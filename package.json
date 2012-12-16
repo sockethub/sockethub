@@ -1,0 +1,27 @@
+{
+  "name": "sockethub",
+  "version": "0.0.1",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "GPL",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/silverbucket/sockethub.git"
+  },
+  "homepage": "http://github.com/silverbucket/sockethub",
+  "author": {
+    "name": "Nick Jennings",
+    "email": "nick@silverbucket.net"
+  },
+  "dependencies": {
+    "websocket": "*",
+    "node-static": "*"
+  },
+  "devDependencies": {
+    "teste": "*"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/teste"
+  }
+}
+

@@ -1,0 +1,79 @@
+<!DOCTYPE html lang="en">
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>pinger</title>
+  </head>
+  <body>
+    <p>
+      <input id="SockJSHost" value="localhost:9999" >
+      /sockethub
+      <input type="submit" value="reconnect" onclick="reconnect();" >
+    </p>
+    <canvas id="myCanvas" style="border: 1px solid black;" width="500" height="100"></canvas>
+  </body>
+  <script>
+    var sock;
+    var graph = document.getElementById('myCanvas').getContext('2d');
+    var x = 1;
+    var graphWidth = document.getElementById('myCanvas').width;
+    var graphHeight = document.getElementById('myCanvas').height;
+    var graphScale = graphHeight * .01;
+    var graphSpacerWidth = graphWidth * .1;
+
+    //console.log('gW: ' + graphWidth + ' gH:' + graphHeight +
+    //            ' gS:' + graphScale + ' gSpW:' + graphSpacerWidth );
+    function draw(time, rtt, colour) {
+      graph.beginPath();
+      graph.moveTo(x, 0);
+      graph.lineTo(x, rtt / graphScale); // graphScale = 1s, graphHeight = 10s
+      graph.strokeStyle = colour;
+      graph.stroke();
+      graph.fillStyle = '#eee';
+      graph.rect(x, 0, graphSpacerWidth, graphHeight);
+      graph.fill();
+      x = x + .5;
+      x = (x > graphWidth) ? x - graphWidth : x;
+    }
+
+    function connect() {
+      var connectString = 'ws://' +
+                           document.getElementById('SockJSHost').value +
+                           '/sockethub';
+      sock = new WebSocket(connectString, 'echo-protocol');
+
+      sock.onopen = function () {
+        draw(new Date().getTime(), graphHeight, '#0f0');  // green start line
+      }
+
+      sock.onmessage = function (e) {
+        var data = JSON.parse(e.data);
+        var sentTime = parseInt(data.response);
+        var now = new Date().getTime();
+        var roundTripTime = now - sentTime;
+        draw(sentTime, roundTripTime, 'black');
+      }
+
+      sock.onclose = function () {
+        draw(new Date().getTime(), graphHeight, '#red');
+      }
+    }
+    connect();
+
+    setInterval(function () {
+      var now = new Date().getTime();
+      if(sock.readyState === WebSocket.CONNECTING) {
+        draw(now, 10, 'green');
+      } else if(sock.readyState === WebSocket.OPEN) {
+        sock.send(now);
+        draw(now, 10, 'blue');
+      } else if(sock.readyState === WebSocket.CLOSING) {
+        draw(now, 10, 'orange');
+      } else {  // CLOSED or non-existent
+        //console.log('sock.readyState: '+sock.readyState);
+        draw(now, 10, 'red');
+        connect();
+      }
+    }, 1000);
+  </script>
+</html>
