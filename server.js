@@ -13,7 +13,7 @@ var static_directory = new node_static.Server('./html');
 
 // http listeners
 function listeners(req, res) {
-  console.log('[http] connect - ' + req.url);
+  console.log(' [http] connect - ' + req.url);
 
   //req.addListener('request', function(req, res) {
   //  console.log('[http] request - ' + req.url);
@@ -68,36 +68,29 @@ var wsServer = new WebSocketServer({
 wsServer.on('request', function(req) {
   //console.log(req);
 
-  var protocol = false;
+  var protoName = false;
   var reqProtoLen = req.requestedProtocols.length;
   for (var i = 0; i < reqProtoLen; i = i + 1) {
     if (config.PROTOCOLS.indexOf(req.requestedProtocols[i]) > -1) {
-      protocol = req.requestedProtocols[i];
+      protoName = req.requestedProtocols[i];
       break;
     }
   }
 
-  if (!protocol) {
-    console.log(' [ws] no valid protocols requested');
+  if (!protoName) {
+    console.log(' [ws] server: no valid protocols requested');
     return false;
   }
 
-  var connection = req.accept(protocol, req.origin);
-  console.log(' [ws] connection accepted [proto: '+protocol+']');
+  var connection = req.accept(protoName, req.origin);
+  console.log(' [ws] server: connection accepted [proto: '+protoName+']');
 
+  var protoHandler = require('./lib/protocols/handler.js');
 
-  connection.on('message', function (message) {
-    if (message.type === 'utf8') {
-      console.log(' [ws]: received message: ' + message.utf8Data);
-      connection.sendUTF('{"response": "'+message.utf8Data+'"}');
-    } else if (message.type === 'binary') {
-      console.log(' [ws]: received binary message of ' + message.binaryData.length + ' bytes');
-      connection.sendBytes(message.binaryData);
-    }
-  });
+  protoHandler.init(protoName, connection);
 
   connection.on('close', function (reasonCode, description) {
-    console.log(' [ws]: ' + (new Date()) + ' peer ' + connection.remoteAddress + ' disconnected.');
+    console.log(' [ws] server:  ' + (new Date()) + ' peer ' + connection.remoteAddress + ' disconnected.');
   });
 });
 
