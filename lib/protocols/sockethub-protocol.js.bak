@@ -1,0 +1,27 @@
+var Echo = {};
+Echo.init = function (connection) {
+  connection.on('message', function (message) {
+    if (message.type === 'utf8') {
+      console.log(' [sockethub]: received message: ' + message.utf8Data);
+      var msg = false;
+      try {
+        msg = JSON.parse(message.utf8Data);
+      } catch (e) {
+        console.log(' [sockethub]: invalid JSON!');
+      }
+
+      if (msg) {
+        response = '{"response": {"date":"'+msg.ping.date+'"}}';
+      } else {
+        response = '{"response": "invalid json"}';
+      }
+      console.log(' [sockethub]: sending response: ' + response);
+      connection.sendUTF(response);
+
+    } else if (message.type === 'binary') {
+      console.log(' [sockethub]: received binary message of ' + message.binaryData.length + ' bytes');
+      connection.sendBytes(message.binaryData);
+    }
+  });
+};
+module.exports = Echo;
