@@ -6,7 +6,7 @@
   </head>
   <body>
     <p>
-      <input id="SockJSHost" value="localhost:10550" >
+      <input id="sockethubHost" value="localhost:10550" >
       /sockethub
       <input type="submit" value="reconnect" onclick="reconnect();" >
     </p>
@@ -74,7 +74,7 @@
 
     function connect() {
       var connectString = 'ws://' +
-                           document.getElementById('SockJSHost').value +
+                           document.getElementById('sockethubHost').value +
                            '/sockethub';
       sock = new WebSocket(connectString, 'sockethub');
 
