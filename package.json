@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "websocket": "*",
-    "node-static": "*"
+    "node-static": "*",
+    "JSV": "*"
   },
   "devDependencies": {
     "teste": "*"

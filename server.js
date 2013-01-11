@@ -32,12 +32,12 @@ function listeners(req, res) {
 
 
 // initiallize http or https server
-if (config.ENABLE_TLS) {
+if (config.HOST.ENABLE_TLS) {
   h = require('https');
   serverCfg = {
-    key: fs.readFileSync(config.TLS_DIR + '/tls.key'),
-    cert: fs.readFileSync(config.TLS_DIR + '/tls.cert'),
-    ca: fs.readFileSync(config.TLS_DIR + '/ca.pem')
+    key: fs.readFileSync(config.HOST.TLS_DIR + '/tls.key'),
+    cert: fs.readFileSync(config.HOST.TLS_DIR + '/tls.cert'),
+    ca: fs.readFileSync(config.HOST.TLS_DIR + '/ca.pem')
   };
   var server = h.createServer(serverCfg, listeners);
 } else {
@@ -47,8 +47,8 @@ if (config.ENABLE_TLS) {
 
 
 // start http server
-server.listen(config.PORT, function () {
-  console.log(' [http] server is listening on port ' + config.PORT);
+server.listen(config.HOST.PORT, function () {
+  console.log(' [http] server is listening on port ' + config.HOST.PORT);
 });
 
 
@@ -71,7 +71,7 @@ wsServer.on('request', function(req) {
   var protoName = false;
   var reqProtoLen = req.requestedProtocols.length;
   for (var i = 0; i < reqProtoLen; i = i + 1) {
-    if (config.PROTOCOLS.indexOf(req.requestedProtocols[i]) > -1) {
+    if (config.HOST.PROTOCOLS.indexOf(req.requestedProtocols[i]) > -1) {
       protoName = req.requestedProtocols[i];
       break;
     }

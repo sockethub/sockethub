@@ -6,20 +6,56 @@
   </head>
   <body>
     <p>
-      <input id="SockJSHost" value="localhost:9999" >
+      <input id="SockJSHost" value="localhost:10550" >
       /sockethub
       <input type="submit" value="reconnect" onclick="reconnect();" >
     </p>
-    <canvas id="myCanvas" style="border: 1px solid black;" width="500" height="100"></canvas>
+    <canvas id="myCanvas" style="border: 1px solid black;" width="500" height="200"></canvas>
   </body>
   <script>
+    var dummyData = {};
+    dummyData.message = {
+      "rid" : "981212",
+      "command" : "message",
+      "data" : [
+        {  // message was sent from an email client, to an email address
+          "actor" : {
+            "protocol" : "smtp",
+            "to" : [  // at least one record for 'to' required
+              {
+                "name" : "Michael Jackson",
+                "address" : "michael@thejacksonfive.com"
+              }
+            ],
+            "cc" : [
+              {
+                "name" : "Cindi Lauper",
+                "address" : "cindi@girlsjustwannahavefun.biz"
+              }
+            ],  // ignored if undefined or empty
+            "bcc" : []  // ignored if undefined or empty
+          },
+          "object" : {
+            "headers" : {},  // name/value pairs of header data to use
+            "subject" : "Hello ...",  // URL encoded string
+            "body" : "Is it me you're looking for?",  // URL encoded string
+          },
+          "source" : {
+            "address" : "Lionel Richie <lionel@dancingontheceiling.com>",
+            "protocol" : "smtp"
+          }
+        }
+      ]
+    };
+
     var sock;
     var graph = document.getElementById('myCanvas').getContext('2d');
     var x = 1;
     var graphWidth = document.getElementById('myCanvas').width;
     var graphHeight = document.getElementById('myCanvas').height;
-    var graphScale = graphHeight * .01;
-    var graphSpacerWidth = graphWidth * .1;
+    var graphScale = graphHeight * .0010;
+    var graphSpacerWidth = graphWidth * .1
+    console.log(graphScale, graphHeight);
 
     //console.log('gW: ' + graphWidth + ' gH:' + graphHeight +
     //            ' gS:' + graphScale + ' gSpW:' + graphSpacerWidth );
@@ -69,7 +105,8 @@
       if(sock.readyState === WebSocket.CONNECTING) {
         draw(now, 10, 'green');
       } else if(sock.readyState === WebSocket.OPEN) {
-        sock.send('{"ping":{"timestamp":"'+now+'"}}');
+        //sock.send('{"ping":{"timestamp":"'+now+'"}}');
+        sock.send(JSON.stringify(dummyData.message));
         draw(now, 10, 'blue');
       } else if(sock.readyState === WebSocket.CLOSING) {
         draw(now, 10, 'orange');
