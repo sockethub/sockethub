@@ -16,36 +16,31 @@
     var dummyData = {};
     dummyData.message = {
       "rid" : "981212",
-      "command" : "message",
-      "data" : [
-        {  // message was sent from an email client, to an email address
-          "actor" : {
-            "protocol" : "smtp",
-            "to" : [  // at least one record for 'to' required
-              {
-                "name" : "Michael Jackson",
-                "address" : "michael@thejacksonfive.com"
-              }
-            ],
-            "cc" : [
-              {
-                "name" : "Cindi Lauper",
-                "address" : "cindi@girlsjustwannahavefun.biz"
-              }
-            ],  // ignored if undefined or empty
-            "bcc" : []  // ignored if undefined or empty
-          },
-          "object" : {
-            "headers" : {},  // name/value pairs of header data to use
-            "subject" : "Hello ...",  // URL encoded string
-            "body" : "Is it me you're looking for?",  // URL encoded string
-          },
-          "source" : {
-            "address" : "Lionel Richie <lionel@dancingontheceiling.com>",
-            "protocol" : "smtp"
+      "verb" : "message",
+      "platform" : "smtp",
+      "actor" : {
+        "to" : [  // at least one record for 'to' required
+          {
+            "name" : "Michael Jackson",
+            "address" : "michael@thejacksonfive.com"
           }
-        }
-      ]
+        ],
+        "cc" : [
+          {
+            "name" : "Cindi Lauper",
+            "address" : "cindi@girlsjustwannahavefun.biz"
+          }
+        ],  // ignored if undefined or empty
+        "bcc" : []  // ignored if undefined or empty
+      },
+      "object" : {
+        "headers" : {},  // name/value pairs of header data to use
+        "subject" : "Hello ...",  // URL encoded string
+        "body" : "Is it me you're looking for?",  // URL encoded string
+      },
+      "source" : {
+        "address" : "Lionel Richie <lionel@dancingontheceiling.com>",
+      }
     };
 
     var sock;
@@ -83,6 +78,7 @@
       }
 
       sock.onmessage = function (e) {
+        console.log('onmessage:', e);
         var data = JSON.parse(e.data);
         if (typeof data.response.timestamp === 'string') {
           var sentTime = parseInt(data.response.timestamp);

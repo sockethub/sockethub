@@ -39,50 +39,52 @@
 // **
 // -- SEND
 {
-  "rid" : "981212",
-  "command" : "message",
-  "data" : [
-    {  // message was sent from an email client, to an email address
-      "actor" : {
-        "protocol" : "smtp",
-        "to" : [  // at least one record for 'to' required
-          {
-            "name" : "Michael Jackson",
-            "address" : "michael@thejacksonfive.com"
-          }
-        ],
-        "cc" : [
-          {
-            "name" : "Cindi Lauper",
-            "address" : "cindi@girlsjustwannahavefun.biz"
-          }
-        ],  // ignored if undefined or empty
-        "bcc" : []  // ignored if undefined or empty
-      },
-      "object" : {
-        "headers" : {},  // name/value pairs of header data to use
-        "subject" : "Hello ...",  // URL encoded string
-        "body" : "Is it me you're looking for?",  // URL encoded string
-      },
-      "source" : {
-        "address" : "Lionel Richie <lionel@dancingontheceiling.com>",
-        "protocol" : "smtp"
-      }
+  {  // message was sent from an email client, to an email address
+    "rid" : "981212",
+    "verb" : "message",
+    "protocol" : "smtp",
+    "actor" : {
+      "to" : [  // at least one record for 'to' required
+        {
+          "name" : "Michael Jackson",
+          "address" : "michael@thejacksonfive.com"
+        }
+      ],
+      "cc" : [
+        {
+          "name" : "Cindi Lauper",
+          "address" : "cindi@girlsjustwannahavefun.biz"
+        }
+      ],  // ignored if undefined or empty
+      "bcc" : []  // ignored if undefined or empty
     },
-    {  // message was sent from an IM client to another IM user
-      "object" : {
-        "subject" : "",  // not used for IMs
-        "body": "hi, i'm in standing your closet right now.",  // URL encoded string
-      },
-      "actor" : {
-        "protocol" : "xmpp",  // instant messenger
-        "address" : "billy <billy.joel@gmail.com>"
-      },
-      "target" : {
-        "protocol" : "icq", // eg: yahoo jabber aim ichat facebook
-        "address" : "Paris Hilton <182940298284>"
+    "object" : {
+      "headers" : {},  // name/value pairs of header data to use
+      "subject" : "Hello ...",  // URL encoded string
+      "body" : "Is it me you're looking for?",  // URL encoded string
+    },
+    "source" : {
+      "address" : "Lionel Richie <lionel@dancingontheceiling.com>",
+      "protocol" : "smtp"
     }
-  ]
+  },
+  {  // message was sent from an IM client to another IM user
+    "rid" : "981212",
+    "verb" : "message",
+    "protocol" : "smtp",
+    "object" : {
+      "subject" : "",  // not used for IMs
+      "body": "hi, i'm in standing your closet right now.",  // URL encoded string
+    },
+    "actor" : {
+      "protocol" : "xmpp",  // instant messenger
+      "address" : "billy <billy.joel@gmail.com>"
+    },
+    "target" : {
+      "protocol" : "icq", // eg: yahoo jabber aim ichat facebook
+      "address" : "Paris Hilton <182940298284>"
+    }
+  }
 }
 
 // notes: what about sending attachments? and gpg

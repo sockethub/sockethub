@@ -5,6 +5,7 @@ var HOST = {
   TLS_CERTS_DIR: '/path/to/tls',
   PORT: 10550,
   PROTOCOLS: [ 'sockethub', 'echo-protocol' ],
+  DISPATCHER: true,
   MY_PLATFORMS: [ 'smtp', 'facebook' ] // list of platforms this instance is responsible for
 };
 
