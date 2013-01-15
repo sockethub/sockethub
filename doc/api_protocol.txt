@@ -1,0 +1,171 @@
+// *********************
+// ** SEARCH and PROFILE
+// **
+// -- SEND
+"whois" : {
+  "rid" : "1234",
+  "address": [
+    "user@example.com",
+    "foobar@example.com"
+  ]
+]
+
+// -- RESPONSE
+"whois" : {
+  "1234" : [
+    "rid" : "1234",
+    "user@example.com" : {
+      "address" : "user@example.com",
+      "status" : true,
+      "protocol" : "WebFinger",
+      "data" : { ... }
+    },
+    "foo@bar.net" : {
+      "address" : "foobar@example.com",
+      "status" : false,
+      "message" : "unable to query profile data for foo@bar.net",
+      "protocol" : ""
+      "data" : {}
+    }
+  ]
+}
+
+// notes: should the "data" returned be "cleansed" to a standard format? or
+//       the format of the protocol type?
+
+
+// **********
+// ** MESSAGE
+// **
+// -- SEND
+{
+  "rid" : "981212",
+  "command" : "message",
+  "data" : [
+    {  // message was sent from an email client, to an email address
+      "actor" : {
+        "protocol" : "smtp",
+        "to" : [  // at least one record for 'to' required
+          {
+            "name" : "Michael Jackson",
+            "address" : "michael@thejacksonfive.com"
+          }
+        ],
+        "cc" : [
+          {
+            "name" : "Cindi Lauper",
+            "address" : "cindi@girlsjustwannahavefun.biz"
+          }
+        ],  // ignored if undefined or empty
+        "bcc" : []  // ignored if undefined or empty
+      },
+      "object" : {
+        "headers" : {},  // name/value pairs of header data to use
+        "subject" : "Hello ...",  // URL encoded string
+        "body" : "Is it me you're looking for?",  // URL encoded string
+      },
+      "source" : {
+        "address" : "Lionel Richie <lionel@dancingontheceiling.com>",
+        "protocol" : "smtp"
+      }
+    },
+    {  // message was sent from an IM client to another IM user
+      "object" : {
+        "subject" : "",  // not used for IMs
+        "body": "hi, i'm in standing your closet right now.",  // URL encoded string
+      },
+      "actor" : {
+        "protocol" : "xmpp",  // instant messenger
+        "address" : "billy <billy.joel@gmail.com>"
+      },
+      "target" : {
+        "protocol" : "icq", // eg: yahoo jabber aim ichat facebook
+        "address" : "Paris Hilton <182940298284>"
+    }
+  ]
+}
+
+// notes: what about sending attachments? and gpg
+
+// -- RESPONSE
+"message" : {
+  "981212" : {
+    "rid" : "981212",
+    "status" : false,
+    "protocol" : "icq",
+    "message" : "could not send message to ICQ number 182940298284"
+  },
+  "abcde" : {
+    "rid" : "abcde",
+    "status" : true,
+    "protocol" : "smtp"
+  }
+}
+
+// -- RECEIVE  ( receiving new messages )
+"message" {
+  {
+    "rid" : "",
+    "actor" : {
+      "name" : "Foo Bar",
+      "address" : "foobar@example.net",
+      "protocol" : "smtp"
+    },
+    "object" : {
+      "subject" : "test",
+      "body" : "test email!",
+      "headers" : { ... },
+    },
+    "target" : {
+      "to" : [
+        {
+          "name" : "You",
+          "address" :  "you@readingthis.me",
+        }
+      ],
+      "protocol" : "smtp"
+      "cc" : [
+        {
+          "name" : "User",
+          "address" : "user@example.com"
+        }
+      ]
+    }
+  }
+]
+
+
+// ***********
+// ** PRESENCE
+// **
+// -- SEND
+"presence" : [  // subscribes to list of user-addresses
+  "rid" : "555555",
+  "accounts" : [
+    {
+      "address" : "billy.joel@gmail.com",
+      "protocol" : "xmpp"
+    },
+    {
+      "address" : "182940298284",
+      "protocol" : "icq"
+    }
+    {
+      "address" : "foobar",
+      "protocol" : "yahoo"
+    }
+    {
+      "address" : "michael",
+      "protocol" : "aim"
+    }
+  ]
+]
+
+
+// -- RECEIVE
+"presence" : {
+  "address" : "billy.joel@gmail.com",
+  "protocol" : "xmpp",
+  "user_status" : "Online"
+}
+
