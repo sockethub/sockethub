@@ -1,27 +1,19 @@
+var PLATFORMS = [
+  // location of platforms running, defaults to this host
+  'smtp', 'facebook'
+];
+
 var HOST = {
   ENABLE_TLS: false, // it is stronlgly recommended that you leave TLS enabled
                     // unless your TLS needs are already taken care of via. a
                     // proxy, or you are running in a development environment.
   TLS_CERTS_DIR: '/path/to/tls',
   PORT: 10550,
-  PROTOCOLS: [ 'sockethub', 'echo-protocol' ],
   DISPATCHER: true,
-  MY_PLATFORMS: [ 'smtp', 'facebook' ] // list of platforms this instance is responsible for
-};
-
-var PLATFORMS = {
-  // location of platforms running, defaults to this host
-  'smtp' : {
-    'host': 'http://localhost',
-    'port': HOST.PORT
-  },
-  'facebook': {
-    'host': 'http://localhost',
-    'port': HOST.PORT
-  }
+  MY_PLATFORMS: PLATFORMS // list of platforms this instance is responsible for
 };
 
 exports.config = {
-  HOST: HOST,
-  PLATFORMS: PLATFORMS
+  HOST: HOST, // host specific config
+  PLATFORMS: PLATFORMS  // all platforms supported
 };
