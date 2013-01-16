@@ -12,11 +12,28 @@ module.exports = (function() {
   }
 
   if (config.HOST.DISPATCHER) {
-    var server = require('./lib/httpServer').init(config);
+    var dispatcher;
+    try {
+      dispatcher = require('./lib/protocols/sockethub/dispatcher.js');
+      dispatcher.init();
+    } catch (e) {
+      throw 'unable to load protocols/sockethub/dispatcher.js : '+e;
+    }
 
-    // initialize websocket server
-    var wsServer = require('./lib/wsServer').init(config, server);
+    setTimeout(function dispatcherStatus() {
+      if (dispatcher.readyState === false) {
+        throw "dispatcher failed initialization";
+      } else if (dispatcher.readyState === undefined) {
+        dispatcherStatus();
+      } else {
+        var server = require('./lib/httpServer').init(config);
+
+        // initialize websocket server
+        var wsServer = require('./lib/wsServer').init(config, server, dispatcher);
+
+        console.log(' [*] finished loading' );
+      }
+    }, 4000);
   }
 
-  console.log(' [*] finished loading' );
 }());
