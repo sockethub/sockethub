@@ -1,7 +1,7 @@
 sockethub
 =========
 
-a polyglot socialweb socket server
+the polyglot approach to the federated social web.
 
 
 license

@@ -8,8 +8,11 @@ module.exports = (function() {
     var wsServer = require('./lib/wsServer').init(config, server);
   }
 
+  var listener = require('./lib/protocols/listener');
   for (var i = 0, len = config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
-    console.log('... should load listener for '+config.HOST.MY_PLATFORMS[i]);
+    //console.log('initializing listener for '+config.HOST.MY_PLATFORMS[i]);
+    var l  = Object.create(listener);
+    l.init(config.HOST.MY_PLATFORMS[i]);
   }
 
   console.log(' [*] finished loading' );
