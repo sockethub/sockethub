@@ -44,8 +44,8 @@ define(['require'], function (require) {
 
       promise = dispatcher.init();
       promise.then(function() {
+          // initialize http server
           var server = require('../lib/httpServer').init(config);
-
           // initialize websocket server
           var wsServer = require('../lib/wsServer').init(config, server, dispatcher);
 
