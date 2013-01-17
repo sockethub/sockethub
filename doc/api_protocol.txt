@@ -75,7 +75,7 @@
     "platform" : "icq",
     "object" : {
       // subject and html not used for IMs
-      "text": "hi, i'm standing in your closet right now.",  // URL encoded string
+      "text": "hi, i'm standing in your closet.",  // URL encoded string
     },
     "actor" : {
       "name" : "Billy Joel",
