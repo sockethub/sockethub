@@ -2,18 +2,19 @@
 // ** SEARCH and PROFILE
 // **
 // -- SEND
-"whois" : {
+{
+  "verb": "whois",
   "rid" : "1234",
-  "address": [
+  "target": [
     "user@example.com",
     "foobar@example.com"
   ]
-]
+}
 
 // -- RESPONSE
-"whois" : {
-  "1234" : [
-    "rid" : "1234",
+{
+  "rid": "1234",
+  "response": {
     "user@example.com" : {
       "address" : "user@example.com",
       "status" : true,
@@ -27,7 +28,7 @@
       "protocol" : ""
       "data" : {}
     }
-  ]
+  }
 }
 
 // notes: should the "data" returned be "cleansed" to a standard format? or
@@ -38,12 +39,11 @@
 // ** MESSAGE
 // **
 // -- SEND
-{
   {  // message was sent from an email client, to an email address
     "rid" : "981212",
     "verb" : "message",
-    "protocol" : "smtp",
-    "actor" : {
+    "platform" : "smtp",
+    "target" : {
       "to" : [  // at least one record for 'to' required
         {
           "name" : "Michael Jackson",
@@ -61,61 +61,52 @@
     "object" : {
       "headers" : {},  // name/value pairs of header data to use
       "subject" : "Hello ...",  // URL encoded string
-      "body" : "Is it me you're looking for?",  // URL encoded string
+      "text" : "Is it me you're looking for?",  // URL encoded string
+      "html" : "<p>Is it <em>me</em> you&quot;re looking for?</p>"
     },
-    "source" : {
-      "address" : "Lionel Richie <lionel@dancingontheceiling.com>",
-      "protocol" : "smtp"
-    }
+    "actor" : "Lionel Richie <lionel@dancingontheceiling.com>"
   },
-  {  // message was sent from an IM client to another IM user
-    "rid" : "981212",
+  {  // message was sent from an ICQ client to another ICQ user
+    "rid" : "981213",
     "verb" : "message",
-    "protocol" : "smtp",
+    "platform" : "icq",
     "object" : {
-      "subject" : "",  // not used for IMs
-      "body": "hi, i'm in standing your closet right now.",  // URL encoded string
+      // subject and html not used for IMs
+      "text": "hi, i'm standing in your closet right now.",  // URL encoded string
     },
-    "actor" : {
-      "protocol" : "xmpp",  // instant messenger
-      "address" : "billy <billy.joel@gmail.com>"
-    },
-    "target" : {
-      "protocol" : "icq", // eg: yahoo jabber aim ichat facebook
-      "address" : "Paris Hilton <182940298284>"
-    }
+    "actor" : "Billy Joel <7732>",
+    "target" : "Paris Hilton <182940298284>"
   }
 }
 
-// notes: what about sending attachments? and gpg
+// notes: what about sending attachments? and gpg -> yeah, we add fields for that, let's just follow the sendgrid.com JSON syntax for now
 
 // -- RESPONSE
-"message" : {
-  "981212" : {
-    "rid" : "981212",
+  {
+    "rid" : "981213",
     "status" : false,
-    "protocol" : "icq",
-    "message" : "could not send message to ICQ number 182940298284"
+    "platform" : "icq",
+    "error" : "could not send message to ICQ number 182940298284"
   },
-  "abcde" : {
+  {
     "rid" : "abcde",
     "status" : true,
-    "protocol" : "smtp"
+    "platform" : "smtp"
   }
-}
+
 
 // -- RECEIVE  ( receiving new messages )
-"message" {
+[
   {
     "rid" : "",
     "actor" : {
       "name" : "Foo Bar",
       "address" : "foobar@example.net",
-      "protocol" : "smtp"
     },
+    "platform" : "smtp"
     "object" : {
       "subject" : "test",
-      "body" : "test email!",
+      "text" : "test email!",
       "headers" : { ... },
     },
     "target" : {
@@ -125,7 +116,6 @@
           "address" :  "you@readingthis.me",
         }
       ],
-      "protocol" : "smtp"
       "cc" : [
         {
           "name" : "User",
@@ -141,33 +131,38 @@
 // ** PRESENCE
 // **
 // -- SEND
-"presence" : [  // subscribes to list of user-addresses
-  "rid" : "555555",
-  "accounts" : [
-    {
-      "address" : "billy.joel@gmail.com",
-      "protocol" : "xmpp"
-    },
-    {
-      "address" : "182940298284",
-      "protocol" : "icq"
-    }
-    {
-      "address" : "foobar",
-      "protocol" : "yahoo"
-    }
-    {
-      "address" : "michael",
-      "protocol" : "aim"
-    }
-  ]
+[  // subscribes to list of user-addresses
+  {
+    "rid" : "555555",
+    "platform" : "xmpp"
+    "target" : "billy.joel@gmail.com",
+    "verb": "subscribe"
+  },
+  {
+    "rid" : "555556",
+    "platform" : "icq"
+    "target" : "182940298284",
+    "verb": "subscribe"
+  },
+  {
+    "rid" : "555557",
+    "platform" : "yahoo"
+    "target" : "foobar",
+    "verb": "subscribe"
+  },
+  {
+    "rid" : "555558",
+    "platform" : "aim"
+    "target" : "michael",
+    "verb": "subscribe"
+  },
 ]
 
 
 // -- RECEIVE
-"presence" : {
-  "address" : "billy.joel@gmail.com",
-  "protocol" : "xmpp",
-  "user_status" : "Online"
+{
+  "verb" : "enter",
+  "actor" : "billy.joel@gmail.com",
+  "platform" : "xmpp"
 }
 
