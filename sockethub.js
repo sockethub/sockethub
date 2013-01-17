@@ -32,6 +32,7 @@ module.exports = (function() {
         var wsServer = require('./lib/wsServer').init(config, server, dispatcher);
 
         console.log(' [*] finished loading' );
+        console.log();
       }
     }, 4000);
   }
