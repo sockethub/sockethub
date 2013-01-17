@@ -8,36 +8,11 @@ define(['require'], function (require) {
     name: "basic tests",
     desc: "collection of basic tests to test sockethub behavior",
     setup: function (env, test) {
-      env.expected = { // struct of expected results for each http call
-        helloWorld: '{"undefined":{"status": false, "message": "no command specified", "data":"[object Object]"}}',
-        test: {
-          foo: "bar"
-        },
-        footwear: {
-          leather: "boots",
-          flip: "flops",
-          block: "of wood"
-        },
-        complex: {
-          we: "are",
-          using: [ "a", "complex", "data"],
-          struct: [
-            {
-              here: "because",
-              it: ['makes', 'us', {feel: "better"}, "about"]
-            },
-            "things"
-          ]
-        }
-      };
 
       var port = 99550;
       env.client = new this.WebSocketClient({
         url: 'ws://localhost:'+port+'/sockethub',
-        type: 'sockethub',
-        messages: env.expected // used for auto verification (if specified
-                     // by using the sendAndVerify() method in the
-                     // test).
+        type: 'sockethub'
       });
 
       var config = {};
@@ -91,33 +66,46 @@ define(['require'], function (require) {
           var _this = this;
           env.client.connect(function (connection) {
             env.connection = connection;
-            env.connection.sendAndVerify('helloWorld', test);
-          });
-          //this.assertAnd(env.connection.connected, true);
-          //env.connection.sendAndVerify('test', this);
-        }
-      },
-      {
-        desc: "complex data struct",
-        run: function (env) {
-          env.connection.sendAndVerify('complex', this);
-        }
-      },
-      {
-        desc: "with callback",
-        run: function (env) {
-          var _this = this;
-          env.connection.sendWithCallback('footwear', function (data) {
-            _this.assert(data.utf8Data,
-                   JSON.stringify(env.expected['footwear']));
+            env.connection.sendAndVerify('helloWorld',
+                '{"status":false,"message":"invalid JSON received"}',
+                test);
           });
         }
       },
       {
-        desc: 'lets try to fail! how exciting!',
-        willFail: true,
-        run: function (env) {
-          env.connection.sendAndVerify('dontexist', this);
+        desc: "send something without an rid",
+        run: function (env, test) {
+          var data = {
+            platform: "dispatcher",
+            verb: "register"
+          };
+          env.connection.sendAndVerify(JSON.stringify(data),
+              '{"status":false,"message":"no rid (request ID) specified"}',
+              test);
+        }
+      },
+      {
+        desc: "send something without a platform",
+        run: function (env, test) {
+          var data = {
+            verb: "register",
+            rid: "123454"
+          };
+          env.connection.sendAndVerify(JSON.stringify(data),
+              '{"rid":"123454","status":false,"message":"no platform specified"}',
+              test);
+        }
+      },
+      {
+        desc: "send something without a verb",
+        run: function (env, test) {
+          var data = {
+            platform: "dispatcher",
+            rid: "123454"
+          };
+          env.connection.sendAndVerify(JSON.stringify(data),
+              '{"rid":"123454","platform":"dispatcher","status":false,"message":"no verb (action) specified"}',
+              test);
         }
       }
     ]
