@@ -7,7 +7,7 @@ define(['require'], function (require) {
   suites.push({
     name: "basic tests",
     desc: "collection of basic tests to test sockethub behavior",
-    setup: function (env) {
+    setup: function (env, test) {
       env.expected = { // struct of expected results for each http call
         helloWorld: '{"undefined":{"status": false, "message": "no command specified", "data":"[object Object]"}}',
         test: {
@@ -48,36 +48,50 @@ define(['require'], function (require) {
         TLS_CERTS_DIR: '/path/to/tls',
         PORT: port,
         PROTOCOLS: [ 'sockethub' ],
-        MY_PLATFORMS: [ 'smtp', 'facebook' ] // list of platforms this instance is responsible for
+        MY_PLATFORMS: [ 'dispatcher', 'smtp', 'facebook' ] // list of platforms this instance is responsible for
       };
 
-      config.PLATFORMS = {
-        // location of platforms running, defaults to this host
-        'smtp' : {
-          'host': 'http://localhost',
-          'port': config.HOST.PORT
-        },
-        'facebook': {
-          'host': 'http://localhost',
-          'port': config.HOST.PORT
+      listener = require('../lib/protocols/sockethub/listener');
+      for (var i = 0, len = config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
+        if (config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
+          continue;
         }
-      };
+        l  = Object.create(listener);
+        l.init(config.HOST.MY_PLATFORMS[i]);
+      }
 
-      var server = require('../lib/httpServer').init(config);
+      var dispatcher, promise;
+      try {
+        dispatcher = require('../lib/protocols/sockethub/dispatcher');
+      } catch (e) {
+        throw e;
+      }
 
-      // initialize websocket server
-      var wsServer = require('../lib/wsServer').init(config, server);
-      this.result(true);
+      promise = dispatcher.init();
+      promise.then(function() {
+          var server = require('../lib/httpServer').init(config);
+
+          // initialize websocket server
+          var wsServer = require('../lib/wsServer').init(config, server, dispatcher);
+
+          console.log(' [*] finished loading' );
+          console.log();
+          test.result(true);
+      }, function(err) {
+          console.log(" [sockethub] dispatcher failed initialization, aborting");
+          process.exit();
+      });
+
     },
     tests: [
       {
         desc: "verify connection",
-        run: function (env) {
+        run: function (env, test) {
           // setup client
           var _this = this;
           env.client.connect(function (connection) {
             env.connection = connection;
-            env.connection.sendAndVerify('helloWorld', _this);
+            env.connection.sendAndVerify('helloWorld', test);
           });
           //this.assertAnd(env.connection.connected, true);
           //env.connection.sendAndVerify('test', this);
