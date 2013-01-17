@@ -16,7 +16,9 @@
   "dependencies": {
     "websocket": "*",
     "node-static": "*",
-    "JSV": "*"
+    "JSV": "*",
+    "redis": "*",
+    "curry": "*"
   },
   "devDependencies": {
     "teste": "*"
