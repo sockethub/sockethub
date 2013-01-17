@@ -6,13 +6,9 @@
   "license": "GPL",
   "repository": {
     "type": "git",
-    "url": "git://github.com/sockethub/sockethub.git"
+    "url": "git://github.com/sockcwethub/sockethub.git"
   },
   "homepage": "http://github.com/sockethub/sockethub",
-  "author": {
-    "name": "Nick Jennings",
-    "email": "nick@silverbucket.net"
-  },
   "dependencies": {
     "websocket": "*",
     "node-static": "*",
