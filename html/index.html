@@ -5,12 +5,15 @@
     <title>pinger</title>
   </head>
   <body>
+    <div id="remotestorage-connect"></div>
     <p>
       <input id="sockethubHost" value="localhost:10550" >
       /sockethub
       <input type="submit" value="reconnect" onclick="reconnect();" >
+      <button onclick="register()">Register</button>
     </p>
     <canvas id="myCanvas" style="border: 1px solid black;" width="500" height="200"></canvas>
+    <pre id="log"></pre>
   </body>
   <script>
     var dummyData = {};
@@ -94,6 +97,7 @@
         draw(new Date().getTime(), graphHeight, '#red');
       }
     }
+
     connect();
 
     setInterval(function () {
@@ -102,7 +106,7 @@
         draw(now, 10, 'green');
       } else if(sock.readyState === WebSocket.OPEN) {
         //sock.send('{"ping":{"timestamp":"'+now+'"}}');
-        sock.send(JSON.stringify(dummyData.message));
+        //sock.send(JSON.stringify(dummyData.message));
         draw(now, 10, 'blue');
       } else if(sock.readyState === WebSocket.CLOSING) {
         draw(now, 10, 'orange');
@@ -112,5 +116,54 @@
         connect();
       }
     }, 1000);
+
+    function log(message) {
+      var d = new Date();
+      var ds = (d.getHours() + 1) + ':' + d.getMinutes() + ':' + d.getSeconds();
+      var line = document.createTextNode(ds + ' -- ' + message + "\n");
+      document.getElementById('log').appendChild(line);
+    }
+
+    /** REMOTESTORAGE STUFF **/
+
+    function initRemoteStorage() {
+
+      remoteStorage.defineModule('sockettest', function(privClient, pubClient) {
+        return {
+          exports: {}
+        };
+      });
+
+      remoteStorage.claimAccess('sockettest', 'rw').then(function() {
+        remoteStorage.displayWidget('remotestorage-connect');
+      });
+    }
+
+    function register() {
+      var message = {
+        rid: 'register-0001',
+        verb: 'register',
+        platform: 'dispatcher',
+        object: {
+          remoteStorage: {
+            storageInfo: remoteStorage.getStorageInfo(),
+            bearerToken: remoteStorage.getBearerToken(),
+            scope: remoteStorage.claimedModules
+          },
+          secret: 'TODO'
+        }
+      };
+
+      if(! message.object.remoteStorage.bearerToken) {
+        log("You need to connect to your storage first!");
+      } else {
+        var rawMessage = JSON.stringify(message);
+        log("Registering: " + rawMessage);
+        sock.send(rawMessage);
+      }
+    }
+
+    window.addEventListener('load', initRemoteStorage);
   </script>
+  <script src="http://remotestoragejs.com/build/0.7.0-head/remoteStorage.min.js"></script>
 </html>
