@@ -1,4 +1,4 @@
-sockethub [![Build Status](https://secure.travis-ci.org/silverbucket/teste.png)](http://travis-ci.org/silverbucket/teste)
+sockethub [![Build Status](https://secure.travis-ci.org/sockethub/sockethub.png)](http://travis-ci.org/sockethub/sockethub)
 =========
 
 the polyglot approach to the federated social web.
