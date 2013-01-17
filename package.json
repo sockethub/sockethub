@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
-  "license": "GPL",
+  "license": "AGPL",
   "repository": {
     "type": "git",
     "url": "git://github.com/sockcwethub/sockethub.git"
