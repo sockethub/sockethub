@@ -12,20 +12,15 @@ module.exports = (function() {
   }
 
   if (config.HOST.DISPATCHER) {
-    var dispatcher;
+    var dispatcher, promise;
     try {
       dispatcher = require('./lib/protocols/sockethub/dispatcher.js');
-      dispatcher.init();
+      promise = dispatcher.init();
     } catch (e) {
-      throw 'unable to load protocols/sockethub/dispatcher.js : '+e;
+      throw 'unable to load protocols/sockethub/dispatcher.js : ' + e;
     }
 
-    setTimeout(function dispatcherStatus() {
-      if (dispatcher.readyState === false) {
-        throw "dispatcher failed initialization";
-      } else if (dispatcher.readyState === undefined) {
-        dispatcherStatus();
-      } else {
+    promise.then(function() {
         var server = require('./lib/httpServer').init(config);
 
         // initialize websocket server
@@ -33,8 +28,10 @@ module.exports = (function() {
 
         console.log(' [*] finished loading' );
         console.log();
-      }
-    }, 4000);
+    }, function(err) {
+        console.log(" [sockethub] dispatcher failed initialization, aborting");
+        process.exit();
+    });
   }
 
 }());

@@ -16,7 +16,8 @@
     "redis": "*",
     "curry": "*",
     "mail": "*",
-    "imap": "*"
+    "imap": "*",
+    "promising": "*"
   },
   "devDependencies": {
     "teste": "*"
