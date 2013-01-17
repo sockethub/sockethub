@@ -85,15 +85,33 @@ define(['require'], function (require) {
         }
       },
       {
+        desc: "send something without an rid and invalid expected",
+        willFail: true,
+        run: function (env, test) {
+          var data = {
+            platform: "dispatcher",
+            verb: "register"
+          };
+          var expected = {
+            status: false,
+            message: "no rid (request ID) specified. YARG!"
+          };
+          env.connection.sendAndVerify(JSON.stringify(data), expected, test);
+        }
+      },
+      {
         desc: "send something without a platform",
         run: function (env, test) {
           var data = {
             verb: "register",
             rid: "123454"
           };
-          env.connection.sendAndVerify(JSON.stringify(data),
-              '{"rid":"123454","status":false,"message":"no platform specified"}',
-              test);
+          var expected = {
+            status: false,
+            message: "no platform specified",
+            rid: "123454"
+          };
+          env.connection.sendAndVerify(JSON.stringify(data), expected, test);
         }
       },
       {
@@ -103,9 +121,13 @@ define(['require'], function (require) {
             platform: "dispatcher",
             rid: "123454"
           };
-          env.connection.sendAndVerify(JSON.stringify(data),
-              '{"rid":"123454","platform":"dispatcher","status":false,"message":"no verb (action) specified"}',
-              test);
+          var expected = {
+            status: false,
+            message: "no verb (action) specified",
+            rid: "123454",
+            platform: "dispatcher"
+          };
+          env.connection.sendAndVerify(JSON.stringify(data), expected, test);
         }
       }
     ]
