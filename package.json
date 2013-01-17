@@ -6,19 +6,17 @@
   "license": "GPL",
   "repository": {
     "type": "git",
-    "url": "git://github.com/silverbucket/sockethub.git"
+    "url": "git://github.com/sockcwethub/sockethub.git"
   },
-  "homepage": "http://github.com/silverbucket/sockethub",
-  "author": {
-    "name": "Nick Jennings",
-    "email": "nick@silverbucket.net"
-  },
+  "homepage": "http://github.com/sockethub/sockethub",
   "dependencies": {
     "websocket": "*",
     "node-static": "*",
     "JSV": "*",
     "redis": "*",
-    "curry": "*"
+    "curry": "*",
+    "mail": "*",
+    "imap": "*"
   },
   "devDependencies": {
     "teste": "*"
