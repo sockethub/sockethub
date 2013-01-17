@@ -13,47 +13,47 @@ The app developer can utilize one tool, indicate what they'd like to do, and tha
 
         1.1 The problem solved by this project
         --------------------------------------
-        Currently, there are numerousseveral attempts to implement aspects of the open social web;, however, many of these projects are working on the same area and do not interoperate. There are about 40 different projects like this, including StatusNet, Diaspora, Friendica, BuddyCloud, Crabgrass, Apache Wave, to name but a few. If you include the ones that do not expose a web interface, then there are even more. This lack of interoperability leaves the landscape extremely fragmented and incohesive. 
-        
+        Currently, there are numerousseveral attempts to implement aspects of the open social web;, however, many of these projects are working on the same area and do not interoperate. There are about 40 different projects like this, including StatusNet, Diaspora, Friendica, BuddyCloud, Crabgrass, Apache Wave, to name but a few. If you include the ones that do not expose a web interface, then there are even more. This lack of interoperability leaves the landscape extremely fragmented and incohesive.
+
         Outside of the realm of social networking, we have many other projects which aim to solve a certainsome aspect of the toolchain. Again, these tools often speak different languages and therefore leave a developer to pick and choose which ones they will support, becoming isolated from those who've chosen another solution.
-        
+
         For example, some of the different problem domains being worked on, and the existing solutions:
-        
+
         - Profile: WebFinger, Simple Web Discovery, WebID/FOAF, Gravatar
         - Messaging: email, Jabber, IRC, Skype, SIP, SMS
         - Presence: Jabber
         - Pub/Sub: pubsubhubbub, xmpp-pubsub, atom/rss, Twitter 'follow', Facebook newsfeed, mailing lists, Usenet groups, IRC
         - Comment: comments on blogs, salmon protocol, WebID-based
 read-write web, Facebook wall posts.
-        
-        Using the polyglot approach, the developer can use one service to expose functionality to the application user without havingthe need to worry about what technologies the user's friends of that user are using. The socket server (the service) will be run-able by anyone;, a user could run their own or the remoteStorage.js provider could run one as a service to their users. In that way, it will behave much in the same way as remoteStorage.js does.
-        
 
-        1.2 The relative advantage of the proposed innovation         
+        Using the polyglot approach, the developer can use one service to expose functionality to the application user without havingthe need to worry about what technologies the user's friends of that user are using. The socket server (the service) will be run-able by anyone;, a user could run their own or the remoteStorage.js provider could run one as a service to their users. In that way, it will behave much in the same way as remoteStorage.js does.
+
+
+        1.2 The relative advantage of the proposed innovation
         -----------------------------------------------------
-        The advantage of this approach is that the there is no need to pick any winners or loosers. The user's polyglot server would speak as many of the protocols as possible, allowing them users to communicate without being trapped in the silo of the technology they use to solve each purpose. These 'esperanto-style' networks are usually only used by a small group of people and always stay fragmented and much smaller than the big commercial networks because of the network effect. 
+        The advantage of this approach is that the there is no need to pick any winners or loosers. The user's polyglot server would speak as many of the protocols as possible, allowing them users to communicate without being trapped in the silo of the technology they use to solve each purpose. These 'esperanto-style' networks are usually only used by a small group of people and always stay fragmented and much smaller than the big commercial networks because of the network effect.
 
 
         1.3 Usability: For whom and to what purpose
         -------------------------------------------
         The main target of this project would be to existing developers, who would develop apps that communicate with the user's polyglot server via sockets from their web app. One important advantage for the developer is that they no longer have to make the choice of which technology to usechoose for each of the social services they wish to provide in their app. In addition, they don't have to implement all these services themselves;, the user's polyglot server takes care of all of handling of different protocols, providing one simplified API for the developer for use in their application.
-        
+
         For users, they suddenly have a much higher success rate of connecting with friends whichwho may be using one of the many different technologies that are otherwise inoperable together. The various choices of which service or communication medium to use and medium of communicating with friends becomes less important and less of a hurdle.
 
 
         1.4 Perspectives for further development of this innovation and/or other technologies
         -------------------------------------------------------------------------------------
         The polyglot server comes with no user-facing interface, but it exposes a cross-origin interface that can be addressed from unhosted web apps. So iIt would solve the fedsocweb problem, and at the same time encourage people to develop unhosted web apps that interact with a user's polyglot server. That is good because unhosted web apps are good. Theose unhosted web apps would likely connect with the user's polyglot server as well as with their remoteStorage, and in that way the two projects are very symbiotic. remoteStorage providers could offer a polyglot service to their users and, the users could use a different service, or run their own.
-        
+
 
         1.5 Relevance for nlnet's mission
         ---------------------------------
-        Applications addressing this subject can have a significant impact in the area of the open social web, and online identity and presence. Although users have very powerful social networking tools at their disposal right now, these tools are all owned by commercial companies in a monopolizing way. Working to break these monopolies and putting these technological advances into the public domain can help us to fully realize the potential of social networking, and bridge the silos of online content and identity. 
+        Applications addressing this subject can have a significant impact in the area of the open social web, and online identity and presence. Although users have very powerful social networking tools at their disposal right now, these tools are all owned by commercial companies in a monopolizing way. Working to break these monopolies and putting these technological advances into the public domain can help us to fully realize the potential of social networking, and bridge the silos of online content and identity.
 
 
-Adopting a polyglot approach is currently the only viable solution right now to help save the web from monopolies, and I believebeleive this is a very important topic for nlnet and is part of it's mission ("to promote the exchange of electronic information and all that is related or beneficial to that purpose"). 
+Adopting a polyglot approach is currently the only viable solution right now to help save the web from monopolies, and I believebeleive this is a very important topic for nlnet and is part of it's mission ("to promote the exchange of electronic information and all that is related or beneficial to that purpose").
 
-        
+
 2. Existing work by others
 --------------------------
 
@@ -79,9 +79,9 @@ http://www.silverbucket.net
 -------------------
 I am requesting funding for the completion of theis polyglot server for the span of one year. The bulk of the development will be in implementing a WebSocket server that users can run and connect with using unhosted web apps, and that developers can write applications to integrate with. The socket server will use the simplest language possible to enable the follow features:
 
-   search & profile) - ways to query about users, finding and detailing profile information about a user. 
+   search & profile) - ways to query about users, finding and detailing profile information about a user.
    message) - send/receive messages to a user (realtime)
-   presence) - get information on whether a user is present or not 
+   presence) - get information on whether a user is present or not
    pub/sub) - subscribe to a users feeds (ie. blog, twitter)
    comment) - post comments (non realtime)
 
@@ -98,7 +98,7 @@ Here is a general timeline for completion of the various parts of the server (by
 
 6. Project budgeting
 --------------------
-We will try to complete the above scope within the time allotted, which is six months for 1 FTE financed out of the project, and other people participating in the project for free (in their spare time or as unpaid interns). This schedule will run from 1 January 2013 to 1 July 2013. The budget is 6x = 9000 euros. 
+We will try to complete the above scope within the time allotted, which is six months for 1 FTE financed out of the project, and other people participating in the project for free (in their spare time or as unpaid interns). This schedule will run from 1 January 2013 to 1 July 2013. The budget is 6x = 9000 euros.
 
 
 7. Project risks
@@ -107,7 +107,7 @@ We will try to complete the above scope within the time allotted, which is six m
         7.1 Lack of apps
         ----------------
         Even though Tthe approach will open up a lotton of potential functionality for web application developers, however one of the risks is that no one develops anything of much interest. However, we feel there is enough interest already being expressed for this type of functionality, by from talented developers, that this scenario is highly unlikely. In addition, to help mitigate this, I would also develop functional demo apps as part of the documentation process, so that users canould already put their polyglot servers to use from the start.
-        
+
         7.2 Closed APIs
         ---------------
         As one of the fundamental points of the project is to interface with the public APIs of several major social networking sites, a bit we face a minor risk is ifof these sites suddenly decidinge to stop providing these APIs as a service to external application developers. This would, of course, have major implications all over the web, and not just for this project.
@@ -117,6 +117,18 @@ We will try to complete the above scope within the time allotted, which is six m
         Unlike the 'esperanto' approach, the lack of adoption is not really a risk, because the polyglot approach is the solution to the network-effect problem.
 
 
+8. Project results dissemenaton
+-------------------------------
+
+As the project makes progress, I'll continue to update those closely involved via blog posts (hackerbeach, unhosted, my own blog at silverbucket.net), and posts to the unhosted mailing list. I will also continue to take note of the developers I come into contact with who could use sockethub as a tool to create apps or add features to existing apps. These use cases will be prioritized to help engage the developers who show interest as soon as possible. Things like email (smtp, imap) facebook & twitter messaging, have already shown themselves as the most wanted features up front, so these will be the first tasks to tackle.
+
+In addition, the sockethub project will aim to be very compatible with remoteStorage.js from the start, and can be packaged as a development solution along with remoteStorage for completely unhosted web-apps.
+
+As the opportunity to speak at JS meetups or conferences present themselves, I will prepare an introduction and overview of the concepts behind sockethub and the implementation.
 
 
+9. Follow-ups on the project
+----------------------------
+
+Sockethub will be designed to be a very modular socket server. Allowing developers to add "platforms" (modules which implement a certain service, whether it's facebook, linkedin, or smtp, pop, imap) with very little development overhead. In this case it should be easy to get developers involved if they express interest in helping. I would like to keep a list compiled of all the possible platform modules to be developed and ideas which come up as the project evolves, and point potential contributers there for inspiration.
 
