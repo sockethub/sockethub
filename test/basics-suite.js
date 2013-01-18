@@ -80,7 +80,7 @@ define(['require'], function (require) {
             verb: "register"
           };
           env.connection.sendAndVerify(JSON.stringify(data),
-              '{"status":false,"message":"no rid (request ID) specified"}',
+              '{"verb":"confirm","status":false,"message":"no rid (request ID) specified"}',
               test);
         }
       },
@@ -94,7 +94,8 @@ define(['require'], function (require) {
           };
           var expected = {
             status: false,
-            message: "no rid (request ID) specified. YARG!"
+            message: "no rid (request ID) specified. YARG!",
+            verb: 'confirm'
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test);
         }
@@ -109,7 +110,8 @@ define(['require'], function (require) {
           var expected = {
             status: false,
             message: "no platform specified",
-            rid: "123454"
+            rid: "123454",
+            verb: 'confirm'
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test);
         }
@@ -125,6 +127,7 @@ define(['require'], function (require) {
             status: false,
             message: "no verb (action) specified",
             rid: "123454",
+            verb: 'confirm',
             platform: "dispatcher"
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test);
@@ -142,7 +145,7 @@ define(['require'], function (require) {
             status: false,
             message: "unknown verb received: blah",
             rid: "123454",
-            verb: 'blah',
+            verb: 'confirm',
             platform: "dispatcher"
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test);
