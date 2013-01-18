@@ -129,6 +129,24 @@ define(['require'], function (require) {
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test);
         }
+      },
+      {
+        desc: "send something with unknown verb",
+        run: function (env, test) {
+          var data = {
+            verb: 'blah',
+            platform: "dispatcher",
+            rid: "123454"
+          };
+          var expected = {
+            status: false,
+            message: "unknown verb received: blah",
+            rid: "123454",
+            verb: 'blah',
+            platform: "dispatcher"
+          };
+          env.connection.sendAndVerify(JSON.stringify(data), expected, test);
+        }
       }
     ]
   });
