@@ -17,7 +17,7 @@
     "curry": "*",
     "mail": "*",
     "imap": "*",
-    "promising": "*"
+    "promising": "0.0.3"
   },
   "devDependencies": {
     "teste": "*"

@@ -21,7 +21,7 @@
       "rid" : "981212",
       "verb" : "message",
       "platform" : "smtp",
-      "actor" : {
+      "target" : {
         "to" : [  // at least one record for 'to' required
           {
             "name" : "Michael Jackson",
@@ -41,7 +41,7 @@
         "subject" : "Hello ...",  // URL encoded string
         "body" : "Is it me you're looking for?",  // URL encoded string
       },
-      "source" : {
+      "actor" : {
         "address" : "Lionel Richie <lionel@dancingontheceiling.com>",
       }
     };
@@ -165,5 +165,5 @@
 
     window.addEventListener('load', initRemoteStorage);
   </script>
-  <script src="http://remotestoragejs.com/build/0.7.0-head/remoteStorage.min.js"></script>
+  <script src="remoteStorage.min.js"></script>
 </html>
