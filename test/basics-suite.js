@@ -17,13 +17,10 @@ define(['require'], function (require) {
 
       var config = {};
       config.HOST = {
-        ENABLE_TLS: false, // it is stronlgly recommended that you leave TLS enabled
-                          // unless your TLS needs are already taken care of via. a
-                          // proxy, or you are running in a development environment.
-        TLS_CERTS_DIR: '/path/to/tls',
+        ENABLE_TLS: false,
         PORT: port,
         PROTOCOLS: [ 'sockethub' ],
-        MY_PLATFORMS: [ 'dispatcher', 'smtp', 'facebook' ] // list of platforms this instance is responsible for
+        MY_PLATFORMS: [ 'dispatcher', 'smtp' ] // list of platforms this instance is responsible for
       };
 
       listener = require('../lib/protocols/sockethub/listener');
