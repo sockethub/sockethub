@@ -16,8 +16,13 @@
     <pre id="log"></pre>
   </body>
   <script>
-    var dummyData = {};
-    dummyData.message = {
+    var sendData = {};
+    sendData.ping = {
+      rid: 'ping001',
+      verb: 'ping',
+      platform: 'dispatcher'
+    };
+    sendData.message = {
       "rid" : "981212",
       "verb" : "message",
       "platform" : "smtp",
@@ -105,8 +110,9 @@
       if(sock.readyState === WebSocket.CONNECTING) {
         draw(now, 10, 'green');
       } else if(sock.readyState === WebSocket.OPEN) {
-        sock.send('{"verb":"ping","platform":"dispatcher","rid":"ping001","timestamp":"'+now+'"}');
-        //sock.send(JSON.stringify(dummyData.message));
+        var sendMsg = sendData.ping;
+        sendMsg.timestamp = now;
+        sock.send(JSON.stringify(sendMsg));
         draw(now, 10, 'blue');
       } else if(sock.readyState === WebSocket.CLOSING) {
         draw(now, 10, 'orange');
