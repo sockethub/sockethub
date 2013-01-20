@@ -24,7 +24,7 @@ installation & setup:
 
 once sockethub is running, you can visit http://localhost:10550 to see the basic pinger health checker.
 
-**Note** *that trying to use a file:// URL for this will not work because remoteStorage.js depends on having a localStorage origin available.*
+**remoteStorage.js note:** *trying to use a file:// URL for this will not work because remoteStorage.js depends on having a localStorage origin available.*
 
 license
 -------
