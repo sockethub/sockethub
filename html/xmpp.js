@@ -79,7 +79,7 @@ window.addEventListener('load', function() {
     socket.onmessage = function(message) {
       var line = document.createTextNode(message.data + '\n');
       socketLog.appendChild(line);
-    }
+    };
   });
 
   sockethubForm.register.addEventListener('click', function(event) {

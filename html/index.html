@@ -81,9 +81,9 @@
       }
 
       sock.onmessage = function (e) {
-        console.log('onmessage:', e);
         var data = JSON.parse(e.data);
-        if (typeof data.response.timestamp === 'string') {
+        if ((typeof data.response === 'object') &&
+            (typeof data.response.timestamp === 'string')) {
           var sentTime = parseInt(data.response.timestamp);
           var now = new Date().getTime();
           var roundTripTime = now - sentTime;
@@ -105,7 +105,7 @@
       if(sock.readyState === WebSocket.CONNECTING) {
         draw(now, 10, 'green');
       } else if(sock.readyState === WebSocket.OPEN) {
-        //sock.send('{"ping":{"timestamp":"'+now+'"}}');
+        sock.send('{"verb":"ping","platform":"dispatcher","rid":"ping001","timestamp":"'+now+'"}');
         //sock.send(JSON.stringify(dummyData.message));
         draw(now, 10, 'blue');
       } else if(sock.readyState === WebSocket.CLOSING) {

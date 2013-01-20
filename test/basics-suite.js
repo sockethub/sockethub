@@ -145,6 +145,7 @@ define(['require'], function (require) {
             verb: 'confirm',
             platform: "dispatcher"
           };
+          console.log('-- EXPECTED: '+JSON.stringify(expected));
           env.connection.sendAndVerify(JSON.stringify(data), expected, test);
         }
       }
