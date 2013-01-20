@@ -129,8 +129,8 @@ define(['require'], function (require) {
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test);
         }
-      },
-      {
+      }
+      /*{
         desc: "send something with unknown verb",
         run: function (env, test) {
           var data = {
@@ -148,7 +148,7 @@ define(['require'], function (require) {
           console.log('-- EXPECTED: '+JSON.stringify(expected));
           env.connection.sendAndVerify(JSON.stringify(data), expected, test);
         }
-      }
+      }*/
     ]
   });
 
