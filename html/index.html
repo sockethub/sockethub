@@ -17,13 +17,20 @@
   </body>
   <script>
     var rid = 0;
+    var isRegistered = false;
     var sendData = {};
     sendData.ping = {
       verb: 'ping',
       platform: 'dispatcher'
     };
+    sendData.register = {
+      verb: "register",
+      platform: "dispatcher",
+      object: {
+        secret: '1234567890'
+      }
+    };
     sendData.message = {
-      "rid" : "981212",
       "verb" : "message",
       "platform" : "smtp",
       "target" : {
@@ -82,6 +89,9 @@
       sock = new WebSocket(connectString, 'sockethub');
 
       sock.onopen = function () {
+        var register = sendData.register;
+        register.rid = rid++;
+        sock.send(JSON.stringify(register));
         draw(new Date().getTime(), graphHeight, '#0f0');  // green start line
       }
 
@@ -96,6 +106,13 @@
           var roundTripTime = now - sentTime;
           console.log('ping response received at '+now);
           draw(sentTime, roundTripTime, 'black');
+        } else if (data.verb === 'register') {
+          if (data.status === true) {
+            console.log('register sucessful!');
+            isRegistered = true;
+          } else {
+            console.log('ERROR: register failed!');
+          }
         } else if (data.verb === 'confirm') {
           console.log('confirmation receipt received. ', data);
         } else {
@@ -116,11 +133,13 @@
       if(sock.readyState === WebSocket.CONNECTING) {
         draw(now, 10, 'green');
       } else if(sock.readyState === WebSocket.OPEN) {
-        var sendMsg = sendData.ping;
-        sendMsg.rid = rid + 1;
-        sendMsg.timestamp = now;
-        sock.send(JSON.stringify(sendMsg));
-        draw(now, 10, 'blue');
+        if (isRegistered) {
+          var sendMsg = sendData.ping;
+          sendMsg.rid = rid++;
+          sendMsg.timestamp = now;
+          sock.send(JSON.stringify(sendMsg));
+          draw(now, 10, 'blue');
+        }
       } else if(sock.readyState === WebSocket.CLOSING) {
         draw(now, 10, 'orange');
       } else {  // CLOSED or non-existent
