@@ -16,9 +16,9 @@
     <pre id="log"></pre>
   </body>
   <script>
+    var rid = 0;
     var sendData = {};
     sendData.ping = {
-      rid: 'ping001',
       verb: 'ping',
       platform: 'dispatcher'
     };
@@ -87,14 +87,20 @@
 
       sock.onmessage = function (e) {
         var data = JSON.parse(e.data);
-        if ((typeof data.response === 'object') &&
-            (typeof data.response.timestamp === 'string')) {
+        if (data.status === false) {
+          console.log('error: '+data.message+' : ', data);
+        } else if ((typeof data.response === 'object') &&
+                   (typeof data.response.timestamp === 'number')) {
           var sentTime = parseInt(data.response.timestamp);
           var now = new Date().getTime();
           var roundTripTime = now - sentTime;
+          console.log('ping response received at '+now);
           draw(sentTime, roundTripTime, 'black');
+        } else if (data.verb === 'confirm') {
+          console.log('confirmation receipt received. ', data);
         } else {
-          draw(new Date().getTime(), graphHeight, '#red');
+          console.log('unknown data received: ', data);
+          draw(new Date().getTime(), graphHeight, 'red');
         }
       }
 
@@ -111,6 +117,7 @@
         draw(now, 10, 'green');
       } else if(sock.readyState === WebSocket.OPEN) {
         var sendMsg = sendData.ping;
+        sendMsg.rid = rid + 1;
         sendMsg.timestamp = now;
         sock.send(JSON.stringify(sendMsg));
         draw(now, 10, 'blue');
