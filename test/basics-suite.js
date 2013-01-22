@@ -32,43 +32,39 @@ define(['require'], function (require) {
         l.init(config.HOST.MY_PLATFORMS[i]);
       }
 
-      var dispatcher, promise;
-      try {
-        dispatcher = require('../lib/protocols/sockethub/dispatcher');
-      } catch (e) {
-        throw e;
-      }
+      var dispatcher = require('../lib/protocols/sockethub/dispatcher');
 
-      promise = dispatcher.init();
-      promise.then(function() {
-          // initialize http server
-          var server = require('../lib/httpServer').init(config);
-          // initialize websocket server
-          var wsServer = require('../lib/wsServer').init(config, server, dispatcher);
+      dispatcher.init().then(function() {
+        // initialize http server
+        var server = require('../lib/httpServer').init(config);
+        // initialize websocket server
+        var wsServer = require('../lib/wsServer').init(config, server, dispatcher);
 
-          console.log(' [*] finished loading' );
-          console.log();
+        console.log(' [*] finished loading' );
+        console.log();
+        env.client.connect(function(connection) {
+          env.connection = connection;
           test.result(true);
+        });
       }, function(err) {
-          console.log(" [sockethub] dispatcher failed initialization, aborting");
-          process.exit();
+        console.log(" [sockethub] dispatcher failed initialization, aborting");
+        process.exit();
       });
 
     },
     tests: [
+
       {
         desc: "verify connection",
         run: function (env, test) {
           // setup client
-          var _this = this;
-          env.client.connect(function (connection) {
-            env.connection = connection;
-            env.connection.sendAndVerify('helloWorld',
-                '{"status":false,"message":"invalid JSON received"}',
-                test);
-          });
+          env.connection.sendAndVerify(
+            'helloWorld',
+            '{"status":false,"message":"invalid JSON received"}',
+            test);
         }
       },
+
       {
         desc: "send something without an rid",
         run: function (env, test) {
@@ -81,6 +77,7 @@ define(['require'], function (require) {
               test);
         }
       },
+
       {
         desc: "send something without an rid and invalid expected",
         willFail: true,
@@ -97,6 +94,7 @@ define(['require'], function (require) {
           env.connection.sendAndVerify(JSON.stringify(data), expected, test);
         }
       },
+
       {
         desc: "send something without a platform",
         run: function (env, test) {
@@ -113,6 +111,7 @@ define(['require'], function (require) {
           env.connection.sendAndVerify(JSON.stringify(data), expected, test);
         }
       },
+
       {
         desc: "send something without a verb",
         run: function (env, test) {
