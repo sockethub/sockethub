@@ -1,15 +1,14 @@
 var PLATFORMS = [
   // location of platforms running, defaults to this host
-  'smtp', 'facebook'
+  'dispatcher', 'smtp', 'xmpp'
 ];
 
 var HOST = {
   ENABLE_TLS: false, // it is stronlgly recommended that you leave TLS enabled
-                    // unless your TLS needs are already taken care of via. a
-                    // proxy, or you are running in a development environment.
+                     // unless your TLS needs are already taken care of via. a
+                     // proxy, or you are running in a development environment.
   TLS_CERTS_DIR: '/path/to/tls',
   PORT: 10550,
-  DISPATCHER: true,
   MY_PLATFORMS: PLATFORMS // list of platforms this instance is responsible for
 };
 
