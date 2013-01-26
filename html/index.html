@@ -24,9 +24,14 @@
       platform: 'dispatcher'
     };
     sendData.register = {
-      verb: "register",
-      platform: "dispatcher",
+      verb: 'register',
+      platform: 'dispatcher',
       object: {
+        remoteStorage: {
+          storageInfo: remoteStorage.getStorageInfo(),
+          bearerToken: remoteStorage.getBearerToken(),
+          scope: remoteStorage.claimedModules
+        },
         secret: '1234567890'
       }
     };
@@ -89,9 +94,7 @@
       sock = new WebSocket(connectString, 'sockethub');
 
       sock.onopen = function () {
-        var register = sendData.register;
-        register.rid = rid++;
-        sock.send(JSON.stringify(register));
+        register();
         draw(new Date().getTime(), graphHeight, '#0f0');  // green start line
       }
 
@@ -172,24 +175,12 @@
     }
 
     function register() {
-      var message = {
-        rid: 'register-0001',
-        verb: 'register',
-        platform: 'dispatcher',
-        object: {
-          remoteStorage: {
-            storageInfo: remoteStorage.getStorageInfo(),
-            bearerToken: remoteStorage.getBearerToken(),
-            scope: remoteStorage.claimedModules
-          },
-          secret: 'TODO'
-        }
-      };
-
-      if(! message.object.remoteStorage.bearerToken) {
+      var register = sendData.register;
+      register.rid = rid++;
+      if(! register.object.remoteStorage.bearerToken) {
         log("You need to connect to your storage first!");
       } else {
-        var rawMessage = JSON.stringify(message);
+        var rawMessage = JSON.stringify(register);
         log("Registering: " + rawMessage);
         sock.send(rawMessage);
       }
