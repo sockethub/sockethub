@@ -9,6 +9,11 @@ define(['require'], function (require) {
     desc: "collection of basic tests to test sockethub behavior",
     setup: function (env, test) {
 
+      env.confirmProps = {
+        status: true,
+        verb: 'confirm'
+      };
+
       var port = 99550;
       env.client = new this.WebSocketClient({
         url: 'ws://localhost:'+port+'/sockethub',
@@ -166,6 +171,53 @@ define(['require'], function (require) {
             platform: "dispatcher"
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test);
+        }
+      },
+
+      {
+        desc: "register",
+        run: function (env, test) {
+          var data = {
+            platform: "dispatcher",
+            object: {
+              secret: '1234567890'
+            },
+            verb: "register",
+            rid: "123454"
+          };
+          var expected = {
+            status: true,
+            rid: "123454",
+            verb: 'register',
+            platform: "dispatcher"
+          };
+          env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
+        }
+      },
+
+      {
+        desc: "register with wrong confirmProps",
+        willFail: true,
+        run: function (env, test) {
+          var confirmProps = {
+            "verb" : "coinform",
+            "status" : true
+          };
+          var data = {
+            platform: "dispatcher",
+            object: {
+              secret: '1234567890'
+            },
+            verb: "register",
+            rid: "123454"
+          };
+          var expected = {
+            status: true,
+            rid: "123454",
+            verb: 'register',
+            platform: "dispatcher"
+          };
+          env.connection.sendAndVerify(JSON.stringify(data), expected, test, confirmProps);
         }
       }
     ]
