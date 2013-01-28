@@ -53,4 +53,4 @@ credits
 Project maintained by [Nick Jennings](http://github.com/silverbucket).
 
 Sponsored by [NLNET](http://nlnet.nl)
-[!(http://sockethub.org/img/nlnet-logo.svg)](http://nlnet.nl)
+[![NLNET Logo](http://sockethub.org/img/nlnet-logo.svg)](http://nlnet.nl)
