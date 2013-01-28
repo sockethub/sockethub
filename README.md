@@ -1,7 +1,7 @@
 sockethub [![Build Status](https://secure.travis-ci.org/sockethub/sockethub.png)](http://travis-ci.org/sockethub/sockethub)
 =========
 
-the polyglot approach to the federated social web.
+The polyglot approach to the federated social web.
 
 about
 -----
@@ -32,12 +32,17 @@ installation & setup
 
     [sockethub]$ npm install
     [sockethub]$ cp config.js.template config.js
+    [sockethub]$ cp config.secrets.js.template config.secrets.js
+
+  You will want to edit your config.secrets.js file and add your own secret string to use during the register command to ensure only apps can connect that have the right secret.
+
     [sockethub]$ node sockethub.js
 
-once sockethub is running, you can visit http://localhost:10550 to see the basic pinger health checker.
+  Once sockethub is running, you can visit http://localhost:10550 to see the basic pinger health checker.
 
 **remoteStorage.js note:** *trying to use a file:// URL for this will not work because remoteStorage.js depends on having a localStorage origin available.*
 
 license
 -------
-sockethub is licensed under the [AGPLv3](https://github.com/sockethub/sockethub/blob/master/LICENSE)
+Sockethub is licensed under the [AGPLv3](https://github.com/sockethub/sockethub/blob/master/LICENSE)
+
