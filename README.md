@@ -15,6 +15,7 @@ status
 Sockethub is currently in very early stages of development, though already basic proof of concepts for XMPP are working, as well as progress being made for SMTP support. The implementtion of each 'platform' is very modular and straightforward to implement. If you are a developer looking to contribute, open an issue and explain what you'd like to implement for help getting started.
 
 
+
 installation & setup
 --------------------
 
@@ -46,3 +47,10 @@ license
 -------
 Sockethub is licensed under the [AGPLv3](https://github.com/sockethub/sockethub/blob/master/LICENSE)
 
+
+credits
+-------
+Project maintained by [Nick Jennings](http://github.com/silverbucket).
+
+Sponsored by [NLNET](http://nlnet.nl)
+[!(http://sockethub.org/img/nlnet-logo.svg)](http://nlnet.nl)
