@@ -3,8 +3,20 @@ sockethub [![Build Status](https://secure.travis-ci.org/sockethub/sockethub.png)
 
 the polyglot approach to the federated social web.
 
-installation & setup:
----------------------
+about
+-----
+
+The sockethub project aims to implement a "polyglot" approach to social networking and other interactive messaging applications, as well as assist [unhosted web apps](http://unhosted.org) in providing server-independant, server-side functionality.
+
+Example uses of sockethub are, writing and receiving messages (SMTP, Facebook, Twitter, Diaspora), instant messaging (XMPP, AIM, MSN), discovery (WebFinger, OpenGraph). The architecture of sockethub is extensible and supports implementation of more 'platforms' to carry out tasks, sockethub can be run on your own server, or provided as a service by a service provider, or app store.
+
+status
+------
+Sockethub is currently in very early stages of development, though already basic proof of concepts for XMPP are working, as well as progress being made for SMTP support. The implementtion of each 'platform' is very modular and straightforward to implement. If you are a developer looking to contribute, open an issue and explain what you'd like to implement for help getting started.
+
+
+installation & setup
+--------------------
 
 ### prerequisites
 
