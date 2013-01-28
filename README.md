@@ -6,7 +6,7 @@ The polyglot approach to the federated social web.
 about
 -----
 
-The sockethub project aims to implement a "polyglot" approach to social networking and other interactive messaging applications, as well as assist [unhosted web apps](http://unhosted.org) in providing server-independant, server-side functionality.
+Sockethub aims to implement a "polyglot" (speaking all the languages of the interwebs) approach to social and other interactive messaging applications, and assist [unhosted web app](http://unhosted.org) developers in providing server-independent, server-side functionality.
 
 Example uses of sockethub are, writing and receiving messages (SMTP, Facebook, Twitter, Diaspora), instant messaging (XMPP, AIM, MSN), discovery (WebFinger, OpenGraph). The architecture of sockethub is extensible and supports implementation of more 'platforms' to carry out tasks, sockethub can be run on your own server, or provided as a service by a service provider, or app store.
 
