@@ -50,7 +50,8 @@ Sockethub is licensed under the [AGPLv3](https://github.com/sockethub/sockethub/
 
 credits
 -------
-Project maintained by [Nick Jennings](http://github.com/silverbucket).
+Project maintained by [Nick Jennings](http://github.com/silverbucket)
+
 Sponsored by [NLNET](http://nlnet.nl)
 
 [![NLNET Logo](http://sockethub.org/img/nlnet-logo.svg)](http://nlnet.nl)
