@@ -15,7 +15,9 @@
     <canvas id="myCanvas" style="border: 1px solid black;" width="500" height="200"></canvas>
     <pre id="log"></pre>
   </body>
+  <script src="remoteStorage.min.js"></script>
   <script>
+  remoteStorage.onWidget('ready', function() {
     var rid = 0;
     var isRegistered = false;
     var sendData = {};
@@ -158,7 +160,19 @@
       var line = document.createTextNode(ds + ' -- ' + message + "\n");
       document.getElementById('log').appendChild(line);
     }
-
+ 
+    function register() {
+      var register = sendData.register;
+      register.rid = rid++;
+      if(! register.object.remoteStorage.bearerToken) {
+        log("You need to connect to your storage first!");
+      } else {
+        var rawMessage = JSON.stringify(register);
+        log("Registering: " + rawMessage);
+        sock.send(rawMessage);
+      }
+    }
+  });
     /** REMOTESTORAGE STUFF **/
 
     function initRemoteStorage() {
@@ -174,19 +188,7 @@
       });
     }
 
-    function register() {
-      var register = sendData.register;
-      register.rid = rid++;
-      if(! register.object.remoteStorage.bearerToken) {
-        log("You need to connect to your storage first!");
-      } else {
-        var rawMessage = JSON.stringify(register);
-        log("Registering: " + rawMessage);
-        sock.send(rawMessage);
-      }
-    }
 
     window.addEventListener('load', initRemoteStorage);
   </script>
-  <script src="remoteStorage.min.js"></script>
 </html>
