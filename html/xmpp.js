@@ -33,12 +33,13 @@ window.addEventListener('load', function() {
 
   configForm.addEventListener('submit', function(event) {
     event.preventDefault();
+    var config;
     try {
-      var config = JSON.parse(configForm.source.value);
+      config = JSON.parse(configForm.source.value);
     } catch(err) {
       configForm.message.value = "Invalid JSON: " + err;
       return;
-    };
+    }
 
     remoteStorage.messages.writeConfig('xmpp', config).
       then(function() {

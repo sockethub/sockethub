@@ -35,6 +35,10 @@
 //       the format of the protocol type?
 
 
+
+
+
+
 // **********
 // ** MESSAGE
 // **
@@ -62,7 +66,7 @@
       "headers" : {},  // name/value pairs of header data to use
       "subject" : "Hello ...",  // URL encoded string
       "text" : "Is it me you're looking for?",  // URL encoded string
-      "html" : "<p>Is it <em>me</em> you&quot;re looking for?</p>"
+      "html" : "<p>Is it <em>me</em> you&quot;re looking for?</p>" // not sure if we should be specifying html separately, something to keep in mind.
     },
     "actor" : {
       "name": "Lionel Richie",
@@ -75,12 +79,12 @@
     "platform" : "icq",
     "object" : {
       // subject and html not used for IMs
-      "text": "hi, i'm standing in your closet.",  // URL encoded string
+      "text": "That's me in the corner...",  // URL encoded string
     },
     "actor" : {
-      "name" : "Billy Joel",
+      "name" : "Michael Stipe",
       "address" : "7732",
-    }
+    },
     "target" : {
       "name" : "Paris Hilton",
       "address"  : "182940298284"
@@ -94,11 +98,13 @@
   {
     "rid" : "981213",
     "status" : false,
+    "verb" : "message",
     "platform" : "icq",
     "error" : "could not send message to ICQ number 182940298284"
   },
   {
     "rid" : "abcde",
+    "verb" : "message",
     "status" : true,
     "platform" : "smtp"
   }
@@ -112,7 +118,8 @@
       "name" : "Foo Bar",
       "address" : "foobar@example.net",
     },
-    "platform" : "smtp"
+    "platform" : "smtp",
+    "verb" : "message"
     "object" : {
       "subject" : "test",
       "text" : "test email!",
@@ -134,6 +141,95 @@
     }
   }
 ]
+
+
+
+
+
+
+// *******
+// ** POST
+// **
+// -- SEND
+  {  // post from one user to anothers wall, on facebook
+    "rid" : "5566",
+    "verb" : "post",
+    "platform" : "facebook",
+    "target" : {
+      "to" : [  // to not required, but used for public posts to another user
+        {
+          "name" : "Mark Zuckerberg",
+          "address" : "zuck"
+        }
+      ]
+    },
+    "object" : {
+      "subject" : "",  // probably never used for posts ?
+      "text" : "Jello shots and slip & slide after work?",
+    },
+    "actor" : {
+      "name": "Donald Trump",
+      "address": "DonaldTrump"
+    }
+  },
+  {  // post made to twitter
+    "rid" : "3453",
+    "verb" : "post",
+    "platform" : "twitter",
+    "object" : {
+      "text": "Hair gell & shades #fresh4life #hashtaglifestyle",
+    },
+    "actor" : {
+      "name" : "Bill Gates",
+      "address" : "BillGates",
+    }
+  }
+}
+
+
+// -- RESPONSE
+  {
+    "rid" : "5566",
+    "status" : false,
+    "verb" : "post",
+    "platform" : "facebook",
+    "error" : "could not post to Mark Zuckerbergs wall, you are not his friend!"
+  },
+  {
+    "rid" : "3453",
+    "verb" : "post",
+    "status" : true,
+    "platform" : "twitter"
+  }
+
+
+// -- RECEIVE  ( receiving new messages )
+[
+  {
+    "rid" : "",
+    "actor" : {
+      "name" : "Sarah Palin",
+      "address" : "sarahpalin",
+    },
+    "platform" : "facebook",
+    "verb" : "post",
+    "object" : {
+      "text" : "Jello shots and slip & slide after work again Donny?",
+    },
+    "target" : {
+      "to" : [
+        {
+          "name" : "Donald Trump",
+          "address" :  "DonaldTrump",
+        }
+      ],
+    }
+  }
+]
+
+
+
+
 
 
 // ***********

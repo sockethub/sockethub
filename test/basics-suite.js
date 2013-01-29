@@ -220,6 +220,7 @@ define(['require'], function (require) {
           env.connection.sendAndVerify(JSON.stringify(data), expected, test, confirmProps);
         }
       }
+
     ]
   });
 
