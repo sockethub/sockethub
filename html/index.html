@@ -17,11 +17,14 @@
       <button onclick="register()">Register</button>
     </p>
     <canvas id="myCanvas" style="border: 1px solid black;" width="500" height="200"></canvas>
+    <input id="post" value="test post sent through sockethub" />
+    <input id="platform" value="twitter" />
+    <input type="submit" value="post" onclick="post();" />
     <pre id="log"></pre>
   </body>
   <script src="remoteStorage.min.js"></script>
   <script>
-    var register, updateCredentials;//global functions
+    var register, updateCredentials, post;//global functions
     /** REMOTESTORAGE STUFF **/
 
     function initRemoteStorage() {
@@ -196,13 +199,21 @@
 		log("Registering: " + rawMessage);
 		sock.send(rawMessage);
 	      }
-	    }
+	    };
 	    updateCredentials = function() {
 	      remoteStorage.sockettest.set('twitterConsumerKey', document.getElementById('twitterConsumerKey').value);
 	      remoteStorage.sockettest.set('twitterConsumerSecret', document.getElementById('twitterConsumerSecret').value);
 	      remoteStorage.sockettest.set('twitterAccessToken', document.getElementById('twitterAccessToken').value);
 	      remoteStorage.sockettest.set('twitterAccessTokenSecret', document.getElementById('twitterAccessTokenSecret').value);
-	    }
+	    };
+            post = function() {
+              sock.send(JSON.stringify({
+                rid: 'post-'+new Date().getTime(),
+                verb: 'post',
+                platform: document.getElementById('platform').value,
+                object: document.getElementById('post').value
+              }));
+            };
       });
     }
 
