@@ -21,6 +21,7 @@
   </body>
   <script src="remoteStorage.min.js"></script>
   <script>
+    var register, updateCredentials;//global functions
     /** REMOTESTORAGE STUFF **/
 
     function initRemoteStorage() {
@@ -29,10 +30,10 @@
         return {
           exports: {
             get: function(key, value) {
-              return privateClient.getObject('.sockethub/'+key);
+              return privClient.getObject('.sockethub/'+key);
             },
             set: function(key, value) {
-              return privateClient.storeObject('config-value', '.sockethub/'+key, value);
+              return privClient.storeObject('config-value', '.sockethub/'+key, value);
             },
           }
         };
@@ -174,7 +175,7 @@
 		draw(now, 10, 'red');
 		connect();
 	      }
-	    }, 1000);
+	    }, 10000);
 
 	    function log(message) {
 	      var d = new Date();
@@ -183,7 +184,7 @@
 	      document.getElementById('log').appendChild(line);
 	    }
 	 
-	    function register() {
+	    register = function() {
 	      var register = sendData.register;
 	      register.rid = rid++;
 	      if(! register.object.remoteStorage.bearerToken) {
@@ -194,7 +195,7 @@
 		sock.send(rawMessage);
 	      }
 	    }
-	    function updateCredentials() {
+	    updateCredentials = function() {
 	      remoteStorage.sockettest.set('twitterConsumerKey', document.getElementById('twitterConsumerKey').value);
 	      remoteStorage.sockettest.set('twitterConsumerSecret', document.getElementById('twitterConsumerSecret').value);
 	      remoteStorage.sockettest.set('twitterAccessToken', document.getElementById('twitterAccessToken').value);
