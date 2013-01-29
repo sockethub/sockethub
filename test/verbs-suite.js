@@ -8,16 +8,23 @@ define(['require'], function(require) {
     name: "post verb tests",
     desc: "Test the post verb which is currently supported by the twitter and facebook platforms",
     setup: function(env, test) {
-      env.Session = require('../lib/protocols/sockethub/session');
+      env.Twitter = require('../lib/protocols/sockethub/platforms/twitter');
+      env.Facebook = require('../lib/protocols/sockethub/platforms/facebook');
       test.result(true);
     },
     tests: [
       {
-        desc: "2+2 != 5",
+        desc: "Twitter has a post verb",
         run: function(env, test) {
-          test.assertFail(2+2, 5);
+          test.assertType(env.Twitter.post, 'function');
         }
-      }
+      },
+      {
+        desc: "Facebook has a post verb",
+        run: function(env, test) {
+          test.assertType(env.Facebook.post, 'function');
+        }
+      },
     ]
   });
 
