@@ -17,7 +17,8 @@
     "curry": "*",
     "mail": "*",
     "imap": "*",
-    "promising": "*"
+    "promising": "*",
+    "ntwitter": "*"
   },
   "devDependencies": {
     "teste": "*"
