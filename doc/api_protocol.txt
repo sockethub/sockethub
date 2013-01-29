@@ -62,7 +62,7 @@
       "headers" : {},  // name/value pairs of header data to use
       "subject" : "Hello ...",  // URL encoded string
       "text" : "Is it me you're looking for?",  // URL encoded string
-      "html" : "<p>Is it <em>me</em> you&quot;re looking for?</p>"
+      "html" : "<p>Is it <em>me</em> you&quot;re looking for?</p>" // not sure if we should be specifying html separately, something to keep in mind.
     },
     "actor" : {
       "name": "Lionel Richie",
@@ -75,10 +75,10 @@
     "platform" : "icq",
     "object" : {
       // subject and html not used for IMs
-      "text": "hi, i'm standing in your closet.",  // URL encoded string
+      "text": "That's me in the corner...",  // URL encoded string
     },
     "actor" : {
-      "name" : "Billy Joel",
+      "name" : "Michael Stipe",
       "address" : "7732",
     }
     "target" : {
