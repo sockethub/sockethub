@@ -29,11 +29,13 @@
       remoteStorage.defineModule('sockettest', function(privClient, pubClient) {
         return {
           exports: {
-            get: function(key, value) {
-              return privClient.getObject('.sockethub/'+key);
+            get: function(key) {
+              return privClient.getObject('.sockethub/'+key).then(function(obj) {
+                return obj.content.value;
+              });
             },
-            set: function(key, value) {
-              return privClient.storeObject('config-value', '.sockethub/'+key, value);
+            set: function(key, valueStr) {
+              return privClient.storeObject('config-value', '.sockethub/'+key, {value: valueStr});
             },
           }
         };
