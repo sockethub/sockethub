@@ -11,15 +11,17 @@
       <input id="twitterConsumerKey" value="twitter consumer key" />
       <input id="twitterConsumerSecret" value="twitter consumer secret" />
       <input id="twitterAccessToken" value="twitter access token" />
-      <input id="twitterAcecssTokenSecret" value="twitter access token secret" />
+      <input id="twitterAccessTokenSecret" value="twitter access token secret" />
       <input type="submit" value="update credentials" onclick="updateCredentials();" />
       <input type="submit" value="reconnect" onclick="reconnect();" />
       <button onclick="register()">Register</button>
     </p>
     <canvas id="myCanvas" style="border: 1px solid black;" width="500" height="200"></canvas>
-    <input id="post" value="test post sent through sockethub" />
-    <input id="platform" value="twitter" />
-    <input type="submit" value="post" onclick="post();" />
+    <p>
+      <input id="post" value="test post sent through sockethub" />
+      to <input id="platform" value="twitter" />
+      <input type="submit" value="post" onclick="post();" />
+    </p>
     <pre id="log"></pre>
   </body>
   <script src="remoteStorage.min.js"></script>
@@ -201,10 +203,12 @@
 	      }
 	    };
 	    updateCredentials = function() {
-	      remoteStorage.sockettest.set('twitterConsumerKey', document.getElementById('twitterConsumerKey').value);
-	      remoteStorage.sockettest.set('twitterConsumerSecret', document.getElementById('twitterConsumerSecret').value);
-	      remoteStorage.sockettest.set('twitterAccessToken', document.getElementById('twitterAccessToken').value);
-	      remoteStorage.sockettest.set('twitterAccessTokenSecret', document.getElementById('twitterAccessTokenSecret').value);
+	      remoteStorage.sockettest.set('.twitter', {
+                consumerKey: document.getElementById('twitterConsumerKey').value,
+	        consumerSecret: document.getElementById('twitterConsumerSecret').value,
+	        accessToken: document.getElementById('twitterAccessToken').value,
+	        accessTokenSecret: document.getElementById('twitterAccessTokenSecret').value
+              });
 	    };
             post = function() {
               sock.send(JSON.stringify({
