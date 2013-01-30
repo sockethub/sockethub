@@ -53,6 +53,8 @@ credits
 -------
 Project maintained by [Nick Jennings](http://github.com/silverbucket)
 
+Logo design by [Jan-Christoph Borchardt](http://jancborchardt.net)
+
 Sponsored by [NLNET](http://nlnet.nl)
 
 [![NLNET Logo](http://sockethub.org/img/nlnet-logo.svg)](http://nlnet.nl)
