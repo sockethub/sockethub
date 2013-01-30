@@ -1,7 +1,8 @@
-sockethub [![Build Status](https://secure.travis-ci.org/sockethub/sockethub.png)](http://travis-ci.org/sockethub/sockethub)
-=========
+[![Sockethub](http://sockethub.org/img/sockethub-logo.svg)](http://sockethub.org)
 
 The polyglot approach to the federated social web.
+
+[![Build Status](https://secure.travis-ci.org/sockethub/sockethub.png)](http://travis-ci.org/sockethub/sockethub)
 
 about
 -----
