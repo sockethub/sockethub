@@ -13,7 +13,7 @@ Example uses of sockethub are, writing and receiving messages (SMTP, Facebook, T
 
 status
 ------
-Sockethub is currently in very early stages of development, though already basic proof of concepts for XMPP are working, as well as progress being made for SMTP support. The implementtion of each 'platform' is very modular and straightforward to implement. If you are a developer looking to contribute, open an issue and explain what you'd like to implement for help getting started.
+Sockethub is currently in very early stages of development, though already basic proof of concepts for XMPP are working, as well as progress being made to support SMTP, Facebook and Twitter. The implementtion of each 'platform' is very modular and straightforward to implement. If you are a developer looking to contribute, open an issue and explain what you'd like to implement for help getting started.
 
 
 
