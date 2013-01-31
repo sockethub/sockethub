@@ -1,6 +1,6 @@
 function buildTest(platform, verb, data, err) {
   return {
-    desc: platform+" - "+verb+" test",
+    desc: platform+" - "+verb+" scaffolding check",
     run: function(env, test) {
       test.assertType(data[verb], 'function');
     }
