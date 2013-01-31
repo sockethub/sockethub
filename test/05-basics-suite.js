@@ -2,6 +2,7 @@ if (typeof define !== 'function') {
   var define = require('amdefine')(module);
 }
 define(['require'], function (require) {
+//define(function () {
   var suites = [];
 
   suites.push({

@@ -18,7 +18,8 @@
     "mail": "*",
     "imap": "*",
     "promising": "*",
-    "ntwitter": "*"
+    "ntwitter": "*",
+    "node-xmpp": "*"
   },
   "devDependencies": {
     "teste": "*"
