@@ -19,7 +19,8 @@
     "imap": "*",
     "promising": "*",
     "ntwitter": "*",
-    "node-xmpp": "*"
+    "node-xmpp": "*",
+    "mailer": "*"
   },
   "devDependencies": {
     "teste": "*"
