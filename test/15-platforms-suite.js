@@ -2,6 +2,9 @@ function buildTest(platform, verb, data, err) {
   return {
     desc: platform+" - "+verb+" scaffolding check",
     run: function(env, test) {
+      if (data === undefined) {
+        test.result(false, 'unable to load platform module "'+platform+'"');
+      }
       test.assertType(data[verb], 'function');
     }
   };
@@ -38,7 +41,7 @@ define(['require'], function (require) {
       try {
         data = require('../lib/protocols/sockethub/platforms/' + platform);
       } catch (e) {
-        platform_test_suite.test.push(buildTest(platform, verb, undefined, e));
+        platform_test_suite.tests.push(buildTest(platform, verb, undefined, e));
       }
 
       platform_test_suite.tests.push(buildTest(platform, verb, data));
