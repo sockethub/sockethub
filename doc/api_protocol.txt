@@ -46,7 +46,7 @@
   {  // message was sent from an email client, to an email address
     "rid" : "981212",
     "verb" : "message",
-    "platform" : "smtp",
+    "platform" : "email",
     "target" : {
       "to" : [  // at least one record for 'to' required
         {
@@ -106,7 +106,7 @@
     "rid" : "abcde",
     "verb" : "message",
     "status" : true,
-    "platform" : "smtp"
+    "platform" : "email"
   }
 
 
@@ -118,7 +118,7 @@
       "name" : "Foo Bar",
       "address" : "foobar@example.net",
     },
-    "platform" : "smtp",
+    "platform" : "email",
     "verb" : "message"
     "object" : {
       "subject" : "test",
