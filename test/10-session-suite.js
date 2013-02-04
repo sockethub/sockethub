@@ -22,36 +22,53 @@ define(['require'], function(require) {
       {
         desc: "Session.get with the same session ID returns the same object",
         run: function(env, test) {
-          var session = env.Session.get('sid1');
-          var sameSession = env.Session.get('sid1');
-          test.assert(session, sameSession);
+          env.Session.get('sid1').then(function (session) {
+            test.write('hello1');
+            env.Session.get('sid1').then(function (sameSession) {
+              test.write('hello2');
+              test.assert(session, sameSession);
+            });
+          });
         }
       },
       {
         desc: "Session.get with another session ID returns a different object",
         run: function(env, test) {
-          var session1 = env.Session.get('sid1');
-          var session2 = env.Session.get('sid2');
-          test.assertFail(session1, session2);
+          env.Session.get('sid1').then(function (session1) {
+            env.Session.get('sid2').then(function (session2) {
+              test.assertFail(session1, session2);
+            });
+          });
         }
       },
       {
         desc: "Session.destroy removes a session",
         run: function(env, test) {
-          var session = env.Session.get('sid1');
-          env.Session.destroy('sid1');
-          var newSession = env.Session.get('sid1');
-          test.assertFail(session, newSession);
+          var s1;
+          env.Session.get('sid1').then(function (session) {
+            s1 = session;
+            return env.Session.destroy('sid1');
+          }).then(function () {
+            return env.Session.get('sid1');
+          }).then(function (newSession) {
+            test.assertFail(s1, newSession);
+          });
         }
       },
       {
         desc: "Session.destroy doesn't affect sessions with a different ID",
         run: function(env, test) {
-          var s1 = env.Session.get('sid1');
-          var s2 = env.Session.get('sid2');
-          env.Session.destroy('sid1');
-          var sameSession2 = env.Session.get('sid2');
-          test.assert(s2, sameSession2);
+          var s2;
+          env.Session.get('sid1').then(function (session) {
+            return env.Session.get('sid2');
+          }).then(function (session2) {
+            s2 = session2;
+            return env.Session.destroy('sid1');
+          }).then(function () {
+            return env.Session.get('sid2');
+          }).then(function (sameSession2) {
+            test.assert(s2, sameSession2);
+          });
         }
       }
     ]
@@ -66,15 +83,18 @@ define(['require'], function(require) {
       test.result(true);
     },
     beforeEach: function(env, test) {
-      env.session = env.Session.get(env.sid);
-      test.assertType(env.session, 'object');
+      env.Session.get(env.sid).then(function (session) {
+        env.session = session;
+        test.assertType(env.session, 'object');
+      });
     },
     afterEach: function(env, test) {
-      env.Session.destroy(env.sid);
-      test.result(true);
+      env.Session.destroy(env.sid).then(function () {
+        test.result(true);
+      });
     },
     tests: [
-      {
+      /*{
         desc: "Session#addPlatform remembers the platform",
         run: function(env, test) {
           test.assertAnd(env.session.getPlatforms(), []);
@@ -89,7 +109,7 @@ define(['require'], function(require) {
           env.session.addPlatform('foo');
           test.assert(env.session.getPlatforms(), ['foo']);
         }
-      },
+      },*/
       {
         desc: "Session#register sets the session to registered",
         run: function(env, test) {
@@ -107,36 +127,36 @@ define(['require'], function(require) {
         }
       },
       {
-        desc: "Session#configure sets the settings",
+        desc: "Session#setConfig sets the settings",
         run: function(env, test) {
-          env.session.configure({ foo: 'bar' });
-          test.assert(env.session.getSettings(), { foo: 'bar' });
+          env.session.setConfig('test', { foo: 'bar' });
+          test.assert(env.session.getConfig('test'), { foo: 'bar' });
         }
       },
       {
         desc: "Session#reset clears platforms and settings",
         run: function(env, test) {
-          env.session.configure({ foo: 'bar' });
-          env.session.addPlatform('phu-quoc');
+          env.session.setConfig('yarg', { foo: 'bar' });
+          //env.session.addPlatform('phu-quoc');
           env.session.reset();
-          test.assertAnd(env.session.getSettings(), {});
-          test.assert(env.session.getPlatforms(), []);
+          //test.assert(env.session.getPlatforms(), []);
+          test.assert(env.session.getConfig('yarg'), {});
         }
       },
       {
-        desc: "Session#get returns a promise",
+        desc: "Session#rsGet returns a promise",
         run: function(env, test) {
-          var promise = env.session.get('foo', 'bar');
+          var promise = env.session.rsGet('foo', 'bar');
           test.assertTypeAnd(promise, 'object');
           test.assertType(promise.then, 'function');
         }
       },
       {
-        desc: "Session#get fails when it has no remoteStorage config",
+        desc: "Session#rsGet fails when it has no remoteStorage config",
         run: function(env, test) {
-          var promise = env.session.get('foo', 'bar');
+          var promise = env.session.rsGet('foo', 'bar');
           promise.then(function() {
-            test.result(false, "Expected Session#get to fail, but it succeeded");
+            test.result(false, "Expected Session#rsGet to fail, but it succeeded");
           }, function() {
             test.result(true);
           });
@@ -146,7 +166,7 @@ define(['require'], function(require) {
   });
 
   suites.push({
-    name: "Session settings from remote",
+    name: "Session rsGet",
     desc: "Session interaction with remoteStorage",
     setup: function(env, test) {
 
@@ -171,16 +191,19 @@ define(['require'], function(require) {
       });
     },
     beforeEach: function(env, test) {
-      env.session = env.Session.get(env.sid);
-      env.session.configure({
-        storageInfo: {
-          href: 'http://localhost:12345/storage',
-        },
-        bearerToken: 'test-token'
+      env.Session.get(env.sid).then(function (session) {
+        env.session = session;
+        env.session.setConfig('remoteStorage', {
+          storageInfo: {
+            href: 'http://localhost:12345/storage'
+          },
+          bearerToken: 'test-token'
+        });
+        env.captured = [];
+        env.simulateResponse = [200, { 'Content-Type': 'text/plain'}, 'Hello World'];
+        test.result(true);
       });
-      env.captured = [];
-      env.simulateResponse = [200, { 'Content-Type': 'text/plain'}, 'Hello World'];
-      test.result(true);
+
     },
     afterEach: function(env, test) {
       env.Session.destroy(env.sid);
@@ -188,18 +211,18 @@ define(['require'], function(require) {
     },
     tests: [
       {
-        desc: "Session#get sends a request",
+        desc: "Session#rsGet sends a request",
         run: function(env, test) {
-          return env.session.get('foo', 'bar').
+          return env.session.rsGet('foo', 'bar').
             then(function() {
               test.assert(env.captured.length, 1);
             });
         }
       },
       {
-        desc: "Session#get builds the path based on storage-root, module and path",
+        desc: "Session#rsGet builds the path based on storage-root, module and path",
         run: function(env, test) {
-          return env.session.get('foo', 'bar').
+          return env.session.rsGet('foo', 'bar').
             then(function() {
               var req = env.captured[0];
               test.assert(req.url, '/storage/foo/bar');
@@ -207,9 +230,9 @@ define(['require'], function(require) {
         }
       },
       {
-        desc: "Session#get sets the Authorization header correctly",
+        desc: "Session#rsGet sets the Authorization header correctly",
         run: function(env, test) {
-          return env.session.get('phu', 'quoc').
+          return env.session.rsGet('phu', 'quoc').
             then(function() {
               var req = env.captured[0];
               test.assert(req.headers['authorization'], 'Bearer test-token');
@@ -217,9 +240,9 @@ define(['require'], function(require) {
         }
       },
       {
-        desc: "Session#get yields the response body and MIME type",
+        desc: "Session#rsGet yields the response body and MIME type",
         run: function(env, test) {
-          return env.session.get('foo', 'bar').
+          return env.session.rsGet('foo', 'bar').
             then(function(result) {
               test.assertAnd(result.mimeType, 'text/plain');
               test.assert(result.data, 'Hello World');
@@ -227,11 +250,11 @@ define(['require'], function(require) {
         }
       },
       {
-        desc: "Session#get unpacks JSON data",
+        desc: "Session#rsGet unpacks JSON data",
         run: function(env, test) {
           env.simulateResponse = [200, { 'Content-Type': 'application/json' },
                                   '{"phu":"quoc"}'];
-          return env.session.get('foo', 'baz').
+          return env.session.rsGet('foo', 'baz').
             then(function(result) {
               test.assert(result, { phu: 'quoc' });
             });
