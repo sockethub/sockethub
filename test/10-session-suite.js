@@ -24,8 +24,10 @@ define(['require'], function(require) {
         run: function(env, test) {
           env.Session.get('sid1').then(function (session) {
             test.write('hello1');
+            console.log('session:', session);
             env.Session.get('sid1').then(function (sameSession) {
               test.write('hello2');
+              console.log('sameSession:', sameSession);
               test.assert(session, sameSession);
             });
           });
@@ -130,7 +132,9 @@ define(['require'], function(require) {
         desc: "Session#setConfig sets the settings",
         run: function(env, test) {
           env.session.setConfig('test', { foo: 'bar' });
-          test.assert(env.session.getConfig('test'), { foo: 'bar' });
+          env.session.getConfig('test').then(function (cfg) {
+            test.assert(cfg, { foo: 'bar' });
+          });
         }
       },
       {
@@ -140,7 +144,9 @@ define(['require'], function(require) {
           //env.session.addPlatform('phu-quoc');
           env.session.reset();
           //test.assert(env.session.getPlatforms(), []);
-          test.assert(env.session.getConfig('yarg'), {});
+          env.session.getConfig('yarg').then(function (cfg) {
+            test.assert(cfg, {});
+          });
         }
       },
       {
