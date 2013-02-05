@@ -18,7 +18,7 @@ define(['require'], function(require) {
           //console.log(msg);
         }
       };
-      env.Smtp = require('../lib/protocols/sockethub/platforms/smtp-implementation').smtp(env.Mailer);
+      env.Smtp = require('../lib/protocols/sockethub/platforms/smtp-implementation');
       test.result(true);
     },
     tests: [
