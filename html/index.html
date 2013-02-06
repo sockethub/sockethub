@@ -4,212 +4,65 @@
     <meta charset="utf-8">
     <title>pinger</title>
     <link rel="stylesheet" type="text/css" href="main.css">
-    <script src="remoteStorage.min.js"></script>
   </head>
   <body>
     <div id="remotestorage-connect"></div>
     <p>
       <input id="sockethubHost" value="localhost:10550" >
       /sockethub
-      <input type="submit" value="reconnect" onclick="reconnect();" >
-      <button onclick="register()">Register</button>
+      <input type="submit" value="Reconnect" onclick="reconnect();" >
       <button onclick="togglePings()">Toggle Pings ON/OFF</button>
+      <button onclick="register(true)">Register</button>
+
     </p>
     <canvas id="myCanvas" style="border: 1px solid black;" width="500" height="200"></canvas>
+    <p></p>
+    <div id="controls">
+      <a id="display-email" href="#">email</a>
+      <a id="display-xmpp" href="#">xmpp</a>
+      <a id="display-twitter" href="#">twitter</a>
+      <a id="display-facebook" href="#">facebook</a>
+    </div>
+    <div id="email">
+      <h3>email</h3>
+      <form name="config">
+        <textarea name="source" rows="7" cols="80"></textarea>
+        <br />
+        <input type="submit" value="Save">
+        <input type="text" name="message" disabled="disabled">
+      </form>
+    </div>
+
+
+    <div id="xmpp">
+      <h3>xmpp</h3>
+      <form name="config">
+        <textarea name="source" rows="7" cols="80"></textarea>
+        <br />
+        <input type="submit" value="Save">
+        <input type="text" name="message" disabled="disabled">
+      </form>
+      <div class="verbs">
+        <button onclick="message()">message</button>
+      </div>
+    </div>
+
+    <div id="twitter">
+      <h3>twitter</h3>
+      <form name="config">
+        <textarea name="source" rows="7" cols="80"></textarea>
+        <br />
+        <input type="submit" value="Save">
+        <input type="text" name="message" disabled="disabled">
+      </form>
+      <div class="verbs">
+        <button onclick="message()">message</button>
+        <button onclick="post()">post</button>
+      </div>
+    </div>
+
     <pre id="log"></pre>
   </body>
-  <script>
-  var doPings = true;
-  var sock;
-  var rid = 0;
-  var isRegistered = false;
-  var sendData = {};
-  sendData.ping = {
-    verb: 'ping',
-    platform: 'dispatcher'
-  };
-  sendData.register = {
-    verb: 'register',
-    platform: 'dispatcher',
-    object: {
-      remoteStorage: {
-        storageInfo: remoteStorage.getStorageInfo(),
-        bearerToken: remoteStorage.getBearerToken(),
-        scope: remoteStorage.claimedModules
-      },
-      secret: '1234567890'
-    }
-  };
-  sendData.message = {
-    "verb" : "message",
-    "platform" : "smtp",
-    "target" : {
-      "to" : [  // at least one record for 'to' required
-        {
-          "name" : "Michael Jackson",
-          "address" : "michael@thejacksonfive.com"
-        }
-      ],
-      "cc" : [
-        {
-          "name" : "Cindi Lauper",
-          "address" : "cindi@girlsjustwannahavefun.biz"
-        }
-      ],  // ignored if undefined or empty
-      "bcc" : []  // ignored if undefined or empty
-    },
-    "object" : {
-      "headers" : {},  // name/value pairs of header data to use
-      "subject" : "Hello ...",  // URL encoded string
-      "body" : "Is it me you're looking for?",  // URL encoded string
-    },
-    "actor" : {
-      "address" : "Lionel Richie <lionel@dancingontheceiling.com>",
-    }
-  };
-
-  window.addEventListener('load', function() {
-    var graph = document.getElementById('myCanvas').getContext('2d');
-    var x = 1;
-    var graphWidth = document.getElementById('myCanvas').width;
-    var graphHeight = document.getElementById('myCanvas').height;
-    var graphScale = graphHeight * .0010;
-    var graphSpacerWidth = graphWidth * .1
-    console.log(graphScale, graphHeight);
-
-    //console.log('gW: ' + graphWidth + ' gH:' + graphHeight +
-    //            ' gS:' + graphScale + ' gSpW:' + graphSpacerWidth );
-    function draw(time, rtt, colour) {
-      graph.beginPath();
-      graph.moveTo(x, 0);
-      graph.lineTo(x, rtt / graphScale); // graphScale = 1s, graphHeight = 10s
-      graph.strokeStyle = colour;
-      graph.stroke();
-      graph.fillStyle = '#eee';
-      graph.rect(x, 0, graphSpacerWidth, graphHeight);
-      graph.fill();
-      x = x + .5;
-      x = (x > graphWidth) ? x - graphWidth : x;
-    }
-
-    function connect() {
-      var connectString = 'ws://' +
-                           document.getElementById('sockethubHost').value +
-                           '/sockethub';
-      sock = new WebSocket(connectString, 'sockethub');
-
-      sock.onopen = function () {
-        setTimeout(function () {
-          register();
-
-        }, 0);
-        draw(new Date().getTime(), graphHeight, '#0f0');  // green start line
-      }
-
-      sock.onmessage = function (e) {
-        var data = JSON.parse(e.data);
-        if (data.status === false) {
-          console.log('error: '+data.message+' : ', data);
-        } else if ((typeof data.response === 'object') &&
-                   (typeof data.response.timestamp === 'number')) {
-          var sentTime = parseInt(data.response.timestamp);
-          var now = new Date().getTime();
-          var roundTripTime = now - sentTime;
-          //log(1, 'ping response received: '+e.data);
-          draw(sentTime, roundTripTime, 'black');
-        } else if (data.verb === 'register') {
-          if (data.status === true) {
-            log(2, 'register sucessful! ' +e.data);
-            isRegistered = true;
-          } else {
-            log(3, 'ERROR: register failed! '+e.data);
-          }
-        } else if (data.verb === 'confirm') {
-          //log(1, 'confirmation receipt received. ' + e.data);
-        } else {
-          log(3, 'unknown data received: ', e.data);
-          draw(new Date().getTime(), graphHeight, 'red');
-        }
-      }
-
-      sock.onclose = function () {
-        draw(new Date().getTime(), graphHeight, '#red');
-      }
-    }
-
-    connect();
-
-    setInterval(function () {
-      if (doPings) {
-        var now = new Date().getTime();
-        if(sock.readyState === WebSocket.CONNECTING) {
-          draw(now, 10, 'green');
-        } else if(sock.readyState === WebSocket.OPEN) {
-          if (isRegistered) {
-            var sendMsg = sendData.ping;
-            sendMsg.rid = rid++;
-            sendMsg.timestamp = now;
-            var json_sendMsg = JSON.stringify(sendMsg);
-            //log(1, 'sending ping: ' + json_sendMsg);
-            sock.send(json_sendMsg);
-            draw(now, 10, 'blue');
-          }
-        } else if(sock.readyState === WebSocket.CLOSING) {
-          draw(now, 10, 'orange');
-        } else {  // CLOSED or non-existent
-          //console.log('sock.readyState: '+sock.readyState);
-          draw(now, 10, 'red');
-          connect();
-        }
-      }
-    }, 1000);
-  });
-
-  function togglePings() {
-    doPings = (doPings) ? false : true;
-  }
-
-  function log(type, message) {
-    var c = { 1:'blue', 2:'green', 3:'red'};
-    var d = new Date();
-    var ds = (d.getHours() + 1) + ':' + d.getMinutes() + ':' + d.getSeconds();
-    //var line = document.createTextNode(ds + ' -- ' + '<p style="color: '+c[type]+';">' + message + "</p>\n");
-    var p = document.createElement('p');
-    p.style.color = c[type];
-    var pmsg = document.createTextNode(ds + ' -- ' + message +"\n");
-    p.appendChild(pmsg);
-    var line = document.createTextNode();
-    document.getElementById('log').appendChild(p);
-  }
-
-  /** REMOTESTORAGE STUFF **/
-
-  function initRemoteStorage() {
-
-    remoteStorage.defineModule('sockettest', function(privClient, pubClient) {
-      return {
-        exports: {}
-      };
-    });
-
-    remoteStorage.claimAccess('sockettest', 'rw').then(function() {
-      remoteStorage.displayWidget('remotestorage-connect');
-    });
-  }
-
-  function register() {
-    var register = sendData.register;
-    register.rid = rid++;
-    if(! register.object.remoteStorage.bearerToken) {
-      log(3, "You need to connect to your storage first!");
-    } else {
-      var rawMessage = JSON.stringify(register);
-      log(1, "Registering: " + rawMessage);
-      sock.send(rawMessage);
-    }
-  }
-
-  window.addEventListener('load', initRemoteStorage);
-  </script>
+  <script src="logic.js"></script>
   <script src="remoteStorage.min.js"></script>
 </html>
