@@ -1,9 +1,9 @@
 // *********************
-// ** SEARCH and PROFILE
+// ** SEARCH (PROFILE)
 // **
 // -- SEND
 {
-  "verb": "whois",
+  "verb": "search",
   "rid" : "1234",
   "target": [
     "user@example.com",
