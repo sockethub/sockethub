@@ -45,7 +45,7 @@
 // -- SEND
   {  // message was sent from an email client, to an email address
     "rid" : "981212",
-    "verb" : "message",
+    "verb" : "send",
     "platform" : "email",
     "target" : {
       "to" : [  // at least one record for 'to' required
@@ -75,7 +75,7 @@
   },
   {  // message was sent from an ICQ client to another ICQ user
     "rid" : "981213",
-    "verb" : "message",
+    "verb" : "send",
     "platform" : "icq",
     "object" : {
       // subject and html not used for IMs
@@ -98,13 +98,13 @@
   {
     "rid" : "981213",
     "status" : false,
-    "verb" : "message",
+    "verb" : "send",
     "platform" : "icq",
     "error" : "could not send message to ICQ number 182940298284"
   },
   {
     "rid" : "abcde",
-    "verb" : "message",
+    "verb" : "send",
     "status" : true,
     "platform" : "email"
   }
@@ -119,7 +119,7 @@
       "address" : "foobar@example.net",
     },
     "platform" : "email",
-    "verb" : "message"
+    "verb" : "send"
     "object" : {
       "subject" : "test",
       "text" : "test email!",
