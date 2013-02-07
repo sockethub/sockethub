@@ -34,7 +34,7 @@
         <input type="submit" value="save" id="saveConfig">
         <input type="hidden" name="platform" value="email">
         <input type="hidden" name="configType" value="credentials">
-        <input type="text" name="location" disabled="disabled" size="60" value="/sockethub/email/credentials">
+        <input type="text" name="location" disabled="disabled" size="60" value="/sockethub/credentials/email">
       </form>
 
       <h3>message</h3>
@@ -181,6 +181,7 @@ function show(platform) {
     e.style.display = 'inline-block';
     var formName = platform+'Config';
     remoteStorage.sockethub.getConfig(platform, 'credentials').then(function (data) {
+      console.log('rs got: ',data);
       if (data === undefined) {
         document[formName].source.value = JSON.stringify(exampleConfig[platform]);
       } else {

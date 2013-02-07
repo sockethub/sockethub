@@ -206,7 +206,7 @@ var sockethub = (function (window, document, undefined) {
       return {
         exports: {
           getConfig: function(platform, type) {
-            console.log(' [RS] getConfig('+type+', '+platform+')');
+            console.log(' [RS] getConfig('+platform+', '+type+')');
             return privateClient.getObject(type+'/'+platform);
           },
 
