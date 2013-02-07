@@ -10,32 +10,58 @@
     <p>
       <input id="sockethubHost" value="localhost:10550" >
       /sockethub
-      <input type="submit" value="Reconnect" onclick="reconnect();" >
-      <button onclick="togglePings()">Toggle Pings ON/OFF</button>
-      <button onclick="register(true)">Register</button>
+      <input type="submit" value="Reconnect" onclick="sockethub.reconnect();" >
+      <button onclick="sockethub.togglePings()">Toggle Pings ON/OFF</button>
+      <button onclick="sockethub.register(true)">Register</button>
 
     </p>
     <canvas id="myCanvas" style="border: 1px solid black;" width="500" height="200"></canvas>
     <p></p>
     <div id="controls">
-      <a id="display-email" href="#">email</a>
-      <a id="display-xmpp" href="#">xmpp</a>
-      <a id="display-twitter" href="#">twitter</a>
-      <a id="display-facebook" href="#">facebook</a>
+      <a id="display-email" href="#" onclick="show('email');">email</a>
+      <a id="display-xmpp" href="#" onclick="show('xmpp');">xmpp</a>
+      <a id="display-twitter" href="#" onclick="show('twitter');">twitter</a>
+      <a id="display-facebook" href="#" onclick="show('facebook');">facebook</a>
     </div>
+
+    <!-- email -->
     <div id="email">
-      <h3>email</h3>
-      <form name="config">
-        <textarea name="source" rows="7" cols="80"></textarea>
+      <h2>email</h2>
+      <h3>config</h3>
+      <form name="email-config">
+        <textarea name="source" rows="7" cols="80">
+{
+  "user@example.com" : {
+    "username": "user@example.com",
+    "password": "123abc",
+    "host": "example.com",
+    "domain": "smtp.example.com"
+  }
+}
+        </textarea><br />
+        <input type="submit" value="save">
+        <input type="text" name="message" disabled="disabled" size="60" value="/sockethub/email/credentials">
+      </form>
+      <h3>message</h3>
+      <form name="emailMessage">
+        <h4>from</h4>
+        <label for="fromName">name</label><input type="text" size="60" name="fromName"><br />
+        <label for="fromAddress">address</label><input type="text" size="60" name="fromAddress"><br />
+        <h4>to</h4>
+        <label for="toName">name</label><input type="text" size="60" name="toName"><br />
+        <label for="toAddress">address</label><input type="text" size="60" name="toAddress"><br />
+
+        <label for="subject">subject</label><input type="text" size="60" name="subject"><br />
+        <label for="body">body</label><br />
+        <textarea name="body" rows="7" cols="80"></textarea>
         <br />
-        <input type="submit" value="Save">
-        <input type="text" name="message" disabled="disabled">
+        <input type="submit" value="send" id="submitEmailMessage">
       </form>
     </div>
 
-
+    <!-- xmpp -->
     <div id="xmpp">
-      <h3>xmpp</h3>
+      <h2>xmpp</h2>
       <form name="config">
         <textarea name="source" rows="7" cols="80"></textarea>
         <br />
@@ -47,8 +73,9 @@
       </div>
     </div>
 
+    <!-- twitter -->
     <div id="twitter">
-      <h3>twitter</h3>
+      <h2>twitter</h2>
       <form name="config">
         <textarea name="source" rows="7" cols="80"></textarea>
         <br />
@@ -61,8 +88,59 @@
       </div>
     </div>
 
+    <!-- log -->
     <pre id="log"></pre>
+    <script>
+
+document.getElementById('submitEmailMessage').addEventListener( 'click', function (e) {
+  if (e.preventDefault) { e.preventDefault(); }
+  var form = e.srcElement.form;
+
+  if ((!form.fromAddress.value) ||
+      (!form.toAddress.value) ||
+      (!form.subject.value) ||
+      (!form.body.value)) {
+    sockethub.log(3, null, 'required fields: from address, to address, subject and body.');
+    return false;
+  }
+
+  var o = {
+    verb: 'send',
+    platform: 'email',
+    actor: {
+      name: (form.fromName.value) ? form.fromName.value : '',
+      address: form.fromAddress.value,
+    },
+    target: {
+      name: (form.toName.value) ? form.toName.value : '',
+      address: form.toAddress.value,
+    },
+    object: {
+      subject: form.subject.value,
+      text: form.body.value
+    }
+  };
+
+  sockethub.submit(o);
+  return false;
+}, false);
+
+//sockethub.submit({platform:'email', verb:'send', form:'form-email-message'}), false);
+
+function show(menu) {
+  var e = document.getElementById(menu);
+  if (e === null) {
+    return;
+  }
+  if (e.style.display === 'inline-block') {
+    e.style.display = 'none';
+  } else {
+    e.style.display = 'inline-block';
+  }
+};
+
+    </script>
   </body>
-  <script src="logic.js"></script>
+  <script src="sockethub-example.js"></script>
   <script src="remoteStorage.min.js"></script>
 </html>

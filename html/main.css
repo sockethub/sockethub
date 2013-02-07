@@ -5,9 +5,36 @@ pre {
  white-space: -o-pre-wrap;    /* Opera 7 */
  word-wrap: break-word;       /* Internet Explorer 5.5+ */
 }
-h3 {
+h2 {
   font-size: 12px;
   padding: 0;
+  margin: 10 auto 0 auto;
+  text-align: center;
+}
+h3 {
+  font-size: 10px;
+  padding: 0;
   margin: 10 0 0 0;
+  display: block;
+}
+h4 {
+  font-size: 8px;
+  padding: 0;
+  margin: 10 0 0 0;
+  display: block;
+}
+#controls {
+  padding: 5px 0 10px 25px;
+  background-color: #F8F8F8;
+}
+#controls a {
+  margin-left: 10px;
+}
+#email, #xmpp, #facebook, #twitter {
+  display: none;
+}
+label {
+  width: 70px;
+  text-align: right;
   display: inline-block;
 }
