@@ -96,7 +96,7 @@ var sockethub = (function (window, document, undefined) {
         if (typeof data.rid !== 'undefined') {
           resp_rid = data.rid;
         }
-        log(3, resp_rid, 'error: '+data.message+' : ' + e.data);
+        log(3, resp_rid, 'error: '+data.message);//+' : ' + e.data);
       } else if ((typeof data.response === 'object') &&
                  (typeof data.response.timestamp === 'number')) {
         var sentTime = parseInt(data.response.timestamp);
@@ -104,18 +104,17 @@ var sockethub = (function (window, document, undefined) {
         var roundTripTime = now - sentTime;
         //log(1, data.rid, 'response received: '+e.data);
         draw(sentTime, roundTripTime, 'black');
-      } else if (data.verb === 'register') {
+      } else if (data.verb === 'confirm') {
+        //log(1, data.rid, 'confirmation receipt received. ' + e.data);
+      } else {
         if (data.status === true) {
           log(2, data.rid, e.data);
           isRegistered = true;
         } else {
           log(3, data.rid, e.data);
         }
-      } else if (data.verb === 'confirm') {
-        //log(1, data.rid, 'confirmation receipt received. ' + e.data);
-      } else {
-        log(3, 'unknown data received: ', e.data);
-        draw(new Date().getTime(), graphHeight, 'red');
+        //log(3, 'unknown data received: ', e.data);
+        //draw(new Date().getTime(), graphHeight, 'red');
       }
     };
 
@@ -203,9 +202,18 @@ var sockethub = (function (window, document, undefined) {
   function initRemoteStorage() {
     remoteStorage.util.silenceAllLoggers();
 
-    remoteStorage.defineModule('sockethub', function(privClient, pubClient) {
+    remoteStorage.defineModule('sockethub', function(privateClient, publicClient) {
       return {
-        exports: {}
+        exports: {
+          getConfig: function(platform, type) {
+            console.log(' [RS] getConfig('+type+', '+platform+')');
+            return privateClient.getObject(type+'/'+platform);
+          },
+
+          writeConfig: function(platform, type, data) {
+            return privateClient.storeObject('config', type+'/'+platform, data);
+          }
+        }
       };
     });
 

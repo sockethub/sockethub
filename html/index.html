@@ -27,21 +27,16 @@
     <!-- email -->
     <div id="email">
       <h2>email</h2>
+
       <h3>config</h3>
-      <form name="email-config">
-        <textarea name="source" rows="7" cols="80">
-{
-  "user@example.com" : {
-    "username": "user@example.com",
-    "password": "123abc",
-    "host": "example.com",
-    "domain": "smtp.example.com"
-  }
-}
-        </textarea><br />
-        <input type="submit" value="save">
-        <input type="text" name="message" disabled="disabled" size="60" value="/sockethub/email/credentials">
+      <form name="emailConfig">
+        <textarea name="source" rows="7" cols="80"> ... loading ...</textarea><br />
+        <input type="submit" value="save" id="saveConfig">
+        <input type="hidden" name="platform" value="email">
+        <input type="hidden" name="configType" value="credentials">
+        <input type="text" name="location" disabled="disabled" size="60" value="/sockethub/email/credentials">
       </form>
+
       <h3>message</h3>
       <form name="emailMessage">
         <h4>from</h4>
@@ -57,11 +52,14 @@
         <br />
         <input type="submit" value="send" id="submitEmailMessage">
       </form>
+
     </div>
 
     <!-- xmpp -->
     <div id="xmpp">
       <h2>xmpp</h2>
+
+      <h3>config</h3>
       <form name="config">
         <textarea name="source" rows="7" cols="80"></textarea>
         <br />
@@ -71,11 +69,14 @@
       <div class="verbs">
         <button onclick="message()">message</button>
       </div>
+
     </div>
 
     <!-- twitter -->
     <div id="twitter">
       <h2>twitter</h2>
+
+      <h3>config</h3>
       <form name="config">
         <textarea name="source" rows="7" cols="80"></textarea>
         <br />
@@ -86,11 +87,50 @@
         <button onclick="message()">message</button>
         <button onclick="post()">post</button>
       </div>
+
     </div>
 
     <!-- log -->
     <pre id="log"></pre>
     <script>
+
+var exampleConfig = {
+  email: {
+    smtp: {
+      'user@example.com': {
+        username: 'user@example.com',
+        password: '123456',
+        host: 'example.com',
+      }
+    }
+  }
+}
+document.getElementById('saveConfig').addEventListener('click', function (e) {
+  if (e.preventDefault) { e.preventDefault(); }
+  var form = e.srcElement.form;
+
+  if ((!form.source.value) ||
+      (!form.platform.value) ||
+      (!form.configType.value)) {
+    sockethub.log(3, null, 'body must contain something');
+    return false;
+  }
+
+  var data;
+  try {
+    data = JSON.parse(form.source.value);
+  } catch (e) {
+    sockethub.log(3, null, 'config not value json data');
+    return false;
+  }
+  remoteStorage.sockethub.writeConfig(form.platform.value,
+                                      form.configType.value,
+                                      data).then(function (ret) {
+                                        sockethub.log(2, null, 'config saved!');
+                                      });
+  return false;
+}, false);
+
 
 document.getElementById('submitEmailMessage').addEventListener( 'click', function (e) {
   if (e.preventDefault) { e.preventDefault(); }
@@ -112,8 +152,12 @@ document.getElementById('submitEmailMessage').addEventListener( 'click', functio
       address: form.fromAddress.value,
     },
     target: {
-      name: (form.toName.value) ? form.toName.value : '',
-      address: form.toAddress.value,
+      to: [
+        {
+          name: (form.toName.value) ? form.toName.value : '',
+          address: form.toAddress.value,
+        }
+      ]
     },
     object: {
       subject: form.subject.value,
@@ -125,10 +169,9 @@ document.getElementById('submitEmailMessage').addEventListener( 'click', functio
   return false;
 }, false);
 
-//sockethub.submit({platform:'email', verb:'send', form:'form-email-message'}), false);
 
-function show(menu) {
-  var e = document.getElementById(menu);
+function show(platform) {
+  var e = document.getElementById(platform);
   if (e === null) {
     return;
   }
@@ -136,9 +179,19 @@ function show(menu) {
     e.style.display = 'none';
   } else {
     e.style.display = 'inline-block';
+    var formName = platform+'Config';
+    remoteStorage.sockethub.getConfig(platform, 'credentials').then(function (data) {
+      if (data === undefined) {
+        document[formName].source.value = JSON.stringify(exampleConfig[platform]);
+      } else {
+        document[formName].source.value = JSON.stringify(data);
+      }
+    }, function (err) {
+      console.log(' rs error: ', err);
+      document[formName].source.value = JSON.stringify(exampleConfig[platform]);
+    });
   }
 };
-
     </script>
   </body>
   <script src="sockethub-example.js"></script>
