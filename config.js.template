@@ -1,6 +1,6 @@
 var PLATFORMS = [
   // location of platforms running, defaults to this host
-  'dispatcher', 'smtp', 'xmpp'
+  'dispatcher', 'email', 'xmpp'
 ];
 
 var HOST = {
