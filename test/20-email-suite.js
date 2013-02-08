@@ -71,17 +71,17 @@ define(['require'], function (require) {
         }
       },
       {
-        desc: "Email.message() calls mailer.send()",
+        desc: "Email.send() calls mailer.send()",
         run: function (env, test) {
           var job = {
             rid: '002',
-            verb: 'message',
+            verb: 'send',
             platform: 'email',
             actor: { name: 'Whitney Houston', address: 'whitney@houston.com' },
             object: { subject: 'Love you', text: 'I will always.' },
             target: { to: [{ name: 'Stevie Wonder', address: 'stevie@wonder.com' }] }
           };
-          env.Email.message(job, env.psession).then(function (err, status, obj) {
+          env.Email.send(job, env.psession).then(function (err, status, obj) {
             env.respHandler()(err, status, obj);
             test.assert(env.mailer.send.called, true);
           });

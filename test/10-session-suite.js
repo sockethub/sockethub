@@ -137,7 +137,7 @@ define(['require'], function(require) {
           });
         }
       },
-      {
+      /*{
         desc: "Session#reset clears platforms and settings",
         run: function(env, test) {
           env.session.setConfig('yarg', { foo: 'bar' });
@@ -148,21 +148,22 @@ define(['require'], function(require) {
             test.assert(cfg, {});
           });
         }
-      },
+      },*/
       {
-        desc: "Session#rsGet returns a promise",
+        desc: "Session#getFile returns a promise",
         run: function(env, test) {
-          var promise = env.session.rsGet('foo', 'bar');
+          var promise = env.session.getFile('storage', 'foo/bar');
+          console.log('promise: ', promise);
           test.assertTypeAnd(promise, 'object');
           test.assertType(promise.then, 'function');
         }
       },
       {
-        desc: "Session#rsGet fails when it has no remoteStorage config",
+        desc: "Session#getFile fails when it has no remoteStorage config",
         run: function(env, test) {
-          var promise = env.session.rsGet('foo', 'bar');
+          var promise = env.session.getFile('foo', 'bar');
           promise.then(function() {
-            test.result(false, "Expected Session#rsGet to fail, but it succeeded");
+            test.result(false, "Expected Session#getFile to fail, but it succeeded");
           }, function() {
             test.result(true);
           });
@@ -172,7 +173,7 @@ define(['require'], function(require) {
   });
 
   suites.push({
-    name: "Session rsGet",
+    name: "Session getFile",
     desc: "Session interaction with remoteStorage",
     setup: function(env, test) {
 
@@ -201,9 +202,11 @@ define(['require'], function(require) {
         env.session = session;
         env.session.setConfig('remoteStorage', {
           storageInfo: {
-            href: 'http://localhost:12345/storage'
+            href: 'http://localhost:12345/storage',
+            type:"https://www.w3.org/community/rww/wiki/read-write-web-00#simple"
           },
-          bearerToken: 'test-token'
+          bearerToken: 'test-token',
+          scope: {"":"rw"}
         });
         env.captured = [];
         env.simulateResponse = [200, { 'Content-Type': 'text/plain'}, 'Hello World'];
@@ -217,18 +220,20 @@ define(['require'], function(require) {
     },
     tests: [
       {
-        desc: "Session#rsGet sends a request",
+        desc: "Session#getFile sends a request",
         run: function(env, test) {
-          return env.session.rsGet('foo', 'bar').
-            then(function() {
+          env.session.getFile('', 'foo/bar').
+            then(function(source, result) {
               test.assert(env.captured.length, 1);
+            }, function (err) {
+              test.result(false);
             });
         }
       },
       {
-        desc: "Session#rsGet builds the path based on storage-root, module and path",
+        desc: "Session#getFile builds the path based on storage-root, module and path",
         run: function(env, test) {
-          return env.session.rsGet('foo', 'bar').
+          return env.session.getFile('', 'foo/bar').
             then(function() {
               var req = env.captured[0];
               test.assert(req.url, '/storage/foo/bar');
@@ -236,9 +241,9 @@ define(['require'], function(require) {
         }
       },
       {
-        desc: "Session#rsGet sets the Authorization header correctly",
+        desc: "Session#getFile sets the Authorization header correctly",
         run: function(env, test) {
-          return env.session.rsGet('phu', 'quoc').
+          return env.session.getFile('', 'phu/quoc').
             then(function() {
               var req = env.captured[0];
               test.assert(req.headers['authorization'], 'Bearer test-token');
@@ -246,22 +251,22 @@ define(['require'], function(require) {
         }
       },
       {
-        desc: "Session#rsGet yields the response body and MIME type",
+        desc: "Session#getFile yields the response body and MIME type",
         run: function(env, test) {
-          return env.session.rsGet('foo', 'bar').
-            then(function(result) {
+          return env.session.getFile('', 'foo/bar').
+            then(function(source, result) {
               test.assertAnd(result.mimeType, 'text/plain');
               test.assert(result.data, 'Hello World');
             });
         }
       },
       {
-        desc: "Session#rsGet unpacks JSON data",
+        desc: "Session#getFile unpacks JSON data",
         run: function(env, test) {
           env.simulateResponse = [200, { 'Content-Type': 'application/json' },
                                   '{"phu":"quoc"}'];
-          return env.session.rsGet('foo', 'baz').
-            then(function(result) {
+          return env.session.getFile('', 'foo/baz').
+            then(function(source, result) {
               test.assert(result, { phu: 'quoc' });
             });
         }
