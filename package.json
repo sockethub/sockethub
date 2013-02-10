@@ -20,7 +20,7 @@
     "promising": "*",
     "ntwitter": "*",
     "node-xmpp": "*",
-    "mailer": "*"
+    "nodemailer": "*"
   },
   "devDependencies": {
     "teste": "*"
