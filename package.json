@@ -21,7 +21,8 @@
     "ntwitter": "*",
     "node-xmpp": "*",
     "nodemailer": "*",
-    "gpg": "*"
+    "gpg": "*",
+    "pop3-client": "*"
   },
   "devDependencies": {
     "teste": "*"
