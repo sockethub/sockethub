@@ -178,7 +178,6 @@ var sockethub = (function (window, document, undefined) {
     p.style.color = c[type];
     var pmsg = document.createTextNode(prefix + ' - ' + message +"\n");
     p.appendChild(pmsg);
-    var line = document.createTextNode();
     var pre = document.getElementById('log');
     pre.insertBefore(p, pre.childNodes[0]);
   }
