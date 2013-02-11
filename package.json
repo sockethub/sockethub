@@ -22,7 +22,8 @@
     "node-xmpp": "*",
     "nodemailer": "*",
     "gpg": "*",
-    "pop3-client": "*"
+    "optimist": "*",
+    "hashlib2": "*"
   },
   "devDependencies": {
     "teste": "*"
