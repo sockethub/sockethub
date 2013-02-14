@@ -20,7 +20,10 @@
     "promising": "*",
     "ntwitter": "*",
     "node-xmpp": "*",
-    "mailer": "*"
+    "nodemailer": "*",
+    "gpg": "*",
+    "optimist": "*",
+    "hashlib2": "*"
   },
   "devDependencies": {
     "teste": "*"

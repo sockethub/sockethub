@@ -12,7 +12,13 @@ var HOST = {
   MY_PLATFORMS: PLATFORMS // list of platforms this instance is responsible for
 };
 
+var GPG = {
+  HOMEDIR: '/path/to/.gnupg/',
+  USERNAME: 'User Name',
+  PASSPHRASEFILE: '/path/to/passphrase'
+}
 exports.config = {
   HOST: HOST, // host specific config
-  PLATFORMS: PLATFORMS  // all platforms supported
+  PLATFORMS: PLATFORMS,  // all platforms supported
+  GPG: GPG // config for signing outgoing email
 };
