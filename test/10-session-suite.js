@@ -28,7 +28,7 @@ define(['require'], function(require) {
             env.Session.get('sid1').then(function (sameSession) {
               test.write('hello2');
               console.log('sameSession:', sameSession);
-              test.assert(session, sameSession);
+              test.assert(session.getSessionID(), sameSession.getSessionID());
             });
           });
         }
@@ -38,6 +38,8 @@ define(['require'], function(require) {
         run: function(env, test) {
           env.Session.get('sid1').then(function (session1) {
             env.Session.get('sid2').then(function (session2) {
+              console.log('session1:', session1);
+              console.log('session2:', session2);
               test.assertFail(session1, session2);
             });
           });
@@ -115,14 +117,14 @@ define(['require'], function(require) {
       {
         desc: "Session#register sets the session to registered",
         run: function(env, test) {
-          env.session.register();
+          env.session.register('1234567890');
           test.result(env.session.isRegistered());
         }
       },
       {
         desc: "Session#unregister sets the session to unregistered",
         run: function(env, test) {
-          env.session.register();
+          env.session.register('1234567890');
           test.assertAnd(env.session.isRegistered(), true);
           env.session.unregister();
           test.assert(env.session.isRegistered(), false);
@@ -131,12 +133,36 @@ define(['require'], function(require) {
       {
         desc: "Session#setConfig sets the settings",
         run: function(env, test) {
-          env.session.setConfig('test', { foo: 'bar' });
-          env.session.getConfig('test').then(function (cfg) {
+          env.session.setConfig('test', { foo: 'bar' }).then(function () {
+            return env.session.getConfig('test');
+          }).then(function (cfg) {
             test.assert(cfg, { foo: 'bar' });
+          });
+
+        }
+      },
+      {
+        desc: "Session#setConfig of complex objects that have clashing namespaces merge nicely",
+        run: function(env, test) {
+          var t1 = { hello: 'world', sub: { one: 'blah', two: 'blah', three: { well: 'this too' }}};
+          var t2 = { hello: 'world2', sub2: 'hithere', sub: { one: 'blah', five: 'yaya', three: { also: 'this also' }}};
+          var t3 = { hello: 'world2', sub: { one: 'blah', two: 'blah', three: { well: 'this too', also: 'this also' }, five: 'yaya' }, sub2: 'hithere' };
+
+          env.session.setConfig('test', t1).then(function () {
+            return env.session.setConfig('test', t2);
+          }).then(function () {
+            return env.session.getConfig('test');
+          }).then(function (cfg) {
+            console.log('cfg:',cfg);
+            console.log('t3:',cfg);
+            test.assert(cfg, t3);
           });
         }
       },
+
+
+
+
       /*{
         desc: "Session#reset clears platforms and settings",
         run: function(env, test) {
@@ -161,10 +187,9 @@ define(['require'], function(require) {
       {
         desc: "Session#getFile fails when it has no remoteStorage config",
         run: function(env, test) {
-          var promise = env.session.getFile('foo', 'bar');
-          promise.then(function() {
+          env.session.getFile('foo', 'bar').then(function () {
             test.result(false, "Expected Session#getFile to fail, but it succeeded");
-          }, function() {
+          }, function () {
             test.result(true);
           });
         }
