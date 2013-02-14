@@ -26,7 +26,7 @@ define(['require'], function (require) {
         ENABLE_TLS: false,
         PORT: port,
         PROTOCOLS: [ 'sockethub' ],
-        MY_PLATFORMS: [ 'dispatcher', 'smtp' ] // list of platforms this instance is responsible for
+        MY_PLATFORMS: [ 'dispatcher', 'email' ] // list of platforms this instance is responsible for
       };
 
       listener = require('../lib/protocols/sockethub/listener');
@@ -40,11 +40,12 @@ define(['require'], function (require) {
 
       var dispatcher = require('../lib/protocols/sockethub/dispatcher');
 
+      env.server = {};
       dispatcher.init().then(function() {
         // initialize http server
-        var server = require('../lib/httpServer').init(config);
+        env.server.h = require('../lib/httpServer').init(config);
         // initialize websocket server
-        var wsServer = require('../lib/wsServer').init(config, server, dispatcher);
+        env.server.ws = require('../lib/wsServer').init(config, env.server.h, dispatcher);
 
         console.log(' [*] finished loading' );
         console.log();
@@ -57,6 +58,17 @@ define(['require'], function (require) {
         process.exit();
       });
 
+    },
+    takedown: function (env, test) {
+      // XXX whats the proper way to disconnect with WebSocketClient?
+      env.connection.close();
+      setTimeout(function() {
+        //env.server.ws.close();
+        env.server.h.close();
+        setTimeout(function() {
+          test.result(true);
+        }, 1000);
+      }, 1000);
     },
     tests: [
 
