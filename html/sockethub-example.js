@@ -63,7 +63,7 @@ var sockethub = (function (window, document, undefined) {
   var x = 1;
   var graphWidth = document.getElementById('myCanvas').width;
   var graphHeight = document.getElementById('myCanvas').height;
-  var graphScale = graphHeight * 0.0010;
+  var graphScale = graphHeight * 0.019;
   var graphSpacerWidth = graphWidth * 0.1;
   console.log(graphScale, graphHeight);
 
