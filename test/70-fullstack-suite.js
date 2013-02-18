@@ -2,13 +2,20 @@ if (typeof define !== 'function') {
   var define = require('amdefine')(module);
 }
 define(['require'], function (require) {
-//define(function () {
   var suites = [];
 
   suites.push({
     name: "full stack tests",
     desc: "tests for the full stack, using the email platform",
     setup: function (env, test) {
+
+      env.mailer = {
+        send: this.Stub(function(obj, cb) {
+          console.log('MAILER STUB CALLED');
+          cb(null, true);
+        })
+      };
+      GLOBAL.mailer = env.mailer;
 
       env.confirmProps = {
         status: true,
@@ -101,7 +108,7 @@ define(['require'], function (require) {
               address: "user@example.com"
             },
             object: {
-              secret: '1234567890'
+              text: 'lalala'
             },
             target: {
               to: [{ address: 'foo@bar.com' }]
@@ -150,7 +157,40 @@ define(['require'], function (require) {
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
         }
+      },
+
+      {
+        desc: "try to send with set credentials",
+        run: function (env, test) {
+          var data = {
+            rid: '002',
+            verb: 'send',
+            platform: 'email',
+            actor: { address: 'user@example.com' },
+            object: { subject: 'test email subject', text: 'test email body' },
+            target: { to: [{ address: 'user2@example.com.com' }] }
+          };
+
+
+
+
+          var expected = {
+            status: true,
+            rid: "002",
+            verb: 'send',
+            platform: "email"
+          };
+          env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
+        }
+      },
+
+      {
+        desc: "verify mailer was called",
+        run: function (env, test) {
+          test.assert(env.mailer.send.called, true);
+        }
       }
+
 
     ]
   });
