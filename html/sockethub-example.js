@@ -198,29 +198,6 @@ var sockethub = (function (window, document, undefined) {
     return v;
   }
 
-  function initRemoteStorage() {
-    remoteStorage.util.silenceAllLoggers();
-
-    remoteStorage.defineModule('sockethub', function(privateClient, publicClient) {
-      return {
-        exports: {
-          getConfig: function(platform, type) {
-            console.log(' [RS] getConfig('+platform+', '+type+')');
-            return privateClient.getObject(type+'/'+platform);
-          },
-
-          writeConfig: function(platform, type, data) {
-            return privateClient.storeObject('config', type+'/'+platform, data);
-          }
-        }
-      };
-    });
-
-    remoteStorage.claimAccess('sockethub', 'rw').then(function() {
-      remoteStorage.displayWidget('remotestorage-connect');
-    });
-  }
-
   pub.register = function (noDelay) {
     var r = sendData.register;
     setTimeout(function() {
@@ -249,7 +226,6 @@ var sockethub = (function (window, document, undefined) {
   };
 
 
-  window.addEventListener('load', initRemoteStorage);
   window.addEventListener('load', pub.connect);
 
   return pub;
