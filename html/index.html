@@ -107,7 +107,7 @@ var exampleConfig = {
 }
 document.getElementById('saveConfig').addEventListener('click', function (e) {
   if (e.preventDefault) { e.preventDefault(); }
-  var form = e.srcElement.form;
+  var form = e.target.form;
 
   if ((!form.source.value) ||
       (!form.platform.value) ||
@@ -134,7 +134,7 @@ document.getElementById('saveConfig').addEventListener('click', function (e) {
 
 document.getElementById('submitEmailMessage').addEventListener( 'click', function (e) {
   if (e.preventDefault) { e.preventDefault(); }
-  var form = e.srcElement.form;
+  var form = e.target.form;
 
   if ((!form.fromAddress.value) ||
       (!form.toAddress.value) ||
