@@ -11,8 +11,8 @@ remoteStorage.defineModule('email', function(privateClient, publicClient) {
         return privateClient.getObject(type);
       },
 
-      writeConfig: function(type, data) {
-        return privateClient.storeObject('config', type, data);
+      writeConfig: function(type, data) {//type is probably 'credentials' here
+        return privateClient.storeObject(type, type, data);
       }
     }
   };
