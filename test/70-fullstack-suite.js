@@ -114,7 +114,7 @@ define(['require'], function (require) {
             rid: "123454",
             verb: 'send',
             platform: "email",
-            errMsg:"could not get remoteStorage for _internal platform"
+            message:"could not get remoteStorage for _internal platform"
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
         }
