@@ -2,6 +2,11 @@
 remoteStorage.defineModule('sockethub', function(privateClient, publicClient) {
   return {
     exports: {
+      init: function() {
+        privateClient.release('');
+        publicClient.release('');
+      },
+
       getConfig: function(platform, type) {
         console.log(' [RS] getConfig('+platform+', '+type+')');
         return privateClient.getObject(type+'/'+platform);

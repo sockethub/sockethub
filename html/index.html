@@ -203,6 +203,8 @@ function show(platform) {
       email: 'rw'
     }).then(function() {
       remoteStorage.displayWidget('remotestorage-connect');
+      remoteStorage.sockethub.init();
+      remoteStorage.email.init();
     });
   </script>
 </html>
