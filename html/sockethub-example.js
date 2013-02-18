@@ -50,6 +50,14 @@ var sockethub = (function (window, document, undefined) {
       "address" : "Lionel Richie <lionel@dancingontheceiling.com>"
     }
   };
+  sendData.set = {
+    "verb" : "set",
+    "platform" : "dispatcher",
+    "target" : {
+      "platform" : ""
+    },
+    "object" : {}
+  };
 
   var graph = document.getElementById('myCanvas').getContext('2d');
   var x = 1;
@@ -240,6 +248,16 @@ var sockethub = (function (window, document, undefined) {
               // populated right away.
   };
 
+
+  pub.set = function (platform, data) {
+    var r = sendData.set;
+    r.target.platform = platform;
+    r.object = data;
+    r.rid = getRID('set');
+    var rawMessage = JSON.stringify(r);
+    log(1, r.rid, rawMessage);
+    sock.send(rawMessage);
+  };
 
   pub.submit = function (o) {
     o.rid = getRID(o.verb);

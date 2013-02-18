@@ -128,6 +128,8 @@ document.getElementById('saveConfig').addEventListener('click', function (e) {
                                       data).then(function (ret) {
                                         sockethub.log(2, null, 'config saved!');
                                       });
+
+  sockethub.set(form.platform.value, data);
   return false;
 }, false);
 
