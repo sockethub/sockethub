@@ -34,7 +34,7 @@
         <input type="submit" value="save" id="saveConfig">
         <input type="hidden" name="platform" value="email">
         <input type="hidden" name="configType" value="credentials">
-        <input type="text" name="location" disabled="disabled" size="60" value="/sockethub/credentials/email">
+        <input type="text" name="location" disabled="disabled" size="60" value="/email/credentials">
       </form>
 
       <h3>message</h3>
@@ -123,11 +123,9 @@ document.getElementById('saveConfig').addEventListener('click', function (e) {
     sockethub.log(3, null, 'config not value json data');
     return false;
   }
-  remoteStorage.sockethub.writeConfig(form.platform.value,
-                                      form.configType.value,
-                                      data).then(function (ret) {
-                                        sockethub.log(2, null, 'config saved!');
-                                      });
+  remoteStorage[form.platform.value].writeConfig(form.configType.value, data).then(function (ret) {
+    sockethub.log(2, null, 'config saved!');
+  });
   return false;
 }, false);
 
@@ -180,7 +178,7 @@ function show(platform) {
   } else {
     e.style.display = 'inline-block';
     var formName = platform+'Config';
-    remoteStorage.sockethub.getConfig(platform, 'credentials').then(function (data) {
+    remoteStorage[platform].getConfig('credentials').then(function (data) {
       console.log('rs got: ',data);
       if (data === undefined) {
         document[formName].source.value = JSON.stringify(exampleConfig[platform]);
@@ -196,5 +194,15 @@ function show(platform) {
     </script>
   </body>
   <script src="sockethub-example.js"></script>
-  <script src="remoteStorage.min.js"></script>
+  <script src="remotestorage.min.js"></script>
+  <script src="remotestorage-sockethub.js"></script>
+  <script src="email.js"></script>
+  <script>
+    remoteStorage.claimAccess({
+      sockethub: 'rw',
+      email: 'rw'
+    }).then(function() {
+      remoteStorage.displayWidget('remotestorage-connect');
+    });
+  </script>
 </html>
