@@ -64,9 +64,14 @@ define(['require'], function (require) {
             }
           };
 
-          env.psession.setConfig('credentials', job.object.credentials);
-          env.psession.getConfig('credentials').then(function (creds) {
-            test.assert(creds, job.object.credentials);
+          env.psession.setConfig('credentials', job.object.credentials).then(function () {
+            env.psession.getConfig('credentials').then(function (creds) {
+              test.assert(creds, job.object.credentials);
+            }, function (err) {
+              test.result(false, err);
+            });
+          }, function (err) {
+            test.result(false, err);
           });
         }
       },
