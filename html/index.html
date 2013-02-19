@@ -13,7 +13,6 @@
       <input type="submit" value="Reconnect" onclick="sockethub.reconnect();" >
       <button onclick="sockethub.togglePings()">Toggle Pings ON/OFF</button>
       <button onclick="sockethub.register(true)">Register</button>
-
     </p>
     <canvas id="myCanvas" style="border: 1px solid black;" width="560" height="50"></canvas>
     <p></p>
@@ -26,23 +25,28 @@
 
     <!-- email -->
     <div id="email">
-      <h2>email</h2>
+      <h1>email</h1>
 
-      <h3>config</h3>
-      <form name="emailConfig">
-        <textarea name="source" rows="7" cols="80"> ... loading ...</textarea><br />
-        <input type="submit" value="save" id="saveConfig">
-        <input type="hidden" name="platform" value="email">
-        <input type="hidden" name="configType" value="credentials">
-        <input type="text" name="location" disabled="disabled" size="60" value="/sockethub/credentials/email">
-      </form>
+      <a id="display-email-config" href="#" onclick="show('email', true);">toggle config</a><br />
+      <div id="emailConfigContainer">
+        <form name="emailConfig">
+          <textarea name="source" rows="7" cols="80"> ... loading ...</textarea><br />
+          <input type="submit" value="save" id="saveConfig">
+          <input type="hidden" name="platform" value="email">
+          <input type="hidden" name="configType" value="credentials">
+          <input type="text" name="location" disabled="disabled" size="60" value="/sockethub/credentials/email">
+        </form>
+      </div>
 
-      <h3>message</h3>
+      <h2>message</h2>
       <form name="emailMessage">
-        <h4>from</h4>
+        <input type="hidden" name="platform" value="email">
+        <h3>from</h3>
+        <label for="emailAccounts">email accounts</label>
+        <select name="emailAccounts" id="emailAccounts"></select><br />
         <label for="fromName">name</label><input type="text" size="60" name="fromName"><br />
         <label for="fromAddress">address</label><input type="text" size="60" name="fromAddress"><br />
-        <h4>to</h4>
+        <h3>to</h3>
         <label for="toName">name</label><input type="text" size="60" name="toName"><br />
         <label for="toAddress">address</label><input type="text" size="60" name="toAddress"><br />
 
@@ -52,47 +56,71 @@
         <br />
         <input type="submit" value="send" id="submitEmailMessage">
       </form>
-
     </div>
 
     <!-- xmpp -->
     <div id="xmpp">
-      <h2>xmpp</h2>
+      <h1>xmpp</h1>
 
-      <h3>config</h3>
-      <form name="config">
-        <textarea name="source" rows="7" cols="80"></textarea>
-        <br />
-        <input type="submit" value="Save">
-        <input type="text" name="message" disabled="disabled">
-      </form>
+      <a href="#" onclick="show('xmpp', true);">toggle config</a><br />
+      <div id="xmppConfigContainer">
+        <form name="xmppConfig">
+          <textarea name="source" rows="7" cols="80"></textarea>
+          <br />
+          <input type="submit" value="Save">
+          <input type="text" name="message" disabled="disabled">
+        </form>
+      </div>
+
       <div class="verbs">
         <button onclick="message()">message</button>
       </div>
-
     </div>
 
     <!-- twitter -->
     <div id="twitter">
-      <h2>twitter</h2>
+      <h1>twitter</h1>
 
-      <h3>config</h3>
-      <form name="config">
-        <textarea name="source" rows="7" cols="80"></textarea>
-        <br />
-        <input type="submit" value="Save">
-        <input type="text" name="message" disabled="disabled">
-      </form>
+      <a href="#" onclick="show('twitter', true);">toggle config</a><br />
+      <div id="twitterConfigContainer">
+        <form name="twitterConfig">
+          <textarea name="source" rows="7" cols="80"></textarea>
+          <br />
+          <input type="submit" value="Save">
+          <input type="text" name="message" disabled="disabled">
+        </form>
+      </div>
+
       <div class="verbs">
         <button onclick="message()">message</button>
         <button onclick="post()">post</button>
       </div>
+    </div>
 
+    <!-- facebook -->
+    <div id="facebook">
+      <h1>facebook</h1>
+
+      <a href="#" onclick="show('facebook', true);">toggle config</a><br />
+      <div id="facebookConfigContainer">
+        <form name="facebookConfig">
+          <textarea name="source" rows="7" cols="80"></textarea>
+          <br />
+          <input type="submit" value="Save">
+          <input type="text" name="message" disabled="disabled">
+        </form>
+      </div>
+      <div class="verbs">
+        <button onclick="message()">message</button>
+        <button onclick="post()">post</button>
+      </div>
     </div>
 
     <!-- log -->
     <pre id="log"></pre>
     <script>
+
+var actors = {};
 
 var exampleConfig = {
   email: {
@@ -104,7 +132,20 @@ var exampleConfig = {
       }
     }
   }
-}
+};
+
+document.getElementById('emailAccounts').addEventListener('click', function (e) {
+  if (e.preventDefault) { e.preventDefault(); }
+  var form = e.target.form;
+  console.log('HELLO WORLD',e);
+  /*if ((!form.platform.value) ||
+      (!form.configType.value)) {
+    sockethub.log(3, null, 'body must contain something');
+    return false;
+  }*/
+
+}, false);
+
 document.getElementById('saveConfig').addEventListener('click', function (e) {
   if (e.preventDefault) { e.preventDefault(); }
   var form = e.target.form;
@@ -130,6 +171,7 @@ document.getElementById('saveConfig').addEventListener('click', function (e) {
                                       });
 
   sockethub.set(form.platform.value, data);
+  populateActors(form.platform.value, data);
   return false;
 }, false);
 
@@ -172,8 +214,13 @@ document.getElementById('submitEmailMessage').addEventListener( 'click', functio
 }, false);
 
 
-function show(platform) {
-  var e = document.getElementById(platform);
+function show(platform, config) {
+  var e;
+  if (config) {
+    e = document.getElementById(platform+'ConfigContainer');
+  } else {
+    e = document.getElementById(platform);
+  }
   if (e === null) {
     return;
   }
@@ -188,13 +235,54 @@ function show(platform) {
         document[formName].source.value = JSON.stringify(exampleConfig[platform]);
       } else {
         document[formName].source.value = JSON.stringify(data);
+        populateActors(platform, data);
       }
     }, function (err) {
       console.log(' rs error: ', err);
       document[formName].source.value = JSON.stringify(exampleConfig[platform]);
     });
   }
-};
+}
+
+function populateActors(platform, data) {
+  if (typeof data.credentials) {
+    var keys = Object.keys(data.credentials);
+    for (var i = 0, num = keys.length; i < num; i = i + 1) {
+      if (keys[i] === '@type') { continue; }
+      var key = keys[i];
+      if (typeof data.credentials[key].actor !== 'undefined') {
+        if (typeof actors[platform] === 'undefined') { actors[platform] = {}; }
+        actors[platform][key] = {
+          name: (data.credentials[key].actor.name) ? data.credentials[key].actor.name : "",
+          address: (data.credentials[key].actor.address) ? data.credentials[key].actor.address : "",
+        };
+      }
+    }
+  }
+
+  var first = true;
+  if ((platform === 'email') && (typeof actors[platform] !== 'undefined')) {
+    var formName = platform+'Message';
+    var s = document.getElementById("emailAccounts");
+    s.options.length = 0;
+    var keys = Object.keys(actors[platform]);
+    for (var i = 0, num = keys.length; i < num; i = i + 1) {
+      if (keys[i] === '@type') { continue; }
+      var key = keys[i];
+      s.options[s.options.length]= new Option(actors[platform][key].address, actors[platform][key].name);
+      if (first) {
+        setForm(formName, platform, actors[platform][key].address);
+        first = false;
+      }
+    }
+  }
+}
+
+function setForm(formName, platform, key) {
+  document[formName].fromName.value = actors[platform][key].name;
+  document[formName].fromAddress.value = actors[platform][key].address;
+}
+
     </script>
   </body>
   <script src="sockethub-example.js"></script>
