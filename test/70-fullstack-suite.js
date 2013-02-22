@@ -171,9 +171,6 @@ define(['require'], function (require) {
             target: { to: [{ address: 'user2@example.com.com' }] }
           };
 
-
-
-
           var expected = {
             status: true,
             rid: "002",
