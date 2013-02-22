@@ -137,20 +137,24 @@ var actors = {};
 
 var exampleConfig = {
   email: {
-    'user@example.com': {
-      smtp: {
-        username: 'user@example.com',
-        password: '123456',
-        host: 'example.com',
+    credentials: {
+      'user@example.com': {
+        smtp: {
+          username: 'user@example.com',
+          password: '123456',
+          host: 'example.com',
+        }
       }
     }
   },
   facebook: {
-    'example_user': {
-      actor: {
-        address: "example_user",
-      },
-      access_token: 'abcde'
+    credentials: {
+      'example_user': {
+        actor: {
+          address: "example_user",
+        },
+        access_token: 'abcde'
+      }
     }
   }
 };
