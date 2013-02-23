@@ -60,7 +60,6 @@ define(['require'], function (require) {
 
     },
     takedown: function (env, test) {
-      // XXX whats the proper way to disconnect with WebSocketClient?
       env.connection.close();
       setTimeout(function() {
         //env.server.ws.close();

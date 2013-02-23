@@ -23,31 +23,41 @@ var sockethub = (function (window, document, undefined) {
       secret: '1234567890'
     }
   };
-  sendData.message = {
-    "verb" : "message",
-    "platform" : "smtp",
-    "target" : {
-      "to" : [  // at least one record for 'to' required
+  sendData.send = {
+    verb: "send",
+    target : {
+      to: [  // at least one record for 'to' required
         {
-          "name" : "Michael Jackson",
-          "address" : "michael@thejacksonfive.com"
+          address: ""
         }
       ],
-      "cc" : [
+      cc: [],  // ignored if undefined or empty
+      bcc: []  // ignored if undefined or empty
+    },
+    object: {
+      headers: {},  // name/value pairs of header data to use
+      subject: "Hello ...",  // URL encoded string
+      text: "Is it me you're looking for?"  // URL encoded string
+    },
+    actor: {
+      address: ""
+    }
+  };
+  sendData.post = {
+    verb: "post",
+    target : {
+      to: [  // at least one record for 'to' required
         {
-          "name" : "Cindi Lauper",
-          "address" : "cindi@girlsjustwannahavefun.biz"
+          address: ""
         }
-      ],  // ignored if undefined or empty
-      "bcc" : []  // ignored if undefined or empty
+      ],
+      cc: []  // ignored if undefined or empty
     },
-    "object" : {
-      "headers" : {},  // name/value pairs of header data to use
-      "subject" : "Hello ...",  // URL encoded string
-      "body" : "Is it me you're looking for?"  // URL encoded string
+    object: {
+      text: "Is it me you're looking for?"  // URL encoded string
     },
-    "actor" : {
-      "address" : "Lionel Richie <lionel@dancingontheceiling.com>"
+    actor: {
+      address: ""
     }
   };
   sendData.set = {
@@ -254,6 +264,30 @@ var sockethub = (function (window, document, undefined) {
     r.target.platform = platform;
     r.object = data;
     r.rid = getRID('set');
+    var rawMessage = JSON.stringify(r);
+    log(1, r.rid, rawMessage);
+    sock.send(rawMessage);
+  };
+
+  pub.send = function (platform, actor, target, object) {
+    var r = sendData.send;
+    r.platform = platform;
+    r.object = object;
+    r.actor = actor;
+    r.target = target;
+    r.rid = getRID('send');
+    var rawMessage = JSON.stringify(r);
+    log(1, r.rid, rawMessage);
+    sock.send(rawMessage);
+  };
+
+  pub.post = function (platform, actor, target, object) {
+    var r = sendData.post;
+    r.platform = platform;
+    r.object = object;
+    r.actor = actor;
+    r.target = target;
+    r.rid = getRID('post');
     var rawMessage = JSON.stringify(r);
     log(1, r.rid, rawMessage);
     sock.send(rawMessage);

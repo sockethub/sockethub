@@ -31,7 +31,7 @@
       <div id="emailConfigContainer">
         <form name="emailConfig">
           <textarea name="source" rows="7" cols="80"> ... loading ...</textarea><br />
-          <input type="submit" value="save" id="saveConfig">
+          <input type="submit" value="save" id="saveEmailConfig">
           <input type="hidden" name="platform" value="email">
           <input type="hidden" name="configType" value="credentials">
           <input type="text" name="location" disabled="disabled" size="60" value="/sockethub/credentials/email">
@@ -104,16 +104,29 @@
       <a href="#" onclick="show('facebook', true);">toggle config</a><br />
       <div id="facebookConfigContainer">
         <form name="facebookConfig">
-          <textarea name="source" rows="7" cols="80"></textarea>
-          <br />
-          <input type="submit" value="Save">
-          <input type="text" name="message" disabled="disabled">
+          <textarea name="source" rows="7" cols="80"> ... loading ...</textarea><br />
+          <input type="submit" value="save" id="saveFacebookConfig">
+          <input type="hidden" name="platform" value="facebook">
+          <input type="hidden" name="configType" value="credentials">
+          <input type="text" name="location" disabled="disabled" size="60" value="/sockethub/credentials/facebook">
         </form>
       </div>
-      <div class="verbs">
-        <button onclick="message()">message</button>
-        <button onclick="post()">post</button>
-      </div>
+
+      <h2>post</h2>
+      <form name="facebookPost">
+        <input type="hidden" name="platform" value="facebook">
+        <h3>from</h3>
+        <label for="facebookAccounts">facebook accounts</label>
+        <select name="facebookAccounts" id="facebookAccounts"></select><br />
+        <label for="fromName">name</label><input type="text" size="60" name="fromName"><br />
+        <label for="fromAddress">address</label><input type="text" size="60" name="fromAddress"><br />
+        <h3>to</h3>
+        <label for="toAddress">address</label><input type="text" size="60" name="toAddress"><br />
+        <label for="body">body</label><br />
+        <textarea name="body" rows="7" cols="80"></textarea>
+        <br />
+        <input type="submit" value="send" id="submitFacebookPost">
+      </form>
     </div>
 
     <!-- log -->
@@ -124,11 +137,23 @@ var actors = {};
 
 var exampleConfig = {
   email: {
-    'user@example.com': {
-      smtp: {
-        username: 'user@example.com',
-        password: '123456',
-        host: 'example.com',
+    credentials: {
+      'user@example.com': {
+        smtp: {
+          username: 'user@example.com',
+          password: '123456',
+          host: 'example.com',
+        }
+      }
+    }
+  },
+  facebook: {
+    credentials: {
+      'example_user': {
+        actor: {
+          address: "example_user",
+        },
+        access_token: 'abcde'
       }
     }
   }
@@ -146,8 +171,12 @@ document.getElementById('emailAccounts').addEventListener('click', function (e) 
 
 }, false);
 
-document.getElementById('saveConfig').addEventListener('click', function (e) {
+document.getElementById('saveEmailConfig').addEventListener('click', saveConfigEvent, false);
+document.getElementById('saveFacebookConfig').addEventListener('click', saveConfigEvent, false);
+
+function saveConfigEvent(e) {
   if (e.preventDefault) { e.preventDefault(); }
+
   var form = e.target.form;
 
   if ((!form.source.value) ||
@@ -164,6 +193,8 @@ document.getElementById('saveConfig').addEventListener('click', function (e) {
     sockethub.log(3, null, 'config not value json data');
     return false;
   }
+
+  console.log('saveConfigEvent platform['+form.platform.value+']');
   remoteStorage.sockethub.writeConfig(form.platform.value,
                                       form.configType.value,
                                       data).then(function (ret) {
@@ -173,10 +204,10 @@ document.getElementById('saveConfig').addEventListener('click', function (e) {
   sockethub.set(form.platform.value, data);
   populateActors(form.platform.value, data);
   return false;
-}, false);
+}
 
 
-document.getElementById('submitEmailMessage').addEventListener( 'click', function (e) {
+document.getElementById('submitEmailMessage').addEventListener('click', function (e) {
   if (e.preventDefault) { e.preventDefault(); }
   var form = e.target.form;
 
@@ -189,8 +220,6 @@ document.getElementById('submitEmailMessage').addEventListener( 'click', functio
   }
 
   var o = {
-    verb: 'send',
-    platform: 'email',
     actor: {
       name: (form.fromName.value) ? form.fromName.value : '',
       address: form.fromAddress.value,
@@ -209,7 +238,38 @@ document.getElementById('submitEmailMessage').addEventListener( 'click', functio
     }
   };
 
-  sockethub.submit(o);
+  sockethub.send('email', o.actor, o.target, o.object);
+  return false;
+}, false);
+
+
+document.getElementById('submitFacebookPost').addEventListener('click', function (e) {
+  if (e.preventDefault) { e.preventDefault(); }
+  var form = e.target.form;
+
+  if ((!form.toAddress.value) ||
+      (!form.body.value)) {
+    sockethub.log(3, null, 'required fields: to address, and body.');
+    return false;
+  }
+
+  var o = {
+    actor: {
+      address: form.fromAddress.value,
+    },
+    target: {
+      to: [
+        {
+          address: form.toAddress.value,
+        }
+      ]
+    },
+    object: {
+      text: form.body.value
+    }
+  };
+
+  sockethub.post('facebook', o.actor, o.target, o.object);
   return false;
 }, false);
 
@@ -235,7 +295,11 @@ function show(platform, config) {
         document[formName].source.value = JSON.stringify(exampleConfig[platform]);
       } else {
         document[formName].source.value = JSON.stringify(data);
-        populateActors(platform, data);
+        if (data.credentials) {
+          populateActors(platform, data.credentials);
+        } else {
+          populateActors(platform, data);
+        }
       }
     }, function (err) {
       console.log(' rs error: ', err);
@@ -244,27 +308,36 @@ function show(platform, config) {
   }
 }
 
+
 function populateActors(platform, data) {
-  if (typeof data.credentials) {
-    var keys = Object.keys(data.credentials);
-    for (var i = 0, num = keys.length; i < num; i = i + 1) {
-      if (keys[i] === '@type') { continue; }
-      var key = keys[i];
-      if (typeof data.credentials[key].actor !== 'undefined') {
-        if (typeof actors[platform] === 'undefined') { actors[platform] = {}; }
-        actors[platform][key] = {
-          name: (data.credentials[key].actor.name) ? data.credentials[key].actor.name : "",
-          address: (data.credentials[key].actor.address) ? data.credentials[key].actor.address : "",
-        };
-      }
+  console.log('populateActors: ',data);
+  var keys = Object.keys(data);
+  for (var i = 0, num = keys.length; i < num; i = i + 1) {
+    if (keys[i] === '@type') { continue; }
+    var key = keys[i];
+    if (typeof data[key].actor !== 'undefined') {
+      if (typeof actors[platform] === 'undefined') { actors[platform] = {}; }
+      actors[platform][key] = {
+        name: (data[key].actor.name) ? data[key].actor.name : (data[key].actor.address) ? data[key].actor.address : "",
+        address: (data[key].actor.address) ? data[key].actor.address : "",
+      };
     }
   }
 
+  console.log('actors:',actors);
+
   var first = true;
-  if ((platform === 'email') && (typeof actors[platform] !== 'undefined')) {
-    var formName = platform+'Message';
-    var s = document.getElementById("emailAccounts");
+  if (typeof actors[platform] !== 'undefined') {
+    var formName;
+    if (platform === 'facebook') {
+      formName = platform+'Post';
+    } else {
+      formName = platform+'Message';
+    }
+    var s = document.getElementById(platform+"Accounts");
+
     s.options.length = 0;
+
     var keys = Object.keys(actors[platform]);
     for (var i = 0, num = keys.length; i < num; i = i + 1) {
       if (keys[i] === '@type') { continue; }
