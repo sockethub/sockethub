@@ -1,3 +1,4 @@
+require("consoleplusplus/console++");
 function buildTest(platform, verb, data, err) {
   return {
     desc: platform+" - "+verb+" scaffolding check",

@@ -1,4 +1,5 @@
-if(typeof(define) !== 'function') {
+require("consoleplusplus/console++");
+if (typeof define !== 'function') {
   var define = require('amdefine')(module);
 }
 define(['require'], function(require) {
