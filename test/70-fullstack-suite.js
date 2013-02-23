@@ -10,13 +10,20 @@ define(['require'], function (require) {
     desc: "tests for the full stack, using the email platform",
     setup: function (env, test) {
 
-      env.mailer = {
-        send: this.Stub(function(obj, cb) {
-          console.log('MAILER STUB CALLED');
-          cb(null, true);
-        })
-      };
-      GLOBAL.mailer = env.mailer;
+      env.nodemailer = {};
+      env.nodemailer.createTransport = test.Stub(function createTransportStub(name, obj) {
+            if (name === 'SMTP') {
+              console.log('NODEMAILER createTransport STUB CALLED');
+              var ret =  {};
+              ret.sendMail = test.Stub(function sendMail(msg, cb) {
+                  console.log('NODEMAILER sendMail STUB CALLED');
+                  cb(null, true);
+                });
+
+              return ret;
+            }
+          });
+      GLOBAL.nodemailer = env.nodemailer;
 
       env.confirmProps = {
         status: true,
@@ -185,7 +192,7 @@ define(['require'], function (require) {
       {
         desc: "verify mailer was called",
         run: function (env, test) {
-          test.assert(env.mailer.send.called, true);
+          test.assert(env.nodemailer.createTransport.called, true);
         }
       }
 
