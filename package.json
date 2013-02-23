@@ -21,7 +21,8 @@
     "ntwitter": "*",
     "node-xmpp": "*",
     "mailer": "*",
-    "gpg": "*"
+    "gpg": "*",
+    "consoleplusplus": "*"
   },
   "devDependencies": {
     "teste": "*"

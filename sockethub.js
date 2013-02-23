@@ -1,3 +1,4 @@
+require("consoleplusplus/console++");
 module.exports = (function() {
   var config = require('./config.js').config;
 
@@ -30,14 +31,14 @@ module.exports = (function() {
         var server = require('./lib/httpServer').init(config);
         // initialize websocket server
         var wsServer = require('./lib/wsServer').init(config, server, dispatcher);
-        console.log(' [*] finished loading' );
+        console.info(' [*] finished loading' );
         console.log();
     }, function(err) {
-        console.log(" [sockethub] dispatcher failed initialization, aborting");
+        console.error(" [sockethub] dispatcher failed initialization, aborting");
         process.exit();
     });
   } else {
-    console.log(' [sockethub] finished loading listeners. ready to work boss!');
+    console.info(' [sockethub] finished loading listeners. ready to work boss!');
   }
 
 }());
