@@ -131,10 +131,9 @@
 
     <!-- log -->
     <pre id="log"></pre>
+
     <script>
-
 var actors = {};
-
 var exampleConfig = {
   email: {
     credentials: {
@@ -190,7 +189,7 @@ function saveConfigEvent(e) {
   try {
     data = JSON.parse(form.source.value);
   } catch (e) {
-    sockethub.log(3, null, 'config not value json data');
+    sockethub.log(3, null, 'config not valid json data');
     return false;
   }
 
@@ -295,11 +294,7 @@ function show(platform, config) {
         document[formName].source.value = JSON.stringify(exampleConfig[platform]);
       } else {
         document[formName].source.value = JSON.stringify(data);
-        if (data.credentials) {
-          populateActors(platform, data.credentials);
-        } else {
-          populateActors(platform, data);
-        }
+        populateActors(platform, data);
       }
     }, function (err) {
       console.log(' rs error: ', err);
@@ -310,7 +305,10 @@ function show(platform, config) {
 
 
 function populateActors(platform, data) {
-  console.log('populateActors: ',data);
+  if (data.credentials) {
+    data = data.credentials;
+  }
+  //console.log('populateActors after: ',data);
   var keys = Object.keys(data);
   for (var i = 0, num = keys.length; i < num; i = i + 1) {
     if (keys[i] === '@type') { continue; }
@@ -324,8 +322,7 @@ function populateActors(platform, data) {
     }
   }
 
-  console.log('actors:',actors);
-
+  //console.log('actors:',actors);
   var first = true;
   if (typeof actors[platform] !== 'undefined') {
     var formName;
@@ -335,9 +332,7 @@ function populateActors(platform, data) {
       formName = platform+'Message';
     }
     var s = document.getElementById(platform+"Accounts");
-
     s.options.length = 0;
-
     var keys = Object.keys(actors[platform]);
     for (var i = 0, num = keys.length; i < num; i = i + 1) {
       if (keys[i] === '@type') { continue; }
@@ -355,7 +350,6 @@ function setForm(formName, platform, key) {
   document[formName].fromName.value = actors[platform][key].name;
   document[formName].fromAddress.value = actors[platform][key].address;
 }
-
     </script>
   </body>
   <script src="sockethub-example.js"></script>

@@ -9,13 +9,21 @@ define(['require'], function (require) {
     name: "email platform tests",
     desc: "collection of tests for the email platform",
     setup: function (env, test) {
-      env.mailer = {
-        send: this.Stub(function(obj, cb) {
-          console.log('MAILER STUB CALLED');
-          cb(null, true);
-        })
-      };
-      GLOBAL.mailer = env.mailer;
+      env.nodemailer = {};
+      env.nodemailer.createTransport = test.Stub(function createTransportStub(name, obj) {
+            if (name === 'SMTP') {
+              console.log('NODEMAILER createTransport STUB CALLED');
+              var ret =  {};
+              ret.sendMail = test.Stub(function sendMail(msg, cb) {
+                  console.log('NODEMAILER sendMail STUB CALLED');
+                  cb(null, true);
+                });
+
+              return ret;
+            }
+          });
+      GLOBAL.nodemailer = env.nodemailer;
+
       env.respHandler = function (testObj) {
         return function(err, status, obj) {
           if (testObj !== undefined) {
@@ -46,12 +54,9 @@ define(['require'], function (require) {
     },
     tests: [
       {
-        desc: "Subscribe to platform with credential details",
+        desc: "set credential details",
         run: function (env, test) {
           var job = {
-            rid: '001',
-            verb: 'subscribe',
-            platform: 'email',
             object: {
               credentials: {
                 'whitney@houston.com': {
@@ -77,7 +82,7 @@ define(['require'], function (require) {
         }
       },
       {
-        desc: "Email.send() calls mailer.send()",
+        desc: "email.send() eventually calls nodemailer.sendMail()",
         run: function (env, test) {
           var job = {
             rid: '002',
@@ -89,7 +94,9 @@ define(['require'], function (require) {
           };
           env.Email.send(job, env.psession).then(function (err, status, obj) {
             env.respHandler()(err, status, obj);
-            test.assert(env.mailer.send.called, true);
+            test.assert(env.nodemailer.createTransport.called, true);
+            //var transport = env.nodemailer.createTransport('SMTP', {});
+            //test.assert(transport.sendMail.called, true);
           });
         }
       }
