@@ -32,7 +32,7 @@ module.exports = (function() {
         // initialize websocket server
         var wsServer = require('./lib/wsServer').init(config, server, dispatcher);
         console.info(' [*] finished loading' );
-        console.log();
+        console.log("\n");
     }, function(err) {
         console.error(" [sockethub] dispatcher failed initialization, aborting");
         process.exit();

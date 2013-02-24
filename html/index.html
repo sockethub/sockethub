@@ -27,25 +27,25 @@
     <div id="email">
       <h1>email</h1>
 
-      <a id="display-email-config" href="#" onclick="show('email', true);">toggle config</a><br />
+      <a id="display-email-config" href="#" onclick="show('email', true);">toggle displaying credentials<br /></a>
       <div id="emailConfigContainer">
         <form name="emailConfig">
           <textarea name="source" rows="7" cols="80"> ... loading ...</textarea><br />
-          <input type="submit" value="save" id="saveEmailConfig">
+      </div><br />
+          <input type="submit" value="set" id="saveEmailConfig">
           <input type="hidden" name="platform" value="email">
           <input type="hidden" name="configType" value="credentials">
           <input type="text" name="location" disabled="disabled" size="60" value="/sockethub/credentials/email">
         </form>
-      </div>
 
       <h2>message</h2>
       <form name="emailMessage">
         <input type="hidden" name="platform" value="email">
         <h3>from</h3>
         <label for="emailAccounts">email accounts</label>
-        <select name="emailAccounts" id="emailAccounts"></select><br />
-        <label for="fromName">name</label><input type="text" size="60" name="fromName"><br />
-        <label for="fromAddress">address</label><input type="text" size="60" name="fromAddress"><br />
+        <select name="emailAccounts" id="emailAccounts"></select>
+        <input type="hidden" size="60" name="fromName">
+        <input type="hidden" size="60" name="fromAddress">
         <h3>to</h3>
         <label for="toName">name</label><input type="text" size="60" name="toName"><br />
         <label for="toAddress">address</label><input type="text" size="60" name="toAddress"><br />
@@ -101,25 +101,25 @@
     <div id="facebook">
       <h1>facebook</h1>
 
-      <a href="#" onclick="show('facebook', true);">toggle config</a><br />
+      <a href="#" onclick="show('facebook', true);">toggle displaying credentials<br /></a>
       <div id="facebookConfigContainer">
         <form name="facebookConfig">
           <textarea name="source" rows="7" cols="80"> ... loading ...</textarea><br />
-          <input type="submit" value="save" id="saveFacebookConfig">
+      </div><br />
+          <input type="submit" value="set" id="saveFacebookConfig">
           <input type="hidden" name="platform" value="facebook">
           <input type="hidden" name="configType" value="credentials">
           <input type="text" name="location" disabled="disabled" size="60" value="/sockethub/credentials/facebook">
         </form>
-      </div>
 
       <h2>post</h2>
       <form name="facebookPost">
         <input type="hidden" name="platform" value="facebook">
         <h3>from</h3>
         <label for="facebookAccounts">facebook accounts</label>
-        <select name="facebookAccounts" id="facebookAccounts"></select><br />
-        <label for="fromName">name</label><input type="text" size="60" name="fromName"><br />
-        <label for="fromAddress">address</label><input type="text" size="60" name="fromAddress"><br />
+        <select name="facebookAccounts" id="facebookAccounts"></select>
+        <input type="hidden" size="60" name="fromName">
+        <input type="hidden" size="60" name="fromAddress">
         <h3>to</h3>
         <label for="toAddress">address</label><input type="text" size="60" name="toAddress"><br />
         <label for="body">body</label><br />
