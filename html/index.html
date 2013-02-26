@@ -65,16 +65,35 @@
       <a href="#" onclick="show('xmpp', true);">toggle config</a><br />
       <div id="xmppConfigContainer">
         <form name="xmppConfig">
-          <textarea name="source" rows="7" cols="80"></textarea>
-          <br />
-          <input type="submit" value="Save">
-          <input type="text" name="message" disabled="disabled">
+          <textarea name="source" rows="7" cols="80"> ... loading ...</textarea><br />
+      </div><br />
+          <input type="submit" value="set" id="saveXmppConfig">
+          <input type="hidden" name="platform" value="xmpp">
+          <input type="hidden" name="configType" value="credentials">
+          <input type="text" name="location" disabled="disabled" size="60" value="/sockethub/credentials/xmpp">
         </form>
-      </div>
 
-      <div class="verbs">
-        <button onclick="message()">message</button>
-      </div>
+      <form id="xmppMessage">
+        <p>
+        <label for="from">
+          From:
+        </label>
+        <input type="text" name="from" value="">
+        <label for="to">
+          To:
+        </label>
+        <input type="text" name="to" value="">
+        </p>
+      <h2>incoming messages</h2>
+        <textarea name="xmppIncomingMessages" rows="7" cols="80"></textarea><br />
+      <h2>send message</h2>
+        <label for="sendMessage">
+          Text:
+        </label>
+        <input type="text" name="sendMessage" size="60" value="">
+        <br/>
+        <input type="submit" value="Send">
+      </form>
     </div>
 
     <!-- twitter -->
@@ -143,6 +162,18 @@ var exampleConfig = {
           password: '123456',
           host: 'example.com',
         }
+      }
+    }
+  },
+  xmpp: {
+    credentials: {
+      'user@example.com': {
+        actor: {
+          name: "Bob Userman",
+          address: "user@example.com"
+        },
+        jid: 'user@example.com',
+        password: 'abcde'
       }
     }
   },
