@@ -34,9 +34,25 @@ define(['require'], function (require) {
   var platforms = protocols.platforms;
 
   for (var i in platforms) {
-    if (platforms[i].name === 'dispatcher') { continue; }
+    var platform = platforms[i].name;
+    if (platform === 'dispatcher') { continue; }
+
+    // manually check for init and cleanup
+    try {
+      data = require('../lib/protocols/sockethub/platforms/' + platform);
+    } catch (e) {
+      platform_test_suite.tests.push(buildTest(platform, 'init', undefined, e));
+    }
+    platform_test_suite.tests.push(buildTest(platform, 'init', data));
+    try {
+      data = require('../lib/protocols/sockethub/platforms/' + platform);
+    } catch (e) {
+      platform_test_suite.tests.push(buildTest(platform, 'cleanup', undefined, e));
+    }
+    platform_test_suite.tests.push(buildTest(platform, 'cleanup', data));
+
+
     for (var j in platforms[i].verbs) {
-      var platform = platforms[i].name;
       var verb = platforms[i].verbs[j].name;
       var data;
       try {

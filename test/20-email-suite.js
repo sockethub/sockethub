@@ -47,9 +47,14 @@ define(['require'], function (require) {
           env.psession.send = function (job) {
             test.write('psession send called:',job);
           };
-          env.Email = require('../lib/protocols/sockethub/platforms/email');
+          var EmailMod = require('../lib/protocols/sockethub/platforms/email');
           //console.log('email:', env.Email);
-          test.result(true);
+          env.Email = Object.create(EmailMod);
+          env.Email.init(psession).then(function() {
+            test.result(true);
+          }, function(err) {
+            test.result(false, err);
+          });
         });
     },
     tests: [
@@ -92,7 +97,7 @@ define(['require'], function (require) {
             object: { subject: 'Love you', text: 'I will always.' },
             target: { to: [{ name: 'Stevie Wonder', address: 'stevie@wonder.com' }] }
           };
-          env.Email.send(job, env.psession).then(function (err, status, obj) {
+          env.Email.send(job).then(function (err, status, obj) {
             env.respHandler()(err, status, obj);
             test.assert(env.nodemailer.createTransport.called, true);
             //var transport = env.nodemailer.createTransport('SMTP', {});
