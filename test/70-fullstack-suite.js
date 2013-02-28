@@ -49,7 +49,7 @@ define(['require'], function (require) {
         if (config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
           continue;
         }
-        l  = Object.create(listener);
+        l  = listener();
         l.init(config.HOST.MY_PLATFORMS[i]);
       }
 
