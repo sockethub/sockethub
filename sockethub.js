@@ -2,7 +2,7 @@ require("consoleplusplus/console++");
 module.exports = (function() {
   var config = require('./config.js').config;
 
-  var listener, l;
+  var listener;
   var initDispatcher = false;
   if (config.HOST.MY_PLATFORMS.length > 0) {
     listener = require('./lib/protocols/sockethub/listener');
@@ -12,8 +12,8 @@ module.exports = (function() {
       initDispatcher = true;
       continue;
     }
-    //console.log('initializing listener for '+config.HOST.MY_PLATFORMS[i]);
-    l  = Object.create(listener);
+    console.debug(' [bootstrap] initializing listener for '+config.HOST.MY_PLATFORMS[i]);
+    var l  = Object.create(listener);
     l.init(config.HOST.MY_PLATFORMS[i]);
   }
 
