@@ -131,7 +131,9 @@ define(['require'], function (require) {
             platform: "email",
             message:"could not get credentials"
           };
-          env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
+          var json_data = JSON.stringify(data);
+          //console.log('JSON_DATA: ',json_data);
+          env.connection.sendAndVerify(json_data, expected, test, env.confirmProps);
         }
       },
 
