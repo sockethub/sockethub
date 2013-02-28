@@ -4,6 +4,8 @@ module.exports = (function() {
 
   var listener;
   var initDispatcher = false;
+  var dispatcher;
+
   if (config.HOST.MY_PLATFORMS.length > 0) {
     listener = require('./lib/protocols/sockethub/listener');
   }
@@ -13,32 +15,49 @@ module.exports = (function() {
       continue;
     }
     console.debug(' [bootstrap] initializing listener for '+config.HOST.MY_PLATFORMS[i]);
-    var l  = Object.create(listener);
+    var l  = listener();
     l.init(config.HOST.MY_PLATFORMS[i]);
   }
 
   if (initDispatcher) {
-    var dispatcher, promise;
     try {
       dispatcher = require('./lib/protocols/sockethub/dispatcher.js');
-      promise = dispatcher.init();
     } catch (e) {
       throw 'unable to load ../protocols/sockethub/dispatcher.js : ' + e;
     }
 
-    promise.then(function() {
+    dispatcher.init().then(function () {
         // initialize http server
         var server = require('./lib/httpServer').init(config);
         // initialize websocket server
         var wsServer = require('./lib/wsServer').init(config, server, dispatcher);
         console.info(' [*] finished loading' );
         console.log("\n");
-    }, function(err) {
+    }, function (err) {
         console.error(" [sockethub] dispatcher failed initialization, aborting");
         process.exit();
     });
   } else {
     console.info(' [sockethub] finished loading listeners. ready to work boss!');
   }
+
+
+
+  process.on('SIGINT', function() {
+    console.debug("\nCaught SIGINT (Ctrl+C)");
+    console.info("Sockethub is shutting down...");
+
+    console.info("Cleaning up listener sessions...");
+    dispatcher.shutdown().then(function () {
+      console.log("Exiting...");
+      console.log("\n");
+      process.exit();
+    }, function (err) {
+      console.log('Aborting...'+err);
+      console.log("\n");
+      process.exit();
+      //throw 'shutdown error '+err;
+    });
+  });
 
 }());

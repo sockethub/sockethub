@@ -35,8 +35,8 @@ define(['require'], function (require) {
         };
       };
 
-      var Session = require('../lib/protocols/sockethub/session');
-      Session.get('testsess1').
+      env.Session = require('../lib/protocols/sockethub/session');
+      env.Session.get('testsess1').
         then(function (session) {
           env.session = session;
 
@@ -56,6 +56,13 @@ define(['require'], function (require) {
             test.result(false, err);
           });
         });
+    },
+    takedown: function (env, test) {
+      env.Session.destroy(env.session.getSessionID()).then(function () {
+        test.result(true);
+      }, function (err) {
+        test.result(false, err);
+      });
     },
     tests: [
       {

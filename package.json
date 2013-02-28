@@ -22,8 +22,7 @@
     "node-xmpp": "*",
     "nodemailer": "*",
     "gpg": "*",
-    "consoleplusplus": "*",
-    "node-stringprep": "*"
+    "consoleplusplus": "*"
   },
   "devDependencies": {
     "teste": "*"
