@@ -73,26 +73,31 @@
           <input type="text" name="location" disabled="disabled" size="60" value="/sockethub/credentials/xmpp">
         </form>
 
-      <form id="xmppMessage">
+      <form name="xmppMessage">
         <p>
-        <label for="from">
+        <label for="xmppAccounts">xmpp accounts</label>
+        <select name="xmppAccounts" id="xmppAccounts"></select></p>
+        <p>
+        <label for="fromAddress">
           From:
         </label>
-        <input type="text" name="from" value="">
-        <label for="to">
+        <input type="hidden" name="fromName" value="">
+        <input type="text" name="fromAddress" value="">
+        <label for="toAddress">
           To:
         </label>
-        <input type="text" name="to" value="">
+        <input type="hidden" name="toName" value="">
+        <input type="text" name="toAddress" value="">
         </p>
       <h2>incoming messages</h2>
         <textarea name="xmppIncomingMessages" rows="7" cols="80"></textarea><br />
       <h2>send message</h2>
-        <label for="sendMessage">
+        <p><label for="sendMessage">
           Text:
-        </label>
+        </label></p>
         <input type="text" name="sendMessage" size="60" value="">
         <br/>
-        <input type="submit" value="Send">
+        <input type="submit" value="send" id="submitXmppMessage">
       </form>
     </div>
 
@@ -172,8 +177,10 @@ var exampleConfig = {
           name: "Bob Userman",
           address: "user@example.com"
         },
-        jid: 'user@example.com',
-        password: 'abcde'
+        username: 'user',
+        password: 'abcde',
+        server: 'example.com',
+        resource: 'Home'
       }
     }
   },
@@ -203,6 +210,7 @@ document.getElementById('emailAccounts').addEventListener('click', function (e) 
 
 document.getElementById('saveEmailConfig').addEventListener('click', saveConfigEvent, false);
 document.getElementById('saveFacebookConfig').addEventListener('click', saveConfigEvent, false);
+document.getElementById('saveXmppConfig').addEventListener('click', saveConfigEvent, false);
 
 function saveConfigEvent(e) {
   if (e.preventDefault) { e.preventDefault(); }
@@ -273,6 +281,39 @@ document.getElementById('submitEmailMessage').addEventListener('click', function
 }, false);
 
 
+document.getElementById('submitXmppMessage').addEventListener('click', function (e) {
+  if (e.preventDefault) { e.preventDefault(); }
+  var form = e.target.form;
+
+  if ((!form.fromAddress.value) ||
+      (!form.toAddress.value) ||
+      (!form.sendMessage.value)) {
+    sockethub.log(3, null, 'required fields: from address, to address, send message.');
+    return false;
+  }
+
+  var o = {
+    actor: {
+      name: (form.fromName.value) ? form.fromName.value : '',
+      address: form.fromAddress.value,
+    },
+    target: {
+      to: [
+        {
+          address: form.toAddress.value,
+        }
+      ]
+    },
+    object: {
+      text: form.sendMessage.value
+    }
+  };
+
+  sockethub.send('xmpp', o.actor, o.target, o.object);
+  return false;
+}, false);
+
+
 document.getElementById('submitFacebookPost').addEventListener('click', function (e) {
   if (e.preventDefault) { e.preventDefault(); }
   var form = e.target.form;
@@ -332,6 +373,7 @@ function show(platform, config) {
       document[formName].source.value = JSON.stringify(exampleConfig[platform]);
     });
   }
+  console.log('show end');
 }
 
 
@@ -339,7 +381,7 @@ function populateActors(platform, data) {
   if (data.credentials) {
     data = data.credentials;
   }
-  //console.log('populateActors after: ',data);
+  console.log('populateActors after: ',data);
   var keys = Object.keys(data);
   for (var i = 0, num = keys.length; i < num; i = i + 1) {
     if (keys[i] === '@type') { continue; }
@@ -353,7 +395,7 @@ function populateActors(platform, data) {
     }
   }
 
-  //console.log('actors:',actors);
+  console.log('actors:',actors);
   var first = true;
   if (typeof actors[platform] !== 'undefined') {
     var formName;
@@ -362,12 +404,14 @@ function populateActors(platform, data) {
     } else {
       formName = platform+'Message';
     }
+    console.log('platform: '+platform+' formName:'+formName+' accounts:'+platform+'Accounts');
     var s = document.getElementById(platform+"Accounts");
     s.options.length = 0;
     var keys = Object.keys(actors[platform]);
     for (var i = 0, num = keys.length; i < num; i = i + 1) {
       if (keys[i] === '@type') { continue; }
       var key = keys[i];
+      console.log('key:'+key);
       s.options[s.options.length]= new Option(actors[platform][key].address, actors[platform][key].name);
       if (first) {
         setForm(formName, platform, actors[platform][key].address);
@@ -375,11 +419,14 @@ function populateActors(platform, data) {
       }
     }
   }
+  console.log('populateActors end');
 }
 
 function setForm(formName, platform, key) {
+  console.log('setForm: '+formName+', '+platform+', '+key);
   document[formName].fromName.value = actors[platform][key].name;
   document[formName].fromAddress.value = actors[platform][key].address;
+  console.log('setForm end');
 }
     </script>
   </body>
