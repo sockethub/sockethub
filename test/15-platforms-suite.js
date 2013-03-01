@@ -1,12 +1,32 @@
 require("consoleplusplus/console++");
+var session = {
+  log: function (msg) {
+    console.log('SESSION LOG '+msg);
+  },
+  getSessionID: function () {
+    return ['1234567890'];
+  }
+};
+
 function buildTest(platform, verb, data, err) {
   return {
     desc: platform+" - "+verb+" scaffolding check",
     run: function(env, test) {
       if (data === undefined) {
         test.result(false, 'unable to load platform module "'+platform+'"');
+      } else {
+        test.assertTypeAnd(data[verb], 'function', 'function '+platform+'.'+verb+'() does not exist');
+        var promise;
+        if (verb === 'init') {
+          promise = data[verb](session);
+        } else if (verb === 'cleanup') {
+          promise = data[verb]();
+        } else {
+          test.assertType(data[verb], 'function');
+        }
+        test.assertTypeAnd(promise, 'object', 'function '+platform+'.'+verb+'() does not return a promise (not an object)');
+        test.assertType(promise.then, 'function', 'function '+platform+'.'+verb+'() does not return a promise (no .then() function)');
       }
-      test.assertType(data[verb], 'function');
     }
   };
 }
@@ -14,7 +34,8 @@ function buildTest(platform, verb, data, err) {
 var platform_test_suite = {
   name: "platform tests",
   desc: "platform tests, verifying the verbs they define in protocol.js are exported in their platform module",
-  setup: function (env, test) { test.result(true); },
+  setup: function (env, test) {
+    test.result(true); },
   tests: []
 };
 
