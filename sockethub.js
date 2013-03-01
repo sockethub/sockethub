@@ -5,6 +5,8 @@ module.exports = (function() {
   var listener;
   var initDispatcher = false;
   var dispatcher;
+  var sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime();
+
 
   if (config.HOST.MY_PLATFORMS.length > 0) {
     listener = require('./lib/protocols/sockethub/listener');
@@ -16,7 +18,7 @@ module.exports = (function() {
     }
     console.debug(' [bootstrap] initializing listener for '+config.HOST.MY_PLATFORMS[i]);
     var l  = listener();
-    l.init(config.HOST.MY_PLATFORMS[i]);
+    l.init(config.HOST.MY_PLATFORMS[i], sockethubId);
   }
 
   if (initDispatcher) {
@@ -26,7 +28,7 @@ module.exports = (function() {
       throw 'unable to load ../protocols/sockethub/dispatcher.js : ' + e;
     }
 
-    dispatcher.init().then(function () {
+    dispatcher.init(config.HOST.MY_PLATFORMS, sockethubId).then(function () {
         // initialize http server
         var server = require('./lib/httpServer').init(config);
         // initialize websocket server
