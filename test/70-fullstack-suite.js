@@ -44,19 +44,21 @@ define(['require'], function (require) {
         MY_PLATFORMS: [ 'dispatcher', 'email' ] // list of platforms this instance is responsible for
       };
 
+      var sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime();
+
       listener = require('../lib/protocols/sockethub/listener');
       for (var i = 0, len = config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
         if (config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
           continue;
         }
         l  = listener();
-        l.init(config.HOST.MY_PLATFORMS[i]);
+        l.init(config.HOST.MY_PLATFORMS[i], sockethubId);
       }
 
       var dispatcher = require('../lib/protocols/sockethub/dispatcher');
 
       env.server = {};
-      dispatcher.init().then(function() {
+      dispatcher.init(config.HOST.MY_PLATFORMS, sockethubId).then(function() {
         // initialize http server
         env.server.h = require('../lib/httpServer').init(config);
         // initialize websocket server
