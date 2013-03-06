@@ -167,9 +167,7 @@
 
     <!-- log -->
     <pre id="log"></pre>
-<!--
-  {"credentials":{"slvrbckt":{"actor":{"address":"slvrbckt"},"consumer_key":"4u75PUPmDrzIWGAKMAMB7Q","consumer_secret":"wzWJpZL6V2UQcC0mjtorPOJb2bcryrOekvwb6Ie3x6U","access_token_key":"5909712-xsAtbEQOIencnBz2NWoJec5LjPpD0hgQb8vTz2Qbs","access_token_secret":"hsiOwWRDoQyk7awnncso2VkdzU4LWSDVfanUjEME"}}}
--->
+
     <script>
 var actors = {};
 var exampleConfig = {
@@ -210,7 +208,7 @@ var exampleConfig = {
         },
         consumer_key: 'abcde',
         consumer_secret: '1234',
-        access_token_key: 'abcde',
+        access_token: 'abcde',
         access_token_secret: '1234'
       }
     }
@@ -461,7 +459,8 @@ function populateActors(platform, data) {
   var first = true;
   if (typeof actors[platform] !== 'undefined') {
     var formName;
-    if (platform === 'facebook') {
+    if ((platform === 'facebook') ||
+        (platform === 'twitter')) {
       formName = platform+'Post';
     } else {
       formName = platform+'Message';
