@@ -108,17 +108,29 @@
       <a href="#" onclick="show('twitter', true);">toggle config</a><br />
       <div id="twitterConfigContainer">
         <form name="twitterConfig">
-          <textarea name="source" rows="7" cols="80"></textarea>
-          <br />
-          <input type="submit" value="Save">
-          <input type="text" name="message" disabled="disabled">
+          <textarea name="source" rows="7" cols="80"> ... loading ... </textarea><br />
+        </div><br />
+          <input type="submit" value="set" id="saveTwitterConfig">
+          <input type="hidden" name="platform" value="twitter">
+          <input type="hidden" name="configType" value="credentials">
+          <input type="text" name="location" disabled="disabled" size="60" value="/sockethub/credentials/twitter">
         </form>
-      </div>
 
-      <div class="verbs">
-        <button onclick="message()">message</button>
-        <button onclick="post()">post</button>
-      </div>
+      <h2>post</h2>
+      <form name="twitterPost">
+        <input type="hidden" name="platform" value="twitter">
+        <h3>from</h3>
+        <label for="twitterAccounts">twitter accounts</label>
+        <select name="twitterAccounts" id="twitterAccounts"></select>
+        <input type="hidden" size="60" name="fromName">
+        <input type="hidden" size="60" name="fromAddress">
+        <h3>to</h3>
+        <label for="toAddress">address</label><input type="text" size="60" name="toAddress"><br />
+        <label for="body">body</label><br />
+        <textarea name="body" rows="7" cols="80"></textarea>
+        <br />
+        <input type="submit" value="send" id="submitTwitterPost">
+      </form>
     </div>
 
     <!-- facebook -->
@@ -155,7 +167,9 @@
 
     <!-- log -->
     <pre id="log"></pre>
-
+<!--
+  {"credentials":{"slvrbckt":{"actor":{"address":"slvrbckt"},"consumer_key":"4u75PUPmDrzIWGAKMAMB7Q","consumer_secret":"wzWJpZL6V2UQcC0mjtorPOJb2bcryrOekvwb6Ie3x6U","access_token_key":"5909712-xsAtbEQOIencnBz2NWoJec5LjPpD0hgQb8vTz2Qbs","access_token_secret":"hsiOwWRDoQyk7awnncso2VkdzU4LWSDVfanUjEME"}}}
+-->
     <script>
 var actors = {};
 var exampleConfig = {
@@ -188,6 +202,19 @@ var exampleConfig = {
       }
     }
   },
+  twitter: {
+    credentials: {
+      'example_user': {
+        actor: {
+          address: "example_user",
+        },
+        consumer_key: 'abcde',
+        consumer_secret: '1234',
+        access_token_key: 'abcde',
+        access_token_secret: '1234'
+      }
+    }
+  },
   facebook: {
     credentials: {
       'example_user': {
@@ -214,6 +241,7 @@ document.getElementById('emailAccounts').addEventListener('click', function (e) 
 
 document.getElementById('saveEmailConfig').addEventListener('click', saveConfigEvent, false);
 document.getElementById('saveFacebookConfig').addEventListener('click', saveConfigEvent, false);
+document.getElementById('saveTwitterConfig').addEventListener('click', saveConfigEvent, false);
 document.getElementById('saveXmppConfig').addEventListener('click', saveConfigEvent, false);
 
 function saveConfigEvent(e) {
@@ -345,6 +373,36 @@ document.getElementById('submitFacebookPost').addEventListener('click', function
   };
 
   sockethub.post('facebook', o.actor, o.target, o.object);
+  return false;
+}, false);
+
+document.getElementById('submitTwitterPost').addEventListener('click', function (e) {
+  if (e.preventDefault) { e.preventDefault(); }
+  var form = e.target.form;
+
+  if ((!form.toAddress.value) ||
+      (!form.body.value)) {
+    sockethub.log(3, null, 'required fields: to address, and body.');
+    return false;
+  }
+
+  var o = {
+    actor: {
+      address: form.fromAddress.value,
+    },
+    target: {
+      to: [
+        {
+          address: form.toAddress.value,
+        }
+      ]
+    },
+    object: {
+      text: form.body.value
+    }
+  };
+
+  sockethub.post('twitter', o.actor, o.target, o.object);
   return false;
 }, false);
 
