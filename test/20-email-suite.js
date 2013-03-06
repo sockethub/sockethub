@@ -69,6 +69,7 @@ define(['require'], function (require) {
         desc: "set credential details",
         run: function (env, test) {
           var job = {
+            target: 'email',
             object: {
               credentials: {
                 'whitney@houston.com': {
