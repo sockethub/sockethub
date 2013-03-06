@@ -15,7 +15,7 @@ function buildTest(platform, verb, data, err) {
       if (data === undefined) {
         test.result(false, 'unable to load platform module "'+platform+'"');
       } else {
-        test.assertTypeAnd(data[verb], 'function', 'function '+platform+'.'+verb+'() does not exist');
+        test.assertTypeAnd(data[verb], 'function', 'function '+platform+'.'+verb+'() does not exist ['+err+']');
         var promise;
         if (verb === 'init') {
           promise = data[verb](session);
@@ -59,32 +59,30 @@ define(['require'], function (require) {
     if (platform === 'dispatcher') { continue; }
 
     // manually check for init and cleanup
+    var pd;
+    var loadFailed = false;
     try {
-      data = require('../lib/protocols/sockethub/platforms/' + platform);
+      pd = require('../lib/protocols/sockethub/platforms/' + platform);
     } catch (e) {
+      loadFailed = true;
       platform_test_suite.tests.push(buildTest(platform, 'init', undefined, e));
-    }
-    platform_test_suite.tests.push(buildTest(platform, 'init', data));
-    try {
-      data = require('../lib/protocols/sockethub/platforms/' + platform);
-    } catch (e) {
       platform_test_suite.tests.push(buildTest(platform, 'cleanup', undefined, e));
     }
-    platform_test_suite.tests.push(buildTest(platform, 'cleanup', data));
+
+    pdi = pd();
+    platform_test_suite.tests.push(buildTest(platform, 'init', pdi));
+    platform_test_suite.tests.push(buildTest(platform, 'cleanup', pdi));
 
 
     for (var j in platforms[i].verbs) {
       var verb = platforms[i].verbs[j].name;
-      var data;
-      try {
-        data = require('../lib/protocols/sockethub/platforms/' + platform);
-      } catch (e) {
+      if (loadFailed) {
         platform_test_suite.tests.push(buildTest(platform, verb, undefined, e));
+      } else {
+        platform_test_suite.tests.push(buildTest(platform, verb, pdi));
       }
-
-      platform_test_suite.tests.push(buildTest(platform, verb, data));
-
     }
+
   }
   //console.log(platform_test_suite);
   suites.push(platform_test_suite);

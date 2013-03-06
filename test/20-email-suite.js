@@ -49,7 +49,7 @@ define(['require'], function (require) {
           };
           var EmailMod = require('../lib/protocols/sockethub/platforms/email');
           //console.log('email:', env.Email);
-          env.Email = Object.create(EmailMod);
+          env.Email = EmailMod();
           env.Email.init(psession).then(function() {
             test.result(true);
           }, function(err) {
