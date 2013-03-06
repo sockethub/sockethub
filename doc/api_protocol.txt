@@ -1,34 +1,45 @@
 // *********************
 // ** SEARCH (PROFILE)
 // **
+
 // -- SEND
 {
   "verb": "search",
   "rid" : "1234",
+  "platform": "webfinger",
   "target": [
-    "user@example.com",
-    "foobar@example.com"
+    {
+      "address": "user@example.com",
+    },
+    {
+      "address": "foobar@example.com"
+    }
   ]
 }
+
 
 // -- RESPONSE
 {
   "rid": "1234",
-  "response": {
-    "user@example.com" : {
-      "address" : "user@example.com",
-      "status" : true,
-      "protocol" : "WebFinger",
-      "data" : { ... }
-    },
-    "foo@bar.net" : {
-      "address" : "foobar@example.com",
-      "status" : false,
-      "message" : "unable to query profile data for foo@bar.net",
-      "protocol" : ""
-      "data" : {}
-    }
-  }
+  "verb": "search",
+  "platform": "webfinger",
+  "status": true,
+  "actor": {
+    "address": "user@example.com"
+  },
+  "object": { ... }
+}
+
+{
+  "rid": "1234",
+  "verb": "search",
+  "platform": "webfinger",
+  "status": false,
+  "actor": {
+    "address": "foobar@example.com"
+  },
+  "object": { ... }
+  "message" : "unable to query profile data for foo@bar.net",
 }
 
 // notes: should the "data" returned be "cleansed" to a standard format? or
@@ -42,6 +53,7 @@
 // **********
 // ** MESSAGE
 // **
+
 // -- SEND
   {  // message was sent from an email client, to an email address
     "rid" : "981212",
@@ -100,7 +112,7 @@
     "status" : false,
     "verb" : "send",
     "platform" : "icq",
-    "error" : "could not send message to ICQ number 182940298284"
+    "message" : "could not send message to ICQ number 182940298284"
   },
   {
     "rid" : "abcde",
@@ -193,7 +205,7 @@
     "status" : false,
     "verb" : "post",
     "platform" : "facebook",
-    "error" : "could not post to Mark Zuckerbergs wall, you are not his friend!"
+    "message" : "could not post to Mark Zuckerbergs wall, you are not his friend!"
   },
   {
     "rid" : "3453",
@@ -204,28 +216,24 @@
 
 
 // -- RECEIVE  ( receiving new messages )
-[
-  {
-    "rid" : "",
-    "actor" : {
-      "name" : "Sarah Palin",
-      "address" : "sarahpalin",
-    },
-    "platform" : "facebook",
-    "verb" : "post",
-    "object" : {
-      "text" : "Jello shots and slip & slide after work again Donny?",
-    },
-    "target" : {
-      "to" : [
-        {
-          "name" : "Donald Trump",
-          "address" :  "DonaldTrump",
-        }
-      ],
+{
+  "actor" : {
+    "name" : "Sarah Palin",
+    "address" : "sarahpalin",
+  },
+  "platform" : "facebook",
+  "verb" : "post",
+  "object" : {
+    "text" : "Jello shots and slip & slide after work again Donny?",
+  },
+  "target" : [
+    {
+      "type" : "to",
+      "name" : "Donald Trump",
+      "address" :  "DonaldTrump",
     }
-  }
-]
+  ],
+}
 
 
 
@@ -240,25 +248,25 @@
   {
     "rid" : "555555",
     "platform" : "xmpp"
-    "target" : "billy.joel@gmail.com",
+    "target" : [ { "address" : "billy.joel@gmail.com" } ],
     "verb": "subscribe"
   },
   {
     "rid" : "555556",
     "platform" : "icq"
-    "target" : "182940298284",
+    "target" : [ { "address" : "182940298284" } ],
     "verb": "subscribe"
   },
   {
     "rid" : "555557",
     "platform" : "yahoo"
-    "target" : "foobar",
+    "target" : [ { "address" : "foobar" } ],
     "verb": "subscribe"
   },
   {
     "rid" : "555558",
     "platform" : "aim"
-    "target" : "michael",
+    "target" : [ { "address" : "michael" } ],
     "verb": "subscribe"
   },
 ]
@@ -267,7 +275,7 @@
 // -- RECEIVE
 {
   "verb" : "enter",
-  "actor" : "billy.joel@gmail.com",
+  "actor" : { "billy.joel@gmail.com" },
   "platform" : "xmpp"
 }
 
