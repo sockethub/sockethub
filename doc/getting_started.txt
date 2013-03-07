@@ -64,3 +64,68 @@ sock.onclose = function() {
   }
 }
 ````
+
+# 6. Set credentials
+Let's assume your app allows the user to post something on facebook. As you can see in
+[the schema definition](https://github.com/sockethub/sockethub/blob/506bdd5d065e254a652ce57ff6d7925564343b54/lib/protocols/sockethub/platforms/facebook.js#L10)
+facebook credentials take the following form:
+````js
+{
+  example_user: {
+    actor: {
+      address: 'example_user'
+    },
+    access_token: 'abcde'
+  }
+}
+````
+Other platforms take different syntaxes, see the
+[demo code](https://github.com/sockethub/sockethub/blob/506bdd5d065e254a652ce57ff6d7925564343b54/html/index.html#L161)
+for an overview.
+
+So the way to send the credentials is with a 'set' verb, as follows:
+````js
+sock.send(JSON.stringify({
+  platform: 'dispatcher',
+  verb: 'set',
+  object: {
+    credentials: {
+      username: {
+        actor: {
+          address: "username"
+        },
+        access_token: "..."
+      }
+    }
+  },
+  target: {
+    platform: 'facebook'
+  },
+  rid: new Date().getTime()
+}));
+````
+
+# 7. Post something
+
+Once you've connected, registered, and set the credentials, actually posting something to a platform is simple. To let
+the user post something onto their own feed, your app should do the following:
+````js
+sock.send(JSON.stringify({
+  platform: 'facebook',
+  verb: 'post',
+  actor: {
+    address: 'example_user'
+  },
+  object: {
+    text: 'hello world!'
+  },
+  target: {
+    to: [
+      {
+        address: 'me'
+      }
+    ]
+  },
+  rid: new Date().getTime()
+}));
+````
