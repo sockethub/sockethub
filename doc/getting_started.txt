@@ -56,11 +56,11 @@ Put all the previous code (setting the sock variable, and assigning its event ha
 called 'connect', and then (also inside that 'connect' function), add an onclose handler:
 ````js
 sock.onclose = function() {
-  if(secret) {//again, make sure this variable is avaiable in the parent scope
+  if(secret) {//again, make sure this variable is available in the parent scope
     connect();
   } else {
     //will also happen if connection was refused or timed out:
-    handler.error('could not connect to the sockethub server on '+host);
+    console.error('could not connect to the sockethub server on '+host);
   }
 }
 ````
