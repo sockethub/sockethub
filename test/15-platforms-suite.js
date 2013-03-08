@@ -13,7 +13,7 @@ function buildTest(platform, verb, data, err) {
     desc: platform+" - "+verb+" scaffolding check",
     run: function(env, test) {
       if (data === undefined) {
-        test.result(false, 'unable to load platform module "'+platform+'"');
+        test.result(false, 'unable to load platform module "'+platform+'" : '+err);
       } else {
         test.assertTypeAnd(data[verb], 'function', 'function '+platform+'.'+verb+'() does not exist ['+err+']');
         var promise;
@@ -69,15 +69,16 @@ define(['require'], function (require) {
       platform_test_suite.tests.push(buildTest(platform, 'cleanup', undefined, e));
     }
 
-    pdi = pd();
-    platform_test_suite.tests.push(buildTest(platform, 'init', pdi));
-    platform_test_suite.tests.push(buildTest(platform, 'cleanup', pdi));
-
+    if (!loadFailed) {
+      pdi = pd();
+      platform_test_suite.tests.push(buildTest(platform, 'init', pdi));
+      platform_test_suite.tests.push(buildTest(platform, 'cleanup', pdi));
+    }
 
     for (var j in platforms[i].verbs) {
       var verb = platforms[i].verbs[j].name;
       if (loadFailed) {
-        platform_test_suite.tests.push(buildTest(platform, verb, undefined));
+        platform_test_suite.tests.push(buildTest(platform, verb, undefined, 'failed to load platform module'));
       } else {
         platform_test_suite.tests.push(buildTest(platform, verb, pdi));
       }

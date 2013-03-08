@@ -30,6 +30,21 @@ define(['require'], function (require) {
         MY_PLATFORMS: [ 'dispatcher', 'email' ] // list of platforms this instance is responsible for
       };
 
+      // test redis service
+      var redis = require('redis');
+      console.log('testing redis connectivity');
+      try {
+        client = redis.createClient();
+        client.on('subscribe', function(channel, count) {
+          console.log('client subscribed to '+channel);
+        });
+        client.subscribe('test');
+        client.quit();
+      } catch (e) {
+        console.error(' [sockethub] cannot connect to redis ' + e);
+        process.exit();
+      }
+
       var sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime();
 
       listener = require('../lib/protocols/sockethub/listener');

@@ -182,7 +182,7 @@ define(['require'], function(require) {
         desc: "Session#getFile returns a promise",
         run: function(env, test) {
           var promise = env.session.getFile('storage', 'foo/bar');
-          console.log('promise: ', promise);
+          console.log('-- PROMISE: ', promise);
           test.assertTypeAnd(promise, 'object');
           test.assertType(promise.then, 'function');
         }
