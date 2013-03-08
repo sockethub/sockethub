@@ -77,7 +77,7 @@ define(['require'], function (require) {
     for (var j in platforms[i].verbs) {
       var verb = platforms[i].verbs[j].name;
       if (loadFailed) {
-        platform_test_suite.tests.push(buildTest(platform, verb, undefined, e));
+        platform_test_suite.tests.push(buildTest(platform, verb, undefined));
       } else {
         platform_test_suite.tests.push(buildTest(platform, verb, pdi));
       }
