@@ -7,6 +7,19 @@ module.exports = (function() {
   var dispatcher;
   var sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime();
 
+  // test redis service
+  var redis = require('redis');
+  var client;
+  try {
+    client = redis.createClient();
+  } catch (e) {
+    console.error(' [sockethub] cannot connect to redis ' + e);
+    process.exit();
+  }
+  client.quit();
+  client = '';
+  redis = '';
+
 
   if (config.HOST.MY_PLATFORMS.length > 0) {
     listener = require('./lib/protocols/sockethub/listener');

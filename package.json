@@ -19,7 +19,8 @@
     "imap": "*",
     "promising": "*",
     "twit": "*",
-    "node-xmpp": "*",
+    "simple-xmpp": "*",
+    "node-stringprep": "*",
     "nodemailer": "*",
     "gpg": "*",
     "consoleplusplus": "*"
