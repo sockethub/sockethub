@@ -1,6 +1,8 @@
 language: node_js
 node_js:
   - 0.8
+before_install:
+  - apt-get install libicu-devel
 before_script: cp config.secrets.js.template config.secrets.js
 script: npm test
 install:
