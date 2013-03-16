@@ -110,6 +110,36 @@ define(['require'], function (require) {
       },
 
       {
+        desc: "send invalid verb",
+        willFail: true,
+        run: function (env, test) {
+          var data = {
+            platform: "email",
+            verb: "foobar",
+            rid: "123456"
+          };
+          var expected = {
+
+          };
+          /*
+          var confirmProps = {
+            status: false,
+            rid: "123456",
+            verb: 'confirm',
+            platform: "email",
+            message: "unknown verb received: foobar"
+          };*/
+          env.connection.sendWith({
+            send: JSON.stringify(data),
+            expect: expected,
+            testObj: test,
+            confirmProps: env.confirmProps,
+            autoVerify: true
+          });
+        }
+      },
+
+      {
         desc: "attempt send without credentials",
         run: function (env, test) {
           var data = {
