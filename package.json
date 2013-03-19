@@ -24,7 +24,7 @@
     "nodemailer": "*",
     "gpg": "*",
     "consoleplusplus": "*",
-    "node-feedparser": "*"
+    "feedparser": "*"
   },
   "devDependencies": {
     "teste": "*"
