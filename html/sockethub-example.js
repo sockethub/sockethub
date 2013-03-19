@@ -60,6 +60,22 @@ var sockethub = (function (window, document, undefined) {
       address: ""
     }
   };
+  sendData.fetch = {
+    verb: "fetch",
+    target : {
+      to: [  // at least one record for 'to' required
+        {
+          address: ""
+        }
+      ]
+    },
+    object: {
+      text: ""
+    },
+    actor: {
+      address: ""
+    }
+  };
   sendData.set = {
     "verb" : "set",
     "platform" : "dispatcher",
@@ -292,6 +308,18 @@ var sockethub = (function (window, document, undefined) {
     log(1, r.rid, rawMessage);
     sock.send(rawMessage);
   };
+
+  pub.fetch = function (platform, actor, target, object) {
+    var r = sendData.fetch;
+    r.platform = platform;
+    r.object = object;
+    r.actor = actor;
+    r.target = target;
+    r.rid = getRID('fetch');
+    var rawMessage = JSON.stringify(r);
+    log(1, r.rid, rawMessage);
+    sock.send(rawMessage);
+  }
 
   pub.submit = function (o) {
     o.rid = getRID(o.verb);

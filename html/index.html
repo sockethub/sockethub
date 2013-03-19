@@ -21,6 +21,7 @@
       <a id="display-xmpp" href="#" onclick="show('xmpp');">xmpp</a>
       <a id="display-twitter" href="#" onclick="show('twitter');">twitter</a>
       <a id="display-facebook" href="#" onclick="show('facebook');">facebook</a>
+      <a id="display-rss" href="#" onclick="show('rss');">rss</a>
     </div>
 
     <!-- email -->
@@ -165,6 +166,20 @@
       </form>
     </div>
 
+    <!-- rss -->
+    <div id="rss">
+      <h1>rss</h1>
+
+      <h2>fetch</h2>
+      <form name="rssFetch">
+        <input type="hidden" name="platform" value="rss">
+        <h3>url</h3>
+        <label for="toAddress">address</label><input type="text" size="60" name="toAddress"><br />
+        <br />
+        <input type="submit" value="send" id="submitRSSFetch">
+      </form>
+    </div>
+
     <!-- log -->
     <pre id="log"></pre>
 
@@ -222,7 +237,8 @@ var exampleConfig = {
         access_token: 'abcde'
       }
     }
-  }
+  },
+  rss: {}
 };
 
 document.getElementById('emailAccounts').addEventListener('click', function (e) {
@@ -403,6 +419,35 @@ document.getElementById('submitTwitterPost').addEventListener('click', function 
   sockethub.post('twitter', o.actor, o.target, o.object);
   return false;
 }, false);
+
+
+document.getElementById('submitRSSFetch').addEventListener('click', function (e) {
+  if (e.preventDefault) { e.preventDefault(); }
+  var form = e.target.form;
+
+  if (!form.toAddress.value) {
+    sockethub.log(3, null, 'required fields: to address, and body.');
+    return false;
+  }
+
+  var o = {
+    actor: {
+      address: ""
+    },
+    target: {
+      to: [
+        {
+          address: form.toAddress.value,
+        }
+      ]
+    },
+    object: {}
+  };
+
+  sockethub.fetch('rss', o.actor, o.target, o.object);
+  return false;
+}, false);
+
 
 
 function show(platform, config) {

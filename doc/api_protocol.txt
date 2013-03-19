@@ -244,32 +244,32 @@
 // ** PRESENCE
 // **
 // -- SEND
-[  // subscribes to list of user-addresses
-  {
-    "rid" : "555555",
-    "platform" : "xmpp"
-    "target" : [ { "address" : "billy.joel@gmail.com" } ],
-    "verb": "subscribe"
-  },
-  {
-    "rid" : "555556",
-    "platform" : "icq"
-    "target" : [ { "address" : "182940298284" } ],
-    "verb": "subscribe"
-  },
-  {
-    "rid" : "555557",
-    "platform" : "yahoo"
-    "target" : [ { "address" : "foobar" } ],
-    "verb": "subscribe"
-  },
-  {
-    "rid" : "555558",
-    "platform" : "aim"
-    "target" : [ { "address" : "michael" } ],
-    "verb": "subscribe"
-  },
-]
+// subscribes to list of user-addresses
+{
+  "rid" : "555555",
+  "platform" : "xmpp"
+  "target" : [ { "address" : "billy.joel@gmail.com" } ],
+  "verb": "subscribe"
+},
+{
+  "rid" : "555556",
+  "platform" : "icq"
+  "target" : [ { "address" : "182940298284" } ],
+  "verb": "subscribe"
+},
+{
+  "rid" : "555557",
+  "platform" : "yahoo"
+  "target" : [ { "address" : "foobar" } ],
+  "verb": "subscribe"
+},
+{
+  "rid" : "555558",
+  "platform" : "aim"
+  "target" : [ { "address" : "michael" } ],
+  "verb": "subscribe"
+},
+
 
 
 // -- RECEIVE
@@ -279,3 +279,14 @@
   "platform" : "xmpp"
 }
 
+
+// **********
+// ** RSS
+// **
+// -- SEND
+{
+  "rid" : "5128",
+  "platform" : "rss"
+  "target" : [ { "address" : "http://blog.example.com/rss" } ],
+  "verb": "fetch"
+}

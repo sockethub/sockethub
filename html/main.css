@@ -36,7 +36,7 @@ h4 {
 #controls a {
   margin-left: 10px;
 }
-#email, #xmpp, #facebook, #twitter {
+#email, #xmpp, #facebook, #twitter, #rss {
   display: none;
 }
 #emailConfigContainer, #xmppConfigContainer, #facebookConfigContainer, #twitterConfigContainer {
