@@ -280,6 +280,8 @@
 }
 
 
+
+
 // **********
 // ** RSS
 // **
@@ -289,4 +291,52 @@
   "platform" : "rss"
   "target" : [ { "address" : "http://blog.example.com/rss" } ],
   "verb": "fetch"
+}
+
+
+
+// **********
+// ** REQUEST-FRIEND
+// **
+// -- SEND
+{
+  "rid" : "173945",
+  "platform" : "xmpp",
+  "actor" : {
+    "address" : "user@jabber.org"
+  },
+  "target" : [
+    {
+      "address" : "user@gmail.com"
+    },
+  ]
+  "verb" : "request-friend"
+}
+
+{
+  "rid" : "173945",
+  "platform" : "xmpp",
+  "actor" : {
+    "address" : "user@jabber.org"
+  },
+  "target" : [
+    {
+      "address" : "user@gmail.com"
+    },
+  ]
+  "verb" : "remove-friend"
+}
+
+{
+  "rid" : "173945",
+  "platform" : "xmpp",
+  "actor" : {
+    "address" : "user@jabber.org"
+  },
+  "target" : [
+    {
+      "address" : "user@gmail.com"
+    },
+  ]
+  "verb" : "make-friend"
 }
