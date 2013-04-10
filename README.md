@@ -6,7 +6,6 @@ The polyglot approach to the federated social web.
 
 about
 -----
-
 Sockethub aims to implement a polyglot (speaking all the languages of the interwebs) approach to social and other interactive messaging applications, and assist [unhosted web app](http://unhosted.org) developers by providing server-independent, server-side functionality.
 
 Example uses of sockethub are, writing and receiving messages (SMTP, Facebook, Twitter, Diaspora), instant messaging (XMPP, AIM, MSN), discovery (WebFinger, OpenGraph). The architecture of sockethub is extensible and supports implementation of more 'platforms' to carry out tasks, sockethub can be run on your own server, or provided as a service by a service provider, or app store.
@@ -15,7 +14,19 @@ status
 ------
 Sockethub is currently in very early stages of development, though already basic proof of concepts for XMPP are working, as well as progress being made to support SMTP, Facebook and Twitter. The implementtion of each 'platform' is very modular and straightforward to implement. If you are a developer looking to contribute, open an issue and explain what you'd like to implement for help getting started.
 
+features
+--------
+We use Activity Streams to map the various social networks terms to a set of 'verbs' which identify the underlying action. For example,for a facebook friend request/accept cycle, we would use the activity stream verbs 'request-friend', 'remove-friend', 'make-friend'.  
 
+Below is a list of platforms we're currently working on and their activity stream verbs (when appropriate) or verbs that are specific to sockethub, both the completed and not yet implemented ones. They all map to the platforms actions.
+
+##### [platform] - [verbs]
+ * Email - <kbd>![completed](http://sockethub.org/img/checkmark.png) send</kbd> <kbd>follow (poll for incoming messages)</kbd>
+ * XMPP - <kbd>![completed](http://sockethub.org/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) request-friend</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) remove-friend</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) make-friend</kbd>
+ * Facebook - <kbd>![completed](http://sockethub.org/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>follow</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd>
+ * Twitter - <kbd>![completed](http://sockethub.org/img/checkmark.png) post</kbd>
+ * RSS - <kbd>![completed](http://sockethub.org/img/checkmark.png) fetch</kbd>
+ * WebFinger - <kbd>search</kbd>
 
 installation & setup
 --------------------
@@ -25,6 +36,11 @@ installation & setup
   * redis server
 
   You will need to have a redis server up and running.
+  
+  * node.js package dependencies
+
+  Some of the node.js packages require operating system libraries in order to function correctly.
+      - simple-xmpp : libexpat1 libexpat1-dev libicu-dev
 
 ### install
 
