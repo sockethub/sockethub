@@ -36,6 +36,11 @@ installation & setup
   * redis server
 
   You will need to have a redis server up and running.
+  
+  * node.js package dependencies
+
+  Some of the node.js packages require operating system libraries in order to function correctly.
+      - simple-xmpp : libexpat1 libexpat1-dev libicu-dev
 
 ### install
 
