@@ -340,3 +340,21 @@
   ]
   "verb" : "make-friend"
 }
+
+// **************
+// ** XMPP ROSTER
+// **
+// -- SEND
+{
+  "rid" : "d4df5",
+  "platform" : "xmpp",
+  "actor" : {
+    "address" : "user@jabber.org"
+  },
+  "target" : [
+    {
+      "address" : "roster"
+    },
+  ]
+  "verb" : "fetch"
+}
