@@ -23,10 +23,11 @@ Below is a list of platforms we're currently working on and their activity strea
 ##### [platform] - [verbs]
  * Email - <kbd>![completed](http://sockethub.org/img/checkmark.png) send</kbd> <kbd>follow (poll for incoming messages)</kbd>
  * XMPP - <kbd>![completed](http://sockethub.org/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) request-friend</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) remove-friend</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) make-friend</kbd>
- * Facebook - <kbd>![completed](http://sockethub.org/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>follow</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd>
- * Twitter - <kbd>![completed](http://sockethub.org/img/checkmark.png) post</kbd>
+ * Facebook - <kbd>![completed](http://sockethub.org/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd>
+ * Twitter - <kbd>![completed](http://sockethub.org/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd>
  * RSS - <kbd>![completed](http://sockethub.org/img/checkmark.png) fetch</kbd>
  * WebFinger - <kbd>search</kbd>
+ * IRC - <kbd>send</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd>
 
 installation & setup
 --------------------
