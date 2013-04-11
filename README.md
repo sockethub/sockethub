@@ -27,6 +27,7 @@ Below is a list of platforms we're currently working on and their activity strea
  * Twitter - <kbd>![completed](http://sockethub.org/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd>
  * RSS - <kbd>![completed](http://sockethub.org/img/checkmark.png) fetch</kbd>
  * WebFinger - <kbd>search</kbd>
+ * IRC - <kbd>send</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd>
 
 installation & setup
 --------------------
