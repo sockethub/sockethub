@@ -59,21 +59,19 @@
     "rid" : "981212",
     "verb" : "send",
     "platform" : "email",
-    "target" : {
-      "to" : [  // at least one record for 'to' required
-        {
-          "name" : "Michael Jackson",
-          "address" : "michael@thejacksonfive.com"
-        }
-      ],
-      "cc" : [
-        {
-          "name" : "Cindi Lauper",
-          "address" : "cindi@girlsjustwannahavefun.biz"
-        }
-      ],  // ignored if undefined or empty
-      "bcc" : []  // ignored if undefined or empty
-    },
+    "target" : [
+      {
+        "field" : "to",  // defaults to 'to', can be: to, cc, bcc
+        "name" : "Michael Jackson",
+        "address" : "michael@thejacksonfive.com"
+      },
+
+      {
+        "field": "cc",
+        "name" : "Cindi Lauper",
+        "address" : "cindi@girlsjustwannahavefun.biz"
+      }
+    ],
     "object" : {
       "headers" : {},  // name/value pairs of header data to use
       "subject" : "Hello ...",  // URL encoded string
@@ -85,6 +83,7 @@
       "address": "lionel@dancingontheceiling.com"
     }
   },
+
   {  // message was sent from an ICQ client to another ICQ user
     "rid" : "981213",
     "verb" : "send",
@@ -97,10 +96,12 @@
       "name" : "Michael Stipe",
       "address" : "7732",
     },
-    "target" : {
-      "name" : "Paris Hilton",
-      "address"  : "182940298284"
-    }
+    "target" : [
+      {
+        "name" : "Paris Hilton",
+        "address"  : "182940298284"
+      }
+    ]
   }
 }
 
@@ -137,20 +138,18 @@
       "text" : "test email!",
       "headers" : { ... },
     },
-    "target" : {
-      "to" : [
-        {
-          "name" : "You",
-          "address" :  "you@readingthis.me",
-        }
-      ],
-      "cc" : [
-        {
-          "name" : "User",
-          "address" : "user@example.com"
-        }
-      ]
-    }
+    "target" : [
+      {
+        "field": "to",
+        "name" : "You",
+        "address" :  "you@readingthis.me",
+      },
+      {
+        "field": "cc"
+        "name" : "User",
+        "address" : "user@example.com"
+      }
+    ]
   }
 ]
 
@@ -167,14 +166,13 @@
     "rid" : "5566",
     "verb" : "post",
     "platform" : "facebook",
-    "target" : {
-      "to" : [  // to not required, but used for public posts to another user
-        {
-          "name" : "Mark Zuckerberg",
-          "address" : "zuck"
-        }
-      ]
-    },
+    "target" : [  // target not required, used when posting directly to someone elses wall
+      {
+        "field": "to"
+        "name" : "Mark Zuckerberg",
+        "address" : "zuck"
+      }
+    ],
     "object" : {
       "subject" : "",  // probably never used for posts ?
       "text" : "Jello shots and slip & slide after work?",
@@ -228,7 +226,7 @@
   },
   "target" : [
     {
-      "type" : "to",
+      "field" : "to",
       "name" : "Donald Trump",
       "address" :  "DonaldTrump",
     }
@@ -340,6 +338,8 @@
   ]
   "verb" : "make-friend"
 }
+
+
 
 // **************
 // ** XMPP ROSTER

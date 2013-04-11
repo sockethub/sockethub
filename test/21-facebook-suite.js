@@ -101,7 +101,7 @@ define(['require'], function (require) {
             platform: 'facebook',
             actor: { address: 'fbuser' },
             object: { text: 'blah blah' },
-            target: { to: [{ address: 'fbuser2' }] }
+            target: [{ address: 'fbuser2' }]
           };
           env.Facebook.post(job).then(function (err, status, obj) {
             env.respHandler()(err, status, obj);

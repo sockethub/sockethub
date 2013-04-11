@@ -26,6 +26,12 @@ define(['require'], function (require) {
             if (typeof callbacks.online === 'function') {
               callbacks['online']();
             }
+          }),
+          getRoster: new test.Stub(function (creds) {
+            console.log('XMPP STUB: getRoster');
+            //if (typeof callbacks.online === 'function') {
+            //  callbacks['online']();
+            //}
           })
         };
       })();
@@ -131,7 +137,7 @@ define(['require'], function (require) {
             verb: 'send',
             platform: 'xmpp',
             actor: { address: 'user@example.com' },
-            target: { to: [{ address: 'test@test.com' }] },
+            target: [{ address: 'test@test.com' }],
             object: { text: 'hello world' }
           };
           env.XMPP.send(job).then(function () {
