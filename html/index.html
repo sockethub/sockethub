@@ -308,14 +308,12 @@ document.getElementById('submitEmailMessage').addEventListener('click', function
       name: (form.fromName.value) ? form.fromName.value : '',
       address: form.fromAddress.value,
     },
-    target: {
-      to: [
-        {
-          name: (form.toName.value) ? form.toName.value : '',
-          address: form.toAddress.value,
-        }
-      ]
-    },
+    target: [
+      {
+        name: (form.toName.value) ? form.toName.value : '',
+        address: form.toAddress.value,
+      }
+    ],
     object: {
       subject: form.subject.value,
       text: form.body.value
@@ -343,13 +341,11 @@ document.getElementById('submitXmppMessage').addEventListener('click', function 
       name: (form.fromName.value) ? form.fromName.value : '',
       address: form.fromAddress.value,
     },
-    target: {
-      to: [
-        {
-          address: form.toAddress.value,
-        }
-      ]
-    },
+    target: [
+      {
+        address: form.toAddress.value,
+      }
+    ],
     object: {
       text: form.sendMessage.value
     }
@@ -374,13 +370,11 @@ document.getElementById('submitFacebookPost').addEventListener('click', function
     actor: {
       address: form.fromAddress.value,
     },
-    target: {
-      to: [
-        {
-          address: form.toAddress.value,
-        }
-      ]
-    },
+    target: [
+      {
+        address: form.toAddress.value,
+      }
+    ],
     object: {
       text: form.body.value
     }
@@ -404,13 +398,11 @@ document.getElementById('submitTwitterPost').addEventListener('click', function 
     actor: {
       address: form.fromAddress.value,
     },
-    target: {
-      to: [
-        {
-          address: form.toAddress.value,
-        }
-      ]
-    },
+    target: [
+      {
+        address: form.toAddress.value,
+      }
+    ],
     object: {
       text: form.body.value
     }
@@ -434,13 +426,11 @@ document.getElementById('submitRSSFetch').addEventListener('click', function (e)
     actor: {
       address: ""
     },
-    target: {
-      to: [
-        {
-          address: form.toAddress.value,
-        }
-      ]
-    },
+    target: [
+      {
+        address: form.toAddress.value,
+      }
+    ],
     object: {}
   };
 
