@@ -205,6 +205,28 @@ define(['require'], function (require) {
       },
 
       {
+        desc: "register with invalid secret",
+        willFail: true,
+        run: function (env, test) {
+          var data = {
+            platform: "dispatcher",
+            object: {
+              secret: 'bababa'
+            },
+            verb: "register",
+            rid: "123454"
+          };
+          var expected = {
+            status: true,
+            rid: "123454",
+            verb: 'register',
+            platform: "dispatcher"
+          };
+          env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
+        }
+      },
+
+      {
         desc: "register",
         run: function (env, test) {
           var data = {
