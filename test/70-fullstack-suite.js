@@ -150,9 +150,7 @@ define(['require'], function (require) {
             object: {
               text: 'lalala'
             },
-            target: {
-              to: [{ address: 'foo@bar.com' }]
-            },
+            target: [{ address: 'foo@bar.com' }],
             verb: "send",
             rid: "123454"
           };
@@ -210,7 +208,7 @@ define(['require'], function (require) {
             platform: 'email',
             actor: { address: 'user@example.com' },
             object: { subject: 'test email subject', text: 'test email body' },
-            target: { to: [{ address: 'user2@example.com.com' }] }
+            target: [{ address: 'user2@example.com.com' }]
           };
 
           var expected = {

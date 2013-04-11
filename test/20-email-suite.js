@@ -103,7 +103,7 @@ define(['require'], function (require) {
             platform: 'email',
             actor: { name: 'Whitney Houston', address: 'whitney@houston.com' },
             object: { subject: 'Love you', text: 'I will always.' },
-            target: { to: [{ name: 'Stevie Wonder', address: 'stevie@wonder.com' }] }
+            target: [{ field: "to", name: 'Stevie Wonder', address: 'stevie@wonder.com' }]
           };
           env.Email.send(job).then(function (err, status, obj) {
             env.respHandler()(err, status, obj);
