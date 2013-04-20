@@ -47,7 +47,7 @@ define(['require'], function (require) {
 
       var sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime();
 
-      listener = require('../lib/protocols/sockethub/listener');
+      listener = require('./../lib/protocols/sockethub/listener');
       for (var i = 0, len = config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
         if (config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
           continue;
