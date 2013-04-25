@@ -1,4 +1,4 @@
-As the major social network vendors increase their platform and customer lock-in, and the open social web platform alternatives continue to be dispersed and re-invent the wheel, we're faced with many different, mostly non-interoperable platforms, protocols and APIs to choose from.
+As the major social network vendors increase their customer lock-in, and the open social web platform alternatives continue to be dispersed and re-invent the wheel, we're faced with many different, mostly non-interoperable platforms, protocols and APIs to choose from.
 
 Developers must spend their time picking and choosing protocols and APIs to integrate into their applications, banking on the increased lock-in of their chosen platforms to ensure the applications’ relevance and longevity. Open-source application developers, are either limited by what they can realize completely in the browser, or faced with tying their application to backend servers to carry out parts of the functionality, or store user data.
 
