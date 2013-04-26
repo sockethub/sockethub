@@ -61,6 +61,10 @@ installation & setup
 
 **remoteStorage.js note:** *trying to use a file:// URL for this will not work because remoteStorage.js depends on having a localStorage origin available.*
 
+### adding a platform
+
+See [doc/adding_a_platform.md](doc/adding_a_platform.md)
+
 license
 -------
 Sockethub is licensed under the [AGPLv3](https://github.com/sockethub/sockethub/blob/master/LICENSE)

@@ -25,7 +25,12 @@ function buildTest(platform, verb, data, err) {
           test.assertType(data[verb], 'function');
         }
         test.assertTypeAnd(promise, 'object', 'function '+platform+'.'+verb+'() does not return a promise (not an object)');
-        test.assertType(promise.then, 'function', 'function '+platform+'.'+verb+'() does not return a promise (no .then() function)');
+        test.assertTypeAnd(promise.then, 'function', 'function '+platform+'.'+verb+'() does not return a promise (no .then() function)');
+        promise.then(function () {
+          test.result(true, 'promise fulfilled');
+        }, function () {
+          test.result(false, 'promise rejected');
+        });
       }
     }
   };
