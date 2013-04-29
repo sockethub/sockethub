@@ -1,5 +1,5 @@
 # 1. Install
-make sure you followed the [install instructions](install.txt)
+make sure you followed the [install instructions](install.md)
 
 # 2. Connect
 Your unhosted web app will have to connect to the user's sockethub instance.

@@ -10,5 +10,5 @@ cp config.secrets.js.template config.secrets.js
 node sockethub.js
 ````
 * browse to http://localhost:10550/ and play around with the examples
-* to let your unhosted web app talk to your sockethub instance, follow [getting_started.txt](getting_started.txt)
+* to let your unhosted web app talk to your sockethub instance, follow [getting started](getting_started.md)
 * be aware of http://dev.mensfeld.pl/2012/07/err-unknown-command-blpop-for-resque-redis-and-rails/
