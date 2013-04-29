@@ -2,8 +2,23 @@
 
 Sockethub is an abstraction layer on top of the many different protocols of the web. Although the project is still young and only a small portion of the planned APIs are supported (the logic of which is contained in what are known as *platforms*), the goal is to continue to improve platform coverage over time.
 
+Here is a basic, and generalized, visual of the sockethub architecture.
 
-[![architecture overview](http://sockethub.org/img/architecture_overview.svg)]
+![architecture overview](http://sockethub.org/img/architecture_overview.svg)
+
+## Components
+
+There are 5 major components of sockethub. The *dispatcher*, the *session* class, the *redis queue*, the *listener* and the *platforms*.
+
+### Dispatcher
+
+### Session
+
+### Redis Queue
+
+### Listener
+
+### Platforms
 
 
 # Platform support
