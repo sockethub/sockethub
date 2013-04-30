@@ -16,7 +16,7 @@ Sockethub is currently in very early stages of development, though already basic
 
 features
 --------
-We use Activity Streams to map the various social networks terms to a set of 'verbs' which identify the underlying action. For example,for a facebook friend request/accept cycle, we would use the activity stream verbs 'request-friend', 'remove-friend', 'make-friend'.  
+We use Activity Streams to map the various social networks terms to a set of 'verbs' which identify the underlying action. For example,for a facebook friend request/accept cycle, we would use the activity stream verbs 'request-friend', 'remove-friend', 'make-friend'.
 
 Below is a list of platforms we're currently working on and their activity stream verbs (when appropriate) or verbs that are specific to sockethub, both the completed and not yet implemented ones. They all map to the platforms actions.
 
@@ -29,6 +29,11 @@ Below is a list of platforms we're currently working on and their activity strea
  * WebFinger - <kbd>search</kbd>
  * IRC - <kbd>send</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd>
 
+architecture overview
+---------------------
+
+Check out [doc/architecture_overview.md](doc/architecture_overview.md) for a little more information *("under the hood")* on the implementation details of Sockethub
+
 installation & setup
 --------------------
 
@@ -37,7 +42,7 @@ installation & setup
   * redis server
 
   You will need to have a redis server up and running.
-  
+
   * node.js package dependencies
 
   Some of the node.js packages require operating system libraries in order to function correctly.
