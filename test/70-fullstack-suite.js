@@ -105,7 +105,16 @@ define(['require'], function (require) {
             verb: 'register',
             platform: "dispatcher"
           };
-          env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
+          env.connection.sendWith({
+            send: JSON.stringify(data),
+            onMessage: function (data) {
+              var m = JSON.parse(data.utf8Data);
+              if (m.verb === 'register') {
+                test.assert(m.status, true);
+              }
+            }
+          });
+          //AndVerify(JSON.stringify(data), expected, test, env.confirmProps);
         }
       },
 
