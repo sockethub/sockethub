@@ -14,6 +14,10 @@ There are 5 major components of sockethub. The *dispatcher*, the *session* class
 
 The dispatcher takes incoming JSON objects from the WebSocket server. If a session (session ID) does not already exist it creates one, then it validates the incoming JSON object, sending back any errors to the client. Assuming the object passes validation, the dispatcher then places the object (referred to as 'job') into the redis queue for the appropriate listener (platform).
 
+In addition, there are a few commands which the dispatcher handles directly. At the moment of writing this, the two main dispatcher commands (*verbs*) are `register` and `set`. These commands don't go through the process of normal commands. For the set command, specifically, the data passed in the object is stored in redis for the platform (specified as the target) to retreive when needed. This is commonly used for things like setting credential data that a platform may later need.
+
+See [getting started](doc/getting_started.md) for some examples of using the register and set commands.
+
 The dispatcher also listens for completed requests on a separate outgoing redis channel for completed jobs. When anything is received here, it will send it to the correct client based on the session ID.
 
 ### Session
@@ -34,7 +38,9 @@ This listener then waits for jobs for that platform on the redis queue, when the
 
 ### Platforms
 
-The paltforms are the heart of Sockethub. They contain all of the logic, quirks, and protocol specifics of the subject of that platform. For example, the 'email' platform would contain logic for POP, IMAP and SMTP - it's important to note that these protocols are not their own specific platforms, they are all within the email platform because email is the problem domain. If you use a JSON object with the verb *'send'*  and the platform *'email'*, then the listener will call the email platforms `send()` function.
+The paltforms are the heart of Sockethub. They contain all of the logic, quirks, and protocol specifics of the subject of that platform. For example, the 'email' platform would contain logic for POP, IMAP and SMTP - it's important to note that these protocols are not their own specific platforms, they are all within the email platform because email is the problem domain. If you use a JSON object with the verb ***send***  and the platform ***email***, then the listener will call the email platforms `send()` function.
+
+However, if you were to specify the ***follow*** verb in your JSON object, the listener would then call the email platforms `follow()` function. Basing our JSON objects on [activity streams](http://activitystrea.ms/registry/verbs/), follow is the verb used to describe interest in receiving updates from a subject. In our case, we may specific the target as 'imap' or 'pop' to indicate which aspect of email (platform) we wish to follow.
 
 For more details on the specifics of platforms, see [doc/adding_a_platform.md](doc/adding_a_platform.md)
 
