@@ -18,11 +18,9 @@ define(['require'], function (require) {
             console.log('XMPP STUB: on '+name);
             callbacks[name] = cb;
           }),
-          conn: {
-            send: new test.Stub(function (address, text) {
-              console.log("XMPP STUB: send");
-            })
-          },
+          send: new test.Stub(function (address, text) {
+            console.log("XMPP STUB: send");
+          }),
           connect: new test.Stub(function (creds) {
             console.log('XMPP STUB: connect');
             if (typeof callbacks.online === 'function') {
@@ -148,7 +146,7 @@ define(['require'], function (require) {
             console.log('env.xmpp.connect numCalled: ', env.xmpp.connect.numCalled);
             console.log('env.xmpp.connect: ', env.xmpp.connect.called);
             test.assertAnd(env.xmpp.connect.called, true);
-            test.assert(env.xmpp.conn.send.called, true);
+            test.assert(env.xmpp.send.called, true);
           });
 
         }
