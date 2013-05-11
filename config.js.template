@@ -14,5 +14,6 @@ var HOST = {
 
 exports.config = {
   HOST: HOST, // host specific config
-  PLATFORMS: PLATFORMS  // all platforms supported
+  PLATFORMS: PLATFORMS,  // all platforms supported
+  NUM_WORKERS: 1  // number of worker threads to use (currently supports just one)
 };
