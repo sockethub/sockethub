@@ -1,6 +1,13 @@
 # 1. Install
 make sure you followed the [install instructions](install.md)
 
+
+
+for using the client library see here: [sockethub client](sockethub-client.md)
+
+# the following is deprecated
+
+
 # 2. Connect
 Your unhosted web app will have to connect to the user's sockethub instance.
 This is done via a WebSocket. you have to get the host and port from the user (default is ws://localhost:10550/),
