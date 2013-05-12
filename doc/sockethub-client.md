@@ -50,7 +50,7 @@ To set credentials for the platforms we will want to use
 ```
   sc.set('facebook', {
     credentials: {
-      zuck: {
+      me: {
         access_token: access_token
       }
     }
@@ -69,7 +69,7 @@ generic function to send data to sockethub
   sc.submit({
     platform: 'facebook',
     verb: 'post',
-    actor: { address: 'zuck' },
+    actor: { address: 'me' },
     target: [{ address: 'friendsusername' }],
     object: {
       text: 'Hello facebook, love Sockethub'
