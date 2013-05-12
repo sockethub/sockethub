@@ -68,7 +68,7 @@ installation & setup
 
 ### writing an app that uses it
 
-Your best bet is to include [https://github.com/sockethub/dogtalk/blob/master/vendor/sockethub.js](the sockethub.js client) and then do something like [doc/sockethub-client.md](connect, register, set, submit).
+Your best bet is to include [the sockethub.js client](https://github.com/sockethub/dogtalk/blob/master/vendor/sockethub.js) and then do something like [connect, register, set, submit](doc/sockethub-client.md).
 
 ### adding a platform
 
