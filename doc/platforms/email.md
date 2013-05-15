@@ -1,12 +1,11 @@
 
 
-
 ## examples
 
 ### sending an email
 
 
-```
+```javascript
   {
     rid: 123,
     platform: "email",
@@ -38,7 +37,7 @@
 ### receiving emails
 
 
-```
+```javascript
   {
     rid: 123,
     platform: "email",
