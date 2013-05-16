@@ -64,7 +64,15 @@
         Delivered-To: "me.foobar@gmail.com",  // actual email account delivered to
         Message-ID: "<CAJL4WtZ1e5DLh7tndgcb8+E3HnjdRjJWpBwsXB-gZn0Jkn8TZg@mail.gmail.com>",
         Sender: "test.recipient@gmail.com",   // actual email account sent from
-        In-Reply-To: "<CAJL4WtaFWueLnc70CcHbSGpQES2N3Oyt3Qu0nP--UcsSSBBjyw@mail.gmail.com>"
+        In-Reply-To: "<CAJL4WtaFWueLnc70CcHbSGpQES2N3Oyt3Qu0nP--UcsSSBBjyw@mail.gmail.com>",
+        Reply-To: "activity-streams@googlegroups.com",
+        List-ID: "activity-streams@googlegroups.com",
+        List-Post: "<http://groups.google.com/group/activity-streams/post?hl=en_US>, <mailto:activity-streams@googlegroups.com>",
+        List-Help: "<http://groups.google.com/support/?hl=en_US>, <mailto:activity-streams+help@googlegroups.com>",
+        List-Archive: "<http://groups.google.com/group/activity-streams?hl=en_US>",
+        Sender: "activity-streams@googlegroups.com",
+        List-Subscribe: "<http://groups.google.com/group/activity-streams/subscribe?hl=en_US>,<mailto:activity-streams+subscribe@googlegroups.com>",
+        List-Unsubscribe: "<http://groups.google.com/group/activity-streams/subscribe?hl=en_US>,<mailto:googlegroups-manage+259438406369+unsubscribe@googlegroups.com>"
       },
       date: "Thu, 16 May 2013 01:23:18 +0200",
       subject: "A test message",
