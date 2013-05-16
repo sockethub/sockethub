@@ -89,6 +89,7 @@ module.exports = (function() {
       _console.log.apply(this, ['[worker #'+cluster.worker.id+'] '+msg]);
     };
 
+
     process.on('SIGINT', function() {
       // ignore SIGINT in worker processes.
       // instead the master handles it and sends us a 'shutdown' message.
