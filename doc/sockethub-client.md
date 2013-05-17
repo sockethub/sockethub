@@ -2,7 +2,7 @@
 
 ## connect
 
-```
+```javascript
   var sc;
   SockethubClient.connect({
     host: 'ws://'+host+':'+port+'/sockethub',
@@ -33,7 +33,7 @@
 ## register
 
 
-```
+```javascript
   sc.register({
     secret: '1234567890'
   }).then(function () {
@@ -47,10 +47,10 @@
 ## set
 To set credentials for the platforms we will want to use
 
-```
+```javascript
   sc.set('facebook', {
     credentials: {
-      zuck: {
+      me: {
         access_token: access_token
       }
     }
@@ -65,11 +65,11 @@ To set credentials for the platforms we will want to use
 ## submit
 generic function to send data to sockethub
 
-```
+```javascript
   sc.submit({
     platform: 'facebook',
     verb: 'post',
-    actor: { address: 'zuck' },
+    actor: { address: 'me' },
     target: [{ address: 'friendsusername' }],
     object: {
       text: 'Hello facebook, love Sockethub'

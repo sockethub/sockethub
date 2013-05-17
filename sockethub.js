@@ -21,24 +21,34 @@ module.exports = (function() {
   client.quit();
   client = '';
   redis = '';
+  var i = 0;
 
-  if(cluster.isMaster) {
+  var _console = {
+    error: console.error,
+    warn: console.warn,
+    info: console.info,
+    debug: console.debug,
+    log: console.log
+  };
+
+
+  if (cluster.isMaster) {
     /** MASTER **/
 
     var shuttingDown = false;
 
-    if(typeof(config.NUM_WORKERS) === 'undefined') {
+    if (typeof(config.NUM_WORKERS) === 'undefined') {
       // have 2 workers by default, so when one dies clients can reconnect
       // immediately without waiting for the new worker to boot up.
       config.NUM_WORKERS = 2;
     }
 
-    for(var i = 0; i < config.NUM_WORKERS; i++) {
+    for (i = 0; i < config.NUM_WORKERS; i++) {
       cluster.fork();
     }
 
-    cluster.on('disconnect', function(worker) {
-      if(shuttingDown) {
+    cluster.on('disconnect', function (worker) {
+      if (shuttingDown) {
         console.log("Worker " + worker.id + " done.");
       } else {
         console.error("Worker " + worker.id + " disconnected, spawning new one.");
@@ -46,13 +56,13 @@ module.exports = (function() {
       }
     });
 
-    process.on('SIGINT', function() {
+    process.on('SIGINT', function () {
       console.debug("\nCaught SIGINT (Ctrl+C)");
       console.info("Sockethub is shutting down...");
 
       shuttingDown = true;
 
-      for(var id in cluster.workers) {
+      for (var id in cluster.workers) {
         console.info("Sending 'shutdown' message to worker " + id);
         cluster.workers[id].send('shutdown');
       }
@@ -61,13 +71,32 @@ module.exports = (function() {
   } else {
     /** WORKER **/
 
+
+    // wrap the console functions to prepend worker id
+    console.info = function (msg) {
+      _console.info.apply(this, ['[worker #'+cluster.worker.id+'] '+msg]);
+    };
+    console.error = function (msg) {
+      _console.error.apply(this, ['[worker #'+cluster.worker.id+'] '+msg]);
+    };
+    console.debug = function (msg) {
+      _console.debug.apply(this, ['[worker #'+cluster.worker.id+'] '+msg]);
+    };
+    console.warn = function (msg) {
+      _console.warn.apply(this, ['[worker #'+cluster.worker.id+'] '+msg]);
+    };
+    console.log = function (msg) {
+      _console.log.apply(this, ['[worker #'+cluster.worker.id+'] '+msg]);
+    };
+
+
     process.on('SIGINT', function() {
       // ignore SIGINT in worker processes.
       // instead the master handles it and sends us a 'shutdown' message.
     });
 
-    cluster.worker.on('message', function(message) {
-      if(message === 'shutdown') {
+    cluster.worker.on('message', function (message) {
+      if (message === 'shutdown') {
         console.info("Cleaning up listener sessions...");
         dispatcher.shutdown().then(function () {
           console.log("Exiting...");
@@ -82,13 +111,12 @@ module.exports = (function() {
       } else {
         console.error("Huh? Someone sent an unexpected message to this worker process: " + message);
       }
-
     });
 
     if (config.HOST.MY_PLATFORMS.length > 0) {
       listener = require('./lib/protocols/sockethub/listener');
     }
-    for (var i = 0, len = config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
+    for (i = 0, len = config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
       if (config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
         initDispatcher = true;
         continue;

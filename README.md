@@ -66,6 +66,10 @@ installation & setup
 
 **remoteStorage.js note:** *trying to use a file:// URL for this will not work because remoteStorage.js depends on having a localStorage origin available.*
 
+### writing an app that uses it
+
+Your best bet is to include [the sockethub.js client](https://github.com/sockethub/dogtalk/blob/master/vendor/sockethub.js) and then do something like [connect, register, set, submit](doc/sockethub-client.md).
+
 ### adding a platform
 
 See [doc/adding_a_platform.md](doc/adding_a_platform.md)
