@@ -10,18 +10,18 @@ define(['require'], function (require) {
     desc: "collection of tests for the email platform",
     setup: function (env, test) {
       env.nodemailer = {};
-      env.nodemailer.createTransport = test.Stub(function createTransportStub(name, obj) {
-            if (name === 'SMTP') {
-              console.log('NODEMAILER createTransport STUB CALLED');
-              var ret =  {};
-              ret.sendMail = test.Stub(function sendMail(msg, cb) {
-                  console.log('NODEMAILER sendMail STUB CALLED');
-                  cb(null, true);
-                });
-
-              return ret;
-            }
-          });
+      var sendMailStub = new test.Stub(function sendMail(msg, cb) {
+          console.log('NODEMAILER sendMail STUB CALLED');
+          cb(null, true);
+        });
+      env.nodemailer.createTransport = new test.Stub(function createTransportStub(name, obj) {
+          if (name === 'SMTP') {
+            console.log('NODEMAILER createTransport STUB CALLED');
+            var ret =  {};
+            ret.sendMail = sendMailStub;
+            return ret;
+          }
+        });
       GLOBAL.nodemailer = env.nodemailer;
 
       env.respHandler = function (testObj) {
@@ -108,8 +108,37 @@ define(['require'], function (require) {
           env.Email.send(job).then(function (err, status, obj) {
             env.respHandler()(err, status, obj);
             test.assert(env.nodemailer.createTransport.called, true);
-            //var transport = env.nodemailer.createTransport('SMTP', {});
-            //test.assert(transport.sendMail.called, true);
+            var transport = env.nodemailer.createTransport('SMTP', {});
+            test.assert(transport.sendMail.called, true);
+          });
+        }
+      },
+      {
+        desc: "email.send() with attachments",
+        run: function (env, test) {
+          var job = {
+            rid: '002',
+            verb: 'send',
+            platform: 'email',
+            actor: { name: 'Whitney Houston', address: 'whitney@houston.com' },
+            target: [{ field: "to", name: 'Stevie Wonder', address: 'stevie@wonder.com' }],
+            object: {
+              subject: 'Love you',
+              text: 'I will always.',
+              attachments: [
+                {
+                  fileName: 'notes.txt',
+                  contents: 'Some notes about this e-mail',
+                  contentType: 'text/plain' // optional, would be detected from the filename
+                }
+              ]
+            }
+          };
+          env.Email.send(job).then(function (err, status, obj) {
+            env.respHandler()(err, status, obj);
+            test.assertAnd(env.nodemailer.createTransport.called, true);
+            var transport = env.nodemailer.createTransport('SMTP', {});
+            test.assert(transport.sendMail.called, true, 'sendMail should have been called');
           });
         }
       }
