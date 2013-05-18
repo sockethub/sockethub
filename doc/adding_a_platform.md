@@ -7,26 +7,23 @@ A platform is a module that gives sockethub access to a "world", for instance th
 
 ## What is a platform?
 
-A platform is a node module which exposes a number of "verbs" (functions) which are actions requested by the user, sockethub validates the request against some schema files and then calls the platforms function with the corresponding verb specified by the user.
+A platform is a node module which exposes a number of "verbs" (functions) which are actions requested by the user, sockethub validates the request against the schema files (in `lib/schemas/*.js`) and then calls the platforms' function with the corresponding verb specified by the user.
 
 Here are the files you'll need to add or update to add a platform:
 
 ### platform module
+First, of course, you'll want to actually write the platform.
+
     lib/platforms/<platform_name>.js
 
 This is the actual platform file which exposes the functions that the sockethub listener calls. It contains all the logic and functionality to carry out. This *is* the platform
 
 ### platforms schema registry
+Then you'll want to update the platforms schema to include your newly created platform
+
     lib/schemas/platforms.js
 
 When you've added a platform to the `lib/platforms/` directory, next you'll want to add it to the list of platforms in the `lib/schemas/platforms.js`. One entry for each platform along with a list of verb names it implements.
-
-
-
-### Config
-When you are ready to test your platform, you'll need to add it to the list in the config.js PLATFORMS variable.
-
-    config.js
 
 
 # adding a verb
@@ -40,6 +37,13 @@ Places to add your verb:
     lib/schemas/verbs.js
 
 If you need a new verb that hasn't been defined yet, you'll want to add it here, along with any types of properties that can be passed to it. The dispatcher automatically runs the JSON Schema Validator on all incoming JSON objects, so the `verbs.js` and `platforms.js` will need to be correct and up to date.
+
+
+
+# config
+When you are ready to test your platform, you'll need to add it to the list in the config.js PLATFORMS variable.
+
+    config.js
 
 
 # Additional notes
