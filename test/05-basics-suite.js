@@ -47,7 +47,7 @@ define(['require'], function (require) {
 
       var sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime();
 
-      listener = require('./../lib/protocols/sockethub/listener');
+      listener = require('./../lib/sockethub/listener');
       for (var i = 0, len = config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
         if (config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
           continue;
@@ -56,14 +56,14 @@ define(['require'], function (require) {
         l.init(config.HOST.MY_PLATFORMS[i], sockethubId);
       }
 
-      var dispatcher = require('../lib/protocols/sockethub/dispatcher');
+      var dispatcher = require('./../lib/sockethub/dispatcher');
 
       env.server = {};
       dispatcher.init(config.HOST.MY_PLATFORMS, sockethubId).then(function() {
         // initialize http server
-        env.server.h = require('../lib/httpServer').init(config);
+        env.server.h = require('../lib/servers/http').init(config);
         // initialize websocket server
-        env.server.ws = require('../lib/wsServer').init(config, env.server.h, dispatcher);
+        env.server.ws = require('../lib/servers/websocket').init(config, env.server.h, dispatcher);
 
         console.log(' [*] finished loading' );
         console.log();

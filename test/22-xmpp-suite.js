@@ -48,7 +48,7 @@ define(['require'], function (require) {
         };
       };
 
-      var Session = require('../lib/protocols/sockethub/session')('1234567890');
+      var Session = require('./../lib/sockethub/session')('1234567890');
       Session.get('testsess1').
         then(function (session) {
           env.session = session;
@@ -60,7 +60,7 @@ define(['require'], function (require) {
           env.psession.send = function (job) {
             test.write('psession send called:',job);
           };
-          var XMPPMod = require('../lib/protocols/sockethub/platforms/xmpp');
+          var XMPPMod = require('./../lib/platforms/xmpp');
 
           env.XMPP = XMPPMod();
           env.XMPP.init(psession).then(function() {

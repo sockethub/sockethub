@@ -53,7 +53,7 @@ define(['require'], function (require) {
 
   var protocols;
   try {
-    protocols = require('../lib/protocols/sockethub/protocol');
+    protocols = require('./../lib/sockethub/protocol');
   } catch (e) {
     test.result(false, e);
   }
@@ -67,7 +67,7 @@ define(['require'], function (require) {
     var pd;
     var loadFailed = false;
     try {
-      pd = require('../lib/protocols/sockethub/platforms/' + platform);
+      pd = require('./../lib/platforms/' + platform);
     } catch (e) {
       loadFailed = true;
       platform_test_suite.tests.push(buildTest(platform, 'init', undefined, e));

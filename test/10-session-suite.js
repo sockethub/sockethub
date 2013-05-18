@@ -10,7 +10,7 @@ define(['require'], function(require) {
     desc: "collection of tests for the Session singleton object",
     setup: function(env, test) {
       env.sockethubId = '1234567890';
-      env.Session = require('../lib/protocols/sockethub/session')(env.sockethubId);
+      env.Session = require('./../lib/sockethub/session')(env.sockethubId);
       test.result(true);
     },
     tests: [
@@ -85,7 +85,7 @@ define(['require'], function(require) {
     desc: "collection of tests for the Session instance",
     setup: function(env, test) {
       env.sockethubId = '1234567890';
-      env.Session = require('../lib/protocols/sockethub/session')(env.sockethubId);
+      env.Session = require('./../lib/sockethub/session')(env.sockethubId);
       env.sid = 'test-sid';
       test.result(true);
     },
@@ -206,7 +206,7 @@ define(['require'], function(require) {
     setup: function(env, test) {
 
       env.sockethubId = '1234567890';
-      env.Session = require('../lib/protocols/sockethub/session')(env.sockethubId);
+      env.Session = require('./../lib/sockethub/session')(env.sockethubId);
       env.sid = 'test-sid';
 
       var http = require('http');

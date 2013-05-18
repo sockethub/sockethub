@@ -56,6 +56,12 @@ module.exports = (function() {
       }
     });
 
+    cluster.on('exit', function (worker, code, signal) {
+      if (worker.suicide) {
+        console.log('worker exited '+code+' '+signal);
+      }
+    });
+
     process.on('SIGINT', function () {
       console.debug("\nCaught SIGINT (Ctrl+C)");
       console.info("Sockethub is shutting down...");
@@ -114,8 +120,9 @@ module.exports = (function() {
     });
 
     if (config.HOST.MY_PLATFORMS.length > 0) {
-      listener = require('./lib/protocols/sockethub/listener');
+      listener = require('./lib/sockethub/listener');
     }
+
     for (i = 0, len = config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
       if (config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
         initDispatcher = true;
@@ -128,26 +135,39 @@ module.exports = (function() {
 
     if (initDispatcher) {
       try {
-        dispatcher = require('./lib/protocols/sockethub/dispatcher.js');
+        dispatcher = require('./lib/sockethub/dispatcher.js');
       } catch (e) {
-        throw 'unable to load ../protocols/sockethub/dispatcher.js : ' + e;
+        throw 'unable to load lib/sockethub/dispatcher.js : ' + e;
       }
 
       dispatcher.init(config.HOST.MY_PLATFORMS, sockethubId).then(function () {
-        // initialize http server
-        var server = require('./lib/httpServer').init(config);
-        // initialize websocket server
-        var wsServer = require('./lib/wsServer').init(config, server, dispatcher);
+        var server;
+        try {
+          // initialize http server
+          server = require('./lib/servers/http').init(config);
+        } catch (e) {
+          console.error('unable to load lib/servers/http ' + e);
+          worker.kill();
+        }
+
+        var wsServer;
+        try {
+          // initialize websocket server
+          wsServer = require('./lib/servers/websocket').init(config, server, dispatcher);
+        } catch (e) {
+          console.error('unable to load lib/servers/websocket ' + e);
+          worker.kill();
+        }
+
         console.info(' [*] finished loading' );
         console.log("\n");
       }, function (err) {
         console.error(" [sockethub] dispatcher failed initialization, aborting");
         process.exit();
       });
+
     } else {
       console.info(' [sockethub] finished loading listeners. ready to work boss!');
     }
-
   }
-
 }());

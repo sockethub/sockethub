@@ -35,7 +35,7 @@ define(['require'], function (require) {
         };
       };
 
-      env.Session = require('../lib/protocols/sockethub/session')('1234567890');
+      env.Session = require('./../lib/sockethub/session')('1234567890');
       env.Session.get('testsess1').
         then(function (session) {
           env.session = session;
@@ -47,7 +47,7 @@ define(['require'], function (require) {
           env.psession.send = function (job) {
             test.write('psession send called:',job);
           };
-          var EmailMod = require('../lib/protocols/sockethub/platforms/email');
+          var EmailMod = require('./../lib/platforms/email');
           //console.log('email:', env.Email);
           env.Email = EmailMod();
           env.Email.init(psession).then(function() {
