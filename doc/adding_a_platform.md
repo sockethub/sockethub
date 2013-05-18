@@ -4,7 +4,12 @@
 
 A platform is a module that gives sockethub access to a "world", for instance the xmpp world, the smtp world, the facebook world, etcetera. It can be unclear whether something is a platform. For instance, would webfinger count as a platform? When in doubt, come to the irc channel (#sockethub on freenode), open a github issue about it on [gh:sockethub/sockethub](https://github.com/sockethub/sockethub/issues/), or ask your question in [unhosted@googlegroups](https://groups.google.com/forum#!forum/unhosted).
 
-Places to add your platform:
+
+## What is a platform?
+
+A platform is a node module which exposes a number of "verbs" (functions) which are actions requested by the user, sockethub validates the request against some schema files and then calls the platforms function with the corresponding verb specified by the user.
+
+Here are the files you'll need to add or update to add a platform:
 
 ### platform module
     lib/platforms/<platform_name>.js
