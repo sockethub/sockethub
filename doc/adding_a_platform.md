@@ -39,6 +39,8 @@ Places to add your verb:
 ### Verbs schema registry
 If your platform implements a previously undefined verb, you'll need to add that verb to the verbs schema registry.
 
+If your platform has not implemented any new verbs, you can skip this step.
+
     lib/schemas/verbs.js
 
 If you need a new verb that hasn't been defined yet, you'll want to add it here, along with any types of properties that can be passed to it. The dispatcher automatically runs the JSON Schema Validator on all incoming JSON objects, so the `verbs.js` and `platforms.js` will need to be correct and up to date.
