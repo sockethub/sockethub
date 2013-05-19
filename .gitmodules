@@ -1,6 +1,6 @@
-[submodule "examples/res/sockethub-client"]
-	path = examples/res/sockethub-client
-	url = git://github.com/sockethub/sockethub-client.git
 [submodule "examples/res/remoteStorage.js"]
 	path = examples/res/remoteStorage.js
 	url = git://github.com/remotestorage/remotestorage.js.git
+[submodule "examples/res/sockethub-client"]
+	path = examples/res/sockethub-client
+	url = git://github.com/sockethub/sockethub-client.git
