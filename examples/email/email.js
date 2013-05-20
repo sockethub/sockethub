@@ -49,9 +49,11 @@ function ($rootScope, $q, SH) {
 
       if (SH.isConnected()) {
         SH.set('email', 'credentials', config.emailAddress, {
-          username: config.username,
-          password: config.password,
-          host: config.host
+          smtp: {
+            username: config.username,
+            password: config.password,
+            host: config.host
+          }
         }).then(function () {
           defer.resolve(config);
         }, defer.reject);
@@ -68,6 +70,7 @@ function ($rootScope, $q, SH) {
     var defer = $q.defer();
     msg.platform = 'email';
     msg.verb = 'send';
+    console.log("SENDING: ", msg);
     SH.submit(msg, 5000).then(defer.resolve, defer.reject);
     return defer.promise;
   }
@@ -157,12 +160,14 @@ function settingsCtrl($scope, $rootScope, Email) {
  * Controller: emailCtrl
  */
 controller('emailCtrl',
-['$scope', '$rootScope', 'Email',
-function emailCtrl($scope, $rootScope, Email) {
+['$scope', '$rootScope', 'Email', '$timeout',
+function emailCtrl($scope, $rootScope, Email, $timeout) {
   console.log('email controller');
 
+  $scope.sending = false;
   $scope.model = {
     targetAddress: '',
+    sendMsg: 'fill out form to send',
 
     message: {
       actor: {
@@ -176,6 +181,8 @@ function emailCtrl($scope, $rootScope, Email) {
       }
     }
   };
+
+  $scope.config = Email.config;
   console.log('model.message.actor.address', $scope.model.message.actor.address);
 
   $scope.addTarget = function () {
@@ -185,10 +192,41 @@ function emailCtrl($scope, $rootScope, Email) {
   };
 
   $scope.sendEmail = function () {
-    Email.send($scope.model.message);
+    $scope.sending = true;
+    $scope.model.message.actor.address = $scope.config.data.emailAddress;
+    Email.send($scope.model.message).then(function () {
+      $scope.model.sendMsg = 'email successfully sent!';
+      console.log('email successfully sent!');
+      $scope.model.targetAddress = '';
+      $scope.model.message.target = [];
+      $scope.model.message.object.subject = '';
+      $scope.model.message.object.text = '';
+      $scope.model.message.object.html = '';
+      $scope.sending = false;
+      $timeout(function () {
+        $scope.model.sendMsg = '';
+      }, 5000);
+
+    }, function (err) {
+      console.log('email failed: ', err);
+      $scope.model.sendMsg = err;
+      $timeout(function () {
+        $scope.model.sendMsg = '';
+      }, 5000);
+    });
   };
 
-  $scope.config = Email.config;
+  $scope.formFilled = function () {
+    if (($scope.model.message.target.length > 0) &&
+        ($scope.model.message.object.subject) &&
+        ($scope.model.message.object.text)) {
+      return true;
+    } else {
+      return false;
+    }
+
+
+  };
 
   if (!$scope.config.exists()) {
     $rootScope.$broadcast('showModalSettingsEmail', {locked: true});

@@ -41,7 +41,7 @@
 
         <div>
           <p>SUBJECT:</p>
-          <input class="input-xxlarge" type="text" ng-model="model.object.subject" ng-disabled="sending || !config.exists()" required>
+          <input class="input-xxlarge" type="text" ng-model="model.message.object.subject" ng-disabled="sending || !config.exists()" required>
         </div>
 
         <div>
@@ -51,7 +51,8 @@
 
         <div class="control-group">
           <div class="controls">
-            <button class="btn btn-primary" type="button" ng-click="sendEmail()" ng-disabled="sending || !config.exists()">Submit</button>
+            <button class="btn btn-primary" type="button" ng-click="sendEmail()" ng-disabled="sending || !formFilled() || !config.exists()">Send Email</button>
+            <p>{{ model.sendMsg }}</p>
           </div>
         </div>
 
