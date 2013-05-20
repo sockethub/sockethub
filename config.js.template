@@ -30,11 +30,6 @@ var PUBLIC = {
 var EXAMPLES = {
   ENABLE: true,  // disable if running in production and/or you dont want people
                  // to be able to use the example applications
-  SECRET: '1234567890',  // if you want the examples to work, set this to
-                        // a valid secret in the config.secrets.js file
-  REDIRECT_URI: 'http://sockethub.org'  // if an HTTP request is made to any
-                                        // unrecognized URI, send a redirect to
-                                        // the specified URI
 };
 
 exports.config = {
