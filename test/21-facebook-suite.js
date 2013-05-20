@@ -40,7 +40,7 @@ define(['require'], function (require) {
         };
       };
 
-      var Session = require('./../lib/sockethub/session')('1234567890');
+      var Session = require('./../lib/sockethub/session')('1234567890', 'abcde');
       Session.get('testsess1').
         then(function (session) {
           env.session = session;

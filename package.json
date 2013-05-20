@@ -1,6 +1,6 @@
 {
   "name": "sockethub",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "AGPL",
@@ -25,7 +25,8 @@
     "gpg": "*",
     "consoleplusplus": "*",
     "feedparser": "*",
-    "nodepie": "*"
+    "nodepie": "*",
+    "crypto": "*"
   },
   "devDependencies": {
     "teste": "*"
