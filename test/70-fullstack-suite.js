@@ -209,6 +209,29 @@ define(['require'], function (require) {
       },
 
       {
+        desc: "try to send with invalid platform",
+        willFail: true,
+        run: function (env, test) {
+          var data = {
+            rid: '002',
+            verb: 'send',
+            platform: 'emailo',
+            actor: { address: 'user@example.com' },
+            object: { subject: 'test email subject', text: 'test email body' },
+            target: [{ address: 'user2@example.com.com' }]
+          };
+
+          var expected = {
+            status: true,
+            rid: "002",
+            verb: 'send',
+            platform: "email"
+          };
+          env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
+        }
+      },
+
+      {
         desc: "try to send with set credentials",
         run: function (env, test) {
           var data = {
