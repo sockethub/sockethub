@@ -25,7 +25,8 @@
     "gpg": "*",
     "consoleplusplus": "*",
     "feedparser": "*",
-    "nodepie": "*"
+    "nodepie": "*",
+    "crypto": "*"
   },
   "devDependencies": {
     "teste": "*"

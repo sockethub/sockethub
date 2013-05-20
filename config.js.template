@@ -3,6 +3,9 @@ var PLATFORMS = [
   'dispatcher', 'email', 'xmpp', 'facebook', 'twitter'
 ];
 
+// number of worker threads to use (currently supports just one)
+var NUM_WORKERS = 2;
+
 var HOST = {
   ENABLE_TLS: false, // it is stronlgly recommended that you leave TLS enabled
                      // unless your TLS needs are already taken care of via. a
@@ -15,5 +18,5 @@ var HOST = {
 exports.config = {
   HOST: HOST, // host specific config
   PLATFORMS: PLATFORMS,  // all platforms supported
-  NUM_WORKERS: 1  // number of worker threads to use (currently supports just one)
+  NUM_WORKERS: NUM_WORKERS
 };
