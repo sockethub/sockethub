@@ -8,18 +8,34 @@
   <link rel="stylesheet" href="/res/css/bootstrap-responsive.min.css" />
  </head>
  <body>
-  <h1>Sockethub Examples</h1>
-  <p>a collection of simple examples for various platforms</p>
-  <div class="examples_list">
-   <div class="row example email">
-    <a href="email/">Email</a>
-   </div>
-   <div class="row example twitter">
-    <a href="email/">Twitter</a>
-   </div>
-   <div class="row example facebook">
-    <a href="email/">Facebook</a>
-   </div>
+  <nav>
+    <div class="navbar" ng-controller="navCtrl">
+      <div class="navbar-inner">
+        <a class="brand">Sockethub Examples</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page" ng-controller="emailCtrl">
+    <div class="container-fluid">
+      <div class="row-fluid">
+
+        <h1>Sockethub Examples</h1>
+        <p>a collection of simple examples for various platforms</p>
+        <div class="examples_list">
+         <div class="example email">
+          <a href="email/">Email</a>
+         </div>
+         <div class="example twitter">
+          <a href="email/">Twitter</a>
+         </div>
+         <div class="example facebook">
+          <a href="email/">Facebook</a>
+         </div>
+        </div>
+
+      </div>
+    </div>
   </div>
  </body>
 </html>
