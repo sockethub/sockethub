@@ -32,6 +32,47 @@ module.exports = (function() {
   };
 
 
+
+  /**
+   *  write examples/connect-config.js
+   */
+  var fs = require('fs');
+  var fileContents;
+  var TLS = false;
+  var secret = '1234567890';
+  if ((config.PUBLIC) &&
+      (config.PUBLIC.DOMAIN) &&
+      (config.PUBLIC.PORT) &&
+      (config.PUBLIC.PATH)) {
+    TLS = (config.PUBLIC.TLS) ? 'true' : 'false';
+    fileContents = 'var CONNECT = {};' +
+                   'CONNECT.TLS=' + TLS + ';' +
+                   'CONNECT.HOST="' + config.PUBLIC.DOMAIN + '";' +
+                   'CONNECT.PORT=' + config.PUBLIC.PORT + ';' +
+                   'CONNECT.PATH="' + config.PUBLIC.PATH + '";';
+  } else {
+    TLS = (config.HOST.ENABLE_TLS) ? 'true' : 'false';
+    fileContents = 'var CONNECT = {};' +
+                   'CONNECT.TLS=' + TLS + ';' +
+                   'CONNECT.HOST="localhost";' +
+                   'CONNECT.PORT=' + config.HOST.PORT + ';' +
+                   'CONNECT.PATH="/sockethub";';
+  }
+  if ((config.EXAMPLES) && (config.EXAMPLES.SECRET)) {
+    secret = config.EXAMPLES.SECRET;
+  }
+  fileContents = fileContents + 'CONNECT.SECRET="'+secret+'";';
+  fs.writeFile("examples/connect-config.js", fileContents, function (err) {
+    if (err) {
+      console.error(' [sockethub] failed to write to examples/connect-config.js - examples may not work');
+    } else {
+      console.info(' [sockethub] wrote to examples/connect-config.js');
+    }
+  });
+  /****/
+
+
+
   if (cluster.isMaster) {
     /** MASTER **/
 

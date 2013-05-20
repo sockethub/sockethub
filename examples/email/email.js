@@ -7,8 +7,26 @@ factory('Email', ['$rootScope', '$q', 'SH',
 function ($rootScope, $q, SH) {
   console.log('email factory');
 
+  var settings = {
+    host: 'localhost',
+    port: '10550',
+    path: '/sockethub',
+    tls: false,
+    secret: '1234567890'
+  };
+
+  if (CONNECT) {
+    settings.host = CONNECT.HOST;
+    settings.port = CONNECT.PORT;
+    settings.path = CONNECT.PATH;
+    settings.tls = CONNECT.TLS;
+    settings.secret = CONNECT.SECRET;
+  }
+
   // connect to sockethub and register
-  SH.setConfig('localhost', '10550', '1234567890').then(function () {
+  SH.setConfig(settings.host, settings.port,
+               settings.path, settings.tls,
+               settings.secret).then(function () {
     return SH.connect();
   }).then(function () {
     return SH.register();

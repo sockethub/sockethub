@@ -7,12 +7,16 @@ function ($rootScope, $q) {
   var config = {
     host: '',
     port: '',
+    path: '/sockethub',
+    tls: false,
     secret: ''
   };
 
   function existsConfig() {
     if ((!config.host) && (config.host !== '') &&
         (!config.port) && (config.port !== '') &&
+        (!config.path) && (config.path !== '') &&
+        (!config.tls) && (config.tls !== '') &&
         (!config.secret) && (config.secret !== '')) {
       return true;
     } else {
@@ -20,12 +24,14 @@ function ($rootScope, $q) {
     }
   }
 
-  function setConfig(host, port, secret) {
+  function setConfig(host, port, path, tls, secret) {
     var defer = $q.defer();
 
-    console.log('SH.setConfig: '+host+', '+port+', '+secret);
+    console.log('SH.setConfig: '+host+', '+port+', '+path+', TLS:'+tls+', SECRET:'+secret);
     config.host = host;
     config.port = port;
+    config.path = path;
+    config.tls = tls;
     config.secret = secret;
 
     defer.resolve();
@@ -66,8 +72,12 @@ function ($rootScope, $q) {
 
   function connect() {
     var defer = $q.defer();
+    var scheme = 'ws://';
+    if (config.tls) {
+      scheme = 'wss://';
+    }
     SockethubClient.connect({
-      host: 'ws://' + config.host + ':' + config.port + '/sockethub',
+      host: scheme + config.host + ':' + config.port + config.path,
       confirmationTimeout: 3000   // timeout in miliseconds to wait for confirm
     }).then(function (connection) {
       sc = connection;

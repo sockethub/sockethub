@@ -52,7 +52,6 @@
       }
     };
 
-
     function finishCommand(rid, result, message) {
       if (typeof cmds[rid] !== 'object') {
         throw ('finishCommand() - unable to find command object for rid '+rid);
@@ -80,7 +79,7 @@
       } else {
         cmds[rid].confirmed = new Date().getTime();
       }
-      console.log('CMDS:', cmds);
+      //console.log('CMDS:', cmds);
     }
     var _this = this;
 
