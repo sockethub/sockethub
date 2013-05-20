@@ -66,6 +66,7 @@ function ($rootScope, $q, SH) {
 
   function send(msg) {
     var defer = $q.defer();
+    msg.platform = 'email';
     msg.verb = 'send';
     SH.submit(msg, 5000).then(defer.resolve, defer.reject);
     return defer.promise;
