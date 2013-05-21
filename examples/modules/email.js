@@ -4,7 +4,7 @@ angular.module('email', []).
  * Factory: Email
  */
 factory('Email', ['$rootScope', '$q', 'SH',
-function ($rootScope, $q, SH) {
+function Email($rootScope, $q, SH) {
   var config = {
     emailAddress: '',
     username: '',
@@ -77,7 +77,7 @@ function ($rootScope, $q, SH) {
  * config
  */
 config(['$routeProvider',
-function ($routeProvider) {
+function config($routeProvider) {
   $routeProvider.
     when('/email', {
       templateUrl: 'templates/email/settings.html'
@@ -93,7 +93,7 @@ function ($routeProvider) {
  */
 controller('emailNavCtrl',
 ['$scope', '$rootScope', '$location',
-function navCtrl($scope, $rootScope, $location) {
+function emailNavCtrl($scope, $rootScope, $location) {
   $scope.navClass = function (page) {
     var currentRoute = $location.path().substring(1) || 'home';
     return page === currentRoute ? 'active' : '';
@@ -106,7 +106,7 @@ function navCtrl($scope, $rootScope, $location) {
  */
 controller('emailSettingsCtrl',
 ['$scope', '$rootScope', 'Email',
-function settingsCtrl($scope, $rootScope, Email) {
+function emailSettingsCtrl($scope, $rootScope, Email) {
   $scope.save = function () {
     $scope.saving = true;
     Email.config.set($scope.config).then(function () {
@@ -121,7 +121,7 @@ function settingsCtrl($scope, $rootScope, Email) {
  */
 controller('emailSendCtrl',
 ['$scope', '$rootScope', 'Email', '$timeout',
-function emailCtrl($scope, $rootScope, Email, $timeout) {
+function emailSendCtrl($scope, $rootScope, Email, $timeout) {
   $scope.sending = false;
   $scope.model = {
     targetAddress: '',

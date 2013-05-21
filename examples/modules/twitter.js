@@ -4,7 +4,7 @@ angular.module('twitter', ['ngSockethubClient']).
  * Factory: Twitter
  */
 factory('Twitter', ['$rootScope', '$q', 'SH',
-function ($rootScope, $q, SH) {
+function Twitter($rootScope, $q, SH) {
 
   var config = {
     emailAddress: '',
@@ -81,7 +81,7 @@ function ($rootScope, $q, SH) {
  * config
  */
 config(['$routeProvider',
-function ($routeProvider) {
+function config($routeProvider) {
   $routeProvider.
     when('/twitter', {
       templateUrl: 'templates/twitter/settings.html'
@@ -97,7 +97,7 @@ function ($routeProvider) {
  */
 controller('twitterNavCtrl',
 ['$scope', '$rootScope', '$location',
-function navCtrl($scope, $rootScope, $location) {
+function twitterNavCtrl($scope, $rootScope, $location) {
   $scope.navClass = function (page) {
     var currentRoute = $location.path().substring(1) || 'home';
     return page === currentRoute ? 'active' : '';
@@ -110,7 +110,7 @@ function navCtrl($scope, $rootScope, $location) {
  */
 controller('twitterSettingsCtrl',
 ['$scope', '$rootScope', 'Twitter',
-function settingsCtrl($scope, $rootScope, Twitter) {
+function twitterSettingsCtrl($scope, $rootScope, Twitter) {
   $scope.save = function () {
     $scope.saving = true;
     Twitter.config.set($scope.config).then(function () {
@@ -125,7 +125,7 @@ function settingsCtrl($scope, $rootScope, Twitter) {
  */
 controller('twitterSendCtrl',
 ['$scope', '$rootScope', 'Twitter', '$timeout',
-function emailCtrl($scope, $rootScope, Twitter, $timeout) {
+function twitterSendCtrl($scope, $rootScope, Twitter, $timeout) {
   $scope.sending = false;
   $scope.model = {
     targetAddress: '',
