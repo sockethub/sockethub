@@ -1,6 +1,4 @@
-
 angular.module('service', []).
-
 
 /**
  * settings service
@@ -29,7 +27,6 @@ value('settings', {
 
 
 angular.module('examples', ['ngSockethubClient', 'service', 'email', 'twitter']).
-
 
 /**
  * connect to sockethub on startup

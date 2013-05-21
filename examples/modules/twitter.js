@@ -5,7 +5,6 @@ angular.module('twitter', ['ngSockethubClient']).
  */
 factory('Twitter', ['$rootScope', '$q', 'SH',
 function Twitter($rootScope, $q, SH) {
-
   var config = {
     emailAddress: '',
     username: '',
@@ -17,15 +16,12 @@ function Twitter($rootScope, $q, SH) {
     if (!cfg) {
       cfg = config;
     }
-    console.log('email config exists? ',cfg);
     if ((cfg.emailAddress) &&
         (cfg.username) &&
         (cfg.password) &&
         (cfg.smtpServer)) {
-      console.log('YES');
       return true;
     } else {
-      console.log('NO');
       return false;
     }
   }
@@ -121,11 +117,11 @@ function twitterSettingsCtrl($scope, $rootScope, Twitter) {
 
 
 /**
- * Controller: twitterSendCtrl
+ * Controller: twitterPostCtrl
  */
-controller('twitterSendCtrl',
+controller('twitterPostCtrl',
 ['$scope', '$rootScope', 'Twitter', '$timeout',
-function twitterSendCtrl($scope, $rootScope, Twitter, $timeout) {
+function twitterPostCtrl($scope, $rootScope, Twitter, $timeout) {
   $scope.sending = false;
   $scope.model = {
     targetAddress: '',
