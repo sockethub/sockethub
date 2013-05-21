@@ -134,7 +134,7 @@ function twitterPostCtrl($scope, $rootScope, Twitter, $timeout) {
       target: [],
       object: {
         subject: '',
-        text: 'Hello from Sockethub!',
+        text: 'Hello from @sockethub! http://sockethub.org #sockethub',
         html: ''
       }
     }
