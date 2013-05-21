@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="examples">
  <head>
   <title>Sockethub Examples</title>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="res/css/main.css" />
   <link rel="stylesheet" href="res/css/bootstrap.min.css" />
@@ -12,24 +13,40 @@
     <div class="navbar" ng-controller="navCtrl">
       <div class="navbar-inner">
         <a class="brand">Sockethub Examples</a>
+        <ul class="nav nav-tabs">
+          <li ng-class="navClass('home')">
+            <a href="#/">Home</a>
+          </li>
+          <li ng-class="navClass('email')">
+            <a href="#/email"><span class="icon-envelope"></span> Email</a>
+          </li>
+        </ul>
       </div>
     </div>
   </nav>
 
-  <div class="page" ng-controller="emailCtrl">
+  <ng-view></ng-view>
+
+  <!-- home page -->
+  <script type="text/ng-template" id="home.html">
+  <div class="page">
     <div class="container-fluid">
       <div class="row-fluid">
-
         <h1>Sockethub Examples</h1>
         <p>a collection of simple examples for various platforms</p>
-        <div class="examples_list">
-         <div class="example email">
-          <a href="email/">Email</a>
-         </div>
-        </div>
-
       </div>
     </div>
   </div>
+  </script>
+
+  <script src="connect-config.js"></script>
+  <script src="res/js/angular-1.0.6.min.js"></script>
+  <script src="res/js/jquery-1.9.1.min.js"></script>
+  <script src="res/js/bootstrap.min.js"></script>
+  <script src="res/js/promising.js"></script>
+  <script src="res/js/sockethub-client.js"></script>
+  <script src="res/js/ngSockethubClient.js"></script>
+  <script src="examples.js"></script>
+  <script src="email/email.js"></script>
  </body>
 </html>

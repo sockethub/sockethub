@@ -1,5 +1,5 @@
-angular.module('emailExample', ['ngSockethubClient']).
-
+//var emailExample = angular.module('emailExample', ['ngSockethubClient']).
+examples.
 /**
  * Factory: Email
  */
@@ -104,12 +104,19 @@ function ($rootScope, $q, SH) {
 }]).
 
 
-
 /**
  * config
  */
-config(function () {}).
-
+config(['$routeProvider',
+function ($routeProvider) {
+  $routeProvider.
+    when('/email', {
+      templateUrl: 'email/index.html'
+    }).
+    when('/email/send', {
+      templateUrl: 'email/send.html'
+    });
+}]).
 
 
 /**
@@ -140,19 +147,17 @@ function ($rootScope) {
 }]).
 
 
-
 /**
- * Controller: navCtrl
+ * Controller: emailNavCtrl
  */
-controller('navCtrl',
-['$scope', '$rootScope',
-function navCtrl($scope, $rootScope) {
-  $scope.popup = {};
-  $scope.popup.emailSettings = function () {
-    $rootScope.$broadcast('showModalSettingsEmail', { locked: false });
+controller('emailNavCtrl',
+['$scope', '$rootScope', '$location',
+function navCtrl($scope, $rootScope, $location) {
+  $scope.navClass = function (page) {
+    var currentRoute = $location.path().substring(1) || 'home';
+    return page === currentRoute ? 'active' : '';
   };
 }]).
-
 
 
 /**
@@ -161,6 +166,11 @@ function navCtrl($scope, $rootScope) {
 controller('settingsCtrl',
 ['$scope', '$rootScope', 'Email',
 function settingsCtrl($scope, $rootScope, Email) {
+
+  $scope.popup = {};
+  $scope.popup.emailSettings = function () {
+    $rootScope.$broadcast('showModalSettingsEmail', { locked: false });
+  };
 
   $scope.save = function () {
     $scope.saving = true;
@@ -177,7 +187,7 @@ function settingsCtrl($scope, $rootScope, Email) {
 /**
  * Controller: emailCtrl
  */
-controller('emailCtrl',
+controller('emailSendCtrl',
 ['$scope', '$rootScope', 'Email', '$timeout',
 function emailCtrl($scope, $rootScope, Email, $timeout) {
   console.log('email controller');
