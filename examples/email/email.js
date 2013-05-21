@@ -40,19 +40,22 @@ function ($rootScope, $q, SH) {
     emailAddress: '',
     username: '',
     password: '',
-    host: ''
+    smtpServer: ''
   };
 
   function exists(cfg) {
     if (!cfg) {
       cfg = config;
     }
+    console.log('email config exists? ',cfg);
     if ((cfg.emailAddress) &&
         (cfg.username) &&
         (cfg.password) &&
-        (cfg.host)) {
+        (cfg.smtpServer)) {
+      console.log('YES');
       return true;
     } else {
+      console.log('NO');
       return false;
     }
   }
@@ -63,14 +66,14 @@ function ($rootScope, $q, SH) {
       config.emailAddress = cfg.emailAddress;
       config.username = cfg.username;
       config.password = cfg.password;
-      config.host = cfg.host;
+      config.smtpServer = cfg.smtpServer;
 
       if (SH.isConnected()) {
         SH.set('email', 'credentials', config.emailAddress, {
           smtp: {
             username: config.username,
             password: config.password,
-            host: config.host
+            smtpServer: config.smtpServer
           }
         }).then(function () {
           defer.resolve(config);
@@ -195,7 +198,7 @@ function emailCtrl($scope, $rootScope, Email, $timeout) {
   $scope.sending = false;
   $scope.model = {
     targetAddress: '',
-    sendMsg: 'fill out form to send',
+    sendMsg: '',
 
     message: {
       actor: {
@@ -232,7 +235,7 @@ function emailCtrl($scope, $rootScope, Email, $timeout) {
       $scope.model.message.object.html = '';
       $scope.sending = false;
       $timeout(function () {
-        $scope.model.sendMsg = '';
+        $scope.model.sendMsg = 'fill out form to send an email message';
       }, 5000);
 
     }, function (err) {
@@ -252,12 +255,12 @@ function emailCtrl($scope, $rootScope, Email, $timeout) {
     } else {
       return false;
     }
-
-
   };
 
-  if (!$scope.config.exists()) {
-    $rootScope.$broadcast('showModalSettingsEmail', {locked: true});
+  if ($scope.config.exists()) {
+    $scope.model.sendMsg = 'fill out form to send an email message';
+  } else {
+    $scope.model.sendMsg = 'you must fill in your settings in order to send an email';
   }
 
 }]);

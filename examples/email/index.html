@@ -9,11 +9,10 @@
     </ul>
   </div>
 
-
   <!-- settings modal window -->
   <div>
     <div class="modal-header">
-      <h4>SMTP settings</h4>
+      <h4>Email Settings</h4>
     </div>
     <div class="modal-body">
       <div style="font-size: 12px;">
@@ -43,9 +42,9 @@
            </div>
 
           <div class="control-group">
-            <label for="host" class="control-label">Host</label>
+            <label for="smtpServer" class="control-label">SMTP Server</label>
             <div class="controls">
-              <input type="text" class="required input-xlarge" name="host" placeholder="Enter host..." ng-model="config.host" required>
+              <input type="text" class="required input-xlarge" name="smtpServer" placeholder="Enter SMTP server.." ng-model="config.smtpServer" required>
             </div>
           </div>
 
@@ -58,7 +57,6 @@
       </form>
     </div>
   </div>
-
 
  </body>
 </html>
