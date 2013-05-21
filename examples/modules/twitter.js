@@ -1,40 +1,10 @@
-//var emailExample = angular.module('emailExample', ['ngSockethubClient']).
-examples.
+angular.module('twitter', ['ngSockethubClient']).
+
 /**
- * Factory: Email
+ * Factory: Twitter
  */
-factory('Email', ['$rootScope', '$q', 'SH',
+factory('Twitter', ['$rootScope', '$q', 'SH',
 function ($rootScope, $q, SH) {
-  console.log('email factory');
-
-  var settings = {
-    host: 'localhost',
-    port: '10550',
-    path: '/sockethub',
-    tls: false,
-    secret: '1234567890'
-  };
-
-  if (CONNECT) {
-    settings.host = CONNECT.HOST;
-    settings.port = CONNECT.PORT;
-    settings.path = CONNECT.PATH;
-    settings.tls = CONNECT.TLS;
-    settings.secret = CONNECT.SECRET;
-  }
-
-  // connect to sockethub and register
-  SH.setConfig(settings.host, settings.port,
-               settings.path, settings.tls,
-               settings.secret).then(function () {
-    return SH.connect();
-  }).then(function () {
-    return SH.register();
-  }).then(function () {
-    console.log('connected to sockethub');
-  }, function (err) {
-    console.log('error connection to sockethub: ', err);
-  });
 
   var config = {
     emailAddress: '',
@@ -113,47 +83,19 @@ function ($rootScope, $q, SH) {
 config(['$routeProvider',
 function ($routeProvider) {
   $routeProvider.
-    when('/email', {
-      templateUrl: 'email/index.html'
+    when('/twitter', {
+      templateUrl: 'templates/twitter/settings.html'
     }).
-    when('/email/send', {
-      templateUrl: 'email/send.html'
+    when('/twitter/post', {
+      templateUrl: 'templates/twitter/post.html'
     });
 }]).
 
 
 /**
- * emitters
+ * Controller: twitterNavCtrl
  */
-run(['$rootScope',
-function ($rootScope) {
-
-  $rootScope.$on('showModalSettingsEmail', function(event, args) {
-    backdrop_setting = true;
-    if ((typeof args === 'object') && (typeof args.locked !== 'undefined')) {
-      if (args.locked) {
-        backdrop_setting = "static";
-      }
-    }
-    console.log('backdrop: ' + backdrop_setting);
-    $("#modalSettingsEmail").modal({
-      show: true,
-      keyboard: true,
-      backdrop: backdrop_setting
-    });
-  });
-
-  $rootScope.$on('closeModalSettingsEmail', function(event, args) {
-    $("#modalSettingsEmail").modal('hide');
-  });
-
-}]).
-
-
-/**
- * Controller: emailNavCtrl
- */
-controller('emailNavCtrl',
+controller('twitterNavCtrl',
 ['$scope', '$rootScope', '$location',
 function navCtrl($scope, $rootScope, $location) {
   $scope.navClass = function (page) {
@@ -164,37 +106,26 @@ function navCtrl($scope, $rootScope, $location) {
 
 
 /**
- * Controller: settingsCtrl
+ * Controller: twitterSettingsCtrl
  */
-controller('settingsCtrl',
-['$scope', '$rootScope', 'Email',
-function settingsCtrl($scope, $rootScope, Email) {
-
-  $scope.popup = {};
-  $scope.popup.emailSettings = function () {
-    $rootScope.$broadcast('showModalSettingsEmail', { locked: false });
-  };
-
+controller('twitterSettingsCtrl',
+['$scope', '$rootScope', 'Twitter',
+function settingsCtrl($scope, $rootScope, Twitter) {
   $scope.save = function () {
     $scope.saving = true;
-    Email.config.set($scope.config).then(function () {
+    Twitter.config.set($scope.config).then(function () {
      $scope.saving = false;
-     $rootScope.$broadcast('closeModalSettingsEmail');
     });
   };
-
 }]).
 
 
-
 /**
- * Controller: emailCtrl
+ * Controller: twitterSendCtrl
  */
-controller('emailSendCtrl',
-['$scope', '$rootScope', 'Email', '$timeout',
-function emailCtrl($scope, $rootScope, Email, $timeout) {
-  console.log('email controller');
-
+controller('twitterSendCtrl',
+['$scope', '$rootScope', 'Twitter', '$timeout',
+function emailCtrl($scope, $rootScope, Twitter, $timeout) {
   $scope.sending = false;
   $scope.model = {
     targetAddress: '',
@@ -213,21 +144,14 @@ function emailCtrl($scope, $rootScope, Email, $timeout) {
     }
   };
 
-  $scope.config = Email.config;
-  console.log('model.message.actor.address', $scope.model.message.actor.address);
+  $scope.config = Twitter.config;
 
-  $scope.addTarget = function () {
-    console.log('scope:', $scope);
-    $scope.model.message.target.push({address: $scope.model.targetAddress});
-    $scope.model.targetAddress = '';
-  };
-
-  $scope.sendEmail = function () {
+  $scope.post = function () {
     $scope.sending = true;
     $scope.model.message.actor.address = $scope.config.data.emailAddress;
-    Email.send($scope.model.message).then(function () {
-      $scope.model.sendMsg = 'email successfully sent!';
-      console.log('email successfully sent!');
+    Twitter.post($scope.model.message).then(function () {
+      $scope.model.sendMsg = 'twitter post successful!';
+      console.log('twitter post successful!');
       $scope.model.targetAddress = '';
       $scope.model.message.target = [];
       $scope.model.message.object.subject = '';
@@ -235,11 +159,11 @@ function emailCtrl($scope, $rootScope, Email, $timeout) {
       $scope.model.message.object.html = '';
       $scope.sending = false;
       $timeout(function () {
-        $scope.model.sendMsg = 'fill out form to send an email message';
+        $scope.model.sendMsg = 'fill out form to make a twitter post';
       }, 5000);
 
     }, function (err) {
-      console.log('email failed: ', err);
+      console.log('twitter post failed: ', err);
       $scope.model.sendMsg = err;
       $timeout(function () {
         $scope.model.sendMsg = '';
@@ -258,9 +182,8 @@ function emailCtrl($scope, $rootScope, Email, $timeout) {
   };
 
   if ($scope.config.exists()) {
-    $scope.model.sendMsg = 'fill out form to send an email message';
+    $scope.model.sendMsg = 'fill out form to make a twitter post';
   } else {
-    $scope.model.sendMsg = 'you must fill in your settings in order to send an email';
+    $scope.model.sendMsg = 'you must complete the settings in order to post to twitter';
   }
-
 }]);
