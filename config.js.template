@@ -28,7 +28,7 @@ var PUBLIC = {
 };
 
 var EXAMPLES = {
-  ENABLE: true,  // disable if running in production and/or you dont want people
+  SECRET: '1234567890',  // disable if running in production and/or you dont want people
                  // to be able to use the example applications
 };
 
