@@ -1,46 +1,15 @@
-angular.module('emailExample', ['ngSockethubClient']).
+angular.module('email', []).
 
 /**
  * Factory: Email
  */
 factory('Email', ['$rootScope', '$q', 'SH',
-function ($rootScope, $q, SH) {
-  console.log('email factory');
-
-  var settings = {
-    host: 'localhost',
-    port: '10550',
-    path: '/sockethub',
-    tls: false,
-    secret: '1234567890'
-  };
-
-  if (CONNECT) {
-    settings.host = CONNECT.HOST;
-    settings.port = CONNECT.PORT;
-    settings.path = CONNECT.PATH;
-    settings.tls = CONNECT.TLS;
-    settings.secret = CONNECT.SECRET;
-  }
-
-  // connect to sockethub and register
-  SH.setConfig(settings.host, settings.port,
-               settings.path, settings.tls,
-               settings.secret).then(function () {
-    return SH.connect();
-  }).then(function () {
-    return SH.register();
-  }).then(function () {
-    console.log('connected to sockethub');
-  }, function (err) {
-    console.log('error connection to sockethub: ', err);
-  });
-
+function Email($rootScope, $q, SH) {
   var config = {
     emailAddress: '',
     username: '',
     password: '',
-    host: ''
+    smtpServer: ''
   };
 
   function exists(cfg) {
@@ -50,7 +19,7 @@ function ($rootScope, $q, SH) {
     if ((cfg.emailAddress) &&
         (cfg.username) &&
         (cfg.password) &&
-        (cfg.host)) {
+        (cfg.smtpServer)) {
       return true;
     } else {
       return false;
@@ -63,14 +32,14 @@ function ($rootScope, $q, SH) {
       config.emailAddress = cfg.emailAddress;
       config.username = cfg.username;
       config.password = cfg.password;
-      config.host = cfg.host;
+      config.smtpServer = cfg.smtpServer;
 
       if (SH.isConnected()) {
         SH.set('email', 'credentials', config.emailAddress, {
           smtp: {
             username: config.username,
             password: config.password,
-            host: config.host
+            smtpServer: config.smtpServer
           }
         }).then(function () {
           defer.resolve(config);
@@ -104,88 +73,59 @@ function ($rootScope, $q, SH) {
 }]).
 
 
-
 /**
  * config
  */
-config(function () {}).
-
-
-
-/**
- * emitters
- */
-run(['$rootScope',
-function ($rootScope) {
-
-  $rootScope.$on('showModalSettingsEmail', function(event, args) {
-    backdrop_setting = true;
-    if ((typeof args === 'object') && (typeof args.locked !== 'undefined')) {
-      if (args.locked) {
-        backdrop_setting = "static";
-      }
-    }
-    console.log('backdrop: ' + backdrop_setting);
-    $("#modalSettingsEmail").modal({
-      show: true,
-      keyboard: true,
-      backdrop: backdrop_setting
+config(['$routeProvider',
+function config($routeProvider) {
+  $routeProvider.
+    when('/email', {
+      templateUrl: 'templates/email/settings.html'
+    }).
+    when('/email/send', {
+      templateUrl: 'templates/email/send.html'
     });
-  });
-
-  $rootScope.$on('closeModalSettingsEmail', function(event, args) {
-    $("#modalSettingsEmail").modal('hide');
-  });
-
 }]).
 
 
-
 /**
- * Controller: navCtrl
+ * Controller: emailNavCtrl
  */
-controller('navCtrl',
-['$scope', '$rootScope',
-function navCtrl($scope, $rootScope) {
-  $scope.popup = {};
-  $scope.popup.emailSettings = function () {
-    $rootScope.$broadcast('showModalSettingsEmail', { locked: false });
+controller('emailNavCtrl',
+['$scope', '$rootScope', '$location',
+function emailNavCtrl($scope, $rootScope, $location) {
+  $scope.navClass = function (page) {
+    var currentRoute = $location.path().substring(1) || 'home';
+    return page === currentRoute ? 'active' : '';
   };
 }]).
 
 
-
 /**
- * Controller: settingsCtrl
+ * Controller: emailSettingsCtrl
  */
-controller('settingsCtrl',
+controller('emailSettingsCtrl',
 ['$scope', '$rootScope', 'Email',
-function settingsCtrl($scope, $rootScope, Email) {
-
+function emailSettingsCtrl($scope, $rootScope, Email) {
   $scope.save = function () {
     $scope.saving = true;
     Email.config.set($scope.config).then(function () {
      $scope.saving = false;
-     $rootScope.$broadcast('closeModalSettingsEmail');
     });
   };
-
 }]).
 
 
-
 /**
- * Controller: emailCtrl
+ * Controller: emailSendCtrl
  */
-controller('emailCtrl',
+controller('emailSendCtrl',
 ['$scope', '$rootScope', 'Email', '$timeout',
-function emailCtrl($scope, $rootScope, Email, $timeout) {
-  console.log('email controller');
-
+function emailSendCtrl($scope, $rootScope, Email, $timeout) {
   $scope.sending = false;
   $scope.model = {
     targetAddress: '',
-    sendMsg: 'fill out form to send',
+    sendMsg: '',
 
     message: {
       actor: {
@@ -201,7 +141,6 @@ function emailCtrl($scope, $rootScope, Email, $timeout) {
   };
 
   $scope.config = Email.config;
-  console.log('model.message.actor.address', $scope.model.message.actor.address);
 
   $scope.addTarget = function () {
     console.log('scope:', $scope);
@@ -222,7 +161,7 @@ function emailCtrl($scope, $rootScope, Email, $timeout) {
       $scope.model.message.object.html = '';
       $scope.sending = false;
       $timeout(function () {
-        $scope.model.sendMsg = '';
+        $scope.model.sendMsg = 'fill out form to send an email message';
       }, 5000);
 
     }, function (err) {
@@ -242,12 +181,11 @@ function emailCtrl($scope, $rootScope, Email, $timeout) {
     } else {
       return false;
     }
-
-
   };
 
-  if (!$scope.config.exists()) {
-    $rootScope.$broadcast('showModalSettingsEmail', {locked: true});
+  if ($scope.config.exists()) {
+    $scope.model.sendMsg = 'fill out form to send an email message';
+  } else {
+    $scope.model.sendMsg = 'you must fill in your settings in order to send an email';
   }
-
 }]);
