@@ -3,6 +3,12 @@ module.exports = (function() {
   var cluster = require('cluster');
 
   var config = require('./config.js').config;
+  if (!config.EXAMPLES) {
+    config.EXAMPLES = {};
+  }
+  if (!config.HOST) {
+    config.HOST = {};
+  }
 
   var listener;
   var initDispatcher = false;
