@@ -25,11 +25,15 @@ var PUBLIC = {
   TLS: HOST.ENABLE_TLS  // purely cosmetic, sockethub will not handle TLS certs,
                         // but will configure examples to use
                         // wss:// instead of ws://
+  EXAMPLES_PATH: '/examples' // uri path where the examples are accessed
 };
 
 var EXAMPLES = {
-  SECRET: '1234567890',  // disable if running in production and/or you dont want people
+  ENABLE: true,  // disable if running in production and/or you dont want people
                  // to be able to use the example applications
+  SECRET: '1234567890',  // disable if running in production and/or you dont want people
+                        // to be able to use the example applications
+  LOCATION: './examples'  // physical location of the examples
 };
 
 exports.config = {
