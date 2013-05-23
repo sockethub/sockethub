@@ -29,10 +29,12 @@ function Email($rootScope, $q, SH) {
   function set(cfg) {
     var defer = $q.defer();
     if (exists(cfg)) {
-      config.emailAddress = cfg.emailAddress;
-      config.username = cfg.username;
-      config.password = cfg.password;
-      config.smtpServer = cfg.smtpServer;
+      if (cfg) {
+        config.emailAddress = cfg.emailAddress;
+        config.username = cfg.username;
+        config.password = cfg.password;
+        config.smtpServer = cfg.smtpServer;
+      }
 
       if (SH.isConnected()) {
         SH.set('email', 'credentials', config.emailAddress, {
@@ -107,10 +109,16 @@ function emailNavCtrl($scope, $rootScope, $location) {
 controller('emailSettingsCtrl',
 ['$scope', '$rootScope', 'Email',
 function emailSettingsCtrl($scope, $rootScope, Email) {
+  $scope.config = Email.config.data;
+  $scope.model = {};
+  $scope.model.submitMsg = '';
   $scope.save = function () {
     $scope.saving = true;
-    Email.config.set($scope.config).then(function () {
-     $scope.saving = false;
+    Email.config.set().then(function () {
+      $scope.model.submitMsg = 'config saved!';
+      $scope.saving = false;
+    }, function (err) {
+      $scope.model.submitMsg = err;
     });
   };
 }]).

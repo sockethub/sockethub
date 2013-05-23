@@ -6,22 +6,25 @@ angular.module('twitter', ['ngSockethubClient']).
 factory('Twitter', ['$rootScope', '$q', 'SH',
 function Twitter($rootScope, $q, SH) {
   var config = {
-    emailAddress: '',
     username: '',
-    password: '',
-    smtpServer: ''
+    consumer_key: '',
+    consumer_secret: '',
+    access_token: '',
+    access_token_secret: ''
   };
 
   function exists(cfg) {
     if (!cfg) {
       cfg = config;
     }
-    if ((cfg.emailAddress) &&
-        (cfg.username) &&
-        (cfg.password) &&
-        (cfg.smtpServer)) {
+    if ((cfg.username) &&
+        (cfg.consumer_key) &&
+        (cfg.consumer_secret) &&
+        (cfg.access_token_secret) &&
+        (cfg.access_token)) {
       return true;
     } else {
+      console.log('config not set properly');
       return false;
     }
   }
@@ -29,18 +32,20 @@ function Twitter($rootScope, $q, SH) {
   function set(cfg) {
     var defer = $q.defer();
     if (exists(cfg)) {
-      config.emailAddress = cfg.emailAddress;
-      config.username = cfg.username;
-      config.password = cfg.password;
-      config.smtpServer = cfg.smtpServer;
-
+      if (cfg) {
+        config.username = cfg.username;
+        config.consumer_key = cfg.consumer_key;
+        config.consumer_secret = cfg.consumer_secret;
+        config.access_token = cfg.access_token;
+        config.access_token_secret = cfg.access_token_secret;
+      }
       if (SH.isConnected()) {
-        SH.set('email', 'credentials', config.emailAddress, {
-          smtp: {
-            username: config.username,
-            password: config.password,
-            smtpServer: config.smtpServer
-          }
+        SH.set('twitter', 'credentials', config.username, {
+          username: config.username,
+          consumer_key: config.consumer_key,
+          consumer_secret: config.consumer_secret,
+          access_token: config.access_token,
+          access_token_secret: config.access_token_secret
         }).then(function () {
           defer.resolve(config);
         }, defer.reject);
@@ -48,16 +53,17 @@ function Twitter($rootScope, $q, SH) {
         defer.reject('not connected to sockethub');
       }
     } else {
-      defer.reject();
+      defer.reject('config not set correctly');
     }
+
     return defer.promise;
   }
 
-  function send(msg) {
+  function post(msg) {
     var defer = $q.defer();
-    msg.platform = 'email';
-    msg.verb = 'send';
-    console.log("SENDING: ", msg);
+    msg.platform = 'twitter';
+    msg.verb = 'post';
+    console.log("POST: ", msg);
     SH.submit(msg, 5000).then(defer.resolve, defer.reject);
     return defer.promise;
   }
@@ -68,7 +74,7 @@ function Twitter($rootScope, $q, SH) {
       set: set,
       data: config
     },
-    send: send
+    post: post
   };
 }]).
 
@@ -107,10 +113,16 @@ function twitterNavCtrl($scope, $rootScope, $location) {
 controller('twitterSettingsCtrl',
 ['$scope', '$rootScope', 'Twitter',
 function twitterSettingsCtrl($scope, $rootScope, Twitter) {
+  $scope.config = Twitter.config.data;
+  $scope.model = {};
+  $scope.model.submitMsg = '';
   $scope.save = function () {
     $scope.saving = true;
-    Twitter.config.set($scope.config).then(function () {
-     $scope.saving = false;
+    Twitter.config.set().then(function () {
+      $scope.model.submitMsg = 'config saved!';
+      $scope.saving = false;
+    }, function (err) {
+      $scope.model.submitMsg = err;
     });
   };
 }]).
@@ -124,7 +136,6 @@ controller('twitterPostCtrl',
 function twitterPostCtrl($scope, $rootScope, Twitter, $timeout) {
   $scope.sending = false;
   $scope.model = {
-    targetAddress: '',
     sendMsg: '',
 
     message: {
@@ -133,9 +144,7 @@ function twitterPostCtrl($scope, $rootScope, Twitter, $timeout) {
       },
       target: [],
       object: {
-        subject: '',
         text: 'Hello from @sockethub! http://sockethub.org #sockethub',
-        html: ''
       }
     }
   };
@@ -144,15 +153,11 @@ function twitterPostCtrl($scope, $rootScope, Twitter, $timeout) {
 
   $scope.post = function () {
     $scope.sending = true;
-    $scope.model.message.actor.address = $scope.config.data.emailAddress;
+    $scope.model.message.actor.address = $scope.config.data.username;
     Twitter.post($scope.model.message).then(function () {
       $scope.model.sendMsg = 'twitter post successful!';
       console.log('twitter post successful!');
-      $scope.model.targetAddress = '';
-      $scope.model.message.target = [];
-      $scope.model.message.object.subject = '';
       $scope.model.message.object.text = '';
-      $scope.model.message.object.html = '';
       $scope.sending = false;
       $timeout(function () {
         $scope.model.sendMsg = 'fill out form to make a twitter post';
@@ -168,9 +173,7 @@ function twitterPostCtrl($scope, $rootScope, Twitter, $timeout) {
   };
 
   $scope.formFilled = function () {
-    if (($scope.model.message.target.length > 0) &&
-        ($scope.model.message.object.subject) &&
-        ($scope.model.message.object.text)) {
+    if ($scope.model.message.object.text) {
       return true;
     } else {
       return false;

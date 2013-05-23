@@ -50,7 +50,8 @@
 
           <div class="control-group">
             <div class="controls">
-              <button class="btn btn-primary" ng-click="save(config)" ng-disabled="settings.$invalid || saving">Submit</button>
+              <button class="btn btn-primary" ng-click="save(config)" ng-disabled="settings.$invalid || saving">Save</button>
+            <span> &nbsp; <b>{{ model.submitMsg }}</b> </span>
             </div>
           </div>
         </fieldset>

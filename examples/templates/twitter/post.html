@@ -17,6 +17,13 @@
         <fieldset>
 
           <div class="control-group">
+            <label for="from" class="control-label">Posting as:</label>
+            <div class="controls">
+              <input class="required input-xxlarge" type="text" ng-model="config.data.username" name="from" disabled>
+            </div>
+          </div>
+
+          <div class="control-group">
             <label for="body" class="control-label">Body:</label>
             <div class="controls">
               <textarea class="input-xxlarge" name="body" rows="6" ng-disabled="sending || !config.exists()" ng-model="model.message.object.text"></textarea>
