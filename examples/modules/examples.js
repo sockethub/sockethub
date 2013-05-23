@@ -40,7 +40,7 @@ value('settings', {
 });
 
 
-angular.module('examples', ['ngSockethubClient', 'service', 'email', 'twitter']).
+angular.module('examples', ['ngSockethubClient', 'service', 'email', 'twitter', 'facebook']).
 
 /**
  * connect to sockethub on startup
@@ -77,6 +77,9 @@ function ($routeProvider) {
     }).
     when('/twitter', {
       templateUrl: 'templates/twitter/settings.html'
+    }).
+    when('/facebook', {
+      templateUrl: 'templates/facebook/settings.html'
     }).
     otherwise({
       redirectTo: '/'

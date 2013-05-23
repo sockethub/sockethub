@@ -1,16 +1,13 @@
-angular.module('twitter', []).
+angular.module('facebook', []).
 
 /**
- * Factory: Twitter
+ * Factory: Facebook
  */
-factory('Twitter', ['$rootScope', '$q', 'SH',
-function Twitter($rootScope, $q, SH) {
+factory('Facebook', ['$rootScope', '$q', 'SH',
+function Facebook($rootScope, $q, SH) {
   var config = {
     username: '',
-    consumer_key: '',
-    consumer_secret: '',
-    access_token: '',
-    access_token_secret: ''
+    access_token: ''
   };
 
   function exists(cfg) {
@@ -18,9 +15,6 @@ function Twitter($rootScope, $q, SH) {
       cfg = config;
     }
     if ((cfg.username) &&
-        (cfg.consumer_key) &&
-        (cfg.consumer_secret) &&
-        (cfg.access_token_secret) &&
         (cfg.access_token)) {
       return true;
     } else {
@@ -34,18 +28,12 @@ function Twitter($rootScope, $q, SH) {
     if (exists(cfg)) {
       if (cfg) {
         config.username = cfg.username;
-        config.consumer_key = cfg.consumer_key;
-        config.consumer_secret = cfg.consumer_secret;
         config.access_token = cfg.access_token;
-        config.access_token_secret = cfg.access_token_secret;
       }
       if (SH.isConnected()) {
-        SH.set('twitter', 'credentials', config.username, {
+        SH.set('facebook', 'credentials', config.username, {
           username: config.username,
-          consumer_key: config.consumer_key,
-          consumer_secret: config.consumer_secret,
-          access_token: config.access_token,
-          access_token_secret: config.access_token_secret
+          access_token: config.access_token
         }).then(function () {
           defer.resolve(config);
         }, defer.reject);
@@ -61,7 +49,7 @@ function Twitter($rootScope, $q, SH) {
 
   function post(msg) {
     var defer = $q.defer();
-    msg.platform = 'twitter';
+    msg.platform = 'facebook';
     msg.verb = 'post';
     console.log("POST: ", msg);
     SH.submit(msg, 5000).then(defer.resolve, defer.reject);
@@ -85,21 +73,21 @@ function Twitter($rootScope, $q, SH) {
 config(['$routeProvider',
 function config($routeProvider) {
   $routeProvider.
-    when('/twitter', {
-      templateUrl: 'templates/twitter/settings.html'
+    when('/facebook', {
+      templateUrl: 'templates/facebook/settings.html'
     }).
-    when('/twitter/post', {
-      templateUrl: 'templates/twitter/post.html'
+    when('/facebook/post', {
+      templateUrl: 'templates/facebook/post.html'
     });
 }]).
 
 
 /**
- * Controller: twitterNavCtrl
+ * Controller: facebookNavCtrl
  */
-controller('twitterNavCtrl',
+controller('facebookNavCtrl',
 ['$scope', '$rootScope', '$location',
-function twitterNavCtrl($scope, $rootScope, $location) {
+function facebookNavCtrl($scope, $rootScope, $location) {
   $scope.navClass = function (page) {
     var currentRoute = $location.path().substring(1) || 'home';
     return page === currentRoute ? 'active' : '';
@@ -108,21 +96,21 @@ function twitterNavCtrl($scope, $rootScope, $location) {
 
 
 /**
- * Controller: twitterSettingsCtrl
+ * Controller: facebookSettingsCtrl
  */
-controller('twitterSettingsCtrl',
-['$scope', '$rootScope', 'settings', 'Twitter',
-function twitterSettingsCtrl($scope, $rootScope, settings, Twitter) {
-  settings.save($scope, Twitter);
+controller('facebookSettingsCtrl',
+['$scope', '$rootScope', 'settings', 'Facebook',
+function facebookSettingsCtrl($scope, $rootScope, settings, Facebook) {
+  settings.save($scope, Facebook);
 }]).
 
 
 /**
- * Controller: twitterPostCtrl
+ * Controller: facebookPostCtrl
  */
-controller('twitterPostCtrl',
-['$scope', '$rootScope', 'Twitter', '$timeout',
-function twitterPostCtrl($scope, $rootScope, Twitter, $timeout) {
+controller('facebookPostCtrl',
+['$scope', '$rootScope', 'Facebook', '$timeout',
+function facebookPostCtrl($scope, $rootScope, Facebook, $timeout) {
   $scope.sending = false;
   $scope.model = {
     sendMsg: '',
@@ -133,27 +121,27 @@ function twitterPostCtrl($scope, $rootScope, Twitter, $timeout) {
       },
       target: [],
       object: {
-        text: 'Hello from @sockethub! http://sockethub.org #sockethub',
+        text: 'Hello from @sockethub! http://sockethub.org',
       }
     }
   };
 
-  $scope.config = Twitter.config;
+  $scope.config = Facebook.config;
 
   $scope.post = function () {
     $scope.sending = true;
     $scope.model.message.actor.address = $scope.config.data.username;
-    Twitter.post($scope.model.message).then(function () {
-      $scope.model.sendMsg = 'twitter post successful!';
-      console.log('twitter post successful!');
+    Facebook.post($scope.model.message).then(function () {
+      $scope.model.sendMsg = 'facebook post successful!';
+      console.log('facebook post successful!');
       $scope.model.message.object.text = '';
       $scope.sending = false;
       $timeout(function () {
-        $scope.model.sendMsg = 'fill out form to make a twitter post';
+        $scope.model.sendMsg = 'fill out form to make a facebook post';
       }, 5000);
 
     }, function (err) {
-      console.log('twitter post failed: ', err);
+      console.log('facebook post failed: ', err);
       $scope.model.sendMsg = err;
       $timeout(function () {
         $scope.model.sendMsg = '';
@@ -170,8 +158,8 @@ function twitterPostCtrl($scope, $rootScope, Twitter, $timeout) {
   };
 
   if ($scope.config.exists()) {
-    $scope.model.sendMsg = 'fill out form to make a twitter post';
+    $scope.model.sendMsg = 'fill out form to make a facebook post';
   } else {
-    $scope.model.sendMsg = 'you must complete the settings in order to post to twitter';
+    $scope.model.sendMsg = 'you must complete the settings in order to post to facebook';
   }
 }]);
