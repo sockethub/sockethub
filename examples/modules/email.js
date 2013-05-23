@@ -107,20 +107,9 @@ function emailNavCtrl($scope, $rootScope, $location) {
  * Controller: emailSettingsCtrl
  */
 controller('emailSettingsCtrl',
-['$scope', '$rootScope', 'Email',
-function emailSettingsCtrl($scope, $rootScope, Email) {
-  $scope.config = Email.config.data;
-  $scope.model = {};
-  $scope.model.submitMsg = '';
-  $scope.save = function () {
-    $scope.saving = true;
-    Email.config.set().then(function () {
-      $scope.model.submitMsg = 'config saved!';
-      $scope.saving = false;
-    }, function (err) {
-      $scope.model.submitMsg = err;
-    });
-  };
+['$scope', '$rootScope', 'settings', 'Email',
+function emailSettingsCtrl($scope, $rootScope, settings, Email) {
+  settings.save($scope, Email);
 }]).
 
 

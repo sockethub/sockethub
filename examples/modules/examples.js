@@ -22,6 +22,20 @@ value('settings', {
       settings.secret = CONNECT.SECRET;
     }
     return settings;
+  },
+  save: function (scope, factory) {
+    scope.config = factory.config.data;
+    scope.model = {};
+    scope.model.submitMsg = '';
+    scope.save = function () {
+      scope.saving = true;
+      factory.config.set().then(function () {
+        scope.model.submitMsg = 'config saved!';
+        scope.saving = false;
+      }, function (err) {
+        scope.model.submitMsg = err;
+      });
+    };
   }
 });
 

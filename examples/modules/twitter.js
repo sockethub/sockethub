@@ -1,4 +1,4 @@
-angular.module('twitter', ['ngSockethubClient']).
+angular.module('twitter', ['ngSockethubClient', 'service']).
 
 /**
  * Factory: Twitter
@@ -111,20 +111,9 @@ function twitterNavCtrl($scope, $rootScope, $location) {
  * Controller: twitterSettingsCtrl
  */
 controller('twitterSettingsCtrl',
-['$scope', '$rootScope', 'Twitter',
-function twitterSettingsCtrl($scope, $rootScope, Twitter) {
-  $scope.config = Twitter.config.data;
-  $scope.model = {};
-  $scope.model.submitMsg = '';
-  $scope.save = function () {
-    $scope.saving = true;
-    Twitter.config.set().then(function () {
-      $scope.model.submitMsg = 'config saved!';
-      $scope.saving = false;
-    }, function (err) {
-      $scope.model.submitMsg = err;
-    });
-  };
+['$scope', '$rootScope', 'settings', 'Twitter',
+function twitterSettingsCtrl($scope, $rootScope, settings, Twitter) {
+  settings.save($scope, Twitter);
 }]).
 
 
