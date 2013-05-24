@@ -4,10 +4,18 @@ module.exports = (function() {
 
   var config = require('./config.js').config;
   if (!config.EXAMPLES) {
-    config.EXAMPLES = {};
+    config.EXAMPLES = {
+      ENABLE: true,
+      SECRET: '1234567890',
+      LOCATION: './examples'
+    };
   }
   if (!config.HOST) {
-    config.HOST = {};
+    config.HOST = {
+      ENABLE_TLS: false,
+      PORT: 10550,
+      MY_PLATFORMS: config.PLATFORMS
+    };
   }
 
   var listener;
