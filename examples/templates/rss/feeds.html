@@ -1,0 +1,25 @@
+  <div ng-controller="rssNavCtrl">
+    <ul class="nav nav-tabs">
+     <li ng-class="navClass('rss')">
+      <a href="#/rss">Fetch</a>
+    </li>
+    <li ng-class="navClass('rss/feeds')">
+      <a href="#/rss/feeds">Feeds</a>
+    </li>
+    </ul>
+  </div>
+
+  <div class="page" ng-controller="rssFeedsCtrl">
+    <div class="container-fluid">
+      <div class="row-fluid">
+
+        <div ng-repeat="f in feeds">
+          <h1>{{ f.object.title }}<h1>
+          <h4><i>{{ f.actor.address }}<i><h4>
+            <p>{{ f.object.description }}</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+

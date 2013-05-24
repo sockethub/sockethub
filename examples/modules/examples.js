@@ -37,10 +37,30 @@ value('settings', {
       });
     };
   }
+}).
+value('configHelper', {
+  exists: function exists(config, cfg) {
+    if (!cfg) {
+      cfg = config;
+    }
+
+    for (var key in config) {
+      if (!cfg[key]) {
+        return false;
+      }
+    }
+    return true;
+  },
+  set: function (config, cfg) {
+    for (var key in cfg) {
+      config[key] = cfg[key];
+    }
+    return config;
+  }
 });
 
 
-angular.module('examples', ['ngSockethubClient', 'service', 'email', 'twitter', 'facebook']).
+angular.module('examples', ['ngSockethubClient', 'service', 'email', 'twitter', 'facebook', 'rss']).
 
 /**
  * connect to sockethub on startup
@@ -80,6 +100,9 @@ function ($routeProvider) {
     }).
     when('/facebook', {
       templateUrl: 'templates/facebook/settings.html'
+    }).
+    when('/fetch', {
+      templateUrl: 'templates/fetch/fetch.html'
     }).
     otherwise({
       redirectTo: '/'

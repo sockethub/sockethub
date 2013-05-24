@@ -3,40 +3,28 @@ angular.module('facebook', []).
 /**
  * Factory: Facebook
  */
-factory('Facebook', ['$rootScope', '$q', 'SH',
-function Facebook($rootScope, $q, SH) {
+factory('Facebook', ['$rootScope', '$q', 'SH', 'configHelper',
+function Facebook($rootScope, $q, SH, CH) {
   var config = {
     username: '',
     access_token: ''
   };
 
   function exists(cfg) {
-    if (!cfg) {
-      cfg = config;
-    }
-    if ((cfg.username) &&
-        (cfg.access_token)) {
-      return true;
-    } else {
-      console.log('config not set properly');
-      return false;
-    }
+    return CH.exists(config, cfg);
   }
 
   function set(cfg) {
     var defer = $q.defer();
     if (exists(cfg)) {
       if (cfg) {
-        config.username = cfg.username;
-        config.access_token = cfg.access_token;
+        CH.set(config, cfg);
       }
       if (SH.isConnected()) {
-        SH.set('facebook', 'credentials', config.username, {
-          username: config.username,
-          access_token: config.access_token
-        }).then(function () {
-          defer.resolve(config);
-        }, defer.reject);
+        SH.set('facebook', 'credentials', config.username, config).
+          then(function () {
+            defer.resolve(config);
+          }, defer.reject);
       } else {
         defer.reject('not connected to sockethub');
       }

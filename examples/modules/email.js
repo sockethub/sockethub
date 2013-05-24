@@ -3,8 +3,8 @@ angular.module('email', []).
 /**
  * Factory: Email
  */
-factory('Email', ['$rootScope', '$q', 'SH',
-function Email($rootScope, $q, SH) {
+factory('Email', ['$rootScope', '$q', 'SH', 'configHelper',
+function Email($rootScope, $q, SH, CH) {
   var config = {
     emailAddress: '',
     username: '',
@@ -13,27 +13,14 @@ function Email($rootScope, $q, SH) {
   };
 
   function exists(cfg) {
-    if (!cfg) {
-      cfg = config;
-    }
-    if ((cfg.emailAddress) &&
-        (cfg.username) &&
-        (cfg.password) &&
-        (cfg.smtpServer)) {
-      return true;
-    } else {
-      return false;
-    }
+    return CH.exist(config, cfg);
   }
 
   function set(cfg) {
     var defer = $q.defer();
     if (exists(cfg)) {
       if (cfg) {
-        config.emailAddress = cfg.emailAddress;
-        config.username = cfg.username;
-        config.password = cfg.password;
-        config.smtpServer = cfg.smtpServer;
+        CH.set(config, cfg);
       }
 
       if (SH.isConnected()) {

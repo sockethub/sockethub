@@ -1,0 +1,54 @@
+  <div ng-controller="rssNavCtrl">
+    <ul class="nav nav-tabs">
+     <li ng-class="navClass('rss')">
+      <a href="#/rss">Fetch</a>
+    </li>
+    <li ng-class="navClass('rss/feeds')">
+      <a href="#/rss/feeds">Feeds</a>
+    </li>
+    </ul>
+  </div>
+
+  <div class="page" ng-controller="rssFetchCtrl">
+    <div class="container-fluid">
+      <div class="row-fluid">
+
+      <form name="email" class="form-horizontal" ng:submit="addTarget()" style="padding: 5px; border: 1px solid #dddddd;" novalidate>
+        <fieldset>
+          <div class="control-group">
+            <label for="to" class="control-label">Add a feed URL:</label>
+            <div class="controls">
+              <input class="input-xxlarge" name="to" type="text" ng-model="model.targetAddress" ng-disabled="sending || !config.exists()" required>
+              <button class="btn btn-primary" type="button" ng:click="addTarget()" ng-disabled="sending || !config.exists()">Add</button>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+
+      <form name="emailSend" class="form-horizontal" novalidate>
+        <fieldset>
+
+          <div class="control-group">
+            <label class="control-label">Feeds:</label>
+            <div class="controls">
+              <p></p>
+              <ul>
+                <li ng-repeat="t in model.message.target"> {{ t.address }} </li>
+              </ul>
+              <p></p>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <div class="controls">
+              <button class="btn btn-primary" type="button" ng-click="fetchRSS()" ng-disabled="sending || !formFilled() || !config.exists()">Fetch RSS</button>
+            <span> &nbsp; <b>{{ model.sendMsg }}</b> </span>
+            </div>
+          </div>
+
+        </fieldset>
+      </form>
+      </div>
+    </div>
+  </div>
+

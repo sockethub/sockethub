@@ -3,8 +3,9 @@ angular.module('twitter', []).
 /**
  * Factory: Twitter
  */
-factory('Twitter', ['$rootScope', '$q', 'SH',
-function Twitter($rootScope, $q, SH) {
+factory('Twitter', ['$rootScope', '$q', 'SH', 'configHelper',
+function Twitter($rootScope, $q, SH, CH) {
+
   var config = {
     username: '',
     consumer_key: '',
@@ -14,41 +15,20 @@ function Twitter($rootScope, $q, SH) {
   };
 
   function exists(cfg) {
-    if (!cfg) {
-      cfg = config;
-    }
-    if ((cfg.username) &&
-        (cfg.consumer_key) &&
-        (cfg.consumer_secret) &&
-        (cfg.access_token_secret) &&
-        (cfg.access_token)) {
-      return true;
-    } else {
-      console.log('config not set properly');
-      return false;
-    }
+    return CH.exist(config, cfg);
   }
 
   function set(cfg) {
     var defer = $q.defer();
     if (exists(cfg)) {
       if (cfg) {
-        config.username = cfg.username;
-        config.consumer_key = cfg.consumer_key;
-        config.consumer_secret = cfg.consumer_secret;
-        config.access_token = cfg.access_token;
-        config.access_token_secret = cfg.access_token_secret;
+        CH.set(config, cfg);
       }
       if (SH.isConnected()) {
-        SH.set('twitter', 'credentials', config.username, {
-          username: config.username,
-          consumer_key: config.consumer_key,
-          consumer_secret: config.consumer_secret,
-          access_token: config.access_token,
-          access_token_secret: config.access_token_secret
-        }).then(function () {
-          defer.resolve(config);
-        }, defer.reject);
+        SH.set('twitter', 'credentials', config.username, config).
+          then(function () {
+            defer.resolve(config);
+          }, defer.reject);
       } else {
         defer.reject('not connected to sockethub');
       }
