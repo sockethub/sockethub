@@ -3,6 +3,12 @@ factory('SH', ['$rootScope', '$q',
 function ($rootScope, $q) {
 
   var sc;
+  var callbacks = {
+    'error': {},
+    'message': {},
+    'response': {},
+    'close': {}
+  };
 
   var config = {
     host: '',
@@ -83,15 +89,35 @@ function ($rootScope, $q) {
       sc = connection;
       sc.on('message', function (data) {
         console.log('SH received message: ', data);
+        if ((data.platform) &&
+            (callbacks['message'][data.platform])) {
+          console.log('SH passing message to platform: '+data.platform);
+          $rootScope.$apply(callbacks['message'][data.platform](data));
+        }
       });
       sc.on('error', function (data) {
         console.log('SH received error: ', data);
+        if ((data.platform) &&
+            (callbacks['error'][data.platform])) {
+          console.log('SH passing error to platform: '+data.platform);
+          $rootScope.$apply(callbacks['error'][data.platform](data));
+        }
       });
       sc.on('response', function (data) {
         console.log('SH received response: ', data);
+        if ((data.platform) &&
+            (callbacks['response'][data.platform])) {
+          console.log('SH passing response to platform: '+data.platform);
+          $rootScope.$apply(callbacks['response'][data.platform](data));
+        }
       });
       sc.on('close', function (data) {
         console.log('SH received close: ', data);
+        if ((data.platform) &&
+            (callbacks[close][data.platform])) {
+          console.log('SH passing close to platform: '+data.platform);
+          $rootScope.$apply(callbacks['close'][data.platform](data));
+        }
       });
       $rootScope.$apply(function () {
         defer.resolve();
@@ -141,12 +167,9 @@ function ($rootScope, $q) {
     return defer.promise;
   }
 
-  function on(type, func) {
-    sc.on(type, function (data) {
-      //console.log('SH passing onmessage ', data);
-      $rootScope.$apply(func(data));
-    });
-  }
+  var on = function on(platform, type, func) {
+    callbacks[type][platform] = func;
+  };
 
   return {
     config: config,
