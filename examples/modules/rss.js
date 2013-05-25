@@ -35,11 +35,21 @@ function RSS($rootScope, $q, SH, CH) {
     return defer.promise;
   }
 
+  var feedData = [];
+
+  SH.on('rss', 'message', function (m) {
+    console.log("RSS received message");
+    feedData.push(m);
+  });
+
   return {
     config: {
       exists: exists,
       set: set,
       data: config
+    },
+    feeds: {
+      data: feedData
     },
     fetch: fetch
   };
@@ -142,4 +152,24 @@ function rssFetchCtrl($scope, $rootScope, RSS, $timeout) {
   } else {
     $scope.model.sendMsg = '';
   }
+}]).
+
+
+/**
+ * controller: rssFeedCtrl
+ */
+controller('rssFeedsCtrl',
+['$scope', 'RSS',
+function rssFeedsCtrl($scope, RSS) {
+  $scope.feeds = RSS.feeds.data;
+// }]).
+
+// directive('renderArticle', ['$compile',
+// function renderArticle($compile) {
+//   return {
+//     scope: true,
+//     link: function (scope, element, attrs) {
+//       var el = $compile()
+//     }
+//   };
 }]);
