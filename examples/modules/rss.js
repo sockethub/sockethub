@@ -196,7 +196,6 @@ function () {
               '  </li>' +
               '</ul>',
     link: function (scope, element, attrs) {
-      console.log('***** heelo');
       scope.uniqueFeeds = [];
 
       for (var i = 0, num = scope.feeds.length; i < num; i = i + 1) {
