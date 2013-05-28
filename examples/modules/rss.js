@@ -4,7 +4,7 @@ angular.module('rss', []).
  * Factory: RSS
  */
 factory('RSS', ['$rootScope', '$q', 'SH', 'configHelper',
-function RSS($rootScope, $q, SH, CH) {
+function ($rootScope, $q, SH, CH) {
 
   var config = {
   };
@@ -60,7 +60,7 @@ function RSS($rootScope, $q, SH, CH) {
  * config
  */
 config(['$routeProvider',
-function config($routeProvider) {
+function ($routeProvider) {
   $routeProvider.
     when('/rss', {
       templateUrl: 'templates/rss/fetch.html'
@@ -76,7 +76,7 @@ function config($routeProvider) {
  */
 controller('rssNavCtrl',
 ['$scope', '$rootScope', '$location',
-function rssNavCtrl($scope, $rootScope, $location) {
+function ($scope, $rootScope, $location) {
   $scope.navClass = function (page) {
     var currentRoute = $location.path().substring(1) || 'home';
     return page === currentRoute ? 'active' : '';
@@ -89,7 +89,7 @@ function rssNavCtrl($scope, $rootScope, $location) {
  */
 controller('rssSettingsCtrl',
 ['$scope', '$rootScope', 'settings', 'RSS',
-function rssSettingsCtrl($scope, $rootScope, settings, RSS) {
+function ($scope, $rootScope, settings, RSS) {
   settings.save($scope, RSS);
 }]).
 
@@ -99,7 +99,7 @@ function rssSettingsCtrl($scope, $rootScope, settings, RSS) {
  */
 controller('rssFetchCtrl',
 ['$scope', '$rootScope', 'RSS', '$timeout',
-function rssFetchCtrl($scope, $rootScope, RSS, $timeout) {
+function ($scope, $rootScope, RSS, $timeout) {
   $scope.sending = false;
   $scope.model = {
     sendMsg: '',
@@ -160,34 +160,65 @@ function rssFetchCtrl($scope, $rootScope, RSS, $timeout) {
  */
 controller('rssFeedsCtrl',
 ['$scope', 'RSS',
-function rssFeedsCtrl($scope, RSS) {
+function ($scope, RSS) {
   $scope.feeds = RSS.feeds.data;
 }]).
 
 directive('articles', [
-function articles() {
+function () {
   return {
     restrict: 'A',
     scope: {
       feeds: '='
     },
     template: '<div class="well" ng-repeat="f in feeds">' +
-                '<h1>{{ f.object.title }}</h1>' +
-                '<p>feed: <i>{{ f.actor.address }}</i></p>' +
-                '<p>article link: <i><a target="_blank" href="{{ f.object.link }}">{{ f.object.link }}</a><i></p>' +
-                '<div data-brief data-ng-bind-html-unsafe="f.object.description"></div>' +
-              '</div>',
+              '  <h2>{{ f.object.title }}</h2>' +
+              '  <p>feed: <i>{{ f.actor.address }}</i></p>' +
+              '  <p>article link: <i><a target="_blank" href="{{ f.object.link }}">{{ f.object.link }}</a><i></p>' +
+              '  <div data-brief data-ng-bind-html-unsafe="f.object.description"></div>' +
+              '</div>'
+  };
+}]).
+
+directive('feedList', [
+function () {
+  return {
+    restrict: 'A',
+    scope: {
+      feeds: '='
+    },
+    template: '<h2 ng-transclude></h2>'+
+              '<ul class="nav nav-list">' +
+              '  <li ng-repeat="f in uniqueFeeds"> ' +
+              '    <a href="#/rss/feeds/{{ f }}">' +
+              '      <span data-toggle="tooltip" title="{{ f }}">{{ f }}</span>' +
+              '    </a>' *
+              '  </li>' +
+              '</ul>',
     link: function (scope, element, attrs) {
-/*      for (var i = 0, num = scope.feeds.length; i < num; i = i + 1) {
-        scope.feeds[i].renderedArticle = $compile(scope.feeds[i].object.description)(scope, function (compiledElement));
-        console.log('ARTICLE: ', scope.feeds[i]);
-      }*/
-    }
+      console.log('***** heelo');
+      scope.uniqueFeeds = [];
+
+      for (var i = 0, num = scope.feeds.length; i < num; i = i + 1) {
+        var match = false;
+        for (var j = 0, jnum = scope.uniqueFeeds.length; j < jnum; j = j + 1) {
+          if (scope.uniqueFeeds[j] === scope.feeds[i].actor.address) {
+            match = true;
+            break;
+          }
+        }
+
+        if (!match) {
+          scope.uniqueFeeds.push(scope.feeds[i].actor.address);
+        }
+      }
+    },
+    transclude: true
   };
 }]).
 
 directive('brief', [
-function brief() {
+function () {
   return {
     restrict: 'A',
     link: function (scope, element, attrs) {
