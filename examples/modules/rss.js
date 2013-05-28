@@ -162,14 +162,36 @@ controller('rssFeedsCtrl',
 ['$scope', 'RSS',
 function rssFeedsCtrl($scope, RSS) {
   $scope.feeds = RSS.feeds.data;
-// }]).
+}]).
 
-// directive('renderArticle', ['$compile',
-// function renderArticle($compile) {
-//   return {
-//     scope: true,
-//     link: function (scope, element, attrs) {
-//       var el = $compile()
-//     }
-//   };
+directive('articles', [
+function articles() {
+  return {
+    restrict: 'A',
+    scope: {
+      feeds: '='
+    },
+    template: '<div class="well" ng-repeat="f in feeds">' +
+                '<h1>{{ f.object.title }}</h1>' +
+                '<p>feed: <i>{{ f.actor.address }}</i></p>' +
+                '<p>article link: <i><a target="_blank" href="{{ f.object.link }}">{{ f.object.link }}</a><i></p>' +
+                '<div data-brief data-ng-bind-html-unsafe="f.object.description"></div>' +
+              '</div>',
+    link: function (scope, element, attrs) {
+/*      for (var i = 0, num = scope.feeds.length; i < num; i = i + 1) {
+        scope.feeds[i].renderedArticle = $compile(scope.feeds[i].object.description)(scope, function (compiledElement));
+        console.log('ARTICLE: ', scope.feeds[i]);
+      }*/
+    }
+  };
+}]).
+
+directive('brief', [
+function brief() {
+  return {
+    restrict: 'A',
+    link: function (scope, element, attrs) {
+      console.log('LINK: ', element[0]);
+    }
+  };
 }]);

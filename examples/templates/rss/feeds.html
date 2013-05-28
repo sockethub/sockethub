@@ -13,12 +13,7 @@
     <div class="container-fluid">
       <div class="row-fluid">
 
-        <div ng-repeat="f in feeds">
-          <h1>{{ f.object.title }}</h1>
-          <p>feed: <i>{{ f.actor.address }}</i></p>
-          <p>article link: <i><a target="_blank" href="{{ f.object.link }}">{{ f.object.link }}</a><i></p>
-          <div>{{ f.object.description }}</div>
-        </div>
+        <div data-articles feeds="feeds"></div>
 
       </div>
     </div>
