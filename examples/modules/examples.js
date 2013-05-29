@@ -101,12 +101,24 @@ function ($routeProvider) {
     when('/facebook', {
       templateUrl: 'templates/facebook/settings.html'
     }).
-    when('/fetch', {
-      templateUrl: 'templates/fetch/fetch.html'
+    when('/rss', {
+      templateUrl: 'templates/rss/fetch.html'
     }).
     otherwise({
       redirectTo: '/'
     });
+}]).
+
+
+/**
+ * filter: urlEncode
+ */
+filter('urlEncode', [
+function() {
+  return function (text, length, end) {
+    console.log("FILTER: ", text, length, end);
+    return encodeURIComponent(text);
+  };
 }]).
 
 
