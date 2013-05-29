@@ -1,11 +1,11 @@
   <div ng-controller="rssNavCtrl">
     <ul class="nav nav-tabs">
-     <li ng-class="navClass('rss')">
-      <a href="#/rss">Fetch</a>
-    </li>
-    <li ng-class="navClass('rss/feeds')">
-      <a href="#/rss/feeds">Feeds</a>
-    </li>
+      <li ng-class="navClass('rss')">
+        <a href="#/rss">Fetch</a>
+      </li>
+      <li ng-class="navClass('rss/feeds')">
+        <a href="#/rss/feeds">Feeds</a>
+      </li>
     </ul>
   </div>
 
@@ -17,7 +17,7 @@
         <fieldset>
           <div class="control-group">
             <label for="to" class="control-label">Add a feed URL:</label>
-            <div class="controls">
+            <div class="controls input-append">
               <input class="input-xxlarge" name="to" type="text" ng-model="model.targetAddress" ng-disabled="sending || !config.exists()" required>
               <button class="btn btn-primary" type="button" ng:click="addTarget()" ng-disabled="sending || !config.exists()">Add</button>
             </div>
