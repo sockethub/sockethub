@@ -67,6 +67,9 @@ function ($routeProvider) {
     }).
     when('/rss/feeds', {
       templateUrl: 'templates/rss/feeds.html'
+    }).
+    when('/rss/feed/:address', {
+      templateUrl: 'templates/rss/feeds.html'
     });
 }]).
 
@@ -164,6 +167,10 @@ function ($scope, RSS) {
   $scope.feeds = RSS.feeds.data;
 }]).
 
+
+/**
+ * directive: articles
+ */
 directive('articles', [
 function () {
   return {
@@ -175,11 +182,18 @@ function () {
               '  <h2>{{ f.object.title }}</h2>' +
               '  <p>feed: <i>{{ f.actor.address }}</i></p>' +
               '  <p>article link: <i><a target="_blank" href="{{ f.object.link }}">{{ f.object.link }}</a><i></p>' +
-              '  <div data-brief data-ng-bind-html-unsafe="f.object.description"></div>' +
-              '</div>'
+              '  <div data-brief data-ng-bind-html-unsafe="f.object.brief_html"></div>' +
+              '</div>',
+    link: function (scope) {
+      //console.log('FEEDS: ', scope.feeds);
+    }
   };
 }]).
 
+
+/**
+ * directive: feedList
+ */
 directive('feedList', [
 function () {
   return {
@@ -189,10 +203,8 @@ function () {
     },
     template: '<h2 ng-transclude></h2>' +
               '<ul class="nav nav-list">' +
-              '  <li ng-repeat="f in uniqueFeeds"> ' +
-              '    <a href="#/rss/feeds/{{ f }}">' +
-              '      <span data-toggle="tooltip" title="{{ f }}">{{ f }}</span>' +
-              '    </a>' *
+              '  <li ng-repeat="f in uniqueFeeds" data-toggle="tooltip" title="{{ f.address }}">' +
+              '    <a href="#/rss/feed/{{ f.address | urlEncode }}">{{ f.name }}</a>' +
               '  </li>' +
               '</ul>',
     link: function (scope, element, attrs) {
@@ -201,27 +213,33 @@ function () {
       for (var i = 0, num = scope.feeds.length; i < num; i = i + 1) {
         var match = false;
         for (var j = 0, jnum = scope.uniqueFeeds.length; j < jnum; j = j + 1) {
-          if (scope.uniqueFeeds[j] === scope.feeds[i].actor.address) {
+          if (scope.uniqueFeeds[j].address === scope.feeds[i].actor.address) {
             match = true;
             break;
           }
         }
-
         if (!match) {
-          scope.uniqueFeeds.push(scope.feeds[i].actor.address);
+          scope.uniqueFeeds.push({ address: scope.feeds[i].actor.address,
+                                   name: scope.feeds[i].actor.name,
+                                   description: scope.feeds[i].actor.description });
         }
       }
+      console.log('**** uniqueFeeds: ', scope.uniqueFeeds);
     },
     transclude: true
   };
 }]).
 
+
+/**
+ * directive: brief
+ */
 directive('brief', [
 function () {
   return {
     restrict: 'A',
     link: function (scope, element, attrs) {
-      console.log('LINK: ', element[0]);
+      //console.log('LINK: ', element[0]);
     }
   };
 }]);
