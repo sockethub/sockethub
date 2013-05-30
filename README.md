@@ -64,7 +64,7 @@ installation & setup
 
     [sockethub]$ node sockethub.js
 
-  Once sockethub is running, you can visit http://localhost:10550 to see some example apps (under development).
+  Once sockethub is running, you can visit `http://localhost:10550/examples/` to see some example apps (under development).
 
 **remoteStorage.js note:** *trying to use a file:// URL for this will not work because remoteStorage.js depends on having a localStorage origin available.*
 
