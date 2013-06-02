@@ -13,7 +13,7 @@ function Email($rootScope, $q, SH, CH) {
   };
 
   function exists(cfg) {
-    return CH.exist(config, cfg);
+    return CH.exists(config, cfg);
   }
 
   function set(cfg) {
