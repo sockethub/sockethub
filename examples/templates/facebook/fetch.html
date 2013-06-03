@@ -16,25 +16,41 @@
     <div class="container-fluid">
       <div class="row-fluid">
 
-      <form name="facebookFetch" class="form-horizontal" novalidate>
-        <fieldset>
-
-          <div class="control-group">
-            <label for="from" class="control-label">Username:</label>
-            <div class="controls">
-              <input class="required input-xxlarge" type="text" ng-model="config.data.username" name="from" disabled>
+       <form name="facebookFeedList" class="form-horizontal" ng:submit="addTarget()" style="padding: 5px; border: 1px solid #dddddd;" novalidate>
+          <fieldset>
+            <div class="control-group">
+              <label for="to" class="control-label">Add facebook username:</label>
+              <div class="controls input-append">
+                <input class="input-xxlarge" name="to" type="text" ng-model="model.targetAddress" ng-disabled="sending || !config.exists()" required>
+                <button class="btn btn-primary" type="button" ng:click="addTarget()" ng-disabled="sending || !config.exists()">Add</button>
+              </div>
             </div>
-          </div>
+          </fieldset>
+        </form>
 
-          <div class="control-group">
-            <div class="controls">
-              <button class="btn btn-primary" type="button" ng-click="fetch()" ng-disabled="sending || !formFilled() || !config.exists()">Fetch users feed</button>
-            <span> &nbsp; <b>{{ model.sendMsg }}</b> </span>
+        <form name="facebookFetch" class="form-horizontal" novalidate>
+          <fieldset>
+
+            <div class="control-group">
+              <label class="control-label">Facebook Feeds:</label>
+              <div class="controls">
+                <p></p>
+                <ul>
+                  <li ng-repeat="t in model.message.target"> {{ t.address }} </li>
+                </ul>
+                <p></p>
+              </div>
             </div>
-          </div>
 
-        </fieldset>
-      </form>
+            <div class="control-group">
+              <div class="controls">
+                <button class="btn btn-primary" type="button" ng-click="fetchRSS()" ng-disabled="sending || !formFilled() || !config.exists()">Fetch Facebook Feeds</button>
+              <span> &nbsp; <b>{{ model.sendMsg }}</b> </span>
+              </div>
+            </div>
+          </fieldset>
+        </form>
+
       </div>
     </div>
   </div>
