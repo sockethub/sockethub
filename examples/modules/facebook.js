@@ -66,6 +66,9 @@ function config($routeProvider) {
     }).
     when('/facebook/post', {
       templateUrl: 'templates/facebook/post.html'
+    }).
+    when('/facebook/fetch', {
+      templateUrl: 'templates/facebook/fetch.html'
     });
 }]).
 
