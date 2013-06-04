@@ -1,50 +1,33 @@
-  <div ng-controller="facebookNavCtrl">
-    <ul class="nav nav-tabs">
-      <li ng-class="navClass('facebook')">
-        <a href="#/facebook">Settings</a>
-      </li>
-      <li ng-class="navClass('facebook/post')">
-        <a href="#/facebook/post">Post</a>
-      </li>
-      <li ng-class="navClass('facebook/fetch')">
-        <a href="#/facebook/fetch">Fetch</a>
-      </li>
-      <li ng-class="navClass('facebook/feeds')">
-        <a href="#/facebook/feeds">Feeds</a>
-      </li>
-    </ul>
-  </div>
+  <div data-facebook-nav></div>
 
-  <div class="page" ng-controller="facebookPostCtrl">
-    <div class="container-fluid">
-      <div class="row-fluid">
+  <!-- facebook fetch -->
+  <div class="container" ng-controller="facebookPostCtrl">
+    <h4>Post to Facebook</h4>
 
-      <form name="facebookPost" class="form-horizontal" novalidate>
-        <fieldset>
+    <form name="facebookPost" class="form-horizontal" novalidate>
+      <fieldset>
 
-          <div class="control-group">
-            <label for="from" class="control-label">Posting as:</label>
-            <div class="controls">
-              <input class="required input-xxlarge" type="text" ng-model="config.data.username" name="from" disabled>
-            </div>
+        <div class="control-group">
+          <label for="from" class="control-label">Posting as:</label>
+          <div class="controls">
+            <input class="required input-xlarge" type="text" ng-model="config.data.username" name="from" disabled>
           </div>
+        </div>
 
-          <div class="control-group">
-            <label for="body" class="control-label">Body:</label>
-            <div class="controls">
-              <textarea class="input-xxlarge" name="body" rows="6" ng-disabled="sending || !config.exists()" ng-model="model.message.object.text"></textarea>
-            </div>
+        <div class="control-group">
+          <label for="body" class="control-label">Body:</label>
+          <div class="controls">
+            <textarea class="input-xlarge" name="body" rows="6" ng-disabled="sending || !config.exists()" ng-model="model.message.object.text"></textarea>
           </div>
+        </div>
 
-          <div class="control-group">
-            <div class="controls">
-              <button class="btn btn-primary" type="button" ng-click="post()" ng-disabled="sending || !formFilled() || !config.exists()">Post to Facebook</button>
-            <span> &nbsp; <b>{{ model.sendMsg }}</b> </span>
-            </div>
+        <div class="control-group">
+          <div class="controls">
+            <button class="btn btn-primary" type="button" ng-click="post()" ng-disabled="sending || !formFilled() || !config.exists()">Post to Facebook</button>
+          <span> &nbsp; <b>{{ model.sendMsg }}</b> </span>
           </div>
+        </div>
 
-        </fieldset>
-      </form>
-      </div>
-    </div>
+      </fieldset>
+    </form>
   </div>
