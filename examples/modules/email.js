@@ -78,6 +78,27 @@ function config($routeProvider) {
 
 
 /**
+ * directive: emailNav
+ */
+directive('emailNav', [
+function () {
+  return {
+    restrict: 'A',
+    template: '<div ng-controller="emailNavCtrl">' +
+              '  <ul class="nav nav-tabs">' +
+              '    <li ng-class="navClass(\'email\')">' +
+              '      <a href="#/email">Settings</a>' +
+              '    </li>' +
+              '    <li ng-class="navClass(\'email/send\')">' +
+              '      <a href="#/email/send">Send</a>' +
+              '    </li>' +
+              '  </ul>' +
+              '</div>'
+  };
+}]).
+
+
+/**
  * Controller: emailNavCtrl
  */
 controller('emailNavCtrl',
