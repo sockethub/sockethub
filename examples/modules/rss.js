@@ -139,7 +139,7 @@ function ($scope, $rootScope, RSS, $timeout) {
   $scope.config = RSS.config;
 
   $scope.addTarget = function () {
-    console.log('scope:', $scope);
+    console.log('targetAddress['+ $scope.model.targetAddress+']');
     $scope.model.message.target.push({address: $scope.model.targetAddress});
     $scope.model.targetAddress = '';
   };
