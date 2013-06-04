@@ -3,3 +3,13 @@
   padding: 5px;
 }
 
+.add-form {
+  padding: 10px 5px 0 0;
+  border-bottom: 1px solid #dddddd;
+}
+
+.notes {
+  font-size: 13px;
+  border-bottom: 1px solid #dddddd;
+  margin-bottom: 10px;
+}
