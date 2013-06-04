@@ -75,6 +75,27 @@ function config($routeProvider) {
 
 
 /**
+ * directive: twitterNav
+ */
+directive('twitterNav', [
+function () {
+  return {
+    restrict: 'A',
+    template: '<div ng-controller="twitterNavCtrl">' +
+              '  <ul class="nav nav-tabs">' +
+              '    <li ng-class="navClass(\'twitter\')">' +
+              '      <a href="#/twitter">Settings</a>' +
+              '    </li>' +
+              '    <li ng-class="navClass(\'twitter/post\')">' +
+              '      <a href="#/twitter/post">Post</a>' +
+              '    </li>' +
+              '  </ul>' +
+              '</div>'
+  };
+}]).
+
+
+/**
  * Controller: twitterNavCtrl
  */
 controller('twitterNavCtrl',
