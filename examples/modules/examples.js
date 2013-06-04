@@ -185,7 +185,7 @@ function () {
     scope: {
       feeds: '='
     },
-    template: '<h2 ng-transclude></h2>' +
+    template: '<h4 ng-transclude></h4>' +
               '<ul class="nav nav-list">' +
               '  <li ng-repeat="f in uniqueFeeds" data-toggle="tooltip" title="{{ f.address }}">' +
               '    <a href="#/{{f.platform}}/feed/{{ f.address | urlEncode }}">{{ f.name }}</a>' +
