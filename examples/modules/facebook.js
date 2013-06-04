@@ -44,13 +44,34 @@ function Facebook($rootScope, $q, SH, CH) {
     return defer.promise;
   }
 
+  function fetch(msg) {
+    var defer = $q.defer();
+    msg.platform = 'facebook';
+    msg.verb = 'fetch';
+    console.log("FETCH: ", msg);
+    SH.submit(msg, 5000).then(defer.resolve, defer.reject);
+    return defer.promise;
+  }
+
+
+  var feedData = [];
+
+  SH.on('facebook', 'message', function (m) {
+    console.log("Facebook received message: ", m);
+    feedData.push(m);
+  });
+
   return {
     config: {
       exists: exists,
       set: set,
       data: config
     },
-    post: post
+    feeds: {
+      data: feedData
+    },
+    post: post,
+    fetch: fetch
   };
 }]).
 
@@ -188,9 +209,10 @@ function ($scope, $rootScope, Facebook, $timeout) {
   $scope.fetchFacebook = function () {
     $scope.model.sendMsg = 'fetching feeds...';
     $scope.sending = true;
-    Facebook.fetch($scope.model.message).then(function () {
+    $scope.model.message.actor.address = $scope.config.data.username;
+    Facebook.fetch($scope.model.message).then(function (data) {
       $scope.model.sendMsg = 'facebook fetch successful!';
-      console.log('facebook fetch successful!');
+      console.log('facebook fetch successful! ', data);
       $scope.sending = false;
       $timeout(function () {
         $scope.model.sendMsg = 'click the feeds tab to view fetched entries';
@@ -198,9 +220,9 @@ function ($scope, $rootScope, Facebook, $timeout) {
     }, function (err) {
       console.log('facebook fetch failed: ', err);
       $scope.model.sendMsg = err;
-      $timeout(function () {
+      /*$timeout(function () {
         $scope.model.sendMsg = '';
-      }, 5000);
+      }, 5000);*/
     });
   };
 
