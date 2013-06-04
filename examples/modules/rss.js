@@ -75,6 +75,27 @@ function ($routeProvider) {
 
 
 /**
+ * directive: rssNav
+ */
+directive('rssNav', [
+function () {
+  return {
+    restrict: 'A',
+    template: '<div ng-controller="rssNavCtrl">' +
+              '  <ul class="nav nav-tabs">' +
+              '    <li ng-class="navClass(\'rss\')">' +
+              '      <a href="#/rss">Fetch</a>' +
+              '    </li>' +
+              '    <li ng-class="navClass(\'rss/feeds\')">' +
+              '      <a href="#/rss/feeds">Feeds</a>' +
+              '    </li>' +
+              '  </ul>' +
+              '</div>'
+  };
+}]).
+
+
+/**
  * Controller: rssNavCtrl
  */
 controller('rssNavCtrl',
