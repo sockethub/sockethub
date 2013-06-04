@@ -1,59 +1,42 @@
-  <div ng-controller="facebookNavCtrl">
-    <ul class="nav nav-tabs">
-      <li ng-class="navClass('facebook')">
-        <a href="#/facebook">Settings</a>
-      </li>
-      <li ng-class="navClass('facebook/post')">
-        <a href="#/facebook/post">Post</a>
-      </li>
-      <li ng-class="navClass('facebook/fetch')">
-        <a href="#/facebook/fetch">Fetch</a>
-      </li>
-      <li ng-class="navClass('facebook/feeds')">
-        <a href="#/facebook/feeds">Feeds</a>
-      </li>
-    </ul>
-  </div>
+  <div data-facebook-nav></div>
 
-  <div class="page" ng-controller="facebookFetchCtrl">
-    <div class="container-fluid">
-      <div class="row-fluid">
+  <!-- facebook fetch -->
+  <div class="container" ng-controller="facebookFetchCtrl">
+    <h4>Fetch Facebook Feeds</h4>
 
-       <form name="facebookFeedList" class="form-horizontal" ng:submit="addTarget()" style="padding: 5px; border: 1px solid #dddddd;" novalidate>
-          <fieldset>
-            <div class="control-group">
-              <label for="to" class="control-label">Add facebook username:</label>
-              <div class="controls input-append">
-                <input class="input-xxlarge" name="to" type="text" ng-model="model.targetAddress" ng-disabled="sending || !config.exists()" required>
-                <button class="btn btn-primary" type="button" ng:click="addTarget()" ng-disabled="sending || !config.exists()">Add</button>
-              </div>
-            </div>
-          </fieldset>
-        </form>
+    <form name="facebookFeedList" class="form-horizontal add-form" ng-submit="addTarget()" novalidate>
+      <fieldset>
+        <div class="control-group">
+          <label for="to" class="control-label">Add facebook username:</label>
+          <div class="controls input-append">
+            <input class="input-xlarge" name="to" type="text" ng-model="model.targetAddress" ng-disabled="sending || !config.exists()" required>
+            <button class="btn btn-primary" type="button" ng:click="addTarget()" ng-disabled="sending || !config.exists()">Add</button>
+          </div>
+        </div>
+      </fieldset>
+    </form>
 
-        <form name="facebookFetch" class="form-horizontal" novalidate>
-          <fieldset>
+    <form name="facebookFetch" class="form-horizontal" novalidate>
+      <fieldset>
 
-            <div class="control-group">
-              <label class="control-label">Facebook Feeds:</label>
-              <div class="controls">
-                <p></p>
-                <ul>
-                  <li ng-repeat="t in model.message.target"> {{ t.address }} </li>
-                </ul>
-                <p></p>
-              </div>
-            </div>
+        <div class="control-group">
+          <label class="control-label">Facebook Feeds:</label>
+          <div class="controls">
+            <p></p>
+            <ul>
+              <li ng-repeat="t in model.message.target"> {{ t.address }} </li>
+            </ul>
+            <p></p>
+          </div>
+        </div>
 
-            <div class="control-group">
-              <div class="controls">
-                <button class="btn btn-primary" type="button" ng-click="fetchFacebook()" ng-disabled="sending || !formFilled() || !config.exists()">Fetch Facebook Feeds</button>
-              <span> &nbsp; <b>{{ model.sendMsg }}</b> </span>
-              </div>
-            </div>
-          </fieldset>
-        </form>
+        <div class="control-group">
+          <div class="controls">
+            <button class="btn btn-primary" type="button" ng-click="fetchFacebook()" ng-disabled="sending || !formFilled() || !config.exists()">Fetch Facebook Feeds</button>
+          <span> &nbsp; <b>{{ model.sendMsg }}</b> </span>
+          </div>
+        </div>
+      </fieldset>
+    </form>
 
-      </div>
-    </div>
   </div>
