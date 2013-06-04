@@ -98,6 +98,33 @@ function config($routeProvider) {
 
 
 /**
+ * directive: platformNav
+ */
+directive('facebookNav', [
+function () {
+  return {
+    restrict: 'A',
+    template: '<div ng-controller="facebookNavCtrl">' +
+              '  <ul class="nav nav-tabs">' +
+              '    <li ng-class="navClass(\'facebook\')">' +
+              '      <a href="#/facebook">Settings</a>' +
+              '    </li>' +
+              '    <li ng-class="navClass(\'facebook/post\')">' +
+              '      <a href="#/facebook/post">Post</a>' +
+              '    </li>' +
+              '    <li ng-class="navClass(\'facebook/fetch\')">' +
+              '      <a href="#/facebook/fetch">Fetch</a>' +
+              '    </li>' +
+              '    <li ng-class="navClass(\'facebook/feeds\')">' +
+              '      <a href="#/facebook/feeds">Feeds</a>' +
+              '    </li>' +
+              '  </ul>' +
+              '</div>'
+  };
+}]).
+
+
+/**
  * Controller: facebookNavCtrl
  */
 controller('facebookNavCtrl',
