@@ -1,44 +1,33 @@
-  <div ng-controller="twitterNavCtrl">
-    <ul class="nav nav-tabs">
-     <li ng-class="navClass('twitter')">
-      <a href="#/twitter">Settings</a>
-    </li>
-     <li ng-class="navClass('twitter/post')">
-        <a href="#/twitter/post">Post</a>
-      </li>
-    </ul>
-  </div>
+  <div data-twitter-nav></div>
 
-  <div class="page" ng-controller="twitterPostCtrl">
-    <div class="container-fluid">
-      <div class="row-fluid">
+  <!-- twitter post -->
+  <div class="container">
+    <h4>Post to Twitter</h4>
 
-      <form name="twitterPost" class="form-horizontal" novalidate>
-        <fieldset>
+    <form name="twitterPost" class="form-horizontal" novalidate>
+      <fieldset>
 
-          <div class="control-group">
-            <label for="from" class="control-label">Posting as:</label>
-            <div class="controls">
-              <input class="required input-xxlarge" type="text" ng-model="config.data.username" name="from" disabled>
-            </div>
+        <div class="control-group">
+          <label for="from" class="control-label">Posting as:</label>
+          <div class="controls">
+            <input class="required input-xxlarge" type="text" ng-model="config.data.username" name="from" disabled>
           </div>
+        </div>
 
-          <div class="control-group">
-            <label for="body" class="control-label">Body:</label>
-            <div class="controls">
-              <textarea class="input-xxlarge" name="body" rows="6" ng-disabled="sending || !config.exists()" ng-model="model.message.object.text"></textarea>
-            </div>
+        <div class="control-group">
+          <label for="body" class="control-label">Body:</label>
+          <div class="controls">
+            <textarea class="input-xxlarge" name="body" rows="6" ng-disabled="sending || !config.exists()" ng-model="model.message.object.text"></textarea>
           </div>
+        </div>
 
-          <div class="control-group">
-            <div class="controls">
-              <button class="btn btn-primary" type="button" ng-click="post()" ng-disabled="sending || !formFilled() || !config.exists()">Post to Twitter</button>
-            <span> &nbsp; <b>{{ model.sendMsg }}</b> </span>
-            </div>
+        <div class="control-group">
+          <div class="controls">
+            <button class="btn btn-primary" type="button" ng-click="post()" ng-disabled="sending || !formFilled() || !config.exists()">Post to Twitter</button>
+          <span> &nbsp; <b>{{ model.sendMsg }}</b> </span>
           </div>
+        </div>
 
-        </fieldset>
-      </form>
-      </div>
-    </div>
+      </fieldset>
+    </form>
   </div>
