@@ -69,6 +69,9 @@ function config($routeProvider) {
     }).
     when('/facebook/fetch', {
       templateUrl: 'templates/facebook/fetch.html'
+    }).
+    when('/facebook/feeds', {
+      templateUrl: 'templates/facebook/feeds.html'
     });
 }]).
 
@@ -153,4 +156,75 @@ function facebookPostCtrl($scope, $rootScope, Facebook, $timeout) {
   } else {
     $scope.model.sendMsg = 'you must complete the settings in order to post to facebook';
   }
+}]).
+
+
+/**
+ * Controller: facebookFetchCtrl
+ */
+controller('facebookFetchCtrl',
+['$scope', '$rootScope', 'Facebook', '$timeout',
+function ($scope, $rootScope, Facebook, $timeout) {
+  $scope.sending = false;
+  $scope.model = {
+    sendMsg: '',
+
+    message: {
+      actor: {
+        address: ''
+      },
+      target: []
+    }
+  };
+
+  $scope.config = Facebook.config;
+
+  $scope.addTarget = function () {
+    console.log('scope:', $scope);
+    $scope.model.message.target.push({address: $scope.model.targetAddress});
+    $scope.model.targetAddress = '';
+  };
+
+  $scope.fetchFacebook = function () {
+    $scope.model.sendMsg = 'fetching feeds...';
+    $scope.sending = true;
+    Facebook.fetch($scope.model.message).then(function () {
+      $scope.model.sendMsg = 'facebook fetch successful!';
+      console.log('facebook fetch successful!');
+      $scope.sending = false;
+      $timeout(function () {
+        $scope.model.sendMsg = 'click the feeds tab to view fetched entries';
+      }, 2000);
+    }, function (err) {
+      console.log('facebook fetch failed: ', err);
+      $scope.model.sendMsg = err;
+      $timeout(function () {
+        $scope.model.sendMsg = '';
+      }, 5000);
+    });
+  };
+
+  $scope.formFilled = function () {
+    if ($scope.model.message.target) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  if ($scope.model.message.target.length === 0) {
+    $scope.model.sendMsg = 'add facebook feeds to fetch';
+  } else {
+    $scope.model.sendMsg = '';
+  }
+}]).
+
+
+/**
+ * controller: facebookFeedCtrl
+ */
+controller('facebookFeedsCtrl',
+['$scope', 'Facebook',
+function ($scope, Facebook) {
+  $scope.feeds = Facebook.feeds.data;
 }]);
