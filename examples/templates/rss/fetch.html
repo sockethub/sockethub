@@ -4,13 +4,13 @@
   <div class="container" ng-controller="rssFetchCtrl">
     <h4>Fetch RSS Feeds</h4>
 
-    <form name="rssFeeds" class="form-horizontal add-form" ng-submit="addTarget()" novalidate>
+    <form name="rssFeeds" class="form-horizontal add-form" ng:submit="addTarget()" novalidate>
       <fieldset>
         <div class="control-group">
           <label for="to" class="control-label">Add a feed URL:</label>
           <div class="controls input-append">
             <input class="input-xlarge" name="to" type="text" ng-model="model.targetAddress" ng-disabled="sending || !config.exists()" required>
-          <button class="btn btn-primary" ng-click="addTarget()" ng-disabled="sending || !config.exists()">Add</button>
+          <button class="btn btn-primary" ng:click="addTarget()" ng-disabled="sending || !config.exists() || !model.targetAddress">Add</button>
           </div>
         </div>
       </fieldset>
