@@ -1,23 +1,11 @@
-  <div ng-controller="rssNavCtrl">
-    <ul class="nav nav-tabs">
-     <li ng-class="navClass('rss')">
-      <a href="#/rss">Fetch</a>
-    </li>
-    <li ng-class="navClass('rss/feeds')">
-      <a href="#/rss/feeds">Feeds</a>
-    </li>
-    </ul>
-  </div>
+  <div data-rss-nav></div>
 
-  <div class="page" ng-controller="rssFeedsCtrl">
-    <div class="container-fluid">
-      <div class="row-fluid">
+  <!-- rss feeds -->
+  <div class="container" ng-controller="rssFeedsCtrl">
 
-        <div class="span3 feeds" data-feed-list feeds="feeds">Feeds</div>
+    <div class="span3 feeds" data-feed-list feeds="feeds">Feeds</div>
 
-        <div class="span9 articles" data-articles feeds="feeds"></div>
+    <div class="span9 articles" data-articles feeds="feeds"></div>
 
-      </div>
-    </div>
   </div>
 
