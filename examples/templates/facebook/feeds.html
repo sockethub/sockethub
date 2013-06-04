@@ -1,29 +1,11 @@
-  <div ng-controller="facebookNavCtrl">
-    <ul class="nav nav-tabs">
-      <li ng-class="navClass('facebook')">
-        <a href="#/facebook">Settings</a>
-      </li>
-      <li ng-class="navClass('facebook/post')">
-        <a href="#/facebook/post">Post</a>
-      </li>
-      <li ng-class="navClass('facebook/fetch')">
-        <a href="#/facebook/fetch">Fetch</a>
-      </li>
-      <li ng-class="navClass('facebook/feeds')">
-        <a href="#/facebook/feeds">Feeds</a>
-      </li>
-    </ul>
-  </div>
+  <div data-facebook-nav></div>
 
-  <div class="page" ng-controller="facebookFeedsCtrl">
-    <div class="container-fluid">
-      <div class="row-fluid">
+  <!-- facebook feeds -->
+  <div class="container" ng-controller="facebookFeedsCtrl">
 
-        <div class="span3 feeds" data-feed-list feeds="feeds">Feeds</div>
+    <div class="span3 feeds" data-feed-list feeds="feeds">Feeds</div>
 
-        <div class="span9 articles" data-articles feeds="feeds"></div>
+    <div class="span9 articles" data-articles feeds="feeds"></div>
 
-      </div>
-    </div>
   </div>
 
