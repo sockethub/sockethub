@@ -193,6 +193,7 @@ function () {
               '</ul>',
     link: function (scope, element, attrs) {
       scope.uniqueFeeds = [];
+      console.log('**** feeds: ', scope.feeds);
 
       for (var i = 0, num = scope.feeds.length; i < num; i = i + 1) {
         var match = false;
@@ -209,7 +210,6 @@ function () {
                                    platform: scope.feeds[i].platform });
         }
       }
-      console.log('**** feeds: ', scope.feeds);
       console.log('**** uniqueFeeds: ', scope.uniqueFeeds);
     },
     transclude: true
