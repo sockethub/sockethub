@@ -26,6 +26,7 @@
     "gpg": "*",
     "consoleplusplus": "*",
     "feedparser": "*",
+    "request": "*",
     "nodepie": "*",
     "crypto": "*"
   },
