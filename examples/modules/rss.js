@@ -6,8 +6,7 @@ angular.module('rss', []).
 factory('RSS', ['$rootScope', '$q', 'SH', 'configHelper',
 function ($rootScope, $q, SH, CH) {
 
-  var config = {
-  };
+  var config = {};
 
   function exists(cfg) {
     return CH.exists(config, cfg);
@@ -30,6 +29,9 @@ function ($rootScope, $q, SH, CH) {
     var defer = $q.defer();
     msg.platform = 'rss';
     msg.verb = 'fetch';
+    if (!msg.actor.address) {
+      msg.actor.address = "rss";
+    }
     console.log("FETCH: ", msg);
     SH.submit(msg, 5000).then(defer.resolve, defer.reject);
     return defer.promise;
@@ -39,7 +41,9 @@ function ($rootScope, $q, SH, CH) {
 
   SH.on('rss', 'message', function (m) {
     console.log("RSS received message");
-    feedData.push(m);
+    if (m.status) { // just handle successful fetches
+      feedData.push(m);
+    }
   });
 
   return {
