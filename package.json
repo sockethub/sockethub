@@ -28,7 +28,8 @@
     "feedparser": "*",
     "request": "*",
     "nodepie": "*",
-    "crypto": "*"
+    "crypto": "*",
+    "posix": "*"
   },
   "devDependencies": {
     "teste": "*"

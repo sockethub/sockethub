@@ -1,4 +1,5 @@
 require("consoleplusplus/console++");
+var posix = require('posix');
 module.exports = (function() {
   var cluster = require('cluster');
 
@@ -22,6 +23,15 @@ module.exports = (function() {
   var initDispatcher = false;
   var dispatcher;
   var sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime();
+
+
+  // set session ulimit
+  var limits = posix.getrlimit('nofile');
+  console.debug('CURRENT SYSTEM RESOURCE limits: soft=' + limits.soft + ', max=' + limits.hard);
+  posix.setrlimit('nofile', {soft: '4096', hard: '4096'});
+  limits = posix.getrlimit('nofile');
+  console.debug('ADJUSTED RESOURCES limits: soft=' + limits.soft + ', max=' + limits.hard);
+
 
   // test redis service
   console.info(" [sockethub] verifying redis connection");
