@@ -62,6 +62,10 @@ installation & setup
 
   You will want to edit your config.secrets.js file and add your own secret string to use during the register command to ensure only apps can connect that have the right secret.
 
+    [sockethub]$ git submodule init && git submodule update
+  You'll need the submodules for the examples to run (uses
+  [sockethub-client](https://github.com/sockethub/sockethub-client/))
+
     [sockethub]$ node sockethub.js
 
   Once sockethub is running, you can visit `http://localhost:10550/examples/` to see some example apps (under development).
