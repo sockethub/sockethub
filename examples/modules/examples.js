@@ -38,6 +38,7 @@ value('settings', {
     };
   }
 }).
+
 value('configHelper', {
   exists: function exists(config, cfg) {
     if (!cfg) {
