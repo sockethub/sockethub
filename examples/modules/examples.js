@@ -70,9 +70,7 @@ run(['settings', 'SH',
 function (settings, SH) {
   var s = settings.sockethub();
   // connect to sockethub and register
-  SH.setConfig(s.host, s.port,
-               s.path, s.tls,
-               s.secret).then(function () {
+  SH.setConfig(s).then(function () {
     return SH.connect();
   }).then(function () {
     return SH.register();
