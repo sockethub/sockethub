@@ -1,3 +1,6 @@
 [submodule "examples/res/sockethub-client"]
 	path = examples/res/sockethub-client
 	url = git://github.com/sockethub/sockethub-client.git
+[submodule "examples/vendor/sockethub-client"]
+	path = examples/vendor/sockethub-client
+	url = git://github.com/sockethub/sockethub-client
