@@ -1,6 +1,8 @@
 CHANGELOG
 =========
 
+- added fetch functionality to twitter platform
+
 - twitter platform examples bugfixes
 
 - bugfixes in listener platform
