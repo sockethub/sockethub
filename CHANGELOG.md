@@ -1,11 +1,11 @@
 CHANGELOG
 =========
 
-- added fetch functionality to twitter platform
+- platforms: added `fetch` functionality to twitter platform
 
-- twitter platform examples bugfixes
+- examples: twitter platform additions for `fetch` verb, and bugfixes
 
-- bugfixes in listener platform
+- bugfixes in listener module
 
 - adjust ulimit on startup
 
