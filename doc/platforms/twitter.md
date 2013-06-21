@@ -52,8 +52,6 @@
 ```
 
 
-*[not implemented]*
-
 ### fetching tweets
 
  ```javascript
@@ -66,12 +64,7 @@
     },
     object: {
       poll: true // continuous polling
-    },
-    target: [
-      {
-        address: "sockethub"
-      }
-    ]
+    }
   }
 ```
 
@@ -85,7 +78,6 @@
       name: "Nick Jennings",
       address: "slvrbckt",
       id: 5909712,
-      description: "freelance developer and project manager. javascript & node.js, *nix administration, web application development.",
       image: "https://twimg0-a.akamaihd.net/profile_images/2035392657/avatar-WEB-Picture-8_normal.jpg"
     },
     object: {
@@ -99,9 +91,10 @@
     },
     target: [
       {
-        field: "mention",
+        field: "cc",
         id: 1134572197,
-        address: "sockethub"
+        address: "sockethub",
+        name: "Sockethub"
       }
     ]
   }
