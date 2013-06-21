@@ -5,7 +5,6 @@ angular.module('twitter', []).
  */
 factory('Twitter', ['$rootScope', '$q', 'SH', 'configHelper',
 function Twitter($rootScope, $q, SH, CH) {
-
   var config = {
     username: '',
     consumer_key: '',
@@ -48,13 +47,34 @@ function Twitter($rootScope, $q, SH, CH) {
     return defer.promise;
   }
 
+  function fetch(msg) {
+    var defer = $q.defer();
+    msg.platform = 'twitter';
+    msg.verb = 'fetch';
+    console.log("FETCH: ", msg);
+    SH.submit(msg, 5000).then(defer.resolve, defer.reject);
+    return defer.promise;
+  }
+
+  var feedData = [];
+
+  SH.on('twitter', 'message', function (m) {
+    console.log("Twitter received message: ", m);
+    feedData.push(m);
+  });
+
+
   return {
     config: {
       exists: exists,
       set: set,
       data: config
     },
-    post: post
+    feeds: {
+      data: feedData
+    },
+    post: post,
+    fetch: fetch
   };
 }]).
 
@@ -70,6 +90,12 @@ function config($routeProvider) {
     }).
     when('/twitter/post', {
       templateUrl: 'templates/twitter/post.html'
+    }).
+    when('/twitter/fetch', {
+      templateUrl: 'templates/twitter/fetch.html'
+    }).
+    when('/twitter/feeds', {
+      templateUrl: 'templates/twitter/feeds.html'
     });
 }]).
 
@@ -88,6 +114,12 @@ function () {
               '    </li>' +
               '    <li ng-class="navClass(\'twitter/post\')">' +
               '      <a href="#/twitter/post">Post</a>' +
+              '    </li>' +
+              '    <li ng-class="navClass(\'twitter/fetch\')">' +
+              '      <a href="#/twitter/fetch">Fetch</a>' +
+              '    </li>' +
+              '    <li ng-class="navClass(\'twitter/feeds\')">' +
+              '      <a href="#/twitter/feeds">Feeds</a>' +
               '    </li>' +
               '  </ul>' +
               '</div>'
@@ -175,4 +207,100 @@ function twitterPostCtrl($scope, $rootScope, Twitter, $timeout) {
   } else {
     $scope.model.sendMsg = 'you must complete the settings in order to post to twitter';
   }
+}]).
+
+
+/**
+ * Controller: twitterFetchCtrl
+ */
+controller('twitterFetchCtrl',
+['$scope', '$rootScope', 'Twitter', '$timeout',
+function ($scope, $rootScope, Twitter, $timeout) {
+  $scope.sending = false;
+  $scope.model = {
+    sendMsg: '',
+
+    message: {
+      actor: {
+        address: ''
+      },
+      target: []
+    }
+  };
+
+  $scope.config = Twitter.config;
+
+  $scope.addTarget = function () {
+    console.log('scope:', $scope);
+    $scope.model.message.target.push({address: $scope.model.targetAddress});
+    $scope.model.targetAddress = '';
+  };
+
+  $scope.fetchTwitter = function () {
+    $scope.model.sendMsg = 'fetching feeds...';
+    $scope.sending = true;
+    $scope.model.message.actor.address = $scope.config.data.username;
+    Twitter.fetch($scope.model.message).then(function (data) {
+      $scope.model.sendMsg = 'twitter fetch successful!';
+      console.log('twitter fetch successful! ', data);
+      $scope.sending = false;
+      $timeout(function () {
+        $scope.model.sendMsg = 'click the feeds tab to view fetched entries';
+      }, 2000);
+    }, function (err) {
+      console.log('twitter fetch failed: ', err);
+      $scope.model.sendMsg = err;
+      /*$timeout(function () {
+        $scope.model.sendMsg = '';
+      }, 5000);*/
+    });
+  };
+
+  $scope.formFilled = function () {
+    if ($scope.model.message.target) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  if ($scope.model.message.target.length === 0) {
+    $scope.model.sendMsg = 'first, fill out your credentials in the settings tab';
+  } else {
+    $scope.model.sendMsg = '';
+  }
+}]).
+
+
+/**
+ * controller: twitterFeedCtrl
+ */
+controller('twitterFeedsCtrl',
+['$scope', 'Twitter',
+function ($scope, Twitter) {
+  $scope.feeds = Twitter.feeds.data;
+}]).
+
+
+/**
+ * directive: tweets
+ */
+directive('tweets', [
+function () {
+  return {
+    restrict: 'A',
+    scope: {
+      feeds: '='
+    },
+    template: '<div class="well tweets" ng-repeat="t in feeds">' +
+              '  <h2>{{ t.actor.name }}</h2>' +
+              '  <p><img src="{{ t.actor.image }}" /> <span class="faded">@{{ t.actor.address }}</span></p> ' +
+              '  <p>{{ t.object.text }}</p>' +
+              '  <p>hashtags:</p><ul><li ng-repeat="t in t.object.tags" class="hashtags"><a target="_blank" href="{{ t }}">{{ t }}</a></li></ul>' +
+              '  <p>links:</p><ul><li ng-repeat="l in t.object.urls" class="links"><a target="_blank" href="{{ l }}">{{ l }}</a></li></ul>' +
+              '  <div data-brief data-ng-bind-html-unsafe="t.object.brief_html"></div>' +
+              '</div>',
+    transclude: true
+  };
 }]);
+
