@@ -15,7 +15,7 @@ function Twitter($rootScope, $q, SH, CH) {
   };
 
   function exists(cfg) {
-    return CH.exist(config, cfg);
+    return CH.exists(config, cfg);
   }
 
   function set(cfg) {
@@ -134,7 +134,7 @@ function twitterPostCtrl($scope, $rootScope, Twitter, $timeout) {
       },
       target: [],
       object: {
-        text: 'Hello from @sockethub! http://sockethub.org #sockethub',
+        text: 'Hello from @sockethub! http://sockethub.org #sockethub'
       }
     }
   };
@@ -144,9 +144,9 @@ function twitterPostCtrl($scope, $rootScope, Twitter, $timeout) {
   $scope.post = function () {
     $scope.sending = true;
     $scope.model.message.actor.address = $scope.config.data.username;
-    Twitter.post($scope.model.message).then(function () {
+    Twitter.post($scope.model.message).then(function (m) {
       $scope.model.sendMsg = 'twitter post successful!';
-      console.log('twitter post successful!');
+      console.log('twitter post successful! reply: ',m);
       $scope.model.message.object.text = '';
       $scope.sending = false;
       $timeout(function () {
