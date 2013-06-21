@@ -164,6 +164,7 @@ define(['require'], function (require) {
             rid: "123454"
           };
           var expected = {
+            actor: {address: 'user@example.com'},
             status: false,
             rid: "123454",
             verb: 'send',
@@ -244,6 +245,7 @@ define(['require'], function (require) {
           };
 
           var expected = {
+            actor: {address: 'user@example.com'},
             status: true,
             rid: "002",
             verb: 'send',
