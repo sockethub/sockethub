@@ -13,3 +13,30 @@
   border-bottom: 1px solid #dddddd;
   margin-bottom: 10px;
 }
+
+.tweets {
+  min-width: 500px;
+  text-align: center;
+}
+
+.faded {
+  color: #7777777;
+}
+
+ul {
+  list-style: none;
+}
+
+.hashtags {
+  list-style: none;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.links {
+  display: block;
+}
+
+p {
+  font-size: 16px;
+}
