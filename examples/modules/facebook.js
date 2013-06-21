@@ -163,7 +163,7 @@ function facebookPostCtrl($scope, $rootScope, Facebook, $timeout) {
       },
       target: [],
       object: {
-        text: 'Hello from @sockethub! http://sockethub.org',
+        text: 'Hello from @sockethub! http://sockethub.org'
       }
     }
   };
