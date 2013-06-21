@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+- twitter platform examples bugfixes
+
+- bugfixes in listener platform
+
+- adjust ulimit on startup
+
+
 sockethub v0.0.5 - 20.06.2013
 -----------------------------
 
