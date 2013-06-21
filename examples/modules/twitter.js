@@ -146,7 +146,7 @@ function twitterPostCtrl($scope, $rootScope, Twitter, $timeout) {
     $scope.model.message.actor.address = $scope.config.data.username;
     Twitter.post($scope.model.message).then(function (m) {
       $scope.model.sendMsg = 'twitter post successful!';
-      console.log('twitter post successful! reply: ',m);
+      console.log('twitter post successful! reply: ', m);
       $scope.model.message.object.text = '';
       $scope.sending = false;
       $timeout(function () {
