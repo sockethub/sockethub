@@ -22,7 +22,7 @@ var PUBLIC = {
   DOMAIN: "localhost",
   PORT: HOST.PORT,
   PATH: "/sockethub",
-  TLS: HOST.ENABLE_TLS  // purely cosmetic, sockethub will not handle TLS certs,
+  TLS: HOST.ENABLE_TLS, // purely cosmetic, sockethub will not handle TLS certs,
                         // but will configure examples to use
                         // wss:// instead of ws://
   EXAMPLES_PATH: '/examples' // uri path where the examples are accessed
