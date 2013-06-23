@@ -43,7 +43,9 @@ installation & setup
 
   * redis server
 
-  You will need to have a redis server up and running.
+  You will need to have a redis server (version 2.x or greater) up and running.
+
+  NOTE: **version 2.x** or greater required as Sockethub makes extensive use of the `BRPOP` command.
 
   * node.js package dependencies
 
@@ -66,6 +68,9 @@ installation & setup
   You'll need the submodules for the examples to run (uses
   [sockethub-client](https://github.com/sockethub/sockethub-client/))
 
+    [sockethub]$ npm test
+  Verify all tests pass, then you should be good to go.
+
     [sockethub]$ node sockethub.js
 
   Once sockethub is running, you can visit `http://localhost:10550/examples/` to see some example apps (under development).
@@ -74,7 +79,7 @@ installation & setup
 
 ### writing an app that uses it
 
-Your best bet is to include [the sockethub.js client](https://github.com/sockethub/dogtalk/blob/master/vendor/sockethub.js) and then do something like [connect, register, set, submit](doc/sockethub-client.md).
+Your best bet is to include [the sockethub.js client](https://github.com/sockethub/sockethub-client).
 
 ### adding a platform
 
