@@ -17,7 +17,7 @@ define(['require'], function (require) {
     tests: [
 
       {
-        desc: "verify connection",
+        desc: "verify redis is available",
         run: function (env, test) {
           env.util.redisCheck(function(err) {
             if (err) {
@@ -32,16 +32,46 @@ define(['require'], function (require) {
       {
         desc: "try to push/pop",
         run: function (env, test) {
-          env.util.redisGet('blpop', 'test', function (err, replies) {
+          env.util.redisGet('brpop', 'test', function (err, replies) {
             if (err) {
               test.result(false, err);
             } else {
               test.assertTypeAnd(replies[1], 'string');
-              test.assert(replies[1], 'helloWorld');
+              test.assert(replies[1], 'helloWorld1');
             }
           });
 
-          env.util.redisSet('lpush', 'test', 'helloWorld');
+          env.util.redisSet('lpush', 'test', 'helloWorld1');
+          env.util.redisSet('lpush', 'test', 'helloWorld2');
+          env.util.redisSet('lpush', 'test', 'helloWorld3');
+        }
+      },
+
+      {
+        desc: "get next in list",
+        run: function (env, test) {
+          env.util.redisGet('brpop', 'test', function (err, replies) {
+            if (err) {
+              test.result(false, err);
+            } else {
+              test.assertTypeAnd(replies[1], 'string');
+              test.assert(replies[1], 'helloWorld2');
+            }
+          });
+        }
+      },
+
+      {
+        desc: "get next in list",
+        run: function (env, test) {
+          env.util.redisGet('brpop', 'test', function (err, replies) {
+            if (err) {
+              test.result(false, err);
+            } else {
+              test.assertTypeAnd(replies[1], 'string');
+              test.assert(replies[1], 'helloWorld3');
+            }
+          });
         }
       }
 
