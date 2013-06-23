@@ -10,7 +10,7 @@ var HOST = {
   ENABLE_TLS: false, // it is stronlgly recommended that you leave TLS enabled
                      // unless your TLS needs are already taken care of via. a
                      // proxy, or you are running in a development environment.
-  TLS_CERTS_DIR: '/path/to/tls',
+  TLS_DIR: '/path/to/tls',
   PORT: 10550,
   MY_PLATFORMS: PLATFORMS // list of platforms this instance is responsible for
 };
