@@ -40,10 +40,13 @@ module.exports = (function() {
   // set session ulimit
   var limits = posix.getrlimit('nofile');
   console.debug('CURRENT SYSTEM RESOURCE limits: soft=' + limits.soft + ', max=' + limits.hard);
-  posix.setrlimit('nofile', {soft: '4096', hard: '4096'});
-  limits = posix.getrlimit('nofile');
-  console.debug('ADJUSTED RESOURCES limits: soft=' + limits.soft + ', max=' + limits.hard);
-
+  try {
+    posix.setrlimit('nofile', {soft: '4096', hard: '4096'});
+    limits = posix.getrlimit('nofile');
+    console.debug('ADJUSTED RESOURCES limits: soft=' + limits.soft + ', max=' + limits.hard);
+  } catch (e) {
+    console.error('unable to set ulimit, resource issues could arise. skipping');
+  }
 
   // test redis service
   console.info(" [sockethub] verifying redis connection");
