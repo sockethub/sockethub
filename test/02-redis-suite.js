@@ -19,7 +19,7 @@ define(['require'], function (require) {
       {
         desc: "verify redis is available",
         run: function (env, test) {
-          env.util.redisCheck(function(err) {
+          env.util.redis.check(function(err) {
             if (err) {
               test.result(false, err);
             } else {
@@ -32,7 +32,7 @@ define(['require'], function (require) {
       {
         desc: "try to push/pop",
         run: function (env, test) {
-          env.util.redisGet('brpop', 'test', function (err, replies) {
+          env.util.redis.get('brpop', 'test', function (err, replies) {
             if (err) {
               test.result(false, err);
             } else {
@@ -41,16 +41,16 @@ define(['require'], function (require) {
             }
           });
 
-          env.util.redisSet('lpush', 'test', 'helloWorld1');
-          env.util.redisSet('lpush', 'test', 'helloWorld2');
-          env.util.redisSet('lpush', 'test', 'helloWorld3');
+          env.util.redis.set('lpush', 'test', 'helloWorld1');
+          env.util.redis.set('lpush', 'test', 'helloWorld2');
+          env.util.redis.set('lpush', 'test', 'helloWorld3');
         }
       },
 
       {
         desc: "get next in list",
         run: function (env, test) {
-          env.util.redisGet('brpop', 'test', function (err, replies) {
+          env.util.redis.get('brpop', 'test', function (err, replies) {
             if (err) {
               test.result(false, err);
             } else {
@@ -64,7 +64,7 @@ define(['require'], function (require) {
       {
         desc: "get next in list",
         run: function (env, test) {
-          env.util.redisGet('brpop', 'test', function (err, replies) {
+          env.util.redis.get('brpop', 'test', function (err, replies) {
             if (err) {
               test.result(false, err);
             } else {

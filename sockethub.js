@@ -178,7 +178,11 @@ module.exports = (function() {
         if (err.stack) {
           console.log(err.stack);
         }
-        process.exit(1);
+        if (err.exit) {
+          process.exit(1);
+        } else {
+          process.exit();
+        }
       });
 
       process.on('SIGINT', function () {
