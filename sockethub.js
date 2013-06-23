@@ -40,7 +40,7 @@ module.exports = (function() {
 
   // test redis service
   console.info(" [sockethub] verifying redis connection");
-  util.redisCheck(function(err) {
+  util.redis.check(function(err) {
     if (err) {
       console.error(' [sockethub] REDIS ERROR: '+err);
       process.exit();
