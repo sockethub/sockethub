@@ -1,4 +1,16 @@
 require("consoleplusplus/console++");
+
+function SockethubError(err, exit) {
+  return {
+    name: "ScokethubError",
+    message: err,
+    exit: (exit) ? exit : false,
+    toString: function () {
+      return this.name +": "+ this.message;
+    }
+  };
+}
+
 var posix = require('posix');
 module.exports = (function() {
   var cluster = require('cluster');
@@ -114,6 +126,21 @@ module.exports = (function() {
 
       var shuttingDown = false;
 
+      process.on('SIGINT', function () {
+        console.debug("\nCaught SIGINT (Ctrl+C)");
+        console.info("Sockethub is shutting down...");
+
+        shuttingDown = true;
+
+        for (var id in cluster.workers) {
+          console.info("Sending 'shutdown' message to worker " + id);
+          cluster.workers[id].send('shutdown');
+        }
+      });
+
+
+
+
       if (typeof(config.NUM_WORKERS) === 'undefined') {
         // have 2 workers by default, so when one dies clients can reconnect
         // immediately without waiting for the new worker to boot up.
@@ -134,62 +161,56 @@ module.exports = (function() {
       });
 
       cluster.on('exit', function (worker, code, signal) {
+
+        if (code === 1) {
+          shuttingDown = true;
+        }
+
         if (worker.suicide) {
           console.log('worker exited '+code+' '+signal);
         }
       });
 
-      process.on('SIGINT', function () {
-        console.debug("\nCaught SIGINT (Ctrl+C)");
-        console.info("Sockethub is shutting down...");
 
-        shuttingDown = true;
 
-        for (var id in cluster.workers) {
-          console.info("Sending 'shutdown' message to worker " + id);
-          cluster.workers[id].send('shutdown');
-        }
-      });
-
-    } else {
+    } else if (cluster.isWorker) {
       /** WORKER **/
 
 
       // wrap the console functions to prepend worker id
-      console.info = function (msg) {
-        _console.info.apply(this, ['[worker #'+cluster.worker.id+'] '+msg]);
+      console.info = function (msg, dump) {
+        _console.info.apply(this, ['[worker #'+cluster.worker.id+'] '+msg, dump]);
       };
-      console.error = function (msg) {
-        _console.error.apply(this, ['[worker #'+cluster.worker.id+'] '+msg]);
+      console.error = function (msg, dump) {
+        _console.error.apply(this, ['[worker #'+cluster.worker.id+'] '+msg, dump]);
       };
-      console.debug = function (msg) {
-        _console.debug.apply(this, ['[worker #'+cluster.worker.id+'] '+msg]);
+      console.debug = function (msg, dump) {
+        _console.debug.apply(this, ['[worker #'+cluster.worker.id+'] '+msg, dump]);
       };
-      console.warn = function (msg) {
-        _console.warn.apply(this, ['[worker #'+cluster.worker.id+'] '+msg]);
+      console.warn = function (msg, dump) {
+        _console.warn.apply(this, ['[worker #'+cluster.worker.id+'] '+msg, dump]);
       };
-      console.log = function (msg) {
-        _console.log.apply(this, ['[worker #'+cluster.worker.id+'] '+msg]);
+      console.log = function (msg, dump) {
+        _console.log.apply(this, ['[worker #'+cluster.worker.id+'] '+msg, dump]);
       };
 
-
-      process.on('SIGINT', function() {
-        // ignore SIGINT in worker processes.
-        // instead the master handles it and sends us a 'shutdown' message.
+      process.on('uncaughtException', function(err) {
+        console.log('Caught exception: ' + err);
+        process.exit(1);
       });
+
 
       cluster.worker.on('message', function (message) {
         if (message === 'shutdown') {
           console.info("Cleaning up listener sessions...");
           dispatcher.shutdown().then(function () {
-            console.log("Exiting...");
+            console.info("Exiting...");
             console.log("\n");
-            process.exit();
+            process.exit(1);
           }, function (err) {
-            console.log('Aborting...'+err);
+            console.error('Aborting...'+err);
             console.log("\n");
-            process.exit();
-            //throw 'shutdown error '+err;
+            process.exit(1);
           });
         } else {
           console.error("Huh? Someone sent an unexpected message to this worker process: " + message);
@@ -207,14 +228,19 @@ module.exports = (function() {
         }
         console.debug(' [bootstrap] initializing listener for '+config.HOST.MY_PLATFORMS[i]);
         var l  = listener();
-        l.init(config.HOST.MY_PLATFORMS[i], sockethubId);
+        l.init({
+          platform: config.HOST.MY_PLATFORMS[i],
+          sockethubId: sockethubId,
+          SockethubError: SockethubError
+        });
       }
 
       if (initDispatcher) {
         try {
           dispatcher = require('./lib/sockethub/dispatcher.js');
         } catch (e) {
-          throw 'unable to load lib/sockethub/dispatcher.js : ' + e;
+          console.error('unable to load lib/sockethub/dispatcher.js : ' + e);
+          process.exit(1);
         }
 
         dispatcher.init(config.HOST.MY_PLATFORMS, sockethubId).then(function () {
@@ -224,7 +250,7 @@ module.exports = (function() {
             server = require('./lib/servers/http').init(config);
           } catch (e) {
             console.error('unable to load lib/servers/http ' + e);
-            worker.kill();
+            process.exit(1);
           }
 
           var wsServer;
@@ -233,14 +259,14 @@ module.exports = (function() {
             wsServer = require('./lib/servers/websocket').init(config, server, dispatcher);
           } catch (e) {
             console.error('unable to load lib/servers/websocket ' + e);
-            worker.kill();
+            process.exit(1);
           }
 
           console.info(' [*] finished loading' );
           console.log("\n");
         }, function (err) {
           console.error(" [sockethub] dispatcher failed initialization, aborting");
-          process.exit();
+          process.exit(1);
         });
 
       } else {
