@@ -40,25 +40,15 @@ module.exports = (function() {
 
   // test redis service
   console.info(" [sockethub] verifying redis connection");
-  (function redisCheck() {
-    var redis = require('redis');
-    var client;
-    try {
-      client = redis.createClient();
-      client.on('error', function (err) {
-        console.error(' [sockethub] REDIS ERROR: '+err);
-        process.exit();
-      });
-      client.on('ready', function () {
-        console.info(' [sockethub] redis check successful');
-        client.quit();
-        initSockethub(); // initialize Sockethub!
-      });
-    } catch (e) {
-      console.error(' [sockethub] cannot connect to redis: ' + e);
+  util.redisCheck(function(err) {
+    if (err) {
+      console.error(' [sockethub] REDIS ERROR: '+err);
       process.exit();
+    } else {
+      console.info(' [sockethub] redis check successful');
+      initSockethub(); // initialize Sockethub!
     }
-  })();
+  });
 
 
   function initSockethub() {
