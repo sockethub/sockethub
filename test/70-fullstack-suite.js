@@ -109,7 +109,7 @@ define(['require'], function (require) {
             verb: 'register',
             platform: "dispatcher"
           };
-          console.log('calling sendwith');
+          console.log('calling env.connection.sendWith');
           env.connection.sendWith({
             send: JSON.stringify(data),
             onMessage: function (data) {
@@ -117,6 +117,9 @@ define(['require'], function (require) {
               if (m.verb === 'register') {
                 test.assert(m.status, true);
               }
+            },
+            onError: function (err) {
+              test.result(false, err);
             }
           });
           //AndVerify(JSON.stringify(data), expected, test, env.confirmProps);
