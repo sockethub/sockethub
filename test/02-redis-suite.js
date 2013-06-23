@@ -19,6 +19,7 @@ define(['require'], function (require) {
       {
         desc: "verify redis is available",
         run: function (env, test) {
+          test.result(false);
           env.util.redisCheck(function(err) {
             if (err) {
               test.result(false, err);
