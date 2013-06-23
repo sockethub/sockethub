@@ -8,6 +8,7 @@ define(['require'], function (require) {
   suites.push({
     name: "redis tests",
     desc: "collection of basic redis tests",
+    abortOnFail: true, // don't continue with further test suites if any tests in this suite fail
     setup: function (env, test) {
       // test redis service
       env.util = require('./../lib/sockethub/util');
@@ -33,7 +34,7 @@ define(['require'], function (require) {
         run: function (env, test) {
           env.util.redisGet('blpop', 'test', function (err, replies) {
             if (err) {
-              test.result(err);
+              test.result(false, err);
             } else {
               test.assertTypeAnd(replies[1], 'string');
               test.assert(replies[1], 'helloWorld');
