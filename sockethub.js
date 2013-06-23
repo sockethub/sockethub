@@ -185,6 +185,9 @@ module.exports = (function() {
 
       process.on('uncaughtException', function(err) {
         console.log('Caught exception: ' + err);
+        if (err.stack) {
+          console.log(err.stack);
+        }
         process.exit(1);
       });
 
