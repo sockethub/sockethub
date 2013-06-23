@@ -1,15 +1,5 @@
 require("consoleplusplus/console++");
-
-function SockethubError(err, exit) {
-  return {
-    name: "ScokethubError",
-    message: err,
-    exit: (exit) ? exit : false,
-    toString: function () {
-      return this.name +": "+ this.message;
-    }
-  };
-}
+var util = require('./lib/sockethub/util.js');
 
 var posix = require('posix');
 module.exports = (function() {
@@ -56,7 +46,7 @@ module.exports = (function() {
     try {
       client = redis.createClient();
       client.on('error', function (err) {
-        console.error(' [sockethub] '+err);
+        console.error(' [sockethub] REDIS ERROR: '+err);
         process.exit();
       });
       client.on('ready', function () {
@@ -81,8 +71,6 @@ module.exports = (function() {
       debug: console.debug,
       log: console.log
     };
-
-
 
     /**
      *  write examples/connect-config.js
@@ -236,8 +224,7 @@ module.exports = (function() {
         var l  = listener();
         l.init({
           platform: config.HOST.MY_PLATFORMS[i],
-          sockethubId: sockethubId,
-          SockethubError: SockethubError
+          sockethubId: sockethubId
         });
       }
 
