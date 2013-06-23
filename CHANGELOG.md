@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+- added redis tests to ensure a version of 2.x or greater is installed.
+
+- additional redis abstraction and returned value vetting
+
 - platforms: added `fetch` functionality to twitter platform
 
 - examples: twitter platform additions for `fetch` verb, and bugfixes
