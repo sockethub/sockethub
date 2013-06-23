@@ -52,7 +52,10 @@ define(['require'], function (require) {
           continue;
         }
         l  = listener();
-        l.init(config.HOST.MY_PLATFORMS[i], sockethubId);
+        l.init({
+          platform: config.HOST.MY_PLATFORMS[i],
+          sockethubId: sockethubId
+        });
       }
 
       var dispatcher = require('./../lib/sockethub/dispatcher');
@@ -89,7 +92,8 @@ define(['require'], function (require) {
     tests: [
 
       {
-        desc: "register without remoteStorage",
+        desc: "register",
+        timeout: 10000,
         run: function (env, test) {
           var data = {
             platform: "dispatcher",
@@ -105,6 +109,7 @@ define(['require'], function (require) {
             verb: 'register',
             platform: "dispatcher"
           };
+          console.log('calling sendwith');
           env.connection.sendWith({
             send: JSON.stringify(data),
             onMessage: function (data) {
@@ -169,7 +174,7 @@ define(['require'], function (require) {
             rid: "123454",
             verb: 'send',
             platform: "email",
-            message:"could not get credentials"
+            message: "could not get credentials"
           };
           var json_data = JSON.stringify(data);
           //console.log('JSON_DATA: ',json_data);

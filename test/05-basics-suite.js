@@ -53,7 +53,10 @@ define(['require'], function (require) {
           continue;
         }
         l  = listener();
-        l.init(config.HOST.MY_PLATFORMS[i], sockethubId);
+        l.init({
+          platform: config.HOST.MY_PLATFORMS[i],
+          sockethubId: sockethubId
+        });
       }
 
       var dispatcher = require('./../lib/sockethub/dispatcher');
