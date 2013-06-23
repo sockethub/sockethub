@@ -129,21 +129,6 @@ module.exports = (function() {
 
       var shuttingDown = false;
 
-      process.on('SIGINT', function () {
-        console.debug("\nCaught SIGINT (Ctrl+C)");
-        console.info("Sockethub is shutting down...");
-
-        shuttingDown = true;
-
-        for (var id in cluster.workers) {
-          console.info("Sending 'shutdown' message to worker " + id);
-          cluster.workers[id].send('shutdown');
-        }
-      });
-
-
-
-
       if (typeof(config.NUM_WORKERS) === 'undefined') {
         // have 2 workers by default, so when one dies clients can reconnect
         // immediately without waiting for the new worker to boot up.
@@ -156,7 +141,7 @@ module.exports = (function() {
 
       cluster.on('disconnect', function (worker) {
         if (shuttingDown) {
-          console.log("Worker " + worker.id + " done.");
+          console.info("Worker " + worker.id + " done.");
         } else {
           console.error("Worker " + worker.id + " disconnected, spawning new one.");
           cluster.fork();
@@ -166,6 +151,7 @@ module.exports = (function() {
       cluster.on('exit', function (worker, code, signal) {
 
         if (code === 1) {
+          console.info('worker exited '+code+' ... shutting down');
           shuttingDown = true;
         }
 
@@ -175,6 +161,18 @@ module.exports = (function() {
       });
 
 
+      process.on('SIGINT', function () {
+        console.log("\nCaught SIGINT (Ctrl+C)");
+        console.info("Sockethub is shutting down...");
+
+        shuttingDown = true;
+
+        for (var id in cluster.workers) {
+          console.info("Sending 'shutdown' message to worker " + id);
+          cluster.workers[id].send('shutdown');
+        }
+      });
+
 
     } else if (cluster.isWorker) {
       /** WORKER **/
@@ -182,19 +180,19 @@ module.exports = (function() {
 
       // wrap the console functions to prepend worker id
       console.info = function (msg, dump) {
-        _console.info.apply(this, ['[worker #'+cluster.worker.id+'] '+msg, dump]);
+        _console.info.apply(this, ['[worker #'+cluster.worker.id+'] '+msg, (dump) ? dump : '']);
       };
       console.error = function (msg, dump) {
         _console.error.apply(this, ['[worker #'+cluster.worker.id+'] '+msg, dump]);
       };
       console.debug = function (msg, dump) {
-        _console.debug.apply(this, ['[worker #'+cluster.worker.id+'] '+msg, dump]);
+        _console.debug.apply(this, ['[worker #'+cluster.worker.id+'] '+msg, (dump) ? dump : '']);
       };
       console.warn = function (msg, dump) {
-        _console.warn.apply(this, ['[worker #'+cluster.worker.id+'] '+msg, dump]);
+        _console.warn.apply(this, ['[worker #'+cluster.worker.id+'] '+msg, (dump) ? dump : '']);
       };
       console.log = function (msg, dump) {
-        _console.log.apply(this, ['[worker #'+cluster.worker.id+'] '+msg, dump]);
+        _console.log.apply(this, ['[worker #'+cluster.worker.id+'] '+msg, (dump) ? dump : '']);
       };
 
       process.on('uncaughtException', function(err) {
@@ -202,6 +200,11 @@ module.exports = (function() {
         process.exit(1);
       });
 
+      process.on('SIGINT', function () {
+        // we catch the sigint in the worker thread but ignore it so that
+        // does not abort our process. we'll be able to gracefully shut down
+        // when we get the command from the master.
+      });
 
       cluster.worker.on('message', function (message) {
         if (message === 'shutdown') {
