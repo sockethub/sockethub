@@ -1,5 +1,4 @@
 
-
 # Adding a platform
 
 A platform is a module that gives sockethub access to one or more APIs or Protocols relating to a specific topic.
@@ -20,14 +19,45 @@ First, of course, you'll want to actually write the platform.
 
     lib/platforms/<platform_name>.js
 
-This is the actual platform file which exposes the functions that the sockethub listener calls. It contains all the logic and functionality to carry out. This *is* the platform
+This is the actual platform file which exposes the functions that the sockethub listener calls.
+It contains all the logic and functionality to carry out. This *is* the platform.
+It needs an init function and a cleanup function that returns a promise. something like:
+
+
+````
+var promising = require('promising');
+
+module.exports = function() {
+  return {
+    init: function() {
+    },
+    cleanup: function() {
+      var promise = promising();
+      promise.fulfill(true);
+      return promise;
+    },
+    post: function (job) {
+      var promise = promising();
+      doSomething(job, function(err, data) {
+        if(err) {
+          promise.reject(err);
+        } else {
+          promise.fulfill(null, true, data);
+        }
+      });
+      return promise;
+    }
+  };
+};
+````
+
 
 ### Platforms schema registry
 Then you'll want to update the platforms schema to include your newly created platform
 
     lib/schemas/platforms.js
 
-When you've added a platform to the `lib/platforms/` directory, next you'll want to add it to the list of platforms in the `lib/schemas/platforms.js`. One entry for each platform along with a list of verb names it implements.
+One entry for each platform along with a list of verb names it implements.
 
 
 # Adding a verb
