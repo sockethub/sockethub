@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+var sockethub = require('./../lib/sockethub/sockethub.js');
+sockethub.init({
+  root: './'
+});
