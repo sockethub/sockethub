@@ -66,13 +66,12 @@ angular.module('examples', ['ngSockethubClient', 'service', 'email', 'twitter', 
 /**
  * connect to sockethub on startup
  */
-run(['settings', 'SH',
-function (settings, SH) {
+run(['settings', 'SH', 'SockethubSettings',
+function (settings, SH, SHsettings) {
   var s = settings.sockethub();
   // connect to sockethub and register
-  SH.setConfig(s).then(function () {
-    return SH.connect();
-  }).then(function () {
+  SHsettings.save('conn', s)
+  SH.connect().then(function () {
     return SH.register();
   }).then(function () {
     console.log('connected to sockethub');
