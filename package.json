@@ -5,6 +5,10 @@
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "AGPL",
+  "main": "bin/sockethub"
+  "bin": {
+    "sockethub": "./bin/sockethub"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/sockcwethub/sockethub.git"
@@ -36,5 +40,12 @@
   },
   "scripts": {
     "test": "node_modules/.bin/teste"
-  }
+  },
+  "keywords": [
+      "javascript",
+      "websocket",
+      "messaging",
+      "social",
+      "polyglot"
+  ]
 }
