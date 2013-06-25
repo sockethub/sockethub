@@ -5,7 +5,7 @@
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "AGPL",
-  "main": "bin/sockethub"
+  "main": "bin/sockethub",
   "bin": {
     "sockethub": "./bin/sockethub"
   },
