@@ -40,12 +40,5 @@
   },
   "scripts": {
     "test": "node_modules/.bin/teste"
-  },
-  "keywords": [
-      "javascript",
-      "websocket",
-      "messaging",
-      "social",
-      "polyglot"
-  ]
+  }
 }
