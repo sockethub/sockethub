@@ -1,0 +1,21 @@
+/**
+ * Variable: platforms
+ *
+ * This is for local & custom platforms that the user has created. 
+ *
+ * You define the platform name, along with any verbs it'll use. This is just
+ * to list the verb names. The actual verb schema is defined in the
+ * schemas/verbs.js file
+ * You have the option of specifying the location, if undefined it will check 
+ * in the normal spot (lib/platforms/<platform_name>.js
+ */
+var platforms = {
+
+  "custom" : {
+    "location" : "/home/user/dev/my-sockethub-platforms/custom.js",
+    "verbs" : [ "post", "fetch" ]
+  },
+
+};
+
+module.exports = platforms;
