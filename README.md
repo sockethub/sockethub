@@ -71,7 +71,7 @@ installation & setup
     [sockethub]$ npm test
   Verify all tests pass, then you should be good to go.
 
-    [sockethub]$ node sockethub.js
+    [sockethub]$ bin/sockethub
 
   Once sockethub is running, you can visit `http://localhost:10550/examples/` to see some example apps (under development).
 
