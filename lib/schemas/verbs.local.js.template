@@ -1,0 +1,37 @@
+var tpl = require('./templates');
+/**
+ * Variable: verbs
+ *
+ * Contains all the schema definitions for any custom verb you want to
+ * use in a platform.
+ *
+ * So any custom verbs, regardless of platform, are defined here first, 
+ * then referenced in their platform in the schemas/platforms.local.js
+ *
+ */
+var verbs = {
+  "fish": {
+    "schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": true,
+      "properties": {
+        "object": {
+          "type": "object",
+          "required": true,
+          "properties": {
+            "test": {
+              "type": "string",
+              "required": true
+            },
+            "bait": {
+              "type": "string",
+              "required": true
+            }
+          }
+        }
+      }
+    }
+  }
+};
+module.exports = verbs;
