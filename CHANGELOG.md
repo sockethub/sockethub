@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+- added sockethub executable: bin/sockethub
+
+- re-factored the initialization process, we now fork off a control child which
+  then manages the master/worker cluster.
+
 - added redis tests to ensure a version of 2.x or greater is installed.
 
 - additional redis abstraction and returned value vetting
