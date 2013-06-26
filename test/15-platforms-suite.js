@@ -42,7 +42,8 @@ var platform_test_suite = {
   name: "platform tests",
   desc: "platform tests, verifying the verbs they define in protocol.js are exported in their platform module",
   setup: function (env, test) {
-    test.result(true); },
+    test.result(true);
+  },
   tests: []
 };
 
@@ -53,13 +54,7 @@ if(typeof(define) !== 'function') {
 define(['require'], function (require) {
   var suites = [];
 
-  var protocols;
-  try {
-    protocols = require('./../lib/sockethub/protocol');
-  } catch (e) {
-    test.result(false, e);
-  }
-  var platforms = protocols.platforms;
+  var platforms = require('./../lib/sockethub/protocol').platforms;
 
   for (var i in platforms) {
     var platform = platforms[i].name;
