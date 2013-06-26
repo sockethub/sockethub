@@ -46,6 +46,7 @@ define(['require'], function (require) {
 
       var sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime();
 
+      var proto = require('./../lib/sockethub/protocol');
       listener = require('./../lib/sockethub/listener');
       for (var i = 0, len = config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
         if (config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
@@ -53,7 +54,7 @@ define(['require'], function (require) {
         }
         l  = listener();
         l.init({
-          platform: config.HOST.MY_PLATFORMS[i],
+          platform: proto.platforms[config.HOST.MY_PLATFORMS[i]],
           sockethubId: sockethubId
         });
       }
@@ -61,7 +62,7 @@ define(['require'], function (require) {
       var dispatcher = require('./../lib/sockethub/dispatcher');
 
       env.server = {};
-      dispatcher.init(config.HOST.MY_PLATFORMS, sockethubId).then(function() {
+      dispatcher.init(config.HOST.MY_PLATFORMS, sockethubId, proto).then(function() {
         // initialize http server
         env.server.h = require('./../lib/servers/http').init(config);
         // initialize websocket server

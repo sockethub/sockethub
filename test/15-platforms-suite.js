@@ -1,11 +1,13 @@
 require("consoleplusplus/console++");
+var promising = require('promising');
 var session = {
   log: function (msg) {
     console.log('SESSION LOG '+msg);
   },
   getSessionID: function () {
     return ['1234567890'];
-  }
+  },
+  promising: promising
 };
 
 function buildTest(platform, verb, data, err) {
@@ -61,13 +63,17 @@ define(['require'], function (require) {
 
   for (var i in platforms) {
     var platform = platforms[i].name;
+    var location = (platforms[i].location) ? ''+platforms[i].location :
+                                             './../lib/platforms/'+platform;
+
+    location = location.replace(/\.js$/, "");
     if (platform === 'dispatcher') { continue; }
 
     // manually check for init and cleanup
     var pd;
     var loadFailed = false;
     try {
-      pd = require('./../lib/platforms/' + platform);
+      pd = require(location);
     } catch (e) {
       loadFailed = true;
       platform_test_suite.tests.push(buildTest(platform, 'init', undefined, e));
