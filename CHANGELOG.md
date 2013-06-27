@@ -18,7 +18,9 @@ sockethub v0.0.6 - 28.06.2013
 - added sockethub executable: `bin/sockethub`
 
 - re-factored the initialization process, we now fork off a control child which
-  then manages the master/worker cluster.
+  then manages the master/worker cluster for listeners, the dispatcher is
+  handled directly by the main sockethub thread. this means no disconnects
+  from the dispatcher when a listener fails and has to reinit.
 
 - added redis tests to ensure a version of 2.x or greater is installed.
 
