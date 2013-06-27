@@ -4,18 +4,18 @@ CHANGELOG
 sockethub v0.0.6 - 28.06.2013
 -----------------------------
 
-- simplified lib/schemas/platforms.js and verbs.js for less typing when adding
+- simplified `lib/schemas/platforms.js` and verbs.js for less typing when adding
   new verbs or platforms (no name property required and verbs list is an array
   of strings).
 
 - sockethub admins can now add custom platforms or verbs by creating a 'local'
-  schema in libs/schemas/platforms.local.js and verbs.local.js using the same
-  format as the default schema files.
+  schema in `libs/schemas/platforms.local.js` and `verbs.local.js` using the
+  same format as the default schema files.
 
 - 'location' property, added to platforms schema. admins can specify the full
   path to their custom platforms .js file.
 
-- added sockethub executable: bin/sockethub
+- added sockethub executable: `bin/sockethub`
 
 - re-factored the initialization process, we now fork off a control child which
   then manages the master/worker cluster.
@@ -49,7 +49,8 @@ sockethub v0.0.5 - 20.06.2013
 sockethub v0.0.4 - 20.05.2013
 -----------------------------
 
-- lots of work improving examples (accessible from `http://localhost:10550/examples/`)
+- lots of work improving examples
+  (accessible from `http://localhost:10550/examples/`)
 
 - platform: `facebook`
 
