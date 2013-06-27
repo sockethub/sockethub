@@ -2,15 +2,36 @@ require("consoleplusplus/console++");
 if (typeof define !== 'function') {
   var define = require('amdefine')(module);
 }
+
 define(['require'], function(require) {
   var suites = [];
+
+  suites.push({
+    name: "Session failed init test",
+    desc: "verify session will fail to init without enckey",
+    setup: function(env, test) {
+      test.result(true);
+    },
+    tests: [
+      {
+        desc: 'fail init without enckey',
+        willFail: true,
+        run: function (env, test) {
+          env.sockethubId = '1234567890';
+          env.Session = require('./../lib/sockethub/session')(env.sockethubId);
+          test.result(true);
+        }
+      }
+    ]
+  });
 
   suites.push({
     name: "Session singleton tests",
     desc: "collection of tests for the Session singleton object",
     setup: function(env, test) {
       env.sockethubId = '1234567890';
-      env.Session = require('./../lib/sockethub/session')(env.sockethubId);
+      env.encKey = '5678abcd';
+      env.Session = require('./../lib/sockethub/session')(env.sockethubId, env.encKey);
       test.result(true);
     },
     tests: [
@@ -85,7 +106,8 @@ define(['require'], function(require) {
     desc: "collection of tests for the Session instance",
     setup: function(env, test) {
       env.sockethubId = '1234567890';
-      env.Session = require('./../lib/sockethub/session')(env.sockethubId);
+      env.encKey = '5678abcd';
+      env.Session = require('./../lib/sockethub/session')(env.sockethubId, env.encKey);
       env.sid = 'test-sid';
       test.result(true);
     },
@@ -101,22 +123,6 @@ define(['require'], function(require) {
       });
     },
     tests: [
-      /*{
-        desc: "Session#addPlatform remembers the platform",
-        run: function(env, test) {
-          test.assertAnd(env.session.getPlatforms(), []);
-          env.session.addPlatform('foo');
-          test.assert(env.session.getPlatforms(), ['foo']);
-        }
-      },
-      {
-        desc: "Session#addPlatform doesn't add a platform twice",
-        run: function(env, test) {
-          env.session.addPlatform('foo');
-          env.session.addPlatform('foo');
-          test.assert(env.session.getPlatforms(), ['foo']);
-        }
-      },*/
       {
         desc: "Session#register sets the session to registered",
         run: function(env, test) {
@@ -163,10 +169,7 @@ define(['require'], function(require) {
         }
       },
 
-
-
-
-      /*{
+      {
         desc: "Session#reset clears platforms and settings",
         run: function(env, test) {
           env.session.setConfig('yarg', { foo: 'bar' });
@@ -175,9 +178,13 @@ define(['require'], function(require) {
           //test.assert(env.session.getPlatforms(), []);
           env.session.getConfig('yarg').then(function (cfg) {
             test.assert(cfg, {});
+            test.result(false);
+          }, function (err) {
+            test.result(true);
           });
         }
-      },*/
+      },
+
       {
         desc: "Session#getFile returns a promise",
         run: function(env, test) {
@@ -206,7 +213,8 @@ define(['require'], function(require) {
     setup: function(env, test) {
 
       env.sockethubId = '1234567890';
-      env.Session = require('./../lib/sockethub/session')(env.sockethubId);
+      env.encKey = '5678abcd';
+      env.Session = require('./../lib/sockethub/session')(env.sockethubId, env.encKey);
       env.sid = 'test-sid';
 
       var http = require('http');
