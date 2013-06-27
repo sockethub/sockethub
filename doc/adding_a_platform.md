@@ -17,11 +17,12 @@ Here are the files you'll need to add or update to add a platform:
 ### Platform module
 First, of course, you'll want to actually write the platform.
 
+You can place it anywhere you like, but sockethub can automatically find it if
+you place it in:
+
     lib/platforms/<platform_name>.js
 
-This is the actual platform file which exposes the functions that the sockethub listener calls.
-It contains all the logic and functionality to carry out. This *is* the platform.
-It needs an init function and a cleanup function that returns a promise. something like:
+This is the actual platform file which exposes the functions that the sockethub listener calls. It contains all the logic and functionality to carry out. This *is* the platform. It needs an init function and a cleanup function that returns a promise. something like:
 
 
 ````
@@ -29,15 +30,18 @@ var promising = require('promising');
 
 module.exports = function() {
   return {
-    init: function() {
+    init: function(session) {
+      var promise = session.promising();  // session object from sockethub
+      promising.fulfill();  // fulfill promise, you can also reject()
+      return promise;
     },
     cleanup: function() {
-      var promise = promising();
-      promise.fulfill(true);
+      var promise = session.promising();
+      promise.fulfill(null, true);
       return promise;
     },
     post: function (job) {
-      var promise = promising();
+      var promise = session.promising();
       doSomething(job, function(err, data) {
         if(err) {
           promise.reject(err);
@@ -57,8 +61,18 @@ Then you'll want to update the platforms schema to include your newly created pl
 
     lib/schemas/platforms.js
 
+Or you can create a local platforms file which contains your changes:
+
+    lib/schemas/platforms.local.js
+
+It should use the exact same format.
+
 One entry for each platform along with a list of verb names it implements.
 
+#### specifying location of platform module
+Optionally, your platform module can live outside of the sockethub area (for example, another git repository). To tell sockethub where you platform is located, you can add a `location` property to your platform schema entry.
+
+See the [lib/schemas/platforms.local.js.example](https://github.com/sockethub/sockethub/blob/master/lib/schemas/platforms.local.js.example) for an example.
 
 # Adding a verb
 
@@ -73,7 +87,13 @@ If your platform has not implemented any new verbs, you can skip this step.
 
     lib/schemas/verbs.js
 
-If you need a new verb that hasn't been defined yet, you'll want to add it here, along with any types of properties that can be passed to it. The dispatcher automatically runs the JSON Schema Validator on all incoming JSON objects, so the `verbs.js` and `platforms.js` will need to be correct and up to date.
+Or you can create a local verbs file which contains your custom changes:
+
+    lib/schemas/verbs.local.js
+
+It should use the exact same format.
+
+If you need a new verb that hasn't been defined yet, you'll want to add it in one of these places, along with any types of properties that can be passed to it. The dispatcher automatically runs the JSON Schema Validator on all incoming JSON objects, so the `verbs.js` and `platforms.js` will need to be correct and up to date.
 
 
 
