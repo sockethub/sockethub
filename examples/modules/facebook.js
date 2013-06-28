@@ -276,4 +276,24 @@ controller('facebookFeedsCtrl',
 ['$scope', 'Facebook',
 function ($scope, Facebook) {
   $scope.feeds = Facebook.feeds.data;
+}]).
+
+
+/**
+ * directive: posts
+ */
+directive('posts', [
+function () {
+  return {
+    restrict: 'A',
+    scope: {
+      feeds: '='
+    },
+    template: '<div class="well tweets" ng-repeat="t in feeds">' +
+              '  <h2>{{ t.actor.name }}</h2>' +
+              '  <p>{{ t.object.brief_text }}</p>' +
+              '  <img src="{{ t.object.image }}"/>' +
+              '</div>',
+    transclude: true
+  };
 }]);
