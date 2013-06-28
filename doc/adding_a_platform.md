@@ -25,15 +25,13 @@ This is the actual platform file which exposes the functions that the sockethub 
 
 
 ````
-var promising = require('promising');
-
 module.exports = function() {
   var session;
   return {
     init: function(setSession) {
       session = setSession;
       var promise = session.promising();  // session object from sockethub
-      promising.fulfill();  // fulfill promise, you can also reject()
+      promise.fulfill();  // fulfill promise, you can also reject()
       return promise;
     },
     cleanup: function() {
@@ -49,7 +47,7 @@ module.exports = function() {
           data: data
         });
       });
-     promise.fulfill(null, true, data);
+      promise.fulfill(null, true);
       return promise;
     }
   };
