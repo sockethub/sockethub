@@ -1,4 +1,3 @@
-
 # Adding a platform
 
 A platform is a module that gives sockethub access to one or more APIs or Protocols relating to a specific topic.
@@ -29,8 +28,10 @@ This is the actual platform file which exposes the functions that the sockethub 
 var promising = require('promising');
 
 module.exports = function() {
+  var session;
   return {
-    init: function(session) {
+    init: function(setSession) {
+      session = setSession;
       var promise = session.promising();  // session object from sockethub
       promising.fulfill();  // fulfill promise, you can also reject()
       return promise;
@@ -43,12 +44,12 @@ module.exports = function() {
     post: function (job) {
       var promise = session.promising();
       doSomething(job, function(err, data) {
-        if(err) {
-          promise.reject(err);
-        } else {
-          promise.fulfill(null, true, data);
-        }
+        session.send({
+          err: err,
+          data: data
+        });
       });
+     promise.fulfill(null, true, data);
       return promise;
     }
   };
