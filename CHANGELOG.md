@@ -1,6 +1,9 @@
 CHANGELOG
 =========
 
+- bugfixes in twitter platform
+
+
 sockethub v0.0.6 - 28.06.2013
 -----------------------------
 
