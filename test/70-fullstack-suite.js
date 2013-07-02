@@ -8,6 +8,7 @@ define(['require'], function (require) {
   suites.push({
     name: "full stack tests",
     desc: "tests for the full stack, using the email platform",
+    abortOnFail: true,
     setup: function (env, test) {
 
       env.nodemailer = {};
@@ -94,7 +95,7 @@ define(['require'], function (require) {
 
       {
         desc: "register",
-        timeout: 10000,
+        timeout: 15000,
         run: function (env, test) {
           var data = {
             platform: "dispatcher",
