@@ -11,31 +11,60 @@ define(['require'], function(require) {
     setup: function(env, test) {
       env.sockethubId = '1234567890';
       env.channel = 'sockethub:'+env.sockethubId+':subsystem';
-      env.platform = 'twitter';
+      env.twitter = {};
+      env.dispatcher = {};
 
-      env.sendPing = {
-        actor: {platform: env.platform},
-        target: [{platform: 'dispatcher'}],
-        verb: 'ping',
-        object: {requestEncKey: true}
+      env.pingObj = {
+        twitter: {
+          send:{
+            actor: {platform: 'twitter'},
+            target: [{platform: 'dispatcher'}],
+            verb: 'ping',
+            object: {requestEncKey: true}
+          },
+          recv: {
+            actor: {platform: 'dispatcher'},
+            target: [{platform: 'twitter'}],
+            verb: 'ping',
+            object: {encKey: 'foobar'},
+            status: true
+          }
+        },
+        dispatcher: {
+          send: {
+            actor: {platform: 'dispatcher'},
+            target: [{platform: 'twitter'}],
+            verb: 'ping',
+            object: {requestEncKey: true}
+          },
+          recv: {
+            actor: {platform: 'twitter'},
+            target: [{platform: 'dispatcher'}],
+            verb: 'ping',
+            object: {encKey: 'foobar'},
+            status: true
+          }
+        }
       };
-      env.recvPing = {
-        actor: {platform: 'dispatcher'},
-        target: [{platform: env.platform}],
-        verb: 'ping',
-        object: {encKey: 'foobar'}
+
+      env.pingObj.recvPing = {
+
       };
       GLOBAL.redis = require('./mocks/redis-mock')(test);
       test.assertType(redis.createClient, 'function');
     },
     afterEach: function (env, test) {
-      delete env.subsystem;
+      redis.__clearHandlers();
+      delete env.twitter.subsystem;
+      delete env.dispatcher.subsystem;
       delete GLOBAL.redis;
       test.result(true);
     },
     beforeEach: function (env, test) {
       GLOBAL.redis = require('./mocks/redis-mock')(test);
-      env.subsystem = require('./../lib/sockethub/subsystem')(env.platform, env.sockethubId);
+      env.twitter.subsystem = require('./../lib/sockethub/subsystem')('twitter', env.sockethubId);
+      env.dispatcher.subsystem = require('./../lib/sockethub/subsystem')('dispatcher', env.sockethubId);
+      test.assertTypeAnd(env.twitter.subsystem.send, 'function');
       test.assertType(redis.createClient, 'function');
     },
     tests: [
@@ -48,16 +77,9 @@ define(['require'], function(require) {
         }
       },
       {
-        desc: "initialize",
-        run: function (env, test) {
-          env.subsystem = require('./../lib/sockethub/subsystem')(env.platform, env.sockethubId);
-          test.assertType(env.subsystem.send, 'function');
-        }
-      },
-      {
         desc: "events.on exists",
         run: function (env, test) {
-          test.assertType(env.subsystem.events.on, 'function');
+          test.assertType(env.twitter.subsystem.events.on, 'function');
         }
       },
       {
@@ -68,39 +90,65 @@ define(['require'], function(require) {
         }
       },
       {
-        desc: "subscribe to an event and receive ping from dispatcher",
+        desc: "subscribe to an event and receive ping from dispatcher (autocallback)",
         run: function (env, test) {
-          env.subsystem.events.on('ping', function (data) {
-            test.assert(data, env.recvPing);
+          env.twitter.subsystem.events.on('ping', function (data) {
+            console.log('#----------1:', data);
+            test.assertAnd(data.actor.platform, 'dispatcher');
+            test.assert(data.target[0].platform, 'twitter');
           });
-          redis.__fireEvent(env.channel, 'message', JSON.stringify(env.recvPing));
+          redis.__fireEvent(env.channel, 'message', JSON.stringify(env.pingObj.dispatcher.send));
+        }
+      },
+      {
+        desc: "subscribe to an event and receive ping from dispatcher (with-callback)",
+        run: function (env, test) {
+          env.twitter.subsystem.events.on('ping-with-callback', function (data, callback) {
+            console.log('@----------1:', data);
+            test.assertAnd(data.actor.platform, 'dispatcher');
+            test.assertAnd(data.target[0].platform, 'twitter');
+            callback();
+            test.result(true);
+          });
+          console.log('ACTOR:', env.pingObj.dispatcher.send.actor.platform);
+          console.log('TARGET:', env.pingObj.dispatcher.send.target[0].platform);
+          redis.__fireEvent(env.channel, 'message', JSON.stringify(env.pingObj.dispatcher.send));
         }
       },
       {
         desc: "send ping and wait for callback as dispatcher",
         run: function (env, test) {
-          var subsystem = require('./../lib/sockethub/subsystem')('dispatcher', env.sockethubId);
-
-          subsystem.events.on('ping', function (data) {
-            test.assert(data, env.sendPing);
+          //env.dispatcher.subsystem = require('./../lib/sockethub/subsystem')('dispatcher', env.sockethubId);
+          env.dispatcher.subsystem.events.on('ping', function (data) {
+            //console.log('----------1:', data);
+            test.assert(data.target[0].platform, 'dispatcher');
           });
-          redis.__fireEvent(env.channel, 'message', JSON.stringify(env.sendPing));
+
+          console.log('target:',env.pingObj.twitter.send.target[0].platform);
+          test.assertAnd(env.pingObj.twitter.send.target[0].platform, 'dispatcher', 'target = dispatcher');
+          test.assertAnd(env.pingObj.twitter.send.actor.platform, 'twitter', 'actor = twitter');
+          redis.__fireEvent(env.channel, 'message', JSON.stringify(env.pingObj.twitter.send));
         }
       },
       {
         desc: "send ping and wait for callback as dispatcher, then respond",
         run: function (env, test) {
-          var subsystem = require('./../lib/sockethub/subsystem')('dispatcher', env.sockethubId);
+          //dispatcher.subsystem = require('./../lib/sockethub/subsystem')('dispatcher', env.sockethubId);
+          env.twitter.subsystem.events.on('ping-response', function (data) {
+            console.log('+++ 1');
+            test.assertAnd(data.target[0].platform, 'twitter');
+            env.pingObj.twitter.recv.object.timestamp = data.object.timestamp;
+            test.assert(data, env.pingObj.twitter.recv);
+          });
 
-          env.subsystem.events.on('ping-response', function (data) {
-            console.log('HELLO: ', data);
-            test.assertAnd(data, env.recvPing);
+          env.dispatcher.subsystem.events.on('ping-with-callback', function (data, callback) {
+            console.log('+++ 2:',data);
+            test.assertAnd(data.actor.platform, 'twitter');
+            test.assertTypeAnd(callback, 'function');
+            callback({encKey: 'foobar'});
           });
-          subsystem.events.on('ping-with-callback', function (data, callback) {
-            test.assertAnd(data, env.sendPing);
-            callback(env.recvPing.object);
-          });
-          redis.__fireEvent(env.channel, 'message', JSON.stringify(env.sendPing));
+
+          redis.__fireEvent(env.channel, 'message', JSON.stringify(env.pingObj.twitter.send));
         }
       }
 
