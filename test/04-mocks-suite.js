@@ -19,7 +19,7 @@ define(['require'], function(require) {
         desc: 'publish is called',
         run: function (env, test) {
           var client = redis.createClient();
-          client.publish('test');
+          client.publish('message');
           test.assert(client.publish.called, true);
         }
       },
@@ -27,7 +27,7 @@ define(['require'], function(require) {
         desc: 'subscribe is called',
         run: function (env, test) {
           var client = redis.createClient();
-          client.subscribe('test');
+          client.subscribe('message');
           test.assert(client.subscribe.called, true);
         }
       },
@@ -35,7 +35,7 @@ define(['require'], function(require) {
         desc: 'on is called',
         run: function (env, test) {
           var client = redis.createClient();
-          client.on('test', function () {});
+          client.on('message', function () {});
           test.assert(client.on.called, true);
         }
       },
@@ -43,9 +43,9 @@ define(['require'], function(require) {
         desc: 'force fire events',
         run: function (env, test) {
           var client = redis.createClient();
-          client.subscribe('test');
+          client.subscribe('message');
 
-          client.on('message', function (data) {
+          client.on('message', function (channel, data) {
             console.log('message event received, data: ', data);
             test.assertTypeAnd(data, 'string', 'no string');
             var d = JSON.parse(data);
@@ -53,8 +53,8 @@ define(['require'], function(require) {
           });
 
           var client2 = redis.createClient();
-          client2.publish('test', JSON.stringify({foo: 'bar'}));
-          client.__fireEvent('test', 'message', JSON.stringify({foo: 'bar'}));
+          client2.publish('message', JSON.stringify({foo: 'bar'}));
+          client.__fireEvent('message', 'message', JSON.stringify({foo: 'bar'}));
         }
       }
     ]
