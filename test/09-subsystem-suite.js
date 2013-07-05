@@ -69,6 +69,7 @@ define(['require'], function(require) {
     },
     takedown: function(env, test) {
       delete GLOBAL.redis;
+      test.result(true);
     },
     tests: [
       {

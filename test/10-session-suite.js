@@ -31,7 +31,21 @@ define(['require'], function(require) {
     setup: function(env, test) {
       env.sockethubId = '1234567890';
       env.encKey = '5678abcd';
-      env.Session = require('./../lib/sockethub/session')(env.sockethubId, env.encKey);
+      GLOBAL.redis = require('./mocks/redis-mock')(test);
+      env.Session = require('./../lib/sockethub/session')('test', env.sockethubId, env.encKey);
+      test.result(true);
+    },
+    afterEach: function (env, test) {
+      redis.__clearHandlers();
+      delete GLOBAL.redis;
+      test.result(true);
+    },
+    beforeEach: function (env, test) {
+      GLOBAL.redis = require('./mocks/redis-mock')(test);
+      test.assertType(redis.createClient, 'function');
+    },
+    takedown: function(env, test) {
+      delete GLOBAL.redis;
       test.result(true);
     },
     tests: [
@@ -107,20 +121,29 @@ define(['require'], function(require) {
     setup: function(env, test) {
       env.sockethubId = '1234567890';
       env.encKey = '5678abcd';
-      env.Session = require('./../lib/sockethub/session')(env.sockethubId, env.encKey);
+      GLOBAL.redis = require('./mocks/redis-mock')(test);
+      env.Session = require('./../lib/sockethub/session')('test', env.sockethubId, env.encKey);
       env.sid = 'test-sid';
       test.result(true);
     },
     beforeEach: function(env, test) {
+      GLOBAL.redis = require('./mocks/redis-mock')(test);
+      test.assertTypeAnd(redis.createClient, 'function');
       env.Session.get(env.sid).then(function (session) {
         env.session = session;
         test.assertType(env.session, 'object');
       });
     },
     afterEach: function(env, test) {
+      redis.__clearHandlers();
+      delete GLOBAL.redis;
       env.Session.destroy(env.sid).then(function () {
         test.result(true);
       });
+    },
+    takedown: function(env, test) {
+      delete GLOBAL.redis;
+      test.result(true);
     },
     tests: [
       {
@@ -211,10 +234,10 @@ define(['require'], function(require) {
     name: "Session getFile",
     desc: "Session interaction with remoteStorage",
     setup: function(env, test) {
-
+      GLOBAL.redis = require('./mocks/redis-mock')(test);
       env.sockethubId = '1234567890';
       env.encKey = '5678abcd';
-      env.Session = require('./../lib/sockethub/session')(env.sockethubId, env.encKey);
+      env.Session = require('./../lib/sockethub/session')('test', env.sockethubId, env.encKey);
       env.sid = 'test-sid';
 
       var http = require('http');
@@ -230,11 +253,14 @@ define(['require'], function(require) {
       });
     },
     takedown: function(env, test) {
+      delete GLOBAL.redis;
       env.testServer.close(function() {
         test.result(true);
       });
     },
     beforeEach: function(env, test) {
+      GLOBAL.redis = require('./mocks/redis-mock')(test);
+      test.assertTypeAnd(redis.createClient, 'function');
       env.Session.get(env.sid).then(function (session) {
         env.session = session;
         env.session.setConfig('remoteStorage', {
@@ -252,6 +278,8 @@ define(['require'], function(require) {
 
     },
     afterEach: function(env, test) {
+      redis.__clearHandlers();
+      delete GLOBAL.redis;
       env.Session.destroy(env.sid);
       test.result(true);
     },

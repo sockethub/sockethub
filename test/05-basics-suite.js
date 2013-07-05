@@ -3,7 +3,6 @@ if (typeof define !== 'function') {
   var define = require('amdefine')(module);
 }
 define(['require'], function (require) {
-//define(function () {
   var suites = [];
 
   suites.push({
@@ -30,22 +29,7 @@ define(['require'], function (require) {
         MY_PLATFORMS: [ 'dispatcher', 'email' ] // list of platforms this instance is responsible for
       };
 
-      // test redis service
-      var redis = require('redis');
-      console.log('testing redis connectivity');
-      try {
-        client = redis.createClient();
-        client.on('subscribe', function(channel, count) {
-          console.log('client subscribed to '+channel);
-        });
-        client.subscribe('test');
-        client.quit();
-      } catch (e) {
-        console.error(' [sockethub] cannot connect to redis ' + e);
-        process.exit();
-      }
-
-      var sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime();
+      var sockethubId = Math.floor((Math.random()*10)+1) * Math.floor((Math.random()*10)+5) + new Date().getTime() / 1000;
 
       var proto = require('./../lib/sockethub/protocol');
       listener = require('./../lib/sockethub/listener');
@@ -79,7 +63,7 @@ define(['require'], function (require) {
         console.log(" [sockethub] dispatcher failed initialization, aborting");
         process.exit();
       });
-
+      console.log('END SETUP');
     },
     takedown: function (env, test) {
       env.connection.close();

@@ -25,6 +25,7 @@ define(['require'], function (require) {
             }
           });
       GLOBAL.nodemailer = env.nodemailer;
+      GLOBAL.redis = require('redis');
 
       env.confirmProps = {
         status: true,

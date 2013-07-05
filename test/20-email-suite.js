@@ -35,7 +35,8 @@ define(['require'], function (require) {
         };
       };
 
-      env.Session = require('./../lib/sockethub/session')('1234567890', 'abcde');
+      GLOBAL.redis = require('redis');
+      env.Session = require('./../lib/sockethub/session')('email', '1234567890', 'abcde');
       env.Session.get('testsess1').
         then(function (session) {
           env.session = session;
@@ -63,6 +64,9 @@ define(['require'], function (require) {
       }, function (err) {
         test.result(false, err);
       });
+    },
+    beforeEach: function (env, test) {
+      test.result(true);
     },
     tests: [
       {

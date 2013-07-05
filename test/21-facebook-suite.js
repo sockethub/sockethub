@@ -40,8 +40,9 @@ define(['require'], function (require) {
         };
       };
 
-      var Session = require('./../lib/sockethub/session')('1234567890', 'abcde');
-      Session.get('testsess1').
+      GLOBAL.redis = require('redis');
+      env.Session = require('./../lib/sockethub/session')('facebook', '1234567890', 'abcde');
+      env.Session.get('testsess1').
         then(function (session) {
           env.session = session;
 
@@ -63,6 +64,16 @@ define(['require'], function (require) {
           });
         });
     },
+    takedown: function (env, test) {
+      env.Session.destroy(env.session.getSessionID()).then(function () {
+        test.result(true);
+      }, function (err) {
+        test.result(false, err);
+      });
+    },
+    beforeEach: function (env, test) {
+      test.result(true);
+    },
     tests: [
       {
         desc: "set credential details",
@@ -83,6 +94,7 @@ define(['require'], function (require) {
 
           env.psession.setConfig('credentials', job.object.credentials).then(function () {
             env.psession.getConfig('credentials').then(function (creds) {
+              console.log('CREDS:', creds);
               test.assert(creds, job.object.credentials);
             }, function (err) {
               test.result(false, err);
