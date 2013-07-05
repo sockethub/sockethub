@@ -67,6 +67,9 @@ define(['require'], function(require) {
       test.assertTypeAnd(env.twitter.subsystem.send, 'function');
       test.assertType(redis.createClient, 'function');
     },
+    takedown: function(env, test) {
+      delete GLOBAL.redis;
+    },
     tests: [
       {
         desc: "verify subsystem will fail to init without all params",
@@ -83,13 +86,6 @@ define(['require'], function(require) {
         }
       },
       {
-        desc: "createClient should have been called",
-        run: function (env, test) {
-          console.log('num:', redis.createClient.numCalled);
-          test.assert(redis.createClient.called, true);
-        }
-      },
-      {
         desc: "subscribe to an event and receive ping from dispatcher (autocallback)",
         run: function (env, test) {
           env.twitter.subsystem.events.on('ping', function (data) {
@@ -103,13 +99,14 @@ define(['require'], function(require) {
       {
         desc: "subscribe to an event and receive ping from dispatcher (with-callback)",
         run: function (env, test) {
-          env.twitter.subsystem.events.on('ping-with-callback', function (data, callback) {
+          var t = env.twitter.subsystem.events.on('ping-with-callback', function (data, callback) {
             console.log('@----------1:', data);
             test.assertAnd(data.actor.platform, 'dispatcher');
             test.assertAnd(data.target[0].platform, 'twitter');
             callback();
             test.result(true);
           });
+          console.log('T:',t);
           console.log('ACTOR:', env.pingObj.dispatcher.send.actor.platform);
           console.log('TARGET:', env.pingObj.dispatcher.send.target[0].platform);
           redis.__fireEvent(env.channel, 'message', JSON.stringify(env.pingObj.dispatcher.send));
@@ -147,6 +144,7 @@ define(['require'], function(require) {
             test.assertTypeAnd(callback, 'function');
             callback({encKey: 'foobar'});
           });
+
 
           redis.__fireEvent(env.channel, 'message', JSON.stringify(env.pingObj.twitter.send));
         }
