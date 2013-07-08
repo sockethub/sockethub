@@ -206,9 +206,9 @@ define(['require'], function(require) {
             test.result(true);
           });
         }
-      },
+      }
 
-      {
+      /*{
         desc: "Session#getFile returns a promise",
         run: function(env, test) {
           var promise = env.session.getFile('storage', 'foo/bar');
@@ -226,7 +226,7 @@ define(['require'], function(require) {
             test.result(true);
           });
         }
-      }
+      }*/
     ]
   });
 
@@ -235,6 +235,8 @@ define(['require'], function(require) {
     desc: "Session interaction with remoteStorage",
     setup: function(env, test) {
       GLOBAL.redis = require('./mocks/redis-mock')(test);
+      //delete GLOBAL.redis;
+      //GLOBAL = {};
       env.sockethubId = '1234567890';
       env.encKey = '5678abcd';
       env.Session = require('./../lib/sockethub/session')('test', env.sockethubId, env.encKey);
