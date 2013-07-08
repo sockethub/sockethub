@@ -3,11 +3,13 @@ if (typeof define !== 'function') {
   var define = require('amdefine')(module);
 }
 define(['require'], function (require) {
+//define(function () {
   var suites = [];
 
   suites.push({
     name: "basic tests",
     desc: "collection of basic tests to test sockethub behavior",
+    abortOnFail: true,
     setup: function (env, test) {
 
       env.confirmProps = {
@@ -29,7 +31,22 @@ define(['require'], function (require) {
         MY_PLATFORMS: [ 'dispatcher', 'email' ] // list of platforms this instance is responsible for
       };
 
-      var sockethubId = Math.floor((Math.random()*10)+1) * Math.floor((Math.random()*10)+5) + new Date().getTime() / 1000;
+      // test redis service
+      var redis = require('redis');
+      console.log('testing redis connectivity');
+      try {
+        client = redis.createClient();
+        client.on('subscribe', function(channel, count) {
+          console.log('client subscribed to '+channel);
+        });
+        client.subscribe('test');
+        client.quit();
+      } catch (e) {
+        console.error(' [sockethub] cannot connect to redis ' + e);
+        process.exit();
+      }
+
+      var sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime();
 
       var proto = require('./../lib/sockethub/protocol');
       listener = require('./../lib/sockethub/listener');
@@ -63,7 +80,7 @@ define(['require'], function (require) {
         console.log(" [sockethub] dispatcher failed initialization, aborting");
         process.exit();
       });
-      console.log('END SETUP');
+
     },
     takedown: function (env, test) {
       env.connection.close();
@@ -194,7 +211,6 @@ define(['require'], function (require) {
 
       {
         desc: "register with invalid secret",
-        willFail: true,
         run: function (env, test) {
           var data = {
             platform: "dispatcher",
@@ -205,12 +221,13 @@ define(['require'], function (require) {
             rid: "123454"
           };
           var expected = {
-            status: true,
+            status: false,
             rid: "123454",
             verb: 'register',
             platform: "dispatcher"
           };
-          env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
+          var result = '{"rid":"123454","platform":"dispatcher","verb":"register","status":false,"message":"registration failed, invalid secret."}';
+          env.connection.sendAndVerify(JSON.stringify(data), result, test, env.confirmProps);
         }
       },
 
@@ -230,18 +247,8 @@ define(['require'], function (require) {
             rid: "123454",
             verb: 'register',
             platform: "dispatcher"
-
           };
-          env.connection.sendWith({
-            send: JSON.stringify(data),
-            onMessage: function (data) {
-              var m = JSON.parse(data.utf8Data);
-              if (m.verb === 'register') {
-                test.assert(m.status, true);
-              }
-            }
-          });
-          //AndVerify(JSON.stringify(data), expected, test, env.confirmProps);
+          env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
         }
       },
 
