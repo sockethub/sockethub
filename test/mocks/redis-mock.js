@@ -49,18 +49,21 @@ var Redis = {
       }
       if (!_this.__instances[key]) { return; }
 
-      try {
+      //try {
+        ///console.log('CHECKING INDEXOF for '+key);
+        //console.log('CHECKING INSTANCES:',_this.__instances);
         if (_this.__instances[key].subscribed_channels.indexOf(channel) > -1) {
           console.log('REDIS EVENT: instance['+key+'] chan. \''+channel+'\', send: \''+event+'\': '+data);
           for (var i = 0, num = events[event].length; i < num; i = i + 1) {
             events[event][i](channel, data);
           }
         } else {
-          ///console.log('instance['+key+'] not subscribed to channel \''+channel+'\', not firing \''+event+'\'', instances[key].subscribed_channels);
+          console.log('instance['+key+'] not subscribed to channel \''+channel+'\', not firing \''+event+'\'', _this.__instances[key].subscribed_channels);
         }
-      } catch (e) {
-        throw new Error("failed reading indexOf for key:"+key+": ", e);
-      }
+      //} catch (e) {
+      //  console.log('##### '+key+' INSTANCE DATA:',_this.__instances[key]);
+      //  throw new Error("failed reading indexOf for "+key+" key: ", e);
+      //}
     };
 
     _this.__instances[me].__clearHandlers = function () {
