@@ -38,7 +38,7 @@ Sockethub aims to solve one piece of that puzzle, by implementing a polyglot ser
  ---------------------
  Sockethub has been around for 6 months now, and it is essentially a polyglot messaging service. It uses WebSockets to send & receive simple JSON objects (which are loosely based on ActivityStreams, plans to conform to AS2.0) which define messages. By specifying the 'platform' in the JSON object, developers can integrate with Facebook, Twitter, Email, XMPP and more, using the same object structure.
 
- The idea being, developers can write their apps with generic messages represented as JSON objects, and as platforms come and go, the application does not need to change it's protocol or API support constantly.
+ The idea being, developers can write their apps with generic messages represented as JSON objects, and as platforms come and go, the application does not need to change its protocol or API support constantly.
 
 
  Links
