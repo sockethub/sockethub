@@ -33,30 +33,27 @@ define(['require'], function (require) {
       };
 
       var port = 99550;
-      env.client = new this.WebSocketClient({
-        url: 'ws://localhost:'+port+'/sockethub',
-        type: 'sockethub'
-      });
 
-      var config = {};
-      config.HOST = {
+
+      env.config = {};
+      env.config.HOST = {
         ENABLE_TLS: false,
         PORT: port,
         PROTOCOLS: [ 'sockethub' ],
         MY_PLATFORMS: [ 'dispatcher', 'email' ] // list of platforms this instance is responsible for
       };
 
-      var sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime();
+      var sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime() / Math.floor((Math.random()*10)+2);
 
       var proto = require('./../lib/sockethub/protocol');
       listener = require('./../lib/sockethub/listener');
-      for (var i = 0, len = config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
-        if (config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
+      for (var i = 0, len = env.config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
+        if (env.config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
           continue;
         }
         l  = listener();
         l.init({
-          platform: proto.platforms[config.HOST.MY_PLATFORMS[i]],
+          platform: proto.platforms[env.config.HOST.MY_PLATFORMS[i]],
           sockethubId: sockethubId
         });
       }
@@ -64,18 +61,15 @@ define(['require'], function (require) {
       var dispatcher = require('./../lib/sockethub/dispatcher');
 
       env.server = {};
-      dispatcher.init(config.HOST.MY_PLATFORMS, sockethubId, proto).then(function() {
+      dispatcher.init(env.config.HOST.MY_PLATFORMS, sockethubId, proto).then(function() {
         // initialize http server
-        env.server.h = require('./../lib/servers/http').init(config);
+        env.server.h = require('./../lib/servers/http').init(env.config);
         // initialize websocket server
-        env.server.ws = require('./../lib/servers/websocket').init(config, env.server.h, dispatcher);
+        env.server.ws = require('./../lib/servers/websocket').init(env.config, env.server.h, dispatcher);
 
         console.log(' [*] finished loading' );
         console.log();
-        env.client.connect(function(connection) {
-          env.connection = connection;
-          test.result(true);
-        });
+        test.result(true);
       }, function(err) {
         console.log(" [sockethub] dispatcher failed initialization, aborting");
         process.exit();
@@ -93,6 +87,20 @@ define(['require'], function (require) {
       }, 1000);
     },
     tests: [
+
+      {
+        desc: "connect",
+        run: function (env, test) {
+          env.client = new this.WebSocketClient({
+            url: 'ws://localhost:'+env.config.HOST.PORT+'/sockethub',
+            type: 'sockethub'
+          });
+          env.client.connect(function(connection) {
+            env.connection = connection;
+            test.result(true);
+          });
+        }
+      },
 
       {
         desc: "register",
