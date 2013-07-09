@@ -206,9 +206,9 @@ define(['require'], function(require) {
             test.result(true);
           });
         }
-      }
+      },
 
-      /*{
+      {
         desc: "Session#getFile returns a promise",
         run: function(env, test) {
           var promise = env.session.getFile('storage', 'foo/bar');
@@ -226,7 +226,7 @@ define(['require'], function(require) {
             test.result(true);
           });
         }
-      }*/
+      }
     ]
   });
 
