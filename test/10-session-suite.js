@@ -193,6 +193,45 @@ define(['require'], function(require) {
       },
 
       {
+        desc: "get platform instance",
+        run: function (env, test) {
+          var myConfig = {
+            foo: 'bar',
+            obj: {
+              data: 'cat'
+            },
+            refrigerator: true
+          };
+          var psession;
+          env.session.getPlatformSession('test').then(function (p) {
+            psession = p;
+            return psession.setConfig('testcfg', myConfig);
+          }).then(function () {
+            return psession.getConfig('testcfg');
+          }).then(function (cfg) {
+            test.assert(cfg, myConfig);
+          }, function (err) {
+            test.result(false, err);
+          });
+        }
+      },
+
+      {
+        desc: "get platform instance session id",
+        run: function (env, test) {
+          var psession;
+          env.session.getPlatformSession('test').then(function (p) {
+            psession = p;
+            return psession.getSessionID();
+          }).then(function (sid) {
+            test.assert(sid, env.sid);
+          }, function (err) {
+            test.result(false, err);
+          });
+        }
+      },
+
+      {
         desc: "Session#reset clears platforms and settings",
         run: function(env, test) {
           env.session.setConfig('yarg', { foo: 'bar' });
