@@ -380,6 +380,86 @@ define(['require'], function(require) {
     ]
   });
 
+
+
+  /**
+   * SESSION PINGS & ENCKEY
+   **/
+  suites.push({
+    desc: "Session pings and enckey",
+    setup: function (env, test) {
+      GLOBAL.redis = require('redis');
+      env.sockethubId = '1234567890';
+      env.encKey = '5678abcd';
+      env.sid = 'test-sid';
+      test.result(true);
+    },
+    takedown: function(env, test) {
+      test.result(true);
+    },
+    beforeEach: function(env, test) {
+      test.assertTypeAnd(redis.createClient, 'function');
+
+      env.dispatcher = require('./../lib/sockethub/session')('dispatcher', env.sockethubId, env.encKey);
+      test.assertTypeAnd(env.dispatcher.destroy, 'function');
+      test.assertAnd(env.dispatcher.encKeySet(), true);
+
+      env.p_one = require('./../lib/sockethub/session')('p_one', env.sockethubId);
+      test.assertTypeAnd(env.p_one.destroy, 'function');
+      test.assertAnd(env.p_one.encKeySet(), false);
+
+      env.p_two = require('./../lib/sockethub/session')('p_two', env.sockethubId);
+      test.assertTypeAnd(env.p_two.destroy, 'function');
+      test.assert(env.p_two.encKeySet(), false);
+    },
+    afterEach: function(env, test) {
+      env.p_two.subsystem.cleanup();
+      env.p_one.subsystem.cleanup();
+      env.dispatcher.subsystem.cleanup();
+      test.result(true);
+    },
+    tests: [
+      {
+        desc: "dispatcher pings first",
+        run: function (env, test) {
+          var p_resp = {};
+          env.dispatcher.subsystem.events.on('ping-response', function (data) {
+            p_resp[data.actor.platform] = true;
+            if ((p_resp['p_one']) && (p_resp['p_two'])) {
+              test.assertAnd(env.p_one.encKeySet(), true);
+              test.assert(env.p_two.encKeySet(), true);
+            }
+          });
+          env.dispatcher.subsystem.send('ping', {timestamp: new Date().getTime(), encKey: env.encKey});
+        }
+      },
+      {
+        desc: "platforms ping first",
+        run: function (env, test) {
+          var p_resp = {};
+          env.p_one.subsystem.events.on('ping-response', function (data) {
+            p_resp['p_one'] = true;
+            test.assertAnd(data.object.encKey, env.encKey);
+            test.assertAnd(env.p_one.encKeySet(), true, 'enckey not set on ping-response');
+            if ((p_resp['p_one']) && (p_resp['p_two'])) {
+              test.result(true);
+            }
+          });
+          env.p_two.subsystem.events.on('ping-response', function (data) {
+            p_resp['p_two'] = true;
+            test.assertAnd(data.object.encKey, env.encKey);
+            test.assertAnd(env.p_two.encKeySet(), true, 'enckey not set on ping-response');
+            if ((p_resp['p_one']) && (p_resp['p_two'])) {
+              test.result(true);
+            }
+          });
+          env.p_one.subsystem.send('ping', {requestEncKey: true, timestamp: new Date().getTime()}, 'dispatcher');
+          env.p_two.subsystem.send('ping', {requestEncKey: true, timestamp: new Date().getTime()}, 'dispatcher');
+        }
+      }
+
+    ]
+  });
   return suites;
 });
 
