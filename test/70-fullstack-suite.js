@@ -96,7 +96,6 @@ define(['require'], function (require) {
 
       {
         desc: "register",
-        timeout: 15000,
         run: function (env, test) {
           var data = {
             platform: "dispatcher",
@@ -113,19 +112,25 @@ define(['require'], function (require) {
             platform: "dispatcher"
           };
           console.log('calling env.connection.sendWith');
-          env.connection.sendWith({
+          /*env.connection.sendWith({
             send: JSON.stringify(data),
             onMessage: function (data) {
+              console.log('RECV: '+data.utf8Data);
               var m = JSON.parse(data.utf8Data);
+              console.log('m.verb: ['+m.verb+']');
               if (m.verb === 'register') {
                 test.assert(m.status, true);
+              } else {
+                test.result(false, 'bad command');
               }
             },
             onError: function (err) {
+              console.log('RECV err: '+err);
               test.result(false, err);
             }
-          });
-          //AndVerify(JSON.stringify(data), expected, test, env.confirmProps);
+          });*/
+          env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
+          console.log('end of test');
         }
       },
 
