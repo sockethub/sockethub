@@ -47,7 +47,13 @@ function Email($rootScope, $q, SH, CH) {
     msg.platform = 'email';
     msg.verb = 'send';
     console.log("SENDING: ", msg);
-    SH.submit(msg, 5000).then(defer.resolve, defer.reject);
+    SH.submit(msg, 5000).then(function (resp) {
+      if (resp.status) {
+        defer.resolve(resp);
+      } else {
+        defer.reject(resp);
+      }
+    });
     return defer.promise;
   }
 
@@ -170,8 +176,8 @@ function emailSendCtrl($scope, $rootScope, Email, $timeout) {
       }, 5000);
 
     }, function (err) {
-      console.log('email failed: ', err);
-      $scope.model.sendMsg = err;
+      console.log('email failed: ', err.message);
+      $scope.model.sendMsg = err.message;
       $timeout(function () {
         $scope.model.sendMsg = '';
       }, 5000);
