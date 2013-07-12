@@ -31,7 +31,6 @@
     "consoleplusplus": "*",
     "feedparser": "*",
     "request": "*",
-    "nodepie": "*",
     "crypto": "*",
     "posix": "*"
   },
