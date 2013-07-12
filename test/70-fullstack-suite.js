@@ -8,7 +8,7 @@ define(['require'], function (require) {
   suites.push({
     name: "full stack tests",
     desc: "tests for the full stack, using the email platform",
-    abortOnFail: true,
+    //abortOnFail: true,
     setup: function (env, test) {
 
       env.nodemailer = {};
@@ -263,6 +263,7 @@ define(['require'], function (require) {
 
       {
         desc: "connect+register fast, WebSocket-Node issue #91",
+        timeout: 3000,
         run: function (env, test) {
           client = new this.WebSocketClient({
             url: 'ws://localhost:' + env.config.HOST.PORT + '/sockethub',
