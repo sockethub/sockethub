@@ -120,23 +120,6 @@ define(['require'], function (require) {
             platform: "dispatcher"
           };
           console.log('calling env.connection.sendWith');
-          /*env.connection.sendWith({
-            send: JSON.stringify(data),
-            onMessage: function (data) {
-              console.log('RECV: '+data.utf8Data);
-              var m = JSON.parse(data.utf8Data);
-              console.log('m.verb: ['+m.verb+']');
-              if (m.verb === 'register') {
-                test.assert(m.status, true);
-              } else {
-                test.result(false, 'bad command');
-              }
-            },
-            onError: function (err) {
-              console.log('RECV err: '+err);
-              test.result(false, err);
-            }
-          });*/
           env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
           console.log('end of test');
         }
@@ -154,14 +137,6 @@ define(['require'], function (require) {
           var expected = {
 
           };
-          /*
-          var confirmProps = {
-            status: false,
-            rid: "123456",
-            verb: 'confirm',
-            platform: "email",
-            message: "unknown verb received: foobar"
-          };*/
           env.connection.sendWith({
             send: JSON.stringify(data),
             expect: expected,
@@ -284,9 +259,32 @@ define(['require'], function (require) {
         run: function (env, test) {
           test.assert(env.nodemailer.createTransport.called, true);
         }
+      },
+
+      {
+        desc: "connect+register fast, WebSocket-Node issue #91",
+        run: function (env, test) {
+          client = new this.WebSocketClient({
+            url: 'ws://localhost:' + env.config.HOST.PORT + '/sockethub',
+            type: 'sockethub'
+          });
+          client.connect(function (connection) {
+            var data = {
+              platform: "dispatcher",
+              object: { secret: '1234567890' },
+              verb: "register",
+              rid: "123454"
+            };
+            var expected = {
+              status: true,
+              rid: "123454",
+              verb: 'register',
+              platform: "dispatcher"
+            };
+            connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
+          });
+        }
       }
-
-
     ]
   });
 

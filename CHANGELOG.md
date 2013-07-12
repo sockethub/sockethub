@@ -3,6 +3,7 @@ CHANGELOG
 
 sockethub v0.0.7 - 10.07.2013
 -----------------------------
+
 - multithreading refactor, to improve decoupling and communication between
   dispatcher and listener(s), as well as improved stability and respawning
   worker threads
@@ -11,6 +12,9 @@ sockethub v0.0.7 - 10.07.2013
 
 - addition of imap supoprt to fetch verb in the email platform
 
+- NOTE: npm test may fail as one of its dependencies (test) requires v0.0.18
+  which is unable to publish to npm at the moment, hopefully this is resolved
+  soon.
 
 sockethub v0.0.6 - 28.06.2013
 -----------------------------
