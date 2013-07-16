@@ -49,7 +49,7 @@ define(['require'], function (require) {
       };
 
       GLOBAL.redis = require('redis');
-      env.Session = require('./../lib/sockethub/session')('xmpp', '1234567890', 'abcde');
+      env.Session = require('./../lib/sockethub/session')({platform: 'xmpp', sockethubId:'1234567890', encKey:'abcde'});
       env.Session.get('testsess1').
         then(function (session) {
           env.session = session;

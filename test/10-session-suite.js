@@ -18,7 +18,7 @@ define(['require'], function(require) {
         willFail: true,
         run: function (env, test) {
           env.sockethubId = '1234567890';
-          env.Session = require('./../lib/sockethub/session')(env.sockethubId);
+          env.Session = require('./../lib/sockethub/session')({sockethubId: env.sockethubId});
           test.result(true);
         }
       }
@@ -32,7 +32,12 @@ define(['require'], function(require) {
       env.sockethubId = '1234567890';
       env.encKey = '5678abcd';
       GLOBAL.redis = require('./mocks/redis-mock')(test);
-      env.Session = require('./../lib/sockethub/session')('test', env.sockethubId, env.encKey);
+      env.sessionObj = {
+        platform: 'test',
+        sockethubId: env.sockethubId,
+        encKey: env.encKey
+      };
+      env.Session = require('./../lib/sockethub/session')(env.sessionObj);
       test.result(true);
     },
     afterEach: function (env, test) {
@@ -122,7 +127,12 @@ define(['require'], function(require) {
       env.sockethubId = '1234567890';
       env.encKey = '5678abcd';
       GLOBAL.redis = require('./mocks/redis-mock')(test);
-      env.Session = require('./../lib/sockethub/session')('test', env.sockethubId, env.encKey);
+      env.sessionObj = {
+        platform: 'test',
+        sockethubId: env.sockethubId,
+        encKey: env.encKey
+      };
+      env.Session = require('./../lib/sockethub/session')(env.sessionObj);
       env.sid = 'test-sid';
       test.result(true);
     },
@@ -232,11 +242,11 @@ define(['require'], function(require) {
       },
 
       {
-        desc: "Session#reset clears platforms and settings",
+        desc: "Session#__cleanup clears platforms and settings",
         run: function(env, test) {
           env.session.setConfig('yarg', { foo: 'bar' });
           //env.session.addPlatform('phu-quoc');
-          env.session.reset();
+          env.session.__cleanup();
           //test.assert(env.session.getPlatforms(), []);
           env.session.getConfig('yarg').then(function (cfg) {
             test.assert(cfg, {});
@@ -278,7 +288,12 @@ define(['require'], function(require) {
       //GLOBAL = {};
       env.sockethubId = '1234567890';
       env.encKey = '5678abcd';
-      env.Session = require('./../lib/sockethub/session')('test', env.sockethubId, env.encKey);
+      env.sessionObj = {
+        platform: 'test',
+        sockethubId: env.sockethubId,
+        encKey: env.encKey
+      };
+      env.Session = require('./../lib/sockethub/session')(env.sessionObj);
       env.sid = 'test-sid';
 
       var http = require('http');
@@ -392,6 +407,11 @@ define(['require'], function(require) {
       env.sockethubId = '1234567890';
       env.encKey = '5678abcd';
       env.sid = 'test-sid';
+      env.sessionObj = {
+        platform: 'test',
+        sockethubId: env.sockethubId,
+        encKey: env.encKey
+      };
       test.result(true);
     },
     takedown: function(env, test) {
@@ -400,15 +420,30 @@ define(['require'], function(require) {
     beforeEach: function(env, test) {
       test.assertTypeAnd(redis.createClient, 'function');
 
-      env.dispatcher = require('./../lib/sockethub/session')('dispatcher', env.sockethubId, env.encKey);
+      var dobj = {
+        platform: 'dispatcher',
+        sockethubId: env.sockethubId,
+        encKey: env.encKey
+      };
+      env.dispatcher = require('./../lib/sockethub/session')(dobj);
       test.assertTypeAnd(env.dispatcher.destroy, 'function');
       test.assertAnd(env.dispatcher.encKeySet(), true);
 
-      env.p_one = require('./../lib/sockethub/session')('p_one', env.sockethubId);
+      var p1obj = {
+        platform: 'p_one',
+        sockethubId: env.sockethubId,
+        encKey: ''
+      };
+      env.p_one = require('./../lib/sockethub/session')(p1obj);
       test.assertTypeAnd(env.p_one.destroy, 'function');
       test.assertAnd(env.p_one.encKeySet(), false);
 
-      env.p_two = require('./../lib/sockethub/session')('p_two', env.sockethubId);
+      var p2obj = {
+        platform: 'p_two',
+        sockethubId: env.sockethubId,
+        encKey: ''
+      };
+      env.p_two = require('./../lib/sockethub/session')(p2obj);
       test.assertTypeAnd(env.p_two.destroy, 'function');
       test.assert(env.p_two.encKeySet(), false);
     },
