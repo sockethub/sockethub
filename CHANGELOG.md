@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+
+- handle SIGINT as early as possible.
+
+- fixed race condition where a command sent immediately upon connect could be
+  lost.
+
+- greatly improved session cleanup handling, removed some old cruft.
+
+- added a 'cleanup' listener for listeners to register with session objects to
+  know when the dispatcher has sent out a cleanup.
+
+- many small bugfixes
+
+
 sockethub v0.0.7 - 10.07.2013
 -----------------------------
 
@@ -15,6 +29,7 @@ sockethub v0.0.7 - 10.07.2013
 - NOTE: npm test may fail as one of its dependencies (test) requires v0.0.18
   which is unable to publish to npm at the moment, hopefully this is resolved
   soon.
+
 
 sockethub v0.0.6 - 28.06.2013
 -----------------------------
