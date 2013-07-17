@@ -419,30 +419,29 @@ define(['require'], function(require) {
     },
     beforeEach: function(env, test) {
       test.assertTypeAnd(redis.createClient, 'function');
-      var dobj = {
+
+      env.dispatcher = require('./../lib/sockethub/session')({
         platform: 'dispatcher',
         sockethubId: env.sockethubId,
         encKey: env.encKey
-      };
-      env.dispatcher = require('./../lib/sockethub/session')(dobj);
+      });
       test.assertTypeAnd(env.dispatcher.destroy, 'function');
       test.assertAnd(env.dispatcher.encKeySet(), true);
 
-      var p1obj = {
+      env.p_one = require('./../lib/sockethub/session')({
         platform: 'p_one',
         sockethubId: env.sockethubId,
         encKey: ''
-      };
-      env.p_one = require('./../lib/sockethub/session')(p1obj);
+      });
       test.assertTypeAnd(env.p_one.destroy, 'function');
       test.assertAnd(env.p_one.encKeySet(), false);
 
-      var p2obj = {
+
+      env.p_two = require('./../lib/sockethub/session')({
         platform: 'p_two',
         sockethubId: env.sockethubId,
         encKey: ''
-      };
-      env.p_two = require('./../lib/sockethub/session')(p2obj);
+      });
       test.assertTypeAnd(env.p_two.destroy, 'function');
       test.assert(env.p_two.encKeySet(), false);
     },
@@ -450,6 +449,9 @@ define(['require'], function(require) {
       env.p_two.subsystem.cleanup();
       env.p_one.subsystem.cleanup();
       env.dispatcher.subsystem.cleanup();
+      env.dispatcher.destroy();
+      env.p_two.destroy();
+      env.p_one.destroy();
       test.result(true);
     },
     tests: [
@@ -557,12 +559,35 @@ define(['require'], function(require) {
           env.p_two.events.on('cleanup', function (sid) {
             p_resp['p_two'] = true;
           });
-          env.dispatcher.subsystem.send('cleanup', {sids: ['0921','82712','12345','abcd2']});
+          env.dispatcher.subsystem.send('cleanup', {sids: ['0921']});
           setTimeout(function () {
             if ((p_resp['p_one']) && (p_resp['p_two'])) {
               test.result(true);
             }
-          }, 2000);
+          }, 1000);
+        }
+      },
+
+      {
+        desc: "cleanup actual session",
+        run: function (env, test) {
+          var p_resp = {};
+          console.log('dispatcher sending cleanup command');
+          env.p_one.events.on('cleanup', function (sid) {
+            p_resp['p_one'] = true;
+          });
+          env.p_one.subsystem.send('ping', {requestEncKey: true, timestamp: new Date().getTime()}, 'dispatcher');
+          setTimeout(function () {
+            env.p_one.get('0921').then(function (session) {
+              env.dispatcher.subsystem.send('cleanup', {sids: ['0921']});
+              setTimeout(function () {
+                var c = redis.createClient();
+                if (!c.exists('sockethub:'+env.sockethubId+':session:0921:_internal')) {
+                  test.result(true);
+                }
+              }, 1000);
+            });
+          }, 1000);
         }
       }
     ]
