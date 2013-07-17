@@ -401,7 +401,7 @@ define(['require'], function(require) {
    * SESSION PINGS & ENCKEY
    **/
   suites.push({
-    desc: "Session pings and enckey",
+    desc: "Session communication",
     setup: function (env, test) {
       GLOBAL.redis = require('redis');
       env.sockethubId = '1234567890';
@@ -419,7 +419,6 @@ define(['require'], function(require) {
     },
     beforeEach: function(env, test) {
       test.assertTypeAnd(redis.createClient, 'function');
-
       var dobj = {
         platform: 'dispatcher',
         sockethubId: env.sockethubId,
@@ -491,8 +490,81 @@ define(['require'], function(require) {
           env.p_one.subsystem.send('ping', {requestEncKey: true, timestamp: new Date().getTime()}, 'dispatcher');
           env.p_two.subsystem.send('ping', {requestEncKey: true, timestamp: new Date().getTime()}, 'dispatcher');
         }
-      }
+      },
 
+      {
+        desc: "receive cleanup",
+        run: function (env, test) {
+          var p_resp = {};
+          env.p_one.subsystem.events.on('cleanup', function (data) {
+            p_resp['p_one'] = true;
+            console.log('p_one received cleanup: ', data);
+            test.assertTypeAnd(data.object.sids, 'object');
+            test.assertAnd(data.object.sids[2], '12345', 'sid[2] not set on cleanup');
+            if ((p_resp['p_one']) && (p_resp['p_two'])) {
+              test.result(true);
+            }
+          });
+          env.p_two.subsystem.events.on('cleanup', function (data) {
+            p_resp['p_two'] = true;
+            console.log('p_two received cleanup: ', data);
+            test.assertTypeAnd(data.object.sids, 'object');
+            test.assertAnd(data.object.sids[2], '12345', 'sid[2] not set on cleanup');
+            if ((p_resp['p_one']) && (p_resp['p_two'])) {
+              test.result(true);
+            }
+          });
+          console.log('dispatcher sending cleanup command');
+          env.dispatcher.subsystem.send('cleanup', {sids: ['0921','82712','12345','abcd2']});
+        }
+      },
+
+      {
+        desc: "receive cleanup",
+        run: function (env, test) {
+          var p_resp = {};
+          env.p_one.subsystem.events.on('cleanup', function (data) {
+            p_resp['p_one'] = true;
+            console.log('p_one received cleanup: ', data);
+            test.assertTypeAnd(data.object.sids, 'object');
+            test.assertAnd(data.object.sids[2], '12345', 'sid[2] not set on cleanup');
+            if ((p_resp['p_one']) && (p_resp['p_two'])) {
+              test.result(true);
+            }
+          });
+          env.p_two.subsystem.events.on('cleanup', function (data) {
+            p_resp['p_two'] = true;
+            console.log('p_two received cleanup: ', data);
+            test.assertTypeAnd(data.object.sids, 'object');
+            test.assertAnd(data.object.sids[2], '12345', 'sid[2] not set on cleanup');
+            if ((p_resp['p_one']) && (p_resp['p_two'])) {
+              test.result(true);
+            }
+          });
+          console.log('dispatcher sending cleanup command');
+          env.dispatcher.subsystem.send('cleanup', {sids: ['0921','82712','12345','abcd2']});
+        }
+      },
+
+      {
+        desc: "receive cleanup",
+        run: function (env, test) {
+          var p_resp = {};
+          console.log('dispatcher sending cleanup command');
+          env.p_one.events.on('cleanup', function (sid) {
+            p_resp['p_one'] = true;
+          });
+          env.p_two.events.on('cleanup', function (sid) {
+            p_resp['p_two'] = true;
+          });
+          env.dispatcher.subsystem.send('cleanup', {sids: ['0921','82712','12345','abcd2']});
+          setTimeout(function () {
+            if ((p_resp['p_one']) && (p_resp['p_two'])) {
+              test.result(true);
+            }
+          }, 2000);
+        }
+      }
     ]
   });
   return suites;
