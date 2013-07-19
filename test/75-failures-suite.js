@@ -95,7 +95,7 @@ define(['require'], function (require) {
             var r = JSON.parse(resp[1]);
             console.log('received: '+resp[1]);
             test.assertAnd(r.status, false);
-            test.assert(r.object.message, "Error: undefined is not a valid uri or options object.");
+            test.assert(r.message, "invalid target array");
           });
           /*var client = redis.createClient();
           client.on('ready', function() {
