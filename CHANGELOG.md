@@ -2,15 +2,23 @@ CHANGELOG
 =========
 
 
+sockethub v0.0.8 - 19.07.2013
+-----------------------------
+
+- fixed some error handling in twitter platform (issue #89)
+
+- reworked redis connection management, implemented connection pool.
+  (issues #84 & #74)
+
 - handle SIGINT as early as possible.
 
 - fixed race condition where a command sent immediately upon connect could be
-  lost.
+  lost. (issue #90)
 
-- greatly improved session cleanup handling, removed some old cruft.
+- greatly improved session cleanup handling, removed some old cruft. (issue #92)
 
 - added a 'cleanup' listener for listeners to register with session objects to
-  know when the dispatcher has sent out a cleanup.
+  know when the dispatcher has sent out a cleanup. (issue #92)
 
 - many small bugfixes
 
