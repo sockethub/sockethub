@@ -8,6 +8,14 @@ var Redis = {
       this.__instances[key].__fireEvent(channel, event, data, key);
     }
   },
+  __existsChannel: function (channel) {
+    for (var key in this.__instances) {
+      if (_this.__instances[key].subscribed_channels.indexOf(channel) > -1) {
+        return true;
+      }
+    }
+    return false;
+  },
   __clearHandlers: function () {
     for (var key in this.__instances) {
       this.__instances[key].__clearHandlers();
@@ -43,27 +51,26 @@ var Redis = {
       events[event].push(callback);
     });
 
+    _this.__instances[me].quit = function () {
+      delete _this.__instances[me];
+    };
+
+    _this.__instances[me].exists = _this.__existsChannel;
+
     _this.__instances[me].__fireEvent = function (channel, event, data, key) {
       if (!key) {
         key = me;
       }
       if (!_this.__instances[key]) { return; }
 
-      //try {
-        ///console.log('CHECKING INDEXOF for '+key);
-        //console.log('CHECKING INSTANCES:',_this.__instances);
-        if (_this.__instances[key].subscribed_channels.indexOf(channel) > -1) {
-          console.log('REDIS EVENT: instance['+key+'] chan. \''+channel+'\', send: \''+event+'\': '+data);
-          for (var i = 0, num = events[event].length; i < num; i = i + 1) {
-            events[event][i](channel, data);
-          }
-        } else {
-          console.log('instance['+key+'] not subscribed to channel \''+channel+'\', not firing \''+event+'\'', _this.__instances[key].subscribed_channels);
+      if (_this.__instances[key].subscribed_channels.indexOf(channel) > -1) {
+        console.log('REDIS EVENT: instance['+key+'] chan. \''+channel+'\', send: \''+event+'\': '+data);
+        for (var i = 0, num = events[event].length; i < num; i = i + 1) {
+          events[event][i](channel, data);
         }
-      //} catch (e) {
-      //  console.log('##### '+key+' INSTANCE DATA:',_this.__instances[key]);
-      //  throw new Error("failed reading indexOf for "+key+" key: ", e);
-      //}
+      } else {
+        console.log('instance['+key+'] not subscribed to channel \''+channel+'\', not firing \''+event+'\'', _this.__instances[key].subscribed_channels);
+      }
     };
 
     _this.__instances[me].__clearHandlers = function () {
