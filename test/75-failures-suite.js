@@ -6,12 +6,11 @@ define(['require'], function (require) {
   var suites = [];
 
   suites.push({
-    desc: "listeners runing without dispatcher",
+    desc: "listeners running without dispatcher",
     abortOnFail: true,
     setup: function (env, test) {
-      //GLOBAL.redis = require('redis');
+      GLOBAL.redis = require('redis');
       env.util = require('./../lib/sockethub/util');
-
       env.confirmProps = {
         status: true,
         verb: 'confirm'
@@ -26,11 +25,15 @@ define(['require'], function (require) {
         MY_PLATFORMS: [ 'rss' ] // list of platforms this instance is responsible for
       };
 
-      env.sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime() / Math.floor((Math.random()*10)+2);
-      env.encKey = Math.floor((Math.random()*10)+1) + new Date().getTime() / Math.floor((Math.random()*10)+2);
+      env.sid = "1617171";
+      env.sockethubId = 'unittests';
+      env.encKey = 'enckeyblah';
       env.listener = [];
+      env.job_channel = 'sockethub:'+env.sockethubId+':listener:rss:incoming';
+      env.resp_channel = 'sockethub:'+env.sockethubId+':dispatcher:outgoing:'+env.sid;
       var proto = require('./../lib/sockethub/protocol');
       listener = require('./../lib/sockethub/listener');
+
       for (var i = 0, len = env.config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
         if (env.config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
           continue;
@@ -46,15 +49,40 @@ define(['require'], function (require) {
 
       test.result(true);
     },
+    afterEach: function (env, test) {
+      test.result(true);
+    },
+    takedown: function (env, test) {
+      env.util.redis.clean(env.sockethubId, function () {
+        test.result(true);
+      });
+    },
     tests: [
 
-      {
-        desc: "send job to platform with an invalid tagret object",
+      /*{
+        desc: "basic test",
         run: function (env, test) {
-          env.sid = "1617171";
-          env.job_channel = 'sockethub:'+env.sockethubId+':listener:rss:incoming';
-          env.resp_channel = 'sockethub:'+env.sockethubId+':dispatcher:outgoing:'+env.sid;
+          env.util.redis.get('blpop', env.job_channel, function (err, replies) {
+            console.log('RECVD rep: ', replies[1]);
+            if (err) {
+              test.result(false, err);
+            } else {
+              test.assertTypeAnd(replies[1], 'string');
+              test.assert(replies[1], 'helloWorld1');
+            }
+          });
+
+          var client = redis.createClient();
+          client.rpush(env.job_channel, 'helloWorld1');
+          //env.util.redis.set('rpush', env.job_channel, 'helloWorld1');
+        }
+      },*/
+
+      {
+        desc: "send job to platform with an invalid target object",
+        run: function (env, test) {
           var job = {
+            rid: 123,
             platform: 'rss',
             verb: 'fetch',
             actor: { address: 'johndoe'},
@@ -63,12 +91,17 @@ define(['require'], function (require) {
             sessionId: env.sid
           };
 
-          env.util.redis.set('lpush', env.job_channel, JSON.stringify(job));
-          env.util.redis.get('brpop', env.resp_channel, function (err, resp) {
+          env.util.redis.get('blpop', env.resp_channel, function (err, resp) {
             var r = JSON.parse(resp[1]);
             test.assertAnd(r.status, false);
             test.assert(r.object.message, "Error: undefined is not a valid uri or options object.");
           });
+          /*var client = redis.createClient();
+          client.on('ready', function() {
+            console.log('CLIENT:', client);
+            client.rpush(env.job_channel, JSON.stringify(job));
+          });*/
+          env.util.redis.set('rpush', env.job_channel, JSON.stringify(job));
         }
       },
       {
@@ -83,8 +116,8 @@ define(['require'], function (require) {
             sessionId: env.sid
           };
 
-          env.util.redis.set('lpush', env.job_channel, JSON.stringify(job));
-          env.util.redis.get('brpop', env.resp_channel, function (err, resp) {
+          env.util.redis.set('rpush', env.job_channel, JSON.stringify(job));
+          env.util.redis.get('blpop', env.resp_channel, function (err, resp) {
             var r = JSON.parse(resp[1]);
             test.assert(r.status, true);
           });
@@ -179,8 +212,8 @@ define(['require'], function (require) {
             sessionId: env.sid
           };
 
-          env.util.redis.set('lpush', env.job_channel, JSON.stringify(job));
-          env.util.redis.get('brpop', env.resp_channel, function (err, resp) {
+          env.util.redis.set('rpush', env.job_channel, JSON.stringify(job));
+          env.util.redis.get('blpop', env.resp_channel, function (err, resp) {
             var r = JSON.parse(resp[1]);
             test.assertAnd(r.status, false);
             test.assert(r.object.message, "Error: undefined is not a valid uri or options object.");
@@ -199,8 +232,8 @@ define(['require'], function (require) {
             sessionId: env.sid
           };
 
-          env.util.redis.set('lpush', env.job_channel, JSON.stringify(job));
-          env.util.redis.get('brpop', env.resp_channel, function (err, resp) {
+          env.util.redis.set('rpush', env.job_channel, JSON.stringify(job));
+          env.util.redis.get('blpop', env.resp_channel, function (err, resp) {
             var r = JSON.parse(resp[1]);
             test.assert(r.status, true);
           });
