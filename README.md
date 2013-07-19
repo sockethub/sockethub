@@ -45,7 +45,7 @@ installation & setup
 
   You will need to have a redis server (version 2.x or greater) up and running.
 
-  NOTE: **version 2.x** or greater required as Sockethub makes extensive use of the `BRPOP` and `LPUSH` commands.
+  NOTE: **version 2.x** or greater required as Sockethub makes extensive use of the `BLPOP` and `RPUSH` commands.
 
   * node.js package dependencies
 
