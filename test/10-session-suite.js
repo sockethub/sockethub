@@ -403,7 +403,8 @@ define(['require'], function(require) {
   suites.push({
     desc: "Session communication",
     setup: function (env, test) {
-      GLOBAL.redis = require('redis');
+      GLOBAL.redis = require('./mocks/redis-mock')(test);
+      //GLOBAL.redis = require('redis');
       env.sockethubId = '1234567890';
       env.encKey = '5678abcd';
       env.sid = 'test-sid';
