@@ -12,7 +12,15 @@ define(['require'], function (require) {
     setup: function (env, test) {
       // test redis service
       env.util = require('./../lib/sockethub/util');
-      test.assertType(env.util, 'object');
+      test.assertTypeAnd(env.util, 'object');
+      env.util.redis.clean(env.sockethubId, function () {
+        test.result(true);
+      });
+    },
+    takedown: function (env, test) {
+      env.util.redis.clean(env.sockethubId, function () {
+        test.result(true);
+      });
     },
     tests: [
 
@@ -33,11 +41,13 @@ define(['require'], function (require) {
         desc: "try to push/pop",
         run: function (env, test) {
           env.util.redis.get('brpop', 'test', function (err, replies) {
+            console.log('RECVD err: ', err);
+            console.log('RECVD rep: ', replies[1]);
             if (err) {
               test.result(false, err);
             } else {
               test.assertTypeAnd(replies[1], 'string');
-              test.assert(replies[1], 'helloWorld1');
+              test.assertType(replies[1], 'string');
             }
           });
 
@@ -55,7 +65,7 @@ define(['require'], function (require) {
               test.result(false, err);
             } else {
               test.assertTypeAnd(replies[1], 'string');
-              test.assert(replies[1], 'helloWorld2');
+              test.assertType(replies[1], 'string');
             }
           });
         }
@@ -69,7 +79,7 @@ define(['require'], function (require) {
               test.result(false, err);
             } else {
               test.assertTypeAnd(replies[1], 'string');
-              test.assert(replies[1], 'helloWorld3');
+              test.assertType(replies[1], 'string');
             }
           });
         }
