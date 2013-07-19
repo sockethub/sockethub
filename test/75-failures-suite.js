@@ -93,6 +93,7 @@ define(['require'], function (require) {
 
           env.util.redis.get('blpop', env.resp_channel, function (err, resp) {
             var r = JSON.parse(resp[1]);
+            console.log('received: '+resp[1]);
             test.assertAnd(r.status, false);
             test.assert(r.object.message, "Error: undefined is not a valid uri or options object.");
           });
