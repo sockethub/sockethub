@@ -32,7 +32,8 @@
     "feedparser": "*",
     "request": "*",
     "crypto": "*",
-    "posix": "*"
+    "posix": "*",
+    "generic-pool": "*"
   },
   "devDependencies": {
     "teste": "*"
