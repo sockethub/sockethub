@@ -115,12 +115,13 @@ define(['require'], function (require) {
             object: { text: 'blah blah' },
             target: [{ address: 'fbuser2' }]
           };
-          env.Facebook.post(job).then(function (err, status, obj) {
-            env.respHandler()(err, status, obj);
-            test.assertAnd(status, true);
+          env.Facebook.post(job).then(function (obj) {
+            env.respHandler()(null, true, obj);
             test.assert(env.https.request.called, true);
             //var transport = env.nodemailer.createTransport('SMTP', {});
             //test.assert(transport.sendMail.called, true);
+          }, function (err, obj) {
+            env.respHandler()(err, false, obj);
           });
         }
       }
