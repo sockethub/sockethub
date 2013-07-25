@@ -476,6 +476,7 @@ define(['require'], function(require) {
           var p_resp = {};
           env.p_one.subsystem.events.on('ping-response', function (data) {
             p_resp['p_one'] = true;
+            console.log('recieved data: ', data);
             test.assertAnd(data.object.encKey, env.encKey);
             test.assertAnd(env.p_one.encKeySet(), true, 'enckey not set on ping-response');
             if ((p_resp['p_one']) && (p_resp['p_two'])) {
