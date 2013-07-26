@@ -1,6 +1,17 @@
 CHANGELOG
 =========
 
+sockethub v0.0.9 - 26.07.2013
+-----------------------------
+
+- simplified promise fulfillment for platforms (issue #82)
+
+- improved session cleanup handling
+
+- address some listener promise handling issues
+
+- some small stability fixes related to redis connection hiccups
+
 
 sockethub v0.0.8 - 19.07.2013
 -----------------------------
