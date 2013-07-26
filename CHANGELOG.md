@@ -4,7 +4,7 @@ CHANGELOG
 sockethub v0.0.9 - 26.07.2013
 -----------------------------
 
-- simplified promise fulfillment for platforms (issue #82)
+- simplified promise fulfillment for platforms ([issue #82](https://github.com/sockethub/sockethub/issues/82))
 
 - improved session cleanup handling
 
@@ -16,20 +16,20 @@ sockethub v0.0.9 - 26.07.2013
 sockethub v0.0.8 - 19.07.2013
 -----------------------------
 
-- fixed some error handling in twitter platform (issue #89)
+- fixed some error handling in twitter platform ([issue #89](https://github.com/sockethub/sockethub/issues/89))
 
 - reworked redis connection management, implemented connection pool.
-  (issues #84 & #74)
+  ([issues #84](https://github.com/sockethub/sockethub/issues/84) & [#74](https://github.com/sockethub/sockethub/issues/74))
 
 - handle SIGINT as early as possible.
 
 - fixed race condition where a command sent immediately upon connect could be
-  lost. (issue #90)
+  lost. ([issue #90](https://github.com/sockethub/sockethub/issues/90))
 
-- greatly improved session cleanup handling, removed some old cruft. (issue #92)
+- greatly improved session cleanup handling, removed some old cruft. ([issue #92](https://github.com/sockethub/sockethub/issues/92))
 
 - added a 'cleanup' listener for listeners to register with session objects to
-  know when the dispatcher has sent out a cleanup. (issue #92)
+  know when the dispatcher has sent out a cleanup. ([issue #92](https://github.com/sockethub/sockethub/issues/92))
 
 - many small bugfixes
 
