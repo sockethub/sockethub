@@ -36,7 +36,7 @@ module.exports = function() {
     },
     cleanup: function() {
       var promise = session.promising();
-      promise.fulfill(null, true);
+      promise.fulfill();
       return promise;
     },
     post: function (job) {
@@ -47,7 +47,7 @@ module.exports = function() {
           data: data
         });
       });
-      promise.fulfill(null, true);
+      promise.fulfill();
       return promise;
     }
   };
