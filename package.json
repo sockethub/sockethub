@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/sockcwethub/sockethub.git"
+    "url": "git://github.com/sockethub/sockethub.git"
   },
   "homepage": "http://github.com/sockethub/sockethub",
   "dependencies": {
