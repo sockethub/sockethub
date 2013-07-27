@@ -21,7 +21,7 @@
     "redis": "0.8.4",
     "curry": "0.0.4",
     "mail": "*",
-    "imap": "*",
+    "imap": "0.7.12",
     "promising": "*",
     "twit": "*",
     "simple-xmpp": "*",
