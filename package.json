@@ -1,7 +1,7 @@
 {
   "name": "sockethub",
   "description": "A polyglot messaging service",
-  "version": "0.0.8",
+  "version": "0.0.10",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "AGPL",
@@ -21,19 +21,20 @@
     "redis": "0.8.4",
     "curry": "0.0.4",
     "mail": "*",
-    "imap": "0.7.12",
+    "imap": "0.7.x",
     "promising": "*",
-    "twit": "*",
+    "twit": "1.x",
     "simple-xmpp": "*",
     "node-stringprep": "*",
-    "nodemailer": "*",
+    "nodemailer": "0.5.x",
     "gpg": "*",
     "consoleplusplus": "*",
-    "feedparser": "*",
+    "feedparser": "0.16.x",
     "request": "*",
     "crypto": "*",
     "posix": "*",
-    "generic-pool": "*"
+    "generic-pool": "2.0.x",
+    "iconv": "2.0.x"
   },
   "devDependencies": {
     "teste": "*"
