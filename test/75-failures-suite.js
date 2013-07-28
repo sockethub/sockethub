@@ -138,14 +138,12 @@ define(['require'], function (require) {
     ]
   });
 
-
-/*  suites.push({
-    desc: "two listeners runing with dispatcher",
+  suites.push({
+    desc: "crashing listeners requesting encKey from dispatcher",
     abortOnFail: true,
     setup: function (env, test) {
-      //GLOBAL.redis = require('redis');
+      GLOBAL.redis = require('redis');
       env.util = require('./../lib/sockethub/util');
-
       env.confirmProps = {
         status: true,
         verb: 'confirm'
@@ -159,29 +157,31 @@ define(['require'], function (require) {
         PORT: port,
         MY_PLATFORMS: [ 'rss' ] // list of platforms this instance is responsible for
       };
-      var NUM_WORKERS = 2;
-      env.sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime() / Math.floor((Math.random()*10)+2);
-      env.encKey = Math.floor((Math.random()*10)+1) + new Date().getTime() / Math.floor((Math.random()*10)+2);
+
+      env.sid = "1617171";
+      env.sockethubId = 'unittests';
       env.listener = [];
-      var proto = require('./../lib/sockethub/protocol');
+      env.job_channel = 'sockethub:'+env.sockethubId+':listener:rss:incoming';
+      env.resp_channel = 'sockethub:'+env.sockethubId+':dispatcher:outgoing:'+env.sid;
+      env.proto = require('./../lib/sockethub/protocol');
       listener = require('./../lib/sockethub/listener');
+
       for (var i = 0, len = env.config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
         if (env.config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
           continue;
         }
         l  = listener();
         l.init({
-          platform: proto.platforms[env.config.HOST.MY_PLATFORMS[i]],
-          sockethubId: env.sockethubId,
-          encKey: env.encKey
+          platform: env.proto.platforms[env.config.HOST.MY_PLATFORMS[i]],
+          sockethubId: env.sockethubId
         });
         env.listener[i] = l;
       }
 
-
       env.dispatcher = require('./../lib/sockethub/dispatcher');
+
       env.server = {};
-      dispatcher.init(env.config.HOST.MY_PLATFORMS, env.sockethubId, proto).then(function() {
+      env.dispatcher.init(env.config.HOST.MY_PLATFORMS, env.sockethubId, env.proto).then(function() {
         // initialize http server
         env.server.h = require('./../lib/servers/http').init(env.config);
         // initialize websocket server
@@ -195,64 +195,98 @@ define(['require'], function (require) {
         process.exit();
       });
 
+      test.result(true);
+    },
+    afterEach: function (env, test) {
+      env.dispatcher.session.subsystem.send('cleanup', { sids: [ env.sessionId ] });
+      setTimeout(function () {
+        env.dispatcher.session.destroy(env.sessionId).then(function () {
+          test.result(true);
+        });
+      }, 2000);
+    },
+    beforeEach: function (env, test) {
+      env.dispatcher.session.get(env.sessionId).then(function(session) {
+        test.result(true);
+      });
+    },
+    takedown: function (env, test) {
+      env.util.redis.clean(env.sockethubId, function () {
+        test.result(true);
+      });
     },
     tests: [
 
       {
-        desc: "send job to platform with an invalid tagret object",
+        desc: "init new listener to ask for enckey",
+        timeout: 5000,
         run: function (env, test) {
-          env.sid = "1617171";
-          env.job_channel = 'sockethub:'+env.sockethubId+':listener:rss:incoming';
-          env.resp_channel = 'sockethub:'+env.sockethubId+':dispatcher:outgoing:'+env.sid;
-          var job = {
-            platform: 'rss',
-            verb: 'fetch',
-            actor: { address: 'johndoe'},
-            object: {},
-            target: { address: 'http://blog.silverbucket.net/rss'},
-            sessionId: env.sid
-          };
 
-          env.util.redis.set('rpush', env.job_channel, JSON.stringify(job));
-          env.util.redis.get('blpop', env.resp_channel, function (err, resp) {
-            var r = JSON.parse(resp[1]);
-            test.assertAnd(r.status, false);
-            test.assert(r.object.message, "Error: undefined is not a valid uri or options object.");
+          l.init({
+            platform: env.proto.platforms['rss'],
+            sockethubId: env.sockethubId
           });
+          setTimeout(function () {
+            var result = l.encKeySet();
+            console.log('ENCKEY SET: ', result);
+            test.assert(result, true, 'encKey not set');
+          }, 4000);
         }
       },
       {
-        desc: "send job to platform",
+        desc: "init new listener to ask for enckey",
+        timeout: 5000,
         run: function (env, test) {
-          var job = {
-            platform: 'rss',
-            verb: 'fetch',
-            actor: { address: 'johndoe'},
-            object: {},
-            target: [{ address: 'http://blog.silverbucket.net/rss'}],
-            sessionId: env.sid
-          };
-
-          env.util.redis.set('rpush', env.job_channel, JSON.stringify(job));
-          env.util.redis.get('blpop', env.resp_channel, function (err, resp) {
-            var r = JSON.parse(resp[1]);
-            test.assert(r.status, true);
+          var t = listener();
+          t.init({
+            platform: env.proto.platforms['rss'],
+            sockethubId: env.sockethubId
           });
+          setTimeout(function () {
+            var result = t.encKeySet();
+            console.log('ENCKEY SET: ', result);
+            test.assert(result, true, 'encKey not set');
+          }, 4000);
         }
       },
       {
-        desc: "shutdown listener",
+        desc: "init new listener to ask for enckey",
+        timeout: 5000,
         run: function (env, test) {
-          env.listener[0].shutdown().then(function () {
-            test.result(true);
-          }, function (err) {
-            test.result(false, err);
+          var t = listener();
+          t.init({
+            platform: env.proto.platforms['rss'],
+            sockethubId: env.sockethubId
           });
+          setTimeout(function () {
+            var result = t.encKeySet();
+            console.log('ENCKEY SET: ', result);
+            test.assert(result, true, 'encKey not set');
+          }, 4000);
+        }
+      },
+      {
+        desc: "init new listener to ask for enckey",
+        timeout: 5000,
+        run: function (env, test) {
+          var t = listener();
+          t.init({
+            platform: env.proto.platforms['rss'],
+            sockethubId: env.sockethubId
+          });
+          setTimeout(function () {
+            var result = t.encKeySet();
+            console.log('ENCKEY SET: ', result);
+            test.assert(result, true, 'encKey not set');
+          }, 4000);
         }
       }
 
+
     ]
-  });*/
+  });
+
+
 
   return suites;
 });
