@@ -17,9 +17,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 var sockethub = require('./../lib/sockethub/sockethub.js');
-var statware = require("statware");
-var logger = statware.logger(console.log, 5);
-logger.registerHelper(statware.memstats);
 sockethub.init({
   root: './'
 });
