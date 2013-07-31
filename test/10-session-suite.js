@@ -458,6 +458,7 @@ define(['require'], function(require) {
     tests: [
       {
         desc: "dispatcher pings first",
+        timeout: 15000,
         run: function (env, test) {
           var p_resp = {};
           env.dispatcher.subsystem.events.on('ping-response', function (data) {
