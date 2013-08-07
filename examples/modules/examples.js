@@ -70,8 +70,9 @@ run(['settings', 'SH', 'SockethubSettings',
 function (settings, SH, SHsettings) {
   var s = settings.sockethub();
   // connect to sockethub and register
-  SHsettings.save('conn', s)
+  SHsettings.save('conn', s);
   SH.connect().then(function () {
+    console.log('connected, registering...');
     return SH.register();
   }).then(function () {
     console.log('connected to sockethub');
