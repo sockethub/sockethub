@@ -88,5 +88,60 @@ define(['require'], function (require) {
     ]
   });
 
+
+  var poolTest = {
+    name: "redis pool use",
+    desc: "try to max out the redis pool",
+    abortOnFail: true,
+    setup: function (env, test) {
+      var Pool = require('generic-pool').Pool;
+      var redis = require('redis');
+      var i = 0;
+      env.pool = Pool({
+        name: 'redis',
+        create: function (callback){
+          var client = redis.createClient();
+          client.__name = "client"+i;
+          i = i + 1;
+          console.log('creating '+client.__name);
+          client.on('error', function (err) {
+            console.error('ERROR: '+err);
+            //throw new SockethubError('util.redisSet failed: ' + err);
+          });
+          client.on('ready', function () {
+            callback(null, client);
+          });
+        },
+        destroy: function (client) {
+          return client.quit();
+        },
+        max: 50,
+        log: true
+      });
+      test.result(true);
+    }
+  };
+
+  function _pt(env, test) {
+    env.pool.acquire(function (err, client) {
+      if (err) {
+        console.log('ERR: '+err);
+        test.result(false);
+      } else {
+        env.pool.release(client);
+        test.result(true);
+      }
+    });
+  }
+  var poolTests = [];
+  for (var j = 0; j < 800; j = j + 1) {
+    poolTests[j] = {
+      desc: 'pool test #'+j,
+      run: _pt
+    };
+  }
+  poolTest.tests = poolTests;
+  suites.push(poolTest);
+
   return suites;
 });
