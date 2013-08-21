@@ -37,13 +37,21 @@ var schema = {
 };
 
 var obj = {
-  credentials: {}
+  credentials: {
+    jdoe: {
+      consumer_key : 'sfsdfds',
+      consumer_secret : 'sdfsdfs',
+      access_token : 'sdfsdf',
+      access_token_secret : 'sdfsdfsd'
+    }    
+  }
 };
+var json_obj = JSON.stringify(obj);
 
 console.log("\n--");
 var JSVlib = require('JSV').JSV; // json schema validator
 var jsv = JSVlib.createEnvironment();
-var report = jsv.validate(obj, schema);
+var report = jsv.validate(json_obj, schema);
 if (report.errors.length !== 0) {  // protocol.js json errors
   console.log(' invalid object format '+JSON.stringify(report.errors));
 } else {

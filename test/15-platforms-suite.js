@@ -33,9 +33,10 @@ require("consoleplusplus/console++");
 var promising = require('promising');
 var JSVlib = require('JSV').JSV; // json schema validator
 
-var schema_tests = [
-  'platforms_schema_data/twitter_credentials.js'
+var schema_test_files = [
+  './platforms_schema_data/twitter_credentials'
 ];
+var schema_tests = {};
 
 var session = {
   log: function (msg) {
@@ -51,7 +52,7 @@ var session = {
 function buildTest(name, p, verb, err) {
   return {
     desc: name+" - "+verb+" scaffolding check",
-    run: function(env, test) {
+    run: function (env, test) {
       if (p === undefined) {
         test.result(false, 'unable to load platform module "'+name+'" : '+err);
       } else {
@@ -77,23 +78,26 @@ function buildTest(name, p, verb, err) {
 }
 
 
-function buildSchemaTest(name, p, filename, prop, num, data, err) {
+function buildSchemaTest(name, p, filename, type, prop, num, data, err) {
   return {
     desc: name+" - "+filename+" schema check #"+num,
-    run: function(env, test) {
+    willFail: (data.willFail) ? true : false,
+    run: function (env, test) {
       if (data === undefined) {
         test.result(false, 'unable to load platform module "'+name+'" : '+err);
       } else {
         test.assertTypeAnd(data, 'object', 'test data #'+num+' not an object '+name+' ['+err+']');
         test.assertTypeAnd(p.schema[prop], 'object', 'platform does not have defined schema property '+prop+' ['+err+']');
 
+        console.log('DATA: ', data.data);
+        console.log('TYPE: ', type);
+        console.log('PROP: ', prop);
+        console.log('SCHEMA: ', p.schema[type]);
         var jsv = JSVlib.createEnvironment();
-        var report = jsv.validate(data, p.schema[prop]);
-        if (report.errors.length !== 0) {  // protocol.js json errors
-          test.result(false, 'invalid object format '+JSON.stringify(report.errors));
-        } else {
-          test.result(true);
-        }
+        var report = jsv.validate(JSON.stringify(data.data), p.schema[type]);
+        console.log('error report: ', report.errors);
+        console.log('error report length: ', report.errors.length);
+        test.assert(report.errors.length, 0); //, 'schema validation failed: '+JSON.stringify(report.errors));
       }
     }
   };
@@ -116,18 +120,56 @@ define(['require'], function (require) {
   var suites = [];
 
   var platforms = require('./../lib/sockethub/protocol').platforms;
+  var loadFailed = false;
+  var t;
 
+  for (var i = 0, len = schema_test_files.length; i < len; i++) {
+      loadFailed = false;
+      t = undefined;
+      try {
+        t = require(schema_test_files[i]);
+      } catch (e) {
+        loadFailed = true;
+        platform_test_suite.tests.push(buildSchemaTest(undefined, undefined,
+                                                      schema_test_files[i],
+                                                      undefined, undefined, undefined,
+                                                      undefined, e));
+      }
+
+      if (!loadFailed) {
+        if (!t) {
+          loadFailed = true;
+          platform_test_suite.tests.push(buildSchemaTest(undefined, undefined,
+                                                        schema_test_files[i],
+                                                        undefined, undefined, undefined,
+                                                        undefined, 'test data module returned empty object'));
+        } else if ((t.platform) && (t.type) && (t.base_prop) && (t.tests) && (typeof t.tests === 'object')) {
+          if (typeof schema_tests[t.platform] !== 'object') {
+            schema_tests[t.platform] = [];
+          }
+          t.filename = schema_test_files[i];
+          schema_tests[t.platform].push(t);
+        } else {
+          platform_test_suite.tests.push(buildSchemaTest(undefined, undefined,
+                                                        schema_test_files[i],
+                                                        undefined, undefined, undefined,
+                                                        undefined, 'test file must have platform, type, base_prop, and tests array as base properties'));
+        }
+      }
+  }
+
+  i = undefined;
   for (var i in platforms) {
     var platform = platforms[i].name;
     var location = (platforms[i].location) ? ''+platforms[i].location :
                                              './../lib/platforms/'+platform;
-
+    var pd;
+    loadFailed = false;
     location = location.replace(/\.js$/, "");
+
     if (platform === 'dispatcher') { continue; }
 
     // manually check for init and cleanup
-    var pd;
-    var loadFailed = false;
     try {
       pd = require(location);
     } catch (e) {
@@ -151,39 +193,26 @@ define(['require'], function (require) {
       }
     }
 
-    for (var k = 0, len = schema_tests.length; k < len; k++) {
-      loadFailed = false;
-      var t;
-      try {
-        t = require(schema_tests[k]);
-      } catch (e) {
-        loadFailed = true;
-        platform_test_suite.tests.push(buildSchemaTest(platform, undefined,
-                                                      schema_tests[k],
-                                                      undefined, undefined,
-                                                      undefined, e));
-      }
 
-      // .. TODO .. tests need to be assigned to a specific platform, currently
-      // they are applied as we loop through the platforms. each time.
-      //
-      //
-      if (!loadFailed) {
-        if (!t) {
-          loadFailed = true;
-          platform_test_suite.tests.push(buildSchemaTest(platform, undefined,
-                                                        schema_tests[k],
-                                                        undefined, undefined,
-                                                        undefined, 'test data module returned empty object'));
-        } else {
-          // iterate through data tests
-          console.log(schema_tests[k]+' t: ',t);
-          for (var l = 0, len2 = t.tests.length; l < len2; l++) {
-            platform_test_suite.tests.push(buildSchemaTest(platform, pi,
-                                                         schema_tests[k],
-                                                         t.base_prop, l,
-                                                         t.tests[l]));
-          }
+
+    // .. TODO .. tests need to be assigned to a specific platform, currently
+    // they are applied as we loop through the platforms. each time.
+    //
+    if (typeof schema_tests[platform] === 'object') {
+      for (var k = 0, len2 = schema_tests[platform].length; k < len2; k++) {
+        loadFailed = false;
+        t = schema_tests[platform][k].tests;
+        var filename = schema_tests[platform][k].filename;
+        var type = schema_tests[platform][k].type;
+        var prop = schema_tests[platform][k].base_prop;
+
+        // iterate through data tests
+        console.log(schema_tests[platform][k]+' t: ',t);
+        for (var l = 0, len3 = t.length; l < len3; l++) {
+          platform_test_suite.tests.push(buildSchemaTest(platform, pdi,
+                                                       filename,
+                                                       type, prop, l,
+                                                       t[l]));
         }
       }
     }
