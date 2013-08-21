@@ -34,7 +34,8 @@ var promising = require('promising');
 var JSVlib = require('JSV').JSV; // json schema validator
 
 var schema_test_files = [
-  './platforms_schema_data/twitter_credentials'
+  './platforms_schema_data/twitter_credentials',
+  './platforms_schema_data/facebook_credentials'
 ];
 var schema_tests = {};
 
