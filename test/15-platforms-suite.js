@@ -97,7 +97,13 @@ function buildSchemaTest(name, p, filename, type, prop, num, data, err) {
         var report = jsv.validate(JSON.stringify(data.data), p.schema[type]);
         console.log('error report: ', report.errors);
         console.log('error report length: ', report.errors.length);
-        test.assert(report.errors.length, 0); //, 'schema validation failed: '+JSON.stringify(report.errors));
+
+        if (report.errors.length === 0) {
+          test.result(true);
+        } else {
+          test.result(false);
+        }
+        //test.assert(report.errors.length, 0); //, 'schema validation failed: '+JSON.stringify(report.errors));
       }
     }
   };
