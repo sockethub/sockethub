@@ -24,7 +24,14 @@ function Twitter($rootScope, $q, SH, CH) {
         CH.set(config, cfg);
       }
       if (SH.isConnected()) {
-        SH.set('twitter', 'credentials', config.username, config).
+        var cred_tpl = SOCKETHUB_CREDS['twitter']['credentials']['# useraddress #'];
+        cred_tpl.access_token = config.access_token;
+        cred_tpl.access_token_secret = config.access_token_secret;
+        cred_tpl.consumer_key = config.consumer_key;
+        cred_tpl.consumer_secret = config.consumer_secret;
+        cred_tpl.actor.address = config.username;
+
+        SH.set('twitter', 'credentials', config.username, cred_tpl).
           then(function () {
             defer.resolve(config);
           }, defer.reject);

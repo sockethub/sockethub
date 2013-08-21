@@ -1,4 +1,5 @@
 /**
+ *
  * This config file is used as a template for all of the examples here. It
  * also is used during the unit tests as examples of a good data struct that
  * should pass the json schema checks.
@@ -24,7 +25,7 @@
  *
  */
 
-var CRED_CFG = {
+var SOCKETHUB_CREDS = {
   email: {
     'credentials': {
       '# useraddress #' : {
@@ -51,7 +52,7 @@ var CRED_CFG = {
   },
   facebook: {
     'credentials': {
-      '# username #': {
+      '# useraddress #': {
         'access_token' : '# token from facebook #',
         'actor': {
           'address': '# username #',
@@ -63,14 +64,18 @@ var CRED_CFG = {
   rss: {}, // none
   twitter: {
     'credentials': {
-      '# username #': {
+      '# useraddress #': {
         'access_token' :        '# token from twitter #',
         'access_token_secret' : '# token from twitter #',
         'consumer_secret' :     '# token from twitter #',
-        'consumer_key' :        '# token from twitter #'
+        'consumer_key' :        '# token from twitter #',
+        'actor': {
+          'address': '# username #',
+          'name':    '# displatname #'
+        }
       }
     }
   }
 };
 
-module.exports = CRED_CFG;
+module.exports = SOCKETHUB_CREDS;

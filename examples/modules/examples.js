@@ -8,7 +8,7 @@ value('settings', {
     // figure out sockethub connect settings
     var settings = {
       host: 'localhost',
-      port: '10550',
+      port: 10550,
       path: '/sockethub',
       tls: false,
       secret: '1234567890'
