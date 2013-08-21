@@ -1,3 +1,4 @@
+var working_creds = require('./../../examples/credential-config.js');
 var cfg = {
   'platform': 'email',
   'type': 'set',
@@ -55,7 +56,7 @@ cfg.tests.push({
           'username': 'asdasdasdasd',
           'password': 'asdasdasdasd',
           'secure': 'asdasdasdasd',
-          'port': 'asdasdasdasd',
+          'port': 123,
           'domain': 'asdasdasdasd',
           'mimeTransport': 'asdasdasdasd'
         }
@@ -94,11 +95,17 @@ cfg.tests.push({
           'username': 'asdasdasdasd',
           'password': 'asdasdasdasd',
           'secure': 'asdasdasdasd',
-          'port': 'asdasdasdasd'
+          'port': 123,
         }
       }
     }
   }
+});
+
+
+cfg.tests.push({
+  'willFail': false,
+  'data': working_creds[cfg.platform]
 });
 
 module.exports = cfg;

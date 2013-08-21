@@ -1,3 +1,4 @@
+var working_creds = require('./../../examples/credential-config.js');
 var cfg = {
   'platform': 'xmpp',
   'type': 'set',
@@ -52,5 +53,10 @@ cfg.tests.push({
   }
 });
 
+
+cfg.tests.push({
+  'willFail': false,
+  'data': working_creds[cfg.platform]
+});
 
 module.exports = cfg;
