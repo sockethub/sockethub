@@ -84,7 +84,7 @@ function buildTest(name, p, verb, err) {
 function buildSchemaTest(name, p, filename, type, prop, num, data, err) {
   return {
     desc: name+" - "+filename+" schema check #"+num,
-    willFail: (data.willFail) ? true : false,
+    willFail: ((data) && (typeof data.willFail !== undefined) && (data.willFail)) ? true : false,
     run: function (env, test) {
       if (data === undefined) {
         test.result(false, 'unable to load platform module "'+name+'" : '+err);
@@ -92,11 +92,11 @@ function buildSchemaTest(name, p, filename, type, prop, num, data, err) {
         //test.result(true, 'yoyo2');
         //test.assertTypeAnd(data, 'object', 'test data #'+num+' not an object '+name+' ['+err+']');
         //test.assertTypeAnd(p.schema[prop], 'object', 'platform does not have defined schema property '+prop+' ['+err+']');
-
         console.log('DATA: ', data.data);
         console.log('TYPE: ', type);
         console.log('PROP: ', prop);
         console.log('SCHEMA: ', p.schema[type]);
+
         var jsv = JSVlib.createEnvironment();
         var report = jsv.validate(data.data, p.schema[type]);
         console.log('error report: ', report.errors);
@@ -105,7 +105,7 @@ function buildSchemaTest(name, p, filename, type, prop, num, data, err) {
         if (report.errors.length === 0) {
           test.result(true, 'PASSED!');
         } else {
-          test.result(false, 'aiyayai!');
+          test.result(false, 'schema validation failed: '+JSON.stringify(report.errors));
         }
         //test.assert(report.errors.length, 0); //, 'schema validation failed: '+JSON.stringify(report.errors));
       }
@@ -205,7 +205,7 @@ define(['require'], function (require) {
 
 
 
-    // .. TODO .. tests need to be assigned to a specific platform, currently
+    // tests need to be assigned to a specific platform, currently
     // they are applied as we loop through the platforms. each time.
     //
     if (typeof schema_tests[platform] === 'object') {
