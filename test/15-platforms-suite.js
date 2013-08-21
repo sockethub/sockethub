@@ -1,5 +1,42 @@
+/**
+ * This file is part of sockethub.
+ *
+ * © 2012-2013 Nick Jennings
+ *             nick@silverbucket.net
+ *             https://github.com/silverbucket
+ *
+ * sockethub is licensed under the AGPLv3.
+ * See the LICENSE file for details.
+ *
+ * The latest version of sockethub can be found here:
+ *   git://github.com/sockethub/sockethub.git
+ *
+ * For more information about sockethub visit http://sockethub.org/.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ */
+
+/**
+ * This test suite builds dynamic tests for the platforms. It tests things like
+ * whether the all of the verbs declared (along with the init and cleanup
+ * commands) have a function exported from the platform module, and if that
+ * function returns a promise. This test is generated in the `buildTest`
+ * function.
+ *
+ * It also can automatically validate good & bad data against the platforms
+ * schema export. This test is generated in the `buildSchematest` function.
+ */
+
 require("consoleplusplus/console++");
 var promising = require('promising');
+var JSVlib = require('JSV').JSV; // json schema validator
+
+var schema_tests = [
+  'platforms_schema_data/twitter_credentials.js'
+];
+
 var session = {
   log: function (msg) {
     console.log('SESSION LOG '+msg);
@@ -10,29 +47,53 @@ var session = {
   promising: promising
 };
 
-function buildTest(platform, verb, data, err) {
+
+function buildTest(name, p, verb, err) {
   return {
-    desc: platform+" - "+verb+" scaffolding check",
+    desc: name+" - "+verb+" scaffolding check",
     run: function(env, test) {
-      if (data === undefined) {
-        test.result(false, 'unable to load platform module "'+platform+'" : '+err);
+      if (p === undefined) {
+        test.result(false, 'unable to load platform module "'+name+'" : '+err);
       } else {
-        test.assertTypeAnd(data[verb], 'function', 'function '+platform+'.'+verb+'() does not exist ['+err+']');
+        test.assertTypeAnd(p[verb], 'function', 'function '+name+'.'+verb+'() does not exist ['+err+']');
         var promise;
         if (verb === 'init') {
-          promise = data[verb](session);
+          promise = p[verb](session);
         } else if (verb === 'cleanup') {
-          promise = data[verb]();
+          promise = p[verb]();
         } else {
-          test.assertType(data[verb], 'function');
+          test.assertType(p[verb], 'function');
         }
-        test.assertTypeAnd(promise, 'object', 'function '+platform+'.'+verb+'() does not return a promise (not an object)');
-        test.assertTypeAnd(promise.then, 'function', 'function '+platform+'.'+verb+'() does not return a promise (no .then() function)');
+        test.assertTypeAnd(promise, 'object', 'function '+name+'.'+verb+'() does not return a promise (not an object)');
+        test.assertTypeAnd(promise.then, 'function', 'function '+name+'.'+verb+'() does not return a promise (no .then() function)');
         promise.then(function () {
           test.result(true, 'promise fulfilled');
         }, function () {
           test.result(false, 'promise rejected');
         });
+      }
+    }
+  };
+}
+
+
+function buildSchemaTest(name, p, filename, prop, num, data, err) {
+  return {
+    desc: name+" - "+filename+" schema check #"+num,
+    run: function(env, test) {
+      if (data === undefined) {
+        test.result(false, 'unable to load platform module "'+name+'" : '+err);
+      } else {
+        test.assertTypeAnd(data, 'object', 'test data #'+num+' not an object '+name+' ['+err+']');
+        test.assertTypeAnd(p.schema[prop], 'object', 'platform does not have defined schema property '+prop+' ['+err+']');
+
+        var jsv = JSVlib.createEnvironment();
+        var report = jsv.validate(data, p.schema[prop]);
+        if (report.errors.length !== 0) {  // protocol.js json errors
+          test.result(false, 'invalid object format '+JSON.stringify(report.errors));
+        } else {
+          test.result(true);
+        }
       }
     }
   };
@@ -71,22 +132,59 @@ define(['require'], function (require) {
       pd = require(location);
     } catch (e) {
       loadFailed = true;
-      platform_test_suite.tests.push(buildTest(platform, 'init', undefined, e));
-      platform_test_suite.tests.push(buildTest(platform, 'cleanup', undefined, e));
+      platform_test_suite.tests.push(buildTest(platform, undefined, 'init', e));
+      platform_test_suite.tests.push(buildTest(platform, undefined, 'cleanup', e));
     }
 
     if (!loadFailed) {
       pdi = pd();
-      platform_test_suite.tests.push(buildTest(platform, 'init', pdi));
-      platform_test_suite.tests.push(buildTest(platform, 'cleanup', pdi));
+      platform_test_suite.tests.push(buildTest(platform, pdi, 'init'));
+      platform_test_suite.tests.push(buildTest(platform, pdi, 'cleanup'));
     }
 
     for (var j in platforms[i].verbs) {
       var verb = platforms[i].verbs[j].name;
       if (loadFailed) {
-        platform_test_suite.tests.push(buildTest(platform, verb, undefined, 'failed to load platform module'));
+        platform_test_suite.tests.push(buildTest(platform, undefined, verb, 'failed to load platform module'));
       } else {
-        platform_test_suite.tests.push(buildTest(platform, verb, pdi));
+        platform_test_suite.tests.push(buildTest(platform, pdi, verb));
+      }
+    }
+
+    for (var k = 0, len = schema_tests.length; k < len; k++) {
+      loadFailed = false;
+      var t;
+      try {
+        t = require(schema_tests[k]);
+      } catch (e) {
+        loadFailed = true;
+        platform_test_suite.tests.push(buildSchemaTest(platform, undefined,
+                                                      schema_tests[k],
+                                                      undefined, undefined,
+                                                      undefined, e));
+      }
+
+      // .. TODO .. tests need to be assigned to a specific platform, currently
+      // they are applied as we loop through the platforms. each time.
+      //
+      //
+      if (!loadFailed) {
+        if (!t) {
+          loadFailed = true;
+          platform_test_suite.tests.push(buildSchemaTest(platform, undefined,
+                                                        schema_tests[k],
+                                                        undefined, undefined,
+                                                        undefined, 'test data module returned empty object'));
+        } else {
+          // iterate through data tests
+          console.log(schema_tests[k]+' t: ',t);
+          for (var l = 0, len2 = t.tests.length; l < len2; l++) {
+            platform_test_suite.tests.push(buildSchemaTest(platform, pi,
+                                                         schema_tests[k],
+                                                         t.base_prop, l,
+                                                         t.tests[l]));
+          }
+        }
       }
     }
 
