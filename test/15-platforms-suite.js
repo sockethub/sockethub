@@ -86,22 +86,23 @@ function buildSchemaTest(name, p, filename, type, prop, num, data, err) {
       if (data === undefined) {
         test.result(false, 'unable to load platform module "'+name+'" : '+err);
       } else {
-        test.assertTypeAnd(data, 'object', 'test data #'+num+' not an object '+name+' ['+err+']');
-        test.assertTypeAnd(p.schema[prop], 'object', 'platform does not have defined schema property '+prop+' ['+err+']');
+        //test.result(true, 'yoyo2');
+        //test.assertTypeAnd(data, 'object', 'test data #'+num+' not an object '+name+' ['+err+']');
+        //test.assertTypeAnd(p.schema[prop], 'object', 'platform does not have defined schema property '+prop+' ['+err+']');
 
         console.log('DATA: ', data.data);
         console.log('TYPE: ', type);
         console.log('PROP: ', prop);
         console.log('SCHEMA: ', p.schema[type]);
         var jsv = JSVlib.createEnvironment();
-        var report = jsv.validate(JSON.stringify(data.data), p.schema[type]);
+        var report = jsv.validate(data.data, p.schema[type]);
         console.log('error report: ', report.errors);
         console.log('error report length: ', report.errors.length);
 
         if (report.errors.length === 0) {
-          test.result(true);
+          test.result(true, 'PASSED!');
         } else {
-          test.result(false);
+          test.result(false, 'aiyayai!');
         }
         //test.assert(report.errors.length, 0); //, 'schema validation failed: '+JSON.stringify(report.errors));
       }
