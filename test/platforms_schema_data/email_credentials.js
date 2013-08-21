@@ -82,6 +82,22 @@ cfg.tests.push({
 });
 
 cfg.tests.push({
+  'willFail': true,
+  'data': {
+    'credentials': {
+      'bob' : {
+        'actor': {
+          'address': 'bob',
+          'name': "Bob Doe"
+        },
+        'smtp': {
+        }
+      }
+    }
+  }
+});
+
+cfg.tests.push({
   'willFail': false,
   'data': {
     'credentials': {
@@ -95,7 +111,7 @@ cfg.tests.push({
           'username': 'asdasdasdasd',
           'password': 'asdasdasdasd',
           'secure': 'asdasdasdasd',
-          'port': 123,
+          'port': 123
         }
       }
     }
