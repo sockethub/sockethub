@@ -2,7 +2,7 @@ var Redis = {
   __test: { Stub: function () {}},
   __instances: {},
   __fireEvent: function (channel, event, data) {
-    console.log('__fireEvent called, instances: ', this.__instances);
+    //console.log('__fireEvent called, instances: ', this.__instances);
     for (var key in this.__instances) {
       console.log('REDIS MOCK EVENT FIRE: ',data);
       this.__instances[key].__fireEvent(channel, event, data, key);
