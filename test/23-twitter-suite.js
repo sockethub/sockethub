@@ -164,7 +164,7 @@ define(['require'], function (require) {
             //test.assert(transport.sendMail.called, true);
           }, function (err) {
             console.log("ERR: "+err.toString());
-            test.assert(err, 'Error: Invalid or expired token');
+            test.assert(err, 'twitting failed, no information given: Error: Invalid or expired token');
           });
         }
       }
