@@ -164,7 +164,7 @@ define(['require'], function (require) {
             //test.assert(transport.sendMail.called, true);
           }, function (err) {
             console.log("ERR: "+err.toString());
-            test.assert(err, '{"errors":[{"message":"Invalid or expired token","code":89}]}');
+            test.assert(err, 'Error: Invalid or expired token');
           });
         }
       }
