@@ -8,13 +8,15 @@ The polyglot approach to the federated social web.
 
 about
 -----
-Sockethub is a polyglot (speaking many different protocols and APIs) messaging service for social and other interactive messaging applications. Not only does it assist [unhosted web app](http://unhosted.org) developers by providing server-independent, server-side functionality, but it also can be used a tool for many different applications, large and small.
+Sockethub is a polyglot (speaking many different protocols and APIs) messaging service for social and other interactive messaging applications. Not only does it assist [unhosted](http://unhosted.org) and [noBackend](http://nobackend.org) web application developers by providing server-independent, server-side functionality, but it also can be used as a back-end tool (invisible to the user) for many different applications, large and small.
 
-Example uses of sockethub are, writing and receiving messages (SMTP, Facebook, Twitter, Diaspora), instant messaging (XMPP, AIM, MSN), discovery (WebFinger, OpenGraph). The architecture of sockethub is extensible and supports implementation of more 'platforms' to carry out tasks, sockethub can be run on your own server, or provided as a service by a service provider, or app store.
+Example uses of sockethub are: writing and receiving messages (SMTP, Facebook, Twitter, Diaspora), instant messaging (XMPP, AIM, MSN, IRC), discovery (WebFinger, RDF(a)). The architecture of sockethub is extensible and supports easy implementation of additional 'platforms' to carry out tasks, sockethub can be run on your own server, or provided as a service by a service provider, or app store.
 
 status
 ------
 Sockethub is currently in very early stages of development, though already basic proof of concepts for XMPP are working, as well as progress being made to support SMTP, Facebook and Twitter. The implementtion of each 'platform' is very modular and straightforward to implement. If you are a developer looking to contribute, open an issue and explain what you'd like to implement for help getting started.
+
+See [doc/platform_overview.md](doc/platform_overview.md)
 
 features
 --------
@@ -29,7 +31,9 @@ Below is a list of platforms we're currently working on and their activity strea
  * Twitter - <kbd>![completed](http://sockethub.org/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) fetch</kbd>
  * RSS - <kbd>![completed](http://sockethub.org/img/checkmark.png) fetch</kbd>
  * WebFinger - <kbd>search</kbd>
+ * RDF - <kbd>search</kbd>
  * IRC - <kbd>send</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd>
+ * Bitcoin - <kbd>send<kbd> <kbd>receive</kbd> ... ?
 
 architecture overview
 ---------------------
@@ -50,7 +54,21 @@ installation & setup
   * node.js package dependencies
 
   Some of the node.js packages require operating system libraries in order to function correctly.
-      - simple-xmpp : libexpat1 libexpat1-dev libicu-dev
+      - simple-xmpp : `libexpat1` `libicu-dev`
+      - node-stringprep (dependency of several packages) : `libicu-dev`
+
+  NOTE: **version v0.10.x** or greater required due to module dependencies.
+
+  Instructions on installing node v0.10.x on Ubuntu 12.04 LTS see this
+
+    # sudo apt-get update
+    # sudo apt-get install python-software-properties python g++ make
+    # sudo add-apt-repository ppa:chris-lea/node.js
+    # sudo apt-get update
+    # sudo apt-get install nodejs
+
+  (from: http://kb.solarvps.com/node-js/installing-node-js-on-ubuntu-12-04-lts/)
+
 
 ### install
 
