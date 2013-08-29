@@ -33,7 +33,7 @@ cfg.tests.push({
         'host': 'asdasdasdasd',
         'username': 'asdasdasdasd',
         'password': 'asdasdasdasd',
-        'secure': 'asdasdasdasd',
+        'tls': 'asdasdasdasd',
         'port': 'asdasdasdasd',
         'domain': 'asdasdasdasd',
         'mimeTransport': 'asdasdasdasd'
@@ -55,8 +55,7 @@ cfg.tests.push({
           'host': 'asdasdasdasd',
           'username': 'asdasdasdasd',
           'password': 'asdasdasdasd',
-          'secure': 'asdasdasdasd',
-          'port': 123,
+          'tls': true,
           'domain': 'asdasdasdasd',
           'mimeTransport': 'asdasdasdasd'
         }
@@ -74,7 +73,7 @@ cfg.tests.push({
         'host': 'asdasdasdasd',
         'username': 'asdasdasdasd',
         'password': 'asdasdasdasd',
-        'secure': 'asdasdasdasd',
+        'tls': 'asdasdasdasd',
         'port': 'asdasdasdasd'
       }
     }
@@ -110,7 +109,6 @@ cfg.tests.push({
           'host': 'asdasdasdasd',
           'username': 'asdasdasdasd',
           'password': 'asdasdasdasd',
-          'secure': 'asdasdasdasd',
           'port': 123
         }
       }

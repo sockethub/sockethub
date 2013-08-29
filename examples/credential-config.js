@@ -37,15 +37,15 @@ var SOCKETHUB_CREDS = {
           'host':     '# example.com #',
           'username': '# username #',
           'password': '# password #',
-          'tls':      '# secure #',
+          'tls':      true, // must be a boolean
           'port': 465 // must be number
         },
         'imap': {
           'host':     '# example.com #',
           'username': '# username #',
           'password': '# password #',
-          'tls':      '# secure #',
-          'port': 993 // must be number
+          'tls':      true, // must be a boolean
+          'port': 993 // not required, must be number
         }
       }
     }
