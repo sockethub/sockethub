@@ -61,11 +61,11 @@ installation & setup
 
   Instructions on installing node v0.10.x on Ubuntu 12.04 LTS see this
 
-    # sudo apt-get update
-    # sudo apt-get install python-software-properties python g++ make
-    # sudo add-apt-repository ppa:chris-lea/node.js
-    # sudo apt-get update
-    # sudo apt-get install nodejs
+    $ sudo apt-get update
+    $ sudo apt-get install python-software-properties python g++ make
+    $ sudo add-apt-repository ppa:chris-lea/node.js
+    $ sudo apt-get update
+    $ sudo apt-get install nodejs
 
   (from: http://kb.solarvps.com/node-js/installing-node-js-on-ubuntu-12-04-lts/)
 
