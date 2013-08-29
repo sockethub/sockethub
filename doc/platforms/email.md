@@ -1,3 +1,14 @@
+# PLATFORM: email
+
+## overview
+
+The email platform currently supports both the SMTP (for sending) and IMAP (for
+fetching) protocols. The current end-user verbs it supports are `send` and
+`fetch`.
+
+
+## `set` credentials
+
 
 
 ## examples
