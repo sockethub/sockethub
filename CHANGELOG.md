@@ -1,26 +1,28 @@
 CHANGELOG
 =========
 
+
+
 sockethub v0.0.10 - 31.07.2013
 ------------------------------
 
-- the dispatcher verifies the platforms of incoming commands against 
-  a list of platforms that the dispatcher has received pings from 
+- the dispatcher verifies the platforms of incoming commands against
+  a list of platforms that the dispatcher has received pings from
   during initialization, otherwise the command fails. ([issue #45](https://github.com/sockethub/sockethub/issues/45))
 
 - revisiting the redis error, this time a few uses of the redis client
   were tracked down in the session object and fixed. ([issue #84](https://github.com/sockethub/sockethub/issues/84))
 
-- dispatcher was sending cleanup to subsystem (and therefore quitting 
+- dispatcher was sending cleanup to subsystem (and therefore quitting
   the subsystem redis channel) at the wrong point (during session end
   instead of during shutdown). ([issue #96](https://github.com/sockethub/sockethub/issues/96))
 
-- when a listener is spawned (or re-spawned) it now waits until it receives 
+- when a listener is spawned (or re-spawned) it now waits until it receives
   the encryption key from the dispatcher before it queues for a job. ([issue #97](https://github.com/sockethub/sockethub/issues/97))
 
 - platforms: (rss) feed data not passed to client encoded as UTF-8 ([issue #99](https://github.com/sockethub/sockethub/issues/99))
 
-- platforms: (rss) job is now completed only after all articles are fetched 
+- platforms: (rss) job is now completed only after all articles are fetched
   and sent to client.  ([issue #98](https://github.com/sockethub/sockethub/issues/98))
 
 
