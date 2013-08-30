@@ -16,7 +16,7 @@ The dispatcher takes incoming JSON objects from the WebSocket server. If a sessi
 
 In addition, there are a few commands which the dispatcher handles directly. At the moment of writing this, the two main dispatcher commands (*verbs*) are `register` and `set`. These commands don't go through the process of normal commands. For the set command, specifically, the data passed in the object is stored in redis for the platform (specified as the target) to retreive when needed. This is commonly used for things like setting credential data that a platform may later need.
 
-See [getting started](getting_started.md) for some examples of using the register and set commands.
+***more info*** For details on using sockethub from your web app, using the `register` or `set` commands and more, see [platform_overview.md](platform_overview), and the [sockethub-client repository](https://github.com/sockethub/sockethub-client).
 
 The dispatcher also listens for completed requests on a separate outgoing redis channel for completed jobs. When anything is received here, it will send it to the correct client based on the session ID.
 
