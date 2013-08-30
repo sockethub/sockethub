@@ -37,7 +37,7 @@ Here's what a credential setting would look like, lets use [the twitter platform
 			}
 		}
 
-** the rid can be any string we want, there is no structure, it's just a means for the developer to keep track of which responses correlate to which request. **
+*the rid can be any string we want, there is no structure, it's just a means for the developer to keep track of which responses correlate to which request.*
 
 
 ### confirming success
@@ -61,7 +61,7 @@ Then the response:
 		status: true
 	}
 
-**the rid will correllate with the one we sent**
+*the rid will correllate with the one we sent*
 
 
 ### what failures look like
@@ -86,7 +86,7 @@ Failure response:
 			message: 'invalid object format [{"uri":"urn:uuid:7973613e-eb8d-4477-9497-ee3aa1f92896#/credentials/sdd","schemaUri":"urn:uuid:6fb353f2-d0d2-4ac4-b58e-edd2b2b7deea#/properties/credentials/patternProperties/.%2B","attribute":"type","message":"Instance is not a required type","details":["object"]}]'
 		}
 
-** the output is directly from the [JSV](https://github.com/garycourt/JSV) json schema validation library for node.js, unfortunately the error messages are not exactly human friendly, hopefully this can be corrected in the future. **
+*the message output for schema errors is used directly from the [JSV](https://github.com/garycourt/JSV) json schema validation library for node.js, unfortunately the error messages are not exactly human friendly, hopefully this can be corrected in the future.*
 
 ### using sockethub-client
 
@@ -107,7 +107,7 @@ First we connect and register:
 		});
 
 
-** for more details of using sockethub-client, please check the [sockethub-client project page](https://github.com/sockethub/sockethub-client) **
+*for more details of using sockethub-client, please check the [sockethub-client project page](https://github.com/sockethub/sockethub-client)*
 
 
 Then we send the `set` command for the `twitter` platform:
