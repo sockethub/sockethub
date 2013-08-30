@@ -203,6 +203,8 @@ To specify another users timeline, not your own, you can add a target object to 
 
 		...
 		'target': [
-			'address': 'guysmiley'
+			{
+				'address': 'guysmiley'
+			}
 		]
 		...
