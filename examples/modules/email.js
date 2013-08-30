@@ -25,8 +25,7 @@ function Email($rootScope, $q, SH, CH) {
       }
 
       if (SH.isConnected()) {
-
-        var cred_tpl = SOCKETHUB_CREDS['email']['# useraddress #']['smtp'];
+        var cred_tpl = SOCKETHUB_CREDS['email']['credentials']['# useraddress #']['smtp'];
         cred_tpl.username = config.username;
         cred_tpl.password = config.password;
         cred_tpl.host = config.smtpServer;
