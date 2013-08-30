@@ -97,7 +97,7 @@ installation & setup
 
 ### writing an app that uses it
 
-Your best bet is to include [the sockethub.js client](https://github.com/sockethub/sockethub-client).
+To begin writing an app that leverages the power of sockethub, you should check out the [sockethub-client library](https://github.com/sockethub/sockethub-client), read the documentation there, and also this [platform overview](doc/platform_overview.md).
 
 ### adding a platform
 
