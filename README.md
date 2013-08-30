@@ -33,7 +33,7 @@ Below is a list of platforms we're currently working on and their activity strea
  * WebFinger - <kbd>search</kbd>
  * RDF - <kbd>search</kbd>
  * IRC - <kbd>send</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd>
- * Bitcoin - <kbd>send<kbd> <kbd>receive</kbd> ... ?
+ * Bitcoin - <kbd>send</kbd> <kbd>receive</kbd> ... ?
 
 architecture overview
 ---------------------
