@@ -7,6 +7,9 @@ For instance, some platforms we're working on are `xmpp`, `email` (which impleme
 When in doubt, come to the irc channel (#sockethub on irc.freenode.net), or open a github issue about it on [github.com/sockethub/sockethub/issues](https://github.com/sockethub/sockethub/issues/).
 
 
+**NOTE:** This document is for developers wishing to add a sockethub platform. For documentation describing the use of sockethub from a web-app, please see [platform overview](platform_overview.md).
+
+
 ## What is a platform?
 
 A platform is a node module which exposes a number of "verbs" (functions) which are actions requested by the user, sockethub validates the request against the schema files (in `lib/schemas/*.js`) and then calls the platforms' function with the corresponding verb specified by the user.
