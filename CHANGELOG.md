@@ -1,6 +1,22 @@
 CHANGELOG
 =========
 
+sockethub v0.0.11 - 30.08.2013
+------------------------------
+
+- improved schema checks against incoming credential data objects. ([issue #109](https://github.com/sockethub/sockethub/issues/109))
+
+- created [master list of credential data](http://github.com/sockethub/sockethub/blob/master/examples/credential-config.js) exampls, which is used both for the automated platform tests suite, and the example applications. (issues [#107](https://github.com/sockethub/sockethub/issues/107) and ([#108](https://github.com/sockethub/sockethub/issues/108))
+
+- resolved an issue were some lingering redis connections were building up. ([issue #105](https://github.com/sockethub/sockethub/issues/105))
+
+- much more documentation added, and updated requirements / dependencies.
+
+- platforms: (rss) can handle fetching multiple feeds specified in one command. (issues [#111](https://github.com/sockethub/sockethub/issues/111) and ([issue #112](https://github.com/sockethub/sockethub/issues/112))
+
+- platforms: (facebook) bugfixes ([issue #105](https://github.com/sockethub/sockethub/issues/105))
+
+**[a complete list of closed issues assigned to this release](https://github.com/sockethub/sockethub/issues?milestone=9&page=1&state=closed)**
 
 
 sockethub v0.0.10 - 31.07.2013
