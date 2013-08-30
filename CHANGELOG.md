@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-sockethub v0.0.11 - 30.08.2013
+sockethub v0.0.11 - 29.08.2013
 ------------------------------
 
 - improved schema checks against incoming credential data objects. ([issue #109](https://github.com/sockethub/sockethub/issues/109))
