@@ -2,7 +2,7 @@
 
 Information about sockethub `platforms`, a platform is a simple nodejs module which can provide various functionality.
 
-This document is targeted toward app developers, and not necessarily sockethub platform developers. For details on implementing a sockethub platform see [adding a platform](docs/adding_a_platform.md).
+This document is targeted toward app developers, and not necessarily sockethub platform developers. For details on implementing a sockethub platform see [adding a platform](adding_a_platform.md).
 
 
 ## Using a platform
