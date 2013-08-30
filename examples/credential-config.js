@@ -78,4 +78,6 @@ var SOCKETHUB_CREDS = {
   }
 };
 
-module.exports = SOCKETHUB_CREDS;
+if (typeof module !== 'undefined') {
+  module.exports = SOCKETHUB_CREDS;
+}
