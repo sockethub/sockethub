@@ -141,14 +141,19 @@ define(['require'], function(require) {
       test.assertTypeAnd(redis.createClient, 'function');
       env.Session.get(env.sid).then(function (session) {
         env.session = session;
-        test.assertType(env.session, 'object');
+        test.assertTypeAnd(env.session, 'object');
+        test.assert(env.session.isRedisKeySet(), true);
       });
     },
     afterEach: function(env, test) {
-      redis.__clearHandlers();
-      delete GLOBAL.redis;
+      console.log('destroying session');
       env.Session.destroy(env.sid).then(function () {
+        console.log('done destroying session');
+        redis.__clearHandlers();
+        delete GLOBAL.redis;
         test.result(true);
+      }, function (e) {
+        test.result(false, e);
       });
     },
     takedown: function(env, test) {
@@ -244,6 +249,7 @@ define(['require'], function(require) {
       {
         desc: "Session#__cleanup clears platforms and settings",
         run: function(env, test) {
+          test.assert(env.session.isRedisKeySet(), true);
           env.session.setConfig('yarg', { foo: 'bar' });
           //env.session.addPlatform('phu-quoc');
           env.session.__cleanup();
@@ -262,10 +268,16 @@ define(['require'], function(require) {
         run: function(env, test) {
           var promise = env.session.getFile('storage', 'foo/bar');
           console.log('-- PROMISE: ', promise);
+          promise.then(function(d) {
+            console.log('success: ',d);
+          }, function(e) {
+            console.log('failed: ',e);
+          });
           test.assertTypeAnd(promise, 'object');
           test.assertType(promise.then, 'function');
         }
       },
+
       {
         desc: "Session#getFile fails when it has no remoteStorage config",
         run: function(env, test) {
