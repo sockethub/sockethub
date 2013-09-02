@@ -25,6 +25,7 @@ function Facebook($rootScope, $q, SH, CH) {
         var cred_tpl = SOCKETHUB_CREDS['facebook']['credentials']['# useraddress #'];
         cred_tpl.access_token = config.access_token;
         cred_tpl.actor.address = config.username;
+        cred_tpl.actor.name = '';
         SH.set('facebook', 'credentials', config.username, cred_tpl).
           then(function () {
             defer.resolve(config);

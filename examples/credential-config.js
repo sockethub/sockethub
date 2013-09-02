@@ -56,7 +56,7 @@ var SOCKETHUB_CREDS = {
         'access_token' : '# token from facebook #',
         'actor': {
           'address': '# username #',
-          'name':    '# displatname #'
+          'name':    '# displayname #'
         }
       }
     }
@@ -71,7 +71,7 @@ var SOCKETHUB_CREDS = {
         'consumer_key' :        '# token from twitter #',
         'actor': {
           'address': '# username #',
-          'name':    '# displatname #'
+          'name':    '# displayname #'
         }
       }
     }

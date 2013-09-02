@@ -30,6 +30,7 @@ function Twitter($rootScope, $q, SH, CH) {
         cred_tpl.consumer_key = config.consumer_key;
         cred_tpl.consumer_secret = config.consumer_secret;
         cred_tpl.actor.address = config.username;
+        cred_tpl.actor.name = '';
 
         SH.set('twitter', 'credentials', config.username, cred_tpl).
           then(function () {
