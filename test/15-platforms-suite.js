@@ -37,7 +37,8 @@ var schema_test_files = [
   './platforms_schema_data/twitter_credentials',
   './platforms_schema_data/facebook_credentials',
   './platforms_schema_data/xmpp_credentials',
-  './platforms_schema_data/email_credentials'
+  './platforms_schema_data/email_credentials',
+  './platforms_schema_data/irc_credentials'
 ];
 var schema_tests = {};
 
