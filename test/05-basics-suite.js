@@ -54,8 +54,7 @@ define(['require'], function (require) {
         if (config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
           continue;
         }
-        l  = listener();
-        l.init({
+        l = listener({
           platform: proto.platforms[config.HOST.MY_PLATFORMS[i]],
           sockethubId: sockethubId
         });

@@ -13,17 +13,17 @@ define(['require'], function (require) {
 
       env.nodemailer = {};
       env.nodemailer.createTransport = test.Stub(function createTransportStub(name, obj) {
-            if (name === 'SMTP') {
-              console.log('NODEMAILER createTransport STUB CALLED');
-              var ret =  {};
-              ret.sendMail = test.Stub(function sendMail(msg, cb) {
-                  console.log('NODEMAILER sendMail STUB CALLED');
-                  cb(null, true);
-                });
+          if (name === 'SMTP') {
+            console.log('NODEMAILER createTransport STUB CALLED');
+            var ret =  {};
+            ret.sendMail = test.Stub(function sendMail(msg, cb) {
+                console.log('NODEMAILER sendMail STUB CALLED');
+                cb(null, true);
+              });
 
-              return ret;
-            }
-          });
+            return ret;
+          }
+        });
       GLOBAL.nodemailer = env.nodemailer;
       GLOBAL.redis = require('redis');
 
@@ -51,8 +51,7 @@ define(['require'], function (require) {
         if (env.config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
           continue;
         }
-        l  = listener();
-        l.init({
+        l = listener({
           platform: proto.platforms[env.config.HOST.MY_PLATFORMS[i]],
           sockethubId: sockethubId
         });

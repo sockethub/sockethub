@@ -31,26 +31,29 @@ define(['require'], function (require) {
       env.listener = [];
       env.job_channel = 'sockethub:'+env.sockethubId+':listener:rss:incoming';
       env.resp_channel = 'sockethub:'+env.sockethubId+':dispatcher:outgoing:'+env.sid;
-      var proto = require('./../lib/sockethub/protocol');
-      listener = require('./../lib/sockethub/listener');
 
+      test.result(true);
+    },
+    beforeEach: function (env, test) {
+      var proto = require('./../lib/sockethub/protocol');
+      var listener = require('./../lib/sockethub/listener');
       for (var i = 0, len = env.config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
         if (env.config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
           continue;
         }
-        l  = listener();
-        l.init({
+        l = listener({
           platform: proto.platforms[env.config.HOST.MY_PLATFORMS[i]],
           sockethubId: env.sockethubId,
           encKey: env.encKey
         });
         env.listener[i] = l;
       }
-
       test.result(true);
     },
     afterEach: function (env, test) {
-      test.result(true);
+      l.shutdown().then(function () {
+        test.result(true);
+      });
     },
     takedown: function (env, test) {
       env.util.redis.clean(env.sockethubId, function () {
@@ -170,8 +173,7 @@ define(['require'], function (require) {
         if (env.config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
           continue;
         }
-        l  = listener();
-        l.init({
+        l  = listener({
           platform: env.proto.platforms[env.config.HOST.MY_PLATFORMS[i]],
           sockethubId: env.sockethubId
         });
@@ -221,12 +223,12 @@ define(['require'], function (require) {
         desc: "init new listener to ask for enckey",
         timeout: 5000,
         run: function (env, test) {
-
-          l.init({
+          var l = require('./../lib/sockethub/listener')({
             platform: env.proto.platforms['rss'],
             sockethubId: env.sockethubId
           });
           setTimeout(function () {
+            console.log('LISTENER: ',l);
             var result = l.encKeySet();
             console.log('ENCKEY SET: ', result);
             test.assert(result, true, 'encKey not set');
@@ -237,8 +239,7 @@ define(['require'], function (require) {
         desc: "init new listener to ask for enckey",
         timeout: 5000,
         run: function (env, test) {
-          var t = listener();
-          t.init({
+          var t = require('./../lib/sockethub/listener')({
             platform: env.proto.platforms['rss'],
             sockethubId: env.sockethubId
           });
@@ -253,8 +254,7 @@ define(['require'], function (require) {
         desc: "init new listener to ask for enckey",
         timeout: 5000,
         run: function (env, test) {
-          var t = listener();
-          t.init({
+          var t = require('./../lib/sockethub/listener')({
             platform: env.proto.platforms['rss'],
             sockethubId: env.sockethubId
           });
@@ -269,8 +269,7 @@ define(['require'], function (require) {
         desc: "init new listener to ask for enckey",
         timeout: 5000,
         run: function (env, test) {
-          var t = listener();
-          t.init({
+          var t = require('./../lib/sockethub/listener')({
             platform: env.proto.platforms['rss'],
             sockethubId: env.sockethubId
           });
