@@ -59,9 +59,9 @@
 
 # further reading
 
-For an architectural overview of sockethub, see [architecture_overview.md](architecture_overview.md).
+For an architectural overview of sockethub, see ([architecture_overview.md](architecture_overview.md)).
 
-For details on using sockethub from your web app, see [platform_overview.md](platform_overview), and the [sockethub-client repository](https://github.com/sockethub/sockethub-client).
+For details on using sockethub from your web app, see ([platform_overview](platform_overview.md)), and the ([sockethub-client repository](https://github.com/sockethub/sockethub-client)).
 
 For creating your own sockethub platform, see ([adding_a_platform.md](adding_a_platform.md])).
 
