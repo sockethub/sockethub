@@ -95,13 +95,9 @@ installation & setup
 
 **remoteStorage.js note:** *trying to use a file:// URL for this will not work because remoteStorage.js depends on having a localStorage origin available.*
 
-### writing an app that uses it
-
-To begin writing an app that leverages the power of sockethub, you should check out the [sockethub-client library](https://github.com/sockethub/sockethub-client), read the documentation there, and also this [platform overview](doc/platform_overview.md).
-
-### adding a platform
-
-See [doc/adding_a_platform.md](doc/adding_a_platform.md)
+docs
+----
+The [Getting Started Guide](https://github.com/sockethub/sockethub/blob/master/doc/getting_started.md) is a good starting place to find links to more specific documentation about Sockethub or SockethubClient.
 
 license
 -------
