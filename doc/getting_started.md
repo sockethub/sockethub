@@ -5,7 +5,7 @@
 Whether you're a sockethub developer, or application developer, you're probably
 going to first have to install sockethub.
 
-* ([Installing Sockethub](https://github.com/sockethub/sockethub/blob/master/doc/install.md))
+* [Installing Sockethub](https://github.com/sockethub/sockethub/blob/master/doc/install.md)
 
 
 ## Application developers
