@@ -485,6 +485,7 @@ define(['require'], function(require) {
       },
       {
         desc: "platforms ping first",
+        timeout: 15000,
         run: function (env, test) {
           var p_resp = {};
           env.p_one.subsystem.events.on('ping-response', function (data) {

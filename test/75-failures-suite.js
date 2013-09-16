@@ -32,7 +32,9 @@ define(['require'], function (require) {
       env.job_channel = 'sockethub:'+env.sockethubId+':listener:rss:incoming';
       env.resp_channel = 'sockethub:'+env.sockethubId+':dispatcher:outgoing:'+env.sid;
 
-      test.result(true);
+      env.util.redis.clean(env.sockethubId, function () {
+        test.result(true);
+      });
     },
     beforeEach: function (env, test) {
       var proto = require('./../lib/sockethub/protocol');
@@ -122,6 +124,7 @@ define(['require'], function (require) {
 
           env.util.redis.set('rpush', env.job_channel, JSON.stringify(job));
           env.util.redis.get('blpop', env.resp_channel, function (err, resp) {
+            console.log("GOT RESP: ", resp);
             var r = JSON.parse(resp[1]);
             test.assert(r.status, true);
           });
