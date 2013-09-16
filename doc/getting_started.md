@@ -15,12 +15,14 @@ getting started with sockethub.
 
 
 ### Platform Overview
+
 * [Platform Overview](platform_overview)
     This will give you a general overview of what the JSON data looks like,
     and then how to use the sockethub-client library (which abstracts that JSON
     away).
 
 ### SockethubClient Library
+
 * [SockethubClient Library](https://github.com/sockethub/sockethub-client).
     This is the main part of sockethub you'll be using, so most of the
     application developer specific documentation will live here.
