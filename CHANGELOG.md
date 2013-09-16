@@ -1,6 +1,18 @@
 CHANGELOG
 =========
 
+sockethub v0.1.0 - 16.09.2013
+------------------------------
+
+- greatly improved documentation. ([docs](https://github.com/sockethub/sockethub/blog/master/doc/getting_started.md))
+
+- centralized credential data structure definitions. ([commit](https://github.com/sockethub/sockethub/commit/bccde92fde2a3a6db0c3885278091be90f27331f))
+
+- when handling an invalid redis object from the queue, don't throw an exception, just log the error and continue. ([issue #120](https://github.com/sockethub/sockethub/issues/120))
+
+- platforms: (rss) added some more information (total count and article links) in completion response.
+
+
 sockethub v0.0.11 - 29.08.2013
 ------------------------------
 
