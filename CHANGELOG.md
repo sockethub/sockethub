@@ -12,6 +12,8 @@ sockethub v0.1.0 - 16.09.2013
 
 - platforms: (rss) added some more information (total count and article links) in completion response.
 
+- updated some unit tests
+
 
 sockethub v0.0.11 - 29.08.2013
 ------------------------------
