@@ -40,6 +40,8 @@ you should check out the following docs.
     This document will give you a general overview of how sockethub is
     structured and the control flow from client to platform module and back.
 
+### Adding a Platform
+
 * [Adding a Platform](adding_a_platform.md])
     For a more in-depth explanation of creating your own sockethub platform,
     see the above document.
