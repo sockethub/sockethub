@@ -448,17 +448,17 @@ define(['require'], function(require) {
       env.p_one = require('./../lib/sockethub/session')({
         platform: 'p_one',
         sockethubId: env.sockethubId,
-        encKey: ''
+        encKey: false
       });
       test.assertTypeAnd(env.p_one.destroy, 'function');
       test.assertAnd(env.p_one.encKeySet(), false);
 
-
       env.p_two = require('./../lib/sockethub/session')({
         platform: 'p_two',
         sockethubId: env.sockethubId,
-        encKey: ''
+        encKey: false
       });
+
       test.assertTypeAnd(env.p_two.destroy, 'function');
       test.assert(env.p_two.encKeySet(), false);
     },
