@@ -203,15 +203,15 @@ define(['require'], function (require) {
       test.result(true);
     },
     afterEach: function (env, test) {
-      env.dispatcher.session.subsystem.send('cleanup', { sids: [ env.sessionId ] });
+      env.dispatcher.session.subsystem.send('cleanup', { sids: [ env.sid ] });
       setTimeout(function () {
-        env.dispatcher.session.destroy(env.sessionId).then(function () {
+        env.dispatcher.session.destroy(env.sid).then(function () {
           test.result(true);
         });
       }, 2000);
     },
     beforeEach: function (env, test) {
-      env.dispatcher.session.get(env.sessionId).then(function(session) {
+      env.dispatcher.session.get(env.sid).then(function(session) {
         test.result(true);
       });
     },
