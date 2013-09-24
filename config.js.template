@@ -4,7 +4,7 @@ var PLATFORMS = [
 ];
 
 // number of worker threads to use (currently supports just one)
-var NUM_WORKERS = 2;
+var NUM_WORKERS = 1;
 // boolean to determine what level of logging to display
 var DEBUG = false;
 
