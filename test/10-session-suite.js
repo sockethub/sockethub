@@ -38,6 +38,7 @@ define(['require'], function(require) {
         encKey: env.encKey
       };
       env.Session = require('./../lib/sockethub/session')(env.sessionObj);
+      console.log('SESSION: ', env.Session);
       test.result(true);
     },
     afterEach: function (env, test) {
@@ -126,7 +127,7 @@ define(['require'], function(require) {
     setup: function(env, test) {
       env.sockethubId = '1234567890';
       env.encKey = '5678abcd';
-      GLOBAL.redis = require('./mocks/redis-mock')(test);
+      GLOBAL.redis = require('redis');//./mocks/redis-mock')(test);
       env.sessionObj = {
         platform: 'test',
         sockethubId: env.sockethubId,
@@ -137,7 +138,7 @@ define(['require'], function(require) {
       test.result(true);
     },
     beforeEach: function(env, test) {
-      GLOBAL.redis = require('./mocks/redis-mock')(test);
+      //GLOBAL.redis = require('./mocks/redis-mock')(test);
       test.assertTypeAnd(redis.createClient, 'function');
       env.Session.get(env.sid).then(function (session) {
         env.session = session;
@@ -149,15 +150,15 @@ define(['require'], function(require) {
       console.log('destroying session');
       env.Session.destroy(env.sid).then(function () {
         console.log('done destroying session');
-        redis.__clearHandlers();
-        delete GLOBAL.redis;
+        //redis.__clearHandlers();
+        //delete GLOBAL.redis;
         test.result(true);
       }, function (e) {
         test.result(false, e);
       });
     },
     takedown: function(env, test) {
-      delete GLOBAL.redis;
+      //delete GLOBAL.redis;
       test.result(true);
     },
     tests: [
@@ -184,6 +185,9 @@ define(['require'], function(require) {
             return env.session.getConfig('test');
           }).then(function (cfg) {
             test.assert(cfg, { foo: 'bar' });
+          }, function (err) {
+            console.log("ERR: ", err);
+            test.result(false, err);
           });
 
         }
