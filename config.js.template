@@ -5,6 +5,8 @@ var PLATFORMS = [
 
 // number of worker threads to use (currently supports just one)
 var NUM_WORKERS = 2;
+// boolean to determine what level of logging to display
+var DEBUG = false;
 
 var HOST = {
   ENABLE_TLS: false, // it is stronlgly recommended that you leave TLS enabled
