@@ -1,10 +1,24 @@
 CHANGELOG
 =========
 
+sockethub v0.1.1 - 26.09.2013
+-----------------------------
+
+- introduction of a way for platforms to persist an object beyond a single session, with `session.clientManager`. ([client-manager.js](https://github.com/sockethub/sockethub/blob/master/lib/sockethub/client-manager.js))
+
+- re-factored session objects to provide better code documentation and clarify the different roles. ([session.js](https://github.com/sockethub/sockethub/blob/master/lib/sockethub/session.js))
+
+- by default, debug logging is now switched off, so the console output should be a bit less overwhelming :)
+
+- some fixes regarding catching uncaughtExceptions and conflicts with the promising library. ([issue #125](https://github.com/sockethub/sockethub/issues/125))
+
+- general performance optimizations, code simplification, commenting and documentation.
+
+
 sockethub v0.1.0 - 16.09.2013
 ------------------------------
 
-- greatly improved documentation. ([docs](https://github.com/sockethub/sockethub/blog/master/doc/getting_started.md))
+- greatly improved documentation. ([docs](https://github.com/sockethub/sockethub/blob/master/doc/getting_started.md))
 
 - centralized credential data structure definitions. ([commit](https://github.com/sockethub/sockethub/commit/bccde92fde2a3a6db0c3885278091be90f27331f))
 
