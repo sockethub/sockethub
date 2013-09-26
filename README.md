@@ -34,6 +34,8 @@ Below is a list of platforms we're currently working on and their activity strea
  * RDF - <kbd>search</kbd> <kbd>fetch</kbd>
  * IRC - <kbd>send</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd>
  * Bitcoin - <kbd>send</kbd> <kbd>receive</kbd> ...
+ * FireFoxSync - *(to be evaluated)*
+ * WebRTC - *(to be evaluated)*
 
 architecture overview
 ---------------------
