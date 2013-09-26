@@ -49,8 +49,8 @@ define(['require'], function (require) {
       };
 
       GLOBAL.redis = require('redis');
-      env.Session = require('./../lib/sockethub/session')({platform: 'xmpp', sockethubId:'1234567890', encKey:'abcde'});
-      env.Session.get('testsess1').
+      env.sessionManager = require('./../lib/sockethub/session')({platform: 'xmpp', sockethubId:'1234567890', encKey:'abcde'});
+      env.sessionManager.get('testsess1').
         then(function (session) {
           env.session = session;
 
@@ -72,7 +72,7 @@ define(['require'], function (require) {
         });
     },
     takedown: function (env, test) {
-      env.Session.destroy(env.session.getSessionID()).then(function () {
+      env.sessionManager.destroy(env.session.getSessionID()).then(function () {
         test.result(true);
       }, function (err) {
         test.result(false, err);
