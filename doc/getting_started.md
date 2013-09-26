@@ -42,6 +42,6 @@ you should check out the following docs.
 
 ### Adding a Platform
 
-* [Adding a Platform](adding_a_platform.md])
+* [Adding a Platform](adding_a_platform.md)
     For a more in-depth explanation of creating your own sockethub platform,
     see the above document.
