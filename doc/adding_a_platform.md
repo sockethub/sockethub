@@ -113,4 +113,10 @@ For some platforms you just want to connect to some API as a client, but for oth
 
 ### Running as a bot
 
-You may want for instance the 'irc' platform to implement an irc bot, that keeps running even if the user doesn't have a session open. We decided against this. The reason is that it is much easier to manage only transient sessions, and for most platforms, this is enough. Also, having only transient sessions and no persistent ones reduces the risk of user lock-in. This means you will probably have to run more services in concert with your sockethub instance (like maybe an irc logger bot, or a pubsubhubbub instance.
+You may want for instance the 'irc' platform to implement an irc bot, that keeps running even if the user doesn't have a session open. We plan to support this in the future, however we don't want to *put the cart before the horse*, right now we are still working on getting a robust base built, with functional apps that work and are useful (not just example apps), [dogfeed](https://github.com/silverbucket/dogtalk) and [dogtalk](https://github.com/silverbucket/dogtalk) are a few in-progress web applications built ontop of sockethub.
+
+Once we have stateless connections working on the back-end, we plan to implement persistent functionality, using [remotestorage](http://remotestorage.io) as our initially supported storage target.
+
+Think google-talk showing you your missed messages the next time you login, but in a completely decentralized and unhosted manner. It'll be cool.
+
+
