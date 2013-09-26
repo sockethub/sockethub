@@ -14,9 +14,9 @@ Example uses of sockethub are: writing and receiving messages (SMTP, Facebook, T
 
 status
 ------
-Sockethub is currently in very early stages of development, though already basic proof of concepts for XMPP are working, as well as progress being made to support SMTP, Facebook and Twitter. The implementtion of each 'platform' is very modular and straightforward to implement. If you are a developer looking to contribute, open an issue and explain what you'd like to implement for help getting started.
+Sockethub is currently under active development, several platforms are being worked on (details below) and are at varying levels of completeness.
 
-See [doc/platform_overview.md](doc/platform_overview.md)
+For more information on platform development, see the [platform overview](doc/platform_overview.md).
 
 features
 --------
@@ -31,14 +31,14 @@ Below is a list of platforms we're currently working on and their activity strea
  * Twitter - <kbd>![completed](http://sockethub.org/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) fetch</kbd>
  * RSS - <kbd>![completed](http://sockethub.org/img/checkmark.png) fetch</kbd>
  * WebFinger - <kbd>search</kbd>
- * RDF - <kbd>search</kbd>
+ * RDF - <kbd>search</kbd> <kbd>fetch</kbd>
  * IRC - <kbd>send</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd>
- * Bitcoin - <kbd>send</kbd> <kbd>receive</kbd> ... ?
+ * Bitcoin - <kbd>send</kbd> <kbd>receive</kbd> ...
 
 architecture overview
 ---------------------
 
-Check out [doc/architecture_overview.md](doc/architecture_overview.md) for a little more information *("under the hood")* on the implementation details of Sockethub
+Check out the [architecture overview](doc/architecture_overview.md) for a little more information *("under the hood")* on the implementation details of Sockethub.
 
 installation & setup
 --------------------
@@ -49,7 +49,7 @@ installation & setup
 
   You will need to have a redis server (version 2.x or greater) up and running.
 
-  NOTE: **version 2.x** or greater required as Sockethub makes extensive use of the `BLPOP` and `RPUSH` commands.
+  NOTE: redis **version 2.x** or greater required as Sockethub makes extensive use of the `BLPOP` and `RPUSH` commands.
 
   * node.js package dependencies
 
@@ -57,7 +57,7 @@ installation & setup
       - simple-xmpp : `libexpat1` `libicu-dev`
       - node-stringprep (dependency of several packages) : `libicu-dev`
 
-  NOTE: **version v0.10.x** or greater required due to module dependencies.
+  NOTE: node **version v0.10.x** or greater required due to module dependencies.
 
   Instructions on installing node v0.10.x on Ubuntu 12.04 LTS see this
 
@@ -83,10 +83,12 @@ installation & setup
   You will want to edit your config.secrets.js file and add your own secret string to use during the register command to ensure only apps can connect that have the right secret.
 
     [sockethub]$ git submodule init && git submodule update
+
   You'll need the submodules for the examples to run (uses
   [sockethub-client](https://github.com/sockethub/sockethub-client/))
 
     [sockethub]$ npm test
+
   Verify all tests pass, then you should be good to go.
 
     [sockethub]$ bin/sockethub
@@ -97,15 +99,18 @@ installation & setup
 
 docs
 ----
+
 The [Getting Started Guide](https://github.com/sockethub/sockethub/blob/master/doc/getting_started.md) is a good starting place to find links to more specific documentation about Sockethub or SockethubClient.
 
 license
 -------
+
 Sockethub is licensed under the [AGPLv3](https://github.com/sockethub/sockethub/blob/master/LICENSE)
 
 
 credits
 -------
+
 Project maintained by [Nick Jennings](http://github.com/silverbucket)
 
 Logo design by [Jan-Christoph Borchardt](http://jancborchardt.net)
