@@ -42,6 +42,7 @@ exports.config = {
   HOST: HOST, // host specific config
   PLATFORMS: PLATFORMS,  // all platforms supported
   NUM_WORKERS: NUM_WORKERS,
+  DEBUG: DEBUG,
   PUBLIC: PUBLIC,
   EXAMPLES: EXAMPLES
 };
