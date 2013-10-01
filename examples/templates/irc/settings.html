@@ -1,0 +1,43 @@
+  <div data-irc-nav></div>
+
+  <!-- irc settings -->
+  <div class="container">
+    <h4>IRC Settings</h4>
+    <div class="notes">
+    </div>
+    <form name="settings" class="form-horizontal" ng-controller="ircSettingsCtrl" novalidate>
+      <fieldset>
+
+        <div class="control-group">
+          <label for="nick" class="control-label">IRC nick</label>
+          <div class="controls">
+            <input type="text" class="required input-xlarge" name="nick" placeholder="Enter IRC nick..." ng-model="config.nick" required>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="server" class="control-label">Server</label>
+          <div class="controls">
+            <input type="text" class="required input-xlarge" name="server" placeholder="Enter IRC server.." ng-model="config.server" required>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="channels" class="control-label">Channels</label>
+          <div class="controls">
+            <input type="text" class="required input-xlarge" name="channels" placeholder="Enter list of channels, separated by space.." ng-model="config.channels_string" required>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="controls">
+            <button class="btn btn-primary" ng-click="save(config)" ng-disabled="settings.$invalid || saving">Save</button>
+          <span> &nbsp; <b>{{ model.submitMsg }}</b> </span>
+          </div>
+        </div>
+      </fieldset>
+    </form>
+  </div>
+
+ </body>
+</html>
