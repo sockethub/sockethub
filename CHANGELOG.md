@@ -4,9 +4,11 @@ CHANGELOG
 sockethub v0.1.1 - 01.10.2013
 -----------------------------
 
-- introduction of a way for platforms to persist an object beyond a single session, with `session.clientManager`. ([client-manager.js](https://github.com/sockethub/sockethub/blob/master/lib/sockethub/client-manager.js))
+- major improvement of the xmpp platform, which is still a work in progress but basically use-able for sending and receiving messages with existing contacts. ([lib/platforms/xmpp.js](https://github.com/sockethub/sockethub/blob/master/lib/platforms/xmpp.js))
 
-- re-factored session objects to provide better code documentation and clarify the different roles. ([session.js](https://github.com/sockethub/sockethub/blob/master/lib/sockethub/session.js))
+- introduction of a way for platforms to persist an object beyond a single session, with `session.clientManager`. ([lib/sockethub/client-manager.js](https://github.com/sockethub/sockethub/blob/master/lib/sockethub/client-manager.js))
+
+- re-factored session objects to provide better code documentation and clarify the different roles. ([lib/sockethub/session.js](https://github.com/sockethub/sockethub/blob/master/lib/sockethub/session.js))
 
 - by default, debug logging is now switched off, so the console output should be a bit less overwhelming.
 
