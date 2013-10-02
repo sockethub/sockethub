@@ -1,6 +1,6 @@
 var PLATFORMS = [
   // location of platforms running, defaults to this host
-  'dispatcher', 'email', 'xmpp', 'facebook', 'twitter', 'rss'
+  'dispatcher', 'email', 'xmpp', 'facebook', 'twitter', 'rss', 'irc'
 ];
 
 // number of worker threads to use (currently supports just one)
