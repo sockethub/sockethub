@@ -20,8 +20,8 @@ function Facebook($rootScope, $q, SH, CH) {
       if (cfg) {
         CH.set(config, cfg);
       }
-      if (SH.isConnected()) {
 
+      if (SH.isConnected()) {
         var cred_tpl = SOCKETHUB_CREDS['facebook']['credentials']['# useraddress #'];
         cred_tpl.access_token = config.access_token;
         cred_tpl.actor.address = config.username;

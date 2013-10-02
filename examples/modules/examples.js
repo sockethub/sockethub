@@ -28,6 +28,7 @@ value('settings', {
     scope.model = {};
     scope.model.submitMsg = '';
     scope.save = function () {
+console.log('!!save called');
       scope.saving = true;
       factory.config.set().then(function () {
         scope.model.submitMsg = 'config saved!';

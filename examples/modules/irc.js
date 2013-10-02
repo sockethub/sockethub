@@ -8,13 +8,13 @@ function IRC($rootScope, $q, SH, CH) {
   var config = {
     server: '',
     nick: '',
-    password: '',
-    channels: []
+    channel: ''
   };
 
   function exists(cfg) {
     return CH.exists(config, cfg);
   }
+
 
   function set(cfg) {
     var defer = $q.defer();
@@ -26,8 +26,13 @@ function IRC($rootScope, $q, SH, CH) {
       if (SH.isConnected()) {
         var cred_tpl = SOCKETHUB_CREDS.irc.credentials['# nickname #'];
         cred_tpl.nick = config.nick;
-        cred_tpl.password = config.password;
+        cred_tpl.password = config.password || '';
         cred_tpl.server = config.server;
+
+        if (config.channel.indexOf('#') < 0) {
+          config.channel = '#' + config.channel;
+        }
+        cred_tpl.channels = [config.channel];
 
         SH.set('irc', 'credentials', config.nick, cred_tpl).then(function () {
           defer.resolve(config);
@@ -41,11 +46,35 @@ function IRC($rootScope, $q, SH, CH) {
     return defer.promise;
   }
 
+
+  function connect() {
+    var defer = $q.defer();
+    var msg = {
+      actor: {
+        address: config.nick
+      },
+      target: [],
+      object: {},
+      platform: 'irc',
+      verb: 'update'
+    };
+    console.log("SENDING (update): ", msg);
+    SH.submit(msg, 5000).then(function (resp) {
+      if (resp.status) {
+        defer.resolve(resp);
+      } else {
+        defer.reject(resp);
+      }
+    });
+    return defer.promise;
+  }
+
+
   function send(msg) {
     var defer = $q.defer();
     msg.platform = 'irc';
     msg.verb = 'send';
-    console.log("SENDING: ", msg);
+    console.log("SENDING (send): ", msg);
     SH.submit(msg, 5000).then(function (resp) {
       if (resp.status) {
         defer.resolve(resp);
@@ -62,7 +91,8 @@ function IRC($rootScope, $q, SH, CH) {
       set: set,
       data: config
     },
-    send: send
+    send: send,
+    connect: connect
   };
 }]).
 
@@ -122,21 +152,22 @@ function ircNavCtrl($scope, $rootScope, $location) {
 controller('ircSettingsCtrl',
 ['$scope', '$rootScope', 'settings', 'IRC',
 function ircSettingsCtrl($scope, $rootScope, settings, IRC) {
+console.log('ircSettingsCtrl called!');
   settings.save($scope, IRC);
 }]).
 
 
 /**
- * Controller: ircSendCtrl
+ * Controller: ircChatCtrl
  */
-controller('ircSendCtrl',
+controller('ircChatCtrl',
 ['$scope', '$rootScope', 'IRC', '$timeout',
-function emailSendCtrl($scope, $rootScope, IRC, $timeout) {
+function ircChatCtrl($scope, $rootScope, IRC, $timeout) {
   $scope.sending = false;
   $scope.model = {
     targetAddress: '',
     sendMsg: '',
-
+    channel: '',
     message: {
       actor: {
         address: ''
@@ -149,20 +180,16 @@ function emailSendCtrl($scope, $rootScope, IRC, $timeout) {
   };
 
   $scope.config = IRC.config;
+  $scope.connect = IRC.connect;
 
-  $scope.addTarget = function () {
-    console.log('scope:', $scope);
-    $scope.model.message.target.push({address: $scope.model.targetAddress});
-    $scope.model.targetAddress = '';
-  };
 
-  $scope.sendIRC = function () {
+  $scope.sendMessage = function () {
     $scope.sending = true;
+    $scope.model.message.target.push({address: IRC.config.data.channel});
     $scope.model.message.actor.address = $scope.config.data.nick;
     IRC.send($scope.model.message).then(function () {
       $scope.model.sendMsg = 'irc message sent!';
       console.log('irc message sent!');
-      $scope.model.targetAddress = '';
       $scope.model.message.target = [];
       $scope.model.message.object.text = '';
       $scope.sending = false;
@@ -180,8 +207,7 @@ function emailSendCtrl($scope, $rootScope, IRC, $timeout) {
   };
 
   $scope.formFilled = function () {
-    if (($scope.model.message.target.length > 0) &&
-        ($scope.model.message.object.text)) {
+    if ($scope.model.message.object.text) {
       return true;
     } else {
       return false;
