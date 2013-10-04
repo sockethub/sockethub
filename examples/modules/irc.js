@@ -47,7 +47,8 @@ function IRC($rootScope, $q, SH, CH) {
   }
 
 
-  function connect() {
+  var o = {};
+  o.connect = function connect() {
     var defer = $q.defer();
     var msg = {
       actor: {
@@ -67,10 +68,10 @@ function IRC($rootScope, $q, SH, CH) {
       }
     });
     return defer.promise;
-  }
+  };
 
 
-  function send(msg) {
+  o.send = function send(msg) {
     var defer = $q.defer();
     msg.platform = 'irc';
     msg.verb = 'send';
@@ -83,17 +84,22 @@ function IRC($rootScope, $q, SH, CH) {
       }
     });
     return defer.promise;
-  }
-
-  return {
-    config: {
-      exists: exists,
-      set: set,
-      data: config
-    },
-    send: send,
-    connect: connect
   };
+
+  o.console = {
+    messages: '-- sockethub irc example --'
+  };
+  SH.on('irc', 'message', function (m) {
+    console.log('irc message received: ', m);
+    o.console.messages = o.console.messages + '\n' + m.object.text;
+  });
+
+  o.config = {
+    exists: exists,
+    set: set,
+    data: config
+  };
+  return o;
 }]).
 
 
@@ -179,6 +185,7 @@ function ircChatCtrl($scope, $rootScope, IRC, $timeout) {
     }
   };
 
+  $scope.console = IRC.console;
   $scope.config = IRC.config;
   $scope.connect = IRC.connect;
 
