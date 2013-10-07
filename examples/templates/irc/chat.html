@@ -22,7 +22,7 @@
           <div class="controls">
             <input class="required input-xlarge" style="width: 470px;" type="text" name="send" ng-model="model.message.object.text" ng-disabled="!config.exists()" required>
 
-            <button class="btn btn-primary" type="button" ng-click="sendMessage()" ng-disabled="!formFilled() || !config.exists()">Send</button>
+            <button class="btn btn-primary" ng-click="sendMessage()" ng-disabled="!formFilled() || !config.exists()">Send</button>
           </div>
         </div>
 

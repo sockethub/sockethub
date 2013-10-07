@@ -91,7 +91,8 @@ function IRC($rootScope, $q, SH, CH) {
   };
   SH.on('irc', 'message', function (m) {
     console.log('irc message received: ', m);
-    o.console.messages = o.console.messages + '\n' + m.object.text;
+    o.console.messages = o.console.messages + '\n' + m.actor.address +
+                                                    ': ' + m.object.text;
   });
 
   o.config = {
@@ -192,15 +193,16 @@ function ircChatCtrl($scope, $rootScope, IRC, $timeout) {
 
   $scope.sendMessage = function () {
     $scope.sending = true;
-    $scope.model.message.target.push({address: IRC.config.data.channel});
+    $scope.model.message.target.push({address: $scope.config.data.channel});
     $scope.model.message.actor.address = $scope.config.data.nick;
     IRC.send($scope.model.message).then(function () {
       $scope.model.sendMsg = 'irc message sent!';
       console.log('irc message sent!');
-      $scope.model.message.target = [];
-      $scope.model.message.object.text = '';
+      $scope.console.messages = $scope.console.messages + '\n<' + $scope.config.data.nick +
+                                                    '> ' + $scope.model.message.object.text;
       $scope.sending = false;
-      $timeout(function () {
+      $scope.model.message.target = [];
+      $scope.model.message.object.text = '';      $timeout(function () {
         $scope.model.sendMsg = 'fill out form to send an irc message';
       }, 5000);
 
