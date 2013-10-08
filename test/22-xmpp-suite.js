@@ -27,6 +27,9 @@ define(['require'], function (require) {
               callbacks['online']();
             }
           }),
+          removeListener: function () {},
+          listeners: function() {},
+          addListener: function() {},
           getRoster: new test.Stub(function (creds) {
             console.log('XMPP STUB: getRoster');
             //if (typeof callbacks.online === 'function') {
