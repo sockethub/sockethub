@@ -93,15 +93,15 @@ function buildSchemaTest(name, p, filename, type, prop, num, data, err) {
         //test.result(true, 'yoyo2');
         //test.assertTypeAnd(data, 'object', 'test data #'+num+' not an object '+name+' ['+err+']');
         //test.assertTypeAnd(p.schema[prop], 'object', 'platform does not have defined schema property '+prop+' ['+err+']');
-        console.log('DATA: ', data.data);
-        console.log('TYPE: ', type);
-        console.log('PROP: ', prop);
-        console.log('SCHEMA: ', p.schema[type]);
+        //console.log('DATA: ', data.data);
+        //console.log('TYPE: ', type);
+        //console.log('PROP: ', prop);
+        //console.log('SCHEMA: ', p.schema[type]);
 
         var jsv = JSVlib.createEnvironment();
         var report = jsv.validate(data.data, p.schema[type]);
-        console.log('error report: ', report.errors);
-        console.log('error report length: ', report.errors.length);
+        //console.log('error report: ', report.errors);
+        //console.log('error report length: ', report.errors.length);
 
         if (report.errors.length === 0) {
           test.result(true, 'PASSED!');
@@ -218,7 +218,7 @@ define(['require'], function (require) {
         var prop = schema_tests[platform][k].base_prop;
 
         // iterate through data tests
-        console.log(schema_tests[platform][k]+' t: ',t);
+        //console.log(schema_tests[platform][k]+' t: ',t);
         for (var l = 0, len3 = t.length; l < len3; l++) {
           platform_test_suite.tests.push(buildSchemaTest(platform, pdi,
                                                        filename,
