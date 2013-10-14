@@ -124,7 +124,7 @@ define(['require'], function (require) {
 
           env.util.redis.set('rpush', env.job_channel, JSON.stringify(job));
           env.util.redis.get('blpop', env.resp_channel, function (err, resp) {
-            console.log("GOT RESP: ", resp);
+            //console.log("GOT RESP: ", resp);
             var r = JSON.parse(resp[1]);
             test.assert(r.status, true);
           });
