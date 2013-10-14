@@ -35,7 +35,9 @@
     "posix": "*",
     "generic-pool": "2.0.x",
     "iconv": "2.0.x",
-    "irc": "0.3.x"
+    "irc": "0.3.x",
+    "argp": "0.1.x",
+    "winston": "0.7.x"
   },
   "devDependencies": {
     "teste": "*"
