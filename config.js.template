@@ -7,6 +7,12 @@ var PLATFORMS = [
 var NUM_WORKERS = 1;
 // boolean to determine what level of logging to display
 var DEBUG = false;
+// fill path to a logfile for sockethub to log too. if this is not
+// empty/undefined, then by default the logs will not be output to
+// the console. this behavior can be overridden with the -o option on the
+// sockethub executable. (with -o and a log file set, sockethub will log to
+// the file AND output to console)
+var LOG_FILE = '';
 
 var HOST = {
   ENABLE_TLS: false, // it is stronlgly recommended that you leave TLS enabled
@@ -43,6 +49,7 @@ exports.config = {
   PLATFORMS: PLATFORMS,  // all platforms supported
   NUM_WORKERS: NUM_WORKERS,
   DEBUG: DEBUG,
+  LOG_FILE: LOG_FILE,
   PUBLIC: PUBLIC,
   EXAMPLES: EXAMPLES
 };
