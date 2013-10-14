@@ -23,7 +23,7 @@ var argv = require ("argp")
     .description ("a polyglot websocket service")
     .email ('https://github.com/sockethub/sockethub/issues')
     .on('end', function(argv) {
-      console.log(argv);
+      //console.log(argv);
       sockethub.init({
        root: './',
        config: argv.config,
