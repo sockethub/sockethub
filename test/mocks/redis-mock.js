@@ -4,7 +4,7 @@ var Redis = {
   __fireEvent: function (channel, event, data) {
     //console.log('__fireEvent called, instances: ', this.__instances);
     for (var key in this.__instances) {
-      console.log('REDIS MOCK EVENT FIRE: ',data);
+      //console.log('REDIS MOCK EVENT FIRE: ',data);
       this.__instances[key].__fireEvent(channel, event, data, key);
     }
   },
@@ -47,7 +47,7 @@ var Redis = {
     });
 
     _this.__instances[me].on = new _this.__test.Stub(function (event, callback) {
-      console.log('instance['+me+'] registering callback for \''+event+'\'');
+      //console.log('instance['+me+'] registering callback for \''+event+'\'');
       events[event].push(callback);
     });
 
@@ -64,12 +64,12 @@ var Redis = {
       if (!_this.__instances[key]) { return; }
 
       if (_this.__instances[key].subscribed_channels.indexOf(channel) > -1) {
-        console.log('REDIS EVENT: instance['+key+'] chan. \''+channel+'\', send: \''+event+'\': '+data);
+        //console.log('REDIS EVENT: instance['+key+'] chan. \''+channel+'\', send: \''+event+'\': '+data);
         for (var i = 0, num = events[event].length; i < num; i = i + 1) {
           events[event][i](channel, data);
         }
       } else {
-        console.log('instance['+key+'] not subscribed to channel \''+channel+'\', not firing \''+event+'\'', _this.__instances[key].subscribed_channels);
+        //console.log('instance['+key+'] not subscribed to channel \''+channel+'\', not firing \''+event+'\'', _this.__instances[key].subscribed_channels);
       }
     };
 
