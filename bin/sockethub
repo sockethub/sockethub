@@ -17,6 +17,32 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 var sockethub = require('./../lib/sockethub/sockethub.js');
-sockethub.init({
-  root: './'
-});
+var p = require('./../package.json');
+
+var argv = require ("argp")
+    .description ("a polyglot websocket service")
+    .email ('https://github.com/sockethub/sockethub/issues')
+    .on('end', function(argv) {
+      console.log(argv);
+      sockethub.init({
+       root: './',
+       config: argv.config,
+       debug: argv.debug,
+       log: argv.log,
+       output: argv.output,
+       sockethubid: argv.sockethubid
+      });
+    })
+    .body ()
+        //The object an argument definitions and the text of the --help message are
+        //configured at the same time
+        .text ("\n Options:")
+        .option ({ short: "c", long: "config", metavar: "CFG_FILE", description: "location of the config.js"})
+        .option ({ short: "d", long: "debug", description: "enable debug output (overrides config file)" })
+        .option ({ short: "l", long: "log", metavar: "LOG_FILE", description: "full path for sockethub to log output" })
+        .option ({ short: "o", long: "output", description: "outputs logs to console in addition to any logfile" })
+        .option ({ short: "s", long: "sockethubid", description: "assign this instance an existing sockethubId, rather than it generating it's own." })
+        .help ()
+        .usage ()
+        .version (p.version)
+    .argv ();
