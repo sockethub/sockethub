@@ -17,7 +17,7 @@ define(['require'], function (require) {
         verb: 'confirm'
       };
 
-      var port = 99550;
+      var port = 10999;
       env.client = new this.WebSocketClient({
         url: 'ws://localhost:'+port+'/sockethub',
         type: 'sockethub'
