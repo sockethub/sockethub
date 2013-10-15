@@ -16,21 +16,54 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
-var sockethub = require('./../lib/sockethub/sockethub.js');
+var Sockethub = require('./../lib/sockethub/sockethub.js');
 var p = require('./../package.json');
+var sockethub;
+
+process.on('SIGINT', function () {
+  console.log("\n [sockethub] caught SIGINT");
+  try {
+    sockethub.shutdown();
+    process.exit(1);
+  } catch (e) {
+    console.log(' ERROR: '+e);
+    process.exit(1);
+  }
+});
+
+process.on('SIGTERM', function () {
+  console.log("\n [sockethub] caught SIGTERM");
+  try {
+    sockethub.shutdown();
+    process.exit(1);
+  } catch (e) {
+    console.log(' ERROR: '+e);
+    process.exit(1);
+  }
+});
+
+process.on('uncaughtException', function (err) {
+  console.log(' [sockethub] caught exception: ' + err);
+  console.log(err.stack);
+  process.exit(1);
+});
+
 
 var argv = require ("argp")
     .description ("a polyglot websocket service")
     .email ('https://github.com/sockethub/sockethub/issues')
     .on('end', function(argv) {
-      //console.log(argv);
-      sockethub({
+      sockethub = Sockethub({
        root: './',
-       config: argv.config,
+       configFile: argv.config,
        debug: argv.debug,
        log: argv.log,
        output: argv.output,
        sockethubid: argv.sockethubid
+      });
+      console.log('SOCKETHUB: ', sockethub);
+      sockethub.events.on('initialized', function () {
+        console.log('sockethub initialization complete');
       });
     })
     .body ()
