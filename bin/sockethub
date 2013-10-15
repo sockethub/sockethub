@@ -24,7 +24,7 @@ var argv = require ("argp")
     .email ('https://github.com/sockethub/sockethub/issues')
     .on('end', function(argv) {
       //console.log(argv);
-      sockethub.init({
+      sockethub({
        root: './',
        config: argv.config,
        debug: argv.debug,
