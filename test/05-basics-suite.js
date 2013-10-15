@@ -28,7 +28,10 @@ define(['require'], function (require) {
         ENABLE_TLS: false,
         PORT: port,
         PROTOCOLS: [ 'sockethub' ],
-        MY_PLATFORMS: [ 'dispatcher', 'email' ] // list of platforms this instance is responsible for
+        MY_PLATFORMS: [ 'dispatcher', 'email' ], // list of platforms this instance is responsible for
+        EXAMPLES: {
+          ENABLE: false
+        }
       };
 
       // test redis service

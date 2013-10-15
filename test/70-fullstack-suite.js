@@ -34,56 +34,49 @@ define(['require'], function (require) {
 
       var port = 10999;
 
-
-      env.config = {};
-      env.config.HOST = {
-        ENABLE_TLS: false,
-        PORT: port,
-        PROTOCOLS: [ 'sockethub' ],
-        MY_PLATFORMS: [ 'dispatcher', 'email' ] // list of platforms this instance is responsible for
+      env.config = {
+        PLATFORMS: ['email'],
+        HOST: {
+          ENABLE_TLS: false,
+          PORT: port,
+          PROTOCOLS: [ 'sockethub' ],
+          MY_PLATFORMS: [ 'dispatcher'] // list of platforms this instance is responsible for
+        },
+        DEBUG: true,
+        EXAMPLES: {
+          ENABLE: false
+        },
+        LOG_FILE: ''
       };
+
 
       var sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime() / Math.floor((Math.random()*10)+2);
 
+      env.sockethub = require('./../lib/sockethub/sockethub')({
+        root: './',
+        debug: false,
+        sockethubId: sockethubId
+      }, env.config);
+      env.sockethub.events.on('initialized', function () {
+        test.result(true);
+      });
+
       var proto = require('./../lib/sockethub/protocol');
       listener = require('./../lib/sockethub/listener');
-      for (var i = 0, len = env.config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
-        if (env.config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
+      for (var i = 0, len = env.config.PLATFORMS.length; i < len; i = i + 1) {
+        if (env.config.PLATFORMS[i] === 'dispatcher') {
           continue;
         }
         l = listener({
-          platform: proto.platforms[env.config.HOST.MY_PLATFORMS[i]],
+          platform: proto.platforms[env.config.PLATFORMS[i]],
           sockethubId: sockethubId
         });
       }
 
-      var dispatcher = require('./../lib/sockethub/dispatcher');
-
-      env.server = {};
-      dispatcher.init(env.config.HOST.MY_PLATFORMS, sockethubId, proto).then(function() {
-        // initialize http server
-        env.server.h = require('./../lib/servers/http').init(env.config);
-        // initialize websocket server
-        env.server.ws = require('./../lib/servers/websocket').init(env.config, env.server.h, dispatcher);
-
-        console.log(' [*] finished loading' );
-        console.log();
-        test.result(true);
-      }, function(err) {
-        console.log(" [sockethub] dispatcher failed initialization, aborting");
-        process.exit();
-      });
-
     },
     takedown: function (env, test) {
-      env.connection.close();
-      setTimeout(function() {
-        //env.server.ws.close();
-        env.server.h.close();
-        setTimeout(function() {
-          test.result(true);
-        }, 1000);
-      }, 1000);
+      env.sockethub.shutdown();
+      test.result(true);
     },
     tests: [
 
@@ -170,7 +163,7 @@ define(['require'], function (require) {
             message: "could not get credentials"
           };
           var json_data = JSON.stringify(data);
-          //console.log('JSON_DATA: ',json_data);
+          console.log('JSON_DATA: ',json_data);
           env.connection.sendAndVerify(json_data, expected, test, env.confirmProps);
         }
       },

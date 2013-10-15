@@ -18,11 +18,13 @@ define(['require'], function (require) {
 
       var port = 10999;
 
-      env.config = {};
-      env.config.HOST = {
-        ENABLE_TLS: false,
-        PORT: port,
-        MY_PLATFORMS: [ 'rss' ] // list of platforms this instance is responsible for
+      env.config = {
+        HOST: {
+          ENABLE_TLS: false,
+          PORT: port,
+          MY_PLATFORMS: [ 'rss' ] // list of platforms this instance is responsible for
+        },
+        DEBUG: false
       };
 
       env.sid = "1617171";
@@ -112,6 +114,7 @@ define(['require'], function (require) {
       },
       {
         desc: "send job to platform",
+        timeout: 10000,
         run: function (env, test) {
           var job = {
             platform: 'rss',
@@ -157,11 +160,20 @@ define(['require'], function (require) {
 
       var port = 10999;
 
-      env.config = {};
-      env.config.HOST = {
-        ENABLE_TLS: false,
-        PORT: port,
-        MY_PLATFORMS: [ 'rss' ] // list of platforms this instance is responsible for
+      env.config = {
+        PLATFORMS: ['rss', 'dispatcher'],
+        HOST: {
+          ENABLE_TLS: false,
+          PORT: port,
+          PROTOCOLS: [ 'sockethub' ],
+          MY_PLATFORMS: [ 'rss', 'dispatcher' ], // list of platforms this instance is responsible for
+          INIT_DISPATCHER: true
+        },
+        DEBUG: true,
+        EXAMPLES: {
+          ENABLE: false
+        },
+        LOG_FILE: ''
       };
 
       env.sid = "1617171";
@@ -169,21 +181,31 @@ define(['require'], function (require) {
       env.listener = [];
       env.job_channel = 'sockethub:'+env.sockethubId+':listener:rss:incoming';
       env.resp_channel = 'sockethub:'+env.sockethubId+':dispatcher:outgoing:'+env.sid;
+
+      env.sockethub = require('./../lib/sockethub/sockethub')({
+        root: './',
+        debug: false,
+        sockethubId: env.sockethubId
+      }, env.config);
+      env.sockethub.events.on('initialized', function () {
+        test.result(true);
+      });
+
+
       env.proto = require('./../lib/sockethub/protocol');
-      listener = require('./../lib/sockethub/listener');
+      // listener = require('./../lib/sockethub/listener');
+      // for (var i = 0, len = env.config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
+      //   if (env.config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
+      //     continue;
+      //   }
+      //   l  = listener({
+      //     platform: env.proto.platforms[env.config.HOST.MY_PLATFORMS[i]],
+      //     sockethubId: env.sockethubId
+      //   });
+      //   env.listener[i] = l;
+      // }
 
-      for (var i = 0, len = env.config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
-        if (env.config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
-          continue;
-        }
-        l  = listener({
-          platform: env.proto.platforms[env.config.HOST.MY_PLATFORMS[i]],
-          sockethubId: env.sockethubId
-        });
-        env.listener[i] = l;
-      }
-
-      env.dispatcher = require('./../lib/sockethub/dispatcher');
+/*      env.dispatcher = require('./../lib/sockethub/dispatcher');
 
       env.server = {};
       env.dispatcher.init(env.config.HOST.MY_PLATFORMS, env.sockethubId, env.proto).then(function() {
@@ -200,25 +222,26 @@ define(['require'], function (require) {
         process.exit();
       });
 
-      test.result(true);
+      test.result(true);*/
     },
     afterEach: function (env, test) {
-      env.dispatcher.sessionManager.subsystem.send('cleanup', { sids: [ env.sid ] });
+      env.sockethub.sessionManager.subsystem.send('cleanup', { sids: [ env.sid ] });
       setTimeout(function () {
-        env.dispatcher.sessionManager.destroy(env.sid).then(function () {
+        env.sockethub.sessionManager.destroy(env.sid).then(function () {
           test.result(true);
         });
       }, 2000);
     },
-    beforeEach: function (env, test) {
-      env.dispatcher.sessionManager.get(env.sid).then(function(session) {
-        test.result(true);
-      });
-    },
+    // beforeEach: function (env, test) {
+    //   env.dispatcher.get(env.sid).then(function(session) {
+    //     test.result(true);
+    //   });
+    // },
     takedown: function (env, test) {
       env.util.redis.clean(env.sockethubId, function () {
         test.result(true);
       });
+      env.sockethub.shutdown();
     },
     tests: [
 
