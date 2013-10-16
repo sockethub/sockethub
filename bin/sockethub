@@ -21,10 +21,12 @@ var p = require('./../package.json');
 var sockethub;
 
 process.on('SIGINT', function () {
-  console.log("\n [sockethub] caught SIGINT");
+  console.log("\ncaught SIGINT");
   try {
-    sockethub.shutdown();
-    process.exit(1);
+    sockethub.shutdown().then(function () {
+      console.log("exiting...");
+      process.exit(1);
+    });
   } catch (e) {
     console.log(' ERROR: '+e);
     process.exit(1);
@@ -32,18 +34,18 @@ process.on('SIGINT', function () {
 });
 
 process.on('SIGTERM', function () {
-  console.log("\n [sockethub] caught SIGTERM");
+  console.log("\ncaught SIGTERM");
   try {
     sockethub.shutdown();
     process.exit(1);
   } catch (e) {
-    console.log(' ERROR: '+e);
+    console.log('ERROR: '+e);
     process.exit(1);
   }
 });
 
 process.on('uncaughtException', function (err) {
-  console.log(' [sockethub] caught exception: ' + err);
+  console.log('uncaught exception: ' + err);
   console.log(err.stack);
   process.exit(1);
 });
@@ -58,23 +60,25 @@ var argv = require ("argp")
        configFile: argv.config,
        debug: argv.debug,
        log: argv.log,
-       output: argv.output,
-       sockethubid: argv.sockethubid
+       verbose: argv.verbose,
+       sockethubId: argv.sockethubid,
+       configSecretFile: argv.secrets
       });
-      console.log('SOCKETHUB: ', sockethub);
       sockethub.events.on('initialized', function () {
-        console.log('sockethub initialization complete');
+        //console.log('sockethub initialization complete');
       });
     })
     .body ()
         //The object an argument definitions and the text of the --help message are
         //configured at the same time
         .text ("\n Options:")
-        .option ({ short: "c", long: "config", metavar: "CFG_FILE", description: "location of the config.js"})
+        .option ({ short: "c", long: "config", metavar: "CONFIG_FILE", description: "location of the config.js file"})
         .option ({ short: "d", long: "debug", description: "enable debug output (overrides config file)" })
+        .option ({ short: "i", long: "sockethubId", metavar: "SOCKETHUB_ID", description: "assign this instance an existing sockethubId, rather than it generating it's own." })
         .option ({ short: "l", long: "log", metavar: "LOG_FILE", description: "full path for sockethub to log output" })
-        .option ({ short: "o", long: "output", description: "outputs logs to console in addition to any logfile" })
-        .option ({ short: "s", long: "sockethubid", description: "assign this instance an existing sockethubId, rather than it generating it's own." })
+        .option ({ short: "s", long: "secrets", metavar: "SECRETS_FILE", description: "location of the config.secrets.js file" })
+        .option ({ long: "verbose", description: "outputs logs to console in addition to any logfile" })
+        .option ({ long: 'listeners-only', description: "only run listeners and no dispatcher (requires sockethubId to be set)"})
         .help ()
         .usage ()
         .version (p.version)
