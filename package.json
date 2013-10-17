@@ -1,11 +1,12 @@
 {
   "name": "sockethub",
   "description": "A polyglot messaging service",
-  "version": "0.1.1",
+  "version": "0.1.2-alpha1",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "AGPL",
   "main": "bin/sockethub",
+  "preferGlobal": true,
   "bin": {
     "sockethub": "./bin/sockethub"
   },
