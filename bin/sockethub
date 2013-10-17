@@ -71,7 +71,7 @@ var argv = require ("argp")
     .body ()
         //The object an argument definitions and the text of the --help message are
         //configured at the same time
-        .text ("\n Options:")
+        .text ("version "+p.version+"\n\n Options:")
         .option ({ short: "c", long: "config", metavar: "CONFIG_FILE", description: "location of the config.js file"})
         .option ({ short: "d", long: "debug", description: "enable debug output (overrides config file)" })
         .option ({ short: "i", long: "sockethubId", metavar: "SOCKETHUB_ID", description: "assign this instance an existing sockethubId, rather than it generating it's own." })
