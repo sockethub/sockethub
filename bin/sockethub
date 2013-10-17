@@ -57,12 +57,12 @@ var argv = require ("argp")
     .on('end', function(argv) {
       sockethub = Sockethub({
        root: './',
-       configFile: argv.config,
+       config: argv.config,
        debug: argv.debug,
        log: argv.log,
        verbose: argv.verbose,
        sockethubId: argv.sockethubid,
-       configSecretFile: argv.secrets
+       secrets: argv.secrets
       });
       sockethub.events.on('initialized', function () {
         //console.log('sockethub initialization complete');
