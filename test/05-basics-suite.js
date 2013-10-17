@@ -23,81 +23,104 @@ define(['require'], function (require) {
         type: 'sockethub'
       });
 
-      var config = {};
-      config.HOST = {
-        ENABLE_TLS: false,
-        PORT: port,
-        PROTOCOLS: [ 'sockethub' ],
-        MY_PLATFORMS: [ 'dispatcher', 'email' ], // list of platforms this instance is responsible for
+      var config = {
+        PLATFORMS: ['dispatcher', 'email'],
+        HOST: {
+          ENABLE_TLS: false,
+          PORT: port,
+          PROTOCOLS: [ 'sockethub' ],
+          MY_PLATFORMS: [ 'dispatcher', 'email' ] // list of platforms this instance is responsible for
+        },
         EXAMPLES: {
           ENABLE: false
-        }
+        },
+        DEBUG: true,
+        LOG_FILE: ''
       };
-
-      // test redis service
-      var redis = require('redis');
-      console.log('testing redis connectivity');
-      try {
-        client = redis.createClient();
-        client.on('subscribe', function(channel, count) {
-          console.log('client subscribed to '+channel);
-        });
-        client.subscribe('test');
-        client.quit();
-      } catch (e) {
-        console.error(' [sockethub] cannot connect to redis ' + e);
-        process.exit();
-      }
-
       var sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime();
 
-      var proto = require('./../lib/sockethub/protocol');
-      listener = require('./../lib/sockethub/listener');
-      for (var i = 0, len = config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
-        if (config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
-          continue;
-        }
-        l = listener({
-          platform: proto.platforms[config.HOST.MY_PLATFORMS[i]],
-          sockethubId: sockethubId
-        });
-      }
 
-      var dispatcher = require('./../lib/sockethub/dispatcher');
+      env.sockethub = require('./../lib/sockethub/sockethub')({
+        root: './',
+        debug: false,
+        sockethubId: sockethubId,
+        config: config,
+        secrets: ['1234567890']
+      });
 
-      env.server = {};
-      dispatcher.init(config.HOST.MY_PLATFORMS, sockethubId, proto).then(function() {
-        // initialize http server
-        env.server.h = require('../lib/servers/http').init(config);
-        // initialize websocket server
-        env.server.ws = require('../lib/servers/websocket').init(config, env.server.h, dispatcher);
-
-        console.log(' [*] finished loading' );
-        console.log();
-        env.client.connect(function(connection) {
+      env.sockethub.events.on('initialized', function () {
+        env.client.connect(function (connection) {
           env.connection = connection;
           test.result(true);
         });
-      }, function(err) {
-        console.log(" [sockethub] dispatcher failed initialization, aborting");
-        process.exit();
       });
+
+      // test redis service
+      //var redis = require('redis');
+      // console.log('testing redis connectivity');
+      // try {
+      //   client = redis.createClient();
+      //   client.on('subscribe', function(channel, count) {
+      //     console.log('client subscribed to '+channel);
+      //   });
+      //   client.subscribe('test');
+      //   client.quit();
+      // } catch (e) {
+      //   console.error(' [sockethub] cannot connect to redis ' + e);
+      //   process.exit();
+      // }
+
+
+      // var proto = require('./../lib/sockethub/protocol');
+      // listener = require('./../lib/sockethub/listener');
+      // for (var i = 0, len = config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
+      //   if (config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
+      //     continue;
+      //   }
+      //   l = listener({
+      //     platform: proto.platforms[config.HOST.MY_PLATFORMS[i]],
+      //     sockethubId: sockethubId
+      //   });
+      // }
+
+      // var dispatcher = require('./../lib/sockethub/dispatcher');
+
+      // env.server = {};
+      // dispatcher.init(config.HOST.MY_PLATFORMS, sockethubId, proto).then(function() {
+      //   // initialize http server
+      //   env.server.h = require('../lib/servers/http').init(config);
+      //   // initialize websocket server
+      //   env.server.ws = require('../lib/servers/websocket').init(config, env.server.h, dispatcher);
+
+      //   console.log(' [*] finished loading' );
+      //   console.log();
+      //   env.client.connect(function(connection) {
+      //     env.connection = connection;
+      //     test.result(true);
+      //   });
+      // }, function(err) {
+      //   console.log(" [sockethub] dispatcher failed initialization, aborting");
+      //   process.exit();
+      // });
 
     },
     takedown: function (env, test) {
-      env.connection.close();
-      setTimeout(function() {
-        //env.server.ws.close();
-        env.server.h.close();
-        setTimeout(function() {
-          test.result(true);
-        }, 1000);
-      }, 1000);
+      env.sockethub.shutdown().then(function() {
+        test.result(true);
+      });
+      // .close();
+      // setTimeout(function() {
+      //   //env.server.ws.close();
+      //   env.server.h.close();
+      //   setTimeout(function() {
+      //     test.result(true);
+      //   }, 1000);
+      // }, 1000);
     },
     tests: [
 
       {
-        desc: "verify connection",
+        desc: "verify connection with bad JSON",
         run: function (env, test) {
           // setup client
           env.connection.sendAndVerify(

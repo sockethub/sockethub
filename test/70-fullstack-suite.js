@@ -55,8 +55,9 @@ define(['require'], function (require) {
       env.sockethub = require('./../lib/sockethub/sockethub')({
         root: './',
         debug: false,
-        sockethubId: sockethubId
-      }, env.config);
+        sockethubId: sockethubId,
+        config: env.config
+      });
       env.sockethub.events.on('initialized', function () {
         test.result(true);
       });

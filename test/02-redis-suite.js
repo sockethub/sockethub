@@ -13,12 +13,12 @@ define(['require'], function (require) {
       // test redis service
       env.util = require('./../lib/sockethub/util');
       test.assertTypeAnd(env.util, 'object');
-      env.util.redis.clean(env.sockethubId, function () {
+      env.util.redis.clean(env.sockethubId).then(function () {
         test.result(true);
       });
     },
     takedown: function (env, test) {
-      env.util.redis.clean(env.sockethubId, function () {
+      env.util.redis.clean(env.sockethubId).then(function () {
         test.result(true);
       });
     },

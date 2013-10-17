@@ -34,7 +34,7 @@ define(['require'], function (require) {
       env.job_channel = 'sockethub:'+env.sockethubId+':listener:rss:incoming';
       env.resp_channel = 'sockethub:'+env.sockethubId+':dispatcher:outgoing:'+env.sid;
 
-      env.util.redis.clean(env.sockethubId, function () {
+      env.util.redis.clean(env.sockethubId).then(function () {
         test.result(true);
       });
     },
@@ -60,7 +60,7 @@ define(['require'], function (require) {
       });
     },
     takedown: function (env, test) {
-      env.util.redis.clean(env.sockethubId, function () {
+      env.util.redis.clean(env.sockethubId).then(function () {
         test.result(true);
       });
     },
@@ -238,10 +238,10 @@ define(['require'], function (require) {
     //   });
     // },
     takedown: function (env, test) {
-      env.util.redis.clean(env.sockethubId, function () {
+      env.sockethub.shutdown();
+      env.util.redis.clean(env.sockethubId).then(function () {
         test.result(true);
       });
-      env.sockethub.shutdown();
     },
     tests: [
 
