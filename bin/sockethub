@@ -36,8 +36,12 @@ process.on('SIGINT', function () {
 process.on('SIGTERM', function () {
   console.log("\ncaught SIGTERM");
   try {
-    sockethub.shutdown();
-    process.exit(1);
+    sockethub.shutdown().then(function() {
+      process.exit(1);
+    }, function (err) {
+      console.log("ERROR: "+err);
+      process.exit(1);
+    });
   } catch (e) {
     console.log('ERROR: '+e);
     process.exit(1);
@@ -67,7 +71,7 @@ var argv = require ("argp")
       sockethub.events.on('initialized', function () {
         //console.log('sockethub initialization complete');
       });
-    })
+  })
     .body ()
         //The object an argument definitions and the text of the --help message are
         //configured at the same time
