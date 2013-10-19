@@ -59,6 +59,7 @@ var argv = require ("argp")
     .description ("a polyglot websocket service")
     .email ('https://github.com/sockethub/sockethub/issues')
     .on('end', function(argv) {
+      //try {
       sockethub = Sockethub({
        root: './',
        config: argv.config,
@@ -68,11 +69,15 @@ var argv = require ("argp")
        sockethubId: argv.sockethubid,
        secrets: argv.secrets,
        redisHost: argv['redis-host'],
-       redisPort: argv['redis-port']
+       redisPort: argv['redis-port'],
+       info: argv.info || false
       });
       sockethub.events.on('initialized', function () {
         //console.log('sockethub initialization complete');
       });
+      // } catch(e) {
+      //   console.log('e:',e);
+      // }
     })
     .body ()
         //The object an argument definitions and the text of the --help message are
@@ -80,13 +85,14 @@ var argv = require ("argp")
         .text ("version "+p.version+"\n\n Options:")
         .option ({ short: "c", long: "config", metavar: "CONFIG_FILE", description: "location of the config.js file"})
         .option ({ short: "d", long: "debug", description: "enable debug output (overrides config file)" })
-        .option ({ short: "i", long: "sockethub-id", metavar: "SOCKETHUB_ID", description: "assign this instance an existing sockethubId, rather than it generating it's own." })
+        .option ({ short: "i", long: "id", metavar: "SOCKETHUB_ID", description: "assign this instance an existing sockethubId, rather than it generating it's own." })
         .option ({ short: "l", long: "log", metavar: "LOG_FILE", description: "full path for sockethub to log output" })
+        .option ({ short: "s", long: "secrets", metavar: "SECRETS_FILE", description: "location of the config.secrets.js file" })
+        .option ({ long: "info", description: "displays the current configuration and other details relevant to sockethub, does not initialize sockethub." })
+        .option ({ long: 'listeners-only', description: "only run listeners and no dispatcher (requires sockethubId to be set)"})
         .option ({ long: "redis-host", metavar: "REDIS_HOST", description: "host location of redis server" })
         .option ({ long: "redis-port", metavar: "REDIS_PORT", description: "port redis is listening on" })
-        .option ({ short: "s", long: "secrets", metavar: "SECRETS_FILE", description: "location of the config.secrets.js file" })
         .option ({ long: "verbose", description: "outputs logs to console in addition to any logfile" })
-        .option ({ long: 'listeners-only', description: "only run listeners and no dispatcher (requires sockethubId to be set)"})
         .help ()
         .usage ()
         .version (p.version)
