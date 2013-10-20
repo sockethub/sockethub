@@ -9,7 +9,7 @@
   "preferGlobal": true,
   "bin": {
     "sockethub": "./bin/sockethub",
-    "sockethub-listener-control": "./bin/sockethub-listener-control"
+    "sockethub-listener-control.js": "./bin/sockethub-listener-control"
   },
   "repository": {
     "type": "git",
