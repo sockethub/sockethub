@@ -1,14 +1,15 @@
 {
   "name": "sockethub",
   "description": "A polyglot messaging service",
-  "version": "0.1.2-alpha1a",
+  "version": "0.1.2-alpha6",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "AGPL",
   "main": "bin/sockethub",
   "preferGlobal": true,
   "bin": {
-    "sockethub": "./bin/sockethub"
+    "sockethub": "./bin/sockethub",
+    "sockethub-listener-control": "./bin/sockethub-listener-control"
   },
   "repository": {
     "type": "git",
