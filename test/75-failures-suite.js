@@ -24,7 +24,8 @@ define(['require'], function (require) {
           PORT: port,
           MY_PLATFORMS: [ 'rss' ] // list of platforms this instance is responsible for
         },
-        DEBUG: false
+        DEBUG: false,
+        BASE_PATH: '../../../../'
       };
 
       env.sid = "1617171";

@@ -46,7 +46,8 @@ define(['require'], function (require) {
         EXAMPLES: {
           ENABLE: false
         },
-        LOG_FILE: ''
+        LOG_FILE: '',
+        BASE_PATH: '../../../../'
       };
 
 

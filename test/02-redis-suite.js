@@ -11,6 +11,19 @@ define(['require'], function (require) {
     abortOnFail: true, // don't continue with further test suites if any tests in this suite fail
     setup: function (env, test) {
       // test redis service
+      config = require('./../lib/sockethub/config-loader').get(undefined, undefined, {
+        HOST: {
+          ENABLE_TLS: false,
+          PORT: '10999',
+          PROTOCOLS: [ 'sockethub' ]
+        },
+        EXAMPLES: {
+          ENABLE: false
+        },
+        DEBUG: true,
+        LOG_FILE: '',
+        BASE_PATH: '../../../../'
+      });
       env.util = require('./../lib/sockethub/util');
       test.assertTypeAnd(env.util, 'object');
       env.util.redis.clean(env.sockethubId).then(function () {
@@ -21,18 +34,18 @@ define(['require'], function (require) {
       env.util.redis.clean(env.sockethubId).then(function () {
         test.result(true);
       });
+      require('./../lib/sockethub/config-loader').clear();
+      delete env.util;
     },
     tests: [
 
       {
         desc: "verify redis is available",
         run: function (env, test) {
-          env.util.redis.check(function(err) {
-            if (err) {
-              test.result(false, err);
-            } else {
-              test.result(true);
-            }
+          env.util.redis.check().then(function() {
+            test.result(true);
+          }, function (err) {
+            test.result(true, err);
           });
         }
       },

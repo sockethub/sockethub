@@ -40,7 +40,7 @@ var argv = require ("argp")
         try {
           _config = JSON.parse(argv.configObject);
         } catch (e) {
-          errorAndExit('unable to read config object as json');      
+          errorAndExit('unable to read config object as json');
           //throw new Error('unable to read config object as json');
         }
       } else {
@@ -52,7 +52,7 @@ var argv = require ("argp")
       } else {
         errorAndExit('no sockethubId specified');
       }
-      config = require('./../lib/sockethub/config-loader')(_config, [], argv);
+      config = require('./../lib/sockethub/config-loader').get(_config, [], argv);
       //
       // got config loaded, now initialize listener(s)
       listenerControl();

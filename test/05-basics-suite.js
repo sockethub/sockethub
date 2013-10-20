@@ -2,6 +2,7 @@ require("consoleplusplus/console++");
 if (typeof define !== 'function') {
   var define = require('amdefine')(module);
 }
+var _require = require;
 define(['require'], function (require) {
 //define(function () {
   var suites = [];
@@ -23,6 +24,7 @@ define(['require'], function (require) {
         type: 'sockethub'
       });
 
+      console.log("TEST: ", _require.cache);
       var config = {
         PLATFORMS: ['dispatcher', 'email'],
         HOST: {
@@ -35,7 +37,8 @@ define(['require'], function (require) {
           ENABLE: false
         },
         DEBUG: true,
-        LOG_FILE: ''
+        LOG_FILE: '',
+        BASE_PATH: '../../../../'
       };
       var sockethubId = Math.floor((Math.random()*10)+1) + new Date().getTime();
 
