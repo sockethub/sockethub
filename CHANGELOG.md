@@ -1,6 +1,9 @@
 CHANGELOG
 =========
 
+- fixes to the removal/re-issuing of listeners
+
+
 sockethub v0.1.1 - 01.10.2013
 -----------------------------
 
