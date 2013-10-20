@@ -19,16 +19,16 @@
  */
 
 require("consoleplusplus/console++");
-var p = require('./../../package.json');
+var p = require('./../package.json');
 var cluster = require('cluster');
-var util = require('./util.js');
+var util = require('./../lib/sockethub/util.js');
 var listener;
 var initDispatcher = false;
 var dispatcher;
 var config;
 
 var argv = require ("argp")
-    .description ("a polyglot websocket service")
+    .description ("this executable is not meant to be run by the user, instead it's called from sockethub")
     .email ('https://github.com/sockethub/sockethub/issues')
     .on('end', function(argv) {
       //
@@ -40,18 +40,19 @@ var argv = require ("argp")
         try {
           _config = JSON.parse(argv.configObject);
         } catch (e) {
-          throw new Error('unable to read config object as json');
+          errorAndExit('unable to read config object as json');      
+          //throw new Error('unable to read config object as json');
         }
       } else {
-        _config = '../../config.js';
+        _config = '../config.js';
       }
 
       if (argv.sockethubid) {
         sockethubId = argv.sockethubid;
       } else {
-        throw new Error('no sockethubId specified');
+        errorAndExit('no sockethubId specified');
       }
-      config = require('./config-loader')(_config, [], argv);
+      config = require('./../lib/sockethub/config-loader')(_config, [], argv);
       //
       // got config loaded, now initialize listener(s)
       listenerControl();
@@ -71,6 +72,14 @@ var argv = require ("argp")
         .version (p.version)
     .argv ();
 
+function errorAndExit(err) {
+    console.log('sockethub-listener-control.js');
+    console.log('');
+    console.log("this executable is not meant to be run by the user, instead it's called from sockethub");
+    console.log('');
+    console.log('ERROR: '+err);
+    process.exit(1);
+}
 
 function listenerControl() {
   var i = 0;
@@ -123,7 +132,7 @@ function listenerControl() {
     /** WORKER **/
 
     // wrap the console functions to prepend worker id
-    console = require('./logging.js')({controller: 'listener',
+    console = require('./../lib/sockethub/logging.js')({controller: 'listener',
                                        id: cluster.worker.id,
                                        console: console,
                                        debug: config.DEBUG,
@@ -158,14 +167,14 @@ function listenerControl() {
     var proto;
     // load in protocol.js (all the schemas) and perform validation
     try {
-      proto = require("./protocol.js");
+      proto = require("./../lib/sockethub/protocol.js");
     } catch (e) {
       throw new util.SockethubError(' [listener-control] unable to load lib/sockethub/protocol.js ' + e, true);
     }
 
     // initialize listeners
     if (config.HOST.MY_PLATFORMS.length > 0) {
-      listener = require('./listener');
+      listener = require('./../lib/sockethub/listener');
     }
 
     var listeners = []; // running listener instances
