@@ -1,7 +1,22 @@
 CHANGELOG
 =========
 
-- fixes to the removal/re-issuing of listeners
+sockethub v0.1.2 - 21.10.2013
+-----------------------------
+
+- sockethub now functions correctly as a globally installed npm packaged. (`npm install -g sockethub`)
+
+- added extensive command-line parameter support. (`bin/sockethub --help`)
+
+- sockethub now supports logging to file.
+
+- tests no longer depend on a config.js to be present, then can send in their own config objects on the fly.
+
+- fixes to the removal/re-issuing of listeners.
+
+- more work and bugfixes around client-manager.
+
+- platforms: (irc) new `irc` platform added with initial working support. (with plans to make it more complete on next release)
 
 
 sockethub v0.1.1 - 01.10.2013
