@@ -23,6 +23,7 @@
     "redis": "0.8.4",
     "curry": "0.0.4",
     "mail": "*",
+    "mailparser": "*",
     "imap": "0.7.x",
     "promising": "*",
     "twit": "1.1.9",
