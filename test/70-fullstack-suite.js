@@ -35,7 +35,7 @@ define(['require'], function (require) {
       var port = 10999;
 
       env.config = {
-        PLATFORMS: ['email'],
+        PLATFORMS: ['email', 'test'],
         HOST: {
           ENABLE_TLS: false,
           PORT: port,
@@ -279,7 +279,32 @@ define(['require'], function (require) {
             connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
           });
         }
+      },
+
+            {
+        desc: "try to call test.fetch to throw error",
+        run: function (env, test) {
+          var data = {
+            rid: '002',
+            verb: 'fetch',
+            platform: 'test',
+            actor: { address: 'user@example.com' },
+            object: { subject: 'test email subject', text: 'test email body' },
+            target: [{ address: 'user2@example.com.com' }]
+          };
+
+          var expected = {
+            actor: {address: 'user@example.com'},
+            status: true,
+            rid: "002",
+            verb: 'fetch',
+            platform: "test"
+          };
+          env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
+        }
       }
+
+
     ]
   });
 
