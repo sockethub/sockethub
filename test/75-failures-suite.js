@@ -162,12 +162,12 @@ define(['require'], function (require) {
       var port = 10999;
 
       env.config = {
-        PLATFORMS: ['rss', 'dispatcher'],
+        PLATFORMS: ['rss', 'dispatcher', 'test'],
         HOST: {
           ENABLE_TLS: false,
           PORT: port,
           PROTOCOLS: [ 'sockethub' ],
-          MY_PLATFORMS: [ 'rss', 'dispatcher' ], // list of platforms this instance is responsible for
+          MY_PLATFORMS: [ 'rss', 'dispatcher', 'test' ], // list of platforms this instance is responsible for
           INIT_DISPATCHER: true
         },
         DEBUG: true,
@@ -194,36 +194,6 @@ define(['require'], function (require) {
 
 
       env.proto = require('./../lib/sockethub/protocol');
-      // listener = require('./../lib/sockethub/listener');
-      // for (var i = 0, len = env.config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
-      //   if (env.config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
-      //     continue;
-      //   }
-      //   l  = listener({
-      //     platform: env.proto.platforms[env.config.HOST.MY_PLATFORMS[i]],
-      //     sockethubId: env.sockethubId
-      //   });
-      //   env.listener[i] = l;
-      // }
-
-/*      env.dispatcher = require('./../lib/sockethub/dispatcher');
-
-      env.server = {};
-      env.dispatcher.init(env.config.HOST.MY_PLATFORMS, env.sockethubId, env.proto).then(function() {
-        // initialize http server
-        env.server.h = require('./../lib/servers/http').init(env.config);
-        // initialize websocket server
-        env.server.ws = require('./../lib/servers/websocket').init(env.config, env.server.h, env.dispatcher);
-
-        console.log(' [*] finished loading' );
-        console.log();
-        test.result(true);
-      }, function(err) {
-        console.log(" [sockethub] dispatcher failed initialization, aborting");
-        process.exit();
-      });
-
-      test.result(true);*/
     },
     afterEach: function (env, test) {
       env.sockethub.sessionManager.subsystem.send('cleanup', { sids: [ env.sid ] });
@@ -233,11 +203,6 @@ define(['require'], function (require) {
         });
       }, 2000);
     },
-    // beforeEach: function (env, test) {
-    //   env.dispatcher.get(env.sid).then(function(session) {
-    //     test.result(true);
-    //   });
-    // },
     takedown: function (env, test) {
       env.sockethub.shutdown();
       env.util.redis.clean(env.sockethubId).then(function () {
@@ -307,8 +272,6 @@ define(['require'], function (require) {
           }, 4000);
         }
       }
-
-
     ]
   });
 
