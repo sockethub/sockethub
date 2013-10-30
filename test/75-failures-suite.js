@@ -19,10 +19,14 @@ define(['require'], function (require) {
       var port = 10999;
 
       env.config = {
+        PLATFORMS: ['rss'],
         HOST: {
           ENABLE_TLS: false,
           PORT: port,
           MY_PLATFORMS: [ 'rss' ] // list of platforms this instance is responsible for
+        },
+        EXAMPLES: {
+          ENABLED: false
         },
         DEBUG: false,
         BASE_PATH: '../../../../'
@@ -35,6 +39,7 @@ define(['require'], function (require) {
       env.job_channel = 'sockethub:'+env.sockethubId+':listener:rss:incoming';
       env.resp_channel = 'sockethub:'+env.sockethubId+':dispatcher:outgoing:'+env.sid;
 
+      var config = require('./../lib/sockethub/config-loader').get(env.config);
       env.util.redis.clean(env.sockethubId).then(function () {
         test.result(true);
       });
@@ -62,29 +67,33 @@ define(['require'], function (require) {
     },
     takedown: function (env, test) {
       env.util.redis.clean(env.sockethubId).then(function () {
-        test.result(true);
+        l.shutdown().then(function () {
+          test.result(true);
+        });
       });
     },
     tests: [
 
-      /*{
-        desc: "basic test",
+      {
+        desc: "send bad json on job queue",
         run: function (env, test) {
-          env.util.redis.get('blpop', env.job_channel, function (err, replies) {
-            console.log('RECVD rep: ', replies[1]);
-            if (err) {
-              test.result(false, err);
-            } else {
-              test.assertTypeAnd(replies[1], 'string');
-              test.assert(replies[1], 'helloWorld1');
-            }
-          });
+          // env.util.redis.get('blpop', env.resp_channel, function (err, replies) {
+          //   console.log('RECVD: ', resp[1]);
+          //   var r = JSON.parse(resp[1]);
+          //   test.assertAnd(r.status, false);
+          //   test.assert(r.message, "invalid target array");
+          //   if (err) {
+          //     test.result(false, err);
+          //   } else {
+          //     test.assertTypeAnd(resp[1], 'string');
+          //     test.assert(replies[1], 'helloWorld1');
+          //   }
+          // });
 
-          var client = redis.createClient();
-          client.rpush(env.job_channel, 'helloWorld1');
-          //env.util.redis.set('rpush', env.job_channel, 'helloWorld1');
+          env.util.redis.set('rpush', env.job_channel, 'helloWorld1');
+          test.done();
         }
-      },*/
+      },
 
       {
         desc: "send job to platform with an invalid target object - FAILS",
@@ -152,15 +161,7 @@ define(['require'], function (require) {
     desc: "crashing listeners requesting encKey from dispatcher",
     abortOnFail: true,
     setup: function (env, test) {
-      GLOBAL.redis = require('redis');
-      env.util = require('./../lib/sockethub/util');
-      env.confirmProps = {
-        status: true,
-        verb: 'confirm'
-      };
-
       var port = 10999;
-
       env.config = {
         PLATFORMS: ['rss', 'dispatcher', 'test'],
         HOST: {
@@ -174,8 +175,19 @@ define(['require'], function (require) {
         EXAMPLES: {
           ENABLE: false
         },
-        LOG_FILE: ''
+        LOG_FILE: '',
+        BASE_PATH: '../../../../'
       };
+
+      require('./../lib/sockethub/config-loader').clear();
+      var config = require('./../lib/sockethub/config-loader').get(env.config);
+      GLOBAL.redis = require('redis');
+      env.util = require('./../lib/sockethub/util');
+      env.confirmProps = {
+        status: true,
+        verb: 'confirm'
+      };
+
 
       env.sid = "1617171";
       env.sockethubId = 'unittests';
@@ -186,12 +198,13 @@ define(['require'], function (require) {
       env.sockethub = require('./../lib/sockethub/sockethub')({
         root: './',
         debug: false,
-        sockethubId: env.sockethubId
-      }, env.config);
+        sockethubId: env.sockethubId,
+        config: env.config
+      });
+
       env.sockethub.events.on('initialized', function () {
         test.result(true);
       });
-
 
       env.proto = require('./../lib/sockethub/protocol');
     },
