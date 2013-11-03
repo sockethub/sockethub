@@ -35,7 +35,7 @@ define(['require'], function (require) {
       var port = 10999;
 
       env.config = {
-        PLATFORMS: ['email', 'test'],
+        PLATFORMS: ['email'],
         HOST: {
           ENABLE_TLS: false,
           PORT: port,
@@ -281,8 +281,9 @@ define(['require'], function (require) {
         }
       },
 
-            {
-        desc: "try to call test.fetch to throw error",
+      {
+        desc: "try to call test.fetch which does not exist",
+        willFail: true,
         run: function (env, test) {
           var data = {
             rid: '002',
@@ -294,13 +295,13 @@ define(['require'], function (require) {
           };
 
           var expected = {
-            actor: {address: 'user@example.com'},
             status: true,
             rid: "002",
-            verb: 'fetch',
-            platform: "test"
+            verb: 'confirm',
+            platform: "test",
+            message: "platform 'test' not loaded"
           };
-          env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
+          env.connection.sendAndVerify(JSON.stringify(data), {}, test, expected);
         }
       }
 
