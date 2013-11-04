@@ -163,12 +163,12 @@ define(['require'], function (require) {
     setup: function (env, test) {
       var port = 10999;
       env.config = {
-        PLATFORMS: ['rss', 'dispatcher', 'test'],
+        PLATFORMS: ['rss', 'dispatcher'],
         HOST: {
           ENABLE_TLS: false,
           PORT: port,
           PROTOCOLS: [ 'sockethub' ],
-          MY_PLATFORMS: [ 'rss', 'dispatcher', 'test' ], // list of platforms this instance is responsible for
+          MY_PLATFORMS: [ 'rss', 'dispatcher'], // list of platforms this instance is responsible for
           INIT_DISPATCHER: true
         },
         DEBUG: true,
