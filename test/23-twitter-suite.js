@@ -108,8 +108,7 @@ define(['require'], function (require) {
             //var transport = env.nodemailer.createTransport('SMTP', {});
             //test.assert(transport.sendMail.called, true);
           }, function (err) {
-            //test.assert(err, 'twitter credentials incomplete');
-            test.result(true);
+            test.assert(err, 'twitter credentials incomplete');
           });
         }
       },
@@ -165,7 +164,7 @@ define(['require'], function (require) {
             //test.assert(transport.sendMail.called, true);
           }, function (err) {
             console.log("ERR: "+err.toString());
-            test.assert(err, 'twitting failed, no information given: Error: Invalid or expired token');
+            test.assert(err, 'twitting failed, no information given: Error: Could not authenticate you');
           });
         }
       }
