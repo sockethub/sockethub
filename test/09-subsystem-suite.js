@@ -55,7 +55,9 @@ define(['require'], function(require) {
     },
     afterEach: function (env, test) {
       redis.__clearHandlers();
+      env.twitter.subsystem._delete();
       delete env.twitter.subsystem;
+      env.dispatcher.subsystem._delete();
       delete env.dispatcher.subsystem;
       delete GLOBAL.redis;
       test.result(true);
@@ -77,7 +79,6 @@ define(['require'], function(require) {
         willFail: true,
         run: function (env, test) {
           var Subsystem = require('./../lib/sockethub/subsystem')(env.sockethubId);
-          test.result(true);
         }
       },
       {
@@ -133,14 +134,14 @@ define(['require'], function(require) {
         run: function (env, test) {
           //dispatcher.subsystem = require('./../lib/sockethub/subsystem')('dispatcher', env.sockethubId);
           env.twitter.subsystem.events.on('ping-response', function (data) {
-            console.log('+++ 1');
+            //console.log('+++ 1');
             test.assertAnd(data.target[0].platform, 'twitter');
             env.pingObj.twitter.recv.object.timestamp = data.object.timestamp;
             test.assert(data, env.pingObj.twitter.recv);
           });
 
           env.dispatcher.subsystem.events.on('ping-with-callback', function (data, callback) {
-            console.log('+++ 2:',data);
+            //console.log('+++ 2:',data);
             test.assertAnd(data.actor.platform, 'twitter');
             test.assertTypeAnd(callback, 'function');
             callback({encKey: 'foobar'});
