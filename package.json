@@ -25,7 +25,6 @@
     "mail": "*",
     "mailparser": "*",
     "imap": "0.8.x",
-    "promising": "*",
     "twit": "1.1.9",
     "simple-xmpp": "*",
     "node-stringprep": "*",
