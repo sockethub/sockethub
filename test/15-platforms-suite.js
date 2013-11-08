@@ -30,7 +30,6 @@
  */
 
 require("consoleplusplus/console++");
-var promising = require('promising');
 var JSVlib = require('JSV').JSV; // json schema validator
 
 var schema_test_files = [
@@ -49,7 +48,6 @@ var session = {
   getSessionID: function () {
     return ['1234567890'];
   },
-  promising: promising
 };
 
 

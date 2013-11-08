@@ -9,7 +9,6 @@ define(['require'], function (require) {
     name: "xmpp platform tests",
     desc: "collection of tests for the xmpp platform",
     setup: function (env, test) {
-      var promising = require('promising');
 
       env.xmpp = (function () {
         var callbacks = {};
