@@ -1,6 +1,26 @@
 CHANGELOG
 =========
 
+sockethub v0.1.3 - 08.11.2013
+-----------------------------
+
+- addressed cases where subsystem event listeners were not being removed after a platform session was destroyed (memory leak)
+
+- fixed issue where in some cases jobs with non-existant platform names were accepted for processing and obviously never reply. ([commit 74587a38d23cde0078b46ab275541488b4f4bf29](https://github.com/sockethub/sockethub/commit/74587a38d23cde0078b46ab275541488b4f4bf29))
+
+- switched to `Q` promise library due to issues with `promising`, and the added bonus of the `.fail()` method.
+
+- many of improvements to error handling.
+
+- removed some overly verbose logging.
+
+- platforms: (email) ensure email platform always returns a result ([issue #131](https://github.com/sockethub/sockethub/issues/131))
+
+- platforms: (email) more work has been done on imap functionality. ([pull #132](https://github.com/sockethub/sockethub/pull/132))
+
+- platforms: (xmpp) explicity log out of an xmpp session after the client manager has determined the connection is no longer being used. ([#69](https://github.com/sockethub/sockethub/issues/69))
+
+
 sockethub v0.1.2 - 21.10.2013
 -----------------------------
 
@@ -70,24 +90,17 @@ sockethub v0.0.11 - 29.08.2013
 sockethub v0.0.10 - 31.07.2013
 ------------------------------
 
-- the dispatcher verifies the platforms of incoming commands against
-  a list of platforms that the dispatcher has received pings from
-  during initialization, otherwise the command fails. ([issue #45](https://github.com/sockethub/sockethub/issues/45))
+- the dispatcher verifies the platforms of incoming commands against a list of platforms that the dispatcher has received pings from during initialization, otherwise the command fails. ([issue #45](https://github.com/sockethub/sockethub/issues/45))
 
-- revisiting the redis error, this time a few uses of the redis client
-  were tracked down in the session object and fixed. ([issue #84](https://github.com/sockethub/sockethub/issues/84))
+- revisiting the redis error, this time a few uses of the redis client were tracked down in the session object and fixed. ([issue #84](https://github.com/sockethub/sockethub/issues/84))
 
-- dispatcher was sending cleanup to subsystem (and therefore quitting
-  the subsystem redis channel) at the wrong point (during session end
-  instead of during shutdown). ([issue #96](https://github.com/sockethub/sockethub/issues/96))
+- dispatcher was sending cleanup to subsystem (and therefore quitting the subsystem redis channel) at the wrong point (during session end instead of during shutdown). ([issue #96](https://github.com/sockethub/sockethub/issues/96))
 
-- when a listener is spawned (or re-spawned) it now waits until it receives
-  the encryption key from the dispatcher before it queues for a job. ([issue #97](https://github.com/sockethub/sockethub/issues/97))
+- when a listener is spawned (or re-spawned) it now waits until it receives the encryption key from the dispatcher before it queues for a job. ([issue #97](https://github.com/sockethub/sockethub/issues/97))
 
 - platforms: (rss) feed data not passed to client encoded as UTF-8 ([issue #99](https://github.com/sockethub/sockethub/issues/99))
 
-- platforms: (rss) job is now completed only after all articles are fetched
-  and sent to client.  ([issue #98](https://github.com/sockethub/sockethub/issues/98))
+- platforms: (rss) job is now completed only after all articles are fetched and sent to client.  ([issue #98](https://github.com/sockethub/sockethub/issues/98))
 
 
 sockethub v0.0.9 - 26.07.2013
@@ -105,15 +118,13 @@ sockethub v0.0.9 - 26.07.2013
 sockethub v0.0.8 - 19.07.2013
 -----------------------------
 
-- fixed some error handling in twitter platform ([issue #89](https://github.com/sockethub/sockethub/issues/89))
+- fixed some error handling in twitter platform. ([issue #89](https://github.com/sockethub/sockethub/issues/89))
 
-- reworked redis connection management, implemented connection pool.
-  ([issues #84](https://github.com/sockethub/sockethub/issues/84) & [#74](https://github.com/sockethub/sockethub/issues/74))
+- reworked redis connection management, implemented connection pool. ([issues #84](https://github.com/sockethub/sockethub/issues/84) & [#74](https://github.com/sockethub/sockethub/issues/74))
 
 - handle SIGINT as early as possible.
 
-- fixed race condition where a command sent immediately upon connect could be
-  lost. ([issue #90](https://github.com/sockethub/sockethub/issues/90))
+- fixed race condition where a command sent immediately upon connect could be lost. ([issue #90](https://github.com/sockethub/sockethub/issues/90))
 
 - greatly improved session cleanup handling, removed some old cruft. ([issue #92](https://github.com/sockethub/sockethub/issues/92))
 
@@ -126,39 +137,27 @@ sockethub v0.0.8 - 19.07.2013
 sockethub v0.0.7 - 10.07.2013
 -----------------------------
 
-- multithreading refactor, to improve decoupling and communication between
-  dispatcher and listener(s), as well as improved stability and respawning
-  worker threads
+- multithreading refactor, to improve decoupling and communication between dispatcher and listener(s), as well as improved stability and respawning worker threads
 
 - bugfixes in twitter platform
 
 - addition of imap supoprt to fetch verb in the email platform
 
-- NOTE: npm test may fail as one of its dependencies (test) requires v0.0.18
-  which is unable to publish to npm at the moment, hopefully this is resolved
-  soon.
+- NOTE: npm test may fail as one of its dependencies (test) requires v0.0.18 which is unable to publish to npm at the moment, hopefully this is resolved soon.
 
 
 sockethub v0.0.6 - 28.06.2013
 -----------------------------
 
-- simplified `lib/schemas/platforms.js` and verbs.js for less typing when adding
-  new verbs or platforms (no name property required and verbs list is an array
-  of strings).
+- simplified `lib/schemas/platforms.js` and verbs.js for less typing when adding new verbs or platforms (no name property required and verbs list is an array of strings).
 
-- sockethub admins can now add custom platforms or verbs by creating a 'local'
-  schema in `libs/schemas/platforms.local.js` and `verbs.local.js` using the
-  same format as the default schema files.
+- sockethub admins can now add custom platforms or verbs by creating a 'local' schema in `libs/schemas/platforms.local.js` and `verbs.local.js` using the same format as the default schema files.
 
-- 'location' property, added to platforms schema. admins can specify the full
-  path to their custom platforms .js file.
+- 'location' property, added to platforms schema. admins can specify the full path to their custom platforms .js file.
 
 - added sockethub executable: `bin/sockethub`
 
-- re-factored the initialization process, we now fork off a control child which
-  then manages the master/worker cluster for listeners, the dispatcher is
-  handled directly by the main sockethub thread. this means no disconnects
-  from the dispatcher when a listener fails and has to reinit.
+- re-factored the initialization process, we now fork off a control child which then manages the master/worker cluster for listeners, the dispatcher is handled directly by the main sockethub thread. this means no disconnects from the dispatcher when a listener fails and has to reinit.
 
 - added redis tests to ensure a version of 2.x or greater is installed.
 
@@ -178,8 +177,7 @@ sockethub v0.0.5 - 20.06.2013
 
 - new platform: `rss`
 
-- updated examples to use sockethub-client repository (don't forget to `git
-  submodule init` and `git submodule update`).
+- updated examples to use sockethub-client repository (don't forget to `git submodule init` and `git submodule update`).
 
 - updated examples for `rss` platform
 
@@ -194,10 +192,9 @@ sockethub v0.0.4 - 20.05.2013
 
 - platform: `facebook`
 
-  - added feed reading functionality (verb: `fetch`)
+- added feed reading functionality (verb: `fetch`)
 
-- re-arranged the lib/* directory structure to make platform files more
-  accessible and simplify the origanization.
+- re-arranged the lib/* directory structure to make platform files more accessible and simplify the origanization.
 
 - documentation updates`
 
