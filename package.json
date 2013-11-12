@@ -20,7 +20,7 @@
     "websocket": "1.0.8",
     "node-static": "*",
     "JSV": "*",
-    "redis": "0.8.4",
+    "redis": "0.9.x",
     "curry": "0.0.4",
     "mail": "*",
     "mailparser": "*",
