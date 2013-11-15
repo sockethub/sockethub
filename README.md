@@ -2,9 +2,11 @@
 
 The polyglot approach to the federated social web.
 
-[![Flattr this](http://api.flattr.com/button/flattr-badge-large.png)](http://flattr.com/thing/1154379/Sockethub)
-
 [![Build Status](https://secure.travis-ci.org/sockethub/sockethub.png)](http://travis-ci.org/sockethub/sockethub)
+[![devDependency Status](https://david-dm.org/remotestorage/remotestorage.js/dev-status.png)](https://david-dm.org/remotestorage/remotestorage.js#info=devDependencies)
+[![Code Climate](https://codeclimate.com/github/sockethub/sockethub.png)](https://codeclimate.com/github/sockethub/sockethub)
+
+[![Flattr this](http://api.flattr.com/button/flattr-badge-large.png)](http://flattr.com/thing/1154379/Sockethub)
 
 about
 -----
