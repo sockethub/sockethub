@@ -119,6 +119,7 @@ define(['require'], function(require) {
             test.assertAnd(redis.__instances[key].subscribed_channels.length, 1, key+': subscribers:'+redis.__instances[key].subscribed_channels.length);
             count = count + 1;
           }
+          console.log('assert 4: ', count);
           test.assert(count, 4, 'count not 4');
 
           var client4 = redis.createClient();

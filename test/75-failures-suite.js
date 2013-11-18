@@ -96,7 +96,7 @@ define(['require'], function (require) {
       },
 
       {
-        desc: "send job to platform with an invalid target object - FAILS",
+        desc: "send job to platform with an invalid target object",
         run: function (env, test) {
           var job = {
             rid: 123,
