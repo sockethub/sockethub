@@ -124,3 +124,7 @@ Sponsored by [NLNET](http://nlnet.nl)
 
 [![NLNET Logo](http://sockethub.org/img/nlnet-logo.svg)](http://nlnet.nl)
 
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/sockethub/sockethub/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
