@@ -112,6 +112,14 @@ license
 
 Sockethub is licensed under the [AGPLv3](https://github.com/sockethub/sockethub/blob/master/LICENSE)
 
+apps built on sockethub
+-----------------------
+
+Sockethubg is still a young project, however ongoing work is being done to build applications ontop of it. Here are some existing projects.
+
+* [Dogfeed](http://github.com/silverbucket/dogfeed) an unhosted feed reader (RSS/Atom currently supported) [stable]
+* [Dogtalk](http://github.com/silverbucket/dogtalk) an unhosted chat client (XMPP & IRC currently supported) [alpha]
+* [Unhosted mail](http://github.com/nilclass/unhosted-mail) an unhosted email client [experimental / alpha]
 
 credits
 -------
