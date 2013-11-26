@@ -1,6 +1,7 @@
 language: node_js
 node_js:
   - 0.10
+services: redis
 before_install:
   - sudo apt-get install libicu-dev
 before_script: cp config.secrets.js.template config.secrets.js
