@@ -6,7 +6,7 @@ sockethub v0.1.4 - 03.12.2013
 
 - bugfix: race condition were a disconnect could loose it's redis connection reference before it was able to disconnect. this was fixed but ensuring the websocket server had a unique disconnect callback for each connection. ([issue #133](https://github.com/sockethub/sockethub/issues/133))
 
-- platform rss: renamed to 'feeds'
+- platform rss: renamed to 'feeds' *be sure to update your config.js*
 
 - platform feeds: added functionality to fetch only a subset of entries in a feed, using date or url and 'before' or 'after'. ([issue #136](https://github.com/sockethub/sockethub/issues/136))
 
