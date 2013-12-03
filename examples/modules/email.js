@@ -49,7 +49,7 @@ function Email($rootScope, $q, SH, CH) {
     msg.platform = 'email';
     msg.verb = 'send';
     console.log("SENDING: ", msg);
-    SH.submit(msg, 5000).then(function (resp) {
+    SH.submit.call(msg, 5000).then(function (resp) {
       if (resp.status) {
         defer.resolve(resp);
       } else {

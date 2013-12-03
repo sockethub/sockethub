@@ -61,7 +61,7 @@ var SOCKETHUB_CREDS = {
       }
     }
   },
-  rss: {}, // none
+  feeds: {}, // none
   twitter: {
     'credentials': {
       '# useraddress #': {

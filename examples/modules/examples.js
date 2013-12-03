@@ -62,7 +62,7 @@ value('configHelper', {
 });
 
 
-angular.module('examples', ['ngSockethubClient', 'service', 'email', 'twitter', 'facebook', 'rss', 'irc']).
+angular.module('examples', ['ngSockethubClient', 'service', 'email', 'twitter', 'facebook', 'feeds', 'irc']).
 
 /**
  * connect to sockethub on startup
@@ -101,8 +101,8 @@ function ($routeProvider) {
     when('/facebook', {
       templateUrl: 'templates/facebook/settings.html'
     }).
-    when('/rss', {
-      templateUrl: 'templates/rss/fetch.html'
+    when('/feeds', {
+      templateUrl: 'templates/feeds/fetch.html'
     }).
     when('/irc', {
       templateUrl: 'templates/irc/settings.html'

@@ -51,7 +51,7 @@ function Twitter($rootScope, $q, SH, CH) {
     msg.platform = 'twitter';
     msg.verb = 'post';
     console.log("POST: ", msg);
-    SH.submit(msg, 5000).then(defer.resolve, defer.reject);
+    SH.submit.call(msg, 5000).then(defer.resolve, defer.reject);
     return defer.promise;
   }
 
@@ -60,7 +60,7 @@ function Twitter($rootScope, $q, SH, CH) {
     msg.platform = 'twitter';
     msg.verb = 'fetch';
     console.log("FETCH: ", msg);
-    SH.submit(msg, 5000).then(defer.resolve, defer.reject);
+    SH.submit.call(msg, 5000).then(defer.resolve, defer.reject);
     return defer.promise;
   }
 

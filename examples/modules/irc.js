@@ -60,7 +60,7 @@ function IRC($rootScope, $q, SH, CH) {
       verb: 'update'
     };
     console.log("SENDING (update): ", msg);
-    SH.submit(msg, 5000).then(function (resp) {
+    SH.submit.call(msg, 5000).then(function (resp) {
       if (resp.status) {
         defer.resolve(resp);
       } else {
@@ -76,7 +76,7 @@ function IRC($rootScope, $q, SH, CH) {
     msg.platform = 'irc';
     msg.verb = 'send';
     console.log("SENDING (send): ", msg);
-    SH.submit(msg, 5000).then(function (resp) {
+    SH.submit.call(msg, 5000).then(function (resp) {
       if (resp.status) {
         defer.resolve(resp);
       } else {
