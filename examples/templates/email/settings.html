@@ -6,39 +6,39 @@
     <div class="notes">
       <p>In order for Sockethub to send an email, it needs the SMTP connection settings for your email provider. All information is encrypted and completely deleted after you navigate away from this page. No data is kept.</p>
     </div>
-    <form name="settings" class="form-horizontal" ng-controller="emailSettingsCtrl" novalidate>
+    <form name="settings" role="form" class="form-horizontal" ng-controller="emailSettingsCtrl" novalidate>
       <fieldset>
 
-        <div class="control-group">
-          <label for="emailAddress" class="control-label">Email Address</label>
-          <div class="controls">
-            <input type="text" class="required input-xlarge" name="emailAddress" placeholder="Enter email address... eg. user@gmail.com" ng-model="config.emailAddress" required>
+        <div class="form-group">
+          <label for="emailAddress" class="col-sm-2 control-label">Email Address</label>
+          <div class="col-sm-10">
+            <input type="text" class="required form-control" name="emailAddress" placeholder="Enter email address... eg. user@gmail.com" ng-model="config.emailAddress" required>
           </div>
         </div>
 
-        <div class="control-group">
-          <label for="username" class="control-label">Username</label>
-          <div class="controls">
-            <input type="text" class="required input-xlarge" name="username" placeholder="Enter username..." ng-model="config.username" required>
+        <div class="form-group">
+          <label for="username" class="col-sm-2 control-label">Username</label>
+          <div class="col-sm-10">
+            <input type="text" class="required form-control" name="username" placeholder="Enter username..." ng-model="config.username" required>
           </div>
         </div>
 
-        <div class="control-group">
-          <label for="password" class="control-label">Password</label>
-          <div class="controls">
-            <input type="password" class="required input-xlarge" name="password" placeholder="Enter password..." ng-model="config.password" required>
+        <div class="form-group">
+          <label for="password" class="col-sm-2 control-label">Password</label>
+          <div class="col-sm-10">
+            <input type="password" class="required form-control" name="password" placeholder="Enter password..." ng-model="config.password" required>
            </div>
          </div>
 
-        <div class="control-group">
-          <label for="smtpServer" class="control-label">SMTP Server</label>
-          <div class="controls">
-            <input type="text" class="required input-xlarge" name="smtpServer" placeholder="Enter SMTP server.." ng-model="config.smtpServer" required>
+        <div class="form-group">
+          <label for="smtpServer" class="col-sm-2 control-label">SMTP Server</label>
+          <div class="col-sm-10">
+            <input type="text" class="required form-control" name="smtpServer" placeholder="Enter SMTP server.." ng-model="config.smtpServer" required>
           </div>
         </div>
 
-        <div class="control-group">
-          <div class="controls">
+        <div class="form-group">
+          <div class="col-sm-10">
             <button class="btn btn-primary" ng-click="save(config)" ng-disabled="settings.$invalid || saving">Save</button>
           <span> &nbsp; <b>{{ model.submitMsg }}</b> </span>
           </div>

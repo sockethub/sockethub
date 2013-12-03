@@ -7,26 +7,26 @@
       <p>In order for Sockethub to post, it needs a access token from Facebook.</p>
       <p><a target="_blank" href="https://developers.facebook.com/tools/explorer">https://developers.facebook.com/tools/explorer</a></p>
     </div>
-    <form name="settings" class="form-horizontal" ng-controller="facebookSettingsCtrl" novalidate>
+    <form name="settings" role="form" class="form-horizontal" ng-controller="facebookSettingsCtrl" novalidate>
       <fieldset>
-        <div class="control-group">
-          <label for="username" class="control-label">Username</label>
-          <div class="controls">
-            <input type="text" class="required input-xlarge" name="username" placeholder="Enter facebook username..." ng-model="config.username" required>
+        <div class="form-group">
+          <label for="username" class="col-sm-2 control-label">Username</label>
+          <div class="col-sm-10">
+            <input type="text" class="required form-control" name="username" placeholder="Enter facebook username..." ng-model="config.username" required>
           </div>
         </div>
 
 
-        <div class="control-group">
-          <label for="access_token" class="control-label">Access Token</label>
-          <div class="controls">
-            <input type="text" class="required input-xlarge" name="access_token" placeholder="Enter access token..." ng-model="config.access_token" required>
+        <div class="form-group">
+          <label for="access_token" class="col-sm-2 control-label">Access Token</label>
+          <div class="col-sm-10">
+            <input type="text" class="required form-control" name="access_token" placeholder="Enter access token..." ng-model="config.access_token" required>
           </div>
         </div>
 
 
-        <div class="control-group">
-          <div class="controls">
+        <div class="form-group">
+          <div class="col-sm-10">
             <button class="btn btn-primary" ng-click="save(config)" ng-disabled="settings.$invalid || saving">Save</button>
             <span> &nbsp; <b>{{ model.submitMsg }}</b> </span>
           </div>

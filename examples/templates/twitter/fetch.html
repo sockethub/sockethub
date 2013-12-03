@@ -4,12 +4,11 @@
   <div class="container" ng-controller="twitterFetchCtrl">
     <h4>Fetch Twitter Feeds</h4>
 
-
-    <form name="twitterFetch" class="form-horizontal" novalidate>
+    <form name="twitterFetch" role="form" class="form-horizontal" novalidate>
       <fieldset>
 
-        <div class="control-group">
-          <div class="controls">
+        <div class="form-group">
+          <div class="col-sm-10">
             <button class="btn btn-primary" type="button" ng-click="fetchTwitter()" ng-disabled="sending || !formFilled() || !config.exists()">Fetch Twitter Feeds</button>
           <span> &nbsp; <b>{{ model.sendMsg }}</b> </span>
           </div>

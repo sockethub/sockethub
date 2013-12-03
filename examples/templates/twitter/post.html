@@ -4,25 +4,25 @@
   <div class="container" ng-controller="twitterPostCtrl">
     <h4>Post to Twitter</h4>
 
-    <form name="twitterPost" class="form-horizontal" novalidate>
+    <form name="twitterPost" role="form" class="form-horizontal" novalidate>
       <fieldset>
 
-        <div class="control-group">
-          <label for="from" class="control-label">Posting as:</label>
-          <div class="controls">
-            <input class="required input-xlarge" type="text" ng-model="config.data.username" name="from" disabled>
+        <div class="form-group">
+          <label for="from" class="col-sm-2 control-label">Posting as:</label>
+          <div class="col-sm-10">
+            <input class="required form-control" type="text" ng-model="config.data.username" name="from" disabled>
           </div>
         </div>
 
-        <div class="control-group">
-          <label for="body" class="control-label">Body:</label>
-          <div class="controls">
-            <textarea class="input-xlarge" name="body" rows="6" ng-disabled="sending || !config.exists()" ng-model="model.message.object.text"></textarea>
+        <div class="form-group">
+          <label for="body" class="col-sm-2 control-label">Body:</label>
+          <div class="col-sm-10">
+            <textarea class="form-control" name="body" rows="6" ng-disabled="sending || !config.exists()" ng-model="model.message.object.text"></textarea>
           </div>
         </div>
 
-        <div class="control-group">
-          <div class="controls">
+        <div class="form-group">
+          <div class="col-sm-10">
             <button class="btn btn-primary" type="button" ng-click="post()" ng-disabled="sending || !formFilled() || !config.exists()">Post to Twitter</button>
           <span> &nbsp; <b>{{ model.sendMsg }}</b> </span>
           </div>

@@ -4,37 +4,39 @@
   <title>Sockethub Examples</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="res/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="res/css/bootstrap-responsive.min.css" />
-  <link rel="stylesheet" href="res/css/flat-ui.css">
+  <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.min.css" />
   <link rel="stylesheet" href="res/css/main.css" />
 
  </head>
  <body>
   <nav>
-    <div class="navbar" ng-controller="navCtrl">
-      <div class="navbar-inner">
-        <a class="brand">Sockethub Examples</a>
-        <ul class="nav nav-tabs">
-          <li ng-class="navClass('home')">
-            <a href="#/">Home</a>
-          </li>
-          <li ng-class="navClass('email')">
-            <a href="#/email"><span class="icon-envelope"></span> Email</a>
-          </li>
-          <li ng-class="navClass('twitter')">
-            <a href="#/twitter">Twitter</a>
-          </li>
-          <li ng-class="navClass('facebook')">
-            <a href="#/facebook">Facebook</a>
-          </li>
-          <li ng-class="navClass('feeds')">
-            <a href="#/feeds">Feeds</a>
-          </li>
-          <li ng-class="navClass('irc')">
-            <a href="#/irc">IRC</a>
-          </li>
-        </ul>
+    <div class="navbar navbar-default" ng-controller="navCtrl">
+      <div class="container">
+        <div class="navbar-header">
+          <a class="navbar-brand">Sockethub Examples</a>
+        </div>
+        <div>
+          <ul class="nav navbar-nav">
+            <li ng-class="navClass('home')">
+              <a href="#/">Home</a>
+            </li>
+            <li ng-class="navClass('email')">
+              <a href="#/email"><span class="glyphicon glyphicon-envelope"></span> Email</a>
+            </li>
+            <li ng-class="navClass('twitter')">
+              <a href="#/twitter">Twitter</a>
+            </li>
+            <li ng-class="navClass('facebook')">
+              <a href="#/facebook">Facebook</a>
+            </li>
+            <li ng-class="navClass('feeds')">
+              <a href="#/feeds">Feeds</a>
+            </li>
+            <li ng-class="navClass('irc')">
+              <a href="#/irc">IRC</a>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </nav>
@@ -44,8 +46,8 @@
   <!-- home page -->
   <script type="text/ng-template" id="home.html">
   <div class="page">
-    <div class="container-fluid">
-      <div class="row-fluid">
+    <div class="container">
+      <div class="row">
         <h1>Sockethub Examples</h1>
         <p>Here is a collection of simple examples written to illustrate the functionality of various Sockethub platforms.</p>
         <p>The code needed to implement these functions on the client end is minimal, and mostly comprises of sending, listening for, and displaying objects (which have a common structure to them).</p>
@@ -63,7 +65,7 @@
   <script src="res/js/angular-route.min.js?v=1.2.3"></script>
   <script src="res/js/angular-sanitize.min.js?v=1.2.3"></script>
   <script src="res/js/jquery.min.js?v=2.0.3"></script>
-  <script src="res/js/bootstrap.min.js"></script>
+  <script src="vendor/bootstrap/js/bootstrap.min.js"></script>
   <script src="res/js/promising.js"></script>
   <script src="vendor/sockethub-client/sockethub-client.js"></script>
   <script src="vendor/sockethub-client/angular/ngSockethubClient.js"></script>

@@ -3,13 +3,13 @@
   <!-- email send -->
   <div class="container" ng-controller="emailSendCtrl">
     <h4>Send an Email</h4>
-    <form name="email" class="form-horizontal add-form" ng-submit="addTarget()" novalidate>
+    <form name="email" role="form" class="form-horizontal add-form" ng-submit="addTarget()" novalidate>
       <fieldset>
-        <div class="control-group">
-          <label for="to" class="control-label">Add a recipient</label>
-          <div class="controls input-append">
-            <input class="input-xlarge" name="to" type="text" ng-model="model.targetAddress" ng-disabled="sending || !config.exists()" required>
-            <button class="btn btn-primary" type="button" ng:click="addTarget()" ng-disabled="sending || !config.exists()">Add</button>
+        <div class="form-group">
+          <label for="to" class="col-sm-2 control-label">Add a recipient</label>
+          <div class="col-sm-10 input-group">
+            <input class="required form-control" name="to" type="text" ng-model="model.targetAddress" ng-disabled="sending || !config.exists()" required>
+            <button class="btn btn-primary" type="button" ng-click="addTarget()" ng-disabled="sending || !config.exists()">Add</button>
           </div>
         </div>
       </fieldset>
@@ -18,9 +18,9 @@
     <form name="emailSend" class="form-horizontal" novalidate>
       <fieldset>
 
-        <div class="control-group">
-          <label class="control-label">To:</label>
-          <div class="controls">
+        <div class="form-group">
+          <label class="col-sm-2 control-label">To:</label>
+          <div class="col-sm-10">
             <p></p>
             <p>
               <span ng-repeat="t in model.message.target"> {{ t.address }}, </span>
@@ -29,29 +29,29 @@
           </div>
         </div>
 
-        <div class="control-group">
-          <label for="from" class="control-label">From:</label>
-          <div class="controls">
-            <input class="required input-xlarge" type="text" ng-model="config.data.emailAddress" name="from" disabled>
+        <div class="form-group">
+          <label for="from" class="col-sm-2 control-label">From:</label>
+          <div class="col-sm-10">
+            <input class="required form-control" type="text" ng-model="config.data.emailAddress" name="from" disabled>
           </div>
         </div>
 
-        <div class="control-group">
-          <label for="subject" class="control-label">Subject:</label>
-          <div class="controls">
-            <input class="required input-xlarge" type="text" name="subject" ng-model="model.message.object.subject" ng-disabled="sending || !config.exists()" required>
+        <div class="form-group">
+          <label for="subject" class="col-sm-2 control-label">Subject:</label>
+          <div class="col-sm-10">
+            <input class="required form-control" type="text" name="subject" ng-model="model.message.object.subject" ng-disabled="sending || !config.exists()" required>
           </div>
         </div>
 
-        <div class="control-group">
-          <label for="body" class="control-label">Body:</label>
-          <div class="controls">
-            <textarea class="input-xlarge" name="body" rows="6" ng-disabled="sending || !config.exists()" ng-model="model.message.object.text"></textarea>
+        <div class="form-group">
+          <label for="body" class="col-sm-2 control-label">Body:</label>
+          <div class="col-sm-10">
+            <textarea class="form-control" name="body" rows="6" ng-disabled="sending || !config.exists()" ng-model="model.message.object.text"></textarea>
           </div>
         </div>
 
-        <div class="control-group">
-          <div class="controls">
+        <div class="form-group">
+          <div class="col-sm-10">
             <button class="btn btn-primary" type="button" ng-click="sendEmail()" ng-disabled="sending || !formFilled() || !config.exists()">Send Email</button>
           <span> &nbsp; <b>{{ model.sendMsg }}</b> </span>
           </div>
