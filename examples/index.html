@@ -28,8 +28,8 @@
           <li ng-class="navClass('facebook')">
             <a href="#/facebook">Facebook</a>
           </li>
-          <li ng-class="navClass('rss')">
-            <a href="#/rss">RSS</a>
+          <li ng-class="navClass('feeds')">
+            <a href="#/feeds">Feeds</a>
           </li>
           <li ng-class="navClass('irc')">
             <a href="#/irc">IRC</a>
@@ -59,17 +59,20 @@
 
   <script src="connect-config.js"></script>
   <script src="credential-config.js"></script>
-  <script src="res/js/angular-1.0.6.min.js"></script>
-  <script src="res/js/jquery-1.9.1.min.js"></script>
+  <script src="res/js/angular.min.js?v=1.2.3"></script>
+  <script src="res/js/angular-route.min.js?v=1.2.3"></script>
+  <script src="res/js/angular-sanitize.min.js?v=1.2.3"></script>
+  <script src="res/js/jquery.min.js?v=2.0.3"></script>
   <script src="res/js/bootstrap.min.js"></script>
   <script src="res/js/promising.js"></script>
   <script src="vendor/sockethub-client/sockethub-client.js"></script>
   <script src="vendor/sockethub-client/angular/ngSockethubClient.js"></script>
+  <script src="vendor/angular-shared/ngCommandQueue.js"></script>
   <script src="modules/examples.js"></script>
   <script src="modules/email.js"></script>
   <script src="modules/twitter.js"></script>
   <script src="modules/facebook.js"></script>
-  <script src="modules/rss.js"></script>
+  <script src="modules/feeds.js"></script>
   <script src="modules/irc.js"></script>
  </body>
 </html>
