@@ -1,3 +1,6 @@
 [submodule "examples/vendor/sockethub-client"]
 	path = examples/vendor/sockethub-client
 	url = git://github.com/sockethub/sockethub-client
+[submodule "examples/vendor/angular-shared"]
+	path = examples/vendor/angular-shared
+	url = git://github.com/silverbucket/angular-shared
