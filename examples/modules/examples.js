@@ -28,7 +28,7 @@ value('settings', {
     scope.model = {};
     scope.model.submitMsg = '';
     scope.save = function () {
-console.log('!!save called');
+      console.log('!!save called');
       scope.saving = true;
       factory.config.set().then(function () {
         scope.model.submitMsg = 'config saved!';
@@ -62,7 +62,13 @@ value('configHelper', {
 });
 
 
-angular.module('examples', ['ngSockethubClient', 'service', 'email', 'twitter', 'facebook', 'feeds', 'irc']).
+angular.module('examples', [
+    'ngSockethubClient',
+    'service', 'email', 'twitter', 'facebook', 'feeds', 'irc',
+    'ngRoute',
+    'ngSanitize'
+]).
+
 
 /**
  * connect to sockethub on startup
@@ -72,11 +78,7 @@ function (settings, SH, SHsettings) {
   var s = settings.sockethub();
   // connect to sockethub and register
   SHsettings.save('conn', s);
-  SH.connect().then(function () {
-    console.log('connected, registering...');
-    return SH.register();
-  }).then(function () {
-    console.log('connected to sockethub');
+  SH.connect({register: true}).then(function () {
   }, function (err) {
     console.log('error connection to sockethub: ', err);
   });

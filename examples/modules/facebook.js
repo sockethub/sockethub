@@ -1,4 +1,4 @@
-angular.module('facebook', []).
+angular.module('facebook', ['ngRoute']).
 
 /**
  * Factory: Facebook

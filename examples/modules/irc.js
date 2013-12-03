@@ -1,4 +1,4 @@
-angular.module('irc', []).
+angular.module('irc', ['ngRoute']).
 
 /**
  * Factory: IRC

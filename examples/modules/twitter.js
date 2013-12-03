@@ -1,4 +1,4 @@
-angular.module('twitter', []).
+angular.module('twitter', ['ngRoute']).
 
 /**
  * Factory: Twitter

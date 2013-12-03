@@ -1,4 +1,4 @@
-angular.module('feeds', []).
+angular.module('feeds', ['ngRoute']).
 
 /**
  * Factory: Feeds

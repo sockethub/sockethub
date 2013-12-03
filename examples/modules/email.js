@@ -1,4 +1,4 @@
-angular.module('email', []).
+angular.module('email', ['ngRoute']).
 
 /**
  * Factory: Email
