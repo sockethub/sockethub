@@ -1,0 +1,43 @@
+  <div data-feeds-nav></div>
+
+  <!-- fetch -->
+  <div class="container" ng-controller="feedsFetchCtrl">
+    <h4>Fetch Feeds</h4>
+
+    <form name="feedsFeeds" class="form-horizontal add-form" ng:submit="addTarget()" novalidate>
+      <fieldset>
+        <div class="control-group">
+          <label for="to" class="control-label">Add a feed URL:</label>
+          <div class="controls input-append">
+            <input class="input-xlarge" name="to" type="text" ng-model="model.targetAddress" ng-disabled="sending || !config.exists()" required>
+          <button class="btn btn-primary" ng:click="addTarget()" ng-disabled="sending || !config.exists() || !model.targetAddress">Add</button>
+          </div>
+        </div>
+      </fieldset>
+    </form>
+
+    <form name="feedsFetch" class="form-horizontal" novalidate>
+      <fieldset>
+
+        <div class="control-group">
+          <label class="control-label">Feeds:</label>
+          <div class="controls">
+            <p></p>
+            <ul>
+              <li ng-repeat="t in model.message.target"> {{ t.address }} </li>
+            </ul>
+            <p></p>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="controls">
+            <button class="btn btn-primary" type="button" ng-click="fetchFeeds()" ng-disabled="sending || !formFilled() || !config.exists()">Fetch Feeds</button>
+          <span> &nbsp; <b>{{ model.sendMsg }}</b> </span>
+          </div>
+        </div>
+
+      </fieldset>
+    </form>
+  </div>
+
