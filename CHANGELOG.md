@@ -1,12 +1,26 @@
 CHANGELOG
 =========
 
+sockethub v0.1.4 - 03.12.2013
+-----------------------------
+
+- bugfix: race condition were a disconnect could loose it's redis connection reference before it was able to disconnect. this was fixed but ensuring the websocket server had a unique disconnect callback for each connection. ([issue #133](https://github.com/sockethub/sockethub/issues/133))
+
+- platform rss: renamed to 'feeds'
+
+- platform feeds: added functionality to fetch only a subset of entries in a feed, using date or url and 'before' or 'after'. ([issue #136](https://github.com/sockethub/sockethub/issues/136))
+
+- platform feeds: media property now added to object, to enable clients to use attached media like podcasts. ([issue #138](https://github.com/sockethub/sockethub/issues/138))
+
+- ([sockethub examples](http://silverbucket.net/sockethub/examples)) updated to angular 1.2 and bootstrap 3
+
+
 sockethub v0.1.3 - 08.11.2013
 -----------------------------
 
-- addressed cases where subsystem event listeners were not being removed after a platform session was destroyed (memory leak)
+- bugfix: subsystem event listeners were not being removed after a platform session was destroyed (memory leak)
 
-- fixed issue where in some cases jobs with non-existant platform names were accepted for processing and obviously never reply. ([commit 74587a38d23cde0078b46ab275541488b4f4bf29](https://github.com/sockethub/sockethub/commit/74587a38d23cde0078b46ab275541488b4f4bf29))
+- bugfix: in some cases jobs with non-existant platform names were accepted for processing and obviously never reply. ([commit 74587a38d23cde0078b46ab275541488b4f4bf29](https://github.com/sockethub/sockethub/commit/74587a38d23cde0078b46ab275541488b4f4bf29))
 
 - switched to `Q` promise library due to issues with `promising`, and the added bonus of the `.fail()` method.
 
