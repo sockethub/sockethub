@@ -19,11 +19,11 @@ define(['require'], function (require) {
       var port = 10999;
 
       env.config = {
-        PLATFORMS: ['rss'],
+        PLATFORMS: ['feeds'],
         HOST: {
           ENABLE_TLS: false,
           PORT: port,
-          MY_PLATFORMS: [ 'rss' ] // list of platforms this instance is responsible for
+          MY_PLATFORMS: [ 'feeds' ] // list of platforms this instance is responsible for
         },
         EXAMPLES: {
           ENABLED: false
@@ -36,7 +36,7 @@ define(['require'], function (require) {
       env.sockethubId = 'unittests';
       env.encKey = 'enckeyblah';
       env.listener = [];
-      env.job_channel = 'sockethub:'+env.sockethubId+':listener:rss:incoming';
+      env.job_channel = 'sockethub:'+env.sockethubId+':listener:feeds:incoming';
       env.resp_channel = 'sockethub:'+env.sockethubId+':dispatcher:outgoing:'+env.sid;
 
       var config = require('./../lib/sockethub/config-loader').get(env.config);
@@ -100,7 +100,7 @@ define(['require'], function (require) {
         run: function (env, test) {
           var job = {
             rid: 123,
-            platform: 'rss',
+            platform: 'feeds',
             verb: 'fetch',
             actor: { address: 'johndoe'},
             object: {},
@@ -127,7 +127,7 @@ define(['require'], function (require) {
         timeout: 10000,
         run: function (env, test) {
           var job = {
-            platform: 'rss',
+            platform: 'feeds',
             verb: 'fetch',
             actor: { address: 'johndoe'},
             object: {},
@@ -163,12 +163,12 @@ define(['require'], function (require) {
   //   setup: function (env, test) {
   //     var port = 10999;
   //     env.config = {
-  //       PLATFORMS: ['rss', 'dispatcher'],
+  //       PLATFORMS: ['feeds', 'dispatcher'],
   //       HOST: {
   //         ENABLE_TLS: false,
   //         PORT: port,
   //         PROTOCOLS: [ 'sockethub' ],
-  //         MY_PLATFORMS: [ 'rss', 'dispatcher'], // list of platforms this instance is responsible for
+  //         MY_PLATFORMS: [ 'feeds', 'dispatcher'], // list of platforms this instance is responsible for
   //         INIT_DISPATCHER: true
   //       },
   //       DEBUG: true,
@@ -192,7 +192,7 @@ define(['require'], function (require) {
   //     env.sid = "1617171";
   //     env.sockethubId = 'unittests';
   //     env.listener = [];
-  //     env.job_channel = 'sockethub:'+env.sockethubId+':listener:rss:incoming';
+  //     env.job_channel = 'sockethub:'+env.sockethubId+':listener:feeds:incoming';
   //     env.resp_channel = 'sockethub:'+env.sockethubId+':dispatcher:outgoing:'+env.sid;
 
   //     env.sockethub = require('./../lib/sockethub/sockethub')({
@@ -236,7 +236,7 @@ define(['require'], function (require) {
   //       timeout: 5000,
   //       run: function (env, test) {
   //         var l = require('./../lib/sockethub/listener')({
-  //           platform: env.proto.platforms['rss'],
+  //           platform: env.proto.platforms['feeds'],
   //           sockethubId: env.sockethubId
   //         });
   //         setTimeout(function () {
@@ -252,7 +252,7 @@ define(['require'], function (require) {
   //       timeout: 5000,
   //       run: function (env, test) {
   //         var t = require('./../lib/sockethub/listener')({
-  //           platform: env.proto.platforms['rss'],
+  //           platform: env.proto.platforms['feeds'],
   //           sockethubId: env.sockethubId
   //         });
   //         setTimeout(function () {
@@ -267,7 +267,7 @@ define(['require'], function (require) {
   //       timeout: 5000,
   //       run: function (env, test) {
   //         var t = require('./../lib/sockethub/listener')({
-  //           platform: env.proto.platforms['rss'],
+  //           platform: env.proto.platforms['feeds'],
   //           sockethubId: env.sockethubId
   //         });
   //         setTimeout(function () {
@@ -282,7 +282,7 @@ define(['require'], function (require) {
   //       timeout: 5000,
   //       run: function (env, test) {
   //         var t = require('./../lib/sockethub/listener')({
-  //           platform: env.proto.platforms['rss'],
+  //           platform: env.proto.platforms['feeds'],
   //           sockethubId: env.sockethubId
   //         });
   //         setTimeout(function () {
