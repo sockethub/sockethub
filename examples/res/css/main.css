@@ -1,4 +1,13 @@
-
+.navbar-default {
+  height: 75px;
+  padding-top: 10px;
+  background-color: rgb(211, 245, 245);
+  color: rgb(41, 41, 41);
+}
+li.active a {
+  background-color: rgb(250,250,250) !important;
+  border-radius: 9px;
+}
 .example {
   padding: 5px;
 }
