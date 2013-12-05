@@ -317,13 +317,16 @@ define(['require'], function(require) {
 
       var http = require('http');
       env.testServer = http.createServer(function(req, res) {
-        env.captured.push(req);
-        var r = env.simulateResponse;
-        res.writeHead(r[0], r[1]);
-        res.write(r[2]);
-        res.end();
+        console.log("TEST SERVER INCOMING REQ: "+ req.url);
+
+          env.captured.push(req);
+          var r = env.simulateResponse;
+          res.writeHead(r[0], r[1]);
+          res.write(r[2]);
+          res.end();
       });
-      env.testServer.listen(12345, function() {
+      env.testServer.listen(12345, 'localhost', function() {
+        console.log('test server listening on port 12345');
         test.result(true);
       });
     },
@@ -346,9 +349,14 @@ define(['require'], function(require) {
           bearerToken: 'test-token',
           scope: {"":"rw"}
         });
+
         env.captured = [];
         env.simulateResponse = [200, { 'Content-Type': 'text/plain'}, 'Hello World'];
+
         test.result(true);
+      }, function (err) {
+        console.log("ERROR with Sesstion.get: ", err);
+        test.result(false, err);
       });
 
     },
