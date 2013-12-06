@@ -6,7 +6,7 @@ if (typeof define !== 'function') {
 define(['require'], function(require) {
   var suites = [];
 
-/*  suites.push({
+ suites.push({
     name: "Session failed init test",
     desc: "verify session will fail to init without enckey",
     setup: function(env, test) {
@@ -297,7 +297,8 @@ define(['require'], function(require) {
       }
     ]
   });
-*/
+
+
   suites.push({
     name: "Session getFile",
     desc: "Session interaction with remoteStorage",
