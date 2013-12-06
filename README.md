@@ -41,6 +41,16 @@ Below is a list of platforms we're currently working on and their activity strea
  * FireFoxSync - *(to be evaluated)*
  * WebRTC - *(to be evaluated)*
 
+apps built on sockethub
+-----------------------
+
+Sockethubg is still a young project, however ongoing work is being done to build applications ontop of it. Here are some existing projects.
+
+* [Dogfeed](http://github.com/silverbucket/dogfeed) an unhosted feed reader (RSS/Atom currently supported) [stable]
+* [Guppy IRC](https://github.com/silverbucket/guppy-irc) a tiny embeddable IRC client (IRC platform used) [stable]
+* [Dogtalk](http://github.com/silverbucket/dogtalk) an unhosted chat client (XMPP & IRC currently supported) [alpha]
+* [Unhosted mail](http://github.com/nilclass/unhosted-mail) an unhosted email client [experimental / alpha]
+
 architecture overview
 ---------------------
 
@@ -112,16 +122,6 @@ license
 -------
 
 Sockethub is licensed under the [AGPLv3](https://github.com/sockethub/sockethub/blob/master/LICENSE)
-
-apps built on sockethub
------------------------
-
-Sockethubg is still a young project, however ongoing work is being done to build applications ontop of it. Here are some existing projects.
-
-* [Dogfeed](http://github.com/silverbucket/dogfeed) an unhosted feed reader (RSS/Atom currently supported) [stable]
-* [Guppy IRC](https://github.com/silverbucket/guppy-irc) a tiny embeddable IRC client (IRC platform used) [stable]
-* [Dogtalk](http://github.com/silverbucket/dogtalk) an unhosted chat client (XMPP & IRC currently supported) [alpha]
-* [Unhosted mail](http://github.com/nilclass/unhosted-mail) an unhosted email client [experimental / alpha]
 
 credits
 -------
