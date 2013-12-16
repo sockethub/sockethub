@@ -1,6 +1,22 @@
 CHANGELOG
 =========
 
+sockethub v0.1.5 - 16.12.2013
+-----------------------------
+
+- bugfix: encryption key being lost after multiple sessions active. ([issue #141](https://github.com/sockethub/sockethub/issues/141))
+
+- util.redis now has specific support for hset and hget. ([issue #140](https://github.com/sockethub/sockethub/issues/140))
+
+- refactor `session.request()` function for clarity. This function issues remoteStorage GETs. ([issue #139](https://github.com/sockethub/sockethub/issues/139))
+
+- ClientManager has new method `move` which moves a client object from one key lookup to another while preserving it's reference count. ([lib/sockethub/client-manager.js](https://github.com/sockethub/sockethub/blob/master/lib/sockethub/client-manager.js))
+
+- platform irc: change nick name. ([issue #144](https://github.com/sockethub/sockethub/issues/144))
+
+- platform irc: several additions announcing room activity.
+
+
 sockethub v0.1.4 - 03.12.2013
 -----------------------------
 
