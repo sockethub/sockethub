@@ -1,9 +1,8 @@
 #!/usr/bin/env node
-
 /**
  * This file is part of sockethub.
  *
- * © 2012-2013 Nick Jennings (https://github.com/silverbucket)
+ * copyright 2012-2013 Nick Jennings (https://github.com/silverbucket)
  *
  * sockethub is licensed under the AGPLv3.
  * See the LICENSE file for details.
