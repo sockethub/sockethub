@@ -89,6 +89,9 @@ define(['require'], function (require) {
           //     test.assert(replies[1], 'helloWorld1');
           //   }
           // });
+          //
+          // the listener doesn't send anything back when it gets invalid
+          // json, so here we're just making sure nothing is thrown.
 
           env.util.redis.set('rpush', env.job_channel, 'helloWorld1');
           test.done();
@@ -114,14 +117,10 @@ define(['require'], function (require) {
             test.assertAnd(r.status, false);
             test.assert(r.message, "invalid target array");
           });
-          /*var client = redis.createClient();
-          client.on('ready', function() {
-            console.log('CLIENT:', client);
-            client.rpush(env.job_channel, JSON.stringify(job));
-          });*/
           env.util.redis.set('rpush', env.job_channel, JSON.stringify(job));
         }
       },
+
       {
         desc: "send job to platform",
         timeout: 10000,

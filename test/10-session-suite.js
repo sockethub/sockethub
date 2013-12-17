@@ -239,14 +239,32 @@ define(['require'], function(require) {
       },
 
       {
-        desc: "get platform instance session id",
+        desc: "test for platform instance session id",
         run: function (env, test) {
           var psession;
           env.session.getPlatformSession('test').then(function (p) {
             psession = p;
+            test.assertTypeAnd(psession.getSessionID, 'function', 'platform session does not return a getSessionID function');
             return psession.getSessionID();
           }).then(function (sid) {
             test.assert(sid, env.sid);
+          }, function (err) {
+            test.result(false, err);
+          });
+        }
+      },
+
+      {
+        desc: "test for platform instance log functions",
+        run: function (env, test) {
+          var psession;
+          env.session.getPlatformSession('test').then(function (p) {
+            psession = p;
+            test.assertTypeAnd(psession.log, 'function', 'platform session does not return a log function');
+            test.assertTypeAnd(psession.info, 'function', 'platform session does not return a info function');
+            test.assertTypeAnd(psession.error, 'function', 'platform session does not return a error function');
+            test.assertTypeAnd(psession.debug, 'function', 'platform session does not return a debug function');
+            test.assertType(psession.warn, 'function', 'platform session does not return a warn function');
           }, function (err) {
             test.result(false, err);
           });
