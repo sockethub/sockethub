@@ -71,9 +71,9 @@ installation & setup
 
   Some of the node.js packages require operating system libraries in order to function correctly.
 
-      - simple-xmpp : `libexpat1` `libicu-dev`
+    **simple-xmpp** : `libexpat1` `libicu-dev`
 
-      - node-stringprep (dependency of several packages) : `libicu-dev`
+    **node-stringprep** *(dependency of several packages)* : `libicu-dev`
 
   NOTE: node **version v0.10.x** or greater required due to module dependencies.
 
