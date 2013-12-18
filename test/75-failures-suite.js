@@ -10,7 +10,7 @@ define(['require'], function (require) {
     abortOnFail: true,
     setup: function (env, test) {
       GLOBAL.redis = require('redis');
-      env.util = require('./../lib/sockethub/util');
+      env.redisPool = require('redis-connection-pool')();
       env.confirmProps = {
         status: true,
         verb: 'confirm'
@@ -40,7 +40,7 @@ define(['require'], function (require) {
       env.resp_channel = 'sockethub:'+env.sockethubId+':dispatcher:outgoing:'+env.sid;
 
       var config = require('./../lib/sockethub/config-loader').get(env.config);
-      env.util.redis.clean(env.sockethubId).then(function () {
+      env.redisPool.clean('sockethub:'+env.sockethubId+':*', function () {
         test.result(true);
       });
     },
@@ -66,7 +66,7 @@ define(['require'], function (require) {
       });
     },
     takedown: function (env, test) {
-      env.util.redis.clean(env.sockethubId).then(function () {
+      env.redisPool.clean('sockethub:'+env.sockethubId+':*', function () {
         l.shutdown().then(function () {
           test.result(true);
         });
@@ -77,7 +77,7 @@ define(['require'], function (require) {
       {
         desc: "send bad json on job queue",
         run: function (env, test) {
-          // env.util.redis.get('blpop', env.resp_channel, function (err, replies) {
+          // env.redisPool.blpop(env.resp_channel, function (err, replies) {
           //   console.log('RECVD: ', resp[1]);
           //   var r = JSON.parse(resp[1]);
           //   test.assertAnd(r.status, false);
@@ -93,7 +93,7 @@ define(['require'], function (require) {
           // the listener doesn't send anything back when it gets invalid
           // json, so here we're just making sure nothing is thrown.
 
-          env.util.redis.set('rpush', env.job_channel, 'helloWorld1');
+          env.redisPool.rpush(env.job_channel, 'helloWorld1');
           test.done();
         }
       },
@@ -111,13 +111,13 @@ define(['require'], function (require) {
             sessionId: env.sid
           };
 
-          env.util.redis.get('blpop', env.resp_channel, function (err, resp) {
+          env.redisPool.blpop(env.resp_channel, function (err, resp) {
             var r = JSON.parse(resp[1]);
             console.log('received: '+resp[1]);
             test.assertAnd(r.status, false);
             test.assert(r.message, "invalid target array");
           });
-          env.util.redis.set('rpush', env.job_channel, JSON.stringify(job));
+          env.redisPool.rpush(env.job_channel, JSON.stringify(job));
         }
       },
 
@@ -134,8 +134,8 @@ define(['require'], function (require) {
             sessionId: env.sid
           };
 
-          env.util.redis.set('rpush', env.job_channel, JSON.stringify(job));
-          env.util.redis.get('blpop', env.resp_channel, function (err, resp) {
+          env.redisPool.rpush(env.job_channel, JSON.stringify(job));
+          env.redisPool.blpop(env.resp_channel, function (err, resp) {
             //console.log("GOT RESP: ", resp);
             var r = JSON.parse(resp[1]);
             test.assert(r.status, true);
@@ -181,7 +181,7 @@ define(['require'], function (require) {
   //     require('./../lib/sockethub/config-loader').clear();
   //     var config = require('./../lib/sockethub/config-loader').get(env.config);
   //     GLOBAL.redis = require('redis');
-  //     env.util = require('./../lib/sockethub/util');
+  //     env.redisPool = require('redis-connection-pool')();
   //     env.confirmProps = {
   //       status: true,
   //       verb: 'confirm'
@@ -224,7 +224,7 @@ define(['require'], function (require) {
   //   },
   //   takedown: function (env, test) {
   //     env.sockethub.shutdown();
-  //     env.util.redis.clean(env.sockethubId).then(function () {
+  //     env.redisPool.clean('sockethub:'+env.sockethubId+':*', function () {
   //       test.result(true);
   //     });
   //   },

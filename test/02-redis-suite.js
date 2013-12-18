@@ -24,25 +24,25 @@ define(['require'], function (require) {
         LOG_FILE: '',
         BASE_PATH: '../../../../'
       });
-      env.util = require('./../lib/sockethub/util');
-      test.assertTypeAnd(env.util, 'object');
-      env.util.redis.clean(env.sockethubId).then(function () {
+      env.redisPool = require('redis-connection-pool')();
+      test.assertTypeAnd(env.redisPool, 'object');
+      env.redisPool.clean('sockethub:'+env.sockethubId+':*', function () {
         test.result(true);
       });
     },
     takedown: function (env, test) {
-      env.util.redis.clean(env.sockethubId).then(function () {
+      env.redisPool.clean('sockethub:'+env.sockethubId+':*', function () {
         test.result(true);
       });
       require('./../lib/sockethub/config-loader').clear();
-      delete env.util;
+      delete env.redisPool;
     },
     tests: [
 
       {
         desc: "verify redis is available",
         run: function (env, test) {
-          env.util.redis.check().then(function() {
+          env.redisPool.check().then(function() {
             test.result(true);
           }, function (err) {
             test.result(true, err);
@@ -53,7 +53,7 @@ define(['require'], function (require) {
       {
         desc: "try to push/pop",
         run: function (env, test) {
-          env.util.redis.get('brpop', 'test', function (err, replies) {
+          env.redisPool.brpop('test', function (err, replies) {
             console.log('RECVD err: ', err);
             console.log('RECVD rep: ', replies[1]);
             if (err) {
@@ -64,16 +64,16 @@ define(['require'], function (require) {
             }
           });
 
-          env.util.redis.set('lpush', 'test', 'helloWorld1');
-          env.util.redis.set('lpush', 'test', 'helloWorld2');
-          env.util.redis.set('lpush', 'test', 'helloWorld3');
+          env.redisPool.lpush('test', 'helloWorld1');
+          env.redisPool.lpush('test', 'helloWorld2');
+          env.redisPool.lpush('test', 'helloWorld3');
         }
       },
 
       {
         desc: "get next in list",
         run: function (env, test) {
-          env.util.redis.get('brpop', 'test', function (err, replies) {
+          env.redisPool.brpop('test', function (err, replies) {
             if (err) {
               test.result(false, err);
             } else {
@@ -87,7 +87,7 @@ define(['require'], function (require) {
       {
         desc: "get next in list",
         run: function (env, test) {
-          env.util.redis.get('brpop', 'test', function (err, replies) {
+          env.redisPool.brpop('test', function (err, replies) {
             if (err) {
               test.result(false, err);
             } else {
@@ -119,7 +119,6 @@ define(['require'], function (require) {
           console.log('creating '+client.__name);
           client.on('error', function (err) {
             console.error('ERROR: '+err);
-            //throw new SockethubError('util.redisSet failed: ' + err);
           });
           client.on('ready', function () {
             callback(null, client);

@@ -20,11 +20,13 @@
 require("consoleplusplus/console++");
 var p = require('./../package.json');
 var cluster = require('cluster');
-var util = require('./../lib/sockethub/util.js');
 var listener;
 var initDispatcher = false;
 var dispatcher;
 var config;
+var redisPool = require('redis-connection-pool')('sockethubRedisPool', {
+  MAX_CLIENTS: 30
+});
 
 var argv = require ("argp")
     .description ("this executable is not meant to be run by the user, instead it's called from sockethub")
@@ -168,7 +170,7 @@ function listenerControl() {
     try {
       proto = require("./../lib/sockethub/protocol.js");
     } catch (e) {
-      throw new util.SockethubError(' [listener-control] unable to load lib/sockethub/protocol.js ' + e, true);
+      throw new Error(' [listener-control] unable to load lib/sockethub/protocol.js ' + e);
     }
 
     // initialize listeners
