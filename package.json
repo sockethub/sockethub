@@ -39,7 +39,8 @@
     "argp": "0.1.x",
     "winston": "0.7.x",
     "q": "0.9.x",
-    "irc-factory": "1.1.4"
+    "irc-factory": "1.1.4",
+    "redis-connection-pool": "*"
   },
   "devDependencies": {
     "teste": "*"
