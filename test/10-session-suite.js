@@ -215,6 +215,25 @@ define(['require'], function(require) {
       },
 
       {
+        desc: "Session#setConfig of complex objects using optional property param",
+        run: function(env, test) {
+          var t2 = { hello: 'world2', sub2: 'hithere', sub: { one: 'blah', five: 'yaya', three: { also: 'this also' }}};
+          var t3 = { hello: 'world2', sub: { one: 'blah', two: 'blah', three: { well: 'this too', also: 'this also' }, five: 'yaya' }, sub2: 'hithere' };
+
+          env.session.setConfig('test', 'test3', t3).then(function () {
+            return env.session.setConfig('test', 'test2', t2);
+          }).then(function () {
+            return env.session.getConfig('test', 'test3');
+          }).then(function (cfg) {
+            test.assertAnd(cfg, t3);
+            return env.session.getConfig('test', 'test2');
+          }).then(function (cfg) {
+            test.assert(cfg, t2);
+          });
+        }
+      },
+
+      {
         desc: "get platform instance",
         run: function (env, test) {
           var myConfig = {
