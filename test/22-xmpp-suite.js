@@ -10,33 +10,7 @@ define(['require'], function (require) {
     desc: "collection of tests for the xmpp platform",
     setup: function (env, test) {
 
-      env.xmpp = (function () {
-        var callbacks = {};
-        return {
-          on: new test.Stub(function (name, cb) {
-            console.log('XMPP STUB: on '+name);
-            callbacks[name] = cb;
-          }),
-          send: new test.Stub(function (address, text) {
-            console.log("XMPP STUB: send");
-          }),
-          connect: new test.Stub(function (creds) {
-            console.log('XMPP STUB: connect');
-            if (typeof callbacks.online === 'function') {
-              callbacks['online']();
-            }
-          }),
-          removeListener: function () {},
-          listeners: function() {},
-          addListener: function() {},
-          getRoster: new test.Stub(function (creds) {
-            console.log('XMPP STUB: getRoster');
-            //if (typeof callbacks.online === 'function') {
-            //  callbacks['online']();
-            //}
-          })
-        };
-      })();
+      env.xmpp = require('./mocks/simple-xmpp-mock')(test);
       GLOBAL.xmpp = env.xmpp;
 
       env.respHandler = function (testObj) {
