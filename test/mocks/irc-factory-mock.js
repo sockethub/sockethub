@@ -1,49 +1,63 @@
 var IRCFactory = function (test) {
   var callbacks = {};
 
-  return {
-    Api: function () {
-      return {
-        createClient: new test.Stub(function (key, creds) {
-          console.log('IRC STUB: createClient');
+  var client;
 
-          if (!callbacks[key]) {
-            callbacks[key] = {};
-          } else if (typeof callbacks[key].registered === 'function') {
-            callbacks[key].registered();
-          }
+  var api = {
+    createClient: new test.Stub(function (key, creds) {
+      console.log('IRC STUB: createClient called');
 
-          return {
-            irc: {
-              raw: test.Stub(function (arr) {
-                console.log('IRC STUB: raw');
-              }),
-              triggerEvent: test.Stub(function (name) {
-                if (!callbacks[key]) {
-                  callbacks[key] = {};
-                } else if (typeof callbacks[key][name] === 'function') {
-                  callbacks[key][name]();
-                }
-              })
+      client = {
+        irc: {
+          raw: test.Stub(function (arr) {
+            console.log('IRC STUB: raw');
+          }),
+          triggerEvent: test.Stub(function (name) {
+            if (!callbacks[key]) {
+              callbacks[key] = {};
+            } else if (typeof callbacks[key][name] === 'function') {
+              callbacks[key][name]();
             }
-          };
-        }),
-        unhookEvent: new test.Stub(function (key, name) {
-          console.log('IRC STUB: unhookEvent');
-          if (!callbacks[key]) {
-            callbacks[key] = {};
-          } else {
-            delete callbacks[key][name];
-          }
-        }),
-        hookEvent: new test.Stub(function (key, name, func) {
-          console.log('IRC STUB: hookEvent');
-          if (!callbacks[key]) {
-            callbacks[key] = {};
-          }
-          callbacks[key][name] = func;
-        })
+          })
+        }
       };
+
+      setTimeout(function () {
+        if (!callbacks[key]) {
+          callbacks[key] = {};
+        } else if (typeof callbacks[key].registered === 'function') {
+          //console.log('IRC STUB: calling registered callback with client:', client);
+          callbacks[key].registered(client);
+        }
+      }, 0);
+      return client;
+    }),
+    unhookEvent: new test.Stub(function (key, name) {
+      console.log('IRC STUB: unhookEvent');
+      if (!callbacks[key]) {
+        callbacks[key] = {};
+      } else {
+        delete callbacks[key][name];
+      }
+    }),
+    hookEvent: new test.Stub(function (key, name, func) {
+      console.log('IRC STUB: hookEvent');
+      if (!callbacks[key]) {
+        callbacks[key] = {};
+      }
+      callbacks[key][name] = func;
+    })
+  };
+
+  return {
+    ClientCalled: function () {
+      return client.irc.raw.called;
+    },
+    ClientNumCalled: function () {
+      return client.irc.raw.numCalled;
+    },
+    Api: function () {
+      return api;
     }
   };
 };

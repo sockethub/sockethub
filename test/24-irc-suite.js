@@ -17,18 +17,18 @@ define(['require'], function (require) {
       });
       test.assertTypeAnd(env.sessionManager.get, 'function');
 
+      // verbs
+      env.verbs = require('./platforms_schema_data/irc_verbs');
+      test.assertTypeAnd(env.verbs, 'object');
+
       // irc-factory mock
-      var IRCFactory = require('./mocks/irc-factory-mock')(test);
-      GLOBAL.IRCFactory = IRCFactory;
+      env.IRCFactory = require('./mocks/irc-factory-mock')(test);
+      GLOBAL.IRCFactory = env.IRCFactory;
       GLOBAL.redis = require('redis');
 
       env.api = IRCFactory.Api();
       test.assertTypeAnd(env.api, 'object');
-      test.assertTypeAnd(env.api.createClient, 'function');
-
-      env.client = env.api.createClient('testkey', {});
-      test.assertAnd(env.api.createClient.called, true);
-      test.assert(env.client.irc.raw.called, false);
+      test.assertType(env.api.createClient, 'function');
     },
     tests: [
       {
@@ -56,13 +56,33 @@ define(['require'], function (require) {
       {
         desc: "load platform",
         run: function (env, test) {
-          var platformIRC = require('./../lib/platforms/irc');
-          env.platformIRC = platformIRC();
-          env.platformIRC.init(env.psession).then(function() {
-            test.result(true);
-          }, function(err) {
-            test.result(false, err);
-          });
+          env.p_irc = require('./../lib/platforms/irc')();
+          test.assertType(env.p_irc.init, 'function');
+        }
+      },
+      {
+        desc: "#init",
+        run: function (env, test) {
+          return env.p_irc.init(env.psession);
+        }
+      },
+      {
+        desc: "set credentials",
+        run: function (env, test) {
+          return env.psession.setConfig('credentials', env.verbs.credentials);
+        }
+      },
+      {
+        desc: "#join",
+        run: function (env, test) {
+          return env.p_irc.join(env.verbs.join[0]);
+        }
+      },
+      {
+        desc: "#join calls stubs",
+        run: function (env, test) {
+          test.assertAnd(env.api.createClient.numCalled, 1);
+          test.assert(env.IRCFactory.ClientNumCalled(), 2); // #sockethub & #remotestore
         }
       }
     ]
