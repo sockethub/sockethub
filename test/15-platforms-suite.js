@@ -167,10 +167,9 @@ define(['require'], function (require) {
       }
   }
 
-  i = undefined;
-  for (var i in platforms) {
-    var platform = platforms[i].name;
-    var location = (platforms[i].location) ? ''+platforms[i].location :
+  for (var key in platforms) {
+    var platform = platforms[key].name;
+    var location = (platforms[key].location) ? ''+platforms[key].location :
                                              './../lib/platforms/'+platform;
     var pd;
     loadFailed = false;
@@ -193,8 +192,8 @@ define(['require'], function (require) {
       platform_test_suite.tests.push(buildTest(platform, pdi, 'cleanup'));
     }
 
-    for (var j in platforms[i].verbs) {
-      var verb = platforms[i].verbs[j].name;
+    for (var j in platforms[key].verbs) {
+      var verb = platforms[key].verbs[j].name;
       if (loadFailed) {
         platform_test_suite.tests.push(buildTest(platform, undefined, verb, 'failed to load platform module'));
       } else {
@@ -202,8 +201,7 @@ define(['require'], function (require) {
       }
     }
 
-
-
+    //
     // tests need to be assigned to a specific platform, currently
     // they are applied as we loop through the platforms. each time.
     //
