@@ -75,14 +75,123 @@ define(['require'], function (require) {
       {
         desc: "#join",
         run: function (env, test) {
-          return env.p_irc.join(env.verbs.join[0]);
+          var verb = 'join';
+          return env.p_irc[verb](env.verbs[verb][0]);
         }
       },
       {
         desc: "#join calls stubs",
         run: function (env, test) {
+          var verb = 'join';
           test.assertAnd(env.api.createClient.numCalled, 1);
-          test.assert(env.IRCFactory.ClientNumCalled(), 2); // #sockethub & #remotestore
+          test.assert(env.IRCFactory.ClientNumCalled(env.verbs[verb][0].actor.address), 2); // #sockethub & #remotestore
+        }
+      },
+      {
+        desc: "#send",
+        run: function (env, test) {
+          var verb = 'send';
+          return env.p_irc[verb](env.verbs[verb][0]);
+        }
+      },
+      {
+        desc: "#send calls stubs",
+        run: function (env, test) {
+          var verb = 'send';
+          test.assertAnd(env.api.createClient.numCalled, 1);
+          test.assert(env.IRCFactory.ClientNumCalled(env.verbs[verb][0].actor.address), 3); // #sockethub
+        }
+      },
+      {
+        desc: "#leave",
+        run: function (env, test) {
+          var verb = 'leave';
+          return env.p_irc[verb](env.verbs[verb][0]);
+        }
+      },
+      {
+        desc: "#leave calls stubs",
+        run: function (env, test) {
+          var verb = 'leave';
+          test.assertAnd(env.api.createClient.numCalled, 1);
+          test.assert(env.IRCFactory.ClientNumCalled(env.verbs[verb][0].actor.address), 4); // #remotestorage
+        }
+      },
+      {
+        desc: "#observe",
+        run: function (env, test) {
+          var verb = 'observe';
+          return env.p_irc[verb](env.verbs[verb][0]);
+        }
+      },
+      {
+        desc: "#observe calls stubs",
+        run: function (env, test) {
+          var verb = 'observe';
+          test.assertAnd(env.api.createClient.numCalled, 1);
+          test.assert(env.IRCFactory.ClientNumCalled(env.verbs[verb][0].actor.address), 5); // #remotestorage
+        }
+      },
+      {
+        desc: "#update topic",
+        run: function (env, test) {
+          var verb = 'update';
+          return env.p_irc[verb](env.verbs[verb][0]);
+        }
+      },
+      {
+        desc: "#update topic calls stubs",
+        run: function (env, test) {
+          var verb = 'update';
+          test.assertAnd(env.api.createClient.numCalled, 1);
+          test.assert(env.IRCFactory.ClientNumCalled(env.verbs[verb][0].actor.address), 6); // #remotestorage
+        }
+      },
+      {
+        desc: "#update nick",
+        run: function (env, test) {
+          var verb = 'update';
+          return env.p_irc[verb](env.verbs[verb][1]);
+        }
+      },
+      {
+        desc: "#update nick calls stubs",
+        run: function (env, test) {
+          var verb = 'update';
+          test.assertAnd(env.api.createClient.numCalled, 1);
+          test.assert(env.IRCFactory.ClientNumCalled(env.verbs[verb][0].actor.address), 7); // #remotestorage
+        }
+      },
+      {
+        desc: "#join with old credentials",
+        run: function (env, test) {
+          var verb = 'join';
+          return env.p_irc[verb](env.verbs[verb][0]);
+        }
+      },
+      {
+        desc: "#join with old credentials makes new client (calls createClient again)",
+        run: function (env, test) {
+          var verb = 'join';
+          test.assertAnd(env.api.createClient.numCalled, 2);
+          test.assert(env.IRCFactory.ClientNumCalled(env.verbs[verb][0].actor.address), 2); // #sockethub & #remotestore
+        }
+      },
+      {
+        desc: "#send with renamed creds",
+        run: function (env, test) {
+          var verb = 'send';
+          return env.p_irc[verb](env.verbs[verb][1]);
+        }
+      },
+      {
+        desc: "#send with renamed creds calls stubs",
+        run: function (env, test) {
+          var verb = 'send';
+          // ensure new client was not created
+          test.assertAnd(env.api.createClient.numCalled, 2);
+          // new object was not used to send message
+          test.assert(env.IRCFactory.ClientNumCalled(env.verbs[verb][0].actor.address), 2);
         }
       }
     ]

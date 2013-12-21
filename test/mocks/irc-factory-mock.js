@@ -1,7 +1,7 @@
 var IRCFactory = function (test) {
   var callbacks = {};
 
-  var client;
+  var clients = {};
 
   var api = {
     createClient: new test.Stub(function (key, creds) {
@@ -21,7 +21,7 @@ var IRCFactory = function (test) {
           })
         }
       };
-
+      clients[creds.nick] = client;
       setTimeout(function () {
         if (!callbacks[key]) {
           callbacks[key] = {};
@@ -50,11 +50,11 @@ var IRCFactory = function (test) {
   };
 
   return {
-    ClientCalled: function () {
-      return client.irc.raw.called;
+    ClientCalled: function (key) {
+      return clients[key].irc.raw.called;
     },
-    ClientNumCalled: function () {
-      return client.irc.raw.numCalled;
+    ClientNumCalled: function (key) {
+      return clients[key].irc.raw.numCalled;
     },
     Api: function () {
       return api;
