@@ -79,13 +79,15 @@ var SOCKETHUB_CREDS = {
   irc: {
     'credentials': {
       '# nickname #': {
-        'nick' :      '# nickname #',
-        'password' :  '# password #',
-        'server' :    '# server #',
-        'channels' :  [ '#channelname' ],
         'actor': {
           'address': '# nickname #',
           'name':    '# displayname #'
+        },
+        'object': {
+          'objectType': 'credentials',
+          'nick' :      '# nickname #',
+          'password' :  '# password #',
+          'server' :    '# server #'
         }
       }
     }

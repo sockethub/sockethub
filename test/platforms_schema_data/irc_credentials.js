@@ -56,10 +56,15 @@ cfg.tests.push({
   'data': {
     'credentials': {
       'bob' : {
-        'server': 'asdasdasdasd',
-        'nick': 'bob',
-        'password': 'asdasdasdasd',
-        'channels': ['asdasdasdasd']
+        'actor': {
+          'address': 'bob',
+        },
+        'object': {
+          'objectType': 'credentials',
+          'server': 'asdasdasdasd',
+          'nick': 'bob',
+          'password': 'asdasdasdasd'
+        }
       }
     }
   }
