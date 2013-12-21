@@ -33,7 +33,7 @@ Below is a list of platforms we're currently working on and their activity strea
  * Facebook - <kbd>![completed](http://sockethub.org/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png)fetch</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd>
  * Twitter - <kbd>![completed](http://sockethub.org/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) fetch</kbd>
  * Feeds *(RSS, Atom)* - <kbd>![completed](http://sockethub.org/img/checkmark.png) fetch</kbd>
- * IRC - <kbd>![completed](http://sockethub.org/img/checkmark.png) send</kbd> <kbd>join</kbd> <kbd>leave</kbd>
+ * IRC - <kbd>![completed](http://sockethub.org/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) join</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) leave</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) observe</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) update</kbd>
  * pump.io - <kbd>post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>fetch</kbd>
  * WebFinger - <kbd>search</kbd>
  * RDF - <kbd>search</kbd> <kbd>fetch</kbd>
