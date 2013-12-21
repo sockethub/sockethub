@@ -9,10 +9,9 @@ var cfg = {
 
 // basic
 cfg.tests.push({
-  'willFail': false,
+  'willFail': true,
   'data': {
-    'credentials': { // still need to figure a way to define this as invalid
-    }
+    'credentials': {}
   }
 });
 
@@ -26,40 +25,40 @@ cfg.tests.push({
 cfg.tests.push({
   'willFail': true,
   'data': {
-    'credentials': {
-      'accessToken': 'asdasdasdasd',
-      'actor': 'asdasdasdasd'
-    }
+    'accessToken': 'asdasdasdasd',
+    'actor': 'asdasdasdasd'
   }
 });
 
 cfg.tests.push({
   'willFail': true,
   'data': {
-    'credentials': {
-      'accessed_token' : 'sadfsdfsdf'
-    }
+    'accessed_token' : 'sadfsdfsdf'
   }
 });
 
 cfg.tests.push({
   'willFail': true,
   'data': {
-    'credentials': {
-      'access_token' : 'sadfsdfsdf',
-      'actor' : 'sadfsdfsdf'
-    }
+    'objectType': 'credentials',
+    'accessed_token' : 'sadfsdfsdf'
   }
 });
 
 cfg.tests.push({
   'willFail': true,
   'data': {
-    'credentials': {
-      'yoyo' : {
-        'accessed_token' : 'sadfsdfsdf',
-        'actor' : 'yoyo'
-      }
+    'access_token' : 'sadfsdfsdf',
+    'actor' : 'sadfsdfsdf'
+  }
+});
+
+cfg.tests.push({
+  'willFail': true,
+  'data': {
+    'yoyo' : {
+      'accessed_token' : 'sadfsdfsdf',
+      'actor' : 'yoyo'
     }
   }
 });
@@ -67,30 +66,14 @@ cfg.tests.push({
 cfg.tests.push({
   'willFail': false,
   'data': {
-    'credentials': {
-      'jdoe': {
-        'access_token' : 'sadfsdfsdf',
-        'actor' : { 'address' : 'jdoe' }
-      }
-    }
+    'objectType': 'credentials',
+    'access_token' : 'sadfsdfsdf',
   }
 });
 
 cfg.tests.push({
   'willFail': false,
-  'data': {
-    'credentials': {
-      'jdoe': {
-        'access_token' : 'sadfsdfsdf'
-      }
-    }
-  }
-});
-
-
-cfg.tests.push({
-  'willFail': false,
-  'data': working_creds[cfg.platform]
+  'data': working_creds[cfg.platform].object
 });
 
 module.exports = cfg;

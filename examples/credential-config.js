@@ -27,69 +27,70 @@
 
 var SOCKETHUB_CREDS = {
   email: {
-    'credentials': {
-      '# useraddress #' : {
-        'actor': {
-          'address': '# useraddress #',
-          'name':    '# displayname #'
-        },
-        'smtp': {
-          'host':     '# example.com #',
-          'username': '# username #',
-          'password': '# password #',
-          'tls':      true, // must be a boolean
-          'port': 465 // must be number
-        },
-        'imap': {
-          'host':     '# example.com #',
-          'username': '# username #',
-          'password': '# password #',
-          'tls':      true, // must be a boolean
-          'port': 993 // not required, must be number
-        }
+    'verb': 'set',
+    'platform': 'dispatcher',
+    'target': [{'platform': 'email'}],
+    'object': {
+      'objectType': 'credentials',
+      'smtp': {
+        'host':     '# example.com #',
+        'username': '# username #',
+        'password': '# password #',
+        'tls':      true, // must be a boolean
+        'port': 465 // must be number
+      },
+      'imap': {
+        'host':     '# example.com #',
+        'username': '# username #',
+        'password': '# password #',
+        'tls':      true, // must be a boolean
+        'port': 993 // not required, must be number
       }
     }
   },
   facebook: {
-    'credentials': {
-      '# useraddress #': {
-        'access_token' : '# token from facebook #',
-        'actor': {
-          'address': '# username #',
-          'name':    '# displayname #'
-        }
-      }
+    'verb': 'set',
+    'platform': 'dispatcher',
+    'target': [{'platform': 'facebook'}],
+    'actor': {
+      'address': '# username #',
+      'name':    '# displayname #'
+    },
+    'object': {
+      'objectType': 'credentials',
+      'access_token' : '# token from facebook #'
     }
   },
   feeds: {}, // none
   twitter: {
-    'credentials': {
-      '# useraddress #': {
-        'access_token' :        '# token from twitter #',
-        'access_token_secret' : '# token from twitter #',
-        'consumer_secret' :     '# token from twitter #',
-        'consumer_key' :        '# token from twitter #',
-        'actor': {
-          'address': '# username #',
-          'name':    '# displayname #'
-        }
-      }
+    'verb': 'set',
+    'platform': 'dispatcher',
+    'target': [{'platform': 'twitter'}],
+    'actor': {
+      'address': '# username #',
+      'name':    '# displayname #'
+    },
+    'object': {
+      'objectType': 'credentials',
+      'access_token' :        '# token from twitter #',
+      'access_token_secret' : '# token from twitter #',
+      'consumer_secret' :     '# token from twitter #',
+      'consumer_key' :        '# token from twitter #',
     }
   },
   irc: {
-    'credentials': {
-      '# nickname #': {
-        'actor': {
-          'address': '# nickname #',
-          'name':    '# displayname #'
-        },
-        'object': {
-          'objectType': 'credentials',
-          'nick' :      '# nickname #',
-          'password' :  '# password #',
-          'server' :    '# server #'
-        }
-      }
+    'verb': 'set',
+    'platform': 'dispatcher',
+    'target': [{'platform': 'irc'}],
+    'actor': {
+      'address': '# nickname #',
+      'name':    '# displayname #'
+    },
+    'object': {
+      'objectType': 'credentials',
+      'nick' :      '# nickname #',
+      'password' :  '# password #',
+      'server' :    '# server #'
     }
   }
 };

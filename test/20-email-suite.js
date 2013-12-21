@@ -73,23 +73,20 @@ define(['require'], function (require) {
         desc: "set credential details",
         run: function (env, test) {
           var job = {
-            target: 'email',
+            actor: { address: 'whitney@houston.com' },
             object: {
-              credentials: {
-                'whitney@houston.com': {
-                  smtp: {
-                    host: 'mailservice.example.com',
-                    username: 'whit',
-                    password: 'ney'
-                  }
-                }
+              objectType: 'credentials',
+              smtp: {
+                host: 'mailservice.example.com',
+                username: 'whit',
+                password: 'ney'
               }
             }
           };
 
-          env.psession.setConfig('credentials', job.object.credentials).then(function () {
-            env.psession.getConfig('credentials').then(function (creds) {
-              test.assert(creds, job.object.credentials);
+          env.psession.setConfig('credentials', job.actor.address, job).then(function () {
+            env.psession.getConfig('credentials', job.actor.address).then(function (creds) {
+              test.assert(creds, job);
             }, function (err) {
               test.result(false, err);
             });

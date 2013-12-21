@@ -25,14 +25,13 @@ function Email($rootScope, $q, SH, CH) {
       }
 
       if (SH.isConnected()) {
-        var cred_tpl = SOCKETHUB_CREDS['email']['credentials']['# useraddress #']['smtp'];
-        cred_tpl.username = config.username;
-        cred_tpl.password = config.password;
-        cred_tpl.host = config.smtpServer;
+        var cred_tpl = SOCKETHUB_CREDS.email;
+        cred_tpl.object.username = config.username;
+        cred_tpl.actor.address = config.username;
+        cred_tpl.object.password = config.password;
+        cred_tpl.object.host = config.smtpServer;
 
-        SH.set('email', 'credentials', config.emailAddress, {
-          smtp: cred_tpl
-        }).then(function () {
+        SH.submit.call(cred_tpl).then(function () {
           defer.resolve(config);
         }, defer.reject);
       } else {

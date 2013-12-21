@@ -95,9 +95,13 @@ function buildSchemaTest(name, p, filename, type, prop, num, data, err) {
         //console.log('TYPE: ', type);
         //console.log('PROP: ', prop);
         //console.log('SCHEMA: ', p.schema[type]);
+        test.assertTypeAnd(p.schema[type], 'object');
+        test.assertTypeAnd(p.schema[type].credentials, 'object');
+        test.assertTypeAnd(p.schema[type].credentials.properties, 'object');
+        test.assertTypeAnd(p.schema[type].credentials.properties.object, 'object');
 
         var jsv = JSVlib.createEnvironment();
-        var report = jsv.validate(data.data, p.schema[type]);
+        var report = jsv.validate(data.data, p.schema[type].credentials.properties.object);
         //console.log('error report: ', report.errors);
         //console.log('error report length: ', report.errors.length);
 
@@ -139,6 +143,7 @@ define(['require'], function (require) {
         t = require(schema_test_files[i]);
       } catch (e) {
         loadFailed = true;
+        //console.log('*** 1', e.stack);
         platform_test_suite.tests.push(buildSchemaTest(undefined, undefined,
                                                       schema_test_files[i],
                                                       undefined, undefined, undefined,

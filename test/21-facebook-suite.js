@@ -79,7 +79,12 @@ define(['require'], function (require) {
         desc: "set credential details",
         run: function (env, test) {
           var job = {
-            target: 'facebook',
+            actor: {
+              address: 'fbuser'
+            },
+            target: [{
+              platform: 'facebook'
+            }],
             object: {
               credentials: {
                 fbuser: {
@@ -92,10 +97,9 @@ define(['require'], function (require) {
             }
           };
 
-          env.psession.setConfig('credentials', job.object.credentials).then(function () {
-            env.psession.getConfig('credentials').then(function (creds) {
-              console.log('CREDS:', creds);
-              test.assert(creds, job.object.credentials);
+          env.psession.setConfig('credentials', job.actor.address, job).then(function () {
+            env.psession.getConfig('credentials', job.actor.address).then(function (creds) {
+              test.assert(creds, job);
             }, function (err) {
               test.result(false, err);
             });

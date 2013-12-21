@@ -1,4 +1,4 @@
-var working_creds = require('./../../examples/credential-config.js');
+//var working_creds = require('./../../examples/credential-config.js');
 var cfg = {
   'platform': 'xmpp',
   'type': 'set',
@@ -6,13 +6,11 @@ var cfg = {
   'tests': []
 };
 
-
 // basic
 cfg.tests.push({
-  'willFail': false,
+  'willFail': true,
   'data': {
-    'credentials': { // still need to figure a way to define this as invalid
-    }
+    'credentials': {}
   }
 });
 
@@ -23,40 +21,34 @@ cfg.tests.push({
   }
 });
 
-
 // creds
 cfg.tests.push({
   'willFail': true,
   'data': {
-    'credentials': {
-      'server': 'asdasdasdasd',
-      'username': 'asdasdasdasd',
-      'password': 'asdasdasdasd',
-      'resource': 'asdasdasdasd',
-      'port': 123
-    }
+    'server': 'asdasdasdasd',
+    'username': 'asdasdasdasd',
+    'password': 'asdasdasdasd',
+    'resource': 'asdasdasdasd',
+    'port': 123
   }
 });
 
 cfg.tests.push({
   'willFail': false,
   'data': {
-    'credentials': {
-      'bob' : {
-        'server': 'asdasdasdasd',
-        'username': 'asdasdasdasd',
-        'password': 'asdasdasdasd',
-        'resource': 'asdasdasdasd',
-        'port': 123
-      }
-    }
+    'objectType': 'credentials',
+    'server': 'asdasdasdasd',
+    'username': 'asdasdasdasd',
+    'password': 'asdasdasdasd',
+    'resource': 'asdasdasdasd',
+    'port': 123
   }
 });
 
 
-cfg.tests.push({
-  'willFail': false,
-  'data': working_creds[cfg.platform]
-});
+// cfg.tests.push({
+//   'willFail': false,
+//   'data': working_creds[cfg.platform].object
+// });
 
 module.exports = cfg;

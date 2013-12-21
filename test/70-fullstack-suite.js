@@ -175,18 +175,18 @@ define(['require'], function (require) {
         run: function (env, test) {
           var data = {
             platform: "dispatcher",
-            target: {
-              platform: "email"
+            actor: {
+              address: 'user@example.com'
             },
+            target: [{
+              platform: "email"
+            }],
             object: {
-              credentials: {
-                "user@example.com": {
-                  smtp: {
-                    username: 'user',
-                    password: 'secretcode',
-                    host: 'example.com'
-                  }
-                }
+              objectType: 'credentials',
+              smtp: {
+                username: 'user',
+                password: 'secretcode',
+                host: 'example.com'
               }
             },
             verb: "set",
@@ -212,7 +212,7 @@ define(['require'], function (require) {
             platform: 'emailo',
             actor: { address: 'user@example.com' },
             object: { subject: 'test email subject', text: 'test email body' },
-            target: [{ address: 'user2@example.com.com' }]
+            target: [{ address: 'user2@example.com' }]
           };
 
           var expected = {
@@ -226,7 +226,7 @@ define(['require'], function (require) {
       },
 
       {
-        desc: "try to send with set credentials",
+        desc: "try to send with previsously set credentials",
         run: function (env, test) {
           var data = {
             rid: '002',

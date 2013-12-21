@@ -1,15 +1,13 @@
 module.exports = {
   credentials: {
-    'testuser' : {
-      'actor': {
-        'address': 'testuser'
-      },
-      'object': {
-        'objectType': 'credentials',
-        'server': 'irc.host.net',
-        'nick': 'testuser',
-        'password': 'asdasdasdasd'
-      }
+    actor: {
+      address: 'testuser'
+    },
+    object: {
+      objectType: 'credentials',
+      server: 'irc.host.net',
+      nick: 'testuser',
+      password: 'asdasdasdasd'
     }
   },
   join: [

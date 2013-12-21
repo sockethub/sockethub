@@ -63,25 +63,21 @@ define(['require'], function (require) {
         desc: "set insufficient credential details",
         run: function (env, test) {
           var job = {
-            target: 'twitter',
+            actor: {address: 'foobar' },
+            target: [{address: 'twitter'}],
             object: {
-              credentials: {
-                foobar: {
-                  actor: {
-                    address: "foobar"
-                  },
-                  access_token: 'abcde',
-                  consumer_secret: "hello"
-                }
-              }
+              objectType: 'credentials',
+              access_token: 'abcde',
+              consumer_secret: "hello"
             }
           };
 
-          env.psession.setConfig('credentials', job.object.credentials).then(function () {
-            env.psession.getConfig('credentials').then(function (creds) {
+          env.psession.setConfig('credentials', job.actor.address, job).then(function () {
+            env.psession.getConfig('credentials', job.actor.address).then(function (creds) {
               console.log('CREDS:', creds);
-              test.assert(creds, job.object.credentials);
+              test.assert(creds, job);
             }, function (err) {
+              console.log("ERROR: ", err);
               test.result(false, err);
             });
           }, function (err) {
@@ -116,26 +112,21 @@ define(['require'], function (require) {
         desc: "set correct credential details",
         run: function (env, test) {
           var job = {
-            target: 'twitter',
+            actor: {address: 'foobar' },
+            target: [{address: 'twitter'}],
             object: {
-              credentials: {
-                foobar: {
-                  actor: {
-                    address: "foobar"
-                  },
-                  access_token: 'abcde',
-                  access_token_secret: 'abcde',
-                  consumer_key: 'abcde',
-                  consumer_secret: "hello"
-                }
-              }
+              objectType: 'credentials',
+              access_token: 'abcde',
+              access_token_secret: 'abcde',
+              consumer_key: 'abcde',
+              consumer_secret: "hello"
             }
           };
 
-          env.psession.setConfig('credentials', job.object.credentials).then(function () {
-            env.psession.getConfig('credentials').then(function (creds) {
+          env.psession.setConfig('credentials', job.actor.address, job).then(function () {
+            env.psession.getConfig('credentials', job.actor.address).then(function (creds) {
               console.log('CREDS:', creds);
-              test.assert(creds, job.object.credentials);
+              test.assert(creds, job);
             }, function (err) {
               test.result(false, err);
             });

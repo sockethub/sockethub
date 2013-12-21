@@ -184,8 +184,8 @@ define(['require'], function(require) {
       {
         desc: "Session#setConfig sets the settings",
         run: function(env, test) {
-          env.session.setConfig('test', { foo: 'bar' }).then(function () {
-            return env.session.getConfig('test');
+          env.session.setConfig('test', 'testkey', { foo: 'bar' }).then(function () {
+            return env.session.getConfig('test', 'testkey');
           }).then(function (cfg) {
             test.assert(cfg, { foo: 'bar' });
           }, function (err) {
@@ -193,24 +193,6 @@ define(['require'], function(require) {
             test.result(false, err);
           });
 
-        }
-      },
-      {
-        desc: "Session#setConfig of complex objects that have clashing namespaces merge nicely",
-        run: function(env, test) {
-          var t1 = { hello: 'world', sub: { one: 'blah', two: 'blah', three: { well: 'this too' }}};
-          var t2 = { hello: 'world2', sub2: 'hithere', sub: { one: 'blah', five: 'yaya', three: { also: 'this also' }}};
-          var t3 = { hello: 'world2', sub: { one: 'blah', two: 'blah', three: { well: 'this too', also: 'this also' }, five: 'yaya' }, sub2: 'hithere' };
-
-          env.session.setConfig('test', t1).then(function () {
-            return env.session.setConfig('test', t2);
-          }).then(function () {
-            return env.session.getConfig('test');
-          }).then(function (cfg) {
-            //console.log('cfg:',cfg);
-            //console.log('t3:',cfg);
-            test.assert(cfg, t3);
-          });
         }
       },
 
@@ -246,9 +228,9 @@ define(['require'], function(require) {
           var psession;
           env.session.getPlatformSession('test').then(function (p) {
             psession = p;
-            return psession.setConfig('testcfg', myConfig);
+            return psession.setConfig('testcfg', 'testkey', myConfig);
           }).then(function () {
-            return psession.getConfig('testcfg');
+            return psession.getConfig('testcfg', 'testkey');
           }).then(function (cfg) {
             test.assert(cfg, myConfig);
           }, function (err) {
@@ -294,11 +276,11 @@ define(['require'], function(require) {
         desc: "Session#__cleanup clears platforms and settings",
         run: function(env, test) {
           test.assert(env.session.isRedisKeySet(), true);
-          env.session.setConfig('yarg', { foo: 'bar' });
+          env.session.setConfig('yarg', 'testkey', { foo: 'bar' });
           //env.session.addPlatform('phu-quoc');
           env.session.__cleanup();
           //test.assert(env.session.getPlatforms(), []);
-          env.session.getConfig('yarg').then(function (cfg) {
+          env.session.getConfig('yarg', 'testkey').then(function (cfg) {
             test.assert(cfg, {});
             test.result(false);
           }, function (err) {
@@ -379,7 +361,7 @@ define(['require'], function(require) {
       test.assertTypeAnd(redis.createClient, 'function');
       env.Session.get(env.sid).then(function (session) {
         env.session = session;
-        env.session.setConfig('remoteStorage', {
+        env.session.setConfig('remoteStorage', 'default', {
           storageInfo: {
             href: 'http://localhost:12345/storage',
             type:"https://www.w3.org/community/rww/wiki/read-write-web-00#simple"
@@ -412,7 +394,8 @@ define(['require'], function(require) {
             then(function(source, result) {
               test.assert(env.captured.length, 1);
             }, function (err) {
-              test.result(false);
+              console.log("ERROR ", err);
+              test.result(false, err);
             });
         }
       },

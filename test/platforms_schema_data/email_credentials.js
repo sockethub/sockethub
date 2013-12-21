@@ -6,13 +6,11 @@ var cfg = {
   'tests': []
 };
 
-
 // basic
 cfg.tests.push({
-  'willFail': false,
+  'willFail': true,
   'data': {
-    'credentials': { // still need to figure a way to define this as invalid
-    }
+    'credentials': {}
   }
 });
 
@@ -23,21 +21,34 @@ cfg.tests.push({
   }
 });
 
-
 // smtp
 cfg.tests.push({
   'willFail': true,
   'data': {
-    'credentials': {
-      'smtp': {
-        'host': 'asdasdasdasd',
-        'username': 'asdasdasdasd',
-        'password': 'asdasdasdasd',
-        'tls': 'asdasdasdasd',
-        'port': 'asdasdasdasd',
-        'domain': 'asdasdasdasd',
-        'mimeTransport': 'asdasdasdasd'
-      }
+    'smtp': {
+      'host': 'asdasdasdasd',
+      'username': 'asdasdasdasd',
+      'password': 'asdasdasdasd',
+      'tls': 'asdasdasdasd',
+      'port': 'asdasdasdasd',
+      'domain': 'asdasdasdasd',
+      'mimeTransport': 'asdasdasdasd'
+    }
+  }
+});
+
+cfg.tests.push({
+  'willFail': true,
+  'data': {
+    'smtp': {
+      'objectType': 'credentials',
+      'host': 'asdasdasdasd',
+      'username': 'asdasdasdasd',
+      'password': 'asdasdasdasd',
+      'tls': true,
+      'port': 'asdasdasdasd',
+      'domain': 'asdasdasdasd',
+      'mimeTransport': 'asdasdasdasd'
     }
   }
 });
@@ -45,21 +56,14 @@ cfg.tests.push({
 cfg.tests.push({
   'willFail': false,
   'data': {
-    'credentials': {
-      'bob' : {
-        'actor': {
-          'address': 'bob',
-          'name': "Bob Doe"
-        },
-        'smtp': {
-          'host': 'asdasdasdasd',
-          'username': 'asdasdasdasd',
-          'password': 'asdasdasdasd',
-          'tls': true,
-          'domain': 'asdasdasdasd',
-          'mimeTransport': 'asdasdasdasd'
-        }
-      }
+    'objectType': 'credentials',
+    'smtp': {
+      'host': 'asdasdasdasd',
+      'username': 'asdasdasdasd',
+      'password': 'asdasdasdasd',
+      'tls': true,
+      'domain': 'asdasdasdasd',
+      'mimeTransport': 'asdasdasdasd'
     }
   }
 });
@@ -68,14 +72,12 @@ cfg.tests.push({
 cfg.tests.push({
   'willFail': true,
   'data': {
-    'credentials': {
-      'imap': {
-        'host': 'asdasdasdasd',
-        'username': 'asdasdasdasd',
-        'password': 'asdasdasdasd',
-        'tls': 'asdasdasdasd',
-        'port': 'asdasdasdasd'
-      }
+    'imap': {
+      'host': 'asdasdasdasd',
+      'username': 'asdasdasdasd',
+      'password': 'asdasdasdasd',
+      'tls': 'asdasdasdasd',
+      'port': 'asdasdasdasd'
     }
   }
 });
@@ -83,14 +85,12 @@ cfg.tests.push({
 cfg.tests.push({
   'willFail': true,
   'data': {
-    'credentials': {
-      'bob' : {
-        'actor': {
-          'address': 'bob',
-          'name': "Bob Doe"
-        },
-        'smtp': {
-        }
+    'bob' : {
+      'actor': {
+        'address': 'bob',
+        'name': "Bob Doe"
+      },
+      'smtp': {
       }
     }
   }
@@ -99,27 +99,19 @@ cfg.tests.push({
 cfg.tests.push({
   'willFail': false,
   'data': {
-    'credentials': {
-      'bob' : {
-        'actor': {
-          'address': 'bob',
-          'name': "Bob Doe"
-        },
-        'smtp': {
-          'host': 'asdasdasdasd',
-          'username': 'asdasdasdasd',
-          'password': 'asdasdasdasd',
-          'port': 123
-        }
-      }
+    'objectType': 'credentials',
+    'smtp': {
+      'host': 'asdasdasdasd',
+      'username': 'asdasdasdasd',
+      'password': 'asdasdasdasd',
+      'port': 123
     }
   }
 });
 
-
 cfg.tests.push({
   'willFail': false,
-  'data': working_creds[cfg.platform]
+  'data': working_creds[cfg.platform].object
 });
 
 module.exports = cfg;

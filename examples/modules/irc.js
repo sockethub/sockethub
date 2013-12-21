@@ -24,17 +24,18 @@ function IRC($rootScope, $q, SH, CH) {
       }
 
       if (SH.isConnected()) {
-        var cred_tpl = SOCKETHUB_CREDS.irc.credentials['# nickname #'];
-        cred_tpl.nick = config.nick;
-        cred_tpl.password = config.password || '';
-        cred_tpl.server = config.server;
+        var cred_tpl = SOCKETHUB_CREDS.irc;
+        cred_tpl.actor.address = config.nick;
+        cred_tpl.object.nick = config.nick;
+        cred_tpl.object.password = config.password || '';
+        cred_tpl.object.server = config.server;
 
         if (config.channel.indexOf('#') < 0) {
           config.channel = '#' + config.channel;
         }
         cred_tpl.channels = [config.channel];
 
-        SH.set('irc', 'credentials', config.nick, cred_tpl).then(function () {
+        SH.submit.call(cred_tpl).then(function () {
           defer.resolve(config);
         }, defer.reject);
       } else {

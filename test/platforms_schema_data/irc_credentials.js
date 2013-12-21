@@ -9,10 +9,9 @@ var cfg = {
 
 // basic
 cfg.tests.push({
-  'willFail': false,
+  'willFail': true,
   'data': {
-    'credentials': { // still need to figure a way to define this as invalid
-    }
+    'credentials': {}
   }
 });
 
@@ -28,52 +27,38 @@ cfg.tests.push({
 cfg.tests.push({
   'willFail': true,
   'data': {
-    'credentials': {
-      'server': 'asdasdasdasd',
-      'nick': 'asdasdasdasd',
-      'password': 'asdasdasdasd',
-      'channels': ['asdasdasdasd']
-    }
+    'objectType': 'credentials',
+    'server': 'asdasdasdasd',
+    'nick': 'asdasdasdasd',
+    'password': 'asdasdasdasd',
+    'channels': ['asdasdasdasd']
   }
 });
 
 cfg.tests.push({
   'willFail': true,
   'data': {
-    'credentials': {
-      'bob' : {
-        'server': 'asdasdasdasd',
-        'nick': 'bob',
-        'password': 'asdasdasdasd',
-        'channels': 'asdasdasdasd'
-      }
-    }
+    'server': 'asdasdasdasd',
+    'nick': 'bob',
+    'password': 'asdasdasdasd',
+    'channels': 'asdasdasdasd'
   }
 });
 
 cfg.tests.push({
   'willFail': false,
   'data': {
-    'credentials': {
-      'bob' : {
-        'actor': {
-          'address': 'bob',
-        },
-        'object': {
-          'objectType': 'credentials',
-          'server': 'asdasdasdasd',
-          'nick': 'bob',
-          'password': 'asdasdasdasd'
-        }
-      }
-    }
+    'objectType': 'credentials',
+    'server': 'asdasdasdasd',
+    'nick': 'bob',
+    'password': 'asdasdasdasd'
   }
 });
 
 
 cfg.tests.push({
   'willFail': false,
-  'data': working_creds[cfg.platform]
+  'data': working_creds[cfg.platform].object
 });
 
 module.exports = cfg;

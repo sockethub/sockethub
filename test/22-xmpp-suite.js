@@ -62,26 +62,24 @@ define(['require'], function (require) {
         desc: "set credential details",
         run: function (env, test) {
           var job = {
-            target: 'xmpp',
+            actor: { address: 'user@example.com' },
+            target: [{
+              address: 'xmpp'
+            }],
             object: {
-              credentials: {
-                "user@example.com": {
-                  actor: {
-                    address: "user@example.com"
-                  },
-                  username: "user@example.com",
-                  password: "1234",
-                  server: "example.com",
-                  resource: "Home"
-                }
-              }
+              objectType: 'credentials',
+              username: "user@example.com",
+              password: "1234",
+              server: "example.com",
+              resource: "Home"
             }
           };
 
-          env.psession.setConfig('credentials', job.object.credentials).then(function () {
-            env.psession.getConfig('credentials').then(function (creds) {
-              console.log('CREDS:', creds);
-              test.assert(creds, job.object.credentials);
+          env.psession.setConfig('credentials', job.actor.address, job).then(function () {
+            env.psession.getConfig('credentials', job.actor.address).then(function (creds) {
+              console.log('CREDS: J', job);
+              console.log('CREDS: C', creds);
+              test.assert(creds, job);
             }, function (err) {
               test.result(false, err);
             });
@@ -94,24 +92,21 @@ define(['require'], function (require) {
         desc: "get credential details",
         run: function (env, test) {
           var job = {
-            target: 'xmpp',
+            actor: { address: 'user@example.com' },
+            target: [{
+              address: 'xmpp'
+            }],
             object: {
-              credentials: {
-                "user@example.com": {
-                  actor: {
-                    address: "user@example.com"
-                  },
-                  username: "user@example.com",
-                  password: "1234",
-                  server: "example.com",
-                  resource: "Home"
-                }
-              }
+              objectType: 'credentials',
+              username: "user@example.com",
+              password: "1234",
+              server: "example.com",
+              resource: "Home"
             }
           };
 
-          env.psession.getConfig('credentials').then(function (creds) {
-            test.assert(creds, job.object.credentials);
+          env.psession.getConfig('credentials', job.actor.address).then(function (creds) {
+            test.assert(creds, job);
           }, function (err) {
             test.result(false, err);
           });

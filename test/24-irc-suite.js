@@ -73,8 +73,10 @@ define(['require'], function (require) {
       {
         desc: "set credentials",
         run: function (env, test) {
-          console.log('credentials', env.verbs.credentials)
-          return env.psession.setConfig('credentials', env.verbs.credentials);
+          console.log('credentials', env.verbs.credentials);
+          return env.psession.setConfig('credentials',
+                                        env.verbs.credentials.actor.address,
+                                        env.verbs.credentials);
         }
       },
       {

@@ -24,18 +24,17 @@ function Twitter($rootScope, $q, SH, CH) {
         CH.set(config, cfg);
       }
       if (SH.isConnected()) {
-        var cred_tpl = SOCKETHUB_CREDS['twitter']['credentials']['# useraddress #'];
-        cred_tpl.access_token = config.access_token;
-        cred_tpl.access_token_secret = config.access_token_secret;
-        cred_tpl.consumer_key = config.consumer_key;
-        cred_tpl.consumer_secret = config.consumer_secret;
+        var cred_tpl = SOCKETHUB_CREDS.twitter;
+        cred_tpl.object.access_token = config.access_token;
+        cred_tpl.object.access_token_secret = config.access_token_secret;
+        cred_tpl.object.consumer_key = config.consumer_key;
+        cred_tpl.object.consumer_secret = config.consumer_secret;
         cred_tpl.actor.address = config.username;
         cred_tpl.actor.name = '';
 
-        SH.set('twitter', 'credentials', config.username, cred_tpl).
-          then(function () {
-            defer.resolve(config);
-          }, defer.reject);
+        SH.submit.call(cred_tpl).then(function () {
+          defer.resolve(config);
+        }, defer.reject);
       } else {
         defer.reject('not connected to sockethub');
       }
