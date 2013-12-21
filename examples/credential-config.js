@@ -29,6 +29,10 @@ var SOCKETHUB_CREDS = {
   email: {
     'verb': 'set',
     'platform': 'dispatcher',
+    'actor': {
+      'name': '# display name #',
+      'address': '# username #'
+    },
     'target': [{'platform': 'email'}],
     'object': {
       'objectType': 'credentials',

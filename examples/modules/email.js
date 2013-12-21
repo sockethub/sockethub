@@ -26,10 +26,11 @@ function Email($rootScope, $q, SH, CH) {
 
       if (SH.isConnected()) {
         var cred_tpl = SOCKETHUB_CREDS.email;
-        cred_tpl.object.username = config.username;
-        cred_tpl.actor.address = config.username;
-        cred_tpl.object.password = config.password;
-        cred_tpl.object.host = config.smtpServer;
+        cred_tpl.actor.address = config.emailAddress;
+        cred_tpl.actor.name = '';
+        cred_tpl.object.smtp.username = config.username;
+        cred_tpl.object.smtp.password = config.password;
+        cred_tpl.object.smtp.host = config.smtpServer;
 
         SH.submit.call(cred_tpl).then(function () {
           defer.resolve(config);
