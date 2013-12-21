@@ -5,7 +5,7 @@ var IRCFactory = function (test) {
 
   var api = {
     createClient: new test.Stub(function (key, creds) {
-      console.log('IRC STUB: createClient called');
+      console.log('IRC STUB: createClient called key:'+key+' creds:', creds);
 
       client = {
         irc: {

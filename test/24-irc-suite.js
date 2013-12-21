@@ -30,6 +30,10 @@ define(['require'], function (require) {
       test.assertTypeAnd(env.api, 'object');
       test.assertType(env.api.createClient, 'function');
     },
+    takedown: function (env, test) {
+      env.session.cleanup();
+      test.result(true);
+    },
     tests: [
       {
         desc: "create platform session",
@@ -69,6 +73,7 @@ define(['require'], function (require) {
       {
         desc: "set credentials",
         run: function (env, test) {
+          console.log('credentials', env.verbs.credentials)
           return env.psession.setConfig('credentials', env.verbs.credentials);
         }
       },
