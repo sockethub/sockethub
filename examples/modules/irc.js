@@ -26,6 +26,7 @@ function IRC($rootScope, $q, SH, CH) {
       if (SH.isConnected()) {
         var cred_tpl = SOCKETHUB_CREDS.irc;
         cred_tpl.actor.address = config.nick;
+        cred_tpl.actor.name = '';
         cred_tpl.object.nick = config.nick;
         cred_tpl.object.password = config.password || '';
         cred_tpl.object.server = config.server;
@@ -33,9 +34,17 @@ function IRC($rootScope, $q, SH, CH) {
         if (config.channel.indexOf('#') < 0) {
           config.channel = '#' + config.channel;
         }
-        cred_tpl.channels = [config.channel];
+        //cred_tpl.channels = [config.channel];
 
         SH.submit.call(cred_tpl).then(function () {
+          return SH.submit.call({
+            verb: 'join',
+            platform: 'irc',
+            actor: { address: config.nick },
+            target: [{address: config.channel }],
+            object: {}
+          });
+        }).then(function (){
           defer.resolve(config);
         }, defer.reject);
       } else {
