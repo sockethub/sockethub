@@ -19,11 +19,10 @@
 
 BUILD_OPTIONS = -o baseUrl=lib
 
-default: prepdoc doc
+doc-all: prepdoc doc commitdoc
 
 prepdoc:
-	cd doc/ap.sockethub.org/
-	git checkout gh-pages
+	cd doc/api.sockethub.org/
 	git pull
 	cd ../../
 
@@ -34,9 +33,8 @@ doc-rebuild:
 	naturaldocs -i lib/ -r -o html doc/api.sockethub.org/ -p doc/api.sockethub.org/.config
 	
 commitdoc:
-	cd doc/api-sockethub.org/
+	cd doc/api.sockethub.org/
 	git add *
-	git add .config/
 	git commit -m "update api docs" .
 	git push
 	cd ../../
