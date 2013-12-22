@@ -37,6 +37,7 @@ commitdoc:
 	git add *
 	git commit -m "update api docs" .
 	git push
+	git checkout gh-pages
 	cd ../../
 
 .PHONY: default doc
