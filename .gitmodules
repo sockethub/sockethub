@@ -4,3 +4,7 @@
 [submodule "examples/vendor/angular-shared"]
 	path = examples/vendor/angular-shared
 	url = git://github.com/silverbucket/angular-shared
+[submodule "doc/api.sockethub.org"]
+	path = doc/api.sockethub.org
+	url = git://github.com/sockethub/website-api.sockethub.org
+	branch = gh-pages
