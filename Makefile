@@ -22,6 +22,6 @@ BUILD_OPTIONS = -o baseUrl=lib
 default: doc
 
 doc:
-	naturaldocs -i lib/ -o html doc/api/ -p doc/api/.config
+	naturaldocs -i lib/ -o html doc/gh-pages/ -p doc/gh-pages/.config
 
 .PHONY: default doc
