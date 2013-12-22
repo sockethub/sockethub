@@ -19,7 +19,7 @@
 
 BUILD_OPTIONS = -o baseUrl=lib
 
-default: prepdoc doc commitdoc
+default: prepdoc doc
 
 prepdoc:
 	cd doc/gh-pages/
@@ -32,12 +32,11 @@ doc:
 doc-rebuild:
 	naturaldocs -i lib/ -r -o html doc/gh-pages/ -p doc/gh-pages/.config
 	
-commitdoc:
-	cd doc/gh-pages/
-	git add *
-	git commit -m "update api docs" .
-	git push
-	git checkout gh-pages
-	cd ../../
+#commitdoc:
+#	cd doc/gh-pages/
+#	git add *
+#	git commit -m "update api docs" .
+#	git push
+#	cd ../../
 
 .PHONY: default doc
