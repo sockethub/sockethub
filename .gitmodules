@@ -6,5 +6,5 @@
 	url = git://github.com/silverbucket/angular-shared
 [submodule "doc/gh-pages"]
 	path = doc/gh-pages
-	url = git@github.com:sockethub/sockethub.git
+	url = git://github.com/sockethub/sockethub
 	branch = gh-pages
