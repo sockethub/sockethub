@@ -34,6 +34,7 @@ Below is a list of platforms we're currently working on and their activity strea
  * Feeds *(RSS, Atom)* - <kbd>![completed](http://sockethub.org/img/checkmark.png) fetch</kbd>
  * IRC - <kbd>![completed](http://sockethub.org/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) join</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) leave</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) observe</kbd> <kbd>![completed](http://sockethub.org/img/checkmark.png) update</kbd>
  * pump.io - <kbd>post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>fetch</kbd>
+ * WhatsApp - <kbd>send</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd>
  * WebFinger - <kbd>search</kbd>
  * RDF - <kbd>search</kbd> <kbd>fetch</kbd>
  * Bitcoin - *(to be evaluated)* <kbd>send</kbd> <kbd>receive</kbd> ...
