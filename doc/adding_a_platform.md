@@ -28,30 +28,32 @@ This is the actual platform file which exposes the functions that the sockethub 
 
 
 ````
+var Q = require('q');
+
 module.exports = function() {
   var session;
   return {
     init: function(setSession) {
-      session = setSession;
-      var promise = session.promising();  // session object from sockethub
-      promise.fulfill();  // fulfill promise, you can also reject()
-      return promise;
+      session = setSession;  // session object from sockethub
+      var q = Q.defer();
+      q.resolve();  // fulfill promise, you can also reject()
+      return q.promise;
     },
     cleanup: function() {
-      var promise = session.promising();
-      promise.fulfill();
-      return promise;
+      var q = Q.defer();
+      q.resolve();  // fulfill promise, you can also reject()
+      return q.promise;
     },
     post: function (job) {
-      var promise = session.promising();
+      var q = Q.defer();
       doSomething(job, function(err, data) {
         session.send({
           err: err,
           data: data
         });
       });
-      promise.fulfill();
-      return promise;
+      q.resolve();  // fulfill promise, you can also reject()
+      return q.promise;
     }
   };
 };
