@@ -162,6 +162,7 @@ define(['require'], function (require) {
             rid: "123454",
             verb: 'send',
             platform: "email",
+            target: [{address: 'foo@bar.com'}],
             message: "could not get credentials"
           };
           var json_data = JSON.stringify(data);
@@ -196,6 +197,9 @@ define(['require'], function (require) {
             status: true,
             rid: "123454",
             verb: 'set',
+            target: [{
+              platform: "email"
+            }],
             platform: "dispatcher"
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
@@ -219,7 +223,8 @@ define(['require'], function (require) {
             status: true,
             rid: "002",
             verb: 'send',
-            platform: "email"
+            platform: "email",
+            target: [{ address: 'user2@example.com' }]
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
         }
@@ -242,7 +247,8 @@ define(['require'], function (require) {
             status: true,
             rid: "002",
             verb: 'send',
-            platform: "email"
+            platform: "email",
+            target: [{ address: 'user2@example.com.com' }]
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
         }

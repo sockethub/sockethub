@@ -100,9 +100,6 @@ function buildSchemaTest(name, p, filename, type, prop, num, data, err) {
         test.assertTypeAnd(p.schema[type].credentials.properties, 'object');
         test.assertTypeAnd(p.schema[type].credentials.properties.object, 'object');
 
-        //console.log('error report: ', report.errors);
-        //console.log('error report length: ', report.errors.length);
-
         if (tv4.validate(data.data, p.schema[type].credentials.properties.object)) {
           test.result(true, 'PASSED!');
         } else {
