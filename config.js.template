@@ -5,14 +5,23 @@ var PLATFORMS = [
 
 // number of worker threads to use (currently supports just one)
 var NUM_WORKERS = 1;
+
 // boolean to determine what level of logging to display
 var DEBUG = false;
+
 // fill path to a logfile for sockethub to log too. if this is not
 // empty/undefined, then by default the logs will not be output to
 // the console. this behavior can be overridden with the -o option on the
 // sockethub executable. (with -o and a log file set, sockethub will log to
 // the file AND output to console)
 var LOG_FILE = '';
+
+// config options for the listener service
+var DISPATCHER = {
+  // waiting for listeners to initialize
+  LISTENER_INTERVAL_COUNT: 3,
+  LISTENER_INTERVAL_TIME: 1000 // ms
+};
 
 var HOST = {
   ENABLE_TLS: false, // it is stronlgly recommended that you leave TLS enabled
@@ -58,6 +67,8 @@ exports.config = {
   NUM_WORKERS: NUM_WORKERS,
   DEBUG: DEBUG,
   LOG_FILE: LOG_FILE,
+  DISPATCHER: DISPATCHER,
+  HOST: HOST,
   PUBLIC: PUBLIC,
   REDIS: REDIS,
   EXAMPLES: EXAMPLES
