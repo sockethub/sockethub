@@ -51,13 +51,11 @@ var obj = {
 var json_obj = JSON.stringify(obj);
 
 console.log("\n--");
-var JSVlib = require('JSV').JSV; // json schema validator
-var jsv = JSVlib.createEnvironment();
-var report = jsv.validate(obj, schema);
-if (report.errors.length !== 0) {  // protocol.js json errors
-  console.log(' invalid object format '+JSON.stringify(report.errors));
-} else {
+var tv4 = require('tv4');
+if (tv4.validate(obj, schema)) {  // protocol.js json errors
   console.log(' job.object schema validated ');//, report);
+} else {
+  console.log(' invalid object format '+tv4.error.message);
 }
 
 
@@ -82,12 +80,11 @@ var schema = {
 };
 
 
-jsv = JSVlib.createEnvironment();
-report = jsv.validate(obj, schema);
-if (report.errors.length !== 0) {  // protocol.js json errors
-  console.log(' invalid object format '+JSON.stringify(report.errors));
-} else {
+var tv4 = require('tv4');
+if (tv4.validate(obj, schema)) {  // protocol.js json errors
   console.log(' job.object schema validated ');//, report);
+} else {
+  console.log(' invalid object format '+tv4.error.message);
 }
 
 console.log("\n");

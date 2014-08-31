@@ -30,7 +30,7 @@
  */
 
 require("consoleplusplus/console++");
-var JSVlib = require('JSV').JSV; // json schema validator
+var tv4 = require('tv4');
 
 var schema_test_files = [
   './platforms_schema_data/twitter_credentials',
@@ -100,17 +100,14 @@ function buildSchemaTest(name, p, filename, type, prop, num, data, err) {
         test.assertTypeAnd(p.schema[type].credentials.properties, 'object');
         test.assertTypeAnd(p.schema[type].credentials.properties.object, 'object');
 
-        var jsv = JSVlib.createEnvironment();
-        var report = jsv.validate(data.data, p.schema[type].credentials.properties.object);
         //console.log('error report: ', report.errors);
         //console.log('error report length: ', report.errors.length);
 
-        if (report.errors.length === 0) {
+        if (tv4.validate(data.data, p.schema[type].credentials.properties.object)) {
           test.result(true, 'PASSED!');
         } else {
-          test.result(false, 'schema validation failed: '+JSON.stringify(report.errors));
+          test.result(false, 'schema validation failed: '+tv4.error.message);
         }
-        //test.assert(report.errors.length, 0); //, 'schema validation failed: '+JSON.stringify(report.errors));
       }
     }
   };
