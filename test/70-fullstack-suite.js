@@ -163,7 +163,7 @@ define(['require'], function (require) {
             verb: 'send',
             platform: "email",
             target: [{address: 'foo@bar.com'}],
-            message: "could not get credentials"
+            message: "credentials not found"
           };
           var json_data = JSON.stringify(data);
           console.log('JSON_DATA: ',json_data);
