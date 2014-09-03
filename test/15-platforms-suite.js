@@ -193,7 +193,9 @@ define(['require'], function (require) {
 
     for (var j in platforms[key].verbs) {
       var verb = platforms[key].verbs[j].name;
-      if (loadFailed) {
+      if (verb === 'set') {
+        // skip internal verb
+      } else if (loadFailed) {
         platform_test_suite.tests.push(buildTest(platform, undefined, verb, 'failed to load platform module'));
       } else {
         platform_test_suite.tests.push(buildTest(platform, pdi, verb));

@@ -175,13 +175,10 @@ define(['require'], function (require) {
         desc: "set credentials",
         run: function (env, test) {
           var data = {
-            platform: "dispatcher",
+            platform: "email",
             actor: {
               address: 'user@example.com'
             },
-            target: [{
-              platform: "email"
-            }],
             object: {
               objectType: 'credentials',
               smtp: {
@@ -197,10 +194,7 @@ define(['require'], function (require) {
             status: true,
             rid: "123454",
             verb: 'set',
-            target: [{
-              platform: "email"
-            }],
-            platform: "dispatcher"
+            platform: "email"
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
         }
