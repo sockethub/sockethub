@@ -16,7 +16,7 @@ getting started with sockethub.
 
 ### Platform Overview
 
-* [Platform Overview](platform_overview)
+* [Platform Overview](platform_overview.md)
     This will give you a general overview of what the JSON data looks like,
     and then how to use the sockethub-client library (which abstracts that JSON
     away).

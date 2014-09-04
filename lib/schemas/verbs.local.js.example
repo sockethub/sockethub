@@ -14,19 +14,20 @@ var verbs = {
     "schema": {
       "type": "object",
       "additionalProperties": true,
-      "required": true,
+      "required": ['object'],
       "properties": {
         "object": {
           "type": "object",
-          "required": true,
+          "required": ['test', 'bait', 'lure'],
           "properties": {
             "test": {
-              "type": "string",
-              "required": true
+              "type": "string"
             },
             "bait": {
-              "type": "string",
-              "required": true
+              "type": "string"
+            },
+            "lure": {
+              "type": "string"
             }
           }
         }

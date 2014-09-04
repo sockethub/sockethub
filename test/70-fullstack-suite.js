@@ -162,7 +162,8 @@ define(['require'], function (require) {
             rid: "123454",
             verb: 'send',
             platform: "email",
-            message: "could not get credentials"
+            target: [{address: 'foo@bar.com'}],
+            message: "credentials not found"
           };
           var json_data = JSON.stringify(data);
           console.log('JSON_DATA: ',json_data);
@@ -174,13 +175,10 @@ define(['require'], function (require) {
         desc: "set credentials",
         run: function (env, test) {
           var data = {
-            platform: "dispatcher",
+            platform: "email",
             actor: {
               address: 'user@example.com'
             },
-            target: [{
-              platform: "email"
-            }],
             object: {
               objectType: 'credentials',
               smtp: {
@@ -196,7 +194,7 @@ define(['require'], function (require) {
             status: true,
             rid: "123454",
             verb: 'set',
-            platform: "dispatcher"
+            platform: "email"
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
         }
@@ -219,7 +217,8 @@ define(['require'], function (require) {
             status: true,
             rid: "002",
             verb: 'send',
-            platform: "email"
+            platform: "email",
+            target: [{ address: 'user2@example.com' }]
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
         }
@@ -242,7 +241,8 @@ define(['require'], function (require) {
             status: true,
             rid: "002",
             verb: 'send',
-            platform: "email"
+            platform: "email",
+            target: [{ address: 'user2@example.com.com' }]
           };
           env.connection.sendAndVerify(JSON.stringify(data), expected, test, env.confirmProps);
         }

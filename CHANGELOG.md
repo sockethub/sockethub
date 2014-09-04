@@ -1,6 +1,9 @@
 CHANGELOG
 =========
 
+- revamped the `set` process to use the platform name as the way to indicate where the credentials apply to. You no longer need to use the `dispatcher` platform to set credentials. ([issue #173](https://github.com/sockethub/sockethub/issues/173))
+
+
 sockethub v0.1.5 - 16.12.2013
 -----------------------------
 

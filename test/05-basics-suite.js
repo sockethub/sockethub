@@ -58,67 +58,11 @@ define(['require'], function (require) {
         });
       });
 
-      // test redis service
-      //var redis = require('redis');
-      // console.log('testing redis connectivity');
-      // try {
-      //   client = redis.createClient();
-      //   client.on('subscribe', function(channel, count) {
-      //     console.log('client subscribed to '+channel);
-      //   });
-      //   client.subscribe('test');
-      //   client.quit();
-      // } catch (e) {
-      //   console.error(' [sockethub] cannot connect to redis ' + e);
-      //   process.exit();
-      // }
-
-
-      // var proto = require('./../lib/sockethub/protocol');
-      // listener = require('./../lib/sockethub/listener');
-      // for (var i = 0, len = config.HOST.MY_PLATFORMS.length; i < len; i = i + 1) {
-      //   if (config.HOST.MY_PLATFORMS[i] === 'dispatcher') {
-      //     continue;
-      //   }
-      //   l = listener({
-      //     platform: proto.platforms[config.HOST.MY_PLATFORMS[i]],
-      //     sockethubId: sockethubId
-      //   });
-      // }
-
-      // var dispatcher = require('./../lib/sockethub/dispatcher');
-
-      // env.server = {};
-      // dispatcher.init(config.HOST.MY_PLATFORMS, sockethubId, proto).then(function() {
-      //   // initialize http server
-      //   env.server.h = require('../lib/servers/http').init(config);
-      //   // initialize websocket server
-      //   env.server.ws = require('../lib/servers/websocket').init(config, env.server.h, dispatcher);
-
-      //   console.log(' [*] finished loading' );
-      //   console.log();
-      //   env.client.connect(function(connection) {
-      //     env.connection = connection;
-      //     test.result(true);
-      //   });
-      // }, function(err) {
-      //   console.log(" [sockethub] dispatcher failed initialization, aborting");
-      //   process.exit();
-      // });
-
     },
     takedown: function (env, test) {
       env.sockethub.shutdown().then(function() {
         test.result(true);
       });
-      // .close();
-      // setTimeout(function() {
-      //   //env.server.ws.close();
-      //   env.server.h.close();
-      //   setTimeout(function() {
-      //     test.result(true);
-      //   }, 1000);
-      // }, 1000);
     },
     tests: [
 
