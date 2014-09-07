@@ -12,7 +12,7 @@ define(['require'], function (require) {
     setup: function (env, test) {
 
       env.nodemailer = {};
-      env.nodemailer.createTransport = test.Stub(function createTransportStub(name, obj) {
+      env.nodemailer.createTransport = new test.Stub(function createTransportStub(name, obj) {
           if (name === 'SMTP') {
             console.log('NODEMAILER createTransport STUB CALLED');
             var ret =  {};

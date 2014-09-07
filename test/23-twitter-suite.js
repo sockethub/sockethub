@@ -22,7 +22,8 @@ define(['require'], function (require) {
       };
 
       GLOBAL.redis = require('redis');
-      env.Session = require('./../lib/sockethub/session')({
+      var SessionManager = require('./../lib/sockethub/session-manager');
+      env.Session = new SessionManager({
               platform:'twitter',
               sockethubId:'1234567890',
               encKey:'abcde'

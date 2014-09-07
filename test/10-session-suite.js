@@ -18,7 +18,8 @@ define(['require'], function(require) {
         willFail: true,
         run: function (env, test) {
           env.sockethubId = '1234567890';
-          env.Session = require('./../lib/sockethub/session')({sockethubId: env.sockethubId});
+          var SessionManager = require('./../lib/sockethub/session-manager');
+          env.Session = new SessionManager({sockethubId: env.sockethubId});
           test.result(true);
         }
       }
@@ -37,7 +38,8 @@ define(['require'], function(require) {
         sockethubId: env.sockethubId,
         encKey: env.encKey
       };
-      env.Session = require('./../lib/sockethub/session')(env.sessionObj);
+      var SessionManager = require('./../lib/sockethub/session-manager');
+      env.Session = new SessionManager(env.sessionObj);
       console.log('SESSION: ', env.Session);
       test.result(true);
     },
@@ -136,7 +138,8 @@ define(['require'], function(require) {
         sockethubId: env.sockethubId,
         encKey: env.encKey
       };
-      env.Session = require('./../lib/sockethub/session')(env.sessionObj);
+      var SessionManager = require('./../lib/sockethub/session-manager');
+      env.Session = new SessionManager(env.sessionObj);
       env.sid = 'test-sid';
       test.result(true);
     },
@@ -332,7 +335,8 @@ define(['require'], function(require) {
         sockethubId: env.sockethubId,
         encKey: env.encKey
       };
-      env.Session = require('./../lib/sockethub/session')(env.sessionObj);
+      var SessionManager = require('./../lib/sockethub/session-manager');
+      env.Session = new SessionManager(env.sessionObj);
       env.sid = 'test-sid';
 
       var http = require('http');
@@ -466,7 +470,9 @@ define(['require'], function(require) {
 
       test.assertTypeAnd(redis.createClient, 'function');
 
-      env.dispatcher = require('./../lib/sockethub/session')({
+      var SessionManager = require('./../lib/sockethub/session-manager');
+
+      env.dispatcher = new SessionManager({
         platform: 'dispatcher',
         sockethubId: env.sockethubId,
         encKey: env.encKey
@@ -474,7 +480,7 @@ define(['require'], function(require) {
       test.assertTypeAnd(env.dispatcher.destroy, 'function');
       test.assertAnd(env.dispatcher.encKeySet(), true);
 
-      env.p_one = require('./../lib/sockethub/session')({
+      env.p_one = new SessionManager({
         platform: 'p_one',
         sockethubId: env.sockethubId,
         encKey: false
@@ -482,7 +488,7 @@ define(['require'], function(require) {
       test.assertTypeAnd(env.p_one.destroy, 'function');
       test.assertAnd(env.p_one.encKeySet(), false);
 
-      env.p_two = require('./../lib/sockethub/session')({
+      env.p_two = new SessionManager({
         platform: 'p_two',
         sockethubId: env.sockethubId,
         encKey: false

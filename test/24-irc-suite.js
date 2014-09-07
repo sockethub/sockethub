@@ -10,7 +10,8 @@ define(['require'], function (require) {
     desc: "collection of tests for the irc platform",
     setup: function (env, test) {
       // load session manager
-      env.sessionManager = require('./../lib/sockethub/session')({
+      var SessionManager = require('./../lib/sockethub/session-manager');
+      env.sessionManager = new SessionManager({
         platform: 'irc',
         sockethubId:'1234567890',
         encKey:'abcde'

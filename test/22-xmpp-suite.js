@@ -25,7 +25,8 @@ define(['require'], function (require) {
       };
 
       GLOBAL.redis = require('redis');
-      env.sessionManager = require('./../lib/sockethub/session')({platform: 'xmpp', sockethubId:'1234567890', encKey:'abcde'});
+      var SessionManager = require('./../lib/sockethub/session-manager');
+      env.sessionManager = new SessionManager({platform: 'xmpp', sockethubId:'1234567890', encKey:'abcde'});
       env.sessionManager.get('testsess1').
         then(function (session) {
           env.session = session;
