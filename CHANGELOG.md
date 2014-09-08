@@ -7,6 +7,8 @@ CHANGELOG
 
 - minor improvements to class structure throughout the code, to improve readability.
 
+- many performance optimizations.
+
 
 sockethub v0.1.5 - 16.12.2013
 -----------------------------
