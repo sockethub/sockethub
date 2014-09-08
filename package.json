@@ -40,7 +40,8 @@
     "tv4": "^1.1.0",
     "twit": "1.1.9",
     "websocket": "1.0.8",
-    "winston": "0.7.x"
+    "winston": "0.7.x",
+    "forEachAsync": "^3.0.0"
   },
   "devDependencies": {
     "jaribu": "*"
