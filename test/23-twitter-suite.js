@@ -64,8 +64,8 @@ define(['require'], function (require) {
         desc: "set insufficient credential details",
         run: function (env, test) {
           var job = {
-            actor: {address: 'foobar' },
-            target: [{address: 'twitter'}],
+            actor: { address: 'foobar' },
+            target: [{ address: 'twitter' }],
             object: {
               objectType: 'credentials',
               access_token: 'abcde',
