@@ -24,6 +24,7 @@ define(['require'], function (require) {
             return ret;
           }
         });
+      delete GLOBAL.nodemailer;
       GLOBAL.nodemailer = env.nodemailer;
       GLOBAL.redis = require('redis');
 
