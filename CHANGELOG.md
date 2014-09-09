@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+sockethub v0.2.0 - 09.09.2014
+-----------------------------
+
+- official IRC support
+
+- improved API documentation
+
+- revamped and simplified credentials process. breaks compatibility with 0.1.x branch. 
+
 - refactored session module into three separate files. `lib/sockethub/session-manager.js` (the only external interface), and it's subclasses `lib/sockethub/session/session.js` and `lib/sockethub/session/platform.js`
 
 - revamped the `set` process to use the platform name as the way to indicate where the credentials apply to. You no longer need to use the `dispatcher` platform to set credentials. ([issue #173](https://github.com/sockethub/sockethub/issues/173))
