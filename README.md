@@ -121,6 +121,9 @@ docs
 
 The [Getting Started Guide](https://github.com/sockethub/sockethub/blob/master/doc/getting_started.md) is a good starting place to find links to more specific documentation about Sockethub or SockethubClient.
 
+[Sockethub Internals](http://sockethub.org/doc/developer)
+
+
 license
 -------
 

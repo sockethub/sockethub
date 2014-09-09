@@ -45,3 +45,7 @@ you should check out the following docs.
 * [Adding a Platform](adding_a_platform.md)
     For a more in-depth explanation of creating your own sockethub platform,
     see the above document.
+
+### Internals
+
+* [Sockethub Components Internals](http://sockethub.org/doc/developer)
