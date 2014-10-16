@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+sockethub v0.2.1 - 16.10.2014
+-----------------------------
+
+- fix for facebook API errors sending back HTML when expecting JSON. ([issue #177](https://github.com/sockethub/sockethub/issues/177))
+
+
 sockethub v0.2.0 - 09.09.2014
 -----------------------------
 
@@ -26,7 +32,7 @@ sockethub v0.1.5 - 16.12.2013
 
 - util.redis now has specific support for hset and hget. ([issue #140](https://github.com/sockethub/sockethub/issues/140))
 
-- refactor `session.request()` function for clarity. This function issues remoteStorage GETs. ([issue #139](https://github.com/sockethub/sockethub/issues/139))
+- refactor `session.request()` function for clarity. This function issues remoteStorage GETs. [issue #139](https://github.com/sockethub/sockethub/issues/139))
 
 - ClientManager has new method `move` which moves a client object from one key lookup to another while preserving it's reference count. ([lib/sockethub/client-manager.js](https://github.com/sockethub/sockethub/blob/master/lib/sockethub/client-manager.js))
 
