@@ -4,7 +4,9 @@ CHANGELOG
 sockethub v0.2.1 - 16.10.2014
 -----------------------------
 
-- fix for facebook API errors sending back HTML when expecting JSON. ([issue #177](https://github.com/sockethub/sockethub/issues/177))
+- platform irc: sometimes leaving a room was represented as a join, and quits would contain undefined properties in the resulting object. ([issue #178](https://github.com/sockethub/sockethub/issues/178))
+
+- platform facebook: API errors sending back HTML when expecting JSON. ([issue #177](https://github.com/sockethub/sockethub/issues/177))
 
 
 sockethub v0.2.0 - 09.09.2014
