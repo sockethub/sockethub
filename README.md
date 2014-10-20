@@ -2,10 +2,10 @@
 
 The polyglot approach to the federated social web.
 
-[![Build Status](https://secure.travis-ci.org/sockethub/sockethub.png)](http://travis-ci.org/sockethub/sockethub)
-[![devDependency Status](https://david-dm.org/sockethub/sockethub/dev-status.png)](https://david-dm.org/sockethub/sockethub#info=devDependencies)
-[![Code Climate](https://codeclimate.com/github/sockethub/sockethub/badges/gpa.svg)](https://codeclimate.com/github/sockethub/sockethub)
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/sockethub/sockethub/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+[![Build Status](http://img.shields.io/travis/sockethub/sockethub.svg?style=flat)](http://travis-ci.org/silverbucket/webfinger.js)
+[![Code Climate](http://img.shields.io/codeclimate/github/sockethub/sockethub.svg?style=flat)](https://codeclimate.com/github/silverbucket/webfinger.js)
+[![license](https://img.shields.io/npm/l/sockethub.svg?style=flat)](https://raw.githubusercontent.com/silverbucket/webfinger.js/master/LICENSE)
+[![downloads](http://img.shields.io/npm/dm/sockethub.svg?style=flat)](https://npmjs.org/package/webfinger.js)
 
 [![Flattr this](http://api.flattr.com/button/flattr-badge-large.png)](http://flattr.com/thing/1154379/Sockethub)
 
