@@ -5,7 +5,7 @@ The polyglot approach to the federated social web.
 [![Build Status](http://img.shields.io/travis/sockethub/sockethub.svg?style=flat)](http://travis-ci.org/silverbucket/webfinger.js)
 [![Dependency Status](http://img.shields.io/david/dev/sockethub/sockethub.svg?style=flat)](https://david-dm.org/remotestorage/remotestorage.js#info=dependencies)
 [![devDependency Status](http://img.shields.io/david/sockethub/sockethub.svg?style=flat)](https://david-dm.org/remotestorage/remotestorage.js#info=devDependencies)
-[![Code Climate](http://img.shields.io/codeclimate/github/sockethub/sockethub.svg?style=flat)](https://codeclimate.com/github/silverbucket/webfinger.js)
+[![Code Climate](https://codeclimate.com/github/silverbucket/webfinger.js/badges/gpa.svg)](https://codeclimate.com/github/silverbucket/webfinger.js)
 [![license](https://img.shields.io/npm/l/sockethub.svg?style=flat)](https://raw.githubusercontent.com/silverbucket/webfinger.js/master/LICENSE)
 [![downloads](http://img.shields.io/npm/dm/sockethub.svg?style=flat)](https://npmjs.org/package/webfinger.js)
 
