@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+sockethub v0.3.0 - 16.11.2014
+-----------------------------
+
+- platform irc: fix during connect, the USER command would be rejected due to not enough params.
+
+- docker: working docker file! hooray!
+
+- updated npm dependencies
+
+
 sockethub v0.2.2 - 16.10.2014
 -----------------------------
 
