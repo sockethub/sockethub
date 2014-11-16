@@ -1,10 +1,16 @@
-FROM ubuntu:precise
-RUN echo "deb http://archive.ubuntu.com/ubuntu precise universe" >> /etc/apt/sources.list
+FROM nodesource/node:trusty
+MAINTAINER Ben Kero <ben.kero@gmail.com>
+
 RUN apt-get update
-RUN apt-get install -y python-software-properties python g++ make redis-server libicu-dev libexpat1 git
-RUN add-apt-repository ppa:chris-lea/node.js
-RUN apt-get update
-RUN apt-get install -y nodejs
-RUN npm install -g sockethub
-CMD service redis-server start && sockethub
+RUN apt-get install -y redis-server libicu-dev libexpat1 git-core
+
+ENV USER root
+
+ADD package.json /tmp/package.json
+RUN cd /tmp && npm install
+RUN mkdir -p /sockethub && cp -a /tmp/node_modules /sockethub/
+WORKDIR /sockethub
+ADD . /sockethub
+
 EXPOSE 10550
+CMD service redis-server start && /sockethub/bin/sockethub
