@@ -227,6 +227,7 @@ define(['require'], function (require) {
 
       {
         desc: "try to send with previsously set credentials",
+        timeout: 15000,
         run: function (env, test) {
           var data = {
             rid: '002',
