@@ -6,9 +6,11 @@ sockethub v0.3.0 - 16.11.2014
 
 - platform irc: fix during connect, the USER command would be rejected due to not enough params.
 
+- platform irc: remove `:` from message string, no longer used in irc-factory library.
+
 - docker: working docker file! hooray!
 
-- updated npm dependencies
+- updated npm dependencies.
 
 
 sockethub v0.2.2 - 16.10.2014
