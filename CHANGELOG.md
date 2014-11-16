@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+sockethub v0.3.1 - 16.11.2014
+-----------------------------
+
+- bugfix: regression fixed where client sessions were not being destroyed due to being lost in an idex.
+
+- platform irc: allow port and secure(true/false) to be specified by the client. defaults to secure, and port 6697.
+
+
 sockethub v0.3.0 - 16.11.2014
 -----------------------------
 
