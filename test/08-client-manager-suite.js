@@ -20,6 +20,7 @@ define(['require'], function(require) {
       var SessionManager = require('./../lib/sockethub/session-manager');
       var SM = new SessionManager(sessionObj);
       SM.get('abcd').then(function (session) {
+        test.assertTypeAnd(session, 'object');
         env.cm1 = ClientManager(session);
         SM.get('efgh').then(function (session) {
           env.cm2 = ClientManager(session);
@@ -43,7 +44,7 @@ define(['require'], function(require) {
         willFail: true,
         run: function (env, test) {
           try {
-            env.cm1.add('test-client', {
+            env.cm1.add('test1', {
               end: function () {}
             });
             test.result(true);
@@ -57,7 +58,7 @@ define(['require'], function(require) {
         desc: 'add a client with correct params (no credentials)',
         run: function (env, test) {
           try {
-            env.cm1.add('test-client', {
+            env.cm1.add('test1', {
               disconnect: function () {},
               credentials: {}
             });
@@ -71,12 +72,13 @@ define(['require'], function(require) {
       {
         desc: 'fetch client without creds',
         run: function (env, test) {
+          var client;
           try {
-            var client = env.cm1.get('test-client', {});
-            test.assertType(client, 'object');
+            client = env.cm1.get('test1', {});
           } catch (e) {
             test.result(false, e);
           }
+          test.assertType(client, 'object');
         }
       },
 
