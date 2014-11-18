@@ -61,7 +61,7 @@
     "websocket": "1.0.8",
     "winston": "0.7.x",
     "forEachAsync": "^3.0.0",
-    "array-keys": "^1.0.0"
+    "array-keys": "^1.1.0"
   },
   "devDependencies": {
     "jaribu": "*"
