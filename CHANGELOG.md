@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+sockethub v0.3.2 - 18.11.2014
+-----------------------------
+
+- refactored SessionManager and ClientManager to use `array-keys` package for tracking session and client objects.
+
+- platform irc: now supports specifying any port and the use of non-secure connections. updated irc example as well.
+
+
 sockethub v0.3.1 - 16.11.2014
 -----------------------------
 
