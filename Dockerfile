@@ -8,9 +8,9 @@ ENV USER root
 
 ADD package.json /tmp/package.json
 RUN cd /tmp && npm install
-RUN mkdir -p /sockethub && cp -a /tmp/node_modules /sockethub/
 WORKDIR /sockethub
 ADD . /sockethub
+RUN cp -a /tmp/node_modules /sockethub/
 
 EXPOSE 10550
 CMD service redis-server start && /sockethub/bin/sockethub
