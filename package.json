@@ -1,7 +1,7 @@
 {
   "name": "sockethub",
   "description": "A polyglot messaging service",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL",
@@ -60,7 +60,8 @@
     "twit": "1.1.9",
     "websocket": "1.0.8",
     "winston": "0.7.x",
-    "forEachAsync": "^3.0.0"
+    "forEachAsync": "^3.0.0",
+    "array-keys": "^1.0.0"
   },
   "devDependencies": {
     "jaribu": "*"
