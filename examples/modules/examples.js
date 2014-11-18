@@ -47,7 +47,7 @@ value('configHelper', {
     }
 
     for (var key in config) {
-      if (!cfg[key]) {
+      if (typeof cfg[key] === 'undefined') {
         return false;
       }
     }

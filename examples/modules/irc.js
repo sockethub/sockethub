@@ -6,9 +6,11 @@ angular.module('irc', ['ngRoute']).
 factory('IRC', ['$rootScope', '$q', 'SH', 'configHelper',
 function IRC($rootScope, $q, SH, CH) {
   var config = {
-    server: '',
+    server: 'irc.freenode.net',
     nick: '',
-    channel: ''
+    channel: '',
+    secure: true,
+    port: 6697
   };
 
   function exists(cfg) {
@@ -30,6 +32,8 @@ function IRC($rootScope, $q, SH, CH) {
         cred_tpl.object.nick = config.nick;
         cred_tpl.object.password = config.password || '';
         cred_tpl.object.server = config.server;
+        cred_tpl.object.secure = (typeof config.secure === 'boolean') ? config.secure : true;
+        cred_tpl.object.port = config.port;// || (cred_tpl.object.secure) ? 6697 : 6667;
 
         if (config.channel.indexOf('#') < 0) {
           config.channel = '#' + config.channel;
