@@ -1,6 +1,6 @@
 # activity-streams.js
 
-A simple too to facilitate handling and referencing activity streams without unecessary verbosity.
+A simple tool to facilitate handling and referencing activity streams without unecessary verbosity.
 
 Designed to run in both `node.js` and the `browser`.
 
