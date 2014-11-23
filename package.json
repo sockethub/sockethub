@@ -1,0 +1,44 @@
+{
+  "name": "sockethub",
+  "description": "A polyglot messaging service",
+  "version": "1.0.0-PREALPHA",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "LGPL",
+  "main": "bin/sockethub",
+  "preferGlobal": true,
+  "keywords": [
+    "sockethub",
+    "messaging",
+    "polyglot",
+    "unhosted",
+    "apis",
+    "api",
+    "protocols",
+    "protocol",
+    "irc",
+    "xmpp",
+    "facebook",
+    "rss",
+    "atom",
+    "twitter",
+    "smtp",
+    "imap",
+    "email"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/sockethub/sockethub.git"
+  },
+  "homepage": "http://github.com/sockethub/sockethub",
+  "dependencies": {
+    "express": "^4.10.2",
+    "socket.io": "^1.2.1"
+  },
+  "devDependencies": {
+    "jaribu": "*"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/jaribu"
+  }
+}
