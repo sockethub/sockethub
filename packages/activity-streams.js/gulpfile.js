@@ -17,7 +17,6 @@ gulp.task('default', function () {
     if (error) {
       throw new Error(error);
     }
-
     minify('node_modules/array-keys/array-keys.js', {
       returnName  : true,
       log         : true
@@ -25,9 +24,16 @@ gulp.task('default', function () {
       if (error) {
         throw new Error(error);
       }
-
-      data += akData + asData + footer;
-      fs.writeFile('dist/activity-streams.min.js', data);
+      minify('node_modules/wolfy87-eventemitter/EventEmitter.js', {
+        returnName  : true,
+        log         : true
+      }, function (error, eeData) {
+        if (error) {
+          throw new Error(error);
+        }
+        data += akData + eeData + asData + footer;
+        fs.writeFile('dist/activity-streams.min.js', data);
+      });
     });
   });
 
