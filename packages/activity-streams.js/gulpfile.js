@@ -27,7 +27,7 @@ gulp.task('default', function () {
       }
 
       data += akData + asData + footer;
-      fs.writeFile('build/activity-streams.min.js', data);
+      fs.writeFile('dist/activity-streams.min.js', data);
     });
   });
 
