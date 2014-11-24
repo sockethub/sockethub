@@ -1,10 +1,11 @@
 {
   "name": "activity-streams",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "A simple tool to facilitate handling and referencing activity streams without unecessary verbosity.",
   "main": "./lib/activity-streams.js",
   "dependencies": {
-    "array-keys": "^1.1.0"
+    "array-keys": "^1.1.0",
+    "wolfy87-eventemitter": "^4.2.9"
   },
   "devDependencies": {
     "gulp": "^3.8.10",

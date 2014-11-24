@@ -43,6 +43,10 @@ Activity.Object.create({
     }
   });
 
+Activity.on('activity-object-create', function (obj) {
+  console.log('this object was just created: ', obj);
+  });
+
 Activity.Object.create({
     objectType: "chatroom",
     id: 'irc://irc.freenode.net/activitystreams',
@@ -56,7 +60,7 @@ Activity.Stream.create({
     actor: 'irc://exampleUser@irc.freenode.net',
     object: {
       objectType: "message",
-      text: "hello world!"
+      content: "hello world!"
     },
     target: 'irc://irc.freenode.net/activitystreams'
   });
