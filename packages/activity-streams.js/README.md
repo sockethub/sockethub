@@ -1,14 +1,14 @@
 # activity-streams.js
 
-A simple tool to facilitate handling and referencing activity streams without unecessary verbosity.
+A simple tool to facilitate handling and referencing activity streams and it's objects, cutting down on verbosity.
 
 Designed to run in both `node.js` and the `browser`.
 
 ## ALPHA
 
-**Warning** this library is `alpha` quality and considered extremely experimental, subject to change at any time.
+**Warning** this library is `pre-alpha` quality and considered extremely experimental, subject to change at any time.
 
-I am learning about JSON-LD and ActivityStreams as I write this library, so suggestions for improvement are very welcome.
+I am learning about JSON-LD and ActivityStreams2 as I write this library, so suggestions for improvement are very welcome.
 
 
 ## Install
