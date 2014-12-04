@@ -9,8 +9,8 @@ gulp.task('default', function () {
 
   gulp.src('lib/activity-streams.js')
       .pipe(browserify({ standalone: 'Activity' }))
-      .pipe(gulp.dest('dist/'))
+      .pipe(gulp.dest('browser/'))
       .pipe(uglify())
       .pipe(rename('activity-streams.min.js'))
-      .pipe(gulp.dest('dist/'));
+      .pipe(gulp.dest('browser/'));
 });
