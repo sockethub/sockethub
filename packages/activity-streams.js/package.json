@@ -1,11 +1,11 @@
 {
   "name": "activity-streams",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A simple tool to facilitate handling and referencing activity streams without unecessary verbosity.",
   "main": "./lib/activity-streams.js",
   "dependencies": {
     "array-keys": "^1.1.0",
-    "wolfy87-eventemitter": "^4.2.9"
+    "event-emitter": "^0.3.1"
   },
   "devDependencies": {
     "gulp": "^3.8.10",
@@ -13,7 +13,7 @@
     "gulp-rename": "^1.2.0",
     "gulp-uglify": "^1.0.1",
     "jaribu": "^0.2.2"
-   },
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/silverbucket/activity-streams.js.git"
