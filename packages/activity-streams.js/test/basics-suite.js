@@ -76,7 +76,7 @@ function getTests() {
 if (typeof define !== 'function') {
   var define = require('amdefine')(module);
 }
-//define(['require', 'array-keys', './../dist/activity-streams.min.js'], function (require, ArrayKeys, amdMod) {
+//define(['require', 'array-keys', './../browser/activity-streams.min.js'], function (require, ArrayKeys, amdMod) {
 define(['require', 'array-keys'], function (require, ArrayKeys) {
   return [{
     desc: "basic tests",
@@ -91,7 +91,7 @@ define(['require', 'array-keys'], function (require, ArrayKeys) {
   {
     desc: "basic tests (browserify)",
     setup: function (env, test) {
-      env.mod = require('./../dist/activity-streams.js');
+      env.mod = require('./../browser/activity-streams.js');
       console.log('mod: ', env.mod);
       test.assertTypeAnd(env.mod, 'object');
       test.assertTypeAnd(env.mod.Object, 'object');
@@ -102,7 +102,7 @@ define(['require', 'array-keys'], function (require, ArrayKeys) {
   {
     desc: "basic tests (browserify minified)",
     setup: function (env, test) {
-      env.mod = require('./../dist/activity-streams.min.js');
+      env.mod = require('./../browser/activity-streams.min.js');
       test.assertTypeAnd(env.mod, 'object');
       test.assertTypeAnd(env.mod.Object, 'object');
       test.assertType(env.mod.Stream, 'object');
