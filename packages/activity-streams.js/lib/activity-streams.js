@@ -1,6 +1,6 @@
 /*!
  * activity-streams
- *   version 0.2.0
+ *   version 0.2.1
  *   http://github.com/silverbucket/activity-streams
  *
  * Developed and Maintained by:
@@ -17,12 +17,12 @@
  */
 
 
-var EventEmitter = require('wolfy87-eventemitter');
+var EventEmitter = require('event-emitter');
 var ArrayKeys    = require('array-keys');
 
 var streams = new ArrayKeys({ identifier: 'id' }),
     objs    = new ArrayKeys({ identifier: 'id' });
-    ee      = new EventEmitter();
+    ee      = EventEmitter();
 
 var Stream = {
   create: function (obj) {
@@ -34,7 +34,7 @@ var Stream = {
     }
 
     if (result) {
-      ee.emitEvent('activity-stream-create', obj);
+      ee.emit('activity-stream-create', obj);
     }
     return result;
   },
@@ -42,7 +42,7 @@ var Stream = {
   delete: function (id) {
     var result = streams.removeRecord(id);
     if (result) {
-      ee.emitEvent('activity-stream-delete', id);
+      ee.emit('activity-stream-delete', id);
     }
     return result;
   },
@@ -63,7 +63,7 @@ var _Object = {
     }
 
     if (result) {
-      ee.emitEvent('activity-object-create', obj);
+      ee.emit('activity-object-create', obj);
     }
     return result;
   },
@@ -71,7 +71,8 @@ var _Object = {
   delete: function (id) {
     var result = objs.removeRecord(id);
     if (result) {
-      ee.emitEvent('activity-object-delete', id);
+      console.log('emitting event');
+      ee.emit('activity-object-delete', id);
     }
     return result;
   },
@@ -85,7 +86,13 @@ var _Object = {
 module.exports = {
   Stream: Stream,
   Object: _Object,
-  on: ee.on,
-  once: ee.once,
-  off: ee.off
+  on: function (event, func) {
+    return ee.on(event, func);
+  },
+  once: function (event, func) {
+    return ee.once(event, func);
+  },
+  off: function (event, funcName) {
+    return ee.off(event, funcName);
+  }
 };
