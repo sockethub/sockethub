@@ -49,23 +49,26 @@ function getTests() {
     },
 
     {
-      desc: '# create 3',
+      desc: '# create 3 w/events',
       run: function (env, test) {
-        test.assert(env.mod.Object.create({id:'thingy3'}), true);
+        env.mod.on('activity-object-create', function onObjCreate(obj) {
+          test.assert(obj.id, 'thingy3');
+        });
+        setTimeout(function () {
+          test.assertAnd(env.mod.Object.create({id:'thingy3'}), true);
+        }, 0);
       }
     },
 
-    // {
-    //   desc: '# getIndexes',
-    //   run: function (env, test) {
-    //     test.assert(env.mod.Object.getIdentifiers(), ['thingy3', 'thingy2', 'thingy1']);
-    //   }
-    // },
-
     {
-      desc: '# delete 2',
+      desc: '# delete 2 w/events',
       run: function (env, test) {
-        test.assert(env.mod.Object.delete('thingy2'), true);
+        env.mod.on('activity-object-delete', function onObjDelete(id) {
+          test.assert(id, 'thingy2');
+        });
+        setTimeout(function () {
+          test.assertAnd(env.mod.Object.delete('thingy2'), true);
+        }, 0);
       }
     },
 
