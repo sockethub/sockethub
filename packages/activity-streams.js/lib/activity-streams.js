@@ -1,6 +1,6 @@
 /*!
  * activity-streams
- *   version 0.1.2
+ *   version 0.2.0
  *   http://github.com/silverbucket/activity-streams
  *
  * Developed and Maintained by:
@@ -16,95 +16,76 @@
  *
  */
 
-(function (global, factory, undefined) {
 
-  if ( typeof module === 'object' && typeof module.exports === 'object' ) {
-    var ArrayKeys = require('array-keys');
-    var EventEmitter = require('wolfy87-eventemitter');
-    module.exports = (global.document) ? factory(global, ArrayKeys, EventEmitter) :
-                                         factory({}, ArrayKeys, EventEmitter);
-  } else {
-    if (! global.ArrayKeys) {
-      throw new Error('activity-streams.js depends on the ArrayKeys module.');
-    } else if (! global.EventEmitter) {
-      throw new Error('activity-streams.js depends on the EventEmitter module.');
+var EventEmitter = require('wolfy87-eventemitter');
+var ArrayKeys    = require('array-keys');
+
+var streams = new ArrayKeys({ identifier: 'id' }),
+    objs    = new ArrayKeys({ identifier: 'id' });
+    ee      = new EventEmitter();
+
+var Stream = {
+  create: function (obj) {
+    var result = false;
+    try {
+      result = streams.addRecord(obj);
+    } catch (e) {
+      throw new Error(e);
     }
-    factory(global, global.ArrayKeys, global.EventEmitter);
+
+    if (result) {
+      ee.emitEvent('activity-stream-create', obj);
+    }
+    return result;
+  },
+
+  delete: function (id) {
+    var result = streams.removeRecord(id);
+    if (result) {
+      ee.emitEvent('activity-stream-delete', id);
+    }
+    return result;
+  },
+
+  get: function (id) {
+    return streams.getRecord(id);
   }
+};
 
-}((typeof window !== 'undefined') ? window : this, function (scope, ArrayKeys, EventEmitter, undefined) {
-  var streams = new ArrayKeys({ identifier: 'id' }),
-      objs    = new ArrayKeys({ identifier: 'id' });
-      ee      = new EventEmitter();
 
-  var Stream = {
-    create: function (obj) {
-      var result = false;
-      try {
-        result = streams.addRecord(obj);
-      } catch (e) {
-        throw new Error(e);
-      }
-
-      if (result) {
-        ee.emitEvent('activity-stream-create', obj);
-      }
-    },
-
-    delete: function (id) {
-      var result = streams.removeRecord(id);
-      if (result) {
-        ee.emitEvent('activity-stream-delete', id);
-      }
-    },
-
-    get: function (id) {
-      return streams.getRecord(id);
+var _Object = {
+  create: function (obj) {
+    var result = false;
+    try {
+      result = objs.addRecord(obj);
+    } catch (e) {
+      throw new Error(e);
     }
-  };
 
-
-  var _Object = {
-    create: function (obj) {
-      var result = false;
-      try {
-        result = objs.addRecord(obj);
-      } catch (e) {
-        throw new Error(e);
-      }
-
-      if (result) {
-        ee.emitEvent('activity-object-create', obj);
-      }
-    },
-
-    delete: function (id) {
-      var result = objs.removeRecord(id);
-      if (result) {
-        ee.emitEvent('activity-object-delete', id);
-      }
-    },
-
-    get: function (obj) {
-      return objs.getRecord(obj);
+    if (result) {
+      ee.emitEvent('activity-object-create', obj);
     }
-  };
+    return result;
+  },
 
+  delete: function (id) {
+    var result = objs.removeRecord(id);
+    if (result) {
+      ee.emitEvent('activity-object-delete', id);
+    }
+    return result;
+  },
 
-  if ( typeof define === 'function' && define.amd ) {
-    define([], function() {
-      return Activity;
-    });
+  get: function (obj) {
+    return objs.getRecord(obj);
   }
+};
 
-  scope.Activity = {
-    Stream: Stream,
-    Object: _Object,
-    on: ee.on,
-    once: ee.once,
-    off: ee.off
-  };
 
-  return scope.Activity;
-}));
-
+module.exports = {
+  Stream: Stream,
+  Object: _Object,
+  on: ee.on,
+  once: ee.once,
+  off: ee.off
+};
