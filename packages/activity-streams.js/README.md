@@ -1,5 +1,11 @@
 # activity-streams.js
 
+[![Build Status](http://img.shields.io/travis/silverbucket/activity-streams.js.svg?style=flat)](http://travis-ci.org/silverbucket/activity-streams.js)
+[![Code Climate](http://img.shields.io/codeclimate/github/silverbucket/activity-streams.js.svg?style=flat)](https://codeclimate.com/github/silverbucket/activity-streams.js)
+[![license](https://img.shields.io/npm/l/activity-streams.js.svg?style=flat)](https://npmjs.org/package/activity-streams.js)
+[![downloads](http://img.shields.io/npm/dm/activity-streams.js.svg?style=flat)](https://npmjs.org/package/activity-streams.js)
+[![release](http://img.shields.io/github/release/silverbucket/activity-streams.js.svg?style=flat)](https://github.com/silverbucket/activity-streams.js/releases)
+
 A simple tool to facilitate handling and referencing activity streams and it's objects, cutting down on verbosity.
 
 Designed to run in both `node.js` and the `browser`.
