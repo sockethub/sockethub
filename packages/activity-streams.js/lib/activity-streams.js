@@ -1,6 +1,6 @@
 /*!
  * activity-streams
- *   version 0.3.0
+ *   version 0.3.1
  *   http://github.com/silverbucket/activity-streams
  *
  * Developed and Maintained by:
@@ -24,27 +24,23 @@ var objs    = new ArrayKeys({ identifier: 'id' }),
     ee      = EventEmitter();
 
 var Stream = function (stream) {
-  var actorObj, targetObj, objectObj;
-  if ((typeof stream.actor === 'string') &&
-      (actorObj = objs.getRecord(stream.actor))) {
-    stream.actor = actorObj;
+
+  if (typeof stream.actor === 'string') {
+    stream.actor = objs.getRecord(stream.actor) || stream.actor;
   }
 
-  if ((typeof stream.target === 'string') &&
-      (actorObj = objs.getRecord(stream.target))) {
-    stream.target = targetObj;
+  if (typeof stream.target === 'string') {
+    stream.target = objs.getRecord(stream.target) || stream.target;
   } else if (Array.isArray(stream.target)) {
     for (var i = stream.target.length - 1; i >= 0; i -= 1) {
-      if ((typeof stream.target[i] === 'string') &&
-          (targetObj = objs.getRecord(stream.target[i]))) {
-        stream.target[i] = targetObj;
+      if (typeof stream.target[i] === 'string') {
+        stream.target[i] = objs.getRecord(stream.target[i]) || stream.target[i];
       }
     }
   }
 
-  if ((typeof stream.object === 'string') &&
-      (objectObj = objs.getRecord(stream.object))) {
-    stream.object = objectObj;
+  if (typeof stream.object === 'string') {
+    stream.object = objs.getRecord(stream.object) || stream.object;
   }
 
   ee.emit('activity-stream', stream);
