@@ -78,6 +78,12 @@ var _Object = {
 
   get: function (obj) {
     return objs.getRecord(obj);
+  },
+
+  getByType: function (type) {
+    objs.forEach(function (o) {
+
+    });
   }
 };
 

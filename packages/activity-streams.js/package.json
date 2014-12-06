@@ -1,10 +1,10 @@
 {
   "name": "activity-streams",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A simple tool to facilitate handling and referencing activity streams without unecessary verbosity.",
   "main": "./lib/activity-streams.js",
   "dependencies": {
-    "array-keys": "^1.1.0",
+    "array-keys": "^1.2.0",
     "event-emitter": "^0.3.1"
   },
   "devDependencies": {
