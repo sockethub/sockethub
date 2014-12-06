@@ -17,11 +17,11 @@
  */
 
 
-var EventEmitter = require('event-emitter');
-var ArrayKeys    = require('array-keys');
+var EventEmitter = require('event-emitter'),
+    ArrayKeys    = require('array-keys');
 
 var streams = new ArrayKeys({ identifier: 'id' }),
-    objs    = new ArrayKeys({ identifier: 'id' });
+    objs    = new ArrayKeys({ identifier: 'id' }),
     ee      = EventEmitter();
 
 var Stream = {
@@ -71,7 +71,6 @@ var _Object = {
   delete: function (id) {
     var result = objs.removeRecord(id);
     if (result) {
-      console.log('emitting event');
       ee.emit('activity-object-delete', id);
     }
     return result;
