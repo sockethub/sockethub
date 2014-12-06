@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Sockethub Example IRC Chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+    </style>
+  </head>
+  <body>
+    <ul id="messages"></ul>
+    <form action="">
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="<%= address %>socket.io/socket.io.js"></script>
+    <script src="<%= address %>activity-streams.js"></script>
+    <script src="<%= address %>sockethub-client.js"></script>
+    <script>
+      var socket = new io.connect('<%= address %>');
+      var sc     = new SockethubClient(socket);
+
+      // our irc user info
+      sc.Activity.Object.create({
+        id: 'irc://sockethub-example@irc.freenode.net',
+        objectType: "person",
+        displayName: 'sockethub-example',
+        url: "http://sockethub.org",
+        image: {
+          url: "http://example.org/image.jpg",
+          mediaType: "image/jpeg",
+          width: 250,
+          height: 250
+        }
+      });
+
+      // the irc chatroom we're connecting to
+      sc.Activity.Object.create({
+        objectType: "chatroom",
+        id: 'irc://irc.freenode.net/sockethub',
+        displayName: '#sockethub'
+      });
+
+      // sending irc credentials to sockethub server
+      socket.emit('credentials', {
+        actor: 'irc://sockethub-example@irc.freenode.net',
+        platform: 'irc',
+        object: {
+          objectType: 'credentials',
+          host: '',
+          port: '',
+          secure: true
+        }
+      });
+
+      // handler for user input, emit messages to sockethub server
+      $('form').submit(function () {
+        socket.emit('message', {
+          platform: 'irc',
+          actor: 'irc://sockethub-example@irc.freenode.net',
+          object: {
+            objectType: "message",
+            content: $('#m').val()
+          },
+          target: 'irc://irc.freenode.net/sockethub',
+          verb: 'send'
+        });
+        $('#m').val('');
+        return false;
+      });
+
+      // handle incoming messages from the sockethub server
+      socket.on('message', function (msg) {
+        console.log('received: ', msg);
+        var actor = sc.Activity.Object.get(msg.actor);
+        $('#messages').append($('<li>').text(actor.displayName + ': ' + msg.object.content));
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "debug": false,
+  "examples": {
+    "enabled": true,
+    "secret": 1234567890
+  },
+  "service": {
+    "port": 10550,
+    "host": "localhost"
+  },
+  "log_file": "",
+  "platforms": {
+    "email": true,
+    "facebook": true,
+    "feeds": true,
+    "irc": true,
+    "twitter": true,
+    "xmpp": true
+  },
+  "public": {
+    "protocol": "http",
+    "host": "localhost",
+    "port": 10550,
+    "path": "/"
+  },
+  "redis": {
+    "host": "127.0.0.1",
+    "port": 6379
+  },
+  "workers": 1
+}

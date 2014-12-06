@@ -1,7 +1,7 @@
 {
   "name": "sockethub",
   "description": "A polyglot messaging service",
-  "version": "1.0.0-PREALPHA",
+  "version": "1.0.0-ALPHA_0",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL",
@@ -32,8 +32,15 @@
   },
   "homepage": "http://github.com/sockethub/sockethub",
   "dependencies": {
-    "express": "^4.10.2",
-    "socket.io": "^1.2.1"
+    "activity-streams": "^0.3.0",
+    "body-parser": "^1.9.3",
+    "ejs": "^1.0.0",
+    "express": "^4.10.4",
+    "nconf": "^0.6.9",
+    "rand-token": "^0.2.1",
+    "redis-connection-pool": "^0.1.1",
+    "socket.io": "^1.2.1",
+    "tv4": "^1.1.4"
   },
   "devDependencies": {
     "jaribu": "*"
