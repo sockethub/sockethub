@@ -20,36 +20,36 @@
 var EventEmitter = require('event-emitter'),
     ArrayKeys    = require('array-keys');
 
-var streams = new ArrayKeys({ identifier: 'id' }),
-    objs    = new ArrayKeys({ identifier: 'id' }),
+var objs    = new ArrayKeys({ identifier: 'id' }),
     ee      = EventEmitter();
 
-var Stream = {
-  create: function (obj) {
-    var result = false;
-    try {
-      result = streams.addRecord(obj);
-    } catch (e) {
-      throw new Error(e);
-    }
-
-    if (result) {
-      ee.emit('activity-stream-create', obj);
-    }
-    return result;
-  },
-
-  delete: function (id) {
-    var result = streams.removeRecord(id);
-    if (result) {
-      ee.emit('activity-stream-delete', id);
-    }
-    return result;
-  },
-
-  get: function (id) {
-    return streams.getRecord(id);
+var Stream = function (stream) {
+  var actorObj, targetObj, objectObj;
+  if ((typeof stream.actor === 'string') &&
+      (actorObj = objs.getRecord(stream.actor))) {
+    stream.actor = actorObj;
   }
+
+  if ((typeof stream.target === 'string') &&
+      (actorObj = objs.getRecord(stream.target))) {
+    stream.target = targetObj;
+  } else if (Array.isArray(stream.target)) {
+    for (var i = stream.target.length - 1; i >= 0; i -= 1) {
+      if ((typeof stream.target[i] === 'string') &&
+          (targetObj = objs.getRecord(stream.target[i]))) {
+        stream.target[i] = targetObj;
+      }
+    }
+  }
+
+  if ((typeof stream.object === 'string') &&
+      (objectObj = objs.getRecord(stream.object))) {
+    stream.object = objectObj;
+  }
+
+  ee.emit('activity-stream', stream);
+
+  return stream;
 };
 
 

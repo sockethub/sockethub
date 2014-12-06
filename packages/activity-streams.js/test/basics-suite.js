@@ -49,6 +49,25 @@ function getTests() {
     },
 
     {
+      desc: '# stream',
+      run: function (env, test) {
+        var stream = env.mod.Stream({
+          verb: 'lol',
+          actor: 'thingy1',
+          object: 'thingy2',
+          target: [ 'thingy1', 'thingy2' ]
+        });
+        var expected = {
+          verb: 'lol',
+          actor: { id: 'thingy1' },
+          target: [ { id: 'thingy1' }, { id: 'thingy2' }],
+          object: { id: 'thingy2' }
+        };
+        test.assert(stream, expected);
+      }
+    },
+
+    {
       desc: '# create 3 w/events',
       run: function (env, test) {
         env.mod.on('activity-object-create', function onObjCreate(obj) {
@@ -87,7 +106,7 @@ define(['require', 'array-keys'], function (require, ArrayKeys) {
       env.mod = require('./../lib/activity-streams');
       test.assertTypeAnd(env.mod, 'object');
       test.assertTypeAnd(env.mod.Object, 'object');
-      test.assertType(env.mod.Stream, 'object');
+      test.assertType(env.mod.Stream, 'function');
     },
     tests: getTests(),
   },
@@ -98,7 +117,7 @@ define(['require', 'array-keys'], function (require, ArrayKeys) {
       console.log('mod: ', env.mod);
       test.assertTypeAnd(env.mod, 'object');
       test.assertTypeAnd(env.mod.Object, 'object');
-      test.assertType(env.mod.Stream, 'object');
+      test.assertType(env.mod.Stream, 'function');
     },
     tests: getTests(),
   },
@@ -108,7 +127,7 @@ define(['require', 'array-keys'], function (require, ArrayKeys) {
       env.mod = require('./../browser/activity-streams.min.js');
       test.assertTypeAnd(env.mod, 'object');
       test.assertTypeAnd(env.mod.Object, 'object');
-      test.assertType(env.mod.Stream, 'object');
+      test.assertType(env.mod.Stream, 'function');
     },
     tests: getTests(),
   }];
