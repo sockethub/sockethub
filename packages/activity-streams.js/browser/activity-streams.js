@@ -24,28 +24,25 @@ var EventEmitter = _dereq_('event-emitter'),
 var objs    = new ArrayKeys({ identifier: 'id' }),
     ee      = EventEmitter();
 
-var Stream = function (stream) {
+var Stream = function (meta) {
+  var stream = {};
 
-  if (typeof stream.actor === 'string') {
-    stream.actor = objs.getRecord(stream.actor) || stream.actor;
-  }
+  for (var key in meta) {
 
-  if (typeof stream.target === 'string') {
-    stream.target = objs.getRecord(stream.target) || stream.target;
-  } else if (Array.isArray(stream.target)) {
-    for (var i = stream.target.length - 1; i >= 0; i -= 1) {
-      if (typeof stream.target[i] === 'string') {
-        stream.target[i] = objs.getRecord(stream.target[i]) || stream.target[i];
+    if (typeof meta[key] === 'string') {
+      stream[key] = objs.getRecord(meta[key]) || meta[key];
+    } else if (Array.isArray(meta[key])) {
+      stream[key] = [];
+
+      for (var i = meta[key].length - 1; i >= 0; i -= 1) {
+        if (typeof meta[key][i] === 'string') {
+          stream[key][i] = objs.getRecord(meta[key][i]) || meta[key][i];
+        }
       }
     }
   }
 
-  if (typeof stream.object === 'string') {
-    stream.object = objs.getRecord(stream.object) || stream.object;
-  }
-
   ee.emit('activity-stream', stream);
-
   return stream;
 };
 
