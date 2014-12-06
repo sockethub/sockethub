@@ -61,7 +61,7 @@ Activity.Object.create({
 
 var exampleUser = Activity.Object.get('irc://exampleUser@irc.freenode.net');
 
-Activity.Stream.create({
+Activity.Stream({
     verb: 'send',
     actor: 'irc://exampleUser@irc.freenode.net',
     object: {
