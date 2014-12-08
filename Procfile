@@ -1,1 +1,1 @@
-web: PUBLIC:node lib/sockethub.js
+web: node lib/sockethub.js
