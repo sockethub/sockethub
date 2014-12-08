@@ -51,8 +51,10 @@ function IRC() {
 /**
  * Property: schema
  *
- * JSON schema defining the credentials which are passed during the 'set'
- * verb. Actual handling of incoming 'set' commands are handled by dispatcher,
+ * JSON schema defining the verbs this platform accepts, and the credentials
+ * object which is passed during the 'set' verb.
+ *
+ * Actual handling of incoming 'set' commands are handled by dispatcher,
  * but the dispatcher uses this defined schema to validate credentials
  * received, so that when a platform verb is called, it can fetch the
  * credentials (`session.getConfig()`), knowing they will have already been
@@ -85,40 +87,39 @@ function IRC() {
  *   (end code)
  */
 IRC.prototype.schema = {
-  "set": {
-    "credentials" : {
-      "required": ['object'],
-      "properties": {
-        "object": {
-          "name": "object",
-          "type": "object",
-          "required": ['objectType', 'nick', 'server'],
-          "additionalProperties": false,
-          "properties" : {
-            "objectType": {
-              "name": "objectType",
-              "type": "string"
-            },
-            "nick" : {
-              "name" : "nick",
-              "type": "string"
-            },
-            "password" : {
-              "name" : "password",
-              "type": "string"
-            },
-            "server" : {
-              "name" : "server",
-              "type": "string"
-            },
-            "port" : {
-              "name": "port",
-              "type": "number"
-            },
-            "secure": {
-              "name": "secure",
-              "type": "boolean"
-            }
+  "verbs" : [ 'update', 'join', 'leave', 'send', 'observe' ],
+  "credentials" : {
+    "required": [ 'object' ],
+    "properties": {
+      "object": {
+        "name": "object",
+        "type": "object",
+        "required": [ 'objectType', 'nick', 'server' ],
+        "additionalProperties": false,
+        "properties" : {
+          "objectType": {
+            "name": "objectType",
+            "type": "string"
+          },
+          "nick" : {
+            "name" : "nick",
+            "type": "string"
+          },
+          "password" : {
+            "name" : "password",
+            "type": "string"
+          },
+          "server" : {
+            "name" : "server",
+            "type": "string"
+          },
+          "port" : {
+            "name": "port",
+            "type": "number"
+          },
+          "secure": {
+            "name": "secure",
+            "type": "boolean"
           }
         }
       }
@@ -145,7 +146,6 @@ IRC.prototype.init = function (session) {
   this.sessionId = session.getSessionID();
   return Promise.resove();
 };
-
 
 /**
  * Function: join
@@ -730,7 +730,4 @@ IRC.prototype._createClient = function (key, creds) {
 };
 
 
-module.exports = function () {
-  return new IRC();
-};
-
+module.exports = IRC;
