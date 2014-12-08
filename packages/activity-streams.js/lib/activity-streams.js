@@ -38,6 +38,8 @@ var Stream = function (meta) {
           stream[key][i] = objs.getRecord(meta[key][i]) || meta[key][i];
         }
       }
+    } else {
+      stream[key] = meta[key];
     }
   }
 
