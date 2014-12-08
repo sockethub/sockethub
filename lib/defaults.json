@@ -1,29 +1,31 @@
 {
-  "HOST": "localhost",
-  "PORT": 10550,
-  "LOG": "",
-  "DEBUG": false,
-  "WORKERS": 1,
-  "EXAMPLES": {
-    "ENABLED": true,
-    "SECRET": 1234567890
+  "debug": false,
+  "examples": {
+    "enabled": true,
+    "secret": 1234567890
   },
-  "PLATFORMS": {
-    "EMAIL": true,
-    "FACEBOOK": true,
-    "FEEDS": true,
-    "IRC": true,
-    "TWITTER": true,
-    "XMPP": true
+  "service": {
+    "port": 10550,
+    "host": "localhost"
   },
-  "PUBLIC": {
-    "PROTOCOL": "http",
-    "HOST": "localhost",
-    "PORT": 10550,
-    "PATH": "/"
+  "log_file": "",
+  "platforms": {
+    "email": true,
+    "facebook": true,
+    "feeds": true,
+    "irc": true,
+    "twitter": true,
+    "xmpp": true
   },
-  "REDIS": {
-    "HOST": "127.0.0.1",
-    "PORT": 6379
-  }
+  "public": {
+    "protocol": "http",
+    "host": "localhost",
+    "port": 10550,
+    "path": "/"
+  },
+  "redis": {
+    "host": "127.0.0.1",
+    "port": 6379
+  },
+  "workers": 1
 }
