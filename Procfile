@@ -1,1 +1,1 @@
-web: node lib/sockethub.js
+web: HOST="0.0.0.0" node lib/sockethub.js
