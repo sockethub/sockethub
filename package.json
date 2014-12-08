@@ -46,6 +46,7 @@
     "jaribu": "*"
   },
   "scripts": {
-    "test": "node_modules/.bin/jaribu"
+    "test": "node_modules/.bin/jaribu",
+    "start": "node lib/server.js"
   }
 }
