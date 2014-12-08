@@ -68,6 +68,25 @@ function getTests() {
     },
 
     {
+      desc: '# stream, static object',
+      run: function (env, test) {
+        var stream = env.mod.Stream({
+          verb: 'lol',
+          actor: 'thingy1',
+          object: { objectType: 'stuff', content: 'har' },
+          target: [ 'thingy1', 'thingy2' ]
+        });
+        var expected = {
+          verb: 'lol',
+          actor: { id: 'thingy1' },
+          target: [ { id: 'thingy1' }, { id: 'thingy2' }],
+          object: { objectType: 'stuff', content: 'har' }
+        };
+        test.assert(stream, expected);
+      }
+    },
+
+    {
       desc: '# create 3 w/events',
       run: function (env, test) {
         env.mod.on('activity-object-create', function onObjCreate(obj) {
