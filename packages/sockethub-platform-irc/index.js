@@ -19,8 +19,8 @@
 if (typeof (IRCFactory) !== 'object') {
   IRCFactory = require('irc-factory');
 }
+var Promise    = require('bluebird');
 
-var Promise = require('bluebird');
 Promise.defer = function () {
   var resolve, reject;
   var promise = new Promise(function() {
