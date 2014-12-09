@@ -40,6 +40,7 @@
     "rand-token": "^0.2.1",
     "redis-connection-pool": "^0.1.1",
     "socket.io": "^1.2.1",
+    "sockethub-platform-irc": "git://github.com/sockethub/sockethub-platform-irc.git#master",
     "tv4": "^1.1.4"
   },
   "devDependencies": {
