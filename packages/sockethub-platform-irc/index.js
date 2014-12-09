@@ -1,5 +1,5 @@
 /**
- * This file is part of the sockethub platform.
+ * This file is part of sockethub.
  *
  * copyright 2012-2015 Nick Jennings (https://github.com/silverbucket)
  *
@@ -64,11 +64,14 @@ function IRC() {
  *
  *   (start code)
  *   {
+ *     id: 1234,
  *     verb: 'set',
- *     platform: 'dispatcher', // dispatcher handles validating incoming credentials
+ *     platform: 'irc',
  *     actor: {
- *       address: 'testuser',
- *       name: 'Dr. Test User'
+ *       id: 'irc://testuser@irc.host.net',
+ *       objectType: 'person',
+ *       displayName: 'Mr. Test User',
+ *       userName: 'testuser'
  *     },
  *     object: {
  *       objectType: 'credentials',
@@ -77,14 +80,16 @@ function IRC() {
  *       password: 'asdasdasdasd',
  *       port: 6697,
  *       secure: true
- *     },
- *     target: [
- *       {
- *         platform: 'irc'  // indicates which platform the credentials are for
- *       }
- *     ]
+ *     }
  *   }
  *   (end code)
+ *
+ * In the above example, sockethub will validate the incoming credentials object
+ * against whatever is defined in the `credentials` portion of the schema
+ * object.
+ *
+ * It will also check if the incoming AS object uses a verb which exists in the
+ * `verbs` portion of the schema object (should be an array of verb names).
  */
 IRC.prototype.schema = {
   "verbs" : [ 'update', 'join', 'leave', 'send', 'observe' ],
@@ -160,21 +165,28 @@ IRC.prototype.init = function (session) {
  *
  *     (start code)
  *     {
+ *       id: 1234,
  *       platform: 'irc',
  *       verb: 'join',
  *       actor: {
- *         address: 'slvrbckt'
+ *         id: 'irc://slvrbckt@irc.freenode.net',
+ *         objectType: 'person',
+ *         displayName: 'Nick Jennings',
+ *         userName: 'slvrbckt'
  *       },
  *       target: [
  *         {
- *           address: '#sockethub'
+ *           id: 'irc://irc.freenode.net/sockethub',
+ *           objectType: 'chatroom',
+ *           displayName: '#sockethub'
  *         },
  *         {
- *           address: '#remotestorage'
+ *           id: 'irc://irc.freenode.net/remotestorage',
+ *           objectType: 'chatroom',
+ *           displayName: '#remotestorage'
  *         }
  *       ],
- *       object: {},
- *       rid: 1234
+ *       object: {}
  *     }
  *     (end code)
  *
@@ -216,18 +228,21 @@ IRC.prototype.join = function (job) {
  *
  *     (start code)
  *     {
+ *       id: 1234,
  *       platform: 'irc',
  *       verb: 'leave',
  *       actor: {
- *         address: 'slvrbckt'
+ *         id: 'irc://slvrbckt@irc.freenode.net',
+ *         objectType: 'person',
+ *         displayName: 'Nick Jennings',
+ *         userName: 'slvrbckt'
  *       },
- *       target: [
- *         {
- *           address: '#remotestorage'
- *         }
- *       ],
- *       object: {},
- *       rid: 1234
+ *       target: {
+ *         id: 'irc://irc.freenode.net/remotestorage',
+ *         objectType: 'chatroom',
+ *         displayName: '#remotestorage'
+ *       },
+ *       object: {}
  *     }
  *     (end code)
  *
@@ -268,20 +283,24 @@ IRC.prototype.leave = function (job) {
  *
  *     (start code)
  *     {
+ *       id: 1234,
  *       platform: 'irc',
  *       verb: 'send',
  *       actor: {
- *         address: 'slvrbckt'
+ *         id: 'irc://slvrbckt@irc.freenode.net',
+ *         objectType: 'person',
+ *         displayName: 'Nick Jennings',
+ *         userName: 'slvrbckt'
  *       },
- *       target: [
- *         {
- *           address: '#sockethub'
- *         }
- *       ],
+ *       target: {
+ *         id: 'irc://irc.freenode.net/remotestorage',
+ *         objectType: 'chatroom',
+ *         displayName: '#remotestorage'
+ *       },
  *       object: {
- *         text: 'Hello from Sockethub!'
- *       },
- *       rid: 1234
+ *         objectType: 'message',
+ *         content: 'Hello from Sockethub!'
+ *       }
  *     }
  *     (end code)
  *
@@ -323,29 +342,37 @@ IRC.prototype.send = function (job) {
  *       platform: 'irc',
  *       verb: 'update',
  *       actor: {
- *         address: 'slvrbckt'
+ *         id: 'irc://slvrbckt@irc.freenode.net',
+ *         objectType: 'person',
+ *         displayName: 'Nick Jennings',
+ *         userName: 'slvrbckt'
  *       },
- *       target: [
- *         {
- *           address: '#sockethub'
- *         }
- *       ],
+ *       target: {
+ *         id: 'irc://irc.freenode.net/sockethub',
+ *         objectType: 'chatroom',
+ *         displayName: '#sockethub'
+ *       },
  *       object: {
  *         objectType: 'topic',
  *         topic: 'New version of Socekthub released!'
  *       },
- *       rid: 1234
+ *       id: 1234
  *     }
  *     (end code)
  *
- * - change nickname
+ * - change nickname  TODO review, also when we rename a user, their person
+ *                    object needs to change (and their credentials)
  *
  *     (start code)
  *     {
+ *       id: 1234,
  *       platform: 'irc',
  *       verb: 'udpate',
  *       actor: {
- *         address: 'slvrbckt'
+ *         id: 'irc://slvrbckt@irc.freenode.net',
+ *         objectType: 'person',
+ *         displayName: 'Nick Jennings',
+ *         userName: 'slvrbckt'
  *       },
  *       object: {
  *         objectType: 'address'
@@ -354,8 +381,7 @@ IRC.prototype.send = function (job) {
  *         {
  *           address: 'CoolDude'
  *         }
- *       ],
- *       rid: 1234
+ *       ]
  *     }
  *     (end code)
  */
@@ -419,20 +445,23 @@ IRC.prototype.update = function (job) {
  *
  *     (start code)
  *     {
+ *       id: 1234,
  *       platform: 'irc',
  *       verb: 'observe',
  *       actor: {
- *         address: 'slvrbckt'
+ *         id: 'irc://slvrbckt@irc.freenode.net',
+ *         objectType: 'person',
+ *         displayName: 'Nick Jennings',
+ *         userName: 'slvrbckt'
  *       },
- *       target: [
- *         {
- *           address: '#sockethub'
- *         }
- *       ],
+ *       target: {
+ *         id: 'irc://irc.freenode.net/sockethub',
+ *         objectType: 'chatroom',
+ *         displayName: '#sockethub'
+ *       },
  *       object: {
  *         objectType: 'attendance'
- *       },
- *       rid: 1234
+ *       }
  *     }
  *     (end code)
  *
@@ -440,12 +469,15 @@ IRC.prototype.update = function (job) {
  *
  *     (start code)
  *     {
+ *       id: 1234,
  *       platform: 'irc',
  *       verb: 'observe',
  *       actor: {
- *         address: '#sockethub'
+ *         id: 'irc://irc.freenode.net/sockethub',
+ *         objectType: 'chatroom',
+ *         displayName: '#sockethub'
  *       },
- *       target: [],
+ *       target: {},
  *       object: {
  *         objectType: 'attendance'
  *         members: [
@@ -455,8 +487,7 @@ IRC.prototype.update = function (job) {
  *           'Smoochie',
  *           'neo'
  *         ]
- *       },
- *       rid: 1234
+ *       }
  *     }
  *     (end code)
  *
@@ -492,7 +523,7 @@ IRC.prototype.observe = function (job) {
 
 
 IRC.prototype.cleanup = function (job) {
-  // XXX destroy IRC connection
+  // TODO - destroy IRC connection
   return Promise.resolve();
 };
 
@@ -525,7 +556,7 @@ IRC.prototype._getClient = function (job, create) {
 
       // make sure we have listeners for this session
       //
-      // XXX TODO FIXME - make sure we know how to re-load listeners for a new
+      // TODO FIXME - make sure we know how to re-load listeners for a new
       // session.
       //
       // if (!client.listeners.message[self.sessionId]) {
