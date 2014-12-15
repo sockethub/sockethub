@@ -1,21 +1,18 @@
 {
-  "debug": false,
+  "debug": "sockethub:*",
   "examples": {
     "enabled": true,
     "secret": 1234567890
   },
   "service": {
     "port": 10550,
-    "host": "localhost"
+    "host": "localhost",
+    "path": "/sockethub"
   },
   "log_file": "",
   "platforms": {
-    "email": true,
-    "facebook": true,
-    "feeds": true,
-    "irc": true,
-    "twitter": true,
-    "xmpp": true
+    "whitelist": [],
+    "blacklist": []
   },
   "public": {
     "protocol": "http",
