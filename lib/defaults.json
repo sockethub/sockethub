@@ -9,6 +9,11 @@
     "host": "localhost",
     "path": "/sockethub"
   },
+  "kue": {
+    "enabled": true,
+    "port": 10549,
+    "host": "localhost"
+  },
   "log_file": "",
   "platforms": {
     "whitelist": [],
