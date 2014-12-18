@@ -17,6 +17,12 @@ nconf.argv({
  .file({ file: __dirname + '/../config.json' })
  .file({ file: __dirname + '/../lib/defaults.json' });
 
+process.on('uncaughtException', function (err) {
+  console.log("\nUNCAUGHT EXCEPTION - something horrible has happened!\n");
+  console.log(err.stack);
+  process.exit(1);
+});
+
 var Sockethub = require('./../lib/sockethub.js');
 
 // var debugScope = process.env.DEBUG || nconf.get('debug');
