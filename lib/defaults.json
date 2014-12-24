@@ -1,5 +1,4 @@
 {
-  "debug": "sockethub:*",
   "examples": {
     "enabled": true,
     "secret": 1234567890

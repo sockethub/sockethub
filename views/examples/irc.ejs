@@ -19,12 +19,12 @@
       <input id="m" autocomplete="off" /><button>Send</button>
     </form>
 
-    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="<%= address %>jquery.js"></script>
     <script src="<%= address %>sockethub/socket.io.js"></script>
     <script src="<%= address %>activity-streams.js"></script>
     <script src="<%= address %>sockethub-client.js"></script>
     <script>
-      localStorage.debug = "*";
+      localStorage.debug = "<%= debug %>";
       var sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
 
       // our irc user info
