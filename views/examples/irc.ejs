@@ -24,7 +24,8 @@
     <script src="<%= address %>activity-streams.js"></script>
     <script src="<%= address %>sockethub-client.js"></script>
     <script>
-      localStorage.debug = "<%= debug %>";
+      bdebug = function(){};//debug('sockethub');
+      localStorage.debug = '<%= debug_scope%>';
       var sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
 
       // our irc user info
@@ -49,20 +50,22 @@
       });
 
       // sending irc credentials to sockethub server
-      sc.socket.emit('credentials', {
+      var credentials = {
         actor: 'irc://sockethub-example@irc.freenode.net',
         platform: 'irc',
         object: {
           objectType: 'credentials',
-          host: '',
+          server: 'example.com',
           port: '',
           secure: true
         }
-      });
+      };
+      bdebug('sending credentials: ', credentials);
+      sc.socket.emit('credentials', credentials);
 
       // handler for user input, emit messages to sockethub server
       $('form').submit(function () {
-        sc.socket.emit('message', {
+        var msg = {
           platform: 'irc',
           actor: 'irc://sockethub-example@irc.freenode.net',
           object: {
@@ -71,14 +74,17 @@
           },
           target: 'irc://irc.freenode.net/sockethub',
           verb: 'send'
-        });
+        };
+
+        bdebug('sending message: ', msg);
+        sc.socket.emit('message', msg);
         $('#m').val('');
         return false;
       });
 
       // handle incoming messages from the sockethub server
       sc.socket.on('message', function (msg) {
-        console.log('received: ', msg);
+        bdebug('received message: ', msg);
         var actor = sc.Activity.Object.get(msg.actor);
         $('#messages').append($('<li>').text(actor.displayName + ': ' + msg.object.content));
       });
