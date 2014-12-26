@@ -48,8 +48,8 @@ define(['require', 'tv4', './../lib/schemas/sockethub-activity-streams'], functi
       setup: function (env, test) {
         test.assertTypeAnd(ASSchema, 'function');
         var schema = ASSchema(['hello', 'goodbye'], ['send', 'fetch']);
-        test.assertAnd(schema.id, 'http://sockethub.org/activity-stream-schema#');
-        tv4.addSchema('http://sockethub.org/activity-stream-schema#', schema);
+        test.assertAnd(schema.id, 'http://sockethub.org/schemas/v0/activity-stream#');
+        tv4.addSchema(schema.id, schema);
         test.done();
       },
       tests: [

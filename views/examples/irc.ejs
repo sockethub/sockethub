@@ -24,7 +24,7 @@
     <script src="<%= address %>activity-streams.js"></script>
     <script src="<%= address %>sockethub-client.js"></script>
     <script>
-      bdebug = function(){};//debug('sockethub');
+      bdebug = function(msg, obj){console.log(msg, obj);};//debug('sockethub');
       localStorage.debug = '<%= debug_scope%>';
       var sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
 
@@ -49,14 +49,28 @@
         displayName: '#sockethub'
       });
 
+      // errors
+      sc.socket.on('failure', function (msg) {
+        bdebug('received failure: ', msg);
+      });
+
+
+      // handle incoming messages from the sockethub server
+      sc.socket.on('message', function (msg) {
+        bdebug('received message: ', msg);
+        var actor = sc.Activity.Object.get(msg.actor);
+        $('#messages').append($('<li>').text(actor.displayName + ': ' + msg.object.content));
+      });
+
       // sending irc credentials to sockethub server
       var credentials = {
         actor: 'irc://sockethub-example@irc.freenode.net',
         platform: 'irc',
         object: {
           objectType: 'credentials',
+          nick: 'sockethub-example',
           server: 'example.com',
-          port: '',
+          port: 6379,
           secure: true
         }
       };
@@ -80,13 +94,6 @@
         sc.socket.emit('message', msg);
         $('#m').val('');
         return false;
-      });
-
-      // handle incoming messages from the sockethub server
-      sc.socket.on('message', function (msg) {
-        bdebug('received message: ', msg);
-        var actor = sc.Activity.Object.get(msg.actor);
-        $('#messages').append($('<li>').text(actor.displayName + ': ' + msg.object.content));
       });
     </script>
   </body>
