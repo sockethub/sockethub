@@ -129,7 +129,7 @@ The [Getting Started Guide](https://github.com/sockethub/sockethub/blob/master/d
 license
 -------
 
-Sockethub is licensed under the [AGPLv3](https://github.com/sockethub/sockethub/blob/master/LICENSE)
+Sockethub is licensed under the [LGPL](https://github.com/sockethub/sockethub/blob/master/LICENSE)
 
 credits
 -------
