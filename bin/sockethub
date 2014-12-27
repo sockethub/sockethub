@@ -1,21 +1,7 @@
 #!/usr/bin/env node
 
 var nconf = require('nconf');
-
-// assign config loading priorities (command-line, environment, cfg, defaults)
-nconf.argv({
-    'port': {
-      alias: 'service.port',
-      default: 10550
-    },
-    'host': {
-      alias: 'service.host',
-      default: 'localhost'
-    }
-  })
- .env()
- .file({ file: __dirname + '/../config.json' })
- .file({ file: __dirname + '/../lib/defaults.json' });
+var init = require('./../lib/bootstrap/init.js');
 
 process.on('uncaughtException', function (err) {
   console.log("\nUNCAUGHT EXCEPTION - something horrible has happened!\n");

@@ -37,7 +37,7 @@ define(['require', 'tv4', './../lib/schemas/sockethub-activity-streams'], functi
         object: {
           objectType: 'credentials'
         }
-      }
+     }
     }
   };
 
