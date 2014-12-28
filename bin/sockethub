@@ -1,8 +1,5 @@
 #!/usr/bin/env node
 
-var nconf = require('nconf');
-var init = require('./../lib/bootstrap/init.js');
-
 process.on('uncaughtException', function (err) {
   console.log("\nUNCAUGHT EXCEPTION - something horrible has happened!\n");
   console.log(err.stack);
