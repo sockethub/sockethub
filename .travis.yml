@@ -3,6 +3,7 @@ node_js:
   - 0.10
   - 0.11
 services: redis
+sudo: false
 script: npm test
 install:
   - npm install
