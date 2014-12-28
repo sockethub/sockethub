@@ -64,7 +64,7 @@
   },
   "devDependencies": {
     "generic-pool": "^2.1.1",
-    "jaribu": "^0.2.2"
+    "jaribu": "^0.3.0"
   },
   "scripts": {
     "test": "node_modules/.bin/jaribu"
