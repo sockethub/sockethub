@@ -1,28 +1,30 @@
 if (typeof define !== 'function') {
   var define = require('amdefine')(module);
 }
-define(['require', 'tv4', './../lib/schemas/sockethub-activity-streams'], function (require, tv4, ASSchema) {
+define(['require', 'tv4', './../lib/schemas/sockethub-activity-streams'], function (require, tv4, schemaSHAS) {
 
   var as = {
-    working: {
+    pass: {
       one: {
         id: 'blah',
         verb: 'send',
         platform: 'hello',
         actor: {
+          id: 'irc://dood@irc.freenode.net',
           objectType: 'person',
           displayName: 'dood'
         },
         target: {
+          id: 'irc://irc.freenode.net/sockethub',
           objectType: 'person',
-          displayName: 'bob'
+          displayName: 'sockethub'
         },
         object: {
           objectType: 'credentials'
         }
       }
     },
-    failing: {
+    fail: {
       one: {
         id: 'blah',
         verb: 'send',
@@ -44,10 +46,9 @@ define(['require', 'tv4', './../lib/schemas/sockethub-activity-streams'], functi
   return [
     {
       desc: 'validate activity streams schema',
-      abortOnFail: true,
       setup: function (env, test) {
-        test.assertTypeAnd(ASSchema, 'function');
-        var schema = ASSchema(['hello', 'goodbye'], ['send', 'fetch']);
+        test.assertTypeAnd(schemaSHAS, 'function');
+        var schema = schemaSHAS(['hello', 'goodbye'], ['send', 'fetch']);
 
         env.schemaId = 'http://sockethub.org/schemas/v0/activity-stream#';
         test.assertAnd(schema.id, env.schemaId);
@@ -56,9 +57,9 @@ define(['require', 'tv4', './../lib/schemas/sockethub-activity-streams'], functi
       },
       tests: [
         {
-          desc: 'basic working schema',
+          desc: 'basic passing schema',
           run: function (env, test) {
-            var result = tv4.validate(as.working.one, env.schemaId);
+            var result = tv4.validate(as.pass.one, env.schemaId);
             console.log(tv4.error);
             test.assert(result, true);
           }
@@ -66,19 +67,17 @@ define(['require', 'tv4', './../lib/schemas/sockethub-activity-streams'], functi
 
         {
           desc: 'basic failing schema',
-          willFail: true,
           run: function (env, test) {
-            test.assert(tv4.validate(as.failing.one, env.schemaId), true);
+            test.assert(tv4.validate(as.fail.one, env.schemaId), false);
           }
         },
 
         {
           desc: 'use bad verb',
-          willFail: true,
           run: function (env, test) {
-            var obj = as.working.one;
+            var obj = as.pass.one;
             obj.verb = 'run';
-            test.assert(tv4.validate(obj, env.schemaId), true);
+            test.assert(tv4.validate(obj, env.schemaId), false);
           }
         }
       ]
