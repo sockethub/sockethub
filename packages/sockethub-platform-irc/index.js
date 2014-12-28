@@ -19,20 +19,23 @@
 if (typeof (IRCFactory) !== 'object') {
   IRCFactory = require('irc-factory');
 }
-var Promise    = require('bluebird');
+
+var Promise = require('bluebird');
 
 Promise.defer = function () {
   var resolve, reject;
   var promise = new Promise(function() {
-      resolve = arguments[0];
-      reject = arguments[1];
+    resolve = arguments[0];
+    reject = arguments[1];
   });
   return {
       resolve: resolve,
-      reject: reject,
-      promise: promise
+    reject: reject,
+    promise: promise
   };
 };
+
+
 
 /**
  * Class: IRC
@@ -44,8 +47,9 @@ Promise.defer = function () {
  * https://github.com/ircanywhere/irc-factory
  *
  */
-function IRC() {
+function IRC(session) {
   this.api = new IRCFactory.Api();
+  this.session = session;
 }
 
 /**
@@ -92,7 +96,14 @@ function IRC() {
  * `verbs` portion of the schema object (should be an array of verb names).
  */
 IRC.prototype.schema = {
-  "verbs" : [ 'update', 'join', 'leave', 'send', 'observe' ],
+  "messages" : {
+    "required": [ 'verb' ],
+    "properties": {
+      "verb": {
+        "enum": [ 'update', 'join', 'leave', 'send', 'observe' ]
+      }
+    }
+  },
   "credentials" : {
     "required": [ 'object' ],
     "properties": {
@@ -133,26 +144,6 @@ IRC.prototype.schema = {
 };
 
 /**
- * Function: init
- *
- * initialize the platform - this is called by the listener during each
- *                           session initialization, and subsequent resets.
- *
- * Parameters:
- *
- *   sess - session object, to send new messages, and log.
- *
- * Returns:
- *
- *   return promise
- */
-IRC.prototype.init = function (session) {
-  this.session = session;
-  this.sessionId = session.getSessionID();
-  return Promise.resove();
-};
-
-/**
  * Function: join
  *
  * Join a room or private conversation.
@@ -171,48 +162,33 @@ IRC.prototype.init = function (session) {
  *       actor: {
  *         id: 'irc://slvrbckt@irc.freenode.net',
  *         objectType: 'person',
- *         displayName: 'Nick Jennings',
- *         userName: 'slvrbckt'
+ *         displayName: 'slvrbckt'
  *       },
- *       target: [
- *         {
- *           id: 'irc://irc.freenode.net/sockethub',
- *           objectType: 'chatroom',
- *           displayName: '#sockethub'
- *         },
- *         {
- *           id: 'irc://irc.freenode.net/remotestorage',
- *           objectType: 'chatroom',
- *           displayName: '#remotestorage'
- *         }
- *       ],
+ *       target: {
+ *         id: 'irc://irc.freenode.net/sockethub',
+ *         objectType: 'chatroom',
+ *         displayName: '#sockethub'
+ *       },
  *       object: {}
  *     }
  *     (end code)
  *
  */
-IRC.prototype.join = function (job) {
+IRC.prototype.join = function (job, done) {
   var self = this;
 
   self.session.debug('join() called');
 
-  if ((typeof job.target[0] !== 'object') || (typeof job.target[0].address !== 'string')) {
-    return Promise.reject('no targets to join!');
-  }
-
   var pending = Promise.defer();
 
   self._getClient(job).then(function (client) {
-    self.session.debug('got client for ' + job.actor.address);
-    job.target.forEach(function (t) {
-      // join channel
-      self.session.debug('join: ' + job.actor.address + ' -> ' + t.address);
-      client.conn.irc.raw(['JOIN', t.address]);
-      pending.resolve();
-    });
-  }, pending.reject).fail(pending.reject);
-
-  return pending.promise;
+    if (err) { return done(err); }
+    self.session.debug('got client for ' + job.actor.id);
+    // join channel
+    self.session.debug('join: ' + job.actor.displayName + ' -> ' + job.target.displayName);
+    client.conn.irc.raw(['JOIN', job.target.displayName]);
+    done();
+  }, done);
 };
 
 /**
@@ -234,8 +210,7 @@ IRC.prototype.join = function (job) {
  *       actor: {
  *         id: 'irc://slvrbckt@irc.freenode.net',
  *         objectType: 'person',
- *         displayName: 'Nick Jennings',
- *         userName: 'slvrbckt'
+ *         displayName: 'slvrbckt'
  *       },
  *       target: {
  *         id: 'irc://irc.freenode.net/remotestorage',
@@ -247,27 +222,17 @@ IRC.prototype.join = function (job) {
  *     (end code)
  *
  */
-IRC.prototype.leave = function (job) {
+IRC.prototype.leave = function (job, done) {
   var self = this;
 
   self.session.debug('leave() called');
 
-  if ((typeof job.target[0] !== 'object') || (typeof job.target[0].address !== 'string')) {
-    return Promise.reject('no targets to leave!');
-  }
-
-  var pending = Promise.defer();
-
   self._getClient(job).then(function (client) {
-    job.target.forEach(function (t) {
-      // leave channel
-      self.session.debug('leave: ' + job.actor.address + ' -< ' + t.address);
-      client.conn.irc.raw(['PART', t.address]);
-    });
-    pending.resolve();
-  }, pending.reject).fail(pending.reject);
-
-  return pending.promise;
+    // leave channel
+    self.session.debug('leave: ' + job.actor.displayName + ' -< ' + t.displayName);
+    client.conn.irc.raw(['PART', t.displayName]);
+    done();
+  }, done);
 };
 
 /**
@@ -305,23 +270,19 @@ IRC.prototype.leave = function (job) {
  *     (end code)
  *
  */
-IRC.prototype.send = function (job) {
+IRC.prototype.send = function (job, done) {
   var self = this;
 
-  self.session.debug('send() called for ' + job.actor.address + ' target: ' + job.target[0].address);
-
-  var pending = Promise.defer();
+  self.session.debug('send() called for ' + job.actor.id + ' target: ' + job.target.id);
 
   self._getClient(job).then(function (client) {
     self.session.debug('send(): got client object');
-    var msg = job.object.text.replace(/^\s+|\s+$/g, "");
-    self.session.debug('irc.say: ' + job.target[0].address + ', [' + msg + ']');
+    var msg = job.object.content.replace(/^\s+|\s+$/g, "");
+    self.session.debug('irc.say: ' + job.target.displayName + ', [' + msg + ']');
 
-    client.conn.irc.raw(['PRIVMSG', job.target[0].address, '' + msg]);
-    pending.resolve();
-  }, pending.reject).fail(pending.reject);
-
-  return pending.promise;
+    client.conn.irc.raw(['PRIVMSG', job.target.displayName, '' + msg]);
+    done();
+  }).catch(done);
 };
 
 /**
@@ -375,61 +336,54 @@ IRC.prototype.send = function (job) {
  *         userName: 'slvrbckt'
  *       },
  *       object: {
- *         objectType: 'address'
+ *         objectType: 'displayName'
  *       },
- *       target: [
- *         {
- *           address: 'CoolDude'
- *         }
- *       ]
+ *       target: {
+*           objectType: "person",
+*           displayName: 'CoolDude'
+*         }
  *     }
  *     (end code)
  */
-IRC.prototype.update = function (job) {
+IRC.prototype.update = function (job, done) {
   var self = this;
 
-  self.session.debug('update() called for ' + job.actor.address);
-
-  if ((typeof job.target[0] !== 'object') || (typeof job.target[0].address !== 'string')) {
-    return Promise.reject('no targets specified');
-  } else if (typeof job.object.objectType !== 'string') {
-    return Promise.reject('object.objectType property required');
-  }
-
-  var pending = Promise.defer();
+  self.session.debug('update() called for ' + job.actor.displayName);
 
   self._getClient(job).then(function (client) {
     self.session.debug('update(): got client object');
+
     if (job.object.objectType === 'address') {
-      self.session.debug('changing nick from ' + job.actor.address + ' to ' + job.target[0].address);
+      self.session.debug('changing nick from ' + job.actor.displayName + ' to ' + job.target.displayName);
       // send nick change command
-      client.conn.irc.raw(['NICK', job.target[0].address]);
+      client.conn.irc.raw(['NICK', job.target.displayName]);
 
       // preserve old creds
       var oldCreds = JSON.parse(JSON.stringify(client.credentials));
       var newCreds = JSON.parse(JSON.stringify(client.credentials));
 
       // set new credentials
-      newCreds.object.nick   = job.target[0].address;
-      newCreds.actor.address = job.target[0].address;
-      newCreds.actor.name    = job.target[0].name || client.credentials.actor.name || '';
+      newCreds.object.nick       = job.target.displayName;
+      newCreds.actor.displayName = job.target.displayName;
+      newCreds.actor.name        = job.target.displayName || client.credentials.actor.name || '';
 
-      self.session.setConfig('credentials', job.target[0].address, newCreds);
+      self.session.setConfig('credentials', job.target.displayName, newCreds);
 
-      // reset index of client object in clientManager
-      self.session.clientManager.move(client.key,
+      // reset index of client object in connection manager
+      self.session.connection.move(client.key,
                                       oldCreds,
-                                      job.target[0].address + '@' + newCreds.object.server,
+                                      job.target.displayName + '@' + newCreds.object.server,
                                       newCreds);
+
     } else if (job.object.objectType === 'topic') {
       // update topic
-      self.session.debug('changing topic in channel ' + job.target[0].address);
-      client.conn.irc.raw(['topic', job.target[0].address, job.object.topic]);
+      self.session.debug('changing topic in channel ' + job.target.displayName);
+      client.conn.irc.raw(['topic', job.target.displayName, job.object.topic]);
     }
-    pending.resolve();
-  }, pending.reject).fail(pending.reject);
 
-  return pending.promise;
+    done();
+  }, done);
+
 };
 
 /**
@@ -492,39 +446,28 @@ IRC.prototype.update = function (job) {
  *     (end code)
  *
  */
-IRC.prototype.observe = function (job) {
+IRC.prototype.observe = function (job, done) {
   var self = this;
 
   self.session.debug('observe() called for ' + job.actor.address);
 
-  if ((typeof job.target[0] !== 'object') || (typeof job.target[0].address !== 'string')) {
-    return Promise.reject('no targets specified');
-  } else if (typeof job.object.objectType !== 'string') {
-    return Promise.reject('object.objectType property required');
-  }
-
-  var pending = Promise.defer();
-
   self._getClient(job).then(function (client) {
     self.session.debug('observe(): got client object');
     if (job.object.objectType === 'attendance') {
-      job.target.forEach(function (t) {
-        self.session.debug('objserve() - sending NAMES for ' + t.address);
-        client.conn.irc.raw(['NAMES', t.address]);
-      });
-      pending.resolve();
+      self.session.debug('objserve() - sending NAMES for ' + job.target.displayName);
+      client.conn.irc.raw(['NAMES', job.target.displayName]);
+      done();
     } else {
-      pending.reject("unknown objectType '" + job.object.objectType + "'");
+      done("unknown objectType '" + job.object.objectType + "'");
     }
-  }, pending.reject).fail(pending.reject);
+  }, done);
 
-  return pending.promise;
 };
 
 
-IRC.prototype.cleanup = function (job) {
-  // TODO - destroy IRC connection
-  return Promise.resolve();
+IRC.prototype.cleanup = function (job, done) {
+  // TODO - derefence IRC connection to lower the count
+  done();
 };
 
 
@@ -536,23 +479,24 @@ IRC.prototype._getClient = function (job, create) {
 
   //
   // get credentials
-  self.session.getConfig('credentials', job.actor.address).then(function (creds) {
-    self.session.debug('got config for ' + job.actor.address);
-    var client_lookup = job.actor.address + '@' + creds.object.server;
+  self.session.store.get(job.actor.id, function (err, creds) {
+    if (err) { return promise.reject(err); }
+
+    self.session.debug('got config for ' + job.actor.id);
 
     //
     // check if client object already exists
-    var client = self.session.clientManager.get(client_lookup, creds);
+    var client = self.session.connection.get(job.actor.id, creds);
 
     if ((!client) && (create)) {
       //
       // create a client
-      return self._createClient(client_lookup, creds).then(pending.resolve, pending.reject).fail(pending.reject);
+      return self._createClient(job.actor.id, creds).catch(function (err) {console.log('err',err); pending.reject(err);});
 
     } else if (client) {
       //
       // client already exists
-      self.session.info('returning existing client ' + client.id);
+      self.session.debug('returning existing client ' + client.id);
 
       // make sure we have listeners for this session
       //
@@ -592,10 +536,11 @@ IRC.prototype._createClient = function (key, creds) {
   var self = this,
       pending = Promise.defer();
 
-  self.session.info('creating new client connection to ' + creds.object.server);
+  self.session.debug('creating new client connection to ' + creds.object.server, creds);
 
-  self.session.clientManager.create(key, creds, {
+  self.session.connection.create({
     timeout: 10000,
+    credentials: creds,
     connect: function (key, credentials, cb) {
       var _this = this;
       var client;
@@ -611,7 +556,7 @@ IRC.prototype._createClient = function (key, creds) {
       };
 
       function onRegister(object) {
-        self.session.info('connected to ' + credentials.object.server);
+        self.session.debug('connected to ' + credentials.object.server);
         self.api.unhookEvent(key, 'registered');
         cb(null, client);
       }
@@ -687,7 +632,7 @@ IRC.prototype._createClient = function (key, creds) {
                    (typeof object.message === 'string')) {
           // message
           if (!object.nickname) {
-            console.log('received UNKNOWN: ', object);
+            self.session.debug('received UNKNOWN: ', object);
           } else {
             self.session.debug('received message: ' + object.nickname + ' -> ' + object.target);
             self.session.send({
@@ -737,18 +682,16 @@ IRC.prototype._createClient = function (key, creds) {
       self.api.hookEvent(key, name, func);
     },
     removeListener: function (client, key, name, func) {
-      console.log('removeListener called!');
       self.session.debug('removeListener called!');
       self.api.unhookEvent(key, name);
     },
     disconnect: function (client, key, cb) {
-      self.session.info('irc disconnect for ' + key);
+      self.session.debug('irc disconnect for ' + key);
       client.conn.irc.disconnect();
       cb();
     }
   },
   function (err, client) {
-    //console.log('COMPLETED ', client);
     // completed
     if (err) {
       pending.reject(err);
