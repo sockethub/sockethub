@@ -536,27 +536,27 @@ IRC.prototype._createClient = function (key, creds) {
   var self = this,
       pending = Promise.defer();
 
-  self.session.debug('creating new client connection to ' + creds.object.server, creds);
+  self.session.debug('creating new client connection: ' + creds.object.server, creds);
 
   self.session.connection.create({
+    id: creds.actor.id,
     timeout: 10000,
     credentials: creds,
-    connect: function (key, credentials, cb) {
-      var _this = this;
+    connect: function (cb) {
       var client;
 
-      var is_secure = (typeof credentials.object.secure === 'boolean') ? credentials.object.secure : true;
+      var is_secure = (typeof this.credentials.object.secure === 'boolean') ? this.credentials.object.secure : true;
       var module_creds = {
-        nick: credentials.object.nick,
-        user: credentials.object.nick,
-        server: credentials.object.server || 'irc.freenode.net',
-        realname: credentials.actor.name || credentials.object.nick,
+        nick: this.credentials.object.nick,
+        user: this.credentials.object.nick,
+        server: this.credentials.object.server || 'irc.freenode.net',
+        realname: this.credentials.actor.displayName || this.credentials.object.nick,
         secure: is_secure,
-        port: (credentials.object.port) ? parseInt(credentials.object.port, 10) : (is_secure) ? 6697 : 6667,
+        port: (this.credentials.object.port) ? parseInt(this.credentials.object.port, 10) : (is_secure) ? 6697 : 6667,
       };
 
       function onRegister(object) {
-        self.session.debug('connected to ' + credentials.object.server);
+        self.session.debug('connected to ' + module_creds.server);
         self.api.unhookEvent(key, 'registered');
         cb(null, client);
       }
@@ -695,6 +695,8 @@ IRC.prototype._createClient = function (key, creds) {
     // completed
     if (err) {
       pending.reject(err);
+    } else if (!client) {
+      pending.reject('didnt receive a client object.');
     } else {
       pending.resolve(client);
     }
