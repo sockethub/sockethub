@@ -5,18 +5,31 @@
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font: 13px Helvetica, Arial; }
-      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      h2 { color: #6B6767; }
+      form#chat { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      input { border: 0; padding: 10px; margin-right: .5%; }
+      button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      button:hover { cursor: pointer; }
+      .messageInput { width: 90%; }
       #messages { list-style-type: none; margin: 0; padding: 0; }
       #messages li { padding: 5px 10px; }
       #messages li:nth-child(odd) { background: #eee; }
+      .modal { position: fixed; top: 50%; left: 25%; width: 50%;
+               line-height: 70px; height: 200px; padding: 20px;
+               margin-top: -100px; background-color: #f1c40f; text-align: center;
+               z-index: 10; outline: 9999px solid rgba(0,0,0,0.5); }
     </style>
   </head>
   <body>
+    <div class="modal">
+      <h2>Click `Join` to connect to the #sockethub channel</h2>
+      <form id="join" action="">
+        <input id="j" autocomplete="off" value="#sockethub" disabled><button id="join">Join</button>
+      </form>
+    </div>
     <ul id="messages"></ul>
-    <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
+    <form id="chat" action="">
+      <input id="m" autocomplete="off" class="messageInput" disabled><button id="send" disabled>Send</button>
     </form>
 
     <script src="<%= address %>jquery.js"></script>
@@ -30,9 +43,9 @@
 
       // our irc user info
       sc.Activity.Object.create({
-        id: 'irc://sockethub-example@irc.freenode.net',
+        id: 'irc://sh-example@irc.freenode.net',
         objectType: "person",
-        displayName: 'sockethub-example',
+        displayName: 'sh-example',
         url: "http://sockethub.org",
         image: {
           url: "http://example.org/image.jpg",
@@ -58,17 +71,23 @@
       // handle incoming messages from the sockethub server
       sc.socket.on('message', function (msg) {
         bdebug('received message: ', msg);
-        var actor = sc.Activity.Object.get(msg.actor);
-        $('#messages').append($('<li>').text(actor.displayName + ': ' + msg.object.content));
+        if (msg.verb === 'join') {
+          $('.modal').css('display', 'none');
+          $('input#m').prop('disabled', false);
+          $('button#send').prop('disabled', false);
+        } else {
+          var actor = sc.Activity.Object.get(msg.actor);
+          $('#messages').append($('<li>').text(actor.displayName + ': ' + msg.object.content));
+        }
       });
 
       // sending irc credentials to sockethub server
       var credentials = {
-        actor: 'irc://sockethub-example@irc.freenode.net',
+        actor: 'irc://sh-example@irc.freenode.net',
         platform: 'irc',
         object: {
           objectType: 'credentials',
-          nick: 'sockethub-example',
+          nick: 'sh-example',
           server: 'irc.freenode.net',
           port: 6697,
           secure: true
@@ -78,11 +97,11 @@
       sc.socket.emit('credentials', credentials);
 
       // handler for user input, emit messages to sockethub server
-      $('form').submit(function () {
+      $('#chat').submit(function () {
         var msg = {
           platform: 'irc',
           verb: 'send',
-          actor: 'irc://sockethub-example@irc.freenode.net',
+          actor: 'irc://sh-example@irc.freenode.net',
           object: {
             objectType: 'message',
             displayName: 'message',
@@ -94,6 +113,22 @@
         bdebug('sending message: ', msg);
         sc.socket.emit('message', msg);
         $('#m').val('');
+        return false;
+      });
+
+      // handler for user input, emit messages to sockethub server
+      $('#join').click(function () {
+        var msg = {
+          platform: 'irc',
+          verb: 'join',
+          actor: 'irc://sh-example@irc.freenode.net',
+          target: 'irc://irc.freenode.net/sockethub'
+        };
+
+        bdebug('sending message: ', msg);
+        sc.socket.emit('message', msg);
+        //$('#join').disabled(true);
+        //$('#m').val('');
         return false;
       });
     </script>
