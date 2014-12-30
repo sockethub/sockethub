@@ -1,0 +1,35 @@
+{
+  "name": "sockethub-platform-feeds",
+  "description": "A sockethub platform module implementing RSS/Atom functionality",
+  "version": "0.0.1",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "LGPL",
+  "keywords": [
+    "sockethub",
+    "messaging",
+    "activitystreams",
+    "activity",
+    "streams",
+    "protocol",
+    "feeds",
+    "rss",
+    "atom"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/sockethub/sockethub-platform-feeds.git"
+  },
+  "homepage": "http://github.com/sockethub/sockethub-platform-feeds",
+  "dependencies": {
+    "bluebird": "^2.3.2",
+    "feedparser": "^0.19.2",
+    "request": "^2.51.0"
+  },
+  "devDependencies": {
+    "jaribu": "*"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/jaribu"
+  }
+}
