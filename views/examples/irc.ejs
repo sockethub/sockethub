@@ -24,8 +24,8 @@
     <script src="<%= address %>activity-streams.js"></script>
     <script src="<%= address %>sockethub-client.js"></script>
     <script>
-      bdebug = function(msg, obj){console.log(msg, obj);};//debug('sockethub');
-      localStorage.debug = '<%= debug_scope%>';
+      bdebug = function (msg, obj) { console.log(msg, obj); };
+      localStorage.debug = '<%= debug_scope %>';
       var sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
 
       // our irc user info
@@ -44,8 +44,8 @@
 
       // the irc chatroom we're connecting to
       sc.Activity.Object.create({
-        objectType: "room",
         id: 'irc://irc.freenode.net/sockethub',
+        objectType: "room",
         displayName: '#sockethub'
       });
 
@@ -69,8 +69,8 @@
         object: {
           objectType: 'credentials',
           nick: 'sockethub-example',
-          server: 'example.com',
-          port: 6379,
+          server: 'irc.freenode.net',
+          port: 6697,
           secure: true
         }
       };
@@ -81,13 +81,14 @@
       $('form').submit(function () {
         var msg = {
           platform: 'irc',
+          verb: 'send',
           actor: 'irc://sockethub-example@irc.freenode.net',
           object: {
             objectType: 'message',
+            displayName: 'message',
             content: $('#m').val()
           },
-          target: 'irc://irc.freenode.net/sockethub',
-          verb: 'send'
+          target: 'irc://irc.freenode.net/sockethub'
         };
 
         bdebug('sending message: ', msg);
