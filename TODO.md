@@ -17,3 +17,5 @@
   we handle it?
 [x] passing reason during job failure
 - cant use 'error' name as emit event?
+[ ] figure out a way to allow for special objects from platforms, without ignoring failed activity stream schema checks
+- 
