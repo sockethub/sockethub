@@ -20,7 +20,8 @@ if (typeof (IRCFactory) !== 'object') {
   IRCFactory = require('irc-factory');
 }
 
-var Promise = require('bluebird');
+var Promise = require('bluebird'),
+    debug   = require('debug')('sockethub-platform-irc');
 
 Promise.defer = function () {
   var resolve, reject;
@@ -38,6 +39,7 @@ Promise.defer = function () {
 var packageJSON = require('./package.json');
 
 
+
 /**
  * Class: IRC
  *
@@ -51,6 +53,7 @@ var packageJSON = require('./package.json');
 function IRC(session) {
   this.api = new IRCFactory.Api();
   this.session = session;
+  this._channels = [];
 }
 
 /**
@@ -187,7 +190,10 @@ IRC.prototype.join = function (job, done) {
     self.session.debug('got client for ' + job.actor.id);
     // join channel
     self.session.debug('join: ' + job.actor.displayName + ' -> ' + job.target.displayName);
-    client.conn.irc.raw(['JOIN', job.target.displayName]);
+    client.connection.irc.raw(['JOIN', job.target.displayName]);
+
+    self._joined(job.target.displayName);
+
     done();
   }, done);
 };
@@ -229,8 +235,9 @@ IRC.prototype.leave = function (job, done) {
 
   self._getClient(job).then(function (client) {
     // leave channel
-    self.session.debug('leave: ' + job.actor.displayName + ' -< ' + t.displayName);
-    client.conn.irc.raw(['PART', t.displayName]);
+    self.session.debug('leave: ' + job.actor.displayName + ' -< ' + job.target.displayName);
+    client.connection.irc.raw(['PART', job.target.displayName]);
+    self._leave(job.target.displayName);
     done();
   }, done);
 };
@@ -276,11 +283,15 @@ IRC.prototype.send = function (job, done) {
 
   self._getClient(job).then(function (client) {
     self.session.debug('send(): got client object');
-    var msg = job.object.content.replace(/^\s+|\s+$/g, "");
-    self.session.debug('irc.say: ' + job.target.displayName + ', [' + msg + ']');
+    if (self._isJoined(job.target.displayName)) {
+      var msg = job.object.content.replace(/^\s+|\s+$/g, "");
+      self.session.debug('irc.say: ' + job.target.displayName + ', [' + msg + ']');
 
-    client.conn.irc.raw(['PRIVMSG', job.target.displayName, '' + msg]);
-    done();
+      client.connection.irc.raw(['PRIVMSG', job.target.displayName, '' + msg]);
+      done();
+    } else {
+      done("cannot send message to a channel of which you've not first `join`ed.");
+    }
   }).catch(done);
 };
 
@@ -354,7 +365,7 @@ IRC.prototype.update = function (job, done) {
     if (job.object.objectType === 'address') {
       self.session.debug('changing nick from ' + job.actor.displayName + ' to ' + job.target.displayName);
       // send nick change command
-      client.conn.irc.raw(['NICK', job.target.displayName]);
+      client.connection.irc.raw(['NICK', job.target.displayName]);
 
       // preserve old creds
       var oldCreds = JSON.parse(JSON.stringify(client.credentials));
@@ -376,7 +387,7 @@ IRC.prototype.update = function (job, done) {
     } else if (job.object.objectType === 'topic') {
       // update topic
       self.session.debug('changing topic in channel ' + job.target.displayName);
-      client.conn.irc.raw(['topic', job.target.displayName, job.object.topic]);
+      client.connection.irc.raw(['topic', job.target.displayName, job.object.topic]);
     }
 
     done();
@@ -451,7 +462,7 @@ IRC.prototype.observe = function (job, done) {
     self.session.debug('observe(): got client object');
     if (job.object.objectType === 'attendance') {
       self.session.debug('objserve() - sending NAMES for ' + job.target.displayName);
-      client.conn.irc.raw(['NAMES', job.target.displayName]);
+      client.connection.irc.raw(['NAMES', job.target.displayName]);
       done();
     } else {
       done("unknown objectType '" + job.object.objectType + "'");
@@ -466,6 +477,35 @@ IRC.prototype.cleanup = function (job, done) {
   done();
 };
 
+IRC.prototype._isJoined = function (channel) {
+  if (channel.indexOf('#') === 0) {
+    // valid channel name
+    if (this._channels.indexOf(channel) >= 0) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    // usernames are always OK to send to
+    return true;
+  }
+};
+
+IRC.prototype._joined = function (channel) {
+  // keep track of channels joined
+  if (this._channels.indexOf(job.target.displayName) < 0) {
+    this._channels.push(channel);
+  }
+};
+
+IRC.prototype._left = function (channel) {
+  // keep track of channels left
+  var index = this._channels.indexOf(job.target.displayName);
+
+  if (index >= 0) {
+    this._channels.splice(index, 1);
+  }
+};
 
 IRC.prototype._getClient = function (job, create) {
   var self = this,
@@ -487,7 +527,7 @@ IRC.prototype._getClient = function (job, create) {
     if ((!client) && (create)) {
       //
       // create a client
-      return self._createClient(job.actor.id, creds).catch(function (err) {console.log('err',err); pending.reject(err);});
+      return self._createClient(job.actor.id, creds).then(pending.resolve).catch(function (err) {console.log('err',err); pending.reject(err);});
 
     } else if (client) {
       //
@@ -559,7 +599,7 @@ IRC.prototype._createClient = function (key, creds) {
       self.api.unhookEvent(key, '*');
 
       self.api.hookEvent(key, '*', function (message) {
-          self.session.debug(JSON.stringify(message));
+          debug('*: ' + JSON.stringify(message));
       });
 
       self.api.hookEvent(key, 'registered', onRegister);
@@ -683,15 +723,16 @@ IRC.prototype._createClient = function (key, creds) {
     },
     disconnect: function (client, key, cb) {
       self.session.debug('irc disconnect for ' + key);
-      client.conn.irc.disconnect();
+      client.connection.irc.disconnect();
       cb();
     }
   },
   function (err, client) {
+    debug('callback called! ', err, client);
     // completed
     if (err) {
       pending.reject(err);
-    } else if (!client) {
+    } else if (! client) {
       pending.reject('didnt receive a client object.');
     } else {
       pending.resolve(client);
