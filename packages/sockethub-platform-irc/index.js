@@ -1,13 +1,13 @@
 /**
- * This file is part of sockethub.
+ * This is a platform for sockethub implementing IRC functionality.
  *
  * copyright 2012-2015 Nick Jennings (https://github.com/silverbucket)
  *
  * sockethub is licensed under the LGPLv3.
  * See the LICENSE file for details.
  *
- * The latest version of sockethub can be found here:
- *   git://github.com/sockethub/sockethub.git
+ * The latest version of this module can be found here:
+ *   git://github.com/sockethub/sockethub-platform-irc.git
  *
  * For more information about sockethub visit http://sockethub.org/.
  *
@@ -35,6 +35,7 @@ Promise.defer = function () {
   };
 };
 
+var packageJSON = require('./package.json');
 
 
 /**
@@ -96,6 +97,7 @@ function IRC(session) {
  * `verbs` portion of the schema object (should be an array of verb names).
  */
 IRC.prototype.schema = {
+  "version": packageJSON.version,
   "messages" : {
     "required": [ 'verb' ],
     "properties": {
@@ -156,7 +158,6 @@ IRC.prototype.schema = {
  *
  *     (start code)
  *     {
- *       id: 1234,
  *       platform: 'irc',
  *       verb: 'join',
  *       actor: {
@@ -204,7 +205,6 @@ IRC.prototype.join = function (job, done) {
  *
  *     (start code)
  *     {
- *       id: 1234,
  *       platform: 'irc',
  *       verb: 'leave',
  *       actor: {
@@ -248,7 +248,6 @@ IRC.prototype.leave = function (job, done) {
  *
  *     (start code)
  *     {
- *       id: 1234,
  *       platform: 'irc',
  *       verb: 'send',
  *       actor: {
@@ -316,8 +315,7 @@ IRC.prototype.send = function (job, done) {
  *       object: {
  *         objectType: 'topic',
  *         topic: 'New version of Socekthub released!'
- *       },
- *       id: 1234
+ *       }
  *     }
  *     (end code)
  *
@@ -399,7 +397,6 @@ IRC.prototype.update = function (job, done) {
  *
  *     (start code)
  *     {
- *       id: 1234,
  *       platform: 'irc',
  *       verb: 'observe',
  *       actor: {
@@ -423,7 +420,6 @@ IRC.prototype.update = function (job, done) {
  *
  *     (start code)
  *     {
- *       id: 1234,
  *       platform: 'irc',
  *       verb: 'observe',
  *       actor: {
