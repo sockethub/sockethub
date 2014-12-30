@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Sockethub Example Feed Reader</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+    </style>
+  </head>
+  <body>
+    <ul id="messages"></ul>
+    <form action="">
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+
+    <script src="<%= address %>jquery.js"></script>
+    <script src="<%= address %>sockethub/socket.io.js"></script>
+    <script src="<%= address %>activity-streams.js"></script>
+    <script src="<%= address %>sockethub-client.js"></script>
+    <script>
+      bdebug = function (msg, obj) { console.log(msg, obj); };
+      localStorage.debug = '<%= debug_scope %>';
+      var sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
+
+      // our irc user info
+      sc.Activity.Object.create({
+        id: 'https://sockethub.org/examples/feeds',
+        objectType: "website",
+        displayName: "Sockethub Examples - Feeds"
+      });
+
+      // errors
+      sc.socket.on('failure', function (msg) {
+        bdebug('received failure: ', msg);
+      });
+
+
+      // handle incoming messages from the sockethub server
+      sc.socket.on('message', function (msg) {
+        bdebug('received message: ', msg);
+        var actor = sc.Activity.Object.get(msg.actor);
+        $('#messages').append($('<li>').text(actor.displayName + ': ' + msg.object.content));
+      });
+
+      // handler for user input, emit messages to sockethub server
+      $('form').submit(function () {
+        var msg = {
+          platform: 'feeds',
+          verb: 'fetch',
+          actor: 'https://sockethub.org/examples/feeds',
+          object: {
+            objectType: 'parameters'
+          },
+          target: {
+            objectType: 'feed',
+            id: $('#m').val()
+          }
+        };
+
+        bdebug('sending message: ', msg);
+        sc.socket.emit('message', msg);
+        $('#m').val('');
+        return false;
+      });
+    </script>
+  </body>
+</html>
