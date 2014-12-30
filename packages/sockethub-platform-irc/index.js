@@ -186,7 +186,6 @@ IRC.prototype.join = function (job, done) {
   var pending = Promise.defer();
 
   self._getClient(job).then(function (client) {
-    if (err) { return done(err); }
     self.session.debug('got client for ' + job.actor.id);
     // join channel
     self.session.debug('join: ' + job.actor.displayName + ' -> ' + job.target.displayName);
@@ -493,14 +492,14 @@ IRC.prototype._isJoined = function (channel) {
 
 IRC.prototype._joined = function (channel) {
   // keep track of channels joined
-  if (this._channels.indexOf(job.target.displayName) < 0) {
+  if (this._channels.indexOf(channel) < 0) {
     this._channels.push(channel);
   }
 };
 
 IRC.prototype._left = function (channel) {
   // keep track of channels left
-  var index = this._channels.indexOf(job.target.displayName);
+  var index = this._channels.indexOf(channel);
 
   if (index >= 0) {
     this._channels.splice(index, 1);
