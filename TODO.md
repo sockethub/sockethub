@@ -11,6 +11,7 @@
   [ ] platforms
   [ ] connection manager
   [ ] sockethub.js
+[ ] reconnects need to resend credentials and activity-objects
 
 ## notes
 - if an `objectType:'credentials'` comes in as a 'message' event, how should
