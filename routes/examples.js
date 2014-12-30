@@ -1,5 +1,11 @@
 var nconf  = require('nconf');
-var routes = [];
+
+var routes      = [],
+    debug_scope = process.env.DEBUG || '',
+    address     = nconf.get('public:protocol') + '://' +
+                    nconf.get('public:host') + ':' +
+                    nconf.get('public:port') +
+                    nconf.get('public:path');
 
 routes.push({
   meta: {
@@ -8,11 +14,20 @@ routes.push({
   },
   route: function (req, res) {
     res.render('examples/irc.ejs', {
-      debug_scope: process.env.DEBUG || '',
-      address: nconf.get('public:protocol') + '://' +
-               nconf.get('public:host') + ':' +
-               nconf.get('public:port') +
-               nconf.get('public:path')
+      debug_scope: debug_scope,
+      address: address
+    });
+  }
+},
+{
+  meta: {
+    method: 'GET',
+    path: '/examples/feeds'
+  },
+  route: function (req, res) {
+    res.render('examples/feeds.ejs', {
+      debug_scope: debug_scope,
+      address: address
     });
   }
 });
