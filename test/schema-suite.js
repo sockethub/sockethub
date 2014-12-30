@@ -60,7 +60,6 @@ define(['require', 'tv4', './../lib/schemas/sockethub-activity-stream'], functio
           desc: 'basic passing schema',
           run: function (env, test) {
             var result = tv4.validate(as.pass.one, env.schemaId);
-            console.log(tv4.error);
             test.assert(result, true);
           }
         },
