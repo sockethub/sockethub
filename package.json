@@ -46,6 +46,7 @@
     "rand-token": "^0.2.1",
     "secure-store-redis": "^0.1.1",
     "socket.io": "^1.2.1",
+    "sockethub-platform-feeds": "git://github.com/sockethub/sockethub-platform-feeds.git#master",
     "sockethub-platform-irc": "git://github.com/sockethub/sockethub-platform-irc.git#master",
     "tv4": "^1.1.4"
   },
