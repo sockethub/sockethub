@@ -722,16 +722,16 @@ IRC.prototype._createClient = function (key, creds) {
         }
       }
     },
-    addListener: function (client, key, name, func) {
-      self.session.debug('addListener called! ' + key + ' ' + name);
-      self.api.hookEvent(key, name, func);
+    addListener: function (name, func) {
+      self.session.debug('addListener called! ' + this.id + ' ' + name);
+      self.api.hookEvent(this.id, name, func);
     },
-    removeListener: function (client, key, name, func) {
+    removeListener: function (name, func) {
       self.session.debug('removeListener called!');
-      self.api.unhookEvent(key, name);
+      self.api.unhookEvent(this.id, name);
     },
-    disconnect: function (client, key, cb) {
-      self.session.debug('irc disconnect for ' + key);
+    disconnect: function (cb) {
+      self.session.debug('irc disconnect for ' + this.id);
       client.connection.irc.disconnect();
       cb();
     }
