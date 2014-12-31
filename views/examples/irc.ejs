@@ -22,9 +22,9 @@
   </head>
   <body>
     <div class="modal">
-      <h2>Click `Join` to connect to the #sockethub channel</h2>
+      <h2>Click `Join` to connect and join the IRC channel.</h2>
       <form id="join" action="">
-        <input id="j" autocomplete="off" value="#sockethub" disabled><button id="join">Join</button>
+        <input id="j" autocomplete="off" value="" disabled><button id="join">Join</button>
       </form>
     </div>
     <ul id="messages"></ul>
@@ -37,15 +37,19 @@
     <script src="<%= address %>activity-streams.js"></script>
     <script src="<%= address %>sockethub-client.js"></script>
     <script>
-      bdebug = function (msg, obj) { console.log(msg, obj); };
+      debug = function (msg, obj) { console.log(msg, obj); };
       localStorage.debug = '<%= debug_scope %>';
       var sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
+      var channel = 'sockethub-test';
+      var nick = 'sh-example';
+
+      $('#j').val('#' + channel);
 
       // our irc user info
       sc.Activity.Object.create({
-        id: 'irc://sh-example@irc.freenode.net',
+        id: 'irc://' + nick + '@irc.freenode.net',
         objectType: "person",
-        displayName: 'sh-example',
+        displayName: nick,
         url: "http://sockethub.org",
         image: {
           url: "http://example.org/image.jpg",
@@ -57,20 +61,20 @@
 
       // the irc chatroom we're connecting to
       sc.Activity.Object.create({
-        id: 'irc://irc.freenode.net/sockethub',
+        id: 'irc://irc.freenode.net/' + channel,
         objectType: "room",
-        displayName: '#sockethub'
+        displayName: '#' + channel
       });
 
       // errors
       sc.socket.on('failure', function (msg) {
-        bdebug('received failure: ', msg);
+        debug('received failure: ', msg);
       });
 
 
       // handle incoming messages from the sockethub server
       sc.socket.on('message', function (msg) {
-        bdebug('received message: ', msg);
+        debug('received message: ', msg);
         if (msg.verb === 'join') {
           $('.modal').css('display', 'none');
           $('input#m').prop('disabled', false);
@@ -83,17 +87,17 @@
 
       // sending irc credentials to sockethub server
       var credentials = {
-        actor: 'irc://sh-example@irc.freenode.net',
+        actor: 'irc://' + nick + '@irc.freenode.net',
         platform: 'irc',
         object: {
           objectType: 'credentials',
-          nick: 'sh-example',
+          nick: nick,
           server: 'irc.freenode.net',
           port: 6697,
           secure: true
         }
       };
-      bdebug('sending credentials: ', credentials);
+      debug('sending credentials: ', credentials);
       sc.socket.emit('credentials', credentials);
 
       // handler for user input, emit messages to sockethub server
@@ -101,16 +105,16 @@
         var msg = {
           platform: 'irc',
           verb: 'send',
-          actor: 'irc://sh-example@irc.freenode.net',
+          actor: 'irc://' + nick + '@irc.freenode.net',
           object: {
             objectType: 'message',
             displayName: 'message',
             content: $('#m').val()
           },
-          target: 'irc://irc.freenode.net/sockethub'
+          target: 'irc://irc.freenode.net/' + channel
         };
 
-        bdebug('sending message: ', msg);
+        debug('sending message: ', msg);
         sc.socket.emit('message', msg);
         $('#m').val('');
         return false;
@@ -121,11 +125,11 @@
         var msg = {
           platform: 'irc',
           verb: 'join',
-          actor: 'irc://sh-example@irc.freenode.net',
-          target: 'irc://irc.freenode.net/sockethub'
+          actor: 'irc://' + nick + '@irc.freenode.net',
+          target: 'irc://irc.freenode.net/' + channel
         };
 
-        bdebug('sending message: ', msg);
+        debug('sending message: ', msg);
         sc.socket.emit('message', msg);
         //$('#join').disabled(true);
         //$('#m').val('');
