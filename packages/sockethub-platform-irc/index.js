@@ -512,6 +512,11 @@ IRC.prototype._getClient = function (job, create) {
 
   create = (typeof create === 'boolean') ? create : true;
 
+  if (self.client) {
+    debug('using existing client instance. ' + self.client.id);
+    return Promise.resolve(self.client);
+  }
+
   //
   // get credentials
   self.session.store.get(job.actor.id, function (err, creds) {
@@ -526,12 +531,15 @@ IRC.prototype._getClient = function (job, create) {
     if ((!client) && (create)) {
       //
       // create a client
-      return self._createClient(job.actor.id, creds).then(pending.resolve).catch(function (err) {console.log('err',err); pending.reject(err);});
+      return self._createClient(job.actor.id, creds).then(function (client) {
+        self.client = client;
+        pending.resolve(client);
+      }).catch(function (err) {console.log('err',err); pending.reject(err);});
 
     } else if (client) {
       //
       // client already exists
-      self.session.debug('returning existing client ' + client.id);
+      self.session.debug('using client from connection manager. ' + client.id);
 
       // make sure we have listeners for this session
       //
@@ -541,6 +549,7 @@ IRC.prototype._getClient = function (job, create) {
       // if (!client.listeners.message[self.sessionId]) {
       //   client.listeners = mergeListeners(client, self._registerListeners(client));
       // }
+      self.client = client;
       pending.resolve(client);
     } else {
       //
@@ -571,7 +580,7 @@ IRC.prototype._createClient = function (key, creds) {
   var self = this,
       pending = Promise.defer();
 
-  self.session.debug('creating new client connection: ' + creds.object.server, creds);
+  self.session.debug('creating new client ');
 
   self.session.connection.create({
     id: creds.actor.id,
@@ -610,6 +619,7 @@ IRC.prototype._createClient = function (key, creds) {
     },
     listeners: {
       '*': function (object) {
+        self.session.debug('HANDLER * called: ', object);
         if (typeof object.names === 'object') {
           // user list
           self.session.debug('received user list: ' + object.channel);
