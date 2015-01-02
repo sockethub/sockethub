@@ -619,16 +619,24 @@ IRC.prototype._createClient = function (key, creds) {
     },
     listeners: {
       '*': function (object) {
-        self.session.debug('HANDLER * called: ', object);
+        debug('HANDLER * called: ', object);
         if (typeof object.names === 'object') {
           // user list
           self.session.debug('received user list: ' + object.channel);
           self.session.send({
             verb: 'observe',
-            actor: { address: object.channel },
-            target: [{ address: object.channel }],
+            actor: {
+              objectType: 'room',
+              id: 'irc://' + creds.object.server + '/' + object.channel,
+              displayName: object.channel
+            },
+            target: {
+              objectType: 'room',
+              id: 'irc://' + creds.object.server + '/' + object.channel,
+              displayName: object.channel
+            },
             object: {
-              'objectType': 'attendance',
+              objectType: 'attendance',
               members: object.names
             }
           });
@@ -641,10 +649,18 @@ IRC.prototype._createClient = function (key, creds) {
           self.session.debug('received topic change list: ' + object.channel + ':' + object.topicBy + ': ' + object.topic);
           self.session.send({
             verb: 'update',
-            actor: { address: object.topicBy },
-            target: [{ address: object.channel }],
+            actor: {
+              objectType: 'person',
+              id: 'irc://' + object.topicBy + '@' + creds.object.server,
+              displayName: object.topicBy
+            },
+            target: {
+              objectType: 'person',
+              id: 'irc://' + object.topicBy + '@' + creds.object.server,
+              displayName: object.topicBy
+            },
             object: {
-              'objectType': 'topic',
+              objectType: 'topic',
               topic: object.topic
             }
           });
@@ -653,10 +669,18 @@ IRC.prototype._createClient = function (key, creds) {
           self.session.debug('received nick change ' + object.nickname + ' -> ' + object.newnick);
           self.session.send({
             verb: 'update',
-            actor: { address: object.nickname },
-            target: [{ address: object.newnick }],
+            actor: {
+              objectType: 'person',
+              id: 'irc://' + object.nickname + '@' + creds.object.server,
+              displayName: object.nickname
+            },
+            target: {
+              objectType: 'person',
+              id: 'irc://' + object.newnick + '@' + creds.object.server,
+              displayName: object.newnick
+            },
             object: {
-              'objectType': 'address'
+              objectType: 'address'
             }
           });
         } else if ((typeof object.channel === 'string') &&
@@ -668,8 +692,16 @@ IRC.prototype._createClient = function (key, creds) {
           } else {
             self.session.send({
               verb: 'join',
-              actor: { address: object.nickname },
-              target: [{ address: object.channel }],
+              actor: {
+                objectType: 'person',
+                id: 'irc://' + object.nickname + '@' + creds.object.server,
+                displayName: object.nickname
+              },
+              target: {
+                objectType: 'room',
+                id: 'irc://' + creds.object.server + '/' + object.channel,
+                displayName: object.channel
+              },
               object: {}
             });
           }
@@ -682,10 +714,17 @@ IRC.prototype._createClient = function (key, creds) {
             self.session.debug('received message: ' + object.nickname + ' -> ' + object.target);
             self.session.send({
               verb: 'send',
-              actor: { address: object.nickname },
-              target: [{ address: object.target }],
+              actor: {
+                objectType: 'person',
+                id: 'irc://' + object.nickname + '@' + creds.object.server,
+                displayName: object.nickname
+              },
+              target: {
+                displayName: object.target
+              },
               object: {
-                text: object.message
+                objectType: 'message',
+                content: object.message
               }
             });
           }
@@ -699,10 +738,15 @@ IRC.prototype._createClient = function (key, creds) {
           self.session.debug('received quit: ' + object.nickname + ' -> ' + object.target, object);
           self.session.send({
             verb: 'leave',
-            actor: { address: object.nickname },
-            target: [{ address: '' }],
+            actor: {
+              objectType: 'person',
+              id: 'irc://' + object.nickname + '@' + creds.object.server,
+              displayName: object.nickname
+            },
+            target: {},
             object: {
-              text: 'user has quit'
+              objectType: 'message',
+              content: 'user has quit'
             }
           });
         } else if ((typeof object.channel === 'string') &&
@@ -711,10 +755,19 @@ IRC.prototype._createClient = function (key, creds) {
           self.session.debug('received leave: ' + object.nickname + ' -> ' + object.target, object);
           self.session.send({
             verb: 'leave',
-            actor: { address: object.nickname },
-            target: [{ address: object.target }],
+            actor: {
+              objectType: 'person',
+              id: 'irc://' + object.nickname + '@' + creds.object.server,
+              displayName: object.nickname
+            },
+            target: {
+              objectType: 'room',
+              id: 'irc://' + creds.object.server + '/' + object.target,
+              displayName: object.target
+            },
             object: {
-              text: 'user has left the channel'
+              objectType: 'message',
+              content: 'user has left the channel'
             }
           });
         // } else {
