@@ -21,7 +21,8 @@ if (typeof (IRCFactory) !== 'object') {
 }
 
 var Promise = require('bluebird'),
-    debug   = require('debug')('sockethub-platform-irc');
+    debug   = require('debug')('sockethub-platform-irc'),
+    api     = new IRCFactory.Api();
 
 Promise.defer = function () {
   var resolve, reject;
@@ -51,7 +52,6 @@ var packageJSON = require('./package.json');
  *
  */
 function IRC(session) {
-  this.api = new IRCFactory.Api();
   this.session = session;
   this._channels = [];
 }
@@ -285,8 +285,8 @@ IRC.prototype.send = function (job, done) {
     if (self._isJoined(job.target.displayName)) {
       var msg = job.object.content.replace(/^\s+|\s+$/g, "");
       self.session.debug('irc.say: ' + job.target.displayName + ', [' + msg + ']');
-
-      client.connection.irc.raw(['PRIVMSG', job.target.displayName, '' + msg]);
+      //client.connection.irc.raw(['PRIVMSG', job.target.displayName, '' + msg]);
+      client.connection.irc.privmsg(job.target.displayName, msg, true); //forcePushback
       done();
     } else {
       done("cannot send message to a channel of which you've not first `join`ed.");
@@ -472,8 +472,12 @@ IRC.prototype.observe = function (job, done) {
 
 
 IRC.prototype.cleanup = function (job, done) {
-  // TODO - derefence IRC connection to lower the count
-  done();
+  var self = this;
+  self._getClient(job).then(function (client) {
+    client.scope.debug('cleanup(): got client object');
+    client.connection.irc.disconnect();
+    done();
+  }, done);
 };
 
 IRC.prototype._isJoined = function (channel) {
@@ -540,15 +544,6 @@ IRC.prototype._getClient = function (job, create) {
       //
       // client already exists
       self.session.debug('using client from connection manager. ' + client.id);
-
-      // make sure we have listeners for this session
-      //
-      // TODO FIXME - make sure we know how to re-load listeners for a new
-      // session.
-      //
-      // if (!client.listeners.message[self.sessionId]) {
-      //   client.listeners = mergeListeners(client, self._registerListeners(client));
-      // }
       self.client = client;
       pending.resolve(client);
     } else {
@@ -588,6 +583,7 @@ IRC.prototype._createClient = function (key, creds) {
     credentials: creds,
     connect: function (cb) {
       var client;
+      var _this = this;
 
       var is_secure = (typeof this.credentials.object.secure === 'boolean') ? this.credentials.object.secure : true;
       var module_creds = {
@@ -600,30 +596,36 @@ IRC.prototype._createClient = function (key, creds) {
       };
 
       function onRegister(object) {
-        self.session.debug('connected to ' + module_creds.server);
-        self.api.unhookEvent(key, 'registered');
+        _this.scope.debug('connected to ' + module_creds.server);
+        api.unhookEvent(key, 'registered');
+        api.unhookEvent(key, '*');
+
+        setInterval(function _checkConnection() {
+          debug('checking connection with PING request');
+          //client.irc.ping();
+        }, 20000);
         cb(null, client);
       }
-      self.api.unhookEvent(key, '*');
+      api.unhookEvent(key, '*');
 
-      self.api.hookEvent(key, '*', function (message) {
+      api.hookEvent(key, '*', function (message) {
           debug('*: ' + JSON.stringify(message));
       });
 
-      self.api.hookEvent(key, 'registered', onRegister);
+      api.hookEvent(key, 'registered', onRegister);
 
-      self.session.debug('attempting to connect to ' + module_creds.server + ':' + module_creds.port + ' [secure:' + is_secure + ']');
+      this.scope.debug('attempting to connect to ' + module_creds.server + ':' + module_creds.port + ' [secure:' + is_secure + ']');
 
       // connect...
-      client = self.api.createClient(key, module_creds);
+      client = api.createClient(key, module_creds);
     },
     listeners: {
       '*': function (object) {
-        debug('HANDLER * called: ', object);
+        debug('HANDLER * called [' + this.id + ']: ', object);
         if (typeof object.names === 'object') {
           // user list
-          self.session.debug('received user list: ' + object.channel);
-          self.session.send({
+          this.scope.debug('received user list: ' + object.channel);
+          this.scope.send({
             verb: 'observe',
             actor: {
               objectType: 'room',
@@ -646,17 +648,17 @@ IRC.prototype._createClient = function (key, creds) {
         } else if ((typeof object.topic === 'string') &&
                    (typeof object.topicBy === 'string')) {
           // topic
-          self.session.debug('received topic change list: ' + object.channel + ':' + object.topicBy + ': ' + object.topic);
-          self.session.send({
+          this.scope.debug('received topic change list: ' + object.channel + ':' + object.topicBy + ': ' + object.topic);
+          this.scope.send({
             verb: 'update',
             actor: {
               objectType: 'person',
-              id: 'irc://' + object.topicBy + '@' + creds.object.server,
+              id: 'irc://' + object.topicBy + '@' + this.crendentials.object.server,
               displayName: object.topicBy
             },
             target: {
               objectType: 'person',
-              id: 'irc://' + object.topicBy + '@' + creds.object.server,
+              id: 'irc://' + object.topicBy + '@' + this.credentials.object.server,
               displayName: object.topicBy
             },
             object: {
@@ -666,17 +668,17 @@ IRC.prototype._createClient = function (key, creds) {
           });
         } else if (typeof object.newnick === 'string') {
           // nick change
-          self.session.debug('received nick change ' + object.nickname + ' -> ' + object.newnick);
-          self.session.send({
+          this.scope.debug('received nick change ' + object.nickname + ' -> ' + object.newnick);
+          this.scope.send({
             verb: 'update',
             actor: {
               objectType: 'person',
-              id: 'irc://' + object.nickname + '@' + creds.object.server,
+              id: 'irc://' + object.nickname + '@' + this.credentials.object.server,
               displayName: object.nickname
             },
             target: {
               objectType: 'person',
-              id: 'irc://' + object.newnick + '@' + creds.object.server,
+              id: 'irc://' + object.newnick + '@' + this.credentials.object.server,
               displayName: object.newnick
             },
             object: {
@@ -686,20 +688,20 @@ IRC.prototype._createClient = function (key, creds) {
         } else if ((typeof object.channel === 'string') &&
                    (object.raw.indexOf(' JOIN ') >= 0)) {
           // join
-          self.session.debug('received join: ' + object.nickname + ' -> ' + object.channel, object);
+          this.scope.debug('received join: ' + object.nickname + ' -> ' + object.channel, object);
           if (!object.nickname) {
-            self.session.debug('skipping join message with undefined nickname');
+            this.scope.debug('skipping join message with undefined nickname');
           } else {
-            self.session.send({
+            this.scope.send({
               verb: 'join',
               actor: {
                 objectType: 'person',
-                id: 'irc://' + object.nickname + '@' + creds.object.server,
+                id: 'irc://' + object.nickname + '@' + this.credentials.object.server,
                 displayName: object.nickname
               },
               target: {
                 objectType: 'room',
-                id: 'irc://' + creds.object.server + '/' + object.channel,
+                id: 'irc://' + this.credentials.object.server + '/' + object.channel,
                 displayName: object.channel
               },
               object: {}
@@ -709,14 +711,14 @@ IRC.prototype._createClient = function (key, creds) {
                    (typeof object.message === 'string')) {
           // message
           if (!object.nickname) {
-            self.session.debug('received UNKNOWN: ', object);
+            this.scope.debug('received UNKNOWN: ', object);
           } else {
-            self.session.debug('received message: ' + object.nickname + ' -> ' + object.target);
-            self.session.send({
+            this.scope.debug('received message: ' + object.nickname + ' -> ' + object.target);
+            this.scope.send({
               verb: 'send',
               actor: {
                 objectType: 'person',
-                id: 'irc://' + object.nickname + '@' + creds.object.server,
+                id: 'irc://' + object.nickname + '@' + this.credentials.object.server,
                 displayName: object.nickname
               },
               target: {
@@ -733,14 +735,25 @@ IRC.prototype._createClient = function (key, creds) {
         } else if (typeof object.mode === 'string') {
           // skip
         } else if ((typeof object.nickname === 'string') &&
+                   (typeof object.capabilities === 'object') &&
+                   (typeof object.time === 'string') &&
+                   (typeof object.raw === 'object')) {
+          // registered
+          debug('registered! ', object);
+        } else if ((object.reconnecting === true) &&
+                   (typeof object.attempts === 'number')) {
+          // disconected, reconnecting
+          debug('disconnected, reconnecting. for ' + this.id, object);
+          this.connection.irc.disconnect();
+        } else if ((typeof object.nickname === 'string') &&
                    (typeof object.target === 'undefined')) {
           // QUIT
-          self.session.debug('received quit: ' + object.nickname + ' -> ' + object.target, object);
-          self.session.send({
+          this.scope.debug('received quit: ' + object.nickname + ' -> ' + object.target, object);
+          this.scope.send({
             verb: 'leave',
             actor: {
               objectType: 'person',
-              id: 'irc://' + object.nickname + '@' + creds.object.server,
+              id: 'irc://' + object.nickname + '@' + this.credentials.object.server,
               displayName: object.nickname
             },
             target: {},
@@ -752,17 +765,17 @@ IRC.prototype._createClient = function (key, creds) {
         } else if ((typeof object.channel === 'string') &&
                    (object.raw.indexOf(' PART ') >= 0)) {
           // leave
-          self.session.debug('received leave: ' + object.nickname + ' -> ' + object.target, object);
-          self.session.send({
+          this.scope.debug('received leave: ' + object.nickname + ' -> ' + object.target, object);
+          this.scope.send({
             verb: 'leave',
             actor: {
               objectType: 'person',
-              id: 'irc://' + object.nickname + '@' + creds.object.server,
+              id: 'irc://' + object.nickname + '@' + this.credentials.object.server,
               displayName: object.nickname
             },
             target: {
               objectType: 'room',
-              id: 'irc://' + creds.object.server + '/' + object.target,
+              id: 'irc://' + this.credentials.object.server + '/' + object.target,
               displayName: object.target
             },
             object: {
@@ -771,26 +784,27 @@ IRC.prototype._createClient = function (key, creds) {
             }
           });
         // } else {
-        //   self.session.log('INCOMING IRC OBJECT: ', object);
+        //   this.scope.log('INCOMING IRC OBJECT: ', object);
         }
       }
     },
     addListener: function (name, func) {
-      self.session.debug('addListener called! ' + this.id + ' ' + name);
-      self.api.hookEvent(this.id, name, func);
+      this.scope.debug('addListener called! ' + this.id + ' ' + name);
+      api.hookEvent(this.id, name, func);
     },
     removeListener: function (name, func) {
-      self.session.debug('removeListener called!');
-      self.api.unhookEvent(this.id, name);
+      this.scope.debug('removeListener called!');
+      api.unhookEvent(this.id, name);
     },
     disconnect: function (cb) {
-      self.session.debug('irc disconnect for ' + this.id);
-      client.connection.irc.disconnect();
+      this.scope.debug('disconnect for ' + this.id);
+      this.scope.quit = true;
+      this.connection.irc.disconnect();
       cb();
     }
   },
   function (err, client) {
-    debug('callback called! ', err, client);
+    debug('callback called! ', err);
     // completed
     if (err) {
       pending.reject(err);
