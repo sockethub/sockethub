@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+//require('look').start();
 
 process.on('uncaughtException', function (err) {
   console.log("\nUNCAUGHT EXCEPTION - something horrible has happened!\n");
