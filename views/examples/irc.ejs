@@ -79,8 +79,14 @@
           $('.modal').css('display', 'none');
           $('input#m').prop('disabled', false);
           $('button#send').prop('disabled', false);
+        } else if (msg.verb === 'observe') {
+          $('#messages').append($('<li>').text('[ users in ' + msg.actor.displayName + ' ]'));
+          $('#messages').append($('<li>').text('[ ' + msg.object.members.join(', ') + ' ]'));
         } else {
-          var actor = sc.Activity.Object.get(msg.actor);
+          var actor = msg.actor;
+          if (typeof actor === 'string') {
+            actor = sc.Activity.Object.get(actor);
+          }
           $('#messages').append($('<li>').text(actor.displayName + ': ' + msg.object.content));
         }
       });
