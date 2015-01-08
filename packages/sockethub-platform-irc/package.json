@@ -20,7 +20,6 @@
   },
   "homepage": "http://github.com/sockethub/sockethub-platform-irc",
   "dependencies": {
-    "bluebird": "^2.3.2",
     "debug": "^2.1.1",
     "irc-factory": "1.10.x"
   },
