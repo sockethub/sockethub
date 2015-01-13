@@ -18,13 +18,15 @@
     "type": "git",
     "url": "git://github.com/sockethub/sockethub-platform-irc.git"
   },
-  "homepage": "http://github.com/sockethub/sockethub-platform-irc",
+  "homepage": "https://github.com/sockethub/sockethub-platform-irc",
   "dependencies": {
     "debug": "^2.1.1",
     "irc-factory": "1.10.x"
   },
   "devDependencies": {
-    "jaribu": "*"
+    "jaribu": "*",
+    "tv4": "^1.1.5",
+    "sockethub-testing-mocks": "https://github.com/sockethub/sockethub-testing-mocks.git#master"
   },
   "scripts": {
     "test": "node_modules/.bin/jaribu"
