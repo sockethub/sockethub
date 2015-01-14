@@ -40,12 +40,28 @@
         bdebug('received failure: ', msg);
       });
 
+      function displayMessage(msg) {
+        msg.actor = sc.Activity.Object.get(msg.actor);
+        bdebug('displaying message: ', msg);
+        $('#messages').append($('<li>').text(msg.actor.displayName + ': ' + msg.object.title));
+      }
+
+      sc.socket.on('completed', function (msg) {
+        bdebug('received completed event for: ', msg);
+      });
 
       // handle incoming messages from the sockethub server
       sc.socket.on('message', function (msg) {
         bdebug('received message: ', msg);
-        var actor = sc.Activity.Object.get(msg.actor);
-        $('#messages').append($('<li>').text(actor.displayName + ': ' + msg.object.content));
+        if (Array.isArray(msg)) {
+          bdebug('is array len:' + msg.length);
+          for (var i = 0, len = msg.length; i < len; i++) {
+            bdebug('looping '+i+' ', msg[i]);
+            displayMessage(msg[i]);
+          }
+        } else {
+          displayMessage(msg);
+        }
       });
 
       // handler for user input, emit messages to sockethub server
