@@ -403,7 +403,6 @@ IRC.prototype.join = function (job, done) {
     // join channel
     self.session.debug('join: ' + job.actor.displayName + ' -> ' + job.target.displayName);
     client.connection.irc.raw(['JOIN', job.target.displayName]);
-
     self._joined(job.target.displayName);
 
     done();
@@ -450,7 +449,7 @@ IRC.prototype.leave = function (job, done) {
     // leave channel
     self.session.debug('leave: ' + job.actor.displayName + ' -< ' + job.target.displayName);
     client.connection.irc.raw(['PART', job.target.displayName]);
-    self._leave(job.target.displayName);
+    self._left(job.target.displayName);
     done();
   });
 };
@@ -577,35 +576,40 @@ IRC.prototype.update = function (job, done) {
     if (err) { return done(err); }
     self.session.debug('update(): got client object');
 
-    if (job.object.objectType === 'address') {
+    if (job.target.objectType === 'person') {
       self.session.debug('changing nick from ' + job.actor.displayName + ' to ' + job.target.displayName);
       // send nick change command
       client.connection.irc.raw(['NICK', job.target.displayName]);
 
       // preserve old creds
-      var oldCreds = JSON.parse(JSON.stringify(client.credentials));
+      var oldCreds = client.credentials; //JSON.parse(JSON.stringify(client.credentials));
       var newCreds = JSON.parse(JSON.stringify(client.credentials));
 
       // set new credentials
       newCreds.object.nick       = job.target.displayName;
       newCreds.actor.displayName = job.target.displayName;
-      newCreds.actor.name        = job.target.displayName || client.credentials.actor.name || '';
+      newCreds.actor.id          = job.target.id;
 
-      self.session.setConfig('credentials', job.target.displayName, newCreds);
+      self.session.store.save(job.target.id, newCreds, function (err) {
+        if (err) {
+          return done(err);
+        }
 
-      // reset index of client object in connection manager
-      self.session.connection.move(client.key,
-                                      oldCreds,
-                                      job.target.displayName + '@' + newCreds.object.server,
-                                      newCreds);
+        // reset index of client object in connection manager
+        self.session.client.move(job.actor.id,
+                                 oldCreds,
+                                 job.target.id,
+                                 newCreds);
+        return done();
+      });
 
     } else if (job.object.objectType === 'topic') {
       // update topic
       self.session.debug('changing topic in channel ' + job.target.displayName);
       client.connection.irc.raw(['topic', job.target.displayName, job.object.topic]);
+      return done();
     }
-
-    done();
+    done('unknown update action');
   });
 
 };
@@ -671,7 +675,7 @@ IRC.prototype.update = function (job, done) {
 IRC.prototype.observe = function (job, done) {
   var self = this;
 
-  self.session.debug('observe() called for ' + job.actor.address);
+  self.session.debug('observe() called for ' + job.actor.id);
 
   self.session.client.get(job.actor.id, createObj, function (err, client) {
     if (err) { return done(err); }
@@ -688,8 +692,8 @@ IRC.prototype.observe = function (job, done) {
 };
 
 
-IRC.prototype.cleanup = function (job, done) {
-  this.channels = [];
+IRC.prototype.cleanup = function (done) {
+  this._channels = [];
   done();
   // var self = this;
   // self.session.client.get(job.actor.id, createObj, function (err, client) {

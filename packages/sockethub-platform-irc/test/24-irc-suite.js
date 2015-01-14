@@ -11,7 +11,7 @@ define(['require'], function (require) {
     setup: function (env, test) {
 
       // load session manager
-      env.session = require('./mock-session')(test);
+      env.session = require('./../node_modules/sockethub-testing-mocks/mock-session')(test);
       test.assertTypeAnd(env.session.store.get, 'function');
       test.assertTypeAnd(env.session.store.save, 'function');
 
@@ -135,7 +135,7 @@ define(['require'], function (require) {
       test.assertType(env.api.createClient, 'function');
     },
     takedown: function (env, test) {
-      env.platform.cleanup({}, function () {
+      env.platform.cleanup(function () {
         test.done();
       });
     },
