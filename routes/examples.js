@@ -10,15 +10,16 @@ var routes      = [],
 routes.push({
   meta: {
     method: 'GET',
-    path: '/examples/irc'
+    path: '/examples/dummy'
   },
   route: function (req, res) {
-    res.render('examples/irc.ejs', {
+    res.render('examples/dummy.ejs', {
       debug_scope: debug_scope,
       address: address
     });
   }
 },
+
 {
   meta: {
     method: 'GET',
@@ -26,6 +27,19 @@ routes.push({
   },
   route: function (req, res) {
     res.render('examples/feeds.ejs', {
+      debug_scope: debug_scope,
+      address: address
+    });
+  }
+},
+
+{
+  meta: {
+    method: 'GET',
+    path: '/examples/irc'
+  },
+  route: function (req, res) {
+    res.render('examples/irc.ejs', {
       debug_scope: debug_scope,
       address: address
     });
