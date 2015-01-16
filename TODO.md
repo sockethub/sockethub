@@ -19,6 +19,7 @@
 [x] passing reason during job failure
 - cant use 'error' name as emit event?
 [ ] figure out a way to allow for special objects from platforms, without ignoring failed activity stream schema checks
+[ ] - investigate socket-relay idea. https://github.com/ircanywhere/irc-factory/blob/master/lib/api.js#L198-L201
 
 ### Workers
 Should workers spawned for each session? or one per platform? or both? 
