@@ -47,9 +47,9 @@
     "rand-token": "^0.2.1",
     "secure-store-redis": "^0.1.1",
     "socket.io": "^1.2.1",
-    "sockethub-platform-dummy": "https://github.com/sockethub/sockethub-platform-dummy.git#master",
-    "sockethub-platform-feeds": "https://github.com/sockethub/sockethub-platform-feeds.git#master",
-    "sockethub-platform-irc": "https://github.com/sockethub/sockethub-platform-irc.git#master",
+    "sockethub-platform-dummy": "^0.0.1",
+    "sockethub-platform-feeds": "^0.0.1",
+    "sockethub-platform-irc": "^0.0.5",
     "tv4": "^1.1.4"
   },
   "devDependencies": {
