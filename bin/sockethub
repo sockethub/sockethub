@@ -1,13 +1,4 @@
 #!/usr/bin/env node
-//require('look').start();
-var memwatch = require('memwatch');
-memwatch.on('leak', function (info) {
-  console.log('memwatch leak: ', info);
-});
-
-memwatch.on('stats', function (stats) {
-  console.log('memwatch stats: ', stats);
-});
 
 process.on('uncaughtException', function (err) {
   console.log("\nUNCAUGHT EXCEPTION - something horrible has happened!\n");
