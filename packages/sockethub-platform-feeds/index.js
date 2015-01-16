@@ -232,9 +232,12 @@ Feeds.prototype.fetch = function (job, cb) {
   // ready to execute job
   self._fetchFeed(job.target.id, job.object)
     .then(function (result) {
+      result.target = job.actor;
       self.session.send(result);
       cb();
     }, function (err) {
+      cb(err);
+    }).catch(function (err) {
       cb(err);
     });
 
@@ -301,16 +304,16 @@ Feeds.prototype._fetchFeed = function (url, options) {
     request(url)
 
     .on('error', function (e) {
-      session.debug('[on 1] failed to fetch feed from url: ' + url + ' : ' + e.toString());
       error = e.toString();
+      session.debug('[on 1] failed to fetch feed from url: ' + url + ' : ' + error);
       defer.reject(error);
     })
 
     .pipe(new FeedParser())
 
     .on('error', function (e) {
-      session.debug('[on 2] failed to fetch feed from url: '+ url + ' : ' + e.toString());
       error = e.toString();
+      session.debug('[on 2] failed to fetch feed from url: '+ url + ' : ' + error);
       defer.reject(error);
     })
 
@@ -347,7 +350,6 @@ Feeds.prototype._fetchFeed = function (url, options) {
             language: actor.language,
             author: actor.author
           },
-          target: successObj.target,
           status: true,
           verb: "post",
           object: {
@@ -386,7 +388,7 @@ Feeds.prototype._fetchFeed = function (url, options) {
         self.session.debug("ERROR ", error);
         return defer.reject(error);
       } else {
-        session.debuf("feed fetching completed.");
+        session.debug("feed fetching completed.");
 
         return defer.resolve(articles);
       }
@@ -394,8 +396,9 @@ Feeds.prototype._fetchFeed = function (url, options) {
 
   } catch (e) {
     if (self.abort) { return Promise.reject('aborting job'); }
-    self.session.log('[try] failed to fetch feed from url: ' + url + ' : ' + e.toString());
-    defer.reject('failed to fetch feed from url: ' + url + ' : ' + e.toString());
+    var error = e.toString();
+    self.session.log('[try] failed to fetch feed from url: ' + url + ' : ' + error);
+    defer.reject('failed to fetch feed from url: ' + url + ' : ' + error);
   }
   return defer.promise;
 };
