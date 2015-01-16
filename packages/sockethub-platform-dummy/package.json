@@ -1,0 +1,26 @@
+{
+  "name": "sockethub-platform-dummy",
+  "description": "A sockethub platform dummy module",
+  "version": "0.0.1",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "LGPL",
+  "keywords": [
+    "sockethub",
+    "messaging",
+    "activitystreams",
+    "activity",
+    "streams",
+    "protocol",
+    "dummy"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/sockethub/sockethub-platform-dummy.git"
+  },
+  "homepage": "http://github.com/sockethub/sockethub-platform-dummy",
+  "dependencies": {
+    "request": "^2.51.0"
+  },
+  "devDependencies": {}
+}
