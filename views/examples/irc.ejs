@@ -38,16 +38,17 @@
     <script src="<%= address %>sockethub-client.js"></script>
     <script>
       debug = function (msg, obj) { console.log(msg, obj); };
+      var ircServer = 'localhost'; // irc.freenode.ent
       localStorage.debug = '<%= debug_scope %>';
       var sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
       var channel = 'sockethub-test';
-      var nick = 'sh-example';
+      var nick = 'sh-<%= randToken %>';
 
       $('#j').val('#' + channel);
 
       // our irc user info
       sc.Activity.Object.create({
-        id: 'irc://' + nick + '@irc.freenode.net',
+        id: 'irc://' + nick + '@' + ircServer,
         objectType: "person",
         displayName: nick,
         url: "http://sockethub.org",
@@ -61,7 +62,7 @@
 
       // the irc chatroom we're connecting to
       sc.Activity.Object.create({
-        id: 'irc://irc.freenode.net/' + channel,
+        id: 'irc://' + ircServer + '/' + channel,
         objectType: "room",
         displayName: '#' + channel
       });
@@ -72,35 +73,57 @@
       });
 
 
-      // handle incoming messages from the sockethub server
-      sc.socket.on('message', function (msg) {
-        debug('received message: ', msg);
+      function expandMessage(msg) {
+        var actor = msg.actor;
+        if (typeof actor === 'string') {
+          actor = sc.Activity.Object.get(actor);
+        }
+        var target = msg.target;
+        if (typeof target === 'string') {
+          target = sc.Activity.Object.get(target);
+        }
+
+        msg.actor = actor;
+        msg.target = target;
+        return msg;
+      }
+
+      sc.socket.on('completed', function (msg) {
+        debug('received completed job: ', msg);
+        msg = expandMessage(msg);
+
         if (msg.verb === 'join') {
           $('.modal').css('display', 'none');
           $('input#m').prop('disabled', false);
           $('button#send').prop('disabled', false);
-        } else if (msg.verb === 'observe') {
+        }
+      });
+
+      // handle incoming messages from the sockethub server
+      sc.socket.on('message', function (msg) {
+        debug('received message: ', msg);
+        msg = expandMessage(msg);
+
+        if (msg.verb === 'observe') {
           $('#messages').append($('<li>').text('[ users in ' + msg.actor.displayName + ' ]'));
           $('#messages').append($('<li>').text('[ ' + msg.object.members.join(', ') + ' ]'));
+        } else if (msg.verb === 'join') {
+          $('#messages').append($('<li>').text(msg.actor.displayName + ' has joined ' + msg.target.displayName));
         } else {
-          var actor = msg.actor;
-          if (typeof actor === 'string') {
-            actor = sc.Activity.Object.get(actor);
-          }
-          $('#messages').append($('<li>').text(actor.displayName + ': ' + msg.object.content));
+          $('#messages').append($('<li>').text(msg.actor.displayName + ': ' + msg.object.content));
         }
       });
 
       // sending irc credentials to sockethub server
       var credentials = {
-        actor: 'irc://' + nick + '@irc.freenode.net',
+        actor: 'irc://' + nick + '@' + ircServer,
         platform: 'irc',
         object: {
           objectType: 'credentials',
           nick: nick,
-          server: 'irc.freenode.net',
-          port: 6697,
-          secure: true
+          server: ircServer,
+          port: 6667,
+          secure: false
         }
       };
       debug('sending credentials: ', credentials);
@@ -111,13 +134,13 @@
         var msg = {
           platform: 'irc',
           verb: 'send',
-          actor: 'irc://' + nick + '@irc.freenode.net',
+          actor: 'irc://' + nick + '@' + ircServer,
           object: {
             objectType: 'message',
             displayName: 'message',
             content: $('#m').val()
           },
-          target: 'irc://irc.freenode.net/' + channel
+          target: 'irc://' + ircServer + '/' + channel
         };
 
         debug('sending message: ', msg);
@@ -131,8 +154,8 @@
         var msg = {
           platform: 'irc',
           verb: 'join',
-          actor: 'irc://' + nick + '@irc.freenode.net',
-          target: 'irc://irc.freenode.net/' + channel
+          actor: 'irc://' + nick + '@' + ircServer,
+          target: 'irc://' + ircServer + '/' + channel
         };
 
         debug('sending message: ', msg);

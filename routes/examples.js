@@ -1,4 +1,5 @@
-var nconf  = require('nconf');
+var nconf      = require('nconf'),
+    randToken  = require('rand-token');
 
 var routes      = [],
     debug_scope = process.env.DEBUG || '',
@@ -41,7 +42,8 @@ routes.push({
   route: function (req, res) {
     res.render('examples/irc.ejs', {
       debug_scope: debug_scope,
-      address: address
+      address: address,
+      randToken: randToken.generate(5)
     });
   }
 });
