@@ -16,7 +16,7 @@ function getTests() {
     {
       desc: '# get  - with no params returns undefined',
       run: function (env, test) {
-        test.assert(env.mod.Object.get('thingy'), undefined);
+        test.assert(env.mod.Object.get(), undefined);
       }
     },
 
@@ -117,7 +117,6 @@ function getTests() {
 if (typeof define !== 'function') {
   var define = require('amdefine')(module);
 }
-//define(['require', 'array-keys', './../browser/activity-streams.min.js'], function (require, ArrayKeys, amdMod) {
 define(['require', 'array-keys'], function (require, ArrayKeys) {
   return [{
     desc: "basic tests",
