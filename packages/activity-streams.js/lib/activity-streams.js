@@ -1,6 +1,6 @@
 /*!
  * activity-streams
- *   version 0.3.3
+ *   version 0.4.0
  *   http://github.com/silverbucket/activity-streams
  *
  * Developed and Maintained by:
@@ -20,11 +20,13 @@
 var EventEmitter = require('event-emitter'),
     ArrayKeys    = require('array-keys');
 
-var objs    = new ArrayKeys({ identifier: 'id' }),
-    ee      = EventEmitter();
+var objs        = new ArrayKeys({ identifier: 'id' }),
+    ee          = EventEmitter(),
+    expandProps = [ 'actor', 'object', 'target' ];
 
 var Stream = function (meta) {
   var stream = {};
+  var i;
 
   for (var key in meta) {
 
@@ -33,13 +35,21 @@ var Stream = function (meta) {
     } else if (Array.isArray(meta[key])) {
       stream[key] = [];
 
-      for (var i = meta[key].length - 1; i >= 0; i -= 1) {
+      for (i = meta[key].length - 1; i >= 0; i -= 1) {
         if (typeof meta[key][i] === 'string') {
           stream[key][i] = objs.getRecord(meta[key][i]) || meta[key][i];
         }
       }
     } else {
       stream[key] = meta[key];
+    }
+
+  }
+
+  // only expand string into objects if they are in the expandProps list
+  for (i = expandProps.length - 1; i >= 0; i -= 1) {
+    if (stream[expandProps[i]] === 'string') {
+      stream[expandProps[i]] = { id: stream[expandProps[i]] };
     }
   }
 
@@ -71,8 +81,17 @@ var _Object = {
     return result;
   },
 
-  get: function (obj) {
-    return objs.getRecord(obj);
+  get: function (id) {
+    var r = objs.getRecord(id);
+    if (r) {
+      return r;
+    } else {
+      return id;
+    }
+  },
+
+  list: function () {
+    return objs.getIdentifiers();
   },
 
   getByType: function (type) {
