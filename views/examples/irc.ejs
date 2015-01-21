@@ -54,7 +54,7 @@
   <body>
     <div class="modal">
       <h3>Click `Join` to connect and join the IRC channel.</h3>
-      <form id="join" action="">
+      <form id="intro" action="">
         <input id="n" autocomplete="off" value="sh-<%= randToken %>"><button class="invis" disabled>nick</button>
         <input id="j" autocomplete="off" value="" disabled><button id="join">Join</button>
       </form>
@@ -78,51 +78,14 @@
 
       $('#j').val('#' + channel);
 
-      // our irc user info
-      sc.Activity.Object.create({
-        id: 'irc://' + nick + '@' + ircServer,
-        objectType: "person",
-        displayName: nick,
-        url: "http://sockethub.org",
-        image: {
-          url: "http://example.org/image.jpg",
-          mediaType: "image/jpeg",
-          width: 250,
-          height: 250
-        }
-      });
-
-      // the irc chatroom we're connecting to
-      sc.Activity.Object.create({
-        id: 'irc://' + ircServer + '/' + channel,
-        objectType: "room",
-        displayName: '#' + channel
-      });
-
       // errors
       sc.socket.on('failure', function (msg) {
         debug('received failure: ', msg);
       });
 
-
-      function expandMessage(msg) {
-        var actor = msg.actor;
-        if (typeof actor === 'string') {
-          actor = sc.Activity.Object.get(actor);
-        }
-        var target = msg.target;
-        if (typeof target === 'string') {
-          target = sc.Activity.Object.get(target);
-        }
-
-        msg.actor = actor;
-        msg.target = target;
-        return msg;
-      }
-
       sc.socket.on('completed', function (msg) {
+        msg = sc.Activity.Stream(msg);
         debug('received completed job: ', msg);
-        msg = expandMessage(msg);
 
         if (msg.verb === 'join') {
           $('.modal').css('display', 'none');
@@ -133,8 +96,8 @@
 
       // handle incoming messages from the sockethub server
       sc.socket.on('message', function (msg) {
+        msg = sc.Activity.Stream(msg);
         debug('received message: ', msg);
-        msg = expandMessage(msg);
 
         if (msg.verb === 'observe') {
           $('#messages').append($('<li>').text('[ users in ' + msg.actor.displayName + ' ]'));
@@ -146,20 +109,7 @@
         }
       });
 
-      // sending irc credentials to sockethub server
-      var credentials = {
-        actor: 'irc://' + nick + '@' + ircServer,
-        platform: 'irc',
-        object: {
-          objectType: 'credentials',
-          nick: nick,
-          server: ircServer,
-          port: 6667,
-          secure: false
-        }
-      };
-      debug('sending credentials: ', credentials);
-      sc.socket.emit('credentials', credentials);
+
 
       // handler for user input, emit messages to sockethub server
       $('#chat').submit(function () {
@@ -183,6 +133,44 @@
 
       // handler for user input, emit messages to sockethub server
       $('#join').click(function () {
+        nick = $('#n').val();
+
+        // our irc user info
+        sc.Activity.Object.create({
+          id: 'irc://' + nick + '@' + ircServer,
+          objectType: "person",
+          displayName: nick,
+          url: "http://sockethub.org",
+          image: {
+            url: "http://example.org/image.jpg",
+            mediaType: "image/jpeg",
+            width: 250,
+            height: 250
+          }
+        });
+
+        // the irc chatroom we're connecting to
+        sc.Activity.Object.create({
+          id: 'irc://' + ircServer + '/' + channel,
+          objectType: "room",
+          displayName: '#' + channel
+        });
+
+        // sending irc credentials to sockethub server
+        var credentials = {
+          actor: 'irc://' + nick + '@' + ircServer,
+          platform: 'irc',
+          object: {
+            objectType: 'credentials',
+            nick: nick,
+            server: ircServer,
+            port: 6667,
+            secure: false
+          }
+        };
+        debug('sending credentials: ', credentials);
+        sc.socket.emit('credentials', credentials);
+
         var msg = {
           platform: 'irc',
           verb: 'join',
@@ -192,8 +180,6 @@
 
         debug('sending message: ', msg);
         sc.socket.emit('message', msg);
-        //$('#join').disabled(true);
-        //$('#m').val('');
         return false;
       });
     </script>
