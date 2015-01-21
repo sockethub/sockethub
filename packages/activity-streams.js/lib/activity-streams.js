@@ -1,6 +1,6 @@
 /*!
  * activity-streams
- *   version 0.4.0
+ *   version 0.4.1
  *   http://github.com/silverbucket/activity-streams
  *
  * Developed and Maintained by:
