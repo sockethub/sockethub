@@ -72,13 +72,13 @@ function getTests() {
       run: function (env, test) {
         var stream = env.mod.Stream({
           verb: 'lol',
-          actor: 'thingy1',
+          actor: 'thingy',
           object: { objectType: 'stuff', content: 'har' },
           target: [ 'thingy1', 'thingy2' ]
         });
         var expected = {
           verb: 'lol',
-          actor: { id: 'thingy1' },
+          actor: { id: 'thingy' },
           target: [ { id: 'thingy1' }, { id: 'thingy2' }],
           object: { objectType: 'stuff', content: 'har' }
         };
@@ -108,7 +108,7 @@ function getTests() {
           test.assertAnd(env.mod.Object.delete('thingy2'), true);
         }, 0);
       }
-    },
+    }
 
   ];
 }
