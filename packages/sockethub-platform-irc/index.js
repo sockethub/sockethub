@@ -194,7 +194,8 @@ var createObj = {
           object: {
             objectType: 'attendance',
             members: object.names
-          }
+          },
+          published: object.time
         });
       } else if ((typeof object.channel === 'string') &&
                  (typeof object.who === 'object')) {
@@ -218,7 +219,8 @@ var createObj = {
           object: {
             objectType: 'topic',
             topic: object.topic
-          }
+          },
+          published: object.time
         });
       } else if (typeof object.newnick === 'string') {
         // nick change
@@ -237,7 +239,8 @@ var createObj = {
           },
           object: {
             objectType: 'address'
-          }
+          },
+          published: object.time
         });
       } else if ((typeof object.channel === 'string') &&
                  (object.raw.indexOf(' JOIN ') >= 0)) {
@@ -258,7 +261,8 @@ var createObj = {
               id: 'irc://' + this.credentials.object.server + '/' + object.channel,
               displayName: object.channel
             },
-            object: {}
+            object: {},
+            published: object.time
           });
         }
       } else if ((typeof object.target === 'string') &&
@@ -281,7 +285,8 @@ var createObj = {
             object: {
               objectType: 'message',
               content: object.message
-            }
+            },
+            published: object.time
           });
         }
       } else if (typeof object.motd === 'object') {
@@ -302,20 +307,30 @@ var createObj = {
       } else if ((typeof object.nickname === 'string') &&
                  (typeof object.target === 'undefined')) {
         // QUIT
-        this.scope.debug('received quit: ' + object.nickname + ' -> ' + object.target, object);
-        this.scope.send({
-          verb: 'leave',
-          actor: {
-            objectType: 'person',
-            id: 'irc://' + object.nickname + '@' + this.credentials.object.server,
-            displayName: object.nickname
-          },
-          target: {},
-          object: {
-            objectType: 'message',
-            content: 'user has quit'
-          }
-        });
+        this.scope.debug('received quit: ' + object.nickname + ' (self: ' + this.credentials.actor.displayName + ')', object);
+
+        if (! this.scope.disconnected) {
+          this.scope.send({
+            verb: 'leave',
+            actor: {
+              objectType: 'person',
+              id: 'irc://' + object.nickname + '@' + this.credentials.object.server,
+              displayName: object.nickname
+            },
+            target: {},
+            object: {
+              objectType: 'message',
+              content: 'user has quit'
+            },
+            published: object.time
+          });
+        }
+
+        if (object.nickname === this.credentials.actor.displayName) {
+          this.scope.debug('disconnecting self');
+          this.connection.irc.disconnect();
+          this.scope.disconnected = true;
+        }
       } else if ((typeof object.channel === 'string') &&
                  (object.raw.indexOf(' PART ') >= 0)) {
         // leave
@@ -335,7 +350,8 @@ var createObj = {
           object: {
             objectType: 'message',
             content: 'user has left the channel'
-          }
+          },
+          published: object.time
         });
       // } else {
       //   this.scope.log('INCOMING IRC OBJECT: ', object);
@@ -351,7 +367,7 @@ var createObj = {
     api.unhookEvent(this.id, name);
   },
   isConnected: function () {
-    debug('checking isConnected: ' + this.connection.irc.isConnected());
+    debug('isConnected() called, returning: ' + this.connection.irc.isConnected());
     return this.connection.irc.isConnected();
   },
   disconnect: function (cb) {
@@ -395,7 +411,7 @@ var createObj = {
 IRC.prototype.join = function (job, done) {
   var self = this;
 
-  self.session.debug('join() called');
+  self.session.debug('join() called for ' + job.actor.id);
 
   self.session.client.get(job.actor.id, createObj, function (err, client) {
     if (err) { return done(err); }
