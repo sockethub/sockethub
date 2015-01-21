@@ -48,7 +48,7 @@ var Stream = function (meta) {
 
   // only expand string into objects if they are in the expandProps list
   for (i = expandProps.length - 1; i >= 0; i -= 1) {
-    if (stream[expandProps[i]] === 'string') {
+    if (typeof stream[expandProps[i]] === 'string') {
       stream[expandProps[i]] = { id: stream[expandProps[i]] };
     }
   }
