@@ -139,7 +139,7 @@ IRC.prototype.schema = {
 
 
 var createObj = {
-  timeout: 20000,
+  timeout: 30000,
   connect: function (cb) {
     var client;
     var _this = this;
@@ -373,7 +373,7 @@ var createObj = {
   disconnect: function (cb) {
     this.scope.debug('disconnect for ' + this.id);
     this.scope.quit = true;
-    this.connection.irc.disconnect();
+    api.destroyClient(this.id);
     cb();
   }
 };
