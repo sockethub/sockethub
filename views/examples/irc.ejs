@@ -102,6 +102,9 @@
         if (msg.verb === 'observe') {
           $('#messages').append($('<li>').text('[ users in ' + msg.actor.displayName + ' ]'));
           $('#messages').append($('<li>').text('[ ' + msg.object.members.join(', ') + ' ]'));
+        } else if ((msg.verb === 'update') &&
+                   (msg.object.objectType === 'address')) {
+          $('#messages').append($('<li>').text(msg.actor.displayName + ' is now known as ' + msg.target.displayName));
         } else if (msg.verb === 'join') {
           $('#messages').append($('<li>').text(msg.actor.displayName + ' has joined ' + msg.target.displayName));
         } else {
