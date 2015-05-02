@@ -24,7 +24,6 @@
     <script src="<%= address %>activity-streams.js"></script>
     <script src="<%= address %>sockethub-client.js"></script>
     <script>
-      bdebug = function (msg, obj) { console.log(msg, obj); };
       localStorage.debug = '<%= debug_scope %>';
       var sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
 
@@ -37,26 +36,24 @@
 
       // errors
       sc.socket.on('failure', function (msg) {
-        bdebug('received failure: ', msg);
+        console.log('received failure: ', msg);
       });
 
       function displayMessage(msg) {
         msg.actor = sc.Activity.Object.get(msg.actor);
-        bdebug('displaying message: ', msg);
+        console.log('displaying message: ', msg);
         $('#messages').append($('<li>').text(msg.actor.displayName + ': ' + msg.object.title));
       }
 
       sc.socket.on('completed', function (msg) {
-        bdebug('received completed event for: ', msg);
+        console.log('received completed event for: ', msg);
       });
 
       // handle incoming messages from the sockethub server
       sc.socket.on('message', function (msg) {
-        bdebug('received message: ', msg);
+        console.log('received message: ', msg);
         if (Array.isArray(msg)) {
-          bdebug('is array len:' + msg.length);
           for (var i = 0, len = msg.length; i < len; i++) {
-            bdebug('looping '+i+' ', msg[i]);
             displayMessage(msg[i]);
           }
         } else {
@@ -79,7 +76,7 @@
           }
         };
 
-        bdebug('sending message: ', msg);
+        console.log('sending message: ', msg);
         sc.socket.emit('message', msg);
         $('#m').val('');
         return false;
