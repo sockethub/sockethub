@@ -1,16 +1,21 @@
-var gulp       = require('gulp'),
-    fs         = require('fs'),
-    browserify = require('gulp-browserify'),
+var source     = require('vinyl-source-stream'),
+    streamify  = require('gulp-streamify'),
+    browserify = require('browserify'),
     uglify     = require('gulp-uglify'),
     rename     = require('gulp-rename'),
-    pkg        = require('./package.json');
+    gulp       = require('gulp');
 
-gulp.task('default', function () {
+var baseDir = './lib/';
+var baseFileName = 'activity-streams';
+var objName  = 'ActivityStreams';
 
-  gulp.src('lib/activity-streams.js')
-      .pipe(browserify({ standalone: 'Activity' }))
-      .pipe(gulp.dest('browser/'))
-      .pipe(uglify())
-      .pipe(rename('activity-streams.min.js'))
-      .pipe(gulp.dest('browser/'));
+gulp.task('default', function() {
+  var bundleStream = browserify(baseDir + baseFileName + '.js', { standalone: objName }).bundle();
+
+  return bundleStream
+         .pipe(source(baseFileName + '.js'))
+         .pipe(gulp.dest('./browser'))
+         .pipe(streamify(uglify()))
+         .pipe(rename(baseFileName + '.min.js'))
+         .pipe(gulp.dest('./browser'));
 });
