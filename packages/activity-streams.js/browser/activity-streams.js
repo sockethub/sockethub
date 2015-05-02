@@ -1,7 +1,7 @@
-!function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Activity=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.ActivityStreams = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /*!
  * activity-streams
- *   version 0.4.0
+ *   version 0.4.1
  *   http://github.com/silverbucket/activity-streams
  *
  * Developed and Maintained by:
@@ -18,8 +18,8 @@
  */
 
 
-var EventEmitter = _dereq_('event-emitter'),
-    ArrayKeys    = _dereq_('array-keys');
+var EventEmitter = require('event-emitter'),
+    ArrayKeys    = require('array-keys');
 
 var objs        = new ArrayKeys({ identifier: 'id' }),
     ee          = EventEmitter(),
@@ -117,16 +117,16 @@ module.exports = {
   }
 };
 
-},{"array-keys":2,"event-emitter":3}],2:[function(_dereq_,module,exports){
+},{"array-keys":2,"event-emitter":4}],2:[function(require,module,exports){
 /*!
  * array-keys
- *   version 1.2.1
+ *   version 2.0.0
  *   http://github.com/silverbucket/array-keys
  *
  * Developed and Maintained by:
  *   Nick Jennings <nick@silverbucket.net> copyright 2014
  *
- * array-keys is released under the LGPL (see LICENSE).
+ * array-keys is released under the MIT license (see LICENSE).
  *
  * You don't have to do anything special to choose one license or the other
  * and you don't have to notify anyone which license you are using.
@@ -136,32 +136,46 @@ module.exports = {
  *
  */
 
+var TinyEmitter = require('tiny-emitter');
+
 function ArrayKeys(p) {
   if (typeof p !== 'object') { p = {}; }
-  this.identifier = p.identifier || 'id';
-  this.store = [];
-  this.idx = []; // array of identifier strings for quick lookup
+  this._identifier = p.identifier || 'id';
+  this._store = [];
+  this._idx = []; // array of identifier strings for quick lookup
+  if (p.emitEvents) {
+    this._emitEvents = true;
+    this.events = new TinyEmitter();
+  } else {
+    this._emitEvents = false;
+  }
 }
+
+ArrayKeys.prototype.emitEvent = function (event, data, dontEmit) {
+  if ((this._emitEvents) && (! dontEmit)) {
+    this.events.emit(event, data);
+  }
+};
 
 ArrayKeys.prototype.getIdentifiers = function () {
   var ids = [];
-  for (var i = this.store.length - 1; i >= 0; i = i - 1) {
-    ids[ids.length] = this.store[i][this.identifier];
+  for (var i = this._store.length - 1; i >= 0; i = i - 1) {
+    ids[ids.length] = this._store[i][this._identifier];
   }
   return ids;
 };
 
 ArrayKeys.prototype.getRecord = function (id) {
-  for (var i = this.store.length - 1; i >= 0; i = i - 1) {
-    if (this.store[i][this.identifier] === id) {
-      return this.store[i];
+  for (var i = this._store.length - 1; i >= 0; i = i - 1) {
+    if (this._store[i][this._identifier] === id) {
+      return this._store[i];
     }
   }
   return undefined;
 };
 
 ArrayKeys.prototype.exists = function (id) {
-  if (this.idx.getIndex(id) >= 0) {
+  if (this.getIndex(id) >= 0) {
     return true;
   } else {
     return false;
@@ -170,8 +184,8 @@ ArrayKeys.prototype.exists = function (id) {
 
 // faster than using indexOf
 ArrayKeys.prototype.getIndex = function (id) {
-  for (i = this.idx.length - 1; i >= 0; i = i - 1) {
-    if (this.idx[i] === id) {
+  for (var i = this._idx.length - 1; i >= 0; i = i - 1) {
+    if (this._idx[i] === id) {
       return i;
     }
   }
@@ -181,38 +195,46 @@ ArrayKeys.prototype.getIndex = function (id) {
 ArrayKeys.prototype.addRecord = function (record) {
   if (typeof record !== 'object') {
     throw new Error('cannot add non-object records.');
-  } else if (!record[this.identifier]) {
-    throw new Error('cannot add a record with no `' + this.identifier +
+  } else if (!record[this._identifier]) {
+    throw new Error('cannot add a record with no `' + this._identifier +
                     '` property specified.');
   }
 
-  this.removeRecord(record[this.identifier]);
-  this.idx[this.idx.length] = record[this.identifier];
-  this.store[this.store.length] = record;
+  var removed = this.removeRecord(record[this._identifier], true);
+  this._idx[this._idx.length] = record[this._identifier];
+  this._store[this._store.length] = record;
+  setTimeout(function () {
+    if (removed) {
+      setTimeout(this.emitEvent.bind(this, 'update', record), 0);
+    } else {
+      setTimeout(this.emitEvent.bind(this, 'add', record), 0);
+    }
+  }.bind(this), 0);
   return true;
 };
 
-ArrayKeys.prototype.removeRecord = function (id) {
+ArrayKeys.prototype.removeRecord = function (id, dontEmit) {
   var idx  = this.getIndex(id);
   if (idx < 0) {
     return false;
   }
 
-  var i;
   // start looking for the record at the same point as the idx entry
-  for (i = idx; i !== 0; i = i - 1) {
-    if (this.store[i][this.identifier] === id) {
-      this.store.splice(i, 1);
-      this.idx.splice(idx, 1);
+  for (var i = idx; i >= 0; i = i - 1) {
+    if (this._store[i][this._identifier] === id) {
+      this._store.splice(i, 1);
+      this._idx.splice(idx, 1);
+      setTimeout(this.emitEvent.bind(this, 'remove', id, dontEmit), 0);
       return true;
     }
   }
 
   // if it was not found, start at the end and break at the idx number
-  for (i = this.store.length - 1; i !== idx; i = i - 1) {
-    if (this.store[i][this.identifier] === id) {
-      this.store.splice(i, 1);
-      this.idx.splice(idx, 1);
+  for (var n = this._store.length - 1; n !== idx; n = n - 1) {
+    if (this._store[n][this._identifier] === id) {
+      this._store.splice(n, 1);
+      this._idx.splice(idx, 1);
+      setTimeout(this.emitEvent.bind(this, 'remove', id, dontEmit), 0);
       return true;
     }
   }
@@ -225,11 +247,11 @@ ArrayKeys.prototype.forEachRecord = function (cb) {
   var finished = function () {};
 
   setTimeout(function () {
-    for (var i = self.store.length - 1; i >= 0; i = i - 1) {
+    for (var i = self._store.length - 1; i >= 0; i = i - 1) {
       count += 1;
-      cb(self.store[i]);
+      setTimeout(cb(self._store[i]), 0);
     }
-    finished(count);
+    setTimeout(finished(count), 0);
   }, 0);
 
   return {
@@ -240,16 +262,82 @@ ArrayKeys.prototype.forEachRecord = function (cb) {
 };
 
 ArrayKeys.prototype.getCount = function () {
-  return this.store.length;
+  return this._store.length;
 };
 
 module.exports = ArrayKeys;
 
-},{}],3:[function(_dereq_,module,exports){
+},{"tiny-emitter":3}],3:[function(require,module,exports){
+function E () {
+	// Keep this empty so it's easier to inherit from
+  // (via https://github.com/lipsmack from https://github.com/scottcorgan/tiny-emitter/issues/3)
+}
+
+E.prototype = {
+	on: function (name, callback, ctx) {
+    var e = this.e || (this.e = {});
+    
+    (e[name] || (e[name] = [])).push({
+      fn: callback,
+      ctx: ctx
+    });
+    
+    return this;
+  },
+
+  once: function (name, callback, ctx) {
+    var self = this;
+    var fn = function () {
+      self.off(name, fn);
+      callback.apply(ctx, arguments);
+    };
+    
+    return this.on(name, fn, ctx);
+  },
+
+  emit: function (name) {
+    var data = [].slice.call(arguments, 1);
+    var evtArr = ((this.e || (this.e = {}))[name] || []).slice();
+    var i = 0;
+    var len = evtArr.length;
+    
+    for (i; i < len; i++) {
+      evtArr[i].fn.apply(evtArr[i].ctx, data);
+    }
+    
+    return this;
+  },
+
+  off: function (name, callback) {
+    var e = this.e || (this.e = {});
+    var evts = e[name];
+    var liveEvents = [];
+    
+    if (evts && callback) {
+      for (var i = 0, len = evts.length; i < len; i++) {
+        if (evts[i].fn !== callback) liveEvents.push(evts[i]);
+      }
+    }
+    
+    // Remove event from queue to prevent memory leak
+    // Suggested by https://github.com/lazd
+    // Ref: https://github.com/scottcorgan/tiny-emitter/commit/c6ebfaa9bc973b33d110a84a307742b7cf94c953#commitcomment-5024910
+
+    (liveEvents.length) 
+      ? e[name] = liveEvents
+      : delete e[name];
+    
+    return this;
+  }
+};
+
+module.exports = E;
+
+},{}],4:[function(require,module,exports){
 'use strict';
 
-var d        = _dereq_('d')
-  , callable = _dereq_('es5-ext/object/valid-callable')
+var d        = require('d')
+  , callable = require('es5-ext/object/valid-callable')
 
   , apply = Function.prototype.apply, call = Function.prototype.call
   , create = Object.create, defineProperty = Object.defineProperty
@@ -379,13 +467,13 @@ module.exports = exports = function (o) {
 };
 exports.methods = methods;
 
-},{"d":4,"es5-ext/object/valid-callable":13}],4:[function(_dereq_,module,exports){
+},{"d":5,"es5-ext/object/valid-callable":14}],5:[function(require,module,exports){
 'use strict';
 
-var assign        = _dereq_('es5-ext/object/assign')
-  , normalizeOpts = _dereq_('es5-ext/object/normalize-options')
-  , isCallable    = _dereq_('es5-ext/object/is-callable')
-  , contains      = _dereq_('es5-ext/string/#/contains')
+var assign        = require('es5-ext/object/assign')
+  , normalizeOpts = require('es5-ext/object/normalize-options')
+  , isCallable    = require('es5-ext/object/is-callable')
+  , contains      = require('es5-ext/string/#/contains')
 
   , d;
 
@@ -444,14 +532,14 @@ d.gs = function (dscr, get, set/*, options*/) {
 	return !options ? desc : assign(normalizeOpts(options), desc);
 };
 
-},{"es5-ext/object/assign":5,"es5-ext/object/is-callable":8,"es5-ext/object/normalize-options":12,"es5-ext/string/#/contains":15}],5:[function(_dereq_,module,exports){
+},{"es5-ext/object/assign":6,"es5-ext/object/is-callable":9,"es5-ext/object/normalize-options":13,"es5-ext/string/#/contains":16}],6:[function(require,module,exports){
 'use strict';
 
-module.exports = _dereq_('./is-implemented')()
+module.exports = require('./is-implemented')()
 	? Object.assign
-	: _dereq_('./shim');
+	: require('./shim');
 
-},{"./is-implemented":6,"./shim":7}],6:[function(_dereq_,module,exports){
+},{"./is-implemented":7,"./shim":8}],7:[function(require,module,exports){
 'use strict';
 
 module.exports = function () {
@@ -462,11 +550,11 @@ module.exports = function () {
 	return (obj.foo + obj.bar + obj.trzy) === 'razdwatrzy';
 };
 
-},{}],7:[function(_dereq_,module,exports){
+},{}],8:[function(require,module,exports){
 'use strict';
 
-var keys  = _dereq_('../keys')
-  , value = _dereq_('../valid-value')
+var keys  = require('../keys')
+  , value = require('../valid-value')
 
   , max = Math.max;
 
@@ -486,21 +574,21 @@ module.exports = function (dest, src/*, …srcn*/) {
 	return dest;
 };
 
-},{"../keys":9,"../valid-value":14}],8:[function(_dereq_,module,exports){
+},{"../keys":10,"../valid-value":15}],9:[function(require,module,exports){
 // Deprecated
 
 'use strict';
 
 module.exports = function (obj) { return typeof obj === 'function'; };
 
-},{}],9:[function(_dereq_,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
-module.exports = _dereq_('./is-implemented')()
+module.exports = require('./is-implemented')()
 	? Object.keys
-	: _dereq_('./shim');
+	: require('./shim');
 
-},{"./is-implemented":10,"./shim":11}],10:[function(_dereq_,module,exports){
+},{"./is-implemented":11,"./shim":12}],11:[function(require,module,exports){
 'use strict';
 
 module.exports = function () {
@@ -510,7 +598,7 @@ module.exports = function () {
 	} catch (e) { return false; }
 };
 
-},{}],11:[function(_dereq_,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 var keys = Object.keys;
@@ -519,19 +607,14 @@ module.exports = function (object) {
 	return keys(object == null ? object : Object(object));
 };
 
-},{}],12:[function(_dereq_,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
-var assign = _dereq_('./assign')
+var forEach = Array.prototype.forEach, create = Object.create;
 
-  , forEach = Array.prototype.forEach
-  , create = Object.create, getPrototypeOf = Object.getPrototypeOf
-
-  , process;
-
-process = function (src, obj) {
-	var proto = getPrototypeOf(src);
-	return assign(proto ? process(proto, obj) : obj, src);
+var process = function (src, obj) {
+	var key;
+	for (key in src) obj[key] = src[key];
 };
 
 module.exports = function (options/*, …options*/) {
@@ -543,7 +626,7 @@ module.exports = function (options/*, …options*/) {
 	return result;
 };
 
-},{"./assign":5}],13:[function(_dereq_,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 module.exports = function (fn) {
@@ -551,7 +634,7 @@ module.exports = function (fn) {
 	return fn;
 };
 
-},{}],14:[function(_dereq_,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 module.exports = function (value) {
@@ -559,14 +642,14 @@ module.exports = function (value) {
 	return value;
 };
 
-},{}],15:[function(_dereq_,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
-module.exports = _dereq_('./is-implemented')()
+module.exports = require('./is-implemented')()
 	? String.prototype.contains
-	: _dereq_('./shim');
+	: require('./shim');
 
-},{"./is-implemented":16,"./shim":17}],16:[function(_dereq_,module,exports){
+},{"./is-implemented":17,"./shim":18}],17:[function(require,module,exports){
 'use strict';
 
 var str = 'razdwatrzy';
@@ -576,7 +659,7 @@ module.exports = function () {
 	return ((str.contains('dwa') === true) && (str.contains('foo') === false));
 };
 
-},{}],17:[function(_dereq_,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 var indexOf = String.prototype.indexOf;
@@ -585,6 +668,5 @@ module.exports = function (searchString/*, position*/) {
 	return indexOf.call(this, searchString, arguments[1]) > -1;
 };
 
-},{}]},{},[1])
-(1)
+},{}]},{},[1])(1)
 });
