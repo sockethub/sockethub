@@ -54,12 +54,25 @@ Activity.on('activity-object-create', function (obj) {
   });
 
 Activity.Object.create({
-    objectType: "chatroom",
     id: 'irc://irc.freenode.net/activitystreams',
+    objectType: "chatroom",
     displayName: '#activitystreams'
   });
 
 var exampleUser = Activity.Object.get('irc://exampleUser@irc.freenode.net');
+// ... returns:
+//  {
+//    id: 'irc://exampleUser@irc.freenode.net',
+//    objectType: "person",
+//    displayName: 'Example User',
+//    url: "http://activitystrea.ms",
+//    image: {
+//      url: "http://activitystrea.ms/avatar.jpg",
+//      mediaType: "image/jpeg",
+//      width: 250,
+//      height: 250
+//    }
+//  }
 
 Activity.Stream({
     verb: 'send',
@@ -70,4 +83,28 @@ Activity.Stream({
     },
     target: 'irc://irc.freenode.net/activitystreams'
   });
-
+// ... returns:
+//  {
+//    verb: 'send',
+//    actor: {
+//      id: 'irc://exampleUser@irc.freenode.net',
+//      objectType: "person",
+//      displayName: 'Example User',
+//      url: "http://activitystrea.ms",
+//      image: {
+//        url: "http://activitystrea.ms/avatar.jpg",
+//        mediaType: "image/jpeg",
+//        width: 250,
+//        height: 250
+//      }
+//    },
+//    object: {
+//      objectType: "message",
+//      content: "hello world!"
+//    },
+//    target: {
+//      id: 'irc://irc.freenode.net/activitystreams',
+//      objectType: "chatroom",
+//      displayName: '#activitystreams'
+//    }
+//  }
