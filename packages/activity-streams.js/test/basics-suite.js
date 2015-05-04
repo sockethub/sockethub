@@ -30,7 +30,7 @@ function getTests() {
     {
       desc: '# get',
       run: function (env, test) {
-        test.assert(env.mod.Object.get('thingy1'), {id:'thingy1'});
+        test.assert(env.mod.Object.get('thingy1'), {'@id':'thingy1'});
       }
     },
 
@@ -52,16 +52,16 @@ function getTests() {
       desc: '# stream',
       run: function (env, test) {
         var stream = env.mod.Stream({
-          verb: 'lol',
+          '@type': 'lol',
           actor: 'thingy1',
-          object: 'thingy2',
+          object: 'hello world',
           target: [ 'thingy1', 'thingy2' ]
         });
         var expected = {
-          verb: 'lol',
-          actor: { id: 'thingy1' },
-          target: [ { id: 'thingy1' }, { id: 'thingy2' }],
-          object: { id: 'thingy2' }
+          '@type': 'lol',
+          actor: { '@id': 'thingy1' },
+          target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
+          object: { 'content': 'hello world' }
         };
         test.assert(stream, expected);
       }
@@ -71,16 +71,56 @@ function getTests() {
       desc: '# stream, static object',
       run: function (env, test) {
         var stream = env.mod.Stream({
-          verb: 'lol',
+          '@type': 'lol',
           actor: 'thingy',
           object: { objectType: 'stuff', content: 'har' },
           target: [ 'thingy1', 'thingy2' ]
         });
         var expected = {
-          verb: 'lol',
-          actor: { id: 'thingy' },
-          target: [ { id: 'thingy1' }, { id: 'thingy2' }],
+          '@type': 'lol',
+          actor: { '@id': 'thingy' },
+          target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
           object: { objectType: 'stuff', content: 'har' }
+        };
+        test.assert(stream, expected);
+      }
+    },
+
+    {
+      desc: '# stream, string object (+ verb renaming)',
+      run: function (env, test) {
+        var stream = env.mod.Stream({
+          verb: 'lol',
+          actor: 'thingy',
+          object: 'allo matey',
+          target: [ 'thingy1', 'thingy2' ]
+        });
+        var expected = {
+          '@type': 'lol',
+          actor: { '@id': 'thingy' },
+          target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
+          object: { content: 'allo matey' }
+        };
+        test.assert(stream, expected);
+      }
+    },
+
+    {
+      desc: '# stream, string object (+ platform renaming)',
+      run: function (env, test) {
+        var stream = env.mod.Stream({
+          platform: 'irc',
+          verb: 'lol',
+          actor: 'thingy',
+          object: 'allo matey',
+          target: [ 'thingy1', 'thingy2' ]
+        });
+        var expected = {
+          '@type': 'lol',
+          '@context': 'irc',
+          actor: { '@id': 'thingy' },
+          target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
+          object: { content: 'allo matey' }
         };
         test.assert(stream, expected);
       }
@@ -90,10 +130,10 @@ function getTests() {
       desc: '# create 3 w/events',
       run: function (env, test) {
         env.mod.on('activity-object-create', function onObjCreate(obj) {
-          test.assert(obj.id, 'thingy3');
+          test.assert(obj['@id'], 'thingy3');
         });
         setTimeout(function () {
-          test.assertAnd(env.mod.Object.create({id:'thingy3'}), true);
+          test.assertAnd(env.mod.Object.create({ id:'thingy3' }), true);
         }, 0);
       }
     },
@@ -120,6 +160,7 @@ if (typeof define !== 'function') {
 define(['require', 'array-keys'], function (require, ArrayKeys) {
   return [{
     desc: "basic tests",
+    abortOnFail: true,
     setup: function (env, test) {
       env.mod = require('./../lib/activity-streams');
       test.assertTypeAnd(env.mod, 'object');
@@ -130,9 +171,9 @@ define(['require', 'array-keys'], function (require, ArrayKeys) {
   },
   {
     desc: "basic tests (browserify)",
+    abortOnFail: true,
     setup: function (env, test) {
       env.mod = require('./../browser/activity-streams.js');
-      console.log('mod: ', env.mod);
       test.assertTypeAnd(env.mod, 'object');
       test.assertTypeAnd(env.mod.Object, 'object');
       test.assertType(env.mod.Stream, 'function');
@@ -141,6 +182,7 @@ define(['require', 'array-keys'], function (require, ArrayKeys) {
   },
   {
     desc: "basic tests (browserify minified)",
+    abortOnFail: true,
     setup: function (env, test) {
       env.mod = require('./../browser/activity-streams.min.js');
       test.assertTypeAnd(env.mod, 'object');
