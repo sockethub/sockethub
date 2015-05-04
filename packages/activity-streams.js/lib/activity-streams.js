@@ -1,10 +1,10 @@
 /*!
  * activity-streams
- *   version 0.4.1
+ *   version 1.0.0
  *   http://github.com/silverbucket/activity-streams
  *
  * Developed and Maintained by:
- *   Nick Jennings <nick@silverbucket.net> copyright 2014
+ *   Nick Jennings <nick@silverbucket.net> copyright 2015
  *
  * activity-streams is released under the MIT (see LICENSE).
  *
@@ -20,13 +20,68 @@
 var EventEmitter = require('event-emitter'),
     ArrayKeys    = require('array-keys');
 
-var objs        = new ArrayKeys({ identifier: 'id' }),
+var objs        = new ArrayKeys({ identifier: '@id' }),
     ee          = EventEmitter(),
-    expandProps = [ 'actor', 'object', 'target' ];
+    baseProps   = {
+      stream: [
+        '@type', 'actor', 'target', 'object'
+      ],
+      object: [
+        '@id', '@type', 
+        'alias', 'attachedTo', 'attachment', 'attributedTo', 'attributedWith', 
+        'content', 'context', 'contextOf', 'displayName', 'endTime', 'generator', 
+        'generatorOf', 'icon', 'image', 'inReplyTo', 'memberOf', 'location', 
+        'locationOf', 'objectOf', 'originOf', 'preview', 'previewOf', 'provider', 
+        'providerOf', 'published', 'rating', 'resultOf', 'replies', 'scope', 
+        'scopeOf', 'startTime', 'summary', 'tag', 'tagOf', 'targetOf', 'title', 
+        'updated', 'url'
+      ]
+    },
+    rename       = {
+      'id': '@id',
+      'verb': '@type',
+      'objectType': '@type',
+      'platform': '@context'
+    },
+    expand       = {
+      'actor' : {
+        'primary': '@id',
+        'props': baseProps
+      },
+      'target': {
+        'primary': '@id',
+        'props': baseProps
+      },
+      'object': {
+        'primary': 'content',
+        'props': baseProps
+      }
+    },
+    expandKeys   = Object.keys(expand);
+
+function validateObject(type, obj) {
+  var keys = Object.keys(obj);
+  for (var i = keys.length - 1; i >= 0; i -= 1) {
+    if (baseProps[type].indexOf(keys[i]) < 0) {
+      if (rename[keys[i]]) {
+        // rename property instead of fail
+        obj[rename[keys[i]]] = obj[keys[i]];
+        delete obj[keys[i]];
+      } else {
+        return 'invalid property ' + keys[i];
+      }
+    }
+  }
+  return false;
+}
 
 var Stream = function (meta) {
   var stream = {};
-  var i;
+
+  var err = validateObject('stream', meta);
+  if (err) {
+    throw new Error(err);
+  }
 
   for (var key in meta) {
 
@@ -46,10 +101,13 @@ var Stream = function (meta) {
 
   }
 
-  // only expand string into objects if they are in the expandProps list
-  for (i = expandProps.length - 1; i >= 0; i -= 1) {
-    if (typeof stream[expandProps[i]] === 'string') {
-      stream[expandProps[i]] = { id: stream[expandProps[i]] };
+  // only expand string into objects if they are in the expand list
+  for (var i = expandKeys.length - 1; i >= 0; i -= 1) {
+    if (typeof stream[expandKeys[i]] === 'string') {
+      var idx = expand[expandKeys[i]].primary;
+      var obj = {};
+      obj[idx] = stream[expandKeys[i]];
+      stream[expandKeys[i]] = obj;
     }
   }
 
@@ -61,6 +119,12 @@ var Stream = function (meta) {
 var _Object = {
   create: function (obj) {
     var result = false;
+
+    var err = validateObject('object', obj);
+    if (err) {
+      throw new Error(err);
+    }
+
     try {
       result = objs.addRecord(obj);
     } catch (e) {
