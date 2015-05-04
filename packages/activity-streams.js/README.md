@@ -37,8 +37,8 @@ Once included in a web-page, the `Activity` base object should be on the global 
 ```javascript
 
 Activity.Object.create({
-    id: 'irc://exampleUser@irc.freenode.net',
-    objectType: "person",
+    '@id': 'irc://exampleUser@irc.freenode.net',
+    '@type': "person",
     displayName: 'Example User',
     url: "http://activitystrea.ms",
     image: {
@@ -54,16 +54,16 @@ Activity.on('activity-object-create', function (obj) {
   });
 
 Activity.Object.create({
-    id: 'irc://irc.freenode.net/activitystreams',
-    objectType: "chatroom",
+    '@id': 'irc://irc.freenode.net/activitystreams',
+    '@type': "chatroom",
     displayName: '#activitystreams'
   });
 
 var exampleUser = Activity.Object.get('irc://exampleUser@irc.freenode.net');
 // ... returns:
 //  {
-//    id: 'irc://exampleUser@irc.freenode.net',
-//    objectType: "person",
+//    '@id': 'irc://exampleUser@irc.freenode.net',
+//    '@type': "person",
 //    displayName: 'Example User',
 //    url: "http://activitystrea.ms",
 //    image: {
@@ -75,20 +75,20 @@ var exampleUser = Activity.Object.get('irc://exampleUser@irc.freenode.net');
 //  }
 
 Activity.Stream({
-    verb: 'send',
+    '@context': 'send',
     actor: 'irc://exampleUser@irc.freenode.net',
     object: {
-      objectType: "message",
+      '@type': "message",
       content: "hello world!"
     },
     target: 'irc://irc.freenode.net/activitystreams'
   });
 // ... returns:
 //  {
-//    verb: 'send',
+//    '@context': 'send',
 //    actor: {
-//      id: 'irc://exampleUser@irc.freenode.net',
-//      objectType: "person",
+//      '@id': 'irc://exampleUser@irc.freenode.net',
+//      '@type': "person",
 //      displayName: 'Example User',
 //      url: "http://activitystrea.ms",
 //      image: {
@@ -99,12 +99,12 @@ Activity.Stream({
 //      }
 //    },
 //    object: {
-//      objectType: "message",
+//      '@type': "message",
 //      content: "hello world!"
 //    },
 //    target: {
-//      id: 'irc://irc.freenode.net/activitystreams',
-//      objectType: "chatroom",
+//      '@id': 'irc://irc.freenode.net/activitystreams',
+//      '@type': "chatroom",
 //      displayName: '#activitystreams'
 //    }
 //  }
