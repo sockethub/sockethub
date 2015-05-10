@@ -23,6 +23,7 @@ var EventEmitter = require('event-emitter'),
 
 var objs        = new ArrayKeys({ identifier: '@id' }),
     ee          = EventEmitter(),
+    specialObjs = [], // the objects don't get rejected for bad props
     baseProps   = {
       stream: [
         '@type', 'actor', 'target', 'object', '@context'
@@ -76,7 +77,10 @@ function validateObject(type, obj) {
             continue;
           }
         }
-        return 'invalid property ' + keys[i];
+
+        if (specialObjs.indexOf(obj['@type']) < 0) {
+          return 'invalid property ' + keys[i];
+        }
       }
     }
   }
@@ -182,18 +186,20 @@ var _Object = {
 
 
 module.exports = function (opts) {
-  if ((typeof opts === 'object') && 
-      (typeof opts.customProps === 'object')) {
-    var keys = Object.keys(opts.customProps);
-    for (var i = 0, len = keys.length; i < len; i += 1) {
-      if (typeof opts.customProps[keys[i]] === 'object') {
-        customProps[keys[i]] = [];
-        for (var j = 0, jlen = opts.customProps[keys[i]].length; j < jlen; j += 1) {
-          customProps[keys[i]].push(opts.customProps[keys[i]][j]);
-        }        
+  if (typeof opts === 'object') {
+    specialObjs = opts.specialObjs || [];
+
+    if (typeof opts.customProps === 'object') {
+      var keys = Object.keys(opts.customProps);
+      for (var i = 0, len = keys.length; i < len; i += 1) {
+        if (typeof opts.customProps[keys[i]] === 'object') {
+          customProps[keys[i]] = [];
+          for (var j = 0, jlen = opts.customProps[keys[i]].length; j < jlen; j += 1) {
+            customProps[keys[i]].push(opts.customProps[keys[i]][j]);
+          }        
+        }
       }
     }
-
   }
 
   return {
