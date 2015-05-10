@@ -84,7 +84,7 @@ function getTests() {
           '@context': 'irc',
           actor: { '@id': 'thingy' },
           target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
-          object: { objectType: 'stuff', content: 'har' }
+          object: { '@type': 'stuff', content: 'har' }
         };
         test.assert(stream, expected);
       }
