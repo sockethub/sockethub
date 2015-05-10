@@ -1,4 +1,5 @@
 var path   = require('path');
+var nconf  = require('nconf');
 var routes = [];
 
 routes.push({
@@ -29,18 +30,29 @@ routes.push({
   route: function (req, res) {
     res.sendFile(path.resolve(__dirname + '/../node_modules/activity-streams/browser/activity-streams.min.js'));
   }
-},
-
-{
-  meta: {
-    method: 'GET',
-    path: '/jquery.js'
-  },
-  route: function (req, res) {
-    res.sendFile(path.resolve(__dirname + '/../node_modules/jquery/dist/jquery.min.js'));
-  }
 });
 
+if (nconf.get('dev')) {
+  routes.push({
+    meta: {
+      method: 'GET',
+      path: '/jquery.js'
+    },
+    route: function (req, res) {
+      res.sendFile(path.resolve(__dirname + '/../node_modules/jquery/dist/jquery.min.js'));
+    }
+  },
+
+  {
+    meta: {
+      method: 'GET',
+      path: '/jquery.min.map'
+    },
+    route: function (req, res) {
+      res.sendFile(path.resolve(__dirname + '/../node_modules/jquery/dist/jquery.min.map'));
+    }
+  });
+}
 
 /**
  * Setup
