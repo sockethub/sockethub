@@ -37,6 +37,7 @@ var objs        = new ArrayKeys({ identifier: '@id' }),
         'updated', 'url'
       ]
     },
+    customProps  = {},
     rename       = {
       'id': '@id',
       'verb': '@type',
@@ -68,6 +69,12 @@ function validateObject(type, obj) {
         obj[rename[keys[i]]] = obj[keys[i]];
         delete obj[keys[i]];
       } else {
+        if ((obj['@type']) && (typeof customProps[obj['@type']] === 'object')) {
+          if (customProps[obj['@type']].indexOf(keys[i]) >= 0) {
+            // custom property matches, continue
+            continue;
+          }
+        }
         return 'invalid property ' + keys[i];
       }
     }
@@ -173,16 +180,32 @@ var _Object = {
 };
 
 
-module.exports = {
-  Stream: Stream,
-  Object: _Object,
-  on: function (event, func) {
-    return ee.on(event, func);
-  },
-  once: function (event, func) {
-    return ee.once(event, func);
-  },
-  off: function (event, funcName) {
-    return ee.off(event, funcName);
+module.exports = function (opts) {
+  if ((typeof opts === 'object') && 
+      (typeof opts.customProps === 'object')) {
+    var keys = Object.keys(opts.customProps);
+    for (var i = 0, len = keys.length; i < len; i += 1) {
+      if (typeof opts.customProps[keys[i]] === 'object') {
+        customProps[keys[i]] = [];
+        for (var j = 0, jlen = opts.customProps[keys[i]].length; j < jlen; j += 1) {
+          customProps[keys[i]].push(opts.customProps[keys[i]][j]);
+        }        
+      }
+    }
+
   }
+
+  return {
+    Stream: Stream,
+    Object: _Object,
+    on: function (event, func) {
+      return ee.on(event, func);
+    },
+    once: function (event, func) {
+      return ee.once(event, func);
+    },
+    off: function (event, funcName) {
+      return ee.off(event, funcName);
+    }
+  };
 };

@@ -91,6 +91,27 @@ function getTests() {
     },
 
     {
+      desc: '# stream, customProp',
+      run: function (env, test) {
+        var stream = env.mod.Stream({
+          '@type': 'lol',
+          platform: 'irc',
+          actor: 'thingy',
+          object: { '@type': 'credentials', content: 'har', secure: true },
+          target: [ 'thingy1', 'thingy2' ]
+        });
+        var expected = {
+          '@type': 'lol',
+          '@context': 'irc',
+          actor: { '@id': 'thingy' },
+          target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
+          object: { '@type': 'credentials', content: 'har', secure: true }
+        };
+        test.assert(stream, expected);
+      }
+    },
+
+    {
       desc: '# stream, string object (+ verb renaming)',
       run: function (env, test) {
         var stream = env.mod.Stream({
@@ -166,7 +187,11 @@ define(['require', 'array-keys'], function (require, ArrayKeys) {
     desc: "basic tests",
     abortOnFail: true,
     setup: function (env, test) {
-      env.mod = require('./../lib/activity-streams');
+      env.mod = require('./../lib/activity-streams')({
+        customProps: {
+          credentials: [ 'secure' ]
+        }
+      });
       test.assertTypeAnd(env.mod, 'object');
       test.assertTypeAnd(env.mod.Object, 'object');
       test.assertType(env.mod.Stream, 'function');
@@ -177,7 +202,11 @@ define(['require', 'array-keys'], function (require, ArrayKeys) {
     desc: "basic tests (browserify)",
     abortOnFail: true,
     setup: function (env, test) {
-      env.mod = require('./../browser/activity-streams.js');
+      env.mod = require('./../browser/activity-streams.js')({
+        customProps: {
+          credentials: [ 'secure' ]
+        }
+      });
       test.assertTypeAnd(env.mod, 'object');
       test.assertTypeAnd(env.mod.Object, 'object');
       test.assertType(env.mod.Stream, 'function');
@@ -188,7 +217,11 @@ define(['require', 'array-keys'], function (require, ArrayKeys) {
     desc: "basic tests (browserify minified)",
     abortOnFail: true,
     setup: function (env, test) {
-      env.mod = require('./../browser/activity-streams.min.js');
+      env.mod = require('./../browser/activity-streams.min.js')({
+        customProps: {
+          credentials: [ 'secure' ]
+        }
+      });
       test.assertTypeAnd(env.mod, 'object');
       test.assertTypeAnd(env.mod.Object, 'object');
       test.assertType(env.mod.Stream, 'function');
