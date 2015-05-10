@@ -24,10 +24,10 @@ var objs        = new ArrayKeys({ identifier: '@id' }),
     ee          = EventEmitter(),
     baseProps   = {
       stream: [
-        '@type', 'actor', 'target', 'object'
+        '@type', 'actor', 'target', 'object', '@context'
       ],
       object: [
-        '@id', '@type', 
+        '@id', '@type', '@context', 
         'alias', 'attachedTo', 'attachment', 'attributedTo', 'attributedWith', 
         'content', 'context', 'contextOf', 'displayName', 'endTime', 'generator', 
         'generatorOf', 'icon', 'image', 'inReplyTo', 'memberOf', 'location', 

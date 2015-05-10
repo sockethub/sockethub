@@ -54,12 +54,14 @@ function getTests() {
         var stream = env.mod.Stream({
           '@type': 'lol',
           actor: 'thingy1',
+          '@context': 'irc',
           object: 'hello world',
           target: [ 'thingy1', 'thingy2' ]
         });
         var expected = {
           '@type': 'lol',
           actor: { '@id': 'thingy1' },
+          '@context': 'irc',
           target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
           object: { 'content': 'hello world' }
         };
@@ -72,12 +74,14 @@ function getTests() {
       run: function (env, test) {
         var stream = env.mod.Stream({
           '@type': 'lol',
+          platform: 'irc',
           actor: 'thingy',
           object: { objectType: 'stuff', content: 'har' },
           target: [ 'thingy1', 'thingy2' ]
         });
         var expected = {
           '@type': 'lol',
+          '@context': 'irc',
           actor: { '@id': 'thingy' },
           target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
           object: { objectType: 'stuff', content: 'har' }
