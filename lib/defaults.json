@@ -1,4 +1,9 @@
 {
+  "activity-streams": {
+    "opts": {
+      "specialObjs": [ "credentials" ]
+    }
+  },
   "examples": {
     "enabled": true,
     "secret": 1234567890
