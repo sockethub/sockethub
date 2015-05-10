@@ -24,9 +24,9 @@
     "irc-factory": "1.10.x"
   },
   "devDependencies": {
-    "jaribu": "*",
+    "jaribu": "^2.0.0",
     "tv4": "^1.1.5",
-    "sockethub-testing-mocks": "https://github.com/sockethub/sockethub-testing-mocks.git#master"
+    "sockethub-testing-mocks": "^1.0.0"
   },
   "scripts": {
     "test": "node_modules/.bin/jaribu"
