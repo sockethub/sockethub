@@ -84,6 +84,13 @@ var Stream = function (meta) {
     throw new Error(err);
   }
 
+  if (typeof meta.object === 'object') {
+    err = validateObject('object', meta.object);
+    if (err) {
+      throw new Error(err);
+    }
+  }
+
   for (var key in meta) {
 
     if (typeof meta[key] === 'string') {
