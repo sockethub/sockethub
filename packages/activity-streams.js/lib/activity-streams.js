@@ -183,6 +183,7 @@ var _Object = {
 module.exports = function (opts) {
   if ((typeof opts === 'object') && 
       (typeof opts.customProps === 'object')) {
+    
     var keys = Object.keys(opts.customProps);
     for (var i = 0, len = keys.length; i < len; i += 1) {
       if (typeof opts.customProps[keys[i]] === 'object') {

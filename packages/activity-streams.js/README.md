@@ -23,20 +23,22 @@ I am learning about JSON-LD and ActivityStreams2 as I write this library, so sug
 
 `npm install activity-streams`
 
-`var Activity = require('activity-streams');`
+`var ActivityStreams = require('activity-streams')();`
 
 #### Browser
 
 `<script src="http://example.com/activity-streams.js"></script>`
 
-Once included in a web-page, the `Activity` base object should be on the global scope, with the sub-properties `Activity.Object` and `Activity.Stream`.
+Once included in a web-page, the `ActivityStreams` base object should be on the global scope, with the sub-properties `ActivityStreams.Object` and `ActivityStreams.Stream`.
 
 
 ## Example
 
 ```javascript
 
-Activity.Object.create({
+var AS = new ActivityStreams();
+
+AS.Object.create({
     '@id': 'irc://exampleUser@irc.freenode.net',
     '@type': "person",
     displayName: 'Example User',
@@ -49,17 +51,17 @@ Activity.Object.create({
     }
   });
 
-Activity.on('activity-object-create', function (obj) {
+AS.on('activity-object-create', function (obj) {
   console.log('this object was just created: ', obj);
   });
 
-Activity.Object.create({
+AS.Object.create({
     '@id': 'irc://irc.freenode.net/activitystreams',
     '@type': "chatroom",
     displayName: '#activitystreams'
   });
 
-var exampleUser = Activity.Object.get('irc://exampleUser@irc.freenode.net');
+var exampleUser = AS.Object.get('irc://exampleUser@irc.freenode.net');
 // ... returns:
 //  {
 //    '@id': 'irc://exampleUser@irc.freenode.net',
@@ -74,7 +76,7 @@ var exampleUser = Activity.Object.get('irc://exampleUser@irc.freenode.net');
 //    }
 //  }
 
-Activity.Stream({
+AS.Stream({
     '@context': 'send',
     actor: 'irc://exampleUser@irc.freenode.net',
     object: {
