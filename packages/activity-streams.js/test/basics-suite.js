@@ -112,6 +112,28 @@ function getTests() {
     },
 
     {
+      desc: '# stream, specialObj',
+      run: function (env, test) {
+        var stream = env.mod.Stream({
+          '@type': 'lol',
+          platform: 'irc',
+          actor: 'thingy',
+          object: { '@type': 'dude', foo: 'bar', content: 'har', secure: true },
+          target: [ 'thingy1', 'thingy2' ]
+        });
+        var expected = {
+          '@type': 'lol',
+          '@context': 'irc',
+          actor: { '@id': 'thingy' },
+          target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
+          object: { '@type': 'dude', foo: 'bar', content: 'har', secure: true }
+
+        };
+        test.assert(stream, expected);
+      }
+    },
+
+    {
       desc: '# stream, string object (+ verb renaming)',
       run: function (env, test) {
         var stream = env.mod.Stream({
@@ -190,7 +212,8 @@ define(['require', 'array-keys'], function (require, ArrayKeys) {
       env.mod = require('./../lib/activity-streams')({
         customProps: {
           credentials: [ 'secure' ]
-        }
+        },
+        specialObjs: [ 'dude']
       });
       test.assertTypeAnd(env.mod, 'object');
       test.assertTypeAnd(env.mod.Object, 'object');
@@ -205,7 +228,8 @@ define(['require', 'array-keys'], function (require, ArrayKeys) {
       env.mod = require('./../browser/activity-streams.js')({
         customProps: {
           credentials: [ 'secure' ]
-        }
+        },
+        specialObjs: [ 'dude']
       });
       test.assertTypeAnd(env.mod, 'object');
       test.assertTypeAnd(env.mod.Object, 'object');
@@ -220,7 +244,8 @@ define(['require', 'array-keys'], function (require, ArrayKeys) {
       env.mod = require('./../browser/activity-streams.min.js')({
         customProps: {
           credentials: [ 'secure' ]
-        }
+        },
+        specialObjs: [ 'dude']
       });
       test.assertTypeAnd(env.mod, 'object');
       test.assertTypeAnd(env.mod.Object, 'object');
