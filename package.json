@@ -44,7 +44,7 @@
     "kue": "^0.9.3",
     "nconf": "^0.7.1",
     "rand-token": "^0.2.1",
-    "secure-store-redis": "^0.1.1",
+    "secure-store-redis": "^0.1.2",
     "socket.io": "^1.2.1",
     "sockethub-platform-dummy": "^0.0.1",
     "sockethub-platform-feeds": "^0.0.1",
