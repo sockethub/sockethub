@@ -49,7 +49,7 @@
     "socket.io": "^1.2.1",
     "sockethub-platform-dummy": "^0.0.1",
     "sockethub-platform-feeds": "^0.0.1",
-    "sockethub-platform-irc": "0.0.6",
+    "sockethub-platform-irc": "git@github.com:sockethub/sockethub-platform-irc.git",
     "tv4": "^1.1.4"
   },
   "devDependencies": {
