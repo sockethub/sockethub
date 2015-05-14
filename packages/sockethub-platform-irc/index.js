@@ -207,7 +207,7 @@ var createObj = {
           '@type': 'update',
           actor: {
             '@type': 'person',
-            '@id': 'irc://' + object.topicBy + '@' + this.crendentials.object.server,
+            '@id': 'irc://' + object.topicBy + '@' + this.credentials.object.server,
             displayName: object.topicBy
           },
           target: {
