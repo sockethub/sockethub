@@ -1,6 +1,6 @@
 /*!
  * activity-streams
- *   version 1.0.0
+ *   version 2.0.3
  *   http://github.com/silverbucket/activity-streams
  *
  * Developed and Maintained by:
@@ -79,7 +79,6 @@ function validateObject(type, obj) {
         }
 
         if (specialObjs.indexOf(obj['@type']) < 0) {
-          console.log('bad obj: ', obj);
           return 'invalid property ' + keys[i];
         }
       }
