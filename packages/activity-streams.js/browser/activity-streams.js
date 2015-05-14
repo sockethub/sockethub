@@ -26,17 +26,18 @@ var objs        = new ArrayKeys({ identifier: '@id' }),
     specialObjs = [], // the objects don't get rejected for bad props
     baseProps   = {
       stream: [
-        '@type', 'actor', 'target', 'object', '@context'
+        '@id', '@type', 'actor', 'target', 'object', '@context', 'context', 
+        'published', 'error'
       ],
       object: [
-        '@id', '@type', '@context', 
+        '@id', '@type', '@context',
         'alias', 'attachedTo', 'attachment', 'attributedTo', 'attributedWith', 
         'content', 'context', 'contextOf', 'displayName', 'endTime', 'generator', 
         'generatorOf', 'icon', 'image', 'inReplyTo', 'memberOf', 'location', 
         'locationOf', 'objectOf', 'originOf', 'preview', 'previewOf', 'provider', 
         'providerOf', 'published', 'rating', 'resultOf', 'replies', 'scope', 
         'scopeOf', 'startTime', 'summary', 'tag', 'tagOf', 'targetOf', 'title', 
-        'updated', 'url'
+        'updated', 'url', 'titleMap', 'contentMap', 'members'
       ]
     },
     customProps  = {},
@@ -44,7 +45,7 @@ var objs        = new ArrayKeys({ identifier: '@id' }),
       'id': '@id',
       'verb': '@type',
       'objectType': '@type',
-      'platform': '@context'
+      'platform': 'context'
     },
     expand       = {
       'actor' : {
@@ -79,6 +80,7 @@ function validateObject(type, obj) {
         }
 
         if (specialObjs.indexOf(obj['@type']) < 0) {
+          console.log('bad obj: ', obj);
           return 'invalid property ' + keys[i];
         }
       }
