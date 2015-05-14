@@ -6,38 +6,38 @@ define(['require', 'tv4', './../lib/schemas/sockethub-activity-stream'], functio
   var as = {
     pass: {
       one: {
-        id: 'blah',
-        verb: 'send',
-        platform: 'hello',
+        '@id': 'blah',
+        '@type': 'send',
+        context: 'dummy',
         actor: {
-          id: 'irc://dood@irc.freenode.net',
-          objectType: 'person',
+          '@id': 'irc://dood@irc.freenode.net',
+          '@type': 'person',
           displayName: 'dood'
         },
         target: {
-          id: 'irc://irc.freenode.net/sockethub',
-          objectType: 'person',
+          '@id': 'irc://irc.freenode.net/sockethub',
+          '@type': 'person',
           displayName: 'sockethub'
         },
         object: {
-          objectType: 'credentials'
+          '@type': 'credentials'
         }
       }
     },
     fail: {
       one: {
-        id: 'blah',
-        verb: 'send',
-        platform: 'dood',
+        '@id': 'blah',
+        '@type': 'send',
+        context: 'dood',
         actor: {
           displayName: 'dood'
         },
         target: {
-          objectType: 'person',
+          '@type': 'person',
           displayName: 'bob'
         },
         object: {
-          objectType: 'credentials'
+          '@type': 'credentials'
         }
      }
     }
@@ -46,11 +46,12 @@ define(['require', 'tv4', './../lib/schemas/sockethub-activity-stream'], functio
   return [
     {
       desc: 'schema - activity stream',
+      abortOnFail: true,
       setup: function (env, test) {
         test.assertTypeAnd(schemaSHAS, 'object');
         //var schema = schemaSHAS(['hello', 'goodbye'], ['send', 'fetch']);
-
         env.schemaId = 'http://sockethub.org/schemas/v0/activity-stream#';
+
         test.assertAnd(schemaSHAS.id, env.schemaId);
         tv4.addSchema(schemaSHAS.id, schemaSHAS);
         test.done();
@@ -60,14 +61,15 @@ define(['require', 'tv4', './../lib/schemas/sockethub-activity-stream'], functio
           desc: 'basic passing schema',
           run: function (env, test) {
             var result = tv4.validate(as.pass.one, env.schemaId);
-            test.assert(result, true);
+            var msg = (tv4.error) ? tv4.error.dataPath + ': ' +  tv4.error.message : '';
+            test.assert(result, true, msg);
           }
         },
 
         {
           desc: 'basic failing schema',
           run: function (env, test) {
-            test.assert(tv4.validate(as.fail.one, env.schemaId), false);
+            test.assert(tv4.validate(as.fail.one, env.schemaId), false, tv4.error.message);
           }
         }
       ]

@@ -28,7 +28,7 @@ routes.push({
     path: '/activity-streams.js'
   },
   route: function (req, res) {
-    res.sendFile(path.resolve(__dirname + '/../node_modules/activity-streams/browser/activity-streams.min.js'));
+    res.sendFile(path.resolve(__dirname + '/../node_modules/activity-streams/browser/activity-streams.js'));
   }
 });
 

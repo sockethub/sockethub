@@ -55,8 +55,8 @@
     <script src="<%= address %>sockethub-client.js"></script>
     <script>
       debug = function (msg, obj) { console.log(msg, obj); };
-      var ircServer = 'localhost'; // irc.freenode.ent
-      localStorage.debug = '<%= debug_scope %>';
+      var ircServer = 'irc.freenode.net';
+      localStorage.debug = 'sockethub:*';
       var sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
       var channel = 'sockethub-test';
       var nick = 'sh-<%= randToken %>';
@@ -66,13 +66,14 @@
       // errors
       sc.socket.on('failure', function (msg) {
         debug('received failure: ', msg);
+        alert(msg.error);
       });
 
       sc.socket.on('completed', function (msg) {
-        msg = sc.Activity.Stream(msg);
+        msg = sc.ActivityStreams.Stream(msg);
         debug('received completed job: ', msg);
 
-        if (msg.verb === 'join') {
+        if (msg['@type'] === 'join') {
           $('.modal').css('display', 'none');
           $('input#m').prop('disabled', false);
           $('button#send').prop('disabled', false);
@@ -81,16 +82,16 @@
 
       // handle incoming messages from the sockethub server
       sc.socket.on('message', function (msg) {
-        msg = sc.Activity.Stream(msg);
+        msg = sc.ActivityStreams.Stream(msg);
         debug('received message: ', msg);
 
-        if (msg.verb === 'observe') {
+        if (msg['@type'] === 'observe') {
           $('#messages').append($('<li>').text('[ users in ' + msg.actor.displayName + ' ]'));
           $('#messages').append($('<li>').text('[ ' + msg.object.members.join(', ') + ' ]'));
-        } else if ((msg.verb === 'update') &&
+        } else if ((msg['@type'] === 'update') &&
                    (msg.object.objectType === 'address')) {
           $('#messages').append($('<li>').text(msg.actor.displayName + ' is now known as ' + msg.target.displayName));
-        } else if (msg.verb === 'join') {
+        } else if (msg['@type'] === 'join') {
           $('#messages').append($('<li>').text(msg.actor.displayName + ' has joined ' + msg.target.displayName));
         } else {
           $('#messages').append($('<li>').text(msg.actor.displayName + ': ' + msg.object.content));
@@ -102,11 +103,11 @@
       // handler for user input, emit messages to sockethub server
       $('#chat').submit(function () {
         var msg = {
-          platform: 'irc',
-          verb: 'send',
+          '@type': 'send',
+          context: 'irc',
           actor: 'irc://' + nick + '@' + ircServer,
           object: {
-            objectType: 'message',
+            '@type': 'message',
             displayName: 'message',
             content: $('#m').val()
           },
@@ -124,9 +125,9 @@
         nick = $('#n').val();
 
         // our irc user info
-        sc.Activity.Object.create({
-          id: 'irc://' + nick + '@' + ircServer,
-          objectType: "person",
+        sc.ActivityStreams.Object.create({
+          '@id': 'irc://' + nick + '@' + ircServer,
+          '@type': "person",
           displayName: nick,
           url: "http://sockethub.org",
           image: {
@@ -138,18 +139,18 @@
         });
 
         // the irc chatroom we're connecting to
-        sc.Activity.Object.create({
-          id: 'irc://' + ircServer + '/' + channel,
-          objectType: "room",
+        sc.ActivityStreams.Object.create({
+          '@id': 'irc://' + ircServer + '/' + channel,
+          '@type': "room",
           displayName: '#' + channel
         });
 
         // sending irc credentials to sockethub server
         var credentials = {
           actor: 'irc://' + nick + '@' + ircServer,
-          platform: 'irc',
+          context: 'irc',
           object: {
-            objectType: 'credentials',
+            '@type': 'credentials',
             nick: nick,
             server: ircServer,
             port: 6667,
@@ -160,8 +161,8 @@
         sc.socket.emit('credentials', credentials);
 
         var msg = {
-          platform: 'irc',
-          verb: 'join',
+          '@type': 'join',
+          context: 'irc',
           actor: 'irc://' + nick + '@' + ircServer,
           target: 'irc://' + ircServer + '/' + channel
         };
