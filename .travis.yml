@@ -6,4 +6,4 @@ services: redis
 sudo: false
 script: npm test
 install:
-  - npm install
+  - npm update -g npm; npm install
