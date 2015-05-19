@@ -1,4 +1,17 @@
-experimental branch, possible replacement of sockethub core for a future 1.0 release.
+# Sockethub v1.x Branch
+
+Experimental branch, possible replacement of sockethub core for a future 1.0 release.
+
+# Setup
+
+`$ npm install`
+
+`$ DEBUG=soockethub* bin/sockethub --dev`
+
+You should then be able to browse to `http://localhost:10550` and try out the examples.
+
+
+# Dev Notes
 
 goals of this branch are:
 * ActivityStreams 2.0 compliance
