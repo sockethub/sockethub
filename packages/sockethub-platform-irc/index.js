@@ -162,7 +162,26 @@ var createObj = {
     api.unhookEvent(key, '*');
 
     api.hookEvent(key, '*', function (message) {
+      if ((typeof message === 'object') && (typeof message.capabilities === 'object')) {
+        _this.scope.send({
+          '@type': 'announce',
+          actor: {
+            '@type': 'service',
+            '@id': 'irc://' + _this.credentials.object.server
+          },
+          target: {
+            '@type': 'person',
+            '@id': 'irc://' + _this.credentials.actor['@id'] + '@' + _this.credentials.object.server
+          },
+          object: {
+            '@type': 'content',
+            content: message.capabilities
+          },
+          published: message.time
+        });
+      } else {
         debug('*: ' + JSON.stringify(message));
+      }
     });
 
     api.hookEvent(key, 'registered', onRegister);
@@ -174,7 +193,7 @@ var createObj = {
   },
   listeners: {
     '*': function (object) {
-      debug('HANDLER * called [' + this.id + ']: ', object);
+      //debug('HANDLER * called [' + this.id + ']: ', object);
       if (typeof object.names === 'object') {
         // user list
         this.scope.debug('received user list: ' + object.channel);
@@ -354,8 +373,8 @@ var createObj = {
           },
           published: object.time
         });
-      // } else {
-      //   this.scope.log('INCOMING IRC OBJECT: ', object);
+      } else {
+        debug('HANDLER * called [' + this.id + ']: ', object);
       }
     }
   },
