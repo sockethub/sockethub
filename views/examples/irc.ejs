@@ -93,6 +93,8 @@
           $('#messages').append($('<li>').text(msg.actor.displayName + ' is now known as ' + msg.target.displayName));
         } else if (msg['@type'] === 'join') {
           $('#messages').append($('<li>').text(msg.actor.displayName + ' has joined ' + msg.target.displayName));
+        } else if ((msg['@type'] === 'announce') && (msg.actor['@type'] === 'service')) {
+          $('#messages').append($('<li>').text('connected to ' + msg.actor['@id']));
         } else {
           $('#messages').append($('<li>').text(msg.actor.displayName + ': ' + msg.object.content));
         }
