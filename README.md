@@ -24,3 +24,8 @@ goals of this branch are:
     - shared application state
     - detecting unresponsive platform sessions efficiently
     - communicating events and errors to client clearly
+
+
+# TODO
+
+* `Post` and `Share` removed in favor of the more generally applicable `Create` or `Add`
