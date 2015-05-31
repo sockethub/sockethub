@@ -57,6 +57,8 @@ var packageJSON = require('./package.json');
  *
  * https://github.com/danmactough/node-feedparser
  *
+ * @constructor
+ * @param {object} Sockethub session object 
  */
 function Feeds(session) {
   this.session = session;
@@ -131,61 +133,52 @@ Feeds.prototype.schema = {
 /**
  * Function: fetch
  *
- * Fetches feeds from specified source.
+ * Fetches feeds from specified source. Upon completion it will send back a 
+ * response to the original request with a complete list of URLs in the feed 
+ * and total count.
  *
- * Parameters:
+ * @param {object} object} Activity streams object containing job data.
  *
- *   job - Activity streams object containing job data:
+ * @example
  *
- * Exmaple:
+ *  {
+ *    context: "feeds",
+ *    '@type': "fetch",
+ *    actor: {
+ *      '@id': 'https://dogfeed.com/user/nick@silverbucket',
+ *      '@type': "person",
+ *      displayName: "nick@silverbucket.net"
+ *    },
+ *    target: {
+ *      '@id': 'http://blog.example.com/rss',
+ *      '@type': "feed"
+ *    },
+ *    object: {
+ *      '@type': "parameters",
+ *      limit: 10,    // default 10
+ *      property: 'date'
+ *      after: 'Tue Nov 26 2013 02:11:59 GMT+0100 (CET)',
  *
- *      (start code)
- *      {
- *        platform: "feeds",
- *        verb: "fetch",
- *        actor: {
- *          id: 'https://dogfeed.com/user/nick@silverbucket',
- *          objectType: "person",
- *          displayName: "nick@silverbucket.net"
- *        },
- *        target: {
- *          id: 'http://blog.example.com/rss',
- *          objectType: "feed"
- *        },
- *        object: {
- *          objectType: "parameters",
- *          limit: 10,    // default 10
- *          property: 'date'
- *          after: 'Tue Nov 26 2013 02:11:59 GMT+0100 (CET)',
+ *      // ... OR ...
  *
- *          // ... OR ...
- *
- *          property: 'link',
- *          after: 'http://www.news.com/articles/man-eats-car',
- *        }
- *      }
- *      (end code)
+ *      property: 'link',
+ *      after: 'http://www.news.com/articles/man-eats-car',
+ *    }
+ *  }
  *
  *
- *         Without any parameters specified, the platform will return most
- *         recent 10 articles fetched from the feed.
+ *  // Without any parameters specified, the platform will return most
+ *  // recent 10 articles fetched from the feed.
  *
- * Returns:
- *
- *   Sends back a message with an AS object for each article, and upon
- *   completion it will send back a response to the original request with a
- *   complete list of URLs in the feed and total count.
- *
- * Example returned object:
- *
- *   (start code)
+ *  // Example of the resulting JSON AS Object:
+ *  
  *   {
- *     platform: 'feeds',
- *     verb: 'post',
+ *     context: 'feeds',
+ *     '@type': 'post',
  *     actor: {
- *       objectType: 'feed',
+ *       '@type': 'feed',
  *       displayName: 'Best Feed Inc.',
- *       id: 'http://blog.example.com/rss',
+ *       '@id': 'http://blog.example.com/rss',
  *       description: 'Where the best feed comes to be the best',
  *       image: {
  *         width: '144',
@@ -198,13 +191,13 @@ Feeds.prototype.schema = {
  *       author: 'John Doe'
  *     },
  *     target: {
- *       id: 'https://dogfeed.com/user/nick@silverbucket',
- *       objectType: "person",
+ *       '@id': 'https://dogfeed.com/user/nick@silverbucket',
+ *       '@type': "person",
  *       displayName: "nick@silverbucket.net"
  *     },
  *     object: {
- *       id: "http://example.com/articles/about-stuff"
- *       objectType: 'post',
+ *       '@id': "http://example.com/articles/about-stuff"
+ *       '@type': 'post',
  *       title: 'About stuff...',
  *       url: "http://example.com/articles/about-stuff"
  *       date: "2013-05-28T12:00:00.000Z",
@@ -223,7 +216,6 @@ Feeds.prototype.schema = {
  *       tags: ['foo', 'bar']
  *     }
  *   }
- *   (end code)
  *
  */
 Feeds.prototype.fetch = function (job, cb) {
@@ -240,7 +232,6 @@ Feeds.prototype.fetch = function (job, cb) {
     }).catch(function (err) {
       cb(err);
     });
-
 };
 
 
@@ -321,7 +312,7 @@ Feeds.prototype._fetchFeed = function (url, options) {
       if (self.abort) {return;}
       session.debug('received feed: ' + meta.title);
       actor = {
-        objectType: 'feedChannel',
+        '@type': 'feedChannel',
         name: (meta.title) ? meta.title : (meta.link) ? meta.link : url,
         address: url,
         description: (meta.description) ? meta.description : '',
@@ -340,9 +331,9 @@ Feeds.prototype._fetchFeed = function (url, options) {
       while (item = stream.read()) {
         var article = {
           actor: {
-            objectType: 'feed',
+            '@type': 'feed',
             displayName: actor.name,
-            id: actor.address,
+            '@id': actor.address,
             description: actor.description,
             image: actor.image,
             favicon: actor.favicon,
@@ -351,9 +342,9 @@ Feeds.prototype._fetchFeed = function (url, options) {
             author: actor.author
           },
           status: true,
-          verb: "post",
+          '@type': "post",
           object: {
-            objectType: 'feedEntry'
+            '@type': 'feedEntry'
           }
         };
         var datenum;
