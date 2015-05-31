@@ -35,6 +35,9 @@ var packageJSON = require('./package.json');
  *
  * https://github.com/ircanywhere/irc-factory
  *
+ * @constructor
+ * @param {object} Sockethub session object 
+ * 
  */
 function IRC(session) {
   this.session   = session;
@@ -52,35 +55,40 @@ function IRC(session) {
  * credentials (`session.getConfig()`), knowing they will have already been
  * validated against this schema.
  *
- * Example valid AS object for setting IRC credentials:
  *
- *   (start code)
- *   {
- *     '@type': 'set',
- *     context: 'irc',
- *     actor: {
- *       '@id': 'irc://testuser@irc.host.net',
- *       '@type': 'person',
- *       displayName: 'Mr. Test User',
- *       userName: 'testuser'
- *     },
- *     object: {
- *       '@type': 'credentials',
- *       server: 'irc.host.net',
- *       nick: 'testuser',
- *       password: 'asdasdasdasd',
- *       port: 6697,
- *       secure: true
- *     }
- *   }
- *   (end code)
- *
- * In the above example, sockethub will validate the incoming credentials object
+ * In the below example, sockethub will validate the incoming credentials object
  * against whatever is defined in the `credentials` portion of the schema
  * object.
  *
+ *
+ * 
  * It will also check if the incoming AS object uses a @type which exists in the
  * `@types` portion of the schema object (should be an array of @type names).
+ *
+ * 
+ * @example
+ * Valid AS object for setting IRC credentials:
+ *
+ *  {
+ *    '@type': 'set',
+ *    context: 'irc',
+ *    actor: {
+ *      '@id': 'irc://testuser@irc.host.net',
+ *      '@type': 'person',
+ *      displayName: 'Mr. Test User',
+ *      userName: 'testuser'
+ *    },
+ *    object: {
+ *      '@type': 'credentials',
+ *      server: 'irc.host.net',
+ *      nick: 'testuser',
+ *      password: 'asdasdasdasd',
+ *      port: 6697,
+ *      secure: true
+ *    }
+ *  }
+ *
+ * 
  */
 IRC.prototype.schema = {
   "version": packageJSON.version,
@@ -88,7 +96,7 @@ IRC.prototype.schema = {
     "required": [ '@type' ],
     "properties": {
       "@type": {
-        "enum": [ 'update', 'join', 'leave', 'send', 'observe' ]
+        "enum": [ 'update', 'join', 'leave', 'send', 'observe', 'announce' ]
       }
     }
   },
@@ -403,29 +411,26 @@ var createObj = {
  *
  * Join a room or private conversation.
  *
- * Parameters:
+ * @param {object} - Activity streams job object
+ * @param {object} - callback when complete
  *
- *   job - activity streams job object
+ * @example
  *
- * Example:
- *
- *     (start code)
- *     {
- *       context: 'irc',
- *       '@type': 'join',
- *       actor: {
- *         '@id': 'irc://slvrbckt@irc.freenode.net',
- *         '@type': 'person',
- *         displayName: 'slvrbckt'
- *       },
- *       target: {
- *         '@id': 'irc://irc.freenode.net/sockethub',
- *         '@type': 'chatroom',
- *         displayName: '#sockethub'
- *       },
- *       object: {}
- *     }
- *     (end code)
+ * {
+ *   context: 'irc',
+ *   '@type': 'join',
+ *   actor: {
+ *     '@id': 'irc://slvrbckt@irc.freenode.net',
+ *     '@type': 'person',
+ *     displayName: 'slvrbckt'
+ *   },
+ *   target: {
+ *     '@id': 'irc://irc.freenode.net/sockethub',
+ *     '@type': 'chatroom',
+ *     displayName: '#sockethub'
+ *   },
+ *   object: {}
+ * }
  *
  */
 IRC.prototype.join = function (job, done) {
@@ -450,29 +455,25 @@ IRC.prototype.join = function (job, done) {
  *
  * Leave a room or private conversation.
  *
- * Parameters:
+ * @param {object} - Activity streams job object
+ * @param {object} - callback when complete
  *
- *   job - activity streams job object
- *
- * Example:
- *
- *     (start code)
- *     {
- *       context: 'irc',
- *       '@type': 'leave',
- *       actor: {
- *         '@id': 'irc://slvrbckt@irc.freenode.net',
- *         '@type': 'person',
- *         displayName: 'slvrbckt'
- *       },
- *       target: {
- *         '@id': 'irc://irc.freenode.net/remotestorage',
- *         '@type': 'chatroom',
- *         displayName: '#remotestorage'
- *       },
- *       object: {}
- *     }
- *     (end code)
+ * @example
+ * {
+ *   context: 'irc',
+ *   '@type': 'leave',
+ *   actor: {
+ *     '@id': 'irc://slvrbckt@irc.freenode.net',
+ *     '@type': 'person',
+ *     displayName: 'slvrbckt'
+ *   },
+ *   target: {
+ *     '@id': 'irc://irc.freenode.net/remotestorage',
+ *     '@type': 'chatroom',
+ *     displayName: '#remotestorage'
+ *   },
+ *   object: {}
+ * }
  *
  */
 IRC.prototype.leave = function (job, done) {
@@ -495,33 +496,30 @@ IRC.prototype.leave = function (job, done) {
  *
  * Send a message to a room or private conversation.
  *
- * Parameters:
+ * @param {object} - Activity streams job object
+ * @param {object} - callback when complete
  *
- *   job - activity streams job object
- *
- * Example:
- *
- *     (start code)
- *     {
- *       context: 'irc',
- *       '@type': 'send',
- *       actor: {
- *         '@id': 'irc://slvrbckt@irc.freenode.net',
- *         '@type': 'person',
- *         displayName: 'Nick Jennings',
- *         userName: 'slvrbckt'
- *       },
- *       target: {
- *         '@id': 'irc://irc.freenode.net/remotestorage',
- *         '@type': 'chatroom',
- *         displayName: '#remotestorage'
- *       },
- *       object: {
- *         '@type': 'message',
- *         content: 'Hello from Sockethub!'
- *       }
- *     }
- *     (end code)
+ * @example
+ * 
+ *  {
+ *    context: 'irc',
+ *    '@type': 'send',
+ *    actor: {
+ *      '@id': 'irc://slvrbckt@irc.freenode.net',
+ *      '@type': 'person',
+ *      displayName: 'Nick Jennings',
+ *      userName: 'slvrbckt'
+ *    },
+ *    target: {
+ *      '@id': 'irc://irc.freenode.net/remotestorage',
+ *      '@type': 'chatroom',
+ *      displayName: '#remotestorage'
+ *    },
+ *    object: {
+ *      '@type': 'message',
+ *      content: 'Hello from Sockethub!'
+ *    }
+ *  }
  *
  */
 IRC.prototype.send = function (job, done) {
@@ -549,59 +547,53 @@ IRC.prototype.send = function (job, done) {
  *
  * Indicate a change (ie. room topic update, or nickname change).
  *
- * Parameters:
+ * @param {object} - Activity streams job object
+ * @param {object} - callback when complete
  *
- *   job - activity streams job object
+ * @example change topic
  *
- * Example:
+ * {
+ *   context: 'irc',
+ *   '@type': 'update',
+ *   actor: {
+ *     '@id': 'irc://slvrbckt@irc.freenode.net',
+ *     '@type': 'person',
+ *     displayName: 'Nick Jennings',
+ *     userName: 'slvrbckt'
+ *   },
+ *   target: {
+ *     '@id': 'irc://irc.freenode.net/sockethub',
+ *     '@type': 'chatroom',
+ *     displayName: '#sockethub'
+ *   },
+ *   object: {
+ *     '@type': 'topic',
+ *     topic: 'New version of Socekthub released!'
+ *   }
+ * }
  *
- * - change topic
- *
- *     (start code)
- *     {
- *       context: 'irc',
- *       '@type': 'update',
- *       actor: {
- *         '@id': 'irc://slvrbckt@irc.freenode.net',
- *         '@type': 'person',
- *         displayName: 'Nick Jennings',
- *         userName: 'slvrbckt'
- *       },
- *       target: {
- *         '@id': 'irc://irc.freenode.net/sockethub',
- *         '@type': 'chatroom',
- *         displayName: '#sockethub'
- *       },
- *       object: {
- *         '@type': 'topic',
- *         topic: 'New version of Socekthub released!'
- *       }
- *     }
- *     (end code)
- *
- * - change nickname  TODO review, also when we rename a user, their person
- *                    object needs to change (and their credentials)
- *
- *     (start code)
- *     {
- *       '@id': 1234,
- *       context: 'irc',
- *       '@type': 'udpate',
- *       actor: {
- *         '@id': 'irc://slvrbckt@irc.freenode.net',
- *         '@type': 'person',
- *         displayName: 'Nick Jennings',
- *         userName: 'slvrbckt'
- *       },
- *       object: {
- *         '@type': 'displayName'
- *       },
- *       target: {
-*           '@type': "person",
-*           displayName: 'CoolDude'
-*         }
- *     }
- *     (end code)
+ * @example change nickname  
+ * // TODO review, also when we rename a user, their person
+ * //      object needs to change (and their credentials)
+ * 
+ *  {
+ *    '@id': 1234,
+ *    context: 'irc',
+ *    '@type': 'udpate',
+ *    actor: {
+ *      '@id': 'irc://slvrbckt@irc.freenode.net',
+ *      '@type': 'person',
+ *      displayName: 'Nick Jennings',
+ *      userName: 'slvrbckt'
+ *    },
+ *    object: {
+ *      '@type': 'displayName'
+ *    },
+ *    target: {
+ *      '@type': "person",
+ *      displayName: 'CoolDude'
+ *    }
+ *  }
  */
 IRC.prototype.update = function (job, done) {
   var self = this;
@@ -655,57 +647,52 @@ IRC.prototype.update = function (job, done) {
  *
  * Indicate an intent to observe something (ie. get a list of users in a room).
  *
- * Parameters:
+ * @param {object} - Activity streams job object
+ * @param {object} - callback when complete
  *
- *   job - activity streams job object
+ * @example
  *
- * Example:
+ *  {
+ *    context: 'irc',
+ *    '@type': 'observe',
+ *    actor: {
+ *      '@id': 'irc://slvrbckt@irc.freenode.net',
+ *      '@type': 'person',
+ *      displayName: 'Nick Jennings',
+ *      userName: 'slvrbckt'
+ *    },
+ *    target: {
+ *      '@id': 'irc://irc.freenode.net/sockethub',
+ *      '@type': 'chatroom',
+ *      displayName: '#sockethub'
+ *    },
+ *    object: {
+ *      '@type': 'attendance'
+ *    }
+ *  }
  *
- *     (start code)
- *     {
- *       context: 'irc',
- *       '@type': 'observe',
- *       actor: {
- *         '@id': 'irc://slvrbckt@irc.freenode.net',
- *         '@type': 'person',
- *         displayName: 'Nick Jennings',
- *         userName: 'slvrbckt'
- *       },
- *       target: {
- *         '@id': 'irc://irc.freenode.net/sockethub',
- *         '@type': 'chatroom',
- *         displayName: '#sockethub'
- *       },
- *       object: {
- *         '@type': 'attendance'
- *       }
- *     }
- *     (end code)
- *
- *   The obove object might return:
- *
- *     (start code)
- *     {
- *       context: 'irc',
- *       '@type': 'observe',
- *       actor: {
- *         '@id': 'irc://irc.freenode.net/sockethub',
- *         '@type': 'chatroom',
- *         displayName: '#sockethub'
- *       },
- *       target: {},
- *       object: {
- *         '@type': 'attendance'
- *         members: [
- *           'RyanGosling',
- *           'PeeWeeHerman',
- *           'Commando',
- *           'Smoochie',
- *           'neo'
- *         ]
- *       }
- *     }
- *     (end code)
+ *  
+ *  // The obove object might return:
+ *  {
+ *    context: 'irc',
+ *    '@type': 'observe',
+ *    actor: {
+ *      '@id': 'irc://irc.freenode.net/sockethub',
+ *      '@type': 'chatroom',
+ *      displayName: '#sockethub'
+ *    },
+ *    target: {},
+ *    object: {
+ *      '@type': 'attendance'
+ *      members: [
+ *        'RyanGosling',
+ *        'PeeWeeHerman',
+ *        'Commando',
+ *        'Smoochie',
+ *        'neo'
+ *      ]
+ *    }
+ *  }
  *
  */
 IRC.prototype.observe = function (job, done) {
