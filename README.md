@@ -1,19 +1,19 @@
-# Sockethub v1.x Branch
+# Sockethub v1.x Development Branch
 
-Experimental branch, possible replacement of sockethub core for a future 1.0 release.
+Experimental branch; replacement of sockethub core for a future 1.0 release.
 
 # Setup
 
 `$ npm install`
 
-`$ DEBUG=soockethub* bin/sockethub --dev`
+`$ DEBUG=* bin/sockethub --dev`
 
 You should then be able to browse to `http://localhost:10550` and try out the examples.
 
-
 # Dev Notes
 
-goals of this branch are:
+Goals of this branch are:
+
 * ActivityStreams 2.0 compliance
 * Improved modularity between components
 * Use of existing libraries to reduce total code size (express, socket.io)
@@ -24,4 +24,3 @@ goals of this branch are:
     - shared application state
     - detecting unresponsive platform sessions efficiently
     - communicating events and errors to client clearly
-
