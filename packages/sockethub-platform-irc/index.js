@@ -238,9 +238,9 @@ var createObj = {
             displayName: object.topicBy
           },
           target: {
-            '@type': 'person',
-            '@id': 'irc://' + object.topicBy + '@' + this.credentials.object.server,
-            displayName: object.topicBy
+            '@type': 'room',
+            '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
+            displayName: object.channel
           },
           object: {
             '@type': 'topic',
