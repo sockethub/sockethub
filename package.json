@@ -32,7 +32,7 @@
   },
   "homepage": "http://github.com/sockethub/sockethub",
   "dependencies": {
-    "activity-streams": "^2.0.3",
+    "activity-streams": "https://github.com/galfert/activity-streams.js#add-topic-property",
     "array-keys": "^2.0.0",
     "body-parser": "^1.9.3",
     "connection-manager": "^0.1.1",
@@ -48,7 +48,7 @@
     "socket.io": "^1.2.1",
     "sockethub-platform-dummy": "^0.0.1",
     "sockethub-platform-feeds": "^0.0.1",
-    "sockethub-platform-irc": "https://github.com/sockethub/sockethub-platform-irc.git",
+    "sockethub-platform-irc": "https://github.com/sockethub/sockethub-platform-irc.git#fix_topic_update_message",
     "tv4": "^1.1.4"
   },
   "devDependencies": {
