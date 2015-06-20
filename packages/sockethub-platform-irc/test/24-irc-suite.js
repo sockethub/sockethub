@@ -111,7 +111,7 @@ define(['require'], function (require) {
             actor: env.actor,
             object: {
               '@type': 'topic',
-              displayName: 'welcome to unit testing, enjoy your stay - the management'
+              topic: 'welcome to unit testing, enjoy your stay - the management'
             },
             target: env.target.sockethub
           },
