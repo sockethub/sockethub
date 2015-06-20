@@ -426,7 +426,7 @@ var createObj = {
  *   },
  *   target: {
  *     '@id': 'irc://irc.freenode.net/sockethub',
- *     '@type': 'chatroom',
+ *     '@type': 'room',
  *     displayName: '#sockethub'
  *   },
  *   object: {}
@@ -469,7 +469,7 @@ IRC.prototype.join = function (job, done) {
  *   },
  *   target: {
  *     '@id': 'irc://irc.freenode.net/remotestorage',
- *     '@type': 'chatroom',
+ *     '@type': 'room',
  *     displayName: '#remotestorage'
  *   },
  *   object: {}
@@ -512,7 +512,7 @@ IRC.prototype.leave = function (job, done) {
  *    },
  *    target: {
  *      '@id': 'irc://irc.freenode.net/remotestorage',
- *      '@type': 'chatroom',
+ *      '@type': 'room',
  *      displayName: '#remotestorage'
  *    },
  *    object: {
@@ -563,7 +563,7 @@ IRC.prototype.send = function (job, done) {
  *   },
  *   target: {
  *     '@id': 'irc://irc.freenode.net/sockethub',
- *     '@type': 'chatroom',
+ *     '@type': 'room',
  *     displayName: '#sockethub'
  *   },
  *   object: {
@@ -663,7 +663,7 @@ IRC.prototype.update = function (job, done) {
  *    },
  *    target: {
  *      '@id': 'irc://irc.freenode.net/sockethub',
- *      '@type': 'chatroom',
+ *      '@type': 'room',
  *      displayName: '#sockethub'
  *    },
  *    object: {
@@ -678,7 +678,7 @@ IRC.prototype.update = function (job, done) {
  *    '@type': 'observe',
  *    actor: {
  *      '@id': 'irc://irc.freenode.net/sockethub',
- *      '@type': 'chatroom',
+ *      '@type': 'room',
  *      displayName: '#sockethub'
  *    },
  *    target: {},
