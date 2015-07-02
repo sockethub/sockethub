@@ -343,7 +343,11 @@ var createObj = {
               '@id': 'irc://' + object.nickname + '@' + this.credentials.object.server,
               displayName: object.nickname
             },
-            target: {},
+            target: {
+              '@type': 'room',
+              '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
+              displayName: object.channel
+            },
             object: {
               '@type': 'message',
               content: 'user has quit'
