@@ -27,22 +27,21 @@ define(['require'], function (require) {
       env.platform = new Platform(env.session);
 
       env.actor = {
-        objectType: 'person',
-        id: 'irc://testingham@irc.example.com',
+        '@type': 'person',
+        '@id': 'irc://testingham@irc.example.com',
         displayName:'testingham'
       };
 
       env.newActor = {
-        objectType: 'person',
-        id: 'irc://testler@irc.example.com',
+        '@type': 'person',
+        '@id': 'irc://testler@irc.example.com',
         displayName:'testler'
       };
-
 
       env.credentials = {
         actor: env.actor,
         object: {
-          objectType: 'credentials',
+          '@type': 'credentials',
           nick: 'testingham',
           server: 'irc.example.com'
         }
@@ -65,13 +64,13 @@ define(['require'], function (require) {
 
       env.target = {
         sockethub: {
-          objectType: 'room',
-          id: 'irc://irc.example.com/sockethub',
+          '@type': 'room',
+          '@id': 'irc://irc.example.com/sockethub',
           displayName: '#sockethub'
         },
         remotestorage: {
-          objectType: 'room',
-          id: 'irc://irc.example.com/remotestorage',
+          '@type': 'room',
+          '@id': 'irc://irc.example.com/remotestorage',
           displayName: '#remotestorage'
         }
       };
@@ -90,7 +89,7 @@ define(['require'], function (require) {
         send: {
           actor: env.actor,
           object: {
-            objectType: 'message',
+            '@type': 'message',
             content: 'hello'
           },
           target: env.target.sockethub
@@ -103,7 +102,7 @@ define(['require'], function (require) {
         observe: {
           actor: env.actor,
           object: {
-            objectType: 'attendance'
+            '@type': 'attendance'
           },
           target: env.target.sockethub
         },
@@ -111,8 +110,8 @@ define(['require'], function (require) {
           topic: {
             actor: env.actor,
             object: {
-              objectType: 'topic',
-              displayName: 'welcome to unit testing, enjoy your stay - the management'
+              '@type': 'topic',
+              topic: 'welcome to unit testing, enjoy your stay - the management'
             },
             target: env.target.sockethub
           },
@@ -126,9 +125,9 @@ define(['require'], function (require) {
       // schema
       env.schema = env.platform.schema;
 
-      // verbs
-      env.verbs = env.platform.schema.messages.properties.verb.enum;
-      test.assertAnd(env.verbs, [ 'update', 'join', 'leave', 'send', 'observe' ]);
+      // types
+      env.types = env.schema.messages.properties['@type'].enum;
+      test.assertAnd(env.types, [ 'update', 'join', 'leave', 'send', 'observe', 'announce' ]);
 
       env.api = IRCFactory.Api();
       test.assertTypeAnd(env.api, 'object');
@@ -164,8 +163,7 @@ define(['require'], function (require) {
       {
         desc: "set credentials",
         run: function (env, test) {
-          console.log('credentials: ', env.credentials);
-          env.session.store.save(env.actor.id,
+          env.session.store.save(env.actor['@id'],
                                  env.credentials, function () {
                                  test.done();
                                 });

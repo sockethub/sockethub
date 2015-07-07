@@ -238,9 +238,9 @@ var createObj = {
             displayName: object.topicBy
           },
           target: {
-            '@type': 'person',
-            '@id': 'irc://' + object.topicBy + '@' + this.credentials.object.server,
-            displayName: object.topicBy
+            '@type': 'room',
+            '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
+            displayName: object.channel
           },
           object: {
             '@type': 'topic',
@@ -343,7 +343,11 @@ var createObj = {
               '@id': 'irc://' + object.nickname + '@' + this.credentials.object.server,
               displayName: object.nickname
             },
-            target: {},
+            target: {
+              '@type': 'room',
+              '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
+              displayName: object.channel
+            },
             object: {
               '@type': 'message',
               content: 'user has quit'
@@ -426,7 +430,7 @@ var createObj = {
  *   },
  *   target: {
  *     '@id': 'irc://irc.freenode.net/sockethub',
- *     '@type': 'chatroom',
+ *     '@type': 'room',
  *     displayName: '#sockethub'
  *   },
  *   object: {}
@@ -469,7 +473,7 @@ IRC.prototype.join = function (job, done) {
  *   },
  *   target: {
  *     '@id': 'irc://irc.freenode.net/remotestorage',
- *     '@type': 'chatroom',
+ *     '@type': 'room',
  *     displayName: '#remotestorage'
  *   },
  *   object: {}
@@ -512,7 +516,7 @@ IRC.prototype.leave = function (job, done) {
  *    },
  *    target: {
  *      '@id': 'irc://irc.freenode.net/remotestorage',
- *      '@type': 'chatroom',
+ *      '@type': 'room',
  *      displayName: '#remotestorage'
  *    },
  *    object: {
@@ -563,7 +567,7 @@ IRC.prototype.send = function (job, done) {
  *   },
  *   target: {
  *     '@id': 'irc://irc.freenode.net/sockethub',
- *     '@type': 'chatroom',
+ *     '@type': 'room',
  *     displayName: '#sockethub'
  *   },
  *   object: {
@@ -663,7 +667,7 @@ IRC.prototype.update = function (job, done) {
  *    },
  *    target: {
  *      '@id': 'irc://irc.freenode.net/sockethub',
- *      '@type': 'chatroom',
+ *      '@type': 'room',
  *      displayName: '#sockethub'
  *    },
  *    object: {
@@ -678,7 +682,7 @@ IRC.prototype.update = function (job, done) {
  *    '@type': 'observe',
  *    actor: {
  *      '@id': 'irc://irc.freenode.net/sockethub',
- *      '@type': 'chatroom',
+ *      '@type': 'room',
  *      displayName: '#sockethub'
  *    },
  *    target: {},
