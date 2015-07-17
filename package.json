@@ -56,6 +56,6 @@
   },
   "scripts": {
     "test": "node_modules/.bin/jaribu",
-    "start": "node lib/server.js"
+    "start": "DEBUG=* ./bin/sockethub"
   }
 }
