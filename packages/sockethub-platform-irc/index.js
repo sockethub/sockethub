@@ -27,16 +27,17 @@ var packageJSON = require('./package.json');
 
 
 /**
- * Class: IRC
+ * @class IRC
+ * @constructor
  *
+ * @description
  * Handles all actions related to communication via. the IRC protocol.
- *
+ * 
  * Uses the `irc-factory` node module as a base tool for interacting with IRC.
  *
- * https://github.com/ircanywhere/irc-factory
+ * {@link https://github.com/ircanywhere/irc-factory}
  *
- * @constructor
- * @param {object} Sockethub session object 
+ * @param {object} session {@link Sockethub.Session#object}
  * 
  */
 function IRC(session) {
@@ -47,6 +48,7 @@ function IRC(session) {
 /**
  * Property: schema
  *
+ * @description
  * JSON schema defining the @types this platform accepts.
  *
  * Actual handling of incoming 'set' commands are handled by dispatcher,
@@ -60,14 +62,13 @@ function IRC(session) {
  * against whatever is defined in the `credentials` portion of the schema
  * object.
  *
- *
  * 
  * It will also check if the incoming AS object uses a @type which exists in the
  * `@types` portion of the schema object (should be an array of @type names).
  *
  * 
- * @example
  * Valid AS object for setting IRC credentials:
+ * @example
  *
  *  {
  *    '@type': 'set',
@@ -333,15 +334,17 @@ var createObj = {
       } else if ((typeof object.nickname === 'string') &&
                  (typeof object.target === 'undefined')) {
         // QUIT
-        this.scope.debug('received quit: ' + object.nickname + ' (self: ' + this.credentials.actor.displayName + ')', object);
+        var quitter = object.kicked || object.nickname;
+        var msg = (typeof object.kicked === 'string') ? 'user has been kicked' : 'user has quit';
+        this.scope.debug((typeof object.kicked === 'string') ? 'kick' : 'quit' + '', object);
 
         if (! this.scope.disconnected) {
           this.scope.send({
             '@type': 'leave',
             actor: {
               '@type': 'person',
-              '@id': 'irc://' + object.nickname + '@' + this.credentials.object.server,
-              displayName: object.nickname
+              '@id': 'irc://' + quitter + '@' + this.credentials.object.server,
+              displayName: quitter
             },
             target: {
               '@type': 'room',
@@ -350,19 +353,19 @@ var createObj = {
             },
             object: {
               '@type': 'message',
-              content: 'user has quit'
+              content: msg
             },
             published: object.time
           });
         }
 
-        if (object.nickname === this.credentials.actor.displayName) {
-          this.scope.debug('disconnecting self');
-          if (this.connection) {
-            this.connection.irc.disconnect();
-          }
-          this.scope.disconnected = true;
-        }
+        // if (quitter === this.credentials.actor.displayName) {
+        //   this.scope.debug('disconnecting self');
+        //   if ((this.connection) && (this.connection.irc.disconnect)) {
+        //     this.connection.irc.disconnect();
+        //   }
+        //   this.scope.disconnected = true;
+        // }
       } else if ((typeof object.channel === 'string') &&
                  (object.raw.indexOf(' PART ') >= 0)) {
         // leave
@@ -529,20 +532,31 @@ IRC.prototype.leave = function (job, done) {
 IRC.prototype.send = function (job, done) {
   var self = this;
 
-  self.session.debug('send() called for ' + job.actor['@id'] + ' target: ' + job.target.id);
+  self.session.debug('send() called for ' + job.actor['@id'] + ' target: ' + job.target['@id']);
 
   self.session.client.get(job.actor['@id'], createObj, function (err, client) {
     if (err) { return done(err); }
+    err = undefined;
+
     self.session.debug('send(): got client object');
-    if (self._isJoined(job.target.displayName)) {
-      var msg = job.object.content.replace(/^\s+|\s+$/g, "");
+
+    var msg = job.object.content.replace(/^\s+|\s+$/g, "");
+
+    if (msg.indexOf('/') === 0) {
+      // message intented as command
+      msg += ' ';
+      var cmd = msg.substr(0, msg.indexOf(' ')).substr(1).toUpperCase(); // get command
+      msg = msg.substr(msg.indexOf(' ') + 1).replace(/\s\s*$/, ''); // remove command from message
+      self.session.debug('sending RAW command: ' + cmd + ', ' + job.target.displayName + ', ' + msg);
+      client.connection.irc.raw([cmd, job.target.displayName, msg]);
+    } else if (self._isJoined(job.target.displayName)) {
       self.session.debug('irc.say: ' + job.target.displayName + ', [' + msg + ']');
       //client.connection.irc.raw(['PRIVMSG', job.target.displayName, '' + msg]);
       client.connection.irc.privmsg(job.target.displayName, msg, true); //forcePushback
-      done();
     } else {
-      done("cannot send message to a channel of which you've not first `join`ed.");
+      err = "cannot send message to a channel of which you've not first `join`ed.";
     }
+    done(err);
   });
 };
 
@@ -620,9 +634,9 @@ IRC.prototype.update = function (job, done) {
       // set new credentials
       newCreds.object.nick       = job.target.displayName;
       newCreds.actor.displayName = job.target.displayName;
-      newCreds.actor['@id']          = job.target.id;
+      newCreds.actor['@id']          = job.target['@id'];
 
-      self.session.store.save(job.target.id, newCreds, function (err) {
+      self.session.store.save(job.target['@id'], newCreds, function (err) {
         if (err) {
           return done(err);
         }
@@ -630,7 +644,7 @@ IRC.prototype.update = function (job, done) {
         // reset index of client object in connection manager
         self.session.client.move(job.actor['@id'],
                                  oldCreds,
-                                 job.target.id,
+                                 job.target['@id'],
                                  newCreds);
         return done();
       });
@@ -640,8 +654,9 @@ IRC.prototype.update = function (job, done) {
       self.session.debug('changing topic in channel ' + job.target.displayName);
       client.connection.irc.raw(['topic', job.target.displayName, job.object.topic]);
       return done();
+    } else {
+      done('unknown update action');
     }
-    done('unknown update action');
   });
 
 };
