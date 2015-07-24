@@ -280,11 +280,16 @@ define(['require'], function (require) {
       },
 
       {
-        desc: "# update nick",
+        desc: "# update nick (rename)",
         run: function (env, test) {
+          var called = 0;
           env.platform.update(env.job.update.nick, function (err, result) {
+            called += 1;
             test.assertTypeAnd(err, 'undefined', err, err);
-            test.assertType(result, 'undefined');
+            test.assertTypeAnd(result, 'undefined');
+            setTimeout(function () {
+              test.assert(called, 1);
+            }, 1000);
           });
         }
       },
