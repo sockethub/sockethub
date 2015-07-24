@@ -61,6 +61,17 @@ Defaults to `localhost`
 * DEBUG
 Specify the namespace to console log, ie. `sockethub*` will print all sockethub related debug statements, whereas `*` will also print any other modules debug statements that use the `debug` module.
 
+# Command-line params
+```
+  --help  : this help screen
+  --info  : displays some basic runtime info
+
+  --dev : enabled examples page and serves helper files like jquery
+
+  --host  : hostname to bind to
+  --port  : port to bind to
+```
+
 # Docs
 
 *Currently being worked on*
