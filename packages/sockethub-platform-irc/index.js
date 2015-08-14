@@ -550,8 +550,11 @@ IRC.prototype.send = function (job, done) {
 
     self.session.debug('send(): got client object');
 
-    var msg = job.object.content.replace(/^\s+|\s+$/g, "");
+    if (typeof job.object.content !== 'string') {
+      return done('cannot send message with no object.content');
+    }
 
+    var msg = job.object.content.replace(/^\s+|\s+$/g, "");
 
     if (msg.indexOf('/') === 0) {
       // message intented as command
