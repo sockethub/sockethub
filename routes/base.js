@@ -32,7 +32,7 @@ routes.push({
   }
 });
 
-if (nconf.get('dev')) {
+if (nconf.get('examples:enabled')) {
   routes.push({
     meta: {
       method: 'GET',

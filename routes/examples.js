@@ -8,7 +8,7 @@ var routes      = [],
                     nconf.get('public:port') +
                     nconf.get('public:path');
 
-if (nconf.get('dev')) {
+if (nconf.get('examples:enabled')) {
   // only add routes if --dev flag is present
   routes.push({
     meta: {
