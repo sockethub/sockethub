@@ -295,13 +295,17 @@ var createObj = {
       } else if ((typeof object.target === 'string') &&
                  (typeof object.message === 'string')) {
         // message
-        if (!object.nickname) {
+
+        if (! object.nickname) {
           this.scope.debug('received UNKNOWN: ', object);
         } else {
-
+          var msg_prefix = ':' + object.nickname + '!' + object.username + '@' + object.hostname;
           var type = 'message';
-          if (object.raw.indexOf(' NOTICE ') > 0) {
+
+          if (object.raw.indexOf(msg_prefix + ' NOTICE ') === 0) {
             type = 'notice';
+          } else if (object.raw.indexOf('ACTION ') === ((msg_prefix + ' PRIVMSG ' + object.target).length + 3)) {
+            type = 'me';
           }
 
           this.scope.debug('received ' + type + ' : ' + object.nickname + ' -> ' + object.target);
