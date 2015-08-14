@@ -32,13 +32,13 @@ var packageJSON = require('./package.json');
  *
  * @description
  * Handles all actions related to communication via. the IRC protocol.
- * 
+ *
  * Uses the `irc-factory` node module as a base tool for interacting with IRC.
  *
  * {@link https://github.com/ircanywhere/irc-factory}
  *
  * @param {object} session {@link Sockethub.Session#object}
- * 
+ *
  */
 function IRC(session) {
   this.session   = session;
@@ -62,11 +62,11 @@ function IRC(session) {
  * against whatever is defined in the `credentials` portion of the schema
  * object.
  *
- * 
+ *
  * It will also check if the incoming AS object uses a @type which exists in the
  * `@types` portion of the schema object (should be an array of @type names).
  *
- * 
+ *
  * Valid AS object for setting IRC credentials:
  * @example
  *
@@ -89,7 +89,7 @@ function IRC(session) {
  *    }
  *  }
  *
- * 
+ *
  */
 IRC.prototype.schema = {
   "version": packageJSON.version,
@@ -202,7 +202,7 @@ var createObj = {
   },
   listeners: {
     '*': function (object) {
-      //debug('HANDLER * called [' + this.id + ']: ', object);
+      debug('HANDLER * called [' + this.id + ']: ', object);
       if (typeof object.names === 'object') {
         // user list
         this.scope.debug('received user list: ' + object.channel);
@@ -298,7 +298,13 @@ var createObj = {
         if (!object.nickname) {
           this.scope.debug('received UNKNOWN: ', object);
         } else {
-          this.scope.debug('received message: ' + object.nickname + ' -> ' + object.target);
+
+          var type = 'message';
+          if (object.raw.indexOf(' NOTICE ') > 0) {
+            type = 'notice';
+          }
+
+          this.scope.debug('received ' + type + ' : ' + object.nickname + ' -> ' + object.target);
           this.scope.send({
             '@type': 'send',
             actor: {
@@ -310,7 +316,7 @@ var createObj = {
               displayName: object.target
             },
             object: {
-              '@type': 'message',
+              '@type': type,
               content: object.message
             },
             published: object.time
@@ -507,7 +513,7 @@ IRC.prototype.leave = function (job, done) {
  * @param {object} - callback when complete
  *
  * @example
- * 
+ *
  *  {
  *    context: 'irc',
  *    '@type': 'send',
@@ -590,10 +596,10 @@ IRC.prototype.send = function (job, done) {
  *   }
  * }
  *
- * @example change nickname  
+ * @example change nickname
  * // TODO review, also when we rename a user, their person
  * //      object needs to change (and their credentials)
- * 
+ *
  *  {
  *    '@id': 1234,
  *    context: 'irc',
@@ -690,7 +696,7 @@ IRC.prototype.update = function (job, done) {
  *    }
  *  }
  *
- *  
+ *
  *  // The obove object might return:
  *  {
  *    context: 'irc',
