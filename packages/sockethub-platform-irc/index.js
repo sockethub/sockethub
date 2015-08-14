@@ -202,7 +202,7 @@ var createObj = {
   },
   listeners: {
     '*': function (object) {
-      debug('HANDLER * called [' + this.id + ']: ', object);
+      // debug('HANDLER * called [' + this.id + ']: ', object);
       if (typeof object.names === 'object') {
         // user list
         this.scope.debug('received user list: ' + object.channel);
@@ -552,17 +552,36 @@ IRC.prototype.send = function (job, done) {
 
     var msg = job.object.content.replace(/^\s+|\s+$/g, "");
 
+
     if (msg.indexOf('/') === 0) {
       // message intented as command
       msg += ' ';
       var cmd = msg.substr(0, msg.indexOf(' ')).substr(1).toUpperCase(); // get command
       msg = msg.substr(msg.indexOf(' ') + 1).replace(/\s\s*$/, ''); // remove command from message
-      self.session.debug('sending RAW command: ' + cmd + ', ' + job.target.displayName + ', ' + msg);
-      client.connection.irc.raw([cmd, job.target.displayName, msg]);
+      if (cmd === 'ME') {
+        // handle /me messages uniquely
+        job.object['@type'] = 'me';
+        job.object.content = msg;
+      } else if (cmd === 'NOTICE') {
+        // attempt to send as raw command
+        job.object['@type'] = 'notice';
+        job.object.content = msg;
+      }
+    } else {
+      job.object.content = msg;
+    }
+
+    if (job.object['@type'] === 'me') {
+      // message intented as command
+      self.session.debug('sending ME message to room ' + job.target.displayName + ': ' + job.actor.displayName + ' ' + job.object.content);
+      client.connection.irc.me(job.target.displayName, job.object.content);
+    } else if (job.object['@type'] === 'notice') {
+      // attempt to send as raw command
+      self.session.debug('sending RAW command: NOTICE to ' + job.target.displayName + ', ' + job.object.content);
+      client.connection.irc.raw(['NOTICE', job.target.displayName, job.object.content]);
     } else if (self._isJoined(job.target.displayName)) {
-      self.session.debug('irc.say: ' + job.target.displayName + ', [' + msg + ']');
-      //client.connection.irc.raw(['PRIVMSG', job.target.displayName, '' + msg]);
-      client.connection.irc.privmsg(job.target.displayName, msg, true); //forcePushback
+      self.session.debug('irc.say: ' + job.target.displayName + ', [' + job.object.content + ']');
+      client.connection.irc.privmsg(job.target.displayName, job.object.content, true); //forcePushback
     } else {
       err = "cannot send message to a channel of which you've not first `join`ed.";
     }
