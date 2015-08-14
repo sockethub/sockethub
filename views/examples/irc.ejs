@@ -95,6 +95,8 @@
           $('#messages').append($('<li>').text(msg.actor.displayName + ' has joined ' + msg.target.displayName));
         } else if ((msg['@type'] === 'announce') && (msg.actor['@type'] === 'service')) {
           $('#messages').append($('<li>').text('connected to ' + msg.actor['@id']));
+        } else if (msg.object['@type'] === 'me') {
+          $('#messages').append($('<li>').text('* ' + msg.actor.displayName + msg.object.content));
         } else if (msg.object['@type'] === 'notice') {
           $('#messages').append($('<li>').text('NOTICE from ' + msg.actor.displayName + ': ' + msg.object.content));
         } else {
