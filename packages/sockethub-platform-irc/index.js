@@ -327,7 +327,21 @@ var createObj = {
           });
         }
       } else if (typeof object.motd === 'object') {
-        // skip
+        // send motd
+        this.scope.debug('sending motd');
+        this.scope.send({
+          '@type': 'update',
+          actor: {
+            '@type': 'service',
+            '@id': 'irc://' + this.credentials.object.server,
+            displayName: this.credentials.object.server
+          },
+          object: {
+            '@type': 'topic',
+            content: object.motd
+          },
+          published: object.time
+        });
       } else if (typeof object.mode === 'string') {
         // skip
       } else if ((typeof object.nickname === 'string') &&
