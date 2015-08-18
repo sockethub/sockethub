@@ -10,7 +10,7 @@ sockethub. Current IRC functionality already exists in the stand-alone sockethub
 # Object Formats
 ## contected to IRC:
 
-```
+```json
 {
   "@type": "announce",
   "context": "irc",
