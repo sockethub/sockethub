@@ -16,10 +16,9 @@ Sockethub is a polyglot (speaking many different protocols and APIs) messaging s
 
 Example uses of sockethub are: writing and receiving messages (SMTP, Facebook, Twitter, Diaspora), instant messaging (XMPP, AIM, MSN, IRC), discovery (WebFinger, RDF(a)). The architecture of sockethub is extensible and supports easy implementation of additional 'platforms' to carry out tasks, sockethub can be run on your own server, or provided as a service by a service provider, or app store.
 
-# Status
-Sockethub is currently under active development, several platforms are being worked on (details below) and are at varying levels of completeness.
+# Docs
 
-For more information on platform development, see the [platform overview](doc/platform_overview.md).
+See the [Sockethub wiki](https://github/sockethub/sockethub/wiki) for documentation.
 
 # Features
 We use Activity Streams to map the various social networks terms to a set of 'verbs' which identify the underlying action. For example,for a facebook friend request/accept cycle, we would use the activity stream verbs 'request-friend', 'remove-friend', 'make-friend'.
@@ -48,7 +47,7 @@ Below is a list of platforms we're currently working on and their activity strea
 
 # Running
 
-`$ DEBUG=* bin/sockethub --dev`
+`$ DEBUG=sockethub* bin/sockethub --examples`
 
 You should then be able to browse to `http://localhost:10550` and try out the examples.
 
@@ -63,19 +62,14 @@ Specify the namespace to console log, ie. `sockethub*` will print all sockethub 
 
 # Command-line params
 ```
-  --help  : this help screen
-  --info  : displays some basic runtime info
+  --help       : this help screen
+  --info       : displays some basic runtime info
 
-  --dev : enabled examples page and serves helper files like jquery
+  --examples   : enabled examples page and serves helper files like jquery
 
-  --host  : hostname to bind to
-  --port  : port to bind to
+  --host       : hostname to bind to
+  --port       : port to bind to
 ```
-
-# Docs
-
-*Currently being worked on*
-
 
 # License
 

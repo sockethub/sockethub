@@ -5,7 +5,7 @@
     }
   },
   "examples": {
-    "enabled": true,
+    "enabled": false,
     "secret": 1234567890
   },
   "service": {
