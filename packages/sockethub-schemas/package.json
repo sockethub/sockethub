@@ -1,0 +1,27 @@
+{
+  "name": "sockethub-schemas",
+  "description": "JSON schema files for validating Sockethub Activity Streams",
+  "version": "1.0.0",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "MIT",
+  "keywords": [
+    "sockethub",
+    "schema`",
+    "activity",
+    "streams"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/sockethub/sockethub-schemas.git"
+  },
+  "devDependencies": {
+    "debug": "^2.2.0",
+    "tv4": "^1.1.4",
+    "jaribu": "^2.0.0"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/jaribu",
+    "build": "DEBUG=* ./bin/sockethub"
+  }
+}
