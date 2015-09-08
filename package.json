@@ -49,6 +49,7 @@
     "sockethub-platform-dummy": "^0.0.1",
     "sockethub-platform-feeds": "^0.0.1",
     "sockethub-platform-irc": "https://github.com/sockethub/sockethub-platform-irc.git",
+    "sockethub-schemas": "https://github.com/sockethub/sockethub-schemas.git",
     "tv4": "^1.1.4"
   },
   "devDependencies": {
