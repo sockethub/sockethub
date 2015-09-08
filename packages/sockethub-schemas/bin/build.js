@@ -14,12 +14,12 @@ tv4.addSchema(schemaSHAS.id, schemaSHAS);
 tv4.addSchema(schemaSHAO.id, schemaSHAO);
 
 var fd = fs.openSync(base + '/schemas/activity-stream.js', 'w+');
-fs.writeSync(fd, 'module.exports = ' + JSON.stringify(schemaSHAS, null, "\t"));
+fs.writeSync(fd, 'module.exports = ' + JSON.stringify(schemaSHAS, null, "\t") + ';');
 fd = fs.openSync(base + '/schemas/activity-stream.json', 'w+');
 fs.writeSync(fd, JSON.stringify(schemaSHAS, null, "\t"));
 
 fd = fs.openSync(base + '/schemas/activity-object.js', 'w+');
-fs.writeSync(fd, 'module.exports = ' + JSON.stringify(schemaSHAO, null, "\t"));
+fs.writeSync(fd, 'module.exports = ' + JSON.stringify(schemaSHAO, null, "\t") + ';');
 fd = fs.openSync(base + '/schemas/activity-object.json', 'w+');
 fs.writeSync(fd, JSON.stringify(schemaSHAO, null, "\t"));
 
