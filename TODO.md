@@ -13,6 +13,7 @@
   [ ] sockethub.js
 [ ] reconnects need to resend credentials and activity-objects
 [ ] `Post` and `Share` removed in favor of the more generally applicable `Create` or `Add`
+[ ] secrets
 
 ## notes
 - if an `objectType:'credentials'` comes in as a 'message' event, how should
