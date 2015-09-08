@@ -11,6 +11,7 @@
     "activity",
     "streams"
   ],
+  "main": "./index.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/sockethub/sockethub-schemas.git"
@@ -22,6 +23,6 @@
   },
   "scripts": {
     "test": "node_modules/.bin/jaribu",
-    "build": "DEBUG=* ./bin/sockethub"
+    "build": "bin/build.js"
   }
 }
