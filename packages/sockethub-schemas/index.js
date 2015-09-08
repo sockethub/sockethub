@@ -1,4 +1,4 @@
 module.exports = {
-  stream: require('schemas/activity-stream.json'),
-  object: require('schemas/activity-object.json')
+  ActivityStream: require('schemas/activity-stream.json'),
+  ActivityObject: require('schemas/activity-object.json')
 };
