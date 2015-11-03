@@ -28,9 +28,9 @@
       var sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
 
       // our irc user info
-      sc.Activity.Object.create({
-        id: 'https://sockethub.org/examples/feeds',
-        objectType: "website",
+      sc.ActivityStreams.Object.create({
+        '@id': 'https://sockethub.org/examples/feeds',
+        '@type': "website",
         displayName: "Sockethub Examples - Feeds"
       });
 
@@ -40,7 +40,7 @@
       });
 
       function displayMessage(msg) {
-        msg.actor = sc.Activity.Object.get(msg.actor);
+        msg.actor = sc.ActivityStreams.Object.get(msg.actor);
         console.log('displaying message: ', msg);
         $('#messages').append($('<li>').text(msg.actor.displayName + ': ' + msg.object.title));
       }
@@ -64,15 +64,15 @@
       // handler for user input, emit messages to sockethub server
       $('form').submit(function () {
         var msg = {
-          platform: 'feeds',
-          verb: 'fetch',
+          context: 'feeds',
+          '@type': 'fetch',
           actor: 'https://sockethub.org/examples/feeds',
           object: {
-            objectType: 'parameters'
+            '@type': 'parameters'
           },
           target: {
-            objectType: 'feed',
-            id: $('#m').val()
+            '@type': 'feed',
+            '@id': $('#m').val()
           }
         };
 
