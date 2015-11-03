@@ -162,7 +162,7 @@ var createObj = {
       port: (this.credentials.object.port) ? parseInt(this.credentials.object.port, 10) : (is_secure) ? 6697 : 6667,
     };
 
-    function onRegister(object) {
+    function onRegister() {
       _this.scope.debug('connected to ' + module_creds.server);
       api.unhookEvent(key, 'registered');
       api.unhookEvent(key, '*');
@@ -227,6 +227,7 @@ var createObj = {
       } else if ((typeof object.channel === 'string') &&
                  (typeof object.who === 'object')) {
         // full who
+        return;
       } else if ((typeof object.topic === 'string') &&
                  (typeof object.topicBy === 'string')) {
         // topic
@@ -295,7 +296,6 @@ var createObj = {
       } else if ((typeof object.target === 'string') &&
                  (typeof object.message === 'string')) {
         // message
-
         if (! object.nickname) {
           this.scope.debug('received UNKNOWN: ', object);
         } else {
@@ -344,6 +344,7 @@ var createObj = {
         });
       } else if (typeof object.mode === 'string') {
         // skip
+        return;
       } else if ((typeof object.nickname === 'string') &&
                  (typeof object.capabilities === 'object') &&
                  (typeof object.time === 'string') &&
@@ -421,7 +422,7 @@ var createObj = {
     this.scope.debug('addListener called! ' + this.id + ' ' + name);
     api.hookEvent(this.id, name, func);
   },
-  removeListener: function (name, func) {
+  removeListener: function (name) {
     this.scope.debug('removeListener called!');
     api.unhookEvent(this.id, name);
   },
