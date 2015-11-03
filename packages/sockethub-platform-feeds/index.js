@@ -222,7 +222,7 @@ Feeds.prototype.fetch = function (job, cb) {
   var self = this;
 
   // ready to execute job
-  self._fetchFeed(job.target.id, job.object)
+  self._fetchFeed(job.target['@id'], job.object)
     .then(function (result) {
       result.target = job.actor;
       self.session.send(result);
