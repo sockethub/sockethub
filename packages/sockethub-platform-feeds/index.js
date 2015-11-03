@@ -241,6 +241,16 @@ Feeds.prototype.cleanup = function (cb) {
 };
 
 
+function extractDate(prop) {
+  var date;
+  try {
+    date  = (typeof prop  === 'string') ? Date.parse(prop)  : (typeof prop  === 'number') ? prop  : 0;
+  } catch (e) {
+    return 'invalid date string passed: ' + prop + ' - ' + e;
+  }
+  return date;
+}
+
 /*
  * setting defaults and normalizing
  */
@@ -249,16 +259,8 @@ function parseConfig(options) {
   cfg.limit = (options.limit) ? options.limit : 10;
   cfg.datenum = 0;
   if ((!cfg.property) || (cfg.property === 'date')) {
-    try {
-      cfg.after_datenum  = (typeof options.after  === 'string') ? Date.parse(options.after)  : (typeof options.after  === 'number') ? options.after  : 0;
-    } catch (e) {
-      return 'invalid date string passed: ' + options.date + ' - ' + e;
-    }
-    try {
-      cfg.before_datenum = (typeof options.before === 'string') ? Date.parse(options.before) : (typeof options.before === 'number') ? options.before : 0;
-    } catch (e) {
-      return 'invalid date string passed: ' + options.date + ' - ' + e;
-    }
+    cfg.after_datenum = extractDate(options.after);
+    cfg.before_datenum = extractDate(options.before);
   }
   cfg.url = (options.url) ? options.url : null;
   cfg.from = 'after';
@@ -275,9 +277,7 @@ Feeds.prototype._fetchFeed = function (url, options) {
   if (this.abort) { return Promise.reject('aborting job'); }
   var defer = Promise.defer();
 
-  var articleLinks = [];
   var error = false;
-  var completed = false;
   var articles = []; // queue of articles to buffer and filter before sending out.
   var session = this.session;
   var self = this;
