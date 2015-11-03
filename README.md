@@ -7,7 +7,7 @@ A polyglot messaging service.
 [![devDependency Status](http://img.shields.io/david/dev/sockethub/sockethub.svg?style=flat)](https://david-dm.org/sockethub/sockethub#info=devDependencies)
 [![Code Climate](http://img.shields.io/codeclimate/github/sockethub/sockethub.svg?style=flat)](https://codeclimate.com/github/sockethub/sockethub)
 [![License](https://img.shields.io/npm/l/sockethub.svg?style=flat)](https://raw.githubusercontent.com/sockethub/sockethub/master/LICENSE)
-[![Release](http://img.shields.io/github/release/sockethub/sockethub.svg?style=flat)](https://github.com/sockethub/sockethub/releases)
+[![Release](https://img.shields.io/npm/v/sockethub.svg?style=flat)](https://github.com/sockethub/sockethub/releases)
 
 [![Flattr this](http://api.flattr.com/button/flattr-badge-large.png)](http://flattr.com/thing/1154379/Sockethub)
 
