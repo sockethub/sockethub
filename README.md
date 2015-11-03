@@ -37,21 +37,12 @@ We use Activity Streams to map the various social networks terms to a set of 've
 Below is a list of platforms we're currently working on and their activity stream verbs (when appropriate) or verbs that are specific to sockethub, both the completed and not yet implemented ones. They all map to the platforms actions.
 
 ##### [platform] - [verbs]
-<<<<<<< HEAD
-* Email *(SMTP, IMAP)* - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch (imap)</kbd>
-* XMPP - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) request-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) remove-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) make-friend</kbd>
-* Facebook - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png)fetch</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd>
-* Twitter - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd>
-* Feeds *(RSS, Atom)* - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd>
-* IRC - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) join</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) leave</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd>
-=======
 * *to port* [Email](https://github.com/sockethub/sockethub-platform-email) *(SMTP, IMAP)* - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch (imap)</kbd>
 * *to port* [XMPP](https://github.com/sockethub/sockethub-platform-xmpp) - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) request-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) remove-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) make-friend</kbd>
 * *to port* [Facebook](https://github.com/sockethub/sockethub-platform-facebook) - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png)fetch</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd>
 * *to port* [Twitter](https://github.com/sockethub/sockethub-platform-twitter) - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd>
 * [Feeds](https://github.com/sockethub/sockethub-platform-feeds) *(RSS, Atom)* - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd>
 * [IRC](https://github.com/sockethub/sockethub-platform-irc) - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) join</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) leave</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd>
->>>>>>> experimental_v1_0
 * pump.io - <kbd>post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>fetch</kbd>
 * WhatsApp - <kbd>send</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd>
 * WebFinger - <kbd>search</kbd>
@@ -95,67 +86,7 @@ Specify the namespace to console log, ie. `sockethub*` will print all sockethub 
 
 Sockethub is licensed under the [LGPL](https://github.com/sockethub/sockethub/blob/master/LICENSE)
 
-<<<<<<< HEAD
-    **node-stringprep** *(dependency of several packages)* : `libicu-dev`
-
-  NOTE: node **version v0.10.x** or greater required due to module dependencies.
-
-  Instructions on installing node v0.10.x on Ubuntu 12.04 LTS see this
-
-		$ sudo apt-get update
-		$ sudo apt-get install python-software-properties python g++ make
-		$ sudo add-apt-repository ppa:chris-lea/node.js
-		$ sudo apt-get update
-		$ sudo apt-get install nodejs
-
-  (from: http://kb.solarvps.com/node-js/installing-node-js-on-ubuntu-12-04-lts/)
-
-
-### install
-
-    $ git clone git@github.com:sockethub/sockethub.git
-
-### setup
-
-    [sockethub]$ npm install
-    [sockethub]$ cp config.js.template config.js
-    [sockethub]$ cp config.secrets.js.template config.secrets.js
-
-  You will want to edit your config.secrets.js file and add your own secret string to use during the register command to ensure only apps can connect that have the right secret.
-
-    [sockethub]$ git submodule init && git submodule update
-
-  You'll need the submodules for the examples to run (uses
-  [sockethub-client](https://github.com/sockethub/sockethub-client/))
-
-    [sockethub]$ npm test
-
-  Verify all tests pass, then you should be good to go.
-
-    [sockethub]$ bin/sockethub
-
-  Once sockethub is running, you can visit `http://localhost:10550/examples/` to see some example apps (under development).
-
-**remoteStorage.js note:** *trying to use a file:// URL for this will not work because remoteStorage.js depends on having a localStorage origin available.*
-
-docs
-----
-
-The [Getting Started Guide](https://github.com/sockethub/sockethub/blob/master/doc/getting_started.md) is a good starting place to find links to more specific documentation about Sockethub or SockethubClient.
-
-[Sockethub Internals](http://sockethub.org/doc/developer)
-
-
-license
--------
-
-Sockethub is licensed under the [LGPL](https://github.com/sockethub/sockethub/blob/master/LICENSE)
-
-credits
--------
-=======
 # Credits
->>>>>>> experimental_v1_0
 
 Project maintained by [Nick Jennings](http://github.com/silverbucket)
 
