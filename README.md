@@ -18,20 +18,8 @@ Example uses of sockethub are: writing and receiving messages (SMTP, Facebook, T
 
 # Docs
 
-See the [Sockethub wiki](https://github/sockethub/sockethub/wiki) for documentation.
 
-<<<<<<< HEAD
-**WARNING: In preparation for version 1.0, Sockethub is undergoing a
-rewrite/refactoring with breaking changes to the APIs and data formats. Active
-development branched off of master and is happening in `experimental_v_1_0`. If
-you want to use it and/or contribute to the development, please join us in
-`#sockethub` on Freenode.**
-
-features
---------
-=======
 # Features
->>>>>>> experimental_v1_0
 We use Activity Streams to map the various social networks terms to a set of 'verbs' which identify the underlying action. For example,for a facebook friend request/accept cycle, we would use the activity stream verbs 'request-friend', 'remove-friend', 'make-friend'.
 
 Below is a list of platforms we're currently working on and their activity stream verbs (when appropriate) or verbs that are specific to sockethub, both the completed and not yet implemented ones. They all map to the platforms actions.
