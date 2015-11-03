@@ -18,6 +18,7 @@ Example uses of sockethub are: writing and receiving messages (SMTP, Facebook, T
 
 # Docs
 
+See the [Sockethub wiki](https://github/sockethub/sockethub/wiki) for documentation.
 
 # Features
 We use Activity Streams to map the various social networks terms to a set of 'verbs' which identify the underlying action. For example,for a facebook friend request/accept cycle, we would use the activity stream verbs 'request-friend', 'remove-friend', 'make-friend'.
