@@ -1,7 +1,7 @@
 {
   "name": "sockethub",
   "description": "A polyglot messaging service",
-  "version": "1.0.0-ALPHA0",
+  "version": "1.0.0",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL",
@@ -42,7 +42,7 @@
     "express": "^4.10.6",
     "jquery": "^2.1.4",
     "kue": "^0.9.5",
-    "nconf": "^0.7.1",
+    "nconf": "^0.8.2",
     "rand-token": "^0.2.1",
     "secure-store-redis": "^0.1.2",
     "socket.io": "^1.2.1",
