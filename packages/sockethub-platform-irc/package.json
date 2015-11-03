@@ -25,8 +25,8 @@
   },
   "devDependencies": {
     "jaribu": "^2.0.0",
-    "tv4": "^1.1.5",
-    "sockethub-testing-mocks": "^1.0.0"
+    "sockethub-testing-mocks": "^1.0.0",
+    "tv4": "^1.2.7"
   },
   "scripts": {
     "test": "node_modules/.bin/jaribu"
