@@ -1,7 +1,7 @@
 {
   "name": "sockethub",
   "description": "A polyglot messaging service",
-  "version": "0.3.2",
+  "version": "1.0.0",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL",
@@ -26,16 +26,13 @@
     "imap",
     "email"
   ],
-  "bin": {
-    "sockethub": "./bin/sockethub",
-    "sockethub-listener-control.js": "./bin/sockethub-listener-control.js"
-  },
   "repository": {
     "type": "git",
     "url": "git://github.com/sockethub/sockethub.git"
   },
   "homepage": "http://github.com/sockethub/sockethub",
   "dependencies": {
+<<<<<<< HEAD
     "argp": "^0.1.1",
     "consoleplusplus": "*",
     "crypto": "*",
@@ -65,8 +62,33 @@
   "devDependencies": {
     "generic-pool": "^2.1.1",
     "jaribu": "^0.3.0"
+=======
+    "activity-streams": "^2.0.4",
+    "array-keys": "^2.0.0",
+    "body-parser": "^1.14.0",
+    "connection-manager": "^0.1.6",
+    "dead-simple-crypt": "0.0.1",
+    "debug": "^2.2.0",
+    "ejs": "^2.3.4",
+    "express": "^4.10.6",
+    "jquery": "^2.1.4",
+    "kue": "^0.9.5",
+    "nconf": "^0.8.2",
+    "rand-token": "^0.2.1",
+    "secure-store-redis": "^0.1.2",
+    "socket.io": "^1.2.1",
+    "sockethub-platform-dummy": "^0.0.1",
+    "sockethub-platform-feeds": "^0.0.1",
+    "sockethub-platform-irc": "https://github.com/sockethub/sockethub-platform-irc.git",
+    "sockethub-schemas": "https://github.com/sockethub/sockethub-schemas.git",
+    "tv4": "^1.2.7"
+  },
+  "devDependencies": {
+    "jaribu": "^2.0.0"
+>>>>>>> experimental_v1_0
   },
   "scripts": {
-    "test": "node_modules/.bin/jaribu"
+    "test": "node_modules/.bin/jaribu",
+    "start": "DEBUG=* ./bin/sockethub"
   }
 }

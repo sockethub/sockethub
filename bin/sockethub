@@ -1,99 +1,16 @@
 #!/usr/bin/env node
-/**
- * This file is part of sockethub.
- *
- * copyright 2012-2013 Nick Jennings (https://github.com/silverbucket)
- *
- * sockethub is licensed under the AGPLv3.
- * See the LICENSE file for details.
- *
- * The latest version of sockethub can be found here:
- *   git://github.com/sockethub/sockethub.git
- *
- * For more information about sockethub visit http://sockethub.org/.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- */
-var Sockethub = require('./../lib/sockethub/sockethub.js');
-var p = require('./../package.json');
-var sockethub;
-
-process.on('SIGINT', function () {
-  console.log("\ncaught SIGINT");
-  try {
-    sockethub.shutdown().then(function () {
-      console.log("exiting...");
-      process.exit(1);
-    });
-  } catch (e) {
-    console.log(' ERROR: '+e);
-    process.exit(1);
-  }
-});
-
-process.on('SIGTERM', function () {
-  console.log("\ncaught SIGTERM");
-  try {
-    sockethub.shutdown().then(function() {
-      process.exit(1);
-    }, function (err) {
-      console.log("ERROR: "+err);
-      process.exit(1);
-    });
-  } catch (e) {
-    console.log('ERROR: '+e);
-    process.exit(1);
-  }
-});
 
 process.on('uncaughtException', function (err) {
-  console.log('uncaught exception: ' + err);
+  console.log("\nUNCAUGHT EXCEPTION - something horrible has happened!\n");
   console.log(err.stack);
   process.exit(1);
 });
 
+var Sockethub = require('./../lib/sockethub.js');
 
-var argv = require ("argp")
-    .description ("a polyglot websocket service")
-    .email ('https://github.com/sockethub/sockethub/issues')
-    .on('end', function(argv) {
-      //try {
-      sockethub = Sockethub({
-       root: './',
-       config: argv.config,
-       debug: argv.debug,
-       log: argv.log,
-       verbose: argv.verbose,
-       sockethubId: argv.sockethubid,
-       secrets: argv.secrets,
-       redisHost: argv['redis-host'],
-       redisPort: argv['redis-port'],
-       info: argv.info || false
-      });
-      sockethub.events.on('initialized', function () {
-        //console.log('sockethub initialization complete');
-      });
-      // } catch(e) {
-      //   console.log('e:',e);
-      // }
-    })
-    .body ()
-        //The object an argument definitions and the text of the --help message are
-        //configured at the same time
-        .text ("version "+p.version+"\n\n Options:")
-        .option ({ short: "c", long: "config", metavar: "CONFIG_FILE", description: "location of the config.js file"})
-        .option ({ short: "d", long: "debug", description: "enable debug output (overrides config file)" })
-        .option ({ short: "i", long: "id", metavar: "SOCKETHUB_ID", description: "assign this instance an existing sockethubId, rather than it generating it's own." })
-        .option ({ short: "l", long: "log", metavar: "LOG_FILE", description: "full path for sockethub to log output" })
-        .option ({ short: "s", long: "secrets", metavar: "SECRETS_FILE", description: "location of the config.secrets.js file" })
-        .option ({ long: "info", description: "displays the current configuration and other details relevant to sockethub, does not initialize sockethub." })
-        .option ({ long: 'listeners-only', description: "only run listeners and no dispatcher (requires sockethubId to be set)"})
-        .option ({ long: "redis-host", metavar: "REDIS_HOST", description: "host location of redis server" })
-        .option ({ long: "redis-port", metavar: "REDIS_PORT", description: "port redis is listening on" })
-        .option ({ long: "verbose", description: "outputs logs to console in addition to any logfile" })
-        .help ()
-        .usage ()
-        .version (p.version)
-    .argv ();
+// var debugScope = process.env.DEBUG || nconf.get('debug');
+// var genConfig  = nconf.get('gen-config');    // TODO
+
+var sockethub = new Sockethub();
+
+sockethub.boot();

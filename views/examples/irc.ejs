@@ -1,0 +1,247 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Sockethub Example IRC Chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 0.8em Helvetica, Arial; }
+      h3 { color: #6B6767; font-size: 0.8em; margin-bottom: 1em; }
+      form#chat { background: #000; padding: 0.3em; position: fixed; bottom: 0; width: 100%; }
+      input { border: 0; padding: 5%; }
+      button { width: 20%; background: rgb(130, 224, 255); border: none; padding: 5%; }
+      button.invis { background-color: rgba(0, 0, 0, 0); color: rgba(0, 0, 0, 0);}
+      button:hover { cursor: pointer; }
+      .messageInput { width: 80%; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 0.1em 1%; }
+      #messages li:nth-child(odd) { background: #eee; }
+      .modal { position: fixed; top: 15%; left: 5%; width: 90%;
+               line-height: 1em; padding: 3% 0 3%;
+               background-color: #f1c40f; text-align: center;
+               z-index: 10; outline: 9999px solid rgba(0,0,0,0.5); }
+      @media only screen and (max-width: 1050px) {
+        body { font: 1em Helvetica, Arial; }
+        h3 { color: #6B6767; font-size: 1em; margin-bottom: 1.5em; }
+        input { border: 0; padding: 3%; width: 70%; font-size: 1em; }
+        button { width: 20%; border: none; padding: 3%; font-size: 1em; }
+      }
+      @media only screen and (max-width: 5000px) {
+        body { font: 0.9em Helvetica, Arial; }
+        h3 { color: #6B6767; font-size: 1.2em; margin-bottom: 1.5em; }
+        .modal input { border: 0; padding: 2%; width: 80%; font-size: 0.8em; }
+        .modal button { width: 10%; border: none; padding: 2%; font-size: 0.8em; }
+        input { padding: 1%; }
+        button { padding: 1%; width: 10%; }
+        .messageInput { width: 90%; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="modal">
+      <h3>Click `Join` to connect and join the IRC channel.</h3>
+      <form id="intro" action="">
+        <input id="n" autocomplete="off" value="sh-<%= randToken %>"><button class="invis" disabled>nick</button>
+        <input id="j" autocomplete="off" value="" disabled><button id="join">Join</button>
+      </form>
+    </div>
+    <ul id="messages"></ul>
+    <form id="chat" action="">
+      <input id="m" autocomplete="off" class="messageInput" disabled><button id="send" disabled>Send</button>
+    </form>
+
+    <script src="<%= address %>jquery.js"></script>
+    <script src="<%= address %>sockethub/socket.io.js"></script>
+    <script src="<%= address %>activity-streams.js"></script>
+    <script src="<%= address %>sockethub-client.js"></script>
+    <script>
+      debug = function (msg, obj) { console.log(msg, obj); };
+      var ircServer = 'irc.freenode.net';
+      localStorage.debug = 'sockethub:*';
+      var sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
+      var channel = 'sockethub-test';
+      var nick = 'sh-<%= randToken %>';
+
+      $('#j').val('#' + channel);
+
+      function __normalizeMessage(msg) {
+
+        function __normalizeTargetFromContent(string) {
+          var postCMD = msg.object.content.substr(string.length + 1) + ' ';
+          var target = postCMD.substr(0, postCMD.indexOf(' '));
+          if (target.indexOf('#') === 0) {
+            msg.target = 'irc://' + ircServer + '/' + target;
+            sc.ActivityStreams.Object.create({
+              '@id': 'irc://' + ircServer + '/' + target,
+              '@type': "room",
+              displayName: target
+            });
+          } else {
+            msg.target = 'irc://' + target + '@' + ircServer;
+            sc.ActivityStreams.Object.create({
+              '@id': 'irc://' + target + '@' + ircServer,
+              '@type': "person",
+              displayName: target
+            });
+          }
+        }
+
+        if ((typeof msg.object === 'object') &&
+            (typeof msg.object.content === 'string')) {
+
+          if (msg.object.content.indexOf('/me') === 0) {
+            // show completed emotes from us
+            // rewrite as object to what the incoming objects should look like
+            msg.object['@type'] = 'me';
+            msg.object.content = msg.object.content.substr(4);
+          } else if (msg.object.content.indexOf('/nick') === 0) {
+            msg.object['@type'] = 'address';
+            msg['@type'] = 'update';
+            __normalizeTargetFromContent('/nick');
+            delete msg.object.content;
+          } else if (msg.object.content.indexOf('/notice') === 0) {
+            // show completed emotes from us
+            // rewrite as object to what the incoming objects should look like
+            msg.object['@type'] = 'notice';
+            __normalizeTargetFromContent('/notice');
+            msg.object.content = msg.object.content.substr(8 + object.target.displayName.length + 1);
+          }
+
+        }
+        return msg;
+      }
+
+      function __processIncomingMessage(msg) {
+        msg = sc.ActivityStreams.Stream(msg);
+        debug('received message: ', msg);
+
+        if (msg['@type'] === 'observe') {
+          $('#messages').append($('<li>').text('[ users in ' + msg.actor.displayName + ' ]'));
+          $('#messages').append($('<li>').text('[ ' + msg.object.members.join(', ') + ' ]'));
+        } else if ((msg['@type'] === 'update') &&
+                   (msg.object['@type'] === 'address')) {
+          $('#messages').append($('<li>').text(msg.actor.displayName + ' is now known as ' + msg.target.displayName));
+        } else if (msg['@type'] === 'join') {
+          $('#messages').append($('<li>').text(msg.actor.displayName + ' has joined ' + msg.target.displayName));
+        } else if ((msg['@type'] === 'announce') && (msg.actor['@type'] === 'service')) {
+          $('#messages').append($('<li>').text('connected to ' + msg.actor['@id']));
+        } else if (msg.object['@type'] === 'me') {
+          $('#messages').append($('<li>').text('* ' + msg.actor.displayName + ' ' + msg.object.content));
+        } else if (msg.object['@type'] === 'notice') {
+          $('#messages').append($('<li>').text('NOTICE from ' + msg.actor.displayName + ': ' + msg.object.content));
+        } else {
+          $('#messages').append($('<li>').text(msg.actor.displayName + ': ' + msg.object.content));
+        }
+      }
+
+      // creates an ActivityStreams object for our actor (us)
+      function __updateActor(_nick) {
+        // our irc user info
+        nick = _nick; // set global nick
+        sc.ActivityStreams.Object.create({
+          '@id': 'irc://' + nick + '@' + ircServer,
+          '@type': "person",
+          displayName: nick,
+          url: "http://sockethub.org",
+          image: {
+            url: "http://example.org/image.jpg",
+            mediaType: "image/jpeg",
+            width: 250,
+            height: 250
+          }
+        });
+      }
+
+      // errors
+      sc.socket.on('failure', function (msg) {
+        debug('received failure: ', msg);
+        alert(msg.error);
+      });
+
+      sc.socket.on('completed', function (msg) {
+        msg = sc.ActivityStreams.Stream(msg);
+        debug('received completed job: ', msg);
+
+        msg = __normalizeMessage(msg);
+        if ((typeof msg.object === 'object') &&
+            (typeof msg.object.content === 'string')) {
+          if (msg.object['@type'] === 'me') {
+            __processIncomingMessage(msg);
+          }
+        } else if ((msg['@type'] === 'update') &&
+                   (msg.object['@type'] === 'address') &&
+                   (msg.actor.displayName === nick)) {
+          // our nick has been updated
+          __updateActor(msg.target.displayName);
+        } else if (msg['@type'] === 'join') {
+          $('.modal').css('display', 'none');
+          $('input#m').prop('disabled', false);
+          $('button#send').prop('disabled', false);
+        }
+      });
+
+      // handle incoming messages from the sockethub server
+      sc.socket.on('message', __processIncomingMessage);
+
+
+      // handler for user input, emit messages to sockethub server
+      $('#chat').submit(function () {
+        var msg = {
+          '@type': 'send',
+          context: 'irc',
+          actor: 'irc://' + nick + '@' + ircServer,
+          object: {
+            '@type': 'message',
+            content: $('#m').val()
+          },
+          target: 'irc://' + ircServer + '/' + channel
+        };
+
+        msg = __normalizeMessage(msg);
+        debug('sending message: ', msg);
+        sc.socket.emit('message', msg);
+        $('#m').val('');
+        return false;
+      });
+
+      // handler for user input, emit messages to sockethub server
+      $('#join').click(function () {
+        nick = $('#n').val();
+
+        __updateActor(nick);
+
+        // the irc chatroom we're connecting to
+        sc.ActivityStreams.Object.create({
+          '@id': 'irc://' + ircServer + '/' + channel,
+          '@type': "room",
+          displayName: '#' + channel
+        });
+
+        // sending irc credentials to sockethub server
+        var credentials = {
+          actor: 'irc://' + nick + '@' + ircServer,
+          context: 'irc',
+          object: {
+            '@type': 'credentials',
+            nick: nick,
+            server: ircServer,
+            port: 6667,
+            secure: false
+          }
+        };
+        debug('sending credentials: ', credentials);
+        sc.socket.emit('credentials', credentials);
+
+        var msg = {
+          '@type': 'join',
+          context: 'irc',
+          actor: 'irc://' + nick + '@' + ircServer,
+          target: 'irc://' + ircServer + '/' + channel
+        };
+
+        debug('sending message: ', msg);
+        sc.socket.emit('message', msg);
+        return false;
+      });
+    </script>
+  </body>
+</html>

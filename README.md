@@ -1,6 +1,6 @@
 [![Sockethub](http://sockethub.org/res/img/sockethub-logo.svg)](http://sockethub.org)
 
-The polyglot approach to the federated social web.
+A polyglot messaging service.
 
 [![Build Status](http://img.shields.io/travis/sockethub/sockethub.svg?style=flat)](https://travis-ci.org/sockethub/sockethub)
 [![Dependency Status](http://img.shields.io/david/sockethub/sockethub.svg?style=flat)](https://david-dm.org/sockethub/sockethub#info=dependencies)
@@ -11,18 +11,16 @@ The polyglot approach to the federated social web.
 
 [![Flattr this](http://api.flattr.com/button/flattr-badge-large.png)](http://flattr.com/thing/1154379/Sockethub)
 
-about
------
+# About
 Sockethub is a polyglot (speaking many different protocols and APIs) messaging service for social and other interactive messaging applications. Not only does it assist [unhosted](http://unhosted.org) and [noBackend](http://nobackend.org) web application developers by providing server-independent, server-side functionality, but it also can be used as a back-end tool (invisible to the user) for many different applications, large and small.
 
 Example uses of sockethub are: writing and receiving messages (SMTP, Facebook, Twitter, Diaspora), instant messaging (XMPP, AIM, MSN, IRC), discovery (WebFinger, RDF(a)). The architecture of sockethub is extensible and supports easy implementation of additional 'platforms' to carry out tasks, sockethub can be run on your own server, or provided as a service by a service provider, or app store.
 
-status
-------
-Sockethub is currently under active development, several platforms are being worked on (details below) and are at varying levels of completeness.
+# Docs
 
-For more information on platform development, see the [platform overview](doc/platform_overview.md).
+See the [Sockethub wiki](https://github/sockethub/sockethub/wiki) for documentation.
 
+<<<<<<< HEAD
 **WARNING: In preparation for version 1.0, Sockethub is undergoing a
 rewrite/refactoring with breaking changes to the APIs and data formats. Active
 development branched off of master and is happening in `experimental_v_1_0`. If
@@ -31,17 +29,29 @@ you want to use it and/or contribute to the development, please join us in
 
 features
 --------
+=======
+# Features
+>>>>>>> experimental_v1_0
 We use Activity Streams to map the various social networks terms to a set of 'verbs' which identify the underlying action. For example,for a facebook friend request/accept cycle, we would use the activity stream verbs 'request-friend', 'remove-friend', 'make-friend'.
 
 Below is a list of platforms we're currently working on and their activity stream verbs (when appropriate) or verbs that are specific to sockethub, both the completed and not yet implemented ones. They all map to the platforms actions.
 
 ##### [platform] - [verbs]
+<<<<<<< HEAD
 * Email *(SMTP, IMAP)* - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch (imap)</kbd>
 * XMPP - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) request-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) remove-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) make-friend</kbd>
 * Facebook - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png)fetch</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd>
 * Twitter - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd>
 * Feeds *(RSS, Atom)* - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd>
 * IRC - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) join</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) leave</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd>
+=======
+* *to port* [Email](https://github.com/sockethub/sockethub-platform-email) *(SMTP, IMAP)* - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch (imap)</kbd>
+* *to port* [XMPP](https://github.com/sockethub/sockethub-platform-xmpp) - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) request-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) remove-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) make-friend</kbd>
+* *to port* [Facebook](https://github.com/sockethub/sockethub-platform-facebook) - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png)fetch</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd>
+* *to port* [Twitter](https://github.com/sockethub/sockethub-platform-twitter) - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd>
+* [Feeds](https://github.com/sockethub/sockethub-platform-feeds) *(RSS, Atom)* - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd>
+* [IRC](https://github.com/sockethub/sockethub-platform-irc) - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) join</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) leave</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd>
+>>>>>>> experimental_v1_0
 * pump.io - <kbd>post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>fetch</kbd>
 * WhatsApp - <kbd>send</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd>
 * WebFinger - <kbd>search</kbd>
@@ -50,38 +60,42 @@ Below is a list of platforms we're currently working on and their activity strea
 * FireFoxSync - *(to be evaluated)*
 * WebRTC - *(to be evaluated)*
 
-apps built on sockethub
------------------------
 
-Sockethubg is still a young project, however ongoing work is being done to build applications ontop of it. Here are some existing projects.
+# Setup
 
-* [**Dogfeed**](http://github.com/silverbucket/dogfeed) an unhosted feed reader (RSS/Atom currently supported) [**stable**]
-* [**Guppy IRC**](https://github.com/silverbucket/guppy-irc) a tiny embeddable IRC client (IRC platform used) [**stable**]
-* [**Dogtalk**](http://github.com/silverbucket/dogtalk) an unhosted chat client (XMPP & IRC currently supported) [**alpha**]
-* [**Unhosted mail**](http://github.com/nilclass/unhosted-mail) an unhosted email client [***experimental / alpha***]
+`$ npm install`
 
-architecture overview
----------------------
+# Running
 
-Check out the [architecture overview](doc/architecture_overview.md) for a little more information *("under the hood")* on the implementation details of Sockethub.
+`$ DEBUG=sockethub* bin/sockethub --examples`
 
-installation & setup
---------------------
+You should then be able to browse to `http://localhost:10550` and try out the examples.
 
-### prerequisites
+# Environment Variables
 
-  * redis server
+* PORT
+Defaults to `10550`
+* HOST
+Defaults to `localhost`
+* DEBUG
+Specify the namespace to console log, ie. `sockethub*` will print all sockethub related debug statements, whereas `*` will also print any other modules debug statements that use the `debug` module.
 
-  You will need to have a redis server (version 2.x or greater) up and running.
+# Command-line params
+```
+  --help       : this help screen
+  --info       : displays some basic runtime info
 
-  NOTE: redis **version 2.x** or greater required as Sockethub makes extensive use of the `BLPOP` and `RPUSH` commands.
+  --examples   : enabled examples page and serves helper files like jquery
 
-  * node.js package dependencies
+  --host       : hostname to bind to
+  --port       : port to bind to
+```
 
-  Some of the node.js packages require operating system libraries in order to function correctly.
+# License
 
-    **simple-xmpp** : `libexpat1` `libicu-dev`
+Sockethub is licensed under the [LGPL](https://github.com/sockethub/sockethub/blob/master/LICENSE)
 
+<<<<<<< HEAD
     **node-stringprep** *(dependency of several packages)* : `libicu-dev`
 
   NOTE: node **version v0.10.x** or greater required due to module dependencies.
@@ -139,6 +153,9 @@ Sockethub is licensed under the [LGPL](https://github.com/sockethub/sockethub/bl
 
 credits
 -------
+=======
+# Credits
+>>>>>>> experimental_v1_0
 
 Project maintained by [Nick Jennings](http://github.com/silverbucket)
 
