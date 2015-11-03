@@ -22,9 +22,9 @@
   },
   "homepage": "http://github.com/sockethub/sockethub-platform-feeds",
   "dependencies": {
-    "bluebird": "^2.3.2",
-    "feedparser": "^0.19.2",
-    "request": "^2.51.0"
+    "bluebird": "^3.0.5",
+    "feedparser": "^1.1.4",
+    "request": "^2.65.0"
   },
   "devDependencies": {
     "jaribu": "*"
