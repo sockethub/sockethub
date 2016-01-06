@@ -5,16 +5,6 @@ var routes = [];
 routes.push({
   meta: {
     method: 'GET',
-    path: '/'
-  },
-  route: function (req,res) {
-    res.render('index.ejs');
-  }
-},
-
-{
-  meta: {
-    method: 'GET',
     path: '/sockethub-client.js'
   },
   route: function (req, res) {
@@ -34,6 +24,16 @@ routes.push({
 
 if (nconf.get('examples:enabled')) {
   routes.push({
+    meta: {
+        method: 'GET',
+        path: '/'
+    },
+    route: function (req,res) {
+        res.render('index.ejs');
+    }
+  },
+
+  {
     meta: {
       method: 'GET',
       path: '/jquery.js'
