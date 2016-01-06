@@ -274,7 +274,7 @@ var createObj = {
                  (object.raw.indexOf(' JOIN ') >= 0)) {
         // join
         this.scope.debug('received join: ' + object.nickname + ' -> ' + object.channel, object);
-        if (!object.nickname) {
+        if (! object.nickname) {
           this.scope.debug('skipping join message with undefined nickname');
         } else {
           this.scope.send({
@@ -342,8 +342,10 @@ var createObj = {
           },
           published: object.time
         });
-      } else if (typeof object.mode === 'string') {
-        // skip
+      } else if ((typeof object.nickname === 'string') &&
+                 (typeof object.mode === 'string')) {
+        // verify username
+        debug('verifying username ' + object.nickname + ' against ' + this.id);
         return;
       } else if ((typeof object.nickname === 'string') &&
                  (typeof object.capabilities === 'object') &&
@@ -359,6 +361,7 @@ var createObj = {
       } else if ((typeof object.nickname === 'string') &&
                  (typeof object.target === 'undefined')) {
         // QUIT
+        debug('received quit');
         var quitter = object.kicked || object.nickname;
         var msg = (typeof object.kicked === 'string') ? 'user has been kicked' : 'user has quit';
         this.scope.debug((typeof object.kicked === 'string') ? 'kick' : 'quit' + '', object);
@@ -414,7 +417,7 @@ var createObj = {
           published: object.time
         });
       } else {
-        debug('HANDLER * called [' + this.id + ']: ', object);
+        debug('Unprocessed message [' + this.id + ']: ', object);
       }
     }
   },
