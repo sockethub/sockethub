@@ -145,301 +145,346 @@ IRC.prototype.schema = {
   }
 };
 
+function __renameUser(id, displayName, credentials, store, client, cb) {
+    // preserve old creds
+    var oldCreds = credentials; 
+    var newCreds = JSON.parse(JSON.stringify(credentials));
 
-var createObj = {
-  timeout: 30000,
-  connect: function (cb) {
-    var client;
-    var _this = this;
-    var key = this.credentials.actor['@id'];
-    var is_secure = (typeof this.credentials.object.secure === 'boolean') ? this.credentials.object.secure : true;
-    var module_creds = {
-      nick: this.credentials.object.nick,
-      user: this.credentials.object.nick,
-      server: this.credentials.object.server || 'irc.freenode.net',
-      realname: this.credentials.actor.displayName || this.credentials.object.nick,
-      secure: is_secure,
-      port: (this.credentials.object.port) ? parseInt(this.credentials.object.port, 10) : (is_secure) ? 6697 : 6667,
-    };
+    // set new credentials
+    newCreds.object.nick       = displayName;
+    newCreds.actor.displayName = displayName;
+    newCreds.actor['@id']      = id;
 
-    function onRegister() {
-      _this.scope.debug('connected to ' + module_creds.server);
-      api.unhookEvent(key, 'registered');
-      api.unhookEvent(key, '*');
-      cb(null, client);
-    }
-    api.unhookEvent(key, '*');
+    store.save(id, newCreds, function (err) {
+        if (err) {
+            return cb(err);
+        }
 
-    api.hookEvent(key, '*', function (message) {
-      if ((typeof message === 'object') && (typeof message.capabilities === 'object')) {
-        _this.scope.send({
-          '@type': 'announce',
-          actor: {
-            '@type': 'service',
-            '@id': 'irc://' + _this.credentials.object.server
-          },
-          target: {
-            '@type': 'person',
-            '@id': 'irc://' + _this.credentials.actor['@id'] + '@' + _this.credentials.object.server
-          },
-          object: {
-            '@type': 'content',
-            content: message.capabilities
-          },
-          published: message.time
-        });
-      } else {
-        debug('*: ' + JSON.stringify(message));
-      }
+        // reset index of client object in connection manager
+        client.move(id, oldCreds, id, newCreds);
+        return cb();
     });
+}
 
-    api.hookEvent(key, 'registered', onRegister);
+function __genClientConnectionObject(session) {
+  return {
+    timeout: 30000,
+    connect: function (cb) {
+      var client;
+      var _this = this;
+      var key = this.credentials.actor['@id'];
+      var is_secure = (typeof this.credentials.object.secure === 'boolean') ? this.credentials.object.secure : true;
+      var module_creds = {
+        nick: this.credentials.object.nick,
+        user: this.credentials.object.nick,
+        server: this.credentials.object.server || 'irc.freenode.net',
+        realname: this.credentials.actor.displayName || this.credentials.object.nick,
+        secure: is_secure,
+        port: (this.credentials.object.port) ? parseInt(this.credentials.object.port, 10) : (is_secure) ? 6697 : 6667,
+      };
 
-    this.scope.debug('attempting to connect to ' + module_creds.server + ':' + module_creds.port + ' [secure:' + is_secure + ']');
+      function onRegister() {
+        _this.scope.debug('connected to ' + module_creds.server);
+        api.unhookEvent(key, 'registered');
+        api.unhookEvent(key, '*');
+        cb(null, client);
+      }
+      api.unhookEvent(key, '*');
 
-    // connect...
-    client = api.createClient(key, module_creds);
-  },
-  listeners: {
-    '*': function (object) {
-      // debug('HANDLER * called [' + this.id + ']: ', object);
-      if (typeof object.names === 'object') {
-        // user list
-        this.scope.debug('received user list: ' + object.channel);
-        this.scope.send({
-          '@type': 'observe',
-          actor: {
-            '@type': 'room',
-            '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
-            displayName: object.channel
-          },
-          target: {
-            '@type': 'room',
-            '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
-            displayName: object.channel
-          },
-          object: {
-            '@type': 'attendance',
-            members: object.names
-          },
-          published: object.time
-        });
-      } else if ((typeof object.channel === 'string') &&
-                 (typeof object.who === 'object')) {
-        // full who
-        return;
-      } else if ((typeof object.topic === 'string') &&
-                 (typeof object.topicBy === 'string')) {
-        // topic
-        this.scope.debug('received topic change list: ' + object.channel + ':' + object.topicBy + ': ' + object.topic);
-        this.scope.send({
-          '@type': 'update',
-          actor: {
-            '@type': 'person',
-            '@id': 'irc://' + object.topicBy + '@' + this.credentials.object.server,
-            displayName: object.topicBy
-          },
-          target: {
-            '@type': 'room',
-            '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
-            displayName: object.channel
-          },
-          object: {
-            '@type': 'topic',
-            topic: object.topic
-          },
-          published: object.time
-        });
-      } else if (typeof object.newnick === 'string') {
-        // nick change
-        this.scope.debug('received nick change ' + object.nickname + ' -> ' + object.newnick);
-        this.scope.send({
-          '@type': 'update',
-          actor: {
-            '@type': 'person',
-            '@id': 'irc://' + object.nickname + '@' + this.credentials.object.server,
-            displayName: object.nickname
-          },
-          target: {
-            '@type': 'person',
-            '@id': 'irc://' + object.newnick + '@' + this.credentials.object.server,
-            displayName: object.newnick
-          },
-          object: {
-            '@type': 'address'
-          },
-          published: object.time
-        });
-      } else if ((typeof object.channel === 'string') &&
-                 (object.raw.indexOf(' JOIN ') >= 0)) {
-        // join
-        this.scope.debug('received join: ' + object.nickname + ' -> ' + object.channel, object);
-        if (! object.nickname) {
-          this.scope.debug('skipping join message with undefined nickname');
-        } else {
-          this.scope.send({
-            '@type': 'join',
+      api.hookEvent(key, '*', function (message) {
+        if ((typeof message === 'object') && (typeof message.capabilities === 'object')) {
+          _this.scope.send({
+            '@type': 'announce',
             actor: {
+              '@type': 'service',
+              '@id': 'irc://' + _this.credentials.object.server
+            },
+            target: {
               '@type': 'person',
-              '@id': 'irc://' + object.nickname + '@' + this.credentials.object.server,
-              displayName: object.nickname
+              '@id': 'irc://' + _this.credentials.actor['@id'] + '@' + _this.credentials.object.server
+            },
+            object: {
+              '@type': 'content',
+              content: message.capabilities
+            },
+            published: message.time
+          });
+        } else {
+          debug('*: ' + JSON.stringify(message));
+        }
+      });
+
+      api.hookEvent(key, 'registered', onRegister);
+
+      this.scope.debug('attempting to connect to ' + module_creds.server + ':' + module_creds.port + ' [secure:' + is_secure + ']');
+
+      // connect...
+      client = api.createClient(key, module_creds);
+    },
+    listeners: {
+      '*': function (object) {
+        // debug('HANDLER * called [' + this.id + ']: ', object);
+        if (typeof object.names === 'object') {
+          // user list
+          this.scope.debug('received user list: ' + object.channel);
+          this.scope.send({
+            '@type': 'observe',
+            actor: {
+              '@type': 'room',
+              '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
+              displayName: object.channel
             },
             target: {
               '@type': 'room',
               '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
               displayName: object.channel
             },
-            object: {},
+            object: {
+              '@type': 'attendance',
+              members: object.names
+            },
             published: object.time
           });
-        }
-      } else if ((typeof object.target === 'string') &&
-                 (typeof object.message === 'string')) {
-        // message
-        if (! object.nickname) {
-          this.scope.debug('received UNKNOWN: ', object);
-        } else {
-          var msg_prefix = ':' + object.nickname + '!' + object.username + '@' + object.hostname;
-          var type = 'message';
-
-          if (object.raw.indexOf(msg_prefix + ' NOTICE ') === 0) {
-            type = 'notice';
-          } else if (object.raw.indexOf('ACTION ') === ((msg_prefix + ' PRIVMSG ' + object.target).length + 3)) {
-            type = 'me';
-          }
-
-          this.scope.debug('received ' + type + ' : ' + object.nickname + ' -> ' + object.target);
+        } else if ((typeof object.channel === 'string') &&
+                  (typeof object.who === 'object')) {
+          // full who
+          return;
+        } else if ((typeof object.topic === 'string') &&
+                  (typeof object.topicBy === 'string')) {
+          // topic
+          this.scope.debug('received topic change list: ' + object.channel + ':' + object.topicBy + ': ' + object.topic);
           this.scope.send({
-            '@type': 'send',
+            '@type': 'update',
+            actor: {
+              '@type': 'person',
+              '@id': 'irc://' + object.topicBy + '@' + this.credentials.object.server,
+              displayName: object.topicBy
+            },
+            target: {
+              '@type': 'room',
+              '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
+              displayName: object.channel
+            },
+            object: {
+              '@type': 'topic',
+              topic: object.topic
+            },
+            published: object.time
+          });
+        } else if (typeof object.newnick === 'string') {
+          // nick change
+          this.scope.debug('received nick change ' + object.nickname + ' -> ' + object.newnick);
+          this.scope.send({
+            '@type': 'update',
             actor: {
               '@type': 'person',
               '@id': 'irc://' + object.nickname + '@' + this.credentials.object.server,
               displayName: object.nickname
             },
             target: {
-              displayName: object.target
+              '@type': 'person',
+              '@id': 'irc://' + object.newnick + '@' + this.credentials.object.server,
+              displayName: object.newnick
             },
             object: {
-              '@type': type,
-              content: object.message
+              '@type': 'address'
             },
             published: object.time
           });
-        }
-      } else if (typeof object.motd === 'object') {
-        // send motd
-        this.scope.debug('sending motd');
-        this.scope.send({
-          '@type': 'update',
-          actor: {
-            '@type': 'service',
-            '@id': 'irc://' + this.credentials.object.server,
-            displayName: this.credentials.object.server
-          },
-          object: {
-            '@type': 'topic',
-            content: object.motd
-          },
-          published: object.time
-        });
-      } else if ((typeof object.nickname === 'string') &&
-                 (typeof object.mode === 'string')) {
-        // verify username
-        debug('verifying username ' + object.nickname + ' against ' + this.id);
-        return;
-      } else if ((typeof object.nickname === 'string') &&
-                 (typeof object.capabilities === 'object') &&
-                 (typeof object.time === 'string') &&
-                 (typeof object.raw === 'object')) {
-        // registered
-        debug('registered! ', object);
-      } else if ((object.reconnecting === true) &&
-                 (typeof object.attempts === 'number')) {
-        // disconected, reconnecting
-        debug('disconnected, reconnecting. for ' + this.id);
-        this.connection.irc.reconnect();
-      } else if ((typeof object.nickname === 'string') &&
-                 (typeof object.target === 'undefined')) {
-        // QUIT
-        debug('received quit');
-        var quitter = object.kicked || object.nickname;
-        var msg = (typeof object.kicked === 'string') ? 'user has been kicked' : 'user has quit';
-        this.scope.debug((typeof object.kicked === 'string') ? 'kick' : 'quit' + '', object);
+        } else if ((typeof object.channel === 'string') &&
+                  (object.raw.indexOf(' JOIN ') >= 0)) {
+          // join
+          this.scope.debug('received join: ' + object.nickname + ' -> ' + object.channel, object);
+          if (! object.nickname) {
+            this.scope.debug('skipping join message with undefined nickname');
+          } else {
+            this.scope.send({
+              '@type': 'join',
+              actor: {
+                '@type': 'person',
+                '@id': 'irc://' + object.nickname + '@' + this.credentials.object.server,
+                displayName: object.nickname
+              },
+              target: {
+                '@type': 'room',
+                '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
+                displayName: object.channel
+              },
+              object: {},
+              published: object.time
+            });
+          }
+        } else if ((typeof object.target === 'string') &&
+                  (typeof object.message === 'string')) {
+          // message
+          if (! object.nickname) {
+            this.scope.debug('received UNKNOWN: ', object);
+          } else {
+            var msg_prefix = ':' + object.nickname + '!' + object.username + '@' + object.hostname;
+            var type = 'message';
 
-        if (! this.scope.disconnected) {
+            if (object.raw.indexOf(msg_prefix + ' NOTICE ') === 0) {
+              type = 'notice';
+            } else if (object.raw.indexOf('ACTION ') === ((msg_prefix + ' PRIVMSG ' + object.target).length + 3)) {
+              type = 'me';
+            }
+
+            this.scope.debug('received ' + type + ' : ' + object.nickname + ' -> ' + object.target);
+            this.scope.send({
+              '@type': 'send',
+              actor: {
+                '@type': 'person',
+                '@id': 'irc://' + object.nickname + '@' + this.credentials.object.server,
+                displayName: object.nickname
+              },
+              target: {
+                displayName: object.target
+              },
+              object: {
+                '@type': type,
+                content: object.message
+              },
+              published: object.time
+            });
+          }
+        } else if (typeof object.motd === 'object') {
+          // send motd
+          this.scope.debug('sending motd');
+          this.scope.send({
+            '@type': 'update',
+            actor: {
+              '@type': 'service',
+              '@id': 'irc://' + this.credentials.object.server,
+              displayName: this.credentials.object.server
+            },
+            object: {
+              '@type': 'topic',
+              content: object.motd
+            },
+            published: object.time
+          });
+        } else if ((typeof object.nickname === 'string') &&
+                  (typeof object.mode === 'string')) {
+          // verify username
+          debug('verifying username ' + object.nickname + ' against ' + this.credentials.actor.displayName);
+          if (object.nickname !== this.credentials.actor.displayName) {
+              this.scope.debug('server name conflict, renaming to ' + object.nickname);
+              __renameUser('irc://' + object.nickname + '@' + this.credentials.object.server, 
+                          object.nickname, this.credentials, this.scope.store, session.client, function (err) {
+                  this.scope.send({
+                      '@type': 'update',
+                      actor: {
+                          '@type': 'person',
+                          '@id': 'irc://' + this.credentials.actor.displayName + '@' + this.credentials.object.server,
+                          displayName: this.credentials.actor.displayName
+                      },
+                      target: {
+                          '@type': 'person',
+                          '@id': 'irc://' + object.nickname + '@' + this.credentials.object.server,
+                          displayName: object.nickname
+                      },
+                      object: {
+                          '@type': 'address'
+                      },
+                      published: object.time
+                  });
+              }.bind(this));    
+          }
+          return;
+        } else if ((typeof object.nickname === 'string') &&
+                  (typeof object.capabilities === 'object') &&
+                  (typeof object.time === 'string') &&
+                  (typeof object.raw === 'object')) {
+          // registered
+          debug('registered! ', object);
+        } else if ((object.reconnecting === true) &&
+                  (typeof object.attempts === 'number')) {
+          // disconected, reconnecting
+          debug('disconnected, reconnecting. for ' + this.id);
+          this.connection.irc.reconnect();
+        } else if ((typeof object.nickname === 'string') &&
+                  (typeof object.target === 'undefined')) {
+          // QUIT
+          debug('received quit');
+          var quitter = object.kicked || object.nickname;
+          var msg = (typeof object.kicked === 'string') ? 'user has been kicked' : 'user has quit';
+          this.scope.debug((typeof object.kicked === 'string') ? 'kick' : 'quit' + '', object);
+
+          if (! this.scope.disconnected) {
+            this.scope.send({
+              '@type': 'leave',
+              actor: {
+                '@type': 'person',
+                '@id': 'irc://' + quitter + '@' + this.credentials.object.server,
+                displayName: quitter
+              },
+              target: {
+                '@type': 'room',
+                '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
+                displayName: object.channel
+              },
+              object: {
+                '@type': 'message',
+                content: msg
+              },
+              published: object.time
+            });
+          }
+
+          // if (quitter === this.credentials.actor.displayName) {
+          //   this.scope.debug('disconnecting self');
+          //   if ((this.connection) && (this.connection.irc.disconnect)) {
+          //     this.connection.irc.disconnect();
+          //   }
+          //   this.scope.disconnected = true;
+          // }
+        } else if ((typeof object.channel === 'string') &&
+                  (object.raw.indexOf(' PART ') >= 0)) {
+          // leave
+          this.scope.debug('received leave: ' + object.nickname + ' -> ' + object.target, object);
           this.scope.send({
             '@type': 'leave',
             actor: {
               '@type': 'person',
-              '@id': 'irc://' + quitter + '@' + this.credentials.object.server,
-              displayName: quitter
+              '@id': 'irc://' + object.nickname + '@' + this.credentials.object.server,
+              displayName: object.nickname
             },
             target: {
               '@type': 'room',
-              '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
-              displayName: object.channel
+              '@id': 'irc://' + this.credentials.object.server + '/' + object.target,
+              displayName: object.target
             },
             object: {
               '@type': 'message',
-              content: msg
+              content: 'user has left the channel'
             },
             published: object.time
           });
+        } else {
+          debug('Unprocessed message [' + this.id + ']: ', object);
         }
-
-        // if (quitter === this.credentials.actor.displayName) {
-        //   this.scope.debug('disconnecting self');
-        //   if ((this.connection) && (this.connection.irc.disconnect)) {
-        //     this.connection.irc.disconnect();
-        //   }
-        //   this.scope.disconnected = true;
-        // }
-      } else if ((typeof object.channel === 'string') &&
-                 (object.raw.indexOf(' PART ') >= 0)) {
-        // leave
-        this.scope.debug('received leave: ' + object.nickname + ' -> ' + object.target, object);
-        this.scope.send({
-          '@type': 'leave',
-          actor: {
-            '@type': 'person',
-            '@id': 'irc://' + object.nickname + '@' + this.credentials.object.server,
-            displayName: object.nickname
-          },
-          target: {
-            '@type': 'room',
-            '@id': 'irc://' + this.credentials.object.server + '/' + object.target,
-            displayName: object.target
-          },
-          object: {
-            '@type': 'message',
-            content: 'user has left the channel'
-          },
-          published: object.time
-        });
-      } else {
-        debug('Unprocessed message [' + this.id + ']: ', object);
       }
+    },
+    addListener: function (name, func) {
+      this.scope.debug('addListener called! ' + this.id + ' ' + name);
+      api.hookEvent(this.id, name, func);
+    },
+    removeListener: function (name) {
+      this.scope.debug('removeListener called!');
+      api.unhookEvent(this.id, name);
+    },
+    isConnected: function () {
+      debug('isConnected() called, returning: ' + this.connection.irc.isConnected());
+      return this.connection.irc.isConnected();
+    },
+    disconnect: function (cb) {
+      this.scope.debug('disconnect for ' + this.id);
+      this.scope.quit = true;
+      api.destroyClient(this.id);
+      cb();
     }
-  },
-  addListener: function (name, func) {
-    this.scope.debug('addListener called! ' + this.id + ' ' + name);
-    api.hookEvent(this.id, name, func);
-  },
-  removeListener: function (name) {
-    this.scope.debug('removeListener called!');
-    api.unhookEvent(this.id, name);
-  },
-  isConnected: function () {
-    debug('isConnected() called, returning: ' + this.connection.irc.isConnected());
-    return this.connection.irc.isConnected();
-  },
-  disconnect: function (cb) {
-    this.scope.debug('disconnect for ' + this.id);
-    this.scope.quit = true;
-    api.destroyClient(this.id);
-    cb();
-  }
-};
+  };
+}
 
 /**
  * Function: join
@@ -470,10 +515,10 @@ var createObj = {
  */
 IRC.prototype.join = function (job, done) {
   var self = this;
-
+console.log('+++++++ JOIN this: ', this);
   self.session.debug('join() called for ' + job.actor['@id']);
 
-  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+  self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
     if (err) { return done(err); }
     self.session.debug('got client for ' + job.actor['@id']);
     // join channel
@@ -516,7 +561,7 @@ IRC.prototype.leave = function (job, done) {
 
   self.session.debug('leave() called');
 
-  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+  self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
     if (err) { return done(err); }
     // leave channel
     self.session.debug('leave: ' + job.actor.displayName + ' -< ' + job.target.displayName);
@@ -562,7 +607,7 @@ IRC.prototype.send = function (job, done) {
 
   self.session.debug('send() called for ' + job.actor['@id'] + ' target: ' + job.target['@id']);
 
-  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+  self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
     if (err) { return done(err); }
     err = undefined;
 
@@ -668,7 +713,7 @@ IRC.prototype.update = function (job, done) {
 
   self.session.debug('update() called for ' + job.actor.displayName);
 
-  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+  self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
     if (err) { return done(err); }
     self.session.debug('update(): got client object');
 
@@ -676,29 +721,7 @@ IRC.prototype.update = function (job, done) {
       self.session.debug('changing nick from ' + job.actor.displayName + ' to ' + job.target.displayName);
       // send nick change command
       client.connection.irc.raw(['NICK', job.target.displayName]);
-
-      // preserve old creds
-      var oldCreds = client.credentials; //JSON.parse(JSON.stringify(client.credentials));
-      var newCreds = JSON.parse(JSON.stringify(client.credentials));
-
-      // set new credentials
-      newCreds.object.nick       = job.target.displayName;
-      newCreds.actor.displayName = job.target.displayName;
-      newCreds.actor['@id']          = job.target['@id'];
-
-      self.session.store.save(job.target['@id'], newCreds, function (err) {
-        if (err) {
-          return done(err);
-        }
-
-        // reset index of client object in connection manager
-        self.session.client.move(job.actor['@id'],
-                                 oldCreds,
-                                 job.target['@id'],
-                                 newCreds);
-        return done();
-      });
-
+      __renameUser(job.target['@id'], job.target.displayName, self.credentials, self.session.store, self.session.client, done);
     } else if (job.object['@type'] === 'topic') {
       // update topic
       self.session.debug('changing topic in channel ' + job.target.displayName);
@@ -769,7 +792,7 @@ IRC.prototype.observe = function (job, done) {
 
   self.session.debug('observe() called for ' + job.actor['@id']);
 
-  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+  self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
     if (err) { return done(err); }
     self.session.debug('observe(): got client object');
     if (job.object['@type'] === 'attendance') {
@@ -788,7 +811,7 @@ IRC.prototype.cleanup = function (done) {
   this._channels = [];
   done();
   // var self = this;
-  // self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+  // self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
   //   if (err) { return done(err); }
   //   client.scope.debug('cleanup(): got client object');
   //   client.connection.irc.disconnect();
