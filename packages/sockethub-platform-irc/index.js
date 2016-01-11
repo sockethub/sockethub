@@ -147,7 +147,7 @@ IRC.prototype.schema = {
 
 function __renameUser(id, displayName, credentials, store, client, cb) {
     // preserve old creds
-    var oldCreds = credentials; 
+    var oldCreds = credentials;
     var newCreds = JSON.parse(JSON.stringify(credentials));
 
     // set new credentials
@@ -369,7 +369,7 @@ function __genClientConnectionObject(session) {
           debug('verifying username ' + object.nickname + ' against ' + this.credentials.actor.displayName);
           if (object.nickname !== this.credentials.actor.displayName) {
               this.scope.debug('server name conflict, renaming to ' + object.nickname);
-              __renameUser('irc://' + object.nickname + '@' + this.credentials.object.server, 
+              __renameUser('irc://' + object.nickname + '@' + this.credentials.object.server,
                           object.nickname, this.credentials, this.scope.store, session.client, function (err) {
                   this.scope.send({
                       '@type': 'update',
@@ -388,7 +388,7 @@ function __genClientConnectionObject(session) {
                       },
                       published: object.time
                   });
-              }.bind(this));    
+              }.bind(this));
           }
           return;
         } else if ((typeof object.nickname === 'string') &&
@@ -403,9 +403,10 @@ function __genClientConnectionObject(session) {
           debug('disconnected, reconnecting. for ' + this.id);
           this.connection.irc.reconnect();
         } else if ((typeof object.nickname === 'string') &&
-                  (typeof object.target === 'undefined')) {
+                  (typeof object.target === 'undefined') &&
+                  (typeof object.capabilities !== 'object')) {
           // QUIT
-          debug('received quit');
+          debug('received quit', object);
           var quitter = object.kicked || object.nickname;
           var msg = (typeof object.kicked === 'string') ? 'user has been kicked' : 'user has quit';
           this.scope.debug((typeof object.kicked === 'string') ? 'kick' : 'quit' + '', object);
@@ -515,7 +516,6 @@ function __genClientConnectionObject(session) {
  */
 IRC.prototype.join = function (job, done) {
   var self = this;
-console.log('+++++++ JOIN this: ', this);
   self.session.debug('join() called for ' + job.actor['@id']);
 
   self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
