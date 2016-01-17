@@ -43,6 +43,7 @@ var packageJSON = require('./package.json');
 function IRC(session) {
   this.session   = session;
   this._channels = [];
+  this._uniqueIDs = []; // unique IDs used in this session
 }
 
 /**
@@ -400,8 +401,13 @@ function __genClientConnectionObject(session) {
         } else if ((object.reconnecting === true) &&
                   (typeof object.attempts === 'number')) {
           // disconected, reconnecting
-          debug('disconnected, reconnecting. for ' + this.id);
-          this.connection.irc.reconnect();
+          if ((typeof this.connection.irc === 'object') &&
+             (typeof this.connection.irc.reconnect === 'function')) {
+            debug('disconnected, reconnecting. for ' + this.id);
+            this.connection.irc.reconnect();
+          } else {
+            debug('skipping reconnect as we are already disconnected. for ' + this.id);
+          }
         } else if ((typeof object.nickname === 'string') &&
                   (typeof object.target === 'undefined') &&
                   (typeof object.capabilities !== 'object')) {
@@ -481,6 +487,8 @@ function __genClientConnectionObject(session) {
     disconnect: function (cb) {
       this.scope.debug('disconnect for ' + this.id);
       this.scope.quit = true;
+      this.connection.irc.disconnect();
+      api.unhookEvent(this.id, '*'); // this has to happen before the destroyClient or the client stays alive.
       api.destroyClient(this.id);
       cb();
     }
@@ -520,11 +528,13 @@ IRC.prototype.join = function (job, done) {
 
   self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
     if (err) { return done(err); }
+
+    self.__addUnique(job.actor['@id']);
     self.session.debug('got client for ' + job.actor['@id']);
     // join channel
     self.session.debug('join: ' + job.actor.displayName + ' -> ' + job.target.displayName);
     client.connection.irc.raw(['JOIN', job.target.displayName]);
-    self._joined(job.target.displayName);
+    self.__joined(job.target.displayName);
 
     done();
   });
@@ -564,9 +574,10 @@ IRC.prototype.leave = function (job, done) {
   self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
     if (err) { return done(err); }
     // leave channel
+    self.__addUnique(job.actor['@id']);
     self.session.debug('leave: ' + job.actor.displayName + ' -< ' + job.target.displayName);
     client.connection.irc.raw(['PART', job.target.displayName]);
-    self._left(job.target.displayName);
+    self.__left(job.target.displayName);
     done();
   });
 };
@@ -611,6 +622,7 @@ IRC.prototype.send = function (job, done) {
     if (err) { return done(err); }
     err = undefined;
 
+    self.__addUnique(job.actor['@id']);
     self.session.debug('send(): got client object');
 
     if (typeof job.object.content !== 'string') {
@@ -645,7 +657,7 @@ IRC.prototype.send = function (job, done) {
       // attempt to send as raw command
       self.session.debug('sending RAW command: NOTICE to ' + job.target.displayName + ', ' + job.object.content);
       client.connection.irc.raw(['NOTICE', job.target.displayName, job.object.content]);
-    } else if (self._isJoined(job.target.displayName)) {
+    } else if (self.__isJoined(job.target.displayName)) {
       self.session.debug('irc.say: ' + job.target.displayName + ', [' + job.object.content + ']');
       client.connection.irc.privmsg(job.target.displayName, job.object.content, true); //forcePushback
     } else {
@@ -715,6 +727,8 @@ IRC.prototype.update = function (job, done) {
 
   self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
     if (err) { return done(err); }
+
+    self.__addUnique(job.actor['@id']);
     self.session.debug('update(): got client object');
 
     if (job.target['@type'] === 'person') {
@@ -789,11 +803,11 @@ IRC.prototype.update = function (job, done) {
  */
 IRC.prototype.observe = function (job, done) {
   var self = this;
-
   self.session.debug('observe() called for ' + job.actor['@id']);
-
   self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
     if (err) { return done(err); }
+
+    self.__addUnique(job.actor['@id']);
     self.session.debug('observe(): got client object');
     if (job.object['@type'] === 'attendance') {
       self.session.debug('objserve() - sending NAMES for ' + job.target.displayName);
@@ -803,23 +817,32 @@ IRC.prototype.observe = function (job, done) {
       done("unknown '@type' '" + job.object['@type'] + "'");
     }
   });
-
 };
 
 
 IRC.prototype.cleanup = function (done) {
+  // this.session.debug('cleanup() called, removing sessions for ', this._uniqueIDs);
+
+  this._uniqueIDs.forEach(function (id, i) {
+    this.session.client.get(id, __genClientConnectionObject(this.session), function (err, client) {
+      if (err) { return done(err); }
+      this.session.debug('cleanup(): disconnection ' + id);
+      if (client.connection.irc === 'object') {
+        if (client.connection.irc.disconnect === 'function') {
+          client.connection.irc.disconnect();
+        }
+      }
+    }.bind(this));
+    this._uniqueIDs.splice(this._uniqueIDs.indexOf(id), 1); // remove this id from list
+  }.bind(this));
+
+  this.session.client.removeAll();
+  this._uniqueIDs = [];
   this._channels = [];
   done();
-  // var self = this;
-  // self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
-  //   if (err) { return done(err); }
-  //   client.scope.debug('cleanup(): got client object');
-  //   client.connection.irc.disconnect();
-  //   done();
-  // });
 };
 
-IRC.prototype._isJoined = function (channel) {
+IRC.prototype.__isJoined = function (channel) {
   if (channel.indexOf('#') === 0) {
     // valid channel name
     if (this._channels.indexOf(channel) >= 0) {
@@ -833,14 +856,14 @@ IRC.prototype._isJoined = function (channel) {
   }
 };
 
-IRC.prototype._joined = function (channel) {
+IRC.prototype.__joined = function (channel) {
   // keep track of channels joined
   if (this._channels.indexOf(channel) < 0) {
     this._channels.push(channel);
   }
 };
 
-IRC.prototype._left = function (channel) {
+IRC.prototype.__left = function (channel) {
   // keep track of channels left
   var index = this._channels.indexOf(channel);
 
@@ -849,5 +872,13 @@ IRC.prototype._left = function (channel) {
   }
 };
 
+IRC.prototype.__addUnique = function (field) {
+  if (this._uniqueIDs.indexOf(field) >= 0) {
+    return false;
+  } else {
+    this._uniqueIDs.push(field);
+    return true;
+  }
+};
 
 module.exports = IRC;
