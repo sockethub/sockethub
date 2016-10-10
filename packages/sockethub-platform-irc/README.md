@@ -2,7 +2,6 @@
 
 A sockethub platform module implementing IRC functionality.
 
-
 [![Build Status](http://img.shields.io/travis/sockethub/sockethub-platform-irc.svg?style=flat)](https://travis-ci.org/sockethub/sockethub-platform-irc)
 [![Dependency Status](http://img.shields.io/david/sockethub/sockethub-platform-irc.svg?style=flat)](https://david-dm.org/sockethub/sockethub-platform-irc#info=dependencies)
 [![devDependency Status](http://img.shields.io/david/dev/sockethub/sockethub-platform-irc.svg?style=flat)](https://david-dm.org/sockethub/sockethub-platform-irc#info=devDependencies)
@@ -18,7 +17,8 @@ This module contains all of the implementation details of an IRC client and is
 used as a sockethub platform.
 
 # Object Formats
-## contected to IRC:
+
+## Connected to IRC:
 
 ```json
 {
