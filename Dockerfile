@@ -1,4 +1,4 @@
-FROM nodesource/node:trusty
+FROM nodesource/trusty:4.6
 MAINTAINER Ben Kero <ben.kero@gmail.com>
 
 RUN apt-get update
