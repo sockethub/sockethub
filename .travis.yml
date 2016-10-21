@@ -1,9 +1,17 @@
 language: node_js
 node_js:
-  - 0.10
-  - 0.11
+  - 4 # LTS
+  - 6 # latest
 services: redis
 sudo: false
 script: npm test
 install:
   - npm update -g npm; npm install
+env:
+  - CXX=g++-4.8
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-4.8
