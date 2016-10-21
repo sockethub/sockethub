@@ -33,7 +33,7 @@
   "homepage": "http://github.com/sockethub/sockethub",
   "dependencies": {
     "activity-streams": "^2.0.4",
-    "array-keys": "^2.1.3",
+    "array-keys": "^2.2.0",
     "body-parser": "^1.14.0",
     "connection-manager": "^0.1.8",
     "dead-simple-crypt": "0.0.1",
@@ -41,7 +41,7 @@
     "ejs": "^2.3.4",
     "express": "^4.10.6",
     "jquery": "^2.1.4",
-    "kue": "^0.9.5",
+    "kue": "^0.11.2",
     "nconf": "^0.8.2",
     "rand-token": "^0.2.1",
     "secure-store-redis": "^0.1.2",
