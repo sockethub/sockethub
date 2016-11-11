@@ -1,7 +1,7 @@
 /**
  * This is a platform for sockethub implementing IRC functionality.
  *
- * copyright 2012-2015 Nick Jennings (https://github.com/sil@typeucket)
+ * copyright 2012-2015 Nick Jennings (https://github.com/silverbucket)
  *
  * sockethub is licensed under the LGPLv3.
  * See the LICENSE file for details.
