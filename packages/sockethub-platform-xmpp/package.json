@@ -1,0 +1,33 @@
+{
+  "name": "sockethub-platform-xmpp",
+  "description": "A sockethub platform module implementing XMPP functionality",
+  "version": "1.0.0",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "LGPL-3.0+",
+  "keywords": [
+    "sockethub",
+    "messaging",
+    "activitystreams",
+    "activity",
+    "streams",
+    "protocol",
+    "xmpp"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/sockethub/sockethub-platform-xmpp.git"
+  },
+  "homepage": "https://github.com/sockethub/sockethub-platform-xmpp",
+  "dependencies": {
+    "debug": "^2.1.1"
+  },
+  "devDependencies": {
+    "jaribu": "^2.0.0",
+    "sockethub-testing-mocks": "^1.0.0",
+    "tv4": "^1.2.7"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/jaribu"
+  }
+}
