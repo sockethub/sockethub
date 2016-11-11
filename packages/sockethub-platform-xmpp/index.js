@@ -17,7 +17,7 @@
  */
 
 if (typeof (xmpp) !== 'object') {
-  xmpp = require('irc-factory');
+  xmpp = require('node-simple-xmpp');
 }
 
 var debug = require('debug')('sockethub-platform-xmpp');
