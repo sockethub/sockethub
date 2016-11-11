@@ -17,7 +17,7 @@
  */
 
 if (typeof (xmpp) !== 'object') {
-  xmpp = require('node-simple-xmpp');
+  xmpp = require('simple-xmpp');
 }
 
 var debug = require('debug')('sockethub-platform-xmpp');
@@ -89,7 +89,7 @@ function XMPP(session) {
  *
  *
  */
-IRC.prototype.schema = {
+XMPP.prototype.schema = {
   "version": packageJSON.version,
   "messages" : {
     "required": [ '@type' ],
@@ -142,3 +142,271 @@ IRC.prototype.schema = {
     }
   }
 };
+
+var idCounter = 0;
+function nextId() {
+  return ++idCounter;
+}
+
+function jidStripResource(jid) {
+  return jid.split('/')[0];
+}
+
+var createObj = {
+  timeout: 30000,
+  connect: function (cb) {
+    var self = this;
+    self.scope.debug('calling connect for ' + self.credentials.actor['@id']);
+
+    //
+    // generate bareJid and fullJid
+    var fullJid;
+    if (self.credentials.object.username.indexOf('@') === -1) {
+      fullJid = self.credentials.object.username + '@' + self.credentials.object.server + '/' + self.credentials.object.resource;
+    } else {
+      fullJid = self.credentials.object.username + '/' + self.credentials.object.resource;
+    }
+
+    //
+    // credential object to pass to simple-xmpp
+    var xmpp_creds = {
+      jid: fullJid,
+      password: self.credentials.object.password
+    };
+    if (self.credentials.object.server) {
+      xmpp_creds.host = self.credentials.object.server;
+    }
+    if (credentials.port) {
+      xmpp_creds.port = self.credentials.object.port;
+    }
+
+    var handlers = {
+      error: function (error) {
+        var msg = 'failed connecting ' + fullJid;
+        msg = (error) ? msg + ' : ' + error : msg;
+        try {
+          self.scope.debug("connect error: " + error);
+          client.disconnect();
+        } catch (e) {
+          self.scope.debug('connect error: failed disconnect ', e);
+        }
+        cb(msg);
+      },
+      online: function () {
+        self.scope.debug('connected with jid: ' + fullJid);
+        xmpp.removeListener('online', handlers.online);
+        xmpp.removeListener('error', handlers.error);
+        xmpp.removeListener('close', handlers.close);
+        cb(null, xmpp);
+      },
+      close: function () {
+        // FIXME - not sure in what cases this happens
+        self.scope.debug('close received for ' + fullJid);
+        cb('received close event for '+ fullJid);
+      }
+    };
+
+    xmpp.on('online', handlers.online);
+    xmpp.on('error', handlers.error);
+    xmpp.on('close', handlers.close);
+
+    xmpp.connect(xmpp_creds);
+    self.scope.log('sent XMPP connect for account ' + fullJid);
+  },
+  listeners: {
+    stanza: function (stanza) {
+      this.scope.debug("got XMPP stanza: " + stanza);
+      if (stanza.is('iq')) {
+        var query = stanza.getChild('query');
+        if (query) {
+          var entries = query.getChildren('item');
+          for (var e in entries) {
+            if (!entries.hasOwnProperty(e)) {
+              continue;
+            }
+            this.scope.debug('STANZA ATTRS: ', entries[e].attrs);
+            if (entries[e].attrs.subscription === 'both') {
+              this.scope.send({
+                '@type': 'update',
+                actor: { '@id': entries[e].attrs.jid, displayName: entries[e].attrs.name },
+                target: this.credentials.actor,
+                object: {
+                  statusText: '',
+                  state: 'offline'
+                }
+              });
+            } else if ((entries[e].attrs.subscription === 'from') &&
+                      (entries[e].attrs.ask) && (entries[e].attrs.ask === 'subscribe')) {
+              this.scope.send({
+                '@type': 'update',
+                actor: { '@id': entries[e].attrs.jid, displayName: entries[e].attrs.name },
+                target: this.credentials.actor,
+                object: {
+                  statusText: '',
+                  state: 'notauthorized'
+                }
+              });
+            } else {
+              /**
+               * cant figure out how to know if one of these query stanzas are from
+               * added contacts or pending requests
+               */
+              this.scope.send({
+                '@type': 'request-friend',
+                actor: { '@id': entries[e].attrs.jid, displayName: entries[e].attrs.name },
+                target: this.credentials.actor
+              });
+            }
+          }
+        }
+      }
+    },
+    chat: function (from, message) {
+      this.scope.debug("received chat message from " + from);
+      this.scope.send({
+        '@type': 'send',
+        actor: { '@id': from },
+        target: this.credentials.actor,
+        object: {
+          content: message,
+          id: nextId()
+        }
+      });
+    },
+    buddy: function (from, state, statusText) {
+      if (from !== this.credentials.actor['@id']) {
+        this.scope.debug('received buddy state update: ' + from + ' - ' + state);
+        this.scope.send({
+          '@type': 'update',
+          actor: { '@id': from },
+          target: this.credentials.actor,
+          object: {
+            content: statusText,
+            state: state
+          }
+        });
+      }
+    },
+    subscribe: function (from) {
+      this.scope.debug('received subscribe request from ' + from);
+      this.scope.send({
+        '@type': "request-friend",
+        actor: { '@id': from },
+        target: this.credentials.actor
+      });
+    },
+    unsubscribe: function (from) {
+      this.scope.debug('received unsubscribe request from ' + from);
+      this.scope.send({
+        '@type': "remove-friend",
+        actor: { '@id': from },
+        target: this.credentials.actor
+      });
+    },
+    close: function () {
+      this.scope.debug('received close event with no handler specified');
+      this.scope.send({
+        '@type': 'close',
+        actor: this.credentials.actor,
+        target: this.credentials.actor
+      });
+      this.scope.debug('**** xmpp session for ' + this.credentials.actor['@id'] + ' closed');
+      session.clientManager.remove(this.credentials.actor['@id']);
+    },
+    error: function (error) {
+      try {
+        this.scope.debug("*** XMPP ERROR (rl): " + error);
+        this.scope.send({
+          '@type': 'error',
+          object: {
+            '@type': 'error',
+            content: error
+          }
+        });
+      } catch (e) {
+        this.scope.debug('*** XMPP ERROR (rl catch): ', e);
+      }
+    },
+    online: function () {
+      this.scope.debug('online');
+      this.scope.debug('reconnectioned ' + this.credentials.actor['@id']);
+    }
+  },
+  addListener: function (name, func) {
+    this.connection.xmpp.on(name, func);
+  },
+  removeListener: function (name) {
+    this.connection.xmpp.removeListener(name);
+  },
+  isConnected: function () {
+    this.scope.debug('isConnected() called: ' + this.connection.xmpp.STATUS);
+    if (this.connection.xmpp.STATUS === 'offline') {
+      return false;
+    } else {
+      return true;
+    }
+  },
+  disconnect: function (cb) {
+    // FIXME - review this, simple-xmpp has a close func now i believe
+    this.scope.log('should be CLOSING connection now, NOT IMPLEMENTED in node-xmpp');
+    this.scope.quit = true;
+    this.connection.xmpp.disconnect();
+    cb();
+  }
+}
+
+XMPP.prototype.join = function () {};
+
+/**
+ * Function: send
+ *
+ * Send a message to a room or private conversation.
+ *
+ * @param {object} - Activity streams job object
+ * @param {object} - callback when complete
+ *
+ * @example
+ *
+ *  {
+ *    context: 'xmpp',
+ *    '@type': 'send',
+ *    actor: {
+ *      '@id': 'xmpp://slvrbckt@jabber.net/Home',
+ *      '@type': 'person',
+ *      displayName: 'Nick Jennings',
+ *      userName: 'slvrbckt'
+ *    },
+ *    target: {
+ *      '@id': 'xmpp://homer@jabber.net/Home',
+ *      '@type': 'user',
+ *      displayName: 'Homer'
+ *    },
+ *    object: {
+ *      '@type': 'message',
+ *      content: 'Hello from Sockethub!'
+ *    }
+ *  }
+ *
+ */
+XMPP.prototype.send = function (job, done) {
+  var self = this;
+  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+    if (err) { return done(err); }
+    self.session.debug('got client for ' + job.actor['@id']);
+    //
+    // send message
+    self.session.debug('sending message to ' + job.target['@id']);
+    client.connection.xmpp.send(
+      job.target['@id'],
+      job.object.content
+    );
+    done();
+  });
+};
+
+XMPP.prototype.update = function () {};
+XMPP.prototype.observe = function () {};
+XMPP.prototype.leave = function () {};
+XMPP.prototype.cleanup = function () {};
+
+module.exports = XMPP;
