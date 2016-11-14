@@ -95,7 +95,7 @@ XMPP.prototype.schema = {
     "required": [ '@type' ],
     "properties": {
       "@type": {
-        "enum": [ 'update', 'join', 'leave', 'send', 'observe', 'announce' ]
+        "enum": [ 'update', 'send', 'request-friend', 'remove-friend', 'accept-friend' ]
       }
     }
   },
@@ -355,8 +355,6 @@ var createObj = {
   }
 }
 
-XMPP.prototype.join = function () {};
-
 /**
  * Function: send
  *
@@ -404,9 +402,94 @@ XMPP.prototype.send = function (job, done) {
   });
 };
 
-XMPP.prototype.update = function () {};
+
+/**
+ * Function: update
+ *
+ * Indicate presence and status message.
+ *
+ * Parameters:
+ *
+ *   job - activity streams job object
+ *
+ * Example:
+ *
+ *     (start code)
+ *     {
+ *       platform: 'xmpp',
+ *       verb: 'update',
+ *       actor: {
+ *         address: 'user@host.org/Home'
+ *       },
+ *       target: [],
+ *       object: {
+ *         objectType: 'presence'
+ *         presence: 'chat',
+ *         text: '...clever saying goes here...'
+ *       },
+ *       rid: 1234
+ *     }
+ *     (end code)
+ *
+ */
+XMPP.prototype.update = function (job, done) {
+  var self = this;
+  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+    if (err) { return done(err); }
+    self.session.debug('got client for ' + job.actor['@id']);
+
+    if (job.object['@type'] === 'presence') {
+      var show = job.object.presence === 'available' ? 'chat' : job.object.show;
+      var status = job.object.status || '';
+      //
+      // setting presence
+      self.session.debug('setting presence: ' + show + ' status: ' + status);
+      client.xmpp.setPresence(show, status);
+      self.session.debug('requesting XMPP roster');
+      client.xmpp.getRoster();
+      /*if (job.object.roster) {
+        _.session.log('requesting roster list');
+        client.xmpp.getRoster();
+      }*/
+      done();
+    } else {
+      done('unknown object type (should be presence?): ' + job.object['@type']);
+    }
+  });
+};
+
+XMPP.prototype['request-friend'] = function (job, done) {
+  var self = this;
+  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+    if (err) { return done(err); }
+    self.session.debug('request friend ' + job.target['@id']);
+    client.xmpp.subscribe(job.target['@id']);
+  });
+};
+
+XMPP.prototype['remove-friend'] = function (job, done) {
+  var self = this;
+  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+    if (err) { return done(err); }
+    self.session.debug('remove friend ' + job.target['@id']);
+    client.xmpp.unsubscribe(job.target['@id']);
+  });
+};
+
+XMPP.prototype['make-friend'] = function (job, done) {
+  var self = this;
+  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+    if (err) { return done(err); }
+    self.session.debug('make friend ' + job.target['@id']);
+    client.xmpp.acceptSubscription(job.target['@id']);
+  });
+};
+
+
 XMPP.prototype.observe = function () {};
-XMPP.prototype.leave = function () {};
-XMPP.prototype.cleanup = function () {};
+XMPP.prototype.cleanup = function () {
+  // FIXME
+  this.session.debug('cleanup called, but nothing implemented');
+};
 
 module.exports = XMPP;
