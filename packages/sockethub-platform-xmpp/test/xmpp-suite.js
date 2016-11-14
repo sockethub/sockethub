@@ -64,18 +64,18 @@ define(['require'], function (require) {
         }
       };
 
-      env.target = {
-        sockethub: {
-          '@type': 'room',
-          '@id': 'xmpp://jabber.net/sockethub',
-          displayName: '#sockethub'
-        },
-        remotestorage: {
-          '@type': 'room',
-          '@id': 'xmpp://jabber.net/remotestorage',
-          displayName: '#remotestorage'
-        }
-      };
+      // env.target = {
+      //   sockethub: {
+      //     '@type': 'room',
+      //     '@id': 'xmpp://jabber.net/sockethub',
+      //     displayName: '#sockethub'
+      //   },
+      //   remotestorage: {
+      //     '@type': 'room',
+      //     '@id': 'xmpp://jabber.net/remotestorage',
+      //     displayName: '#remotestorage'
+      //   }
+      // };
 
       env.job = {
         join: {
@@ -171,39 +171,39 @@ define(['require'], function (require) {
         }
       },
 
-      {
-        desc: "# join 1 channel",
-        run: function (env, test) {
-          env.platform.join(env.job.join.sockethub, function (err, result) {
-            test.assertTypeAnd(err, 'undefined', err);
-            test.assertType(result, 'undefined');
-          });
-        }
-      },
-      {
-        desc: "# join 1 - check stubs",
-        run: function (env, test) {
-          test.assertAnd(env.xmpp.connect.numCalled, 1);
-          test.assert(env.SimpleXMPP.ClientNumCalled(0), 1); // #sockethub
-        }
-      },
+      // {
+      //   desc: "# join 1 channel",
+      //   run: function (env, test) {
+      //     env.platform.join(env.job.join.sockethub, function (err, result) {
+      //       test.assertTypeAnd(err, 'undefined', err);
+      //       test.assertType(result, 'undefined');
+      //     });
+      //   }
+      // },
+      // {
+      //   desc: "# join 1 - check stubs",
+      //   run: function (env, test) {
+      //     test.assertAnd(env.xmpp.connect.numCalled, 1);
+      //     test.assert(env.SimpleXMPP.ClientNumCalled(0), 1); // #sockethub
+      //   }
+      // },
 
-      {
-        desc: "# join 2nd channel",
-        run: function (env, test) {
-          env.platform.join(env.job.join.remotestorage, function (err, result) {
-            test.assertTypeAnd(err, 'undefined', err);
-            test.assertType(result, 'undefined');
-          });
-        }
-      },
-      {
-        desc: "# join 2 - check stubs",
-        run: function (env, test) {
-          test.assertAnd(env.api.connect.numCalled, 1);
-          test.assert(env.SimpleXMPP.ClientNumCalled(0), 2); // #remotestorage
-        }
-      },
+      // {
+      //   desc: "# join 2nd channel",
+      //   run: function (env, test) {
+      //     env.platform.join(env.job.join.remotestorage, function (err, result) {
+      //       test.assertTypeAnd(err, 'undefined', err);
+      //       test.assertType(result, 'undefined');
+      //     });
+      //   }
+      // },
+      // {
+      //   desc: "# join 2 - check stubs",
+      //   run: function (env, test) {
+      //     test.assertAnd(env.api.connect.numCalled, 1);
+      //     test.assert(env.SimpleXMPP.ClientNumCalled(0), 2); // #remotestorage
+      //   }
+      // },
 
       {
         desc: "# send",
