@@ -4,58 +4,67 @@ var SimpleXMPP = function (test) {
   var clients = [];
 
   var xmpp = {
-    connect: new test.Stub(function (key, creds) {
-      test.write('XMPP STUB: connect called key: ' + key );
+    connect: new test.Stub(function (creds) {
+      test.write('XMPP STUB: connect called: ' + creds.jid );
 
       client = {
-        raw: test.Stub(function (arr) {
-          test.write('XMPP STUB: raw');
-        }),
         send: test.Stub(function (arr) {
           test.write('XMPP STUB: privmsg');
         }),
         triggerEvent: test.Stub(function (name) {
-          if (!callbacks[key]) {
-            callbacks[key] = {};
-          } else if (typeof callbacks[key][name] === 'function') {
-            callbacks[key][name]();
+          if (!callbacks) {
+            callbacks = {};
+          } else if (typeof callbacks[name] === 'function') {
+            callbacks[name]();
           }
         })
       };
       clients.push(client);
       setTimeout(function () {
-        if (!callbacks[key]) {
-          callbacks[key] = {};
-        } else if (typeof callbacks[key].registered === 'function') {
+        // console.log('call registered ', Object.keys(callbacks));
+        if (!callbacks) {
+          callbacks = {};
+        } else if (typeof callbacks.online === 'function') {
           //test.write('XMPP STUB: calling registered callback with client:', client);
-          callbacks[key].registered(client);
+          callbacks.online(client);
         }
       }, 0);
       return client;
     }),
     removeListener: new test.Stub(function (key, name) {
       test.write('XMPP STUB: unhookEvent');
-      if (!callbacks[key]) {
-        callbacks[key] = {};
+      if (!callbacks) {
+        callbacks = {};
       } else {
-        delete callbacks[key][name];
+        delete callbacks[name];
       }
     }),
-    on: new test.Stub(function (key, name, func) {
-      test.write('IRC STUB: hookEvent');
-      if (!callbacks[key]) {
-        callbacks[key] = {};
+    on: new test.Stub(function (name, func) {
+      test.write('XMPP STUB: hookEvent');
+      if (!callbacks) {
+        callbacks = {};
       }
-      callbacks[key][name] = func;
+      callbacks[name] = func;
+    }),
+    send: new test.Stub(function (target, message) {
+      test.write('XMPP STUB: send')
+    }),
+    setPresence: new test.Stub(function (target, message) {
+      test.write('XMPP STUB: setPresence')
+    }),
+    getRoster: new test.Stub(function (target, message) {
+      test.write('XMPP STUB: getRoster')
     })
   };
 
   return {
     ClientCalled: function (pos) {
-      return clients[pos].irc.raw.called;
+      return clients[pos].send.called;
     },
     ClientNumCalled: function (pos) {
-      return clients[pos].irc.raw.numCalled + clients[pos].irc.privmsg.numCalled;
+      console.log('clients['+pos+'] ', clients[pos]);
+      return clients[pos].send.numCalled;
+      // + clients[pos].xmpp.privmsg.numCalled;
     },
     xmpp: function () {
       return xmpp;

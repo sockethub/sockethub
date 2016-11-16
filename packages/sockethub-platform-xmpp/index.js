@@ -95,7 +95,7 @@ XMPP.prototype.schema = {
     "required": [ '@type' ],
     "properties": {
       "@type": {
-        "enum": [ 'update', 'send', 'request-friend', 'remove-friend', 'accept-friend' ]
+        "enum": [ 'update', 'send', 'request-friend', 'remove-friend', 'make-friend' ]
       }
     }
   },
@@ -176,7 +176,7 @@ var createObj = {
     if (self.credentials.object.server) {
       xmpp_creds.host = self.credentials.object.server;
     }
-    if (credentials.port) {
+    if (self.credentials.port) {
       xmpp_creds.port = self.credentials.object.port;
     }
 
@@ -211,7 +211,7 @@ var createObj = {
     xmpp.on('close', handlers.close);
 
     xmpp.connect(xmpp_creds);
-    self.scope.log('sent XMPP connect for account ' + fullJid);
+    self.scope.debug('sent XMPP connect for account ' + fullJid);
   },
   listeners: {
     stanza: function (stanza) {
@@ -333,14 +333,14 @@ var createObj = {
     }
   },
   addListener: function (name, func) {
-    this.connection.xmpp.on(name, func);
+    this.connection.on(name, func);
   },
   removeListener: function (name) {
-    this.connection.xmpp.removeListener(name);
+    this.connection.removeListener(name);
   },
   isConnected: function () {
-    this.scope.debug('isConnected() called: ' + this.connection.xmpp.STATUS);
-    if (this.connection.xmpp.STATUS === 'offline') {
+    this.scope.debug('isConnected() called: ' + this.connection.STATUS);
+    if (this.connection.STATUS === 'offline') {
       return false;
     } else {
       return true;
@@ -350,7 +350,7 @@ var createObj = {
     // FIXME - review this, simple-xmpp has a close func now i believe
     this.scope.log('should be CLOSING connection now, NOT IMPLEMENTED in node-xmpp');
     this.scope.quit = true;
-    this.connection.xmpp.disconnect();
+    this.connection.disconnect();
     cb();
   }
 }
@@ -394,7 +394,7 @@ XMPP.prototype.send = function (job, done) {
     //
     // send message
     self.session.debug('sending message to ' + job.target['@id']);
-    client.connection.xmpp.send(
+    client.connection.send(
       job.target['@id'],
       job.object.content
     );
@@ -444,12 +444,12 @@ XMPP.prototype.update = function (job, done) {
       //
       // setting presence
       self.session.debug('setting presence: ' + show + ' status: ' + status);
-      client.xmpp.setPresence(show, status);
+      client.connection.setPresence(show, status);
       self.session.debug('requesting XMPP roster');
-      client.xmpp.getRoster();
+      client.connection.getRoster();
       /*if (job.object.roster) {
         _.session.log('requesting roster list');
-        client.xmpp.getRoster();
+        client.connection.getRoster();
       }*/
       done();
     } else {
@@ -463,7 +463,7 @@ XMPP.prototype['request-friend'] = function (job, done) {
   self.session.client.get(job.actor['@id'], createObj, function (err, client) {
     if (err) { return done(err); }
     self.session.debug('request friend ' + job.target['@id']);
-    client.xmpp.subscribe(job.target['@id']);
+    client.connection.subscribe(job.target['@id']);
   });
 };
 
@@ -472,7 +472,7 @@ XMPP.prototype['remove-friend'] = function (job, done) {
   self.session.client.get(job.actor['@id'], createObj, function (err, client) {
     if (err) { return done(err); }
     self.session.debug('remove friend ' + job.target['@id']);
-    client.xmpp.unsubscribe(job.target['@id']);
+    client.connection.unsubscribe(job.target['@id']);
   });
 };
 
@@ -481,7 +481,7 @@ XMPP.prototype['make-friend'] = function (job, done) {
   self.session.client.get(job.actor['@id'], createObj, function (err, client) {
     if (err) { return done(err); }
     self.session.debug('make friend ' + job.target['@id']);
-    client.xmpp.acceptSubscription(job.target['@id']);
+    client.connection.acceptSubscription(job.target['@id']);
   });
 };
 
