@@ -148,6 +148,7 @@ IRC.prototype.schema = {
 
 function __renameUser(id, displayName, credentials, store, client, cb) {
     // preserve old creds
+    console.log('rename user: ', credentials);
     var oldCreds = credentials;
     var newCreds = JSON.parse(JSON.stringify(credentials));
 
@@ -541,8 +542,9 @@ IRC.prototype.join = function (job, done) {
 };
 
 /**
- * Function: leave
+ * @function leave
  *
+ * @description
  * Leave a room or private conversation.
  *
  * @param {object} - Activity streams job object
@@ -735,7 +737,7 @@ IRC.prototype.update = function (job, done) {
       self.session.debug('changing nick from ' + job.actor.displayName + ' to ' + job.target.displayName);
       // send nick change command
       client.connection.irc.raw(['NICK', job.target.displayName]);
-      __renameUser(job.target['@id'], job.target.displayName, self.credentials, self.session.store, self.session.client, done);
+      __renameUser(job.target['@id'], job.target.displayName, client.credentials, self.session.store, self.session.client, done);
     } else if (job.object['@type'] === 'topic') {
       // update topic
       self.session.debug('changing topic in channel ' + job.target.displayName);
