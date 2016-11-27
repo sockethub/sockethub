@@ -487,9 +487,10 @@ XMPP.prototype['make-friend'] = function (job, done) {
 
 
 XMPP.prototype.observe = function () {};
-XMPP.prototype.cleanup = function () {
+XMPP.prototype.cleanup = function (done) {
   // FIXME
   this.session.debug('cleanup called, but nothing implemented');
+  done();
 };
 
 module.exports = XMPP;
