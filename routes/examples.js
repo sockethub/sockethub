@@ -48,6 +48,20 @@ if (nconf.get('examples:enabled')) {
         randToken: randToken.generate(5)
       });
     }
+  },
+
+  {
+    meta: {
+      method: 'GET',
+      path: '/examples/xmpp'
+    },
+    route: function (req, res) {
+      res.render('examples/xmpp.ejs', {
+        debug_scope: debug_scope,
+        address: address,
+        randToken: randToken.generate(5)
+      });
+    }
   });
 }
 
