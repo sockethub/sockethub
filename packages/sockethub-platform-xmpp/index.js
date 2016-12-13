@@ -95,7 +95,7 @@ XMPP.prototype.schema = {
     "required": [ '@type' ],
     "properties": {
       "@type": {
-        "enum": [ 'update', 'send', 'request-friend', 'remove-friend', 'make-friend' ]
+        "enum": [ 'connect', 'update', 'send', 'request-friend', 'remove-friend', 'make-friend' ]
       }
     }
   },
@@ -215,7 +215,7 @@ var createObj = {
   },
   listeners: {
     stanza: function (stanza) {
-      this.scope.debug("got XMPP stanza: " + stanza);
+      this.scope.debug("got XMPP stanza... ");// + stanza);
       if (stanza.is('iq')) {
         var query = stanza.getChild('query');
         if (query) {
@@ -339,7 +339,6 @@ var createObj = {
     this.connection.removeListener(name);
   },
   isConnected: function () {
-    this.scope.debug('isConnected() called: ' + this.connection.STATUS);
     if (this.connection.STATUS === 'offline') {
       return false;
     } else {
@@ -348,12 +347,44 @@ var createObj = {
   },
   disconnect: function (cb) {
     // FIXME - review this, simple-xmpp has a close func now i believe
-    this.scope.log('should be CLOSING connection now, NOT IMPLEMENTED in node-xmpp');
+    this.scope.debug('should be CLOSING connection now, NOT IMPLEMENTED in node-xmpp');
     this.scope.quit = true;
     this.connection.disconnect();
     cb();
   }
 }
+
+/**
+ * Function: connect
+ *
+ * Connect to the XMPP server.
+ *
+ * @param {object} - Activity streams job object
+ * @param {object} - callback when complete
+ *
+ * @example
+ *
+ *  {
+ *    context: 'xmpp',
+ *    '@type': 'connect',
+ *    actor: {
+ *      '@id': 'xmpp://slvrbckt@jabber.net/Home',
+ *      '@type': 'person',
+ *      displayName: 'Nick Jennings',
+ *      userName: 'slvrbckt'
+ *    }
+ *  }
+ *
+ */
+XMPP.prototype.connect = function (job, done) {
+  var self = this;
+  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+    if (err) { return done(err); }
+    self.session.debug('got client for ' + job.actor['@id']);
+    done();
+  });
+};
+
 
 /**
  * Function: send
