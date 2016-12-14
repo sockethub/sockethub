@@ -1,11 +1,11 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.ActivityStreams = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /*!
  * activity-streams
- *   version 1.0.0
+ *   version 2.0.4
  *   http://github.com/silverbucket/activity-streams
  *
  * Developed and Maintained by:
- *   Nick Jennings <nick@silverbucket.net> copyright 2015
+ *   Nick Jennings <nick@silverbucket.net> copyright 2015-2016
  *
  * activity-streams is released under the MIT (see LICENSE).
  *
@@ -26,17 +26,17 @@ var objs        = new ArrayKeys({ identifier: '@id' }),
     specialObjs = [], // the objects don't get rejected for bad props
     baseProps   = {
       stream: [
-        '@id', '@type', 'actor', 'target', 'object', '@context', 'context', 
+        '@id', '@type', 'actor', 'target', 'object', '@context', 'context',
         'published', 'error'
       ],
       object: [
         '@id', '@type', '@context',
-        'alias', 'attachedTo', 'attachment', 'attributedTo', 'attributedWith', 
-        'content', 'context', 'contextOf', 'displayName', 'endTime', 'generator', 
-        'generatorOf', 'icon', 'image', 'inReplyTo', 'memberOf', 'location', 
-        'locationOf', 'objectOf', 'originOf', 'preview', 'previewOf', 'provider', 
-        'providerOf', 'published', 'rating', 'resultOf', 'replies', 'scope', 
-        'scopeOf', 'startTime', 'summary', 'tag', 'tagOf', 'targetOf', 'title', 
+        'alias', 'attachedTo', 'attachment', 'attributedTo', 'attributedWith',
+        'content', 'context', 'contextOf', 'displayName', 'endTime', 'generator',
+        'generatorOf', 'icon', 'image', 'inReplyTo', 'memberOf', 'location',
+        'locationOf', 'objectOf', 'originOf', 'presence', 'preview', 'previewOf', 'provider',
+        'providerOf', 'published', 'rating', 'resultOf', 'replies', 'scope',
+        'scopeOf', 'startTime', 'status', 'summary', 'tag', 'tagOf', 'targetOf', 'title',
         'updated', 'url', 'titleMap', 'contentMap', 'members'
       ]
     },
@@ -80,8 +80,7 @@ function validateObject(type, obj) {
         }
 
         if (specialObjs.indexOf(obj['@type']) < 0) {
-          console.log('bad obj: ', obj);
-          return 'invalid property ' + keys[i];
+          return 'invalid property: "' + keys[i] + '"';
         }
       }
     }
@@ -198,7 +197,7 @@ module.exports = function (opts) {
           customProps[keys[i]] = [];
           for (var j = 0, jlen = opts.customProps[keys[i]].length; j < jlen; j += 1) {
             customProps[keys[i]].push(opts.customProps[keys[i]][j]);
-          }        
+          }
         }
       }
     }
