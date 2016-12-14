@@ -1,10 +1,10 @@
 /*!
  * activity-streams
- *   version 2.0.3
+ *   version 2.0.4
  *   http://github.com/silverbucket/activity-streams
  *
  * Developed and Maintained by:
- *   Nick Jennings <nick@silverbucket.net> copyright 2015
+ *   Nick Jennings <nick@silverbucket.net> copyright 2015-2016
  *
  * activity-streams is released under the MIT (see LICENSE).
  *
@@ -25,17 +25,17 @@ var objs        = new ArrayKeys({ identifier: '@id' }),
     specialObjs = [], // the objects don't get rejected for bad props
     baseProps   = {
       stream: [
-        '@id', '@type', 'actor', 'target', 'object', '@context', 'context', 
+        '@id', '@type', 'actor', 'target', 'object', '@context', 'context',
         'published', 'error'
       ],
       object: [
         '@id', '@type', '@context',
-        'alias', 'attachedTo', 'attachment', 'attributedTo', 'attributedWith', 
-        'content', 'context', 'contextOf', 'displayName', 'endTime', 'generator', 
-        'generatorOf', 'icon', 'image', 'inReplyTo', 'memberOf', 'location', 
-        'locationOf', 'objectOf', 'originOf', 'preview', 'previewOf', 'provider', 
-        'providerOf', 'published', 'rating', 'resultOf', 'replies', 'scope', 
-        'scopeOf', 'startTime', 'summary', 'tag', 'tagOf', 'targetOf', 'title', 
+        'alias', 'attachedTo', 'attachment', 'attributedTo', 'attributedWith',
+        'content', 'context', 'contextOf', 'displayName', 'endTime', 'generator',
+        'generatorOf', 'icon', 'image', 'inReplyTo', 'memberOf', 'location',
+        'locationOf', 'objectOf', 'originOf', 'presence', 'preview', 'previewOf', 'provider',
+        'providerOf', 'published', 'rating', 'resultOf', 'replies', 'scope',
+        'scopeOf', 'startTime', 'status', 'summary', 'tag', 'tagOf', 'targetOf', 'title',
         'updated', 'url', 'titleMap', 'contentMap', 'members'
       ]
     },
@@ -79,7 +79,7 @@ function validateObject(type, obj) {
         }
 
         if (specialObjs.indexOf(obj['@type']) < 0) {
-          return 'invalid property ' + keys[i];
+          return 'invalid property: "' + keys[i] + '"';
         }
       }
     }
@@ -196,7 +196,7 @@ module.exports = function (opts) {
           customProps[keys[i]] = [];
           for (var j = 0, jlen = opts.customProps[keys[i]].length; j < jlen; j += 1) {
             customProps[keys[i]].push(opts.customProps[keys[i]][j]);
-          }        
+          }
         }
       }
     }
