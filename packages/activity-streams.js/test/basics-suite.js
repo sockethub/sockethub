@@ -54,14 +54,14 @@ function getTests() {
         var stream = env.mod.Stream({
           '@type': 'lol',
           actor: 'thingy1',
-          '@context': 'irc',
+          context: 'irc',
           object: 'hello world',
           target: [ 'thingy1', 'thingy2' ]
         });
         var expected = {
           '@type': 'lol',
           actor: { '@id': 'thingy1' },
-          '@context': 'irc',
+          context: 'irc',
           target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
           object: { 'content': 'hello world' }
         };
@@ -81,7 +81,7 @@ function getTests() {
         });
         var expected = {
           '@type': 'lol',
-          '@context': 'irc',
+          context: 'irc',
           actor: { '@id': 'thingy' },
           target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
           object: { '@type': 'stuff', content: 'har' }
@@ -102,7 +102,7 @@ function getTests() {
         });
         var expected = {
           '@type': 'lol',
-          '@context': 'irc',
+          context: 'irc',
           actor: { '@id': 'thingy' },
           target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
           object: { '@type': 'credentials', content: 'har', secure: true }
@@ -123,7 +123,7 @@ function getTests() {
         });
         var expected = {
           '@type': 'lol',
-          '@context': 'irc',
+          context: 'irc',
           actor: { '@id': 'thingy' },
           target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
           object: { '@type': 'dude', foo: 'bar', content: 'har', secure: true }
@@ -164,7 +164,7 @@ function getTests() {
         });
         var expected = {
           '@type': 'lol',
-          '@context': 'irc',
+          context: 'irc',
           actor: { '@id': 'thingy' },
           target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
           object: { content: 'allo matey' }

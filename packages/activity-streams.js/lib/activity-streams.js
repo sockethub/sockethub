@@ -89,8 +89,8 @@ function validateObject(type, obj) {
 
 var Stream = function (meta) {
   var stream = {};
-
   var err = validateObject('stream', meta);
+
   if (err) {
     throw new Error(err);
   }
@@ -101,6 +101,7 @@ var Stream = function (meta) {
       throw new Error(err);
     }
   }
+
 
   for (var key in meta) {
 
@@ -138,8 +139,8 @@ var Stream = function (meta) {
 var _Object = {
   create: function (obj) {
     var result = false;
-
     var err = validateObject('object', obj);
+
     if (err) {
       throw new Error(err);
     }
