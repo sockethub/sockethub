@@ -42,9 +42,9 @@
       <form id="intro" action="">
         <input id="username" autocomplete="off" value="username"><button class="invis" disabled>&nbsp;</button>
         <input id="password" type="password" autocomplete="off" value="password"><button class="invis" disabled>&nbsp;</button>
-        <input id="server" autocomplete="off" value="server"><button class="invis" disabled>&nbsp;</button>
+        <input id="server" autocomplete="off" value="jabber.org"><button class="invis" disabled>&nbsp;</button>
         <input id="port" type="number" autocomplete="off" value="5222"><button class="invis" disabled>&nbsp;</button>
-        <input id="resource" autocomplete="off" value="resource" disabled><button id="join">Join</button>
+        <input id="resource" autocomplete="off" value="Sockethub" disabled><button id="join">Join</button>
       </form>
     </div>
 
@@ -62,7 +62,7 @@
       localStorage.debug = 'sockethub:*';
       var config = {
         '@type': 'credentials',
-        server: 'jabber.net',
+        server: 'jabber.org',
         username: 'foobar',
         password: '123456',
         port: 5222,
@@ -126,7 +126,10 @@
         msg = sc.ActivityStreams.Stream(msg);
         debug('received message: ', msg);
 
-        if (msg['@type'] === 'observe') {
+        if (msg['@type'] === 'presence') {
+          var status = (msg.object.status) ? ': ' + msg.object.status : '';
+          $('#messages').append($('<li>').text('[ '+ msg.actor['@id'] + ' is ' + msg.object.presence + ']' + status ));
+        } else if (msg['@type'] === 'observe') {
           $('#messages').append($('<li>').text('[ users in ' + msg.actor.displayName + ' ]'));
           $('#messages').append($('<li>').text('[ ' + msg.object.members.join(', ') + ' ]'));
         } else if ((msg['@type'] === 'update') &&
@@ -147,6 +150,7 @@
 
       // creates an ActivityStreams object for our actor (us)
       function __updateActor(username) {
+        console.log('updating actor object for: ' + username);
         // our xmpp user info
         config.username = username; // set global nick
         actorString = 'xmpp://' + config.username + '@' + config.server + '/' + config.resource
@@ -185,7 +189,7 @@
                    (msg.actor.displayName === nick)) {
           // our nick has been updated
           __updateActor(msg.target.displayName);
-        } else if (msg['@type'] === 'join') {
+        } else if (msg['@type'] === 'connect') {
           $('.modal').css('display', 'none');
           $('input#m').prop('disabled', false);
           $('button#send').prop('disabled', false);
@@ -198,6 +202,7 @@
 
       // handler for user input, emit messages to sockethub server
       $('#chat').submit(function () {
+        event.preventDefault();
         var msg = {
           '@type': 'send',
           context: 'xmpp',
@@ -235,23 +240,25 @@
         //   displayName: '#' + channel
         // });
 
-        // sending irc credentials to sockethub server
-        var credentials = {
-          actor: actorString,
-          context: 'xmpp',
-          object: config
-        };
-        debug('sending credentials: ', credentials);
-        sc.socket.emit('credentials', credentials);
+        setTimeout(function () {
+          // sending irc credentials to sockethub server
+          var credentials = {
+            actor: actorString,
+            context: 'xmpp',
+            object: config
+          };
+          debug('sending credentials: ', credentials);
+          sc.socket.emit('credentials', credentials);
 
-        var msg = {
-          '@type': 'connect',
-          context: 'xmpp',
-          actor: actorString
-        };
+          var msg = {
+            '@type': 'connect',
+            context: 'xmpp',
+            actor: actorString
+          };
 
-        debug('sending message: ', msg);
-        sc.socket.emit('message', msg);
+          debug('sending message: ', msg);
+          sc.socket.emit('message', msg);
+        }, 100);
         return false;
       });
     </script>
