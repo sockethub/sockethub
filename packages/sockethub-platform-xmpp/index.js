@@ -186,7 +186,7 @@ var createObj = {
         msg = (error) ? msg + ' : ' + error : msg;
         try {
           self.scope.debug("connect error: " + error);
-          client.disconnect();
+          this.connection.disconnect();
         } catch (e) {
           self.scope.debug('connect error: failed disconnect ', e);
         }
@@ -227,23 +227,25 @@ var createObj = {
             this.scope.debug('STANZA ATTRS: ', entries[e].attrs);
             if (entries[e].attrs.subscription === 'both') {
               this.scope.send({
-                '@type': 'update',
+                '@type': 'presence',
                 actor: { '@id': entries[e].attrs.jid, displayName: entries[e].attrs.name },
                 target: this.credentials.actor,
                 object: {
-                  statusText: '',
-                  state: 'offline'
+                  '@type': 'presence',
+                  status: '',
+                  presence: state
                 }
               });
             } else if ((entries[e].attrs.subscription === 'from') &&
                       (entries[e].attrs.ask) && (entries[e].attrs.ask === 'subscribe')) {
               this.scope.send({
-                '@type': 'update',
+                '@type': 'presence',
                 actor: { '@id': entries[e].attrs.jid, displayName: entries[e].attrs.name },
                 target: this.credentials.actor,
                 object: {
+                  '@type': 'presence',
                   statusText: '',
-                  state: 'notauthorized'
+                  presence: 'notauthorized'
                 }
               });
             } else {
@@ -275,14 +277,15 @@ var createObj = {
     },
     buddy: function (from, state, statusText) {
       if (from !== this.credentials.actor['@id']) {
-        this.scope.debug('received buddy state update: ' + from + ' - ' + state);
+        this.scope.debug('received buddy presence update: ' + from + ' - ' + state);
         this.scope.send({
-          '@type': 'update',
+          '@type': 'presence',
           actor: { '@id': from },
           target: this.credentials.actor,
           object: {
-            content: statusText,
-            state: state
+            '@type': 'presence',
+            status: statusText,
+            presence: state
           }
         });
       }
@@ -311,7 +314,7 @@ var createObj = {
         target: this.credentials.actor
       });
       this.scope.debug('**** xmpp session for ' + this.credentials.actor['@id'] + ' closed');
-      session.clientManager.remove(this.credentials.actor['@id']);
+      this.scope.client.remove(this.credentials.actor['@id']);
     },
     error: function (error) {
       try {
