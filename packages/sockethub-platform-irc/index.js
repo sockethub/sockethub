@@ -527,7 +527,7 @@ IRC.prototype.join = function (job, done) {
   var self = this;
   self.session.debug('join() called for ' + job.actor['@id']);
 
-  self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
+  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
     if (err) { return done(err); }
 
     self.__addUnique(job.actor['@id']);
@@ -573,7 +573,7 @@ IRC.prototype.leave = function (job, done) {
 
   self.session.debug('leave() called');
 
-  self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
+  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
     if (err) { return done(err); }
     // leave channel
     self.__addUnique(job.actor['@id']);
@@ -620,7 +620,7 @@ IRC.prototype.send = function (job, done) {
 
   self.session.debug('send() called for ' + job.actor['@id'] + ' target: ' + job.target['@id']);
 
-  self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
+  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
     if (err) { return done(err); }
     err = undefined;
 
@@ -727,7 +727,7 @@ IRC.prototype.update = function (job, done) {
 
   self.session.debug('update() called for ' + job.actor.displayName);
 
-  self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
+  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
     if (err) { return done(err); }
 
     self.__addUnique(job.actor['@id']);
@@ -806,7 +806,7 @@ IRC.prototype.update = function (job, done) {
 IRC.prototype.observe = function (job, done) {
   var self = this;
   self.session.debug('observe() called for ' + job.actor['@id']);
-  self.session.client.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
+  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
     if (err) { return done(err); }
 
     self.__addUnique(job.actor['@id']);
@@ -826,7 +826,7 @@ IRC.prototype.cleanup = function (done) {
   // this.session.debug('cleanup() called, removing sessions for ', this._uniqueIDs);
 
   this._uniqueIDs.forEach(function (id, i) {
-    this.session.client.get(id, __genClientConnectionObject(this.session), function (err, client) {
+    this.session.connectionManager.get(id, __genClientConnectionObject(this.session), function (err, client) {
       if (err) { return done(err); }
       this.session.debug('cleanup(): disconnection ' + id);
       if (client.connection.irc === 'object') {
@@ -838,7 +838,7 @@ IRC.prototype.cleanup = function (done) {
     this._uniqueIDs.splice(this._uniqueIDs.indexOf(id), 1); // remove this id from list
   }.bind(this));
 
-  this.session.client.removeAll();
+  this.session.connectionManager.removeAll();
   this._uniqueIDs = [];
   this._channels = [];
   done();
