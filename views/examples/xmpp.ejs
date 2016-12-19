@@ -128,6 +128,15 @@
 
         if (msg['@type'] === 'presence') {
           var status = (msg.object.status) ? ': ' + msg.object.status : '';
+          var actor = msg.actor['@id'];
+          if (msg.object.presence !== 'offline') {
+            actor = document.createElement('a');
+            actor.appendChild(document.createTextNode(msg.actor['@id']));
+            actor.title = msg.actor['@id'];
+            actor.href = msg.actor['@id'];
+            $('#messages').append(actor);
+            // actor = '<a class="actor" href="' + msg.actor['@id'] + '>' + msg.actor['@id'] + '</a>';
+          }
           $('#messages').append($('<li>').text('[ '+ msg.actor['@id'] + ' is ' + msg.object.presence + ']' + status ));
         } else if (msg['@type'] === 'observe') {
           $('#messages').append($('<li>').text('[ users in ' + msg.actor.displayName + ' ]'));
@@ -199,6 +208,10 @@
       // handle incoming messages from the sockethub server
       sc.socket.on('message', __processIncomingMessage);
 
+      $('.actor').click(function (e) {
+        e.preventDefault();
+        console.log('e: ', e);
+      });
 
       // handler for user input, emit messages to sockethub server
       $('#chat').submit(function () {
