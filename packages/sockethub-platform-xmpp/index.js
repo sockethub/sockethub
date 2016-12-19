@@ -314,7 +314,7 @@ var createObj = {
         target: this.credentials.actor
       });
       this.scope.debug('**** xmpp session for ' + this.credentials.actor['@id'] + ' closed');
-      this.scope.client.remove(this.credentials.actor['@id']);
+      this.connection.disconnect();
     },
     error: function (error) {
       try {
@@ -381,7 +381,7 @@ var createObj = {
  */
 XMPP.prototype.connect = function (job, done) {
   var self = this;
-  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+  self.session.connectionManager.get(job.actor['@id'], createObj, function (err, client) {
     if (err) { return done(err); }
     self.session.debug('got client for ' + job.actor['@id']);
     done();
@@ -422,7 +422,7 @@ XMPP.prototype.connect = function (job, done) {
  */
 XMPP.prototype.send = function (job, done) {
   var self = this;
-  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+  self.session.connectionManager.get(job.actor['@id'], createObj, function (err, client) {
     if (err) { return done(err); }
     self.session.debug('got client for ' + job.actor['@id']);
     //
@@ -468,7 +468,7 @@ XMPP.prototype.send = function (job, done) {
  */
 XMPP.prototype.update = function (job, done) {
   var self = this;
-  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+  self.session.connectionManager.get(job.actor['@id'], createObj, function (err, client) {
     if (err) { return done(err); }
     self.session.debug('got client for ' + job.actor['@id']);
 
@@ -494,7 +494,7 @@ XMPP.prototype.update = function (job, done) {
 
 XMPP.prototype['request-friend'] = function (job, done) {
   var self = this;
-  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+  self.session.connectionManager.get(job.actor['@id'], createObj, function (err, client) {
     if (err) { return done(err); }
     self.session.debug('request friend ' + job.target['@id']);
     client.connection.subscribe(job.target['@id']);
@@ -503,7 +503,7 @@ XMPP.prototype['request-friend'] = function (job, done) {
 
 XMPP.prototype['remove-friend'] = function (job, done) {
   var self = this;
-  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+  self.session.connectionManager.get(job.actor['@id'], createObj, function (err, client) {
     if (err) { return done(err); }
     self.session.debug('remove friend ' + job.target['@id']);
     client.connection.unsubscribe(job.target['@id']);
@@ -512,7 +512,7 @@ XMPP.prototype['remove-friend'] = function (job, done) {
 
 XMPP.prototype['make-friend'] = function (job, done) {
   var self = this;
-  self.session.client.get(job.actor['@id'], createObj, function (err, client) {
+  self.session.connectionManager.get(job.actor['@id'], createObj, function (err, client) {
     if (err) { return done(err); }
     self.session.debug('make friend ' + job.target['@id']);
     client.connection.acceptSubscription(job.target['@id']);
