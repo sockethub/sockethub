@@ -124,7 +124,7 @@
 
       function __processIncomingMessage(msg) {
         msg = sc.ActivityStreams.Stream(msg);
-        debug('received message: ', msg);
+        debug('processing message: ', msg);
 
         if (msg['@type'] === 'presence') {
           var status = (msg.object.status) ? ': ' + msg.object.status : '';
@@ -138,6 +138,10 @@
             // actor = '<a class="actor" href="' + msg.actor['@id'] + '>' + msg.actor['@id'] + '</a>';
           }
           $('#messages').append($('<li>').text('[ '+ msg.actor['@id'] + ' is ' + msg.object.presence + ']' + status ));
+        } else if (msg['@type'] === 'error') {
+          console.log('error received: ', msg);
+        } else if (msg['@type'] === 'close') {
+          console.log('close event received... offline.');
         } else if (msg['@type'] === 'observe') {
           $('#messages').append($('<li>').text('[ users in ' + msg.actor.displayName + ' ]'));
           $('#messages').append($('<li>').text('[ ' + msg.object.members.join(', ') + ' ]'));
@@ -190,7 +194,7 @@
         // msg = __normalizeMessage(msg);
         if ((typeof msg.object === 'object') &&
             (typeof msg.object.content === 'string')) {
-          if (msg.object['@type'] === 'me') {
+          if (msg.object['@type'] === 'message') {
             __processIncomingMessage(msg);
           }
         } else if ((msg['@type'] === 'update') &&
@@ -216,15 +220,20 @@
       // handler for user input, emit messages to sockethub server
       $('#chat').submit(function () {
         event.preventDefault();
+        var input = $('#m').val();
+        var [target, text_message] = input.split(':');
+        if (! target) {
+          console.log('unable to send message without target specified: ', target, text_message, input);
+        }
         var msg = {
           '@type': 'send',
           context: 'xmpp',
           actor: actorString,
           object: {
             '@type': 'message',
-            content: $('#m').val()
+            content: text_message
           },
-          target: 'irc://' + ircServer + '/' + channel
+          target: 'xmpp://' + target
         };
 
         console.log('[normalize?] sending ', msg);
