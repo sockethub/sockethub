@@ -35,7 +35,7 @@
     "activity-streams": "^2.0.5",
     "array-keys": "^2.3.1",
     "body-parser": "^1.14.0",
-    "connection-manager": "^1.0.0",
+    "connection-manager": "^1.0.1",
     "dead-simple-crypt": "0.0.1",
     "debug": "^2.3.3",
     "ejs": "^2.5.5",
