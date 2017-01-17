@@ -148,8 +148,8 @@ IRC.prototype.schema = {
 
 function __renameUser(id, displayName, credentials, store, client, cb) {
     // preserve old creds
-    console.log('rename user: ', credentials);
     var oldCreds = credentials;
+    var oldId = credentials.actor['@id'];
     var newCreds = JSON.parse(JSON.stringify(credentials));
 
     // set new credentials
@@ -163,7 +163,7 @@ function __renameUser(id, displayName, credentials, store, client, cb) {
         }
 
         // reset index of client object in connection manager
-        client.move(id, oldCreds, id, newCreds);
+        client.move(oldId, oldCreds, id, newCreds);
         return cb();
     });
 }
@@ -372,7 +372,7 @@ function __genClientConnectionObject(session) {
           if (object.nickname !== this.credentials.actor.displayName) {
               this.scope.debug('server name conflict, renaming to ' + object.nickname);
               __renameUser('irc://' + object.nickname + '@' + this.credentials.object.server,
-                          object.nickname, this.credentials, this.scope.store, session.client, function (err) {
+                          object.nickname, this.credentials, this.scope.store, session.connectionManager, function (err) {
                   this.scope.send({
                       '@type': 'update',
                       actor: {
@@ -467,6 +467,24 @@ function __genClientConnectionObject(session) {
               content: 'user has left the channel'
             },
             published: object.time
+          });
+      } else if ((object.command === 'ERR_CHANOPRIVSNEEDED') && 
+                 ((typeof object.params === 'object') && (typeof object.params.length === 'number'))) {
+          var [ username, channel, message ] = object.params;
+          this.scope.send({
+            '@type': 'send',
+            actor: {
+              '@type': 'room',
+              '@id': 'irc://' + this.credentials.object.server + '/' + channel``
+            },
+            target: {
+              '@type': 'person',
+              '@id': 'irc://' + username + '/' + this.credentials.object.server
+            },
+            object: {
+              '@type': 'message',
+              content: message
+            }
           });
         } else {
           debug('Unprocessed message [' + this.id + ']: ', object);
@@ -737,7 +755,7 @@ IRC.prototype.update = function (job, done) {
       self.session.debug('changing nick from ' + job.actor.displayName + ' to ' + job.target.displayName);
       // send nick change command
       client.connection.irc.raw(['NICK', job.target.displayName]);
-      __renameUser(job.target['@id'], job.target.displayName, client.credentials, self.session.store, self.session.client, done);
+      __renameUser(job.target['@id'], job.target.displayName, client.credentials, self.session.store, self.session.connectionManager, done);
     } else if (job.object['@type'] === 'topic') {
       // update topic
       self.session.debug('changing topic in channel ' + job.target.displayName);
