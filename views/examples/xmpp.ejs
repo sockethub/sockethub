@@ -218,8 +218,8 @@
       });
 
       // handler for user input, emit messages to sockethub server
-      $('#chat').submit(function () {
-        event.preventDefault();
+      $('#chat').submit(function (e) {
+        e.preventDefault();
         var input = $('#m').val();
         var [target, text_message] = input.split(':');
         if (! target) {
@@ -245,8 +245,8 @@
       });
 
       // handler for user input, emit messages to sockethub server
-      $('#join').click(function (event) {
-        event.preventDefault();
+      $('#join').click(function (e) {
+        e.preventDefault();
         config.username = $('#username').val();
         config.password = $('#password').val();
         config.server = $('#server').val();
