@@ -362,9 +362,9 @@ Feeds.prototype._fetchFeed = function (url, options) {
         article.object.html = item.summary;
         article.object.brief_text = item.description;
         article.object.brief_html = item.description;
-        article.object.url = item.origlink || item.link;
-        article.object['@id'] = item.origlink || item.link;
-        article.object.media = item.enclosures;
+        article.object.url = item.origlink || item.link || item.meta.link;
+        article.object['@id'] = item.origlink || item.link || item.meta.link + '#' + article.object.datenum;
+        article.object.media = item.enclosures; 
         article.object.source = item.source;
 
         // add to articles queue
@@ -393,6 +393,5 @@ Feeds.prototype._fetchFeed = function (url, options) {
   }
   return defer.promise;
 };
-
 
 module.exports = Feeds;
