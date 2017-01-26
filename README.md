@@ -14,7 +14,7 @@ A polyglot messaging service.
 # About
 Sockethub is a polyglot (speaking many different protocols and APIs) messaging service for social and other interactive messaging applications. Not only does it assist [unhosted](http://unhosted.org) and [noBackend](http://nobackend.org) web application developers by providing server-independent, server-side functionality, but it also can be used as a back-end tool (invisible to the user) for many different applications, large and small.
 
-Example uses of sockethub are: writing and receiving messages (SMTP, Facebook, Twitter, Diaspora), instant messaging (XMPP, AIM, MSN, IRC), discovery (WebFinger, RDF(a)). The architecture of sockethub is extensible and supports easy implementation of additional 'platforms' to carry out tasks, sockethub can be run on your own server, or provided as a service by a service provider, or app store.
+Example uses of sockethub are: writing and receiving messages (SMTP, Facebook, Twitter), instant messaging (XMPP, IRC, MSN, FB Messenger, Hangouts), discovery (WebFinger, RDF(a)). The architecture of sockethub is extensible and supports easy implementation of additional 'platforms' to carry out tasks, sockethub can be run on your own server, or provided as a service by a service provider, or app store.
 
 # Docs
 
@@ -39,6 +39,7 @@ Below is a list of platforms we're currently working on and their activity strea
 * Bitcoin - *(to be evaluated)* <kbd>send</kbd> <kbd>receive</kbd> ...
 * FireFoxSync - *(to be evaluated)*
 * WebRTC - *(to be evaluated)*
+* Signal - *(to be evaluated)*
 
 
 # Setup
@@ -77,7 +78,7 @@ Sockethub is licensed under the [LGPL](https://github.com/sockethub/sockethub/bl
 
 # Credits
 
-Project maintained by [Nick Jennings](http://github.com/silverbucket)
+Project created and maintained by [Nick Jennings](http://github.com/silverbucket)
 
 Logo design by [Jan-Christoph Borchardt](http://jancborchardt.net)
 
