@@ -1,7 +1,7 @@
 {
   "name": "sockethub-platform-dummy",
   "description": "A sockethub platform dummy module",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL",
