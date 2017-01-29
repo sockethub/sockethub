@@ -20,6 +20,16 @@ routes.push({
   route: function (req, res) {
     res.sendFile(path.resolve(__dirname + '/../node_modules/activity-streams/browser/activity-streams.js'));
   }
+},
+
+{
+  meta: {
+    method: 'GET',
+    path: '/activity-streams.min.js'
+  },
+  route: function (req, res) {
+    res.sendFile(path.resolve(__dirname + '/../node_modules/activity-streams/browser/activity-streams.min.js'));
+  }
 });
 
 if (nconf.get('examples:enabled')) {
