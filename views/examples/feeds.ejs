@@ -27,23 +27,10 @@
       localStorage.debug = '<%= debug_scope %>';
       var sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
 
-      // our irc user info
-      sc.ActivityStreams.Object.create({
-        '@id': 'https://sockethub.org/examples/feeds',
-        '@type': "website",
-        displayName: "Sockethub Examples - Feeds"
-      });
-
       // errors
       sc.socket.on('failure', function (msg) {
         console.log('received failure: ', msg);
       });
-
-      function displayMessage(msg) {
-        msg.actor = sc.ActivityStreams.Object.get(msg.actor);
-        console.log('displaying message: ', msg);
-        $('#messages').append($('<li>').text(msg.actor.displayName + ': ' + msg.object.title));
-      }
 
       sc.socket.on('completed', function (msg) {
         console.log('received completed event for: ', msg);
@@ -60,6 +47,12 @@
           displayMessage(msg);
         }
       });
+
+      function displayMessage(msg) {
+        msg.actor = sc.ActivityStreams.Object.get(msg.actor);
+        console.log('displaying message: ', msg);
+        $('#messages').append($('<li>').text(msg.actor.displayName + ': ' + msg.object.title));
+      }
 
       // handler for user input, emit messages to sockethub server
       $('form').submit(function () {
@@ -80,6 +73,13 @@
         sc.socket.emit('message', msg);
         $('#m').val('');
         return false;
+      });
+
+      // our feed actor info
+      sc.ActivityStreams.Object.create({
+        '@id': 'https://sockethub.org/examples/feeds',
+        '@type': "website",
+        displayName: "Sockethub Examples - Feeds"
       });
     </script>
   </body>
