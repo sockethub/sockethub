@@ -8,7 +8,19 @@ routes.push({
     path: '/sockethub-client.js'
   },
   route: function (req, res) {
+    res.setHeader("Access-Control-Allow-Origin", "*");
     res.sendFile(path.resolve(__dirname + '/../lib/client.js'));
+  }
+},
+
+{
+  meta: {
+    method: 'GET',
+    path: '/socket.io.js'
+  },
+  route: function (req, res) {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.sendFile(path.resolve(__dirname + '/../node_modules/socket.io-client/dist/socket.io.js'));
   }
 },
 
@@ -18,6 +30,7 @@ routes.push({
     path: '/activity-streams.js'
   },
   route: function (req, res) {
+    res.setHeader("Access-Control-Allow-Origin", "*");
     res.sendFile(path.resolve(__dirname + '/../node_modules/activity-streams/browser/activity-streams.js'));
   }
 });
@@ -29,7 +42,7 @@ if (nconf.get('examples:enabled')) {
         path: '/'
     },
     route: function (req,res) {
-        res.render('index.ejs');
+      res.render('index.ejs');
     }
   },
 
