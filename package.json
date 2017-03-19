@@ -59,5 +59,8 @@
   "scripts": {
     "test": "node_modules/.bin/jaribu",
     "start": "DEBUG=* ./bin/sockethub"
+  },
+  "engines": {
+    "node": ">= 5.0.0"
   }
 }
