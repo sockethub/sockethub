@@ -66,28 +66,27 @@ function XMPP(session) {
  *
  *
  * Valid AS object for setting XMPP credentials:
+ *
  * @example
  *
- *  {
- *    '@type': 'set',
- *    context: 'xmpp',
- *    actor: {
- *      '@id': 'xmpp://testuser@jabber.net',
- *      '@type': 'person',
- *      displayName: 'Mr. Test User',
- *      userName: 'testuser'
- *    },
- *    object: {
- *      '@type': 'credentials',
- *      server: 'jabber.net',
- *      username: 'testuser',
- *      password: 'asdasdasdasd',
- *      port: 6697,
- *      resource: 'me'
- *    }
- *  }
- *
- *
+ * {
+ *   '@type': 'set',
+ *   context: 'xmpp',
+ *   actor: {
+ *     '@id': 'xmpp://testuser@jabber.net',
+ *     '@type': 'person',
+ *     displayName: 'Mr. Test User',
+ *     userName: 'testuser'
+ *   },
+ *   object: {
+ *     '@type': 'credentials',
+ *     server: 'jabber.net',
+ *     username: 'testuser',
+ *     password: 'asdasdasdasd',
+ *     port: 5223,
+ *     resource: 'phone'
+ *   }
+ * }
  */
 XMPP.prototype.schema = {
   "version": packageJSON.version,
@@ -355,7 +354,7 @@ var createObj = {
     this.connection.disconnect();
     cb();
   }
-}
+};
 
 /**
  * Function: connect
@@ -367,17 +366,16 @@ var createObj = {
  *
  * @example
  *
- *  {
- *    context: 'xmpp',
- *    '@type': 'connect',
- *    actor: {
- *      '@id': 'xmpp://slvrbckt@jabber.net/Home',
- *      '@type': 'person',
- *      displayName: 'Nick Jennings',
- *      userName: 'slvrbckt'
- *    }
- *  }
- *
+ * {
+ *   context: 'xmpp',
+ *   '@type': 'connect',
+ *   actor: {
+ *     '@id': 'xmpp://slvrbckt@jabber.net/Home',
+ *     '@type': 'person',
+ *     displayName: 'Nick Jennings',
+ *     userName: 'slvrbckt'
+ *   }
+ * }
  */
 XMPP.prototype.connect = function (job, done) {
   var self = this;
@@ -399,25 +397,25 @@ XMPP.prototype.connect = function (job, done) {
  *
  * @example
  *
- *  {
- *    context: 'xmpp',
- *    '@type': 'send',
- *    actor: {
- *      '@id': 'xmpp://slvrbckt@jabber.net/Home',
- *      '@type': 'person',
- *      displayName: 'Nick Jennings',
- *      userName: 'slvrbckt'
- *    },
- *    target: {
- *      '@id': 'xmpp://homer@jabber.net/Home',
- *      '@type': 'user',
- *      displayName: 'Homer'
- *    },
- *    object: {
- *      '@type': 'message',
- *      content: 'Hello from Sockethub!'
- *    }
- *  }
+ * {
+ *   context: 'xmpp',
+ *   '@type': 'send',
+ *   actor: {
+ *     '@id': 'xmpp://slvrbckt@jabber.net/Home',
+ *     '@type': 'person',
+ *     displayName: 'Nick Jennings',
+ *     userName: 'slvrbckt'
+ *   },
+ *   target: {
+ *     '@id': 'xmpp://homer@jabber.net/Home',
+ *     '@type': 'user',
+ *     displayName: 'Homer'
+ *   },
+ *   object: {
+ *     '@type': 'message',
+ *     content: 'Hello from Sockethub!'
+ *   }
+ * }
  *
  */
 XMPP.prototype.send = function (job, done) {
@@ -440,31 +438,27 @@ XMPP.prototype.send = function (job, done) {
 /**
  * Function: update
  *
+ * @description
  * Indicate presence and status message.
  *
- * Parameters:
+ * @param job {object} - ActivityStreams job object
  *
- *   job - activity streams job object
+ * @example
  *
- * Example:
- *
- *     (start code)
- *     {
- *       platform: 'xmpp',
- *       verb: 'update',
- *       actor: {
- *         address: 'user@host.org/Home'
- *       },
- *       target: [],
- *       object: {
- *         objectType: 'presence'
- *         presence: 'chat',
- *         text: '...clever saying goes here...'
- *       },
- *       rid: 1234
- *     }
- *     (end code)
- *
+ * {
+ *   platform: 'xmpp',
+ *   verb: 'update',
+ *   actor: {
+ *     address: 'user@host.org/Home'
+ *   },
+ *   target: [],
+ *   object: {
+ *     objectType: 'presence'
+ *     presence: 'chat',
+ *     text: '...clever saying goes here...'
+ *   },
+ *   rid: 1234
+ * }
  */
 XMPP.prototype.update = function (job, done) {
   var self = this;
