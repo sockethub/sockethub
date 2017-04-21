@@ -441,7 +441,7 @@ XMPP.prototype.send = function (job, done) {
  * @description
  * Indicate presence and status message.
  *
- * @param job {object} - ActivityStreams job object
+ * @param {object} job - ActivityStreams job object
  *
  * @example
  *
