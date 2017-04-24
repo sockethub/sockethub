@@ -68,6 +68,7 @@ function IRC(session) {
  * It will also check if the incoming AS object uses a @type which exists in the
  * `@types` portion of the schema object (should be an array of @type names).
  *
+ * * **NOTE**: For more information on using the credentials object from a client, see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
  *
  * Valid AS object for setting IRC credentials:
  * @example
@@ -526,9 +527,6 @@ function __genClientConnectionObject(session) {
  *
  * Join a room or private conversation.
  *
- * @param {object} - Activity streams job object
- * @param {object} - callback when complete
- *
  * @example
  *
  * {
@@ -583,9 +581,6 @@ IRC.prototype.join = function (job, done) {
  * @description
  * Leave a room or private conversation.
  *
- * @param {object} - Activity streams job object
- * @param {object} - callback when complete
- *
  * @example
  * {
  *   context: 'irc',
@@ -624,9 +619,6 @@ IRC.prototype.leave = function (job, done) {
  * Function: send
  *
  * Send a message to a room or private conversation.
- *
- * @param {object} - Activity streams job object
- * @param {object} - callback when complete
  *
  * @example
  *
@@ -713,9 +705,6 @@ IRC.prototype.send = function (job, done) {
  *
  * Indicate a change (ie. room topic update, or nickname change).
  *
- * @param {object} - Activity streams job object
- * @param {object} - callback when complete
- *
  * @example change topic
  *
  * {
@@ -793,9 +782,6 @@ IRC.prototype.update = function (job, done) {
  * Function: observe
  *
  * Indicate an intent to observe something (ie. get a list of users in a room).
- *
- * @param {object} - Activity streams job object
- * @param {object} - callback when complete
  *
  * @example
  *

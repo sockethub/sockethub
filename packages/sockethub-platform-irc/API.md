@@ -24,10 +24,10 @@ IRC
 * [IRC](#IRC)
     * [new IRC(session)](#new_IRC_new)
     * [.schema](#IRC+schema)
-    * [.join(job, done)](#IRC+join)
-    * [.send(job, done)](#IRC+send)
-    * [.update(job, done)](#IRC+update)
-    * [.observe(job, done)](#IRC+observe)
+    * [.join()](#IRC+join)
+    * [.send()](#IRC+send)
+    * [.update()](#IRC+update)
+    * [.observe()](#IRC+observe)
 
 <a name="new_IRC_new"></a>
 
@@ -63,6 +63,7 @@ object.
 It will also check if the incoming AS object uses a @type which exists in the
 `@types` portion of the schema object (should be an array of @type names).
 
+* **NOTE**: For more information on using the credentials object from a client, see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
 
 Valid AS object for setting IRC credentials:
 
@@ -90,18 +91,12 @@ Valid AS object for setting IRC credentials:
 ```
 <a name="IRC+join"></a>
 
-### irC.join(job, done)
+### irC.join()
 Function: join
 
 Join a room or private conversation.
 
 **Kind**: instance method of [<code>IRC</code>](#IRC)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | Activity streams job object |
-| done | <code>object</code> | callback when complete |
-
 **Example**  
 ```js
 {
@@ -122,18 +117,12 @@ Join a room or private conversation.
 ```
 <a name="IRC+send"></a>
 
-### irC.send(job, done)
+### irC.send()
 Function: send
 
 Send a message to a room or private conversation.
 
 **Kind**: instance method of [<code>IRC</code>](#IRC)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | Activity streams job object |
-| done | <code>object</code> | callback when complete |
-
 **Example**  
 ```js
 {
@@ -158,18 +147,12 @@ Send a message to a room or private conversation.
 ```
 <a name="IRC+update"></a>
 
-### irC.update(job, done)
+### irC.update()
 Function: update
 
 Indicate a change (ie. room topic update, or nickname change).
 
 **Kind**: instance method of [<code>IRC</code>](#IRC)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | Activity streams job object |
-| done | <code>object</code> | callback when complete |
-
 **Example**  
 ```js
 change topic
@@ -221,18 +204,12 @@ change nickname
 ```
 <a name="IRC+observe"></a>
 
-### irC.observe(job, done)
+### irC.observe()
 Function: observe
 
 Indicate an intent to observe something (ie. get a list of users in a room).
 
 **Kind**: instance method of [<code>IRC</code>](#IRC)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | Activity streams job object |
-| done | <code>object</code> | callback when complete |
-
 **Example**  
 ```js
 {
@@ -283,12 +260,6 @@ Indicate an intent to observe something (ie. get a list of users in a room).
 Leave a room or private conversation.
 
 **Kind**: global function  
-
-| Type | Description |
-| --- | --- |
-| <code>object</code> | Activity streams job object |
-| <code>object</code> | callback when complete |
-
 **Example**  
 ```js
 {
