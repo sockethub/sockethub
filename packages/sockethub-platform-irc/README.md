@@ -16,6 +16,9 @@ A sockethub platform module implementing IRC functionality.
 This module contains all of the implementation details of an IRC client and is
 used as a sockethub platform.
 
+Each sockethub platform uses JSON Activity Streams 2.0 which are recevied from and sent to clients, through the Sockethub service.
+
+
 # Object Formats
 
 ## Connected to IRC:
@@ -89,3 +92,5 @@ used as a sockethub platform.
   }
 }
 ```
+# API
+API docs can be found [here](API.md)
