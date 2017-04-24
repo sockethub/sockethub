@@ -10,7 +10,10 @@ XMPP
     * [.schema](#XMPP+schema)
     * [.connect(job, done)](#XMPP+connect)
     * [.send(job, done)](#XMPP+send)
-    * [.update(job)](#XMPP+update)
+    * [.update(job, done)](#XMPP+update)
+    * [.request-friend(job, done)](#XMPP+request-friend)
+    * [.remove-friend(job, done)](#XMPP+remove-friend)
+    * [.make-friend(job, done)](#XMPP+make-friend)
 
 <a name="new_XMPP_new"></a>
 
@@ -136,7 +139,7 @@ Send a message to a room or private conversation.
 ```
 <a name="XMPP+update"></a>
 
-### xmpP.update(job)
+### xmpP.update(job, done)
 Indicate presence and status message.
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
@@ -144,21 +147,95 @@ Indicate presence and status message.
 | Param | Type | Description |
 | --- | --- | --- |
 | job | <code>object</code> | ActivityStreams job object |
+| done | <code>object</code> | callback when complete |
 
 **Example**  
 ```js
 {
-  platform: 'xmpp',
-  verb: 'update',
+  context: 'xmpp',
+  '@type': 'update',
   actor: {
-    address: 'user@host.org/Home'
+    '@id': 'user@host.org/Home'
   },
-  target: [],
   object: {
-    objectType: 'presence'
+    '@type': 'presence'
     presence: 'chat',
-    text: '...clever saying goes here...'
+    content: '...clever saying goes here...'
+  }
+}
+```
+<a name="XMPP+request-friend"></a>
+
+### xmpP.request-friend(job, done)
+Send friend request
+
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | ActivityStreams job object |
+| done | <code>object</code> | callback when complete |
+
+**Example**  
+```js
+{
+  context: 'xmpp',
+  '@type': 'request-friend',
+  actor: {
+    '@id': 'user@host.org/Home'
   },
-  rid: 1234
+  target: {
+    '@id': 'xmpp://homer@jabber.net/Home',
+  }
+}
+```
+<a name="XMPP+remove-friend"></a>
+
+### xmpP.remove-friend(job, done)
+Send a remove friend request
+
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | ActivityStreams job object |
+| done | <code>object</code> | callback when complete |
+
+**Example**  
+```js
+{
+  context: 'xmpp',
+  '@type': 'remove-friend',
+  actor: {
+    '@id': 'user@host.org/Home'
+  },
+  target: {
+    '@id': 'xmpp://homer@jabber.net/Home',
+  }
+}
+```
+<a name="XMPP+make-friend"></a>
+
+### xmpP.make-friend(job, done)
+Confirm a friend request
+
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | ActivityStreams job object |
+| done | <code>object</code> | callback when complete |
+
+**Example**  
+```js
+{
+  context: 'xmpp',
+  '@type': 'make-friend',
+  actor: {
+    '@id': 'user@host.org/Home'
+  },
+  target: {
+    '@id': 'xmpp://homer@jabber.net/Home',
+  }
 }
 ```
