@@ -18,3 +18,6 @@ A sockethub platform module implementing Atom/RSS feed functionality.
 
 This module contains all of the implementation details of a Feed client, Atom & RSS, and is
 used as a sockethub platform.
+
+# API
+API docs can be found [here](API.md)

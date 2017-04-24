@@ -27,9 +27,11 @@
     "request": "^2.65.0"
   },
   "devDependencies": {
-    "jaribu": "^2.2.1"
+    "jaribu": "^2.2.1",
+    "jsdoc-to-markdown": "^3.0.0"
   },
   "scripts": {
-    "test": "node_modules/.bin/jaribu"
+    "test": "node_modules/.bin/jaribu",
+    "doc": "node_modules/.bin/jsdoc2md index.js  > API.md"
   }
 }
