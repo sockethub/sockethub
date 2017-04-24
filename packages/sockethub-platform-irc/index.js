@@ -25,6 +25,7 @@ var debug = require('debug')('sockethub-platform-irc'),
 
 var packageJSON = require('./package.json');
 
+var receivedWho = {}; // lookup, per-channel, for latest WHO response per-channel (used to gague connectivity)
 
 /**
  * @class IRC
@@ -226,6 +227,12 @@ function __genClientConnectionObject(session) {
     listeners: {
       '*': function (object) {
         // debug('HANDLER * called [' + this.id + ']: ', object);
+
+        if ((object.channel) && (object.raw.includes('/WHO'))) {
+          this.scope.debug('received /WHO response, updating receivedWho');
+          receivedWho[object.channel] = Date.now();
+        }
+
         if (typeof object.names === 'object') {
           // user list
           this.scope.debug('received user list: ' + object.channel);
@@ -468,7 +475,7 @@ function __genClientConnectionObject(session) {
             },
             published: object.time
           });
-      } else if ((object.command === 'ERR_CHANOPRIVSNEEDED') && 
+      } else if ((object.command === 'ERR_CHANOPRIVSNEEDED') &&
                  ((typeof object.params === 'object') && (typeof object.params.length === 'number'))) {
           var [ username, channel, message ] = object.params;
           this.scope.send({
@@ -554,7 +561,18 @@ IRC.prototype.join = function (job, done) {
     self.session.debug('join: ' + job.actor.displayName + ' -> ' + job.target.displayName);
     client.connection.irc.raw(['JOIN', job.target.displayName]);
     self.__joined(job.target.displayName);
-
+    setTimeout(function () {
+      self.session.debug('sending /WHO');
+      client.connection.irc.raw(['WHO', job.target.displayName]);
+      receivedWho[job.target.displayName] = receivedWho[job.target.displayName] || 0;
+      setTimeout(function () {
+        if (receivedWho[job.target.displayName] > (Date.now() - 7000)) {
+          self.session.debug('response from WHO command not received, possible disconnect. TODO something about it.');
+        } else {
+          self.session.debug('response time acceptable, were live. [' + typeof receivedWho[job.target.displayName] + '] ' + receivedWho[job.target.displayName] + ' > [' + typeof (Date.now() - 7000) + '] ' + (Date.now() - 7000), receivedWho);
+        }
+      }, 5000);
+    }, 5000);
     done();
   });
 };
@@ -683,6 +701,9 @@ IRC.prototype.send = function (job, done) {
     } else {
       err = "cannot send message to a channel of which you've not first `join`ed.";
     }
+
+    self.session.debug('sending ping to #sockethub');
+    client.connection.irc.raw(['PING', '#sockethub']);
     done(err);
   });
 };
