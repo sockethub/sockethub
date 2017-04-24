@@ -442,22 +442,21 @@ XMPP.prototype.send = function (job, done) {
  * Indicate presence and status message.
  *
  * @param {object} job - ActivityStreams job object
+ * @param {object} - callback when complete
  *
  * @example
  *
  * {
- *   platform: 'xmpp',
- *   verb: 'update',
+ *   context: 'xmpp',
+ *   '@type': 'update',
  *   actor: {
- *     address: 'user@host.org/Home'
+ *     '@id': 'user@host.org/Home'
  *   },
- *   target: [],
  *   object: {
- *     objectType: 'presence'
+ *     '@type': 'presence'
  *     presence: 'chat',
- *     text: '...clever saying goes here...'
- *   },
- *   rid: 1234
+ *     content: '...clever saying goes here...'
+ *   }
  * }
  */
 XMPP.prototype.update = function (job, done) {
@@ -468,7 +467,7 @@ XMPP.prototype.update = function (job, done) {
 
     if (job.object['@type'] === 'presence') {
       var show = job.object.presence === 'available' ? 'chat' : job.object.show;
-      var status = job.object.status || '';
+      var status = job.object.content || '';
       //
       // setting presence
       self.session.debug('setting presence: ' + show + ' status: ' + status);
@@ -486,6 +485,28 @@ XMPP.prototype.update = function (job, done) {
   });
 };
 
+/**
+ * Function: request-friend
+ *
+ * @description
+ * Send friend request
+ *
+ * @param {object} job - ActivityStreams job object
+ * @param {object} - callback when complete
+ *
+ * @example
+ *
+ * {
+ *   context: 'xmpp',
+ *   '@type': 'request-friend',
+ *   actor: {
+ *     '@id': 'user@host.org/Home'
+ *   },
+ *   target: {
+ *     '@id': 'xmpp://homer@jabber.net/Home',
+ *   }
+ * }
+ */
 XMPP.prototype['request-friend'] = function (job, done) {
   var self = this;
   self.session.connectionManager.get(job.actor['@id'], createObj, function (err, client) {
@@ -495,6 +516,28 @@ XMPP.prototype['request-friend'] = function (job, done) {
   });
 };
 
+/**
+ * Function: remove-friend
+ *
+ * @description
+ * Send a remove friend request
+ *
+ * @param {object} job - ActivityStreams job object
+ * @param {object} - callback when complete
+ *
+ * @example
+ *
+ * {
+ *   context: 'xmpp',
+ *   '@type': 'remove-friend',
+ *   actor: {
+ *     '@id': 'user@host.org/Home'
+ *   },
+ *   target: {
+ *     '@id': 'xmpp://homer@jabber.net/Home',
+ *   }
+ * }
+ */
 XMPP.prototype['remove-friend'] = function (job, done) {
   var self = this;
   self.session.connectionManager.get(job.actor['@id'], createObj, function (err, client) {
@@ -504,6 +547,28 @@ XMPP.prototype['remove-friend'] = function (job, done) {
   });
 };
 
+/**
+ * Function: make-friend
+ *
+ * @description
+ * Confirm a friend request
+ *
+ * @param {object} job - ActivityStreams job object
+ * @param {object} - callback when complete
+ *
+ * @example
+ *
+ * {
+ *   context: 'xmpp',
+ *   '@type': 'make-friend',
+ *   actor: {
+ *     '@id': 'user@host.org/Home'
+ *   },
+ *   target: {
+ *     '@id': 'xmpp://homer@jabber.net/Home',
+ *   }
+ * }
+ */
 XMPP.prototype['make-friend'] = function (job, done) {
   var self = this;
   self.session.connectionManager.get(job.actor['@id'], createObj, function (err, client) {
