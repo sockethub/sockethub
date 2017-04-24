@@ -8,12 +8,12 @@ XMPP
 * [XMPP](#XMPP)
     * [new XMPP(session)](#new_XMPP_new)
     * [.schema](#XMPP+schema)
-    * [.connect(job, done)](#XMPP+connect)
-    * [.send(job, done)](#XMPP+send)
-    * [.update(job, done)](#XMPP+update)
-    * [.request-friend(job, done)](#XMPP+request-friend)
-    * [.remove-friend(job, done)](#XMPP+remove-friend)
-    * [.make-friend(job, done)](#XMPP+make-friend)
+    * [.connect()](#XMPP+connect)
+    * [.send()](#XMPP+send)
+    * [.update()](#XMPP+update)
+    * [.request-friend()](#XMPP+request-friend)
+    * [.remove-friend()](#XMPP+remove-friend)
+    * [.make-friend()](#XMPP+make-friend)
 
 <a name="new_XMPP_new"></a>
 
@@ -49,6 +49,7 @@ object.
 It will also check if the incoming AS object uses a @type which exists in the
 `@types` portion of the schema object (should be an array of @type names).
 
+**NOTE**: For more information on using the credentials object from a client, see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
 
 Valid AS object for setting XMPP credentials:
 
@@ -76,18 +77,12 @@ Valid AS object for setting XMPP credentials:
 ```
 <a name="XMPP+connect"></a>
 
-### xmpP.connect(job, done)
+### xmpP.connect()
 Function: connect
 
 Connect to the XMPP server.
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | Activity streams job object |
-| done | <code>object</code> | callback when complete |
-
 **Example**  
 ```js
 {
@@ -103,18 +98,12 @@ Connect to the XMPP server.
 ```
 <a name="XMPP+send"></a>
 
-### xmpP.send(job, done)
+### xmpP.send()
 Function: send
 
 Send a message to a room or private conversation.
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | Activity streams job object |
-| done | <code>object</code> | callback when complete |
-
 **Example**  
 ```js
 {
@@ -139,16 +128,10 @@ Send a message to a room or private conversation.
 ```
 <a name="XMPP+update"></a>
 
-### xmpP.update(job, done)
+### xmpP.update()
 Indicate presence and status message.
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | ActivityStreams job object |
-| done | <code>object</code> | callback when complete |
-
 **Example**  
 ```js
 {
@@ -166,16 +149,10 @@ Indicate presence and status message.
 ```
 <a name="XMPP+request-friend"></a>
 
-### xmpP.request-friend(job, done)
+### xmpP.request-friend()
 Send friend request
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | ActivityStreams job object |
-| done | <code>object</code> | callback when complete |
-
 **Example**  
 ```js
 {
@@ -191,16 +168,10 @@ Send friend request
 ```
 <a name="XMPP+remove-friend"></a>
 
-### xmpP.remove-friend(job, done)
+### xmpP.remove-friend()
 Send a remove friend request
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | ActivityStreams job object |
-| done | <code>object</code> | callback when complete |
-
 **Example**  
 ```js
 {
@@ -216,16 +187,10 @@ Send a remove friend request
 ```
 <a name="XMPP+make-friend"></a>
 
-### xmpP.make-friend(job, done)
+### xmpP.make-friend()
 Confirm a friend request
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | ActivityStreams job object |
-| done | <code>object</code> | callback when complete |
-
 **Example**  
 ```js
 {

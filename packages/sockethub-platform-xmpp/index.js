@@ -64,6 +64,7 @@ function XMPP(session) {
  * It will also check if the incoming AS object uses a @type which exists in the
  * `@types` portion of the schema object (should be an array of @type names).
  *
+ * **NOTE**: For more information on using the credentials object from a client, see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
  *
  * Valid AS object for setting XMPP credentials:
  *
@@ -361,9 +362,6 @@ var createObj = {
  *
  * Connect to the XMPP server.
  *
- * @param {object} - Activity streams job object
- * @param {object} - callback when complete
- *
  * @example
  *
  * {
@@ -391,9 +389,6 @@ XMPP.prototype.connect = function (job, done) {
  * Function: send
  *
  * Send a message to a room or private conversation.
- *
- * @param {object} - Activity streams job object
- * @param {object} - callback when complete
  *
  * @example
  *
@@ -440,9 +435,6 @@ XMPP.prototype.send = function (job, done) {
  *
  * @description
  * Indicate presence and status message.
- *
- * @param {object} job - ActivityStreams job object
- * @param {object} - callback when complete
  *
  * @example
  *
@@ -491,9 +483,6 @@ XMPP.prototype.update = function (job, done) {
  * @description
  * Send friend request
  *
- * @param {object} job - ActivityStreams job object
- * @param {object} - callback when complete
- *
  * @example
  *
  * {
@@ -522,9 +511,6 @@ XMPP.prototype['request-friend'] = function (job, done) {
  * @description
  * Send a remove friend request
  *
- * @param {object} job - ActivityStreams job object
- * @param {object} - callback when complete
- *
  * @example
  *
  * {
@@ -552,9 +538,6 @@ XMPP.prototype['remove-friend'] = function (job, done) {
  *
  * @description
  * Confirm a friend request
- *
- * @param {object} job - ActivityStreams job object
- * @param {object} - callback when complete
  *
  * @example
  *
