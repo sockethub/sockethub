@@ -32,6 +32,8 @@
   "redis": {
     "host": "redis",
     "port": 6379
+    // if defined overrides host + port pair, env: REDIS_URL
+    // "url": "redis://user:password@hostname:port"
   },
   "workers": 1
 }
