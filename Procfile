@@ -1,1 +1,1 @@
-web: DEBUG=* HOST="0.0.0.0" bin/sockethub --public.protocol="https" --public.host="sockethub-exper-v100a0a.herokuapp.com" --public.port="443" --redis.host="0.0.0.0"
+web: DEBUG=* HOST="0.0.0.0" bin/sockethub --public.protocol="https" --public.host="sockethub-exper-v100a0a.herokuapp.com" --public.port="443" --redis.host="process.env.DATABASE_URL"
