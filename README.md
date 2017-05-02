@@ -61,6 +61,16 @@ Defaults to `localhost`
 * DEBUG
 Specify the namespace to console log, ie. `sockethub*` will print all sockethub related debug statements, whereas `*` will also print any other modules debug statements that use the `debug` module.
 
+* REDIS_PORT
+Defaults to `6379`
+* REDIS_HOST
+Defaults to `localhost`
+
+***OR***
+
+* REDIS_URL
+Overrides `REDIS_HOST` and `REDIS_PORT`, can specify a full redis connect URL (eq. `redis://username:password@host:port`)
+
 # Command-line params
 ```
   --help       : this help screen
