@@ -21,26 +21,34 @@ Example uses of sockethub are: writing and receiving messages (SMTP, Facebook, T
 See the [Sockethub wiki](https://github.com/sockethub/sockethub/wiki) for documentation.
 
 # Features
-We use Activity Streams to map the various social networks terms to a set of 'verbs' which identify the underlying action. For example,for a facebook friend request/accept cycle, we would use the activity stream verbs 'request-friend', 'remove-friend', 'make-friend'.
 
-Below is a list of platforms we're currently working on and their activity stream verbs (when appropriate) or verbs that are specific to sockethub, both the completed and not yet implemented ones. They all map to the platforms actions.
+We use Activity Streams to map the various social networks terms to a set of
+'verbs' which identify the underlying action. For example,for a facebook friend
+request/accept cycle, we would use the activity stream verbs 'request-friend',
+'remove-friend', 'make-friend'.
 
-##### [platform] - [verbs]
-* *to port* [Email](https://github.com/sockethub/sockethub-platform-email) *(SMTP, IMAP)* - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch (imap)</kbd>
-* [XMPP](https://github.com/sockethub/sockethub-platform-xmpp) - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) request-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) remove-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) make-friend</kbd>
-* *to port* [Facebook](https://github.com/sockethub/sockethub-platform-facebook) - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png)fetch</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd>
-* *to port* [Twitter](https://github.com/sockethub/sockethub-platform-twitter) - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd>
-* [Feeds](https://github.com/sockethub/sockethub-platform-feeds) *(RSS, Atom)* - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd>
-* [IRC](https://github.com/sockethub/sockethub-platform-irc) - <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) join</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) leave</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd>
-* pump.io - <kbd>post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>fetch</kbd>
-* WhatsApp - <kbd>send</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd>
-* WebFinger - <kbd>search</kbd>
-* RDF - <kbd>search</kbd> <kbd>fetch</kbd>
-* Bitcoin - *(to be evaluated)* <kbd>send</kbd> <kbd>receive</kbd> ...
-* FireFoxSync - *(to be evaluated)*
-* WebRTC - *(to be evaluated)*
-* Signal - *(to be evaluated)*
+Below is a list of platforms we're currently working on and their
+activity stream verbs (when appropriate) or verbs that are specific to
+Sockethub, both the completed and not yet implemented ones. They all map to the
+platforms actions.
 
+| Platforms | Verbs |
+| --------- | ----- |
+| [Email](https://github.com/sockethub/sockethub-platform-email) *(SMTP, IMAP)* *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch (imap)</kbd> |
+| [XMPP](https://github.com/sockethub/sockethub-platform-xmpp) | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) request-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) remove-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) make-friend</kbd> |
+| [Facebook](https://github.com/sockethub/sockethub-platform-facebook) *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png)fetch</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd> |
+| [Twitter](https://github.com/sockethub/sockethub-platform-twitter) *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd> |
+| [Feeds](https://github.com/sockethub/sockethub-platform-feeds) *(RSS, Atom)* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd> |
+| [IRC](https://github.com/sockethub/sockethub-platform-irc) | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) join</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) leave</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd> |
+| pump.io | <kbd>post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>fetch</kbd> |
+| WhatsApp | <kbd>send</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> |
+| WebFinger | <kbd>search</kbd> |
+| RDF | <kbd>search</kbd> <kbd>fetch</kbd> |
+| Bitcoin | *(to be evaluated)* <kbd>send</kbd> <kbd>receive</kbd> ... |
+| Ethereum | *(to be evaluated)* |
+| FireFoxSync | *(to be evaluated)* |
+| WebRTC | *(to be evaluated)* |
+| Signal | *(to be evaluated)* |
 
 # Setup
 
