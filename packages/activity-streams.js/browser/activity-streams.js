@@ -36,7 +36,7 @@ var objs        = new ArrayKeys({ identifier: '@id' }),
         'generatorOf', 'icon', 'image', 'inReplyTo', 'memberOf', 'location',
         'locationOf', 'objectOf', 'originOf', 'presence', 'preview', 'previewOf', 'provider',
         'providerOf', 'published', 'rating', 'resultOf', 'replies', 'scope',
-        'scopeOf', 'startTime', 'status', 'summary', 'tag', 'tagOf', 'targetOf', 'title',
+        'scopeOf', 'startTime', 'status', 'summary', 'topic', 'tag', 'tagOf', 'targetOf', 'title',
         'updated', 'url', 'titleMap', 'contentMap', 'members'
       ]
     },
@@ -99,6 +99,7 @@ var Stream = function (meta) {
   if (typeof meta.object === 'object') {
     err = validateObject('object', meta.object);
     if (err) {
+      console.log("object: ", meta.object);
       throw new Error(err);
     }
   }
@@ -218,11 +219,10 @@ module.exports = function (opts) {
     }
   };
 };
-
 },{"array-keys":2,"event-emitter":17}],2:[function(require,module,exports){
 /*!
  * array-keys
- *   version 2.3.0
+ *   version 2.3.1
  *   http://github.com/silverbucket/array-keys
  *
  * Developed and Maintained by:
@@ -333,7 +333,7 @@ ArrayKeys.prototype.removeRecord = function (id, dontEmit) {
 
   // if it was not found, start at the end and break at the idx number
   for (var n = this._store.length - 1; n >= idx; n = n - 1) {
-    if ((this._store[i]) && (this._store[n][this._identifier] === id)) {
+    if ((this._store[n]) && (this._store[n][this._identifier] === id)) {
       this._store.splice(n, 1);
       this._idx.splice(idx, 1);
       setTimeout(this.emitEvent.bind(this, 'remove', id, dontEmit), 0);

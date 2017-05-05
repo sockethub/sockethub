@@ -1,6 +1,5 @@
 /*!
  * activity-streams
- *   version 2.0.5
  *   http://github.com/silverbucket/activity-streams
  *
  * Developed and Maintained by:
@@ -35,7 +34,7 @@ var objs        = new ArrayKeys({ identifier: '@id' }),
         'generatorOf', 'icon', 'image', 'inReplyTo', 'memberOf', 'location',
         'locationOf', 'objectOf', 'originOf', 'presence', 'preview', 'previewOf', 'provider',
         'providerOf', 'published', 'rating', 'resultOf', 'replies', 'scope',
-        'scopeOf', 'startTime', 'status', 'summary', 'tag', 'tagOf', 'targetOf', 'title',
+        'scopeOf', 'startTime', 'status', 'summary', 'topic', 'tag', 'tagOf', 'targetOf', 'title',
         'updated', 'url', 'titleMap', 'contentMap', 'members'
       ]
     },
@@ -98,6 +97,7 @@ var Stream = function (meta) {
   if (typeof meta.object === 'object') {
     err = validateObject('object', meta.object);
     if (err) {
+      console.log("object: ", meta.object);
       throw new Error(err);
     }
   }
