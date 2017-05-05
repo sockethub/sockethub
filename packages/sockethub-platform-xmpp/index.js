@@ -95,7 +95,7 @@ XMPP.prototype.schema = {
     "required": [ '@type' ],
     "properties": {
       "@type": {
-        "enum": [ 'connect', 'update', 'send', 'request-friend', 'remove-friend', 'make-friend' ]
+        "enum": [ 'connect', 'update', 'send', 'join', 'request-friend', 'remove-friend', 'make-friend' ]
       }
     }
   },
@@ -105,7 +105,7 @@ XMPP.prototype.schema = {
       // TODO platforms shouldn't have to define the actor property if they don't want to, just credential specifics
       "actor": {
         "type": "object",
-        "required": [ "@id", "displayName" ]
+        "required": [ "@id" ]
       },
       "object": {
         "name": "object",
@@ -184,12 +184,8 @@ var createObj = {
       error: function (error) {
         var msg = 'failed connecting ' + fullJid;
         msg = (error) ? msg + ' : ' + error : msg;
-        try {
-          self.scope.debug("connect error: " + error);
-          this.connection.disconnect();
-        } catch (e) {
-          self.scope.debug('connect error: failed disconnect ', e);
-        }
+        self.scope.debug("connect error: " + error);
+        xmpp.disconnect();
         cb(msg);
       },
       online: function () {
@@ -215,8 +211,42 @@ var createObj = {
   },
   listeners: {
     stanza: function (stanza) {
-      this.scope.debug("got XMPP stanza... ");// + stanza);
-      if (stanza.is('iq')) {
+      this.scope.debug("got XMPP stanza... " + stanza);
+
+      // simple-xmpp currently doesn't seem to handle error state presence
+      // so we'll do it here for now.
+      // TODO: consider moving this to simple-xmpp once it's ironed out and
+      // proven to work well.
+      if (stanza.is('presence') && (stanza.type === 'error')) {
+        var error,
+            message = stanza.toString(),
+            type = 'update';
+
+        if (error = stanza.getChild('error')) {
+          message = error.toString();
+          if (error.getChild('remote-server-not-found')) {
+            // when we get this type of return message, we know it was a response from a join
+            type = 'join';
+            message = 'remote server not found ' + stanza.from;
+          }
+        }
+
+        this.scope.send({
+          '@type': type,
+          actor: {
+            '@id': stanza.from,
+            '@type': 'room'
+          },
+          object: {
+            '@type': 'error', // type error
+            content: message.toString()
+          },
+          target: {
+            '@id': stanza.to,
+            '@type': 'person'
+          }
+        });
+      } else if (stanza.is('iq')) {
         var query = stanza.getChild('query');
         if (query) {
           var entries = query.getChildren('item');
@@ -227,7 +257,7 @@ var createObj = {
             this.scope.debug('STANZA ATTRS: ', entries[e].attrs);
             if (entries[e].attrs.subscription === 'both') {
               this.scope.send({
-                '@type': 'presence',
+                '@type': 'update',
                 actor: { '@id': entries[e].attrs.jid, displayName: entries[e].attrs.name },
                 target: this.credentials.actor,
                 object: {
@@ -239,7 +269,7 @@ var createObj = {
             } else if ((entries[e].attrs.subscription === 'from') &&
                       (entries[e].attrs.ask) && (entries[e].attrs.ask === 'subscribe')) {
               this.scope.send({
-                '@type': 'presence',
+                '@type': 'update',
                 actor: { '@id': entries[e].attrs.jid, displayName: entries[e].attrs.name },
                 target: this.credentials.actor,
                 object: {
@@ -263,6 +293,15 @@ var createObj = {
         }
       }
     },
+    chatstate: function (from, name) {
+      this.scope.debug('received chatstate event: ' + from, name);
+    },
+    groupbuddy: function (id, groupBuddy, state, statusText) {
+      this.scope.debug('received groupbuddy event: ' + id, groupBuddy, state, statusText);
+    },
+    buddyCapabilities: function (id, capabilities) {
+      this.scope.debug('received buddyCapabilities: ' + id, capabilities);
+    },
     chat: function (from, message) {
       this.scope.debug("received chat message from " + from);
       this.scope.send({
@@ -279,7 +318,7 @@ var createObj = {
       if (from !== this.credentials.actor['@id']) {
         this.scope.debug('received buddy presence update: ' + from + ' - ' + state);
         this.scope.send({
-          '@type': 'presence',
+          '@type': 'update',
           actor: { '@id': from },
           target: this.credentials.actor,
           object: {
@@ -380,6 +419,48 @@ XMPP.prototype.connect = function (job, done) {
   self.session.connectionManager.get(job.actor['@id'], createObj, function (err, client) {
     if (err) { return done(err); }
     self.session.debug('got client for ' + job.actor['@id']);
+    done();
+  });
+};
+
+/**
+ * Function: join
+ *
+ * Join a room, oprionally defining a display name for that room.
+ *
+ * @example
+ *
+ * {
+ *   context: 'xmpp',
+ *   '@type': 'join',
+ *   actor: {
+ *     '@type': 'person'
+ *     '@id': 'slvrbckt@jabber.net/Home',
+ *   },
+ *   object: {
+ *     '@type': 'person',
+ *     '@id': 'slvrbckt@jabber.net/Home',
+ *     displayName: 'Mr. Pimp'
+ *   },
+ *   target: {
+ *     '@type': 'room'
+ *     '@id': 'PartyChatRoom@muc.jabber.net',
+ *   }
+ * }
+ *
+ */
+XMPP.prototype.join = function (job, done) {
+  var self = this;
+  self.session.connectionManager.get(job.actor['@id'], createObj, function (err, client) {
+    if (err) { return done(err); }
+    self.session.debug('got client for ' + job.actor['@id']);
+    //
+    // send join
+    self.session.debug('sending join to ' + job.target['@id']);
+    client.connection.join(
+      job.target['@id']
+      // optional passwords not handled for now
+    );
     done();
   });
 };
