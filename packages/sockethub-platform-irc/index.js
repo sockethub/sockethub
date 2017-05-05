@@ -110,7 +110,7 @@ IRC.prototype.schema = {
       // TODO platforms shouldn't have to define the actor property if they don't want to, just credential specifics
       "actor": {
         "type": "object",
-        "required": [ "@id", "displayName" ]
+        "required": [ "@id" ]
       },
       "object": {
         "name": "object",
@@ -240,11 +240,6 @@ function __genClientConnectionObject(session) {
           this.scope.send({
             '@type': 'observe',
             actor: {
-              '@type': 'room',
-              '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
-              displayName: object.channel
-            },
-            target: {
               '@type': 'room',
               '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
               displayName: object.channel
@@ -508,6 +503,9 @@ function __genClientConnectionObject(session) {
       api.unhookEvent(this.id, name);
     },
     isConnected: function () {
+      if (! this.connection.irc) {
+        return false;
+      }
       debug('isConnected() called, returning: ' + this.connection.irc.isConnected());
       return this.connection.irc.isConnected();
     },
@@ -732,8 +730,7 @@ IRC.prototype.send = function (job, done) {
  * //      object needs to change (and their credentials)
  *
  *  {
- *    '@id': 1234,
- *    context: 'irc',
+ *    context: 'irc'
  *    '@type': 'udpate',
  *    actor: {
  *      '@id': 'irc://slvrbckt@irc.freenode.net',
@@ -742,11 +739,12 @@ IRC.prototype.send = function (job, done) {
  *      userName: 'slvrbckt'
  *    },
  *    object: {
- *      '@type': 'displayName'
- *    },
- *    target: {
  *      '@type': "person",
  *      displayName: 'CoolDude'
+ *    },
+ *    target: {
+ *      '@id': 'irc://irc.freenode.net',
+ *      '@type': 'service' // FIXME - rewrite
  *    }
  *  }
  */
