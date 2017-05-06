@@ -1,7 +1,7 @@
 {
   "name": "sockethub",
   "description": "A polyglot messaging service",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
