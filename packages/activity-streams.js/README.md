@@ -1,5 +1,7 @@
 # activity-streams.js
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/silverbucket/activity-streams.js.svg)](https://greenkeeper.io/)
+
 [![Build Status](http://img.shields.io/travis/silverbucket/activity-streams.js.svg?style=flat)](http://travis-ci.org/silverbucket/activity-streams.js)
 [![Code Climate](http://img.shields.io/codeclimate/github/silverbucket/activity-streams.js.svg?style=flat)](https://codeclimate.com/github/silverbucket/activity-streams.js)
 [![license](https://img.shields.io/npm/l/activity-streams.svg?style=flat)](https://npmjs.org/package/activity-streams)
