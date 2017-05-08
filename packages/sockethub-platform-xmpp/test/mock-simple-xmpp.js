@@ -29,6 +29,9 @@ var SimpleXMPP = function (test) {
       }
       callbacks[name] = func;
     }),
+    join: new test.Stub(function (target, message) {
+      test.write('XMPP STUB: join')
+    }),
     send: new test.Stub(function (target, message) {
       test.write('XMPP STUB: send')
     }),
