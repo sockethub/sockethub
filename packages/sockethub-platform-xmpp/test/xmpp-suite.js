@@ -118,7 +118,7 @@ define(['require'], function (require) {
 
       // types
       env.types = env.schema.messages.properties['@type'].enum;
-      test.assertAnd(env.types.sort(), [ 'update', 'make-friend', 'send', 'remove-friend', 'request-friend' ].sort());
+      test.assertAnd(env.types.sort(), [ 'update', 'make-friend', 'send', 'remove-friend', 'request-friend', 'join', 'connect' ].sort());
 
       test.assertTypeAnd(env.xmpp, 'object');
       test.assertType(env.xmpp.connect, 'function');
