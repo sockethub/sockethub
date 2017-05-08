@@ -49,7 +49,7 @@
     "sockethub-platform-dummy": "^1.0.0",
     "sockethub-platform-feeds": "^1.0.0",
     "sockethub-platform-irc": "^1.1.2",
-    "sockethub-platform-xmpp": "^1.1.0",
+    "sockethub-platform-xmpp": "^1.1.2",
     "sockethub-schemas": "^1.0.1",
     "tv4": "^1.2.7"
   },
