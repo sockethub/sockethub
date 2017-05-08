@@ -26,13 +26,13 @@ define(['require'], function (require) {
 
       env.actor = {
         '@type': 'person',
-        '@id': 'xmpp://testingham@jabber.net',
+        '@id': 'xmpp:testingham@jabber.net',
         displayName:'testingham'
       };
 
       env.actor2 = {
         '@type': 'person',
-        '@id': 'xmpp://testingturkey@jabber.net',
+        '@id': 'xmpp:testingturkey@jabber.net',
         displayName:'testingturkey'
       };
 
@@ -76,12 +76,24 @@ define(['require'], function (require) {
       env.target = {
         mrfoobar: {
           '@type': 'person',
-          '@id': 'xmpp://jabber.net/mrfoobar',
+          '@id': 'xmpp:jabber.net/mrfoobar',
           displayName: 'Mr FooBar'
+        },
+        partyroom: {
+          '@type': 'room',
+          '@id': 'xmpp:partyroom@jabber.net'
         }
       };
 
       env.job = {
+        join: {
+          actor: env.actor,
+          object: {
+            '@type': 'update',
+            displayName: 'Frank'
+          },
+          target: env.target.partyroom
+        },
         send: {
           actor: env.actor,
           object: {
@@ -157,6 +169,17 @@ define(['require'], function (require) {
                                  env.credentials, function () {
                                  test.done();
                                 });
+        }
+      },
+
+      {
+        desc: "# join",
+        run: function (env, test) {
+          env.platform.join(env.job.join, function (err, result) {
+            test.assertTypeAnd(err, 'undefined', err);
+            test.assertTypeAnd(result, 'undefined');
+            test.assert(env.xmpp.join.numCalled, 1);
+          });
         }
       },
 
