@@ -3,6 +3,7 @@ var source     = require('vinyl-source-stream'),
     browserify = require('browserify'),
     uglify     = require('gulp-uglify'),
     rename     = require('gulp-rename'),
+    util       = require('gulp-util'),
     gulp       = require('gulp');
 
 var baseDir = './lib/';
@@ -15,7 +16,9 @@ gulp.task('default', function() {
   return bundleStream
          .pipe(source(baseFileName + '.js'))
          .pipe(gulp.dest('./browser'))
-         .pipe(streamify(uglify()))
+         .pipe(streamify(uglify().on('error', function (err) {
+             console.log('gulpify error: ', err);
+          })))
          .pipe(rename(baseFileName + '.min.js'))
          .pipe(gulp.dest('./browser'));
 });
