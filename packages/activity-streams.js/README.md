@@ -25,7 +25,11 @@ I am learning about JSON-LD and ActivityStreams2 as I write this library, so sug
 
 `npm install activity-streams`
 
-`var ActivityStreams = require('activity-streams')();`
+```javascript
+var ActivityStreams = require('activity-streams')({
+  failOnUnkownObjectProperties: false //default
+  });
+```
 
 #### Browser
 
