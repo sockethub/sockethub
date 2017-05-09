@@ -1,11 +1,15 @@
 var objectTypes = require('./object-types');
 
 var validObjects = [];
+var validObjectTypes = {};
 
 var keys = Object.keys(objectTypes);
-for (var i = 0, len = keys.length; i < len; i++) {
-  validObjects.push({ "$ref": "#/definitions/type/" + keys[i] });
-}
+keys.forEach(function (type, i) {
+  if (objectTypes[type]["activity-object"]) {
+    validObjects.push({ "$ref": "#/definitions/type/" + type });
+    validObjectTypes[type] = objectTypes[type];
+  }
+});
 
 module.exports = {
   "id": "http://sockethub.org/schemas/v0/activity-object#",
@@ -22,6 +26,6 @@ module.exports = {
   },
 
   "definitions": {
-    "type": objectTypes
+    "type": validObjectTypes
   }
 };
