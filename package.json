@@ -48,7 +48,7 @@
     "socket.io": "^2.0.1",
     "sockethub-platform-dummy": "^1.0.0",
     "sockethub-platform-feeds": "^1.0.0",
-    "sockethub-platform-irc": "^1.1.4",
+    "sockethub-platform-irc": "^1.1.5",
     "sockethub-platform-xmpp": "^1.1.2",
     "sockethub-schemas": "^2.0.0",
     "tv4": "^1.2.7",
