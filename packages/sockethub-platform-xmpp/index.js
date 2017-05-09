@@ -414,88 +414,7 @@ XMPP.prototype.cleanup = function (done) {
 };
 
 
-//
-// connection manager object for establishing XMPP connection (connect property), and handling incoming events (listeners property), and more.
-//
-var createObj = {
-  timeout: 30000,
-  connect: function (cb) {
-    var self = this;
-    self.scope.debug('calling connect for ' + self.credentials.actor['@id']);
 
-    //
-    // generate bareJid and fullJid
-    var fullJid;
-    if (self.credentials.object.username.indexOf('@') === -1) {
-      fullJid = self.credentials.object.username + '@' + self.credentials.object.server + '/' + self.credentials.object.resource;
-    } else {
-      fullJid = self.credentials.object.username + '/' + self.credentials.object.resource;
-    }
-
-    //
-    // credential object to pass to simple-xmpp
-    var xmpp_creds = {
-      jid: fullJid,
-      password: self.credentials.object.password
-    };
-    if (self.credentials.object.server) {
-      xmpp_creds.host = self.credentials.object.server;
-    }
-    if (self.credentials.port) {
-      xmpp_creds.port = self.credentials.object.port;
-    }
-
-    var handlers = {
-      error: function (error) {
-        var msg = 'failed connecting ' + fullJid;
-        msg = (error) ? msg + ' : ' + error : msg;
-        self.scope.debug("connect error: " + error);
-        xmpp.disconnect();
-        cb(msg);
-      },
-      online: function () {
-        self.scope.debug('connected with jid: ' + fullJid);
-        xmpp.removeListener('online', handlers.online);
-        xmpp.removeListener('error', handlers.error);
-        xmpp.removeListener('close', handlers.close);
-        cb(null, xmpp);
-      },
-      close: function () {
-        // FIXME - not sure in what cases this happens
-        self.scope.debug('close received for ' + fullJid);
-        cb('received close event for '+ fullJid);
-      }
-    };
-
-    xmpp.on('online', handlers.online);
-    xmpp.on('error', handlers.error);
-    xmpp.on('close', handlers.close);
-
-    xmpp.connect(xmpp_creds);
-    self.scope.debug('sent XMPP connect for account ' + fullJid);
-  },
-  listeners: XMPP.__listeners,
-  addListener: function (name, func) {
-    this.connection.on(name, func);
-  },
-  removeListener: function (name) {
-    this.connection.removeListener(name);
-  },
-  isConnected: function () {
-    if (this.connection.STATUS === 'offline') {
-      return false;
-    } else {
-      return true;
-    }
-  },
-  disconnect: function (cb) {
-    // FIXME - review this, simple-xmpp has a close func now i believe
-    this.scope.debug('should be CLOSING connection now, NOT IMPLEMENTED in node-xmpp');
-    this.scope.quit = true;
-    this.connection.disconnect();
-    cb();
-  }
-};
 
 XMPP.prototype.__listeners = {
   stanza: function (stanza) {
@@ -660,6 +579,89 @@ XMPP.prototype.__listeners = {
   online: function () {
     this.scope.debug('online');
     this.scope.debug('reconnectioned ' + this.credentials.actor['@id']);
+  }
+};
+
+//
+// connection manager object for establishing XMPP connection (connect property), and handling incoming events (listeners property), and more.
+//
+var createObj = {
+  timeout: 30000,
+  connect: function (cb) {
+    var self = this;
+    self.scope.debug('calling connect for ' + self.credentials.actor['@id']);
+
+    //
+    // generate bareJid and fullJid
+    var fullJid;
+    if (self.credentials.object.username.indexOf('@') === -1) {
+      fullJid = self.credentials.object.username + '@' + self.credentials.object.server + '/' + self.credentials.object.resource;
+    } else {
+      fullJid = self.credentials.object.username + '/' + self.credentials.object.resource;
+    }
+
+    //
+    // credential object to pass to simple-xmpp
+    var xmpp_creds = {
+      jid: fullJid,
+      password: self.credentials.object.password
+    };
+    if (self.credentials.object.server) {
+      xmpp_creds.host = self.credentials.object.server;
+    }
+    if (self.credentials.port) {
+      xmpp_creds.port = self.credentials.object.port;
+    }
+
+    var handlers = {
+      error: function (error) {
+        var msg = 'failed connecting ' + fullJid;
+        msg = (error) ? msg + ' : ' + error : msg;
+        self.scope.debug("connect error: " + error);
+        xmpp.disconnect();
+        cb(msg);
+      },
+      online: function () {
+        self.scope.debug('connected with jid: ' + fullJid);
+        xmpp.removeListener('online', handlers.online);
+        xmpp.removeListener('error', handlers.error);
+        xmpp.removeListener('close', handlers.close);
+        cb(null, xmpp);
+      },
+      close: function () {
+        // FIXME - not sure in what cases this happens
+        self.scope.debug('close received for ' + fullJid);
+        cb('received close event for '+ fullJid);
+      }
+    };
+
+    xmpp.on('online', handlers.online);
+    xmpp.on('error', handlers.error);
+    xmpp.on('close', handlers.close);
+
+    xmpp.connect(xmpp_creds);
+    self.scope.debug('sent XMPP connect for account ' + fullJid);
+  },
+  listeners: XMPP.prototype.__listeners,
+  addListener: function (name, func) {
+    this.connection.on(name, func);
+  },
+  removeListener: function (name) {
+    this.connection.removeListener(name);
+  },
+  isConnected: function () {
+    if (this.connection.STATUS === 'offline') {
+      return false;
+    } else {
+      return true;
+    }
+  },
+  disconnect: function (cb) {
+    // FIXME - review this, simple-xmpp has a close func now i believe
+    this.scope.debug('should be CLOSING connection now, NOT IMPLEMENTED in node-xmpp');
+    this.scope.quit = true;
+    this.connection.disconnect();
+    cb();
   }
 };
 
