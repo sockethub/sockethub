@@ -9,11 +9,13 @@ XMPP
     * [new XMPP(session)](#new_XMPP_new)
     * [.schema](#XMPP+schema)
     * [.connect()](#XMPP+connect)
+    * [.join()](#XMPP+join)
     * [.send()](#XMPP+send)
     * [.update()](#XMPP+update)
     * [.request-friend()](#XMPP+request-friend)
     * [.remove-friend()](#XMPP+remove-friend)
     * [.make-friend()](#XMPP+make-friend)
+    * [.observe()](#XMPP+observe)
 
 <a name="new_XMPP_new"></a>
 
@@ -93,6 +95,34 @@ Connect to the XMPP server.
     '@type': 'person',
     displayName: 'Nick Jennings',
     userName: 'slvrbckt'
+  }
+}
+```
+<a name="XMPP+join"></a>
+
+### xmpP.join()
+Function: join
+
+Join a room, oprionally defining a display name for that room.
+
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
+**Example**  
+```js
+{
+  context: 'xmpp',
+  '@type': 'join',
+  actor: {
+    '@type': 'person'
+    '@id': 'slvrbckt@jabber.net/Home',
+  },
+  object: {
+    '@type': 'person',
+    '@id': 'slvrbckt@jabber.net/Home',
+    displayName: 'Mr. Pimp'
+  },
+  target: {
+    '@type': 'room'
+    '@id': 'PartyChatRoom@muc.jabber.net',
   }
 }
 ```
@@ -204,3 +234,9 @@ Confirm a friend request
   }
 }
 ```
+<a name="XMPP+observe"></a>
+
+### xmpP.observe()
+NOTE IMPLEMENTED YET
+
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
