@@ -17,6 +17,7 @@ module.exports = {
     "properties": {
       "@id": {
         "type": "string",
+        "format": "uri"
       },
       "@type": {
         "enum": [ "feed" ]
@@ -62,6 +63,7 @@ module.exports = {
     "properties": {
       "@id": {
         "type": "string",
+        "format": "uri"
       },
       "@type": {
         "enum": [ "person" ]
@@ -79,6 +81,7 @@ module.exports = {
     "properties": {
       "@id": {
         "type": "string",
+        "format": "uri"
       },
       "@type": {
         "enum": [ "room" ]
@@ -96,6 +99,7 @@ module.exports = {
     "properties": {
       "@id": {
         "type": "string",
+        "format": "uri"
       },
       "@type": {
         "enum": [ "website" ]
