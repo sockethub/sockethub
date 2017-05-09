@@ -218,7 +218,8 @@ define(['require'], function (require) {
         run: function (env, test) {
           var verb = 'send';
           test.assertAnd(env.api.createClient.numCalled, 1);
-          test.assert(env.IRCFactory.ClientNumCalled(0), 3); // #sockethub
+          // jump to 4 because send command also sends a WHO request
+          test.assert(env.IRCFactory.ClientNumCalled(0), 4); // #sockethub
         }
       },
 
@@ -235,7 +236,7 @@ define(['require'], function (require) {
         desc: "# leave - check stubs",
         run: function (env, test) {
           test.assertAnd(env.api.createClient.numCalled, 1);
-          test.assert(env.IRCFactory.ClientNumCalled(0), 4); // #remotestorage
+          test.assert(env.IRCFactory.ClientNumCalled(0), 5); // #remotestorage
         }
       },
       {
@@ -258,7 +259,7 @@ define(['require'], function (require) {
         desc: "# observe - check stubs",
         run: function (env, test) {
           test.assertAnd(env.api.createClient.numCalled, 1);
-          test.assert(env.IRCFactory.ClientNumCalled(0), 5); // #sockethub
+          test.assert(env.IRCFactory.ClientNumCalled(0), 6); // #sockethub
         }
       },
 
@@ -275,7 +276,7 @@ define(['require'], function (require) {
         desc: "# update topic - check stubs",
         run: function (env, test) {
           test.assertAnd(env.api.createClient.numCalled, 1);
-          test.assert(env.IRCFactory.ClientNumCalled(0), 6); // #sockethub
+          test.assert(env.IRCFactory.ClientNumCalled(0), 7); // #sockethub
         }
       },
 
@@ -297,7 +298,7 @@ define(['require'], function (require) {
         desc: "# update nick - check stubs",
         run: function (env, test) {
           test.assertAnd(env.api.createClient.numCalled, 1);
-          test.assert(env.IRCFactory.ClientNumCalled(0), 7);
+          test.assert(env.IRCFactory.ClientNumCalled(0), 8);
         }
       },
 
@@ -337,7 +338,7 @@ define(['require'], function (require) {
           // ensure new client was not created
           test.assertAnd(env.api.createClient.numCalled, 2);
           // new object was not used to send message
-          test.assert(env.IRCFactory.ClientNumCalled(0), 8);
+          test.assert(env.IRCFactory.ClientNumCalled(0), 10);
         }
       }
     ]
