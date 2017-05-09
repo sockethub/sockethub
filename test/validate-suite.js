@@ -189,13 +189,15 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
       },
       output: {
         "actor": {
-          "@id": "xmpp://hyper_rau@localhost"
+          "@id": "xmpp://hyper_rau@localhost",
+          displayName: 'hyper_rau'
         },
         '@type': 'join',
         "context": "xmpp",
         "object": {},
         target: {
-          '@id': 'dooder'
+          '@id': 'dooder',
+          displayName: 'dooder'
         }
       }
     },
@@ -247,10 +249,10 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
       desc: '# [' + string + '] ' + name,
       run: function (env, test) {
         env.validate(type)(input, function (state, msg) {
-          // console.log('input: ', input);
-          // console.log('msg: ', msg);
-          // console.log('expected output: ', output);
-          // console.log('result: ', state);
+          console.log('input: ', input);
+          console.log('msg: ', msg);
+          console.log('expected output: ', output);
+          console.log('result: ', state);
 
           if (output === 'same') {
             test.assertAnd(input, msg, "input not the same as output");
