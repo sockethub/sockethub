@@ -76,8 +76,7 @@ function XMPP(session) {
  *   actor: {
  *     '@id': 'xmpp://testuser@jabber.net',
  *     '@type': 'person',
- *     displayName: 'Mr. Test User',
- *     userName: 'testuser'
+ *     displayName: 'Mr. Test User'
  *   },
  *   object: {
  *     '@type': 'credentials',
