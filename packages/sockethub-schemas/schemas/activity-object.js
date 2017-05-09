@@ -11,16 +11,16 @@ module.exports = {
 			"type": "object",
 			"oneOf": [
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-object#/definitions/type/feed"
+					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/feed"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-object#/definitions/type/person"
+					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/person"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-object#/definitions/type/room"
+					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/room"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-object#/definitions/type/website"
+					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/website"
 				}
 			]
 		}
@@ -36,7 +36,8 @@ module.exports = {
 				"additionalProperties": true,
 				"properties": {
 					"@id": {
-						"type": "string"
+						"type": "string",
+						"format": "uri"
 					},
 					"@type": {
 						"enum": [
@@ -67,7 +68,8 @@ module.exports = {
 				"additionalProperties": true,
 				"properties": {
 					"@id": {
-						"type": "string"
+						"type": "string",
+						"format": "uri"
 					},
 					"@type": {
 						"enum": [
@@ -89,7 +91,8 @@ module.exports = {
 				"additionalProperties": true,
 				"properties": {
 					"@id": {
-						"type": "string"
+						"type": "string",
+						"format": "uri"
 					},
 					"@type": {
 						"enum": [
@@ -111,7 +114,8 @@ module.exports = {
 				"additionalProperties": true,
 				"properties": {
 					"@id": {
-						"type": "string"
+						"type": "string",
+						"format": "uri"
 					},
 					"@type": {
 						"enum": [

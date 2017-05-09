@@ -1,17 +1,14 @@
-var objectTypes = require('./object-types');
+var activityObjects = require('./sockethub-activity-object.js');
+var objectTypes     = require('./object-types.js');
 
-var validActors = [
-  { "$ref": "#/definitions/type/person" },
-  { "$ref": "#/definitions/type/room" }
-];
+var validActorRefs  = activityObjects.properties.object.oneOf;
+var validTargetRefs = activityObjects.properties.object.oneOf
 
-var validTargets = validActors;
-
-var validObjects = validActors;
-validObjects.push(
-  { "$ref": "#/definitions/type/credentials" },
-  { "$ref": "#/definitions/type/message" }
-);
+var validObjectRefs = [];
+var keys = Object.keys(objectTypes);
+keys.forEach(function (type, i) {
+  validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
+});
 
 var contextSchema = {
   "type": "string"
@@ -35,15 +32,15 @@ module.exports = {
     "context": contextSchema,
     "actor": {
       "type": "object",
-      "oneOf": validActors
+      "oneOf": validActorRefs
     },
     "target": {
       "type": "object",
-      "oneOf": validTargets
+      "oneOf": validTargetRefs
     },
     "object": {
       "type": "object",
-      "oneOf": validObjects
+      "oneOf": validObjectRefs
     }
   },
 

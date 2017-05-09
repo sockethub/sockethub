@@ -1,13 +1,13 @@
 var objectTypes = require('./object-types');
 
-var validObjects = [];
-var validObjectTypes = {};
+var validObjectRefs = [];
+var validObjectDefs = {};
 
 var keys = Object.keys(objectTypes);
 keys.forEach(function (type, i) {
   if (objectTypes[type]["activity-object"]) {
-    validObjects.push({ "$ref": "#/definitions/type/" + type });
-    validObjectTypes[type] = objectTypes[type];
+    validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
+    validObjectDefs[type] = objectTypes[type];
   }
 });
 
@@ -21,11 +21,11 @@ module.exports = {
   "properties": {
     "object": {
       "type": "object",
-      "oneOf": validObjects
+      "oneOf": validObjectRefs
     }
   },
 
   "definitions": {
-    "type": validObjectTypes
+    "type": validObjectDefs
   }
 };
