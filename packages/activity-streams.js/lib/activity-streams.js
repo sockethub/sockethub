@@ -21,6 +21,7 @@ var EventEmitter = require('event-emitter'),
 
 var objs        = new ArrayKeys({ identifier: '@id' }),
     ee          = EventEmitter(),
+    failOnUnknownObjectProperties = false,
     specialObjs = [], // the objects don't get rejected for bad props
     baseProps   = {
       stream: [
@@ -96,8 +97,10 @@ var Stream = function (meta) {
 
   if (typeof meta.object === 'object') {
     err = validateObject('object', meta.object);
-    if (err) {
+    if ((err) && (failOnUnknownObjectProperties)) {
       throw new Error(err);
+    } else {
+      console.warn(err);
     }
   }
 
@@ -138,8 +141,10 @@ var _Object = {
     var result = false;
     var err = validateObject('object', obj);
 
-    if (err) {
+    if ((err) && (failOnUnknownObjectProperties)) {
       throw new Error(err);
+    } else {
+      console.warn(err);
     }
 
     try {
@@ -190,7 +195,7 @@ var _Object = {
 module.exports = function (opts) {
   if (typeof opts === 'object') {
     specialObjs = opts.specialObjs || [];
-
+    failOnUnknownObjectProperties = opts.failOnUnknownObjectProperties || false;
     if (typeof opts.customProps === 'object') {
       var keys = Object.keys(opts.customProps);
       for (var i = 0, len = keys.length; i < len; i += 1) {
