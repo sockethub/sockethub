@@ -148,6 +148,403 @@ IRC.prototype.schema = {
   }
 };
 
+/**
+ * Function: join
+ *
+ * Join a room or private conversation.
+ *
+ * @example
+ *
+ * {
+ *   context: 'irc',
+ *   '@type': 'join',
+ *   actor: {
+ *     '@id': 'irc://slvrbckt@irc.freenode.net',
+ *     '@type': 'person',
+ *     displayName: 'slvrbckt'
+ *   },
+ *   target: {
+ *     '@id': 'irc://irc.freenode.net/sockethub',
+ *     '@type': 'room',
+ *     displayName: '#sockethub'
+ *   },
+ *   object: {}
+ * }
+ *
+ */
+IRC.prototype.join = function (job, done) {
+  var self = this;
+  self.session.debug('join() called for ' + job.actor['@id']);
+
+  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
+    if (err) { return done(err); }
+
+    self.__addUnique(job.actor['@id']);
+    // self.session.debug('got client for ' + job.actor['@id']);
+    // join channel
+    self.session.debug('join: -> ' + job.target.displayName); //, client.connection);
+    client.connection.irc.raw(['JOIN', job.target.displayName]);
+    self.__joined(job.target.displayName);
+    setTimeout(function () {
+      self.session.debug('sending /WHO');
+      client.connection.irc.raw(['WHO', job.target.displayName]);
+      receivedWho[job.target.displayName] = receivedWho[job.target.displayName] || 0; // ensure it's initialized as a number
+      setTimeout(function () {
+        if (receivedWho[job.target.displayName] > (Date.now() - 16000)) {
+          self.session.debug('response from WHO command not received, possible disconnect. sending error to client.');
+          self.session.send({
+            '@type': 'join',
+            actor: job.target,
+            object: {
+              '@type': 'error',
+              content: 'requested WHO command not received after 15 seconds, possibly not connected.'
+            },
+            target: job.actor
+          })
+        } else {
+          self.session.debug('response time acceptable, were live. [' + typeof receivedWho[job.target.displayName] + '] ' + receivedWho[job.target.displayName]);
+          // + ' > [' + typeof (Date.now() - 7000) + '] ' + (Date.now() - 7000), receivedWho);
+        }
+      }, 15000);
+    }, 5000);
+    done();
+  });
+};
+
+/**
+ * @function leave
+ *
+ * @description
+ * Leave a room or private conversation.
+ *
+ * @example
+ * {
+ *   context: 'irc',
+ *   '@type': 'leave',
+ *   actor: {
+ *     '@id': 'irc://slvrbckt@irc.freenode.net',
+ *     '@type': 'person',
+ *     displayName: 'slvrbckt'
+ *   },
+ *   target: {
+ *     '@id': 'irc://irc.freenode.net/remotestorage',
+ *     '@type': 'room',
+ *     displayName: '#remotestorage'
+ *   },
+ *   object: {}
+ * }
+ *
+ */
+IRC.prototype.leave = function (job, done) {
+  var self = this;
+
+  self.session.debug('leave() called');
+
+  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
+    if (err) { return done(err); }
+    // leave channel
+    self.__addUnique(job.actor['@id']);
+    self.session.debug('leave: ' + job.actor.displayName + ' -< ' + job.target.displayName);
+    client.connection.irc.raw(['PART', job.target.displayName]);
+    self.__left(job.target.displayName);
+    done();
+  });
+};
+
+/**
+ * Function: send
+ *
+ * Send a message to a room or private conversation.
+ *
+ * @example
+ *
+ *  {
+ *    context: 'irc',
+ *    '@type': 'send',
+ *    actor: {
+ *      '@id': 'irc://slvrbckt@irc.freenode.net',
+ *      '@type': 'person',
+ *      displayName: 'Nick Jennings',
+ *      userName: 'slvrbckt'
+ *    },
+ *    target: {
+ *      '@id': 'irc://irc.freenode.net/remotestorage',
+ *      '@type': 'room',
+ *      displayName: '#remotestorage'
+ *    },
+ *    object: {
+ *      '@type': 'message',
+ *      content: 'Hello from Sockethub!'
+ *    }
+ *  }
+ *
+ */
+IRC.prototype.send = function (job, done) {
+  var self = this;
+
+  self.session.debug('send() called for ' + job.actor['@id'] + ' target: ' + job.target['@id']);
+
+  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
+    if (err) { return done(err); }
+    err = undefined;
+
+    self.__addUnique(job.actor['@id']);
+    self.session.debug('send(): got client object');
+
+    if (typeof job.object.content !== 'string') {
+      return done('cannot send message with no object.content');
+    }
+
+    var msg = job.object.content.replace(/^\s+|\s+$/g, "");
+
+    if (msg.indexOf('/') === 0) {
+      // message intented as command
+      msg += ' ';
+      var cmd = msg.substr(0, msg.indexOf(' ')).substr(1).toUpperCase(); // get command
+      msg = msg.substr(msg.indexOf(' ') + 1).replace(/\s\s*$/, ''); // remove command from message
+      if (cmd === 'ME') {
+        // handle /me messages uniquely
+        job.object['@type'] = 'me';
+        job.object.content = msg;
+      } else if (cmd === 'NOTICE') {
+        // attempt to send as raw command
+        job.object['@type'] = 'notice';
+        job.object.content = msg;
+      }
+    } else {
+      job.object.content = msg;
+    }
+
+    if (job.object['@type'] === 'me') {
+      // message intented as command
+      self.session.debug('sending ME message to room ' + job.target.displayName + ': ' + job.actor.displayName + ' ' + job.object.content);
+      client.connection.irc.me(job.target.displayName, job.object.content);
+    } else if (job.object['@type'] === 'notice') {
+      // attempt to send as raw command
+      self.session.debug('sending RAW command: NOTICE to ' + job.target.displayName + ', ' + job.object.content);
+      client.connection.irc.raw(['NOTICE', job.target.displayName, job.object.content]);
+    } else if (self.__isJoined(job.target.displayName)) {
+      self.session.debug('irc.say: ' + job.target.displayName + ', [' + job.object.content + ']');
+      client.connection.irc.privmsg(job.target.displayName, job.object.content, true); //forcePushback
+    } else {
+      err = "cannot send message to a channel of which you've not first `join`ed.";
+    }
+
+    self.session.debug('sending ping to #sockethub');
+    client.connection.irc.raw(['PING', '#sockethub']);
+    done(err);
+  });
+};
+
+/**
+ * Function: update
+ *
+ * Indicate a change (ie. room topic update, or nickname change).
+ *
+ * @example change topic
+ *
+ * {
+ *   context: 'irc',
+ *   '@type': 'update',
+ *   actor: {
+ *     '@id': 'irc://slvrbckt@irc.freenode.net',
+ *     '@type': 'person',
+ *     displayName: 'Nick Jennings',
+ *     userName: 'slvrbckt'
+ *   },
+ *   target: {
+ *     '@id': 'irc://irc.freenode.net/sockethub',
+ *     '@type': 'room',
+ *     displayName: '#sockethub'
+ *   },
+ *   object: {
+ *     '@type': 'topic',
+ *     topic: 'New version of Socekthub released!'
+ *   }
+ * }
+ *
+ * @example change nickname
+ * // TODO review, also when we rename a user, their person
+ * //      object needs to change (and their credentials)
+ *
+ *  {
+ *    context: 'irc'
+ *    '@type': 'udpate',
+ *    actor: {
+ *      '@id': 'irc://slvrbckt@irc.freenode.net',
+ *      '@type': 'person',
+ *      displayName: 'Nick Jennings',
+ *      userName: 'slvrbckt'
+ *    },
+ *    object: {
+ *      '@type': "person",
+ *      displayName: 'CoolDude'
+ *    },
+ *    target: {
+ *      '@id': 'irc://irc.freenode.net',
+ *      '@type': 'service' // FIXME - rewrite
+ *    }
+ *  }
+ */
+IRC.prototype.update = function (job, done) {
+  var self = this;
+
+  self.session.debug('update() called for ' + job.actor.displayName);
+
+  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
+    if (err) { return done(err); }
+
+    self.__addUnique(job.actor['@id']);
+    self.session.debug('update(): got client object');
+
+    if (job.target['@type'] === 'person') {
+      self.session.debug('changing nick from ' + job.actor.displayName + ' to ' + job.target.displayName);
+      // send nick change command
+      client.connection.irc.raw(['NICK', job.target.displayName]);
+      __renameUser(job.target['@id'], job.target.displayName, client.credentials, self.session.store, self.session.connectionManager, done);
+    } else if (job.object['@type'] === 'topic') {
+      // update topic
+      self.session.debug('changing topic in channel ' + job.target.displayName);
+      client.connection.irc.raw(['topic', job.target.displayName, job.object.topic]);
+      return done();
+    } else {
+      done('unknown update action');
+    }
+  });
+
+};
+
+/**
+ * Function: observe
+ *
+ * Indicate an intent to observe something (ie. get a list of users in a room).
+ *
+ * @example
+ *
+ *  {
+ *    context: 'irc',
+ *    '@type': 'observe',
+ *    actor: {
+ *      '@id': 'irc://slvrbckt@irc.freenode.net',
+ *      '@type': 'person',
+ *      displayName: 'Nick Jennings',
+ *      userName: 'slvrbckt'
+ *    },
+ *    target: {
+ *      '@id': 'irc://irc.freenode.net/sockethub',
+ *      '@type': 'room',
+ *      displayName: '#sockethub'
+ *    },
+ *    object: {
+ *      '@type': 'attendance'
+ *    }
+ *  }
+ *
+ *
+ *  // The obove object might return:
+ *  {
+ *    context: 'irc',
+ *    '@type': 'observe',
+ *    actor: {
+ *      '@id': 'irc://irc.freenode.net/sockethub',
+ *      '@type': 'room',
+ *      displayName: '#sockethub'
+ *    },
+ *    target: {},
+ *    object: {
+ *      '@type': 'attendance'
+ *      members: [
+ *        'RyanGosling',
+ *        'PeeWeeHerman',
+ *        'Commando',
+ *        'Smoochie',
+ *        'neo'
+ *      ]
+ *    }
+ *  }
+ *
+ */
+IRC.prototype.observe = function (job, done) {
+  var self = this;
+  self.session.debug('observe() called for ' + job.actor['@id']);
+  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
+    if (err) { return done(err); }
+
+    self.__addUnique(job.actor['@id']);
+    self.session.debug('observe(): got client object');
+    if (job.object['@type'] === 'attendance') {
+      self.session.debug('objserve() - sending NAMES for ' + job.target.displayName);
+      client.connection.irc.raw(['NAMES', job.target.displayName]);
+      done();
+    } else {
+      done("unknown '@type' '" + job.object['@type'] + "'");
+    }
+  });
+};
+
+
+IRC.prototype.cleanup = function (done) {
+  // this.session.debug('cleanup() called, removing sessions for ', this._uniqueIDs);
+
+  this._uniqueIDs.forEach(function (id, i) {
+    this.session.connectionManager.get(id, __genClientConnectionObject(this.session), function (err, client) {
+      if (err) { return done(err); }
+      this.session.debug('cleanup(): disconnection ' + id);
+      if (client.connection.irc === 'object') {
+        if (client.connection.irc.disconnect === 'function') {
+          client.connection.irc.disconnect();
+        }
+      }
+    }.bind(this));
+    this._uniqueIDs.splice(this._uniqueIDs.indexOf(id), 1); // remove this id from list
+  }.bind(this));
+
+  this.session.connectionManager.removeAll();
+  this._uniqueIDs = [];
+  this._channels = [];
+  done();
+};
+
+
+IRC.prototype.__isJoined = function (channel) {
+  if (channel.indexOf('#') === 0) {
+    // valid channel name
+    if (this._channels.indexOf(channel) >= 0) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    // usernames are always OK to send to
+    return true;
+  }
+};
+
+IRC.prototype.__joined = function (channel) {
+  // keep track of channels joined
+  if (this._channels.indexOf(channel) < 0) {
+    this._channels.push(channel);
+  }
+};
+
+IRC.prototype.__left = function (channel) {
+  // keep track of channels left
+  var index = this._channels.indexOf(channel);
+
+  if (index >= 0) {
+    this._channels.splice(index, 1);
+  }
+};
+
+IRC.prototype.__addUnique = function (field) {
+  if (this._uniqueIDs.indexOf(field) >= 0) {
+    return false;
+  } else {
+    this._uniqueIDs.push(field);
+    return true;
+  }
+};
+
 function __renameUser(id, displayName, credentials, store, client, cb) {
     // preserve old creds
     var oldCreds = credentials;
@@ -519,391 +916,5 @@ function __genClientConnectionObject(session) {
     }
   };
 }
-
-/**
- * Function: join
- *
- * Join a room or private conversation.
- *
- * @example
- *
- * {
- *   context: 'irc',
- *   '@type': 'join',
- *   actor: {
- *     '@id': 'irc://slvrbckt@irc.freenode.net',
- *     '@type': 'person',
- *     displayName: 'slvrbckt'
- *   },
- *   target: {
- *     '@id': 'irc://irc.freenode.net/sockethub',
- *     '@type': 'room',
- *     displayName: '#sockethub'
- *   },
- *   object: {}
- * }
- *
- */
-IRC.prototype.join = function (job, done) {
-  var self = this;
-  self.session.debug('join() called for ' + job.actor['@id']);
-
-  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
-    if (err) { return done(err); }
-
-    self.__addUnique(job.actor['@id']);
-    // self.session.debug('got client for ' + job.actor['@id']);
-    // join channel
-    self.session.debug('join: -> ' + job.target.displayName); //, client.connection);
-    client.connection.irc.raw(['JOIN', job.target.displayName]);
-    self.__joined(job.target.displayName);
-    setTimeout(function () {
-      self.session.debug('sending /WHO');
-      client.connection.irc.raw(['WHO', job.target.displayName]);
-      receivedWho[job.target.displayName] = receivedWho[job.target.displayName] || 0;
-      setTimeout(function () {
-        if (receivedWho[job.target.displayName] > (Date.now() - 7000)) {
-          self.session.debug('response from WHO command not received, possible disconnect. TODO something about it.');
-        } else {
-          self.session.debug('response time acceptable, were live. [' + typeof receivedWho[job.target.displayName] + '] ' + receivedWho[job.target.displayName] + ' > [' + typeof (Date.now() - 7000) + '] ' + (Date.now() - 7000), receivedWho);
-        }
-      }, 5000);
-    }, 5000);
-    done();
-  });
-};
-
-/**
- * @function leave
- *
- * @description
- * Leave a room or private conversation.
- *
- * @example
- * {
- *   context: 'irc',
- *   '@type': 'leave',
- *   actor: {
- *     '@id': 'irc://slvrbckt@irc.freenode.net',
- *     '@type': 'person',
- *     displayName: 'slvrbckt'
- *   },
- *   target: {
- *     '@id': 'irc://irc.freenode.net/remotestorage',
- *     '@type': 'room',
- *     displayName: '#remotestorage'
- *   },
- *   object: {}
- * }
- *
- */
-IRC.prototype.leave = function (job, done) {
-  var self = this;
-
-  self.session.debug('leave() called');
-
-  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
-    if (err) { return done(err); }
-    // leave channel
-    self.__addUnique(job.actor['@id']);
-    self.session.debug('leave: ' + job.actor.displayName + ' -< ' + job.target.displayName);
-    client.connection.irc.raw(['PART', job.target.displayName]);
-    self.__left(job.target.displayName);
-    done();
-  });
-};
-
-/**
- * Function: send
- *
- * Send a message to a room or private conversation.
- *
- * @example
- *
- *  {
- *    context: 'irc',
- *    '@type': 'send',
- *    actor: {
- *      '@id': 'irc://slvrbckt@irc.freenode.net',
- *      '@type': 'person',
- *      displayName: 'Nick Jennings',
- *      userName: 'slvrbckt'
- *    },
- *    target: {
- *      '@id': 'irc://irc.freenode.net/remotestorage',
- *      '@type': 'room',
- *      displayName: '#remotestorage'
- *    },
- *    object: {
- *      '@type': 'message',
- *      content: 'Hello from Sockethub!'
- *    }
- *  }
- *
- */
-IRC.prototype.send = function (job, done) {
-  var self = this;
-
-  self.session.debug('send() called for ' + job.actor['@id'] + ' target: ' + job.target['@id']);
-
-  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
-    if (err) { return done(err); }
-    err = undefined;
-
-    self.__addUnique(job.actor['@id']);
-    self.session.debug('send(): got client object');
-
-    if (typeof job.object.content !== 'string') {
-      return done('cannot send message with no object.content');
-    }
-
-    var msg = job.object.content.replace(/^\s+|\s+$/g, "");
-
-    if (msg.indexOf('/') === 0) {
-      // message intented as command
-      msg += ' ';
-      var cmd = msg.substr(0, msg.indexOf(' ')).substr(1).toUpperCase(); // get command
-      msg = msg.substr(msg.indexOf(' ') + 1).replace(/\s\s*$/, ''); // remove command from message
-      if (cmd === 'ME') {
-        // handle /me messages uniquely
-        job.object['@type'] = 'me';
-        job.object.content = msg;
-      } else if (cmd === 'NOTICE') {
-        // attempt to send as raw command
-        job.object['@type'] = 'notice';
-        job.object.content = msg;
-      }
-    } else {
-      job.object.content = msg;
-    }
-
-    if (job.object['@type'] === 'me') {
-      // message intented as command
-      self.session.debug('sending ME message to room ' + job.target.displayName + ': ' + job.actor.displayName + ' ' + job.object.content);
-      client.connection.irc.me(job.target.displayName, job.object.content);
-    } else if (job.object['@type'] === 'notice') {
-      // attempt to send as raw command
-      self.session.debug('sending RAW command: NOTICE to ' + job.target.displayName + ', ' + job.object.content);
-      client.connection.irc.raw(['NOTICE', job.target.displayName, job.object.content]);
-    } else if (self.__isJoined(job.target.displayName)) {
-      self.session.debug('irc.say: ' + job.target.displayName + ', [' + job.object.content + ']');
-      client.connection.irc.privmsg(job.target.displayName, job.object.content, true); //forcePushback
-    } else {
-      err = "cannot send message to a channel of which you've not first `join`ed.";
-    }
-
-    self.session.debug('sending ping to #sockethub');
-    client.connection.irc.raw(['PING', '#sockethub']);
-    done(err);
-  });
-};
-
-/**
- * Function: update
- *
- * Indicate a change (ie. room topic update, or nickname change).
- *
- * @example change topic
- *
- * {
- *   context: 'irc',
- *   '@type': 'update',
- *   actor: {
- *     '@id': 'irc://slvrbckt@irc.freenode.net',
- *     '@type': 'person',
- *     displayName: 'Nick Jennings',
- *     userName: 'slvrbckt'
- *   },
- *   target: {
- *     '@id': 'irc://irc.freenode.net/sockethub',
- *     '@type': 'room',
- *     displayName: '#sockethub'
- *   },
- *   object: {
- *     '@type': 'topic',
- *     topic: 'New version of Socekthub released!'
- *   }
- * }
- *
- * @example change nickname
- * // TODO review, also when we rename a user, their person
- * //      object needs to change (and their credentials)
- *
- *  {
- *    context: 'irc'
- *    '@type': 'udpate',
- *    actor: {
- *      '@id': 'irc://slvrbckt@irc.freenode.net',
- *      '@type': 'person',
- *      displayName: 'Nick Jennings',
- *      userName: 'slvrbckt'
- *    },
- *    object: {
- *      '@type': "person",
- *      displayName: 'CoolDude'
- *    },
- *    target: {
- *      '@id': 'irc://irc.freenode.net',
- *      '@type': 'service' // FIXME - rewrite
- *    }
- *  }
- */
-IRC.prototype.update = function (job, done) {
-  var self = this;
-
-  self.session.debug('update() called for ' + job.actor.displayName);
-
-  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
-    if (err) { return done(err); }
-
-    self.__addUnique(job.actor['@id']);
-    self.session.debug('update(): got client object');
-
-    if (job.target['@type'] === 'person') {
-      self.session.debug('changing nick from ' + job.actor.displayName + ' to ' + job.target.displayName);
-      // send nick change command
-      client.connection.irc.raw(['NICK', job.target.displayName]);
-      __renameUser(job.target['@id'], job.target.displayName, client.credentials, self.session.store, self.session.connectionManager, done);
-    } else if (job.object['@type'] === 'topic') {
-      // update topic
-      self.session.debug('changing topic in channel ' + job.target.displayName);
-      client.connection.irc.raw(['topic', job.target.displayName, job.object.topic]);
-      return done();
-    } else {
-      done('unknown update action');
-    }
-  });
-
-};
-
-/**
- * Function: observe
- *
- * Indicate an intent to observe something (ie. get a list of users in a room).
- *
- * @example
- *
- *  {
- *    context: 'irc',
- *    '@type': 'observe',
- *    actor: {
- *      '@id': 'irc://slvrbckt@irc.freenode.net',
- *      '@type': 'person',
- *      displayName: 'Nick Jennings',
- *      userName: 'slvrbckt'
- *    },
- *    target: {
- *      '@id': 'irc://irc.freenode.net/sockethub',
- *      '@type': 'room',
- *      displayName: '#sockethub'
- *    },
- *    object: {
- *      '@type': 'attendance'
- *    }
- *  }
- *
- *
- *  // The obove object might return:
- *  {
- *    context: 'irc',
- *    '@type': 'observe',
- *    actor: {
- *      '@id': 'irc://irc.freenode.net/sockethub',
- *      '@type': 'room',
- *      displayName: '#sockethub'
- *    },
- *    target: {},
- *    object: {
- *      '@type': 'attendance'
- *      members: [
- *        'RyanGosling',
- *        'PeeWeeHerman',
- *        'Commando',
- *        'Smoochie',
- *        'neo'
- *      ]
- *    }
- *  }
- *
- */
-IRC.prototype.observe = function (job, done) {
-  var self = this;
-  self.session.debug('observe() called for ' + job.actor['@id']);
-  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
-    if (err) { return done(err); }
-
-    self.__addUnique(job.actor['@id']);
-    self.session.debug('observe(): got client object');
-    if (job.object['@type'] === 'attendance') {
-      self.session.debug('objserve() - sending NAMES for ' + job.target.displayName);
-      client.connection.irc.raw(['NAMES', job.target.displayName]);
-      done();
-    } else {
-      done("unknown '@type' '" + job.object['@type'] + "'");
-    }
-  });
-};
-
-
-IRC.prototype.cleanup = function (done) {
-  // this.session.debug('cleanup() called, removing sessions for ', this._uniqueIDs);
-
-  this._uniqueIDs.forEach(function (id, i) {
-    this.session.connectionManager.get(id, __genClientConnectionObject(this.session), function (err, client) {
-      if (err) { return done(err); }
-      this.session.debug('cleanup(): disconnection ' + id);
-      if (client.connection.irc === 'object') {
-        if (client.connection.irc.disconnect === 'function') {
-          client.connection.irc.disconnect();
-        }
-      }
-    }.bind(this));
-    this._uniqueIDs.splice(this._uniqueIDs.indexOf(id), 1); // remove this id from list
-  }.bind(this));
-
-  this.session.connectionManager.removeAll();
-  this._uniqueIDs = [];
-  this._channels = [];
-  done();
-};
-
-IRC.prototype.__isJoined = function (channel) {
-  if (channel.indexOf('#') === 0) {
-    // valid channel name
-    if (this._channels.indexOf(channel) >= 0) {
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    // usernames are always OK to send to
-    return true;
-  }
-};
-
-IRC.prototype.__joined = function (channel) {
-  // keep track of channels joined
-  if (this._channels.indexOf(channel) < 0) {
-    this._channels.push(channel);
-  }
-};
-
-IRC.prototype.__left = function (channel) {
-  // keep track of channels left
-  var index = this._channels.indexOf(channel);
-
-  if (index >= 0) {
-    this._channels.splice(index, 1);
-  }
-};
-
-IRC.prototype.__addUnique = function (field) {
-  if (this._uniqueIDs.indexOf(field) >= 0) {
-    return false;
-  } else {
-    this._uniqueIDs.push(field);
-    return true;
-  }
-};
 
 module.exports = IRC;
