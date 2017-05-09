@@ -11,6 +11,7 @@ module.exports = {
   },
 
   "feed": {
+    "activity-object": true,
     "required": [ "@id", "@type" ],
     "additionalProperties": true,
     "properties": {
@@ -55,6 +56,7 @@ module.exports = {
   },
 
   "person": {
+    "activity-object": true,
     "required": [ "@id", "@type", "displayName" ],
     "additionalProperties": true,
     "properties": {
@@ -71,6 +73,7 @@ module.exports = {
   },
 
   "room": {
+    "activity-object": true,
     "required": [ "@id", "@type", "displayName" ],
     "additionalProperties": true,
     "properties": {
@@ -87,6 +90,7 @@ module.exports = {
   },
 
   "website": {
+    "activity-object": true,
     "required": [ "@id", "@type", "displayName" ],
     "additionalProperties": true,
     "properties": {

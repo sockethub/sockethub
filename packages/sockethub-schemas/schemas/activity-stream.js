@@ -86,6 +86,7 @@ module.exports = {
 				}
 			},
 			"feed": {
+				"activity-object": true,
 				"required": [
 					"@id",
 					"@type"
@@ -139,6 +140,7 @@ module.exports = {
 				}
 			},
 			"person": {
+				"activity-object": true,
 				"required": [
 					"@id",
 					"@type",
@@ -160,6 +162,7 @@ module.exports = {
 				}
 			},
 			"room": {
+				"activity-object": true,
 				"required": [
 					"@id",
 					"@type",
@@ -181,6 +184,7 @@ module.exports = {
 				}
 			},
 			"website": {
+				"activity-object": true,
 				"required": [
 					"@id",
 					"@type",
@@ -203,4 +207,4 @@ module.exports = {
 			}
 		}
 	}
-}
+};

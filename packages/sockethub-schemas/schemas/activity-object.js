@@ -11,13 +11,7 @@ module.exports = {
 			"type": "object",
 			"oneOf": [
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-object#/definitions/type/credentials"
-				},
-				{
 					"$ref": "http://sockethub.org/schemas/v0/activity-object#/definitions/type/feed"
-				},
-				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-object#/definitions/type/message"
 				},
 				{
 					"$ref": "http://sockethub.org/schemas/v0/activity-object#/definitions/type/person"
@@ -33,20 +27,8 @@ module.exports = {
 	},
 	"definitions": {
 		"type": {
-			"credentials": {
-				"required": [
-					"@type"
-				],
-				"additionalProperties": true,
-				"properties": {
-					"@type": {
-						"enum": [
-							"credentials"
-						]
-					}
-				}
-			},
 			"feed": {
+				"activity-object": true,
 				"required": [
 					"@id",
 					"@type"
@@ -75,31 +57,8 @@ module.exports = {
 					}
 				}
 			},
-			"message": {
-				"required": [
-					"@type",
-					"displayName",
-					"content"
-				],
-				"additionalProperties": true,
-				"properties": {
-					"@id": {
-						"type": "string"
-					},
-					"@type": {
-						"enum": [
-							"message"
-						]
-					},
-					"displayName": {
-						"type": "string"
-					},
-					"content": {
-						"type": "string"
-					}
-				}
-			},
 			"person": {
+				"activity-object": true,
 				"required": [
 					"@id",
 					"@type",
@@ -121,6 +80,7 @@ module.exports = {
 				}
 			},
 			"room": {
+				"activity-object": true,
 				"required": [
 					"@id",
 					"@type",
@@ -142,6 +102,7 @@ module.exports = {
 				}
 			},
 			"website": {
+				"activity-object": true,
 				"required": [
 					"@id",
 					"@type",
@@ -164,4 +125,4 @@ module.exports = {
 			}
 		}
 	}
-}
+};

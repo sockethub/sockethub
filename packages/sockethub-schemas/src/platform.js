@@ -16,7 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-// the schema defines the general structure of the schema object which should
+// this schema defines the general structure of the schema object which should
 // be returned from platforms.
 module.exports = {
   'type' : 'object',
