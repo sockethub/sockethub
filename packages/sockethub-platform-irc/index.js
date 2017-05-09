@@ -875,7 +875,7 @@ function __genClientConnectionObject(session) {
             '@type': 'send',
             actor: {
               '@type': 'room',
-              '@id': 'irc://' + this.credentials.object.server + '/' + channel``
+              '@id': 'irc://' + this.credentials.object.server + '/' + channel
             },
             target: {
               '@type': 'person',
