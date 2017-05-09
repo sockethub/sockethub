@@ -45,13 +45,14 @@
     "nconf": "^0.8.2",
     "rand-token": "^0.3.0",
     "secure-store-redis": "^1.2.0",
-    "socket.io": "^1.7.4",
+    "socket.io": "^2.0.1",
     "sockethub-platform-dummy": "^1.0.0",
     "sockethub-platform-feeds": "^1.0.0",
     "sockethub-platform-irc": "^1.1.2",
     "sockethub-platform-xmpp": "^1.1.2",
-    "sockethub-schemas": "^1.1.0",
-    "tv4": "^1.2.7"
+    "sockethub-schemas": "^2.0.0",
+    "tv4": "^1.2.7",
+    "urijs": "^1.18.10"
   },
   "devDependencies": {
     "jaribu": "^2.0.0"
