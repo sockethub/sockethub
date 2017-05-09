@@ -1,91 +1,44 @@
 if (typeof define !== 'function') {
   var define = require('amdefine')(module);
 }
-define(['require', './../lib/validate'], function (require, Validate) {
+define(['require', './../lib/validate', 'activity-streams'], function (require, Validate, Activity) {
 
+  var activity = new Activity();
   var errMsg = '';
   var suites = [];
 
-  var groups = {
-    'credentials': {
-      pass: {
-        one: {
-          '@id': 'blah',
-          '@type': 'send',
-          context: 'dummy',
-          actor: {
-            '@id': 'irc://dood@irc.freenode.net',
-            '@type': 'person',
-            displayName: 'dood',
-          },
-          target: {
-            '@id': 'irc://irc.freenode.net/sockethub',
-            '@type': 'person',
-            displayName: 'sockethub'
-          },
-          object: {
-            '@type': 'credentials'
-          }
+  var testGroups = [
+    {
+      name: 'one',
+      result: true,
+      type: 'credentials',
+      input: {
+        '@id': 'blah',
+        '@type': 'send',
+        context: 'dummy',
+        actor: {
+          '@id': 'irc://dood@irc.freenode.net',
+          '@type': 'person',
+          displayName: 'dood',
         },
-        newFormat: {
-          context: "irc",
-          actor: {
-            '@id': "irc://sh-9K3Vk@irc.freenode.net",
-            '@type': "person",
-            displayName: "sh-9K3Vk",
-            image: {
-              height: 250,
-              mediaType: "image/jpeg",
-              url: "http://example.org/image.jpg",
-              width: 250
-            },
-            url: "http://sockethub.org"
-          },
-          object: {
-            '@type': "credentials",
-            nick: "sh-9K3Vk",
-            port: 6667,
-            secure: false,
-            server: "irc.freenode.net"
-          }
+        target: {
+          '@id': 'irc://irc.freenode.net/sockethub',
+          '@type': 'person',
+          displayName: 'sockethub'
+        },
+        object: {
+          '@type': 'credentials'
         }
       },
-      fail: {
-        credentials: {
-          "actor": "xmpp://hyper_rau@localhost",
-          "context": "xmpp",
-          "object": {
-            "username": "hyper_rau",
-            "password": "123",
-            "server": "localhost",
-            "port": 5222,
-            "resource": "laptop"
-          }
-        }
-      }
+      output: 'same'
     },
-    'activity-object': {
-      pass: {
-        person: {
-          '@id': 'blah',
-          '@type': 'person',
-          displayName: 'dood'
-        },
-        personWithExtras: {
-          '@id': 'blah',
-          '@type': 'person',
-          displayName: 'bob',
-          hello: 'there',
-          i: [ 'am','extras' ]
-        },
-        aCredential: {
-          '@type': "credentials",
-          nick: "sh-9K3Vk",
-          port: 6667,
-          secure: false,
-          server: "irc.freenode.net"
-        },
-        aNewPerson: {
+    {
+      name: 'new format',
+      result: true,
+      type: 'credentials',
+      input: {
+        context: "irc",
+        actor: {
           '@id': "irc://sh-9K3Vk@irc.freenode.net",
           '@type': "person",
           displayName: "sh-9K3Vk",
@@ -96,9 +49,104 @@ define(['require', './../lib/validate'], function (require, Validate) {
             width: 250
           },
           url: "http://sockethub.org"
+        },
+        object: {
+          '@type': "credentials",
+          nick: "sh-9K3Vk",
+          port: 6667,
+          secure: false,
+          server: "irc.freenode.net"
         }
       },
-      fail: {
+      output: 'same'
+    },
+    {
+      name: 'no type',
+      result: false,
+      type: 'credentials',
+      input: {
+        "actor": "xmpp://hyper_rau@localhost",
+        "context": "xmpp",
+        "object": {
+          "username": "hyper_rau",
+          "password": "123",
+          "server": "localhost",
+          "port": 5222,
+          "resource": "laptop"
+        }
+      }
+    },
+    {
+      name: 'person',
+      type: 'activity-object',
+      result: true,
+      input: {
+        '@id': 'blah',
+        '@type': 'person',
+        displayName: 'dood'
+      },
+      output: 'same'
+    },
+    {
+      name: 'person with extras',
+      result: true,
+      type: 'activity-object',
+      input: {
+        '@id': 'blah',
+        '@type': 'person',
+        displayName: 'bob',
+        hello: 'there',
+        i: [ 'am','extras' ]
+      },
+      output: 'same'
+    },
+    {
+      name: 'alone credentials (as activity-object)',
+      result: false,
+      type: 'activity-object',
+      input:  {
+        '@type': "credentials",
+        nick: "sh-9K3Vk",
+        port: 6667,
+        secure: false,
+        server: "irc.freenode.net"
+      }
+    },
+    {
+      name: 'alone credentials (as credentials)',
+      result: false,
+      type: 'credentials',
+      input:  {
+        '@type': "credentials",
+        nick: "sh-9K3Vk",
+        port: 6667,
+        secure: false,
+        server: "irc.freenode.net"
+      }
+    },
+    {
+      name: 'new person',
+      result: true,
+      type: 'activity-object',
+      input: {
+        '@id': "irc://sh-9K3Vk@irc.freenode.net",
+        '@type': "person",
+        displayName: "sh-9K3Vk",
+        image: {
+          height: 250,
+          mediaType: "image/jpeg",
+          url: "http://example.org/image.jpg",
+          width: 250
+        },
+        url: "http://sockethub.org"
+      },
+      output: 'same'
+    },
+    {
+      name: 'bad parent object',
+      result: false,
+      type: 'activity-object',
+      input: {
         string: 'this is a string',
         array: ['this', 'is', { an: 'array'} ],
         as: {
@@ -127,25 +175,96 @@ define(['require', './../lib/validate'], function (require, Validate) {
           '@id': 'larg',
         }
       }
+    },
+    {
+      name: 'expand actor and target of unknowns',
+      result: true,
+      type: 'message',
+      input: {
+        "actor": "xmpp://hyper_rau@localhost",
+        '@type': 'join',
+        "context": "xmpp",
+        "object": {},
+        target: 'dooder'
+      },
+      output: {
+        "actor": {
+          "@id": "xmpp://hyper_rau@localhost"
+        },
+        '@type': 'join',
+        "context": "xmpp",
+        "object": {},
+        target: {
+          '@id': 'dooder'
+        }
+      }
+    },
+    {
+      name: "expand known person",
+      result: true,
+      type: "message",
+      input: {
+        actor: "irc://sh-9K3Vk@irc.freenode.net",
+        target: "blah",
+        "@type": "send",
+        context: "irc",
+        object: {}
+      },
+      output: {
+        actor: {
+          '@id': "irc://sh-9K3Vk@irc.freenode.net",
+          '@type': "person",
+          displayName: "sh-9K3Vk",
+          image: {
+            height: 250,
+            mediaType: "image/jpeg",
+            url: "http://example.org/image.jpg",
+            width: 250
+          },
+          url: "http://sockethub.org"
+        },
+        target: {
+          '@id': 'blah',
+          '@type': 'person',
+          displayName: 'bob',
+          hello: 'there',
+          i: [ 'am','extras' ]
+        },
+        "@type": "send",
+        context: "irc",
+        object: {}
+      }
     }
-  };
+  ];
 
-  function buildTest(expect, type, name, obj) {
+  function buildTest(name, result, type, input, output) {
     var string = 'fail';
-    if (expect) {
+    if (result) {
       string = 'pass';
     }
 
     var test = {
-      desc: '# ' + string + ' ' + name,
+      desc: '# [' + string + '] ' + name,
       run: function (env, test) {
-        // console.log('validating ' + type + ' object. expecting: ' + expect + ' with obj: ', obj);
-        env.validate(type)(obj, function (result, err) {
-          if (typeof result !== 'boolean') {
-            result = true;
+        env.validate(type)(input, function (state, msg) {
+          // console.log('input: ', input);
+          // console.log('msg: ', msg);
+          // console.log('expected output: ', output);
+          // console.log('result: ', state);
+
+          if (output === 'same') {
+            test.assertAnd(input, msg, "input not the same as output");
+          } else if (output) {
+            test.assertAnd(msg, output, "expected and returned output don't match");
           }
-          // console.log('assert ' + result + ' === ' + expect + ' ... ' + err);
-          test.assert(result, expect, err);
+
+          test.assertAnd(result, state, "results don't match");
+
+          if ((result) && (type === 'activity-object')) {
+            // console.log('activity: ', activity);
+            activity.Object.create(msg);
+          }
+          test.done();
         });
       }
     };
@@ -170,29 +289,11 @@ define(['require', './../lib/validate'], function (require, Validate) {
     };
   }
 
-  var keys = Object.keys(groups);
-  for (var i = 0, len = keys.length; i < len; i++) {
-
-    var suite = buildSuite(keys[i]);
-
-    var tests = [];
-
-    if (typeof groups[keys[i]].pass === 'object') {
-      var pkeys = Object.keys(groups[keys[i]].pass);
-      for (var p = 0, plen = pkeys.length; p < plen; p++) {
-        tests.push(buildTest(true, keys[i], pkeys[p], groups[keys[i]].pass[pkeys[p]]));
-      }
-    }
-
-    if (typeof groups[keys[i]].fail === 'object') {
-      var fkeys = Object.keys(groups[keys[i]].fail);
-      for (var f = 0, flen = fkeys.length; f < flen; f++) {
-        tests.push(buildTest(false, keys[i], fkeys[f], groups[keys[i]].fail[fkeys[f]]));
-      }
-    }
-
-    suite.tests = tests;
-    suites.push(suite);
-  }
-  return suites;
+  var suite = buildSuite('input validation tests');
+  var tests = [];
+  testGroups.forEach(function (entry, i) {
+    tests.push(buildTest(entry.name, entry.result, entry.type, entry.input, entry.output));
+  });
+  suite.tests = tests;
+  return [ suite ];
 });
