@@ -162,7 +162,7 @@ var _Object = {
     return result;
   },
 
-  get: function (id, doExpand = false) {
+  get: function (id, doExpand) {
     var r = objs.getRecord(id);
     if (r) {
       return r;
