@@ -3,7 +3,7 @@
  *   http://github.com/silverbucket/activity-streams
  *
  * Developed and Maintained by:
- *   Nick Jennings <nick@silverbucket.net> copyright 2015-2016
+ *   Nick Jennings <nick@silverbucket.net> copyright 2015
  *
  * activity-streams is released under the MIT (see LICENSE).
  *
@@ -97,11 +97,9 @@ var Stream = function (meta) {
   if (typeof meta.object === 'object') {
     err = validateObject('object', meta.object);
     if (err) {
-      console.log("object: ", meta.object);
       throw new Error(err);
     }
   }
-
 
   for (var key in meta) {
 
@@ -118,7 +116,6 @@ var Stream = function (meta) {
     } else {
       stream[key] = meta[key];
     }
-
   }
 
   // only expand string into objects if they are in the expand list
@@ -165,12 +162,16 @@ var _Object = {
     return result;
   },
 
-  get: function (id) {
+  get: function (id, doExpand = false) {
     var r = objs.getRecord(id);
     if (r) {
       return r;
     } else {
-      return id;
+      if (doExpand) {
+        return { '@id': id };
+      } else {
+        return r;
+      }
     }
   },
 
@@ -180,7 +181,7 @@ var _Object = {
 
   getByType: function (type) {
     objs.forEach(function (o) {
-
+      // TODO not implemented
     });
   }
 };
