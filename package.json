@@ -32,7 +32,7 @@
   },
   "homepage": "http://github.com/sockethub/sockethub",
   "dependencies": {
-    "activity-streams": "^3.0.0",
+    "activity-streams": "^3.0.1",
     "array-keys": "^2.3.1",
     "body-parser": "^1.17.1",
     "connection-manager": "^1.0.4",
