@@ -99,7 +99,7 @@ var Stream = function (meta) {
     err = validateObject('object', meta.object);
     if ((err) && (failOnUnknownObjectProperties)) {
       throw new Error(err);
-    } else {
+    } else if (err) {
       console.warn(err);
     }
   }
@@ -143,7 +143,7 @@ var _Object = {
 
     if ((err) && (failOnUnknownObjectProperties)) {
       throw new Error(err);
-    } else {
+    } else if (err) {
       console.warn(err);
     }
 
