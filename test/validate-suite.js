@@ -49,6 +49,19 @@ define(['require', './../lib/validate'], function (require, Validate) {
             server: "irc.freenode.net"
           }
         }
+      },
+      fail: {
+        credentials: {
+          "actor": "xmpp://hyper_rau@localhost",
+          "context": "xmpp",
+          "object": {
+            "username": "hyper_rau",
+            "password": "123",
+            "server": "localhost",
+            "port": 5222,
+            "resource": "laptop"
+          }
+        }
       }
     },
     'activity-object': {
@@ -126,12 +139,12 @@ define(['require', './../lib/validate'], function (require, Validate) {
     var test = {
       desc: '# ' + string + ' ' + name,
       run: function (env, test) {
-        //console.log('validating ' + type + ' object. expecting: ' + expect + ' with obj: ', obj);
+        // console.log('validating ' + type + ' object. expecting: ' + expect + ' with obj: ', obj);
         env.validate(type)(obj, function (result, err) {
           if (typeof result !== 'boolean') {
             result = true;
           }
-          //console.log('assert ' + result + ' === ' + expect + ' ... ' + err);
+          // console.log('assert ' + result + ' === ' + expect + ' ... ' + err);
           test.assert(result, expect, err);
         });
       }
