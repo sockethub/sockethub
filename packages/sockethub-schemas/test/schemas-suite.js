@@ -97,7 +97,7 @@ define(['require', 'tv4', './../schemas/activity-stream'], function (require, tv
         test.assert(result, entry.result, msg);
       }
     })
-  })
+  });
 
   return [ suite ];
 });
