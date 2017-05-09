@@ -14,8 +14,6 @@ define(['require'], function (require) {
       test.assertTypeAnd(env.session.store.get, 'function');
       test.assertTypeAnd(env.session.store.save, 'function');
 
-
-
       // irc-factory mock
       env.xmpp = require('./mock-simple-xmpp')(test);
       env.xmpp.mock = true;
@@ -55,17 +53,16 @@ define(['require'], function (require) {
   function buildTests() {
     var data = require('./incoming-data');
     var ltx = require('ltx');
-    var keys = Object.keys(data);
     var tests = [];
-    keys.forEach(function(name, i) {
+    data.forEach(function(entry) {
       tests.push({
-        desc: '# incoming data: ' + name,
+        desc: '# incoming data: ' + entry.name,
         run: function (env, test) {
-          var stanza = ltx.parse(data[name].input);
-          env.session.callOnNext('send', function (as) {
-            test.assert(as, data[name].as);
+          var stanza = ltx.parse(entry.input);
+          env.session.callOnNext('send', function (msg) {
+            test.assert(msg, entry.output);
           });
-          env.platform.__listeners.stanza.apply({ scope: env.session }, [stanza]);
+          env.platform.__listeners.stanza.apply({ scope: env.session }, [ stanza ]);
         }
       })
     })
