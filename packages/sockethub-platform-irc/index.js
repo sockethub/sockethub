@@ -552,9 +552,9 @@ IRC.prototype.join = function (job, done) {
     if (err) { return done(err); }
 
     self.__addUnique(job.actor['@id']);
-    self.session.debug('got client for ' + job.actor['@id']);
+    // self.session.debug('got client for ' + job.actor['@id']);
     // join channel
-    self.session.debug('join: ' + job.actor.displayName + ' -> ' + job.target.displayName);
+    self.session.debug('join: -> ' + job.target.displayName); //, client.connection);
     client.connection.irc.raw(['JOIN', job.target.displayName]);
     self.__joined(job.target.displayName);
     setTimeout(function () {
