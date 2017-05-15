@@ -259,7 +259,8 @@ XMPP.prototype.send = function (job, done) {
     self.session.debug('sending message to ' + job.target['@id']);
     client.connection.send(
       job.target['@id'],
-      job.object.content
+      job.object.content,
+      job.target['@type'] === 'room'
     );
     done();
   });
@@ -505,6 +506,9 @@ XMPP.prototype.__listeners = {
   groupbuddy: function (id, groupBuddy, state, statusText) {
     this.scope.debug('received groupbuddy event: ' + id, groupBuddy, state, statusText);
   },
+  groupchat: function (conference, id, message, stamp) {
+    this.scope.debug('received groupchat event: ' + conference, id, message, stamp);
+  },
   buddyCapabilities: function (id, capabilities) {
     this.scope.debug('received buddyCapabilities: ' + id, capabilities);
   },
@@ -512,12 +516,17 @@ XMPP.prototype.__listeners = {
     this.scope.debug("received chat message from " + from);
     this.scope.send({
       '@type': 'send',
-      actor: { '@id': from },
+      actor: {
+        '@type': 'person',
+        '@id': from
+      },
       target: this.credentials.actor,
       object: {
+        '@type': 'message',
         content: message,
-        id: nextId()
-      }
+        '@id': nextId()
+      },
+      published: new Date()
     });
   },
   buddy: function (from, state, statusText) {
