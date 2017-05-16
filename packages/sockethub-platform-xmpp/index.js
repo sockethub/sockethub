@@ -506,8 +506,25 @@ XMPP.prototype.__listeners = {
   groupbuddy: function (id, groupBuddy, state, statusText) {
     this.scope.debug('received groupbuddy event: ' + id, groupBuddy, state, statusText);
   },
-  groupchat: function (conference, id, message, stamp) {
-    this.scope.debug('received groupchat event: ' + conference, id, message, stamp);
+  groupchat: function (room, from, message, stamp) {
+    this.scope.debug('received groupchat event: ' + room, from, message, stamp);
+    this.scope.send({
+      '@type': 'send',
+      actor: {
+        '@type': 'person',
+        '@id': from
+      },
+      target: {
+        '@type': 'room',
+        '@id': room
+      },
+      object: {
+        '@type': 'message',
+        content: message,
+        '@id': nextId()
+      },
+      published: new Date()
+    });
   },
   buddyCapabilities: function (id, capabilities) {
     this.scope.debug('received buddyCapabilities: ' + id, capabilities);
