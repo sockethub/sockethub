@@ -643,7 +643,7 @@ IRC.prototype.__listeners = {
               (typeof object.message === 'string')) {
       // message
       if (! object.nickname) {
-        this.scope.debug('received UNKNOWN: ' + object);
+        this.scope.debug('received UNKNOWN:', object);
       } else {
         var msg_prefix = ':' + object.nickname + '!' + object.username + '@' + object.hostname;
         var type = 'message';
@@ -721,7 +721,7 @@ IRC.prototype.__listeners = {
               (typeof object.time === 'string') &&
               (typeof object.raw === 'object')) {
       // registered
-      debug('registered! ' +  object);
+      debug('registered!', object);
     } else if ((object.reconnecting === true) &&
               (typeof object.attempts === 'number')) {
       // disconected, reconnecting
@@ -736,7 +736,7 @@ IRC.prototype.__listeners = {
               (typeof object.channel === 'undefined') &&
               (typeof object.capabilities !== 'object')) {
       // QUIT
-      debug('received quit ' + object);
+      debug('received quit', object);
       var quitter = object.kicked || object.nickname;
       var msg = (typeof object.kicked === 'string') ? 'user has been kicked' : 'user has quit';
 
