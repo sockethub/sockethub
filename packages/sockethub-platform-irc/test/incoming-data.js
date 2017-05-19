@@ -54,6 +54,36 @@ module.exports = [
     }
   },
   {
+    name: 'leave',
+    input: {
+      nickname: 'sandwich',
+      username: '~sandwich',
+      hostname: '87.78.135.102',
+      channel: '#sockethub',
+      message: '',
+      time: '2017-05-09T22:47:21.137Z',
+      raw: ':sandwich!~sandwich@87.78.135.102 PART #sockethub'
+    },
+    output: {
+      '@type': 'leave',
+      actor: {
+        '@type': 'person',
+        '@id': 'irc://sandwich@irc.freenode.net',
+        displayName: 'sandwich'
+      },
+      target: {
+        '@id': 'irc://irc.freenode.net/#sockethub',
+        '@type': 'room',
+        displayName: '#sockethub'
+      },
+      object: {
+        '@type': 'message',
+        content: 'user has left the channel'
+      },
+      published: '2017-05-09T22:47:21.137Z'
+    }
+  },
+  {
     name: 'join',
     input: { nickname: 'donut',
       username: '~donut',

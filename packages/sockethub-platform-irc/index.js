@@ -643,7 +643,7 @@ IRC.prototype.__listeners = {
               (typeof object.message === 'string')) {
       // message
       if (! object.nickname) {
-        this.scope.debug('received UNKNOWN: ' + object);
+        this.scope.debug('received UNKNOWN:', object);
       } else {
         var msg_prefix = ':' + object.nickname + '!' + object.username + '@' + object.hostname;
         var type = 'message';
@@ -721,7 +721,7 @@ IRC.prototype.__listeners = {
               (typeof object.time === 'string') &&
               (typeof object.raw === 'object')) {
       // registered
-      debug('registered! ' +  object);
+      debug('registered!', object);
     } else if ((object.reconnecting === true) &&
               (typeof object.attempts === 'number')) {
       // disconected, reconnecting
@@ -733,10 +733,10 @@ IRC.prototype.__listeners = {
         debug('skipping reconnect as we are already disconnected. for ' + this.id);
       }
     } else if ((typeof object.nickname === 'string') &&
-              (typeof object.target === 'undefined') &&
+              (typeof object.channel === 'undefined') &&
               (typeof object.capabilities !== 'object')) {
       // QUIT
-      debug('received quit ' + object);
+      debug('received quit', object);
       var quitter = object.kicked || object.nickname;
       var msg = (typeof object.kicked === 'string') ? 'user has been kicked' : 'user has quit';
 
@@ -770,7 +770,7 @@ IRC.prototype.__listeners = {
     } else if ((typeof object.channel === 'string') &&
               (object.raw.indexOf(' PART ') >= 0)) {
       // leave
-      this.scope.debug('received leave: ' + object.nickname + ' -> ' + object.target);
+      this.scope.debug('received leave: ' + object.nickname + ' -> ' + object.channel);
       this.scope.send({
         '@type': 'leave',
         actor: {
@@ -780,8 +780,8 @@ IRC.prototype.__listeners = {
         },
         target: {
           '@type': 'room',
-          '@id': 'irc://' + this.credentials.object.server + '/' + object.target,
-          displayName: object.target
+          '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
+          displayName: object.channel
         },
         object: {
           '@type': 'message',
