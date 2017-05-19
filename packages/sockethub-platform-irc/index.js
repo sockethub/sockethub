@@ -733,7 +733,7 @@ IRC.prototype.__listeners = {
         debug('skipping reconnect as we are already disconnected. for ' + this.id);
       }
     } else if ((typeof object.nickname === 'string') &&
-              (typeof object.target === 'undefined') &&
+              (typeof object.channel === 'undefined') &&
               (typeof object.capabilities !== 'object')) {
       // QUIT
       debug('received quit ' + object);
@@ -770,7 +770,7 @@ IRC.prototype.__listeners = {
     } else if ((typeof object.channel === 'string') &&
               (object.raw.indexOf(' PART ') >= 0)) {
       // leave
-      this.scope.debug('received leave: ' + object.nickname + ' -> ' + object.target);
+      this.scope.debug('received leave: ' + object.nickname + ' -> ' + object.channel);
       this.scope.send({
         '@type': 'leave',
         actor: {
@@ -780,8 +780,8 @@ IRC.prototype.__listeners = {
         },
         target: {
           '@type': 'room',
-          '@id': 'irc://' + this.credentials.object.server + '/' + object.target,
-          displayName: object.target
+          '@id': 'irc://' + this.credentials.object.server + '/' + object.channel,
+          displayName: object.channel
         },
         object: {
           '@type': 'message',
