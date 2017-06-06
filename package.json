@@ -55,6 +55,7 @@
     "urijs": "^1.18.10"
   },
   "devDependencies": {
+    "espree": "^3.4.3",
     "jaribu": "^2.0.0"
   },
   "scripts": {
