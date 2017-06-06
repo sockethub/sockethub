@@ -1,7 +1,8 @@
 language: node_js
 node_js:
   - 6 # LTS
-  - 7 # latest
+  - 7 #
+  - 8 # latest
 services: redis
 sudo: false
 script: npm test
