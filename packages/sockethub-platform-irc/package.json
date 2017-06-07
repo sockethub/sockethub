@@ -21,7 +21,8 @@
   "homepage": "https://github.com/sockethub/sockethub-platform-irc",
   "dependencies": {
     "debug": "^2.6.6",
-    "irc-factory": "1.10.x"
+    "irc-factory": "1.10.x",
+    "irc-socket": "^3.0.7"
   },
   "devDependencies": {
     "jaribu": "^2.2.1",
