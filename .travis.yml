@@ -7,7 +7,7 @@ services: redis
 sudo: false
 script: npm test
 install:
-  - npm update -g npm; npm install; npm install irc-socket; ls node_modules/ | wc -l; 
+  - npm update -g npm; npm install;
 env:
   - CXX=g++-4.8
 addons:
