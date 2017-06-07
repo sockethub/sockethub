@@ -211,9 +211,9 @@ XMPP.prototype.join = function (job, done) {
     self.session.debug('got client for ' + job.actor['@id']);
     //
     // send join
-    self.session.debug('sending join to ' + job.target['@id']);
+    self.session.debug('sending join to ' + `${job.target['@id']}/${job.actor.displayName}`);
     client.connection.join(
-      job.target['@id']
+      `${job.target['@id']}/${job.actor.displayName}`
       // optional passwords not handled for now
     );
     done();

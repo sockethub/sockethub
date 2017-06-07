@@ -184,6 +184,19 @@ define(['require'], function (require) {
       },
 
       {
+        desc: "# join - sets the proper target",
+        run: function (env, test) {
+          const originalJoin = env.xmpp.join;
+          env.xmpp.join = new test.Stub(function(target) {
+            test.assert(target, 'xmpp:partyroom@jabber.net/testingham');
+            env.xmpp.join = originalJoin;
+          });
+
+          env.platform.join(env.job.join);
+        }
+      },
+
+      {
         desc: "# send 1",
         run: function (env, test) {
           env.platform.send(env.job.send, function (err, result) {
