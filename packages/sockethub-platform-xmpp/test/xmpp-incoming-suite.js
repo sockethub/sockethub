@@ -58,11 +58,16 @@ define(['require'], function (require) {
       tests.push({
         desc: '# incoming data: ' + entry.name,
         run: function (env, test) {
-          var stanza = ltx.parse(entry.input);
+          var inputParams;
+          if (typeof entry.input === 'string') {
+            inputParams = [ltx.parse(entry.input)]; // Stanza
+          } else {
+            inputParams = entry.input; // array of params
+          }
           env.session.callOnNext('send', function (msg) {
             test.assert(msg, entry.output);
           });
-          env.platform.__listeners.stanza.apply({ scope: env.session }, [ stanza ]);
+          env.platform.__listeners[entry.handler || "stanza"].apply({ scope: env.session }, inputParams);
         }
       })
     })
