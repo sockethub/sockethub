@@ -40,5 +40,27 @@ module.exports = [
         '@type': 'person'
       }
     }
+  },
+  {
+    name: 'groupbuddy event',
+    input: ['test@muc.5apps.com', 'greg', 'online', 'hey, wazzup?'],
+    handler: 'groupbuddy',
+    output: {
+      '@type': 'update',
+      actor: {
+        '@id': 'test@muc.5apps.com/greg',
+        '@type': 'person',
+        displayName: 'greg'
+      },
+      target: {
+        '@id': 'test@muc.5apps.com',
+        '@type': 'room'
+      },
+      object: {
+        '@type': 'presence',
+        status: 'hey, wazzup?',
+        presence: 'online'
+      }
+    }
   }
 ];
