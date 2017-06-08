@@ -1,12 +1,13 @@
 language: node_js
 node_js:
   - 6 # LTS
-  - 7 # latest
+  - 7 #
+  - 8 # latest
 services: redis
 sudo: false
 script: npm test
 install:
-  - npm update -g npm; npm install
+  - npm update -g npm; npm install;
 env:
   - CXX=g++-4.8
 addons:
