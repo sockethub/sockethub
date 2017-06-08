@@ -40,6 +40,7 @@
     "debug": "^2.6.8",
     "ejs": "^2.5.6",
     "express": "^4.15.3",
+    "jaribu": "^2.0.0",
     "jquery": "^3.1.1",
     "kue": "^0.11.5",
     "nconf": "^0.8.2",
@@ -53,9 +54,6 @@
     "sockethub-schemas": "^2.0.0",
     "tv4": "^1.2.7",
     "urijs": "^1.18.10"
-  },
-  "devDependencies": {
-    "jaribu": "^2.0.0"
   },
   "scripts": {
     "test": "node_modules/.bin/jaribu",
