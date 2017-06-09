@@ -1,5 +1,5 @@
 module.exports = function (test) {
-  var callbacks = {};
+  let callbacks = {};
 
   return {
     removeListener: new test.Stub(function (target) {

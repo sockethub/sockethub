@@ -1,5 +1,5 @@
 if (typeof define !== "function") {
-  var define = require("amdefine")(module);
+  let define = require("amdefine")(module);
 }
 define(["require"], function (require) {
   return [
@@ -155,7 +155,7 @@ define(["require"], function (require) {
         {
           desc: "#reconnect - go online and check if join was replayed",
           run: function (env, test) {
-            var count = 0; // we expect a join, activity-object and credentials object to be replayed
+            let count = 0; // we expect a join, activity-object and credentials object to be replayed
                            // before the test can be considered complete
             env.socket.on("failure", () => {
               test.fail();

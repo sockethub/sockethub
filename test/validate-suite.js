@@ -1,46 +1,46 @@
-if (typeof define !== 'function') {
-  var define = require('amdefine')(module);
+if (typeof define !== "function") {
+  let define = require("amdefine")(module);
 }
-define(['require', './../lib/validate', 'activity-streams'], function (require, Validate, Activity) {
+define(["require", "./../lib/validate", "activity-streams"], function (require, Validate, Activity) {
 
-  var activity = new Activity();
-  var errMsg = '';
-  var suites = [];
+  let activity = new Activity();
+  let errMsg = "";
+  let suites = [];
 
-  var testGroups = [
+  let testGroups = [
     {
-      name: 'one',
+      name: "one",
       result: true,
-      type: 'credentials',
+      type: "credentials",
       input: {
-        '@id': 'blah',
-        '@type': 'send',
-        context: 'dummy',
+        "@id": "blah",
+        "@type": "send",
+        context: "dummy",
         actor: {
-          '@id': 'irc://dood@irc.freenode.net',
-          '@type': 'person',
-          displayName: 'dood',
+          "@id": "irc://dood@irc.freenode.net",
+          "@type": "person",
+          displayName: "dood",
         },
         target: {
-          '@id': 'irc://irc.freenode.net/sockethub',
-          '@type': 'person',
-          displayName: 'sockethub'
+          "@id": "irc://irc.freenode.net/sockethub",
+          "@type": "person",
+          displayName: "sockethub"
         },
         object: {
-          '@type': 'credentials'
+          "@type": "credentials"
         }
       },
-      output: 'same'
+      output: "same"
     },
     {
-      name: 'new format',
+      name: "new format",
       result: true,
-      type: 'credentials',
+      type: "credentials",
       input: {
         context: "irc",
         actor: {
-          '@id': "irc://sh-9K3Vk@irc.freenode.net",
-          '@type': "person",
+          "@id": "irc://sh-9K3Vk@irc.freenode.net",
+          "@type": "person",
           displayName: "sh-9K3Vk",
           image: {
             height: 250,
@@ -51,19 +51,19 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
           url: "http://sockethub.org"
         },
         object: {
-          '@type': "credentials",
+          "@type": "credentials",
           nick: "sh-9K3Vk",
           port: 6667,
           secure: false,
           server: "irc.freenode.net"
         }
       },
-      output: 'same'
+      output: "same"
     },
     {
-      name: 'no type',
+      name: "no type",
       result: false,
-      type: 'credentials',
+      type: "credentials",
       input: {
         "actor": "xmpp://hyper_rau@localhost",
         "context": "xmpp",
@@ -77,35 +77,35 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
       }
     },
     {
-      name: 'person',
-      type: 'activity-object',
+      name: "person",
+      type: "activity-object",
       result: true,
       input: {
-        '@id': 'blah',
-        '@type': 'person',
-        displayName: 'dood'
+        "@id": "blah",
+        "@type": "person",
+        displayName: "dood"
       },
-      output: 'same'
+      output: "same"
     },
     {
-      name: 'person with extras',
+      name: "person with extras",
       result: true,
-      type: 'activity-object',
+      type: "activity-object",
       input: {
-        '@id': 'blah',
-        '@type': 'person',
-        displayName: 'bob',
-        hello: 'there',
-        i: [ 'am','extras' ]
+        "@id": "blah",
+        "@type": "person",
+        displayName: "bob",
+        hello: "there",
+        i: [ "am", "extras" ]
       },
-      output: 'same'
+      output: "same"
     },
     {
-      name: 'alone credentials (as activity-object)',
+      name: "alone credentials (as activity-object)",
       result: false,
-      type: 'activity-object',
+      type: "activity-object",
       input:  {
-        '@type': "credentials",
+        "@type": "credentials",
         nick: "sh-9K3Vk",
         port: 6667,
         secure: false,
@@ -113,11 +113,11 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
       }
     },
     {
-      name: 'alone credentials (as credentials)',
+      name: "alone credentials (as credentials)",
       result: false,
-      type: 'credentials',
+      type: "credentials",
       input:  {
-        '@type': "credentials",
+        "@type": "credentials",
         nick: "sh-9K3Vk",
         port: 6667,
         secure: false,
@@ -125,12 +125,12 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
       }
     },
     {
-      name: 'new person',
+      name: "new person",
       result: true,
-      type: 'activity-object',
+      type: "activity-object",
       input: {
-        '@id': "irc://sh-9K3Vk@irc.freenode.net",
-        '@type': "person",
+        "@id": "irc://sh-9K3Vk@irc.freenode.net",
+        "@type": "person",
         displayName: "sh-9K3Vk",
         image: {
           height: 250,
@@ -140,64 +140,64 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
         },
         url: "http://sockethub.org"
       },
-      output: 'same'
+      output: "same"
     },
     {
-      name: 'bad parent object',
+      name: "bad parent object",
       result: false,
-      type: 'activity-object',
+      type: "activity-object",
       input: {
-        string: 'this is a string',
-        array: ['this', 'is', { an: 'array'} ],
+        string: "this is a string",
+        array: ["this", "is", { an: "array"} ],
         as: {
-          '@id': 'blah',
-          '@type': 'send',
-          context: 'hello',
+          "@id": "blah",
+          "@type": "send",
+          context: "hello",
           actor: {
-            displayName: 'dood'
+            displayName: "dood"
           },
           target: {
-            '@type': 'person',
-            displayName: 'bob'
+            "@type": "person",
+            displayName: "bob"
           },
           object: {
-            '@type': 'credentials'
+            "@type": "credentials"
           }
         },
         noId: {
-          displayName: 'dood'
+          displayName: "dood"
         },
         noId2: {
-          '@type': 'person',
-          displayName: 'bob'
+          "@type": "person",
+          displayName: "bob"
         },
         noDisplayName: {
-          '@id': 'larg',
+          "@id": "larg",
         }
       }
     },
     {
-      name: 'expand actor and target of unknowns',
+      name: "expand actor and target of unknowns",
       result: true,
-      type: 'message',
+      type: "message",
       input: {
         "actor": "xmpp://hyper_rau@localhost",
-        '@type': 'join',
+        "@type": "join",
         "context": "xmpp",
         "object": {},
-        target: 'dooder'
+        target: "dooder"
       },
       output: {
         "actor": {
           "@id": "xmpp://hyper_rau@localhost",
-          displayName: 'hyper_rau'
+          displayName: "hyper_rau"
         },
-        '@type': 'join',
+        "@type": "join",
         "context": "xmpp",
         "object": {},
         target: {
-          '@id': 'dooder',
-          displayName: 'dooder'
+          "@id": "dooder",
+          displayName: "dooder"
         }
       }
     },
@@ -214,8 +214,8 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
       },
       output: {
         actor: {
-          '@id': "irc://sh-9K3Vk@irc.freenode.net",
-          '@type': "person",
+          "@id": "irc://sh-9K3Vk@irc.freenode.net",
+          "@type": "person",
           displayName: "sh-9K3Vk",
           image: {
             height: 250,
@@ -226,11 +226,11 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
           url: "http://sockethub.org"
         },
         target: {
-          '@id': 'blah',
-          '@type': 'person',
-          displayName: 'bob',
-          hello: 'there',
-          i: [ 'am','extras' ]
+          "@id": "blah",
+          "@type": "person",
+          displayName: "bob",
+          hello: "there",
+          i: [ "am", "extras" ]
         },
         "@type": "send",
         context: "irc",
@@ -240,13 +240,13 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
   ];
 
   function buildTest(name, result, type, input, output) {
-    var string = 'fail';
+    let string = "fail";
     if (result) {
-      string = 'pass';
+      string = "pass";
     }
 
-    var test = {
-      desc: '# [' + string + '] ' + name,
+    let test = {
+      desc: "# [" + string + "] " + name,
       run: function (env, test) {
         env.validate(type)(input, function (state, msg) {
           //console.log('input: ', input);
@@ -254,7 +254,7 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
           //console.log('expected output: ', output);
           //console.log('result: ', state);
 
-          if (output === 'same') {
+          if (output === "same") {
             test.assertAnd(input, msg, "input not the same as output");
           } else if (output) {
             test.assertAnd(msg, output, "expected and returned output don't match");
@@ -262,7 +262,7 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
 
           test.assertAnd(result, state, "results don't match");
 
-          if ((result) && (type === 'activity-object')) {
+          if ((result) && (type === "activity-object")) {
             // console.log('activity: ', activity);
             activity.Object.create(msg);
           }
@@ -275,24 +275,24 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
 
   function buildSuite(type) {
     return {
-      desc: 'validate middleware - ' + type,
+      desc: "validate middleware - " + type,
       timeout: 1000,
       abortOnFail: true,
       setup: function (env, test) {
-        test.assertTypeAnd(Validate, 'function');
+        test.assertTypeAnd(Validate, "function");
         env.validate = Validate({
           onfail: function (_err, _type, _msg) {
             // erroMsg = _type + ' : ' + _err;
             // test.write(_type + ' : ' + _err, _msg);
           }
         });
-        test.assertType(env.validate, 'function');
+        test.assertType(env.validate, "function");
       }
     };
   }
 
-  var suite = buildSuite('input validation tests');
-  var tests = [];
+  let suite = buildSuite("input validation tests");
+  let tests = [];
   testGroups.forEach(function (entry, i) {
     tests.push(buildTest(entry.name, entry.result, entry.type, entry.input, entry.output));
   });
