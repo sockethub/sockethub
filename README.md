@@ -44,11 +44,12 @@ platforms actions.
 | WhatsApp | <kbd>send</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> |
 | WebFinger | <kbd>search</kbd> |
 | RDF | <kbd>search</kbd> <kbd>fetch</kbd> |
-| Bitcoin | *(to be evaluated)* <kbd>send</kbd> <kbd>receive</kbd> ... |
-| Ethereum | *(to be evaluated)* |
-| FireFoxSync | *(to be evaluated)* |
-| WebRTC | *(to be evaluated)* |
+| Bitcoin (e.g. sending signed transactions to a node) | *(to be evaluated)* <kbd>send</kbd> <kbd>receive</kbd> ... |
+| Ethereum (e.g. contract events) | *(to be evaluated)* |
+| WebRTC (signaling) | *(to be evaluated)* |
 | Signal | *(to be evaluated)* |
+| [MicroPub](https://indieweb.org/micropub) (IndieWeb, ...) | *(to be evaluated)* |
+| [OStatus](https://en.wikipedia.org/wiki/OStatus) (GNUSocial, Mastodon, ...) | *(to be evaluated)* |
 
 # Setup
 
