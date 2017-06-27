@@ -1,3 +1,5 @@
+var xmppClient = require('node-xmpp-client');
+
 var SimpleXMPP = function (test) {
   var callbacks = {};
 
@@ -47,7 +49,15 @@ var SimpleXMPP = function (test) {
       } else if (typeof callbacks[name] === 'function') {
         callbacks[name]();
       }
-    })
+    }),
+
+    conn: {
+      send: new test.Stub(function (stanza) {
+        test.write('XMPP STUB: conn.send')
+      })
+    },
+
+    Element: xmppClient.Element
   };
 
   return xmpp;

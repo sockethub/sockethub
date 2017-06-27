@@ -62,5 +62,32 @@ module.exports = [
         presence: 'online'
       }
     }
-  }
+  },
+  {
+    name: 'attendance',
+    input: '<iq id="muc_id" type="result" to="ernie@jabber.net/Home" from="PartyChatRoom@jabber.net" xmlns:stream="http://etherx.jabber.org/streams"><query xmlns="http://jabber.org/protocol/disco#items"><item jid="PartyChatRoom@jabber.net/ernie" name="ernie"/><item jid="PartyChatRoom@jabber.net/bert" name="bert"/><item jid="PartyChatRoom@jabber.net/oscar" name="oscar"/><item jid="PartyChatRoom@jabber.net/big_bird" name="big_bird"/><item jid="PartyChatRoom@jabber.net/elmo" name="elmo"/></query></iq>',
+    output: {
+      '@type': 'observe',
+      actor: {
+        '@id': 'PartyChatRoom@jabber.net',
+        '@type': 'room'
+      },
+      target: {
+        '@id': 'ernie@jabber.net/Home',
+        '@type': 'person'
+      },
+      object: {
+        '@type': 'attendance',
+        members: [
+          'ernie',
+          'bert',
+          'oscar',
+          'big_bird',
+          'elmo'
+        ]
+      }
+    }
+  },
+
+
 ];
