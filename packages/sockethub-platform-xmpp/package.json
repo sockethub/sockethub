@@ -1,7 +1,7 @@
 {
   "name": "sockethub-platform-xmpp",
   "description": "A sockethub platform module implementing XMPP functionality",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
