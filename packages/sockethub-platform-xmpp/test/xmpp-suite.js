@@ -111,6 +111,13 @@ define(['require'], function (require) {
               status: 'available'
             }
           }
+        },
+        observe: {
+          actor: env.actor,
+          target: env.target.partyroom,
+          object: {
+            '@type': 'attendance'
+          }
         }
       };
 
@@ -130,7 +137,7 @@ define(['require'], function (require) {
 
       // types
       env.types = env.schema.messages.properties['@type'].enum;
-      test.assertAnd(env.types.sort(), [ 'update', 'make-friend', 'send', 'remove-friend', 'request-friend', 'join', 'connect' ].sort());
+      test.assertAnd(env.types.sort(), [ 'update', 'make-friend', 'send', 'remove-friend', 'request-friend', 'join', 'connect', 'observe' ].sort());
 
       test.assertTypeAnd(env.xmpp, 'object');
       test.assertType(env.xmpp.connect, 'function');
@@ -252,6 +259,25 @@ define(['require'], function (require) {
             test.assertTypeAnd(result, 'undefined');
             test.assertAnd(env.xmpp.send.numCalled, 3);
             test.assert(env.xmpp.connect.numCalled, 2);
+          });
+        }
+      },
+
+      {
+        desc: "# observe",
+        run: function (env, test) {
+          const originalSend = env.xmpp.conn.send;
+          env.xmpp.conn.send = new test.Stub(function(stanza) {
+            test.assertAnd(stanza.is('iq'), true);
+            test.assertAnd(stanza.attrs.id, 'muc_id');
+            test.assertAnd(stanza.attrs.from, 'xmpp:testingham@jabber.net');
+            test.assert(stanza.attrs.to, 'xmpp:partyroom@jabber.net');
+            env.xmpp.conn.send = originalSend;
+          });
+
+          env.platform.observe(env.job.observe, function (err, result) {
+            test.assertTypeAnd(err, 'undefined', err);
+            test.assertTypeAnd(result, 'undefined');
           });
         }
       }

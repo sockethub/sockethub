@@ -94,7 +94,7 @@ XMPP.prototype.schema = {
     "required": [ '@type' ],
     "properties": {
       "@type": {
-        "enum": [ 'connect', 'update', 'send', 'join', 'request-friend', 'remove-friend', 'make-friend' ]
+        "enum": [ 'connect', 'update', 'send', 'join', 'observe', 'request-friend', 'remove-friend', 'make-friend' ]
       }
     }
   },
@@ -181,7 +181,7 @@ XMPP.prototype.connect = function (job, done) {
 /**
  * Function: join
  *
- * Join a room, oprionally defining a display name for that room.
+ * Join a room, optionally defining a display name for that room.
  *
  * @example
  *
@@ -401,11 +401,71 @@ XMPP.prototype['make-friend'] = function (job, done) {
 /**
  * Function: observe
  *
- * @description
- * NOTE IMPLEMENTED YET
+ * Indicate an intent to observe something (ie. get a list of users in a room).
  *
+ * @example
+ *
+ *  {
+ *    context: 'xmpp',
+ *    '@type': 'observe',
+ *    actor: {
+ *      '@id': 'slvrbckt@jabber.net/Home',
+ *      '@type': 'person'
+ *    },
+ *    target: {
+ *      '@id': 'PartyChatRoom@muc.jabber.net',
+ *      '@type': 'room'
+ *    },
+ *    object: {
+ *      '@type': 'attendance'
+ *    }
+ *  }
+ *
+ *
+ *  // The obove object might return:
+ *  {
+ *    context: 'xmpp',
+ *    '@type': 'observe',
+ *    actor: {
+ *      '@id': 'PartyChatRoom@muc.jabber.net',
+ *      '@type': 'room'
+ *    },
+ *    target: {
+ *      '@id': 'slvrbckt@jabber.net/Home',
+ *      '@type': 'person'
+ *    },
+ *    object: {
+ *      '@type': 'attendance'
+ *      members: [
+ *        'RyanGosling',
+ *        'PeeWeeHerman',
+ *        'Commando',
+ *        'Smoochie',
+ *        'neo'
+ *      ]
+ *    }
+ *  }
  */
-XMPP.prototype.observe = function () {};
+XMPP.prototype.observe = function (job, done) {
+  var self = this;
+  self.session.debug('observe() called by ' + job.actor['@id'] + ' for ' + job.target['@id']);
+  self.session.connectionManager.get(job.actor['@id'], createObj, function (err, client) {
+    if (err) { return done(err); }
+    self.session.debug('got client for ' + job.actor['@id']);
+
+    var stanza = new xmpp.Element('iq', {
+      id: 'muc_id',
+      type: 'get',
+      from: job.actor['@id'],
+      to: job.target['@id']
+    })
+    stanza.c('query', { xmlns: 'http://jabber.org/protocol/disco#items' });
+
+    client.connection.conn.send(stanza);
+
+    done();
+  });
+};
 
 XMPP.prototype.cleanup = function (done) {
   // FIXME
@@ -414,7 +474,35 @@ XMPP.prototype.cleanup = function (done) {
 };
 
 
+function handleRoomAttendanceList(client, stanza) {
+  var query = stanza.getChild('query');
+  if (query) {
+    var members = [];
+    var entries = query.getChildren('item');
+    for (var e in entries) {
+      if (!entries.hasOwnProperty(e)) {
+        continue;
+      }
+      members.push(entries[e].attrs.name);
+    }
 
+    client.scope.send({
+      '@type': 'observe',
+      actor: {
+        '@id': stanza.attrs.from,
+        '@type': 'room'
+      },
+      target: {
+        '@id': stanza.attrs.to,
+        '@type': 'person'
+      },
+      object: {
+        '@type': 'attendance',
+        members: members
+      }
+    });
+  }
+}
 
 XMPP.prototype.__listeners = {
   stanza: function (stanza) {
@@ -454,6 +542,11 @@ XMPP.prototype.__listeners = {
         }
       });
     } else if (stanza.is('iq')) {
+      if (stanza.attrs.id === 'muc_id' && stanza.attrs.type === 'result') {
+        this.scope.debug('got room attendance list');
+        handleRoomAttendanceList(this, stanza);
+        return;
+      }
       var query = stanza.getChild('query');
       if (query) {
         var entries = query.getChildren('item');
