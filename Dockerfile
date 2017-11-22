@@ -1,9 +1,8 @@
-FROM nodesource/xenial:latest
+FROM "node:6"
 MAINTAINER Ben Kero <ben.kero@gmail.com>
 
-RUN apt-get update && apt-get install -y git-core
-
 ADD package.json /tmp/package.json
+ADD package-lock.json /tmp/package-lock.json
 RUN cd /tmp && npm install
 RUN mkdir -p /app
 ADD config.json.example /app/config.json
