@@ -202,7 +202,7 @@ IRC.prototype.join = function (job, done) {
             target: job.actor
           })
         } else {
-          self.session.debug('response time acceptable, were live. [' + typeof receivedWho[job.target.displayName] + '] ' + receivedWho[job.target.displayName]);
+          self.session.debug("response time acceptable, we're live. [" + typeof receivedWho[job.target.displayName] + '] ' + receivedWho[job.target.displayName]);
           // + ' > [' + typeof (Date.now() - 7000) + '] ' + (Date.now() - 7000), receivedWho);
         }
       }, 15000);
@@ -695,7 +695,7 @@ IRC.prototype.__listeners = {
       if (object.nickname !== this.credentials.actor.displayName) {
           this.scope.debug('server name conflict, renaming to ' + object.nickname);
           __renameUser('irc://' + object.nickname + '@' + this.credentials.object.server,
-                      object.nickname, this.credentials, this.scope.store, session.connectionManager, function (err) {
+                      object.nickname, this.credentials, this.scope.store, this.session.connectionManager, function (err) {
               this.scope.send({
                   '@type': 'update',
                   actor: {
