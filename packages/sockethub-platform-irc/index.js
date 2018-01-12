@@ -20,12 +20,11 @@ if (typeof (IRCFactory) !== 'object') {
   IRCFactory = require('irc-factory');
 }
 
-var debug = require('debug')('sockethub-platform-irc'),
-    api   = new IRCFactory.Api();
+const debug = require('debug')('sockethub-platform-irc'),
+      api   = new IRCFactory.Api(),
+      packageJSON = require('./package.json');
 
-var packageJSON = require('./package.json');
-
-var receivedWho = {}; // lookup, per-channel, for latest WHO response per-channel (used to gague connectivity)
+let receivedWho = {}; // lookup, per-channel, for latest WHO response per-channel (used to gague connectivity)
 
 /**
  * @class IRC
@@ -173,26 +172,25 @@ IRC.prototype.schema = {
  *
  */
 IRC.prototype.join = function (job, done) {
-  var self = this;
-  self.session.debug('join() called for ' + job.actor['@id']);
+  this.session.debug('join() called for ' + job.actor['@id']);
 
-  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
+  this.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(this.session), (err, client) => {
     if (err) { return done(err); }
 
-    self.__addUnique(job.actor['@id']);
-    // self.session.debug('got client for ' + job.actor['@id']);
+    this.__addUnique(job.actor['@id']);
+    // this.session.debug('got client for ' + job.actor['@id']);
     // join channel
-    self.session.debug('join: -> ' + job.target.displayName); //, client.connection);
+    this.session.debug('join: -> ' + job.target.displayName); //, client.connection);
     client.connection.irc.raw(['JOIN', job.target.displayName]);
-    self.__joined(job.target.displayName);
-    setTimeout(function () {
-      self.session.debug('sending /WHO');
+    this.__joined(job.target.displayName);
+    setTimeout(() => {
+      this.session.debug('sending /WHO');
       client.connection.irc.raw(['WHO', job.target.displayName]);
       receivedWho[job.target.displayName] = receivedWho[job.target.displayName] || 0; // ensure it's initialized as a number
-      setTimeout(function () {
+      setTimeout(() => {
         if (receivedWho[job.target.displayName] > (Date.now() - 16000)) {
-          self.session.debug('response from WHO command not received, possible disconnect. sending error to client.');
-          self.session.send({
+          this.session.debug('response from WHO command not received, possible disconnect. sending error to client.');
+          this.session.send({
             '@type': 'join',
             actor: job.target,
             object: {
@@ -202,7 +200,7 @@ IRC.prototype.join = function (job, done) {
             target: job.actor
           })
         } else {
-          self.session.debug("response time acceptable, we're live. [" + typeof receivedWho[job.target.displayName] + '] ' + receivedWho[job.target.displayName]);
+          this.session.debug("response time acceptable, we're live. [" + typeof receivedWho[job.target.displayName] + '] ' + receivedWho[job.target.displayName]);
           // + ' > [' + typeof (Date.now() - 7000) + '] ' + (Date.now() - 7000), receivedWho);
         }
       }, 15000);
@@ -236,17 +234,15 @@ IRC.prototype.join = function (job, done) {
  *
  */
 IRC.prototype.leave = function (job, done) {
-  var self = this;
+  this.session.debug('leave() called');
 
-  self.session.debug('leave() called');
-
-  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
+  this.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(this.session), (err, client) => {
     if (err) { return done(err); }
     // leave channel
-    self.__addUnique(job.actor['@id']);
-    self.session.debug('leave: ' + job.actor.displayName + ' -< ' + job.target.displayName);
+    this.__addUnique(job.actor['@id']);
+    this.session.debug('leave: ' + job.actor.displayName + ' -< ' + job.target.displayName);
     client.connection.irc.raw(['PART', job.target.displayName]);
-    self.__left(job.target.displayName);
+    this.__left(job.target.displayName);
     done();
   });
 };
@@ -280,27 +276,25 @@ IRC.prototype.leave = function (job, done) {
  *
  */
 IRC.prototype.send = function (job, done) {
-  var self = this;
+  this.session.debug('send() called for ' + job.actor['@id'] + ' target: ' + job.target['@id']);
 
-  self.session.debug('send() called for ' + job.actor['@id'] + ' target: ' + job.target['@id']);
-
-  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
+  this.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(this.session), (err, client) => {
     if (err) { return done(err); }
     err = undefined;
 
-    self.__addUnique(job.actor['@id']);
-    self.session.debug('send(): got client object');
+    this.__addUnique(job.actor['@id']);
+    this.session.debug('send(): got client object');
 
     if (typeof job.object.content !== 'string') {
       return done('cannot send message with no object.content');
     }
 
-    var msg = job.object.content.replace(/^\s+|\s+$/g, "");
+    let msg = job.object.content.replace(/^\s+|\s+$/g, "");
 
     if (msg.indexOf('/') === 0) {
       // message intented as command
       msg += ' ';
-      var cmd = msg.substr(0, msg.indexOf(' ')).substr(1).toUpperCase(); // get command
+      const cmd = msg.substr(0, msg.indexOf(' ')).substr(1).toUpperCase(); // get command
       msg = msg.substr(msg.indexOf(' ') + 1).replace(/\s\s*$/, ''); // remove command from message
       if (cmd === 'ME') {
         // handle /me messages uniquely
@@ -317,20 +311,20 @@ IRC.prototype.send = function (job, done) {
 
     if (job.object['@type'] === 'me') {
       // message intented as command
-      self.session.debug('sending ME message to room ' + job.target.displayName + ': ' + job.actor.displayName + ' ' + job.object.content);
+      this.session.debug('sending ME message to room ' + job.target.displayName + ': ' + job.actor.displayName + ' ' + job.object.content);
       client.connection.irc.me(job.target.displayName, job.object.content);
     } else if (job.object['@type'] === 'notice') {
       // attempt to send as raw command
-      self.session.debug('sending RAW command: NOTICE to ' + job.target.displayName + ', ' + job.object.content);
+      this.session.debug('sending RAW command: NOTICE to ' + job.target.displayName + ', ' + job.object.content);
       client.connection.irc.raw(['NOTICE', job.target.displayName, job.object.content]);
-    } else if (self.__isJoined(job.target.displayName)) {
-      self.session.debug('irc.say: ' + job.target.displayName + ', [' + job.object.content + ']');
+    } else if (this.__isJoined(job.target.displayName)) {
+      this.session.debug('irc.say: ' + job.target.displayName + ', [' + job.object.content + ']');
       client.connection.irc.privmsg(job.target.displayName, job.object.content, true); //forcePushback
     } else {
       err = "cannot send message to a channel of which you've not first `join`ed.";
     }
 
-    self.session.debug('sending ping to #sockethub');
+    this.session.debug('sending ping to #sockethub');
     client.connection.irc.raw(['PING', '#sockethub']);
     done(err);
   });
@@ -387,24 +381,22 @@ IRC.prototype.send = function (job, done) {
  *  }
  */
 IRC.prototype.update = function (job, done) {
-  var self = this;
+  this.session.debug('update() called for ' + job.actor.displayName);
 
-  self.session.debug('update() called for ' + job.actor.displayName);
-
-  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
+  this.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(this.session), (err, client) => {
     if (err) { return done(err); }
 
-    self.__addUnique(job.actor['@id']);
-    self.session.debug('update(): got client object');
+    this.__addUnique(job.actor['@id']);
+    this.session.debug('update(): got client object');
 
     if (job.target['@type'] === 'person') {
-      self.session.debug('changing nick from ' + job.actor.displayName + ' to ' + job.target.displayName);
+      this.session.debug('changing nick from ' + job.actor.displayName + ' to ' + job.target.displayName);
       // send nick change command
       client.connection.irc.raw(['NICK', job.target.displayName]);
-      __renameUser(job.target['@id'], job.target.displayName, client.credentials, self.session.store, self.session.connectionManager, done);
+      __renameUser(job.target['@id'], job.target.displayName, client.credentials, this.session.store, this.session.connectionManager, done);
     } else if (job.object['@type'] === 'topic') {
       // update topic
-      self.session.debug('changing topic in channel ' + job.target.displayName);
+      this.session.debug('changing topic in channel ' + job.target.displayName);
       client.connection.irc.raw(['topic', job.target.displayName, job.object.topic]);
       return done();
     } else {
@@ -465,15 +457,14 @@ IRC.prototype.update = function (job, done) {
  *
  */
 IRC.prototype.observe = function (job, done) {
-  var self = this;
-  self.session.debug('observe() called for ' + job.actor['@id']);
-  self.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(self.session), function (err, client) {
+  this.session.debug('observe() called for ' + job.actor['@id']);
+  this.session.connectionManager.get(job.actor['@id'], __genClientConnectionObject(this.session), (err, client) => {
     if (err) { return done(err); }
 
-    self.__addUnique(job.actor['@id']);
-    self.session.debug('observe(): got client object');
+    this.__addUnique(job.actor['@id']);
+    this.session.debug('observe(): got client object');
     if (job.object['@type'] === 'attendance') {
-      self.session.debug('objserve() - sending NAMES for ' + job.target.displayName);
+      this.session.debug('objserve() - sending NAMES for ' + job.target.displayName);
       client.connection.irc.raw(['NAMES', job.target.displayName]);
       done();
     } else {
@@ -485,9 +476,8 @@ IRC.prototype.observe = function (job, done) {
 
 IRC.prototype.cleanup = function (done) {
   // this.session.debug('cleanup() called, removing sessions for ', this._uniqueIDs);
-
   this._uniqueIDs.forEach(function (id, i) {
-    this.session.connectionManager.get(id, __genClientConnectionObject(this.session), function (err, client) {
+    this.session.connectionManager.get(id, __genClientConnectionObject(this.session), (err, client) => {
       if (err) { return done(err); }
       this.session.debug('cleanup(): disconnection ' + id);
       if (client.connection.irc === 'object') {
@@ -495,7 +485,7 @@ IRC.prototype.cleanup = function (done) {
           client.connection.irc.disconnect();
         }
       }
-    }.bind(this));
+    });
     this._uniqueIDs.splice(this._uniqueIDs.indexOf(id), 1); // remove this id from list
   }.bind(this));
 
@@ -529,8 +519,7 @@ IRC.prototype.__joined = function (channel) {
 
 IRC.prototype.__left = function (channel) {
   // keep track of channels left
-  var index = this._channels.indexOf(channel);
-
+  const index = this._channels.indexOf(channel);
   if (index >= 0) {
     this._channels.splice(index, 1);
   }
@@ -645,8 +634,8 @@ IRC.prototype.__listeners = {
       if (! object.nickname) {
         this.scope.debug('received UNKNOWN:', object);
       } else {
-        var msg_prefix = ':' + object.nickname + '!' + object.username + '@' + object.hostname;
-        var type = 'message';
+        const msg_prefix = ':' + object.nickname + '!' + object.username + '@' + object.hostname;
+        let type = 'message';
 
         if (object.raw.indexOf(msg_prefix + ' NOTICE ') === 0) {
           type = 'notice';
@@ -737,8 +726,8 @@ IRC.prototype.__listeners = {
               (typeof object.capabilities !== 'object')) {
       // QUIT
       debug('received quit', object);
-      var quitter = object.kicked || object.nickname;
-      var msg = (typeof object.kicked === 'string') ? 'user has been kicked' : 'user has quit';
+      const quitter = object.kicked || object.nickname;
+      const msg = (typeof object.kicked === 'string') ? 'user has been kicked' : 'user has quit';
 
       if (! this.scope.disconnected) {
         this.scope.send({
@@ -791,7 +780,7 @@ IRC.prototype.__listeners = {
       });
     } else if ((object.command === 'ERR_CHANOPRIVSNEEDED') &&
               ((typeof object.params === 'object') && (typeof object.params.length === 'number'))) {
-      var [ username, channel, message ] = object.params;
+      const [ username, channel, message ] = object.params;
       this.scope.send({
         '@type': 'send',
         actor: {
@@ -831,16 +820,16 @@ IRC.prototype.__listeners = {
 
 function __renameUser(id, displayName, credentials, store, client, cb) {
     // preserve old creds
-    var oldCreds = credentials;
-    var oldId = credentials.actor['@id'];
-    var newCreds = JSON.parse(JSON.stringify(credentials));
+    const oldCreds = credentials;
+    const oldId = credentials.actor['@id'];
+    let newCreds = JSON.parse(JSON.stringify(credentials));
 
     // set new credentials
     newCreds.object.nick       = displayName;
     newCreds.actor.displayName = displayName;
     newCreds.actor['@id']      = id;
 
-    store.save(id, newCreds, function (err) {
+    store.save(id, newCreds, (err) => {
         if (err) {
             return cb(err);
         }
@@ -855,11 +844,10 @@ function __genClientConnectionObject(session) {
   return {
     timeout: 30000,
     connect: function (cb) {
-      var client;
-      var _this = this;
-      var key = this.credentials.actor['@id'];
-      var is_secure = (typeof this.credentials.object.secure === 'boolean') ? this.credentials.object.secure : true;
-      var module_creds = {
+      let client;
+      const key = this.credentials.actor['@id'];
+      const is_secure = (typeof this.credentials.object.secure === 'boolean') ? this.credentials.object.secure : true;
+      const module_creds = {
         nick: this.credentials.object.nick,
         user: this.credentials.object.nick,
         server: this.credentials.object.server || 'irc.freenode.net',
@@ -869,24 +857,24 @@ function __genClientConnectionObject(session) {
       };
 
       function onRegister() {
-        _this.scope.debug('connected to ' + module_creds.server);
+        this.scope.debug('connected to ' + module_creds.server);
         api.unhookEvent(key, 'registered');
         api.unhookEvent(key, '*');
         cb(null, client);
       }
       api.unhookEvent(key, '*');
 
-      api.hookEvent(key, '*', function (message) {
+      api.hookEvent(key, '*', (message) => {
         if ((typeof message === 'object') && (typeof message.capabilities === 'object')) {
-          _this.scope.send({
+          this.scope.send({
             '@type': 'announce',
             actor: {
               '@type': 'service',
-              '@id': 'irc://' + _this.credentials.object.server
+              '@id': 'irc://' + this.credentials.object.server
             },
             target: {
               '@type': 'person',
-              '@id': 'irc://' + _this.credentials.actor['@id'] + '@' + _this.credentials.object.server
+              '@id': 'irc://' + this.credentials.actor['@id'] + '@' + this.credentials.object.server
             },
             object: {
               '@type': 'content',
@@ -899,7 +887,7 @@ function __genClientConnectionObject(session) {
         }
       });
 
-      api.hookEvent(key, 'registered', onRegister);
+      api.hookEvent(key, 'registered', onRegister.bind(this));
 
       this.scope.debug('attempting to connect to ' + module_creds.server + ':' + module_creds.port + ' [secure:' + is_secure + ']');
 
