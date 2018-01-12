@@ -476,7 +476,7 @@ IRC.prototype.observe = function (job, done) {
 
 IRC.prototype.cleanup = function (done) {
   // this.session.debug('cleanup() called, removing sessions for ', this._uniqueIDs);
-  this._uniqueIDs.forEach(function (id, i) {
+  this._uniqueIDs.forEach((id, i) => {
     this.session.connectionManager.get(id, __genClientConnectionObject(this.session), (err, client) => {
       if (err) { return done(err); }
       this.session.debug('cleanup(): disconnection ' + id);
@@ -487,7 +487,7 @@ IRC.prototype.cleanup = function (done) {
       }
     });
     this._uniqueIDs.splice(this._uniqueIDs.indexOf(id), 1); // remove this id from list
-  }.bind(this));
+  });
 
   this.session.connectionManager.removeAll();
   this._uniqueIDs = [];
