@@ -1,13 +1,13 @@
 if (typeof define !== 'function') {
-  var define = require('amdefine')(module);
+  let define = require('amdefine')(module);
 }
 define(['require', './../lib/validate', 'activity-streams'], function (require, Validate, Activity) {
 
-  var activity = new Activity();
-  var errMsg = '';
-  var suites = [];
+  const activity = new Activity();
+  let errMsg = '';
+  let suites = [];
 
-  var testGroups = [
+  const testGroups = [
     {
       name: 'one',
       result: true,
