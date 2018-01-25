@@ -10,6 +10,7 @@ const ERR_CHAN_PRIVS = "482",
       NAMES_END = "366",
       NICK = "NICK",
       PART = "PART",
+      PING = "PING",
       PONG = "PONG",
       PRIVMSG = "PRIVMSG",
       QUIT = "QUIT",
@@ -37,6 +38,11 @@ IrcToActivityStreams.prototype.input = function (string) {
                     ((typeof pos2 === "string") && (pos2.startsWith('#'))) ? pos2 : 
                     ((typeof pos3 === "string") && (pos3.startsWith('#'))) ? pos3 : undefined;
     let nick, type, message;
+
+    if (metadata === PING) {
+        this.events.emit('ping', time);
+        return true;
+    }
 
     switch (code) {
         /** */
