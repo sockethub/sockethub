@@ -128,6 +128,11 @@ define(['require'], function (require, IRC2AS) {
                 console.log('unprocessed> ' + string);
             });
 
+            env.pongs = 0;
+            irc2as.events.on('pong', (time) => {
+                env.pongs++;
+            });
+
             testData.split('\n').forEach((line) => {
                 irc2as.input(line);    
             });
@@ -135,9 +140,9 @@ define(['require'], function (require, IRC2AS) {
         },
         tests: [
             {
-                desc: "test", 
+                desc: "verify pong count", 
                 run: function (env, test) {
-                    test.done();
+                    test.assert(env.pongs, 3);
                 }
             }
         ]
