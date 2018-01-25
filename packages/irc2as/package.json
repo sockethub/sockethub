@@ -1,0 +1,33 @@
+{
+  "name": "irc2as",
+  "version": "1.0.0",
+  "description": "IRC to ActivityStreams objects",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "fast-deep-equal": "^1.0.0",
+    "jaribu": "^2.2.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "jaribu"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/silverbucket/irc2as.git"
+  },
+  "keywords": [
+    "irc",
+    "activitystreams",
+    "activity-streams",
+    "sockethub"
+  ],
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/silverbucket/irc2as/issues"
+  },
+  "homepage": "https://github.com/silverbucket/irc2as#readme"
+}
