@@ -133,12 +133,23 @@ define(['require'], function (require, IRC2AS) {
                 env.pongs++;
             });
 
+            env.pings = 0;
+            irc2as.events.on('ping', (time) => {
+                env.pings++;
+            });
+
             testData.split('\n').forEach((line) => {
                 irc2as.input(line);    
             });
             test.done();
         },
         tests: [
+            {
+                desc: "verify ping count", 
+                run: function (env, test) {
+                    test.assert(env.pings, 2);
+                }
+            },
             {
                 desc: "verify pong count", 
                 run: function (env, test) {

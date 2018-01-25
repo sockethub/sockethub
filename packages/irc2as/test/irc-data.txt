@@ -14,6 +14,7 @@
 :adams.freenode.net 372 hyper_slvrbckt :-  
 :adams.freenode.net 376 hyper_slvrbckt :End of /MOTD command.
 :hyper_slvrbckt MODE hyper_slvrbckt :+i
+PING :moon.freenode.net
 :adams.freenode.net 352 hyper_slvrbckt * ~undefined 75-140-253-250.dhcp.ftwo.tx.charter.com livingstone.freenode.net undefined H :0 undefined
 :adams.freenode.net 315 hyper_slvrbckt undefined :End of /WHO list.
 :adams.freenode.net 352 hyper_slvrbckt #kosmos-random ~hyper_slv 154.65.34.210 adams.freenode.net hyper_slvrbckt H :0 hyper_slvrbckt
