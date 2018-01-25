@@ -24,6 +24,7 @@
 :slvrbckt!~slvtbckt@154.65.34.210 PART #debian :"Leaving"
 :karatkievich.freenode.net PONG karatkievich.freenode.net :LAG1516615441149
 :slvrbckt!~slvtbckt@154.65.34.210 NICK :donkey2018
+PING :moon.freenode.net
 :donkey2018!~slvtbckt@154.65.34.210 NICK :slvrbckt
 :karatkievich.freenode.net PONG karatkievich.freenode.net :1516615578917
 :karatkievich.freenode.net 433 slvrbckt nkj :Nickname is already in use.

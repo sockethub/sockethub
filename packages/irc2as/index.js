@@ -10,6 +10,7 @@ const ERR_CHAN_PRIVS = "482",
       NAMES_END = "366",
       NICK = "NICK",
       PART = "PART",
+      PONG = "PONG",
       PRIVMSG = "PRIVMSG",
       QUIT = "QUIT",
       TOPIC_CHANGE = "TOPIC",
@@ -27,7 +28,7 @@ function IrcToActivityStreams(cfg) {
 
 IrcToActivityStreams.prototype.input = function (string) {
     if (typeof string !== 'string') { return false; }
-    if (string.length < 5) { return false; }
+    if (string.length < 3) { return false; }
     string = string.trim();
     const time = Date.now();
     const [metadata, content] = string.split(' :');
@@ -212,6 +213,11 @@ IrcToActivityStreams.prototype.input = function (string) {
             },
             published: time
         });
+        break;
+
+        /** */
+        case PONG: // ping response received
+        this.events.emit('pong', time);
         break;
 
         /** */
