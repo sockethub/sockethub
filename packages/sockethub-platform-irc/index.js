@@ -53,6 +53,7 @@ function IRC(cfg) {
   this.__forceDisconnect = false;
   this.__client;
   this.__channels = [];
+  this.__callbacks = [];
 }
 
 /**
@@ -312,9 +313,10 @@ IRC.prototype.send = function (job, credentials, done) {
       // this.debug('irc.say: ' + job.target.displayName + ', [' + job.object.content + ']');
       client.raw(['PRIVMSG', job.target.displayName, job.object.content, true]); //forcePushback
     } else {
-      err = "cannot send message to a channel of which you've not first joined.";
+      return done("cannot send message to a channel of which you've not first joined.")
     }
-    done(err);
+    this.__callbacks.push(done);
+    client.raw('WHO ' + this.nick);
   });
 };
 
@@ -509,7 +511,7 @@ IRC.prototype.__hasLeft = function (channel) {
 };
 
 // TODO FIX 
-IRC.prototype.__renameUser = function (nick, displayName, store, cb) {
+IRC.prototype.__renameUser = function (nick, displayName, cb) {
     // preserve old creds
     const oldId = this.nick;
     // TODO - fix rename
@@ -541,7 +543,7 @@ IRC.prototype.__getClient = function (key, credentials, cb) {
 
 IRC.prototype.__connect = function (key, credentials, cb) {
   const netSocket = new NetSocket();
-  const is_secure = false; //(typeof credentials.object.secure === 'boolean') ? credentials.object.secure : true;
+  const is_secure = false; // (typeof credentials.object.secure === 'boolean') ? credentials.object.secure : true;
   let socket = netSocket;
   if (is_secure) {
     socket = new TlsSocket(netSocket, { rejectUnauthorized: false });
@@ -578,9 +580,9 @@ IRC.prototype.__connect = function (key, credentials, cb) {
     __forceDisconnect.apply(this, ['error with connection to server.']);
   });
 
-  client.once('end', () => {
-    this.debug('irc client \'end\' event fired.')
-    __forceDisconnect.apply(this, ['connection to server ended.']);
+  client.once('close', () => {
+    this.debug('irc client \'close\' event fired.')
+    __forceDisconnect.apply(this, ['connection to server closed.']);
   });
 
   client.once('timeout', () => {
@@ -610,6 +612,14 @@ IRC.prototype.__registerListeners = function () {
   this.__client.on('data', this.irc2as.input.bind(this.irc2as));
 
   this.irc2as.events.on('stream', (stream) => {
+    if ((stream.object) && (stream.object['@type'] === 'attendance') && (stream.actor['@id'] === this.id)) {
+      const callbacks = this.__callbacks;
+      this.__callbacks = [];
+      callbacks.forEach((cb) => {
+        return cb();
+      });
+      return;
+    }
     this.sendToClient(stream);
   });
 
