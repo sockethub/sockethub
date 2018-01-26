@@ -104,7 +104,12 @@ define(['require'], function (require, IRC2AS) {
                 {"@type":"send","actor":{"@type":"person","@id":"irc://hyper_slvrbckt@localhost","displayName":"hyper_slvrbckt"},"target":{"displayName":"#kosmos-random"},"object":{"@type":"message","content":"-ssssssss"}},
                 {"@type":"send","actor":{"@type":"room","@id":"irc://localhost/#kosmos-random"},"target":{"@type":"person","@id":"irc://slvrbckt@localhost"},"object":{"@type":"message","content":"You're not a channel operator"}},
                 {"@type":"update","actor":{"@type":"person","@id":"irc://lio17@localhost","displayName":"lio17"},"target":{"@type":"room","@id":"irc://localhost/#kosmos-random","displayName":"#kosmos-random"},"object":{"@type":"topic","topic":"no longer boating in senegal"}},
-                {"@type":"send","actor":{"@type":"person","@id":"irc://raucao@localhost","displayName":"raucao"},"target":{"displayName":"#kosmos-random"},"object":{"@type":"me","content":"is thinking about sending someone to get b33rz"}}
+                {"@type":"send","actor":{"@type":"person","@id":"irc://raucao@localhost","displayName":"raucao"},"target":{"displayName":"#kosmos-random"},"object":{"@type":"me","content":"is thinking about sending someone to get b33rz"}},
+                {"@type":"observe","actor":{"@type":"room","@id":"irc://localhost/#kosmos","displayName":"#kosmos"},"object":{"@type":"attendance","members":["slvrbckt","lio17","M-silverbucket","botka1","derbumi","ChanServ","bkero-","galfert","raucao","hal8000","gregkare","bkero","bumi[m]"]}},
+                {"@type":"observe","object":{"@type":"attendance","members":["hyper_slvrbckt"]},"actor":{"@type":"person","@id":"irc://undefined@localhost","displayName":"undefined"}},
+                {"@type":"observe","object":{"@type":"attendance","members":["hyper_slvrbckt"]},"actor":{"@type":"person","@id":"irc://hyper_slvrbckt@localhost","displayName":"hyper_slvrbckt"}},
+                {"@type":"observe","object":{"@type":"attendance","members":["hyper_slvrbckt"]},"actor":{"@type":"person","@id":"irc://hyper_slvrbckt@localhost","displayName":"hyper_slvrbckt"}},                
+                {"@type":"observe","object":{"@type":"attendance","members":["hyper_slvrbckt"]},"actor":{"@type":"person","@id":"irc://hyper_slvrbckt@localhost","displayName":"hyper_slvrbckt"}}
             ];
             const IRC2AS = require('./../index');
             const testData = fs.readFileSync('./test/irc-data.txt', 'utf-8');
@@ -115,11 +120,13 @@ define(['require'], function (require, IRC2AS) {
                 let matched = false;
                 for (let i = 0; i <= validStreams.length; i++) {
                     matched = equal(stream, validStreams[i]);
-                    if (matched) { 
+                    if (matched) {
+                        validStreams.splice(i, 1); 
                         return; 
                     }
                 }
                 if (! matched) {
+                    console.log(JSON.stringify(validStreams));
                     test.fail('failed matching ' + JSON.stringify(stream));
                 }
             });
@@ -138,10 +145,11 @@ define(['require'], function (require, IRC2AS) {
                 env.pings++;
             });
 
-            testData.split('\n').forEach((line) => {
-                irc2as.input(line);    
-            });
-            test.done();
+            const lines = testData.split('\n');
+            for (let i = 0; lines.length > i; i++) {
+                irc2as.input(lines[i]);    
+            };
+            test.assert(validStreams.length, 0);
         },
         tests: [
             {
