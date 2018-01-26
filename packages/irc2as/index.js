@@ -3,6 +3,14 @@ const events = require('events');
 const ERR_CHAN_PRIVS = "482",
       ERR_NICK_IN_USE = "433",
       ERR_NO_CHANNEL = "403",
+      ERR_NOT_INVITED = "471",
+      ERR_BADMODE= "472",
+      ERR_INVITE_ONLY = "473",
+      ERR_BANNED = "474",
+      ERR_BADKEY = "475"
+      ERR_BADMASK = "476"
+      ERR_NOCHANMODES = "477",
+      ERR_BANLISTFULL = "478"
       JOIN = "JOIN",
       MOTD = "372",
       MOTD_END = "376",
@@ -49,7 +57,15 @@ IrcToActivityStreams.prototype.input = function (string) {
 
     switch (code) {
         /** */
-        case ERR_CHAN_PRIVS: // privs not sufficient
+        case ERR_CHAN_PRIVS:
+        case ERR_NOT_INVITED:
+        case ERR_BADMODE:
+        case ERR_INVITE_ONLY:
+        case ERR_BANNED:
+        case ERR_BADKEY:
+        case ERR_BADMASK:
+        case ERR_NOCHANMODES:
+        case ERR_BANLISTFULL:
         this.events.emit('stream', {
             '@type': 'send',
             actor: {
@@ -72,9 +88,8 @@ IrcToActivityStreams.prototype.input = function (string) {
         this.events.emit('stream', {
             '@type': 'update',
             actor: {
-                '@type': 'person',
-                '@id': 'irc://' + pos1 + '@' + this.server,
-                displayName: pos1
+                '@type': 'service',
+                '@id': 'irc://' + this.server
             },
             object: {
                 '@type': 'error',
