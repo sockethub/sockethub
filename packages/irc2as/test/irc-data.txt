@@ -67,3 +67,5 @@ PING :moon.freenode.net
 :leguin.freenode.net 315 slvrbckt #kosmos :End of /WHO list.
 :card.freenode.net 352 hyper_slvrbckt #kosmos-random ~hyper_slv cell01228.qcell.gm card.freenode.net hyper_slvrbckt H :0 hyper_slvrbckt +311ms
 :card.freenode.net 315 hyper_slvrbckt hyper_slvrbckt :End of /WHO list. 
+:moon.freenode.net 473 hyper_slvrbckt #freenode-sponsors :Cannot join channel (+i) - you must be invited 
+:weber.freenode.net 482 slvrbckt #debian :You're not a channel operator
