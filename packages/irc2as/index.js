@@ -16,7 +16,10 @@ const ERR_CHAN_PRIVS = "482",
       QUIT = "QUIT",
       TOPIC_CHANGE = "TOPIC",
       TOPIC_IS = "332",
-      TOPIC_SET_BY = "333";
+      TOPIC_SET_BY = "333",
+      WHO = "352",
+      WHO_OLD = "354"
+      WHO_END = "315";
 
 function IrcToActivityStreams(cfg) {
     const config = cfg || {};
@@ -147,6 +150,7 @@ IrcToActivityStreams.prototype.input = function (string) {
         }
         break; 
         case MOTD_END: // end of MOTD
+        if (! this.__buffer[MOTD]) { break; }
         this.events.emit('stream', this.__buffer[MOTD]);
         delete this.__buffer[MOTD];
         break;
@@ -172,6 +176,7 @@ IrcToActivityStreams.prototype.input = function (string) {
         }
         break;
         case NAMES_END: // end user list
+        if (! this.__buffer[NAMES][channel]) { break; }
         this.events.emit('stream', this.__buffer[NAMES][channel]);
         delete this.__buffer[NAMES][channel];
         break;
@@ -317,6 +322,7 @@ IrcToActivityStreams.prototype.input = function (string) {
         };
         break;
         case TOPIC_SET_BY: // current topic set by
+        if (! this.__buffer[TOPIC_IS]) { break; }
         nick = pos3.split('!')[0];
         this.__buffer[TOPIC_IS].actor = {
             '@type': 'person',
@@ -326,6 +332,43 @@ IrcToActivityStreams.prototype.input = function (string) {
         this.__buffer[TOPIC_IS].published = msg[0];
         this.events.emit('stream', this.__buffer[TOPIC_IS]);
         delete this.__buffer[TOPIC_IS];
+        break;
+
+        /** */
+        case WHO:
+        case WHO_OLD:
+        nick = (msg[3].length <= 2) ? msg[2] : msg[3];
+        if (nick === 'undefined') { break; }
+        if (! this.__buffer[WHO]) {
+            this.__buffer[WHO] = {
+                '@type': 'observe',
+                object: {
+                    '@type': 'attendance',
+                    members: [ nick ]
+                },
+                published: time
+            };
+        } else {
+            this.__buffer[WHO].object.members.push(nick);
+        }
+        break;
+        case WHO_END:
+        if (! this.__buffer[WHO]) { break; }
+        if (!channel) {
+            this.__buffer[WHO].actor = {
+                '@type': 'person',
+                '@id': 'irc://' + pos2 + '@' + this.server,
+                displayName: pos2
+            };
+        } else {
+            this.__buffer[WHO].actor = {
+                '@type': 'room',
+                '@id': 'irc://' + this.server + '/' + channel,
+                displayName: channel
+            };
+        }
+        this.events.emit('stream', this.__buffer[WHO]);
+        delete this.__buffer[WHO];
         break;
 
         /** */
