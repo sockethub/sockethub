@@ -1,7 +1,7 @@
 {
   "name": "sockethub",
   "description": "A polyglot messaging service",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
@@ -35,12 +35,12 @@
     "activity-streams": "^3.0.1",
     "array-keys": "^2.3.1",
     "body-parser": "^1.18.2",
-    "connection-manager": "^1.0.5",
     "dead-simple-crypt": "0.0.1",
     "debug": "^3.1.0",
     "ejs": "^2.5.7",
     "espree": "^3.5.2",
     "express": "^4.16.2",
+    "irc-message": "^3.0.2",
     "jaribu": "^2.2.1",
     "jquery": "^3.1.1",
     "kue": "^0.11.5",
@@ -58,7 +58,7 @@
   },
   "scripts": {
     "test": "node_modules/.bin/jaribu",
-    "start": "DEBUG=* ./bin/sockethub"
+    "start": "DEBUG=sockethub*,connection-manager* ./bin/sockethub"
   },
   "engines": {
     "node": ">= 5.0.0"
