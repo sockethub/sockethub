@@ -58,7 +58,7 @@
   },
   "scripts": {
     "test": "node_modules/.bin/jaribu",
-    "start": "DEBUG=sockethub*,connection-manager* ./bin/sockethub"
+    "start": "DEBUG=sockethub* ./bin/sockethub"
   },
   "engines": {
     "node": ">= 5.0.0"
