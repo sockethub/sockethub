@@ -151,10 +151,6 @@ IRC.prototype.schema = {
   }
 };
 
-IRC.prototype.config = {
-  persist: true
-};
-
 
 /**
  * Function: join
@@ -188,7 +184,6 @@ IRC.prototype.join = function (job, credentials, done) {
   this.debug('join() called for ' + job.actor['@id']);
   this.__getClient(job.actor['@id'], credentials, (err, client) => {
     if (err) { return done(err); }
-
     // this.debug('got client for ' + job.actor['@id']);
     // join channel
     this.debug('join: -> ' + job.target.displayName); //, client.connection);
