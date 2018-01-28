@@ -306,10 +306,10 @@ IRC.prototype.send = function (job, credentials, done) {
       client.raw('PRIVMSG ' + job.target.displayName + ' :' + message);
     } else if (job.object['@type'] === 'notice') {
       // attempt to send as raw command
-      this.debug('sending RAW command: NOTICE ' + job.target.displayName + ' :' + job.object.content);
+      // this.debug('sending RAW command: NOTICE ' + job.target.displayName + ' :' + job.object.content);
       client.raw('NOTICE ' + job.target.displayName + ' :' + job.object.content);
     } else if (this.__isJoined(job.target.displayName)) {
-      this.debug('irc.say: ' + 'PRIVMSG ' + job.target.displayName + ' :' + job.object.content);
+      // this.debug('irc.say: ' + 'PRIVMSG ' + job.target.displayName + ' :' + job.object.content);
       client.raw('PRIVMSG ' + job.target.displayName + ' :' + job.object.content);
     } else {
       return done("cannot send message to a channel of which you've not first joined.")
