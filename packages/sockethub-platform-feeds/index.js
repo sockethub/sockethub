@@ -1,7 +1,7 @@
 /**
  * This is a platform for sockethub implementing Atom/RSS fetching functionality.
  *
- * copyright 2012-2015 Nick Jennings (https://github.com/silverbucket)
+ * Developed by Nick Jennings (https://github.com/silverbucket)
  *
  * sockethub is licensed under the LGPLv3.
  * See the LICENSE file for details.
@@ -24,22 +24,21 @@ if (typeof(request) !== 'object') {
   request = require('request');
 }
 
-var Promise = require('bluebird');
+const packageJSON = require('./package.json');
+let Promise = require('bluebird');
 
 Promise.defer = function () {
-  var resolve, reject;
-  var promise = new Promise(function() {
+  let resolve, reject;
+  const promise = new Promise(function() {
     resolve = arguments[0];
     reject = arguments[1];
   });
   return {
-      resolve: resolve,
+    resolve: resolve,
     reject: reject,
     promise: promise
   };
 };
-
-var packageJSON = require('./package.json');
 
 
 /**
@@ -58,12 +57,14 @@ var packageJSON = require('./package.json');
  * https://github.com/danmactough/node-feedparser
  *
  * @constructor
- * @param {object} Sockethub session object 
+ * @param {object} cfg a unique config object for this instance // TODO LINK
  */
-function Feeds(session) {
-  this.session = session;
-  this.abort = false;
-  return this;
+function Feeds(cfg) {
+  cfg = (typeof cfg === 'object') ? cfg : {};
+  this.id = cfg.id; // actor
+  this.debug = cfg.debug;
+  this.sendToClient = cfg.sendToClient;
+  this.__abort = false;
 }
 
 
@@ -128,6 +129,8 @@ Feeds.prototype.schema = {
   }
 };
 
+
+Feeds.prototype.config = {};
 
 
 /**
@@ -218,31 +221,25 @@ Feeds.prototype.schema = {
  *   }
  *
  */
-Feeds.prototype.fetch = function (job, cb) {
-  var self = this;
-
+Feeds.prototype.fetch = function (job, credentials, cb) {
   // ready to execute job
-  self._fetchFeed(job.target['@id'], job.object)
-    .then(function (result) {
+  this.__fetchFeed(job.target['@id'], job.object)
+    .then((result) => {
       result.target = job.actor;
-      self.session.send(result);
-      cb();
-    }, function (err) {
-      cb(err);
-    }).catch(function (err) {
-      cb(err);
-    });
+      this.sendToClient(result);
+      return cb();
+    }, cb).catch(cb);
 };
 
 
 Feeds.prototype.cleanup = function (cb) {
-  this.abort = true;
+  this.__abort = true;
   cb();
 };
 
 
 function extractDate(prop) {
-  var date;
+  let date;
   try {
     date  = (typeof prop  === 'string') ? Date.parse(prop)  : (typeof prop  === 'number') ? prop  : 0;
   } catch (e) {
@@ -255,7 +252,7 @@ function extractDate(prop) {
  * setting defaults and normalizing
  */
 function parseConfig(options) {
-  var cfg = {};
+  let cfg = {};
   cfg.limit = (options.limit) ? options.limit : 10;
   cfg.datenum = 0;
   if ((!cfg.property) || (cfg.property === 'date')) {
@@ -273,44 +270,42 @@ function parseConfig(options) {
 //
 // fetches the articles from a feed, adding them to an array
 // for processing
-Feeds.prototype._fetchFeed = function (url, options) {
-  if (this.abort) { return Promise.reject('aborting job'); }
-  var defer = Promise.defer();
+Feeds.prototype.__fetchFeed = function (url, options) {
+  if (this.__abort) { return Promise.reject('aborting job'); }
+  const defer = Promise.defer();
 
-  var error = false;
-  var articles = []; // queue of articles to buffer and filter before sending out.
-  var session = this.session;
-  var self = this;
+  let error = false,
+      articles = [],
+      actor; // queue of articles to buffer and filter before sending out.
 
-  var cfg = parseConfig(options);
+  let cfg = parseConfig(options);
   if (typeof cfg === 'string') {
     return Promise.reject(cfg);
   }
 
-  session.debug('issuing request');
-  session.debug('FEED URL: ' + url);
+  this.debug('issuing request');
+  this.debug('FEED URL: ' + url);
 
-  var actor;
   try {
     request(url)
 
-    .on('error', function (e) {
+    .on('error', (e) => {
       error = e.toString();
-      session.debug('[on 1] failed to fetch feed from url: ' + url + ' : ' + error);
+      this.debug('[on 1] failed to fetch feed from url: ' + url + ' : ' + error);
       defer.reject(error);
     })
 
     .pipe(new FeedParser())
 
-    .on('error', function (e) {
+    .on('error', (e)  => {
       error = e.toString();
-      session.debug('[on 2] failed to fetch feed from url: '+ url + ' : ' + error);
+      this.debug('[on 2] failed to fetch feed from url: '+ url + ' : ' + error);
       defer.reject(error);
     })
 
-    .on('meta', function (meta) {
-      if (self.abort) {return;}
-      session.debug('received feed: ' + meta.title);
+    .on('meta', (meta)  => {
+      if (this.__abort) {return;}
+      this.debug('received feed: ' + meta.title);
       actor = {
         '@type': 'feedChannel',
         name: (meta.title) ? meta.title : (meta.link) ? meta.link : url,
@@ -324,12 +319,13 @@ Feeds.prototype._fetchFeed = function (url, options) {
       };
     })
 
-    .on('readable', function () {
-      if (this.abort) { return defer.reject('aborting job'); }
+    .on('readable', ()  => {
+      if (this.__abort) { return defer.reject('aborting job'); }
 
-      var stream = this, item;
+      const stream = this, item;
       while (item = stream.read()) {
-        var article = {
+        let datenum;
+        let article = {
           actor: {
             '@type': 'feed',
             displayName: actor.name,
@@ -347,12 +343,13 @@ Feeds.prototype._fetchFeed = function (url, options) {
             '@type': 'feedEntry'
           }
         };
-        var datenum;
+
         try {
           datenum = Date.parse(item.date) || 0;
         } catch (e) {
           datenum = 0;
         }
+
         article.object.displayName = item.title;
         article.object.title = item.title;
         article.object.date = item.date;
@@ -372,26 +369,27 @@ Feeds.prototype._fetchFeed = function (url, options) {
       }
     })
 
-    .on('end', function () {
-      if (this.abort) { return defer.reject('aborting job'); }
+    .on('end', () => {
+      if (this.__abort) { return defer.reject('aborting job'); }
 
       if (error) {
-        self.session.debug("ERROR ", error);
+        this.debug("ERROR ", error);
         return defer.reject(error);
       } else {
-        session.debug("feed fetching completed.");
+        this.debug("feed fetching completed.");
 
         return defer.resolve(articles);
       }
     });
 
   } catch (e) {
-    if (self.abort) { return Promise.reject('aborting job'); }
-    var error = e.toString();
-    self.session.log('[try] failed to fetch feed from url: ' + url + ' : ' + error);
+    if (this.__abort) { return Promise.reject('aborting job'); }
+    let error = e.toString();
+    this.log('[try] failed to fetch feed from url: ' + url + ' : ' + error);
     defer.reject('failed to fetch feed from url: ' + url + ' : ' + error);
   }
   return defer.promise;
 };
+
 
 module.exports = Feeds;
