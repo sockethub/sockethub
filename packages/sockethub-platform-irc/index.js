@@ -46,14 +46,13 @@ const debug = require('debug')('sockethub-platform-irc'),
  * @param {object} cfg a unique config object for this instance // TODO LINK
  */
 function IRC(cfg) {
-  if (! cfg) { return this; }
+  cfg = (typeof cfg === 'object') ? cfg : {};
   this.id = cfg.id; // actor
   this.debug = cfg.debug;
   this.sendToClient = cfg.sendToClient;
   this.__forceDisconnect = false;
   this.__client;
   this.__channels = [];
-  this.__callbacks = [];
 }
 
 /**
@@ -149,6 +148,11 @@ IRC.prototype.schema = {
       }
     }
   }
+};
+
+
+IRC.prototype.config = {
+  persist: true
 };
 
 
@@ -299,19 +303,19 @@ IRC.prototype.send = function (job, credentials, done) {
       // message intented as command
       const message = '\001ACTION ' + job.object.content + '\001';
       // this.debug('sending ME message to room ' + job.target.displayName + ': ' + job.actor.displayName + ' ' + message);
-      client.raw(['PRIVMSG ' + job.target.displayName + ' :' + message]);
+      client.raw('PRIVMSG ' + job.target.displayName + ' :' + message);
     } else if (job.object['@type'] === 'notice') {
       // attempt to send as raw command
-      this.debug('sending RAW command: NOTICE to ' + job.target.displayName + ', ' + job.object.content);
-      client.raw(['NOTICE', job.target.displayName, job.object.content]);
+      this.debug('sending RAW command: NOTICE ' + job.target.displayName + ' :' + job.object.content);
+      client.raw('NOTICE ' + job.target.displayName + ' :' + job.object.content);
     } else if (this.__isJoined(job.target.displayName)) {
-      // this.debug('irc.say: ' + job.target.displayName + ', [' + job.object.content + ']');
-      client.raw(['PRIVMSG', job.target.displayName, job.object.content, true]); //forcePushback
+      this.debug('irc.say: ' + 'PRIVMSG ' + job.target.displayName + ' :' + job.object.content);
+      client.raw('PRIVMSG ' + job.target.displayName + ' :' + job.object.content);
     } else {
       return done("cannot send message to a channel of which you've not first joined.")
     }
-    this.__callbacks.push(done);
-    client.raw('WHO ' + this.nick);
+    client.raw('PING ' + this.nick);
+    return done();
   });
 };
 
@@ -566,8 +570,8 @@ IRC.prototype.__connect = function (key, credentials, cb) {
     }
     if ((this.__client) && (typeof this.__client.end === 'function')) {
       this.__client.end();
-      throw new Error(err);
     }
+    throw new Error(err);
   }
 
   client.once('error', (err) => {
@@ -607,14 +611,6 @@ IRC.prototype.__registerListeners = function () {
   this.__client.on('data', this.irc2as.input.bind(this.irc2as));
 
   this.irc2as.events.on('stream', (stream) => {
-    if ((stream.object) && (stream.object['@type'] === 'attendance') && (stream.actor['@id'] === this.id)) {
-      const callbacks = this.__callbacks;
-      this.__callbacks = [];
-      callbacks.forEach((cb) => {
-        return cb();
-      });
-      return;
-    }
     this.sendToClient(stream);
   });
 
@@ -624,10 +620,26 @@ IRC.prototype.__registerListeners = function () {
 
   this.irc2as.events.on('pong', (timestamp) => {
     this.debug('received PONG at ' + timestamp);
+    this.sendToClient({
+      '@type': 'pong',
+      actor: {
+        '@type': 'service',
+        '@id': this.server
+      },
+      published: timestamp
+    });
   });
 
   this.irc2as.events.on('ping', (timestamp) => {
     this.debug('sending PING at ' + timestamp);
+    this.sendToClient({
+      '@type': 'ping',
+      target: {
+        '@type': 'service',
+        '@id': this.server
+      },
+      published: timestamp
+    });
   });
 };
 
