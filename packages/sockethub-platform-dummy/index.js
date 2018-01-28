@@ -1,8 +1,11 @@
-var packageJSON = require('./package.json');
-var request = require('request');
+const packageJSON = require('./package.json'),
+      request = require('request');
 
-function Dummy(session) {
-  this.session = session;
+function Dummy(cfg) {
+  cfg = (typeof cfg === 'object') ? cfg : {};
+  this.id = cfg.id;
+  this.debug = cfg.debug;
+  this.sendToClient = cfg.sendToClient;
 }
 
 Dummy.prototype.schema = {
@@ -11,32 +14,33 @@ Dummy.prototype.schema = {
   messages: {}
 };
 
-Dummy.prototype.fetch = function (job, cb) {
-  var self = this;
-  self.session.debug('using request on ' + job.target.id);
+Dummy.prototype.config = {};
+
+Dummy.prototype.fetch = function (job, credentials, cb) {
+  this.debug('using request on ' + job.target.id);
   request(job.target.id)
     .on('error', function (err) {
-      self.session.debug('error received: ', err);
+      this.debug('error received: ', err);
       cb(err);
     })
 
     .on('response', function (resp) {
-      self.session.debug('response received');
-      //self.session.send(resp);
+      this.debug('response received');
+      //this.sendToClient(resp);
       //cb(null);
     })
 
     .on('end', function () {
-      self.session.debug('end event');
+      this.debug('end event');
       cb(null);
     });
 };
 
-Dummy.prototype.send = function (job, cb) {
+Dummy.prototype.send = function (job, credentials, cb) {
   cb();
 };
 
-Dummy.prototype.error = function (job, cb) {
+Dummy.prototype.error = function (job, credentials, cb) {
   cb();
 };
 
