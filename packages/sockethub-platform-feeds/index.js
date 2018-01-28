@@ -322,7 +322,8 @@ Feeds.prototype.__fetchFeed = function (url, options) {
     .on('readable', ()  => {
       if (this.__abort) { return defer.reject('aborting job'); }
 
-      const stream = this, item;
+      const stream = this;
+      let item;
       while (item = stream.read()) {
         let datenum;
         let article = {
