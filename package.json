@@ -49,10 +49,11 @@
     "secure-store-redis": "^1.3.1",
     "socket.io": "^2.0.4",
     "sockethub-platform-dummy": "^2.0.0",
-    "sockethub-platform-feeds": "^1.0.0",
+    "sockethub-platform-feeds": "^2.0.1",
     "sockethub-platform-irc": "^3.1.0",
-    "sockethub-platform-xmpp": "^2.0.0",
+    "sockethub-platform-xmpp": "^2.1.0",
     "sockethub-schemas": "^2.0.0",
+    "supports-color": "^5.1.0",
     "tv4": "^1.2.7",
     "urijs": "^1.19.0"
   },
