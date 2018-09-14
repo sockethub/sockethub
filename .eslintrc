@@ -16,7 +16,7 @@
         "no-eval": 2,
         "no-tabs": 2,
         "no-var": 1,
-        "quotes": [1, "double", { "allowTemplateLiterals": true }],
+        "quotes": [1, "single", { "allowTemplateLiterals": true }],
         "semi": 2,
         "space-before-blocks": 2,
         "space-before-function-paren": [2, {"anonymous": "always", "named": "never"}]
