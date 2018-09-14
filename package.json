@@ -61,7 +61,7 @@
   "scripts": {
     "test": "jaribu",
     "start": "DEBUG=* ./bin/sockethub",
-    "lint": "eslint **/*.js",
+    "lint": "eslint **/*.js bin/sockethub",
     "lint:fix": "eslint --fix **/*.js"
   },
   "engines": {
