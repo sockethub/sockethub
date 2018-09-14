@@ -48,8 +48,8 @@ routes.push({
 if (nconf.get('examples:enabled')) {
   routes.push({
     meta: {
-        method: 'GET',
-        path: '/'
+      method: 'GET',
+      path: '/'
     },
     route: (req,res) => {
       res.render('index.ejs');

@@ -37,25 +37,25 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
       result: true,
       type: 'credentials',
       input: {
-        context: "irc",
+        context: 'irc',
         actor: {
-          '@id': "irc://sh-9K3Vk@irc.freenode.net",
-          '@type': "person",
-          displayName: "sh-9K3Vk",
+          '@id': 'irc://sh-9K3Vk@irc.freenode.net',
+          '@type': 'person',
+          displayName: 'sh-9K3Vk',
           image: {
             height: 250,
-            mediaType: "image/jpeg",
-            url: "http://example.org/image.jpg",
+            mediaType: 'image/jpeg',
+            url: 'http://example.org/image.jpg',
             width: 250
           },
-          url: "http://sockethub.org"
+          url: 'http://sockethub.org'
         },
         object: {
-          '@type': "credentials",
-          nick: "sh-9K3Vk",
+          '@type': 'credentials',
+          nick: 'sh-9K3Vk',
           port: 6667,
           secure: false,
-          server: "irc.freenode.net"
+          server: 'irc.freenode.net'
         }
       },
       output: 'same'
@@ -65,14 +65,14 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
       result: false,
       type: 'credentials',
       input: {
-        "actor": "xmpp://hyper_rau@localhost",
-        "context": "xmpp",
-        "object": {
-          "username": "hyper_rau",
-          "password": "123",
-          "server": "localhost",
-          "port": 5222,
-          "resource": "laptop"
+        'actor': 'xmpp://hyper_rau@localhost',
+        'context': 'xmpp',
+        'object': {
+          'username': 'hyper_rau',
+          'password': '123',
+          'server': 'localhost',
+          'port': 5222,
+          'resource': 'laptop'
         }
       }
     },
@@ -105,11 +105,11 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
       result: false,
       type: 'activity-object',
       input:  {
-        '@type': "credentials",
-        nick: "sh-9K3Vk",
+        '@type': 'credentials',
+        nick: 'sh-9K3Vk',
         port: 6667,
         secure: false,
-        server: "irc.freenode.net"
+        server: 'irc.freenode.net'
       }
     },
     {
@@ -117,11 +117,11 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
       result: false,
       type: 'credentials',
       input:  {
-        '@type': "credentials",
-        nick: "sh-9K3Vk",
+        '@type': 'credentials',
+        nick: 'sh-9K3Vk',
         port: 6667,
         secure: false,
-        server: "irc.freenode.net"
+        server: 'irc.freenode.net'
       }
     },
     {
@@ -129,16 +129,16 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
       result: true,
       type: 'activity-object',
       input: {
-        '@id': "irc://sh-9K3Vk@irc.freenode.net",
-        '@type': "person",
-        displayName: "sh-9K3Vk",
+        '@id': 'irc://sh-9K3Vk@irc.freenode.net',
+        '@type': 'person',
+        displayName: 'sh-9K3Vk',
         image: {
           height: 250,
-          mediaType: "image/jpeg",
-          url: "http://example.org/image.jpg",
+          mediaType: 'image/jpeg',
+          url: 'http://example.org/image.jpg',
           width: 250
         },
-        url: "http://sockethub.org"
+        url: 'http://sockethub.org'
       },
       output: 'same'
     },
@@ -181,20 +181,20 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
       result: true,
       type: 'message',
       input: {
-        "actor": "xmpp://hyper_rau@localhost",
+        'actor': 'xmpp://hyper_rau@localhost',
         '@type': 'join',
-        "context": "xmpp",
-        "object": {},
+        'context': 'xmpp',
+        'object': {},
         target: 'dooder'
       },
       output: {
-        "actor": {
-          "@id": "xmpp://hyper_rau@localhost",
+        'actor': {
+          '@id': 'xmpp://hyper_rau@localhost',
           displayName: 'hyper_rau'
         },
         '@type': 'join',
-        "context": "xmpp",
-        "object": {},
+        'context': 'xmpp',
+        'object': {},
         target: {
           '@id': 'dooder',
           displayName: 'dooder'
@@ -202,28 +202,28 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
       }
     },
     {
-      name: "expand known person",
+      name: 'expand known person',
       result: true,
-      type: "message",
+      type: 'message',
       input: {
-        actor: "irc://sh-9K3Vk@irc.freenode.net",
-        target: "blah",
-        "@type": "send",
-        context: "irc",
+        actor: 'irc://sh-9K3Vk@irc.freenode.net',
+        target: 'blah',
+        '@type': 'send',
+        context: 'irc',
         object: {}
       },
       output: {
         actor: {
-          '@id': "irc://sh-9K3Vk@irc.freenode.net",
-          '@type': "person",
-          displayName: "sh-9K3Vk",
+          '@id': 'irc://sh-9K3Vk@irc.freenode.net',
+          '@type': 'person',
+          displayName: 'sh-9K3Vk',
           image: {
             height: 250,
-            mediaType: "image/jpeg",
-            url: "http://example.org/image.jpg",
+            mediaType: 'image/jpeg',
+            url: 'http://example.org/image.jpg',
             width: 250
           },
-          url: "http://sockethub.org"
+          url: 'http://sockethub.org'
         },
         target: {
           '@id': 'blah',
@@ -232,20 +232,20 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
           hello: 'there',
           i: [ 'am','extras' ]
         },
-        "@type": "send",
-        context: "irc",
+        '@type': 'send',
+        context: 'irc',
         object: {}
       }
     }
   ];
 
   function buildTest(name, result, type, input, output) {
-    var string = 'fail';
+    let string = 'fail';
     if (result) {
       string = 'pass';
     }
 
-    var test = {
+    let test = {
       desc: '# [' + string + '] ' + name,
       run: function (env, test) {
         env.validate(type)(input, function (state, msg) {
@@ -255,12 +255,12 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
           //console.log('result: ', state);
 
           if (output === 'same') {
-            test.assertAnd(input, msg, "input not the same as output");
+            test.assertAnd(input, msg, 'input not the same as output');
           } else if (output) {
-            test.assertAnd(msg, output, "expected and returned output don't match");
+            test.assertAnd(msg, output, 'expected and returned output don't match');
           }
 
-          test.assertAnd(result, state, "results don't match");
+          test.assertAnd(result, state, 'results don't match');
 
           if ((result) && (type === 'activity-object')) {
             // console.log('activity: ', activity);
