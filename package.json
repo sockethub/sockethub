@@ -58,8 +58,8 @@
   "scripts": {
     "test": "jaribu",
     "start": "DEBUG=* ./bin/sockethub",
-    "lint": "eslint **/*.js bin/sockethub",
-    "lint:fix": "eslint --fix **/*.js bin/sockethub"
+    "lint": "eslint \"**/*.js\" bin/sockethub",
+    "lint:fix": "eslint --fix \"**/*.js\" bin/sockethub"
   },
   "engines": {
     "node": ">= 5.0.0"
