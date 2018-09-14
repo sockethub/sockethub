@@ -59,7 +59,7 @@
     "test": "jaribu",
     "start": "DEBUG=* ./bin/sockethub",
     "lint": "eslint **/*.js bin/sockethub",
-    "lint:fix": "eslint --fix **/*.js"
+    "lint:fix": "eslint --fix **/*.js bin/sockethub"
   },
   "engines": {
     "node": ">= 5.0.0"
@@ -67,6 +67,6 @@
   "devDependencies": {
     "eslint": "^5.5.0",
     "eslint-cli": "^1.1.1",
-    "jaribu": "^2.2.1",
+    "jaribu": "^2.2.1"
   }
 }
