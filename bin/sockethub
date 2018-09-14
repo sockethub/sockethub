@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-process.on("uncaughtException", function (err) {
-  console.log("\nUNCAUGHT EXCEPTION\n");
+process.on('uncaughtException', function (err) {
+  console.log('\nUNCAUGHT EXCEPTION\n');
   console.log(err.stack);
   process.exit(1);
 });
 
-let Sockethub = require("./../lib/sockethub.js");
+let Sockethub = require('./../lib/sockethub.js');
 
 // var debugScope = process.env.DEBUG || nconf.get('debug');
 // var genConfig  = nconf.get('gen-config');    // TODO
