@@ -3,11 +3,11 @@ if (typeof define !== 'function') {
 }
 define(['require', './../lib/validate', 'activity-streams'], function (require, Validate, Activity) {
 
-  const activity = new Activity();
+  let activity = new Activity();
   let errMsg = '';
   let suites = [];
 
-  const testGroups = [
+  let testGroups = [
     {
       name: 'one',
       result: true,
@@ -96,7 +96,7 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
         '@type': 'person',
         displayName: 'bob',
         hello: 'there',
-        i: [ 'am','extras' ]
+        i: [ 'am', 'extras' ]
       },
       output: 'same'
     },
@@ -230,7 +230,7 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
           '@type': 'person',
           displayName: 'bob',
           hello: 'there',
-          i: [ 'am','extras' ]
+          i: [ 'am', 'extras' ]
         },
         '@type': 'send',
         context: 'irc',
@@ -257,10 +257,10 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
           if (output === 'same') {
             test.assertAnd(input, msg, 'input not the same as output');
           } else if (output) {
-            test.assertAnd(msg, output, 'expected and returned output don't match');
+            test.assertAnd(msg, output, `expected and returned output don't match`);
           }
 
-          test.assertAnd(result, state, 'results don't match');
+          test.assertAnd(result, state, `results don't match`);
 
           if ((result) && (type === 'activity-object')) {
             // console.log('activity: ', activity);
@@ -291,8 +291,8 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
     };
   }
 
-  var suite = buildSuite('input validation tests');
-  var tests = [];
+  let suite = buildSuite('input validation tests');
+  let tests = [];
   testGroups.forEach(function (entry, i) {
     tests.push(buildTest(entry.name, entry.result, entry.type, entry.input, entry.output));
   });
