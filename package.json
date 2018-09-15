@@ -58,8 +58,10 @@
   "scripts": {
     "test": "jaribu",
     "start": "DEBUG=* ./bin/sockethub",
-    "lint": "eslint \"**/*.js\" bin/sockethub",
-    "lint:fix": "eslint --fix \"**/*.js\" bin/sockethub"
+    "compliance": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\" bin/sockethub; istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
+    "coverage": "istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
+    "lint": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\" bin/sockethub",
+    "lint:fix": "eslint --ignore-path \"coverage/\" --fix \"**/*.js\" bin/sockethub"
   },
   "engines": {
     "node": ">= 5.0.0"
@@ -67,6 +69,7 @@
   "devDependencies": {
     "eslint": "^5.5.0",
     "eslint-cli": "^1.1.1",
+    "istanbul": "^0.4.5",
     "jaribu": "^2.2.1"
   }
 }

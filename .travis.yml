@@ -6,8 +6,7 @@ node_js:
 services: redis
 sudo: false
 script:
-  - npm run lint
-  - npm test
+  - npm run compliance
 install:
   - npm update -g npm; npm install;
 env:
