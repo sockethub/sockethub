@@ -1,0 +1,10 @@
+version: '2'
+services:
+  sockethub:
+    build: .
+    ports:
+    - "10550:10550"
+    links:
+    - redis
+  redis:
+    image: redis

@@ -1,14 +1,14 @@
-var path   = require('path');
-var nconf  = require('nconf');
-var routes = [];
+const path   = require('path'),
+      nconf  = require('nconf'),
+      routes = [];
 
 routes.push({
   meta: {
     method: 'GET',
     path: '/sockethub-client.js'
   },
-  route: function (req, res) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
+  route: (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.sendFile(path.resolve(__dirname + '/../lib/client.js'));
   }
 },
@@ -18,8 +18,8 @@ routes.push({
     method: 'GET',
     path: '/socket.io.js'
   },
-  route: function (req, res) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
+  route: (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.sendFile(path.resolve(__dirname + '/../node_modules/socket.io-client/dist/socket.io.js'));
   }
 },
@@ -29,8 +29,8 @@ routes.push({
     method: 'GET',
     path: '/activity-streams.js'
   },
-  route: function (req, res) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
+  route: (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.sendFile(path.resolve(__dirname + '/../node_modules/activity-streams/browser/activity-streams.js'));
   }
 },
@@ -40,7 +40,7 @@ routes.push({
     method: 'GET',
     path: '/activity-streams.min.js'
   },
-  route: function (req, res) {
+  route: (req, res) => {
     res.sendFile(path.resolve(__dirname + '/../node_modules/activity-streams/browser/activity-streams.min.js'));
   }
 });
@@ -48,10 +48,10 @@ routes.push({
 if (nconf.get('examples:enabled')) {
   routes.push({
     meta: {
-        method: 'GET',
-        path: '/'
+      method: 'GET',
+      path: '/'
     },
-    route: function (req,res) {
+    route: (req, res) => {
       res.render('index.ejs');
     }
   },
@@ -61,7 +61,7 @@ if (nconf.get('examples:enabled')) {
       method: 'GET',
       path: '/jquery.js'
     },
-    route: function (req, res) {
+    route: (req, res) => {
       res.sendFile(path.resolve(__dirname + '/../node_modules/jquery/dist/jquery.min.js'));
     }
   },
@@ -71,7 +71,7 @@ if (nconf.get('examples:enabled')) {
       method: 'GET',
       path: '/jquery.min.map'
     },
-    route: function (req, res) {
+    route: (req, res) => {
       res.sendFile(path.resolve(__dirname + '/../node_modules/jquery/dist/jquery.min.map'));
     }
   });
@@ -81,8 +81,8 @@ if (nconf.get('examples:enabled')) {
  * Setup
  */
 
-exports.setup = function (app) {
-  routes.forEach(function (route) {
+exports.setup = (app) => {
+  routes.forEach((route) => {
     app[route.meta.method.toLowerCase()](
       route.meta.path,
       route.route

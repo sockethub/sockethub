@@ -76,11 +76,14 @@ platforms actions.
 <kbd>make-friend</kbd> |
 | WebFinger | <kbd>search</kbd> |
 | RDF | <kbd>search</kbd> <kbd>fetch</kbd> |
-| Bitcoin | *(to be evaluated)* <kbd>send</kbd> <kbd>receive</kbd> ... |
-| Ethereum | *(to be evaluated)* |
-| FireFoxSync | *(to be evaluated)* |
-| WebRTC | *(to be evaluated)* |
+| Bitcoin (e.g. sending signed transactions to a node) | *(to be evaluated)* <kbd>send</kbd>
+<kbd>receive</kbd> ... |
+| Ethereum (e.g. contract events) | *(to be evaluated)* |
+| WebRTC (signaling) | *(to be evaluated)* |
 | Signal | *(to be evaluated)* |
+| [MicroPub](https://indieweb.org/micropub) (IndieWeb, ...) | *(to be evaluated)* |
+| [OStatus](https://en.wikipedia.org/wiki/OStatus) (GNUSocial, Mastodon, ...)
+| *(to be evaluated)* |
 
 ## Setup
 
@@ -92,7 +95,23 @@ platforms actions.
 
 You should then be able to browse to `http://localhost:10550` and try out the examples.
 
-### Environment Variables
+## Running using Docker Compose
+
+Requires [Docker Compose](https://docs.docker.com/compose/) 1.10.0+
+
+`$ docker-compose up`
+
+> If you’re using Docker natively on Linux, Docker for Mac, or Docker for
+> Windows, then sockethub should now be listening on port 10550 on your Docker
+> daemon host. Point your web browser to `http://localhost:10550` to find
+> sockethub. If this doesn’t resolve, you can also try
+> `http://0.0.0.0:10550`.
+>
+> If you’re using Docker Machine on a Mac or Windows, use docker-machine ip
+> MACHINE_VM to get the IP address of your Docker host. Then, open
+> `http://MACHINE_VM_IP:10550` in a browser.
+
+## Environment Variables
 
 * PORT
 
