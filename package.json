@@ -60,8 +60,8 @@
     "start": "DEBUG=* ./bin/sockethub",
     "compliance": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\" bin/sockethub && istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
     "coverage": "istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
-    "lint": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\" bin/sockethub",
-    "lint:fix": "eslint --ignore-path \"coverage/\" --fix \"**/*.js\" bin/sockethub"
+    "lint": "eslint --ignore-pattern \"coverage\" \"**/*.js\" bin/sockethub",
+    "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\" bin/sockethub"
   },
   "engines": {
     "node": ">= 5.0.0"
