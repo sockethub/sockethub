@@ -117,6 +117,8 @@
         if (msg['@type'] === 'observe') {
           $('#messages').append($('<li>').text('[ users in ' + msg.actor.displayName + ' ]'));
           $('#messages').append($('<li>').text('[ ' + msg.object.members.join(', ') + ' ]'));
+        } else if ((msg['@type'] === 'pong') || (msg['@type'] === 'pong')) {
+          $('#messages').append($('<li>').text(`${msg['@type']} received from ${msg.actor['@id']} at ${msg.published}`));
         } else if ((msg['@type'] === 'update') &&
                    (msg.object['@type'] === 'address')) {
           $('#messages').append($('<li>').text(msg.actor.displayName + ' is now known as ' + msg.target.displayName));
@@ -216,6 +218,7 @@
           displayName: '#' + channel
         });
 
+        debug('socket id: ', sc.socket.id);
         // sending irc credentials to sockethub server
         var credentials = {
           actor: 'irc://' + nick + '@' + ircServer,
