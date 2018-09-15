@@ -34,9 +34,9 @@
   "scripts": {
     "test": "jaribu",
     "doc": "node_modules/.bin/jsdoc2md index.js  > API.md",
-    "compliance": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\" && istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
+    "compliance": "istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
     "coverage": "istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
-    "lint": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\"",
-    "lint:fix": "eslint --ignore-path \"coverage/\" --fix \"**/*.js\""
+    "lint": "eslint --ignore-pattern \"coverage\" \"**/*.js\"",
+    "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\""
   }
 }
