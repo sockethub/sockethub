@@ -1,3 +1,5 @@
+# Sockethub
+
 [![Sockethub](http://sockethub.org/res/img/sockethub-logo.svg)](http://sockethub.org)
 
 A polyglot messaging service.
@@ -11,16 +13,17 @@ A polyglot messaging service.
 
 [![Flattr this](http://api.flattr.com/button/flattr-badge-large.png)](http://flattr.com/thing/1154379/Sockethub)
 
-# About
+## About
+
 Sockethub is a polyglot (speaking many different protocols and APIs) messaging service for social and other interactive messaging applications. Not only does it assist [unhosted](http://unhosted.org) and [noBackend](http://nobackend.org) web application developers by providing server-independent, server-side functionality, but it also can be used as a back-end tool (invisible to the user) for many different applications, large and small.
 
 Example uses of sockethub are: writing and receiving messages (SMTP, Facebook, Twitter), instant messaging (XMPP, IRC, MSN, FB Messenger, Hangouts), discovery (WebFinger, RDF(a)). The architecture of sockethub is extensible and supports easy implementation of additional 'platforms' to carry out tasks, sockethub can be run on your own server, or provided as a service by a service provider, or app store.
 
-# Docs
+## Docs
 
 See the [Sockethub wiki](https://github.com/sockethub/sockethub/wiki) for documentation.
 
-# Features
+## Features
 
 We use Activity Streams to map the various social networks terms to a set of
 'verbs' which identify the underlying action. For example,for a facebook friend
@@ -50,37 +53,47 @@ platforms actions.
 | WebRTC | *(to be evaluated)* |
 | Signal | *(to be evaluated)* |
 
-# Setup
+## Setup
 
 `$ npm install`
 
-# Running
+## Running
 
 `$ DEBUG=sockethub* bin/sockethub --examples`
 
 You should then be able to browse to `http://localhost:10550` and try out the examples.
 
-# Environment Variables
+### Environment Variables
 
 * PORT
+
 Defaults to `10550`
+
 * HOST
+
 Defaults to `localhost`
+
 * DEBUG
+
 Specify the namespace to console log, ie. `sockethub*` will print all sockethub related debug statements, whereas `*` will also print any other modules debug statements that use the `debug` module.
 
 * REDIS_PORT
+
 Defaults to `6379`
+
 * REDIS_HOST
+
 Defaults to `localhost`
 
 ***OR***
 
 * REDIS_URL
+
 Overrides `REDIS_HOST` and `REDIS_PORT`, can specify a full redis connect URL (eq. `redis://username:password@host:port`)
 
-# Command-line params
-```
+### Command-line params
+
+```text
   --help       : this help screen
   --info       : displays some basic runtime info
 
@@ -90,11 +103,11 @@ Overrides `REDIS_HOST` and `REDIS_PORT`, can specify a full redis connect URL (e
   --port       : port to bind to
 ```
 
-# License
+## License
 
 Sockethub is licensed under the [LGPL](https://github.com/sockethub/sockethub/blob/master/LICENSE)
 
-# Credits
+## Credits
 
 Project created and maintained by [Nick Jennings](http://github.com/silverbucket)
 
@@ -103,4 +116,3 @@ Logo design by [Jan-Christoph Borchardt](http://jancborchardt.net)
 Sponsored by [NLNET](http://nlnet.nl)
 
 [![NLNET Logo](http://sockethub.org/res/img/nlnet-logo.svg)](http://nlnet.nl)
-
