@@ -15,9 +15,17 @@ A polyglot messaging service.
 
 ## About
 
-Sockethub is a polyglot (speaking many different protocols and APIs) messaging service for social and other interactive messaging applications. Not only does it assist [unhosted](http://unhosted.org) and [noBackend](http://nobackend.org) web application developers by providing server-independent, server-side functionality, but it also can be used as a back-end tool (invisible to the user) for many different applications, large and small.
+Sockethub is a polyglot (speaking many different protocols and APIs) messaging service for social
+and other interactive messaging applications. Not only does it assist
+[unhosted](http://unhosted.org) and [noBackend](http://nobackend.org) web application developers
+by providing server-independent, server-side functionality, but it also can be used as a back-end
+tool (invisible to the user) for many different applications, large and small.
 
-Example uses of sockethub are: writing and receiving messages (SMTP, Facebook, Twitter), instant messaging (XMPP, IRC, MSN, FB Messenger, Hangouts), discovery (WebFinger, RDF(a)). The architecture of sockethub is extensible and supports easy implementation of additional 'platforms' to carry out tasks, sockethub can be run on your own server, or provided as a service by a service provider, or app store.
+Example uses of sockethub are: writing and receiving messages (SMTP, Facebook, Twitter), instant
+messaging (XMPP, IRC, MSN, FB Messenger, Hangouts), discovery (WebFinger, RDF(a)). The architecture
+of sockethub is extensible and supports easy implementation of additional 'platforms' to carry out
+tasks, sockethub can be run on your own server, or provided as a service by a service provider,
+or app store.
 
 ## Docs
 
@@ -37,14 +45,35 @@ platforms actions.
 
 | Platforms | Verbs |
 | --------- | ----- |
-| [Email](https://github.com/sockethub/sockethub-platform-email) *(SMTP, IMAP)* *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch (imap)</kbd> |
-| [XMPP](https://github.com/sockethub/sockethub-platform-xmpp) | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) request-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) remove-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) make-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd> <kbd>join</kbd> <kbd>observe</kbd>|
-| [Facebook](https://github.com/sockethub/sockethub-platform-facebook) *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png)fetch</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd> |
-| [Twitter](https://github.com/sockethub/sockethub-platform-twitter) *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd> |
-| [Feeds](https://github.com/sockethub/sockethub-platform-feeds) *(RSS, Atom)* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd> |
-| [IRC](https://github.com/sockethub/sockethub-platform-irc) | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) join</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) leave</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd> |
+| [Email](https://github.com/sockethub/sockethub-platform-email) *(SMTP, IMAP)* *to port* |
+<kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png) fetch (imap)</kbd> |
+| [XMPP](https://github.com/sockethub/sockethub-platform-xmpp) | <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png) request-friend</kbd> <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png) remove-friend</kbd> <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png) make-friend</kbd> <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png) update</kbd> <kbd>join</kbd>
+<kbd>observe</kbd>|
+| [Facebook](https://github.com/sockethub/sockethub-platform-facebook) *to port* | <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png)fetch</kbd> <kbd>request-friend</kbd>
+<kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd> |
+| [Twitter](https://github.com/sockethub/sockethub-platform-twitter) *to port* | <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>follow</kbd>
+<kbd>unfollow</kbd> <kbd>send</kbd> <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd> |
+| [Feeds](https://github.com/sockethub/sockethub-platform-feeds) *(RSS, Atom)* | <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd> |
+| [IRC](https://github.com/sockethub/sockethub-platform-irc) | <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png) join</kbd> <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png) leave</kbd> <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png) observe</kbd> <kbd>!
+[completed](http://sockethub.org/res/img/checkmark.png) update</kbd> |
 | pump.io | <kbd>post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>fetch</kbd> |
-| WhatsApp | <kbd>send</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> |
+| WhatsApp | <kbd>send</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd>
+<kbd>make-friend</kbd> |
 | WebFinger | <kbd>search</kbd> |
 | RDF | <kbd>search</kbd> <kbd>fetch</kbd> |
 | Bitcoin | *(to be evaluated)* <kbd>send</kbd> <kbd>receive</kbd> ... |
@@ -75,7 +104,9 @@ Defaults to `localhost`
 
 * DEBUG
 
-Specify the namespace to console log, ie. `sockethub*` will print all sockethub related debug statements, whereas `*` will also print any other modules debug statements that use the `debug` module.
+Specify the namespace to console log, ie. `sockethub*` will print all sockethub related debug
+statements, whereas `*` will also print any other modules debug statements that use the `debug`
+module.
 
 * REDIS_PORT
 
@@ -89,7 +120,8 @@ Defaults to `localhost`
 
 * REDIS_URL
 
-Overrides `REDIS_HOST` and `REDIS_PORT`, can specify a full redis connect URL (eq. `redis://username:password@host:port`)
+Overrides `REDIS_HOST` and `REDIS_PORT`, can specify a full redis connect URL
+(eq. `redis://username:password@host:port`)
 
 ### Command-line params
 
