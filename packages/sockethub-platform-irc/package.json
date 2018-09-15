@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/sockethub/sockethub-platform-irc",
   "dependencies": {
-    "debug": "^3.1.0",
+    "debug": "^4.0.1",
     "irc-socket": "^3.0.8",
     "irc2as": "^1.4.0"
   },
