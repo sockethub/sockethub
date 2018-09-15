@@ -27,26 +27,37 @@
 
 - cant use 'error' name as emit event?
 
-[ ] figure out a way to allow for special objects from platforms, without ignoring failed activity stream schema checks
-[ ] - investigate socket-relay idea. https://github.com/ircanywhere/irc-factory/blob/master/lib/api.js#L198-L201
+[ ] figure out a way to allow for special objects from platforms, without ignoring failed activity
+stream schema checks
+[ ] - investigate socket-relay idea.
+https://github.com/ircanywhere/irc-factory/blob/master/lib/api.js#L198-L201
 
 ### Workers
 
 Should workers spawned for each session? or one per platform? or both?
 
-It kinda makes sense that there are no workers running by default, and when a new session connects, a new worker is spawned and handles their requests. Care must be taken to make sure the worker doesn't build up memory leaks, and data is purged, but logically it seems cleaner overall.
+It kinda makes sense that there are no workers running by default, and when a new session connects,
+a new worker is spawned and handles their requests. Care must be taken to make sure the worker
+doesn't build up memory leaks, and data is purged, but logically it seems cleaner overall.
 
-#### 1 worker per sessions:
+#### 1 worker per sessions
 
-- connects can take a while, you can have workers process requests concurrently, but only up to a point.
-- when there are crashes and client connections are lost. it's only in the realm of a single sessions, so other clients aren't effected.
-- if you are mainly operating in IRC, but then send a tweet and something crashes, you could loose your IRC session connection.
+Connects can take a while you can have workers process requests concurrently, but only up to a
+point.
 
-#### 1 worker per platform:
+When there are crashes and client connections are lost, it's only in the realm of a single
+sessions, so other clients aren't effected.
 
-- if 100 sessions are connected, that's 100 worker objects operating
-- if the IRC platform worker crashes, all people using sockethub loose their IRC conenctions.
-- if a different platform worker crashes, the IRC sessions are not effected
+If you are mainly operating in IRC, but then send a tweet and something crashes, you could loose
+your IRC session connection.
+
+#### 1 worker per platform
+
+If 100 sessions are connected, that's 100 worker objects operating.
+
+If the IRC platform worker crashes, all people using sockethub loose their IRC conenctions.
+
+If a different platform worker crashes, the IRC sessions are not effected.
 
 ## Dev Notes
 
