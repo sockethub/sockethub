@@ -1,8 +1,9 @@
 language: node_js
 node_js:
-  - 6 # LTS
-  - 7 # latest
+  - 8
+  - 9
+  - 10
 sudo: false
-script: npm test
+script: npm compliance
 install:
   - npm install
