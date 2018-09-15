@@ -40,8 +40,6 @@
     "ejs": "^2.5.7",
     "espree": "^3.5.2",
     "express": "^4.16.2",
-    "irc-message": "^3.0.2",
-    "jaribu": "^2.2.1",
     "jquery": "^3.3.1",
     "kue": "^0.11.5",
     "nconf": "^0.10.0",
@@ -51,7 +49,6 @@
     "socket.io": "^2.0.4",
     "sockethub-platform-dummy": "^2.0.0",
     "sockethub-platform-feeds": "^2.0.1",
-    "sockethub-platform-irc": "^3.1.0",
     "sockethub-platform-xmpp": "^2.1.0",
     "sockethub-schemas": "^2.0.0",
     "supports-color": "^5.1.0",
@@ -59,10 +56,17 @@
     "urijs": "^1.19.0"
   },
   "scripts": {
-    "test": "node_modules/.bin/jaribu",
-    "start": "DEBUG=sockethub* ./bin/sockethub"
+    "test": "jaribu",
+    "start": "DEBUG=* ./bin/sockethub",
+    "lint": "eslint \"**/*.js\" bin/sockethub",
+    "lint:fix": "eslint --fix \"**/*.js\" bin/sockethub"
   },
   "engines": {
     "node": ">= 5.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.5.0",
+    "eslint-cli": "^1.1.1",
+    "jaribu": "^2.2.1"
   }
 }
