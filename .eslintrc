@@ -12,6 +12,7 @@
         "handle-callback-err": 2,
         "indent": [2, 2, { "SwitchCase": 1, "VariableDeclarator": { "var": 2, "let": 2, "const": 3 }}],
         "keyword-spacing": 2,
+        "max-len": [2, { "code": 99 }],
         "no-eq-null": 2,
         "no-eval": 2,
         "no-tabs": 2,

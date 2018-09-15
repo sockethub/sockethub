@@ -24,8 +24,7 @@ define(['require'], function (require) {
           desc: 'platforms',
           run: function (env, test) {
             test.assertTypeAnd(env.init.platforms, 'object');
-            test.assertTypeAnd(env.init.platforms.exists, 'function');
-            test.assert(env.init.platforms.exists('irc'), true);
+            test.assert(env.init.platforms.has('irc'), true);
           }
         }
       ]
