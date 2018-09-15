@@ -58,7 +58,7 @@
   "scripts": {
     "test": "jaribu",
     "start": "DEBUG=* ./bin/sockethub",
-    "compliance": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\" bin/sockethub; istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
+    "compliance": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\" bin/sockethub && istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
     "coverage": "istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
     "lint": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\" bin/sockethub",
     "lint:fix": "eslint --ignore-path \"coverage/\" --fix \"**/*.js\" bin/sockethub"
