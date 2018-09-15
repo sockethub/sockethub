@@ -1,12 +1,12 @@
-if(typeof(define) !== 'function') {
-  var define = require('amdefine')(module);
+if (typeof(define) !== 'function') {
+  let define = require('amdefine')(module);
 }
 define(['require'], function (require) {
-  var suites = [];
+  let suites = [];
 
   suites.push({
-    name: "irc platform tests",
-    desc: "collection of tests for the irc platform",
+    name: 'irc platform tests',
+    desc: 'collection of tests for the irc platform',
     abortOnFail: true,
     setup: function (env, test) {
       env.actor = {
@@ -105,7 +105,7 @@ define(['require'], function (require) {
         }
       };
 
-      var Platform = require('./../index');
+      const Platform = require('./../index');
       env.platform = new Platform({
         id: env.actor.actor,
         debug: console.log
@@ -158,7 +158,7 @@ define(['require'], function (require) {
       },
 
       {
-        desc: "# join 1 channel",
+        desc: '# join 1 channel',
         run: function (env, test) {
           env.platform.join(env.job.join.sockethub, env.credentials, function (err, result) {
             test.assertTypeAnd(err, 'undefined', err);
@@ -167,14 +167,14 @@ define(['require'], function (require) {
         }
       },
       {
-        desc: "# join 1 - check stubs",
+        desc: '# join 1 - check stubs',
         run: function (env, test) {
           test.assert(env.platform.__connect.numCalled, 1);
         }
       },
 
       {
-        desc: "# join 2nd channel",
+        desc: '# join 2nd channel',
         run: function (env, test) {
           env.platform.join(env.job.join.remotestorage, env.credentials, function (err, result) {
             test.assertTypeAnd(err, 'undefined', err);
@@ -183,14 +183,14 @@ define(['require'], function (require) {
         }
       },
       {
-        desc: "# join 2 - check stubs",
+        desc: '# join 2 - check stubs',
         run: function (env, test) {
           test.assert(env.platform.__connect.numCalled, 1);
         }
       },
 
       {
-        desc: "# send",
+        desc: '# send',
         run: function (env, test) {
           env.platform.send(env.job.send, env.credentials, function (err, result) {
             test.assertTypeAnd(err, 'undefined', err);
@@ -202,15 +202,14 @@ define(['require'], function (require) {
         }
       },
       {
-        desc: "# send - check stubs",
+        desc: '# send - check stubs',
         run: function (env, test) {
-          var verb = 'send';
           test.assert(env.platform.__connect.numCalled, 1);
         }
       },
 
       {
-        desc: "# leave",
+        desc: '# leave',
         run: function (env, test) {
           env.platform.leave(env.job.leave, env.credentials, function (err, result) {
             test.assertTypeAnd(err, 'undefined', err);
@@ -219,20 +218,20 @@ define(['require'], function (require) {
         }
       },
       {
-        desc: "# leave - check stubs",
+        desc: '# leave - check stubs',
         run: function (env, test) {
           test.assert(env.platform.__connect.numCalled, 1);
         }
       },
       {
-        desc: "# check internal prop _channels",
+        desc: '# check internal prop _channels',
         run: function (env, test) {
           test.assert(env.platform.__channels, ['#sockethub']);
         }
       },
 
       {
-        desc: "# observe",
+        desc: '# observe',
         run: function (env, test) {
           env.platform.observe(env.job.observe, env.credentials, function (err, result) {
             test.assertTypeAnd(err, 'undefined', err);
@@ -241,14 +240,14 @@ define(['require'], function (require) {
         }
       },
       {
-        desc: "# observe - check stubs",
+        desc: '# observe - check stubs',
         run: function (env, test) {
           test.assert(env.platform.__connect.numCalled, 1);
         }
       },
 
       {
-        desc: "# update topic",
+        desc: '# update topic',
         run: function (env, test) {
           env.platform.update(env.job.update.topic, env.credentials, function (err, result) {
             test.assertTypeAnd(err, 'undefined', err);
@@ -257,16 +256,16 @@ define(['require'], function (require) {
         }
       },
       {
-        desc: "# update topic - check stubs",
+        desc: '# update topic - check stubs',
         run: function (env, test) {
           test.assert(env.platform.__connect.numCalled, 1);
         }
       },
 
       {
-        desc: "# update nick (rename)",
+        desc: '# update nick (rename)',
         run: function (env, test) {
-          var called = 0;
+          let called = 0;
           env.platform.update(env.job.update.nick, env.credentials, function (err, result) {
             called += 1;
             test.assertTypeAnd(err, 'undefined', err, err);
@@ -278,14 +277,14 @@ define(['require'], function (require) {
         }
       },
       {
-        desc: "# update nick - check stubs",
+        desc: '# update nick - check stubs',
         run: function (env, test) {
           test.assert(env.platform.__connect.numCalled, 1);
         }
       },
 
       {
-        desc: "# join with old credentials",
+        desc: '# join with old credentials',
         run: function (env, test) {
           env.platform.join(env.job.join.remotestorage, env.credentials, function (err, result) {
             test.assertTypeAnd(err, 'undefined', err);
@@ -295,14 +294,14 @@ define(['require'], function (require) {
       }
 
       // {
-      //   desc: "# join with old credentials makes new client (calls createClient again)",
+      //   desc: '# join with old credentials makes new client (calls createClient again)',
       //   run: function (env, test) {
       //     test.assert(env.platform.__connect.numCalled, 2);
       //   }
       // },
 
       // {
-      //   desc: "# send with renamed creds",
+      //   desc: '# send with renamed creds',
       //   run: function (env, test) {
       //     var job = env.job.send;
       //     job.actor = env.newActor;
@@ -315,7 +314,7 @@ define(['require'], function (require) {
       // },
 
       // {
-      //   desc: "# send with renamed creds - check stubs",
+      //   desc: '# send with renamed creds - check stubs',
       //   run: function (env, test) {
       //     // ensure new client was not created
       //     test.assert(env.platform.__connect.numCalled, 2);

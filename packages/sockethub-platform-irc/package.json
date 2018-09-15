@@ -25,12 +25,18 @@
     "irc2as": "^1.4.0"
   },
   "devDependencies": {
+    "eslint": "^5.6.0",
+    "istanbul": "^0.4.5",
     "jaribu": "^2.2.1",
     "jsdoc-to-markdown": "^4.0.1",
     "tv4": "^1.3.0"
   },
   "scripts": {
-    "test": "node_modules/.bin/jaribu",
-    "doc": "node_modules/.bin/jsdoc2md index.js  > API.md"
+    "test": "jaribu",
+    "doc": "node_modules/.bin/jsdoc2md index.js  > API.md",
+    "compliance": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\" && istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
+    "coverage": "istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
+    "lint": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\"",
+    "lint:fix": "eslint --ignore-path \"coverage/\" --fix \"**/*.js\""
   }
 }

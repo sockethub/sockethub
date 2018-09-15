@@ -160,7 +160,7 @@ IRC.prototype.config = {
  * Function: join
  *
  * Join a room or private conversation.
- * 
+ *
  * @param {object} job activiy streams object // TODO LINK
  * @param {object} credentials credentials object // TODO LINK
  * @param {object} callback callback when job is done // TODO LINK
@@ -206,7 +206,7 @@ IRC.prototype.join = function (job, credentials, done) {
  * @param {object} job activiy streams object // TODO LINK
  * @param {object} credentials credentials object // TODO LINK
  * @param {object} callback callback when job is done // TODO LINK
- * 
+ *
  * @example
  * {
  *   context: 'irc',
@@ -241,7 +241,7 @@ IRC.prototype.leave = function (job, credentials, done) {
  * Function: send
  *
  * Send a message to a room or private conversation.
- * 
+ *
  * @param {object} job activiy streams object // TODO LINK
  * @param {object} credentials credentials object // TODO LINK
  * @param {object} callback callback when job is done // TODO LINK
@@ -323,7 +323,7 @@ IRC.prototype.send = function (job, credentials, done) {
  * Function: update
  *
  * Indicate a change (ie. room topic update, or nickname change).
- * 
+ *
  * @param {object} job activiy streams object // TODO LINK
  * @param {object} credentials redentials object // TODO LINK
  * @param {object} callback callback when job is done // TODO LINK
@@ -404,7 +404,7 @@ IRC.prototype.update = function (job, credentials, done) {
  * @param {object} job activiy streams object // TODO LINK
  * @param {object} credentials credentials object // TODO LINK
  * @param {object} callback callback when job is done // TODO LINK
- * 
+ *
  * @example
  *
  *  {
@@ -509,7 +509,7 @@ IRC.prototype.__hasLeft = function (channel) {
   }
 };
 
-// TODO FIX 
+// TODO FIX
 IRC.prototype.__renameUser = function (nick, displayName, cb) {
     // preserve old creds
     const oldId = this.nick;
@@ -525,12 +525,12 @@ IRC.prototype.__getClient = function (key, credentials, cb) {
   if (! credentials) {
     return cb('no client found, and no credentials specified.');
   }
-  
+
   this.nick = credentials.object.nick;
   this.server = credentials.object.server;
 
   this.__connect(key, credentials, (err, client) => {
-    if (err) { 
+    if (err) {
       return cb(err);
     }
     this.__client = client;
