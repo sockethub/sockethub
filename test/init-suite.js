@@ -4,7 +4,7 @@ if (typeof define !== 'function') {
 define(['require'], function (require) {
   return [
     {
-      desc: 'test init process',
+      desc: 'lib/bootstrap/init',
       abortOnFail: true,
       setup: function (env, test) {
         env.init = require('./../lib/bootstrap/init');
