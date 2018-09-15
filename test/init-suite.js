@@ -1,10 +1,10 @@
 if (typeof define !== 'function') {
-  var define = require('amdefine')(module);
+  let define = require('amdefine')(module);
 }
 define(['require'], function (require) {
   return [
     {
-      desc: "test init process",
+      desc: 'test init process',
       abortOnFail: true,
       setup: function (env, test) {
         env.init = require('./../lib/bootstrap/init');
@@ -31,7 +31,7 @@ define(['require'], function (require) {
       ]
     },
     {
-      desc: "nconf should have defaults set",
+      desc: 'nconf should have defaults set',
       setup: function (env, test) {
         env.nconf = require('nconf');
         test.assertType(env.nconf.get, 'function');

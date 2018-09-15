@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 process.on('uncaughtException', (err) => {
-  console.log("\nUNCAUGHT EXCEPTION\n");
+  console.log(`\nUNCAUGHT EXCEPTION\n`);
   console.log(err.stack);
   process.exit(1);
 });
