@@ -4,6 +4,6 @@ node_js:
   - 9
   - 10
 sudo: false
-script: npm compliance
+script: npm run compliance
 install:
   - npm install
