@@ -32,7 +32,7 @@
   },
   "homepage": "http://github.com/sockethub/sockethub",
   "dependencies": {
-    "activity-streams": "^3.0.1",
+    "activity-streams": "^3.1.0",
     "body-parser": "^1.18.2",
     "dead-simple-crypt": "0.0.1",
     "debug": "^4.0.1",
@@ -48,7 +48,7 @@
     "socket.io": "^2.0.4",
     "sockethub-platform-dummy": "^2.0.0",
     "sockethub-platform-feeds": "^2.0.1",
-    "sockethub-platform-irc": "^3.1.1",
+    "sockethub-platform-irc": "^3.2.0",
     "sockethub-platform-xmpp": "^2.1.0",
     "sockethub-schemas": "^2.0.0",
     "supports-color": "^5.1.0",
