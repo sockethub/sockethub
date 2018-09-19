@@ -1,22 +1,32 @@
 const events = require('events');
+const debug = require('debug')('irc2as');
 
-const ERR_CHAN_PRIVS = "482",
+const EVENT_INCOMING = 'incoming',
+      EVENT_ERROR = 'error',
+      EVENT_PONG = 'pong',
+      EVENT_PING = 'ping',
+      EVENT_UNPROCESSED = 'unprocessed';
+
+const ERR_BAD_NICK = "432",
+      ERR_CHAN_PRIVS = "482",
       ERR_NICK_IN_USE = "433",
+      ERR_TEMP_UNAVAIL = "437",
       ERR_NO_CHANNEL = "403",
       ERR_NOT_INVITED = "471",
       ERR_BADMODE= "472",
       ERR_INVITE_ONLY = "473",
       ERR_BANNED = "474",
-      ERR_BADKEY = "475"
-      ERR_BADMASK = "476"
+      ERR_BADKEY = "475",
+      ERR_BADMASK = "476",
       ERR_NOCHANMODES = "477",
-      ERR_BANLISTFULL = "478"
+      ERR_BANLISTFULL = "478",
       JOIN = "JOIN",
       MOTD = "372",
       MOTD_END = "376",
       NAMES = "353",
       NAMES_END = "366",
       NICK = "NICK",
+      NOTICE = "NOTICE",
       PART = "PART",
       PING = "PING",
       PONG = "PONG",
@@ -26,7 +36,7 @@ const ERR_CHAN_PRIVS = "482",
       TOPIC_IS = "332",
       TOPIC_SET_BY = "333",
       WHO = "352",
-      WHO_OLD = "354"
+      WHO_OLD = "354",
       WHO_END = "315";
 
 function IrcToActivityStreams(cfg) {
@@ -39,22 +49,31 @@ function IrcToActivityStreams(cfg) {
 }
 
 IrcToActivityStreams.prototype.input = function (string) {
-    if (typeof string !== 'string') { return false; }
-    if (string.length < 3) { return false; }
+    debug(string);
+    if (typeof string !== 'string') {
+        debug('unable to process incoming message as it was not a string.');
+        return false;
+    }
+    if (string.length < 3) {
+        debug('unable to process incoming string, length smaller than 3.');
+        return false;
+    }
     string = string.trim();
     const time = Date.now();
     const [metadata, content] = string.split(' :');
     const [server, code, pos1, pos2, pos3, ...msg] = metadata.split(" ");
-    const channel = ((typeof pos1 === "string") && (pos1.startsWith('#'))) ? pos1 : 
-                    ((typeof pos2 === "string") && (pos2.startsWith('#'))) ? pos2 : 
+    const channel = ((typeof pos1 === "string") && (pos1.startsWith('#'))) ? pos1 :
+                    ((typeof pos2 === "string") && (pos2.startsWith('#'))) ? pos2 :
                     ((typeof pos3 === "string") && (pos3.startsWith('#'))) ? pos3 : undefined;
     let nick, type, message;
 
     if (metadata === PING) {
-        this.events.emit('ping', time);
+        this.events.emit(EVENT_PING, time);
         return true;
     }
 
+    debug(`[${code}] server: ${server} channel: ${channel} 1: ${pos1}, 2: ${pos2}, 3: ${pos3}.` +
+          ` content: `, content);
     switch (code) {
         /** */
         case ERR_CHAN_PRIVS:
@@ -66,7 +85,7 @@ IrcToActivityStreams.prototype.input = function (string) {
         case ERR_BADMASK:
         case ERR_NOCHANMODES:
         case ERR_BANLISTFULL:
-        this.events.emit('stream', {
+        this.events.emit(EVENT_ERROR, {
             '@type': 'send',
             actor: {
               '@type': 'room',
@@ -77,7 +96,7 @@ IrcToActivityStreams.prototype.input = function (string) {
               '@id': 'irc://' + pos1 + '@' + this.server
             },
             object: {
-              '@type': 'message',
+              '@type': 'error',
               content: content
             }
         });
@@ -85,7 +104,8 @@ IrcToActivityStreams.prototype.input = function (string) {
 
         /** */
         case ERR_NICK_IN_USE: // nick conflict
-        this.events.emit('stream', {
+        case ERR_BAD_NICK:
+        this.events.emit(EVENT_ERROR, {
             '@type': 'update',
             actor: {
                 '@type': 'service',
@@ -101,12 +121,12 @@ IrcToActivityStreams.prototype.input = function (string) {
                 displayName: pos2
             },
             published: time
-        })
+        });
         break;
 
         /** */
         case ERR_NO_CHANNEL: // no such channel
-        this.events.emit('stream', {
+        this.events.emit(EVENT_ERROR, {
             '@type': 'join',
             actor: {
                 '@id': 'irc://' + this.server,
@@ -123,11 +143,32 @@ IrcToActivityStreams.prototype.input = function (string) {
             published: time
         });
         break;
-    
+
+        /** */
+        case ERR_TEMP_UNAVAIL: // nick conflict
+        this.events.emit(EVENT_ERROR, {
+            '@type': 'update',
+            actor: {
+                '@type': 'service',
+                '@id': 'irc://' + this.server
+            },
+            object: {
+                '@type': 'error',
+                content: content
+            },
+            target: {
+                '@type': 'person',
+                '@id': 'irc://' + pos2 + '@' + this.server,
+                displayName: pos2
+            },
+            published: time
+        });
+        break;
+
         /** */
         case JOIN: // room join
         nick = server.split(/^:/)[1].split('!')[0];
-        this.events.emit('stream', {
+        this.events.emit(EVENT_INCOMING, {
             '@type': 'join',
             actor: {
                 '@type': 'person',
@@ -163,10 +204,10 @@ IrcToActivityStreams.prototype.input = function (string) {
         } else {
             this.__buffer[MOTD].object.content.push(content);
         }
-        break; 
+        break;
         case MOTD_END: // end of MOTD
         if (! this.__buffer[MOTD]) { break; }
-        this.events.emit('stream', this.__buffer[MOTD]);
+        this.events.emit(EVENT_INCOMING, this.__buffer[MOTD]);
         delete this.__buffer[MOTD];
         break;
 
@@ -192,14 +233,14 @@ IrcToActivityStreams.prototype.input = function (string) {
         break;
         case NAMES_END: // end user list
         if (! this.__buffer[NAMES][channel]) { break; }
-        this.events.emit('stream', this.__buffer[NAMES][channel]);
+        this.events.emit(EVENT_INCOMING, this.__buffer[NAMES][channel]);
         delete this.__buffer[NAMES][channel];
         break;
 
         /** */
         case NICK: // nick change
         nick = server.split(/^:/)[1].split('!')[0];
-        this.events.emit('stream', {
+        this.events.emit(EVENT_INCOMING, {
             '@type': 'update',
             actor: {
                 '@type': 'person',
@@ -219,18 +260,39 @@ IrcToActivityStreams.prototype.input = function (string) {
         break;
 
         /** */
+        case NOTICE: // notice
+        this.events.emit(EVENT_INCOMING, {
+            '@type': 'update',
+            actor: {
+                '@type': 'service',
+                '@id': 'irc://' + this.server
+            },
+            object: {
+                '@type': 'error',
+                content: content
+            },
+            target: {
+                '@type': 'person',
+                '@id': 'irc://' + pos1 + '@' + this.server,
+                displayName: pos1
+            },
+            published: time
+        });
+        break;
+
+        /** */
         case PART: // leaving
         nick = server.split(/^:/)[1].split('!')[0];
-        this.events.emit('stream', {
+        this.events.emit(EVENT_INCOMING, {
             '@type': 'leave',
             actor: {
                 '@type': 'person',
-                '@id': 'irc://' + nick + '@' + this.server, 
+                '@id': 'irc://' + nick + '@' + this.server,
                 displayName: nick
             },
             target: {
                 '@type': 'room',
-                '@id': 'irc://' + this.server + '/' + channel, 
+                '@id': 'irc://' + this.server + '/' + channel,
                 displayName: channel
             },
             object: {
@@ -243,7 +305,7 @@ IrcToActivityStreams.prototype.input = function (string) {
 
         /** */
         case PONG: // ping response received
-        this.events.emit('pong', time);
+        this.events.emit(EVENT_PONG, time);
         break;
 
         /** */
@@ -257,7 +319,7 @@ IrcToActivityStreams.prototype.input = function (string) {
             message = content;
         }
 
-        this.events.emit('stream', {
+        this.events.emit(EVENT_INCOMING, {
             '@type': 'send',
             actor: {
               '@type': 'person',
@@ -278,16 +340,16 @@ IrcToActivityStreams.prototype.input = function (string) {
         /** */
         case QUIT: // quit user
         nick = server.split(/^:/)[1].split('!')[0];
-        this.events.emit('stream', {
+        this.events.emit(EVENT_INCOMING, {
             '@type': 'leave',
             actor: {
                 '@type': 'person',
-                '@id': 'irc://' + nick + '@' + this.server, 
+                '@id': 'irc://' + nick + '@' + this.server,
                 displayName: nick
             },
             target: {
                 '@type': 'service',
-                '@id': 'irc://' + this.server 
+                '@id': 'irc://' + this.server
             },
             object: {
                 '@type': 'message',
@@ -300,7 +362,7 @@ IrcToActivityStreams.prototype.input = function (string) {
         /** */
         case TOPIC_CHANGE: // topic changed now
         nick = server.split(/^:/)[1].split('!')[0];
-        this.events.emit('stream', {
+        this.events.emit(EVENT_INCOMING, {
             '@type': 'update',
             actor: {
                 '@type': 'person',
@@ -345,7 +407,7 @@ IrcToActivityStreams.prototype.input = function (string) {
             displayName: nick
         };
         this.__buffer[TOPIC_IS].published = msg[0];
-        this.events.emit('stream', this.__buffer[TOPIC_IS]);
+        this.events.emit(EVENT_INCOMING, this.__buffer[TOPIC_IS]);
         delete this.__buffer[TOPIC_IS];
         break;
 
@@ -382,15 +444,15 @@ IrcToActivityStreams.prototype.input = function (string) {
                 displayName: channel
             };
         }
-        this.events.emit('stream', this.__buffer[WHO]);
+        this.events.emit(EVENT_INCOMING, this.__buffer[WHO]);
         delete this.__buffer[WHO];
         break;
 
         /** */
         default:
-        this.events.emit('unprocessed', string);
+        this.events.emit(EVENT_UNPROCESSED, string);
         break;
     }
-}
+};
 
 module.exports = IrcToActivityStreams;
