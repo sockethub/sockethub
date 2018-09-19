@@ -36,7 +36,7 @@ var objs        = new ArrayKeys({ identifier: '@id' }),
         'locationOf', 'objectOf', 'originOf', 'presence', 'preview', 'previewOf', 'provider',
         'providerOf', 'published', 'rating', 'resultOf', 'replies', 'scope',
         'scopeOf', 'startTime', 'status', 'summary', 'topic', 'tag', 'tagOf', 'targetOf', 'title',
-        'updated', 'url', 'titleMap', 'contentMap', 'members'
+        'updated', 'url', 'titleMap', 'contentMap', 'members', 'message'
       ]
     },
     customProps  = {},
@@ -85,6 +85,12 @@ function validateObject(type, obj) {
     }
   }
   return false;
+}
+
+function ensureProps(obj) {
+  // ensure the displayName property, which can generall be inferred from the @id
+  // displayName = obj.match(/(?(?\w+):\/\/)(?:.+@)?(.+?)(?:\/|$)/)[1]
+  return obj;
 }
 
 var Stream = function (meta) {
@@ -147,6 +153,8 @@ var _Object = {
       console.warn(err);
     }
 
+    obj = ensureProps(obj);
+
     try {
       result = objs.addRecord(obj);
     } catch (e) {
@@ -169,15 +177,14 @@ var _Object = {
 
   get: function (id, doExpand) {
     var r = objs.getRecord(id);
-    if (r) {
-      return r;
-    } else {
+    if (! r) {
       if (doExpand) {
-        return { '@id': id };
+        r = { '@id': id };
       } else {
         return r;
       }
     }
+    return ensureProps(r);
   },
 
   list: function () {

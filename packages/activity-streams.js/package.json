@@ -8,14 +8,14 @@
     "event-emitter": "^0.3.4"
   },
   "devDependencies": {
-    "browserify": "^14.3.0",
+    "browserify": "^16.2.2",
     "gulp": "^3.9.1",
-    "gulp-rename": "^1.2.0",
+    "gulp-rename": "^1.4.0",
     "gulp-streamify": "^1.0.2",
-    "gulp-uglify": "^2.0.0",
+    "gulp-uglify": "^3.0.1",
     "gulp-util": "^3.0.8",
     "jaribu": "^2.2.1",
-    "vinyl-source-stream": "^1.1.0"
+    "vinyl-source-stream": "^2.0.0"
   },
   "repository": {
     "type": "git",
