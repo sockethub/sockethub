@@ -10,6 +10,7 @@ of them, and as time goes on hopefully become more compliant (PRs & feedback wel
 
 ## Usage
 
+```javascript
     var IRC2AS = require('irc2as');
     var irc2as = new IRC2AS({server: 'irc.freenode.net'});
 
@@ -22,7 +23,7 @@ of them, and as time goes on hopefully become more compliant (PRs & feedback wel
     });
 
     irc2as.events.on('unprocessed', function (line) {
-      console.log('irc line we don't know what to do with (yet), PRs welcome', line);
+      console.log(`irc line we don't know what to do with (yet), PRs welcome`, line);
     });
 
     irc2as.events.on('pong', function (timestamp) {
@@ -35,6 +36,7 @@ of them, and as time goes on hopefully become more compliant (PRs & feedback wel
 
     // ....  some code to get IRC socket messages
     ircClient.on('data', this.irc2as.input.bind(this.irc2as));
+```
 
 ## License
 

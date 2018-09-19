@@ -69,3 +69,9 @@ PING :moon.freenode.net
 :card.freenode.net 315 hyper_slvrbckt hyper_slvrbckt :End of /WHO list. 
 :moon.freenode.net 473 hyper_slvrbckt #freenode-sponsors :Cannot join channel (+i) - you must be invited 
 :weber.freenode.net 482 slvrbckt #debian :You're not a channel operator
+:NickServ!NickServ@services. NOTICE boo :This nickname is registered. Please choose a different nickname, or identify via /msg NickServ identify <password>.
+:NickServ!NickServ@services. NOTICE boo :You have 30 seconds to identify to your nickname before it is changed.
+:NickServ!NickServ@services. NOTICE boo :You failed to identify in time for the nickname boo
+:asimov.freenode.net 437 sh-mhJLD boo :Nick/channel is temporarily unavailable
+:wilhelm.freenode.net 433 sh-4a3LB slvrbckt :Nickname is already in use.
+:sh-WjwOE!~sh-WjwOE@194.228.76.203 NICK :woooo
