@@ -32,6 +32,7 @@ if (typeof (IRC2AS) !== 'object') {
 const debug = require('debug')('sockethub-platform-irc'),
       packageJSON = require('./package.json');
 
+
 /**
  * @class IRC
  * @constructor
@@ -47,12 +48,14 @@ const debug = require('debug')('sockethub-platform-irc'),
  */
 function IRC(cfg) {
   cfg = (typeof cfg === 'object') ? cfg : {};
-  this.id = cfg.id; // actor
   this.debug = cfg.debug;
   this.sendToClient = cfg.sendToClient;
+  this.updateCredentials = cfg.updateCredentials;
   this.__forceDisconnect = false;
-  this.__client;
-  this.__channels = [];
+  this.__client = undefined;
+  this.__jobQueue = []; // list of handlers to confirm when message delivery confirmed
+  this.__channels = new Set();
+  this.__handledActors = new Set();
 }
 
 /**
@@ -163,7 +166,7 @@ IRC.prototype.config = {
  *
  * @param {object} job activiy streams object // TODO LINK
  * @param {object} credentials credentials object // TODO LINK
- * @param {object} callback callback when job is done // TODO LINK
+ * @param {object} done callback when job is done // TODO LINK
  *
  * @example
  *
@@ -186,14 +189,19 @@ IRC.prototype.config = {
  */
 IRC.prototype.join = function (job, credentials, done) {
   this.debug('join() called for ' + job.actor['@id']);
+  if (this.__channels.has(job.target.displayName)) {
+    this.debug(`channel ${job.target.displayName} already joined`)
+    return done();
+  }
   this.__getClient(job.actor['@id'], credentials, (err, client) => {
     if (err) { return done(err); }
-    // this.debug('got client for ' + job.actor['@id']);
     // join channel
-    this.debug('join: -> ' + job.target.displayName); //, client.connection);
+    this.__jobQueue.push(() => {
+      this.__hasJoined(job.target.displayName);
+      done();
+    });
+    this.debug('sending join ' + job.target.displayName);
     client.raw(['JOIN', job.target.displayName]);
-    this.__hasJoined(job.target.displayName);
-    done();
   });
 };
 
@@ -205,7 +213,7 @@ IRC.prototype.join = function (job, credentials, done) {
  *
  * @param {object} job activiy streams object // TODO LINK
  * @param {object} credentials credentials object // TODO LINK
- * @param {object} callback callback when job is done // TODO LINK
+ * @param {object} done callback when job is done // TODO LINK
  *
  * @example
  * {
@@ -226,13 +234,12 @@ IRC.prototype.join = function (job, credentials, done) {
  *
  */
 IRC.prototype.leave = function (job, credentials, done) {
-  this.debug('leave() called');
+  this.debug('leave() called for ' + job.actor.displayName);
   this.__getClient(job.actor['@id'], credentials, (err, client) => {
     if (err) { return done(err); }
     // leave channel
-    this.debug('leave: ' + job.actor.displayName + ' -< ' + job.target.displayName);
-    client.raw(['PART', job.target.displayName]);
     this.__hasLeft(job.target.displayName);
+    client.raw(['PART', job.target.displayName]);
     done();
   });
 };
@@ -244,7 +251,7 @@ IRC.prototype.leave = function (job, credentials, done) {
  *
  * @param {object} job activiy streams object // TODO LINK
  * @param {object} credentials credentials object // TODO LINK
- * @param {object} callback callback when job is done // TODO LINK
+ * @param {object} done callback when job is done // TODO LINK
  *
  * @example
  *
@@ -273,9 +280,7 @@ IRC.prototype.send = function (job, credentials, done) {
   this.debug('send() called for ' + job.actor['@id'] + ' target: ' + job.target['@id']);
   this.__getClient(job.actor['@id'], credentials, (err, client) => {
     if (err) { return done(err); }
-    err = undefined;
 
-    this.debug('send(): got client object');
     if (typeof job.object.content !== 'string') {
       return done('cannot send message with no object.content');
     }
@@ -314,8 +319,8 @@ IRC.prototype.send = function (job, credentials, done) {
     } else {
       return done("cannot send message to a channel of which you've not first joined.")
     }
-    client.raw('PING ' + this.nick);
-    return done();
+    this.__jobQueue.push(done);
+    client.raw('PING ' + job.actor.displayName);
   });
 };
 
@@ -326,7 +331,7 @@ IRC.prototype.send = function (job, credentials, done) {
  *
  * @param {object} job activiy streams object // TODO LINK
  * @param {object} credentials redentials object // TODO LINK
- * @param {object} callback callback when job is done // TODO LINK
+ * @param {object} done callback when job is done // TODO LINK
  *
  * @example change topic
  *
@@ -351,25 +356,21 @@ IRC.prototype.send = function (job, credentials, done) {
  * }
  *
  * @example change nickname
- * // TODO review, also when we rename a user, their person
- * //      object needs to change (and their credentials)
- *
  *  {
  *    context: 'irc'
  *    '@type': 'udpate',
  *    actor: {
  *      '@id': 'irc://slvrbckt@irc.freenode.net',
  *      '@type': 'person',
- *      displayName: 'Nick Jennings',
- *      userName: 'slvrbckt'
+ *      displayName: 'slvrbckt'
  *    },
  *    object: {
- *      '@type': "person",
- *      displayName: 'CoolDude'
+ *      '@type': "address",
  *    },
  *    target: {
- *      '@id': 'irc://irc.freenode.net',
- *      '@type': 'service' // FIXME - rewrite
+ *      '@id': 'irc://cooldude@irc.freenode.net',
+ *      '@type': 'person',
+ *      displayName: cooldude
  *    }
  *  }
  */
@@ -378,22 +379,24 @@ IRC.prototype.update = function (job, credentials, done) {
   this.__getClient(job.actor['@id'], credentials, (err, client) => {
     if (err) { return done(err); }
 
-    this.debug('update(): got client object');
-    if (job.target['@type'] === 'person') {
+    if (job.object['@type'] === 'address')  {
       this.debug('changing nick from ' + job.actor.displayName + ' to ' + job.target.displayName);
+      this.__jobQueue.push(() => {
+        this.debug('completing nick change');
+        credentials.object.nick = job.target.displayName;
+        this.updateCredentials(job.target.displayName, credentials.object.server, credentials.object, done);
+      });
       // send nick change command
       client.raw(['NICK', job.target.displayName]);
-      return this.__renameUser(job.target.displayName, job.target.displayName, done); // TODO fix rename!
     } else if (job.object['@type'] === 'topic') {
       // update topic
       this.debug('changing topic in channel ' + job.target.displayName);
+      this.__jobQueue.push(done);
       client.raw(['topic', job.target.displayName, job.object.topic]);
-      return done();
     } else {
-      return done('unknown update action');
+      return done(`unknown update action.`);
     }
   });
-
 };
 
 /**
@@ -403,7 +406,7 @@ IRC.prototype.update = function (job, credentials, done) {
  *
  * @param {object} job activiy streams object // TODO LINK
  * @param {object} credentials credentials object // TODO LINK
- * @param {object} callback callback when job is done // TODO LINK
+ * @param {object} done callback when job is done // TODO LINK
  *
  * @example
  *
@@ -455,7 +458,6 @@ IRC.prototype.observe = function (job, credentials, done) {
   this.__getClient(job.actor['@id'], credentials, (err, client) => {
     if (err) { return done(err); }
 
-    this.debug('observe(): got client object');
     if (job.object['@type'] === 'attendance') {
       this.debug('observe() - sending NAMES for ' + job.target.displayName);
       client.raw(['NAMES', job.target.displayName]);
@@ -480,42 +482,40 @@ IRC.prototype.cleanup = function (done) {
 };
 
 
+/**
+ *
+ * Private methods
+ */
+
+
 IRC.prototype.__isJoined = function (channel) {
   if (channel.indexOf('#') === 0) {
     // valid channel name
-    if (this.__channels.indexOf(channel) >= 0) {
-      return true;
-    } else {
-      return false;
-    }
+    return this.__channels.has(channel);
   } else {
     // usernames are always OK to send to
     return true;
   }
 };
 
+
 IRC.prototype.__hasJoined = function (channel) {
+  this.debug('joined ' + channel);
   // keep track of channels joined
-  if (this.__channels.indexOf(channel) < 0) {
-    this.__channels.push(channel);
+  if (! this.__channels.has(channel)) {
+    this.__channels.add(channel);
   }
 };
+
 
 IRC.prototype.__hasLeft = function (channel) {
+  this.debug('left ' + channel);
   // keep track of channels left
-  const index = this.__channels.indexOf(channel);
-  if (index >= 0) {
-    this.__channels.splice(index, 1);
+  if (this.__channels.has(channel)) {
+    this.__channels.delete(channel);
   }
 };
 
-// TODO FIX
-IRC.prototype.__renameUser = function (nick, displayName, cb) {
-    // preserve old creds
-    const oldId = this.nick;
-    // TODO - fix rename
-    return cb();
-};
 
 IRC.prototype.__getClient = function (key, credentials, cb) {
   if (this.__client) {
@@ -526,15 +526,13 @@ IRC.prototype.__getClient = function (key, credentials, cb) {
     return cb('no client found, and no credentials specified.');
   }
 
-  this.nick = credentials.object.nick;
-  this.server = credentials.object.server;
-
   this.__connect(key, credentials, (err, client) => {
     if (err) {
       return cb(err);
     }
+    this.__handledActors.add(credentials.actor['@id']);
     this.__client = client;
-    this.__registerListeners();
+    this.__registerListeners(credentials.object.server);
     return cb(null, client);
   });
 };
@@ -548,7 +546,6 @@ IRC.prototype.__connect = function (key, credentials, cb) {
     socket = new TlsSocket(netSocket, { rejectUnauthorized: false });
   }
 
-  const debug = this.debug;
   const module_creds = {
     socket: socket,
     username: credentials.object.nick,
@@ -560,7 +557,7 @@ IRC.prototype.__connect = function (key, credentials, cb) {
     debug: console.log
   };
 
-  debug('attempting to connect to ' + module_creds.server + ':' + module_creds.port);
+  this.debug('attempting to connect to ' + module_creds.server + ':' + module_creds.port);
   const client = IrcSocket(module_creds);
 
   function __forceDisconnect(err) {
@@ -580,7 +577,7 @@ IRC.prototype.__connect = function (key, credentials, cb) {
   });
 
   client.once('close', () => {
-    this.debug('irc client \'close\' event fired.')
+    this.debug('irc client \'close\' event fired.');
     __forceDisconnect.apply(this, ['connection to server closed.']);
   });
 
@@ -596,7 +593,7 @@ IRC.prototype.__connect = function (key, credentials, cb) {
         client.end();
         return cb('force disconnect active, aborting connect.');
       }
-      debug('connected to ' + module_creds.server);
+      this.debug('connected to ' + module_creds.server);
       return cb(null, client);
     } else {
       return cb('unable to connect to server');
@@ -605,41 +602,52 @@ IRC.prototype.__connect = function (key, credentials, cb) {
 };
 
 
-IRC.prototype.__registerListeners = function () {
-  this.debug('adding listener for \'data\'');
-  this.irc2as = new IRC2AS({ server: this.server });
-  this.__client.on('data', this.irc2as.input.bind(this.irc2as));
+IRC.prototype.__completeJob = function (err) {
+  this.debug(`completing job. queue count: ${this.__jobQueue.length}`);
+  const done = this.__jobQueue.shift();
+  if (typeof done === 'function') {
+    done(err);
+  } else {
+    this.debug('WARNING: job completion event received with an empty job queue.');
+  }
+};
 
-  this.irc2as.events.on('stream', (stream) => {
-    this.sendToClient(stream);
+
+IRC.prototype.__registerListeners = function (server) {
+  this.debug('adding listener for \'data\'');
+  this.irc2as = new IRC2AS({ server: server });
+  this.__client.on('data', (data) => {
+    this.irc2as.input(data);
+  });
+
+  this.irc2as.events.on('incoming', (asObject) => {
+    this.debug('incoming irc object, handled actors: ', [...this.__handledActors.values()]);
+    if ((typeof asObject.actor === 'object') &&
+        (typeof asObject.actor.displayName === 'string') &&
+        (this.__handledActors.has(asObject.actor['@id']))) {
+      this.__completeJob();
+    } else {
+      this.debug('calling sendToClient for ' + asObject.actor['@id'], [...this.__handledActors.keys()]);
+      this.sendToClient(asObject);
+    }
   });
 
   this.irc2as.events.on('unprocessed', (string) => {
     this.debug('unprocessed irc message:> ' + string);
   });
 
+  this.irc2as.events.on('error', (asObject) => {
+    this.debug('message error response ' + asObject.object.content);
+    this.__completeJob(asObject.object.content);
+  });
+
   this.irc2as.events.on('pong', (timestamp) => {
     this.debug('received PONG at ' + timestamp);
-    this.sendToClient({
-      '@type': 'pong',
-      actor: {
-        '@type': 'service',
-        '@id': this.server
-      },
-      published: timestamp
-    });
+    this.__completeJob();
   });
 
   this.irc2as.events.on('ping', (timestamp) => {
     this.debug('sending PING at ' + timestamp);
-    this.sendToClient({
-      '@type': 'ping',
-      target: {
-        '@type': 'service',
-        '@id': this.server
-      },
-      published: timestamp
-    });
   });
 };
 
