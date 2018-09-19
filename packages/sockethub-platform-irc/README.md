@@ -11,17 +11,16 @@ A sockethub platform module implementing IRC functionality.
 
 [![Flattr this](http://api.flattr.com/button/flattr-badge-large.png)](http://flattr.com/thing/1154379/Sockethub)
 
-# About
+## About
 
 This module contains all of the implementation details of an IRC client and is
 used as a sockethub platform.
 
 Each sockethub platform uses JSON Activity Streams 2.0 which are recevied from and sent to clients, through the Sockethub service.
 
+## Object Formats
 
-# Object Formats
-
-## Connected to IRC:
+### Connected to IRC
 
 ```json
 {
@@ -39,13 +38,13 @@ Each sockethub platform uses JSON Activity Streams 2.0 which are recevied from a
   },
   "object": {
     "@type": "content",
-    "content": {  
-      "network":{  
+    "content": {
+      "network":{
          "name":"freenode",
          "hostname":"orwell.freenode.net",
          "ircd":"ircd-seven-1.1.3",
          "nicklength":16,
-         "maxtargets":{  
+         "maxtargets":{
             "NAMES":1,
             "LIST":1,
             "KICK":1,
@@ -56,11 +55,11 @@ Each sockethub platform uses JSON Activity Streams 2.0 which are recevied from a
             "MONITOR":0
          }
       },
-      "channel":{  
-         "idlength":{  
+      "channel":{
+         "idlength":{
 
          },
-         "limit":{  
+         "limit":{
             "#":120
          },
          "length":50,
@@ -69,22 +68,22 @@ Each sockethub platform uses JSON Activity Streams 2.0 which are recevied from a
          "kicklength":0,
          "topiclength":390
       },
-      "modes":{  
+      "modes":{
          "user":"DOQRSZaghilopswz",
          "channel":"CFILMPQSbcefgijklmnopqrstvz",
          "param":"bkloveqjfI",
-         "types":{  
+         "types":{
             "a":"eIbq",
             "b":"kov",
             "c":"flj",
             "d":"CFLMPQScgimnprstz"
          },
          "prefixes":"@+",
-         "prefixmodes":{  
+         "prefixmodes":{
             "o":"@",
             "v":"+"
          },
-         "maxlist":{  
+         "maxlist":{
             "bqeI":100
          }
       }
@@ -92,5 +91,7 @@ Each sockethub platform uses JSON Activity Streams 2.0 which are recevied from a
   }
 }
 ```
-# API
+
+## API
+
 API docs can be found [here](API.md)
