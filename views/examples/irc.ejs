@@ -112,8 +112,8 @@
 
       function __processIncomingMessage(msg) {
         if (msg['@type'] === 'observe') {
-          $('#messages').append($('<li>').text('[ users in ' + msg.actor.displayName + ' ]'));
-          $('#messages').append($('<li>').text('[ ' + msg.object.members.join(', ') + ' ]'));
+          $('#messages').append($('<li>').text(' users in ' + msg.actor.displayName))
+            .append($('<li>').text('  [ ' + msg.object.members.join(', ') + ' ]'));
 
         } else if ((msg['@type'] === 'pong') || (msg['@type'] === 'pong')) {
           $('#messages').append($('<li>').text(`${msg['@type']} received from ${msg.actor['@id']} at ${msg.published}`));
@@ -134,8 +134,13 @@
         } else if (msg.object['@type'] === 'notice') {
           $('#messages').append($('<li>').text('NOTICE from ' + msg.actor.displayName + ': ' + msg.object.content));
 
+        } else if (msg.object.content) {
+          const name = msg.actor.displayName  || msg.actor['@id'];
+          $('#messages').append($('<li>').text( name + ': ' + msg.object.content));
+
         } else {
-          $('#messages').append($('<li>').text(msg.actor.displayName + ': ' + msg.object.content));
+          debug('unknown message, applying default display rule ', msg);
+          $('#messages').append($('<li>').text(': ' + JSON.stringify(msg)));
         }
       }
 
