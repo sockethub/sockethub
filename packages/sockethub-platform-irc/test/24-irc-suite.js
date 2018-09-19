@@ -100,6 +100,9 @@ define(['require'], function (require) {
           },
           nick: {
             actor: env.actor,
+            object: {
+              '@type': 'address'
+            },
             target: env.newActor
           }
         }
@@ -107,8 +110,10 @@ define(['require'], function (require) {
 
       const Platform = require('./../index');
       env.platform = new Platform({
-        id: env.actor.actor,
-        debug: console.log
+        debug: console.log,
+        updateCredentials: function (one, two, three, cb) {
+          cb();
+        }
       });
 
       // schema
@@ -164,6 +169,7 @@ define(['require'], function (require) {
             test.assertTypeAnd(err, 'undefined', err);
             test.assertType(result, 'undefined');
           });
+          env.platform.__completeJob();
         }
       },
       {
@@ -180,6 +186,7 @@ define(['require'], function (require) {
             test.assertTypeAnd(err, 'undefined', err);
             test.assertType(result, 'undefined');
           });
+          env.platform.__completeJob();
         }
       },
       {
@@ -196,9 +203,7 @@ define(['require'], function (require) {
             test.assertTypeAnd(err, 'undefined', err);
             test.assertType(result, 'undefined');
           });
-          env.platform.__callbacks.forEach((done) => {
-            done();
-          });
+          env.platform.__completeJob();
         }
       },
       {
@@ -215,6 +220,7 @@ define(['require'], function (require) {
             test.assertTypeAnd(err, 'undefined', err);
             test.assertType(result, 'undefined');
           });
+          env.platform.__completeJob();
         }
       },
       {
@@ -226,7 +232,7 @@ define(['require'], function (require) {
       {
         desc: '# check internal prop _channels',
         run: function (env, test) {
-          test.assert(env.platform.__channels, ['#sockethub']);
+          test.assert(env.platform.__channels.has('#sockethub'), true);
         }
       },
 
@@ -237,6 +243,7 @@ define(['require'], function (require) {
             test.assertTypeAnd(err, 'undefined', err);
             test.assertType(result, 'undefined');
           });
+          env.platform.__completeJob();
         }
       },
       {
@@ -253,6 +260,7 @@ define(['require'], function (require) {
             test.assertTypeAnd(err, 'undefined', err);
             test.assertType(result, 'undefined');
           });
+          env.platform.__completeJob();
         }
       },
       {
@@ -274,6 +282,7 @@ define(['require'], function (require) {
               test.assert(called, 1);
             }, 1000);
           });
+          env.platform.__completeJob();
         }
       },
       {
@@ -290,6 +299,7 @@ define(['require'], function (require) {
             test.assertTypeAnd(err, 'undefined', err);
             test.assertType(result, 'undefined');
           });
+          env.platform.__completeJob();
         }
       }
 
