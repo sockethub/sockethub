@@ -1,19 +1,3 @@
-## Classes
-
-<dl>
-<dt><a href="#IRC">IRC</a></dt>
-<dd><p>IRC</p>
-</dd>
-</dl>
-
-## Functions
-
-<dl>
-<dt><a href="#leave">leave()</a></dt>
-<dd><p>Leave a room or private conversation.</p>
-</dd>
-</dl>
-
 <a name="IRC"></a>
 
 ## IRC
@@ -22,16 +6,17 @@ IRC
 **Kind**: global class  
 
 * [IRC](#IRC)
-    * [new IRC(session)](#new_IRC_new)
+    * [new IRC(cfg)](#new_IRC_new)
     * [.schema](#IRC+schema)
-    * [.join()](#IRC+join)
-    * [.send()](#IRC+send)
-    * [.update()](#IRC+update)
-    * [.observe()](#IRC+observe)
+    * [.join(job, credentials, done)](#IRC+join)
+    * [.leave(job, credentials, done)](#IRC+leave)
+    * [.send(job, credentials, done)](#IRC+send)
+    * [.update(job, credentials, done)](#IRC+update)
+    * [.observe(job, credentials, done)](#IRC+observe)
 
 <a name="new_IRC_new"></a>
 
-### new IRC(session)
+### new IRC(cfg)
 Handles all actions related to communication via. the IRC protocol.
 
 Uses the `irc-factory` node module as a base tool for interacting with IRC.
@@ -41,18 +26,12 @@ Uses the `irc-factory` node module as a base tool for interacting with IRC.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| session | <code>object</code> | [Sockethub.Session#object](Sockethub.Session#object) |
+| cfg | <code>object</code> | a unique config object for this instance // TODO LINK |
 
 <a name="IRC+schema"></a>
 
 ### irC.schema
 JSON schema defining the @types this platform accepts.
-
-Actual handling of incoming 'set' commands are handled by dispatcher,
-but the dispatcher uses this defined schema to validate credentials
-received, so that when a @context @type is called, it can fetch the
-credentials (`session.getConfig()`), knowing they will have already been
-validated against this schema.
 
 
 In the below example, sockethub will validate the incoming credentials object
@@ -91,12 +70,19 @@ Valid AS object for setting IRC credentials:
 ```
 <a name="IRC+join"></a>
 
-### irC.join()
+### irC.join(job, credentials, done)
 Function: join
 
 Join a room or private conversation.
 
 **Kind**: instance method of [<code>IRC</code>](#IRC)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | activiy streams object // TODO LINK |
+| credentials | <code>object</code> | credentials object // TODO LINK |
+| done | <code>object</code> | callback when job is done // TODO LINK |
+
 **Example**  
 ```js
 {
@@ -115,14 +101,54 @@ Join a room or private conversation.
   object: {}
 }
 ```
+<a name="IRC+leave"></a>
+
+### irC.leave(job, credentials, done)
+Function leave
+
+Leave a room or private conversation.
+
+**Kind**: instance method of [<code>IRC</code>](#IRC)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | activiy streams object // TODO LINK |
+| credentials | <code>object</code> | credentials object // TODO LINK |
+| done | <code>object</code> | callback when job is done // TODO LINK |
+
+**Example**  
+```js
+{
+  context: 'irc',
+  '@type': 'leave',
+  actor: {
+    '@id': 'irc://slvrbckt@irc.freenode.net',
+    '@type': 'person',
+    displayName: 'slvrbckt'
+  },
+  target: {
+    '@id': 'irc://irc.freenode.net/remotestorage',
+    '@type': 'room',
+    displayName: '#remotestorage'
+  },
+  object: {}
+}
+```
 <a name="IRC+send"></a>
 
-### irC.send()
+### irC.send(job, credentials, done)
 Function: send
 
 Send a message to a room or private conversation.
 
 **Kind**: instance method of [<code>IRC</code>](#IRC)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | activiy streams object // TODO LINK |
+| credentials | <code>object</code> | credentials object // TODO LINK |
+| done | <code>object</code> | callback when job is done // TODO LINK |
+
 **Example**  
 ```js
 {
@@ -147,12 +173,19 @@ Send a message to a room or private conversation.
 ```
 <a name="IRC+update"></a>
 
-### irC.update()
+### irC.update(job, credentials, done)
 Function: update
 
 Indicate a change (ie. room topic update, or nickname change).
 
 **Kind**: instance method of [<code>IRC</code>](#IRC)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | activiy streams object // TODO LINK |
+| credentials | <code>object</code> | redentials object // TODO LINK |
+| done | <code>object</code> | callback when job is done // TODO LINK |
+
 **Example**  
 ```js
 change topic
@@ -180,36 +213,39 @@ change topic
 **Example**  
 ```js
 change nickname
-// TODO review, also when we rename a user, their person
-//      object needs to change (and their credentials)
-
  {
-   '@id': 1234,
-   context: 'irc',
+   context: 'irc'
    '@type': 'udpate',
    actor: {
      '@id': 'irc://slvrbckt@irc.freenode.net',
      '@type': 'person',
-     displayName: 'Nick Jennings',
-     userName: 'slvrbckt'
+     displayName: 'slvrbckt'
    },
    object: {
-     '@type': 'displayName'
+     '@type': "address",
    },
    target: {
-     '@type': "person",
-     displayName: 'CoolDude'
+     '@id': 'irc://cooldude@irc.freenode.net',
+     '@type': 'person',
+     displayName: cooldude
    }
  }
 ```
 <a name="IRC+observe"></a>
 
-### irC.observe()
+### irC.observe(job, credentials, done)
 Function: observe
 
 Indicate an intent to observe something (ie. get a list of users in a room).
 
 **Kind**: instance method of [<code>IRC</code>](#IRC)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | activiy streams object // TODO LINK |
+| credentials | <code>object</code> | credentials object // TODO LINK |
+| done | <code>object</code> | callback when job is done // TODO LINK |
+
 **Example**  
 ```js
 {
@@ -253,28 +289,4 @@ Indicate an intent to observe something (ie. get a list of users in a room).
      ]
    }
  }
-```
-<a name="leave"></a>
-
-## leave()
-Leave a room or private conversation.
-
-**Kind**: global function  
-**Example**  
-```js
-{
-  context: 'irc',
-  '@type': 'leave',
-  actor: {
-    '@id': 'irc://slvrbckt@irc.freenode.net',
-    '@type': 'person',
-    displayName: 'slvrbckt'
-  },
-  target: {
-    '@id': 'irc://irc.freenode.net/remotestorage',
-    '@type': 'room',
-    displayName: '#remotestorage'
-  },
-  object: {}
-}
 ```

@@ -206,9 +206,8 @@ IRC.prototype.join = function (job, credentials, done) {
 };
 
 /**
- * @function leave
+ * Function leave
  *
- * @description
  * Leave a room or private conversation.
  *
  * @param {object} job activiy streams object // TODO LINK
@@ -307,14 +306,11 @@ IRC.prototype.send = function (job, credentials, done) {
     if (job.object['@type'] === 'me') {
       // message intented as command
       const message = '\001ACTION ' + job.object.content + '\001';
-      // this.debug('sending ME message to room ' + job.target.displayName + ': ' + job.actor.displayName + ' ' + message);
       client.raw('PRIVMSG ' + job.target.displayName + ' :' + message);
     } else if (job.object['@type'] === 'notice') {
       // attempt to send as raw command
-      // this.debug('sending RAW command: NOTICE ' + job.target.displayName + ' :' + job.object.content);
       client.raw('NOTICE ' + job.target.displayName + ' :' + job.object.content);
     } else if (this.__isJoined(job.target.displayName)) {
-      // this.debug('irc.say: ' + 'PRIVMSG ' + job.target.displayName + ' :' + job.object.content);
       client.raw('PRIVMSG ' + job.target.displayName + ' :' + job.object.content);
     } else {
       return done("cannot send message to a channel of which you've not first joined.")
@@ -482,10 +478,10 @@ IRC.prototype.cleanup = function (done) {
 };
 
 
-/**
- *
- * Private methods
- */
+
+//
+// Private methods
+//
 
 
 IRC.prototype.__isJoined = function (channel) {
