@@ -4,3 +4,4 @@ node_modules
 ./config.secrets.js
 ./examples/connect-config.js
 coverage
+.idea
