@@ -48,7 +48,7 @@
     "socket.io": "^2.0.4",
     "sockethub-platform-dummy": "^2.0.0",
     "sockethub-platform-feeds": "^2.0.1",
-    "sockethub-platform-irc": "^3.2.0",
+    "sockethub-platform-irc": "^3.3.0",
     "sockethub-platform-xmpp": "^2.1.0",
     "sockethub-schemas": "^2.0.0",
     "supports-color": "^5.1.0",
