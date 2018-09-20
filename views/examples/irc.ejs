@@ -135,7 +135,7 @@
           $('#messages').append($('<li>').text('NOTICE from ' + msg.actor.displayName + ': ' + msg.object.content));
 
         } else if (msg.object.content) {
-          const name = msg.actor.displayName  || msg.actor['@id'];
+          const name = (typeof msg.actor === 'object') ? msg.actor.displayName || msg.actor['@id'] : msg['@type'];
           $('#messages').append($('<li>').text( name + ': ' + msg.object.content));
 
         } else {
@@ -182,9 +182,9 @@
       }
 
       // errors
-      sc.socket.on('failure', function (msg) {
-        debug('received failure: ', msg);
-        alert(msg.error);
+      sc.socket.on('failed', function (msg) {
+        debug('failed ', msg);
+        $('#messages').append($('<li>').text(msg.error));
       });
 
       sc.socket.on('completed', function (msg) {
