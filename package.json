@@ -34,7 +34,6 @@
   "dependencies": {
     "activity-streams": "^3.1.0",
     "body-parser": "^1.18.2",
-    "dead-simple-crypt": "0.0.1",
     "debug": "^4.0.1",
     "ejs": "^2.5.7",
     "espree": "^4.0.0",
@@ -58,7 +57,7 @@
   "scripts": {
     "test": "jaribu",
     "start": "DEBUG=* ./bin/sockethub",
-    "compliance": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\" bin/sockethub && istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
+    "compliance": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\" bin/sockethub && istanbul cover --print both -i \"lib/*.js\" jaribu -- **/*-suite.js",
     "coverage": "istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
     "lint": "eslint --ignore-pattern \"coverage\" \"**/*.js\" bin/sockethub",
     "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\" bin/sockethub"
