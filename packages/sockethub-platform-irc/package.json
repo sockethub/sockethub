@@ -1,7 +1,7 @@
 {
   "name": "sockethub-platform-irc",
   "description": "A sockethub platform module implementing IRC functionality",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL",
