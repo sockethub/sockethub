@@ -11,7 +11,7 @@
   [ ] platforms
   [ ] connection manager
   [ ] sockethub.js
-[ ] reconnects need to resend credentials and activity-objects
+[x] reconnects need to resend credentials and activity-objects
 [ ] `Post` and `Share` removed in favor of the more generally applicable `Create` or `Add`
 [ ] secrets
 
@@ -53,3 +53,5 @@ Goals of this branch are:
     - shared application state
     - detecting unresponsive platform sessions efficiently
     - communicating events and errors to client clearly
+
+
