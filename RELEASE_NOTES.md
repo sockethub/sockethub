@@ -28,4 +28,11 @@ platformInstance is essentially the connection object.
 
 #### IRC
 - Job completed messages are now confirmations that the IRC message was sent, due to PONG messages being sent after 
-every PRIVMSG message.
+every PRIVMSG message. `__jobQueue`
+
+- client connecting can only happen once, so if multiple client requests come in and one request is in the process of 
+connecting, the other requests wait for it to connect with a 20s timeout. `__clientConnecting`
+
+- Implemented ability to rename nick, using `updateCredentials` along with internal tracking of valid user nicks 
+(because we can't control what name the incoming messages on the irc socket give us, so we keep a mapping). 
+`__handledActors`
