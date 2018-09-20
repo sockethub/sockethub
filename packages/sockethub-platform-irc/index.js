@@ -52,6 +52,7 @@ function IRC(cfg) {
   this.sendToClient = cfg.sendToClient;
   this.updateCredentials = cfg.updateCredentials;
   this.__forceDisconnect = false;
+  this.__clientConnecting = false;
   this.__client = undefined;
   this.__jobQueue = []; // list of handlers to confirm when message delivery confirmed
   this.__channels = new Set();
@@ -189,12 +190,12 @@ IRC.prototype.config = {
  */
 IRC.prototype.join = function (job, credentials, done) {
   this.debug('join() called for ' + job.actor['@id']);
-  if (this.__channels.has(job.target.displayName)) {
-    this.debug(`channel ${job.target.displayName} already joined`)
-    return done();
-  }
   this.__getClient(job.actor['@id'], credentials, (err, client) => {
     if (err) { return done(err); }
+    if (this.__channels.has(job.target.displayName)) {
+      this.debug(`channel ${job.target.displayName} already joined`);
+      return done();
+    }
     // join channel
     this.__jobQueue.push(() => {
       this.__hasJoined(job.target.displayName);
@@ -371,13 +372,18 @@ IRC.prototype.send = function (job, credentials, done) {
  *  }
  */
 IRC.prototype.update = function (job, credentials, done) {
-  this.debug('update() called for ' + job.actor.displayName);
+  this.debug('update() called for ' + job.actor['@id']);
   this.__getClient(job.actor['@id'], credentials, (err, client) => {
     if (err) { return done(err); }
 
     if (job.object['@type'] === 'address')  {
       this.debug('changing nick from ' + job.actor.displayName + ' to ' + job.target.displayName);
-      this.__jobQueue.push(() => {
+      this.__handledActors.add(job.target['@id']);
+      this.__jobQueue.push((err) => {
+        if (err) {
+          this.__handledActors.delete(job.target['@id']);
+          return done(err);
+        }
         this.debug('completing nick change');
         credentials.object.nick = job.target.displayName;
         this.updateCredentials(job.target.displayName, credentials.object.server, credentials.object, done);
@@ -514,8 +520,22 @@ IRC.prototype.__hasLeft = function (channel) {
 
 
 IRC.prototype.__getClient = function (key, credentials, cb) {
+  this.debug('getClient called, connecting: ' + this.__clientConnecting);
   if (this.__client) {
+    this.__handledActors.add(key);
     return cb(null, this.__client);
+  } else if (this.__clientConnecting) {
+    // client is in the process of connecting, wait
+    setTimeout(function (_cb) {
+      if (this.__client) {
+        this.debug(`resolving delayed getClient call for ${key}`);
+        this.__handledActors.add(key);
+        return _cb(null, this.__client);
+      } else {
+        return cb('failed to get irc client, please try again.');
+      }
+    }.bind(this, cb), 30000);
+    return;
   }
 
   if (! credentials) {
@@ -526,7 +546,7 @@ IRC.prototype.__getClient = function (key, credentials, cb) {
     if (err) {
       return cb(err);
     }
-    this.__handledActors.add(credentials.actor['@id']);
+    this.__handledActors.add(key);
     this.__client = client;
     this.__registerListeners(credentials.object.server);
     return cb(null, client);
@@ -535,6 +555,7 @@ IRC.prototype.__getClient = function (key, credentials, cb) {
 
 
 IRC.prototype.__connect = function (key, credentials, cb) {
+  this.__clientConnecting = true;
   const netSocket = new NetSocket();
   const is_secure = false; // (typeof credentials.object.secure === 'boolean') ? credentials.object.secure : true;
   let socket = netSocket;
@@ -552,12 +573,13 @@ IRC.prototype.__connect = function (key, credentials, cb) {
     // port: (credentials.object.port) ? parseInt(credentials.object.port, 10) : (is_secure) ? 6697 : 6667,
     debug: console.log
   };
-
   this.debug('attempting to connect to ' + module_creds.server + ':' + module_creds.port);
+
   const client = IrcSocket(module_creds);
 
-  function __forceDisconnect(err) {
+  const __forceDisconnect = (err) => {
     this.__forceDisconnect = true;
+    this.__clientConnecting = false;
     if ((client) && (typeof client.end === 'function')) {
       client.end();
     }
@@ -565,25 +587,26 @@ IRC.prototype.__connect = function (key, credentials, cb) {
       this.__client.end();
     }
     throw new Error(err);
-  }
+  };
 
   client.once('error', (err) => {
     this.debug('irc client \'error\' occurred.' + err);
-    __forceDisconnect.apply(this, ['error with connection to server.']);
+    __forceDisconnect('error with connection to server.');
   });
 
   client.once('close', () => {
     this.debug('irc client \'close\' event fired.');
-    __forceDisconnect.apply(this, ['connection to server closed.']);
+    __forceDisconnect('connection to server closed.');
   });
 
   client.once('timeout', () => {
     this.debug('timeout occurred, force-disconnect');
-    __forceDisconnect.apply(this, ['connection timeout to server.']);
+    __forceDisconnect('connection timeout to server.');
     return cb('timeout during connect');
   });
 
   client.connect().then((res) => {
+    this.__clientConnecting = false;
     if (res.isOk()) {
       if (this.__forceDisconnect) {
         client.end();
@@ -599,7 +622,7 @@ IRC.prototype.__connect = function (key, credentials, cb) {
 
 
 IRC.prototype.__completeJob = function (err) {
-  this.debug(`completing job. queue count: ${this.__jobQueue.length}`);
+  this.debug(`completing job, queue count: ${this.__jobQueue.length}`);
   const done = this.__jobQueue.shift();
   if (typeof done === 'function') {
     done(err);
@@ -617,7 +640,6 @@ IRC.prototype.__registerListeners = function (server) {
   });
 
   this.irc2as.events.on('incoming', (asObject) => {
-    this.debug('incoming irc object, handled actors: ', [...this.__handledActors.values()]);
     if ((typeof asObject.actor === 'object') &&
         (typeof asObject.actor.displayName === 'string') &&
         (this.__handledActors.has(asObject.actor['@id']))) {
@@ -638,12 +660,12 @@ IRC.prototype.__registerListeners = function (server) {
   });
 
   this.irc2as.events.on('pong', (timestamp) => {
-    this.debug('received PONG at ' + timestamp);
+    // this.debug('received PONG at ' + timestamp);
     this.__completeJob();
   });
 
   this.irc2as.events.on('ping', (timestamp) => {
-    this.debug('sending PING at ' + timestamp);
+    // this.debug('sending PING at ' + timestamp);
   });
 };
 
