@@ -3,18 +3,24 @@
 ## 3.0.0
 
 ### Client
+- New simplified sockethub client which handles packing and unpacking verbose and simplified versions of an AS2 message.
+
 - Renamed `failure` event to `failed`
 
 ### Core
 - Added broadcast of sent-messages from one client to other clients using the same platform instance. This enables two 
 separate instances of the same user to get the words they typed from one window in the other as well.
 
+- Resource Manager runs in background, checking for stale sockets or platform instances and performing cleanup 
+operations.
+
+- Activity Stream objects have been further solidified with increased validation and parsing
+
 ### Worker
 - A worker is created for each physical client websocket connection to sockethub, and can access a shared pool of 
 platformInstances (only after account authentication from the user).
 
 - Many improvements to error handling, cleanup and re-initialization during unexpected failures.
-
 
 ### Platforms
 - A platform instance a single instance of a socket connection to the target (eq. `irc`, `xmpp`), and can be accessed
