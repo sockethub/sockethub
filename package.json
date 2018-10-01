@@ -44,7 +44,7 @@
     "nconf": "^0.10.0",
     "object-hash": "^1.2.0",
     "rand-token": "^0.4.0",
-    "secure-store-redis": "^1.4.1",
+    "secure-store-redis": "^1.4.3",
     "socket.io": "^2.0.4",
     "sockethub-platform-dummy": "^2.0.0",
     "sockethub-platform-feeds": "^2.0.1",
@@ -67,7 +67,7 @@
     "node": ">= 5.0.0"
   },
   "devDependencies": {
-    "eslint": "^5.5.0",
+    "eslint": "^5.6.1",
     "eslint-cli": "^1.1.1",
     "jaribu": "^2.2.1"
   }
