@@ -53,21 +53,22 @@
     <script src="<%= address %>sockethub/socket.io.js"></script>
     <script src="<%= address %>activity-streams.js"></script>
     <script src="<%= address %>sockethub-client.js"></script>
+    <script src="<%= address %>examples/shared.js"></script>
     <script>
       debug = function (msg, obj) { console.log(msg, obj); };
-      var ircServer = 'irc.freenode.net';
+      const ircServer = 'irc.freenode.net';
       localStorage.debug = 'sockethub:*';
-      var sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
-      var channel = 'sockethub-test';
-      var nick = 'sh-<%= randToken %>';
+      const sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
+      const channel = 'sockethub-test';
+      let nick = 'sh-<%= randToken %>';
 
       $('#j').val('#' + channel);
 
       function __normalizeMessage(msg) {
 
         function __normalizeTargetFromContent(string) {
-          var postCMD = msg.object.content.substr(string.length + 1) + ' ';
-          var target = postCMD.substr(0, postCMD.indexOf(' '));
+          const postCMD = msg.object.content.substr(string.length + 1) + ' ';
+          const target = postCMD.substr(0, postCMD.indexOf(' '));
           if (target.indexOf('#') === 0) {
             msg.target = 'irc://' + ircServer + '/' + target;
             sc.ActivityStreams.Object.create({
@@ -110,39 +111,7 @@
         return msg;
       }
 
-      function __processIncomingMessage(msg) {
-        if (msg['@type'] === 'observe') {
-          $('#messages').append($('<li>').text(' users in ' + msg.actor.displayName))
-            .append($('<li>').text('  [ ' + msg.object.members.join(', ') + ' ]'));
 
-        } else if ((msg['@type'] === 'pong') || (msg['@type'] === 'pong')) {
-          $('#messages').append($('<li>').text(`${msg['@type']} received from ${msg.actor['@id']} at ${msg.published}`));
-
-        } else if ((msg['@type'] === 'update') &&
-                   (msg.object['@type'] === 'address')) {
-          $('#messages').append($('<li>').text(msg.actor.displayName + ' is now known as ' + msg.target.displayName));
-
-        } else if (msg['@type'] === 'join') {
-          $('#messages').append($('<li>').text(msg.actor.displayName + ' has joined ' + msg.target.displayName));
-
-        } else if ((msg['@type'] === 'announce') && (msg.actor['@type'] === 'service')) {
-          $('#messages').append($('<li>').text('connected to ' + msg.actor['@id']));
-
-        } else if (msg.object['@type'] === 'me') {
-          $('#messages').append($('<li>').text('* ' + msg.actor.displayName + ' ' + msg.object.content));
-
-        } else if (msg.object['@type'] === 'notice') {
-          $('#messages').append($('<li>').text('NOTICE from ' + msg.actor.displayName + ': ' + msg.object.content));
-
-        } else if (msg.object.content) {
-          const name = (typeof msg.actor === 'object') ? msg.actor.displayName || msg.actor['@id'] : msg['@type'];
-          $('#messages').append($('<li>').text( name + ': ' + msg.object.content));
-
-        } else {
-          debug('unknown message, applying default display rule ', msg);
-          $('#messages').append($('<li>').text(': ' + JSON.stringify(msg)));
-        }
-      }
 
       // creates an ActivityStreams object for our actor (us)
       function __updateActor(_nick) {
@@ -166,7 +135,7 @@
 
       function __updateCredentials() {
         // sending irc credentials to sockethub server
-        var credentials = {
+        const credentials = {
           actor: 'irc://' + nick + '@' + ircServer,
           context: 'irc',
           object: {
@@ -194,13 +163,13 @@
         msg = __normalizeMessage(msg);
         if ((typeof msg.object === 'object') &&
             (typeof msg.object.content === 'string')) {
-          __processIncomingMessage(msg);
+          shared.processIncomingMessage(msg);
         } else if ((msg['@type'] === 'update') &&
                    (msg.object['@type'] === 'address') &&
                    (msg.actor.displayName === nick)) {
           // our nick has been updated
           __updateActor(msg.target.displayName);
-          __processIncomingMessage(msg);
+          shared.processIncomingMessage(msg);
         } else if (msg['@type'] === 'join') {
           $('.modal').css('display', 'none');
           $('input#m').prop('disabled', false);
@@ -214,12 +183,12 @@
       sc.socket.on('message', (msg) => {
         msg = sc.ActivityStreams.Stream(msg);
         debug('processing message: ', msg);
-        __processIncomingMessage(msg);
+        shared.processIncomingMessage(msg);
       });
 
       // handler for user input, emit messages to sockethub server
       $('#chat').submit(function () {
-        var msg = {
+        let msg = {
           '@type': 'send',
           context: 'irc',
           actor: 'irc://' + nick + '@' + ircServer,
@@ -250,7 +219,7 @@
         __updateActor(nick);
         debug('socket id: ', sc.socket.id);
 
-        var msg = {
+        const msg = {
           '@type': 'join',
           context: 'irc',
           actor: 'irc://' + nick + '@' + ircServer,

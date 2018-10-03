@@ -73,6 +73,16 @@ if (nconf.get('examples:enabled')) {
   {
     meta: {
       method: 'GET',
+      path: '/examples/shared.js'
+    },
+    route: (req, res) => {
+      res.sendFile(path.resolve(__dirname + '/../views/examples/shared.js'));
+    }
+  },
+
+  {
+    meta: {
+      method: 'GET',
       path: '/jquery.min.map'
     },
     route: (req, res) => {
