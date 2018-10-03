@@ -6,7 +6,7 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-const Sockethub = require('./../lib/sockethub.js');
+const Sockethub = require('./../lib/sockethub');
 
 // var debugScope = process.env.DEBUG || nconf.get('debug');
 // var genConfig  = nconf.get('gen-config');    // TODO

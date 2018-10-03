@@ -1,9 +1,9 @@
 if (typeof define !== 'function') {
   let define = require('amdefine')(module);
 }
-define(['require', './../lib/validate', 'activity-streams'], function (require, Validate, Activity) {
+define(['require', './../lib/validate', 'activity-streams'], function (require, validate, AS) {
 
-  let activity = new Activity();
+  let activity = new AS();
   let errMsg = '';
   let suites = [];
 
@@ -248,7 +248,7 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
     let test = {
       desc: '# [' + string + '] ' + name,
       run: function (env, test) {
-        env.validate(type)(input, function (state, msg) {
+        env.validate(type)(function (state, msg) {
           //console.log('input: ', input);
           //console.log('msg: ', msg);
           //console.log('expected output: ', output);
@@ -267,7 +267,7 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
             activity.Object.create(msg);
           }
           test.done();
-        });
+        }, input);
       }
     };
     return test;
@@ -279,13 +279,8 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
       timeout: 1000,
       abortOnFail: true,
       setup: function (env, test) {
-        test.assertTypeAnd(Validate, 'function');
-        env.validate = Validate({
-          onfail: function (_err, _type, _msg) {
-            // erroMsg = _type + ' : ' + _err;
-            // test.write(_type + ' : ' + _err, _msg);
-          }
-        });
+        test.assertTypeAnd(validate, 'function');
+        env.validate = validate;
         test.assertType(env.validate, 'function');
       }
     };

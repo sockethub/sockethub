@@ -4,7 +4,7 @@ if (typeof define !== 'function') {
 define(['require'], function (require) {
   return [
     {
-      desc: 'test init process',
+      desc: 'lib/bootstrap/init',
       abortOnFail: true,
       setup: function (env, test) {
         env.init = require('./../lib/bootstrap/init');
@@ -24,8 +24,7 @@ define(['require'], function (require) {
           desc: 'platforms',
           run: function (env, test) {
             test.assertTypeAnd(env.init.platforms, 'object');
-            test.assertTypeAnd(env.init.platforms.exists, 'function');
-            test.assert(env.init.platforms.exists('irc'), true);
+            test.assert(env.init.platforms.has('irc'), true);
           }
         }
       ]

@@ -31,7 +31,9 @@ routes.push({
   },
   route: (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.sendFile(path.resolve(__dirname + '/../node_modules/activity-streams/browser/activity-streams.js'));
+    res.sendFile(
+      path.resolve(__dirname
+      + '/../node_modules/activity-streams/browser/activity-streams.js'));
   }
 },
 
@@ -41,7 +43,9 @@ routes.push({
     path: '/activity-streams.min.js'
   },
   route: (req, res) => {
-    res.sendFile(path.resolve(__dirname + '/../node_modules/activity-streams/browser/activity-streams.min.js'));
+    res.sendFile(
+      path.resolve(__dirname
+      + '/../node_modules/activity-streams/browser/activity-streams.min.js'));
   }
 });
 
@@ -63,6 +67,16 @@ if (nconf.get('examples:enabled')) {
     },
     route: (req, res) => {
       res.sendFile(path.resolve(__dirname + '/../node_modules/jquery/dist/jquery.min.js'));
+    }
+  },
+
+  {
+    meta: {
+      method: 'GET',
+      path: '/examples/shared.js'
+    },
+    route: (req, res) => {
+      res.sendFile(path.resolve(__dirname + '/../views/examples/shared.js'));
     }
   },
 
