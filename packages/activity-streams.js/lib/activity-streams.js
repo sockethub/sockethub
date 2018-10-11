@@ -63,28 +63,33 @@ let objs = new Map(),
 
 
 function validateObject(type, obj) {
-  if (typeof obj !== 'object') { throw new Error('no object provided'); }
-  for (let key of Object.keys(obj)) {
-    if (baseProps[type].indexOf(key) >= 0) { continue; }
+  const keys = Object.keys(obj).filter((key) => {
+    if (! baseProps[type].includes(key)) {
+      return key;
+    }
+  });
+
+  for (let key of keys) {
     if (rename[key]) {
       // rename property instead of fail
       obj[rename[key]] = obj[key];
       delete obj[key];
-    } else {
-      if ((obj['@type']) && (typeof customProps[obj['@type']] === 'object')) {
-        if (customProps[obj['@type']].indexOf(key) >= 0) {
-          // custom property matches, continue
-          continue;
-        }
-      }
+      continue;
+    }
 
-      if (specialObjs.indexOf(obj['@type']) < 0) {
-        const err = `invalid property: "${key}"`;
-        if (failOnUnknownObjectProperties) {
-          throw new Error(err);
-        } else {
-          console.warn(err);
-        }
+    if ((obj['@type']) &&
+        (typeof customProps[obj['@type']] === 'object') &&
+        (customProps[obj['@type']].includes(key))) {
+        // custom property matches, continue
+      continue;
+    }
+
+    if (! specialObjs.includes(obj['@type'])) {
+      const err = `invalid property: "${key}"`;
+      if (failOnUnknownObjectProperties) {
+        throw new Error(err);
+      } else {
+        console.warn(err);
       }
     }
   }
@@ -97,15 +102,8 @@ function ensureProps(obj) {
   return obj;
 }
 
-
-function Stream(meta) {
+function expandStream(meta) {
   let stream = {};
-
-  validateObject('stream', meta);
-  if (typeof meta.object === 'object') {
-    validateObject('object', meta.object);
-  }
-
   for (let key of Object.keys(meta)) {
     if (typeof meta[key] === 'string') {
       stream[key] = objs.get(meta[key]) || meta[key];
@@ -130,7 +128,15 @@ function Stream(meta) {
       stream[key] = obj;
     }
   }
+  return stream;
+}
 
+function Stream(meta) {
+  validateObject('stream', meta);
+  if (typeof meta.object === 'object') {
+    validateObject('object', meta.object);
+  }
+  const stream = expandStream(meta)
   ee.emit('activity-stream', stream);
   return stream;
 };
