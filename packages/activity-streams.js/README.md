@@ -14,7 +14,7 @@ Designed to run in both `node.js` and the `browser`.
 
 ## ALPHA
 
-**Warning** this library is `pre-alpha` quality and considered extremely experimental, subject to change at any time.
+**Warning** this library should be considered `alpha` quality and considered extremely experimental, subject to change at any time.
 
 I am learning about JSON-LD and ActivityStreams2 as I write this library, so suggestions for improvement are very welcome.
 
@@ -28,7 +28,7 @@ I am learning about JSON-LD and ActivityStreams2 as I write this library, so sug
 ```javascript
 var ActivityStreams = require('activity-streams')({
   failOnUnkownObjectProperties: false //default
-  });
+});
 ```
 
 #### Browser
@@ -42,77 +42,78 @@ Once included in a web-page, the `ActivityStreams` base object should be on the 
 
 ```javascript
 
-var AS = new ActivityStreams();
+const AS = new ActivityStreams();
 
 AS.Object.create({
-    '@id': 'irc://exampleUser@irc.freenode.net',
-    '@type': "person",
-    displayName: 'Example User',
-    url: "http://activitystrea.ms",
-    image: {
-      url: "http://activitystrea.ms/avatar.jpg",
-      mediaType: "image/jpeg",
-      width: 250,
-      height: 250
-    }
-  });
+  '@id': 'irc://exampleUser@irc.freenode.net',
+  '@type': "person",
+  displayName: 'Example User',
+  url: "http://activitystrea.ms",
+  image: {
+    url: "http://activitystrea.ms/avatar.jpg",
+    mediaType: "image/jpeg",
+    width: 250,
+    height: 250
+  }
+});
 
 AS.on('activity-object-create', function (obj) {
   console.log('this object was just created: ', obj);
-  });
+});
 
 AS.Object.create({
-    '@id': 'irc://irc.freenode.net/activitystreams',
-    '@type': "chatroom",
-    displayName: '#activitystreams'
-  });
+  '@id': 'irc://irc.freenode.net/activitystreams',
+  '@type': "chatroom",
+  displayName: '#activitystreams'
+});
 
-var exampleUser = AS.Object.get('irc://exampleUser@irc.freenode.net');
-// ... returns:
-//  {
-//    '@id': 'irc://exampleUser@irc.freenode.net',
-//    '@type': "person",
-//    displayName: 'Example User',
-//    url: "http://activitystrea.ms",
-//    image: {
-//      url: "http://activitystrea.ms/avatar.jpg",
-//      mediaType: "image/jpeg",
-//      width: 250,
-//      height: 250
-//    }
-//  }
+const exampleUser = AS.Object.get('irc://exampleUser@irc.freenode.net');
+    // ... returns:
+    //  {
+    //    '@id': 'irc://exampleUser@irc.freenode.net',
+    //    '@type': "person",
+    //    displayName: 'Example User',
+    //    url: "http://activitystrea.ms",
+    //    image: {
+    //      url: "http://activitystrea.ms/avatar.jpg",
+    //      mediaType: "image/jpeg",
+    //      width: 250,
+    //      height: 250
+    //    }
+    //  }
 
 AS.Stream({
-    '@context': 'send',
-    actor: 'irc://exampleUser@irc.freenode.net',
-    object: {
-      '@type': "message",
-      content: "hello world!"
-    },
-    target: 'irc://irc.freenode.net/activitystreams'
-  });
-// ... returns:
-//  {
-//    '@context': 'send',
-//    actor: {
-//      '@id': 'irc://exampleUser@irc.freenode.net',
-//      '@type': "person",
-//      displayName: 'Example User',
-//      url: "http://activitystrea.ms",
-//      image: {
-//        url: "http://activitystrea.ms/avatar.jpg",
-//        mediaType: "image/jpeg",
-//        width: 250,
-//        height: 250
-//      }
-//    },
-//    object: {
-//      '@type': "message",
-//      content: "hello world!"
-//    },
-//    target: {
-//      '@id': 'irc://irc.freenode.net/activitystreams',
-//      '@type': "chatroom",
-//      displayName: '#activitystreams'
-//    }
-//  }
+  '@context': 'send',
+  actor: 'irc://exampleUser@irc.freenode.net',
+  object: {
+    '@type': "message",
+    content: "hello world!"
+  },
+  target: 'irc://irc.freenode.net/activitystreams'
+});
+    // ... returns:
+    //  {
+    //    '@context': 'send',
+    //    actor: {
+    //      '@id': 'irc://exampleUser@irc.freenode.net',
+    //      '@type': "person",
+    //      displayName: 'Example User',
+    //      url: "http://activitystrea.ms",
+    //      image: {
+    //        url: "http://activitystrea.ms/avatar.jpg",
+    //        mediaType: "image/jpeg",
+    //        width: 250,
+    //        height: 250
+    //      }
+    //    },
+    //    object: {
+    //      '@type': "message",
+    //      content: "hello world!"
+    //    },
+    //    target: {
+    //      '@id': 'irc://irc.freenode.net/activitystreams',
+    //      '@type': "chatroom",
+    //      displayName: '#activitystreams'
+    //    }
+    //  }
+```

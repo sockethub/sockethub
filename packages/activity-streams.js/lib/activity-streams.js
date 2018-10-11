@@ -62,29 +62,41 @@ let objs = new Map(),
     customProps  = {};
 
 
-function validateObject(type, obj) {
-  const keys = Object.keys(obj).filter((key) => {
+function matchesCustomProp(type, key) {
+  if ((typeof customProps[type] === 'object') && (customProps[type].includes(key))) {
+      return true;
+  }
+  return false;
+}
+
+function renameProp(obj, key) {
+  obj[rename[key]] = obj[key];
+  delete obj[key];
+  return obj;
+}
+
+function validateObject(type, obj = {}) {
+  const unknownKeys = Object.keys(obj).filter((key) => {
     if (! baseProps[type].includes(key)) {
       return key;
     }
   });
 
-  for (let key of keys) {
+  for (let key of unknownKeys) {
     if (rename[key]) {
       // rename property instead of fail
-      obj[rename[key]] = obj[key];
-      delete obj[key];
+      obj = renameProp(obj, key)
       continue;
     }
 
-    if ((obj['@type']) &&
-        (typeof customProps[obj['@type']] === 'object') &&
-        (customProps[obj['@type']].includes(key))) {
-        // custom property matches, continue
+    if (matchesCustomProp(obj['@type'], key)) {
+      // custom property matches, continue
       continue;
     }
 
     if (! specialObjs.includes(obj['@type'])) {
+      // not defined as a special prop
+      // don't know what to do with it, so throw error
       const err = `invalid property: "${key}"`;
       if (failOnUnknownObjectProperties) {
         throw new Error(err);
@@ -148,7 +160,7 @@ const _Object = {
     obj = ensureProps(obj);
     objs.set(obj['@id'], obj);
     ee.emit('activity-object-create', obj);
-    return true;
+    return obj;
   },
 
   delete: function (id) {
@@ -159,14 +171,10 @@ const _Object = {
     return result;
   },
 
-  get: function (id, doExpand) {
+  get: function (id) {
     let obj = objs.get(id);
     if (! obj) {
-      if (doExpand) {
-        obj = { '@id': id };
-      } else {
-        return obj;
-      }
+      return obj;
     }
     return ensureProps(obj);
   },
@@ -181,16 +189,12 @@ const _Object = {
 };
 
 
-function ActivityFactory(opts) {
-  if (typeof opts === 'object') {
-    specialObjs = opts.specialObjs || [];
-    failOnUnknownObjectProperties = opts.failOnUnknownObjectProperties || false;
-    if (typeof opts.customProps === 'object') {
-      for (let propName of Object.keys(opts.customProps)) {
-        if (typeof opts.customProps[propName] === 'object') {
-          customProps[propName] = opts.customProps[propName];
-        }
-      }
+function ActivityFactory(opts = {}) {
+  specialObjs = opts.specialObjs || [];
+  failOnUnknownObjectProperties = opts.failOnUnknownObjectProperties || false;
+  for (let propName of Object.keys(opts.customProps || {})) {
+    if (typeof opts.customProps[propName] === 'object') {
+      customProps[propName] = opts.customProps[propName];
     }
   }
 
