@@ -8,21 +8,15 @@
 [![Downloads](http://img.shields.io/npm/dm/activity-streams.svg?style=flat)](https://npmjs.org/package/activity-streams)
 [![Release](http://img.shields.io/github/release/silverbucket/activity-streams.js.svg?style=flat)](https://github.com/silverbucket/activity-streams.js/releases)
 
-
 A simple tool to facilitate handling and referencing activity streams and it's objects, cutting down on verbosity.
 
 Designed to run in both `node.js` and the `browser`.
 
-## ALPHA
-
-**Warning** this library should be considered `alpha` quality and considered extremely experimental, subject to change at any time.
-
 I am learning about JSON-LD and ActivityStreams2 as I write this library, so suggestions for improvement are very welcome.
-
 
 ## Install
 
-#### Node.js
+### Node.js
 
 `npm install activity-streams`
 
@@ -32,7 +26,7 @@ var ActivityStreams = require('activity-streams')({
 });
 ```
 
-#### Browser
+### Browser
 
 `<script src="http://example.com/activity-streams.js"></script>`
 
