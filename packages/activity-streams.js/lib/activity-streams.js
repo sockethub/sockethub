@@ -65,26 +65,29 @@ let objs = new Map(),
 function validateObject(type, obj) {
   if (typeof obj !== 'object') { throw new Error('no object provided'); }
   for (let key of Object.keys(obj)) {
-    if (baseProps[type].indexOf(key) < 0) {
-      if (rename[key]) {
-        // rename property instead of fail
-        obj[rename[key]] = obj[key];
-        delete obj[key];
-      } else {
-        if ((obj['@type']) && (typeof customProps[obj['@type']] === 'object')) {
-          if (customProps[obj['@type']].indexOf(key) >= 0) {
-            // custom property matches, continue
-            continue;
-          }
+    if (baseProps[type].indexOf(key) >= 0) { continue; }
+    if (rename[key]) {
+      // rename property instead of fail
+      obj[rename[key]] = obj[key];
+      delete obj[key];
+    } else {
+      if ((obj['@type']) && (typeof customProps[obj['@type']] === 'object')) {
+        if (customProps[obj['@type']].indexOf(key) >= 0) {
+          // custom property matches, continue
+          continue;
         }
+      }
 
-        if (specialObjs.indexOf(obj['@type']) < 0) {
-          return 'invalid property: "' + key + '"';
+      if (specialObjs.indexOf(obj['@type']) < 0) {
+        const err = `invalid property: "${key}"`;
+        if (failOnUnknownObjectProperties) {
+          throw new Error(err);
+        } else {
+          console.warn(err);
         }
       }
     }
   }
-  return false;
 }
 
 
@@ -96,20 +99,11 @@ function ensureProps(obj) {
 
 
 function Stream(meta) {
-  let stream = {},
-      err    = validateObject('stream', meta);
+  let stream = {};
 
-  if (err) {
-    throw new Error(err);
-  }
-
+  validateObject('stream', meta);
   if (typeof meta.object === 'object') {
-    err = validateObject('object', meta.object);
-    if ((err) && (failOnUnknownObjectProperties)) {
-      throw new Error(err);
-    } else if (err) {
-      console.warn(err);
-    }
+    validateObject('object', meta.object);
   }
 
   for (let key of Object.keys(meta)) {
@@ -117,7 +111,6 @@ function Stream(meta) {
       stream[key] = objs.get(meta[key]) || meta[key];
     } else if (Array.isArray(meta[key])) {
       stream[key] = [];
-
       for (let entry of meta[key]) {
         if (typeof entry === 'string') {
           stream[key].push(objs.get(entry) || entry);
@@ -145,14 +138,7 @@ function Stream(meta) {
 
 const _Object = {
   create: function (obj) {
-    const err = validateObject('object', obj);
-
-    if ((err) && (failOnUnknownObjectProperties)) {
-      throw new Error(err);
-    } else if (err) {
-      console.warn(err);
-    }
-
+    validateObject('object', obj);
     obj = ensureProps(obj);
     objs.set(obj['@id'], obj);
     ee.emit('activity-object-create', obj);
@@ -160,7 +146,7 @@ const _Object = {
   },
 
   delete: function (id) {
-    let result = objs.delete(id);
+    const result = objs.delete(id);
     if (result) {
       ee.emit('activity-object-delete', id);
     }
