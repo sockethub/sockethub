@@ -171,10 +171,13 @@ const _Object = {
     return result;
   },
 
-  get: function (id) {
+  get: function (id, expand) {
     let obj = objs.get(id);
     if (! obj) {
+      if (! expand) {
       return obj;
+      }
+      obj = {'@id': id};
     }
     return ensureProps(obj);
   },
