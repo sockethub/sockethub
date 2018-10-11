@@ -1,28 +1,24 @@
 {
   "name": "activity-streams",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "A simple tool to facilitate handling and referencing activity streams without unecessary verbosity.",
   "main": "./lib/activity-streams.js",
   "dependencies": {
-    "array-keys": "^2.3.0",
     "event-emitter": "^0.3.4"
   },
   "devDependencies": {
-    "browserify": "^16.2.2",
-    "gulp": "^3.9.1",
-    "gulp-rename": "^1.4.0",
-    "gulp-streamify": "^1.0.2",
-    "gulp-uglify": "^3.0.1",
-    "gulp-util": "^3.0.8",
-    "jaribu": "^2.2.1",
-    "vinyl-source-stream": "^2.0.0"
+    "webpack": "^4.20.2",
+    "webpack-cli": "^3.1.2",
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/silverbucket/activity-streams.js.git"
   },
   "scripts": {
-    "test": "node_modules/.bin/jaribu"
+    "test": "node_modules/.bin/mocha test/**/*.js",
+    "build": "node_modules/.bin/webpack --mode production"
   },
   "keywords": [
     "activity",
