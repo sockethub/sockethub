@@ -1,5 +1,5 @@
-if (typeof ActivityFactory !== 'function') {
-  ActivityFactory = require('./../lib/activity-streams');
+if (typeof ASFactory !== 'function') {
+  ASFactory = require('./../lib/activity-streams');
 }
 if (typeof chai !== 'object') {
   chai = require('chai')
@@ -18,8 +18,8 @@ describe('basic tests', () => {
   let activity;
 
   before('initialize activity module', () => {
-    assert.typeOf(ActivityFactory, 'function');
-    activity = ActivityFactory(config);
+    assert.typeOf(ASFactory, 'function');
+    activity = ASFactory(config);
   });
 
   describe('object tests', () => {

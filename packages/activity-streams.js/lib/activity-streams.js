@@ -189,7 +189,7 @@ const _Object = {
 };
 
 
-function ActivityFactory(opts = {}) {
+function ASFactory(opts = {}) {
   specialObjs = opts.specialObjs || [];
   failOnUnknownObjectProperties = opts.failOnUnknownObjectProperties || false;
   for (let propName of Object.keys(opts.customProps || {})) {
@@ -214,8 +214,8 @@ function ActivityFactory(opts = {}) {
 }
 
 if (typeof module === 'object' && module.exports) {
-  module.exports = ActivityFactory
+  module.exports = ASFactory
 }
 if (typeof window === 'object') {
-  window.ActivityFactory = ActivityFactory;
+  window.ASFactory = ASFactory;
 }
