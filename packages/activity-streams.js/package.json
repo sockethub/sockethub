@@ -7,6 +7,7 @@
     "event-emitter": "^0.3.4"
   },
   "devDependencies": {
+    "c8": "^3.2.0",
     "chai": "^4.2.0",
     "karma": "^3.0.0",
     "karma-chai": "^0.1.0",
@@ -23,7 +24,7 @@
     "url": "https://github.com/silverbucket/activity-streams.js.git"
   },
   "scripts": {
-    "test": "node_modules/.bin/mocha test/**/*.js",
+    "test": "node_modules/.bin/c8 -r text node_modules/.bin/mocha test/**/*.js",
     "browser_test": "node_modules/.bin/karma start --single-run --browsers ChromeHeadless,FirefoxHeadless karma.config.js",
     "build": "node_modules/.bin/webpack --mode production",
     "release": "run-s build test browser_test"
