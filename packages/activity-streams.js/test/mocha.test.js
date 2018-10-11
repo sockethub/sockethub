@@ -49,6 +49,10 @@ describe('basic tests', () => {
       expect(activity.Object.create({id: 'thingy2'})).to.deep.equal({'@id':'thingy2'});
       expect(activity.Object.get('thingy2')).to.deep.equal({'@id':'thingy2'});
     });
+
+    it('getting an unknown id with expand=true returns object', () => {
+      expect(activity.Object.get('thingy3', true)).to.deep.equal({'@id':'thingy3'});
+    })
   });
 
   describe('stream tests', () => {
@@ -107,14 +111,16 @@ describe('basic tests', () => {
 
   describe('event emitions', () => {
     it('should fire on object creation', () => {
-      activity.on('activity-object-create', (obj) => {
+      function onHandler(obj) {
         expect(obj).to.deep.equal({ '@id': 'thingy3' });
-      });
+        activity.off('activity-object-create', onHandler);
+      }
+      activity.on('activity-object-create', onHandler);
       activity.Object.create({ id:'thingy3' });
     });
 
     it('should fire on object deletion', () => {
-      activity.on('activity-object-delete', (id) => {
+      activity.once('activity-object-delete', (id) => {
         expect(id).to.equal('thingy2');
       });
       activity.Object.delete('thingy2');
