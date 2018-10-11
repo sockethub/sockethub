@@ -37,7 +37,7 @@ describe('basic tests', () => {
     });
 
     it('creates an object and exit when get', () => {
-      assert.equal(activity.Object.create({id: 'thingy1'}), true);
+      expect(activity.Object.create({id: 'thingy1'})).to.deep.equal({'@id': 'thingy1'});
       expect(activity.Object.get('thingy1')).to.deep.equal({'@id':'thingy1'});
     });
 
@@ -46,7 +46,7 @@ describe('basic tests', () => {
     });
 
     it('create another object and exist when get', () => {
-      assert.equal(activity.Object.create({id: 'thingy2'}), true);
+      expect(activity.Object.create({id: 'thingy2'})).to.deep.equal({'@id':'thingy2'});
       expect(activity.Object.get('thingy2')).to.deep.equal({'@id':'thingy2'});
     });
   });
