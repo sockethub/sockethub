@@ -3,7 +3,7 @@
  *   http://github.com/silverbucket/activity-streams
  *
  * Developed and Maintained by:
- *   Nick Jennings <nick@silverbucket.net> copyright 2015
+ *   Nick Jennings <nick@silverbucket.net>
  *
  * activity-streams is released under the MIT (see LICENSE).
  *
@@ -16,70 +16,70 @@
  */
 
 
-var EventEmitter = require('event-emitter'),
-    ArrayKeys    = require('array-keys');
+const EventEmitter = require('event-emitter');
 
-var objs        = new ArrayKeys({ identifier: '@id' }),
-    ee          = EventEmitter(),
+const ee = EventEmitter(),
+      baseProps = {
+        stream: [
+          '@id', '@type', 'actor', 'target', 'object', '@context', 'context',
+          'published', 'error'
+        ],
+        object: [
+          '@id', '@type', '@context',
+          'alias', 'attachedTo', 'attachment', 'attributedTo', 'attributedWith',
+          'content', 'context', 'contextOf', 'displayName', 'endTime', 'generator',
+          'generatorOf', 'icon', 'image', 'inReplyTo', 'memberOf', 'location',
+          'locationOf', 'objectOf', 'originOf', 'presence', 'preview', 'previewOf', 'provider',
+          'providerOf', 'published', 'rating', 'resultOf', 'replies', 'scope',
+          'scopeOf', 'startTime', 'status', 'summary', 'topic', 'tag', 'tagOf', 'targetOf', 'title',
+          'updated', 'url', 'titleMap', 'contentMap', 'members', 'message'
+        ]
+      },
+      rename = {
+        'id': '@id',
+        'verb': '@type',
+        'objectType': '@type',
+        'platform': 'context'
+      },
+      expand = {
+        'actor' : {
+          'primary': '@id',
+          'props': baseProps
+        },
+        'target': {
+          'primary': '@id',
+          'props': baseProps
+        },
+        'object': {
+          'primary': 'content',
+          'props': baseProps
+        }
+      };
+
+let objs = new Map(),
     failOnUnknownObjectProperties = false,
     specialObjs = [], // the objects don't get rejected for bad props
-    baseProps   = {
-      stream: [
-        '@id', '@type', 'actor', 'target', 'object', '@context', 'context',
-        'published', 'error'
-      ],
-      object: [
-        '@id', '@type', '@context',
-        'alias', 'attachedTo', 'attachment', 'attributedTo', 'attributedWith',
-        'content', 'context', 'contextOf', 'displayName', 'endTime', 'generator',
-        'generatorOf', 'icon', 'image', 'inReplyTo', 'memberOf', 'location',
-        'locationOf', 'objectOf', 'originOf', 'presence', 'preview', 'previewOf', 'provider',
-        'providerOf', 'published', 'rating', 'resultOf', 'replies', 'scope',
-        'scopeOf', 'startTime', 'status', 'summary', 'topic', 'tag', 'tagOf', 'targetOf', 'title',
-        'updated', 'url', 'titleMap', 'contentMap', 'members', 'message'
-      ]
-    },
-    customProps  = {},
-    rename       = {
-      'id': '@id',
-      'verb': '@type',
-      'objectType': '@type',
-      'platform': 'context'
-    },
-    expand       = {
-      'actor' : {
-        'primary': '@id',
-        'props': baseProps
-      },
-      'target': {
-        'primary': '@id',
-        'props': baseProps
-      },
-      'object': {
-        'primary': 'content',
-        'props': baseProps
-      }
-    },
-    expandKeys   = Object.keys(expand);
+    customProps  = {};
+
 
 function validateObject(type, obj) {
-  var keys = Object.keys(obj);
-  for (var i = keys.length - 1; i >= 0; i -= 1) {
-    if (baseProps[type].indexOf(keys[i]) < 0) {
-      if (rename[keys[i]]) {
+  if (typeof obj !== 'object') { throw new Error('no object provided'); }
+  for (let key of Object.keys(obj)) {
+    if (baseProps[type].indexOf(key) < 0) {
+      if (rename[key]) {
         // rename property instead of fail
-        obj[rename[keys[i]]] = obj[keys[i]];
-        delete obj[keys[i]];
+        obj[rename[key]] = obj[key];
+        delete obj[key];
       } else {
         if ((obj['@type']) && (typeof customProps[obj['@type']] === 'object')) {
-          if (customProps[obj['@type']].indexOf(keys[i]) >= 0) {
+          if (customProps[obj['@type']].indexOf(key) >= 0) {
             // custom property matches, continue
             continue;
           }
         }
 
         if (specialObjs.indexOf(obj['@type']) < 0) {
-          return 'invalid property: "' + keys[i] + '"';
+          return 'invalid property: "' + key + '"';
         }
       }
     }
@@ -87,15 +87,17 @@ function validateObject(type, obj) {
   return false;
 }
 
+
 function ensureProps(obj) {
   // ensure the displayName property, which can generall be inferred from the @id
   // displayName = obj.match(/(?(?\w+):\/\/)(?:.+@)?(.+?)(?:\/|$)/)[1]
   return obj;
 }
 
-var Stream = function (meta) {
-  var stream = {};
-  var err = validateObject('stream', meta);
+
+function Stream(meta) {
+  let stream = {},
+      err    = validateObject('stream', meta);
 
   if (err) {
     throw new Error(err);
@@ -110,16 +112,15 @@ var Stream = function (meta) {
     }
   }
 
-  for (var key in meta) {
-
+  for (let key of Object.keys(meta)) {
     if (typeof meta[key] === 'string') {
-      stream[key] = objs.getRecord(meta[key]) || meta[key];
+      stream[key] = objs.get(meta[key]) || meta[key];
     } else if (Array.isArray(meta[key])) {
       stream[key] = [];
 
-      for (i = meta[key].length - 1; i >= 0; i -= 1) {
-        if (typeof meta[key][i] === 'string') {
-          stream[key][i] = objs.getRecord(meta[key][i]) || meta[key][i];
+      for (let entry of meta[key]) {
+        if (typeof entry === 'string') {
+          stream[key].push(objs.get(entry) || entry);
         }
       }
     } else {
@@ -128,12 +129,12 @@ var Stream = function (meta) {
   }
 
   // only expand string into objects if they are in the expand list
-  for (var i = expandKeys.length - 1; i >= 0; i -= 1) {
-    if (typeof stream[expandKeys[i]] === 'string') {
-      var idx = expand[expandKeys[i]].primary;
-      var obj = {};
-      obj[idx] = stream[expandKeys[i]];
-      stream[expandKeys[i]] = obj;
+  for (let key of Object.keys(expand)) {
+    if (typeof stream[key] === 'string') {
+      const idx = expand[key].primary;
+      let obj = {};
+      obj[idx] = stream[key];
+      stream[key] = obj;
     }
   }
 
@@ -142,10 +143,9 @@ var Stream = function (meta) {
 };
 
 
-var _Object = {
+const _Object = {
   create: function (obj) {
-    var result = false;
-    var err = validateObject('object', obj);
+    const err = validateObject('object', obj);
 
     if ((err) && (failOnUnknownObjectProperties)) {
       throw new Error(err);
@@ -154,21 +154,13 @@ var _Object = {
     }
 
     obj = ensureProps(obj);
-
-    try {
-      result = objs.addRecord(obj);
-    } catch (e) {
-      throw new Error(e);
-    }
-
-    if (result) {
-      ee.emit('activity-object-create', obj);
-    }
-    return result;
+    objs.set(obj['@id'], obj);
+    ee.emit('activity-object-create', obj);
+    return true;
   },
 
   delete: function (id) {
-    var result = objs.removeRecord(id);
+    let result = objs.delete(id);
     if (result) {
       ee.emit('activity-object-delete', id);
     }
@@ -176,41 +168,35 @@ var _Object = {
   },
 
   get: function (id, doExpand) {
-    var r = objs.getRecord(id);
-    if (! r) {
+    let obj = objs.get(id);
+    if (! obj) {
       if (doExpand) {
-        r = { '@id': id };
+        obj = { '@id': id };
       } else {
-        return r;
+        return obj;
       }
     }
-    return ensureProps(r);
+    return ensureProps(obj);
   },
 
   list: function () {
-    return objs.getIdentifiers();
+    return objs.keys();
   },
 
   getByType: function (type) {
-    objs.forEach(function (o) {
-      // TODO not implemented
-    });
+    // TODO not implemented
   }
 };
 
 
-module.exports = function (opts) {
+function ActivityFactory(opts) {
   if (typeof opts === 'object') {
     specialObjs = opts.specialObjs || [];
     failOnUnknownObjectProperties = opts.failOnUnknownObjectProperties || false;
     if (typeof opts.customProps === 'object') {
-      var keys = Object.keys(opts.customProps);
-      for (var i = 0, len = keys.length; i < len; i += 1) {
-        if (typeof opts.customProps[keys[i]] === 'object') {
-          customProps[keys[i]] = [];
-          for (var j = 0, jlen = opts.customProps[keys[i]].length; j < jlen; j += 1) {
-            customProps[keys[i]].push(opts.customProps[keys[i]][j]);
-          }
+      for (let propName of Object.keys(opts.customProps)) {
+        if (typeof opts.customProps[propName] === 'object') {
+          customProps[propName] = opts.customProps[propName];
         }
       }
     }
@@ -229,4 +215,11 @@ module.exports = function (opts) {
       return ee.off(event, funcName);
     }
   };
-};
+}
+
+if (typeof module === 'object' && module.exports) {
+  module.exports = ActivityFactory
+}
+if (typeof window === 'object') {
+  window.ActivityFactory = ActivityFactory;
+}
