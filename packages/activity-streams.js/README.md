@@ -18,11 +18,12 @@ I am learning about JSON-LD and ActivityStreams2 as I write this library, so sug
 
 ### Node.js
 
-`npm install activity-streams`
+`$ npm install activity-streams`
 
 ```javascript
-const ActivityStreams = require('activity-streams')({
-  failOnUnkownObjectProperties: false //default
+const ASFactory = require('activity-streams');
+const ActivityStreams = ASFactory({
+  failOnUnkownObjectProperties: false // default
 });
 ```
 
@@ -37,9 +38,9 @@ Once included in a web-page, the `ActivityStreams` base object should be on the 
 
 ```javascript
 
-const AS = new ActivityStreams();
+const ActivityStreams = ASFactory();
 
-AS.Object.create({
+ActivityStreams.Object.create({
   '@id': 'irc://exampleUser@irc.freenode.net',
   '@type': "person",
   displayName: 'Example User',
@@ -52,17 +53,17 @@ AS.Object.create({
   }
 });
 
-AS.on('activity-object-create', function (obj) {
+ActivityStreams.on('activity-object-create', function (obj) {
   console.log('this object was just created: ', obj);
 });
 
-AS.Object.create({
+ActivityStreams.Object.create({
   '@id': 'irc://irc.freenode.net/activitystreams',
   '@type': "chatroom",
   displayName: '#activitystreams'
 });
 
-const exampleUser = AS.Object.get('irc://exampleUser@irc.freenode.net');
+const exampleUser = ActivityStreams.Object.get('irc://exampleUser@irc.freenode.net');
     // ... returns:
     //  {
     //    '@id': 'irc://exampleUser@irc.freenode.net',
@@ -77,7 +78,7 @@ const exampleUser = AS.Object.get('irc://exampleUser@irc.freenode.net');
     //    }
     //  }
 
-AS.Stream({
+ActivityStreams.Stream({
   '@context': 'send',
   actor: 'irc://exampleUser@irc.freenode.net',
   object: {
