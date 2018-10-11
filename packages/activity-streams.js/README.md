@@ -1,12 +1,13 @@
 # activity-streams.js
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/silverbucket/activity-streams.js.svg)](https://greenkeeper.io/)
 
 [![Build Status](http://img.shields.io/travis/silverbucket/activity-streams.js.svg?style=flat)](http://travis-ci.org/silverbucket/activity-streams.js)
-[![Code Climate](http://img.shields.io/codeclimate/github/silverbucket/activity-streams.js.svg?style=flat)](https://codeclimate.com/github/silverbucket/activity-streams.js)
-[![license](https://img.shields.io/npm/l/activity-streams.svg?style=flat)](https://npmjs.org/package/activity-streams)
-[![downloads](http://img.shields.io/npm/dm/activity-streams.svg?style=flat)](https://npmjs.org/package/activity-streams)
-[![release](http://img.shields.io/github/release/silverbucket/activity-streams.js.svg?style=flat)](https://github.com/silverbucket/activity-streams.js/releases)
+[![Maintainability](https://api.codeclimate.com/v1/badges/dfe3c6173bba08e18fd5/maintainability)](https://codeclimate.com/github/silverbucket/activity-streams.js/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/dfe3c6173bba08e18fd5/test_coverage)](https://codeclimate.com/github/silverbucket/activity-streams.js/test_coverage)
+[![License](https://img.shields.io/npm/l/activity-streams.svg?style=flat)](https://npmjs.org/package/activity-streams)
+[![Downloads](http://img.shields.io/npm/dm/activity-streams.svg?style=flat)](https://npmjs.org/package/activity-streams)
+[![Release](http://img.shields.io/github/release/silverbucket/activity-streams.js.svg?style=flat)](https://github.com/silverbucket/activity-streams.js/releases)
+
 
 A simple tool to facilitate handling and referencing activity streams and it's objects, cutting down on verbosity.
 
