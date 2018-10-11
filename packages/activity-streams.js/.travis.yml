@@ -11,7 +11,7 @@ before_script:
   - ./cc-test-reporter before-build
 script: npm run travis
 after_script:
-  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT --input coverage/lcov.info
 install:
   - npm install
 
