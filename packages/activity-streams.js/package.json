@@ -25,9 +25,11 @@
   },
   "scripts": {
     "test": "node_modules/.bin/c8 -r text node_modules/.bin/mocha test/**/*.js",
+    "test_lcov": "node_modules/.bin/c8 -r text-lcov node_modules/.bin/mocha test/**/*.js",
     "browser_test": "node_modules/.bin/karma start --single-run --browsers ChromeHeadless,FirefoxHeadless karma.config.js",
     "build": "node_modules/.bin/webpack --mode production",
-    "release": "run-s build test browser_test"
+    "release": "run-s build test browser_test",
+    "travis": "run-s test_lcov browser_test"
   },
   "keywords": [
     "activity",
