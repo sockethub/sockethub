@@ -37,7 +37,7 @@
     "c8": "^3.2.0",
     "debug": "^4.1.0",
     "ejs": "^2.5.7",
-    "espree": "^4.0.0",
+    "espree": "^4.1.0",
     "express": "^4.16.4",
     "jquery": "^3.3.1",
     "kue": "^0.11.5",
@@ -51,7 +51,7 @@
     "sockethub-platform-irc": "^3.3.0",
     "sockethub-platform-xmpp": "^2.1.0",
     "sockethub-schemas": "^2.0.0",
-    "supports-color": "^5.1.0",
+    "supports-color": "^5.5.0",
     "tv4": "^1.2.7",
     "urijs": "^1.19.0"
   },
@@ -67,7 +67,7 @@
     "node": ">= 5.0.0"
   },
   "devDependencies": {
-    "eslint": "^5.6.1",
+    "eslint": "^5.12.0",
     "eslint-cli": "^1.1.1",
     "jaribu": "^2.2.1"
   }
