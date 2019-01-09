@@ -81,7 +81,6 @@ if (nconf.get('examples:enabled')) {
 /**
  * Setup
  */
-
 exports.setup = (app) => {
   routes.forEach((route) => {
     app[route.meta.method.toLowerCase()](
