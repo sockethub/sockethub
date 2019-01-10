@@ -65,7 +65,6 @@
       $('#j').val('#' + channel);
 
       function __normalizeMessage(msg) {
-
         function __normalizeTargetFromContent(string) {
           const postCMD = msg.object.content.substr(string.length + 1) + ' ';
           const target = postCMD.substr(0, postCMD.indexOf(' '));
@@ -110,8 +109,6 @@
         }
         return msg;
       }
-
-
 
       // creates an ActivityStreams object for our actor (us)
       function __updateActor(_nick) {
