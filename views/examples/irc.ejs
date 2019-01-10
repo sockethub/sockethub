@@ -56,6 +56,7 @@
     <script src="<%= address %>examples/shared.js"></script>
     <script>
       debug = function (msg, obj) { console.log(msg, obj); };
+      const examplesShared = new ExamplesShared();
       const ircServer = 'irc.freenode.net';
       localStorage.debug = 'sockethub:*';
       const sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
@@ -160,13 +161,13 @@
         msg = __normalizeMessage(msg);
         if ((typeof msg.object === 'object') &&
             (typeof msg.object.content === 'string')) {
-          shared.processIncomingMessage(msg);
+          examplesShared.processIncomingMessage(msg);
         } else if ((msg['@type'] === 'update') &&
                    (msg.object['@type'] === 'address') &&
                    (msg.actor.displayName === nick)) {
           // our nick has been updated
           __updateActor(msg.target.displayName);
-          shared.processIncomingMessage(msg);
+          examplesShared.processIncomingMessage(msg);
         } else if (msg['@type'] === 'join') {
           $('.modal').css('display', 'none');
           $('input#m').prop('disabled', false);
@@ -180,7 +181,7 @@
       sc.socket.on('message', (msg) => {
         msg = sc.ActivityStreams.Stream(msg);
         debug('processing message: ', msg);
-        shared.processIncomingMessage(msg);
+        examplesShared.processIncomingMessage(msg);
       });
 
       // handler for user input, emit messages to sockethub server

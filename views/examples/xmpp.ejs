@@ -61,6 +61,7 @@
 
     <script>
       debug = function (msg, obj) { console.log(msg, obj); };
+      const examplesShared = new ExamplesShared();
       localStorage.debug = 'sockethub:*';
       const config = {
         '@type': 'credentials',
@@ -159,7 +160,7 @@
         if ((typeof msg.object === 'object') &&
             (typeof msg.object.content === 'string')) {
           if (msg.object['@type'] === 'message') {
-            shared.processIncomingMessage(msg);
+            examplesShared.processIncomingMessage(msg);
           }
         } else if ((msg['@type'] === 'update') &&
                    (msg.object['@type'] === 'address') &&
@@ -174,7 +175,7 @@
       });
 
       // handle incoming messages from the sockethub server
-      sc.socket.on('message', shared.processIncomingMessage);
+      sc.socket.on('message', examplesShared.processIncomingMessage.bind(examplesShared));
 
       $('.actor').click(function (e) {
         e.preventDefault();
