@@ -10,7 +10,12 @@
         "comma-spacing": [2, { "before": false, "after": true }],
         "eqeqeq": 2,
         "handle-callback-err": 2,
-        "indent": [2, 2, { "SwitchCase": 1, "VariableDeclarator": { "var": 2, "let": 2, "const": 3 }}],
+        "indent": ["error", 2, {
+            "SwitchCase": 1,
+            "VariableDeclarator": { "var": 2, "let": 2, "const": 3 },
+            "FunctionDeclaration": { "parameters": "first" },
+            "CallExpression": { "arguments":  "first" }
+        }],
         "keyword-spacing": 2,
         "max-len": [2, { "code": 99 }],
         "no-eq-null": 2,
