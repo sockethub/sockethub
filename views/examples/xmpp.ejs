@@ -75,57 +75,6 @@
 
       const sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
 
-      // var ircServer = 'irc.freenode.net';
-      // var channel = 'sockethub-test';
-      // var nick = 'sh-<%= randToken %>';
-
-      // function __normalizeMessage(msg) {
-      //   function __normalizeTargetFromContent(string) {
-      //     var postCMD = msg.object.content.substr(string.length + 1) + ' ';
-      //     var target = postCMD.substr(0, postCMD.indexOf(' '));
-      //     if (target.indexOf('#') === 0) {
-      //       msg.target = 'irc://' + ircServer + '/' + target;
-      //       sc.ActivityStreams.Object.create({
-      //         '@id': 'irc://' + ircServer + '/' + target,
-      //         '@type': "room",
-      //         displayName: target
-      //       });
-      //     } else {
-      //       msg.target = 'irc://' + target + '@' + ircServer;
-      //       sc.ActivityStreams.Object.create({
-      //         '@id': 'irc://' + target + '@' + ircServer,
-      //         '@type': "person",
-      //         displayName: target
-      //       });
-      //     }
-      //   }
-
-      //   if ((typeof msg.object === 'object') &&
-      //       (typeof msg.object.content === 'string')) {
-
-      //     if (msg.object.content.indexOf('/me') === 0) {
-      //       // show completed emotes from us
-      //       // rewrite as object to what the incoming objects should look like
-      //       msg.object['@type'] = 'me';
-      //       msg.object.content = msg.object.content.substr(4);
-      //     } else if (msg.object.content.indexOf('/nick') === 0) {
-      //       msg.object['@type'] = 'address';
-      //       msg['@type'] = 'update';
-      //       __normalizeTargetFromContent('/nick');
-      //       delete msg.object.content;
-      //     } else if (msg.object.content.indexOf('/notice') === 0) {
-      //       // show completed emotes from us
-      //       // rewrite as object to what the incoming objects should look like
-      //       msg.object['@type'] = 'notice';
-      //       __normalizeTargetFromContent('/notice');
-      //       msg.object.content = msg.object.content.substr(8 + object.target.displayName.length + 1);
-      //     }
-
-      //   }
-      //   return msg;
-      // }
-
-
       // creates an ActivityStreams object for our actor (us)
       function __updateActor(username) {
         console.log('updating actor object for: ' + username);

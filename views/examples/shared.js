@@ -45,17 +45,17 @@ ExamplesShared.prototype.processIncomingMessage = function (msg) {
       `${msg.actor.displayName} has joined ${msg.target.displayName}`));
   } else if ((msg['@type'] === 'announce') && (msg.actor['@type'] === 'service')) {
     $('#messages').append($('<li>').text(`connected to ${msg.actor['@id']}`));
-  } else if (msg.object['@type'] === 'me') {
-    $('#messages').append($('<li>').text(
-      `* ${msg.actor.displayName} ${msg.object.content}`));
-  } else if (msg.object['@type'] === 'notice') {
-    $('#messages').append($(
-      '<li>').text(`NOTICE from ${msg.actor.displayName}: ${msg.object.content}`));
   } else if (msg['@type'] === 'error') {
     console.log('error received: ', msg);
   } else if (msg['@type'] === 'close') {
     console.log('close event received... offline.');
-  } else if (msg.object.content) {
+  } else if (msg.object && msg.object['@type'] === 'me') {
+    $('#messages').append($('<li>').text(
+      `* ${msg.actor.displayName} ${msg.object.content}`));
+  } else if (msg.object && msg.object['@type'] === 'notice') {
+    $('#messages').append($(
+      '<li>').text(`NOTICE from ${msg.actor.displayName}: ${msg.object.content}`));
+  } else if (msg.object && msg.object.content) {
     this.__displayMessageContent(msg);
   } else {
     this.__displayUnknownContent(msg);
