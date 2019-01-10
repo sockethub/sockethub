@@ -21,9 +21,7 @@ if (nconf.get('examples:enabled')) {
         address: address
       });
     }
-  },
-
-  {
+  }, {
     meta: {
       method: 'GET',
       path: '/examples/feeds'
@@ -34,9 +32,7 @@ if (nconf.get('examples:enabled')) {
         address: address
       });
     }
-  },
-
-  {
+  }, {
     meta: {
       method: 'GET',
       path: '/examples/irc'
@@ -48,9 +44,7 @@ if (nconf.get('examples:enabled')) {
         randToken: randToken.generate(5)
       });
     }
-  },
-
-  {
+  }, {
     meta: {
       method: 'GET',
       path: '/examples/xmpp'

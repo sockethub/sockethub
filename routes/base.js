@@ -11,9 +11,7 @@ routes.push({
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.sendFile(path.resolve(__dirname + '/../lib/client.js'));
   }
-},
-
-{
+}, {
   meta: {
     method: 'GET',
     path: '/socket.io.js'
@@ -22,9 +20,7 @@ routes.push({
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.sendFile(path.resolve(__dirname + '/../node_modules/socket.io-client/dist/socket.io.js'));
   }
-},
-
-{
+}, {
   meta: {
     method: 'GET',
     path: '/activity-streams.min.js'
@@ -45,9 +41,7 @@ if (nconf.get('examples:enabled')) {
     route: (req, res) => {
       res.render('index.ejs');
     }
-  },
-
-  {
+  }, {
     meta: {
       method: 'GET',
       path: '/jquery.js'
@@ -55,9 +49,7 @@ if (nconf.get('examples:enabled')) {
     route: (req, res) => {
       res.sendFile(path.resolve(__dirname + '/../node_modules/jquery/dist/jquery.min.js'));
     }
-  },
-
-  {
+  }, {
     meta: {
       method: 'GET',
       path: '/examples/shared.js'
@@ -65,9 +57,7 @@ if (nconf.get('examples:enabled')) {
     route: (req, res) => {
       res.sendFile(path.resolve(__dirname + '/../views/examples/shared.js'));
     }
-  },
-
-  {
+  }, {
     meta: {
       method: 'GET',
       path: '/jquery.min.map'
