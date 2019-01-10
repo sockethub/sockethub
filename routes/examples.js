@@ -4,9 +4,9 @@ const nconf      = require('nconf'),
 const routes      = [],
       debug_scope = process.env.DEBUG || '',
       address     = nconf.get('public:protocol') + '://' +
-                      nconf.get('public:host') + ':' +
-                      nconf.get('public:port') +
-                      nconf.get('public:path');
+                    nconf.get('public:host') + ':' +
+                    nconf.get('public:port') +
+                    nconf.get('public:path');
 
 if (nconf.get('examples:enabled')) {
   // only add routes if --dev flag is present
@@ -21,9 +21,7 @@ if (nconf.get('examples:enabled')) {
         address: address
       });
     }
-  },
-
-  {
+  }, {
     meta: {
       method: 'GET',
       path: '/examples/feeds'
@@ -34,9 +32,7 @@ if (nconf.get('examples:enabled')) {
         address: address
       });
     }
-  },
-
-  {
+  }, {
     meta: {
       method: 'GET',
       path: '/examples/irc'
@@ -48,9 +44,7 @@ if (nconf.get('examples:enabled')) {
         randToken: randToken.generate(5)
       });
     }
-  },
-
-  {
+  }, {
     meta: {
       method: 'GET',
       path: '/examples/xmpp'
@@ -68,7 +62,6 @@ if (nconf.get('examples:enabled')) {
 /**
  * Setup
  */
-
 exports.setup = (app) => {
   routes.forEach((route) => {
     app[route.meta.method.toLowerCase()](

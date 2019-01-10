@@ -248,14 +248,14 @@ define(['require', './../lib/validate', 'activity-streams'], function (require, 
     let test = {
       desc: '# [' + string + '] ' + name,
       run: function (env, test) {
-        env.validate(type)(function (state, msg) {
+        env.validate(type)((state, msg) => {
           //console.log('input: ', input);
           //console.log('msg: ', msg);
           //console.log('expected output: ', output);
           //console.log('result: ', state);
 
           if (output === 'same') {
-            test.assertAnd(input, msg, 'input not the same as output');
+            test.assertAnd(input, msg, `input not the same as output`);
           } else if (output) {
             test.assertAnd(msg, output, `expected and returned output don't match`);
           }
