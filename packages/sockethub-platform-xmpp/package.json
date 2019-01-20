@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "jaribu": "^2.2.2",
-    "jsdoc-to-markdown": "^3.0.0",
+    "jsdoc-to-markdown": "^4.0.1",
     "sockethub-testing-mocks": "^1.2.0",
     "tv4": "^1.3.0"
   },
