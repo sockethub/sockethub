@@ -44,7 +44,7 @@ module.exports = [
   {
     name: 'groupbuddy event',
     input: ['test@muc.5apps.com', 'greg', 'online', 'hey, wazzup?'],
-    handler: 'groupbuddy',
+    handler: 'groupBuddy',
     output: {
       '@type': 'update',
       actor: {
@@ -88,6 +88,25 @@ module.exports = [
       }
     }
   },
+  {
+    name: 'message',
+    //input: '<message from="radical@example.org/thinkpad" to="user@jabber.org" type="chat" id="purple9840c15f" xmlns:stream="http://etherx.jabber.org/streams"><active xmlns="http://jabber.org/protocol/chatstates"/><body>ohai</body></message>',
+    input: [ 'radical@example.org', 'ohai' ],
+    handler: 'chat',
+    output: {
+      '@type': 'send',
+      actor: {
+        '@type': 'person',
+        '@id': 'radical@example.org'
+      },
+      target: 'user@jabber.org',
+      object: {
+        '@type': 'message',
+        content: 'ohai',
+        '@id': 1
+      }
+    }
+  }
 
 
 ];
