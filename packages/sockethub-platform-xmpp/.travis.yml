@@ -1,7 +1,8 @@
 language: node_js
 node_js:
-  - 6 # LTS
-  - 7 # latest
+  - 8 # LTS
+  - 10 # LTS
+  - 11 # latest
 sudo: false
 script: npm test
 install:
