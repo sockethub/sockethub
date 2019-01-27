@@ -1,6 +1,6 @@
 [![Sockethub](http://sockethub.org/res/img/sockethub-logo.svg)](http://sockethub.org)
 
-A polyglot messaging service.
+A protocol gateway for the web.
 
 [![Build Status](http://img.shields.io/travis/sockethub/sockethub.svg?style=flat)](https://travis-ci.org/sockethub/sockethub)
 [![Dependency Status](http://img.shields.io/david/sockethub/sockethub.svg?style=flat)](https://david-dm.org/sockethub/sockethub#info=dependencies)
@@ -9,12 +9,12 @@ A polyglot messaging service.
 [![License](https://img.shields.io/npm/l/sockethub.svg?style=flat)](https://raw.githubusercontent.com/sockethub/sockethub/master/LICENSE)
 [![Release](https://img.shields.io/npm/v/sockethub.svg?style=flat)](https://github.com/sockethub/sockethub/releases)
 
-[![Flattr this](http://api.flattr.com/button/flattr-badge-large.png)](http://flattr.com/thing/1154379/Sockethub)
-
 # About
-Sockethub is a polyglot (speaking many different protocols and APIs) messaging service for social and other interactive messaging applications. Not only does it assist [unhosted](http://unhosted.org) and [noBackend](http://nobackend.org) web application developers by providing server-independent, server-side functionality, but it also can be used as a back-end tool (invisible to the user) for many different applications, large and small.
+Sockethub is a translation layer for web-apps to communicate with other protocols and services that are traditionally inaccessible or impracticle.
 
-Example uses of sockethub are: writing and receiving messages (SMTP, Facebook, Twitter), instant messaging (XMPP, IRC, MSN, FB Messenger, Hangouts), discovery (WebFinger, RDF(a)). The architecture of sockethub is extensible and supports easy implementation of additional 'platforms' to carry out tasks, sockethub can be run on your own server, or provided as a service by a service provider, or app store.
+Using [ActivityStream](http://activitystrea.ms/) (AS) objects to pass messages to and from the web-app, Sockethub acts as a sort of smart web-proxy and can maintain state, connect to sockets or REST enpoints that would otherwise be restricted from an application running in the browser. Originally inspired as a sister project to [RemoteStorage](https://remotestorage.io) and assisting in the development of [unhosted](http://unhosted.org) or [noBackend](http://nobackend.org) applications, Sockethubs functionality can also fit into a more traditional development stack, removing the need for custom code to handle various protocol-specifics at the applicaton layer.
+
+Example uses of sockethub are: writing and receiving messages (SMTP, Facebook, Twitter), instant messaging (XMPP, IRC, MSN, FB Messenger, Hangouts), discovery (WebFinger, RDF(a)). The architecture of Sockethub is extensible and supports easy implementation of additional 'platforms' to carry out tasks.
 
 # Docs
 
@@ -22,24 +22,30 @@ See the [Sockethub wiki](https://github.com/sockethub/sockethub/wiki) for docume
 
 # Features
 
-We use Activity Streams to map the various social networks terms to a set of
-'verbs' which identify the underlying action. For example,for a facebook friend
-request/accept cycle, we would use the activity stream verbs 'request-friend',
-'remove-friend', 'make-friend'.
+We use ActivityStreams to map the various actions of a platform to a set of AS '@type's which identify the underlying action. For example, using the XMPP  platform, a friend request/accept cycle would use the activity stream types 'request-friend', 'remove-friend', 'make-friend'.
 
-Below is a list of platforms we're currently working on and their
-activity stream verbs (when appropriate) or verbs that are specific to
-Sockethub, both the completed and not yet implemented ones. They all map to the
-platforms actions.
+Below is a list of platform contexts we're currently working on and their types, both the completed and not yet implemented ones. They are all implemented in the sockethub platform (each have their own repository) and can be enabled/disabled in the config.json.
 
-| Platforms | Verbs |
+## Implemented
+Full or partial implementations, being used.
+| Platform (@context) | Type (@type) |
 | --------- | ----- |
-| [Email](https://github.com/sockethub/sockethub-platform-email) *(SMTP, IMAP)* *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch (imap)</kbd> |
 | [XMPP](https://github.com/sockethub/sockethub-platform-xmpp) | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) request-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) remove-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) make-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png)  join</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd>|
-| [Facebook](https://github.com/sockethub/sockethub-platform-facebook) *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png)fetch</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd> |
-| [Twitter](https://github.com/sockethub/sockethub-platform-twitter) *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd> |
 | [Feeds](https://github.com/sockethub/sockethub-platform-feeds) *(RSS, Atom)* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd> |
 | [IRC](https://github.com/sockethub/sockethub-platform-irc) | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) join</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) leave</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd> |
+
+## Out of date
+Implemented in a previous major release of Sockethub, never ported to the current release and unmaintained.
+| Platform (@context) | Type (@type) |
+| --------- | ----- |
+| [Email](https://github.com/sockethub/sockethub-platform-email) *(SMTP, IMAP)* *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch (imap)</kbd> |
+| [Facebook](https://github.com/sockethub/sockethub-platform-facebook) *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png)fetch</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd> |
+| [Twitter](https://github.com/sockethub/sockethub-platform-twitter) *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd> |
+
+## Future consideration
+List of possible future platforms and their potentials verb types.
+| Platform (@context) | Type (@type) |
+| --------- | ----- |
 | pump.io | <kbd>post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>fetch</kbd> |
 | WhatsApp | <kbd>send</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> |
 | WebFinger | <kbd>search</kbd> |
