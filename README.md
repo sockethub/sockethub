@@ -27,25 +27,31 @@ We use ActivityStreams to map the various actions of a platform to a set of AS '
 Below is a list of platform contexts we're currently working on and their types, both the completed and not yet implemented ones. They are all implemented in the sockethub platform (each have their own repository) and can be enabled/disabled in the config.json.
 
 ## Implemented
+
 Full or partial implementations, being used.
+
 | Platform (@context) | Type (@type) |
-| --------- | ----- |
+| ------------------- | ------------ |
 | [XMPP](https://github.com/sockethub/sockethub-platform-xmpp) | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) request-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) remove-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) make-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png)  join</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd>|
 | [Feeds](https://github.com/sockethub/sockethub-platform-feeds) *(RSS, Atom)* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd> |
 | [IRC](https://github.com/sockethub/sockethub-platform-irc) | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) join</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) leave</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd> |
 
 ## Out of date
+
 Implemented in a previous major release of Sockethub, never ported to the current release and unmaintained.
+
 | Platform (@context) | Type (@type) |
-| --------- | ----- |
+| ------------------- | ------------ |
 | [Email](https://github.com/sockethub/sockethub-platform-email) *(SMTP, IMAP)* *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch (imap)</kbd> |
 | [Facebook](https://github.com/sockethub/sockethub-platform-facebook) *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png)fetch</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd> |
 | [Twitter](https://github.com/sockethub/sockethub-platform-twitter) *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd> |
 
 ## Future consideration
+
 List of possible future platforms and their potentials verb types.
+
 | Platform (@context) | Type (@type) |
-| --------- | ----- |
+| ------------------- | ------------ |
 | pump.io | <kbd>post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>fetch</kbd> |
 | WhatsApp | <kbd>send</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> |
 | WebFinger | <kbd>search</kbd> |
