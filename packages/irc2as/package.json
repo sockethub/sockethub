@@ -1,15 +1,15 @@
 {
   "name": "irc2as",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "IRC to ActivityStreams objects",
   "main": "index.js",
   "directories": {
     "test": "test"
   },
   "dependencies": {
-    "debug": "^4.0.1",
+    "debug": "^4.1.1",
     "fast-deep-equal": "^2.0.1",
-    "jaribu": "^2.2.1"
+    "jaribu": "^2.2.2"
   },
   "devDependencies": {},
   "scripts": {
