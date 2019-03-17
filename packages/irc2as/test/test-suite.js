@@ -185,6 +185,27 @@ define(['require'], function (require, IRC2AS) {
                 run: function (env, test) {
                     test.assert(env.pongs, 3);
                 }
+            },
+            {
+                desc: "lots of people in a room",
+                run: function (env, test) {
+                    env.irc2as.events.on('incoming', (msg) => {
+                        for (let i = 0; i < msg.object.members.length; i++)  {
+                            console.log(msg.object.members[i])
+                            test.assertTypeAnd(msg.object.members[i], 'string', msg.object.members[i]);
+                        };
+                        test.done();
+                    });
+
+                    for (let i = 0; i < 5; i++) {
+                        let names = ':hitchcock.freenode.net 353 hyper_slvrbckt @ #kosmos-random :hyper_slvrbckt ';
+                        for (let n = 0; n < 100; n++) {
+                            names += ` gregkare${i}${n} hal8000${i}${n} botka${i}${n} raucao${i}${n} galfert${i}${n}`;
+                        }
+                        env.irc2as.input(names);
+                    }
+                    env.irc2as.input(':hitchcock.freenode.net 366 hyper_slvrbckt #kosmos-random :End of /NAMES list.')
+                }
             }
         ]
     });
