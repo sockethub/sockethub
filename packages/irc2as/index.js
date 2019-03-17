@@ -228,7 +228,7 @@ IrcToActivityStreams.prototype.input = function (string) {
                 published: time
             };
         } else {
-            this.__buffer[NAMES][channel].object.members.push(content.split(' '));
+            this.__buffer[NAMES][channel].object.members = this.__buffer[NAMES][channel].object.members.concat(content.split(' '));
         }
         break;
         case NAMES_END: // end user list
