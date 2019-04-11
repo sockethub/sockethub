@@ -23,6 +23,16 @@ routes.push({
 }, {
   meta: {
     method: 'GET',
+    path: '/activity-streams.js'
+  },
+  route: (req, res) => {
+    res.sendFile(
+      path.resolve(__dirname
+      + '/../node_modules/activity-streams/browser/activity-streams.js'));
+  }
+}, {
+  meta: {
+    method: 'GET',
     path: '/activity-streams.min.js'
   },
   route: (req, res) => {
