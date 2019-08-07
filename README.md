@@ -30,7 +30,7 @@ See the [Sockethub wiki](https://github.com/sockethub/sockethub/wiki) for docume
 
 We use ActivityStreams to map the various actions of a platform to a set of AS '@type's which identify the underlying action. For example, using the XMPP platform, a friend request/accept cycle would use the activity stream types 'request-friend', 'remove-friend', 'make-friend'.
 
-Below is a list of platform contexts we're currently working on and their types, both the completed and not yet implemented ones. They are all implemented in the sockethub platform (each have their own repository) and can be enabled/disabled in the config.json.
+Below is a list of platform contexts we're currently working on and their types, both the completed and not yet implemented ones. They are all implemented in Sockethub platforms (each in their own repository) and can be enabled/disabled in the `config.json`.
 
 ## Implemented
 
