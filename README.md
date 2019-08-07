@@ -14,7 +14,13 @@ Sockethub is a translation layer for web applications to communicate with other 
 
 Using [ActivityStream](http://activitystrea.ms/) (AS) objects to pass messages to and from the web-app, Sockethub acts as a sort of smart web-proxy and can maintain state, connect to sockets or REST enpoints that would otherwise be restricted from an application running in the browser. Originally inspired as a sister project to [RemoteStorage](https://remotestorage.io) and assisting in the development of [unhosted](http://unhosted.org) or [noBackend](http://nobackend.org) applications, Sockethubs functionality can also fit into a more traditional development stack, removing the need for custom code to handle various protocol-specifics at the applicaton layer.
 
-Example uses of sockethub are: writing and receiving messages (SMTP, Facebook, Twitter), instant messaging (XMPP, IRC, MSN, FB Messenger, Hangouts), discovery (WebFinger, RDF(a)). The architecture of Sockethub is extensible and supports easy implementation of additional 'platforms' to carry out tasks.
+Example uses of Sockethub are:
+
+* Writing and receiving messages (SMTP, IMAP, Facebook, Twitter, ...)
+* Instant messaging (XMPP, IRC, MSN, FB Messenger, Hangouts, ...)
+* Discovery (WebFinger, RDF(a), ...)
+
+The architecture of Sockethub is extensible and supports easy implementation of additional 'platforms' to carry out tasks.
 
 # Docs
 
