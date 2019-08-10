@@ -1,10 +1,10 @@
 if (typeof define !== 'function') {
   let define = require('amdefine')(module);
 }
-define(['require', './../lib/middleware'], function (require, Middleware) {
+define(['require', '../src/middleware'], function (require, Middleware) {
   return [
     {
-      desc: 'lib/middleware',
+      desc: 'src/middleware',
       abortOnFail: true,
       beforeEach: function (env, test) {
         env.middleware = new Middleware((...params) => {

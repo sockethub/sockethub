@@ -1,37 +1,37 @@
 /* global __dirname */
-const nconf      = require('nconf'),
-      randToken  = require('rand-token'),
-      Debug      = require('debug'),
-      kue        = require('kue'),
-      Store      = require('secure-store-redis'),
-      activity   = require('activity-streams')(nconf.get('activity-streams:opts'));
+import debug from 'debug';
+import randToken from 'rand-token';
+import kue from 'kue';
+import Store from 'secure-store-redis';
+import ActivityStreams from 'activity-streams';
 
-const crypto          = require('./crypto'),
-      init            = require('./bootstrap/init'),
-      Middleware      = require('./middleware'),
-      resourceManager = require('./resource-manager'),
-      services        = require('./services'),
-      SR              = require('./shared-resources'),
-      validate        = require('./validate'),
-      Worker          = require('./worker');
+import config from './config';
+import crypto from './crypto';
+import init from './bootstrap/init';
+import Middleware from './middleware';
+import resourceManager from './resource-manager';
+import services from './services';
+import validate from './validate';
+import Worker from './worker';
+import SharedResources from "./shared-resources";
 
-const debug        = Debug('sockethub:core  '),
-      parentId     = randToken.generate(16),
+const log           = debug('sockethub:core  '),
+      parentId      = randToken.generate(16),
       parentSecret1 = randToken.generate(16),
-      parentSecret2 = randToken.generate(16);
-
+      parentSecret2 = randToken.generate(16),
+      activity      = ActivityStreams(config.get('activity-streams:opts'));
 
 function Sockethub() {
   this.counter   = 0;
   this.platforms = init.platforms;
   this.status = false;
 
-  debug('sockethub session id: ' + parentId);
+  log('sockethub session id: ' + parentId);
 }
 
 Sockethub.prototype.boot = function () {
   if (this.status) {
-    return debug('Sockethub.boot() called more than once');
+    return log('Sockethub.boot() called more than once');
   } else { this.status = true; }
 
   resourceManager.start();
@@ -39,7 +39,7 @@ Sockethub.prototype.boot = function () {
   // start internal and external services
   this.queue = services.startQueue(parentId);
   this.io = services.startExternal();
-  debug('registering handlers');
+  log('registering handlers');
   this.queue.on('job complete', this.__processJobResult('completed'));
   this.queue.on('job failed', this.__processJobResult('failed'));
   this.io.on('connection', this.__handleNewConnection.bind(this));
@@ -47,20 +47,20 @@ Sockethub.prototype.boot = function () {
 
 // send message to every connected socket associated with the given platform instance.
 Sockethub.prototype.__broadcastToSharedPeers = function (origSocket, msg) {
-  debug(`broadcasting called, originating socket ${origSocket}`);
+  log(`broadcasting called, originating socket ${origSocket}`);
   const platformInstance = this.__getPlatformInstance(msg);
   if (! platformInstance) { return; }
   for (let socketId of platformInstance.sockets.values()) {
     if (socketId !== origSocket) {
-      debug(`broadcasting message to ${socketId}`);
+      log(`broadcasting message to ${socketId}`);
       this.io.sockets.connected[socketId].emit('message', msg);
     }
   }
 };
 
-Sockethub.prototype.__getMiddleware = function (socket, sessionDebug) {
+Sockethub.prototype.__getMiddleware = function (socket, sessionLog) {
   return new Middleware((err, type, msg) => {
-    sessionDebug('validation failed for ' + type + '. ' + err, msg);
+    sessionLog('validation failed for ' + type + '. ' + err, msg);
     // called with validation fails
     if (typeof msg !== 'object') {
       msg = {};
@@ -73,9 +73,9 @@ Sockethub.prototype.__getMiddleware = function (socket, sessionDebug) {
 
 Sockethub.prototype.__getPlatformInstance = function (msg) {
   if ((typeof msg.actor !== 'object') || (! msg.actor['@id'])) { return; }
-  const platformInstanceId = SR.platformMappings.get(msg.actor['@id']);
+  const platformInstanceId = SharedResources.platformMappings.get(msg.actor['@id']);
   if (! platformInstanceId) { return false; }
-  const platformInstance = SR.platformInstances.get(platformInstanceId);
+  const platformInstance = SharedResources.platformInstances.get(platformInstanceId);
   if (! platformInstance) { return false; }
   return platformInstance;
 };
@@ -84,7 +84,7 @@ Sockethub.prototype.__getStore = function (socket, workerSecret) {
   return new Store({
     namespace: 'sockethub:' + parentId + ':worker:' + socket.id + ':store',
     secret: parentSecret1 + workerSecret,
-    redis: nconf.get('redis')
+    redis: config.get('redis')
   });
 };
 
@@ -99,79 +99,79 @@ Sockethub.prototype.__getWorker = function (socket, workerSecret) {
   });
 };
 
-Sockethub.prototype.__handlerActivityObject = function (sessionDebug) {
+Sockethub.prototype.__handlerActivityObject = function (sessionLog) {
   return (obj) => {
-    sessionDebug('processing activity-object');
+    sessionLog('processing activity-object');
     activity.Object.create(obj);
   };
 };
 
 // init worker, store and register listeners for a new client connection
 Sockethub.prototype.__handleNewConnection = function (socket) {
-  const sessionDebug = Debug('sockethub:core  :' + socket.id), // session-specific debug messages
+  const sessionLog = debug('sockethub:core  :' + socket.id), // session-specific debug messages
         workerSecret = randToken.generate(16),
         worker       = this.__getWorker(socket, workerSecret),
         store        = this.__getStore(socket, workerSecret), // store instance is session-specific
-        middleware   = this.__getMiddleware(socket, sessionDebug);
+        middleware   = this.__getMiddleware(socket, sessionLog);
 
-  sessionDebug('connected to socket.io channel ' + socket.id);
+  sessionLog('connected to socket.io channel ' + socket.id);
 
-  SR.socketConnections.set(socket.id, socket);
+  SharedResources.socketConnections.set(socket.id, socket);
   worker.boot();
   worker.onFailure((err) => {
-    sessionDebug('worker ' + socket.id + ' failure detected ' + err);
-    delete SR.socketConnections.delete(socket.id);
-    sessionDebug('disconnecting client socket');
+    sessionLog('worker ' + socket.id + ' failure detected ' + err);
+    SharedResources.socketConnections.delete(socket.id);
+    sessionLog('disconnecting client socket');
     socket.disconnect(err);
   });
 
   socket.on('disconnect', () => {
-    sessionDebug('disconnect received from client.');
+    sessionLog('disconnect received from client.');
     worker.shutdown();
-    delete SR.socketConnections.delete(socket.id);
+    SharedResources.socketConnections.delete(socket.id);
   });
 
   socket.on(
     'credentials',
     middleware.chain(
-      validate('credentials'), this.__handlerStoreCredentials(store, sessionDebug))
+      validate('credentials'), this.__handlerStoreCredentials(store, sessionLog))
   );
 
   socket.on(
     'message',
-    middleware.chain(validate('message'), this.__handlerQueueJob(socket, sessionDebug))
+    middleware.chain(validate('message'), this.__handlerQueueJob(socket, sessionLog))
   );
 
   // when new activity objects are created on the client side, an event is
   // fired and we receive a copy on the server side.
   socket.on(
     'activity-object',
-    middleware.chain(validate('activity-object'), this.__handlerActivityObject(sessionDebug))
+    middleware.chain(validate('activity-object'), this.__handlerActivityObject(sessionLog))
   );
 };
 
-Sockethub.prototype.__handlerQueueJob = function (socket, sessionDebug) {
+Sockethub.prototype.__handlerQueueJob = function (socket, sessionLog) {
   return (msg) => {
-    sessionDebug('queueing incoming job ' + msg.context + ' for socket ' + socket.id);
+    sessionLog('queueing incoming job ' + msg.context + ' for socket ' + socket.id);
     const job = this.queue.create(socket.id, {
       title: socket.id + '-' + msg.context + '-' + (msg['@id']) ? msg['@id'] : this.counter++,
       socket: socket.id,
       msg: crypto.encrypt(msg, parentSecret1 + parentSecret2)
     }).save((err) => {
       if (err) {
-        sessionDebug('error adding job [' + job.id + '] to queue: ', err);
+        sessionLog('error adding job [' + job.id + '] to queue: ', err);
       }
     });
   };
 };
 
-Sockethub.prototype.__handlerStoreCredentials = function (store, sessionDebug) {
+Sockethub.prototype.__handlerStoreCredentials = function (store, sessionLog) {
   return (creds) => {
     store.save(creds.actor['@id'], creds, (err) => {
       if (err) {
-        sessionDebug('error saving credentials to store ' + err);
+        sessionLog('error saving credentials to store ' + err);
       } else {
-        sessionDebug('credentials encrypted and saved with key: ' + creds.actor['@id']);
+        sessionLog('credentials encrypted and saved with key: ' + creds.actor['@id']);
       }
     });
   };
@@ -182,7 +182,7 @@ Sockethub.prototype.__processJobResult = function (type) {
   return (id, result) => {
     kue.Job.get(id, (err, job) => {
       if (err) {
-        return debug(`error retrieving (${type}) job #${id}`);
+        return log(`error retrieving (${type}) job #${id}`);
       }
 
       if (this.io.sockets.connected[job.data.socket]) {
@@ -198,15 +198,15 @@ Sockethub.prototype.__processJobResult = function (type) {
             job.data.msg.error = result;
           }
         }
-        debug(`job #${job.id} on socket ${job.data.socket} ${type}`);
+        log(`job #${job.id} on socket ${job.data.socket} ${type}`);
         this.io.sockets.connected[job.data.socket].emit(type, job.data.msg);
       } else {
-        debug(`received (${type}) job for non-existent socket ${job.data.socket}`);
+        log(`received (${type}) job for non-existent socket ${job.data.socket}`);
       }
 
-      job.remove((err) => {
+      job.remove((err: string) => {
         if (err) {
-          debug(`error removing (${type}) job #${job.id}, ${err}`);
+          log(`error removing (${type}) job #${job.id}, ${err}`);
         }
       });
     });

@@ -1,7 +1,7 @@
 if (typeof define !== 'function') {
   let define = require('amdefine')(module);
 }
-define(['require', './../lib/validate', 'activity-streams'], function (require, validate, AS) {
+define(['require', '../src/validate', 'activity-streams'], function (require, validate, AS) {
 
   let activity = new AS();
   let errMsg = '';

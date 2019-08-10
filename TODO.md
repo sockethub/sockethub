@@ -10,10 +10,9 @@
   [ ] worker
   [ ] platforms
   [ ] connection manager
-  [ ] sockethub.js
+  [ ] sockethub.ts
 [x] reconnects need to resend credentials and activity-objects
-[ ] `Post` and `Share` removed in favor of the more generally applicable `Create` or `Add`
-[ ] secrets
+[x] secrets
 
 ## notes
 - if an `objectType:'credentials'` comes in as a 'message' event, how should
@@ -21,7 +20,7 @@
 [x] passing reason during job failure
 - cant use 'error' name as emit event?
 [ ] figure out a way to allow for special objects from platforms, without ignoring failed activity stream schema checks
-[ ] - investigate socket-relay idea. https://github.com/ircanywhere/irc-factory/blob/master/lib/api.js#L198-L201
+[ ] investigate socket-relay idea. https://github.com/ircanywhere/irc-factory/blob/master/lib/api.js#L198-L201
 
 ### Workers
 Should workers spawned for each session? or one per platform? or both? 
@@ -37,21 +36,3 @@ It kinda makes sense that there are no workers running by default, and when a ne
  - if 100 sessions are connected, that's 100 worker objects operating
  - if the IRC platform worker crashes, all people using sockethub loose their IRC conenctions.
  - if a different platform worker crashes, the IRC sessions are not effected
- 
-
-# Dev Notes
-
-Goals of this branch are:
-
-* ActivityStreams 2.0 compliance
-* Improved modularity between components
-* Use of existing libraries to reduce total code size (express, socket.io)
-* Re-approach the managing of platforms:
-    - memory footprint
-    - memory protection
-    - restarting platforms without effecting the rest of the application
-    - shared application state
-    - detecting unresponsive platform sessions efficiently
-    - communicating events and errors to client clearly
-
-

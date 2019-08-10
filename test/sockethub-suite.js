@@ -1,10 +1,10 @@
 if (typeof define !== 'function') {
   let define = require('amdefine')(module);
 }
-define(['require', './../lib/sockethub'], function (require, Sockethub) {
+define(['require', '../src/sockethub'], function (require, Sockethub) {
   return [
     {
-      desc: 'lib/sockethub',
+      desc: 'src/sockethub',
       abortOnFail: true,
       beforeEach: function () {
         this.env.sockethub = new Sockethub();

@@ -1,10 +1,10 @@
 if (typeof define !== 'function') {
   let define = require('amdefine')(module);
 }
-define(['require', './../lib/shared-resources'], function (require, SR) {
+define(['require', '../src/shared-resources'], function (require, SR) {
   return [
     {
-      desc: 'lib/shared-resources',
+      desc: 'src/shared-resources',
       abortOnFail: true,
       tests: [
         {

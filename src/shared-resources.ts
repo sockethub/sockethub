@@ -1,4 +1,4 @@
-const SR = {
+const SharedResources = {
   // collection of platform instances, stored by `uid`
   platformInstances: (() => new Map())(),
   // collection of socket instances, stored by `socket.id`
@@ -7,9 +7,9 @@ const SR = {
   platformMappings: (() => new Map())(),
   helpers: {
     removePlatform: function (platformInstance) {
-      SR.platformMappings.delete(platformInstance.actor['@id']);
-      SR.platformInstances.delete(platformInstance.id);
+      SharedResources.platformMappings.delete(platformInstance.actor['@id']);
+      SharedResources.platformInstances.delete(platformInstance.id);
     }
   }
 };
-module.exports = SR;
+export default SharedResources;

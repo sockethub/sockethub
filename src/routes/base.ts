@@ -1,6 +1,7 @@
-const path   = require('path'),
-      nconf  = require('nconf'),
-      routes = [];
+import path from 'path';
+
+import config from './../config';
+let routes = [];
 
 routes.push({
   meta: {
@@ -9,7 +10,7 @@ routes.push({
   },
   route: (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.sendFile(path.resolve(__dirname + '/../lib/client.js'));
+    res.sendFile(path.resolve(__dirname + '/../../src/js/client.js'));
   }
 }, {
   meta: {
@@ -18,7 +19,7 @@ routes.push({
   },
   route: (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.sendFile(path.resolve(__dirname + '/../node_modules/socket.io-client/dist/socket.io.js'));
+    res.sendFile(path.resolve(__dirname + '/../../node_modules/socket.io-client/dist/socket.io.js'));
   }
 }, {
   meta: {
@@ -28,7 +29,7 @@ routes.push({
   route: (req, res) => {
     res.sendFile(
       path.resolve(__dirname
-      + '/../node_modules/activity-streams/browser/activity-streams.js'));
+      + '/../../node_modules/activity-streams/browser/activity-streams.js'));
   }
 }, {
   meta: {
@@ -38,11 +39,11 @@ routes.push({
   route: (req, res) => {
     res.sendFile(
       path.resolve(__dirname
-      + '/../node_modules/activity-streams/browser/activity-streams.min.js'));
+      + '/../../node_modules/activity-streams/browser/activity-streams.min.js'));
   }
 });
 
-if (nconf.get('examples:enabled')) {
+if (config.get('examples:enabled')) {
   routes.push({
     meta: {
       method: 'GET',
@@ -57,7 +58,7 @@ if (nconf.get('examples:enabled')) {
       path: '/jquery.js'
     },
     route: (req, res) => {
-      res.sendFile(path.resolve(__dirname + '/../node_modules/jquery/dist/jquery.min.js'));
+      res.sendFile(path.resolve(__dirname + '/../../node_modules/jquery/dist/jquery.min.js'));
     }
   }, {
     meta: {
@@ -65,7 +66,7 @@ if (nconf.get('examples:enabled')) {
       path: '/examples/shared.js'
     },
     route: (req, res) => {
-      res.sendFile(path.resolve(__dirname + '/../views/examples/shared.js'));
+      res.sendFile(path.resolve(__dirname + '/../examples/examples/shared.js'));
     }
   }, {
     meta: {
@@ -73,7 +74,7 @@ if (nconf.get('examples:enabled')) {
       path: '/jquery.min.map'
     },
     route: (req, res) => {
-      res.sendFile(path.resolve(__dirname + '/../node_modules/jquery/dist/jquery.min.map'));
+      res.sendFile(path.resolve(__dirname + '/../../node_modules/jquery/dist/jquery.min.map'));
     }
   });
 }
@@ -81,11 +82,14 @@ if (nconf.get('examples:enabled')) {
 /**
  * Setup
  */
-exports.setup = (app) => {
-  routes.forEach((route) => {
-    app[route.meta.method.toLowerCase()](
-      route.meta.path,
-      route.route
-    );
-  });
+const routeBase = {
+  setup: function (app) {
+    routes.forEach((route) => {
+      app[route.meta.method.toLowerCase()](
+          route.meta.path,
+          route.route
+      );
+    });
+  }
 };
+export default routeBase;

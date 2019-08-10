@@ -4,10 +4,10 @@ if (typeof define !== 'function') {
 define(['require'], function (require) {
   return [
     {
-      desc: 'lib/bootstrap/init',
+      desc: 'src/bootstrap/init',
       abortOnFail: true,
       setup: function (env, test) {
-        env.init = require('./../lib/bootstrap/init');
+        env.init = require('../src/bootstrap/init');
         test.assertType(env.init, 'object');
       },
       tests: [

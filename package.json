@@ -32,6 +32,7 @@
   },
   "homepage": "http://github.com/sockethub/sockethub",
   "dependencies": {
+    "@types/node": "^12.7.1",
     "activity-streams": "^4.1.0",
     "body-parser": "^1.19.0",
     "c8": "^5.0.1",
@@ -51,17 +52,20 @@
     "sockethub-platform-irc": "^3.3.1",
     "sockethub-platform-xmpp": "^2.1.0",
     "sockethub-schemas": "^2.0.0",
+    "source-map-loader": "^0.2.4",
     "supports-color": "^7.0.0",
     "tv4": "^1.3.0",
     "urijs": "^1.19.1"
   },
   "scripts": {
     "test": "jaribu",
-    "start": "DEBUG=* ./bin/sockethub",
+    "start": "tsc && PROD='dist' DEBUG=* ./bin/sockethub",
     "compliance": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\" bin/sockethub && c8 jaribu",
     "coverage": "c8 jaribu",
     "lint": "eslint --ignore-pattern \"coverage\" \"**/*.js\" bin/sockethub",
-    "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\" bin/sockethub"
+    "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\" bin/sockethub",
+    "tsc": "tsc",
+    "dev": "ts-node --pretty --skip-ignore -T ./bin/sockethub"
   },
   "engines": {
     "node": ">= 5.0.0"
@@ -69,6 +73,8 @@
   "devDependencies": {
     "eslint": "^6.1.0",
     "eslint-cli": "^1.1.1",
-    "jaribu": "^2.2.2"
+    "jaribu": "^2.2.2",
+    "ts-node": "^8.3.0",
+    "typescript": "^3.5.3"
   }
 }

@@ -54,4 +54,4 @@ Middleware.prototype.chain = function (...funcs) {
   };
 };
 
-module.exports = Middleware;
+export default Middleware;
