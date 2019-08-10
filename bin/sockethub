@@ -6,7 +6,11 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-const Sockethub = require('../src/sockethub');
+let srcDir = 'src'
+if (process.env.PROD) {
+  srcDir = 'dist';
+}
+const Sockethub = require(`../${srcDir}/sockethub`);
 
 // var debugScope = process.env.DEBUG || nconf.get('debug');
 // var genConfig  = nconf.get('gen-config');    // TODO

@@ -59,7 +59,7 @@
   },
   "scripts": {
     "test": "jaribu",
-    "start": "tsc && PROD='dist' DEBUG=* ./bin/sockethub",
+    "start": "tsc && cp src/defaults.json dist/defaults.json && PROD=1 DEBUG=sockethub* ./bin/sockethub",
     "compliance": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\" bin/sockethub && c8 jaribu",
     "coverage": "c8 jaribu",
     "lint": "eslint --ignore-pattern \"coverage\" \"**/*.js\" bin/sockethub",
