@@ -1,6 +1,4 @@
-import tv4 from 'tv4';
 import debug from 'debug';
-import * as SockethubSchemas from 'sockethub-schemas';
 
 import config from '../config';
 import platformLoad from './platforms';
@@ -11,11 +9,6 @@ log('running init routines');
 const packageJSON = require('./../../package.json');
 const platforms = platformLoad(Object.keys(packageJSON.dependencies));
 log('loaded platforms');
-
-// load sockethub-activity-stream schema and register it with tv4
-tv4.addSchema(SockethubSchemas.ActivityStream.id, SockethubSchemas.ActivityStream);
-// load sockethub-activity-object schema and register it with tv4
-tv4.addSchema(SockethubSchemas.ActivityObject.id, SockethubSchemas.ActivityObject);
 
 if (config.get('help')) {
   console.log(packageJSON.name + ' ' + packageJSON.version);
