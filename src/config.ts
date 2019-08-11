@@ -33,7 +33,8 @@ function Config() {
     'kue_url': {
       alias: 'kue.url'
     },
-  }).env();
+  });
+  nconf.env();
 
   // get value of flags defined by any command-line params
   const examples = nconf.get('examples');
@@ -45,12 +46,12 @@ function Config() {
   nconf.set('examples:enabled', (examples ? true: nconf.get('examples:enabled')));
 
   // load defaults
-  const defaults = require(__dirname + '/defaults.json');
+  const defaults: object = require(__dirname + '/defaults.json');
   nconf.defaults(defaults);
 
   nconf.required(['platforms:whitelist', 'platforms:blacklist']);
 
-  function defaultEnvParams(host, port, prop) {
+  function defaultEnvParams(host: string, port: string|number, prop: string) {
     nconf.set(prop + ':host', host);
     nconf.set(prop + ':port', port);
   }
@@ -75,11 +76,11 @@ function Config() {
   }
 }
 
-Config.prototype.get = function (key) {
+Config.prototype.get = function (key: string): any {
   return nconf.get(key);
 };
 
 if (! config) {
-  config = new Config()
+  config = new Config();
 }
 export default config;
