@@ -78,9 +78,9 @@
     "coverage": "c8 jaribu",
     "lint": "eslint --ignore-pattern \"coverage\" \"src/*.js\" bin/sockethub",
     "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\" bin/sockethub",
-    "tsc": "tsc",
+    "tsc": "tsc -p src",
     "dev": "ts-node --pretty --skip-ignore -T ./bin/sockethub",
-    "build": "tsc && cp src/defaults.json dist/defaults.json"
+    "build": "tsc -p src && cp src/defaults.json dist/defaults.json"
   },
   "engines": {
     "node": ">= 12.0.0"
