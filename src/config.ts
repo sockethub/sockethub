@@ -75,7 +75,7 @@ class Config {
       nconf.clear('redis:port');
     }
   }
-  static get(key: string): any {
+  get(key: string): any {
     return nconf.get(key);
   }
 }
