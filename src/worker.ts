@@ -1,13 +1,13 @@
-const nconf             = require('nconf'),
-      Debug             = require('debug'),
-      domain            = require('domain'),
-      randToken         = require('rand-token'),
-      Store             = require('secure-store-redis'),
-      hash              = require('object-hash');
+import debug from 'debug';
+import domain from 'domain';
+import randToken from 'rand-token';
+import Store from 'secure-store-redis';
+import hash from 'object-hash';
 
-const crypto     = require('./crypto'),
-      services   = require('./services'),
-      SR         = require('./shared-resources');
+import crypto from './crypto';
+import services from './services';
+import SharedResources from './shared-resources';
+import config from './config';
 
 let parentSecret1, parentSecret2, workerSecret; // inaccessible outside this file
 
@@ -17,7 +17,7 @@ function Worker(cfg) {
   workerSecret     = cfg.workerSecret;
   this.socket      = cfg.socket; // websocket to client
   this.parentId    = cfg.parentId; // parent instance identifier
-  this.debug       = Debug('sockethub:worker:' + this.socket.id);
+  this.log         = debug('sockethub:worker:' + this.socket.id);
   this.queue       = services.startQueue(this.parentId);
   this.__onFailure = function () {};
 
@@ -35,14 +35,14 @@ function Worker(cfg) {
 }
 
 Worker.prototype.boot = function () {
-  this.debug('listening for jobs');
+  this.log('listening for jobs');
   // each job comes in on this handler, with the job object and a `done` callback
   this.queue.process(this.socket.id, (job, done) => {
     job.data.msg = crypto.decrypt(job.data.msg, parentSecret1 + parentSecret2);
-    this.debug(`got job #${job.id}: ${job.data.msg['@type']}`);
+    this.log(`got job #${job.id}: ${job.data.msg['@type']}`);
 
-    let identifier = SR.platformMappings.get(job.data.msg.actor['@id']);
-    const platformInstance = identifier ? SR.platformInstances.get(identifier) :
+    let identifier = SharedResources.platformMappings.get(job.data.msg.actor['@id']);
+    const platformInstance = identifier ? SharedResources.platformInstances.get(identifier) :
       this.__getPlatformInstance(job, randToken.generate(16));
 
     // try to get credentials for this specific secret + socket.id
@@ -73,7 +73,7 @@ Worker.prototype.executeJob = function (job, platformInstance, credentials, done
   d.on('error', (err) => {
     if (_caughtError) { return; }
     else { _caughtError = true; }
-    this.debug('caught platform domain error: ' + err.stack);
+    this.log('caught platform domain error: ' + err.stack);
     _cleanupDomain(err.toString());
   });
 
@@ -85,7 +85,7 @@ Worker.prototype.executeJob = function (job, platformInstance, credentials, done
     setTimeout(() => {
       if ((! _callbackCalled) && (! _caughtError)) {
         const errorMessage = `timeout reached for ${job.data.msg['@type']} job`;
-        this.debug(errorMessage);
+        this.log(errorMessage);
         _cleanupDomain(errorMessage);
       }
     }, 60000);
@@ -115,11 +115,11 @@ Worker.prototype.getCredentials = function (platformInstance, cb) {
 Worker.prototype.generateSendFunction = function (identifier) {
   return (msg) => {
     if (typeof msg !== 'object') {
-      return this.debug('sendToClient called with no message: ', msg);
+      return this.log('sendToClient called with no message: ', msg);
     }
-    const platformInstance = SR.platformInstances.get(identifier);
+    const platformInstance = SharedResources.platformInstances.get(identifier);
     if (! platformInstance) {
-      return this.debug('unable to propagate message to user, platform instance cannot be found');
+      return this.log('unable to propagate message to user, platform instance cannot be found');
     }
 
     platformInstance.sockets.forEach(this.__handlerSendMessage(platformInstance, msg));
@@ -137,9 +137,9 @@ Worker.prototype.generateUpdateCredentialsFunction = function (identifier) {
       return done('update credentials called with no new credentials.object provided');
     }
 
-    const platformInstance = SR.platformInstances.get(identifier);
+    const platformInstance = SharedResources.platformInstances.get(identifier);
     if (! platformInstance) {
-      return cb('unable to update credentials, platform instance cannot be found');
+      return done('unable to update credentials, platform instance cannot be found');
     }
 
     this.getCredentials(
@@ -153,22 +153,22 @@ Worker.prototype.onFailure = function (cb) {
 };
 
 Worker.prototype.shutdown = function () {
-  this.debug('shutting down');
-  SR.platformInstances.forEach((platformInstance) => {
+  this.log('shutting down');
+  SharedResources.platformInstances.forEach((platformInstance) => {
     platformInstance.sockets.delete(this.socket.id);
   });
-  SR.socketConnections.delete(this.socket.id);
+  SharedResources.socketConnections.delete(this.socket.id);
 };
 
 Worker.prototype.__getPlatformInstance = function (job, identifier) {
-  this.debug(
+  this.log(
     `creating ${job.data.msg.context} platform instance for ${job.data.msg.actor['@id']}`);
   return {
     id: identifier,
     name: job.data.msg.context,
     actor: job.data.msg.actor,
     module: new this.Platforms[job.data.msg.context]({
-      debug: Debug(`sockethub:platform:${job.data.msg.context}:${identifier}`),
+      log: debug(`sockethub:platform:${job.data.msg.context}:${identifier}`),
       sendToClient: this.generateSendFunction(identifier),
       updateCredentials: this.generateUpdateCredentialsFunction(identifier)
     }),
@@ -182,13 +182,13 @@ Worker.prototype.__getStore = function (secret) {
   return new Store({
     namespace: 'sockethub:' + this.parentId + ':worker:' + this.socket.id + ':store',
     secret: secret,
-    redis: nconf.get('redis')
+    redis: config.get('redis')
   });
 };
 
 Worker.prototype.__handlerCleanupDomain = function (platformInstance, d, done) {
   return (errorString) => {
-    this.debug('sending connection failure message to client: ' + errorString);
+    this.log('sending connection failure message to client: ' + errorString);
     platformInstance.module.sendToClient({
       context: platformInstance.name,
       '@type': 'connect',
@@ -200,8 +200,8 @@ Worker.prototype.__handlerCleanupDomain = function (platformInstance, d, done) {
     });
 
     platformInstance.module.cleanup(() => {
-      this.debug('disposing of domain');
-      SR.helpers.removePlatform(platformInstance);
+      this.log('disposing of domain');
+      SharedResources.helpers.removePlatform(platformInstance);
       d.exit();
       this.__onFailure('platform shutdown');
       done(errorString);
@@ -211,14 +211,14 @@ Worker.prototype.__handlerCleanupDomain = function (platformInstance, d, done) {
 
 Worker.prototype.__handlerSendMessage = function (platformInstance, msg) {
   return (socketId) => {
-    const socket = SR.socketConnections.get(socketId);
+    const socket = SharedResources.socketConnections.get(socketId);
     if (socket) { // send message
       msg.context = platformInstance.name;
-      this.debug(`sending message to socket ${socketId}`);
+      this.log(`sending message to socket ${socketId}`);
       socket.emit('message', msg);
     } else { // stale socket reference
-      this.debug(`deleting stale socket reference ${socketId}`);
-      SR.socketConnections.delete(socketId);
+      this.log(`deleting stale socket reference ${socketId}`);
+      SharedResources.socketConnections.delete(socketId);
       platformInstance.sockets.delete(socketId);
       if (this.socket.id === socketId) {
         this.shutdown();
@@ -240,12 +240,12 @@ Worker.prototype.__handlerUpdateCredentials = function (platformInstance, newNam
 
     platformInstance.actor = credentials.actor;
     platformInstance.credentialsHash = hash(credentials.object);
-    platformInstance.debug =
-      Debug(`sockethub:worker:${platformInstance.name}:module:${newActor}`);
+    platformInstance.log =
+      debug(`sockethub:worker:${platformInstance.name}:module:${newActor}`);
 
-    SR.platformMappings.set(platformInstance.actor['@id'], platformInstance.id);
-    SR.platformInstances.set(platformInstance.id, platformInstance);
-    this.debug('encrypting credentials for ' + newActor);
+    SharedResources.platformMappings.set(platformInstance.actor['@id'], platformInstance.id);
+    SharedResources.platformInstances.set(platformInstance.id, platformInstance);
+    this.log('encrypting credentials for ' + newActor);
     this.store.save(newActor, credentials, done);
   };
 };
@@ -253,10 +253,11 @@ Worker.prototype.__handlerUpdateCredentials = function (platformInstance, newNam
 // persists platform instance to be preserved after a single request (used for chat apps which
 // have to maintain connections after completed single jobs.
 Worker.prototype.__persistPlatformInstance = function (platformInstance) {
-  this.debug(`persisting platform instance ${platformInstance.id}`);
+  this.log(`persisting platform instance ${platformInstance.id}`);
   platformInstance.sockets.add(this.socket.id);
-  SR.platformMappings.set(platformInstance.actor['@id'], platformInstance.id);
-  SR.platformInstances.set(platformInstance.id, platformInstance); // add or update record
+  SharedResources.platformMappings.set(platformInstance.actor['@id'], platformInstance.id);
+  // add or update record
+  SharedResources.platformInstances.set(platformInstance.id, platformInstance);
 };
 
-module.exports = Worker;
+export default  Worker;

@@ -4,9 +4,11 @@
     let ASFactory = require('activity-streams');
     module.exports = (global.document) ? factory(global, ASFactory) : factory({}, ASFactory);
   } else {
+    // @ts-ignore
     if (! global.ASFactory) {
       throw new Error('sockethub-client.js depends on the activity-streams module.');
     }
+    // @ts-ignore
     factory(global, global.ASFactory);
   }
 

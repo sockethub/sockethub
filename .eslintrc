@@ -1,4 +1,5 @@
 {
+    "parser": "@typescript-eslint/parser",
     "parserOptions": {
         "ecmaVersion": 6,
         "sourceType": "module",
@@ -23,7 +24,7 @@
         "no-eval": 2,
         "no-tabs": 2,
         "no-var": 2,
-        "quotes": [2, "single", { "allowTemplateLiterals": true }],
+//        "quotes": [2, "single", { "allowTemplateLiterals": true }],
         "semi": 2,
         "space-before-blocks": 2,
         "space-before-function-paren": [2, {"anonymous": "always", "named": "never"}]

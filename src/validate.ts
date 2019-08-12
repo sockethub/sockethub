@@ -1,13 +1,24 @@
 /**
  * responsible for handling the validation and expansion (when applicable) of all incoming objects
  */
-const init     = require('./bootstrap/init'),
-      tv4      = require('tv4'),
-      nconf    = require('nconf'),
-      Debug    = require('debug'),
-      URI      = require('urijs'),
-      activity = require('activity-streams')(nconf.get('activity-streams:opts')),
-      debug    = Debug('sockethub:validate');
+import tv4 from 'tv4';
+import debug from 'debug';
+import URI from 'urijs';
+import ActivityStreams from 'activity-streams';
+import * as SockethubSchemas from 'sockethub-schemas';
+
+import init from './bootstrap/init';
+import config from './config';
+
+const activity = ActivityStreams(config.get('activity-streams:opts')),
+      log = debug('sockethub:validate');
+
+// load sockethub-activity-stream schema and register it with tv4
+// http://sockethub.org/schemas/v0/activity-stream#
+tv4.addSchema(SockethubSchemas.ActivityStream.id, SockethubSchemas.ActivityStream);
+// load sockethub-activity-object schema and register it with tv4
+// http://sockethub.org/schemas/v0/activity-object#
+tv4.addSchema(SockethubSchemas.ActivityObject.id, SockethubSchemas.ActivityObject);
 
 // educated guess on what the displayName is, if it's not defined
 // since we know the @id is a URI, we prioritize by username, then fragment (no case yet for path)
@@ -77,11 +88,13 @@ function processActivityStream(msg, error, next) {
 function processCredentials(msg, error, next) {
   msg.actor = expandProp('actor', msg.actor);
   msg.target = expandProp('target', msg.target);
-  if (! tv4.getSchema(`http://sockethub.org/schemas/v0/context/${msg.context}/credentials`)) {
+  let credentialsSchema = tv4.getSchema(
+    `http://sockethub.org/schemas/v0/context/${msg.context}/credentials`);
+  if (! credentialsSchema) {
     return error(`no credentials schema found for ${msg.context} context`);
   }
 
-  if (! validateCredentials(msg)) {
+  if (! validateCredentials(msg, credentialsSchema)) {
     return error(
       `credentials schema validation failed: ${tv4.error.dataPath} = ${tv4.error.message}`);
   }
@@ -90,18 +103,17 @@ function processCredentials(msg, error, next) {
 }
 
 function validateActivityObject(msg) {
-  return tv4.validate({ object: msg }, 'http://sockethub.org/schemas/v0/activity-object#');
+  return tv4.validate({ object: msg }, SockethubSchemas.ActivityObject);
 }
 
-function validateCredentials(msg) {
-  return tv4.validate(
-    msg, `http://sockethub.org/schemas/v0/context/${msg.context}/credentials`);
+function validateCredentials(msg, schema) {
+  return tv4.validate(msg, schema);
 }
 
 function validateActivityStream(msg) {
   // TODO figure out a way to allow for special objects from platforms, without
   // ignoring failed activity stream schema checks
-  if (! tv4.validate(msg, 'http://sockethub.org/schemas/v0/activity-stream#')) {
+  if (! tv4.validate(msg, SockethubSchemas.ActivityStream)) {
     return tv4.getSchema(`http://sockethub.org/schemas/v0/context/${msg.context}/messages`);
   }
   return true;
@@ -109,10 +121,10 @@ function validateActivityStream(msg) {
 
 // called when registered with the middleware function, define the type of validation
 // that will be called when the middleware eventually does.
-module.exports = function validate(type) {
+export default function validate(type) {
   // called by the middleware with the message and the next (callback) in the chain
   return (next, msg) => {
-    debug('applying schema validation for ' + type);
+    log('applying schema validation for ' + type);
     const error = errorHandler(type, msg, next);
 
     if (! ensureObject(msg)) {

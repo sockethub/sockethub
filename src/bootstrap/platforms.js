@@ -5,12 +5,18 @@
  * platforms, and whitelisting or blacklisting (or neither) based on the
  * config.
  */
-const tv4            = require('tv4'),
-      debug          = require('debug')('sockethub:bootstrap:platforms'),
-      whitelist      = require('nconf').get('platforms:whitelist'),
-      blacklist      = require('nconf').get('platforms:blacklist'),
-      platformSchema = require('sockethub-schemas').platform;
+const tv4     = require('tv4'),
+      debug   = require('debug'),
+      schemas = require('sockethub-schemas');
 
+const config = require('../config').default;
+
+const log = debug('sockethub:bootstrap:platforms');
+
+const whitelist = config.get('platforms:whitelist'),
+      blacklist = config.get('platforms:blacklist');
+
+log('loading platforms');
 
 // checks platform against black and whitelist.
 function platformIsAccepted(platformName) {
@@ -37,27 +43,27 @@ function platformListsSupportedTypes(p) {
     (p.schema.messages.properties['@type'].enum.length > 0));
 }
 
-module.exports = function (moduleList) {
+module.exports = function platformLoad(moduleList) {
   // load platforms from package.json
   const rx = new RegExp('^sockethub-platform-', 'i');
   const platforms = new Map();
-  debug('finding and registering platforms from package list');
+  log('finding and registering platforms from package list');
 
   for (let moduleName of moduleList) {
     if (rx.test(moduleName)) {
       // found a sockethub platform
       const platformName = moduleName.replace(rx, '');
-      debug('registering ' + platformName + ' platform');
+      log('registering ' + platformName + ' platform');
 
       if (platformIsAccepted(platformName)) {
         // try to load platform
         const P = require(moduleName);
         const p = new P();
-        const pjson = require(`./../../node_modules/${moduleName}/package.json`);
+        const packageJson = require(`./../../node_modules/${moduleName}/package.json`);
         let types = [];
 
         // validate schema property
-        if (! tv4.validate(p.schema, platformSchema)) {
+        if (! tv4.validate(p.schema, schemas.platform)) {
           throw new Error(
             `${platformName} platform schema failed to validate: ${tv4.error.message}`);
         } else if (typeof p.config !== 'object') {
@@ -80,7 +86,7 @@ module.exports = function (moduleList) {
         platforms.set(platformName, {
           id: platformName,
           moduleName: moduleName,
-          version: pjson.version,
+          version: packageJson.version,
           '@types': types.join(', ')
         });
       }

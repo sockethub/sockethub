@@ -1,13 +1,13 @@
 if (typeof define !== 'function') {
   let define = require('amdefine')(module);
 }
-define(['require', './../lib/middleware'], function (require, Middleware) {
+define(['require', '../dist/middleware'], function (require, Middleware) {
   return [
     {
-      desc: 'lib/middleware',
+      desc: 'src/middleware',
       abortOnFail: true,
       beforeEach: function (env, test) {
-        env.middleware = new Middleware((...params) => {
+        env.middleware = new Middleware.default((...params) => {
           this.fail(params);
         });
         test.done();
@@ -29,7 +29,7 @@ define(['require', './../lib/middleware'], function (require, Middleware) {
         {
           desc: 'basic 1 input param with error',
           run: function (env, test) {
-            const middleware = new Middleware((err, input) => {
+            const middleware = new Middleware.default((err, input) => {
               test.assertAnd(err, 'incorrect input');
               test.assert(input, 'foobar');
             });

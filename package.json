@@ -5,7 +5,7 @@
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
-  "main": "bin/sockethub",
+  "main": "npm start",
   "preferGlobal": true,
   "keywords": [
     "sockethub",
@@ -32,6 +32,21 @@
   },
   "homepage": "http://github.com/sockethub/sockethub",
   "dependencies": {
+    "@types/body-parser": "^1.17.0",
+    "@types/debug": "^4.1.5",
+    "@types/ejs": "^2.6.3",
+    "@types/eslint": "^4.16.8",
+    "@types/express": "^4.17.0",
+    "@types/jquery": "^3.3.31",
+    "@types/kue": "^0.11.12",
+    "@types/nconf": "^0.10.0",
+    "@types/node": "^12.7.1",
+    "@types/object-hash": "^1.3.0",
+    "@types/socket.io": "^2.1.2",
+    "@types/supports-color": "^5.3.0",
+    "@types/tv4": "^1.2.29",
+    "@types/typescript": "^2.0.0",
+    "@types/urijs": "^1.19.3",
     "activity-streams": "^4.1.0",
     "body-parser": "^1.19.0",
     "c8": "^5.0.1",
@@ -51,24 +66,31 @@
     "sockethub-platform-irc": "^3.3.1",
     "sockethub-platform-xmpp": "^2.1.0",
     "sockethub-schemas": "^2.0.0",
+    "source-map-loader": "^0.2.4",
     "supports-color": "^7.0.0",
     "tv4": "^1.3.0",
     "urijs": "^1.19.1"
   },
   "scripts": {
-    "test": "jaribu",
-    "start": "DEBUG=* ./bin/sockethub",
-    "compliance": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\" bin/sockethub && c8 jaribu",
+    "test": "npm run build && jaribu",
+    "start": "npm run build && PROD=1 DEBUG=sockethub* ./bin/sockethub",
+    "compliance": "npm run build && eslint --ignore-pattern \"coverage/*\" \"**/*.ts\" bin/sockethub && c8 jaribu",
     "coverage": "c8 jaribu",
-    "lint": "eslint --ignore-pattern \"coverage\" \"**/*.js\" bin/sockethub",
-    "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\" bin/sockethub"
+    "lint": "eslint --ignore-pattern \"coverage\" \"src/*.js\" bin/sockethub",
+    "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\" bin/sockethub",
+    "tsc": "tsc -p src",
+    "dev": "ts-node --pretty --skip-ignore -T ./bin/sockethub",
+    "build": "tsc -p src && cp src/defaults.json dist/defaults.json"
   },
   "engines": {
-    "node": ">= 5.0.0"
+    "node": ">= 12.0.0"
   },
   "devDependencies": {
+    "@typescript-eslint/parser": "^1.13.0",
     "eslint": "^6.1.0",
     "eslint-cli": "^1.1.1",
-    "jaribu": "^2.2.2"
+    "jaribu": "^2.2.2",
+    "ts-node": "^8.3.0",
+    "typescript": "^3.5.3"
   }
 }
