@@ -1,8 +1,8 @@
 if (typeof define !== 'function') {
   let define = require('amdefine')(module);
 }
-define(['require', '../src/validate', 'activity-streams'], function (require, validate, AS) {
-
+define(['require', '../dist/validate', 'activity-streams'], function (require, validateLib, AS) {
+  const validate = validateLib.default;
   let activity = new AS();
   let errMsg = '';
   let suites = [];

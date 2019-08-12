@@ -1,7 +1,7 @@
 if (typeof define !== 'function') {
   let define = require('amdefine')(module);
 }
-define(['require', '../src/sockethub'], function (require, Sockethub) {
+define(['require', '../dist/sockethub'], function (require, Sockethub) {
   return [
     {
       desc: 'src/sockethub',

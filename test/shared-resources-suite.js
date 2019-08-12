@@ -1,7 +1,8 @@
 if (typeof define !== 'function') {
   let define = require('amdefine')(module);
 }
-define(['require', '../src/shared-resources'], function (require, SR) {
+define(['require', '../dist/shared-resources'], function (require, SharedResources) {
+  const SR = SharedResources.default;
   return [
     {
       desc: 'src/shared-resources',

@@ -72,14 +72,15 @@
     "urijs": "^1.19.1"
   },
   "scripts": {
-    "test": "jaribu",
-    "start": "tsc && cp src/defaults.json dist/defaults.json && PROD=1 DEBUG=sockethub* ./bin/sockethub",
+    "test": "npm run build && jaribu",
+    "start": "npm run build && PROD=1 DEBUG=sockethub* ./bin/sockethub",
     "compliance": "eslint --ignore-pattern \"coverage/*\" \"**/*.js\" bin/sockethub && c8 jaribu",
     "coverage": "c8 jaribu",
     "lint": "eslint --ignore-pattern \"coverage\" \"**/*.js\" bin/sockethub",
     "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\" bin/sockethub",
     "tsc": "tsc",
-    "dev": "ts-node --pretty --skip-ignore -T ./bin/sockethub"
+    "dev": "ts-node --pretty --skip-ignore -T ./bin/sockethub",
+    "build": "tsc && cp src/defaults.json dist/defaults.json"
   },
   "engines": {
     "node": ">= 12.0.0"
