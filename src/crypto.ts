@@ -15,7 +15,7 @@ class Crypto {
     encrypted = Buffer.concat([encrypted, cipher.final()]);
     return iv.toString('hex') + ':' + encrypted.toString('hex');
   }
-  static decrypt (text: string, secret: string) {
+  static decrypt(text: string, secret: string) {
     let parts = text.split(':');
     const iv = Buffer.from(parts.shift(), 'hex');
     const encryptedText = Buffer.from(parts.join(':'), 'hex');
@@ -25,7 +25,7 @@ class Crypto {
     decrypted = Buffer.concat([decrypted, decipher.final()]);
     return JSON.parse(decrypted.toString());
   }
-};
+}
 
 crypto = crypto ? crypto : new Crypto();
 export default crypto;

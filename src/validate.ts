@@ -88,7 +88,8 @@ function processActivityStream(msg, error, next) {
 function processCredentials(msg, error, next) {
   msg.actor = expandProp('actor', msg.actor);
   msg.target = expandProp('target', msg.target);
-  let credentialsSchema = tv4.getSchema(`http://sockethub.org/schemas/v0/context/${msg.context}/credentials`);
+  let credentialsSchema = tv4.getSchema(
+    `http://sockethub.org/schemas/v0/context/${msg.context}/credentials`);
   if (! credentialsSchema) {
     return error(`no credentials schema found for ${msg.context} context`);
   }

@@ -19,7 +19,8 @@ routes.push({
   },
   route: (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.sendFile(path.resolve(__dirname + '/../../node_modules/socket.io-client/dist/socket.io.js'));
+    res.sendFile(
+      path.resolve(`${__dirname}/../../node_modules/socket.io-client/dist/socket.io.js`));
   }
 }, {
   meta: {
@@ -86,8 +87,8 @@ const routeBase = {
   setup: function (app) {
     routes.forEach((route) => {
       app[route.meta.method.toLowerCase()](
-          route.meta.path,
-          route.route
+        route.meta.path,
+        route.route
       );
     });
   }

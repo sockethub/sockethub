@@ -57,15 +57,15 @@ class Config {
     }
 
     defaultEnvParams(
-        process.env.HOST || nconf.get('service:host'),
-        process.env.PORT || nconf.get('service:port'),
-        'service'
+      process.env.HOST || nconf.get('service:host'),
+      process.env.PORT || nconf.get('service:port'),
+      'service'
     );
 
     defaultEnvParams(
-        process.env.REDIS_HOST || nconf.get('redis:host'),
-        process.env.REDIS_PORT || nconf.get('redis:port'),
-        'redis'
+      process.env.REDIS_HOST || nconf.get('redis:host'),
+      process.env.REDIS_PORT || nconf.get('redis:port'),
+      'redis'
     );
 
     // allow a redis://user:host:port url, takes precedence

@@ -67,8 +67,8 @@ const routeExamples = {
   setup: function (app) {
     routes.forEach((route) => {
       app[route.meta.method.toLowerCase()](
-          route.meta.path,
-          route.route
+        route.meta.path,
+        route.route
       );
     });
   }

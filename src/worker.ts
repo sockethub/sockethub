@@ -256,7 +256,8 @@ Worker.prototype.__persistPlatformInstance = function (platformInstance) {
   this.log(`persisting platform instance ${platformInstance.id}`);
   platformInstance.sockets.add(this.socket.id);
   SharedResources.platformMappings.set(platformInstance.actor['@id'], platformInstance.id);
-  SharedResources.platformInstances.set(platformInstance.id, platformInstance); // add or update record
+  // add or update record
+  SharedResources.platformInstances.set(platformInstance.id, platformInstance);
 };
 
 export default  Worker;

@@ -134,10 +134,10 @@ class Sockethub {
   // init worker, store and register listeners for a new client connection
   private __handleNewConnection(socket) {
     const sessionLog = debug('sockethub:core  :' + socket.id), // session-specific debug messages
-        workerSecret = randToken.generate(16),
-        worker = this.__getWorker(socket, workerSecret),
-        store = this.__getStore(socket, workerSecret), // store instance is session-specific
-        middleware = this.__getMiddleware(socket, sessionLog);
+          workerSecret = randToken.generate(16),
+          worker = this.__getWorker(socket, workerSecret),
+          store = this.__getStore(socket, workerSecret), // store instance is session-specific
+          middleware = this.__getMiddleware(socket, sessionLog);
 
     sessionLog('connected to socket.io channel ' + socket.id);
 
@@ -157,21 +157,21 @@ class Sockethub {
     });
 
     socket.on(
-        'credentials',
-        middleware.chain(
-            validate('credentials'), this.__handlerStoreCredentials(store, sessionLog))
+      'credentials',
+      middleware.chain(
+        validate('credentials'), this.__handlerStoreCredentials(store, sessionLog))
     );
 
     socket.on(
-        'message',
-        middleware.chain(validate('message'), this.__handlerQueueJob(socket, sessionLog))
+      'message',
+      middleware.chain(validate('message'), this.__handlerQueueJob(socket, sessionLog))
     );
 
     // when new activity objects are created on the client side, an event is
     // fired and we receive a copy on the server side.
     socket.on(
-        'activity-object',
-        middleware.chain(validate('activity-object'), this.__handlerActivityObject(sessionLog))
+      'activity-object',
+      middleware.chain(validate('activity-object'), this.__handlerActivityObject(sessionLog))
     );
   };
 
