@@ -7,7 +7,7 @@ define(['require', '../dist/sockethub'], function (require, Sockethub) {
       desc: 'src/sockethub',
       abortOnFail: true,
       beforeEach: function () {
-        this.env.sockethub = new Sockethub();
+        this.env.sockethub = new Sockethub.default();
         this.done();
       },
       tests: [
