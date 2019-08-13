@@ -7,6 +7,6 @@ process.on('uncaughtException', (err) => {
 });
 
 const baseDir = process.env.PROD ? 'dist' : 'src';
-const Sockethub = require(`../${baseDir}/sockethub`);
+const Sockethub = require(`../${baseDir}/sockethub`).default;
 const sockethub = new Sockethub();
 sockethub.boot();
