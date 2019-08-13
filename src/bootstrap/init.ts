@@ -17,7 +17,7 @@ if (config.get('help')) {
   console.log('  --help     : this help screen');
   console.log('  --info     : displays some basic runtime info');
   console.log();
-  console.log('  --examples : enabled examples page and serves helper files like jquery');
+  console.log('  --examples : enables examples page and serves helper files like jquery');
   console.log();
   console.log('  --host     : hostname to bind to');
   console.log('  --port     : port to bind to');

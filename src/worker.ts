@@ -168,6 +168,7 @@ Worker.prototype.__getPlatformInstance = function (job, identifier) {
     name: job.data.msg.context,
     actor: job.data.msg.actor,
     module: new this.Platforms[job.data.msg.context]({
+      debug: debug(`sockethub:platform:${job.data.msg.context}:${identifier}`),
       log: debug(`sockethub:platform:${job.data.msg.context}:${identifier}`),
       sendToClient: this.generateSendFunction(identifier),
       updateCredentials: this.generateUpdateCredentialsFunction(identifier)

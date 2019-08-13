@@ -75,9 +75,7 @@ class Config {
       nconf.clear('redis:port');
     }
   }
-  get(key: string): any {
-    return nconf.get(key);
-  }
+  get = (key: string): any => nconf.get(key);
 }
 
 config = config ? config : new Config();

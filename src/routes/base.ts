@@ -10,7 +10,7 @@ routes.push({
   },
   route: (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.sendFile(path.resolve(__dirname + '/../../src/js/client.js'));
+    res.sendFile(path.resolve(__dirname + '/../js/client.js'));
   }
 }, {
   meta: {
@@ -67,7 +67,7 @@ if (config.get('examples:enabled')) {
       path: '/examples/shared.js'
     },
     route: (req, res) => {
-      res.sendFile(path.resolve(__dirname + '/../examples/examples/shared.js'));
+      res.sendFile(path.resolve(__dirname + '/../../views/examples/shared.js'));
     }
   }, {
     meta: {
