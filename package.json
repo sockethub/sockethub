@@ -49,7 +49,6 @@
     "@types/urijs": "^1.19.3",
     "activity-streams": "^4.1.0",
     "body-parser": "^1.19.0",
-    "c8": "^5.0.1",
     "debug": "^4.1.1",
     "ejs": "^2.6.2",
     "espree": "^6.0.0",
@@ -87,7 +86,8 @@
   },
   "devDependencies": {
     "@typescript-eslint/parser": "^1.13.0",
-    "eslint": "^6.1.0",
+    "c8": "^5.0.1",
+    "eslint": "^6.2.2",
     "eslint-cli": "^1.1.1",
     "jaribu": "^2.2.2",
     "ts-node": "^8.3.0",
