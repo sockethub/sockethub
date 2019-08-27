@@ -8,14 +8,14 @@ XMPP
 * [XMPP](#XMPP)
     * [new XMPP(session)](#new_XMPP_new)
     * [.schema](#XMPP+schema)
-    * [.connect()](#XMPP+connect)
-    * [.join()](#XMPP+join)
-    * [.send()](#XMPP+send)
-    * [.update()](#XMPP+update)
-    * [.request-friend()](#XMPP+request-friend)
-    * [.remove-friend()](#XMPP+remove-friend)
-    * [.make-friend()](#XMPP+make-friend)
-    * [.observe()](#XMPP+observe)
+    * [.connect(job, credentials, done)](#XMPP+connect)
+    * [.join(job, credentials, done)](#XMPP+join)
+    * [.send(job, credentials, done)](#XMPP+send)
+    * [.update(job, credentials, done)](#XMPP+update)
+    * [.request-friend(job, credentials, done)](#XMPP+request-friend)
+    * [.remove-friend(job, credentials, done)](#XMPP+remove-friend)
+    * [.make-friend(job, credentials, done)](#XMPP+make-friend)
+    * [.observe(job, credentials, done)](#XMPP+observe)
 
 <a name="new_XMPP_new"></a>
 
@@ -51,7 +51,8 @@ object.
 It will also check if the incoming AS object uses a @type which exists in the
 `@types` portion of the schema object (should be an array of @type names).
 
-**NOTE**: For more information on using the credentials object from a client, see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
+**NOTE**: For more information on using the credentials object from a client,
+see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
 
 Valid AS object for setting XMPP credentials:
 
@@ -62,10 +63,9 @@ Valid AS object for setting XMPP credentials:
   '@type': 'set',
   context: 'xmpp',
   actor: {
-    '@id': 'xmpp://testuser@jabber.net',
+    '@id': 'testuser@jabber.net',
     '@type': 'person',
-    displayName: 'Mr. Test User',
-    userName: 'testuser'
+    displayName: 'Mr. Test User'
   },
   object: {
     '@type': 'credentials',
@@ -79,19 +79,26 @@ Valid AS object for setting XMPP credentials:
 ```
 <a name="XMPP+connect"></a>
 
-### xmpP.connect()
+### xmpP.connect(job, credentials, done)
 Function: connect
 
 Connect to the XMPP server.
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | activiy streams object // TODO LINK |
+| credentials | <code>object</code> | credentials object // TODO LINK |
+| done | <code>object</code> | callback when job is done // TODO LINK |
+
 **Example**  
 ```js
 {
   context: 'xmpp',
   '@type': 'connect',
   actor: {
-    '@id': 'xmpp://slvrbckt@jabber.net/Home',
+    '@id': 'slvrbckt@jabber.net/Home',
     '@type': 'person',
     displayName: 'Nick Jennings',
     userName: 'slvrbckt'
@@ -100,12 +107,19 @@ Connect to the XMPP server.
 ```
 <a name="XMPP+join"></a>
 
-### xmpP.join()
+### xmpP.join(job, credentials, done)
 Function: join
 
-Join a room, oprionally defining a display name for that room.
+Join a room, optionally defining a display name for that room.
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | activity streams object // TODO LINK |
+| credentials | <code>object</code> | credentials object // TODO LINK |
+| done | <code>object</code> | callback when job is done // TODO LINK |
+
 **Example**  
 ```js
 {
@@ -128,27 +142,53 @@ Join a room, oprionally defining a display name for that room.
 ```
 <a name="XMPP+send"></a>
 
-### xmpP.send()
+### xmpP.send(job, credentials, done)
 Function: send
 
 Send a message to a room or private conversation.
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | activity streams object // TODO LINK |
+| credentials | <code>object</code> | credentials object // TODO LINK |
+| done | <code>object</code> | callback when job is done // TODO LINK |
+
 **Example**  
 ```js
 {
   context: 'xmpp',
   '@type': 'send',
   actor: {
-    '@id': 'xmpp://slvrbckt@jabber.net/Home',
+    '@id': 'slvrbckt@jabber.net/Home',
     '@type': 'person',
     displayName: 'Nick Jennings',
     userName: 'slvrbckt'
   },
   target: {
-    '@id': 'xmpp://homer@jabber.net/Home',
+    '@id': 'homer@jabber.net/Home',
     '@type': 'user',
     displayName: 'Homer'
+  },
+  object: {
+    '@type': 'message',
+    content: 'Hello from Sockethub!'
+  }
+}
+
+{
+  context: 'xmpp',
+  '@type': 'send',
+  actor: {
+    '@id': 'slvrbckt@jabber.net/Home',
+    '@type': 'person',
+    displayName: 'Nick Jennings',
+    userName: 'slvrbckt'
+  },
+  target: {
+    '@id': 'party-room@jabber.net',
+    '@type': 'room'
   },
   object: {
     '@type': 'message',
@@ -158,10 +198,17 @@ Send a message to a room or private conversation.
 ```
 <a name="XMPP+update"></a>
 
-### xmpP.update()
+### xmpP.update(job, credentials, done)
 Indicate presence and status message.
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | activity streams object // TODO LINK |
+| credentials | <code>object</code> | credentials object // TODO LINK |
+| done | <code>object</code> | callback when job is done // TODO LINK |
+
 **Example**  
 ```js
 {
@@ -179,10 +226,17 @@ Indicate presence and status message.
 ```
 <a name="XMPP+request-friend"></a>
 
-### xmpP.request-friend()
+### xmpP.request-friend(job, credentials, done)
 Send friend request
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | activity streams object // TODO LINK |
+| credentials | <code>object</code> | credentials object // TODO LINK |
+| done | <code>object</code> | callback when job is done // TODO LINK |
+
 **Example**  
 ```js
 {
@@ -192,16 +246,23 @@ Send friend request
     '@id': 'user@host.org/Home'
   },
   target: {
-    '@id': 'xmpp://homer@jabber.net/Home',
+    '@id': 'homer@jabber.net/Home',
   }
 }
 ```
 <a name="XMPP+remove-friend"></a>
 
-### xmpP.remove-friend()
+### xmpP.remove-friend(job, credentials, done)
 Send a remove friend request
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | activity streams object // TODO LINK |
+| credentials | <code>object</code> | credentials object // TODO LINK |
+| done | <code>object</code> | callback when job is done // TODO LINK |
+
 **Example**  
 ```js
 {
@@ -211,16 +272,23 @@ Send a remove friend request
     '@id': 'user@host.org/Home'
   },
   target: {
-    '@id': 'xmpp://homer@jabber.net/Home',
+    '@id': 'homer@jabber.net/Home',
   }
 }
 ```
 <a name="XMPP+make-friend"></a>
 
-### xmpP.make-friend()
+### xmpP.make-friend(job, credentials, done)
 Confirm a friend request
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | activity streams object // TODO LINK |
+| credentials | <code>object</code> | credentials object // TODO LINK |
+| done | <code>object</code> | callback when job is done // TODO LINK |
+
 **Example**  
 ```js
 {
@@ -230,13 +298,65 @@ Confirm a friend request
     '@id': 'user@host.org/Home'
   },
   target: {
-    '@id': 'xmpp://homer@jabber.net/Home',
+    '@id': 'homer@jabber.net/Home',
   }
 }
 ```
 <a name="XMPP+observe"></a>
 
-### xmpP.observe()
-NOTE IMPLEMENTED YET
+### xmpP.observe(job, credentials, done)
+Function: observe
+
+Indicate an intent to observe something (ie. get a list of users in a room).
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| job | <code>object</code> | activity streams object // TODO LINK |
+| credentials | <code>object</code> | credentials object // TODO LINK |
+| done | <code>object</code> | callback when job is done // TODO LINK |
+
+**Example**  
+```js
+{
+   context: 'xmpp',
+   '@type': 'observe',
+   actor: {
+     '@id': 'slvrbckt@jabber.net/Home',
+     '@type': 'person'
+   },
+   target: {
+     '@id': 'PartyChatRoom@muc.jabber.net',
+     '@type': 'room'
+   },
+   object: {
+     '@type': 'attendance'
+   }
+ }
+
+
+ // The above object might return:
+ {
+   context: 'xmpp',
+   '@type': 'observe',
+   actor: {
+     '@id': 'PartyChatRoom@muc.jabber.net',
+     '@type': 'room'
+   },
+   target: {
+     '@id': 'slvrbckt@jabber.net/Home',
+     '@type': 'person'
+   },
+   object: {
+     '@type': 'attendance'
+     members: [
+       'RyanGosling',
+       'PeeWeeHerman',
+       'Commando',
+       'Smoochie',
+       'neo'
+     ]
+   }
+ }
+```
