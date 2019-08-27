@@ -165,7 +165,7 @@ class XMPP {
    *   '@type': 'set',
    *   context: 'xmpp',
    *   actor: {
-   *     '@id': 'xmpp://testuser@jabber.net',
+   *     '@id': 'testuser@jabber.net',
    *     '@type': 'person',
    *     displayName: 'Mr. Test User'
    *   },
@@ -205,7 +205,7 @@ class XMPP {
    *   context: 'xmpp',
    *   '@type': 'connect',
    *   actor: {
-   *     '@id': 'xmpp://slvrbckt@jabber.net/Home',
+   *     '@id': 'slvrbckt@jabber.net/Home',
    *     '@type': 'person',
    *     displayName: 'Nick Jennings',
    *     userName: 'slvrbckt'
@@ -224,7 +224,7 @@ class XMPP {
    *
    * Join a room, optionally defining a display name for that room.
    *
-   * @param {object} job activiy streams object // TODO LINK
+   * @param {object} job activity streams object // TODO LINK
    * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
@@ -268,7 +268,7 @@ class XMPP {
    *
    * Send a message to a room or private conversation.
    *
-   * @param {object} job activiy streams object // TODO LINK
+   * @param {object} job activity streams object // TODO LINK
    * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
@@ -278,15 +278,34 @@ class XMPP {
    *   context: 'xmpp',
    *   '@type': 'send',
    *   actor: {
-   *     '@id': 'xmpp://slvrbckt@jabber.net/Home',
+   *     '@id': 'slvrbckt@jabber.net/Home',
    *     '@type': 'person',
    *     displayName: 'Nick Jennings',
    *     userName: 'slvrbckt'
    *   },
    *   target: {
-   *     '@id': 'xmpp://homer@jabber.net/Home',
+   *     '@id': 'homer@jabber.net/Home',
    *     '@type': 'user',
    *     displayName: 'Homer'
+   *   },
+   *   object: {
+   *     '@type': 'message',
+   *     content: 'Hello from Sockethub!'
+   *   }
+   * }
+   *
+   * {
+   *   context: 'xmpp',
+   *   '@type': 'send',
+   *   actor: {
+   *     '@id': 'slvrbckt@jabber.net/Home',
+   *     '@type': 'person',
+   *     displayName: 'Nick Jennings',
+   *     userName: 'slvrbckt'
+   *   },
+   *   target: {
+   *     '@id': 'party-room@jabber.net',
+   *     '@type': 'room'
    *   },
    *   object: {
    *     '@type': 'message',
@@ -303,7 +322,7 @@ class XMPP {
       client.send(
           job.target['@id'],
           job.object.content,
-          job.target['@type'] === 'room'
+          job.target['@type'] === 'room' ? 'groupchat' : 'chat'
       );
       done();
     });
@@ -316,7 +335,7 @@ class XMPP {
    * @description
    * Indicate presence and status message.
    *
-   * @param {object} job activiy streams object // TODO LINK
+   * @param {object} job activity streams object // TODO LINK
    * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
@@ -359,7 +378,7 @@ class XMPP {
    * @description
    * Send friend request
    *
-   * @param {object} job activiy streams object // TODO LINK
+   * @param {object} job activity streams object // TODO LINK
    * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
@@ -372,7 +391,7 @@ class XMPP {
    *     '@id': 'user@host.org/Home'
    *   },
    *   target: {
-   *     '@id': 'xmpp://homer@jabber.net/Home',
+   *     '@id': 'homer@jabber.net/Home',
    *   }
    * }
    */
@@ -390,7 +409,7 @@ class XMPP {
    * @description
    * Send a remove friend request
    *
-   * @param {object} job activiy streams object // TODO LINK
+   * @param {object} job activity streams object // TODO LINK
    * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
@@ -403,7 +422,7 @@ class XMPP {
    *     '@id': 'user@host.org/Home'
    *   },
    *   target: {
-   *     '@id': 'xmpp://homer@jabber.net/Home',
+   *     '@id': 'homer@jabber.net/Home',
    *   }
    * }
    */
@@ -421,7 +440,7 @@ class XMPP {
    * @description
    * Confirm a friend request
    *
-   * @param {object} job activiy streams object // TODO LINK
+   * @param {object} job activity streams object // TODO LINK
    * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
@@ -434,7 +453,7 @@ class XMPP {
    *     '@id': 'user@host.org/Home'
    *   },
    *   target: {
-   *     '@id': 'xmpp://homer@jabber.net/Home',
+   *     '@id': 'homer@jabber.net/Home',
    *   }
    * }
    */
@@ -442,8 +461,8 @@ class XMPP {
     this.debug('make-friend() called for ' + job.actor['@id']);
     this.__getClient(job.actor['@id'], credentials, (client) => {
       this.debug('make friend ' + job.target['@id']);
-      client.acceptSubscription(job.target['@id']);
-    });
+        client.acceptSubscription(job.target['@id']);
+      });
   };
 
   /**
@@ -451,7 +470,7 @@ class XMPP {
    *
    * Indicate an intent to observe something (ie. get a list of users in a room).
    *
-   * @param {object} job activiy streams object // TODO LINK
+   * @param {object} job activity streams object // TODO LINK
    * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
@@ -474,7 +493,7 @@ class XMPP {
    *  }
    *
    *
-   *  // The obove object might return:
+   *  // The above object might return:
    *  {
    *    context: 'xmpp',
    *    '@type': 'observe',
@@ -581,24 +600,23 @@ class XMPP {
     xmpp.on('error', handlers.error);
     xmpp.on('close', handlers.close);
     xmpp.connect(xmppCreds);
-    this.debug('sent XMPP connect for account ' + fullJid);
   };
 
 
   __registerListeners() {
     const ih = new IncomingHandlers(this);
-    this.__client.on('buddy', ih.buddy);
-    this.__client.on('buddyCapabilities', ih.buddyCapabilities);
-    this.__client.on('chat', ih.chat);
-    this.__client.on('close', ih.close);
-    this.__client.on('chatstate', ih.chatstate);
-    this.__client.on('error', ih.error);
-    this.__client.on('groupbuddy', ih.groupBuddy);
-    this.__client.on('groupchat', ih.groupChat);
-    this.__client.on('online', ih.online);
-    this.__client.on('subscribe', ih.subscribe);
-    this.__client.on('unsubscribe', ih.unsubscribe);
-    this.__client.on('stanza', ih.__stanza);
+    this.__client.on('buddy', ih.buddy.bind(ih));
+    this.__client.on('buddyCapabilities', ih.buddyCapabilities.bind(ih));
+    this.__client.on('chat', ih.chat.bind(ih));
+    this.__client.on('close', ih.close.bind(ih));
+    this.__client.on('chatstate', ih.chatstate.bind(ih));
+    this.__client.on('error', ih.error.bind(ih));
+    this.__client.on('groupbuddy', ih.groupBuddy.bind(ih));
+    this.__client.on('groupchat', ih.groupChat.bind(ih));
+    this.__client.on('online', ih.online.bind(ih));
+    this.__client.on('subscribe', ih.subscribe.bind(ih));
+    this.__client.on('unsubscribe', ih.unsubscribe.bind(ih));
+    this.__client.on('stanza', ih.__stanza.bind(ih));
   };
 }
 
