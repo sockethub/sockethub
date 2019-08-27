@@ -18,14 +18,20 @@ define(['require'], function (require) {
 
       env.actor = {
         '@type': 'person',
-        '@id': 'xmpp:testingham@jabber.net',
+        '@id': 'testingham@jabber.net',
         displayName:'testingham'
       };
 
       env.actor2 = {
         '@type': 'person',
-        '@id': 'xmpp:testingturkey@jabber.net',
+        '@id': 'testingturkey@jabber.net',
         displayName:'testingturkey'
+      };
+
+      env.actor3 = {
+        '@type': 'person',
+        '@id': 'partyroom@jabber.net/king tut',
+        displayName:'king tut'
       };
 
       env.credentials = {
@@ -33,6 +39,17 @@ define(['require'], function (require) {
         object: {
           '@type': 'credentials',
           username: 'testingham',
+          server: 'jabber.net',
+          password: 'foobar',
+          resource: 'home'
+        }
+      };
+
+      env.credentials2 = {
+        actor: env.actor2,
+        object: {
+          '@type': 'credentials',
+          username: 'testingturkey',
           server: 'jabber.net',
           password: 'foobar',
           resource: 'home'
@@ -68,12 +85,16 @@ define(['require'], function (require) {
       env.target = {
         mrfoobar: {
           '@type': 'person',
-          '@id': 'xmpp:jabber.net/mrfoobar',
+          '@id': 'mrfoobar@jabber.net',
           displayName: 'Mr FooBar'
         },
         partyroom: {
           '@type': 'room',
-          '@id': 'xmpp:partyroom@jabber.net'
+          '@id': 'partyroom@jabber.net'
+        },
+        roomuser: {
+          '@type': 'room',
+          '@id': 'partyroom@jabber.net/ms tut'
         }
       };
 
@@ -87,12 +108,22 @@ define(['require'], function (require) {
           target: env.target.partyroom
         },
         send: {
-          actor: env.actor,
-          object: {
-            '@type': 'message',
-            content: 'hello'
+          chat: {
+            actor: env.actor,
+            object: {
+              '@type': 'message',
+              content: 'hello'
+            },
+            target: env.target.mrfoobar
           },
-          target: env.target.mrfoobar
+          groupchat: {
+            actor: env.actor3,
+            object: {
+              '@type': 'message',
+              content: 'hello'
+            },
+            target: env.target.roomuser
+          }
         },
         update: {
           presence: {
@@ -183,7 +214,7 @@ define(['require'], function (require) {
         run: function (env, test) {
           const originalJoin = env.xmpp.join;
           env.xmpp.join = new test.Stub(function (target) {
-            test.assert(target, 'xmpp:partyroom@jabber.net/testingham');
+            test.assert(target, 'partyroom@jabber.net/testingham');
             env.xmpp.join = originalJoin;
           });
 
@@ -192,9 +223,9 @@ define(['require'], function (require) {
       },
 
       {
-        desc: "# send 1",
+        desc: "# send chat 1",
         run: function (env, test) {
-          env.platform.send(env.job.send, env.credentials, function (err, result) {
+          env.platform.send(env.job.send.chat, env.credentials, function (err, result) {
             test.assertTypeAnd(err, 'undefined', err);
             test.assertTypeAnd(result, 'undefined');
             test.assert(env.xmpp.send.numCalled, 1);
@@ -202,12 +233,22 @@ define(['require'], function (require) {
         }
       },
       {
-        desc: "# send 2",
+        desc: "# send chat 2",
         run: function (env, test) {
-          env.platform.send(env.job.send, env.credentials, function (err, result) {
+          env.platform.send(env.job.send.chat, env.credentials, function (err, result) {
             test.assertTypeAnd(err, 'undefined', err);
             test.assertTypeAnd(result, 'undefined');
             test.assert(env.xmpp.send.numCalled, 2);
+          });
+        }
+      },
+      {
+        desc: "# send groupchat 1",
+        run: function (env, test) {
+          env.platform.send(env.job.send.groupchat, env.credentials3, function (err, result) {
+            test.assertTypeAnd(err, 'undefined', err);
+            test.assertTypeAnd(result, 'undefined');
+            test.assert(env.xmpp.send.numCalled, 3);
           });
         }
       },
@@ -249,8 +290,8 @@ define(['require'], function (require) {
           env.xmpp.conn.send = new test.Stub(function(stanza) {
             test.assertAnd(stanza.is('iq'), true);
             test.assertAnd(stanza.attrs.id, 'muc_id');
-            test.assertAnd(stanza.attrs.from, 'xmpp:testingham@jabber.net');
-            test.assertAnd(stanza.attrs.to, 'xmpp:partyroom@jabber.net');
+            test.assertAnd(stanza.attrs.from, 'testingham@jabber.net');
+            test.assertAnd(stanza.attrs.to, 'partyroom@jabber.net');
             env.xmpp.conn.send = originalSend;
             count++;
             if (count === 2) { test.done(); }

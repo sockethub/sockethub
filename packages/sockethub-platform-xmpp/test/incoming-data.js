@@ -43,14 +43,14 @@ module.exports = [
   },
   {
     name: 'groupbuddy event',
-    input: ['test@muc.5apps.com', 'greg', 'online', 'hey, wazzup?'],
+    input: ['test@muc.5apps.com', 'greg the speedboat', 'online', 'hey, wazzup?'],
     handler: 'groupBuddy',
     output: {
       '@type': 'update',
       actor: {
-        '@id': 'test@muc.5apps.com/greg',
+        '@id': 'test@muc.5apps.com/greg the speedboat',
         '@type': 'person',
-        displayName: 'greg'
+        displayName: 'greg the speedboat'
       },
       target: {
         '@id': 'test@muc.5apps.com',

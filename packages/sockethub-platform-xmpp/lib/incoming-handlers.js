@@ -9,6 +9,7 @@ function nextId() {
 // be a race condition which tries to still access session functions which have already been terminated by the worker.
 // this function wrapper only calls the session functions if they still exist.
 function referenceProtection(session) {
+  if (typeof session === 'undefined') { throw new Error('session object not provided'); }
   function checkScope(funcName) {
     return (msg) => {
       if (typeof session[funcName] === 'function') {
