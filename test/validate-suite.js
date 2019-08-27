@@ -17,12 +17,12 @@ define(['require', '../dist/validate', 'activity-streams'], function (require, l
         '@type': 'send',
         context: 'dummy',
         actor: {
-          '@id': 'irc://dood@irc.freenode.net',
+          '@id': 'dood@irc.freenode.net',
           '@type': 'person',
           displayName: 'dood',
         },
         target: {
-          '@id': 'irc://irc.freenode.net/sockethub',
+          '@id': 'irc.freenode.net/sockethub',
           '@type': 'person',
           displayName: 'sockethub'
         },
@@ -39,7 +39,7 @@ define(['require', '../dist/validate', 'activity-streams'], function (require, l
       input: {
         context: 'irc',
         actor: {
-          '@id': 'irc://sh-9K3Vk@irc.freenode.net',
+          '@id': 'sh-9K3Vk@irc.freenode.net/space name',
           '@type': 'person',
           displayName: 'sh-9K3Vk',
           image: {
@@ -65,7 +65,7 @@ define(['require', '../dist/validate', 'activity-streams'], function (require, l
       result: false,
       type: 'credentials',
       input: {
-        'actor': 'xmpp://hyper_rau@localhost',
+        'actor': 'hyper_rau@localhost',
         'context': 'xmpp',
         'object': {
           'username': 'hyper_rau',
@@ -129,7 +129,7 @@ define(['require', '../dist/validate', 'activity-streams'], function (require, l
       result: true,
       type: 'activity-object',
       input: {
-        '@id': 'irc://sh-9K3Vk@irc.freenode.net',
+        '@id': 'sh-9K3Vk@irc.freenode.net',
         '@type': 'person',
         displayName: 'sh-9K3Vk',
         image: {
@@ -181,7 +181,7 @@ define(['require', '../dist/validate', 'activity-streams'], function (require, l
       result: true,
       type: 'message',
       input: {
-        'actor': 'xmpp://hyper_rau@localhost',
+        'actor': 'hyper_rau@localhost',
         '@type': 'join',
         'context': 'xmpp',
         'object': {},
@@ -189,8 +189,8 @@ define(['require', '../dist/validate', 'activity-streams'], function (require, l
       },
       output: {
         'actor': {
-          '@id': 'xmpp://hyper_rau@localhost',
-          displayName: 'hyper_rau'
+          '@id': 'hyper_rau@localhost',
+          displayName: 'hyper_rau@localhost'
         },
         '@type': 'join',
         'context': 'xmpp',
@@ -206,7 +206,7 @@ define(['require', '../dist/validate', 'activity-streams'], function (require, l
       result: true,
       type: 'message',
       input: {
-        actor: 'irc://sh-9K3Vk@irc.freenode.net',
+        actor: 'sh-9K3Vk@irc.freenode.net',
         target: 'blah',
         '@type': 'send',
         context: 'irc',
@@ -214,7 +214,7 @@ define(['require', '../dist/validate', 'activity-streams'], function (require, l
       },
       output: {
         actor: {
-          '@id': 'irc://sh-9K3Vk@irc.freenode.net',
+          '@id': 'sh-9K3Vk@irc.freenode.net',
           '@type': 'person',
           displayName: 'sh-9K3Vk',
           image: {
@@ -255,12 +255,19 @@ define(['require', '../dist/validate', 'activity-streams'], function (require, l
           //console.log('result: ', state);
 
           if (output === 'same') {
-            test.assertAnd(input, msg, `input not the same as output`);
+            test.assertAnd(
+              input, msg,
+              `input not the same as output: ${JSON.stringify(input)} ... ${JSON.stringify(msg)}`);
           } else if (output) {
-            test.assertAnd(msg, output, `expected and returned output don't match`);
+            test.assertAnd(
+              msg, output,
+              `expected and returned output don't match: ` +
+              `${JSON.stringify(msg)} ... ${JSON.stringify(output)}`);
           }
 
-          test.assertAnd(result, state, `results don't match`);
+          test.assertAnd(
+            result, state,
+            `results don't match: ${JSON.stringify(result)} ... ${JSON.stringify(state)}`);
 
           if ((result) && (type === 'activity-object')) {
             // console.log('activity: ', activity);
