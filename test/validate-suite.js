@@ -143,6 +143,18 @@ define(['require', '../dist/validate', 'activity-streams'], function (require, l
       output: 'same'
     },
     {
+      name: 'new person',
+      result: true,
+      type: 'activity-object',
+      input: {
+        '@id': 'irc://sh-9K3Vk@irc.freenode.net',
+        '@type': 'person',
+        displayName: 'sh-9K3Vk',
+        url: 'http://sockethub.org'
+      },
+      output: 'same'
+    },
+    {
       name: 'bad parent object',
       result: false,
       type: 'activity-object',
@@ -173,6 +185,29 @@ define(['require', '../dist/validate', 'activity-streams'], function (require, l
         },
         noDisplayName: {
           '@id': 'larg',
+        }
+      }
+    },
+    {
+      name: 'expand actor and target of unknowns',
+      result: true,
+      type: 'message',
+      input: {
+        'actor': 'irc://uuu@localhost',
+        '@type': 'join',
+        'context': 'irc',
+        'target': 'irc://irc.dooder.net/a-room'
+      },
+      output: {
+        'actor': {
+          '@id': 'irc://uuu@localhost',
+          'displayName': 'uuu'
+        },
+        '@type': 'join',
+        'context': 'irc',
+        'target': {
+          '@id': 'irc://irc.dooder.net/a-room',
+          'displayName': '/a-room'
         }
       }
     },

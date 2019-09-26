@@ -70,16 +70,16 @@
           const postCMD = msg.object.content.substr(string.length + 1) + ' ';
           const target = postCMD.substr(0, postCMD.indexOf(' '));
           if (target.indexOf('#') === 0) {
-            msg.target = 'irc://' + ircServer + '/' + target;
+            msg.target = ircServer + '/' + target;
             sc.ActivityStreams.Object.create({
-              '@id': 'irc://' + ircServer + '/' + target,
+              '@id': ircServer + '/' + target,
               '@type': "room",
               displayName: target
             });
           } else {
-            msg.target = 'irc://' + target + '@' + ircServer;
+            msg.target = target + '@' + ircServer;
             sc.ActivityStreams.Object.create({
-              '@id': 'irc://' + target + '@' + ircServer,
+              '@id': target + '@' + ircServer,
               '@type': "person",
               displayName: target
             });
@@ -117,7 +117,7 @@
         // our irc user info
         nick = _nick; // set global nick
         sc.ActivityStreams.Object.create({
-          '@id': 'irc://' + nick + '@' + ircServer,
+          '@id': nick + '@' + ircServer,
           '@type': "person",
           displayName: nick,
           url: "http://sockethub.org",
@@ -134,7 +134,7 @@
       function __updateCredentials() {
         // sending irc credentials to sockethub server
         const credentials = {
-          actor: 'irc://' + nick + '@' + ircServer,
+          actor: nick + '@' + ircServer,
           context: 'irc',
           object: {
             '@type': 'credentials',
@@ -189,12 +189,12 @@
         let msg = {
           '@type': 'send',
           context: 'irc',
-          actor: 'irc://' + nick + '@' + ircServer,
+          actor: nick + '@' + ircServer,
           object: {
             '@type': 'message',
             content: $('#m').val()
           },
-          target: 'irc://' + ircServer + '/' + channel
+          target: ircServer + '/' + channel
         };
 
         msg = __normalizeMessage(msg);
@@ -210,7 +210,7 @@
 
         // the irc chatroom we're connecting to
         sc.ActivityStreams.Object.create({
-          '@id': 'irc://' + ircServer + '/' + channel,
+          '@id': ircServer + '/' + channel,
           '@type': "room",
           displayName: '#' + channel
         });
@@ -220,8 +220,8 @@
         const msg = {
           '@type': 'join',
           context: 'irc',
-          actor: 'irc://' + nick + '@' + ircServer,
-          target: 'irc://' + ircServer + '/' + channel
+          actor: nick + '@' + ircServer,
+          target: ircServer + '/' + channel
         };
 
         debug('sending message: ', msg);

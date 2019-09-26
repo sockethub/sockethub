@@ -66,7 +66,7 @@
       const config = {
         '@type': 'credentials',
         server: 'jabber.org',
-        username: 'foobar',
+        username: 'username',
         password: '123456',
         port: 5222,
         resource: 'Home'
@@ -80,11 +80,15 @@
         console.log('updating actor object for: ' + username);
         // our xmpp user info
         config.username = username; // set global nick
-        actorString = 'xmpp://' + config.username + '@' + config.server + '/' + config.resource
+        if (config.username.includes('@')) {
+          actorString = config.username + '/' + config.resource;
+        } else {
+          actorString = config.username + '@' + config.server + '/' + config.resource;
+        }
         sc.ActivityStreams.Object.create({
           '@id': actorString,
           '@type': "person",
-          displayName: username,
+          displayName: new URL('http://' + username).username,
           url: "http://sockethub.org",
           image: {
             url: "http://example.org/image.jpg",
@@ -136,8 +140,9 @@
         e.preventDefault();
         var input = $('#m').val();
         var [target, text_message] = input.split(':');
-        if (! target) {
-          console.log('unable to send message without target specified: ', target, text_message, input);
+
+        if ((! target) && (! text_message)) {
+          console.log('unable to send message without target specified [room@server.org: hello world]: ', target, text_message, input);
         }
         var msg = {
           '@type': 'send',
@@ -147,7 +152,7 @@
             '@type': 'message',
             content: text_message
           },
-          target: 'xmpp://' + target
+          target: target
         };
 
         console.log('[normalize?] sending ', msg);
@@ -168,13 +173,6 @@
         config.resource = $('#resource').val();
 
         __updateActor(config.username);
-
-        // the irc chatroom we're connecting to
-        // sc.ActivityStreams.Object.create({
-        //   '@id': 'irc://' + ircServer + '/' + channel,
-        //   '@type': "room",
-        //   displayName: '#' + channel
-        // });
 
         setTimeout(function () {
           // sending irc credentials to sockethub server
