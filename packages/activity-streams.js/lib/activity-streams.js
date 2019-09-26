@@ -32,7 +32,7 @@ const ee = EventEmitter(),
           'locationOf', 'objectOf', 'originOf', 'presence', 'preview', 'previewOf', 'provider',
           'providerOf', 'published', 'rating', 'resultOf', 'replies', 'scope',
           'scopeOf', 'startTime', 'status', 'summary', 'topic', 'tag', 'tagOf', 'targetOf', 'title',
-          'updated', 'url', 'titleMap', 'contentMap', 'members', 'message'
+          'updated', 'url', 'titleMap', 'contentMap', 'members', 'message', 'group'
         ]
       },
       rename = {
