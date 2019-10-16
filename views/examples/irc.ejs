@@ -41,7 +41,7 @@
       <h3>Click `Join` to connect and join the IRC channel.</h3>
       <form id="intro" action="">
         <input id="n" autocomplete="off" value="sh-<%= randToken %>"><button class="invis" disabled>nick</button>
-        <input id="j" autocomplete="off" value="" disabled><button id="join">Join</button>
+        <input id="j" autocomplete="off" value=""><button id="join">Join</button>
       </form>
     </div>
     <ul id="messages"></ul>
@@ -60,7 +60,7 @@
       const ircServer = 'irc.freenode.net';
       localStorage.debug = 'sockethub:*';
       const sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
-      const channel = 'sockethub-test';
+      let channel = 'sockethub-test';
       let nick = 'sh-<%= randToken %>';
 
       $('#j').val('#' + channel);
@@ -207,12 +207,13 @@
       // handler for user input, emit messages to sockethub server
       $('#join').click(function () {
         nick = $('#n').val();
+        channel = $('#j').val();
 
         // the irc chatroom we're connecting to
         sc.ActivityStreams.Object.create({
-          '@id': ircServer + '/' + channel,
+          '@id': ircServer + '/' + channel.replace('#', ''),
           '@type': "room",
-          displayName: '#' + channel
+          displayName: channel
         });
         __updateActor(nick);
         debug('socket id: ', sc.socket.id);
@@ -221,7 +222,7 @@
           '@type': 'join',
           context: 'irc',
           actor: nick + '@' + ircServer,
-          target: ircServer + '/' + channel
+          target: ircServer + '/' + channel.replace('#', '')
         };
 
         debug('sending message: ', msg);
