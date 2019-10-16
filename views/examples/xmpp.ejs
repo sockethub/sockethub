@@ -63,7 +63,7 @@
       debug = function (msg, obj) { console.log(msg, obj); };
       const examplesShared = new ExamplesShared();
       localStorage.debug = 'sockethub:*';
-      const config = {
+      let config = {
         '@type': 'credentials',
         server: 'jabber.org',
         username: 'username',
@@ -138,13 +138,13 @@
       // handler for user input, emit messages to sockethub server
       $('#chat').submit(function (e) {
         e.preventDefault();
-        var input = $('#m').val();
-        var [target, text_message] = input.split(':');
+        const input = $('#m').val();
+        const [target, text_message] = input.split(':');
 
         if ((! target) && (! text_message)) {
           console.log('unable to send message without target specified [room@server.org: hello world]: ', target, text_message, input);
         }
-        var msg = {
+        const msg = {
           '@type': 'send',
           context: 'xmpp',
           actor: actorString,
@@ -176,7 +176,7 @@
 
         setTimeout(function () {
           // sending irc credentials to sockethub server
-          var credentials = {
+          const credentials = {
             actor: actorString,
             context: 'xmpp',
             object: config
@@ -184,7 +184,7 @@
           debug('sending credentials: ', credentials);
           sc.socket.emit('credentials', credentials);
 
-          var msg = {
+          const msg = {
             '@type': 'connect',
             context: 'xmpp',
             actor: actorString
