@@ -39,7 +39,7 @@ define(['require', '../dist/validate', 'activity-streams'], function (require, l
       input: {
         context: 'irc',
         actor: {
-          '@id': 'sh-9K3Vk@irc.freenode.net/space name',
+          '@id': 'sh-9K3Vk@irc.freenode.net',
           '@type': 'person',
           displayName: 'sh-9K3Vk',
           image: {
