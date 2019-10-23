@@ -12,12 +12,12 @@ define(['require', 'tv4', './../schemas/activity-stream'], function (require, tv
         '@type': 'send',
         context: 'irc',
         actor: {
-          '@id': 'irc://dood@irc.freenode.net',
+          '@id': 'dood@irc.freenode.net',
           '@type': 'person',
           displayName: 'dood'
         },
         target: {
-          '@id': 'irc://irc.freenode.net/sockethub',
+          '@id': 'irc.freenode.net/sockethub',
           '@type': 'room',
           displayName: 'sockethub'
         },
@@ -55,12 +55,12 @@ define(['require', 'tv4', './../schemas/activity-stream'], function (require, tv
         '@type': 'send',
         context: 'dood',
         actor: {
-          id: 'irc://doobar@freenode.net/channel',
+          id: 'doobar@freenode.net/channel',
           '@type': 'message',
           content: 'hi there'
         },
         target: {
-          '@id': 'xmpp:bob@crusty.net/Home',
+          '@id': 'bob@crusty.net/Home',
           '@type': 'person',
           displayName: 'bob'
         },
