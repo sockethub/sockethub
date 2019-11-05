@@ -5,16 +5,16 @@ module.exports = [
   // },
   {
     name: 'presence-2',
-    input: '<presence type="error" to="hermes@5apps.com/hyperchannel" from="irc://xmpp.5apps.com/#watercooler" xmlns:stream="http://etherx.jabber.org/streams"><error type="cancel"><remote-server-not-found xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error></presence>',
+    input: '<presence type="error" to="hermes@5apps.com/hyperchannel" from="xmpp.5apps.com/#watercooler" xmlns:stream="http://etherx.jabber.org/streams"><error type="cancel"><remote-server-not-found xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error></presence>',
     output: {
       '@type': 'join',
       actor: {
-        '@id': 'irc://xmpp.5apps.com/#watercooler',
+        '@id': 'xmpp.5apps.com/#watercooler',
         '@type': 'room'
       },
       object: {
         '@type': 'error',
-        content: 'remote server not found irc://xmpp.5apps.com/#watercooler'
+        content: 'remote server not found xmpp.5apps.com/#watercooler'
       },
       target: {
         '@id': 'hermes@5apps.com/hyperchannel',
@@ -24,11 +24,11 @@ module.exports = [
   },
   {
     name: 'presence-3',
-    input: '<presence type="error" to="hermes@5apps.com/hyperchannel" from="irc://xmpp.5apps.com/#watercooler" xmlns:stream="http://etherx.jabber.org/streams"><error type="cancel"><not-allowed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/><text xmlns="urn:ietf:params:xml:ns:xmpp-stanzas">Communication with remote domains is not enabled</text></error></presence>',
+    input: '<presence type="error" to="hermes@5apps.com/hyperchannel" from="xmpp.5apps.com/#watercooler" xmlns:stream="http://etherx.jabber.org/streams"><error type="cancel"><not-allowed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/><text xmlns="urn:ietf:params:xml:ns:xmpp-stanzas">Communication with remote domains is not enabled</text></error></presence>',
     output: {
       '@type': 'update',
       actor: {
-        '@id': 'irc://xmpp.5apps.com/#watercooler',
+        '@id': 'xmpp.5apps.com/#watercooler',
         '@type': 'room'
       },
       object: {

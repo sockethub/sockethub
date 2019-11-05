@@ -47,7 +47,7 @@ class IncomingHandlers {
   }
 
   buddyCapabilities(id, capabilities) {
-    this.session.debug('received buddyCapabilities: ' + id, capabilities);
+    this.session.debug('received buddyCapabilities: ' + id);
   }
 
   chat(from, message) {
@@ -98,7 +98,7 @@ class IncomingHandlers {
   }
 
   groupBuddy(id, groupBuddy, state, statusText) {
-    this.session.debug('received groupbuddy event: ' + id, groupBuddy, state, statusText);
+    this.session.debug('received groupbuddy event: ' + id);
     this.session.sendToClient({
       '@type': 'update',
       actor: {
@@ -165,14 +165,15 @@ class IncomingHandlers {
    * Handles all unknown conditions that we don't have an explicit handler for
    **/
   __stanza(stanza) {
-    this.session.debug("got XMPP stanza... " + stanza);
-
     // simple-xmpp currently doesn't seem to handle error state presence so we'll do it here for now.
     // TODO: consider moving this.session.to simple-xmpp once it's ironed out and proven to work well.
-    if (stanza.is('presence') && (stanza.attrs.type === 'error')) {
+    if ((stanza.attrs.type === 'error')) {
       const error = stanza.getChild('error');
-      let message = stanza.toString(),
-          type = 'update';
+      let message = stanza.toString();
+      let type = 'message';
+      if (stanza.is('presence')) {
+        type = 'update';
+      }
 
       if (error) {
         message = error.toString();
@@ -253,6 +254,8 @@ class IncomingHandlers {
           }
         }
       }
+    // } else {
+    //   this.session.debug("got XMPP unknown stanza... " + stanza);
     }
   }
 
