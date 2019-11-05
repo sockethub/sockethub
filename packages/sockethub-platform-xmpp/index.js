@@ -77,36 +77,7 @@ const PlatformSchema = {
   }
 };
 
-function buildFullJid(credentials) {
-  let fullJid;
 
-  // generate bareJid and fullJid
-  if (credentials.object.username.indexOf('@') === -1) {
-    fullJid = credentials.object.username + '@' + credentials.object.server + '/' + credentials.object.resource;
-  } else {
-    fullJid = credentials.object.username + '/' + credentials.object.resource;
-  }
-
-  return fullJid;
-}
-
-function buildXmppCredentials(fullJid, credentials) {
-  // credential object to pass to simple-xmpp
-  let xmpp_creds = {
-    jid: fullJid,
-    password: credentials.object.password
-  };
-
-  if (credentials.object.server) {
-    xmpp_creds.host = credentials.object.server;
-  }
-
-  if (credentials.port) {
-    xmpp_creds.port = credentials.object.port;
-  }
-
-  return xmpp_creds;
-}
 
 
 /**
@@ -254,8 +225,9 @@ class XMPP {
     this.__getClient(job.actor['@id'], credentials, (client) => {
       // send join
       this.debug('sending join to ' + `${job.target['@id']}/${job.actor.displayName}`);
+      let id = job.target['@id'].split('/')[0];
       client.join(
-          `${job.target['@id']}/${job.actor.displayName}`
+          `${job.target['@id']}/${job.actor.displayName || id}`
           // TODO optional passwords not handled for now
       );
       done();
@@ -566,8 +538,10 @@ class XMPP {
 
   __connect(key, credentials, cb) {
     this.debug('calling connect for ' + credentials.actor['@id']);
-    const fullJid = buildFullJid(credentials);
-    const xmppCreds = buildXmppCredentials(fullJid, credentials);
+    const fullJid = this.__buildFullJid(credentials);
+    const xmppCreds = this.__buildXmppCredentials(fullJid, credentials);
+    console.log(credentials);
+    console.log(xmppCreds);
 
     function __removeListeners() {
       xmpp.removeListener('online', handlers.online);
@@ -618,6 +592,38 @@ class XMPP {
     this.__client.on('unsubscribe', ih.unsubscribe.bind(ih));
     this.__client.on('stanza', ih.__stanza.bind(ih));
   };
+
+
+  __buildFullJid(credentials) {
+    let fullJid;
+
+    // generate bareJid and fullJid
+    if (credentials.object.username.indexOf('@') === -1) {
+      fullJid = credentials.object.username + '@' + credentials.object.server + '/' + credentials.object.resource;
+    } else {
+      fullJid = credentials.object.username + '/' + credentials.object.resource;
+    }
+
+    return fullJid;
+  }
+
+  __buildXmppCredentials(fullJid, credentials) {
+    // credential object to pass to simple-xmpp
+    let xmpp_creds = {
+      jid: fullJid,
+      password: credentials.object.password
+    };
+
+    if (credentials.object.server) {
+      xmpp_creds.host = credentials.object.server;
+    }
+
+    if (credentials.object.port) {
+      xmpp_creds.port = credentials.object.port;
+    }
+
+    return xmpp_creds;
+  }
 }
 
 module.exports = XMPP;

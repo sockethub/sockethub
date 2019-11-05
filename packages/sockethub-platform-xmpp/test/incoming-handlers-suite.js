@@ -9,7 +9,6 @@ define(['require'], function (require) {
     desc: "takes a list of paired data (incoming and expected result) to build a series of tests",
     abortOnFail: true,
     setup: function (env, test) {
-      // irc-factory mock
       env.xmpp = require('./mock-simple-xmpp')(test);
       env.IncomingHandlers = require('./../lib/incoming-handlers');
       env.xmpp.mock = true;
