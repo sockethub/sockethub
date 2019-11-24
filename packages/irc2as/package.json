@@ -1,6 +1,6 @@
 {
   "name": "irc2as",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "IRC to ActivityStreams objects",
   "main": "index.js",
   "directories": {

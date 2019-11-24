@@ -6,6 +6,7 @@ if (typeof(define) !== 'function') {
 
 function matchStream(env, test) {
     return (stream) => {
+        test.assertTypeAnd(stream.published, 'string');
         delete stream.published;
         let matched = false;
         for (let i = 0; i <= env.validStreams.length; i++) {
@@ -17,7 +18,7 @@ function matchStream(env, test) {
         }
         if (! matched) {
             console.log();
-            console.log('available matches:' + JSON.stringify(env.validStreams));
+            // console.log('available matches:' + JSON.stringify(env.validStreams));
             console.log('failed to find match for: ' + JSON.stringify(stream));
             test.fail('failed matching ' + JSON.stringify(stream));
         }
@@ -36,7 +37,7 @@ define(['require'], function (require, IRC2AS) {
                     '@type': 'update',
                     actor: { 
                         '@type': 'service',
-                        '@id': 'irc://localhost',
+                        '@id': 'localhost',
                         displayName: 'localhost' 
                     },
                     object: { 
@@ -45,29 +46,10 @@ define(['require'], function (require, IRC2AS) {
                     }
                 },
                 {
-                    '@type': 'observe',
-                    actor: {
-                        '@type': 'room',
-                        '@id': 'irc://localhost/#kosmos-random',
-                        displayName: '#kosmos-random' 
-                    },
-                    object: {   
-                        '@type': 'attendance',
-                        members: [ 
-                            'hyper_slvrbckt',
-                            'gregkare',
-                            'hal8000',
-                            'botka',
-                            'raucao',
-                            'galfert' 
-                        ]
-                    }
-                },
-                { 
                     '@type': 'update',
                     actor: {   
                         '@type': 'service',
-                        '@id': 'irc://localhost',
+                        '@id': 'localhost',
                         displayName: 'localhost' 
                     },
                     object: {   
@@ -86,57 +68,75 @@ define(['require'], function (require, IRC2AS) {
                 { '@type': 'update',
                     actor: 
                     { '@type': 'person',
-                        '@id': 'irc://donkey2018@localhost',
+                        '@id': 'donkey2018@localhost',
                         displayName: 'donkey2018' },
                     target: 
                     { '@type': 'person',
-                        '@id': 'irc://slvrbckt@localhost',
+                        '@id': 'slvrbckt@localhost',
                         displayName: 'slvrbckt' },
                     object: { '@type': 'address' } 
                 },
                 { '@type': 'update',
                     actor: 
                     { '@type': 'person',
-                        '@id': 'irc://slvrbckt@localhost',
+                        '@id': 'slvrbckt@localhost',
                         displayName: 'slvrbckt' },
                     target: 
                     { '@type': 'person',
-                        '@id': 'irc://donkey2018@localhost',
+                        '@id': 'donkey2018@localhost',
                         displayName: 'donkey2018' },
                     object: { '@type': 'address' } 
                 },
                 { '@type': 'leave',
                     actor: 
                     { '@type': 'person',
-                        '@id': 'irc://slvrbckt@localhost',
+                        '@id': 'slvrbckt@localhost',
                         displayName: 'slvrbckt' },
                     target: 
                     { '@type': 'room',
-                        '@id': 'irc://localhost/#debian',
+                        '@id': 'localhost/#debian',
                         displayName: '#debian' },
                     object: { '@type': 'message', content: 'user has left the channel' } 
                 },
-                {"@type":"leave",actor:{"@type":"person","@id":"irc://jarlaxl_@localhost",displayName:"jarlaxl_"},target:{"@type":"service","@id":"irc://localhost"},object:{"@type":"message",content:"user has quit"}},
-                {"@type":"join",actor:{"@id":"irc://localhost","@type":"service"},object:{"@type":"error",content:"no such channel sdfsdfsdfsdfsdf"},target:{"@id":"irc://sdfsdfsdfsdfsdf@localhost","@type":"person"}},
-                {"@type":"update","actor":{"@type":"person","@id":"irc://lio17@localhost","displayName":"lio17"},"target":{"@type":"room","@id":"irc://localhost/#kosmos-random","displayName":"#kosmos-random"},"object":{"@type":"topic","topic":"testing123"}},
-                {"@type":"send","actor":{"@type":"person","@id":"irc://hyper_slvrbckt@localhost","displayName":"hyper_slvrbckt"},"target":{"displayName":"#kosmos-random"},"object":{"@type":"message","content":"-ssssssss"}},
-                {"@type":"send","actor":{"@type":"room","@id":"irc://localhost/#kosmos-random"},"target":{"@type":"person","@id":"irc://slvrbckt@localhost"},"object":{"@type":"error","content":"You're not a channel operator"}},
-                {"@type":"update","actor":{"@type":"person","@id":"irc://lio17@localhost","displayName":"lio17"},"target":{"@type":"room","@id":"irc://localhost/#kosmos-random","displayName":"#kosmos-random"},"object":{"@type":"topic","topic":"no longer boating in senegal"}},
-                {"@type":"send","actor":{"@type":"person","@id":"irc://raucao@localhost","displayName":"raucao"},"target":{"displayName":"#kosmos-random"},"object":{"@type":"me","content":"is thinking about sending someone to get b33rz"}},
-                {"@type":"observe","actor":{"@type":"room","@id":"irc://localhost/#kosmos","displayName":"#kosmos"},"object":{"@type":"attendance","members":["slvrbckt","lio17","M-silverbucket","botka1","derbumi","ChanServ","bkero-","galfert","raucao","hal8000","gregkare","bkero","bumi[m]"]}},
-                {"@type":"observe","object":{"@type":"attendance","members":["hyper_slvrbckt"]},"actor":{"@type":"person","@id":"irc://undefined@localhost","displayName":"undefined"}},
-                {"@type":"observe","object":{"@type":"attendance","members":["hyper_slvrbckt"]},"actor":{"@type":"person","@id":"irc://hyper_slvrbckt@localhost","displayName":"hyper_slvrbckt"}},
-                {"@type":"observe","object":{"@type":"attendance","members":["hyper_slvrbckt"]},"actor":{"@type":"person","@id":"irc://hyper_slvrbckt@localhost","displayName":"hyper_slvrbckt"}},                
-                {"@type":"observe","object":{"@type":"attendance","members":["hyper_slvrbckt"]},"actor":{"@type":"person","@id":"irc://hyper_slvrbckt@localhost","displayName":"hyper_slvrbckt"}},
-                {"@type":"send","actor":{"@type":"room","@id":"irc://localhost/#debian"},"target":{"@type":"person","@id":"irc://slvrbckt@localhost"},"object":{"@type":"error","content":"You're not a channel operator"}},
-                {"@type":"send","actor":{"@type":"room","@id":"irc://localhost/#freenode-sponsors"},"target":{"@type":"person","@id":"irc://hyper_slvrbckt@localhost"},"object":{"@type":"error","content":"Cannot join channel (+i) - you must be invited"}},
-                {"@type":"update","actor":{"@type":"service","@id":"irc://localhost"},"object":{"@type":"error","content":"Nickname is already in use."},"target":{"@type":"person","@id":"irc://nkj@localhost","displayName":"nkj"}},
-                {"@type":"update","actor":{"@type":"service","@id":"irc://localhost"},"object":{"@type":"error","content":"This nickname is registered. Please choose a different nickname, or identify via /msg NickServ identify <password>."},"target":{"@type":"person","@id":"irc://boo@localhost","displayName":"boo"}},
-                {"@type":"update","actor":{"@type":"service","@id":"irc://localhost"},"object":{"@type":"error","content":"You have 30 seconds to identify to your nickname before it is changed."},"target":{"@type":"person","@id":"irc://boo@localhost","displayName":"boo"}},
-                {"@type":"update","actor":{"@type":"service","@id":"irc://localhost"},"object":{"@type":"error","content":"You failed to identify in time for the nickname boo"},"target":{"@type":"person","@id":"irc://boo@localhost","displayName":"boo"}},
-                {"@type":"update","actor":{"@type":"service","@id":"irc://localhost"},"object":{"@type":"error","content":"Nick/channel is temporarily unavailable"},"target":{"@type":"person","@id":"irc://boo@localhost","displayName":"boo"}},
-                {"@type":"update","actor":{"@type":"service","@id":"irc://localhost"},"object":{"@type":"error","content":"Nickname is already in use."},"target":{"@type":"person","@id":"irc://slvrbckt@localhost","displayName":"slvrbckt"}},
-                {"@type":"update","actor":{"@type":"person","@id":"irc://sh-WjwOE@localhost","displayName":"sh-WjwOE"},"target":{"@type":"person","@id":"irc://woooo@localhost","displayName":"woooo"},"object":{"@type":"address"}}
+                {"@type":"leave",actor:{"@type":"person","@id":"jarlaxl_@localhost",displayName:"jarlaxl_"},target:{"@type":"service","@id":"localhost"},object:{"@type":"message",content:"user has quit"}},
+                {"@type":"join",actor:{"@id":"localhost","@type":"service"},object:{"@type":"error",content:"no such channel sdfsdfsdfsdfsdf"},target:{"@id":"sdfsdfsdfsdfsdf@localhost","@type":"person"}},
+                {"@type":"update","actor":{"@type":"person","@id":"lio17@localhost","displayName":"lio17"},"target":{"@type":"room","@id":"localhost/#kosmos-random","displayName":"#kosmos-random"},"object":{"@type":"topic","topic":"testing123"}},
+                {"@type":"send","actor":{"@type":"person","@id":"hyper_slvrbckt@localhost","displayName":"hyper_slvrbckt"},"target":{"displayName":"#kosmos-random"},"object":{"@type":"message","content":"-ssssssss"}},
+                {"@type":"send","actor":{"@type":"room","@id":"localhost/#kosmos-random"},"target":{"@type":"person","@id":"slvrbckt@localhost"},"object":{"@type":"error","content":"You're not a channel operator"}},
+                {"@type":"update","actor":{"@type":"person","@id":"lio17@localhost","displayName":"lio17"},"target":{"@type":"room","@id":"localhost/#kosmos-random","displayName":"#kosmos-random"},"object":{"@type":"topic","topic":"no longer boating in senegal"}},
+                {"@type":"send","actor":{"@type":"person","@id":"raucao@localhost","displayName":"raucao"},"target":{"displayName":"#kosmos-random"},"object":{"@type":"me","content":"is thinking about sending someone to get b33rz"}},
+                {"@type":"update","object":{"@type":"presence","role":"member"},"actor":{"@type":"person","@id":"hyper_slvrbckt@localhost","displayName":"hyper_slvrbckt"},"target":{"@type":"room","@id":"localhost/#kosmos-random","displayName":"#kosmos-random"}},
+                {"@type":"update","object":{"@type":"presence","role":"member"},"actor":{"@type":"person","@id":"hyper_slvrbckt@localhost","displayName":"hyper_slvrbckt"},"target":{"@type":"room","@id":"localhost/#kosmos-random","displayName":"#kosmos-random"}},
+                {"@type":"update","object":{"@type":"presence","role":"member"},"actor":{"@type":"person","@id":"hyper_slvrbckt@localhost","displayName":"hyper_slvrbckt"},"target":{"@type":"room","@id":"localhost/#kosmos-random","displayName":"#kosmos-random"}},
+                {"@type":"update","object":{"@type":"presence","role":"member"},"actor":{"@type":"person","@id":"hyper_slvrbckt@localhost","displayName":"hyper_slvrbckt"},"target":{"@type":"room","@id":"localhost/#kosmos-random","displayName":"#kosmos-random"}},
+                {"@type":"update","actor":{"@type":"person","@id":"hyper_slvrbckt@localhost","displayName":"hyper_slvrbckt"},"target":{"@type":"room","@id":"localhost/#kosmos-random","displayName":"#kosmos-random"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"update","actor":{"@type":"person","@id":"gregkare@localhost","displayName":"gregkare"},"target":{"@type":"room","@id":"localhost/#kosmos-random","displayName":"#kosmos-random"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"update","actor":{"@type":"person","@id":"slvrbckt@localhost","displayName":"slvrbckt"},"target":{"@type":"room","@id":"localhost/#kosmos","displayName":"#kosmos"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"update","actor":{"@type":"person","@id":"lio17@localhost","displayName":"lio17"},"target":{"@type":"room","@id":"localhost/#kosmos","displayName":"#kosmos"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"update","actor":{"@type":"person","@id":"M-silverbucket@localhost","displayName":"M-silverbucket"},"target":{"@type":"room","@id":"localhost/#kosmos","displayName":"#kosmos"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"update","actor":{"@type":"person","@id":"botka1@localhost","displayName":"botka1"},"target":{"@type":"room","@id":"localhost/#kosmos","displayName":"#kosmos"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"update","actor":{"@type":"person","@id":"derbumi@localhost","displayName":"derbumi"},"target":{"@type":"room","@id":"localhost/#kosmos","displayName":"#kosmos"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"update","actor":{"@type":"person","@id":"ChanServ@localhost","displayName":"ChanServ"},"target":{"@type":"room","@id":"localhost/#kosmos","displayName":"#kosmos"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"update","actor":{"@type":"person","@id":"gregkare@localhost","displayName":"gregkare"},"target":{"@type":"room","@id":"localhost/#kosmos","displayName":"#kosmos"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"update","actor":{"@type":"person","@id":"hal8000@localhost","displayName":"hal8000"},"target":{"@type":"room","@id":"localhost/#kosmos-random","displayName":"#kosmos-random"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"update","actor":{"@type":"person","@id":"bkero-@localhost","displayName":"bkero-"},"target":{"@type":"room","@id":"localhost/#kosmos","displayName":"#kosmos"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"update","actor":{"@type":"person","@id":"galfert@localhost","displayName":"galfert"},"target":{"@type":"room","@id":"localhost/#kosmos","displayName":"#kosmos"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"update","actor":{"@type":"person","@id":"raucao@localhost","displayName":"raucao"},"target":{"@type":"room","@id":"localhost/#kosmos","displayName":"#kosmos"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"update","actor":{"@type":"person","@id":"hal8000@localhost","displayName":"hal8000"},"target":{"@type":"room","@id":"localhost/#kosmos","displayName":"#kosmos"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"update","actor":{"@type":"person","@id":"bkero@localhost","displayName":"bkero"},"target":{"@type":"room","@id":"localhost/#kosmos","displayName":"#kosmos"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"update","actor":{"@type":"person","@id":"bumi[m]@localhost","displayName":"bumi[m]"},"target":{"@type":"room","@id":"localhost/#kosmos","displayName":"#kosmos"},"object":{"@type":"presence","role":"member"}},
+                {"@type":"send","actor":{"@type":"room","@id":"localhost/#debian"},"target":{"@type":"person","@id":"slvrbckt@localhost"},"object":{"@type":"error","content":"You're not a channel operator"}},
+                { "@type": "add", "actor": { "@type": "person", "@id": "alice@localhost", "displayName": "alice" }, "target": { "@type": "person", "@id": "Kilroy@localhost", "displayName": "Kilroy" }, "object": { "@type": "relationship", "relationship": "role", "subject": { "@type": "presence", "role": "owner" }, "object": { "@type": "room", "@id": "localhost/#Finnish", "displayName": "#Finnish" } } },
+                { "@type": "add", "actor": { "@type": "person", "@id": "bob@localhost", "displayName": "bob" }, "target": { "@type": "person", "@id": "alice@localhost", "displayName": "alice" }, "object": { "@type": "relationship", "relationship": "role", "subject": { "@type": "presence", "role": "participant" }, "object": { "@type": "room", "@id": "localhost/#room_a", "displayName": "#room_a" } } },
+                { "@type": "add", "actor": { "@type": "person", "@id": "alice@localhost", "displayName": "alice" }, "target": { "@type": "person", "@id": "bob@localhost", "displayName": "bob" }, "object": { "@type": "relationship", "relationship": "role", "subject": { "@type": "presence", "role": "admin" }, "object": { "@type": "room", "@id": "localhost/#room_b", "displayName": "#room_b" } } },
+                {"@type":"send","actor":{"@type":"room","@id":"localhost/#freenode-sponsors"},"target":{"@type":"person","@id":"hyper_slvrbckt@localhost"},"object":{"@type":"error","content":"Cannot join channel (+i) - you must be invited"}},
+                {"@type":"update","actor":{"@type":"service","@id":"localhost"},"object":{"@type":"error","content":"Nickname is already in use."},"target":{"@type":"person","@id":"nkj@localhost","displayName":"nkj"}},
+                {"@type":"update","actor":{"@type":"service","@id":"localhost"},"object":{"@type":"error","content":"This nickname is registered. Please choose a different nickname, or identify via /msg NickServ identify <password>."},"target":{"@type":"person","@id":"boo@localhost","displayName":"boo"}},
+                {"@type":"update","actor":{"@type":"service","@id":"localhost"},"object":{"@type":"error","content":"You have 30 seconds to identify to your nickname before it is changed."},"target":{"@type":"person","@id":"boo@localhost","displayName":"boo"}},
+                {"@type":"update","actor":{"@type":"service","@id":"localhost"},"object":{"@type":"error","content":"You failed to identify in time for the nickname boo"},"target":{"@type":"person","@id":"boo@localhost","displayName":"boo"}},
+                {"@type":"update","actor":{"@type":"service","@id":"localhost"},"object":{"@type":"error","content":"Nick/channel is temporarily unavailable"},"target":{"@type":"person","@id":"boo@localhost","displayName":"boo"}},
+                {"@type":"update","actor":{"@type":"service","@id":"localhost"},"object":{"@type":"error","content":"Nickname is already in use."},"target":{"@type":"person","@id":"slvrbckt@localhost","displayName":"slvrbckt"}},
+                {"@type":"update","actor":{"@type":"person","@id":"sh-WjwOE@localhost","displayName":"sh-WjwOE"},"target":{"@type":"person","@id":"woooo@localhost","displayName":"woooo"},"object":{"@type":"address"}}
             ];
             const IRC2AS = require('./../index');
             env.testData = fs.readFileSync('./test/irc-data.txt', 'utf-8');
@@ -170,7 +170,7 @@ define(['require'], function (require, IRC2AS) {
                         env.irc2as.input(lines[i]);
                     }
                     setTimeout(() => {
-                        test.assert(env.validStreams.length, 0); 
+                        test.assert(env.validStreams.length, 0);
                     }, 0);
                 }
             },
@@ -189,12 +189,14 @@ define(['require'], function (require, IRC2AS) {
             {
                 desc: "lots of people in a room",
                 run: function (env, test) {
-                    env.irc2as.events.on('incoming', (msg) => {
-                        for (let i = 0; i < msg.object.members.length; i++)  {
-                            console.log(msg.object.members[i])
-                            test.assertTypeAnd(msg.object.members[i], 'string', msg.object.members[i]);
-                        };
-                        test.done();
+                    let totalCount = 0;
+                    const IRC2AS = require('./../index');
+                    let irc2as = new IRC2AS({server: 'localhost'});
+                    irc2as.events.on('incoming', (msg) => {
+                        totalCount += 1;
+                        if (totalCount === 5 * 100) {
+                            test.done();
+                        }
                     });
 
                     for (let i = 0; i < 5; i++) {
@@ -202,9 +204,9 @@ define(['require'], function (require, IRC2AS) {
                         for (let n = 0; n < 100; n++) {
                             names += ` gregkare${i}${n} hal8000${i}${n} botka${i}${n} raucao${i}${n} galfert${i}${n}`;
                         }
-                        env.irc2as.input(names);
+                        irc2as.input(names);
                     }
-                    env.irc2as.input(':hitchcock.freenode.net 366 hyper_slvrbckt #kosmos-random :End of /NAMES list.')
+                    irc2as.input(':hitchcock.freenode.net 366 hyper_slvrbckt #kosmos-random :End of /NAMES list.')
                 }
             }
         ]
