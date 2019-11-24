@@ -2,19 +2,22 @@
 :hitchcock.freenode.net 372 hyper_slvrbckt :- on the https://freenode.live website for our call for volunteers and call for
 :hitchcock.freenode.net 372 hyper_slvrbckt :- participation. If you are interested in sponsoring next year's event, please
 :hitchcock.freenode.net 372 hyper_slvrbckt :- send us an e-mail to sponsor@freenode.live
-:hitchcock.freenode.net 372 hyper_slvrbckt :-  
+:hitchcock.freenode.net 372 hyper_slvrbckt :-
 :hitchcock.freenode.net 372 hyper_slvrbckt :- Thank you for using freenode!
-:hitchcock.freenode.net 372 hyper_slvrbckt :-  
-:hitchcock.freenode.net 372 hyper_slvrbckt :-  
+:hitchcock.freenode.net 372 hyper_slvrbckt :-
+:hitchcock.freenode.net 372 hyper_slvrbckt :-
 :hitchcock.freenode.net 376 hyper_slvrbckt :End of /MOTD command.
 :hitchcock.freenode.net 315 hyper_slvrbckt undefined :End of /WHO list.
-:hitchcock.freenode.net 353 hyper_slvrbckt @ #kosmos-random :hyper_slvrbckt gregkare hal8000 botka raucao galfert
+:hitchcock.freenode.net 353 hyper_slvrbckt @ #kosmos-random :hyper_slvrbckt gregkare hal8000
 :hitchcock.freenode.net 366 hyper_slvrbckt #kosmos-random :End of /NAMES list.
 :hitchcock.freenode.net 352 hyper_slvrbckt #kosmos-random ~hyper_slv 154.65.34.210 hitchcock.freenode.net hyper_slvrbckt H :0 hyper_slvrbckt
-:adams.freenode.net 372 hyper_slvrbckt :-  
-:adams.freenode.net 372 hyper_slvrbckt :-  
+:adams.freenode.net 372 hyper_slvrbckt :-
+:adams.freenode.net 372 hyper_slvrbckt :-
 :adams.freenode.net 376 hyper_slvrbckt :End of /MOTD command.
-:hyper_slvrbckt MODE hyper_slvrbckt :+i
+:bob MODE hyper_slvrbckt :+i
+:alice MODE #Finnish +o Kilroy
+:bob MODE #room_a +v alice
+:alice MODE #room_b +h bob
 PING :moon.freenode.net
 :adams.freenode.net 352 hyper_slvrbckt * ~undefined 75-140-253-250.dhcp.ftwo.tx.charter.com livingstone.freenode.net undefined H :0 undefined
 :adams.freenode.net 315 hyper_slvrbckt undefined :End of /WHO list.
@@ -66,8 +69,8 @@ PING :moon.freenode.net
 :leguin.freenode.net 354 slvrbckt 152 #kosmos bumimatrix gateway/shell/matrix.org/x-aeqgcnylcgbinlmx roddenberry.freenode.net bumi[m] H 0 :@bumi:matrix.org
 :leguin.freenode.net 315 slvrbckt #kosmos :End of /WHO list.
 :card.freenode.net 352 hyper_slvrbckt #kosmos-random ~hyper_slv cell01228.qcell.gm card.freenode.net hyper_slvrbckt H :0 hyper_slvrbckt +311ms
-:card.freenode.net 315 hyper_slvrbckt hyper_slvrbckt :End of /WHO list. 
-:moon.freenode.net 473 hyper_slvrbckt #freenode-sponsors :Cannot join channel (+i) - you must be invited 
+:card.freenode.net 315 hyper_slvrbckt hyper_slvrbckt :End of /WHO list.
+:moon.freenode.net 473 hyper_slvrbckt #freenode-sponsors :Cannot join channel (+i) - you must be invited
 :weber.freenode.net 482 slvrbckt #debian :You're not a channel operator
 :NickServ!NickServ@services. NOTICE boo :This nickname is registered. Please choose a different nickname, or identify via /msg NickServ identify <password>.
 :NickServ!NickServ@services. NOTICE boo :You have 30 seconds to identify to your nickname before it is changed.
