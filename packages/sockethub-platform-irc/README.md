@@ -5,11 +5,10 @@ A sockethub platform module implementing IRC functionality.
 [![Build Status](http://img.shields.io/travis/sockethub/sockethub-platform-irc.svg?style=flat)](https://travis-ci.org/sockethub/sockethub-platform-irc)
 [![Dependency Status](http://img.shields.io/david/sockethub/sockethub-platform-irc.svg?style=flat)](https://david-dm.org/sockethub/sockethub-platform-irc#info=dependencies)
 [![devDependency Status](http://img.shields.io/david/dev/sockethub/sockethub-platform-irc.svg?style=flat)](https://david-dm.org/sockethub/sockethub-platform-irc#info=devDependencies)
-[![Code Climate](http://img.shields.io/codeclimate/github/sockethub/sockethub-platform-irc.svg?style=flat)](https://codeclimate.com/github/sockethub/sockethub-platform-irc)
+[![Maintainability](https://api.codeclimate.com/v1/badges/95912fc801271faf44f6/maintainability)](https://codeclimate.com/github/sockethub/sockethub-platform-irc/maintainability)
 [![License](https://img.shields.io/npm/l/sockethub-platform-irc.svg?style=flat)](https://raw.githubusercontent.com/sockethub/sockethub-platform-irc/master/LICENSE)
 [![Release](http://img.shields.io/github/release/sockethub/sockethub-platform-irc.svg?style=flat)](https://github.com/sockethub/sockethub-platform-irc/releases)
 
-[![Flattr this](http://api.flattr.com/button/flattr-badge-large.png)](http://flattr.com/thing/1154379/Sockethub)
 
 ## About
 
@@ -27,12 +26,12 @@ Each sockethub platform uses JSON Activity Streams 2.0 which are recevied from a
   "@type": "announce",
   "context": "irc",
   "actor": {
-    "@id": "irc://irc.freenode.net",
+    "@id": "irc.freenode.net",
     "@type": "service"
   },
   "published": "2015-05-20T22:32:06.212Z",
   "target": {
-    "@id": "irc://foobar@irc.freenode.net",
+    "@id": "foobar@irc.freenode.net",
     "@type": "person",
     "displayName": "Foobar McUser"
   },

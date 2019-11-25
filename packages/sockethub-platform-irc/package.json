@@ -1,7 +1,7 @@
 {
   "name": "sockethub-platform-irc",
   "description": "A sockethub platform module implementing IRC functionality",
-  "version": "3.3.1",
+  "version": "3.4.1",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL",
@@ -22,20 +22,20 @@
   "dependencies": {
     "debug": "^4.1.1",
     "irc-socket": "^3.0.8",
-    "irc2as": "^2.0.1"
+    "irc2as": "^3.0.0"
   },
   "devDependencies": {
-    "eslint": "^5.15.2",
-    "istanbul": "^0.4.5",
+    "c8": "^5.0.4",
+    "eslint": "^6.4.0",
     "jaribu": "^2.2.2",
-    "jsdoc-to-markdown": "^4.0.1",
+    "jsdoc-to-markdown": "^5.0.1",
     "tv4": "^1.3.0"
   },
   "scripts": {
     "test": "jaribu",
     "doc": "node_modules/.bin/jsdoc2md index.js  > API.md",
-    "compliance": "istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
-    "coverage": "istanbul cover --print both --include-all-sources jaribu -- **/*-suite.js",
+    "compliance": "c8 jaribu **/*-suite.js",
+    "coverage": "c8 jaribu **/*-suite.js",
     "lint": "eslint --ignore-pattern \"coverage\" \"**/*.js\"",
     "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\""
   }

@@ -53,7 +53,7 @@ Valid AS object for setting IRC credentials:
    '@type': 'set',
    context: 'irc',
    actor: {
-     '@id': 'irc://testuser@irc.host.net',
+     '@id': 'testuser@irc.host.net',
      '@type': 'person',
      displayName: 'Mr. Test User',
      userName: 'testuser'
@@ -79,7 +79,7 @@ Join a room or private conversation.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| job | <code>object</code> | activiy streams object // TODO LINK |
+| job | <code>object</code> | activity streams object // TODO LINK |
 | credentials | <code>object</code> | credentials object // TODO LINK |
 | done | <code>object</code> | callback when job is done // TODO LINK |
 
@@ -89,12 +89,12 @@ Join a room or private conversation.
   context: 'irc',
   '@type': 'join',
   actor: {
-    '@id': 'irc://slvrbckt@irc.freenode.net',
+    '@id': 'slvrbckt@irc.freenode.net',
     '@type': 'person',
     displayName: 'slvrbckt'
   },
   target: {
-    '@id': 'irc://irc.freenode.net/sockethub',
+    '@id': 'irc.freenode.net/sockethub',
     '@type': 'room',
     displayName: '#sockethub'
   },
@@ -112,7 +112,7 @@ Leave a room or private conversation.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| job | <code>object</code> | activiy streams object // TODO LINK |
+| job | <code>object</code> | activity streams object // TODO LINK |
 | credentials | <code>object</code> | credentials object // TODO LINK |
 | done | <code>object</code> | callback when job is done // TODO LINK |
 
@@ -122,12 +122,12 @@ Leave a room or private conversation.
   context: 'irc',
   '@type': 'leave',
   actor: {
-    '@id': 'irc://slvrbckt@irc.freenode.net',
+    '@id': 'slvrbckt@irc.freenode.net',
     '@type': 'person',
     displayName: 'slvrbckt'
   },
   target: {
-    '@id': 'irc://irc.freenode.net/remotestorage',
+    '@id': 'irc.freenode.net/remotestorage',
     '@type': 'room',
     displayName: '#remotestorage'
   },
@@ -145,7 +145,7 @@ Send a message to a room or private conversation.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| job | <code>object</code> | activiy streams object // TODO LINK |
+| job | <code>object</code> | activity streams object // TODO LINK |
 | credentials | <code>object</code> | credentials object // TODO LINK |
 | done | <code>object</code> | callback when job is done // TODO LINK |
 
@@ -155,13 +155,13 @@ Send a message to a room or private conversation.
    context: 'irc',
    '@type': 'send',
    actor: {
-     '@id': 'irc://slvrbckt@irc.freenode.net',
+     '@id': 'slvrbckt@irc.freenode.net',
      '@type': 'person',
      displayName: 'Nick Jennings',
      userName: 'slvrbckt'
    },
    target: {
-     '@id': 'irc://irc.freenode.net/remotestorage',
+     '@id': 'irc.freenode.net/remotestorage',
      '@type': 'room',
      displayName: '#remotestorage'
    },
@@ -182,7 +182,7 @@ Indicate a change (ie. room topic update, or nickname change).
 
 | Param | Type | Description |
 | --- | --- | --- |
-| job | <code>object</code> | activiy streams object // TODO LINK |
+| job | <code>object</code> | activity streams object // TODO LINK |
 | credentials | <code>object</code> | redentials object // TODO LINK |
 | done | <code>object</code> | callback when job is done // TODO LINK |
 
@@ -194,13 +194,13 @@ change topic
   context: 'irc',
   '@type': 'update',
   actor: {
-    '@id': 'irc://slvrbckt@irc.freenode.net',
+    '@id': 'slvrbckt@irc.freenode.net',
     '@type': 'person',
     displayName: 'Nick Jennings',
     userName: 'slvrbckt'
   },
   target: {
-    '@id': 'irc://irc.freenode.net/sockethub',
+    '@id': 'irc.freenode.net/sockethub',
     '@type': 'room',
     displayName: '#sockethub'
   },
@@ -217,7 +217,7 @@ change nickname
    context: 'irc'
    '@type': 'udpate',
    actor: {
-     '@id': 'irc://slvrbckt@irc.freenode.net',
+     '@id': 'slvrbckt@irc.freenode.net',
      '@type': 'person',
      displayName: 'slvrbckt'
    },
@@ -225,7 +225,7 @@ change nickname
      '@type': "address",
    },
    target: {
-     '@id': 'irc://cooldude@irc.freenode.net',
+     '@id': 'cooldude@irc.freenode.net',
      '@type': 'person',
      displayName: cooldude
    }
@@ -242,7 +242,7 @@ Indicate an intent to observe something (ie. get a list of users in a room).
 
 | Param | Type | Description |
 | --- | --- | --- |
-| job | <code>object</code> | activiy streams object // TODO LINK |
+| job | <code>object</code> | activity streams object // TODO LINK |
 | credentials | <code>object</code> | credentials object // TODO LINK |
 | done | <code>object</code> | callback when job is done // TODO LINK |
 
@@ -252,13 +252,13 @@ Indicate an intent to observe something (ie. get a list of users in a room).
    context: 'irc',
    '@type': 'observe',
    actor: {
-     '@id': 'irc://slvrbckt@irc.freenode.net',
+     '@id': 'slvrbckt@irc.freenode.net',
      '@type': 'person',
      displayName: 'Nick Jennings',
      userName: 'slvrbckt'
    },
    target: {
-     '@id': 'irc://irc.freenode.net/sockethub',
+     '@id': 'irc.freenode.net/sockethub',
      '@type': 'room',
      displayName: '#sockethub'
    },
@@ -268,12 +268,12 @@ Indicate an intent to observe something (ie. get a list of users in a room).
  }
 
 
- // The obove object might return:
+ // The above object might return:
  {
    context: 'irc',
    '@type': 'observe',
    actor: {
-     '@id': 'irc://irc.freenode.net/sockethub',
+     '@id': 'irc.freenode.net/sockethub',
      '@type': 'room',
      displayName: '#sockethub'
    },

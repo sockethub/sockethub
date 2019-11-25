@@ -11,13 +11,13 @@ define(['require'], function (require) {
     setup: function (env, test) {
       env.actor = {
         '@type': 'person',
-        '@id': 'irc://testingham@irc.example.com',
+        '@id': 'testingham@irc.example.com',
         displayName:'testingham'
       };
 
       env.newActor = {
         '@type': 'person',
-        '@id': 'irc://testler@irc.example.com',
+        '@id': 'testler@irc.example.com',
         displayName:'testler'
       };
 
@@ -48,12 +48,12 @@ define(['require'], function (require) {
       env.target = {
         sockethub: {
           '@type': 'room',
-          '@id': 'irc://irc.example.com/sockethub',
+          '@id': 'irc.example.com/sockethub',
           displayName: '#sockethub'
         },
         remotestorage: {
           '@type': 'room',
-          '@id': 'irc://irc.example.com/remotestorage',
+          '@id': 'irc.example.com/remotestorage',
           displayName: '#remotestorage'
         }
       };
