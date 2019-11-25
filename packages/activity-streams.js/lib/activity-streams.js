@@ -27,12 +27,13 @@ const ee = EventEmitter(),
         object: [
           '@id', '@type', '@context',
           'alias', 'attachedTo', 'attachment', 'attributedTo', 'attributedWith',
-          'content', 'context', 'contextOf', 'displayName', 'endTime', 'generator',
-          'generatorOf', 'icon', 'image', 'inReplyTo', 'memberOf', 'location',
-          'locationOf', 'objectOf', 'originOf', 'presence', 'preview', 'previewOf', 'provider',
-          'providerOf', 'published', 'rating', 'resultOf', 'replies', 'scope',
-          'scopeOf', 'startTime', 'status', 'summary', 'topic', 'tag', 'tagOf', 'targetOf', 'title',
-          'updated', 'url', 'titleMap', 'contentMap', 'members', 'message', 'group'
+          'content', 'contentMap', 'context', 'contextOf', 'displayName', 'endTime', 'generator',
+          'generatorOf', 'group', 'icon', 'image', 'inReplyTo', 'members', 'memberOf', 
+          'message', 'location', 'locationOf', 'objectOf', 'originOf', 'presence', 
+          'preview', 'previewOf', 'provider', 'providerOf', 'published', 'rating', 
+          'relationship', 'resultOf', 'replies', 'role', 'scope', 'scopeOf', 'startTime', 
+          'status', 'summary', 'topic', 'tag', 'tagOf', 'targetOf', 'title', 'titleMap',
+          'updated', 'url'
         ]
       },
       rename = {
