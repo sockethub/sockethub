@@ -29,6 +29,7 @@ ExamplesShared.prototype.__displayUnknownContent = function (msg) {
 };
 
 ExamplesShared.prototype.processIncomingMessage = function (msg) {
+  console.log('incoming message: ', msg);
   if (msg['@type'] === 'observe') {
     $('#messages').append($('<li>').text(` users in ${msg.actor.displayName}`))
       .append($('<li>').text(`  [ ${msg.object.members.join(', ')} ]`));
@@ -40,6 +41,12 @@ ExamplesShared.prototype.processIncomingMessage = function (msg) {
       `${msg.actor.displayName} is now known as ${msg.target.displayName}`));
   } else if ((msg['@type'] === 'update') && (msg.object['@type'] === 'presence')) {
     this.__displayPresenceUpdate(msg);
+  } else if ((msg['@type'] === 'add' || msg['@type'] === 'remove') &&
+             (msg.object['@type'] === 'relationship')) {
+    const action = msg['@type'] === 'add' ? 'set' : 'removed';
+    $('#messages').append($('<li>').text(
+      `${msg.actor.displayName} ${action} ${msg.object.relationship} of 
+      ${msg.object.subject.role}`));
   } else if (msg['@type'] === 'join') {
     $('#messages').append($('<li>').text(
       `${msg.actor.displayName} has joined ${msg.target.displayName}`));
