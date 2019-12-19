@@ -22,14 +22,7 @@
   "dependencies": {
     "debug": "^4.1.1",
     "irc-socket": "^3.0.8",
-    "irc2as": "^3.0.0"
-  },
-  "devDependencies": {
-    "c8": "^5.0.4",
-    "eslint": "^6.4.0",
-    "jaribu": "^2.2.2",
-    "jsdoc-to-markdown": "^5.0.1",
-    "tv4": "^1.3.0"
+    "irc2as": "file:../irc2as"
   },
   "scripts": {
     "test": "jaribu",

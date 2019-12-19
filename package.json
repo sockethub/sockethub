@@ -2,6 +2,36 @@
   "name": "root",
   "private": true,
   "devDependencies": {
-    "lerna": "^3.19.0"
+    "@typescript-eslint/parser": "^2.9.0",
+    "c8": "^5.0.4",
+    "chai": "^4.2.0",
+    "eslint": "^6.4.0",
+    "eslint-cli": "^1.1.1",
+    "jaribu": "^2.0.0",
+    "jsdoc-to-markdown": "^5.0.1",
+    "karma": "^4.4.1",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-firefox-launcher": "^1.2.0",
+    "karma-mocha": "^1.3.0",
+    "lerna": "^3.19.0",
+    "mocha": "^6.2.2",
+    "npm-run-all": "^4.1.5",
+    "sockethub-testing-mocks": "^1.2.1",
+    "ts-node": "^8.5.4",
+    "tv4": "^1.1.4",
+    "typescript": "^3.7.2",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10"
+  },
+  "dependencies": {
+    "activity-streams": "file:packages/activity-streams.js",
+    "irc2as": "file:packages/irc2as",
+    "sockethub": "file:packages/core",
+    "sockethub-platform-dummy": "file:packages/platform-dummy",
+    "sockethub-platform-feeds": "file:packages/platform-feeds",
+    "sockethub-platform-irc": "file:packages/platform-irc",
+    "sockethub-platform-xmpp": "file:packages/platform-xmpp",
+    "sockethub-schemas": "file:packages/schemas"
   }
 }

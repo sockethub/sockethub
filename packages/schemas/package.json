@@ -16,10 +16,6 @@
     "type": "git",
     "url": "git://github.com/sockethub/sockethub-schemas.git"
   },
-  "devDependencies": {
-    "tv4": "^1.1.4",
-    "jaribu": "^2.0.0"
-  },
   "scripts": {
     "test": "node_modules/.bin/jaribu",
     "build": "bin/build.js"
