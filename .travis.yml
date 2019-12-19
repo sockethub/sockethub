@@ -6,9 +6,9 @@ node_js:
 services: redis
 sudo: false
 script:
-  - npm run compliance
+  - lerna run test
 install:
-  - npm update -g npm; npm install;
+  - lerna bootstrap
 env:
   - CXX=g++-4.8
 addons:

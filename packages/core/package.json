@@ -72,10 +72,9 @@
     "urijs": "^1.19.2"
   },
   "scripts": {
-    "test": "npm run build && jaribu",
     "start": "npm run build && PROD=1 DEBUG=sockethub* ./bin/sockethub",
     "dev": "ts-node --pretty --skip-ignore -T -P src/tsconfig.json/ ./bin/sockethub --examples",
-    "compliance": "npm run build && eslint --ignore-pattern \"coverage/*\" \"**/*.ts\" bin/sockethub && c8 jaribu",
+    "test": "npm run build && eslint --ignore-pattern \"coverage/*\" \"**/*.ts\" bin/sockethub && c8 jaribu",
     "coverage": "c8 jaribu",
     "lint": "eslint --ignore-pattern \"coverage\" \"src/*.js\" bin/sockethub",
     "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\" bin/sockethub",
