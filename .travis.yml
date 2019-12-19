@@ -8,7 +8,7 @@ sudo: false
 script:
   - lerna run test
 install:
-  - lerna bootstrap
+  - npm update -g lerna; lerna bootstrap
 env:
   - CXX=g++-4.8
 addons:
