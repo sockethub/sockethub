@@ -1,9 +1,8 @@
 language: node_js
 node_js:
-  - 11
-  - 12 # LTS
+  - 'lts/*'
   - 13 # latest
 sudo: false
-script: npm test
+script: yarn run travis
 install:
-  - npm install
+  - yarn install
