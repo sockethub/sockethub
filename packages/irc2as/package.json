@@ -13,7 +13,8 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "jaribu"
+    "test": "jaribu",
+    "travis": "yarn run test"
   },
   "repository": {
     "type": "git",
