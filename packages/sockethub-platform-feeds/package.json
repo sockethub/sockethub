@@ -4,7 +4,7 @@
   "version": "2.0.1",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
-  "license": "LGPL",
+  "license": "LGPL-3.0+",
   "keywords": [
     "sockethub",
     "messaging",
@@ -22,7 +22,6 @@
   },
   "homepage": "http://github.com/sockethub/sockethub-platform-feeds",
   "dependencies": {
-    "bluebird": "^3.5.1",
     "feedparser": "^2.2.9",
     "request": "^2.83.0"
   },
