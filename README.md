@@ -70,13 +70,19 @@ List of possible future platforms and their potentials verb types.
 
 # Setup
 
-`$ npm install`
+`$ yarn install`
 
 # Running
 
-`$ DEBUG=sockethub* bin/sockethub --examples`
+For development purposes, with examples enabled, run:
+
+`$ DEBUG=sockethub* yarn run dev`
 
 You should then be able to browse to `http://localhost:10550` and try out the examples.
+
+For production, with examples disabled.
+
+`$ DEBUG=sockethub* yarn run start`
 
 # Running using Docker Compose
 
