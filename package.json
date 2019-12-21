@@ -80,7 +80,8 @@
     "lint": "eslint --ignore-pattern \"coverage\" \"src/*.js\" bin/sockethub",
     "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\" bin/sockethub",
     "tsc": "tsc -p src",
-    "build": "tsc -p src && cp src/defaults.json dist/defaults.json"
+    "build": "tsc -p src && cp src/defaults.json dist/defaults.json",
+    "travis": "yarn run compliance"
   },
   "engines": {
     "node": ">= 12.0.0"
