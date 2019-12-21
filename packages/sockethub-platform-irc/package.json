@@ -4,7 +4,7 @@
   "version": "3.4.1",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
-  "license": "LGPL",
+  "license": "LGPL-3.0+",
   "keywords": [
     "sockethub",
     "messaging",
@@ -25,7 +25,7 @@
     "irc2as": "^3.0.0"
   },
   "devDependencies": {
-    "c8": "^5.0.4",
+    "c8": "6.0.1",
     "eslint": "^6.4.0",
     "jaribu": "^2.2.2",
     "jsdoc-to-markdown": "^5.0.1",
@@ -37,6 +37,7 @@
     "compliance": "c8 jaribu **/*-suite.js",
     "coverage": "c8 jaribu **/*-suite.js",
     "lint": "eslint --ignore-pattern \"coverage\" \"**/*.js\"",
-    "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\""
+    "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\"",
+    "travis": "yarn run compliance"
   }
 }

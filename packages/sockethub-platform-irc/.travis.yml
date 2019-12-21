@@ -1,9 +1,8 @@
 language: node_js
 node_js:
-  - 10
-  - 12
+  - 'lts/*'
   - 13
 sudo: false
-script: npm run compliance
+script: yarn run travis
 install:
-  - npm install
+  - yarn install
