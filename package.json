@@ -5,7 +5,7 @@
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
-  "main": "npm start",
+  "main": "yarn run start",
   "preferGlobal": true,
   "keywords": [
     "sockethub",
@@ -72,15 +72,16 @@
     "urijs": "^1.19.2"
   },
   "scripts": {
-    "test": "npm run build && jaribu",
-    "start": "npm run build && PROD=1 DEBUG=sockethub* ./bin/sockethub",
+    "test": "yarn run build && jaribu",
+    "start": "yarn run build && PROD=1 DEBUG=sockethub* ./bin/sockethub",
     "dev": "ts-node --pretty --skip-ignore -T -P src/tsconfig.json/ ./bin/sockethub --examples",
-    "compliance": "npm run build && eslint --ignore-pattern \"coverage/*\" \"**/*.ts\" bin/sockethub && c8 jaribu",
+    "compliance": "yarn run build && eslint --ignore-pattern \"coverage/*\" \"**/*.ts\" bin/sockethub && c8 jaribu",
     "coverage": "c8 jaribu",
     "lint": "eslint --ignore-pattern \"coverage\" \"src/*.js\" bin/sockethub",
     "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\" bin/sockethub",
     "tsc": "tsc -p src",
-    "build": "tsc -p src && cp src/defaults.json dist/defaults.json"
+    "build": "tsc -p src && cp src/defaults.json dist/defaults.json",
+    "travis": "yarn run compliance"
   },
   "engines": {
     "node": ">= 12.0.0"
