@@ -1,8 +1,8 @@
 node_modules
 *~
-./config.js
-./config.secrets.js
-src/examples/connect-config.js
+config.js
+config.secrets.js
+connect-config.js
 coverage
 .idea
-dist/
+dist
