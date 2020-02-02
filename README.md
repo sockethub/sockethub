@@ -1,4 +1,4 @@
-# Sockethub
+[![Sockethub](http://sockethub.org/res/img/sockethub-logo.svg)](http://sockethub.org)
 
 A protocol gateway for the web.
 
