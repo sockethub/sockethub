@@ -34,6 +34,8 @@ Full or partial implementations, being used.
 
 ## Packages
 
+Packages maintained in this repository.
+
 * [packages/activity-streams.js](packages/activity-streams.js)
 * [packages/irc2as](packages/irc2as)
 * [packages/sockethub](packages/sockethub)
