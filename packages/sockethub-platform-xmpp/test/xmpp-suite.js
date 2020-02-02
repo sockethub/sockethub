@@ -1,13 +1,11 @@
 if(typeof(define) !== 'function') {
   var define = require('amdefine')(module);
 }
-define(['require'], function (require) {
+define(['require', 'tv4'], function (require, tv4Module) {
   var suites = [];
-
-
   suites.push({
     name: "helper function tests",
-    desc: "collection of tests for the xmpp platform helper functions",
+    desc: "collection of tests for the XMPP platform helper functions",
     abortOnFail: true,
     setup: function (env, test) {
       env.Platform = require('./../index');
@@ -32,12 +30,11 @@ define(['require'], function (require) {
 
 
   suites.push({
-    name: "xmpp platform tests",
-    desc: "collection of tests for the xmpp platform",
+    name: "XMPP platform tests",
+    desc: "collection of tests for the XMPP platform",
     abortOnFail: true,
     setup: function (env, test) {
-      env.tv4 = require('./../node_modules/tv4/tv4');
-
+      env.tv4 = tv4Module;
       env.xmpp = require('./mock-simple-xmpp')(test);
       env.xmpp.mock = true;
       global.xmpp = env.xmpp;

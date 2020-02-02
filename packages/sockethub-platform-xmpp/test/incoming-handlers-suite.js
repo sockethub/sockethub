@@ -64,13 +64,13 @@ define(['require'], function (require) {
             inputParams = entry.input; // array of params
           }
           env.platform.sendToClient = function (msg) {
-            console.log('sendToClient: ', msg);
-            console.log('expected:', entry.output);
+            // console.log('sendToClient: ', msg);
+            // console.log('expected:', entry.output);
             test.assert(msg, entry.output);
           };
           const func  = entry.handler || '__stanza';
           const ih = new env.IncomingHandlers(env.platform, 'user@jabber.org');
-          console.log('function: ' + func, typeof ih[func]);
+          // console.log('function: ' + func, typeof ih[func]);
           ih[func](...inputParams);
         }
       })

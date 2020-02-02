@@ -987,15 +987,6 @@ irc-socket@^3.0.8:
     bluebird "^3"
     r-result "^1.4.0"
 
-irc2as@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/irc2as/-/irc2as-3.0.0.tgz#28e1c1bf7f3ad98ec45cd678e851e980d143c808"
-  integrity sha512-pMG/ZwS+zSaUC0Qt6wEBW5WaJ5/P6TWS4c6SROdkCsCXgzvqs4Sq6hpTJD5MgkLvNpJ64h9uxJ++bhIjPlFXtg==
-  dependencies:
-    debug "^4.1.1"
-    fast-deep-equal "^2.0.1"
-    jaribu "^2.2.2"
-
 is-arrayish@^0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/is-arrayish/-/is-arrayish-0.2.1.tgz#77c99840527aa8ecb1a8ba697b80645a7a926a9d"

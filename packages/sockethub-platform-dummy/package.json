@@ -14,6 +14,9 @@
     "protocol",
     "dummy"
   ],
+  "scripts": {
+    "test": "exit 0"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/sockethub/sockethub-platform-dummy.git"

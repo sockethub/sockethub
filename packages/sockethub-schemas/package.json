@@ -21,8 +21,8 @@
     "jaribu": "^2.0.0"
   },
   "scripts": {
-    "test": "node_modules/.bin/jaribu",
-    "build": "bin/build.js",
+    "test": "jaribu",
+    "build": "./bin/build.js",
     "travis": "yarn run test"
   },
   "dependencies": {

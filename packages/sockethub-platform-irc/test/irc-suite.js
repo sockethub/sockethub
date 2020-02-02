@@ -1,7 +1,7 @@
 if (typeof(define) !== 'function') {
   let define = require('amdefine')(module);
 }
-define(['require'], function (require) {
+define(['require', 'tv4'], function (require, tv4Module) {
   let suites = [];
 
   suites.push({
@@ -9,6 +9,7 @@ define(['require'], function (require) {
     desc: 'collection of tests for the irc platform',
     abortOnFail: true,
     setup: function (env, test) {
+      env.Platform = require('./../index');
       env.actor = {
         '@type': 'person',
         '@id': 'testingham@irc.example.com',
@@ -108,8 +109,7 @@ define(['require'], function (require) {
         }
       };
 
-      const Platform = require('./../index');
-      env.platform = new Platform({
+      env.platform = new env.Platform({
         debug: console.log,
         updateCredentials: function (one, two, three, cb) {
           cb();
@@ -123,7 +123,7 @@ define(['require'], function (require) {
       env.types = env.schema.messages.properties['@type'].enum;
       test.assertAnd(env.types, [ 'update', 'join', 'leave', 'send', 'observe', 'announce' ]);
 
-      env.tv4 = require('./../node_modules/tv4/tv4');
+      env.tv4 = tv4Module;
 
       env.platform.__connect = new test.Stub(function (key, credentials, cb) {
         cb(null, {

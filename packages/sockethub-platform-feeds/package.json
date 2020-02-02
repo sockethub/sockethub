@@ -30,7 +30,7 @@
     "jsdoc-to-markdown": "^3.0.0"
   },
   "scripts": {
-    "test": "node_modules/.bin/jaribu",
-    "doc": "node_modules/.bin/jsdoc2md index.js  > API.md"
+    "test": "jaribu",
+    "doc": "jsdoc2md index.js  > API.md"
   }
 }

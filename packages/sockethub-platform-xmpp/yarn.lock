@@ -856,7 +856,7 @@ lodash@^4.17.14:
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.15.tgz#b447f6670a0455bbfeedd11392eff330ea097548"
   integrity sha512-8xOcRHvCjnocdS5cpwXQXVzmmh5e5+saE2QGoeQmbKmRS6J3VQppPOIt0MnmE+4xlZoumy0GPG0D0MVIQbNA1A==
 
-ltx@^2.5.0, ltx@^2.6.2:
+ltx@^2.5.0, ltx@^2.6.2, ltx@^2.9.2:
   version "2.9.2"
   resolved "https://registry.yarnpkg.com/ltx/-/ltx-2.9.2.tgz#222b28745142b71f66c566f20bb73648f82c0d86"
   integrity sha512-llB7HflFhlfsYYT1SAe80elCBO5C20ryLdwPB/A/BZk38hhVeZztDlWQ9uTyvKNPX4aK6sA+JfS1f/mfzp5cxA==
