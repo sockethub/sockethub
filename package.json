@@ -5,7 +5,7 @@
     "install": "lerna bootstrap",
     "test": "lerna run test",
     "travis": "lerna run travis",
-    "dev": "cd packages/sockethub && yarn run dev; cdd",
-    "start": "cd packages/sockethub && yarn run start"
+    "dev": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run dev; cdd",
+    "start": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run start"
   }
 }
