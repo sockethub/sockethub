@@ -4,6 +4,8 @@
   "scripts": {
     "install": "lerna bootstrap",
     "test": "lerna run test",
-    "travis": "lerna run travis"
+    "travis": "lerna run travis",
+    "dev": "cd packages/sockethub && yarn run dev; cdd",
+    "start": "cd packages/sockethub && yarn run start"
   }
 }

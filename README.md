@@ -16,21 +16,27 @@ Originally inspired as a sister project to [RemoteStorage](https://remotestorage
 
 ## Platforms
 
-Full or partial implementations, being used.
-
-* [Feeds](packages/sockethub-platform-feeds) *(RSS, Atom)*|
+* [Feeds](packages/sockethub-platform-feeds) *(RSS, Atom)*
 * [IRC](packages/sockethub-platform-irc) 
 * [XMPP](packages/sockethub-platform-xmpp) 
 
 ## Setup
 
-### Install Dependencies
+### Dependencies
 
 ```$ yarn run install```
 
-### Run Tests
+### Tests
 
-```$ yarn test```
+```$ yarn run test```
+
+### Run
+
+```$ yarn run start```
+
+Or, for debugging or development:
+
+```$ yarn run dev```
 
 ## Packages
 
