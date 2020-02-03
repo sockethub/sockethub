@@ -4,23 +4,15 @@ node_js:
   - 13
 services: redis-server
 sudo: false
-before_script:
-  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-  - chmod +x ./cc-test-reporter
-  - ./cc-test-reporter before-build
 script:
   - yarn run test && yarn run travis
 install:
   - npm update npm -g && npm install -g lerna yarn && yarn run install
 env:
   - CXX=g++-4.8
-  global:
-    - CC_TEST_REPORTER_ID=24c64e68bbc0781513767008c1642fba33a168599950c490ed2c12a47e7d4cf2
 addons:
   apt:
     sources:
       - ubuntu-toolchain-r-test
     packages:
       - g++-4.8
-after_script:
-  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT --input coverage/lcov.info
