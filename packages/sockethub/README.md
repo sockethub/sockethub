@@ -87,6 +87,8 @@ Overrides `REDIS_HOST` and `REDIS_PORT`, can specify a full redis connect URL (e
 
 # Running using Docker Compose
 
+***This section likely needs updating***
+
 Requires [Docker Compose](https://docs.docker.com/compose/) 1.10.0+
 
 `$ docker-compose up`
