@@ -31,46 +31,15 @@ We use ActivityStreams to map the various actions of a platform to a set of AS '
 
 Below is a list of platform contexts we're currently working on and their types, both the completed and not yet implemented ones. They are all implemented in Sockethub platforms (each in their own repository) and can be enabled/disabled in the `config.json`.
 
-## Implemented
+## Platforms
 
-Full or partial implementations, being used.
-
-| Platform (@context) | Type (@type) |
-| ------------------- | ------------ |
-| [XMPP](https://github.com/sockethub/sockethub-platform-xmpp) | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) request-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) remove-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) make-friend</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png)  join</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd>|
-| [Feeds](https://github.com/sockethub/sockethub-platform-feeds) *(RSS, Atom)* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd> |
-| [IRC](https://github.com/sockethub/sockethub-platform-irc) | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) join</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) leave</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd> |
-
-## Out of date
-
-Implemented in a previous major release of Sockethub, never ported to the current release and unmaintained.
-
-| Platform (@context) | Type (@type) |
-| ------------------- | ------------ |
-| [Email](https://github.com/sockethub/sockethub-platform-email) *(SMTP, IMAP)* *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch (imap)</kbd> |
-| [Facebook](https://github.com/sockethub/sockethub-platform-facebook) *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png)fetch</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> <kbd>like</kbd> |
-| [Twitter](https://github.com/sockethub/sockethub-platform-twitter) *to port* | <kbd>![completed](http://sockethub.org/res/img/checkmark.png) post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd> |
-
-## Future consideration
-
-List of possible future platforms and their potentials verb types.
-
-| Platform (@context) | Type (@type) |
-| ------------------- | ------------ |
-| pump.io | <kbd>post</kbd> <kbd>follow</kbd> <kbd>unfollow</kbd> <kbd>send</kbd> <kbd>fetch</kbd> |
-| WhatsApp | <kbd>send</kbd> <kbd>request-friend</kbd> <kbd>remove-friend</kbd> <kbd>make-friend</kbd> |
-| WebFinger | <kbd>search</kbd> |
-| RDF | <kbd>search</kbd> <kbd>fetch</kbd> |
-| Bitcoin (e.g. sending signed transactions to a node) | *(to be evaluated)* <kbd>send</kbd> <kbd>receive</kbd> ... |
-| Ethereum (e.g. contract events) | *(to be evaluated)* |
-| WebRTC (signaling) | *(to be evaluated)* |
-| Signal | *(to be evaluated)* |
-| [MicroPub](https://indieweb.org/micropub) (IndieWeb, ...) | *(to be evaluated)* |
-| [OStatus](https://en.wikipedia.org/wiki/OStatus) (GNUSocial, Mastodon, ...) | *(to be evaluated)* |
+* [Feeds](packages/sockethub-platform-feeds) *(RSS, Atom)*
+* [IRC](packages/sockethub-platform-irc) 
+* [XMPP](packages/sockethub-platform-xmpp) 
 
 # Setup
 
-`$ yarn install`
+`$ yarn run install`
 
 # Running
 
@@ -84,21 +53,18 @@ For production, with examples disabled.
 
 `$ DEBUG=sockethub* yarn run start`
 
-# Running using Docker Compose
+# Packages
 
-Requires [Docker Compose](https://docs.docker.com/compose/) 1.10.0+
+Packages maintained in this repository.
 
-`$ docker-compose up`
-
-> If you’re using Docker natively on Linux, Docker for Mac, or Docker for
-> Windows, then sockethub should now be listening on port 10550 on your Docker
-> daemon host. Point your web browser to http://localhost:10550 to find
-> sockethub. If this doesn’t resolve, you can also try
-> http://0.0.0.0:10550.
-
-> If you’re using Docker Machine on a Mac or Windows, use docker-machine ip
-> MACHINE_VM to get the IP address of your Docker host. Then, open
-> http://MACHINE_VM_IP:10550 in a browser.
+* [packages/activity-streams.js](packages/activity-streams.js)
+* [packages/irc2as](packages/irc2as)
+* [packages/sockethub](packages/sockethub)
+* [packages/sockethub-platform-dummy](packages/sockethub-platform-dummy)
+* [packages/sockethub-platform-feeds](packages/sockethub-platform-feeds)
+* [packages/sockethub-platform-irc](packages/sockethub-platform-irc)
+* [packages/sockethub-platform-xmpp](packages/sockethub-platform-xmpp)
+* [packages/sockethub-schemas](packages/sockethub-schemas)
 
 # Environment Variables
 
@@ -119,16 +85,21 @@ Defaults to `localhost`
 * REDIS_URL
 Overrides `REDIS_HOST` and `REDIS_PORT`, can specify a full redis connect URL (eq. `redis://username:password@host:port`)
 
-# Command-line params
-```
-  --help       : this help screen
-  --info       : displays some basic runtime info
+# Running using Docker Compose
 
-  --examples   : enabled examples page and serves helper files like jquery
+Requires [Docker Compose](https://docs.docker.com/compose/) 1.10.0+
 
-  --host       : hostname to bind to
-  --port       : port to bind to
-```
+`$ docker-compose up`
+
+> If you’re using Docker natively on Linux, Docker for Mac, or Docker for
+> Windows, then sockethub should now be listening on port 10550 on your Docker
+> daemon host. Point your web browser to http://localhost:10550 to find
+> sockethub. If this doesn’t resolve, you can also try
+> http://0.0.0.0:10550.
+
+> If you’re using Docker Machine on a Mac or Windows, use docker-machine ip
+> MACHINE_VM to get the IP address of your Docker host. Then, open
+> http://MACHINE_VM_IP:10550 in a browser.
 
 # License
 

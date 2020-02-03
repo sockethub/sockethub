@@ -1,11 +1,11 @@
 FROM "node:6"
 MAINTAINER Ben Kero <ben.kero@gmail.com>
 
-ADD package.json /tmp/package.json
-ADD package-lock.json /tmp/package-lock.json
+ADD packages/sockethub/package.json /tmp/package.json
+ADD packages/sockethub/yarn.lock /tmp/yarn.lock
 RUN cd /tmp && npm install
 RUN mkdir -p /app
-ADD config.json.example /app/config.json
+ADD packages/sockethub/config.json.example /app/config.json
 RUN cp -a /tmp/node_modules /app/
 
 WORKDIR /app
