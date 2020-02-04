@@ -6,7 +6,7 @@ A protocol gateway for the web.
 [![Maintainability](https://api.codeclimate.com/v1/badges/95912fc801271faf44f6/maintainability)](https://codeclimate.com/github/sockethub/sockethub/maintainability)
 [![Release](https://img.shields.io/npm/v/sockethub.svg?style=flat)](https://github.com/sockethub/sockethub/releases)
 
-# About
+## About
 Sockethub is a translation layer for web applications to communicate with other protocols and services that are traditionally either inaccessible or impractical to use from in-browser JavaScript.
 
 Using [ActivityStream](http://activitystrea.ms/) (AS) objects to pass messages to and from the web app, Sockethub acts as a smart proxy server/agent, which can maintain state, and connect to sockets, endpoints and networks that would otherwise be restricted from an application running in the browser.
@@ -21,11 +21,11 @@ Example uses of Sockethub are:
 
 The architecture of Sockethub is extensible and supports easy implementation of additional 'platforms' to carry out tasks.
 
-# Docs
+## Docs
 
 See the [Sockethub wiki](https://github.com/sockethub/sockethub/wiki) for documentation.
 
-# Features
+## Features
 
 We use ActivityStreams to map the various actions of a platform to a set of AS '@type's which identify the underlying action. For example, using the XMPP platform, a friend request/accept cycle would use the activity stream types 'request-friend', 'remove-friend', 'make-friend'.
 
@@ -37,36 +37,13 @@ Below is a list of platform contexts we're currently working on and their types,
 * [IRC](packages/sockethub-platform-irc) 
 * [XMPP](packages/sockethub-platform-xmpp) 
 
-# Setup
+## Install
 
-`$ yarn run install`
+`$ npm install -g sockethub`
 
-# Running
+## Running
 
-For development purposes, with examples enabled, run:
-
-`$ DEBUG=sockethub* yarn run dev`
-
-You should then be able to browse to `http://localhost:10550` and try out the examples.
-
-For production, with examples disabled.
-
-`$ DEBUG=sockethub* yarn run start`
-
-# Packages
-
-Packages maintained in this repository.
-
-* [packages/activity-streams.js](packages/activity-streams.js)
-* [packages/irc2as](packages/irc2as)
-* [packages/sockethub](packages/sockethub)
-* [packages/sockethub-platform-dummy](packages/sockethub-platform-dummy)
-* [packages/sockethub-platform-feeds](packages/sockethub-platform-feeds)
-* [packages/sockethub-platform-irc](packages/sockethub-platform-irc)
-* [packages/sockethub-platform-xmpp](packages/sockethub-platform-xmpp)
-* [packages/sockethub-schemas](packages/sockethub-schemas)
-
-# Environment Variables
+### Environment Variables
 
 * PORT
 Defaults to `10550`
@@ -85,29 +62,35 @@ Defaults to `localhost`
 * REDIS_URL
 Overrides `REDIS_HOST` and `REDIS_PORT`, can specify a full redis connect URL (eq. `redis://username:password@host:port`)
 
-# Running using Docker Compose
+### Command-line params
 
-***This section likely needs updating***
+```
+  --help       : this help screen
+  --info       : displays some basic runtime info
 
-Requires [Docker Compose](https://docs.docker.com/compose/) 1.10.0+
+  --examples   : enabled examples page and serves helper files like jquery
 
-`$ docker-compose up`
+  --host       : hostname to bind to
+  --port       : port to bind to
+```
 
-> If you’re using Docker natively on Linux, Docker for Mac, or Docker for
-> Windows, then sockethub should now be listening on port 10550 on your Docker
-> daemon host. Point your web browser to http://localhost:10550 to find
-> sockethub. If this doesn’t resolve, you can also try
-> http://0.0.0.0:10550.
+### Start
 
-> If you’re using Docker Machine on a Mac or Windows, use docker-machine ip
-> MACHINE_VM to get the IP address of your Docker host. Then, open
-> http://MACHINE_VM_IP:10550 in a browser.
+Run with debug output and examples enabled:
 
-# License
+`$ DEBUG=sockethub* sockethub --examples`
+
+You should then be able to browse to `http://localhost:10550/examples` and try out the examples.
+
+For production, with examples disabled.
+
+`$ DEBUG=sockethub* sockethub`
+
+## License
 
 Sockethub is licensed under the [LGPL](https://github.com/sockethub/sockethub/blob/master/LICENSE)
 
-# Credits
+## Credits
 
 Project created and maintained by [Nick Jennings](http://github.com/silverbucket)
 
