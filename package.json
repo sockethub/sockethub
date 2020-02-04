@@ -1,11 +1,16 @@
 {
   "name": "root",
   "private": true,
+  "devDependencies": {
+    "lerna": "^3.20.2",
+    "yarn": "^1.21.1"
+  },
   "scripts": {
     "install": "lerna bootstrap",
     "test": "lerna run test",
     "travis": "lerna run travis",
     "dev": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run dev; cdd",
     "start": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run start"
-  }
+  },
+  "dependencies": {}
 }
