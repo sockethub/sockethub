@@ -1,1 +1,0 @@
-packages/sockethub/README.md
