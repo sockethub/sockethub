@@ -18,7 +18,7 @@ Sockethub is a translation layer for web applications to communicate with other 
 
 ### Install Dependencies
 
-```$ yarn run install```
+```$ yarn install```
 
 ### Run Tests
 
@@ -35,6 +35,8 @@ You should then be able to browse to `http://localhost:10550` and try out the ex
 For production, with examples disabled.
 
 `$ DEBUG=sockethub* yarn run start`
+
+*For more infor on configuration options, see the [Sockethub README](packages/sockethub/README.md#environment-variables)* section on evironment variables.*
 
 ## Packages
 
