@@ -5,4 +5,3 @@ config.secrets.js
 connect-config.js
 coverage
 .idea
-dist
