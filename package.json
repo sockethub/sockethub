@@ -2,6 +2,7 @@
   "name": "root",
   "private": true,
   "devDependencies": {
+    "find-up": "^4.1.0",
     "lerna": "^3.20.2",
     "yarn": "^1.21.1"
   },
