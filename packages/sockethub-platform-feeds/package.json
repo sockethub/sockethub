@@ -1,7 +1,7 @@
 {
   "name": "sockethub-platform-feeds",
   "description": "A sockethub platform module implementing RSS/Atom functionality",
-  "version": "2.0.1",
+  "version": "2.0.2-alpha.0",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",

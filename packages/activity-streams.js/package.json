@@ -1,6 +1,6 @@
 {
   "name": "activity-streams",
-  "version": "4.3.0",
+  "version": "4.3.1-alpha.0",
   "description": "A simple tool to facilitate handling and referencing activity streams without unecessary verbosity.",
   "main": "./lib/activity-streams.js",
   "dependencies": {
@@ -9,6 +9,7 @@
   "devDependencies": {
     "c8": "^6.0.1",
     "chai": "^4.2.0",
+    "event-emitter": "^0.3.5",
     "karma": "^4.4.1",
     "karma-chai": "^0.1.0",
     "karma-chrome-launcher": "^3.1.0",
@@ -16,8 +17,7 @@
     "karma-mocha": "^1.3.0",
     "mocha": "^6.2.2",
     "webpack": "^4.41.2",
-    "webpack-cli": "^3.3.10",
-    "event-emitter": "^0.3.5"
+    "webpack-cli": "^3.3.10"
   },
   "repository": {
     "type": "git",
