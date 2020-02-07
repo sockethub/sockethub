@@ -49,7 +49,11 @@ module.exports = function platformLoad(moduleList) {
                 // try to load platform
                 const P = require(moduleName);
                 const p = new P();
-                const packageJson = require(findup(moduleName) + '/package.json');
+                let path = findup(moduleName);
+                if (!path) {
+                    path = findup(moduleName, { cwd: 'node_modules' });
+                }
+                const packageJson = require(path + '/package.json');
                 let types = [];
                 // validate schema property
                 if (!tv4.validate(p.schema, schemas.platform)) {
