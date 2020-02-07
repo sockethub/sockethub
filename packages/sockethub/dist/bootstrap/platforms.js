@@ -5,7 +5,7 @@
  * platforms, and whitelisting or blacklisting (or neither) based on the
  * config.
  */
-const tv4 = require('tv4'), debug = require('debug'), schemas = require('sockethub-schemas');
+const tv4 = require('tv4'), debug = require('debug'), schemas = require('sockethub-schemas'), pkginfo = require('pkginfo');
 const config = require('../config').default;
 const log = debug('sockethub:bootstrap:platforms');
 const whitelist = config.get('platforms:whitelist'), blacklist = config.get('platforms:blacklist');
@@ -49,7 +49,7 @@ module.exports = function platformLoad(moduleList) {
                 // try to load platform
                 const P = require(moduleName);
                 const p = new P();
-                const packageJson = require(`./../../node_modules/${moduleName}/package.json`);
+                const packageJson = pkginfo(moduleName);
                 let types = [];
                 // validate schema property
                 if (!tv4.validate(p.schema, schemas.platform)) {
