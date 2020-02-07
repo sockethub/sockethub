@@ -60,7 +60,7 @@ module.exports = function platformLoad(moduleList) {
         // try to load platform
         const P = require(moduleName);
         const p = new P();
-        let path = findup(moduleName);
+        let path = findup(moduleName, { cwd: __dirname + '/../../' });
         if (! path) {
           path = findup(moduleName, { cwd: 'node_modules' });
         }
