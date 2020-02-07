@@ -8,7 +8,7 @@
 const tv4     = require('tv4'),
       debug   = require('debug'),
       schemas = require('sockethub-schemas'),
-      pkginfo = require('pkginfo');
+      findup  = require('findup-sync');
 
 const config = require('../config').default;
 
@@ -54,13 +54,13 @@ module.exports = function platformLoad(moduleList) {
     if (rx.test(moduleName)) {
       // found a sockethub platform
       const platformName = moduleName.replace(rx, '');
-      log('registering ' + platformName + ' platform');
+      log(`registering ${platformName} platform`);
 
       if (platformIsAccepted(platformName)) {
         // try to load platform
         const P = require(moduleName);
         const p = new P();
-        const packageJson = pkginfo(moduleName);
+        const packageJson = require(findup(moduleName) + '/package.json');
         let types = [];
 
         // validate schema property
