@@ -7,7 +7,7 @@
     "yarn": "^1.21.1"
   },
   "scripts": {
-    "prepublish": "lerna run build && gid add **/dist/*",
+    "prepublish": "lerna run build && git add **/dist/*",
     "install": "lerna bootstrap",
     "test": "lerna run test",
     "travis": "lerna run travis",

@@ -96,5 +96,6 @@
     "jaribu": "^2.2.2",
     "ts-node": "^8.5.4",
     "typescript": "^3.7.2"
-  }
+  },
+  "gitHead": "39e2be4c4b9f76930397b689d5de6124dd200c0b"
 }
