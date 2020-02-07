@@ -51,7 +51,7 @@ if (config.get('examples:enabled')) {
       path: '/'
     },
     route: (req, res) => {
-      res.render('index.ejs');
+      res.render(path.resolve(__dirname + '/../../views/index.ejs'));
     }
   }, {
     meta: {
