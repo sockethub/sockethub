@@ -1,4 +1,7 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
@@ -6,10 +9,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
     result["default"] = mod;
     return result;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const path_1 = __importDefault(require("path"));
 const randToken = __importStar(require("rand-token"));
 const config_1 = __importDefault(require("./../config"));
 const routes = [], debug_scope = process.env.DEBUG || '', address = config_1.default.get('public:protocol') + '://' +
@@ -24,7 +25,7 @@ if (config_1.default.get('examples:enabled')) {
             path: '/examples/dummy'
         },
         route: (req, res) => {
-            res.render('examples/dummy.ejs', {
+            res.render(path_1.default.resolve(__dirname + './../../views/examples/dummy.ejs'), {
                 debug_scope: debug_scope,
                 address: address
             });
@@ -35,7 +36,7 @@ if (config_1.default.get('examples:enabled')) {
             path: '/examples/feeds'
         },
         route: (req, res) => {
-            res.render('examples/feeds.ejs', {
+            res.render(path_1.default.resolve(__dirname + './../../views/examples/feeds.ejs'), {
                 debug_scope: debug_scope,
                 address: address
             });
@@ -46,7 +47,7 @@ if (config_1.default.get('examples:enabled')) {
             path: '/examples/irc'
         },
         route: (req, res) => {
-            res.render('examples/irc.ejs', {
+            res.render(path_1.default.resolve(__dirname + './../../views/examples/irc.ejs'), {
                 debug_scope: debug_scope,
                 address: address,
                 randToken: randToken.generate(5)
@@ -58,7 +59,7 @@ if (config_1.default.get('examples:enabled')) {
             path: '/examples/xmpp'
         },
         route: (req, res) => {
-            res.render('examples/xmpp.ejs', {
+            res.render(path_1.default.resolve(__dirname + './../../views/examples/xmpp.ejs'), {
                 debug_scope: debug_scope,
                 address: address,
                 randToken: randToken.generate(5)

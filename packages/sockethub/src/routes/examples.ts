@@ -1,3 +1,5 @@
+import path from 'path';
+
 import * as randToken from 'rand-token';
 
 import config from './../config';
@@ -17,7 +19,7 @@ if (config.get('examples:enabled')) {
       path: '/examples/dummy'
     },
     route: (req, res) => {
-      res.render('examples/dummy.ejs', {
+      res.render(path.resolve(__dirname + './../../views/examples/dummy.ejs'), {
         debug_scope: debug_scope,
         address: address
       });
@@ -28,7 +30,7 @@ if (config.get('examples:enabled')) {
       path: '/examples/feeds'
     },
     route: (req, res) => {
-      res.render('examples/feeds.ejs', {
+      res.render(path.resolve(__dirname + './../../views/examples/feeds.ejs'), {
         debug_scope: debug_scope,
         address: address
       });
@@ -39,7 +41,7 @@ if (config.get('examples:enabled')) {
       path: '/examples/irc'
     },
     route: (req, res) => {
-      res.render('examples/irc.ejs', {
+      res.render(path.resolve(__dirname + './../../views/examples/irc.ejs'), {
         debug_scope: debug_scope,
         address: address,
         randToken: randToken.generate(5)
@@ -51,7 +53,7 @@ if (config.get('examples:enabled')) {
       path: '/examples/xmpp'
     },
     route: (req, res) => {
-      res.render('examples/xmpp.ejs', {
+      res.render(path.resolve(__dirname + './../../views/examples/xmpp.ejs'), {
         debug_scope: debug_scope,
         address: address,
         randToken: randToken.generate(5)
