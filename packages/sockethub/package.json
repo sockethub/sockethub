@@ -59,6 +59,7 @@
     "nconf": "^0.10.0",
     "npm-check-updates": "^3.2.2",
     "object-hash": "^2.0.1",
+    "pkginfo": "^0.4.1",
     "rand-token": "^0.4.0",
     "secure-store-redis": "^1.4.3",
     "socket.io": "^2.3.0",

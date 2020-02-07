@@ -7,7 +7,8 @@
  */
 const tv4     = require('tv4'),
       debug   = require('debug'),
-      schemas = require('sockethub-schemas');
+      schemas = require('sockethub-schemas'),
+      pkginfo = require('pkginfo');
 
 const config = require('../config').default;
 
@@ -59,7 +60,7 @@ module.exports = function platformLoad(moduleList) {
         // try to load platform
         const P = require(moduleName);
         const p = new P();
-        const packageJson = require(`./../../node_modules/${moduleName}/package.json`);
+        const packageJson = pkginfo(moduleName);
         let types = [];
 
         // validate schema property
