@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "debug": "^4.1.1",
-    "fast-deep-equal": "^2.0.1"
+    "fast-deep-equal": "3.1.1"
   },
   "devDependencies": {
     "jaribu": "^2.2.2"

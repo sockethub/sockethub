@@ -26,6 +26,6 @@
     "travis": "yarn run test"
   },
   "dependencies": {
-    "debug": "^2.2.0"
+    "debug": "4.1.1"
   }
 }
