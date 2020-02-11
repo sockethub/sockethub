@@ -30,7 +30,7 @@
     "jsdoc": "^3.6.3",
     "fs-then-native": "^2.0.0",
     "jaribu": "^2.2.1",
-    "jsdoc-to-markdown": "5.0.3"
+    "jsdoc-to-markdown": "^5.0.3"
   },
   "scripts": {
     "test": "jaribu",
