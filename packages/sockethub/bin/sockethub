@@ -1,0 +1,12 @@
+#!/usr/bin/env node
+
+process.on('uncaughtException', (err) => {
+  console.log(`\nUNCAUGHT EXCEPTION\n`);
+  console.log(err.stack);
+  process.exit(1);
+});
+
+const baseDir = process.env.DEV ? 'src' : 'dist';
+const Sockethub = require(`./../${baseDir}/sockethub`).default;
+const sockethub = new Sockethub();
+sockethub.boot();

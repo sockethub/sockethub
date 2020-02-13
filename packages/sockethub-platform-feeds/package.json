@@ -1,0 +1,39 @@
+{
+  "name": "sockethub-platform-feeds",
+  "description": "A sockethub platform module implementing RSS/Atom functionality",
+  "version": "2.0.2-alpha.1",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "LGPL-3.0+",
+  "main": "index.js",
+  "keywords": [
+    "sockethub",
+    "messaging",
+    "activitystreams",
+    "activity",
+    "streams",
+    "protocol",
+    "feeds",
+    "rss",
+    "atom"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/sockethub/sockethub-platform-feeds.git"
+  },
+  "homepage": "http://github.com/sockethub/sockethub-platform-feeds",
+  "dependencies": {
+    "feedparser": "^2.2.9",
+    "request": "^2.83.0"
+  },
+  "devDependencies": {
+    "jsdoc": "^3.6.3",
+    "fs-then-native": "^2.0.0",
+    "jaribu": "^2.2.1",
+    "jsdoc-to-markdown": "^5.0.3"
+  },
+  "scripts": {
+    "test": "jaribu",
+    "doc": "jsdoc2md index.js  > API.md"
+  }
+}

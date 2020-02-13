@@ -1,0 +1,8 @@
+language: node_js
+node_js:
+  - 'lts/*'
+  - 13
+sudo: false
+script: yarn run travis
+install:
+  - yarn install

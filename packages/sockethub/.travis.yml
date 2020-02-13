@@ -2,12 +2,10 @@ language: node_js
 node_js:
   - 'lts/*'
   - 13
-services: redis-server
+services: redis
 sudo: false
 script:
-  - yarn run test && yarn run travis
-install:
-  - npm update npm -g && npm install -g lerna yarn && yarn run install
+  - yarn run travis
 env:
   - CXX=g++-4.8
 addons:
