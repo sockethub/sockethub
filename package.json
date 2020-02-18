@@ -12,8 +12,8 @@
     "test": "lerna run test",
     "travis": "lerna run travis",
     "build": "lerna run build",
-    "dev": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run dev; cd -",
-    "start": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run start; cd -"
+    "dev": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run dev",
+    "start": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run start"
   },
   "dependencies": {}
 }
