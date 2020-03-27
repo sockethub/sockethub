@@ -56,6 +56,7 @@ class Sockethub {
     // start internal and external services
     this.queue = services.startQueue(this.parentId);
     this.io = services.startExternal();
+
     log('registering handlers');
     this.queue.on('job complete', this.__processJobResult('completed'));
     this.queue.on('job failed', this.__processJobResult('failed'));
@@ -113,17 +114,6 @@ class Sockethub {
     });
   };
 
-  private __getWorker(socket, workerSecret: string) {
-    return new Worker({
-      parentId: this.parentId,
-      parentSecret1: this.parentSecret1,
-      parentSecret2: this.parentSecret2,
-      workerSecret: workerSecret,
-      socket: socket,
-      platforms: [...this.platforms.keys()]
-    });
-  };
-
   private __handlerActivityObject(sessionLog) {
     return (obj) => {
       sessionLog('processing activity-object');
@@ -131,11 +121,32 @@ class Sockethub {
     };
   };
 
-  // init worker, store and register listeners for a new client connection
+  private __handlerQueueJob(socket, sessionLog) {
+    return (msg) => {
+      sessionLog('queueing incoming job ' + msg.context + ' for socket ' + socket.id);
+      const job = this.queue.create(socket.id, {
+        title: socket.id + '-' + msg.context + '-' + (msg['@id']) ? msg['@id'] : this.counter++,
+        socket: socket.id,
+        msg: crypto.encrypt(msg, this.parentSecret1 + this.parentSecret2)
+      }).save((err) => {
+        if (err) {
+          sessionLog('error adding job [' + job.id + '] to queue: ', err);
+        }
+      });
+    };
+  };
+
   private __handleNewConnection(socket) {
     const sessionLog = debug('sockethub:core  :' + socket.id), // session-specific debug messages
           workerSecret = randToken.generate(16),
-          worker = this.__getWorker(socket, workerSecret),
+          worker = new Worker({
+            parentId: this.parentId,
+            parentSecret1: this.parentSecret1,
+            parentSecret2: this.parentSecret2,
+            workerSecret: workerSecret,
+            socket: socket,
+            platforms: [...this.platforms.keys()]
+          }),
           store = this.__getStore(socket, workerSecret), // store instance is session-specific
           middleware = this.__getMiddleware(socket, sessionLog);
 
@@ -173,22 +184,7 @@ class Sockethub {
       'activity-object',
       middleware.chain(validate('activity-object'), this.__handlerActivityObject(sessionLog))
     );
-  };
-
-  private __handlerQueueJob(socket, sessionLog) {
-    return (msg) => {
-      sessionLog('queueing incoming job ' + msg.context + ' for socket ' + socket.id);
-      const job = this.queue.create(socket.id, {
-        title: socket.id + '-' + msg.context + '-' + (msg['@id']) ? msg['@id'] : this.counter++,
-        socket: socket.id,
-        msg: crypto.encrypt(msg, this.parentSecret1 + this.parentSecret2)
-      }).save((err) => {
-        if (err) {
-          sessionLog('error adding job [' + job.id + '] to queue: ', err);
-        }
-      });
-    };
-  };
+  }
 
   private __handlerStoreCredentials(store, sessionLog) {
     return (creds: ActivityObject) => {
