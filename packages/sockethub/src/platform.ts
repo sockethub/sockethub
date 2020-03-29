@@ -5,21 +5,33 @@ const logger = debug('sockethub:platform');
 logger(`platform handler initialized for ${platformName} ${identifier}`);
 const PlatformModule = require(`sockethub-platform-${platformName}`);
 
+/**
+ * Handle any uncaught errors from the platform by alerting the worker and shutting down.
+ */
 process.on('uncaughtException', (err) => {
-  console.log(`\nUNCAUGHT EXCEPTION IN PLATFORM HANDLER\n`);
+  console.log(`\nUNCAUGHT EXCEPTION IN PLATFORM\n`);
   console.log(err.stack);
-  process.send(['error', err]);
+  process.send(['error', err.toString()]);
   process.exit(1);
 });
 
-process.on('message', (cmds) => {
-  console.log('incomming message ', cmds);
-  let func = cmds.shift();
-  platform[func](...cmds, (data) => {
-    console.log('callback called', data);
+/**
+ * Incoming messages from the worker to this platform. Data is an array, the first property is the
+ * method to call, the rest are params.
+ */
+process.on('message', (data) => {
+  let func = data.shift();
+  platform[func](...data, (err, obj) => {
+    console.log('CALLBACK CALLED', obj);
+    process.send(['callback', err, obj]);
   });
 });
 
+/**
+ * sendFunction wrapper, generates a function to pass to the platform class. The platform can
+ * call that function to send messages back to the client.
+ * @param command
+ */
 function sendFunction(command) {
   return function (msg) {
     logger('sending message from platform to worker ', msg);

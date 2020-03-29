@@ -46,23 +46,14 @@ Worker.prototype.boot = function () {
 };
 Worker.prototype.executeJob = function (job, platformInstance, credentials, done) {
     this.log('process executeJob run');
-    // the callback provided to the platformInstance
-    // const _callbackHandler = (err, obj) => {
-    //   if (_callbackCalled) { return; }
-    //   else { _callbackCalled = true; }
-    //   done(err, obj);
-    // };
+    platformInstance.process.on('message', (msg) => {
+        const func = msg.shift();
+        if (func === 'callback') {
+            done(...msg);
+        }
+    });
     // run corresponding platformInstance method
     platformInstance.process.send([job.data.msg['@type'], job.data.msg, credentials]);
-    done();
-    // platformInstance.module[job.data.msg['@type']](job.data.msg, credentials, _callbackHandler);
-    // setTimeout(() => {
-    //   if ((! _callbackCalled) && (! _caughtError)) {
-    //     const errorMessage = `timeout reached for ${job.data.msg['@type']} job`;
-    //     this.log(errorMessage);
-    //     _cleanupDomain(errorMessage);
-    //   }
-    // }, 60000);
 };
 Worker.prototype.getCredentials = function (platformInstance, cb) {
     this.store.get(platformInstance.actor['@id'], (err, credentials) => {
@@ -143,22 +134,30 @@ Worker.prototype.__getPlatformInstance = function (job, identifier) {
         sockets: new Set()
     };
     const _cleanupProcess = this.__handlerCleanupProcess(platformInstance);
+    // when the child process closes
     childProcess.on('close', (err) => {
+        console.log("CLEANUP CLOSE EVENT");
         this.log('caught platform process close: ', err);
         _cleanupProcess();
     });
     // cleanup module whenever an exception is thrown
-    childProcess.on('error', (err) => {
-        this.log('caught platform process error: ' + err.stack);
-        _cleanupProcess(err.toString());
-    });
+    // childProcess.on('error', (err) => {
+    //   console.log("CLEANUP ERROR EVENT");
+    //   this.log('caught platform process error: ' + err.stack);
+    //   _cleanupProcess(err.toString());
+    // });
+    // incoming messages from the platform process
     childProcess.on('message', (msg) => {
         const func = msg.shift();
         if (func === 'updateCredentials') {
             updateCredentials(...msg);
         }
         else if (func === 'error') {
+            console.log('error message received');
             _cleanupProcess(...msg);
+        }
+        else if (func === 'callback') {
+            // ignored
         }
         else {
             send(...msg);
@@ -175,7 +174,14 @@ Worker.prototype.__getStore = function (secret) {
     });
 };
 Worker.prototype.__handlerCleanupProcess = function (platformInstance) {
+    let _cleanupCalled = false;
     return (errorString) => {
+        if (_cleanupCalled) {
+            return;
+        }
+        else {
+            _cleanupCalled = true;
+        }
         this.log('sending connection failure message to client: ' + errorString);
         platformInstance.sendToClient({
             context: platformInstance.name,

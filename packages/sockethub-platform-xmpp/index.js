@@ -540,8 +540,6 @@ class XMPP {
     this.debug('calling connect for ' + credentials.actor['@id']);
     const fullJid = this.__buildFullJid(credentials);
     const xmppCreds = this.__buildXmppCredentials(fullJid, credentials);
-    console.log(credentials);
-    console.log(xmppCreds);
 
     function __removeListeners() {
       xmpp.removeListener('online', handlers.online);
