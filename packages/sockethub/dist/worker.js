@@ -21,7 +21,6 @@ function Worker(cfg) {
     this.parentId = cfg.parentId; // parent instance identifier
     this.log = debug_1.default('sockethub:worker:' + this.socket.id);
     this.queue = services_1.default.startQueue(this.parentId);
-    this.__onFailure = function () { };
     // store object to fetch credentials stored for this specific socket connection
     this.store = this.__getStore(parentSecret1 + workerSecret);
 }
@@ -40,20 +39,11 @@ Worker.prototype.boot = function () {
             if (err) {
                 return done(err);
             }
-            this.executeJob(job, platformInstance, credentials, done);
+            this.jobComplete = done;
+            // run corresponding platformInstance method
+            platformInstance.process.send([job.data.msg['@type'], job.data.msg, credentials]);
         });
     });
-};
-Worker.prototype.executeJob = function (job, platformInstance, credentials, done) {
-    this.log('process executeJob run');
-    platformInstance.process.on('message', (msg) => {
-        const func = msg.shift();
-        if (func === 'callback') {
-            done(...msg);
-        }
-    });
-    // run corresponding platformInstance method
-    platformInstance.process.send([job.data.msg['@type'], job.data.msg, credentials]);
 };
 Worker.prototype.getCredentials = function (platformInstance, cb) {
     this.store.get(platformInstance.actor['@id'], (err, credentials) => {
@@ -107,9 +97,7 @@ Worker.prototype.generateUpdateCredentialsFunction = function (identifier) {
         this.getCredentials(platformInstance, this.__handlerUpdateCredentials(platformInstance, newName, newServer, newObject, done));
     };
 };
-Worker.prototype.onFailure = function (cb) {
-    this.__onFailure = cb;
-};
+Worker.prototype.jobComplete = function () { };
 Worker.prototype.shutdown = function () {
     this.log('shutting down');
     shared_resources_1.default.platformInstances.forEach((platformInstance) => {
@@ -133,19 +121,32 @@ Worker.prototype.__getPlatformInstance = function (job, identifier) {
         flaggedForTermination: false,
         sockets: new Set()
     };
-    const _cleanupProcess = this.__handlerCleanupProcess(platformInstance);
+    let _cleanupCalled = false;
+    const cleanup = (error) => {
+        if (_cleanupCalled) {
+            return;
+        }
+        else {
+            _cleanupCalled = true;
+        }
+        this.jobComplete(error);
+        platformInstance.sendToClient({
+            context: platformInstance.name,
+            '@type': 'error',
+            target: platformInstance.actor,
+            object: {
+                '@type': 'error',
+                content: error
+            }
+        });
+        this.log('removing platform instance ' + platformInstance.id);
+        shared_resources_1.default.helpers.removePlatform(platformInstance);
+    };
     // when the child process closes
-    childProcess.on('close', (err) => {
-        console.log("CLEANUP CLOSE EVENT");
-        this.log('caught platform process close: ', err);
-        _cleanupProcess();
+    childProcess.on('close', () => {
+        this.log('caught platform instance close');
+        cleanup('platform instance closed unexpectedly');
     });
-    // cleanup module whenever an exception is thrown
-    // childProcess.on('error', (err) => {
-    //   console.log("CLEANUP ERROR EVENT");
-    //   this.log('caught platform process error: ' + err.stack);
-    //   _cleanupProcess(err.toString());
-    // });
     // incoming messages from the platform process
     childProcess.on('message', (msg) => {
         const func = msg.shift();
@@ -153,11 +154,11 @@ Worker.prototype.__getPlatformInstance = function (job, identifier) {
             updateCredentials(...msg);
         }
         else if (func === 'error') {
-            console.log('error message received');
-            _cleanupProcess(...msg);
+            this.log('error detected in platform instance, cleaning up thread');
+            cleanup(msg[0]);
         }
         else if (func === 'callback') {
-            // ignored
+            this.jobComplete(...msg);
         }
         else {
             send(...msg);
@@ -172,32 +173,6 @@ Worker.prototype.__getStore = function (secret) {
         secret: secret,
         redis: config_1.default.get('redis')
     });
-};
-Worker.prototype.__handlerCleanupProcess = function (platformInstance) {
-    let _cleanupCalled = false;
-    return (errorString) => {
-        if (_cleanupCalled) {
-            return;
-        }
-        else {
-            _cleanupCalled = true;
-        }
-        this.log('sending connection failure message to client: ' + errorString);
-        platformInstance.sendToClient({
-            context: platformInstance.name,
-            '@type': 'connect',
-            target: platformInstance.actor,
-            object: {
-                '@type': 'error',
-                content: errorString
-            }
-        });
-        // platformInstance.process.send(['cleanup']);
-        this.log('disposing of domain');
-        shared_resources_1.default.helpers.removePlatform(platformInstance);
-        this.__onFailure('platform shutdown');
-        // done(errorString);
-    };
 };
 Worker.prototype.__handlerSendMessage = function (platformInstance, msg) {
     return (socketId) => {

@@ -131,12 +131,6 @@ class Sockethub {
         sessionLog('connected to socket.io channel ' + socket.id);
         shared_resources_1.default.socketConnections.set(socket.id, socket);
         worker.boot();
-        worker.onFailure((err) => {
-            sessionLog('worker ' + socket.id + ' failure detected ' + err);
-            shared_resources_1.default.socketConnections.delete(socket.id);
-            sessionLog('disconnecting client socket');
-            socket.disconnect(err);
-        });
         socket.on('disconnect', () => {
             sessionLog('disconnect received from client.');
             worker.shutdown();
@@ -178,7 +172,10 @@ class Sockethub {
                             job.data.msg.message = result;
                         }
                         else if (type === 'failed') {
-                            job.data.msg.error = result;
+                            job.data.msg.object = {
+                                '@type': 'error',
+                                content: result
+                            };
                         }
                     }
                     log(`job #${job.id} on socket ${job.data.socket} ${type}`);

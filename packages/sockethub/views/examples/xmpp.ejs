@@ -100,9 +100,9 @@
       }
 
       // errors
-      sc.socket.on('failure', function (msg) {
+      sc.socket.on('failed', function (msg) {
         debug('received failure: ', msg);
-        alert(msg.error);
+        console.error(msg.object.content);
       });
 
       sc.socket.on('completed', function (msg) {

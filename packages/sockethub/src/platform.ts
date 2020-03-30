@@ -22,7 +22,6 @@ process.on('uncaughtException', (err) => {
 process.on('message', (data) => {
   let func = data.shift();
   platform[func](...data, (err, obj) => {
-    console.log('CALLBACK CALLED', obj);
     process.send(['callback', err, obj]);
   });
 });
@@ -34,7 +33,6 @@ process.on('message', (data) => {
  */
 function sendFunction(command) {
   return function (msg) {
-    logger('sending message from platform to worker ', msg);
     process.send([command, msg]);
   };
 }
