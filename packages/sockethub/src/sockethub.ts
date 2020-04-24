@@ -11,8 +11,8 @@ import Middleware from './middleware';
 import resourceManager from './resource-manager';
 import services from './services';
 import validate from './validate';
-import Worker from './worker';
 import SharedResources from "./shared-resources";
+import ProcessManager from "./process-manager";
 
 const log = debug('sockethub:core  '),
       activity = ActivityStreams(config.get('activity-streams:opts'));
@@ -33,6 +33,7 @@ class Sockethub {
   status: boolean;
   queue: any;
   io: any;
+  processManager: any;
 
   constructor() {
     this.counter = 0;
@@ -41,6 +42,7 @@ class Sockethub {
     this.parentId = randToken.generate(16);
     this.parentSecret1 = randToken.generate(16);
     this.parentSecret2 = randToken.generate(16);
+    this.processManager = new ProcessManager(this.parentId);
     log('sockethub session id: ' + this.parentId);
   }
 
@@ -121,10 +123,12 @@ class Sockethub {
     };
   };
 
-  private __handlerQueueJob(socket, sessionLog) {
+  private __handlerIncomingMessage(socket, sessionLog) {
     return (msg) => {
-      sessionLog('queueing incoming job ' + msg.context + ' for socket ' + socket.id);
-      const job = this.queue.create(socket.id, {
+      const identifier = this.processManager.register(msg);
+      sessionLog(`queueing incoming job ${msg.context} for socket 
+        ${socket.id} to chanel ${identifier}`);
+      const job = this.queue.create(identifier, {
         title: socket.id + '-' + msg.context + '-' + (msg['@id']) ? msg['@id'] : this.counter++,
         socket: socket.id,
         msg: crypto.encrypt(msg, this.parentSecret1 + this.parentSecret2)
@@ -139,25 +143,15 @@ class Sockethub {
   private __handleNewConnection(socket) {
     const sessionLog = debug('sockethub:core  :' + socket.id), // session-specific debug messages
           workerSecret = randToken.generate(16),
-          worker = new Worker({
-            parentId: this.parentId,
-            parentSecret1: this.parentSecret1,
-            parentSecret2: this.parentSecret2,
-            workerSecret: workerSecret,
-            socket: socket,
-            platforms: [...this.platforms.keys()]
-          }),
           store = this.__getStore(socket, workerSecret), // store instance is session-specific
           middleware = this.__getMiddleware(socket, sessionLog);
 
     sessionLog('connected to socket.io channel ' + socket.id);
 
     SharedResources.socketConnections.set(socket.id, socket);
-    worker.boot();
 
     socket.on('disconnect', () => {
       sessionLog('disconnect received from client.');
-      worker.shutdown();
       SharedResources.socketConnections.delete(socket.id);
     });
 
@@ -169,7 +163,7 @@ class Sockethub {
 
     socket.on(
       'message',
-      middleware.chain(validate('message'), this.__handlerQueueJob(socket, sessionLog))
+      middleware.chain(validate('message'), this.__handlerIncomingMessage(socket, sessionLog))
     );
 
     // when new activity objects are created on the client side, an event is
@@ -193,7 +187,7 @@ class Sockethub {
   };
 
   // handle job results, from workers, in the queue
-  private __processJobResult(type) {
+  private __processJobResult(type: string) {
     return (id, result) => {
       kue.Job.get(id, (err, job) => {
         if (err) {
