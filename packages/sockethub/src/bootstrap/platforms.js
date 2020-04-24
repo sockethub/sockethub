@@ -91,6 +91,7 @@ module.exports = function platformLoad(moduleList) {
         platforms.set(platformName, {
           id: platformName,
           moduleName: moduleName,
+          config: p.config,
           version: packageJson.version,
           '@types': types.join(', ')
         });
