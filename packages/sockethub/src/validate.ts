@@ -22,7 +22,7 @@ tv4.addSchema(SockethubSchemas.ActivityObject.id, SockethubSchemas.ActivityObjec
 
 // educated guess on what the displayName is, if it's not defined
 // since we know the @id is a URI, we prioritize by username, then fragment (no case yet for path)
-function ensureDisplayName(msg) {
+function ensureDisplayName(msg: any) {
   if ((msg['@id']) && (! msg.displayName)) {
     const uri = new URI(msg['@id']);
     return uri.username() || getUriFragment(uri) || uri.path();
@@ -30,17 +30,18 @@ function ensureDisplayName(msg) {
   return msg.displayName;
 }
 
-function ensureObject(msg) {
+function ensureObject(msg: any) {
   return !((typeof msg !== 'object') || (Array.isArray(msg)));
 }
 
-function errorHandler(type, msg, next) {
+function errorHandler(type: any, msg: any, next: any) {
   return (err) => {
     return next(false, err, type, msg);
   };
 }
 
 // expand given prop to full object if they are just strings
+// FIXME are we sure this works? What's propName for?
 function expandProp(propName, prop) {
   return (typeof prop === 'string') ? activity.Object.get(prop, true) : prop;
 }
@@ -53,12 +54,12 @@ function expandStream(msg) {
   return msg;
 }
 
-function getUriFragment(uri) {
+function getUriFragment(uri: any) {
   const frag = uri.fragment();
   return (frag) ? '#' + frag : undefined;
 }
 
-function processActivityObject(msg, error, next) {
+function processActivityObject(msg: any, error: any, next: any) {
   if (! validateActivityObject(msg)) {
     return error(
       `activity-object schema validation failed: ${tv4.error.dataPath} = ${tv4.error.message}`
@@ -68,7 +69,7 @@ function processActivityObject(msg, error, next) {
   return next(true, msg); // passed validation, on to next handler in middleware chain
 }
 
-function processActivityStream(msg, error, next) {
+function processActivityStream(msg: any, error: any, next: any) {
   let stream;
   try { // expands the AS object to a full object with the expected properties
     stream = activity.Stream(msg);
@@ -85,7 +86,7 @@ function processActivityStream(msg, error, next) {
   return next(true, expandStream(msg));
 }
 
-function processCredentials(msg, error, next) {
+function processCredentials(msg: any, error: any, next: any) {
   msg.actor = expandProp('actor', msg.actor);
   msg.target = expandProp('target', msg.target);
   let credentialsSchema = tv4.getSchema(
@@ -102,15 +103,15 @@ function processCredentials(msg, error, next) {
   return next(true, expandStream(msg));
 }
 
-function validateActivityObject(msg) {
+function validateActivityObject(msg: any) {
   return tv4.validate({ object: msg }, SockethubSchemas.ActivityObject);
 }
 
-function validateCredentials(msg, schema) {
+function validateCredentials(msg: any, schema: any) {
   return tv4.validate(msg, schema);
 }
 
-function validateActivityStream(msg) {
+function validateActivityStream(msg: any) {
   // TODO figure out a way to allow for special objects from platforms, without
   // ignoring failed activity stream schema checks
   if (! tv4.validate(msg, SockethubSchemas.ActivityStream)) {
@@ -121,7 +122,7 @@ function validateActivityStream(msg) {
 
 // called when registered with the middleware function, define the type of validation
 // that will be called when the middleware eventually does.
-export default function validate(type) {
+export default function validate(type: string) {
   // called by the middleware with the message and the next (callback) in the chain
   return (next, msg) => {
     log('applying schema validation for ' + type);
