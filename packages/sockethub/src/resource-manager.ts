@@ -37,10 +37,11 @@ function resourceManagerCycle() {
           rmLog(`terminating platform instance ${platformInstance.id} ` +
             `(flagged for termination: no registered sockets found)`);
           try {
-            platformInstance.module.cleanup(() => {
-              SharedResources.helpers.removePlatform(platformInstance);
-            });
+            platformInstance.process.unref();
+            platformInstance.process.kill();
+            SharedResources.helpers.removePlatform(platformInstance);
           } catch (e) {
+            rmLog('failed killing process ', e);
             SharedResources.helpers.removePlatform(platformInstance);
           }
         } else {
