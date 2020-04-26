@@ -21,7 +21,6 @@ class Crypto {
     const encryptedText = Buffer.from(parts.join(':'), 'hex');
     const decipher = cryptoLib.createDecipheriv(ALGORITHM, Buffer.from(secret), iv);
     let decrypted = decipher.update(encryptedText);
-
     decrypted = Buffer.concat([decrypted, decipher.final()]);
     return JSON.parse(decrypted.toString());
   }
