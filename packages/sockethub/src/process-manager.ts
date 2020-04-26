@@ -60,8 +60,16 @@ class ProcessManager {
           content: e
         }
       });
-      console.log('removing platform instance ' + platformInstance.id);
+      console.log('remove platform instance ' + platformInstance.id);
       SharedResources.helpers.removePlatform(platformInstance);
+    });
+
+    childProcess.send({
+      type: 'secrets',
+      data: {
+        parentSecret1: this.parentSecret1,
+        parentSecret2: this.parentSecret2,
+      }
     });
     
     SharedResources.platformInstances.set(identifier, platformInstance);
