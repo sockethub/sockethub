@@ -42,7 +42,8 @@ class Sockethub {
     this.parentId = randToken.generate(16);
     this.parentSecret1 = randToken.generate(16);
     this.parentSecret2 = randToken.generate(16);
-    this.processManager = new ProcessManager(this.parentId);
+    this.processManager = new ProcessManager(
+      this.parentId, this.parentSecret1, this.parentSecret2);
     log('sockethub session id: ' + this.parentId);
   }
 
