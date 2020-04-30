@@ -40,7 +40,7 @@
   dependencies:
     "@types/babel-types" "*"
 
-"@types/body-parser@*", "@types/body-parser@1.19.0":
+"@types/body-parser@*", "@types/body-parser@^1.19.0":
   version "1.19.0"
   resolved "https://registry.yarnpkg.com/@types/body-parser/-/body-parser-1.19.0.tgz#0685b3c47eb3006ffed117cdd55164b61f80538f"
   integrity sha512-W98JrE0j2K78swW4ukqMleo8R7h/pFETjM2DQ90MF6XK2i4LO4W3gQ71Lt4w3bfm2EvVSyWHplECvB5sK22yFQ==
@@ -65,10 +65,10 @@
   resolved "https://registry.yarnpkg.com/@types/debug/-/debug-4.1.5.tgz#b14efa8852b7768d898906613c23f688713e02cd"
   integrity sha512-Q1y515GcOdTHgagaVFhHnIFQ38ygs/kmxdNpvpou+raI9UO3YZcHDngBSYKQklcKlvA7iuQlmIKbzvmxcOE9CQ==
 
-"@types/ejs@3.0.0":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@types/ejs/-/ejs-3.0.0.tgz#eeed4cd7eb731138da4d8f65634207cb343f4608"
-  integrity sha512-6mUaeRO+zTcoFzjXZgYybf5/FtXXyWmfkGheS04iPOEmE+lV3qBkcqG0WnabmJD2ATSPTlWDBMUpxdE80JqUPQ==
+"@types/ejs@^3.0.0":
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/@types/ejs/-/ejs-3.0.3.tgz#aa88c117fb4e666ece7348e8620d0c57b3cc2ad3"
+  integrity sha512-vkPNcai0FAHsaqLXObm1bTr87XOwfAS1a/jUx5b+Mj+lUToeEcgMIcdE0PuU0CdWq4VkNJYgLa0asYjrNb/maA==
 
 "@types/eslint-visitor-keys@^1.0.0":
   version "1.0.0"
@@ -146,10 +146,15 @@
   resolved "https://registry.yarnpkg.com/@types/nconf/-/nconf-0.10.0.tgz#a5c9753a09c59d44c8e6dc94b57d73f70eb12ebe"
   integrity sha512-Qh0/DWkz7fQm5h+IPFBIO5ixaFdv86V6gpbA8TPA1hhgXYtzGviv9yriqN1B+KTtmLweemKZD5XxY1cTAQPNMg==
 
-"@types/node@*", "@types/node@13.7.1":
+"@types/node@*":
   version "13.7.1"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-13.7.1.tgz#238eb34a66431b71d2aaddeaa7db166f25971a0d"
   integrity sha512-Zq8gcQGmn4txQEJeiXo/KiLpon8TzAl0kmKH4zdWctPj05nWwp1ClMdAVEloqrQKfaC48PNLdgN/aVaLqUrluA==
+
+"@types/node@^13.7.1":
+  version "13.13.4"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-13.13.4.tgz#1581d6c16e3d4803eb079c87d4ac893ee7501c2c"
+  integrity sha512-x26ur3dSXgv5AwKS0lNfbjpCakGIduWU1DU91Zz58ONRWrIKGunmZBNv4P7N+e27sJkiGDsw/3fT4AtsqQBrBA==
 
 "@types/object-hash@^1.3.0":
   version "1.3.1"
@@ -292,10 +297,10 @@ acorn@^7.1.0:
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-7.1.0.tgz#949d36f2c292535da602283586c2477c57eb2d6c"
   integrity sha512-kL5CuoXA/dgxlBbVrflsflzQ3PAas7RYZB52NOm/6839iVYJgKMJ3cQJD+t2i5+qFa8h3MDpEOJiS64E8JLnSQ==
 
-activity-streams@^4.3.1-alpha.1:
-  version "4.3.1-alpha.1"
-  resolved "https://registry.yarnpkg.com/activity-streams/-/activity-streams-4.3.1-alpha.1.tgz#1d4358e0b9647a758f0d31ad50804882eab25886"
-  integrity sha512-Sloz3AX/zv6F8bwvg5ik2/G6wUYrUW9gYz4R7BxLzfY6MHW06fgqyT4BNSGrp9MuxSLT1YmNJtSehP/0S54xLQ==
+activity-streams@^4.3.2:
+  version "4.3.2"
+  resolved "https://registry.yarnpkg.com/activity-streams/-/activity-streams-4.3.2.tgz#52f9e3f2cac96244f0e74bb782d67593016f0e3d"
+  integrity sha512-hl39HLYkjgIV01Rv4rnvwYeies5o/B0ZfJcjz+J9gE21jFNe1bS+yFfG7OENcFz3DD/3o0Z/m5sa287MuJyc3g==
   dependencies:
     event-emitter "^0.3.5"
 
@@ -1290,11 +1295,6 @@ extsprintf@^1.2.0:
   resolved "https://registry.yarnpkg.com/extsprintf/-/extsprintf-1.4.0.tgz#e2689f8f356fad62cca65a3a91c5df5f9551692f"
   integrity sha1-4mifjzVvrWLMplo6kcXfX5VRaS8=
 
-fast-deep-equal@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-2.0.1.tgz#7b05218ddf9667bf7f370bf7fdb2cb15fdd0aa49"
-  integrity sha1-ewUhjd+WZ79/Nwv3/bLLFf3Qqkk=
-
 fast-deep-equal@^3.1.1:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-3.1.1.tgz#545145077c501491e33b15ec408c294376e94ae4"
@@ -1732,13 +1732,13 @@ irc-socket@^3.0.8:
     bluebird "^3"
     r-result "^1.4.0"
 
-irc2as@^3.0.1-alpha.0:
-  version "3.0.1-alpha.0"
-  resolved "https://registry.yarnpkg.com/irc2as/-/irc2as-3.0.1-alpha.0.tgz#537a1de45cf9008c855b548f4a263f1f336c0205"
-  integrity sha512-l2ReAfO4KNdI24N9PARYcIA+G66t8QtNUOHAVgIfo7yLrqPHMd/cZSfma45O9ipaVysETwcxPBnTILbqBwiS1A==
+irc2as@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/irc2as/-/irc2as-3.0.1.tgz#76bc1a53883a21f53813c8c6ea2b8c454a87956e"
+  integrity sha512-oyApv4TIDohY0mgCXMlMSrt9YhRci5NxljENHD4+hJbGEqccyHRbJ6VDSJlqUmx2Tw0jqx/q5no21r1ulYHJJQ==
   dependencies:
     debug "^4.1.1"
-    fast-deep-equal "^2.0.1"
+    fast-deep-equal "^3.1.1"
 
 is-arrayish@^0.2.1:
   version "0.2.1"
@@ -1882,9 +1882,9 @@ jaribu@^2.2.2:
     whatwg-fetch "^1.1.1"
 
 jquery@^3.4.1:
-  version "3.4.1"
-  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.4.1.tgz#714f1f8d9dde4bdfa55764ba37ef214630d80ef2"
-  integrity sha512-36+AdBzCL+y6qjw5Tx7HgzeGCzC81MDDgaUP8ld2zhx58HdqXGoBd+tHdrBMiyjGQs0Hxs/MLZTu/eHNJJuWPw==
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.5.0.tgz#9980b97d9e4194611c36530e7dc46a58d7340fc9"
+  integrity sha512-Xb7SVYMvygPxbFMpTFQiHh1J7HClEaThguL15N/Gg37Lri/qKyhRGZYzHRyLH8Stq3Aow0LsHO2O2ci86fCrNQ==
 
 js-stringify@^1.0.1:
   version "1.0.2"
@@ -3091,44 +3091,44 @@ socket.io@^2.3.0:
     socket.io-client "2.3.0"
     socket.io-parser "~3.4.0"
 
-sockethub-platform-dummy@^2.0.1-alpha.1:
-  version "2.0.1-alpha.1"
-  resolved "https://registry.yarnpkg.com/sockethub-platform-dummy/-/sockethub-platform-dummy-2.0.1-alpha.1.tgz#4fbd44d86070e46f73814eb7e67e79b66ed0901f"
-  integrity sha512-gVblNzp20B7lUC4ZidGBO0bHghL+uycCreROT0ISBf09xrSs94E/HN81hZ4Rmhb2syuohatst7PP5vq3MeTqFA==
+sockethub-platform-dummy@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/sockethub-platform-dummy/-/sockethub-platform-dummy-2.0.1.tgz#0c8bc1aed01f4fcc8f8400b785d3cdbe5cbb8a70"
+  integrity sha512-vjLEJiQ+izRznaK7BV009CtCBzibdB4YJ/UkRO64EO3pNG54nV9hzguBukSV8khXjTJNmfD7JGtC532oZ/CcSA==
   dependencies:
     request "^2.83.0"
 
-sockethub-platform-feeds@^2.0.2-alpha.1:
-  version "2.0.2-alpha.1"
-  resolved "https://registry.yarnpkg.com/sockethub-platform-feeds/-/sockethub-platform-feeds-2.0.2-alpha.1.tgz#770fd68d570087beec2d9bb1e24f56116cf638b1"
-  integrity sha512-rkH7ActYV5AWEM83eD8Gqqm7cTFZFq4m1hA4D9gozZHofZG3BOR6mJgpN62mDQOd+SaUpMCPRnhxtm8zXBw6LQ==
+sockethub-platform-feeds@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/sockethub-platform-feeds/-/sockethub-platform-feeds-2.0.2.tgz#529334d03d5c06f298111f65a7822d6d37572741"
+  integrity sha512-4ycT54RPjT1ApHEbXjWs7px0SaHo41sDDubZ0p3soxcCX3crCqbHlVvuk2ZT6+ZB/VEctQnd1mBhnkgQoxbLhg==
   dependencies:
     feedparser "^2.2.9"
     request "^2.83.0"
 
-sockethub-platform-irc@^3.4.2-alpha.2:
-  version "3.4.2-alpha.2"
-  resolved "https://registry.yarnpkg.com/sockethub-platform-irc/-/sockethub-platform-irc-3.4.2-alpha.2.tgz#76de23f3b43cb0387f07a84dfdd9151e50994eff"
-  integrity sha512-wYs5faEwiDXG5mm/MonVNRINFvo2WIJWfEExLySegd7EKpH/Oh4DZW0bunXQAE4ReNrW65Rx4vZnJxg7QH/mGA==
+sockethub-platform-irc@^3.4.2:
+  version "3.4.2"
+  resolved "https://registry.yarnpkg.com/sockethub-platform-irc/-/sockethub-platform-irc-3.4.2.tgz#86477b4ab88356164dcd114ae2d6bcbfb319f6dd"
+  integrity sha512-O9Y9vWCvhFus4LNGCF24OBrrhBfEAGEz7/qetIY2sVlaXYhFn03Gg8664ziMwVEDka7YDvsfv8t+BRHVckpBKw==
   dependencies:
     debug "^4.1.1"
     irc-socket "^3.0.8"
-    irc2as "^3.0.1-alpha.0"
+    irc2as "^3.0.1"
 
-sockethub-platform-xmpp@^3.2.1-alpha.1:
-  version "3.2.1-alpha.1"
-  resolved "https://registry.yarnpkg.com/sockethub-platform-xmpp/-/sockethub-platform-xmpp-3.2.1-alpha.1.tgz#14cf33ef23ec3612a4892efdb4d664aa4e155e6d"
-  integrity sha512-FtbG7i8ABDKqItG/2fY5lwpf/fRwOCzhSDj2eHt4fAyDpeX6uXLBk5g/mSF4w/eDlydY/e40x8mQ+3ttmwpAJg==
+sockethub-platform-xmpp@^3.2.1:
+  version "3.2.1"
+  resolved "https://registry.yarnpkg.com/sockethub-platform-xmpp/-/sockethub-platform-xmpp-3.2.1.tgz#4752f74b78b6976b7a37ac35f2ea45e6b0de7837"
+  integrity sha512-s0padJdGfCduTA2kl+duwc93gvaoUhZLEGYNvXgL7n1WFqkrVMS534ueJ03EtR1YXadkbL1/RuLZZ9z7MPAnjA==
   dependencies:
     ltx "^2.9.2"
     simple-xmpp "^1.3.1"
 
-sockethub-schemas@^2.0.1-alpha.0:
-  version "2.0.1-alpha.0"
-  resolved "https://registry.yarnpkg.com/sockethub-schemas/-/sockethub-schemas-2.0.1-alpha.0.tgz#e51a29d7e0d634d4ec944c5c0278c4807cbc0c4e"
-  integrity sha512-yZf8Ganbdjhsp3Pda3399yaR2eadNFeLQNfmQDQe03v5+FcXUmiM4v3yaMaQce2ckFcKUN/42dU2q917uR/wZQ==
+sockethub-schemas@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/sockethub-schemas/-/sockethub-schemas-2.0.1.tgz#3be4ef2b80d934a0685c3e2d6f7be9ee443a1ea8"
+  integrity sha512-7Bg/22s5JgNNI5+3+U06D0zGRvCZm9u3ebU89tvkYHIWX+0Y2XA54aIl+y5cqXHm2ZxFIwtU2UNfMJGfjRBQCw==
   dependencies:
-    debug "^2.2.0"
+    debug "^4.1.1"
 
 source-map-loader@^0.2.4:
   version "0.2.4"
