@@ -38,8 +38,12 @@ class PlatformInstance {
   }
 
   public sendToClient(sessionId: string, msg: any) {
-    // XXX TODO
-    console.log('sendToClient called ', msg);
+    const socket = SharedResources.sessionConnections.get(sessionId);
+    if (socket) { // send message
+      msg.context = this.name;
+      // this.log(`sending message to socket ${sessionId}`);
+      socket.emit('message', msg);
+    }
   }
 
   private deregisterListeners(sessionId: string) {
