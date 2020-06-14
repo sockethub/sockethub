@@ -74,6 +74,9 @@ class Sockethub {
     log('sockethub session id: ' + this.parentId);
   }
 
+  /**
+   * initialization of sockethub starts here
+   */
   boot() {
     if (this.status) {
       return log('Sockethub.boot() called more than once');
@@ -88,9 +91,9 @@ class Sockethub {
     this.io = services.startExternal();
 
     log('registering handlers');
-    this.queue.on('job complete', this.processJobResult('completed'));
-    this.queue.on('job failed', this.processJobResult('failed'));
-    this.io.on('connection', this.incomingConnetion.bind(this));
+    this.queue.on('job complete', this.handleJobResult('completed'));
+    this.queue.on('job failed', this.handleJobResult('failed'));
+    this.io.on('connection', this.incomingConnection.bind(this));
   }
 
   // send message to every connected socket associated with the given platform instance.
@@ -117,6 +120,45 @@ class Sockethub {
       activity.Object.create(obj);
     };
   };
+
+  // handle job results coming in on the queue from platform instances
+  private handleJobResult(type: string) {
+    return (id, result) => {
+      kue.Job.get(id, (err, job) => {
+        if (err) {
+          return log(`error retrieving (${type}) job #${id}`);
+        }
+
+        if (this.io.sockets.connected[job.data.socket]) {
+          job.data.msg = crypto.decrypt(job.data.msg, this.parentSecret1 + this.parentSecret2);
+          if (type === 'completed') { // let all related peers know of result
+            this.broadcastToSharedPeers(job.data.socket, job.data.msg);
+          }
+
+          if (result) {
+            if (type === 'completed') {
+              job.data.msg.message = result;
+            } else if (type === 'failed') {
+              job.data.msg.object = {
+                '@type': 'error',
+                content: result
+              };
+            }
+          }
+          log(`job #${job.id} on socket ${job.data.socket} ${type}`);
+          this.io.sockets.connected[job.data.socket].emit(type, job.data.msg);
+        } else {
+          log(`received (${type}) job for non-existent socket ${job.data.socket}`);
+        }
+
+        job.remove((err: string) => {
+          if (err) {
+            log(`error removing (${type}) job #${job.id}, ${err}`);
+          }
+        });
+      });
+    };
+  }
 
   private handleIncomingMessage(socket: any, store: any, sessionLog: any) {
     return (msg) => {
@@ -147,7 +189,7 @@ class Sockethub {
     };
   };
 
-  private incomingConnetion(socket: any) {
+  private incomingConnection(socket: any) {
     const sessionLog = debug('sockethub:core  :' + socket.id), // session-specific debug messages
           sessionSecret = randToken.generate(16),
           // store instance is session-specific
@@ -190,45 +232,6 @@ class Sockethub {
       'activity-object',
       middleware.chain(validate('activity-object'), this.handleActivityObject(sessionLog))
     );
-  }
-
-  // handle job results coming in on the queue from platform instances
-  private processJobResult(type: string) {
-    return (id, result) => {
-      kue.Job.get(id, (err, job) => {
-        if (err) {
-          return log(`error retrieving (${type}) job #${id}`);
-        }
-
-        if (this.io.sockets.connected[job.data.socket]) {
-          job.data.msg = crypto.decrypt(job.data.msg, this.parentSecret1 + this.parentSecret2);
-          if (type === 'completed') { // let all related peers know of result
-            this.broadcastToSharedPeers(job.data.socket, job.data.msg);
-          }
-
-          if (result) {
-            if (type === 'completed') {
-              job.data.msg.message = result;
-            } else if (type === 'failed') {
-              job.data.msg.object = {
-                '@type': 'error',
-                content: result
-              };
-            }
-          }
-          log(`job #${job.id} on socket ${job.data.socket} ${type}`);
-          this.io.sockets.connected[job.data.socket].emit(type, job.data.msg);
-        } else {
-          log(`received (${type}) job for non-existent socket ${job.data.socket}`);
-        }
-
-        job.remove((err: string) => {
-          if (err) {
-            log(`error removing (${type}) job #${job.id}, ${err}`);
-          }
-        });
-      });
-    };
   }
 }
 
