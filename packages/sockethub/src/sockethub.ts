@@ -25,6 +25,32 @@ interface ActivityObject {
   error?: any;
 }
 
+function getMiddleware(socket, sessionLog) {
+  return new Middleware((err, type: string, msg: ActivityObject) => {
+    sessionLog('validation failed for ' + type + '. ' + err, msg);
+    // called with validation fails
+    if (typeof msg !== 'object') {
+      msg = { context: 'error' };
+    }
+    msg.error = err;
+    // send failure
+    socket.emit('failure', msg);
+  });
+}
+
+function getPlatformInstance(msg: ActivityObject) {
+  if ((typeof msg.actor !== 'object') || (!msg.actor['@id'])) {
+    return;
+  }
+  const platformInstance = SharedResources.platformInstances.get(
+    getPlatformId(msg.context, msg.actor['@id'])
+  );
+  if (!platformInstance) {
+    return false;
+  }
+  return platformInstance;
+}
+
 class Sockethub {
   private readonly parentId: string;
   private readonly parentSecret1: string;
@@ -62,60 +88,37 @@ class Sockethub {
     this.io = services.startExternal();
 
     log('registering handlers');
-    this.queue.on('job complete', this.__processJobResult('completed'));
-    this.queue.on('job failed', this.__processJobResult('failed'));
-    this.io.on('connection', this.__handleNewConnection.bind(this));
+    this.queue.on('job complete', this.processJobResult('completed'));
+    this.queue.on('job failed', this.processJobResult('failed'));
+    this.io.on('connection', this.incomingConnetion.bind(this));
   }
 
   // send message to every connected socket associated with the given platform instance.
-  private __broadcastToSharedPeers(origSocket, msg: ActivityObject) {
+  private broadcastToSharedPeers(origSocket, msg: ActivityObject) {
     log(`broadcasting called, originating socket ${origSocket}`);
-    const platformInstance = Sockethub.__getPlatformInstance(msg);
+    const platformInstance = getPlatformInstance(msg);
     if (!platformInstance) {
       return;
     }
     for (let sessionId of platformInstance.sessions.values()) {
       if (sessionId !== origSocket) {
         log(`broadcasting message to ${sessionId}`);
-        this.io.sockets.connected[sessionId].emit('message', msg);
+        console.log(this.io.sockets.connected);
+        if (this.io.sockets.connected[sessionId]) {
+          this.io.sockets.connected[sessionId].emit('message', msg);
+        }
       }
     }
   };
 
-  private __getMiddleware(socket, sessionLog) {
-    return new Middleware((err, type: string, msg: ActivityObject) => {
-      sessionLog('validation failed for ' + type + '. ' + err, msg);
-      // called with validation fails
-      if (typeof msg !== 'object') {
-        msg = { context: 'error' };
-      }
-      msg.error = err;
-      // send failure
-      socket.emit('failure', msg);
-    });
-  };
-
-  private static __getPlatformInstance(msg: ActivityObject) {
-    if ((typeof msg.actor !== 'object') || (!msg.actor['@id'])) {
-      return;
-    }
-    const platformInstance = SharedResources.platformInstances.get(
-      getPlatformId(msg.context, msg.actor['@id'])
-    );
-    if (!platformInstance) {
-      return false;
-    }
-    return platformInstance;
-  };
-
-  private __handlerActivityObject(sessionLog) {
+  private handleActivityObject(sessionLog) {
     return (obj) => {
       sessionLog('processing activity-object');
       activity.Object.create(obj);
     };
   };
 
-  private __handlerIncomingMessage(socket: any, store: any, sessionLog: any) {
+  private handleIncomingMessage(socket: any, store: any, sessionLog: any) {
     return (msg) => {
       const identifier = this.processManager.register(msg, socket.id);
       sessionLog(`queueing incoming job ${msg.context} for socket 
@@ -132,12 +135,24 @@ class Sockethub {
     };
   };
 
-  private __handleNewConnection(socket: any) {
+  private handleStoreCredentials(store, sessionLog) {
+    return (creds: ActivityObject) => {
+      store.save(creds.actor['@id'], creds, (err) => {
+        if (err) {
+          sessionLog('error saving credentials to store ' + err);
+        } else {
+          sessionLog('credentials encrypted and saved with key: ' + creds.actor['@id']);
+        }
+      });
+    };
+  };
+
+  private incomingConnetion(socket: any) {
     const sessionLog = debug('sockethub:core  :' + socket.id), // session-specific debug messages
           sessionSecret = randToken.generate(16),
           // store instance is session-specific
           store = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret),
-          middleware = this.__getMiddleware(socket, sessionLog);
+          middleware = getMiddleware(socket, sessionLog);
 
     sessionLog('connected to socket.io channel ' + socket.id);
 
@@ -151,7 +166,7 @@ class Sockethub {
     socket.on(
       'credentials',
       middleware.chain(
-        validate('credentials'), this.__handlerStoreCredentials(store, sessionLog))
+        validate('credentials'), this.handleStoreCredentials(store, sessionLog))
     );
 
     socket.on(
@@ -165,7 +180,7 @@ class Sockethub {
           msg.sessionSecret = sessionSecret;
           next(true, msg);
         },
-        this.__handlerIncomingMessage(socket, store, sessionLog)
+        this.handleIncomingMessage(socket, store, sessionLog)
       )
     );
 
@@ -173,24 +188,12 @@ class Sockethub {
     // fired and we receive a copy on the server side.
     socket.on(
       'activity-object',
-      middleware.chain(validate('activity-object'), this.__handlerActivityObject(sessionLog))
+      middleware.chain(validate('activity-object'), this.handleActivityObject(sessionLog))
     );
   }
 
-  private __handlerStoreCredentials(store, sessionLog) {
-    return (creds: ActivityObject) => {
-      store.save(creds.actor['@id'], creds, (err) => {
-        if (err) {
-          sessionLog('error saving credentials to store ' + err);
-        } else {
-          sessionLog('credentials encrypted and saved with key: ' + creds.actor['@id']);
-        }
-      });
-    };
-  };
-
-  // handle job results, from workers, in the queue
-  private __processJobResult(type: string) {
+  // handle job results coming in on the queue from platform instances
+  private processJobResult(type: string) {
     return (id, result) => {
       kue.Job.get(id, (err, job) => {
         if (err) {
@@ -200,7 +203,7 @@ class Sockethub {
         if (this.io.sockets.connected[job.data.socket]) {
           job.data.msg = crypto.decrypt(job.data.msg, this.parentSecret1 + this.parentSecret2);
           if (type === 'completed') { // let all related peers know of result
-            this.__broadcastToSharedPeers(job.data.socket, job.data.msg);
+            this.broadcastToSharedPeers(job.data.socket, job.data.msg);
           }
 
           if (result) {
