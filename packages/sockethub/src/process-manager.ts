@@ -18,14 +18,15 @@ class ProcessManager {
     const platformDetails = init.platforms.get(msg.context);
 
     if (! platformDetails.config.persist) {
-      // ensure process is started
+      // ensure process is started - one for all jobs
       return this.ensureProcess(msg.context);
     } else {
+      // ensure process is started - one for each actor
       return this.ensureProcess(msg.context, msg.actor['@id']);
     }
   }
   
-  ensureProcess(platform: string, actor?: string) {
+  private ensureProcess(platform: string, actor?: string, credentials?: object) {
     const identifier = actor ? crypto.hash(platform + actor) : crypto.hash(platform);
 
     if (SharedResources.platformInstances.has(identifier)) {
@@ -69,6 +70,7 @@ class ProcessManager {
       data: {
         parentSecret1: this.parentSecret1,
         parentSecret2: this.parentSecret2,
+        credentials: credentials
       }
     });
     
