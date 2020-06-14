@@ -22,34 +22,27 @@ function resourceManagerCycle() {
         const mod = cycleCount % 4;
         if (!mod) {
             reportCount++;
-            rmLog('sockets: ' + shared_resources_1.default.socketConnections.size +
+            rmLog('sessions: ' + shared_resources_1.default.sessionConnections.size +
                 ' instances: ' + shared_resources_1.default.platformInstances.size);
         }
         for (let platformInstance of shared_resources_1.default.platformInstances.values()) {
-            for (let socketId of platformInstance.sockets.values()) {
-                if (!shared_resources_1.default.socketConnections.has(socketId)) {
-                    rmLog('removing stale socket reference ' + socketId + ' in platform instance '
+            for (let sessionId of platformInstance.sessions.values()) {
+                if (!shared_resources_1.default.sessionConnections.has(sessionId)) {
+                    rmLog('removing stale session reference ' + sessionId + ' in platform instance '
                         + platformInstance.id);
-                    platformInstance.sockets.delete(socketId);
+                    platformInstance.sessions.delete(sessionId);
                 }
             }
-            if (platformInstance.sockets.size <= 0) {
+            if (platformInstance.sessions.size <= 0) {
                 if (platformInstance.flaggedForTermination) {
                     // terminate
                     rmLog(`terminating platform instance ${platformInstance.id} ` +
-                        `(flagged for termination: no registered sockets found)`);
-                    try {
-                        platformInstance.module.cleanup(() => {
-                            shared_resources_1.default.helpers.removePlatform(platformInstance);
-                        });
-                    }
-                    catch (e) {
-                        shared_resources_1.default.helpers.removePlatform(platformInstance);
-                    }
+                        `(flagged for termination: no registered sessions found)`);
+                    shared_resources_1.default.helpers.removePlatform(platformInstance);
                 }
                 else {
                     rmLog(`flagging for termination platform instance ${platformInstance.id} ` +
-                        `(no registered sockets found)`);
+                        `(no registered sessions found)`);
                     platformInstance.flaggedForTermination = true;
                 }
             }

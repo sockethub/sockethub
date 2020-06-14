@@ -45,6 +45,7 @@ function errorHandler(type, msg, next) {
     };
 }
 // expand given prop to full object if they are just strings
+// FIXME are we sure this works? What's propName for?
 function expandProp(propName, prop) {
     return (typeof prop === 'string') ? activity.Object.get(prop, true) : prop;
 }
