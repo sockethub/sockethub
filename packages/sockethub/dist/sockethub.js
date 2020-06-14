@@ -18,6 +18,28 @@ const shared_resources_1 = __importDefault(require("./shared-resources"));
 const process_manager_1 = __importDefault(require("./process-manager"));
 const common_1 = require("./common");
 const log = debug_1.default('sockethub:core  '), activity = activity_streams_1.default(config_1.default.get('activity-streams:opts'));
+function getMiddleware(socket, sessionLog) {
+    return new middleware_1.default((err, type, msg) => {
+        sessionLog('validation failed for ' + type + '. ' + err, msg);
+        // called with validation fails
+        if (typeof msg !== 'object') {
+            msg = { context: 'error' };
+        }
+        msg.error = err;
+        // send failure
+        socket.emit('failure', msg);
+    });
+}
+function getPlatformInstance(msg) {
+    if ((typeof msg.actor !== 'object') || (!msg.actor['@id'])) {
+        return;
+    }
+    const platformInstance = shared_resources_1.default.platformInstances.get(common_1.getPlatformId(msg.context, msg.actor['@id']));
+    if (!platformInstance) {
+        return false;
+    }
+    return platformInstance;
+}
 class Sockethub {
     constructor() {
         this.counter = 0;
@@ -29,6 +51,9 @@ class Sockethub {
         this.processManager = new process_manager_1.default(this.parentId, this.parentSecret1, this.parentSecret2);
         log('sockethub session id: ' + this.parentId);
     }
+    /**
+     * initialization of sockethub starts here
+     */
     boot() {
         if (this.status) {
             return log('Sockethub.boot() called more than once');
@@ -41,14 +66,14 @@ class Sockethub {
         this.queue = services_1.default.startQueue(this.parentId);
         this.io = services_1.default.startExternal();
         log('registering handlers');
-        this.queue.on('job complete', this.__processJobResult('completed'));
-        this.queue.on('job failed', this.__processJobResult('failed'));
-        this.io.on('connection', this.__handleNewConnection.bind(this));
+        this.queue.on('job complete', this.handleJobResult('completed'));
+        this.queue.on('job failed', this.handleJobResult('failed'));
+        this.io.on('connection', this.incomingConnection.bind(this));
     }
     // send message to every connected socket associated with the given platform instance.
-    __broadcastToSharedPeers(origSocket, msg) {
+    broadcastToSharedPeers(origSocket, msg) {
         log(`broadcasting called, originating socket ${origSocket}`);
-        const platformInstance = Sockethub.__getPlatformInstance(msg);
+        const platformInstance = getPlatformInstance(msg);
         if (!platformInstance) {
             return;
         }
@@ -56,97 +81,22 @@ class Sockethub {
             if (sessionId !== origSocket) {
                 log(`broadcasting message to ${sessionId}`);
                 console.log(this.io.sockets.connected);
-                this.io.sockets.connected[sessionId].emit('message', msg);
+                if (this.io.sockets.connected[sessionId]) {
+                    this.io.sockets.connected[sessionId].emit('message', msg);
+                }
             }
         }
     }
     ;
-    __getMiddleware(socket, sessionLog) {
-        return new middleware_1.default((err, type, msg) => {
-            sessionLog('validation failed for ' + type + '. ' + err, msg);
-            // called with validation fails
-            if (typeof msg !== 'object') {
-                msg = { context: 'error' };
-            }
-            msg.error = err;
-            // send failure
-            socket.emit('failure', msg);
-        });
-    }
-    ;
-    static __getPlatformInstance(msg) {
-        if ((typeof msg.actor !== 'object') || (!msg.actor['@id'])) {
-            return;
-        }
-        const platformInstance = shared_resources_1.default.platformInstances.get(common_1.getPlatformId(msg.context, msg.actor['@id']));
-        if (!platformInstance) {
-            return false;
-        }
-        return platformInstance;
-    }
-    ;
-    __handlerActivityObject(sessionLog) {
+    handleActivityObject(sessionLog) {
         return (obj) => {
             sessionLog('processing activity-object');
             activity.Object.create(obj);
         };
     }
     ;
-    __handlerIncomingMessage(socket, store, sessionLog) {
-        return (msg) => {
-            const identifier = this.processManager.register(msg, socket.id);
-            sessionLog(`queueing incoming job ${msg.context} for socket 
-        ${socket.id} to chanel ${identifier}`);
-            const job = this.queue.create(identifier, {
-                title: socket.id + '-' + msg.context + '-' + (msg['@id']) ? msg['@id'] : this.counter++,
-                socket: socket.id,
-                msg: crypto_1.default.encrypt(msg, this.parentSecret1 + this.parentSecret2)
-            }).save((err) => {
-                if (err) {
-                    sessionLog('error adding job [' + job.id + '] to queue: ', err);
-                }
-            });
-        };
-    }
-    ;
-    __handleNewConnection(socket) {
-        const sessionLog = debug_1.default('sockethub:core  :' + socket.id), // session-specific debug messages
-        sessionSecret = rand_token_1.default.generate(16), 
-        // store instance is session-specific
-        store = common_1.getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret), middleware = this.__getMiddleware(socket, sessionLog);
-        sessionLog('connected to socket.io channel ' + socket.id);
-        shared_resources_1.default.sessionConnections.set(socket.id, socket);
-        socket.on('disconnect', () => {
-            sessionLog('disconnect received from client.');
-            shared_resources_1.default.sessionConnections.delete(socket.id);
-        });
-        socket.on('credentials', middleware.chain(validate_1.default('credentials'), this.__handlerStoreCredentials(store, sessionLog)));
-        socket.on('message', middleware.chain(validate_1.default('message'), (next, msg) => {
-            // middleware which attaches the sessionSecret to the message. The platform thread
-            // must find the credentials on their own using the given sessionSecret, which indicates
-            // that this specific session (socket connection) has provided credentials.
-            msg.sessionSecret = sessionSecret;
-            next(true, msg);
-        }, this.__handlerIncomingMessage(socket, store, sessionLog)));
-        // when new activity objects are created on the client side, an event is
-        // fired and we receive a copy on the server side.
-        socket.on('activity-object', middleware.chain(validate_1.default('activity-object'), this.__handlerActivityObject(sessionLog)));
-    }
-    __handlerStoreCredentials(store, sessionLog) {
-        return (creds) => {
-            store.save(creds.actor['@id'], creds, (err) => {
-                if (err) {
-                    sessionLog('error saving credentials to store ' + err);
-                }
-                else {
-                    sessionLog('credentials encrypted and saved with key: ' + creds.actor['@id']);
-                }
-            });
-        };
-    }
-    ;
     // handle job results coming in on the queue from platform instances
-    __processJobResult(type) {
+    handleJobResult(type) {
         return (id, result) => {
             kue_1.default.Job.get(id, (err, job) => {
                 if (err) {
@@ -155,7 +105,7 @@ class Sockethub {
                 if (this.io.sockets.connected[job.data.socket]) {
                     job.data.msg = crypto_1.default.decrypt(job.data.msg, this.parentSecret1 + this.parentSecret2);
                     if (type === 'completed') { // let all related peers know of result
-                        this.__broadcastToSharedPeers(job.data.socket, job.data.msg);
+                        this.broadcastToSharedPeers(job.data.socket, job.data.msg);
                     }
                     if (result) {
                         if (type === 'completed') {
@@ -181,6 +131,59 @@ class Sockethub {
                 });
             });
         };
+    }
+    handleIncomingMessage(socket, store, sessionLog) {
+        return (msg) => {
+            const identifier = this.processManager.register(msg, socket.id);
+            sessionLog(`queueing incoming job ${msg.context} for socket 
+        ${socket.id} to chanel ${identifier}`);
+            const job = this.queue.create(identifier, {
+                title: socket.id + '-' + msg.context + '-' + (msg['@id']) ? msg['@id'] : this.counter++,
+                socket: socket.id,
+                msg: crypto_1.default.encrypt(msg, this.parentSecret1 + this.parentSecret2)
+            }).save((err) => {
+                if (err) {
+                    sessionLog('error adding job [' + job.id + '] to queue: ', err);
+                }
+            });
+        };
+    }
+    ;
+    handleStoreCredentials(store, sessionLog) {
+        return (creds) => {
+            store.save(creds.actor['@id'], creds, (err) => {
+                if (err) {
+                    sessionLog('error saving credentials to store ' + err);
+                }
+                else {
+                    sessionLog('credentials encrypted and saved with key: ' + creds.actor['@id']);
+                }
+            });
+        };
+    }
+    ;
+    incomingConnection(socket) {
+        const sessionLog = debug_1.default('sockethub:core  :' + socket.id), // session-specific debug messages
+        sessionSecret = rand_token_1.default.generate(16), 
+        // store instance is session-specific
+        store = common_1.getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret), middleware = getMiddleware(socket, sessionLog);
+        sessionLog('connected to socket.io channel ' + socket.id);
+        shared_resources_1.default.sessionConnections.set(socket.id, socket);
+        socket.on('disconnect', () => {
+            sessionLog('disconnect received from client.');
+            shared_resources_1.default.sessionConnections.delete(socket.id);
+        });
+        socket.on('credentials', middleware.chain(validate_1.default('credentials'), this.handleStoreCredentials(store, sessionLog)));
+        socket.on('message', middleware.chain(validate_1.default('message'), (next, msg) => {
+            // middleware which attaches the sessionSecret to the message. The platform thread
+            // must find the credentials on their own using the given sessionSecret, which indicates
+            // that this specific session (socket connection) has provided credentials.
+            msg.sessionSecret = sessionSecret;
+            next(true, msg);
+        }, this.handleIncomingMessage(socket, store, sessionLog)));
+        // when new activity objects are created on the client side, an event is
+        // fired and we receive a copy on the server side.
+        socket.on('activity-object', middleware.chain(validate_1.default('activity-object'), this.handleActivityObject(sessionLog)));
     }
 }
 exports.default = Sockethub;

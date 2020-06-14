@@ -32,8 +32,12 @@ class PlatformInstance {
         this.deregisterListeners(sessionId);
     }
     sendToClient(sessionId, msg) {
-        // XXX TODO
-        console.log('sendToClient called ', msg);
+        const socket = shared_resources_1.default.sessionConnections.get(sessionId);
+        if (socket) { // send message
+            msg.context = this.name;
+            // this.log(`sending message to socket ${sessionId}`);
+            socket.emit('message', msg);
+        }
     }
     deregisterListeners(sessionId) {
         for (let key of Object.keys(this.listeners)) {
