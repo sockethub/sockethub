@@ -3,6 +3,7 @@ import services from './services';
 import crypto from "./crypto";
 import SharedResources from "./shared-resources";
 import hash from "object-hash";
+import { getSessionStore } from "./common";
 
 const parentId = process.argv[2];
 const platformName = process.argv[3];
@@ -29,11 +30,11 @@ process.on('uncaughtException', (err) => {
  * method to call, the rest are params.
  */
 process.on('message', (msg) => {
-  console.log('incoming IPC message: ' + msg.type, msg.data);
+  // console.log('incoming IPC message: ' + msg.type, msg.data);
   if (msg.type === 'secrets') {
     parentSecret1 = msg.data.parentSecret1;
     parentSecret2 = msg.data.parentSecret2;
-    startQueueListener()
+    startQueueListener();
   }
 });
 
@@ -48,40 +49,46 @@ function sendFunction(command) {
   };
 }
 
-// TODO handle credential fetching
-function getCredentials(id, cb) {
-//   this.store.get(platformInstance.actor['@id'], (err, credentials) => {
-//     if (platformInstance.config.persist) {
-//       // don't continue if we don't get credentials
-//       if (err) { return cb(err); }
-//       this.persistPlatformInstance(platformInstance);
-//     }
-//
-//     if (platformInstance.credentialsHash) {
-//       if (platformInstance.credentialsHash !== hash(credentials.object)) {
-//         return cb('provided credentials do not match existing platform instance for actor '
-//             + platformInstance.actor['@id']);
-//       }
-//     } else {
-//       platformInstance.credentialsHash = hash(credentials.object);
-//     }
-//     cb(undefined, credentials);
-//   });
-}
-
 const platform = new PlatformModule({
   debug: debug(`sockethub:platform:${platformName}:${identifier}`),
   sendToClient: sendFunction('message'),
   updateCredentials: sendFunction('updateCredentials')
 });
 
+// TODO handle credential fetching
+function getCredentials(actorId, sessionId, sessionSecret, cb) {
+  const store = getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
+  store.get(actorId, (err, credentials) => {
+    if (platform.config.persist) {
+      // don't continue if we don't get credentials
+      if (err) { return cb(err); }
+    }
+
+    if (platform.credentialsHash) {
+      if (platform.credentialsHash !== hash(credentials.object)) {
+        return cb('provided credentials do not match existing platform instance for actor '
+            + platform.actor['@id']);
+      }
+    } else {
+      platform.credentialsHash = hash(credentials.object);
+    }
+    cb(undefined, credentials);
+  });
+}
+
+
 function startQueueListener() {
   console.log('starting queue listener');
   queue.process(identifier, (job, done) => {
-    console.log("platform process received job ", job.data.msg);
     job.data.msg = crypto.decrypt(job.data.msg, parentSecret1 + parentSecret2);
-    console.log("platform process decrypted job ", job.data.msg);
-    platform[job.data.msg['@type']](job.data.msg, credentials, done);
+    console.log("platform process decrypted job " + job.data.msg['@type']);
+    getCredentials(job.data.msg.actor['@id'], job.data.socket, job.data.msg.sessionSecret,
+                   (err, credentials) => {
+                     if (err) { console.log('ERROR: ', err); return; }
+                     console.log(
+                       `got credentials for ${job.data.msg.actor['@id']}`);
+                     platform[job.data.msg['@type']](job.data.msg, credentials, done);
+                   });
   });
 }
 
