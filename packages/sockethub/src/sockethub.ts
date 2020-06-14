@@ -1,7 +1,6 @@
 import debug from 'debug';
 import randToken from 'rand-token';
 import kue from 'kue';
-import Store from 'secure-store-redis';
 import ActivityStreams from 'activity-streams';
 
 import config from './config';
@@ -13,6 +12,7 @@ import services from './services';
 import validate from './validate';
 import SharedResources from "./shared-resources";
 import ProcessManager from "./process-manager";
+import { getSessionStore, getPlatformId } from "./common";
 
 const log = debug('sockethub:core  '),
       activity = ActivityStreams(config.get('activity-streams:opts'));
@@ -21,6 +21,7 @@ interface ActivityObject {
   actor?: {
     '@id'?: string;
   }
+  context: string;
   error?: any;
 }
 
@@ -73,10 +74,10 @@ class Sockethub {
     if (!platformInstance) {
       return;
     }
-    for (let socketId of platformInstance.sockets.values()) {
-      if (socketId !== origSocket) {
-        log(`broadcasting message to ${socketId}`);
-        this.io.sockets.connected[socketId].emit('message', msg);
+    for (let sessionId of platformInstance.sessions.values()) {
+      if (sessionId !== origSocket) {
+        log(`broadcasting message to ${sessionId}`);
+        this.io.sockets.connected[sessionId].emit('message', msg);
       }
     }
   };
@@ -86,7 +87,7 @@ class Sockethub {
       sessionLog('validation failed for ' + type + '. ' + err, msg);
       // called with validation fails
       if (typeof msg !== 'object') {
-        msg = {};
+        msg = { context: 'error' };
       }
       msg.error = err;
       // send failure
@@ -98,23 +99,13 @@ class Sockethub {
     if ((typeof msg.actor !== 'object') || (!msg.actor['@id'])) {
       return;
     }
-    const platformInstanceId = SharedResources.platformMappings.get(msg.actor['@id']);
-    if (!platformInstanceId) {
-      return false;
-    }
-    const platformInstance = SharedResources.platformInstances.get(platformInstanceId);
+    const platformInstance = SharedResources.platformInstances.get(
+      getPlatformId(msg.context, msg.actor['@id'])
+    );
     if (!platformInstance) {
       return false;
     }
     return platformInstance;
-  };
-
-  private __getStore(socket, workerSecret: string) {
-    return new Store({
-      namespace: 'sockethub:' + this.parentId + ':worker:' + socket.id + ':store',
-      secret: this.parentSecret1 + workerSecret,
-      redis: config.get('redis')
-    });
   };
 
   private __handlerActivityObject(sessionLog) {
@@ -124,9 +115,9 @@ class Sockethub {
     };
   };
 
-  private __handlerIncomingMessage(socket, sessionLog) {
+  private __handlerIncomingMessage(socket: any, store: any, sessionLog: any) {
     return (msg) => {
-      const identifier = this.processManager.register(msg);
+      const identifier = this.processManager.register(msg, socket.id);
       sessionLog(`queueing incoming job ${msg.context} for socket 
         ${socket.id} to chanel ${identifier}`);
       const job = this.queue.create(identifier, {
@@ -141,19 +132,20 @@ class Sockethub {
     };
   };
 
-  private __handleNewConnection(socket) {
+  private __handleNewConnection(socket: any) {
     const sessionLog = debug('sockethub:core  :' + socket.id), // session-specific debug messages
-          workerSecret = randToken.generate(16),
-          store = this.__getStore(socket, workerSecret), // store instance is session-specific
+          sessionSecret = randToken.generate(16),
+          // store instance is session-specific
+          store = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret),
           middleware = this.__getMiddleware(socket, sessionLog);
 
     sessionLog('connected to socket.io channel ' + socket.id);
 
-    SharedResources.socketConnections.set(socket.id, socket);
+    SharedResources.sessionConnections.set(socket.id, socket);
 
     socket.on('disconnect', () => {
       sessionLog('disconnect received from client.');
-      SharedResources.socketConnections.delete(socket.id);
+      SharedResources.sessionConnections.delete(socket.id);
     });
 
     socket.on(
@@ -164,7 +156,17 @@ class Sockethub {
 
     socket.on(
       'message',
-      middleware.chain(validate('message'), this.__handlerIncomingMessage(socket, sessionLog))
+      middleware.chain(
+        validate('message'),
+        (next, msg) => {
+          // middleware which attaches the sessionSecret to the message. The platform thread
+          // must find the credentials on their own using the given sessionSecret, which indicates
+          // that this specific session (socket connection) has provided credentials.
+          msg.sessionSecret = sessionSecret;
+          next(true, msg);
+        },
+        this.__handlerIncomingMessage(socket, store, sessionLog)
+      )
     );
 
     // when new activity objects are created on the client side, an event is
