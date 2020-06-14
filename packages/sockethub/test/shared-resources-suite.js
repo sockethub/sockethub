@@ -16,29 +16,24 @@ define(['require', '../dist/shared-resources'], function (require, SharedResourc
         },
 
         {
-          desc: 'socketConnections',
+          desc: 'sessionConnections',
           run: function (env, test) {
-            test.assert(SR.socketConnections instanceof Map, true);
-          }
-        },
-
-        {
-          desc: 'platformMappings',
-          run: function (env, test) {
-            test.assert(SR.platformMappings instanceof Map, true);
+            test.assert(SR.sessionConnections instanceof Map, true);
           }
         },
 
         {
           desc: 'helpers.removePlatform',
           run: function (env, test) {
-            const pObj = {id: 'test1', actor: {'@id': 'foobar'}};
+            const pObj = { id: 'test1', actor: { '@id': 'foobar' },
+              process: {
+                removeAllListeners: () => {},
+                unref: () => {},
+                kill: () => {},
+              }};
             SR.platformInstances.set(pObj.id, pObj);
-            SR.platformMappings.set('foobar', pObj.id);
-            test.assertAnd(SR.platformMappings.get('foobar'), pObj.id);
             test.assertAnd(SR.platformInstances.get(pObj.id), pObj);
             SR.helpers.removePlatform(pObj);
-            test.assertAnd(SR.platformMappings.get('foobar'), undefined);
             test.assert(SR.platformInstances.get(pObj.id), undefined);
           }
         },
