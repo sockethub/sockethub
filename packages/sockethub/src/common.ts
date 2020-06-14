@@ -15,4 +15,3 @@ export function getSessionStore(parentId: string, parentSecret: string,
 export function getPlatformId(platform: string, actor?: string) {
   return actor ? crypto.hash(platform + actor) : crypto.hash(platform);
 }
-

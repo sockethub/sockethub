@@ -1,17 +1,18 @@
 import debug from 'debug';
+import hash from "object-hash";
+
 import services from './services';
 import crypto from "./crypto";
-import SharedResources from "./shared-resources";
-import hash from "object-hash";
 import { getSessionStore } from "./common";
 
+// command-line params
 const parentId = process.argv[2];
 const platformName = process.argv[3];
 const identifier = process.argv[4];
+
 const logger = debug('sockethub:platform');
 logger(`platform handler initialized for ${platformName} ${identifier}`);
 const PlatformModule = require(`sockethub-platform-${platformName}`);
-const queue = services.startQueue(parentId);
 
 let parentSecret1, parentSecret2;
 
@@ -45,17 +46,28 @@ process.on('message', (msg) => {
  */
 function sendFunction(command) {
   return function (msg) {
+    logger('sending to client');
     process.send([command, msg]);
   };
 }
 
+/**
+ * Initialize platform module
+ */
 const platform = new PlatformModule({
   debug: debug(`sockethub:platform:${platformName}:${identifier}`),
   sendToClient: sendFunction('message'),
   updateCredentials: sendFunction('updateCredentials')
 });
 
-// TODO handle credential fetching
+/**
+ * get the credentials stored for this user in this sessions store, if given the correct
+ * sessionSecret.
+ * @param actorId
+ * @param sessionId
+ * @param sessionSecret
+ * @param cb
+ */
 function getCredentials(actorId, sessionId, sessionSecret, cb) {
   const store = getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
   store.get(actorId, (err, credentials) => {
@@ -76,36 +88,21 @@ function getCredentials(actorId, sessionId, sessionSecret, cb) {
   });
 }
 
-
+/**
+ * starts listening on the queue for incoming jobs
+ */
 function startQueueListener() {
-  console.log('starting queue listener');
+  logger('listening on the queue for incoming jobs');
   queue.process(identifier, (job, done) => {
     job.data.msg = crypto.decrypt(job.data.msg, parentSecret1 + parentSecret2);
-    console.log("platform process decrypted job " + job.data.msg['@type']);
+    logger("platform process decrypted job " + job.data.msg['@type']);
     getCredentials(job.data.msg.actor['@id'], job.data.socket, job.data.msg.sessionSecret,
                    (err, credentials) => {
-                     if (err) { console.log('ERROR: ', err); return; }
-                     console.log(
-                       `got credentials for ${job.data.msg.actor['@id']}`);
+                     if (err) { logger('ERROR: ', err); return; }
                      platform[job.data.msg['@type']](job.data.msg, credentials, done);
                    });
   });
 }
 
-// job.data.msg = crypto.decrypt(job.data.msg, parentSecret1 + parentSecret2);
-// this.log(`got job #${job.id}: ${job.data.msg['@type']}`);
-//
-// let identifier = SharedResources.platformMappings.get(job.data.msg.actor['@id']);
-// const platformInstance = identifier ? SharedResources.platformInstances.get(identifier) :
-//     this.__getPlatformInstance(job, randToken.generate(16));
-//
-// // try to get credentials for this specific secret + socket.id
-// // (each websocket connection must specify credentials to access initialized platforms)
-// this.getCredentials(platformInstance, (err, credentials) => {
-//   if (err) { return done(err); }
-//   this.jobComplete = done;
-//   // run corresponding platformInstance method
-//   platformInstance.process.send([job.data.msg['@type'], job.data.msg, credentials]);
-// });
-
-console.log('process started')
+const queue = services.startQueue(parentId);
+logger('process started');
