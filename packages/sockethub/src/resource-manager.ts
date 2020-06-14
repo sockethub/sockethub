@@ -18,35 +18,28 @@ function resourceManagerCycle() {
     const mod = cycleCount % 4;
     if (! mod) {
       reportCount++;
-      rmLog('sockets: ' + SharedResources.socketConnections.size +
+      rmLog('sessions: ' + SharedResources.sessionConnections.size +
         ' instances: ' + SharedResources.platformInstances.size);
     }
 
     for (let platformInstance of SharedResources.platformInstances.values()) {
-      for (let socketId of platformInstance.sockets.values()) {
-        if (!SharedResources.socketConnections.has(socketId)) {
-          rmLog('removing stale socket reference ' + socketId + ' in platform instance '
+      for (let sessionId of platformInstance.sessions.values()) {
+        if (!SharedResources.sessionConnections.has(sessionId)) {
+          rmLog('removing stale session reference ' + sessionId + ' in platform instance '
             + platformInstance.id);
-          platformInstance.sockets.delete(socketId);
+          platformInstance.sessions.delete(sessionId);
         }
       }
 
-      if (platformInstance.sockets.size <= 0) {
+      if (platformInstance.sessions.size <= 0) {
         if (platformInstance.flaggedForTermination) {
           // terminate
           rmLog(`terminating platform instance ${platformInstance.id} ` +
-            `(flagged for termination: no registered sockets found)`);
-          try {
-            platformInstance.process.unref();
-            platformInstance.process.kill();
-            SharedResources.helpers.removePlatform(platformInstance);
-          } catch (e) {
-            rmLog('failed killing process ', e);
-            SharedResources.helpers.removePlatform(platformInstance);
-          }
+            `(flagged for termination: no registered sessions found)`);
+          SharedResources.helpers.removePlatform(platformInstance);
         } else {
           rmLog(`flagging for termination platform instance ${platformInstance.id} ` +
-            `(no registered sockets found)`);
+            `(no registered sessions found)`);
           platformInstance.flaggedForTermination = true;
         }
       } else {
