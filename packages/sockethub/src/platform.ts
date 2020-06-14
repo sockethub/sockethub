@@ -49,7 +49,7 @@ function sendFunction(command) {
 }
 
 // TODO handle credential fetching
-// function getCredentials(id, cb) {
+function getCredentials(id, cb) {
 //   this.store.get(platformInstance.actor['@id'], (err, credentials) => {
 //     if (platformInstance.config.persist) {
 //       // don't continue if we don't get credentials
@@ -67,7 +67,7 @@ function sendFunction(command) {
 //     }
 //     cb(undefined, credentials);
 //   });
-// }
+}
 
 const platform = new PlatformModule({
   debug: debug(`sockethub:platform:${platformName}:${identifier}`),
@@ -80,7 +80,7 @@ function startQueueListener() {
   queue.process(identifier, (job, done) => {
     console.log("platform process received job ", job.data.msg);
     job.data.msg = crypto.decrypt(job.data.msg, parentSecret1 + parentSecret2);
-    console.log("platform process decreypted job ", job.data.msg);
+    console.log("platform process decrypted job ", job.data.msg);
     platform[job.data.msg['@type']](job.data.msg, credentials, done);
   });
 }
