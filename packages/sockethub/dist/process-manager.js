@@ -37,52 +37,8 @@ class ProcessManager {
             }
         });
         shared_resources_1.default.platformInstances.set(identifier, platformInstance);
-        setTimeout(() => {
-            console.log('PlatformInstances: ' + shared_resources_1.default.platformInstances.values());
-            throw new Error('alo');
-        });
         return identifier;
     }
 }
 exports.default = ProcessManager;
-// const childProcess =
-//
-// platformInstance = {
-//   id: identifier,
-//   name: platform,
-//   sendToClient: (e) => {
-//     // XXX TODO
-//     console.log('sendToClient called ', e);
-//   },
-//   process: childProcess,
-//   flaggedForTermination: false,
-//   sockets: new Set()
-// };
-// platformInstance.sockets.add(socketId);
-// const generateListener = {
-//   'close': () => {
-//     return (e) => {
-//       console.log('close even triggered ' + platformInstance.actor);
-//       platformInstance.sendToClient({
-//         context: platformInstance.name,
-//         '@type': 'error',
-//         target: platformInstance.actor,
-//         object: {
-//           '@type': 'error',
-//           content: e
-//         }
-//       });
-//       console.log('remove platform instance ' + platformInstance.id);
-//       SharedResources.helpers.removePlatform(platformInstance);
-//       platformInstance.sockets.delete(socketId);
-//       platformInstance.process.removeListener('close', SharedResources.processListeners['close'].get(socketId));
-//     };
-//   },
-//   'message': () => {
-//     return (msg) => {}
-//   }
-// };
-// const closeHandler = generateListener();
-// SharedResources.processCloseListener.set(socketId, closeHandler);
-// childProcess.on('close', closeHandler);
 //# sourceMappingURL=process-manager.js.map

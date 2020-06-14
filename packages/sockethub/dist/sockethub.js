@@ -55,6 +55,7 @@ class Sockethub {
         for (let sessionId of platformInstance.sessions.values()) {
             if (sessionId !== origSocket) {
                 log(`broadcasting message to ${sessionId}`);
+                console.log(this.io.sockets.connected);
                 this.io.sockets.connected[sessionId].emit('message', msg);
             }
         }
@@ -144,7 +145,7 @@ class Sockethub {
         };
     }
     ;
-    // handle job results, from workers, in the queue
+    // handle job results coming in on the queue from platform instances
     __processJobResult(type) {
         return (id, result) => {
             kue_1.default.Job.get(id, (err, job) => {
