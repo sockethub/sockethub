@@ -27,7 +27,7 @@ class Crypto {
   hash(text: string) {
     const shasum = cryptoLib.createHash('sha1');
     shasum.update(text);
-    return shasum.digest('hex');
+    return shasum.digest('hex').substring(0, 7);
   }
 }
 
