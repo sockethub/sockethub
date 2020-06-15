@@ -19,7 +19,9 @@ class PlatformInstance {
     this.id = id;
     this.name = name;
     this.parentId = parentId;
-    this.actor = actor;
+    if (actor) {
+      this.actor = actor;
+    }
     // spin off a process
     this.process = fork('dist/platform.js', [parentId, name, id]);
   }

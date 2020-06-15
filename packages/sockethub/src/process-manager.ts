@@ -14,23 +14,24 @@ class ProcessManager {
     this.parentSecret2 = parentSecret2;
   }
 
-  register(msg: any, sessionId: string) {
+  register(msg: any, sessionId?: string) {
     const platformDetails = init.platforms.get(msg.context);
 
     if (platformDetails.config.persist) {
       // ensure process is started - one for each actor
-      return this.ensureProcess(msg.context, msg.actor['@id'], sessionId);
+      return this.ensureProcess(msg.context, sessionId, msg.actor['@id'], );
     } else {
       // ensure process is started - one for all jobs
       return this.ensureProcess(msg.context);
     }
   }
   
-  private ensureProcess(platform: string, actor?: string, sessionId?: string) {
+  private ensureProcess(platform: string, sessionId?: string, actor?: string) {
     const identifier = getPlatformId(platform, actor);
     const platformInstance = SharedResources.platformInstances.get(identifier) ||
         new PlatformInstance(identifier, platform, this.parentId, actor);
 
+    // TODO FIXME handle case of non persistent platform instances.
     platformInstance.registerSession(sessionId);
 
     platformInstance.process.send({
