@@ -104,6 +104,7 @@ class Sockethub {
                 }
                 if (this.io.sockets.connected[job.data.socket]) {
                     job.data.msg = crypto_1.default.decrypt(job.data.msg, this.parentSecret1 + this.parentSecret2);
+                    delete job.data.msg.sessionSecret;
                     if (type === 'completed') { // let all related peers know of result
                         this.broadcastToSharedPeers(job.data.socket, job.data.msg);
                     }

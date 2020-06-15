@@ -54,28 +54,39 @@ class PlatformInstance {
             this.listeners[key].set(sessionId, listenerFunc);
         }
     }
+    /**
+     * Sends error message to client and clears all references to this class.
+     * @param sessionId
+     * @param errorMessage
+     */
+    reportFailure(sessionId, errorMessage) {
+        const errorObject = {
+            context: this.name,
+            '@type': 'error',
+            target: this.actor || {},
+            object: {
+                '@type': 'error',
+                content: errorMessage
+            }
+        };
+        this.sendToClient(sessionId, errorObject);
+        this.sessions.clear();
+        this.flaggedForTermination = true;
+        shared_resources_1.default.helpers.removePlatform(this);
+    }
     listenerFunction(key, sessionId) {
         const funcs = {
             'close': (e) => {
                 console.log('close even triggered ' + this.id);
-                this.sendToClient(sessionId, {
-                    context: this.name,
-                    '@type': 'error',
-                    target: this.actor || {},
-                    object: {
-                        '@type': 'error',
-                        content: 'irc session closed unexpectedly.'
-                    }
-                });
-                this.deregisterSession(sessionId);
+                this.reportFailure(sessionId, `Error: session thread closed unexpectedly`);
             },
             'message': (data) => {
                 if (data[0] === 'updateCredentials') {
                     // TODO FIXME - handle the case where a user changes their credentials
                     //  (username or password). We need to update the store.
                 }
-                else {
-                    this.sendToClient(sessionId, data[1]);
+                else if (data[0] === 'error') {
+                    this.reportFailure(sessionId, data[1]);
                 }
             }
         };
