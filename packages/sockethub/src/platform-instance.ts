@@ -63,35 +63,39 @@ class PlatformInstance {
     }
   }
 
-  private generateASErrorObject(sessionId: string) {
-    return {
+  /**
+   * Sends error message to client and clears all references to this class.
+   * @param sessionId
+   * @param errorMessage
+   */
+  private reportFailure(sessionId: string, errorMessage) {
+    const errorObject = {
       context: this.name,
       '@type': 'error',
       target: this.actor || {},
       object: {
         '@type': 'error',
-        content: undefined
+        content: errorMessage
       }
-    }
+    };
+    this.sendToClient(sessionId, errorObject);
+    this.sessions.clear();
+    this.flaggedForTermination = true;
+    SharedResources.helpers.removePlatform(this);
   }
 
   private listenerFunction(key, sessionId) {
     const funcs = {
       'close': (e) => {
         console.log('close even triggered ' + this.id);
-        let errorAS = this.generateASErrorObject(sessionId);
-        errorAS.object.content = 'irc session closed unexpectedly.';
-        this.sendToClient(sessionId, errorAS);
-        this.deregisterSession(sessionId);
+        this.reportFailure(sessionId, `Error: session thread closed unexpectedly`);
       },
       'message': (data) => {
         if (data[0] === 'updateCredentials') {
           // TODO FIXME - handle the case where a user changes their credentials
           //  (username or password). We need to update the store.
         } else if (data[0] === 'error') {
-          let errorAS = this.generateASErrorObject(sessionId);
-          errorAS.object.content = data[1];
-          this.sendToClient(sessionId, errorAS);
+          this.reportFailure(sessionId, data[1]);
         }
       }
     };
