@@ -93,10 +93,11 @@ function startQueueListener() {
     queue.process(identifier, (job, done) => {
         job.data.msg = crypto_1.default.decrypt(job.data.msg, parentSecret1 + parentSecret2);
         logger("platform process decrypted job " + job.data.msg['@type']);
-        getCredentials(job.data.msg.actor['@id'], job.data.socket, job.data.msg.sessionSecret, (err, credentials) => {
+        const sessionSecret = job.data.msg.sessionSecret;
+        delete job.data.msg.sessionSecret;
+        getCredentials(job.data.msg.actor['@id'], job.data.socket, sessionSecret, (err, credentials) => {
             if (err) {
-                logger('ERROR: ', err);
-                return;
+                return done(err);
             }
             platform[job.data.msg['@type']](job.data.msg, credentials, done);
         });

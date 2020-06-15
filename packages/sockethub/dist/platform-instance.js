@@ -62,13 +62,19 @@ class PlatformInstance {
                     target: this.actor || {},
                     object: {
                         '@type': 'error',
-                        content: e
+                        content: 'irc session closed unexpectedly. ', e
                     }
                 });
                 this.deregisterSession(sessionId);
             },
-            'message': (msg) => {
-                this.sendToClient(sessionId, msg);
+            'message': (data) => {
+                if (data[0] === 'updateCredentials') {
+                    // TODO FIXME - handle the case where a user changes their credentials
+                    //  (username or password). We need to update the store.
+                }
+                else {
+                    this.sendToClient(sessionId, data[1]);
+                }
             }
         };
         return funcs[key];

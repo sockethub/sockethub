@@ -27,7 +27,7 @@ class ProcessManager {
     ensureProcess(platform, actor, sessionId) {
         const identifier = common_1.getPlatformId(platform, actor);
         const platformInstance = shared_resources_1.default.platformInstances.get(identifier) ||
-            new platform_instance_1.default(identifier, platform, this.parentId);
+            new platform_instance_1.default(identifier, platform, this.parentId, actor);
         platformInstance.registerSession(sessionId);
         platformInstance.process.send({
             type: 'secrets',
