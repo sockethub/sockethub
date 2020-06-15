@@ -29,7 +29,7 @@ class ProcessManager {
   private ensureProcess(platform: string, actor?: string, sessionId?: string) {
     const identifier = getPlatformId(platform, actor);
     const platformInstance = SharedResources.platformInstances.get(identifier) ||
-        new PlatformInstance(identifier, platform, this.parentId);
+        new PlatformInstance(identifier, platform, this.parentId, actor);
 
     platformInstance.registerSession(sessionId);
 
