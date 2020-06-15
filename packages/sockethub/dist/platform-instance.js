@@ -16,7 +16,9 @@ class PlatformInstance {
         this.id = id;
         this.name = name;
         this.parentId = parentId;
-        this.actor = actor;
+        if (actor) {
+            this.actor = actor;
+        }
         // spin off a process
         this.process = child_process_1.fork('dist/platform.js', [parentId, name, id]);
     }
@@ -62,7 +64,7 @@ class PlatformInstance {
                     target: this.actor || {},
                     object: {
                         '@type': 'error',
-                        content: 'irc session closed unexpectedly. ', e
+                        content: 'irc session closed unexpectedly.'
                     }
                 });
                 this.deregisterSession(sessionId);

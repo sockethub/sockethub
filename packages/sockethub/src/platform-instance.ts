@@ -67,7 +67,7 @@ class PlatformInstance {
     const funcs = {
       'close': (e) => {
         console.log('close even triggered ' + this.id);
-        this.sendToClient(sessionId,{
+        this.sendToClient(sessionId, {
           context: this.name,
           '@type': 'error',
           target: this.actor || {},

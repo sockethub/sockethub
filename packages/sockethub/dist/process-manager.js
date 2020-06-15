@@ -17,17 +17,18 @@ class ProcessManager {
         const platformDetails = init_1.default.platforms.get(msg.context);
         if (platformDetails.config.persist) {
             // ensure process is started - one for each actor
-            return this.ensureProcess(msg.context, msg.actor['@id'], sessionId);
+            return this.ensureProcess(msg.context, sessionId, msg.actor['@id']);
         }
         else {
             // ensure process is started - one for all jobs
             return this.ensureProcess(msg.context);
         }
     }
-    ensureProcess(platform, actor, sessionId) {
+    ensureProcess(platform, sessionId, actor) {
         const identifier = common_1.getPlatformId(platform, actor);
         const platformInstance = shared_resources_1.default.platformInstances.get(identifier) ||
             new platform_instance_1.default(identifier, platform, this.parentId, actor);
+        // TODO FIXME handle case of non persistent platform instances.
         platformInstance.registerSession(sessionId);
         platformInstance.process.send({
             type: 'secrets',
