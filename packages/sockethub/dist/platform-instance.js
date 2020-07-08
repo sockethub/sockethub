@@ -88,6 +88,11 @@ class PlatformInstance {
                 else if (data[0] === 'error') {
                     this.reportFailure(sessionId, data[1]);
                 }
+                else {
+                    // treat like a message to clients
+                    console.log("handle", data[1]);
+                    this.sendToClient(sessionId, data[1]);
+                }
             }
         };
         return funcs[key];
