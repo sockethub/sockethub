@@ -13,7 +13,9 @@ interface ActivityStream {
   }
 }
 
-interface IncomingPlatformData extends Array<string|ActivityStream>{0: string, 1: ActivityStream}
+interface MessageFromPlatform extends Array<string|ActivityStream>{0: string, 1: ActivityStream}
+export interface MessageFromParent extends Array<string|any>{0: string, 1: any}
+
 
 class PlatformInstance {
   flaggedForTermination: boolean = false;
@@ -103,7 +105,7 @@ class PlatformInstance {
         console.log('close even triggered ' + this.id);
         this.reportFailure(sessionId, `Error: session thread closed unexpectedly`);
       },
-      'message': (data: IncomingPlatformData) => {
+      'message': (data: MessageFromPlatform) => {
         if (data[0] === 'updateCredentials') {
           // TODO FIXME - handle the case where a user changes their credentials
           //  (username or password). We need to update the store.

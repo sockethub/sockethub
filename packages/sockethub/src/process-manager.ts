@@ -2,6 +2,7 @@ import init from './bootstrap/init';
 import SharedResources from "./shared-resources";
 import PlatformInstance from "./platform-instance";
 import { getPlatformId } from "./common";
+import { MessageFromParent } from "./platform-instance";
 
 class ProcessManager {
   private readonly parentId: string;
@@ -25,7 +26,7 @@ class ProcessManager {
       return this.ensureProcess(msg.context);
     }
   }
-  
+
   private ensureProcess(platform: string, sessionId?: string, actor?: string) {
     const identifier = getPlatformId(platform, actor);
     const platformInstance = SharedResources.platformInstances.get(identifier) ||
@@ -34,14 +35,14 @@ class ProcessManager {
     // TODO FIXME handle case of non persistent platform instances.
     platformInstance.registerSession(sessionId);
 
-    platformInstance.process.send({
-      type: 'secrets',
-      data: {
+    const secrets: MessageFromParent = [
+      'secrets', {
         parentSecret1: this.parentSecret1,
         parentSecret2: this.parentSecret2
       }
-    });
-    
+    ];
+    platformInstance.process.send(secrets);
+
     SharedResources.platformInstances.set(identifier, platformInstance);
     return identifier;
   }

@@ -4,6 +4,7 @@ import hash from "object-hash";
 import services from './services';
 import crypto from "./crypto";
 import { getSessionStore } from "./common";
+import { MessageFromParent } from './platform-instance';
 
 // command-line params
 const parentId = process.argv[2];
@@ -14,7 +15,7 @@ const logger = debug('sockethub:platform');
 logger(`platform handler initialized for ${platformName} ${identifier}`);
 const PlatformModule = require(`sockethub-platform-${platformName}`);
 
-let parentSecret1, parentSecret2;
+let parentSecret1: string, parentSecret2: string;
 
 /**
  * Handle any uncaught errors from the platform by alerting the worker and shutting down.
@@ -30,11 +31,11 @@ process.on('uncaughtException', (err) => {
  * Incoming messages from the worker to this platform. Data is an array, the first property is the
  * method to call, the rest are params.
  */
-process.on('message', (msg) => {
+process.on('message', (data: MessageFromParent) => {
   // console.log('incoming IPC message: ' + msg.type, msg.data);
-  if (msg.type === 'secrets') {
-    parentSecret1 = msg.data.parentSecret1;
-    parentSecret2 = msg.data.parentSecret2;
+  if (data[0] === 'secrets') {
+    parentSecret1 = data[1].parentSecret1;
+    parentSecret2 = data[1].parentSecret2;
     startQueueListener();
   }
 });
@@ -93,7 +94,7 @@ function getCredentials(actorId, sessionId, sessionSecret, cb) {
  */
 function startQueueListener() {
   logger('listening on the queue for incoming jobs');
-  queue.process(identifier, (job, done) => {
+  queue.process(identifier, (job, done: Function) => {
     job.data.msg = crypto.decrypt(job.data.msg, parentSecret1 + parentSecret2);
     logger("platform process decrypted job " + job.data.msg['@type']);
     const sessionSecret = job.data.msg.sessionSecret;
