@@ -80,6 +80,7 @@ function getCredentials(actorId, sessionId, sessionSecret, cb) {
             }
         }
         else {
+            console.log('hashing credentials object ', credentials);
             platform.credentialsHash = object_hash_1.default(credentials.object);
         }
         cb(undefined, credentials);
