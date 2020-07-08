@@ -2,6 +2,19 @@ import { ChildProcess, fork } from 'child_process';
 
 import SharedResources from "./shared-resources";
 
+interface ActivityStream {
+  '@type': string,
+  actor: {
+    '@type': string,
+    '@id': string
+  },
+  object: {
+    '@type': string
+  }
+}
+
+interface IncomingPlatformData extends Array<string|ActivityStream>{0: string, 1: ActivityStream}
+
 class PlatformInstance {
   flaggedForTermination: boolean = false;
   readonly id: string;
@@ -32,7 +45,7 @@ class PlatformInstance {
       this.registerListeners(sessionId);
     }
   }
-  
+
   public deregisterSession(sessionId: string) {
     SharedResources.helpers.removePlatform(this);
     this.sessions.delete(sessionId);
@@ -68,7 +81,7 @@ class PlatformInstance {
    * @param sessionId
    * @param errorMessage
    */
-  private reportFailure(sessionId: string, errorMessage) {
+  private reportFailure(sessionId: string, errorMessage: any) {
     const errorObject = {
       context: this.name,
       '@type': 'error',
@@ -84,18 +97,22 @@ class PlatformInstance {
     SharedResources.helpers.removePlatform(this);
   }
 
-  private listenerFunction(key, sessionId) {
+  private listenerFunction(key: string, sessionId: string) {
     const funcs = {
-      'close': (e) => {
+      'close': (e: object) => {
         console.log('close even triggered ' + this.id);
         this.reportFailure(sessionId, `Error: session thread closed unexpectedly`);
       },
-      'message': (data) => {
+      'message': (data: IncomingPlatformData) => {
         if (data[0] === 'updateCredentials') {
           // TODO FIXME - handle the case where a user changes their credentials
           //  (username or password). We need to update the store.
         } else if (data[0] === 'error') {
           this.reportFailure(sessionId, data[1]);
+        } else {
+          // treat like a message to clients
+          console.log("handle", data[1]);
+          this.sendToClient(sessionId, data[1]);
         }
       }
     };
