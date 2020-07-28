@@ -2,26 +2,24 @@
 const baseDir = process.env.DEV ? 'src' : 'dist';
 const SharedResources = require(`./../${baseDir}/shared-resources`);
 
-process.on('uncaughtException', (err) => {
+process.once('uncaughtException', function (err) {
   console.log(`\nUNCAUGHT EXCEPTION\n`);
   console.log(err.stack);
-  console.log('Terminating platform threads...');
-  setTimeout(() => {
-    try {
-      // TODO FIXME - this doesn't work, platformInstances is undefined. Look into other way to
-      //  kill all child processes, or have them commit seppuku when their parent thread is slain.
-      console.log('platforms: ', SharedResources.platformInstances);
-      for (let platform of SharedResources.platformInstances.values()) {
-        SharedResources.helpers.removePlatform(platform);
-      }
-      process.exit(1);
-    } catch (e) {
-      console.log(e);
-      console.log('Unable to reliably terminate platforms, please check your process list for ' +
-        'orphaned `platform.js` threads.');
-      process.exit(1);
-    }
-  }, 10000);
+  process.exit(1);
+});
+
+process.once('SIGTERM', function () {
+  console.log('Received TERM signal. Exiting.');
+  process.exit(0);
+});
+
+process.once('SIGINT', function () {
+  console.log('Received INT signal. Exiting.');
+  process.exit(0);
+});
+
+process.once('exit', function () {
+  sockethub.removeAllPlatformInstances();
 });
 
 const Sockethub = require(`./../${baseDir}/sockethub`).default;
