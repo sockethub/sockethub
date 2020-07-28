@@ -96,6 +96,12 @@ class Sockethub {
     this.io.on('connection', this.incomingConnection.bind(this));
   }
 
+  removeAllPlatformInstances() {
+    for (let platform of SharedResources.platformInstances.values()) {
+      SharedResources.helpers.removePlatform(platform);
+    }
+  }
+
   // send message to every connected socket associated with the given platform instance.
   private broadcastToSharedPeers(origSocket, msg: ActivityObject) {
     log(`broadcasting called, originating socket ${origSocket}`);
