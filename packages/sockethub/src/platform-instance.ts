@@ -1,4 +1,5 @@
 import { ChildProcess, fork } from 'child_process';
+import { join } from 'path';
 
 import SharedResources from "./shared-resources";
 
@@ -38,7 +39,7 @@ class PlatformInstance {
       this.actor = actor;
     }
     // spin off a process
-    this.process = fork('dist/platform.js', [parentId, name, id]);
+    this.process = fork(join(__dirname, 'platform.js'), [parentId, name, id]);
   }
 
   public registerSession(sessionId: string) {
