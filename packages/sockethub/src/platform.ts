@@ -70,6 +70,7 @@ const platform = new PlatformModule({
  * @param cb
  */
 function getCredentials(actorId, sessionId, sessionSecret, cb) {
+  if (platform.config.noConfig) { return cb(); }
   const store = getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
   store.get(actorId, (err, credentials) => {
     if (platform.config.persist) {
@@ -96,7 +97,7 @@ function startQueueListener() {
   logger('listening on the queue for incoming jobs');
   queue.process(identifier, (job, done: Function) => {
     job.data.msg = crypto.decrypt(job.data.msg, parentSecret1 + parentSecret2);
-    logger("platform process decrypted job " + job.data.msg['@type']);
+    logger(`platform process decrypted job ${job.data.msg['@type']}`);
     const sessionSecret = job.data.msg.sessionSecret;
     delete job.data.msg.sessionSecret;
     getCredentials(job.data.msg.actor['@id'], job.data.socket, sessionSecret,

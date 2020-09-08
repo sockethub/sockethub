@@ -70,7 +70,6 @@ function Feeds(cfg) {
 
 Feeds.prototype.schema = {
   "version": packageJSON.version,
-  "credentials": {},
   "messages": {
     "required": [ "verb" ],
     "properties": {

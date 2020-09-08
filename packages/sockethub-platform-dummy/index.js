@@ -10,7 +10,6 @@ function Dummy(cfg) {
 
 Dummy.prototype.schema = {
   version: packageJSON.version,
-  credentials: {},
   messages: {}
 };
 

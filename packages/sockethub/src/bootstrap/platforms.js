@@ -74,11 +74,16 @@ module.exports = function platformLoad(moduleList) {
         } else if (typeof p.config !== 'object') {
           throw new Error(
             `${platformName} platform must have a config property that is an object.`);
-        } else if (p.schema.credentials) {
-          // register the platforms credentials schema
-          types.push('credentials');
-          tv4.addSchema(`http://sockethub.org/schemas/v0/context/${platformName}/credentials`,
-                        p.schema.credentials);
+        } else {
+          if (p.schema.credentials) {
+            // register the platforms credentials schema
+            types.push('credentials');
+            tv4.addSchema(`http://sockethub.org/schemas/v0/context/${platformName}/credentials`,
+                          p.schema.credentials);
+          } else {
+            p.config.noConfig = true;
+          }
+
         }
 
         tv4.addSchema(`http://sockethub.org/schemas/v0/context/${platformName}/messages`,

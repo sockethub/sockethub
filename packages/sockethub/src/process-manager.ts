@@ -20,7 +20,7 @@ class ProcessManager {
 
     if (platformDetails.config.persist) {
       // ensure process is started - one for each actor
-      return this.ensureProcess(msg.context, sessionId, msg.actor['@id'], );
+      return this.ensureProcess(msg.context, sessionId, msg.actor['@id']);
     } else {
       // ensure process is started - one for all jobs
       return this.ensureProcess(msg.context);
@@ -32,9 +32,6 @@ class ProcessManager {
     const platformInstance = SharedResources.platformInstances.get(identifier) ||
         new PlatformInstance(identifier, platform, this.parentId, actor);
 
-    // TODO FIXME handle case of non persistent platform instances.
-    platformInstance.registerSession(sessionId);
-
     const secrets: MessageFromParent = [
       'secrets', {
         parentSecret1: this.parentSecret1,
@@ -43,6 +40,9 @@ class ProcessManager {
     ];
     platformInstance.process.send(secrets);
 
+    if (sessionId) {
+      platformInstance.registerSession(sessionId);
+    }
     SharedResources.platformInstances.set(identifier, platformInstance);
     return identifier;
   }
