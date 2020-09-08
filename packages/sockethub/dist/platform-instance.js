@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const child_process_1 = require("child_process");
+const path_1 = require("path");
 const shared_resources_1 = __importDefault(require("./shared-resources"));
 class PlatformInstance {
     constructor(id, name, parentId, actor) {
@@ -19,8 +20,11 @@ class PlatformInstance {
         if (actor) {
             this.actor = actor;
         }
+        else {
+            this.global = true;
+        }
         // spin off a process
-        this.process = child_process_1.fork('dist/platform.js', [parentId, name, id]);
+        this.process = child_process_1.fork(path_1.join(__dirname, 'platform.js'), [parentId, name, id]);
     }
     registerSession(sessionId) {
         if (!this.sessions.has(sessionId)) {

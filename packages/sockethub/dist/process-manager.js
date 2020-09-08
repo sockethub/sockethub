@@ -28,15 +28,16 @@ class ProcessManager {
         const identifier = common_1.getPlatformId(platform, actor);
         const platformInstance = shared_resources_1.default.platformInstances.get(identifier) ||
             new platform_instance_1.default(identifier, platform, this.parentId, actor);
-        // TODO FIXME handle case of non persistent platform instances.
-        platformInstance.registerSession(sessionId);
-        platformInstance.process.send({
-            type: 'secrets',
-            data: {
+        const secrets = [
+            'secrets', {
                 parentSecret1: this.parentSecret1,
                 parentSecret2: this.parentSecret2
             }
-        });
+        ];
+        platformInstance.process.send(secrets);
+        if (sessionId) {
+            platformInstance.registerSession(sessionId);
+        }
         shared_resources_1.default.platformInstances.set(identifier, platformInstance);
         return identifier;
     }
