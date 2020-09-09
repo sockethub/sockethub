@@ -70,7 +70,7 @@ const platform = new PlatformModule({
  * @param cb
  */
 function getCredentials(actorId, sessionId, sessionSecret, cb) {
-  if (platform.config.noConfig) { return cb(); }
+  if (platform.config.noCredentials) { return cb(); }
   const store = getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
   store.get(actorId, (err, credentials) => {
     if (platform.config.persist) {
