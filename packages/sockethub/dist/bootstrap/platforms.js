@@ -69,7 +69,7 @@ module.exports = function platformLoad(moduleList) {
                         tv4.addSchema(`http://sockethub.org/schemas/v0/context/${platformName}/credentials`, p.schema.credentials);
                     }
                     else {
-                        p.config.noConfig = true;
+                        p.config.noCredentials = true;
                     }
                 }
                 tv4.addSchema(`http://sockethub.org/schemas/v0/context/${platformName}/messages`, p.schema.messages);
