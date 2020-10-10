@@ -29,11 +29,11 @@ process.on('uncaughtException', (err) => {
  * Incoming messages from the worker to this platform. Data is an array, the first property is the
  * method to call, the rest are params.
  */
-process.on('message', (msg) => {
+process.on('message', (data) => {
     // console.log('incoming IPC message: ' + msg.type, msg.data);
-    if (msg.type === 'secrets') {
-        parentSecret1 = msg.data.parentSecret1;
-        parentSecret2 = msg.data.parentSecret2;
+    if (data[0] === 'secrets') {
+        parentSecret1 = data[1].parentSecret1;
+        parentSecret2 = data[1].parentSecret2;
         startQueueListener();
     }
 });
@@ -65,6 +65,9 @@ const platform = new PlatformModule({
  * @param cb
  */
 function getCredentials(actorId, sessionId, sessionSecret, cb) {
+    if (platform.config.noCredentials) {
+        return cb();
+    }
     const store = common_1.getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
     store.get(actorId, (err, credentials) => {
         if (platform.config.persist) {
@@ -80,7 +83,6 @@ function getCredentials(actorId, sessionId, sessionSecret, cb) {
             }
         }
         else {
-            console.log('hashing credentials object ', credentials);
             platform.credentialsHash = object_hash_1.default(credentials.object);
         }
         cb(undefined, credentials);
@@ -93,7 +95,7 @@ function startQueueListener() {
     logger('listening on the queue for incoming jobs');
     queue.process(identifier, (job, done) => {
         job.data.msg = crypto_1.default.decrypt(job.data.msg, parentSecret1 + parentSecret2);
-        logger("platform process decrypted job " + job.data.msg['@type']);
+        logger(`platform process decrypted job ${job.data.msg['@type']}`);
         const sessionSecret = job.data.msg.sessionSecret;
         delete job.data.msg.sessionSecret;
         getCredentials(job.data.msg.actor['@id'], job.data.socket, sessionSecret, (err, credentials) => {

@@ -292,7 +292,7 @@ define(['require', '../dist/validate', 'activity-streams'], function (require, l
           if (output === 'same') {
             test.assertAnd(
               input, msg,
-              `input not the same as output: ${JSON.stringify(input)} ... ${JSON.stringify(msg)}`);
+              `input not the same as output. ${JSON.stringify(input)} ... ${JSON.stringify(msg)}`);
           } else if (output) {
             test.assertAnd(
               msg, output,

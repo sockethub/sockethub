@@ -26,6 +26,7 @@ class PlatformInstance {
   readonly parentId: string;
   readonly sessions: Set<string> = new Set();
   private readonly actor?: string;
+  public readonly global?: boolean;
   private readonly listeners: object = {
     'close': (() => new Map())(),
     'message': (() => new Map())(),
@@ -37,6 +38,8 @@ class PlatformInstance {
     this.parentId = parentId;
     if (actor) {
       this.actor = actor;
+    } else {
+      this.global = true;
     }
     // spin off a process
     this.process = fork(join(__dirname, 'platform.js'), [parentId, name, id]);

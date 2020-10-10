@@ -64,10 +64,7 @@ let objs = new Map(),
 
 
 function matchesCustomProp(type, key) {
-  if ((typeof customProps[type] === 'object') && (customProps[type].includes(key))) {
-      return true;
-  }
-  return false;
+  return !!((typeof customProps[type] === 'object') && (customProps[type].includes(key)));
 }
 
 function renameProp(obj, key) {
@@ -110,7 +107,7 @@ function validateObject(type, obj = {}) {
 
 
 function ensureProps(obj) {
-  // ensure the displayName property, which can generall be inferred from the @id
+  // ensure the displayName property, which can general be inferred from the @id
   // displayName = obj.match(/(?(?\w+):\/\/)(?:.+@)?(.+?)(?:\/|$)/)[1]
   return obj;
 }

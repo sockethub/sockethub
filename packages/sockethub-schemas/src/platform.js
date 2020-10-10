@@ -1,7 +1,7 @@
 /**
  * This file is part of sockethub.
  *
- * copyright 2012-2015 Nick Jennings (https://github.com/silverbucket)
+ * Developed by Nick Jennings (https://github.com/silverbucket)
  *
  * sockethub is licensed under the LGPL.
  * See the LICENSE file for details.
@@ -20,7 +20,7 @@
 // be returned from platforms.
 module.exports = {
   'type' : 'object',
-  'required': [ 'messages', 'credentials' ],
+  'required': [ 'version', 'messages' ],
   'additionalProperties': false,
   'properties' : {
 

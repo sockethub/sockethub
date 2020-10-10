@@ -70,6 +70,11 @@ class Sockethub {
         this.queue.on('job failed', this.handleJobResult('failed'));
         this.io.on('connection', this.incomingConnection.bind(this));
     }
+    removeAllPlatformInstances() {
+        for (let platform of shared_resources_1.default.platformInstances.values()) {
+            shared_resources_1.default.helpers.removePlatform(platform);
+        }
+    }
     // send message to every connected socket associated with the given platform instance.
     broadcastToSharedPeers(origSocket, msg) {
         log(`broadcasting called, originating socket ${origSocket}`);

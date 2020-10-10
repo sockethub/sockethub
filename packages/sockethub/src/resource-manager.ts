@@ -31,7 +31,10 @@ function resourceManagerCycle() {
         }
       }
 
-      if (platformInstance.sessions.size <= 0) {
+      if (platformInstance.global) {
+        // static platform for global use, don't do resource management
+        return;
+      } else if (platformInstance.sessions.size <= 0) {
         if (platformInstance.flaggedForTermination) {
           // terminate
           rmLog(`terminating platform instance ${platformInstance.id} ` +
