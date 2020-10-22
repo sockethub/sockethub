@@ -62,7 +62,7 @@ class PlatformInstance {
     const socket = SharedResources.sessionConnections.get(sessionId);
     if (socket) { // send message
       msg.context = this.name;
-      // this.log(`sending message to socket ${sessionId}`);
+      // console.log(`sending message to socket ${sessionId}`);
       socket.emit('message', msg);
     }
   }
@@ -117,7 +117,7 @@ class PlatformInstance {
           this.reportFailure(sessionId, data[1]);
         } else {
           // treat like a message to clients
-          console.log("handle", data[1]);
+          // console.log("handling normal message event from platform ", data[1]);
           this.sendToClient(sessionId, data[1]);
         }
       }
