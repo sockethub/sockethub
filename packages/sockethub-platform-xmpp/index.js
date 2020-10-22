@@ -102,7 +102,6 @@ class XMPP {
     }
   };
 
-
   /**
    * Function: connect
    *
@@ -176,7 +175,6 @@ class XMPP {
     });
   };
 
-
   /**
    * Function: send
    *
@@ -241,7 +239,6 @@ class XMPP {
       done();
     });
   };
-
 
   /**
    * Function: update
@@ -458,7 +455,6 @@ class XMPP {
     done();
   };
 
-
   __getClient(key, credentials, cb) {
     if (this.__client) {
       return cb(this.__client);
@@ -477,38 +473,9 @@ class XMPP {
     });
   };
 
-
   __connect(key, credentials, cb) {
     this.debug('calling connect for ' + credentials.actor['@id']);
-    const xmppCreds = this.__buildXmppCredentials(credentials);
-    const [ username, server ] = credentials.object.username.split('@');
-    let xmpp = client({
-      service: server,
-      username: username,
-      password: credentials.object.password,
-      resource: credentials.object.resource || 'Sockethub'
-    });
-
-    // const handlers = {
-    //   error: (error) => {
-    //     let msg = 'failed connecting ' + fullJid;
-    //     msg = (error) ? msg + ' : ' + error : msg;
-    //     __removeListeners();
-    //     xmpp.disconnect();
-    //     throw new Error(msg);
-    //   },
-    //   online: () => {
-    //     this.debug('connected with jid: ' + fullJid);
-    //     __removeListeners();
-    //     cb(xmpp);
-    //   },
-    //   close: () => {
-    //     // FIXME - not sure in what cases this happens
-    //     this.debug('close received for ' + fullJid);
-    //     __removeListeners();
-    //     throw new Error('received close event for ' + fullJid);
-    //   }
-    // };
+    let xmpp = client(buildXmppCredentials(credentials));
 
     xmpp.on("offline", (a) => {
       console.log("offline", a);
@@ -542,10 +509,8 @@ class XMPP {
       console.log('status: ', status);
     });
 
-    xmpp.start().then((a) => {
-      cb(xmpp);
-      // console.log('connected? ', a);
-      // this.__registerListeners();
+    xmpp.start().then(() => {
+      cb(xmpp); // connected
       // await xmpp.send(xml("presence"));
     }).catch((err) => {
       console.log(`on start catch: ${err}`);
@@ -560,7 +525,6 @@ class XMPP {
     });
   };
 
-
   __registerListeners() {
     const ih = new IncomingHandlers(this);
     this.__client.on('close', ih.close.bind(ih));
@@ -568,22 +532,19 @@ class XMPP {
     this.__client.on('online', ih.online.bind(ih));
     this.__client.on('stanza', ih.__stanza.bind(ih));
   };
+}
 
-
-  __buildXmppCredentials(credentials) {
-    // credential object to pass to simple-xmpp
-    let xmpp_creds = {
-      service: credentials.object.server,
-      username: credentials.object.username,
-      password: credentials.object.password
-    };
-
-    if (credentials.object.resource) {
-      xmpp_creds.resource = credentials.object.resource;
-    }
-
-    return xmpp_creds;
+function buildXmppCredentials(credentials) {
+  const [ username, server ] = credentials.object.username.split('@');
+  let xmpp_creds = {
+    service: server,
+    username: username,
+    password: credentials.object.password
+  };
+  if (credentials.object.resource) {
+    xmpp_creds.resource = credentials.object.resource;
   }
+  return xmpp_creds;
 }
 
 module.exports = XMPP;
