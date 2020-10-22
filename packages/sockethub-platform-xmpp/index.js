@@ -16,68 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-if (typeof (xmpp) !== 'object') {
-  xmpp = require('simple-xmpp');
-}
+const { client, xml } = require("@xmpp/client");
 
 const IncomingHandlers = require('./lib/incoming-handlers');
-const packageJSON = require('./package.json');
-
-const PlatformSchema = {
-  "version": packageJSON.version,
-  "messages": {
-    "required": ['@type'],
-    "properties": {
-      "@type": {
-        "enum": ['connect', 'update', 'send', 'join', 'observe', 'request-friend', 'remove-friend', 'make-friend']
-      }
-    }
-  },
-  "credentials": {
-    "required": ['object'],
-    "properties": {
-      // TODO platforms shouldn't have to define the actor property if they don't want to, just credential specifics
-      "actor": {
-        "type": "object",
-        "required": ["@id"]
-      },
-      "object": {
-        "name": "object",
-        "type": "object",
-        "required": ['@type', 'username', 'password', 'server', 'resource'],
-        "additionalProperties": false,
-        "properties": {
-          "@type": {
-            "name": "@type",
-            "type": "string"
-          },
-          "username": {
-            "name": "username",
-            "type": "string"
-          },
-          "password": {
-            "name": "password",
-            "type": "string"
-          },
-          "server": {
-            "name": "server",
-            "type": "string"
-          },
-          "port": {
-            "name": "port",
-            "type": "number"
-          },
-          "resource": {
-            "name": "resource",
-            "type": "string"
-          }
-        }
-      }
-    }
-  }
-};
-
-
+const PlatformSchema = require('./lib/schema.js');
 
 
 /**
@@ -185,7 +127,7 @@ class XMPP {
    */
   connect(job, credentials, done) {
     this.debug('connect() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
+    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
       done();
     });
   };
@@ -222,11 +164,11 @@ class XMPP {
    */
   join(job, credentials, done) {
     this.debug('join() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
+    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
       // send join
       this.debug('sending join to ' + `${job.target['@id']}/${job.actor.displayName}`);
       let id = job.target['@id'].split('/')[0];
-      client.join(
+      xmpp.join(
           `${job.target['@id']}/${job.actor.displayName || id}`
           // TODO optional passwords not handled for now
       );
@@ -288,10 +230,10 @@ class XMPP {
    */
   send(job, credentials, done) {
     this.debug('send() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
+    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
       // send message
       this.debug('sending message to ' + job.target['@id']);
-      client.send(
+      xmpp.send(
           job.target['@id'],
           job.object.content,
           job.target['@type'] === 'room' ? 'groupchat' : 'chat'
@@ -328,15 +270,15 @@ class XMPP {
    */
   update(job, credentials, done) {
     this.debug('update() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
+    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
       if (job.object['@type'] === 'presence') {
         const show = job.object.presence === 'available' ? 'chat' : job.object.show;
         const status = job.object.content || '';
         // setting presence
         this.debug('setting presence: ' + show + ' status: ' + status);
-        client.setPresence(show, status);
+        xmpp.setPresence(show, status);
         this.debug('requesting XMPP roster');
-        client.getRoster();
+        xmpp.getRoster();
         done();
       } else {
         done('unknown object type (should be presence?): ' + job.object['@type']);
@@ -369,9 +311,9 @@ class XMPP {
    */
   'request-friend'(job, credentials, done) {
     this.debug('request-friend() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
+    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
       this.debug('request friend ' + job.target['@id']);
-      client.subscribe(job.target['@id']);
+      xmpp.subscribe(job.target['@id']);
     });
   };
 
@@ -400,9 +342,9 @@ class XMPP {
    */
   'remove-friend'(job, credentials, done) {
     this.debug('remove-friend() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
+    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
       this.debug('remove friend ' + job.target['@id']);
-      client.unsubscribe(job.target['@id']);
+      xmpp.unsubscribe(job.target['@id']);
     });
   };
 
@@ -431,9 +373,9 @@ class XMPP {
    */
   'make-friend'(job, credentials, done) {
     this.debug('make-friend() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
+    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
       this.debug('make friend ' + job.target['@id']);
-        client.acceptSubscription(job.target['@id']);
+        xmpp.acceptSubscription(job.target['@id']);
       });
   };
 
@@ -491,7 +433,7 @@ class XMPP {
    */
   observe(job, credentials, done) {
     this.debug('observe() called by ' + job.actor['@id'] + ' for ' + job.target['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
+    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
       const stanza = new xmpp.Element('iq', {
         id: 'muc_id',
         type: 'get',
@@ -499,7 +441,7 @@ class XMPP {
         to: job.target['@id']
       });
       stanza.c('query', {xmlns: 'http://jabber.org/protocol/disco#items'});
-      client.conn.send(stanza);
+      xmpp.conn.send(stanza);
       done();
     });
   };
@@ -522,102 +464,122 @@ class XMPP {
       return cb(this.__client);
     }
 
-    if (!credentials) {
+    if (! credentials) {
       throw new Error('no client found, and no credentials specified.');
     }
 
     this.actor = credentials.actor;
 
-    this.__connect(key, credentials, (client) => {
-      this.__client = client;
+    this.__connect(key, credentials, (xmpp) => {
+      this.__client = xmpp;
       this.__registerListeners();
-      return cb(client);
+      return cb(xmpp);
     });
   };
 
 
   __connect(key, credentials, cb) {
     this.debug('calling connect for ' + credentials.actor['@id']);
-    const fullJid = this.__buildFullJid(credentials);
-    const xmppCreds = this.__buildXmppCredentials(fullJid, credentials);
+    const xmppCreds = this.__buildXmppCredentials(credentials);
+    const [ username, server ] = credentials.object.username.split('@');
+    let xmpp = client({
+      service: server,
+      username: username,
+      password: credentials.object.password,
+      resource: credentials.object.resource || 'Sockethub'
+    });
 
-    function __removeListeners() {
-      xmpp.removeListener('online', handlers.online);
-      xmpp.removeListener('error', handlers.error);
-      xmpp.removeListener('close', handlers.close);
-    }
+    // const handlers = {
+    //   error: (error) => {
+    //     let msg = 'failed connecting ' + fullJid;
+    //     msg = (error) ? msg + ' : ' + error : msg;
+    //     __removeListeners();
+    //     xmpp.disconnect();
+    //     throw new Error(msg);
+    //   },
+    //   online: () => {
+    //     this.debug('connected with jid: ' + fullJid);
+    //     __removeListeners();
+    //     cb(xmpp);
+    //   },
+    //   close: () => {
+    //     // FIXME - not sure in what cases this happens
+    //     this.debug('close received for ' + fullJid);
+    //     __removeListeners();
+    //     throw new Error('received close event for ' + fullJid);
+    //   }
+    // };
 
-    const handlers = {
-      error: (error) => {
-        let msg = 'failed connecting ' + fullJid;
-        msg = (error) ? msg + ' : ' + error : msg;
-        __removeListeners();
-        xmpp.disconnect();
-        throw new Error(msg);
-      },
-      online: () => {
-        this.debug('connected with jid: ' + fullJid);
-        __removeListeners();
-        cb(xmpp);
-      },
-      close: () => {
-        // FIXME - not sure in what cases this happens
-        this.debug('close received for ' + fullJid);
-        __removeListeners();
-        throw new Error('received close event for ' + fullJid);
-      }
-    };
+    xmpp.on("offline", (a) => {
+      console.log("offline", a);
+      console.log(xmpp.status);
+    });
 
-    xmpp.on('online', handlers.online);
-    xmpp.on('error', handlers.error);
-    xmpp.on('close', handlers.close);
-    xmpp.connect(xmppCreds);
+    // xmpp.on("stanza", async (stanza) => {
+    //   // console.log(`stanza ${stanza}`);
+    //   console.log(stanza);
+    //   if (stanza.is("message")) {
+    //     await xmpp.send(xml("presence", { type: "unavailable" }));
+    //     // await xmpp.stop();
+    //   }
+    // });
+
+    // xmpp.on("online", async (address) => {
+    //   // Makes itself available
+    //   console.log('xmpp online event ', address);
+    //   await xmpp.send(xml("presence"));
+
+    //   // Sends a chat message to itself
+    //   const message = xml(
+    //     "message",
+    //     { type: "chat", to: address },
+    //     xml("body", {}, "hello world"),
+    //   );
+    //   await xmpp.send(message);
+    // });
+
+    xmpp.on('status', (status) => {
+      console.log('status: ', status);
+    });
+
+    xmpp.start().then((a) => {
+      cb(xmpp);
+      // console.log('connected? ', a);
+      // this.__registerListeners();
+      // await xmpp.send(xml("presence"));
+    }).catch((err) => {
+      console.log(`on start catch: ${err}`);
+      this.sendToClient({
+        '@type': 'error',
+        object: {
+          '@type': 'error',
+          content: err.text || err.toString(),
+          condition: err.condition || 'connection-error'
+        }
+      });
+    });
   };
 
 
   __registerListeners() {
     const ih = new IncomingHandlers(this);
-    this.__client.on('buddy', ih.buddy.bind(ih));
-    this.__client.on('buddyCapabilities', ih.buddyCapabilities.bind(ih));
-    this.__client.on('chat', ih.chat.bind(ih));
     this.__client.on('close', ih.close.bind(ih));
-    this.__client.on('chatstate', ih.chatstate.bind(ih));
     this.__client.on('error', ih.error.bind(ih));
-    this.__client.on('groupbuddy', ih.groupBuddy.bind(ih));
-    this.__client.on('groupchat', ih.groupChat.bind(ih));
     this.__client.on('online', ih.online.bind(ih));
-    this.__client.on('subscribe', ih.subscribe.bind(ih));
-    this.__client.on('unsubscribe', ih.unsubscribe.bind(ih));
     this.__client.on('stanza', ih.__stanza.bind(ih));
   };
 
 
-  __buildFullJid(credentials) {
-    let fullJid;
-
-    // generate bareJid and fullJid
-    if (credentials.object.username.indexOf('@') === -1) {
-      fullJid = credentials.object.username + '@' + credentials.object.server + '/' + credentials.object.resource;
-    } else {
-      fullJid = credentials.object.username + '/' + credentials.object.resource;
-    }
-
-    return fullJid;
-  }
-
-  __buildXmppCredentials(fullJid, credentials) {
+  __buildXmppCredentials(credentials) {
     // credential object to pass to simple-xmpp
     let xmpp_creds = {
-      jid: fullJid,
+      service: credentials.object.server,
+      username: credentials.object.username,
       password: credentials.object.password
     };
 
-    if (credentials.object.server) {
-      xmpp_creds.host = credentials.object.server;
-    }
-
-    if (credentials.object.port) {
-      xmpp_creds.port = credentials.object.port;
+    if (credentials.object.resource) {
+      xmpp_creds.resource = credentials.object.resource;
     }
 
     return xmpp_creds;

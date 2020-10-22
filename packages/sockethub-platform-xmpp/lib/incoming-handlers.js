@@ -1,4 +1,3 @@
-
 let idCounter = 0;
 
 function nextId() {
@@ -82,16 +81,16 @@ class IncomingHandlers {
     this.session.connection.disconnect();
   }
 
-  error(error) {
+  error(err) {
     try {
-      this.session.debug("*** XMPP ERROR (rl): " + error);
       this.session.sendToClient({
         '@type': 'error',
         object: {
           '@type': 'error',
-          content: error
+          content: err.text || err.toString(),
+          condition: err.condition || 'unknown'
         }
-      });
+      })
     } catch (e) {
       this.session.debug('*** XMPP ERROR (rl catch): ', e);
     }
@@ -165,6 +164,7 @@ class IncomingHandlers {
    * Handles all unknown conditions that we don't have an explicit handler for
    **/
   __stanza(stanza) {
+    console.log("incoming stanza ", stanza);
     // simple-xmpp currently doesn't seem to handle error state presence so we'll do it here for now.
     // TODO: consider moving this.session.to simple-xmpp once it's ironed out and proven to work well.
     if ((stanza.attrs.type === 'error')) {
