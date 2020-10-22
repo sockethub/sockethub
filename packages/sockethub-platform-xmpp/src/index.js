@@ -18,9 +18,9 @@
 
 const { client, xml } = require("@xmpp/client");
 
-const IncomingHandlers = require('./incoming-handlers');
-const PlatformSchema = require('./schema.js');
 const utils = require('./utils.js');
+const IncomingHandlers = require('./lib/incoming-handlers');
+const PlatformSchema = require('./lib/schema.js');
 
 
 /**
