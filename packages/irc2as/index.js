@@ -1,5 +1,6 @@
 const events = require('events');
 const debug = require('debug')('irc2as');
+const ASTemplates = require('./as-templates');
 
 const EVENT_INCOMING = 'incoming',
       EVENT_ERROR = 'error',
@@ -63,7 +64,6 @@ class IrcToActivityStreams {
     this.events = new events.EventEmitter();
     this.__buffer = {};
     this.__buffer[NAMES] = {};
-    return this;
   }
 
   input(string) {
@@ -91,6 +91,7 @@ class IrcToActivityStreams {
   }
 
   __processIRCCodes(code, server, channel, pos1, pos2, pos3, content, msg) {
+    const ast = new ASTemplates(this.events, this.server);
     let nick, type, role;
     switch (code) {
         /** */
@@ -103,28 +104,28 @@ class IrcToActivityStreams {
         case ERR_BADMASK:
         case ERR_NOCHANMODES:
         case ERR_BANLISTFULL:
-        this.__sendChannelError(channel, pos1, content)
+        ast.channelError(channel, pos1, content)
         break;
 
         /** */
         case ERR_NICK_IN_USE: // nick conflict
         case ERR_BAD_NICK:
-        this.__sendServiceError(pos2, content)
+        ast.serviceError(pos2, content)
         break;
 
         /** */
         case ERR_NO_CHANNEL: // no such channel
-        this.__sendJoinError(pos2)
+        ast.joinError(pos2)
         break;
 
         /** */
         case ERR_TEMP_UNAVAIL: // nick conflict
-        this.__sendNickError(pos2, content);
+        ast.nickError(pos2, content);
         break;
 
         /** */
         case JOIN: // room join
-        this.__joinRoom(channel, getNickFromServerString(server))
+        ast.joinRoom(channel, getNickFromServerString(server))
         break;
 
         case MODE: // custom event indicating a channel mode has been updated, used to re-query user or channel
@@ -136,7 +137,7 @@ class IrcToActivityStreams {
         if (user_mode[0] === '-') {
             type = 'remove';
         }
-        this.__sendRole(type, getNickFromServerString(server), pos3, role, channel)
+        ast.role(type, getNickFromServerString(server), pos3, role, channel)
         break;
 
         /** */
@@ -174,24 +175,24 @@ class IrcToActivityStreams {
                 username = entry.substr(1);
                 role = ROLE[entry[0]];
             }
-            this.__sendPresence(username, role, channel);
+            ast.presence(username, role, channel);
         }
         break;
 
         /** */
         case NICK: // nick change
         // debug(`- 2 nick: ${nick} from content: ${content}`);
-        this.__sendNickChange(getNickFromServerString(server), content);
+        ast.nickChange(getNickFromServerString(server), content);
         break;
 
         /** */
         case NOTICE: // notice
-        this.__sendNotice(pos1, content);
+        ast.notice(pos1, content);
         break;
 
         /** */
         case PART: // leaving
-        this.__sendUserPart(channel, getNickFromServerString(server));
+        ast.userPart(channel, getNickFromServerString(server));
         break;
 
         /** */
@@ -201,17 +202,17 @@ class IrcToActivityStreams {
 
         /** */
         case PRIVMSG: // msg
-        this.__sendPrivMsg(getNickFromServerString(server), pos1, content);
+        ast.privMsg(getNickFromServerString(server), pos1, content);
         break;
 
         /** */
         case QUIT: // quit user
-        this.__sendUserQuit(getNickFromServerString(server))
+        ast.userQuit(getNickFromServerString(server))
         break;
 
         /** */
         case TOPIC_CHANGE: // topic changed now
-        this.__sendTopicChange(channel, getNickFromServerString(server), content);
+        ast.topicChange(channel, getNickFromServerString(server), content);
         break;
 
         /** */
@@ -249,7 +250,7 @@ class IrcToActivityStreams {
         nick = (msg[3].length <= 2) ? msg[2] : msg[3];
         if (nick === 'undefined') { break; }
         role = MODES[pos2[1]] || 'member';
-        this.__sendPresence(nick, role, channel);
+        ast.presence(nick, role, channel);
         break;
 
         /** */
@@ -257,282 +258,6 @@ class IrcToActivityStreams {
         // this.events.emit(EVENT_UNPROCESSED, string);
         // break;
     }
-  }
-
-  __sendPresence(nick, role, channel) {
-    this.events.emit(EVENT_INCOMING, {
-        '@type': 'update',
-        actor: {
-            '@type': 'person',
-            '@id': `${nick}@${this.server}`,
-            'displayName': nick,
-        },
-        target: {
-            '@type': 'room',
-            '@id': this.server + '/' + channel,
-            displayName: channel
-        },
-        object: {
-            '@type': 'presence',
-            role: role
-        },
-        published: `${Date.now()}`
-    });
-  };
-
-  __sendChannelError(channel, nick, content) {
-    this.events.emit(EVENT_ERROR, {
-      '@type': 'send',
-      actor: {
-        '@type': 'room',
-        '@id': this.server + '/' + channel
-      },
-      target: {
-        '@type': 'person',
-        '@id': nick + '@' + this.server
-      },
-      object: {
-        '@type': 'error',
-        content: content
-      },
-      published: `${Date.now()}`
-    });
-  }
-
-  __sendServiceError(nick, content) {
-    this.events.emit(EVENT_ERROR, {
-      '@type': 'update',
-      actor: {
-          '@type': 'service',
-          '@id': this.server
-      },
-      object: {
-          '@type': 'error',
-          content: content
-      },
-      target: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
-      },
-      published: `${Date.now()}`
-    });
-  }
-
-  __sendJoinError(nick) {
-    this.events.emit(EVENT_ERROR, {
-      '@type': 'join',
-      actor: {
-          '@id': this.server,
-          '@type': 'service'
-      },
-      object: {
-          '@type': 'error',
-          content: 'no such channel ' + nick
-      },
-      target: {
-          '@id': nick + '@' + this.server,
-          '@type': 'person'
-      },
-      published: `${Date.now()}`
-    });
-  }
-
-  __sendNickError(nick, content) {
-    this.events.emit(EVENT_ERROR, {
-      '@type': 'update',
-      actor: {
-          '@type': 'service',
-          '@id': this.server
-      },
-      object: {
-          '@type': 'error',
-          content: content
-      },
-      target: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
-      },
-      published: `${Date.now()}`
-    });
-  }
-
-  __sendTopicChange(channel, nick, content) {
-    this.events.emit(EVENT_INCOMING, {
-      '@type': 'update',
-      actor: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
-      },
-      target: {
-          '@type': 'room',
-          '@id': this.server + '/' + channel,
-          displayName: channel
-      },
-      object: {
-          '@type': 'topic',
-          topic: content
-      },
-      published: `${Date.now()}`
-    });
-  }
-
-  __joinRoom(channel, nick) {
-    this.events.emit(EVENT_INCOMING, {
-      '@type': 'join',
-      actor: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
-      },
-      target: {
-          '@type': 'room',
-          '@id': this.server + '/' + channel,
-          displayName: channel
-      },
-      object: {},
-      published: `${Date.now()}`
-    });
-  }
-
-  __sendUserQuit(nick) {
-    this.events.emit(EVENT_INCOMING, {
-      '@type': 'leave',
-      actor: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
-      },
-      target: {
-          '@type': 'service',
-          '@id': this.server
-      },
-      object: {
-          '@type': 'message',
-          content: 'user has quit'
-      },
-      published: `${Date.now()}`
-    });
-  }
-
-  __sendUserPart(channel, nick) {
-    this.events.emit(EVENT_INCOMING, {
-      '@type': 'leave',
-      actor: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
-      },
-      target: {
-          '@type': 'room',
-          '@id': this.server + '/' + channel,
-          displayName: channel
-      },
-      object: {
-          '@type': 'message',
-          content: 'user has left the channel'
-      },
-      published: `${Date.now()}`
-    });
-  }
-
-  __sendPrivMsg(nick, target, content) {
-    let type, message;
-    if (content.startsWith('+\u0001ACTION ')) {
-      type = 'me';
-      message = content.split(/^\+\u0001ACTION\s+/)[1].split(/\u0001$/)[0];
-    } else {
-      type = 'message';
-      message = content;
-    }
-    this.events.emit(EVENT_INCOMING, {
-      '@type': 'send',
-      actor: {
-        '@type': 'person',
-        '@id': nick + '@' + this.server,
-        displayName: nick
-      },
-      target: {
-        displayName: target
-      },
-      object: {
-        '@type': type,
-        content: message
-      },
-      published: `${Date.now()}`
-    });
-  }
-
-  __sendRole(type, nick, target, role, channel) {
-    this.events.emit(EVENT_INCOMING, {
-      '@type': type,
-      actor: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
-      },
-      target: {
-          '@type': 'person',
-          '@id': target + '@' + this.server,
-          displayName: target
-      },
-      object: {
-          "@type": "relationship",
-          "relationship": 'role',
-          "subject": {
-              '@type': 'presence',
-              role: role
-          },
-          "object": {
-              '@type': 'room',
-              '@id': this.server + '/' + channel,
-              displayName: channel
-          }
-      },
-      published: `${Date.now()}`
-    });
-  }
-
-  __sendNickChange(nick, content) {
-    this.events.emit(EVENT_INCOMING, {
-      '@type': 'update',
-      actor: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
-      },
-      target: {
-          '@type': 'person',
-          '@id': content + '@' + this.server,
-          displayName: content
-      },
-      object: {
-          '@type': 'address'
-      },
-      published: `${Date.now()}`
-    });
-  }
-
-  __sendNotice(nick, content) {
-    this.events.emit(EVENT_INCOMING, {
-      '@type': 'update',
-      actor: {
-          '@type': 'service',
-          '@id': this.server
-      },
-      object: {
-          '@type': 'error',
-          content: content
-      },
-      target: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
-      },
-      published: `${Date.now()}`
-    });
   }
 };
 
