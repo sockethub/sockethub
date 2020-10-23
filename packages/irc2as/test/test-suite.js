@@ -6,6 +6,7 @@ if (typeof(define) !== 'function') {
 
 function matchStream(env, test) {
     return (stream) => {
+        // console.log(stream);
         test.assertTypeAnd(stream.published, 'string');
         delete stream.published;
         let matched = false;
@@ -24,6 +25,7 @@ function matchStream(env, test) {
         }
     }
 }
+
 define(['require'], function (require, IRC2AS) {
     let suites = [];
     suites.push({
@@ -33,70 +35,70 @@ define(['require'], function (require, IRC2AS) {
         setup: function (env, test) {
             env.equal = require('fast-deep-equal');
             env.validStreams = [
-                { 
+                {
                     '@type': 'update',
-                    actor: { 
+                    actor: {
                         '@type': 'service',
                         '@id': 'localhost',
-                        displayName: 'localhost' 
+                        displayName: 'localhost'
                     },
-                    object: { 
-                        '@type': 'topic', 
-                        content: [ '-', '-' ] 
+                    object: {
+                        '@type': 'topic',
+                        content: [ '-', '-' ]
                     }
                 },
                 {
                     '@type': 'update',
-                    actor: {   
+                    actor: {
                         '@type': 'service',
                         '@id': 'localhost',
-                        displayName: 'localhost' 
+                        displayName: 'localhost'
                     },
-                    object: {   
+                    object: {
                         '@type': 'topic',
-                        content: [   
+                        content: [
                             '- on the https://freenode.live website for our call for volunteers and call for',
                             '- participation. If you are interested in sponsoring next year\'s event, please',
                             '- send us an e-mail to sponsor@freenode.live',
                             '-',
                             '- Thank you for using freenode!',
                             '-',
-                            '-' 
-                        ] 
+                            '-'
+                        ]
                     }
                 },
                 { '@type': 'update',
-                    actor: 
+                    actor:
                     { '@type': 'person',
                         '@id': 'donkey2018@localhost',
                         displayName: 'donkey2018' },
-                    target: 
+                    target:
                     { '@type': 'person',
                         '@id': 'slvrbckt@localhost',
                         displayName: 'slvrbckt' },
-                    object: { '@type': 'address' } 
+                    object: { '@type': 'address' }
                 },
                 { '@type': 'update',
-                    actor: 
+                    actor:
                     { '@type': 'person',
                         '@id': 'slvrbckt@localhost',
                         displayName: 'slvrbckt' },
-                    target: 
+                    target:
                     { '@type': 'person',
                         '@id': 'donkey2018@localhost',
                         displayName: 'donkey2018' },
-                    object: { '@type': 'address' } 
+                    object: { '@type': 'address' }
                 },
                 { '@type': 'leave',
-                    actor: 
+                    actor:
                     { '@type': 'person',
                         '@id': 'slvrbckt@localhost',
                         displayName: 'slvrbckt' },
-                    target: 
+                    target:
                     { '@type': 'room',
                         '@id': 'localhost/#debian',
                         displayName: '#debian' },
-                    object: { '@type': 'message', content: 'user has left the channel' } 
+                    object: { '@type': 'message', content: 'user has left the channel' }
                 },
                 {"@type":"leave",actor:{"@type":"person","@id":"jarlaxl_@localhost",displayName:"jarlaxl_"},target:{"@type":"service","@id":"localhost"},object:{"@type":"message",content:"user has quit"}},
                 {"@type":"join",actor:{"@id":"localhost","@type":"service"},object:{"@type":"error",content:"no such channel sdfsdfsdfsdfsdf"},target:{"@id":"sdfsdfsdfsdfsdf@localhost","@type":"person"}},
@@ -175,13 +177,13 @@ define(['require'], function (require, IRC2AS) {
                 }
             },
             {
-                desc: "verify ping count", 
+                desc: "verify ping count",
                 run: function (env, test) {
                     test.assert(env.pings, 2);
                 }
             },
             {
-                desc: "verify pong count", 
+                desc: "verify pong count",
                 run: function (env, test) {
                     test.assert(env.pongs, 3);
                 }

@@ -1,6 +1,6 @@
 const events = require('events');
 const debug = require('debug')('irc2as');
-const ASTemplates = require('./as-templates');
+const ASEmitter = require('./as-emitter');
 
 const EVENT_INCOMING = 'incoming',
       EVENT_ERROR = 'error',
@@ -66,6 +66,13 @@ class IrcToActivityStreams {
     this.__buffer[NAMES] = {};
   }
 
+  emit(code, asObject) {
+    if ((typeof asObject === 'object') && (! asObject.published)) {
+      asObject.published = `${Date.now()}`;
+    }
+    this.events.emit(code, asObject);
+  }
+
   input(string) {
     debug(string);
     if (typeof string !== 'string') {
@@ -91,7 +98,7 @@ class IrcToActivityStreams {
   }
 
   __processIRCCodes(code, server, channel, pos1, pos2, pos3, content, msg) {
-    const ast = new ASTemplates(this.events, this.server);
+    const ase = new ASEmitter(this.events, this.server);
     let nick, type, role;
     switch (code) {
         /** */
@@ -104,28 +111,28 @@ class IrcToActivityStreams {
         case ERR_BADMASK:
         case ERR_NOCHANMODES:
         case ERR_BANLISTFULL:
-        ast.channelError(channel, pos1, content)
+        ase.channelError(channel, pos1, content)
         break;
 
         /** */
         case ERR_NICK_IN_USE: // nick conflict
         case ERR_BAD_NICK:
-        ast.serviceError(pos2, content)
+        ase.serviceError(pos2, content)
         break;
 
         /** */
         case ERR_NO_CHANNEL: // no such channel
-        ast.joinError(pos2)
+        ase.joinError(pos2)
         break;
 
         /** */
         case ERR_TEMP_UNAVAIL: // nick conflict
-        ast.nickError(pos2, content);
+        ase.nickError(pos2, content);
         break;
 
         /** */
         case JOIN: // room join
-        ast.joinRoom(channel, getNickFromServerString(server))
+        ase.joinRoom(channel, getNickFromServerString(server))
         break;
 
         case MODE: // custom event indicating a channel mode has been updated, used to re-query user or channel
@@ -137,7 +144,7 @@ class IrcToActivityStreams {
         if (user_mode[0] === '-') {
             type = 'remove';
         }
-        ast.role(type, getNickFromServerString(server), pos3, role, channel)
+        ase.role(type, getNickFromServerString(server), pos3, role, channel)
         break;
 
         /** */
@@ -153,8 +160,7 @@ class IrcToActivityStreams {
                 object: {
                     '@type': 'topic',
                     content: [ content ]
-                },
-                published: `${Date.now()}`
+                }
             }
         } else {
             this.__buffer[MOTD].object.content.push(content);
@@ -162,7 +168,7 @@ class IrcToActivityStreams {
         break;
         case MOTD_END: // end of MOTD
         if (! this.__buffer[MOTD]) { break; }
-        this.events.emit(EVENT_INCOMING, this.__buffer[MOTD]);
+        ase.emitEvent(EVENT_INCOMING, this.__buffer[MOTD]);
         delete this.__buffer[MOTD];
         break;
 
@@ -175,24 +181,24 @@ class IrcToActivityStreams {
                 username = entry.substr(1);
                 role = ROLE[entry[0]];
             }
-            ast.presence(username, role, channel);
+            ase.presence(username, role, channel);
         }
         break;
 
         /** */
         case NICK: // nick change
         // debug(`- 2 nick: ${nick} from content: ${content}`);
-        ast.nickChange(getNickFromServerString(server), content);
+        ase.nickChange(getNickFromServerString(server), content);
         break;
 
         /** */
         case NOTICE: // notice
-        ast.notice(pos1, content);
+        ase.notice(pos1, content);
         break;
 
         /** */
         case PART: // leaving
-        ast.userPart(channel, getNickFromServerString(server));
+        ase.userPart(channel, getNickFromServerString(server));
         break;
 
         /** */
@@ -202,17 +208,17 @@ class IrcToActivityStreams {
 
         /** */
         case PRIVMSG: // msg
-        ast.privMsg(getNickFromServerString(server), pos1, content);
+        ase.privMsg(getNickFromServerString(server), pos1, content);
         break;
 
         /** */
         case QUIT: // quit user
-        ast.userQuit(getNickFromServerString(server))
+        ase.userQuit(getNickFromServerString(server))
         break;
 
         /** */
         case TOPIC_CHANGE: // topic changed now
-        ast.topicChange(channel, getNickFromServerString(server), content);
+        ase.topicChange(channel, getNickFromServerString(server), content);
         break;
 
         /** */
@@ -240,7 +246,7 @@ class IrcToActivityStreams {
             displayName: nick
         };
         this.__buffer[TOPIC_IS].published = msg[0];
-        this.events.emit(EVENT_INCOMING, this.__buffer[TOPIC_IS]);
+        ase.emitEvent(EVENT_INCOMING, this.__buffer[TOPIC_IS]);
         delete this.__buffer[TOPIC_IS];
         break;
 
@@ -250,7 +256,7 @@ class IrcToActivityStreams {
         nick = (msg[3].length <= 2) ? msg[2] : msg[3];
         if (nick === 'undefined') { break; }
         role = MODES[pos2[1]] || 'member';
-        ast.presence(nick, role, channel);
+        ase.presence(nick, role, channel);
         break;
 
         /** */
