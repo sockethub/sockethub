@@ -14,6 +14,25 @@ class ASTemplates {
     this.events.emit(code, asObject);
   }
 
+  __generalError(nick, content) {
+    return {
+      '@type': 'update',
+      actor: {
+          '@type': 'service',
+          '@id': this.server
+      },
+      object: {
+          '@type': 'error',
+          content: content
+      },
+      target: {
+          '@type': 'person',
+          '@id': nick + '@' + this.server,
+          displayName: nick
+      }
+    };
+  }
+
   presence(nick, role, channel) {
     this.emitEvent(EVENT_INCOMING, {
         '@type': 'update',
@@ -52,23 +71,17 @@ class ASTemplates {
     });
   }
 
+
+  nickError(nick, content) {
+    this.emitEvent(EVENT_ERROR, this.__generalError(nick, content));
+  }
+
+  notice(nick, content) {
+    this.emitEvent(EVENT_INCOMING, this.__generalError(nick, content));
+  }
+
   serviceError(nick, content) {
-    this.emitEvent(EVENT_ERROR, {
-      '@type': 'update',
-      actor: {
-          '@type': 'service',
-          '@id': this.server
-      },
-      object: {
-          '@type': 'error',
-          content: content
-      },
-      target: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
-      }
-    });
+    this.emitEvent(EVENT_ERROR, this.__generalError(nick, content));
   }
 
   joinError(nick) {
@@ -85,25 +98,6 @@ class ASTemplates {
       target: {
           '@id': nick + '@' + this.server,
           '@type': 'person'
-      }
-    });
-  }
-
-  nickError(nick, content) {
-    this.emitEvent(EVENT_ERROR, {
-      '@type': 'update',
-      actor: {
-          '@type': 'service',
-          '@id': this.server
-      },
-      object: {
-          '@type': 'error',
-          content: content
-      },
-      target: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
       }
     });
   }
@@ -254,25 +248,6 @@ class ASTemplates {
       },
       object: {
           '@type': 'address'
-      }
-    });
-  }
-
-  notice(nick, content) {
-    this.emitEvent(EVENT_INCOMING, {
-      '@type': 'update',
-      actor: {
-          '@type': 'service',
-          '@id': this.server
-      },
-      object: {
-          '@type': 'error',
-          content: content
-      },
-      target: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
       }
     });
   }
