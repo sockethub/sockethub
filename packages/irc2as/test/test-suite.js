@@ -6,7 +6,6 @@ if (typeof(define) !== 'function') {
 
 function matchStream(env, test) {
     return (stream) => {
-        // console.log(stream);
         test.assertTypeAnd(stream.published, 'string');
         delete stream.published;
         let matched = false;
