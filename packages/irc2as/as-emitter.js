@@ -71,7 +71,6 @@ class ASTemplates {
     });
   }
 
-
   nickError(nick, content) {
     this.emitEvent(EVENT_ERROR, this.__generalError(nick, content));
   }
