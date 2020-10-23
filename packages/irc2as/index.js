@@ -66,13 +66,6 @@ class IrcToActivityStreams {
     this.__buffer[NAMES] = {};
   }
 
-  emit(code, asObject) {
-    if ((typeof asObject === 'object') && (! asObject.published)) {
-      asObject.published = `${Date.now()}`;
-    }
-    this.events.emit(code, asObject);
-  }
-
   input(string) {
     debug(string);
     if (typeof string !== 'string') {
