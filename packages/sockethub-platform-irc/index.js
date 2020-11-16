@@ -29,8 +29,7 @@ if (typeof (IRC2AS) !== 'object') {
   IRC2AS = require('irc2as');
 }
 
-const debug = require('debug')('sockethub-platform-irc'),
-      packageJSON = require('./package.json');
+const packageJSON = require('./package.json');
 
 
 /**
@@ -314,7 +313,7 @@ IRC.prototype.send = function (job, credentials, done) {
     } else if (this.__isJoined(job.target.displayName)) {
       client.raw('PRIVMSG ' + job.target.displayName + ' :' + job.object.content);
     } else {
-      return done("cannot send message to a channel of which you've not first joined.")
+      return done("cannot send message to a channel of which you've not first joined.");
     }
     this.__jobQueue.push(done);
     client.raw('PING ' + job.actor.displayName);
@@ -557,7 +556,7 @@ IRC.prototype.__getClient = function (key, credentials, cb) {
 IRC.prototype.__connect = function (key, credentials, cb) {
   this.__clientConnecting = true;
   const netSocket = new NetSocket();
-  const is_secure = false; // (typeof credentials.object.secure === 'boolean') ? credentials.object.secure : true;
+  const is_secure = (typeof credentials.object.secure === 'boolean') ? credentials.object.secure : true;
   let socket = netSocket;
   if (is_secure) {
     socket = new TlsSocket(netSocket, { rejectUnauthorized: false });
@@ -570,7 +569,6 @@ IRC.prototype.__connect = function (key, credentials, cb) {
     server: credentials.object.server || 'irc.freenode.net',
     realname: credentials.actor.displayName || credentials.object.nick,
     port: (is_secure) ? 6697 : 6667,
-    // port: (credentials.object.port) ? parseInt(credentials.object.port, 10) : (is_secure) ? 6697 : 6667,
     debug: console.log
   };
   this.debug('attempting to connect to ' + module_creds.server + ':' + module_creds.port);

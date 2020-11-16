@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 const baseDir = process.env.DEV ? 'src' : 'dist';
-const SharedResources = require(`./../${baseDir}/shared-resources`);
 
 process.once('uncaughtException', function (err) {
   console.log(`\nUNCAUGHT EXCEPTION\n`);

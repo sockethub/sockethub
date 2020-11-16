@@ -31,5 +31,5 @@ class Crypto {
   }
 }
 
-crypto = crypto ? crypto : new Crypto();
+crypto = new Crypto();
 export default crypto;

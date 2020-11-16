@@ -1,9 +1,9 @@
-var objectTypes = require('./object-types');
+const objectTypes = require('./object-types');
 
-var validObjectRefs = [];
-var validObjectDefs = {};
+let validObjectRefs = [];
+let validObjectDefs = {};
 
-var keys = Object.keys(objectTypes);
+const keys = Object.keys(objectTypes);
 keys.forEach(function (type, i) {
   if (objectTypes[type]["activity-object"]) {
     validObjectRefs.push({ "$ref": "#/definitions/type/" + type });

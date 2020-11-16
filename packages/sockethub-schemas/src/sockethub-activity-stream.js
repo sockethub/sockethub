@@ -1,19 +1,20 @@
-var activityObjects = require('./sockethub-activity-object.js');
-var objectTypes     = require('./object-types.js');
+const activityObjects = require('./sockethub-activity-object.js');
+const objectTypes     = require('./object-types.js');
 
-var validActorRefs  = activityObjects.properties.object.oneOf;
-var validTargetRefs = activityObjects.properties.object.oneOf
+const validActorRefs  = activityObjects.properties.object.oneOf;
+const validTargetRefs = activityObjects.properties.object.oneOf;
 
-var validObjectRefs = [];
-var keys = Object.keys(objectTypes);
+let validObjectRefs = [];
+
+const keys = Object.keys(objectTypes);
 keys.forEach(function (type, i) {
   validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
 });
 
-var contextSchema = {
+const contextSchema = {
   "type": "string"
 };
-var typeSchema = {
+const typeSchema = {
   "type": "string"
 };
 
