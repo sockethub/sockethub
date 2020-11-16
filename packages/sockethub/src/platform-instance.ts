@@ -1,5 +1,6 @@
 import { ChildProcess, fork } from 'child_process';
 import { join } from 'path';
+import { debug, Debugger } from 'debug';
 
 import SharedResources from "./shared-resources";
 
@@ -18,11 +19,12 @@ interface MessageFromPlatform extends Array<string|ActivityStream>{0: string, 1:
 export interface MessageFromParent extends Array<string|any>{0: string, 1: any}
 
 
-class PlatformInstance {
+export default class PlatformInstance {
   flaggedForTermination: boolean = false;
   readonly id: string;
   readonly name: string;
   readonly process: ChildProcess;
+  readonly debug: Debugger;
   readonly parentId: string;
   readonly sessions: Set<string> = new Set();
   private readonly actor?: string;
@@ -41,8 +43,9 @@ class PlatformInstance {
     } else {
       this.global = true;
     }
+    this.debug = debug(`sockethub:platform-instance:${this.id}`);
     // spin off a process
-    this.process = fork(join(__dirname, 'platform.js'), [parentId, name, id]);
+    this.process = fork(join(__dirname, 'platform.js'), [ parentId, name, id ]);
   }
 
   public registerSession(sessionId: string) {
@@ -58,6 +61,12 @@ class PlatformInstance {
     this.deregisterListeners(sessionId);
   }
 
+  /**
+   * Sends a message to client (user), can be registered with an event emitted from the platform
+   * process.
+   * @param sessionId ID of the socket connection to send the message to
+   * @param msg ActivityStream object to send to client
+   */
   public sendToClient(sessionId: string, msg: any) {
     const socket = SharedResources.sessionConnections.get(sessionId);
     if (socket) { // send message
@@ -67,13 +76,23 @@ class PlatformInstance {
     }
   }
 
+  /**
+   * Remove listener and delete it from the map.
+   * @param sessionId ID of the socket connection that will no longer receive messages from
+   * platform emits.
+   */
   private deregisterListeners(sessionId: string) {
-    for (let key of Object.keys(this.listeners)) {
-      this.process.removeListener(key, this.listeners[key].get(sessionId));
-      this.listeners[key].delete(sessionId);
+    for (let listener of Object.keys(this.listeners)) {
+      this.process.removeListener(listener, this.listeners[listener].get(sessionId));
+      this.listeners[listener].delete(sessionId);
     }
   }
 
+
+  /**
+   * Register listener to be called when the process emits a message.
+   * @param sessionId ID of socket connection that will receive messages from platform emits
+   */
   private registerListeners(sessionId: string) {
     for (let key of Object.keys(this.listeners)) {
       const listenerFunc = this.listenerFunction(key, sessionId);
@@ -103,7 +122,13 @@ class PlatformInstance {
     SharedResources.helpers.removePlatform(this);
   }
 
-  private listenerFunction(key: string, sessionId: string) {
+  /**
+   * Generates a function tied to a given client session (socket connection), the generated
+   * function will be called for each session ID registered, for every platform emit.
+   * @param listener
+   * @param sessionId
+   */
+  private listenerFunction(listener: string, sessionId: string) {
     const funcs = {
       'close': (e: object) => {
         console.log('close even triggered ' + this.id);
@@ -122,8 +147,6 @@ class PlatformInstance {
         }
       }
     };
-    return funcs[key];
+    return funcs[listener];
   }
 }
-
-export default PlatformInstance;
