@@ -44,7 +44,7 @@ process.on('message', (data) => {
  */
 function sendFunction(command) {
     return function (msg) {
-        logger('sending to client');
+        logger(`sending ${command} to client`);
         process.send([command, msg]);
     };
 }

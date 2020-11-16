@@ -46,9 +46,9 @@ class PlatformInstance {
         }
     }
     deregisterListeners(sessionId) {
-        for (let key of Object.keys(this.listeners)) {
-            this.process.removeListener(key, this.listeners[key].get(sessionId));
-            this.listeners[key].delete(sessionId);
+        for (let listener of Object.keys(this.listeners)) {
+            this.process.removeListener(listener, this.listeners[listener].get(sessionId));
+            this.listeners[listener].delete(sessionId);
         }
     }
     registerListeners(sessionId) {
@@ -78,7 +78,7 @@ class PlatformInstance {
         this.flaggedForTermination = true;
         shared_resources_1.default.helpers.removePlatform(this);
     }
-    listenerFunction(key, sessionId) {
+    listenerFunction(listener, sessionId) {
         const funcs = {
             'close': (e) => {
                 console.log('close even triggered ' + this.id);
@@ -99,7 +99,7 @@ class PlatformInstance {
                 }
             }
         };
-        return funcs[key];
+        return funcs[listener];
     }
 }
 exports.default = PlatformInstance;
