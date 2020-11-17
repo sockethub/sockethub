@@ -569,7 +569,7 @@ IRC.prototype.__connect = function (key, credentials, cb) {
     nicknames: [ credentials.object.nick ],
     server: credentials.object.server || 'irc.freenode.net',
     realname: credentials.actor.displayName || credentials.object.nick,
-    port: (is_secure) ? 6697 : 6667,
+    port: (credentials.object.port) ? parseInt(credentials.object.port, 10) : (is_secure) ? 6697 : 6667,
     debug: console.log
   };
   this.debug('attempting to connect to ' + module_creds.server + ':' + module_creds.port);
