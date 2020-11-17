@@ -98,7 +98,7 @@ class Sockethub {
 
   removeAllPlatformInstances() {
     for (let platform of SharedResources.platformInstances.values()) {
-      SharedResources.helpers.removePlatform(platform);
+      platform.destroy();
     }
   }
 
