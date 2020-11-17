@@ -28,7 +28,7 @@ export default class PlatformInstance {
   readonly parentId: string;
   readonly sessions: Set<string> = new Set();
   private readonly actor?: string;
-  public readonly global?: boolean;
+  public readonly global?: boolean = false;
   private readonly listeners: object = {
     'close': (() => new Map())(),
     'message': (() => new Map())(),
@@ -82,22 +82,21 @@ export default class PlatformInstance {
    * platform emits.
    */
   private deregisterListeners(sessionId: string) {
-    for (let listener of Object.keys(this.listeners)) {
-      this.process.removeListener(listener, this.listeners[listener].get(sessionId));
-      this.listeners[listener].delete(sessionId);
+    for (let type of Object.keys(this.listeners)) {
+      this.process.removeListener(type, this.listeners[type].get(sessionId));
+      this.listeners[type].delete(sessionId);
     }
   }
-
 
   /**
    * Register listener to be called when the process emits a message.
    * @param sessionId ID of socket connection that will receive messages from platform emits
    */
   private registerListeners(sessionId: string) {
-    for (let key of Object.keys(this.listeners)) {
-      const listenerFunc = this.listenerFunction(key, sessionId);
-      this.process.on(key, listenerFunc);
-      this.listeners[key].set(sessionId, listenerFunc);
+    for (let type of Object.keys(this.listeners)) {
+      const listenerFunc = this.listenerFunction(type, sessionId);
+      this.process.on(type, listenerFunc);
+      this.listeners[type].set(sessionId, listenerFunc);
     }
   }
 
@@ -131,7 +130,7 @@ export default class PlatformInstance {
   private listenerFunction(listener: string, sessionId: string) {
     const funcs = {
       'close': (e: object) => {
-        console.log('close even triggered ' + this.id);
+        this.debug('close even triggered ' + this.id);
         this.reportFailure(sessionId, `Error: session thread closed unexpectedly`);
       },
       'message': (data: MessageFromPlatform) => {
@@ -142,7 +141,7 @@ export default class PlatformInstance {
           this.reportFailure(sessionId, data[1]);
         } else {
           // treat like a message to clients
-          console.log("handle", data[1]);
+          this.debug("handling message from platform process", data[1]);
           this.sendToClient(sessionId, data[1]);
         }
       }
