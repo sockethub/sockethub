@@ -78,5 +78,5 @@ class Config {
   get = (key: string): any => nconf.get(key);
 }
 
-config = config ? config : new Config();
+config = new Config();
 export default config;
