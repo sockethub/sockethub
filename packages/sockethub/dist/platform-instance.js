@@ -5,11 +5,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const child_process_1 = require("child_process");
 const path_1 = require("path");
+const debug_1 = require("debug");
 const shared_resources_1 = __importDefault(require("./shared-resources"));
 class PlatformInstance {
     constructor(id, name, parentId, actor) {
         this.flaggedForTermination = false;
         this.sessions = new Set();
+        this.global = false;
         this.listeners = {
             'close': (() => new Map())(),
             'message': (() => new Map())(),
@@ -23,6 +25,7 @@ class PlatformInstance {
         else {
             this.global = true;
         }
+        this.debug = debug_1.debug(`sockethub:platform-instance:${this.id}`);
         // spin off a process
         this.process = child_process_1.fork(path_1.join(__dirname, 'platform.js'), [parentId, name, id]);
     }
@@ -37,6 +40,12 @@ class PlatformInstance {
         this.sessions.delete(sessionId);
         this.deregisterListeners(sessionId);
     }
+    /**
+     * Sends a message to client (user), can be registered with an event emitted from the platform
+     * process.
+     * @param sessionId ID of the socket connection to send the message to
+     * @param msg ActivityStream object to send to client
+     */
     sendToClient(sessionId, msg) {
         const socket = shared_resources_1.default.sessionConnections.get(sessionId);
         if (socket) { // send message
@@ -45,17 +54,26 @@ class PlatformInstance {
             socket.emit('message', msg);
         }
     }
+    /**
+     * Remove listener and delete it from the map.
+     * @param sessionId ID of the socket connection that will no longer receive messages from
+     * platform emits.
+     */
     deregisterListeners(sessionId) {
-        for (let listener of Object.keys(this.listeners)) {
-            this.process.removeListener(listener, this.listeners[listener].get(sessionId));
-            this.listeners[listener].delete(sessionId);
+        for (let type of Object.keys(this.listeners)) {
+            this.process.removeListener(type, this.listeners[type].get(sessionId));
+            this.listeners[type].delete(sessionId);
         }
     }
+    /**
+     * Register listener to be called when the process emits a message.
+     * @param sessionId ID of socket connection that will receive messages from platform emits
+     */
     registerListeners(sessionId) {
-        for (let key of Object.keys(this.listeners)) {
-            const listenerFunc = this.listenerFunction(key, sessionId);
-            this.process.on(key, listenerFunc);
-            this.listeners[key].set(sessionId, listenerFunc);
+        for (let type of Object.keys(this.listeners)) {
+            const listenerFunc = this.listenerFunction(type, sessionId);
+            this.process.on(type, listenerFunc);
+            this.listeners[type].set(sessionId, listenerFunc);
         }
     }
     /**
@@ -78,10 +96,16 @@ class PlatformInstance {
         this.flaggedForTermination = true;
         shared_resources_1.default.helpers.removePlatform(this);
     }
+    /**
+     * Generates a function tied to a given client session (socket connection), the generated
+     * function will be called for each session ID registered, for every platform emit.
+     * @param listener
+     * @param sessionId
+     */
     listenerFunction(listener, sessionId) {
         const funcs = {
             'close': (e) => {
-                console.log('close even triggered ' + this.id);
+                this.debug('close even triggered ' + this.id);
                 this.reportFailure(sessionId, `Error: session thread closed unexpectedly`);
             },
             'message': (data) => {
@@ -94,7 +118,7 @@ class PlatformInstance {
                 }
                 else {
                     // treat like a message to clients
-                    console.log("handle", data[1]);
+                    this.debug("handling message from platform process", data[1]);
                     this.sendToClient(sessionId, data[1]);
                 }
             }
