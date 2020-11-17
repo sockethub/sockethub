@@ -33,7 +33,7 @@ ExamplesShared.prototype.processIncomingMessage = function (msg) {
   if (msg['@type'] === 'observe') {
     $('#messages').append($('<li>').text(` users in ${msg.actor.displayName}`))
       .append($('<li>').text(`  [ ${msg.object.members.join(', ')} ]`));
-  } else if ((msg['@type'] === 'pong') || (msg['@type'] === 'pong')) {
+  } else if ((msg['@type'] === 'pong') || (msg['@type'] === 'ping')) {
     $('#messages').append($('<li>').text(
       `${msg['@type']} received from ${msg.actor['@id']} at ${msg.published}`));
   } else if ((msg['@type'] === 'update') && (msg.object['@type'] === 'address')) {

@@ -3,7 +3,7 @@ const debug = require('debug')('irc2as');
 const ASEmitter = require('./as-emitter');
 
 const EVENT_INCOMING = 'incoming',
-      EVENT_ERROR = 'error',
+      // EVENT_ERROR = 'error',
       EVENT_PONG = 'pong',
       EVENT_PING = 'ping',
       EVENT_UNPROCESSED = 'unprocessed';
@@ -26,7 +26,7 @@ const ERR_BAD_NICK = "432",
       MOTD = "372",
       MOTD_END = "376",
       NAMES = "353",
-      NAMES_END = "366",
+      // NAMES_END = "366",
       NICK = "NICK",
       NOTICE = "NOTICE",
       PART = "PART",
@@ -38,8 +38,8 @@ const ERR_BAD_NICK = "432",
       TOPIC_IS = "332",
       TOPIC_SET_BY = "333",
       WHO = "352",
-      WHO_OLD = "354",
-      WHO_END = "315";
+      WHO_OLD = "354";
+      // WHO_END = "315";
 
 const ROLE = {
     '@': 'owner',
