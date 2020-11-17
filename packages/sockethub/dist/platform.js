@@ -15,6 +15,7 @@ const identifier = process.argv[4];
 const logger = debug_1.default('sockethub:platform');
 logger(`platform handler initialized for ${platformName} ${identifier}`);
 const PlatformModule = require(`sockethub-platform-${platformName}`);
+let queueStarted = false;
 let parentSecret1, parentSecret2;
 /**
  * Handle any uncaught errors from the platform by alerting the worker and shutting down.
@@ -30,7 +31,7 @@ process.on('uncaughtException', (err) => {
  * method to call, the rest are params.
  */
 process.on('message', (data) => {
-    // console.log('incoming IPC message: ' + msg.type, msg.data);
+    console.log('incoming IPC message: ', data);
     if (data[0] === 'secrets') {
         parentSecret1 = data[1].parentSecret1;
         parentSecret2 = data[1].parentSecret2;
@@ -92,6 +93,10 @@ function getCredentials(actorId, sessionId, sessionSecret, cb) {
  * starts listening on the queue for incoming jobs
  */
 function startQueueListener() {
+    if (queueStarted) {
+        return;
+    }
+    queueStarted = true;
     logger('listening on the queue for incoming jobs');
     queue.process(identifier, (job, done) => {
         job.data.msg = crypto_1.default.decrypt(job.data.msg, parentSecret1 + parentSecret2);

@@ -142,7 +142,7 @@ class Sockethub {
         return (msg) => {
             const identifier = this.processManager.register(msg, socket.id);
             sessionLog(`queueing incoming job ${msg.context} for socket 
-        ${socket.id} to chanel ${identifier}`);
+        ${socket.id} to channel ${identifier}`);
             const job = this.queue.create(identifier, {
                 title: socket.id + '-' + msg.context + '-' + (msg['@id']) ? msg['@id'] : this.counter++,
                 socket: socket.id,
