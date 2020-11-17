@@ -1,0 +1,133 @@
+GROUPMESSAGE
+incoming stanza  <ref *1> Element {
+  name: 'message',
+  parent: Element {
+    name: 'stream:stream',
+    parent: null,
+    children: [],
+    attrs: {
+      id: '11206930717011432258',
+      version: '1.0',
+      'xml:lang': 'en',
+      'xmlns:stream': 'http://etherx.jabber.org/streams',
+      from: 'kosmos.org',
+      xmlns: 'jabber:client'
+    }
+  },
+  children: [
+    Element {
+      name: 'archived',
+      parent: [Circular *1],
+      children: [],
+      attrs: [Object]
+    },
+    Element {
+      name: 'stanza-id',
+      parent: [Circular *1],
+      children: [],
+      attrs: [Object]
+    },
+    Element {
+      name: 'origin-id',
+      parent: [Circular *1],
+      children: [],
+      attrs: [Object]
+    },
+    Element {
+      name: 'body',
+      parent: [Circular *1],
+      children: [Array],
+      attrs: {}
+    }
+  ],
+  attrs: {
+    'xml:lang': 'en',
+    to: 'jimmy@kosmos.org/hyperchannel',
+    from: 'kosmos-random@kosmos.chat/raucao',
+    type: 'groupchat',
+    id: '2a755e35-9939-447a-a076-2ea803ca69e9'
+  }
+}
+
+
+LEAVE ROOM
+
+incoming stanza  <ref *1> Element {
+  name: 'presence',
+  parent: Element {
+    name: 'stream:stream',
+    parent: null,
+    children: [],
+    attrs: {
+      id: '1691885476301117321',
+      version: '1.0',
+      'xml:lang': 'en',
+      'xmlns:stream': 'http://etherx.jabber.org/streams',
+      from: 'kosmos.org',
+      xmlns: 'jabber:client'
+    }
+  },
+  children: [
+    Element {
+      name: 'x',
+      parent: [Circular *1],
+      children: [Array],
+      attrs: [Object]
+    }
+  ],
+  attrs: {
+    'xml:lang': 'en',
+    to: 'jimmy@kosmos.org/hyperchannel',
+    from: 'kosmos-random@kosmos.chat/raucao',
+    type: 'unavailable',
+    id: 'f8704b55-b012-43ea-b033-21bf47984752'
+  }
+}
+
+
+JOIN ROOM
+incoming stanza  <ref *1> Element {
+  name: 'presence',
+  parent: Element {
+    name: 'stream:stream',
+    parent: null,
+    children: [],
+    attrs: {
+      id: '1691885476301117321',
+      version: '1.0',
+      'xml:lang': 'en',
+      'xmlns:stream': 'http://etherx.jabber.org/streams',
+      from: 'kosmos.org',
+      xmlns: 'jabber:client'
+    }
+  },
+  children: [
+    Element {
+      name: 'c',
+      parent: [Circular *1],
+      children: [],
+      attrs: [Object]
+    },
+    Element {
+      name: 'x',
+      parent: [Circular *1],
+      children: [Array],
+      attrs: [Object]
+    },
+    Element {
+      name: 'x',
+      parent: [Circular *1],
+      children: [Array],
+      attrs: [Object]
+    }
+  ],
+  attrs: {
+    'xml:lang': 'en',
+    to: 'jimmy@kosmos.org/hyperchannel',
+    from: 'kosmos-random@kosmos.chat/raucao',
+    id: 'edaff0d8-869d-47cd-901c-74475749473c'
+  }
+}
+
+
+
