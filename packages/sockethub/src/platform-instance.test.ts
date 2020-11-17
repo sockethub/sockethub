@@ -14,8 +14,9 @@ jest.mock('./shared-resources', () => ({
         return { emit: jest.fn() };
       })
     },
-    helpers: {
-      removePlatform: jest.fn()
+    platformInstances: {
+      delete: jest.fn(),
+      set: jest.fn()
     }
   }
 }));
@@ -25,9 +26,7 @@ const FORK_PATH = __dirname + '/platform.js';
 describe("PlatformInstance", () => {
   let pi;
   let handlers = {
-    'registerListeners': undefined,
-    'deregisterListeners': undefined,
-    'listenerFunction': undefined
+    'callbackFunction': undefined
   };
 
   beforeEach(() => {
@@ -36,35 +35,54 @@ describe("PlatformInstance", () => {
         PlatformInstance.prototype as any, handler);
     }
 
-    pi = new PlatformInstance('id', 'name', 'parentId');
+    pi = new PlatformInstance('platform identifier', 'a platform name', 'the parentId');
 
     pi.process = {
       on: jest.fn().mockName('pi.process.on'),
-      removeListener: jest.fn().mockName('pi.process.removeListener')
+      removeListener: jest.fn().mockName('pi.process.removeListener'),
+      removeAllListeners: jest.fn().mockName('pi.process.removeAllListeners'),
+      unref: jest.fn().mockName('pi.process.unref'),
+      kill: jest.fn().mockName('pi.process.kill'),
     };
   });
 
   it("should provided have properties set and be global", () => {
-    expect(pi.id).toBe('id');
-    expect(pi.name).toBe('name');
-    expect(pi.parentId).toBe('parentId');
+    expect(pi.id).toBe('platform identifier');
+    expect(pi.name).toBe('a platform name');
+    expect(pi.parentId).toBe('the parentId');
     expect(pi.flaggedForTermination).toBe(false);
     expect(pi.global).toBe(true);
-    expect(fork).toBeCalledWith(FORK_PATH, ['parentId', 'name', 'id']);
+    expect(fork).toBeCalledWith(FORK_PATH, [
+      'the parentId', 'a platform name', 'platform identifier'
+    ]);
   });
 
   it('should register a listener when a session is registered', () => {
     pi.registerSession('my session id');
-    expect(handlers.registerListeners).toBeCalledWith('my session id');
-    expect(handlers.listenerFunction).nthCalledWith(1, 'close', 'my session id');
-    expect(handlers.listenerFunction).nthCalledWith(2, 'message', 'my session id');
+    expect(handlers.callbackFunction).nthCalledWith(1, 'close', 'my session id');
+    expect(handlers.callbackFunction).nthCalledWith(2, 'message', 'my session id');
+    expect(pi.sessions.has('my session id')).toBe(true);
   });
 
-  it('should deregister listener when a session is given', () => {
-    pi.deregisterSession('my session id');
-    expect(handlers.deregisterListeners).toBeCalledWith('my session id');
-    expect(handlers.listenerFunction).nthCalledWith(1, 'close', 'my session id');
-    expect(handlers.listenerFunction).nthCalledWith(2, 'message', 'my session id');
+  it('should generate a failure report', () => {
+    pi.registerSession('my session id');
+    expect(pi.sessions.has('my session id')).toBe(true);
+    pi.reportFailure('my session id', 'an error message');
+    pi.sendToClient = jest.fn();
+    pi.destroy = jest.fn();
+    expect(pi.sessions.size).toBe(0);
+  });
+
+  it('should destroy instance', () => {
+    pi.destroy();
+    expect(SharedResources.platformInstances.delete).toBeCalledWith('platform identifier');
+  });
+
+  it('should update identifier', () => {
+    pi.updateIdentifier('foo bar');
+    expect(pi.id).toBe('foo bar');
+    expect(SharedResources.platformInstances.delete).toBeCalledWith('platform identifier');
+    expect(SharedResources.platformInstances.set).toBeCalledWith('foo bar', pi);
   });
 
   it('should send message to client using socket', () => {
