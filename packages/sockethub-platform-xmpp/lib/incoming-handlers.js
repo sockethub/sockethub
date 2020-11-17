@@ -117,8 +117,8 @@ class IncomingHandlers {
     });
   }
 
-  groupChat(room, from, message, stamp) {
-    this.session.debug('received groupchat event: ' + room, from, message, stamp);
+  groupChatMessage(room, from, message) {
+    this.session.debug('received groupchat event: ' + room, from, message);
     this.session.sendToClient({
       '@type': 'send',
       actor: {
@@ -160,11 +160,34 @@ class IncomingHandlers {
     });
   }
 
+  getMessageBody(stanza) {
+    for (let elem of stanza.children) {
+      if (elem.name === 'body') {
+        return elem.children.join(' ');
+      }
+    }
+  }
+
+  handleMessage(stanza) {
+    console.log('handle message');
+    switch (true) {
+      case stanza.attrs.type === 'groupchat':
+        const [ room, actor ] = stanza.attrs.from.split('/');
+        this.groupChatMessage(room, actor, this.getMessageBody(stanza));
+        break;
+    }
+  }
+
   /**
    * Handles all unknown conditions that we don't have an explicit handler for
    **/
   __stanza(stanza) {
     console.log("incoming stanza ", stanza);
+    switch (true) {
+      case (stanza.name === 'message'):
+        this.handleMessage(stanza);
+        break;
+    }
     // simple-xmpp currently doesn't seem to handle error state presence so we'll do it here for now.
     // TODO: consider moving this.session.to simple-xmpp once it's ironed out and proven to work well.
     if ((stanza.attrs.type === 'error')) {

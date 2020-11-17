@@ -125,9 +125,55 @@ class XMPP {
    * }
    */
   connect(job, credentials, done) {
-    this.debug('connect() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
-      done();
+    if (this.__client) { return done(); } // TODO verify client is actually connected
+    this.debug('connect called for ' + job.actor['@id']);
+    this.__client = client(buildXmppCredentials(credentials));
+    this.__client.on("offline", (a) => {
+      console.log("offline", a);
+      console.log(xmpp.status);
+    });
+    this.__client.on('status', (status) => {
+      console.log('status: ', status);
+    });
+
+    // xmpp.on("stanza", async (stanza) => {
+    //   // console.log(`stanza ${stanza}`);
+    //   console.log(stanza);
+    //   if (stanza.is("message")) {
+    //     await xmpp.send(xml("presence", { type: "unavailable" }));
+    //     // await xmpp.stop();
+    //   }
+    // });
+
+    // xmpp.on("online", async (address) => {
+    //   // Makes itself available
+    //   console.log('xmpp online event ', address);
+    //   await xmpp.send(xml("presence"));
+
+    //   // Sends a chat message to itself
+    //   const message = xml(
+    //     "message",
+    //     { type: "chat", to: address },
+    //     xml("body", {}, "hello world"),
+    //   );
+    //   await xmpp.send(message);
+    // });
+
+    this.__client.start().then(() => {
+      // connected
+      this.debug('connection successful');
+      this.__registerListeners();
+      return done();
+    }).catch((err) => {
+      this.debug(`connect error: ${err}`);
+      this.sendToClient({
+        '@type': 'error',
+        object: {
+          '@type': 'error',
+          content: err.text || err.toString(),
+          condition: err.condition || 'connection-error'
+        }
+      });
     });
   };
 
@@ -162,17 +208,14 @@ class XMPP {
    *
    */
   join(job, credentials, done) {
-    this.debug('join() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
-      // send join
-      this.debug('sending join to ' + `${job.target['@id']}/${job.actor.displayName}`);
-      let id = job.target['@id'].split('/')[0];
-      xmpp.join(
-          `${job.target['@id']}/${job.actor.displayName || id}`
-          // TODO optional passwords not handled for now
-      );
-      done();
-    });
+    this.debug(`sending join from ${job.actor['@id']} to ${job.target['@id']}/${job.actor.displayName}`);
+    let id = job.target['@id'].split('/')[0];
+    // TODO optional passwords not handled for now
+    // TODO investigate implementation reserved nickname discovery
+    this.__client.send(xml("presence",
+      { from: job.actor['@id'], to: `${job.target['@id']}/${job.actor.displayName || id}` }
+    ));
+    done();
   };
 
   /**
@@ -228,16 +271,14 @@ class XMPP {
    */
   send(job, credentials, done) {
     this.debug('send() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
-      // send message
-      this.debug('sending message to ' + job.target['@id']);
-      xmpp.send(
-          job.target['@id'],
-          job.object.content,
-          job.target['@type'] === 'room' ? 'groupchat' : 'chat'
-      );
-      done();
-    });
+    // send message
+    this.debug('sending message to ' + job.target['@id']);
+    this.__client.send(
+        job.target['@id'],
+        job.object.content,
+        job.target['@type'] === 'room' ? 'groupchat' : 'chat'
+    );
+    done();
   };
 
   /**
@@ -267,20 +308,18 @@ class XMPP {
    */
   update(job, credentials, done) {
     this.debug('update() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
-      if (job.object['@type'] === 'presence') {
-        const show = job.object.presence === 'available' ? 'chat' : job.object.show;
-        const status = job.object.content || '';
-        // setting presence
-        this.debug('setting presence: ' + show + ' status: ' + status);
-        xmpp.setPresence(show, status);
-        this.debug('requesting XMPP roster');
-        xmpp.getRoster();
-        done();
-      } else {
-        done('unknown object type (should be presence?): ' + job.object['@type']);
-      }
-    });
+    if (job.object['@type'] === 'presence') {
+      const show = job.object.presence === 'available' ? 'chat' : job.object.show;
+      const status = job.object.content || '';
+      // setting presence
+      this.debug('setting presence: ' + show + ' status: ' + status);
+      this.__client.setPresence(show, status);
+      this.debug('requesting XMPP roster');
+      this.__client.getRoster();
+      done();
+    } else {
+      done('unknown object type (should be presence?): ' + job.object['@type']);
+    }
   };
 
   /**
@@ -308,10 +347,8 @@ class XMPP {
    */
   'request-friend'(job, credentials, done) {
     this.debug('request-friend() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
-      this.debug('request friend ' + job.target['@id']);
-      xmpp.subscribe(job.target['@id']);
-    });
+    this.debug('request friend ' + job.target['@id']);
+    this.__client.subscribe(job.target['@id']);
   };
 
   /**
@@ -339,10 +376,8 @@ class XMPP {
    */
   'remove-friend'(job, credentials, done) {
     this.debug('remove-friend() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
-      this.debug('remove friend ' + job.target['@id']);
-      xmpp.unsubscribe(job.target['@id']);
-    });
+    this.debug('remove friend ' + job.target['@id']);
+    this.__client.unsubscribe(job.target['@id']);
   };
 
   /**
@@ -370,10 +405,8 @@ class XMPP {
    */
   'make-friend'(job, credentials, done) {
     this.debug('make-friend() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
-      this.debug('make friend ' + job.target['@id']);
-        xmpp.acceptSubscription(job.target['@id']);
-      });
+    this.debug('make friend ' + job.target['@id']);
+    this.__client.acceptSubscription(job.target['@id']);
   };
 
   /**
@@ -428,19 +461,14 @@ class XMPP {
    *    }
    *  }
    */
-  observe(job, credentials, done) {
-    this.debug('observe() called by ' + job.actor['@id'] + ' for ' + job.target['@id']);
-    this.__getClient(job.actor['@id'], credentials, (xmpp) => {
-      const stanza = new xmpp.Element('iq', {
-        id: 'muc_id',
-        type: 'get',
-        from: job.actor['@id'],
-        to: job.target['@id']
-      });
-      stanza.c('query', {xmlns: 'http://jabber.org/protocol/disco#items'});
-      xmpp.conn.send(stanza);
-      done();
-    });
+  observe(job, done) {
+    this.debug('sending observe from ' + job.actor['@id'] + ' for ' + job.target['@id']);
+    this.__client.send(xml("iq",  {
+      id: 'muc_id',
+      type: 'get',
+      from: job.actor['@id'],
+      to: job.target['@id']
+    }, xml("query", {xmlns: 'http://jabber.org/protocol/disco#items'})));
   };
 
   cleanup(done) {
@@ -453,76 +481,6 @@ class XMPP {
       this.__client.disconnect();
     }
     done();
-  };
-
-  __getClient(key, credentials, cb) {
-    if (this.__client) {
-      return cb(this.__client);
-    }
-
-    if (! credentials) {
-      throw new Error('no client found, and no credentials specified.');
-    }
-
-    this.actor = credentials.actor;
-
-    this.__connect(key, credentials, (xmpp) => {
-      this.__client = xmpp;
-      this.__registerListeners();
-      return cb(xmpp);
-    });
-  };
-
-  __connect(key, credentials, cb) {
-    this.debug('calling connect for ' + credentials.actor['@id']);
-    let xmpp = client(buildXmppCredentials(credentials));
-
-    xmpp.on("offline", (a) => {
-      console.log("offline", a);
-      console.log(xmpp.status);
-    });
-
-    // xmpp.on("stanza", async (stanza) => {
-    //   // console.log(`stanza ${stanza}`);
-    //   console.log(stanza);
-    //   if (stanza.is("message")) {
-    //     await xmpp.send(xml("presence", { type: "unavailable" }));
-    //     // await xmpp.stop();
-    //   }
-    // });
-
-    // xmpp.on("online", async (address) => {
-    //   // Makes itself available
-    //   console.log('xmpp online event ', address);
-    //   await xmpp.send(xml("presence"));
-
-    //   // Sends a chat message to itself
-    //   const message = xml(
-    //     "message",
-    //     { type: "chat", to: address },
-    //     xml("body", {}, "hello world"),
-    //   );
-    //   await xmpp.send(message);
-    // });
-
-    xmpp.on('status', (status) => {
-      console.log('status: ', status);
-    });
-
-    xmpp.start().then(() => {
-      cb(xmpp); // connected
-      // await xmpp.send(xml("presence"));
-    }).catch((err) => {
-      console.log(`on start catch: ${err}`);
-      this.sendToClient({
-        '@type': 'error',
-        object: {
-          '@type': 'error',
-          content: err.text || err.toString(),
-          condition: err.condition || 'connection-error'
-        }
-      });
-    });
   };
 
   __registerListeners() {
