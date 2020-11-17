@@ -374,7 +374,6 @@ IRC.prototype.update = function (job, credentials, done) {
   this.debug('update() called for ' + job.actor['@id']);
   this.__getClient(job.actor['@id'], credentials, (err, client) => {
     if (err) { return done(err); }
-
     if (job.object['@type'] === 'address')  {
       this.debug('changing nick from ' + job.actor.displayName + ' to ' + job.target.displayName);
       this.__handledActors.add(job.target['@id']);
@@ -383,7 +382,6 @@ IRC.prototype.update = function (job, credentials, done) {
           this.__handledActors.delete(job.target['@id']);
           return done(err);
         }
-        this.debug('completing nick change');
         credentials.object.nick = job.target.displayName;
         credentials.actor['@id'] = `${job.target.displayName}@${credentials.object.server}`;
         credentials.actor.displayName = job.target.displayName;
