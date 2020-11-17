@@ -76,7 +76,7 @@
     "start": "yarn run build && DEBUG=sockethub* ./bin/sockethub",
     "dev": "yarn run build && DEBUG=sockethub* ./bin/sockethub --examples",
     "dev-old": "DEBUG=sockethub* DEV=1 ts-node --pretty --skip-ignore -T -P ./src/tsconfig.json ./bin/sockethub --examples",
-    "compliance": "yarn run build && eslint --ignore-pattern \"coverage/*\" \"**/*.ts\" ./bin/sockethub && c8 jaribu",
+    "compliance": "yarn run build && eslint --ignore-pattern \"coverage/*\" \"**/*.ts\" ./bin/sockethub && c8 jaribu && jest --coverage",
     "coverage": "c8 jaribu",
     "lint": "eslint --ignore-pattern \"coverage\" \"src/*.js\" ./bin/sockethub",
     "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\" ./bin/sockethub",
@@ -94,11 +94,9 @@
     "eslint": "^7.5.0",
     "eslint-cli": "^1.1.1",
     "jaribu": "^2.2.2",
+    "jest": "^26.6.3",
     "ts-jest": "^26.4.4",
     "ts-node": "^8.5.4",
     "typescript": "^3.7.2"
-  },
-  "peerDependencies": {
-    "jest": "^26.6.3"
   }
 }
