@@ -49,7 +49,7 @@ function IRC(cfg) {
   cfg = (typeof cfg === 'object') ? cfg : {};
   this.debug = cfg.debug;
   this.sendToClient = cfg.sendToClient;
-  this.updateCredentials = cfg.updateCredentials;
+  this.updateActor = cfg.updateActor;
   this.__forceDisconnect = false;
   this.__clientConnecting = false;
   this.__client = undefined;
@@ -385,7 +385,10 @@ IRC.prototype.update = function (job, credentials, done) {
         }
         this.debug('completing nick change');
         credentials.object.nick = job.target.displayName;
-        this.updateCredentials(job.target.displayName, credentials.object.server, credentials.object, done);
+        credentials.actor['@id'] = `${job.target.displayName}@${credentials.object.server}`;
+        credentials.actor.displayName = job.target.displayName;
+        this.updateActor(credentials);
+        done();
       });
       // send nick change command
       client.raw(['NICK', job.target.displayName]);
