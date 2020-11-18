@@ -289,10 +289,9 @@ function buildFeedEntry(actor) {
 }
 
 function buildFeedChannel(url, meta) {
-  const link = (meta.link) ? meta.link : url;
   return {
     '@type': 'feedChannel',
-    name: (meta.title) ? meta.title : link,
+    name: (meta.title) ? meta.title : (meta.link) ? meta.link : url,
     address: url,
     description: (meta.description) ? meta.description : '',
     image: (meta.image) ? meta.image : {},
