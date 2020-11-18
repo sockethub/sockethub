@@ -1,13 +1,25 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
     return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const debug_1 = __importDefault(require("debug"));
@@ -16,10 +28,9 @@ const express_1 = __importDefault(require("express"));
 const HTTP = __importStar(require("http"));
 const kue_1 = __importDefault(require("kue"));
 const socket_io_1 = __importDefault(require("socket.io"));
-const init_1 = __importDefault(require("./bootstrap/init"));
+const config_1 = __importDefault(require("./config"));
 const base_1 = __importDefault(require("./routes/base"));
 const examples_1 = __importDefault(require("./routes/examples"));
-const config_1 = __importDefault(require("./config"));
 const log = debug_1.default('sockethub:services');
 let redisCfg = config_1.default.get('redis');
 if (redisCfg.url) {
@@ -28,8 +39,10 @@ if (redisCfg.url) {
 log('redis connection info ', redisCfg);
 const services = {
     startQueue: function (parentId) {
+        const channel = `sockethub:services:queue:${parentId}`;
+        log(`queue started on channel ${channel}`);
         return kue_1.default.createQueue({
-            prefix: 'sockethub:services:queue:' + parentId,
+            prefix: channel,
             redis: redisCfg
         });
     },
@@ -37,7 +50,7 @@ const services = {
         const app = this.__initExpress();
         // initialize express and socket.io objects
         const http = new HTTP.Server(app);
-        const io = socket_io_1.default(http, { path: init_1.default.path });
+        const io = socket_io_1.default(http, { path: config_1.default.get('service:path') });
         // routes list
         [
             base_1.default,
@@ -59,9 +72,9 @@ const services = {
         }
     },
     __startListener: function (http) {
-        http.listen(init_1.default.port, init_1.default.host, () => {
-            log('sockethub listening on http://' + init_1.default.host + ':' + init_1.default.port);
-            log('active platforms: ', [...init_1.default.platforms.keys()]);
+        http.listen(config_1.default.get('service:port'), config_1.default.get('service:host'), () => {
+            log(`sockethub listening on ` +
+                `http://${config_1.default.get('service:host')}:${config_1.default.get('service:port')}`);
         });
     },
     __initExpress: function () {

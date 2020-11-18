@@ -12,9 +12,11 @@ const common_1 = require("./common");
 const parentId = process.argv[2];
 const platformName = process.argv[3];
 const identifier = process.argv[4];
-const logger = debug_1.default('sockethub:platform');
-logger(`platform handler initialized for ${platformName} ${identifier}`);
+const logger = debug_1.default(`sockethub:platform:${identifier}`);
+const queue = services_1.default.startQueue(parentId);
 const PlatformModule = require(`sockethub-platform-${platformName}`);
+logger(`platform handler initialized for ${platformName} ${identifier}`);
+let queueStarted = false;
 let parentSecret1, parentSecret2;
 /**
  * Handle any uncaught errors from the platform by alerting the worker and shutting down.
@@ -30,7 +32,6 @@ process.on('uncaughtException', (err) => {
  * method to call, the rest are params.
  */
 process.on('message', (data) => {
-    // console.log('incoming IPC message: ' + msg.type, msg.data);
     if (data[0] === 'secrets') {
         parentSecret1 = data[1].parentSecret1;
         parentSecret2 = data[1].parentSecret2;
@@ -92,6 +93,11 @@ function getCredentials(actorId, sessionId, sessionSecret, cb) {
  * starts listening on the queue for incoming jobs
  */
 function startQueueListener() {
+    if (queueStarted) {
+        logger('start queue called multiple times, skipping');
+        return;
+    }
+    queueStarted = true;
     logger('listening on the queue for incoming jobs');
     queue.process(identifier, (job, done) => {
         job.data.msg = crypto_1.default.decrypt(job.data.msg, parentSecret1 + parentSecret2);
@@ -106,6 +112,4 @@ function startQueueListener() {
         });
     });
 }
-const queue = services_1.default.startQueue(parentId);
-logger('process started');
 //# sourceMappingURL=platform.js.map
