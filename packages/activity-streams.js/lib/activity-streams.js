@@ -173,7 +173,7 @@ const _Object = {
     let obj = objs.get(id);
     if (! obj) {
       if (! expand) {
-      return obj;
+        return obj;
       }
       obj = {'@id': id};
     }

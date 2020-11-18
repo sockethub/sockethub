@@ -52,7 +52,11 @@ describe('basic tests', () => {
 
     it('getting an unknown id with expand=true returns object', () => {
       expect(activity.Object.get('thingy3', true)).to.deep.equal({'@id':'thingy3'});
-    })
+    });
+
+    it('sending an already expanded object returns itself', () => {
+      expect(activity.Object.get({'@id': 'thingy3', 'foo': 'bar'})).to.deep.equal({'@id': 'thingy3', 'foo': 'bar'});
+    });
   });
 
   describe('stream tests', () => {
