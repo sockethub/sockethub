@@ -39,7 +39,7 @@ if (redisCfg.url) {
 log('redis connection info ', redisCfg);
 const services = {
     startQueue: function (parentId) {
-        const channel = `sockethub:services:queue:${parentId}`;
+        const channel = `sockethub:${parentId}`;
         log(`queue started on channel ${channel}`);
         return kue_1.default.createQueue({
             prefix: channel,
