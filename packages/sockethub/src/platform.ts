@@ -76,6 +76,9 @@ function getCredentials(actorId, sessionId, sessionSecret, cb) {
     if (platform.config.persist) {
       // don't continue if we don't get credentials
       if (err) { return cb(err); }
+    } else if (! credentials) {
+      // also skip if this is a non-persist platform with no credentials
+      return cb();
     }
 
     if (platform.credentialsHash) {
