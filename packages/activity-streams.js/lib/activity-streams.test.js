@@ -1,8 +1,8 @@
 if (typeof ASFactory !== 'function') {
-  ASFactory = require('./../lib/activity-streams');
+  ASFactory = require('./activity-streams');
 }
 if (typeof chai !== 'object') {
-  chai = require('chai')
+  chai = require('chai');
 }
 
 const assert = chai.assert;
