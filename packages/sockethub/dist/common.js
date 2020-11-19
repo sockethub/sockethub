@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getPlatformId = exports.getSessionStore = void 0;
 const secure_store_redis_1 = __importDefault(require("secure-store-redis"));
 const config_1 = __importDefault(require("./config"));
 const crypto_1 = __importDefault(require("./crypto"));
