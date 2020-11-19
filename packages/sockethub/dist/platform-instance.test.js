@@ -41,7 +41,7 @@ describe("PlatformInstance", () => {
             kill: jest.fn().mockName('pi.process.kill'),
         };
     });
-    it("should provided have properties set and be global", () => {
+    it("has certain accessible properties", () => {
         expect(pi.id).toBe('platform identifier');
         expect(pi.name).toBe('a platform name');
         expect(pi.parentId).toBe('the parentId');
@@ -51,13 +51,13 @@ describe("PlatformInstance", () => {
             'the parentId', 'a platform name', 'platform identifier'
         ]);
     });
-    it('should register a listener when a session is registered', () => {
+    it('adds a close and message handler when a session is registered', () => {
         pi.registerSession('my session id');
         expect(handlers.callbackFunction).nthCalledWith(1, 'close', 'my session id');
         expect(handlers.callbackFunction).nthCalledWith(2, 'message', 'my session id');
         expect(pi.sessions.has('my session id')).toBe(true);
     });
-    it('should generate a failure report', () => {
+    it('is able to generate a failure reports', () => {
         pi.registerSession('my session id');
         expect(pi.sessions.has('my session id')).toBe(true);
         pi.reportFailure('my session id', 'an error message');
@@ -65,22 +65,22 @@ describe("PlatformInstance", () => {
         pi.destroy = jest.fn();
         expect(pi.sessions.size).toBe(0);
     });
-    it('should destroy instance', () => {
+    it("cleans up it's references when destroyed", () => {
         pi.destroy();
         expect(shared_resources_1.default.platformInstances.delete).toBeCalledWith('platform identifier');
     });
-    it('should update identifier', () => {
+    it("updates it's identifier when changed", () => {
         pi.updateIdentifier('foo bar');
         expect(pi.id).toBe('foo bar');
         expect(shared_resources_1.default.platformInstances.delete).toBeCalledWith('platform identifier');
         expect(shared_resources_1.default.platformInstances.set).toBeCalledWith('foo bar', pi);
     });
-    it('should send message to client using socket', () => {
+    it('sends messages to client using socket session id', () => {
         pi.sendToClient('my session id', { foo: 'this is a message object' });
         expect(shared_resources_1.default.sessionConnections.get).toBeCalledWith('my session id');
     });
 });
-describe('test private instance per-actor', () => {
+describe('private instance per-actor', () => {
     it("should have actor set and be non-global when provided", () => {
         const pi = new platform_instance_1.default('id', 'name', 'parentId', 'actor string');
         expect(pi.global).toBe(false);
