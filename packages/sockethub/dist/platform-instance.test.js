@@ -62,7 +62,7 @@ describe("PlatformInstance", () => {
         expect(handlers.callbackFunction).nthCalledWith(2, 'message', 'my session id');
         expect(pi.sessions.has('my session id')).toBe(true);
     });
-    it('is able to generate a failure reports', () => {
+    it('is able to generate failure reports', () => {
         pi.registerSession('my session id');
         expect(pi.sessions.has('my session id')).toBe(true);
         pi.reportFailure('my session id', 'an error message');
@@ -70,11 +70,11 @@ describe("PlatformInstance", () => {
         pi.destroy = jest.fn();
         expect(pi.sessions.size).toBe(0);
     });
-    it("cleans up it's references when destroyed", () => {
+    it("cleans up its references when destroyed", () => {
         pi.destroy();
         expect(shared_resources_1.default.platformInstances.delete).toBeCalledWith('platform identifier');
     });
-    it("updates it's identifier when changed", () => {
+    it("updates its identifier when changed", () => {
         pi.updateIdentifier('foo bar');
         expect(pi.id).toBe('foo bar');
         expect(shared_resources_1.default.platformInstances.delete).toBeCalledWith('platform identifier');
@@ -86,7 +86,7 @@ describe("PlatformInstance", () => {
     });
 });
 describe('private instance per-actor', () => {
-    it("should have actor set and be non-global when provided", () => {
+    it("is set as non-global when an actor is provided", () => {
         const params = {
             identifier: 'id',
             platform: 'name',
