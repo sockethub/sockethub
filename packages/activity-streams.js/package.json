@@ -23,8 +23,8 @@
     "url": "https://github.com/silverbucket/activity-streams.js.git"
   },
   "scripts": {
-    "test": "c8 -r text mocha ./test/**/*.js",
-    "test_lcov": "c8 -r lcov mocha ./test/**/*.js",
+    "test": "c8 -r text mocha ./lib/**/*.test.js",
+    "test_lcov": "c8 -r lcov mocha ./lib/**/*.test.js",
     "browser_test": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
     "build": "webpack --mode production",
     "release": "yarn run build && yarn run test && yarn run browser_test",

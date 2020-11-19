@@ -1,8 +1,8 @@
 if (typeof ASFactory !== 'function') {
-  ASFactory = require('./../lib/activity-streams');
+  ASFactory = require('./activity-streams');
 }
 if (typeof chai !== 'object') {
-  chai = require('chai')
+  chai = require('chai');
 }
 
 const assert = chai.assert;
@@ -23,7 +23,7 @@ describe('basic tests', () => {
   });
 
   describe('object tests', () => {
-    it('should have the expected structure', () => {
+    it('has expected structure', () => {
       assert.typeOf(activity, 'object');
       assert.typeOf(activity.Object, 'object');
       assert.typeOf(activity.Stream, 'function');
@@ -32,27 +32,31 @@ describe('basic tests', () => {
       assert.typeOf(activity.off, 'function');
     });
 
-    it('with no params returns undefined', () => {
+    it('returns undefined when no params are passed', () => {
       assert.equal(activity.Object.get(), undefined);
     });
 
-    it('creates an object and exit when get', () => {
+    it('returns object when given a valid lookup id', () => {
       expect(activity.Object.create({id: 'thingy1'})).to.deep.equal({'@id': 'thingy1'});
       expect(activity.Object.get('thingy1')).to.deep.equal({'@id':'thingy1'});
     });
 
-    it('should throw an exception when called with no identifier', () => {
+    it('throws an exception when called with no identifier', () => {
       expect(activity.Object.create).to.throw(Error);
     });
 
-    it('create another object and exist when get', () => {
+    it('creates a second object and returns is as expected', () => {
       expect(activity.Object.create({id: 'thingy2'})).to.deep.equal({'@id':'thingy2'});
       expect(activity.Object.get('thingy2')).to.deep.equal({'@id':'thingy2'});
     });
 
-    it('getting an unknown id with expand=true returns object', () => {
+    it('returns a basic ActivtyObject when receiving an unknown id with expand=true', () => {
       expect(activity.Object.get('thingy3', true)).to.deep.equal({'@id':'thingy3'});
-    })
+    });
+
+    it('returns given id param when lookup fails and expand=false', () => {
+      expect(activity.Object.get({'@id': 'thingy3', 'foo': 'bar'})).to.deep.equal({'@id': 'thingy3', 'foo': 'bar'});
+    });
   });
 
   describe('stream tests', () => {
@@ -69,14 +73,14 @@ describe('basic tests', () => {
       });
     });
 
-    it('should rename mapped props', () => {
+    it('renames mapped props', () => {
       expect(stream['@type']).to.equal('lol');
       expect(stream.verb).to.not.exist;
       expect(stream.context).to.equal('irc');
       expect(stream.platform).to.not.exist;
     });
 
-    it('should expand existing objects', () => {
+    it('expands existing objects', () => {
       expect(stream.target).to.deep.equal([
         { '@id': 'thingy1' },
         { '@id': 'thingy2' }
@@ -84,14 +88,14 @@ describe('basic tests', () => {
       expect(stream.actor).to.deep.equal({ '@id': 'thingy1' });
     });
 
-    it('should handle customProps', () => {
+    it('handles customProps as expected', () => {
       expect(stream.object).to.deep.equal(
         { '@type': 'credentials', content: 'har', secure: true }
       );
       expect(stream.object.objectType).to.not.exist;
     });
 
-    it('should respect specialObj properties', () => {
+    it('respects specialObj properties', () => {
       let stream2 = activity.Stream({
         '@type': 'lol',
         platform: 'irc',
@@ -109,8 +113,8 @@ describe('basic tests', () => {
     })
   });
 
-  describe('event emitions', () => {
-    it('should fire on object creation', () => {
+  describe('emitters', () => {
+    it('emits an event on object creation', () => {
       function onHandler(obj) {
         expect(obj).to.deep.equal({ '@id': 'thingy3' });
         activity.off('activity-object-create', onHandler);
@@ -119,7 +123,7 @@ describe('basic tests', () => {
       activity.Object.create({ id:'thingy3' });
     });
 
-    it('should fire on object deletion', () => {
+    it('emits an event on object deletion', () => {
       activity.once('activity-object-delete', (id) => {
         expect(id).to.equal('thingy2');
       });
