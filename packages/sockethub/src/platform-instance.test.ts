@@ -78,7 +78,7 @@ describe("PlatformInstance", () => {
     expect(pi.sessions.size).toBe(0);
   });
 
-  it("cleans up it's references when destroyed", () => {
+  it("cleans up its references when destroyed", () => {
     pi.destroy();
     expect(SharedResources.platformInstances.delete).toBeCalledWith('platform identifier');
   });
