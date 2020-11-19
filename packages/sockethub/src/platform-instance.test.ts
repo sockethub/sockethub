@@ -83,7 +83,7 @@ describe("PlatformInstance", () => {
     expect(SharedResources.platformInstances.delete).toBeCalledWith('platform identifier');
   });
 
-  it("updates it's identifier when changed", () => {
+  it("updates its identifier when changed", () => {
     pi.updateIdentifier('foo bar');
     expect(pi.id).toBe('foo bar');
     expect(SharedResources.platformInstances.delete).toBeCalledWith('platform identifier');
