@@ -89,6 +89,7 @@ class Sockethub {
     // start internal and external services
     this.queue = services.startQueue(this.parentId);
     this.io = services.startExternal();
+    log('active platforms: ', [...init.platforms.keys()]);
 
     log('registering handlers');
     this.queue.on('job complete', this.handleJobResult('completed'));
@@ -122,7 +123,6 @@ class Sockethub {
 
   private handleActivityObject(sessionLog) {
     return (obj) => {
-      sessionLog('processing activity-object');
       activity.Object.create(obj);
     };
   };
@@ -169,11 +169,11 @@ class Sockethub {
     };
   }
 
-  private handleIncomingMessage(socket: any, store: any, sessionLog: any) {
+  private handleIncomingMessage(socket: any, sessionLog: any) {
     return (msg) => {
       const identifier = this.processManager.register(msg, socket.id);
       sessionLog(`queueing incoming job ${msg.context} for socket 
-        ${socket.id} to chanel ${identifier}`);
+        ${socket.id} to channel ${identifier}`);
       const job = this.queue.create(identifier, {
         title: socket.id + '-' + msg.context + '-' + (msg['@id']) ? msg['@id'] : this.counter++,
         socket: socket.id,
@@ -205,7 +205,7 @@ class Sockethub {
           store = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret),
           middleware = getMiddleware(socket, sessionLog);
 
-    sessionLog('connected to socket.io channel ' + socket.id);
+    sessionLog(`connection on socket.io channel ${socket.id}`);
 
     SharedResources.sessionConnections.set(socket.id, socket);
 
@@ -231,7 +231,7 @@ class Sockethub {
           msg.sessionSecret = sessionSecret;
           next(true, msg);
         },
-        this.handleIncomingMessage(socket, store, sessionLog)
+        this.handleIncomingMessage(socket, sessionLog)
       )
     );
 

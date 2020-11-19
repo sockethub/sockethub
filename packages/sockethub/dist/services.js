@@ -28,10 +28,9 @@ const express_1 = __importDefault(require("express"));
 const HTTP = __importStar(require("http"));
 const kue_1 = __importDefault(require("kue"));
 const socket_io_1 = __importDefault(require("socket.io"));
-const init_1 = __importDefault(require("./bootstrap/init"));
+const config_1 = __importDefault(require("./config"));
 const base_1 = __importDefault(require("./routes/base"));
 const examples_1 = __importDefault(require("./routes/examples"));
-const config_1 = __importDefault(require("./config"));
 const log = debug_1.default('sockethub:services');
 let redisCfg = config_1.default.get('redis');
 if (redisCfg.url) {
@@ -40,8 +39,10 @@ if (redisCfg.url) {
 log('redis connection info ', redisCfg);
 const services = {
     startQueue: function (parentId) {
+        const channel = `sockethub:${parentId}`;
+        log(`queue started on channel ${channel}`);
         return kue_1.default.createQueue({
-            prefix: 'sockethub:services:queue:' + parentId,
+            prefix: channel,
             redis: redisCfg
         });
     },
@@ -49,7 +50,7 @@ const services = {
         const app = this.__initExpress();
         // initialize express and socket.io objects
         const http = new HTTP.Server(app);
-        const io = socket_io_1.default(http, { path: init_1.default.path });
+        const io = socket_io_1.default(http, { path: config_1.default.get('service:path') });
         // routes list
         [
             base_1.default,
@@ -71,9 +72,9 @@ const services = {
         }
     },
     __startListener: function (http) {
-        http.listen(init_1.default.port, init_1.default.host, () => {
-            log('sockethub listening on http://' + init_1.default.host + ':' + init_1.default.port);
-            log('active platforms: ', [...init_1.default.platforms.keys()]);
+        http.listen(config_1.default.get('service:port'), config_1.default.get('service:host'), () => {
+            log(`sockethub listening on ` +
+                `http://${config_1.default.get('service:host')}:${config_1.default.get('service:port')}`);
         });
     },
     __initExpress: function () {

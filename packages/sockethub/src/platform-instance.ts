@@ -14,11 +14,17 @@ interface ActivityStream {
   }
 }
 
+export interface PlatformInstanceParams {
+  identifier: string,
+  platform: string,
+  parentId?: string,
+  actor?: string
+}
+
 interface MessageFromPlatform extends Array<string|ActivityStream>{0: string, 1: ActivityStream}
 export interface MessageFromParent extends Array<string|any>{0: string, 1: any}
 
-
-class PlatformInstance {
+export default class PlatformInstance {
   flaggedForTermination: boolean = false;
   readonly id: string;
   readonly name: string;
@@ -32,17 +38,17 @@ class PlatformInstance {
     'message': (() => new Map())(),
   };
 
-  constructor(id: string, name: string, parentId: string, actor?: string) {
-    this.id = id;
-    this.name = name;
-    this.parentId = parentId;
-    if (actor) {
-      this.actor = actor;
+  constructor(params: PlatformInstanceParams) {
+    this.id = params.identifier;
+    this.name = params.platform;
+    this.parentId = params.parentId;
+    if (params.actor) {
+      this.actor = params.actor;
     } else {
       this.global = true;
     }
     // spin off a process
-    this.process = fork(join(__dirname, 'platform.js'), [parentId, name, id]);
+    this.process = fork(join(__dirname, 'platform.js'), [this.parentId, this.name, this.id]);
   }
 
   public registerSession(sessionId: string) {
@@ -125,5 +131,3 @@ class PlatformInstance {
     return funcs[key];
   }
 }
-
-export default PlatformInstance;
