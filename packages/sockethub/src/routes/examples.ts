@@ -1,5 +1,4 @@
 import path from 'path';
-
 import * as randToken from 'rand-token';
 
 import config from './../config';

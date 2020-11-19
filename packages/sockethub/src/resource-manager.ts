@@ -39,7 +39,7 @@ function resourceManagerCycle() {
           // terminate
           rmLog(`terminating platform instance ${platformInstance.id} ` +
             `(flagged for termination: no registered sessions found)`);
-          SharedResources.helpers.removePlatform(platformInstance);
+          platformInstance.destroy();
         } else {
           rmLog(`flagging for termination platform instance ${platformInstance.id} ` +
             `(no registered sessions found)`);

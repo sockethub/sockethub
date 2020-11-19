@@ -111,9 +111,7 @@ define(['require', 'tv4'], function (require, tv4Module) {
 
       env.platform = new env.Platform({
         debug: console.log,
-        updateCredentials: function (one, two, three, cb) {
-          cb();
-        }
+        updateActor: function (obj) { }
       });
 
       // schema

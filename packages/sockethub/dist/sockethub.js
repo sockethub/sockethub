@@ -65,6 +65,7 @@ class Sockethub {
         // start internal and external services
         this.queue = services_1.default.startQueue(this.parentId);
         this.io = services_1.default.startExternal();
+        log('active platforms: ', [...init_1.default.platforms.keys()]);
         log('registering handlers');
         this.queue.on('job complete', this.handleJobResult('completed'));
         this.queue.on('job failed', this.handleJobResult('failed'));
@@ -72,7 +73,7 @@ class Sockethub {
     }
     removeAllPlatformInstances() {
         for (let platform of shared_resources_1.default.platformInstances.values()) {
-            shared_resources_1.default.helpers.removePlatform(platform);
+            platform.destroy();
         }
     }
     // send message to every connected socket associated with the given platform instance.
@@ -95,7 +96,6 @@ class Sockethub {
     ;
     handleActivityObject(sessionLog) {
         return (obj) => {
-            sessionLog('processing activity-object');
             activity.Object.create(obj);
         };
     }
@@ -115,7 +115,10 @@ class Sockethub {
                     }
                     if (result) {
                         if (type === 'completed') {
-                            job.data.msg.message = result;
+                            job.data.msg.object = {
+                                '@type': 'result',
+                                content: result
+                            };
                         }
                         else if (type === 'failed') {
                             job.data.msg.object = {
@@ -138,7 +141,7 @@ class Sockethub {
             });
         };
     }
-    handleIncomingMessage(socket, store, sessionLog) {
+    handleIncomingMessage(socket, sessionLog) {
         return (msg) => {
             const identifier = this.processManager.register(msg, socket.id);
             sessionLog(`queueing incoming job ${msg.context} for socket 
@@ -173,7 +176,7 @@ class Sockethub {
         sessionSecret = rand_token_1.default.generate(16), 
         // store instance is session-specific
         store = common_1.getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret), middleware = getMiddleware(socket, sessionLog);
-        sessionLog('connected to socket.io channel ' + socket.id);
+        sessionLog(`connection on socket.io channel ${socket.id}`);
         shared_resources_1.default.sessionConnections.set(socket.id, socket);
         socket.on('disconnect', () => {
             sessionLog('disconnect received from client.');
@@ -186,7 +189,7 @@ class Sockethub {
             // that this specific session (socket connection) has provided credentials.
             msg.sessionSecret = sessionSecret;
             next(true, msg);
-        }, this.handleIncomingMessage(socket, store, sessionLog)));
+        }, this.handleIncomingMessage(socket, sessionLog)));
         // when new activity objects are created on the client side, an event is
         // fired and we receive a copy on the server side.
         socket.on('activity-object', middleware.chain(validate_1.default('activity-object'), this.handleActivityObject(sessionLog)));

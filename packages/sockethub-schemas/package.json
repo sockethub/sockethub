@@ -17,7 +17,7 @@
     "url": "git://github.com/sockethub/sockethub-schemas.git"
   },
   "devDependencies": {
-    "jaribu": "^2.0.0",
+    "jaribu": "^2.2.3",
     "tv4": "^1.1.4"
   },
   "scripts": {
@@ -26,6 +26,6 @@
     "travis": "yarn run test"
   },
   "dependencies": {
-    "debug": "^4.1.1"
+    "debug": "^4.3.1"
   }
 }

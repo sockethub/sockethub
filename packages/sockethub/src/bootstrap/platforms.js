@@ -11,7 +11,6 @@ const tv4     = require('tv4'),
       findup  = require('findup-sync');
 
 const config = require('../config').default;
-
 const log = debug('sockethub:bootstrap:platforms');
 
 const whitelist = config.get('platforms:whitelist'),

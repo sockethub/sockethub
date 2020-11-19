@@ -1,6 +1,6 @@
 import init from './bootstrap/init';
 import SharedResources from "./shared-resources";
-import PlatformInstance from "./platform-instance";
+import PlatformInstance, { PlatformInstanceParams } from "./platform-instance";
 import { getPlatformId } from "./common";
 import { MessageFromParent } from "./platform-instance";
 
@@ -27,19 +27,27 @@ class ProcessManager {
     }
   }
 
-  private ensureProcess(platform: string, sessionId?: string, actor?: string) {
-    const identifier = getPlatformId(platform, actor);
-    const platformInstance = SharedResources.platformInstances.get(identifier) ||
-        new PlatformInstance(identifier, platform, this.parentId, actor);
-
+  private createPlatformInstance(identifier:string, platform:string, actor?: string) {
     const secrets: MessageFromParent = [
       'secrets', {
         parentSecret1: this.parentSecret1,
         parentSecret2: this.parentSecret2
       }
     ];
+    const platformInstance = new PlatformInstance({
+      identifier: identifier,
+      platform: platform,
+      parentId: this.parentId,
+      actor: actor
+    });
     platformInstance.process.send(secrets);
+    return platformInstance;
+  }
 
+  private ensureProcess(platform: string, sessionId?: string, actor?: string) {
+    const identifier = getPlatformId(platform, actor);
+    const platformInstance = SharedResources.platformInstances.get(identifier) ||
+              this.createPlatformInstance(identifier, platform, actor);
     if (sessionId) {
       platformInstance.registerSession(sessionId);
     }

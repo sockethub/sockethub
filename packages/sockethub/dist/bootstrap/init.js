@@ -64,10 +64,7 @@ else if (config_1.default.get('info')) {
 log('finished init routines');
 const init = {
     version: packageJSON.version,
-    platforms: platforms,
-    host: config_1.default.get('service:host'),
-    port: config_1.default.get('service:port'),
-    path: config_1.default.get('service:path')
+    platforms: platforms
 };
 exports.default = init;
 //# sourceMappingURL=init.js.map
