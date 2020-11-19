@@ -73,7 +73,7 @@ class Sockethub {
     }
     removeAllPlatformInstances() {
         for (let platform of shared_resources_1.default.platformInstances.values()) {
-            shared_resources_1.default.helpers.removePlatform(platform);
+            platform.destroy();
         }
     }
     // send message to every connected socket associated with the given platform instance.

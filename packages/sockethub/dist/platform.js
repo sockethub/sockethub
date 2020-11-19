@@ -11,13 +11,14 @@ const common_1 = require("./common");
 // command-line params
 const parentId = process.argv[2];
 const platformName = process.argv[3];
-const identifier = process.argv[4];
+let identifier = process.argv[4];
 const logger = debug_1.default(`sockethub:platform:${identifier}`);
 const queue = services_1.default.startQueue(parentId);
 const PlatformModule = require(`sockethub-platform-${platformName}`);
 logger(`platform handler initialized for ${platformName} ${identifier}`);
 let queueStarted = false;
 let parentSecret1, parentSecret2;
+logger(`platform handler initialized for ${platformName} ${identifier}`);
 /**
  * Handle any uncaught errors from the platform by alerting the worker and shutting down.
  */
@@ -35,7 +36,7 @@ process.on('message', (data) => {
     if (data[0] === 'secrets') {
         parentSecret1 = data[1].parentSecret1;
         parentSecret2 = data[1].parentSecret2;
-        startQueueListener();
+        startQueueListener(identifier, parentSecret1 + parentSecret2);
     }
 });
 /**
@@ -44,9 +45,9 @@ process.on('message', (data) => {
  * @param command
  */
 function sendFunction(command) {
-    return function (msg) {
-        logger('sending to client');
-        process.send([command, msg]);
+    return function (msg, special) {
+        logger(`sending ${command} to client`);
+        process.send([command, msg, special]);
     };
 }
 /**
@@ -55,7 +56,7 @@ function sendFunction(command) {
 const platform = new PlatformModule({
     debug: debug_1.default(`sockethub:platform:${platformName}:${identifier}`),
     sendToClient: sendFunction('message'),
-    updateCredentials: sendFunction('updateCredentials')
+    updateActor: updateActor
 });
 /**
  * get the credentials stored for this user in this sessions store, if given the correct
@@ -93,18 +94,25 @@ function getCredentials(actorId, sessionId, sessionSecret, cb) {
         cb(undefined, credentials);
     });
 }
+function updateActor(credentials) {
+    identifier = common_1.getPlatformId(platformName, credentials.actor['@id']);
+    logger(`platform actor updated to ${credentials.actor['@id']} identifier ${identifier}`);
+    platform.credentialsHash = object_hash_1.default(credentials.object);
+    platform.debug = debug_1.default(`sockethub:platform:${platformName}:${identifier}`);
+    process.send(['updateActor', undefined, identifier]);
+}
 /**
  * starts listening on the queue for incoming jobs
  */
-function startQueueListener() {
+function startQueueListener(_identifier, secret) {
     if (queueStarted) {
         logger('start queue called multiple times, skipping');
         return;
     }
     queueStarted = true;
     logger('listening on the queue for incoming jobs');
-    queue.process(identifier, (job, done) => {
-        job.data.msg = crypto_1.default.decrypt(job.data.msg, parentSecret1 + parentSecret2);
+    queue.process(_identifier, (job, done) => {
+        job.data.msg = crypto_1.default.decrypt(job.data.msg, secret);
         logger(`platform process decrypted job ${job.data.msg['@type']}`);
         const sessionSecret = job.data.msg.sessionSecret;
         delete job.data.msg.sessionSecret;

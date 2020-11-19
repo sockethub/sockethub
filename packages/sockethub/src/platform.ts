@@ -2,13 +2,13 @@ import debug from 'debug';
 import hash from "object-hash";
 import services from './services';
 import crypto from "./crypto";
-import { getSessionStore } from "./common";
-import { MessageFromParent } from './platform-instance';
+import { getSessionStore, getPlatformId } from "./common";
+import { MessageFromParent, ActivityObject } from './platform-instance';
 
 // command-line params
 const parentId = process.argv[2];
 const platformName = process.argv[3];
-const identifier = process.argv[4];
+let identifier = process.argv[4];
 
 const logger = debug(`sockethub:platform:${identifier}`);
 const queue = services.startQueue(parentId);
@@ -18,6 +18,7 @@ logger(`platform handler initialized for ${platformName} ${identifier}`);
 
 let queueStarted = false;
 let parentSecret1: string, parentSecret2: string;
+logger(`platform handler initialized for ${platformName} ${identifier}`);
 
 /**
  * Handle any uncaught errors from the platform by alerting the worker and shutting down.
@@ -37,7 +38,7 @@ process.on('message', (data: MessageFromParent) => {
   if (data[0] === 'secrets') {
     parentSecret1 = data[1].parentSecret1;
     parentSecret2 = data[1].parentSecret2;
-    startQueueListener();
+    startQueueListener(identifier, parentSecret1 + parentSecret2);
   }
 });
 
@@ -46,10 +47,10 @@ process.on('message', (data: MessageFromParent) => {
  * call that function to send messages back to the client.
  * @param command
  */
-function sendFunction(command) {
-  return function (msg) {
-    logger('sending to client');
-    process.send([command, msg]);
+function sendFunction(command: string) {
+  return function (msg: ActivityObject, special?: string) {
+    logger(`sending ${command} to client`);
+    process.send([command, msg, special]);
   };
 }
 
@@ -59,7 +60,7 @@ function sendFunction(command) {
 const platform = new PlatformModule({
   debug: debug(`sockethub:platform:${platformName}:${identifier}`),
   sendToClient: sendFunction('message'),
-  updateCredentials: sendFunction('updateCredentials')
+  updateActor: updateActor
 });
 
 /**
@@ -94,18 +95,26 @@ function getCredentials(actorId, sessionId, sessionSecret, cb) {
   });
 }
 
+function updateActor(credentials) {
+  identifier = getPlatformId(platformName, credentials.actor['@id']);
+  logger(`platform actor updated to ${credentials.actor['@id']} identifier ${identifier}`);
+  platform.credentialsHash = hash(credentials.object);
+  platform.debug = debug(`sockethub:platform:${platformName}:${identifier}`);
+  process.send(['updateActor', undefined, identifier]);
+}
+
 /**
  * starts listening on the queue for incoming jobs
  */
-function startQueueListener() {
+function startQueueListener(_identifier: string, secret: string) {
   if (queueStarted) {
     logger('start queue called multiple times, skipping');
     return;
   }
   queueStarted = true;
   logger('listening on the queue for incoming jobs');
-  queue.process(identifier, (job, done: Function) => {
-    job.data.msg = crypto.decrypt(job.data.msg, parentSecret1 + parentSecret2);
+  queue.process(_identifier, (job, done: Function) => {
+    job.data.msg = crypto.decrypt(job.data.msg, secret);
     logger(`platform process decrypted job ${job.data.msg['@type']}`);
     const sessionSecret = job.data.msg.sessionSecret;
     delete job.data.msg.sessionSecret;
