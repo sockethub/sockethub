@@ -115,7 +115,10 @@ class Sockethub {
                     }
                     if (result) {
                         if (type === 'completed') {
-                            job.data.msg.message = result;
+                            job.data.msg.object = {
+                                '@type': 'result',
+                                content: result
+                            };
                         }
                         else if (type === 'failed') {
                             job.data.msg.object = {

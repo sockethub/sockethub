@@ -77,6 +77,10 @@ function getCredentials(actorId, sessionId, sessionSecret, cb) {
                 return cb(err);
             }
         }
+        else if (!credentials) {
+            // also skip if this is a non-persist platform with no credentials
+            return cb();
+        }
         if (platform.credentialsHash) {
             if (platform.credentialsHash !== object_hash_1.default(credentials.object)) {
                 return cb('provided credentials do not match existing platform instance for actor '

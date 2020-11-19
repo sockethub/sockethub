@@ -134,7 +134,6 @@ class Sockethub {
         if (err) {
           return log(`error retrieving (${type}) job #${id}`);
         }
-
         if (this.io.sockets.connected[job.data.socket]) {
           job.data.msg = crypto.decrypt(job.data.msg, this.parentSecret1 + this.parentSecret2);
           delete job.data.msg.sessionSecret;
@@ -144,7 +143,10 @@ class Sockethub {
 
           if (result) {
             if (type === 'completed') {
-              job.data.msg.message = result;
+              job.data.msg.object = {
+                '@type': 'result',
+                content: result
+              };
             } else if (type === 'failed') {
               job.data.msg.object = {
                 '@type': 'error',
