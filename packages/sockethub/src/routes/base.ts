@@ -1,6 +1,7 @@
 import path from 'path';
 
 import config from './../config';
+
 let routes = [];
 
 routes.push({

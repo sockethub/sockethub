@@ -8,7 +8,7 @@ const path_1 = require("path");
 const debug_1 = require("debug");
 const shared_resources_1 = __importDefault(require("./shared-resources"));
 class PlatformInstance {
-    constructor(id, name, parentId, actor) {
+    constructor(params) {
         this.flaggedForTermination = false;
         this.sessions = new Set();
         this.global = false;
@@ -16,18 +16,18 @@ class PlatformInstance {
             'close': (() => new Map())(),
             'message': (() => new Map())(),
         };
-        this.id = id;
-        this.name = name;
-        this.parentId = parentId;
-        if (actor) {
-            this.actor = actor;
+        this.id = params.identifier;
+        this.name = params.platform;
+        this.parentId = params.parentId;
+        if (params.actor) {
+            this.actor = params.actor;
         }
         else {
             this.global = true;
         }
         this.debug = debug_1.debug(`sockethub:platform-instance:${this.id}`);
         // spin off a process
-        this.process = child_process_1.fork(path_1.join(__dirname, 'platform.js'), [parentId, name, id]);
+        this.process = child_process_1.fork(path_1.join(__dirname, 'platform.js'), [this.parentId, this.name, this.id]);
     }
     /**
      * Destroys all references to this platform instance, internal listeners and controlled processes

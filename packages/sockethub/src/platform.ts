@@ -1,6 +1,5 @@
 import debug from 'debug';
 import hash from "object-hash";
-
 import services from './services';
 import crypto from "./crypto";
 import { getSessionStore, getPlatformId } from "./common";
@@ -9,11 +8,15 @@ import { MessageFromParent, ActivityObject } from './platform-instance';
 // command-line params
 const parentId = process.argv[2];
 const platformName = process.argv[3];
-const PlatformModule = require(`sockethub-platform-${platformName}`);
-const logger = debug('sockethub:platform');
-
 let identifier = process.argv[4];
 
+const logger = debug(`sockethub:platform:${identifier}`);
+const queue = services.startQueue(parentId);
+const PlatformModule = require(`sockethub-platform-${platformName}`);
+
+logger(`platform handler initialized for ${platformName} ${identifier}`);
+
+let queueStarted = false;
 let parentSecret1: string, parentSecret2: string;
 logger(`platform handler initialized for ${platformName} ${identifier}`);
 
@@ -32,7 +35,6 @@ process.on('uncaughtException', (err) => {
  * method to call, the rest are params.
  */
 process.on('message', (data: MessageFromParent) => {
-  // console.log('incoming IPC message: ' + msg.type, msg.data);
   if (data[0] === 'secrets') {
     parentSecret1 = data[1].parentSecret1;
     parentSecret2 = data[1].parentSecret2;
@@ -76,6 +78,9 @@ function getCredentials(actorId, sessionId, sessionSecret, cb) {
     if (platform.config.persist) {
       // don't continue if we don't get credentials
       if (err) { return cb(err); }
+    } else if (! credentials) {
+      // also skip if this is a non-persist platform with no credentials
+      return cb();
     }
 
     if (platform.credentialsHash) {
@@ -102,6 +107,11 @@ function updateActor(credentials) {
  * starts listening on the queue for incoming jobs
  */
 function startQueueListener(_identifier: string, secret: string) {
+  if (queueStarted) {
+    logger('start queue called multiple times, skipping');
+    return;
+  }
+  queueStarted = true;
   logger('listening on the queue for incoming jobs');
   queue.process(_identifier, (job, done: Function) => {
     job.data.msg = crypto.decrypt(job.data.msg, secret);
@@ -116,5 +126,3 @@ function startQueueListener(_identifier: string, secret: string) {
   });
 }
 
-const queue = services.startQueue(parentId);
-logger('process started');

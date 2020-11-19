@@ -12,15 +12,6 @@ define(['require'], function (require) {
       },
       tests: [
         {
-          desc: 'host, port, path',
-          run: function (env, test) {
-            test.assertAnd(env.init.host, 'localhost');
-            test.assertAnd(env.init.port, 10550);
-            test.assert(env.init.path, '/sockethub');
-          }
-        },
-
-        {
           desc: 'platforms',
           run: function (env, test) {
             test.assertTypeAnd(env.init.platforms, 'object');

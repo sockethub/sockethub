@@ -15,6 +15,13 @@ export interface ActivityObject {
   }
 }
 
+export interface PlatformInstanceParams {
+  identifier: string,
+  platform: string,
+  parentId?: string,
+  actor?: string
+}
+
 interface MessageFromPlatform extends Array<string|ActivityObject>{
   0: string, 1: ActivityObject, 2: string}
 export interface MessageFromParent extends Array<string|any>{0: string, 1: any}
@@ -35,18 +42,18 @@ export default class PlatformInstance {
     'message': (() => new Map())(),
   };
 
-  constructor(id: string, name: string, parentId: string, actor?: string) {
-    this.id = id;
-    this.name = name;
-    this.parentId = parentId;
-    if (actor) {
-      this.actor = actor;
+  constructor(params: PlatformInstanceParams) {
+    this.id = params.identifier;
+    this.name = params.platform;
+    this.parentId = params.parentId;
+    if (params.actor) {
+      this.actor = params.actor;
     } else {
       this.global = true;
     }
     this.debug = debug(`sockethub:platform-instance:${this.id}`);
     // spin off a process
-    this.process = fork(join(__dirname, 'platform.js'), [ parentId, name, id ]);
+    this.process = fork(join(__dirname, 'platform.js'), [this.parentId, this.name, this.id]);
   }
 
   /**

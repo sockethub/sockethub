@@ -1,7 +1,7 @@
 import { fork } from 'child_process';
 import { debug } from 'debug';
 
-import PlatformInstance from "./platform-instance";
+import PlatformInstance, { PlatformInstanceParams } from "./platform-instance";
 import SharedResources from "./shared-resources";
 
 jest.mock('child_process');
@@ -35,7 +35,12 @@ describe("PlatformInstance", () => {
         PlatformInstance.prototype as any, handler);
     }
 
-    pi = new PlatformInstance('platform identifier', 'a platform name', 'the parentId');
+    const params: PlatformInstanceParams = {
+      identifier: 'platform identifier',
+      platform: 'a platform name',
+      parentId: 'the parentId'
+    };
+    pi = new PlatformInstance(params);
 
     pi.process = {
       on: jest.fn().mockName('pi.process.on'),
@@ -93,7 +98,13 @@ describe("PlatformInstance", () => {
 
 describe('private instance per-actor', () => {
   it("should have actor set and be non-global when provided", () => {
-    const pi = new PlatformInstance('id', 'name', 'parentId', 'actor string');
+    const params: PlatformInstanceParams = {
+      identifier: 'id',
+      platform: 'name',
+      parentId: 'parentId',
+      actor: 'actor string'
+    };
+    const pi = new PlatformInstance(params);
     expect(pi.global).toBe(false);
     expect(fork).toBeCalledWith(FORK_PATH, ['parentId', 'name', 'id']);
   });

@@ -24,17 +24,26 @@ class ProcessManager {
             return this.ensureProcess(msg.context);
         }
     }
-    ensureProcess(platform, sessionId, actor) {
-        const identifier = common_1.getPlatformId(platform, actor);
-        const platformInstance = shared_resources_1.default.platformInstances.get(identifier) ||
-            new platform_instance_1.default(identifier, platform, this.parentId, actor);
+    createPlatformInstance(identifier, platform, actor) {
         const secrets = [
             'secrets', {
                 parentSecret1: this.parentSecret1,
                 parentSecret2: this.parentSecret2
             }
         ];
+        const platformInstance = new platform_instance_1.default({
+            identifier: identifier,
+            platform: platform,
+            parentId: this.parentId,
+            actor: actor
+        });
         platformInstance.process.send(secrets);
+        return platformInstance;
+    }
+    ensureProcess(platform, sessionId, actor) {
+        const identifier = common_1.getPlatformId(platform, actor);
+        const platformInstance = shared_resources_1.default.platformInstances.get(identifier) ||
+            this.createPlatformInstance(identifier, platform, actor);
         if (sessionId) {
             platformInstance.registerSession(sessionId);
         }

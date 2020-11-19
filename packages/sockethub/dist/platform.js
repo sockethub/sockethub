@@ -11,9 +11,12 @@ const common_1 = require("./common");
 // command-line params
 const parentId = process.argv[2];
 const platformName = process.argv[3];
-const PlatformModule = require(`sockethub-platform-${platformName}`);
-const logger = debug_1.default('sockethub:platform');
 let identifier = process.argv[4];
+const logger = debug_1.default(`sockethub:platform:${identifier}`);
+const queue = services_1.default.startQueue(parentId);
+const PlatformModule = require(`sockethub-platform-${platformName}`);
+logger(`platform handler initialized for ${platformName} ${identifier}`);
+let queueStarted = false;
 let parentSecret1, parentSecret2;
 logger(`platform handler initialized for ${platformName} ${identifier}`);
 /**
@@ -30,7 +33,6 @@ process.on('uncaughtException', (err) => {
  * method to call, the rest are params.
  */
 process.on('message', (data) => {
-    // console.log('incoming IPC message: ' + msg.type, msg.data);
     if (data[0] === 'secrets') {
         parentSecret1 = data[1].parentSecret1;
         parentSecret2 = data[1].parentSecret2;
@@ -76,6 +78,10 @@ function getCredentials(actorId, sessionId, sessionSecret, cb) {
                 return cb(err);
             }
         }
+        else if (!credentials) {
+            // also skip if this is a non-persist platform with no credentials
+            return cb();
+        }
         if (platform.credentialsHash) {
             if (platform.credentialsHash !== object_hash_1.default(credentials.object)) {
                 return cb('provided credentials do not match existing platform instance for actor '
@@ -99,6 +105,11 @@ function updateActor(credentials) {
  * starts listening on the queue for incoming jobs
  */
 function startQueueListener(_identifier, secret) {
+    if (queueStarted) {
+        logger('start queue called multiple times, skipping');
+        return;
+    }
+    queueStarted = true;
     logger('listening on the queue for incoming jobs');
     queue.process(_identifier, (job, done) => {
         job.data.msg = crypto_1.default.decrypt(job.data.msg, secret);
@@ -113,6 +124,4 @@ function startQueueListener(_identifier, secret) {
         });
     });
 }
-const queue = services_1.default.startQueue(parentId);
-logger('process started');
 //# sourceMappingURL=platform.js.map

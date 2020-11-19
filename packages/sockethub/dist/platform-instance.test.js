@@ -32,7 +32,12 @@ describe("PlatformInstance", () => {
         for (let handler of Object.keys(handlers)) {
             handlers[handler] = jest.spyOn(platform_instance_1.default.prototype, handler);
         }
-        pi = new platform_instance_1.default('platform identifier', 'a platform name', 'the parentId');
+        const params = {
+            identifier: 'platform identifier',
+            platform: 'a platform name',
+            parentId: 'the parentId'
+        };
+        pi = new platform_instance_1.default(params);
         pi.process = {
             on: jest.fn().mockName('pi.process.on'),
             removeListener: jest.fn().mockName('pi.process.removeListener'),
@@ -82,7 +87,13 @@ describe("PlatformInstance", () => {
 });
 describe('private instance per-actor', () => {
     it("should have actor set and be non-global when provided", () => {
-        const pi = new platform_instance_1.default('id', 'name', 'parentId', 'actor string');
+        const params = {
+            identifier: 'id',
+            platform: 'name',
+            parentId: 'parentId',
+            actor: 'actor string'
+        };
+        const pi = new platform_instance_1.default(params);
         expect(pi.global).toBe(false);
         expect(child_process_1.fork).toBeCalledWith(FORK_PATH, ['parentId', 'name', 'id']);
     });
