@@ -69,7 +69,7 @@ describe("PlatformInstance", () => {
     expect(pi.sessions.has('my session id')).toBe(true);
   });
 
-  it('is able to generate a failure reports', () => {
+  it('is able to generate failure reports', () => {
     pi.registerSession('my session id');
     expect(pi.sessions.has('my session id')).toBe(true);
     pi.reportFailure('my session id', 'an error message');
