@@ -49,7 +49,7 @@ function IRC(cfg) {
   cfg = (typeof cfg === 'object') ? cfg : {};
   this.debug = cfg.debug;
   this.sendToClient = cfg.sendToClient;
-  this.updateCredentials = cfg.updateCredentials;
+  this.updateActor = cfg.updateActor;
   this.__forceDisconnect = false;
   this.__clientConnecting = false;
   this.__client = undefined;
@@ -374,7 +374,6 @@ IRC.prototype.update = function (job, credentials, done) {
   this.debug('update() called for ' + job.actor['@id']);
   this.__getClient(job.actor['@id'], credentials, (err, client) => {
     if (err) { return done(err); }
-
     if (job.object['@type'] === 'address')  {
       this.debug('changing nick from ' + job.actor.displayName + ' to ' + job.target.displayName);
       this.__handledActors.add(job.target['@id']);
@@ -383,9 +382,11 @@ IRC.prototype.update = function (job, credentials, done) {
           this.__handledActors.delete(job.target['@id']);
           return done(err);
         }
-        this.debug('completing nick change');
         credentials.object.nick = job.target.displayName;
-        this.updateCredentials(job.target.displayName, credentials.object.server, credentials.object, done);
+        credentials.actor['@id'] = `${job.target.displayName}@${credentials.object.server}`;
+        credentials.actor.displayName = job.target.displayName;
+        this.updateActor(credentials);
+        done();
       });
       // send nick change command
       client.raw(['NICK', job.target.displayName]);

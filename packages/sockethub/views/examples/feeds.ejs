@@ -25,7 +25,7 @@
     <script src="<%= address %>sockethub-client.js"></script>
     <script>
       localStorage.debug = '<%= debug_scope %>';
-      var sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
+      const sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
 
       // errors
       sc.socket.on('failure', function (msg) {
@@ -34,29 +34,33 @@
 
       sc.socket.on('completed', function (msg) {
         console.log('received completed event for: ', msg);
+        displayMessages(msg.object.content || []);
       });
 
       // handle incoming messages from the sockethub server
       sc.socket.on('message', function (msg) {
         console.log('received message: ', msg);
-        if (Array.isArray(msg)) {
-          for (var i = 0, len = msg.length; i < len; i++) {
-            displayMessage(msg[i]);
-          }
-        } else {
-          displayMessage(msg);
-        }
+        displayMessages(msg);
       });
 
+      function displayMessages(msgs) {
+        if (Array.isArray(msgs)) {
+          for (let i = 0, len = msgs.length; i < len; i++) {
+            displayMessage(msgs[i]);
+          }
+        } else {
+          displayMessage(msgs);
+        }
+      }
+
       function displayMessage(msg) {
-        msg.actor = sc.ActivityStreams.Object.get(msg.actor);
         console.log('displaying message: ', msg);
-        $('#messages').append($('<li>').text(msg.actor.displayName + ': ' + msg.object.title));
+        $('#messages').append($('<li>').html(`<b>${msg.object.displayName}</b>: ${msg.object.html}`));
       }
 
       // handler for user input, emit messages to sockethub server
       $('form').submit(function () {
-        var msg = {
+        const msg = {
           context: 'feeds',
           '@type': 'fetch',
           actor: 'https://sockethub.org/examples/feeds',

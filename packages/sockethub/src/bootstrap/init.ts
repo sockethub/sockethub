@@ -62,11 +62,21 @@ if (config.get('help')) {
 
 log('finished init routines');
 
-const init = {
+export interface IInitObject {
+  version: string,
+  platforms: Map<string, {
+    id: string,
+    moduleName: string,
+    config: {
+      persist?: boolean
+    },
+    version: string,
+    '@types': string
+  }>,
+}
+
+const init: IInitObject = {
   version: packageJSON.version,
-  platforms: platforms,
-  host: config.get('service:host'),
-  port: config.get('service:port'),
-  path: config.get('service:path')
+  platforms: platforms
 };
 export default init;
