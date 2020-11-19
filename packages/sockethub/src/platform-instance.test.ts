@@ -97,7 +97,7 @@ describe("PlatformInstance", () => {
 });
 
 describe('private instance per-actor', () => {
-  it("should have actor set and be non-global when provided", () => {
+  it("is set as non-global when an actor is provided", () => {
     const params: PlatformInstanceParams = {
       identifier: 'id',
       platform: 'name',
