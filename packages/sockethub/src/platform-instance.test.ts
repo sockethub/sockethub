@@ -91,7 +91,7 @@ describe("PlatformInstance", () => {
   });
 });
 
-describe('test private instance per-actor', () => {
+describe('Private instance per-actor', () => {
   it("should have actor set and be non-global when provided", () => {
     const pi = new PlatformInstance('id', 'name', 'parentId', 'actor string');
     expect(pi.global).toBe(false);
