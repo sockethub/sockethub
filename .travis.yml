@@ -1,4 +1,7 @@
 language: node_js
+os: linux
+arch: arm64-graviton2
+group: edge
 node_js:
   - 'lts/*'
   - 13
