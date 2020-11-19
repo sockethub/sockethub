@@ -46,7 +46,7 @@ describe("PlatformInstance", () => {
     };
   });
 
-  it("should provided have properties set and be global", () => {
+  it("has certain accessible properties", () => {
     expect(pi.id).toBe('platform identifier');
     expect(pi.name).toBe('a platform name');
     expect(pi.parentId).toBe('the parentId');
@@ -57,14 +57,14 @@ describe("PlatformInstance", () => {
     ]);
   });
 
-  it('should register a listener when a session is registered', () => {
+  it('adds a close and message handler when a session is registered', () => {
     pi.registerSession('my session id');
     expect(handlers.callbackFunction).nthCalledWith(1, 'close', 'my session id');
     expect(handlers.callbackFunction).nthCalledWith(2, 'message', 'my session id');
     expect(pi.sessions.has('my session id')).toBe(true);
   });
 
-  it('should generate a failure report', () => {
+  it('is able to generate a failure reports', () => {
     pi.registerSession('my session id');
     expect(pi.sessions.has('my session id')).toBe(true);
     pi.reportFailure('my session id', 'an error message');
@@ -73,25 +73,25 @@ describe("PlatformInstance", () => {
     expect(pi.sessions.size).toBe(0);
   });
 
-  it('should destroy instance', () => {
+  it("cleans up it's references when destroyed", () => {
     pi.destroy();
     expect(SharedResources.platformInstances.delete).toBeCalledWith('platform identifier');
   });
 
-  it('should update identifier', () => {
+  it("updates it's identifier when changed", () => {
     pi.updateIdentifier('foo bar');
     expect(pi.id).toBe('foo bar');
     expect(SharedResources.platformInstances.delete).toBeCalledWith('platform identifier');
     expect(SharedResources.platformInstances.set).toBeCalledWith('foo bar', pi);
   });
 
-  it('should send message to client using socket', () => {
+  it('sends messages to client using socket session id', () => {
     pi.sendToClient('my session id', {foo: 'this is a message object'});
     expect(SharedResources.sessionConnections.get).toBeCalledWith('my session id');
   });
 });
 
-describe('Private instance per-actor', () => {
+describe('private instance per-actor', () => {
   it("should have actor set and be non-global when provided", () => {
     const pi = new PlatformInstance('id', 'name', 'parentId', 'actor string');
     expect(pi.global).toBe(false);
