@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "fs-then-native": "^2.0.0",
-    "jaribu": "^2.2.1",
+    "jaribu": "^2.2.3",
     "jsdoc": "^3.6.3",
     "jsdoc-to-markdown": "^6.0.1"
   },
