@@ -51,9 +51,6 @@ For production, with examples disabled.
 * [sockethub-platform-xmpp](packages/sockethub-platform-xmpp)
 * [sockethub-schemas](packages/sockethub-schemas)
 
-## License
-Sockethub is licensed under the [LGPL](https://github.com/sockethub/sockethub/blob/master/LICENSE)
-
 ## Credits
 
 Project created and maintained by [Nick Jennings](http://github.com/silverbucket)
