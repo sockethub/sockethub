@@ -12,7 +12,7 @@ const common_1 = require("./common");
 const parentId = process.argv[2];
 const platformName = process.argv[3];
 let identifier = process.argv[4];
-const logger = debug_1.default(`sockethub:platform:${identifier}`);
+let logger = debug_1.default(`sockethub:platform:${identifier}`);
 const queue = services_1.default.startQueue(parentId);
 const PlatformModule = require(`sockethub-platform-${platformName}`);
 logger(`platform handler initialized for ${platformName} ${identifier}`);
@@ -36,7 +36,7 @@ process.on('message', (data) => {
     if (data[0] === 'secrets') {
         parentSecret1 = data[1].parentSecret1;
         parentSecret2 = data[1].parentSecret2;
-        startQueueListener(identifier, parentSecret1 + parentSecret2);
+        startQueueListener();
     }
 });
 /**
@@ -94,24 +94,35 @@ function getCredentials(actorId, sessionId, sessionSecret, cb) {
         cb(undefined, credentials);
     });
 }
+/**
+ * When I user changes actor name, the identifier changes, we need to ensure the logging and
+ * queue this thread listens for jobs on is updated.
+ * @param credentials
+ */
 function updateActor(credentials) {
+    // const oldIdentifier = identifier;
     identifier = common_1.getPlatformId(platformName, credentials.actor['@id']);
     logger(`platform actor updated to ${credentials.actor['@id']} identifier ${identifier}`);
+    logger = debug_1.default(`sockethub:platform:${identifier}`);
     platform.credentialsHash = object_hash_1.default(credentials.object);
     platform.debug = debug_1.default(`sockethub:platform:${platformName}:${identifier}`);
     process.send(['updateActor', undefined, identifier]);
+    startQueueListener(true);
 }
 /**
  * starts listening on the queue for incoming jobs
+ * @param refresh boolean if the param is true, we re-init the queue.process
+ * (used when identifier changes)
  */
-function startQueueListener(_identifier, secret) {
-    if (queueStarted) {
+function startQueueListener(refresh = false) {
+    const secret = parentSecret1 + parentSecret2;
+    if ((queueStarted) && (!refresh)) {
         logger('start queue called multiple times, skipping');
         return;
     }
     queueStarted = true;
     logger('listening on the queue for incoming jobs');
-    queue.process(_identifier, (job, done) => {
+    queue.process(identifier, (job, done) => {
         job.data.msg = crypto_1.default.decrypt(job.data.msg, secret);
         logger(`platform process decrypted job ${job.data.msg['@type']}`);
         const sessionSecret = job.data.msg.sessionSecret;
