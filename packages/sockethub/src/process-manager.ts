@@ -27,7 +27,7 @@ class ProcessManager {
     }
   }
 
-  private createPlatformInstance(identifier:string, platform:string, actor?: string) {
+  private createPlatformInstance(identifier: string, platform: string, actor?: string) {
     const secrets: MessageFromParent = [
       'secrets', {
         parentSecret1: this.parentSecret1,
