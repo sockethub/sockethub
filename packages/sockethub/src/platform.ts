@@ -97,8 +97,8 @@ function getCredentials(actorId, sessionId, sessionSecret, cb) {
 }
 
 /**
- * When I user changes actor name, the identifier changes, we need to ensure the logging and
- * queue this thread listens for jobs on is updated.
+ * When a user changes it's actor name, the channel identifier changes, we need to ensure that
+ * both the queue thread (listening on the channel for jobs) and the logging object are updated.
  * @param credentials
  */
 function updateActor(credentials) {
