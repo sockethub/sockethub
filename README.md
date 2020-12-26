@@ -7,6 +7,7 @@ A protocol gateway for the web.
 [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/sockethub/sockethub.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/sockethub/sockethub/context:javascript)
 [![Maintainability](https://api.codeclimate.com/v1/badges/95912fc801271faf44f6/maintainability)](https://codeclimate.com/github/sockethub/sockethub/maintainability)
 [![Release](https://img.shields.io/npm/v/sockethub.svg?style=flat)](https://github.com/sockethub/sockethub/releases)
+[![Lerna](https://img.shields.io/badge/maintained%20with-lerna-cc00ff.svg)](https://lerna.js.org/)
 
 ## About
 
