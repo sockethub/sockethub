@@ -100,7 +100,6 @@ function getCredentials(actorId, sessionId, sessionSecret, cb) {
  * @param credentials
  */
 function updateActor(credentials) {
-    // const oldIdentifier = identifier;
     identifier = common_1.getPlatformId(platformName, credentials.actor['@id']);
     logger(`platform actor updated to ${credentials.actor['@id']} identifier ${identifier}`);
     logger = debug_1.default(`sockethub:platform:${identifier}`);
