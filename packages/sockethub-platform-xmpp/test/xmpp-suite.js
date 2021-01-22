@@ -11,21 +11,7 @@ define(['require', 'tv4'], function (require, tv4Module) {
       env.Platform = require('./../index');
       test.done();
     },
-    tests: [
-      {
-        desc: 'buildXmppCredentials',
-        run: function (env, test) {
-          const p = new env.Platform('foo');
-          test.assert(p.__buildXmppCredentials('foo', {object:{port:123, server:'foo', password:'bar'}}),
-              {
-                jid: 'foo',
-                password: 'bar',
-                host: 'foo',
-                port: 123
-              }, false);
-        }
-      }
-    ]
+    tests: []
   });
 
 
@@ -35,9 +21,9 @@ define(['require', 'tv4'], function (require, tv4Module) {
     abortOnFail: true,
     setup: function (env, test) {
       env.tv4 = tv4Module;
-      env.xmpp = require('./mock-simple-xmpp')(test);
-      env.xmpp.mock = true;
-      global.xmpp = env.xmpp;
+      // env.xmpp = require('./mock-simple-xmpp')(test);
+      // env.xmpp.mock = true;
+      // global.xmpp = env.xmpp;
 
       env.actor = {
         '@type': 'person',
@@ -178,11 +164,12 @@ define(['require', 'tv4'], function (require, tv4Module) {
         }
       };
 
-      var Platform = require('./../index');
+      const Platform = require('./../index');
       env.platform = new Platform({
         id: env.actor.actor,
         debug: console.log
       });
+      env.Platform.__client =
 
       // schema
       env.schema = env.platform.schema;
