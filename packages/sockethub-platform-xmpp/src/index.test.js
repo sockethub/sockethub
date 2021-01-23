@@ -16,7 +16,7 @@ jest.mock('./utils');
 const actor = {
   '@type': 'person',
   '@id': 'testingham@jabber.net',
-  displayName:'testingham'
+  displayName:'testing ham'
 };
 
 const credentials = {
@@ -117,17 +117,32 @@ describe('xmpp platform initialization', () => {
     })
   });
 
-  it('calls xmppjs.send when #join is called', (done) => {
+  it('calls xmppjs correctly #join is called', (done) => {
     xp.join(job.join, {}, () => {
       expect(xp.__client.send).toHaveBeenCalled()
-      expect(xml).toHaveBeenCalledWith("presence", {"from": "testingham@jabber.net", "to": "partyroom@jabber.net/testingham"})
+      expect(xml).toHaveBeenCalledWith("presence", {"from": "testingham@jabber.net", "to": "partyroom@jabber.net/testing ham"})
       done();
     })
   })
 
-  it('calls xmppjs.send when #send is called', (done) => {
+  it('calls xmppjs correctly when #send is called', (done) => {
     xp.send(job.send.chat, {}, () => {
       expect(xp.__client.send).toHaveBeenCalledWith(job.send.chat.target['@id'], job.send.chat.object.content, "chat")
+      done();
+    })
+  })
+
+  it('calls xmppjs correctly when #send is called for a groupchat', (done) => {
+    xp.send(job.send.groupchat, {}, () => {
+      expect(xp.__client.send).toHaveBeenCalledWith(job.send.groupchat.target['@id'], job.send.groupchat.object.content, "groupchat")
+      done();
+    })
+  })
+
+  it('calls xmppjs correctly when #observe is called', (done) => {
+    xp.observe(job.observe, {}, () => {
+      expect(xp.__client.send).toHaveBeenCalled();
+      expect(xml).toHaveBeenCalledWith("presence", {"from": "testingham@jabber.net", "to": "partyroom@jabber.net/testing ham"})
       done();
     })
   })

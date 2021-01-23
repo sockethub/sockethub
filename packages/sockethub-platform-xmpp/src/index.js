@@ -463,7 +463,7 @@ class XMPP {
    *    }
    *  }
    */
-  observe(job, done) {
+  observe(job, credentials, done) {
     this.debug('sending observe from ' + job.actor['@id'] + ' for ' + job.target['@id']);
     this.__client.send(xml("iq",  {
       id: 'muc_id',
@@ -471,6 +471,7 @@ class XMPP {
       from: job.actor['@id'],
       to: job.target['@id']
     }, xml("query", {xmlns: 'http://jabber.org/protocol/disco#items'})));
+    done();
   };
 
   cleanup(done) {
