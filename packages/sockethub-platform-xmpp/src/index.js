@@ -491,7 +491,7 @@ class XMPP {
     this.__client.on('close', ih.close.bind(ih));
     this.__client.on('error', ih.error.bind(ih));
     this.__client.on('online', ih.online.bind(ih));
-    this.__client.on('stanza', ih.__stanza.bind(ih));
+    this.__client.on('stanza', ih.stanza.bind(ih));
   };
 }
 
