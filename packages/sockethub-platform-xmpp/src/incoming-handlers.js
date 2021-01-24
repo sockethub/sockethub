@@ -24,6 +24,14 @@ function nextId() {
 //   }
 // }
 
+function getMessageBody(stanza) {
+  for (let elem of stanza.children) {
+    if (elem.name === 'body') {
+      return elem.children.join(' ');
+    }
+  }
+}
+
 
 class IncomingHandlers {
   constructor(session) {
@@ -46,22 +54,7 @@ class IncomingHandlers {
   //   }
   // }
 
-  // chat(from, message) {
-  //   this.session.debug("received chat message from " + from);
-  //   this.session.sendToClient({
-  //     '@type': 'send',
-  //     actor: {
-  //       '@type': 'person',
-  //       '@id': from
-  //     },
-  //     target: this.session.actor,
-  //     object: {
-  //       '@type': 'message',
-  //       content: message,
-  //       '@id': nextId()
-  //     }
-  //   });
-  // }
+
 
   close() {
     this.session.debug('received close event with no handler specified');
@@ -109,30 +102,6 @@ class IncomingHandlers {
   //     }
   //   });
   // }
-  //
-  // groupChatMessage(room, from, message) {
-  //   this.session.debug('received groupchat event: ' + room, from, message);
-  //   this.session.sendToClient({
-  //     '@type': 'send',
-  //     actor: {
-  //       '@type': 'person',
-  //       '@id': from
-  //     },
-  //     target: {
-  //       '@type': 'room',
-  //       '@id': room
-  //     },
-  //     object: {
-  //       '@type': 'message',
-  //       content: message,
-  //       '@id': nextId()
-  //     }
-  //   });
-  // }
-
-  online() {
-    this.session.debug('online');
-  }
 
   // subscribe(from) {
   //   this.session.debug('received subscribe request from ' + from);
@@ -142,7 +111,7 @@ class IncomingHandlers {
   //     target: this.session.actor
   //   });
   // }
-  //
+
   // unsubscribe(from) {
   //   this.session.debug('received unsubscribe request from ' + from);
   //   this.session.sendToClient({
@@ -151,14 +120,93 @@ class IncomingHandlers {
   //     target: this.session.actor
   //   });
   // }
-  //
-  // getMessageBody(stanza) {
-  //   for (let elem of stanza.children) {
-  //     if (elem.name === 'body') {
-  //       return elem.children.join(' ');
-  //     }
-  //   }
-  // }
+
+  handleMessage(stanza) {
+    switch (true) {
+      case stanza.attrs.type === 'groupchat':
+        const [ room, actor ] = stanza.attrs.from.split('/');
+        this.notifyGroupChatMessage(room, actor, getMessageBody(stanza));
+        break;
+      case stanza.attrs.type === 'chat':
+        this.notifyChatMessage(stanza.attrs.to, stanza.attrs.from, getMessageBody(stanza));
+        break;
+
+    }
+  }
+
+  notifyChatMessage(to, from, message) {
+    this.session.sendToClient({
+      '@type': 'send',
+      actor: {
+        '@type': 'person',
+        '@id': from
+      },
+      target: to,
+      object: {
+        '@type': 'message',
+        content: message,
+        '@id': nextId()
+      }
+    });
+  }
+
+  notifyError(stanza) {
+    const error = stanza.getChild('error');
+    let message = stanza.toString();
+    let type = 'message';
+    if (stanza.is('presence')) {
+      type = 'update';
+    }
+
+    if (error) {
+      message = error.toString();
+      if (error.getChild('remote-server-not-found')) {
+        // when we get this.session.type of return message, we know it was a response from a join
+        type = 'join';
+        message = 'remote server not found ' + stanza.attrs.from;
+      }
+    }
+
+    this.session.sendToClient({
+      '@type': type,
+      actor: {
+        '@id': stanza.attrs.from,
+        '@type': 'room'
+      },
+      object: {
+        '@type': 'error', // type error
+        content: message
+      },
+      target: {
+        '@id': stanza.attrs.to,
+        '@type': 'person'
+      }
+    });
+  }
+
+  notifyGroupChatMessage(room, from, message) {
+    this.session.debug('received groupchat event: ' + room, from, message);
+    this.session.sendToClient({
+      '@type': 'send',
+      actor: {
+        '@type': 'person',
+        '@id': from
+      },
+      target: {
+        '@type': 'room',
+        '@id': room
+      },
+      object: {
+        '@type': 'message',
+        content: message,
+        '@id': nextId()
+      }
+    });
+  }
+
+  online() {
+    this.session.debug('online');
+  }
 
   /**
    * Handles all unknown conditions that we don't have an explicit handler for
@@ -166,48 +214,18 @@ class IncomingHandlers {
   stanza(stanza) {
     console.log("incoming stanza ", stanza);
     switch (true) {
-      case (stanza.name === 'message'):
+      case stanza.is('message'):
         this.handleMessage(stanza);
-        break;
+        return;
     }
     // simple-xmpp currently doesn't seem to handle error state presence so we'll do it here for now.
     // TODO: consider moving this.session.to simple-xmpp once it's ironed out and proven to work well.
     if ((stanza.attrs.type === 'error')) {
-      const error = stanza.getChild('error');
-      let message = stanza.toString();
-      let type = 'message';
-      if (stanza.is('presence')) {
-        type = 'update';
-      }
-
-      if (error) {
-        message = error.toString();
-        if (error.getChild('remote-server-not-found')) {
-          // when we get this.session.type of return message, we know it was a response from a join
-          type = 'join';
-          message = 'remote server not found ' + stanza.attrs.from;
-        }
-      }
-
-      this.session.sendToClient({
-        '@type': type,
-        actor: {
-          '@id': stanza.attrs.from,
-          '@type': 'room'
-        },
-        object: {
-          '@type': 'error', // type error
-          content: message
-        },
-        target: {
-          '@id': stanza.attrs.to,
-          '@type': 'person'
-        }
-      });
+      this.notifyError(stanza);
     } else if (stanza.is('iq')) {
       if (stanza.attrs.id === 'muc_id' && stanza.attrs.type === 'result') {
         this.session.debug('got room attendance list');
-        this.roomAttendance(stanza);
+        this.notifyRoomAttendance(stanza);
         return;
       }
 
@@ -264,35 +282,35 @@ class IncomingHandlers {
     }
   }
 
-  // roomAttendance(stanza) {
-  //   const query = stanza.getChild('query');
-  //   if (query) {
-  //     let members = [];
-  //     const entries = query.getChildren('item');
-  //     for (let e in entries) {
-  //       if (!entries.hasOwnProperty(e)) {
-  //         continue;
-  //       }
-  //       members.push(entries[e].attrs.name);
-  //     }
-  //
-  //     this.session.sendToClient({
-  //       '@type': 'observe',
-  //       actor: {
-  //         '@id': stanza.attrs.from,
-  //         '@type': 'room'
-  //       },
-  //       target: {
-  //         '@id': stanza.attrs.to,
-  //         '@type': 'person'
-  //       },
-  //       object: {
-  //         '@type': 'attendance',
-  //         members: members
-  //       }
-  //     });
-  //   }
-  // }
+  notifyRoomAttendance(stanza) {
+    const query = stanza.getChild('query');
+    if (query) {
+      let members = [];
+      const entries = query.getChildren('item');
+      for (let e in entries) {
+        if (!entries.hasOwnProperty(e)) {
+          continue;
+        }
+        members.push(entries[e].attrs.name);
+      }
+
+      this.session.sendToClient({
+        '@type': 'observe',
+        actor: {
+          '@id': stanza.attrs.from,
+          '@type': 'room'
+        },
+        target: {
+          '@id': stanza.attrs.to,
+          '@type': 'person'
+        },
+        object: {
+          '@type': 'attendance',
+          members: members
+        }
+      });
+    }
+  }
 }
 
 module.exports = IncomingHandlers;
