@@ -319,8 +319,6 @@ class IncomingHandlers {
     //   this.session.debug("got XMPP unknown stanza... " + stanza);
     }
   }
-
-
 }
 
 module.exports = IncomingHandlers;
