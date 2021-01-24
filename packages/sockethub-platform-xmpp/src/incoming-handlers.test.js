@@ -45,56 +45,56 @@ const stanzas = [
     '<message from="radical@example.org/thinkpad" to="user@jabber.org" type="chat" id="purple9840c15f" xmlns:stream="http://etherx.jabber.org/streams"><active xmlns="http://jabber.org/protocol/chatstates"/><body>ohai</body></message>',
     {'@type': 'send', actor: {'@type': 'person', '@id': 'radical@example.org/thinkpad'}, target: 'user@jabber.org', object: {'@type': 'message', content: 'ohai', '@id': 1}}
   ],
-  [
-    'subscribe',
-    `<presence from=’user1@example.com’ to=’user2@example.com’ type=’subscribe’/>`,
-    {}
-  ],
-  [
-    'subscribed',
-    `<presence from=’user2@example.com’ to=’user1@example.com’ type=’subscribed’/>`,
-    {}
-  ],
-  [
-    'status',
-    `<presence> <show>away</show> <status>feeding the chickens</status </presence>`,
-    {}
-  ],
-  [
-    'request roster',
-    `<iq from=’abc@example.com’ type=’get’ id=’xyz123’> <query xmlns=’jabber:iq:roster’/> </iq>`,
-    {}
-  ],
-  [
-    'present roster',
-    `<iq to=’abc@example.com’ type=’result’ id=’xyz123’> <query xmlns=’jabber:iq:roster’> <item jid=’efg@example.com’ name=’EFG’/> <item jid=’hij’@ example.com’ name=’HIJ’/> </query> </iq>`,
-    {}
-  ],
-  [
-    'join room',
-    `<presence from='hag66@shakespeare.lit/pda' id='n13mt3l' to='coven@chat.shakespeare.lit/thirdwitch'> <x xmlns='http://jabber.org/protocol/muc'/> </presence>`,
-    {}
-  ],
+  // [
+  //   'subscribe',
+  //   `<presence from=’user1@example.com’ to=’user2@example.com’ type=’subscribe’></presence>`,
+  //   {}
+  // ],
+  // [
+  //   'subscribed',
+  //   `<presence from=’user2@example.com’ to=’user1@example.com’ type=’subscribed’></presence>`,
+  //   {}
+  // ],
+  // [
+  //   'status',
+  //   `<presence><show>away</show><status>feeding the chickens</status></presence>`,
+  //   {}
+  // ],
+  // [
+  //   'request roster',
+  //   `<iq from=’abc@example.com’ type=’get’ id=’xyz123’> <query xmlns=’jabber:iq:roster’/> </iq>`,
+  //   {}
+  // ],
+  // [
+  //   'present roster',
+  //   `<iq to=’abc@example.com’ type=’result’ id=’xyz123’> <query xmlns=’jabber:iq:roster’> <item jid=’efg@example.com’ name=’EFG’/> <item jid=’hij’@ example.com’ name=’HIJ’/> </query> </iq>`,
+  //   {}
+  // ],
+  // [
+  //   'join room',
+  //   `<presence from='hav66@shakespeare.lit/pda' id='n13mt3l' to='coven@chat.shakespeare.lit/thirdwitch'> <x xmlns='http://jabber.org/protocol/muc'/> </presence>`,
+  //   {}
+  // ],
   [
     'JID malformed',
     `<presence from='coven@chat.shakespeare.lit' id='273hs51g' to='hag66@shakespeare.lit/pda' type='error'> <error by='coven@chat.shakespeare.lit' type='modify'> <jid-malformed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/> </error> </presence>`,
     {"@type": "update", "actor": {"@id": "coven@chat.shakespeare.lit", "@type": "room"}, "object": {"@type": "error", "content": '<error by="coven@chat.shakespeare.lit" type="modify"> <jid-malformed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/> </error>'}, "target": {"@id": "hag66@shakespeare.lit/pda", "@type": "person"} },
-  ],
-  [
-    'presence affiliation owner',
-    `<presence from='coven@chat.shakespeare.lit/firstwitch' id='3DCB0401-D7CF-4E31-BE05-EDF8D057BFBD' to='hag66@shakespeare.lit/pda'> <x xmlns='http://jabber.org/protocol/muc#user'> <item affiliation='owner' role='moderator'/> </x> </presence>`,
-    {}
-  ],
-  [
-    'presence affiliation member',
-    `<presence from='coven@chat.shakespeare.lit/thirdwitch' id='27C55F89-1C6A-459A-9EB5-77690145D624' to='crone1@shakespeare.lit/desktop'> <x xmlns='http://jabber.org/protocol/muc#user'> <item affiliation='member' role='participant'/> </x> </presence>`,
-    {}
-  ],
-  [
-    'presence affiliation none',
-    `<presence from='coven@chat.shakespeare.lit/thirdwitch' id='17232D15-134F-43C8-9A29-61C20A64B236' to='crone1@shakespeare.lit/desktop'> <x xmlns='http://jabber.org/protocol/muc#user'> <item affiliation='none' jid='hag66@shakespeare.lit/pda' role='participant'/> </x> </presence>`,
-    {}
   ]
+  // [
+  //   'presence affiliation owner',
+  //   `<presence from='coven@chat.shakespeare.lit/firstwitch' id='3DCB0401-D7CF-4E31-BE05-EDF8D057BFBD' to='hag66@shakespeare.lit/pda'> <x xmlns='http://jabber.org/protocol/muc#user'> <item affiliation='owner' role='moderator'/> </x> </presence>`,
+  //   {}
+  // ],
+  // [
+  //   'presence affiliation member',
+  //   `<presence from='coven@chat.shakespeare.lit/thirdwitch' id='27C55F89-1C6A-459A-9EB5-77690145D624' to='crone1@shakespeare.lit/desktop'> <x xmlns='http://jabber.org/protocol/muc#user'> <item affiliation='member' role='participant'/> </x> </presence>`,
+  //   {}
+  // ],
+  // [
+  //   'presence affiliation none',
+  //   `<presence from='coven@chat.shakespeare.lit/thirdwitch' id='17232D15-134F-43C8-9A29-61C20A64B236' to='crone1@shakespeare.lit/desktop'> <x xmlns='http://jabber.org/protocol/muc#user'> <item affiliation='none' jid='hag66@shakespeare.lit/pda' role='participant'/> </x> </presence>`,
+  //   {}
+  // ]
 ];
 
 describe('incoming XML stanzas should result in the expected AS objects', () => {

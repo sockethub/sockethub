@@ -103,14 +103,18 @@ class IncomingHandlers {
   //   });
   // }
 
-  // subscribe(from) {
-  //   this.session.debug('received subscribe request from ' + from);
-  //   this.session.sendToClient({
-  //     '@type': "request-friend",
-  //     actor: { '@id': from },
-  //     target: this.session.actor
-  //   });
-  // }
+  subscribe(to, from, displayName) {
+    this.session.debug('received subscribe request from ' + from);
+    const actor = { '@id': from };
+    if (displayName) {
+      actor.displayName = displayName;
+    }
+    this.session.sendToClient({
+      '@type': "request-friend",
+      actor: actor,
+      target: to
+    });
+  }
 
   // unsubscribe(from) {
   //   this.session.debug('received unsubscribe request from ' + from);
@@ -132,6 +136,9 @@ class IncomingHandlers {
         break;
 
     }
+  }
+
+  handlePresence(stanza) {
   }
 
   notifyChatMessage(to, from, message) {
@@ -204,6 +211,36 @@ class IncomingHandlers {
     });
   }
 
+  notifyRoomAttendance(stanza) {
+    const query = stanza.getChild('query');
+    if (query) {
+      let members = [];
+      const entries = query.getChildren('item');
+      for (let e in entries) {
+        if (!entries.hasOwnProperty(e)) {
+          continue;
+        }
+        members.push(entries[e].attrs.name);
+      }
+
+      this.session.sendToClient({
+        '@type': 'observe',
+        actor: {
+          '@id': stanza.attrs.from,
+          '@type': 'room'
+        },
+        target: {
+          '@id': stanza.attrs.to,
+          '@type': 'person'
+        },
+        object: {
+          '@type': 'attendance',
+          members: members
+        }
+      });
+    }
+  }
+
   online() {
     this.session.debug('online');
   }
@@ -212,17 +249,22 @@ class IncomingHandlers {
    * Handles all unknown conditions that we don't have an explicit handler for
    **/
   stanza(stanza) {
-    console.log("incoming stanza ", stanza);
+    // console.log("incoming stanza ", stanza);
+
+    if ((stanza.attrs.type === 'error')) {
+      this.notifyError(stanza);
+    }
+
     switch (true) {
       case stanza.is('message'):
         this.handleMessage(stanza);
         return;
+      case stanza.is('presence'):
+        this.handlePresence(stanza);
+        return;
     }
-    // simple-xmpp currently doesn't seem to handle error state presence so we'll do it here for now.
-    // TODO: consider moving this.session.to simple-xmpp once it's ironed out and proven to work well.
-    if ((stanza.attrs.type === 'error')) {
-      this.notifyError(stanza);
-    } else if (stanza.is('iq')) {
+
+    if (stanza.is('iq')) {
       if (stanza.attrs.id === 'muc_id' && stanza.attrs.type === 'result') {
         this.session.debug('got room attendance list');
         this.notifyRoomAttendance(stanza);
@@ -269,11 +311,7 @@ class IncomingHandlers {
              * cant figure out how to know if one of these query stanzas are from
              * added contacts or pending requests
              */
-            this.session.sendToClient({
-              '@type': 'request-friend',
-              actor: { '@id': entries[e].attrs.jid, displayName: entries[e].attrs.name },
-              target: this.session.actor
-            });
+            this.subscribe(this.session.actor, entries[e].attrs.jid, entries[e].attrs.name)
           }
         }
       }
@@ -282,35 +320,7 @@ class IncomingHandlers {
     }
   }
 
-  notifyRoomAttendance(stanza) {
-    const query = stanza.getChild('query');
-    if (query) {
-      let members = [];
-      const entries = query.getChildren('item');
-      for (let e in entries) {
-        if (!entries.hasOwnProperty(e)) {
-          continue;
-        }
-        members.push(entries[e].attrs.name);
-      }
 
-      this.session.sendToClient({
-        '@type': 'observe',
-        actor: {
-          '@id': stanza.attrs.from,
-          '@type': 'room'
-        },
-        target: {
-          '@id': stanza.attrs.to,
-          '@type': 'person'
-        },
-        object: {
-          '@type': 'attendance',
-          members: members
-        }
-      });
-    }
-  }
 }
 
 module.exports = IncomingHandlers;
