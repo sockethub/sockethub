@@ -18,8 +18,9 @@
 
 const { client, xml } = require("@xmpp/client");
 
-const IncomingHandlers = require('./lib/incoming-handlers');
-const PlatformSchema = require('./lib/schema.js');
+const IncomingHandlers = require('./incoming-handlers');
+const PlatformSchema = require('./schema.js');
+const utils = require('./utils.js');
 
 
 /**
@@ -107,7 +108,7 @@ class XMPP {
    *
    * Connect to the XMPP server.
    *
-   * @param {object} job activiy streams object // TODO LINK
+   * @param {object} job activity streams object // TODO LINK
    * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
@@ -127,7 +128,7 @@ class XMPP {
   connect(job, credentials, done) {
     if (this.__client) { return done(); } // TODO verify client is actually connected
     this.debug('connect called for ' + job.actor['@id']);
-    this.__client = client(buildXmppCredentials(credentials));
+    this.__client = client(utils.buildXmppCredentials(credentials));
     this.__client.on("offline", (a) => {
       console.log("offline", a);
       console.log(xmpp.status);
@@ -174,6 +175,7 @@ class XMPP {
           condition: err.condition || 'connection-error'
         }
       });
+      return done(err);
     });
   };
 
@@ -461,7 +463,7 @@ class XMPP {
    *    }
    *  }
    */
-  observe(job, done) {
+  observe(job, credentials, done) {
     this.debug('sending observe from ' + job.actor['@id'] + ' for ' + job.target['@id']);
     this.__client.send(xml("iq",  {
       id: 'muc_id',
@@ -469,6 +471,7 @@ class XMPP {
       from: job.actor['@id'],
       to: job.target['@id']
     }, xml("query", {xmlns: 'http://jabber.org/protocol/disco#items'})));
+    done();
   };
 
   cleanup(done) {
@@ -490,19 +493,6 @@ class XMPP {
     this.__client.on('online', ih.online.bind(ih));
     this.__client.on('stanza', ih.__stanza.bind(ih));
   };
-}
-
-function buildXmppCredentials(credentials) {
-  const [ username, server ] = credentials.object.username.split('@');
-  let xmpp_creds = {
-    service: server,
-    username: username,
-    password: credentials.object.password
-  };
-  if (credentials.object.resource) {
-    xmpp_creds.resource = credentials.object.resource;
-  }
-  return xmpp_creds;
 }
 
 module.exports = XMPP;
