@@ -308,7 +308,7 @@ class IncomingHandlers {
             });
           } else {
             /**
-             * cant figure out how to know if one of these query stanzas are from
+             * can't figure out how to know if one of these query stanzas are from
              * added contacts or pending requests
              */
             this.subscribe(this.session.actor, entries[e].attrs.jid, entries[e].attrs.name)
