@@ -117,7 +117,7 @@ describe('xmpp platform initialization', () => {
     })
   });
 
-  it('calls xmpp.js correctly #join is called', (done) => {
+  it('calls xmpp.js correctly when #join is called', (done) => {
     xp.join(job.join, {}, () => {
       expect(xp.__client.send).toHaveBeenCalled()
       expect(xml).toHaveBeenCalledWith("presence", {"from": "testingham@jabber.net", "to": "partyroom@jabber.net/testing ham"})
