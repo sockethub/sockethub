@@ -55,7 +55,6 @@ class IncomingHandlers {
   // }
 
 
-
   close() {
     this.session.debug('received close event with no handler specified');
     this.session.sendToClient({
@@ -125,30 +124,33 @@ class IncomingHandlers {
   //   });
   // }
 
-  handleMessage(stanza) {
-    switch (true) {
-      case stanza.attrs.type === 'groupchat':
-        const [ room, actor ] = stanza.attrs.from.split('/');
-        this.notifyGroupChatMessage(room, actor, getMessageBody(stanza));
-        break;
-      case stanza.attrs.type === 'chat':
-        this.notifyChatMessage(stanza.attrs.to, stanza.attrs.from, getMessageBody(stanza));
-        break;
-
-    }
-  }
-
   handlePresence(stanza) {
   }
 
-  notifyChatMessage(to, from, message) {
+  notifyChatMessage(stanza) {
+    const from = stanza.attrs.from
+    const message = getMessageBody(stanza);
+    let to = stanza.attrs.to;
+    const actorObj =  {
+      '@type': 'person',
+      '@id': from,
+    };
+
+    let fromName;
+    let target_type = 'person';
+    if (stanza.attrs.type === 'groupchat') {
+      target_type = 'room';
+      [to, fromName] = from.split('/');
+      actorObj.displayName = fromName;
+    }
+
     this.session.sendToClient({
       '@type': 'send',
-      actor: {
-        '@type': 'person',
-        '@id': from
+      actor: actorObj,
+      target: {
+        '@type': target_type,
+        '@id': to,
       },
-      target: to,
       object: {
         '@type': 'message',
         content: message,
@@ -187,26 +189,6 @@ class IncomingHandlers {
       target: {
         '@id': stanza.attrs.to,
         '@type': 'person'
-      }
-    });
-  }
-
-  notifyGroupChatMessage(room, from, message) {
-    this.session.debug('received groupchat event: ' + room, from, message);
-    this.session.sendToClient({
-      '@type': 'send',
-      actor: {
-        '@type': 'person',
-        '@id': from
-      },
-      target: {
-        '@type': 'room',
-        '@id': room
-      },
-      object: {
-        '@type': 'message',
-        content: message,
-        '@id': nextId()
       }
     });
   }
@@ -250,25 +232,16 @@ class IncomingHandlers {
    **/
   stanza(stanza) {
     // console.log("incoming stanza ", stanza);
-
     if ((stanza.attrs.type === 'error')) {
       this.notifyError(stanza);
-    }
-
-    switch (true) {
-      case stanza.is('message'):
-        this.handleMessage(stanza);
-        return;
-      case stanza.is('presence'):
-        this.handlePresence(stanza);
-        return;
-    }
-
-    if (stanza.is('iq')) {
+    } else if (stanza.is('message')) {
+      this.notifyChatMessage(stanza);
+    } else if (stanza.is('presence')) {
+      this.handlePresence(stanza);
+    } else if (stanza.is('iq')) {
       if (stanza.attrs.id === 'muc_id' && stanza.attrs.type === 'result') {
         this.session.debug('got room attendance list');
-        this.notifyRoomAttendance(stanza);
-        return;
+        return this.notifyRoomAttendance(stanza);
       }
 
       const query = stanza.getChild('query');

@@ -1,29 +1,6 @@
 const IncomingHandler = require('./incoming-handlers');
 const parse = require('@xmpp/xml/lib/parse')
 
-// {
-//     name: 'groupbuddy event',
-//     input: ['test@muc.5apps.com', 'greg the speedboat', 'online', 'hey, wazzup?'],
-//     handler: 'groupBuddy',
-//     output: {
-//       '@type': 'update',
-//       actor: {
-//         '@id': 'test@muc.5apps.com/greg the speedboat',
-//         '@type': 'person',
-//         displayName: 'greg the speedboat'
-//       },
-//       target: {
-//         '@id': 'test@muc.5apps.com',
-//         '@type': 'room'
-//       },
-//       object: {
-//         '@type': 'presence',
-//         status: 'hey, wazzup?',
-//         presence: 'online'
-//       }
-//     }
-//   }
-
 const stanzas = [
   [
     `presence error 1`,
@@ -43,7 +20,17 @@ const stanzas = [
   [
     'message',
     '<message from="radical@example.org/thinkpad" to="user@jabber.org" type="chat" id="purple9840c15f" xmlns:stream="http://etherx.jabber.org/streams"><active xmlns="http://jabber.org/protocol/chatstates"/><body>ohai</body></message>',
-    {'@type': 'send', actor: {'@type': 'person', '@id': 'radical@example.org/thinkpad'}, target: 'user@jabber.org', object: {'@type': 'message', content: 'ohai', '@id': 1}}
+    {'@type': 'send', actor: {'@type': 'person', '@id': 'radical@example.org/thinkpad'}, target: { '@type': 'person', '@id': 'user@jabber.org' }, object: {'@type': 'message', content: 'ohai', '@id': 1}}
+  ],
+  // [
+  //   'group presence',
+  //   `<presence from='room@xmpp.example.org/speedboat'><show>chat</show><status>brroom!</status></presence>`,
+  //   {'@type': 'update', actor: {'@id': 'room@xmpp.example.org/speedboat', '@type': 'person', displayName: 'speedboat'}, target: {'@id': 'room@xmpp.example.org', '@type': 'room'}, object: {'@type': 'presence', status: 'brrroom!', presence: 'online' }}
+  // ],
+  [
+    'group message',
+    `<message from='coven@chat.shakespeare.lit/thirdwitch' id='hysf1v37' to='crone1@shakespeare.lit/desktop' type='groupchat'> <body>Thrice the brinded cat hath mew'd.</body> </message>`,
+    {'@type': 'send', actor: {'@type': 'person', '@id': 'coven@chat.shakespeare.lit/thirdwitch', displayName: 'thirdwitch'}, target: { '@type': 'room', '@id': 'coven@chat.shakespeare.lit' }, object: { '@type': 'message', content: 'Thrice the brinded cat hath mew\'d.', '@id': 2}}
   ],
   // [
   //   'subscribe',
