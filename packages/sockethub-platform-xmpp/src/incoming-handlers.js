@@ -54,7 +54,6 @@ class IncomingHandlers {
   //   }
   // }
 
-
   close() {
     this.session.debug('received close event with no handler specified');
     this.session.sendToClient({

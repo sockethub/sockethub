@@ -138,7 +138,7 @@ describe('xmpp platform initialization', () => {
       done();
     })
   })
-
+  
   it('calls xmpp.js correctly when #observe is called', (done) => {
     xp.observe(job.observe, {}, () => {
       expect(xp.__client.send).toHaveBeenCalled();
