@@ -1,7 +1,7 @@
 {
   "name": "sockethub-platform-irc",
   "description": "A sockethub platform module implementing IRC functionality",
-  "version": "3.4.2",
+  "version": "3.5.0",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
@@ -23,7 +23,7 @@
   "dependencies": {
     "debug": "^4.3.1",
     "irc-socket": "^3.0.8",
-    "irc2as": "^3.0.1"
+    "irc2as": "^3.0.2"
   },
   "devDependencies": {
     "c8": "^7.3.5",

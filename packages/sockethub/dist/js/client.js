@@ -53,7 +53,7 @@
         }
     };
     SockethubClient.prototype.__registerSocketIOHandlers = function () {
-        let storedCredentials = new Map(), storedActivityObjects = new Map(), storedJoins = new Map();
+        let storedCredentials = new Map(), storedActivityObjects = new Map(), storedConnects = new Map(), storedJoins = new Map();
         // middleware for events which don't deal in AS objects
         const callHandler = (event) => {
             return (obj) => {
@@ -61,6 +61,7 @@
                     this.online = true;
                     this.__replay('activity-object', storedActivityObjects);
                     this.__replay('credentials', storedCredentials);
+                    this.__replay('message', storedConnects);
                     this.__replay('message', storedJoins);
                 }
                 else if (event === 'connect') {
@@ -112,6 +113,12 @@
                         }
                         else if (content['@type'] === 'leave') {
                             storedJoins['delete'](this.__getKey(content), content);
+                        }
+                        if (content['@type'] === 'connect') {
+                            storedConnects['set'](this.__getKey(content), content);
+                        }
+                        else if (content['@type'] === 'disconnect') {
+                            storedConnects['delete'](this.__getKey(content), content);
                         }
                     }
                     else {
