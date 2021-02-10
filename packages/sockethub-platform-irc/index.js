@@ -558,14 +558,14 @@ IRC.prototype.__connect = function (key, credentials, cb) {
   this.__clientConnecting = true;
   const netSocket = new NetSocket();
   // FIXME: TLS is currently disabled due to bug in `irc-socket` https://github.com/sockethub/sockethub/issues/319
-  const is_secure = false; // (typeof credentials.object.secure === 'boolean') ? credentials.object.secure : true;
-  let socket = netSocket;
+  // const is_secure = (typeof credentials.object.secure === 'boolean') ? credentials.object.secure : true;
+  // let socket = netSocket;
   // if (is_secure) {
   //   socket = new TlsSocket(netSocket, { rejectUnauthorized: false });
   // }
 
   const module_creds = {
-    socket: socket,
+    socket: netSocket, // socket,
     username: credentials.object.nick,
     nicknames: [ credentials.object.nick ],
     server: credentials.object.server || 'irc.freenode.net',
