@@ -3,10 +3,10 @@ module.exports = {
   roots: ['<rootDir>/src'],
   coverageThreshold: {
     global: {
-      branches: 10,
-      functions: 28,
-      lines: 30,
-      statements: 30
+      branches: 34,
+      functions: 50,
+      lines: 57,
+      statements: 57
     }
   },
   coverageReporters: ['json', 'lcov', 'text', 'clover']
