@@ -17,10 +17,10 @@
  */
 
 if (typeof (NetSocket) !== 'object') {
-  NetSocket = require('net').Socket;
+  net = require('net');
 }
 if (typeof (TlsSocket) !== 'object') {
-  TlsSocket = require('tls').TLSSocket;
+  tls = require('tls');
 }
 if (typeof (IrcSocket) !== 'object') {
   IrcSocket = require('irc-socket');
@@ -556,25 +556,20 @@ IRC.prototype.__getClient = function (key, credentials, cb) {
 
 IRC.prototype.__connect = function (key, credentials, cb) {
   this.__clientConnecting = true;
-  const netSocket = new NetSocket();
   const is_secure = (typeof credentials.object.secure === 'boolean') ? credentials.object.secure : true;
-  let socket = netSocket;
-  if (is_secure) {
-    socket = new TlsSocket(netSocket, { rejectUnauthorized: false });
-  }
 
   const module_creds = {
-    socket: socket,
     username: credentials.object.nick,
     nicknames: [ credentials.object.nick ],
     server: credentials.object.server || 'irc.freenode.net',
     realname: credentials.actor.displayName || credentials.object.nick,
     port: (credentials.object.port) ? parseInt(credentials.object.port, 10) : (is_secure) ? 6697 : 6667,
-    debug: console.log
+    debug: console.log,
+    connectOptions: { rejectUnauthorized: false }
   };
   this.debug('attempting to connect to ' + module_creds.server + ':' + module_creds.port);
 
-  const client = IrcSocket(module_creds);
+  const client = IrcSocket(module_creds, is_secure ? tls : net);
 
   const __forceDisconnect = (err) => {
     this.__forceDisconnect = true;
