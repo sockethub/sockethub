@@ -564,9 +564,11 @@ IRC.prototype.__connect = function (key, credentials, cb) {
     server: credentials.object.server || 'irc.freenode.net',
     realname: credentials.actor.displayName || credentials.object.nick,
     port: (credentials.object.port) ? parseInt(credentials.object.port, 10) : (is_secure) ? 6697 : 6667,
-    debug: console.log,
-    connectOptions: { rejectUnauthorized: false }
+    debug: console.log
   };
+  if (is_secure) {
+    module_creds.connectOptions = { rejectUnauthorized: false };
+  }
   this.debug('attempting to connect to ' + module_creds.server + ':' + module_creds.port);
 
   const client = IrcSocket(module_creds, is_secure ? tls : net);
