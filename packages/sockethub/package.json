@@ -76,7 +76,7 @@
     "start": "yarn run build && DEBUG=sockethub* ./bin/sockethub",
     "dev": "yarn run build && DEBUG=sockethub* ./bin/sockethub --examples",
     "dev-old": "DEBUG=sockethub* DEV=1 ts-node --pretty --skip-ignore -T -P ./src/tsconfig.json ./bin/sockethub --examples",
-    "compliance": "yarn run build && eslint --ignore-pattern \"coverage/*\" \"**/*.ts\" ./bin/sockethub && c8 jaribu && jest --coverage",
+    "compliance": "yarn run build && c8 jaribu && jest --coverage",
     "coverage": "c8 jaribu",
     "lint": "eslint --ignore-pattern \"coverage\" \"src/*.js\" ./bin/sockethub",
     "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\" ./bin/sockethub",
