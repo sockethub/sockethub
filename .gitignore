@@ -5,3 +5,4 @@ config.secrets.js
 connect-config.js
 coverage
 .idea
+**/package-lock.json
