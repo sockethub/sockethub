@@ -22,7 +22,7 @@
   "homepage": "https://github.com/sockethub/sockethub-platform-irc",
   "dependencies": {
     "debug": "^4.3.1",
-    "irc-socket": "^3.0.8",
+    "irc-socket": "https://github.com/silverbucket/irc-socket/archive/v4-alpha.tar.gz",
     "irc2as": "^3.0.2"
   },
   "devDependencies": {
