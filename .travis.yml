@@ -4,8 +4,8 @@ arch: arm64-graviton2
 group: edge
 node_js:
   - 'lts/*'
-  - 13
-services: redis-server
+  - 15
+services: redis
 sudo: false
 script:
   - yarn run test && yarn run travis
