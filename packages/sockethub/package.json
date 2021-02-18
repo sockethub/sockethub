@@ -89,7 +89,7 @@
   },
   "devDependencies": {
     "@types/jest": "^26.0.15",
-    "@typescript-eslint/parser": "^4.8.1",
+    "@typescript-eslint/parser": "^4.15.1",
     "c8": "7.3.5",
     "eslint": "^7.13.0",
     "eslint-cli": "^1.1.1",
