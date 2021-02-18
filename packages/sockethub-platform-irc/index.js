@@ -569,7 +569,8 @@ IRC.prototype.__connect = function (key, credentials, cb) {
   if (is_secure) {
     module_creds.connectOptions = { rejectUnauthorized: false };
   }
-  this.debug('attempting to connect to ' + module_creds.server + ':' + module_creds.port);
+  this.debug('attempting to connect to ' + module_creds.server + ':' + module_creds.port +
+    ` transport: ${is_secure?'secure':'clear'}`);
 
   const client = IrcSocket(module_creds, is_secure ? tls : net);
 
@@ -586,12 +587,12 @@ IRC.prototype.__connect = function (key, credentials, cb) {
   };
 
   client.once('error', (err) => {
-    this.debug('irc client \'error\' occurred.' + err);
-    __forceDisconnect('error with connection to server.');
+    this.debug(`irc client 'error' occurred. `, err);
+    __forceDisconnect('error connecting to server.');
   });
 
   client.once('close', () => {
-    this.debug('irc client \'close\' event fired.');
+    this.debug(`irc client 'close' event fired.`);
     __forceDisconnect('connection to server closed.');
   });
 
