@@ -28,3 +28,8 @@ exclude_patterns:
 - "**/src/routes/"
 - "**/schemas/"
 - "**/*.test.*"
+- "packages/irc2as/*"
+- "packages/sockethub-platform-feeds/"
+- "packages/activity-streams.js/"
+- "packages/sockethub-platform-xmpp/"
+- "packages/sockethub-schemas/"
