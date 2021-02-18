@@ -60,7 +60,7 @@
     "object-hash": "^2.0.1",
     "rand-token": "^1.0.1",
     "secure-store-redis": "^1.4.3",
-    "socket.io": "2.4.1",
+    "socket.io": "^2.4.1",
     "sockethub-platform-dummy": "^2.0.2",
     "sockethub-platform-feeds": "^2.1.0",
     "sockethub-platform-irc": "^3.5.0",
