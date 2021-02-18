@@ -16,6 +16,7 @@
         this.socket = socket;
         this.ActivityStreams = ASFactory({ specialObjs: ['credentials'] });
         this.online = false;
+        this.debug = false;
         this.__registerSocketIOHandlers();
         this.ActivityStreams.on('activity-object-create', (obj) => {
             socket.emit('activity-object', obj);
@@ -24,6 +25,11 @@
             this.ActivityStreams.Object.create(obj);
         });
     }
+    SockethubClient.prototype.log = function (msg, obj) {
+        if (this.debug) {
+            console.log(msg, obj);
+        }
+    };
     SockethubClient.prototype.__handlers = {
         // wrapping the `on` method in order to automatically unpack Activity Streams objects
         // that come in on the 'messages' channel, so that app developers don't need to.
@@ -143,6 +149,7 @@
     };
     SockethubClient.prototype.__replay = function (name, asMap) {
         asMap.forEach((obj) => {
+            this.log(`replaying ${name}`, obj);
             this.socket._emit(name, obj);
         });
     };

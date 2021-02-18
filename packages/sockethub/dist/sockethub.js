@@ -144,8 +144,7 @@ class Sockethub {
     handleIncomingMessage(socket, sessionLog) {
         return (msg) => {
             const identifier = this.processManager.register(msg, socket.id);
-            sessionLog(`queueing incoming job ${msg.context} for socket 
-        ${socket.id} to channel ${identifier}`);
+            sessionLog(`queueing incoming job ${msg.context} to channel ${identifier}`);
             const job = this.queue.create(identifier, {
                 title: socket.id + '-' + msg.context + '-' + (msg['@id']) ? msg['@id'] : this.counter++,
                 socket: socket.id,
@@ -182,8 +181,8 @@ class Sockethub {
             sessionLog('disconnect received from client.');
             shared_resources_1.default.sessionConnections.delete(socket.id);
         });
-        socket.on('credentials', middleware.chain(validate_1.default('credentials'), this.handleStoreCredentials(store, sessionLog)));
-        socket.on('message', middleware.chain(validate_1.default('message'), (next, msg) => {
+        socket.on('credentials', middleware.chain(validate_1.default('credentials', socket.id), this.handleStoreCredentials(store, sessionLog)));
+        socket.on('message', middleware.chain(validate_1.default('message', socket.id), (next, msg) => {
             // middleware which attaches the sessionSecret to the message. The platform thread
             // must find the credentials on their own using the given sessionSecret, which indicates
             // that this specific session (socket connection) has provided credentials.
@@ -192,7 +191,7 @@ class Sockethub {
         }, this.handleIncomingMessage(socket, sessionLog)));
         // when new activity objects are created on the client side, an event is
         // fired and we receive a copy on the server side.
-        socket.on('activity-object', middleware.chain(validate_1.default('activity-object'), this.handleActivityObject(sessionLog)));
+        socket.on('activity-object', middleware.chain(validate_1.default('activity-object', socket.id), this.handleActivityObject(sessionLog)));
     }
 }
 exports.default = Sockethub;

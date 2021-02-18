@@ -32,7 +32,7 @@ const activity_streams_1 = __importDefault(require("activity-streams"));
 const SockethubSchemas = __importStar(require("sockethub-schemas"));
 const init_1 = __importDefault(require("./bootstrap/init"));
 const config_1 = __importDefault(require("./config"));
-const activity = activity_streams_1.default(config_1.default.get('activity-streams:opts')), log = debug_1.default('sockethub:validate');
+const activity = activity_streams_1.default(config_1.default.get('activity-streams:opts'));
 // load sockethub-activity-stream schema and register it with tv4
 // http://sockethub.org/schemas/v0/activity-stream#
 tv4_1.default.addSchema(SockethubSchemas.ActivityStream.id, SockethubSchemas.ActivityStream);
@@ -123,10 +123,11 @@ function validateActivityStream(msg) {
 }
 // called when registered with the middleware function, define the type of validation
 // that will be called when the middleware eventually does.
-function validate(type) {
+function validate(type, sockethubId) {
+    const sessionLog = debug_1.default(`sockethub:validate:${sockethubId}`);
     // called by the middleware with the message and the next (callback) in the chain
     return (next, msg) => {
-        log('applying schema validation for ' + type);
+        sessionLog('applying schema validation for ' + type);
         const error = errorHandler(type, msg, next);
         if (!ensureObject(msg)) {
             error(`message received is not an object.`);

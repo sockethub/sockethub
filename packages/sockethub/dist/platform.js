@@ -15,7 +15,6 @@ let identifier = process.argv[4];
 let logger = debug_1.default(`sockethub:platform:${identifier}`);
 const queue = services_1.default.startQueue(parentId);
 const PlatformModule = require(`sockethub-platform-${platformName}`);
-logger(`platform handler initialized for ${platformName} ${identifier}`);
 let queueStarted = false;
 let parentSecret1, parentSecret2;
 logger(`platform handler initialized for ${platformName} ${identifier}`);
