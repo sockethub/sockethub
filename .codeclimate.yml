@@ -1,0 +1,30 @@
+version: "2"
+
+plugins:
+  editorconfig:
+    enabled: true
+  eslint:
+    enabled: true
+    channel: "eslint-7"
+  fixme:
+    enabled: true
+  markdownlint:
+    enabled: true
+  nodesecurity:
+    enabled: true
+
+exclude_patterns:
+- "**/dist/"
+- "**/browser/"
+- "**/node_modules/"
+- "**/script/"
+- "**/spec/"
+- "**/test/"
+- "**/tests/"
+- "**/vendor/"
+- "**/*_test.go"
+- "**/*.d.ts"
+- "**/views/"
+- "**/src/routes/"
+- "**/schemas/"
+- "**/*.test.*"
