@@ -72,17 +72,16 @@
     "urijs": "^1.19.2"
   },
   "scripts": {
-    "test": "yarn run build && jaribu && jest --coverage",
+    "test": "yarn run build && c8 jaribu && jest --coverage",
     "start": "yarn run build && DEBUG=sockethub* ./bin/sockethub",
     "dev": "yarn run build && DEBUG=sockethub* ./bin/sockethub --examples",
     "dev-old": "DEBUG=sockethub* DEV=1 ts-node --pretty --skip-ignore -T -P ./src/tsconfig.json ./bin/sockethub --examples",
-    "compliance": "yarn run build && eslint \"**/*.ts\" ./bin/sockethub && jest --coverage",
     "coverage": "jest --coverage",
     "lint": "eslint \"**/*.ts\" ./bin/sockethub",
     "lint:fix": "eslint --fix \"**/*.ts\" ./bin/sockethub",
     "tsc": "tsc -p src",
     "build": "tsc -p src && cp ./src/defaults.json ./dist/defaults.json",
-    "travis": "yarn run compliance"
+    "travis": "yarn run test"
   },
   "engines": {
     "node": ">= 12.0.0"
