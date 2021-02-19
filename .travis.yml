@@ -1,7 +1,7 @@
 language: node_js
 os: linux
 dist: focal
-arch: arm64
+arch: amd64
 services: redis
 sudo: false
 node_js:
