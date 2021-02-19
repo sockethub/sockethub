@@ -6,7 +6,8 @@
     "eslint": "^7.20.0",
     "find-up": "5.0.0",
     "lerna": "^3.20.2",
-    "yarn": "^1.22.0"
+    "yarn": "^1.22.0",
+    "typescript": "^4.1.5"
   },
   "scripts": {
     "version": "lerna run build && git add **/dist/*",
@@ -16,6 +17,5 @@
     "build": "lerna run build",
     "dev": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run dev",
     "start": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run start"
-  },
-  "dependencies": {}
+  }
 }
