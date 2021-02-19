@@ -17,6 +17,6 @@ before_script:
 after_script:
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT --input coverage/lcov.info
 install:
-  - npm update npm -g && npm install -g lerna yarn eslint && yarn run install
+  - npm update npm -g && npm install -g lerna yarn eslint && yarn install @typescript-eslint/parser && yarn run install
 script:
   - yarn run travis
