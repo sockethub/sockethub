@@ -33,7 +33,7 @@
     "tv4": "^1.3.0"
   },
   "scripts": {
-    "test": "c8 jaribu ./**/*-suite.js",
+    "test": "c8 jaribu",
     "doc": "jsdoc2md index.js  > API.md",
     "lint": "eslint --ignore-pattern \"coverage\" \"**/*.js\"",
     "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\"",
