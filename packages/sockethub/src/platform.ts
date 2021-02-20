@@ -14,10 +14,10 @@ let logger = debug(`sockethub:platform:${identifier}`);
 const queue = services.startQueue(parentId);
 const PlatformModule = require(`sockethub-platform-${platformName}`);
 
-logger(`platform handler initialized for ${platformName} ${identifier}`);
 
 let queueStarted = false;
 let parentSecret1: string, parentSecret2: string;
+
 logger(`platform handler initialized for ${platformName} ${identifier}`);
 
 /**

@@ -10,8 +10,7 @@ import * as SockethubSchemas from 'sockethub-schemas';
 import init from './bootstrap/init';
 import config from './config';
 
-const activity = ActivityStreams(config.get('activity-streams:opts')),
-      log = debug('sockethub:validate');
+const activity = ActivityStreams(config.get('activity-streams:opts'));
 
 // load sockethub-activity-stream schema and register it with tv4
 // http://sockethub.org/schemas/v0/activity-stream#
@@ -122,10 +121,11 @@ function validateActivityStream(msg: any) {
 
 // called when registered with the middleware function, define the type of validation
 // that will be called when the middleware eventually does.
-export default function validate(type: string) {
+export default function validate(type: string, sockethubId: string) {
+  const sessionLog = debug(`sockethub:validate:${sockethubId}`);
   // called by the middleware with the message and the next (callback) in the chain
   return (next, msg) => {
-    log('applying schema validation for ' + type);
+    sessionLog('applying schema validation for ' + type);
     const error = errorHandler(type, msg, next);
 
     if (! ensureObject(msg)) {
