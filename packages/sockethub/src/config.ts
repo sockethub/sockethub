@@ -1,7 +1,6 @@
 import nconf from 'nconf';
 import debug from 'debug';
 
-let config;
 const log = debug.debug('sockethub:bootstrap:config');
 
 class Config {
@@ -78,5 +77,5 @@ class Config {
   get = (key: string): any => nconf.get(key);
 }
 
-config = new Config();
+const config = new Config();
 export default config;
