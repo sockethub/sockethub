@@ -27,6 +27,14 @@ Sockethub is a translation layer for web applications to communicate with other 
 
 ```$ yarn test```
 
+### Run Linter
+
+```$ yarn lint:js```
+
+Or, to automatically fix linting errors:
+
+```$ yarn lint:fix```
+
 ## Running
 
 For development purposes, with examples enabled, run:
