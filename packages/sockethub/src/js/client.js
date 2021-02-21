@@ -175,7 +175,7 @@
 
   SockethubClient.prototype.__getKey = function (content) {
     let actor = content.actor['@id'] || content.actor;
-    let target = content.target['@id'] || content.target;
+    let target = content.target ? content.target['@id'] || content.target : '';
     return actor + '-' + target;
   };
 
