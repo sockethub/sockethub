@@ -10,7 +10,7 @@
     "typescript": "^4.1.5"
   },
   "scripts": {
-    "version": "lerna run build && git add **/dist/*",
+    "version": "lerna run build",
     "install": "lerna bootstrap",
     "test": "lerna run test",
     "lint:js": "eslint '**/*.ts' '**/*.js' ./packages/sockethub/bin/sockethub",
