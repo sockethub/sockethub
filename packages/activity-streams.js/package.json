@@ -1,6 +1,6 @@
 {
   "name": "activity-streams",
-  "version": "4.3.4",
+  "version": "4.3.5",
   "description": "A simple tool to facilitate handling and referencing activity streams without unecessary verbosity.",
   "main": "./lib/activity-streams.js",
   "dependencies": {
