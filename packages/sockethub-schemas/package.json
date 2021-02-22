@@ -1,7 +1,7 @@
 {
   "name": "sockethub-schemas",
   "description": "JSON schema files for validating Sockethub Activity Streams",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
