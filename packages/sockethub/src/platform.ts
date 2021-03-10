@@ -130,10 +130,18 @@ function startQueueListener(refresh: boolean = false) {
     const sessionSecret = job.data.msg.sessionSecret;
     delete job.data.msg.sessionSecret;
     getCredentials(job.data.msg.actor['@id'], job.data.socket, sessionSecret,
-                   (err, credentials) => {
-                     if (err) { return done(err); }
-                     platform[job.data.msg['@type']](job.data.msg, credentials, done);
-                   });
+      (err, credentials) => {
+        if (err) { return done(err); }
+        const params = [ job.data.msg ];
+        if ((Array.isArray(platform.config.requireCredentials)) &&
+            (platform.config.requireCredentials.includes(job.data.msg['@type']))) {
+          // pass credentials object as second param if this method is defined in the
+          // `requireCredentials` list in the platform config.
+          params.push(credentials);
+        }
+        params.push(done);
+        platform[job.data.msg['@type']](...params);
+      });
   });
 }
 
