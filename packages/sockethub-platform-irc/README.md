@@ -2,12 +2,6 @@
 
 A sockethub platform module implementing IRC functionality.
 
-[![Dependency Status](http://img.shields.io/david/sockethub/sockethub-platform-irc.svg?style=flat)](https://david-dm.org/sockethub/sockethub-platform-irc#info=dependencies)
-[![devDependency Status](http://img.shields.io/david/dev/sockethub/sockethub-platform-irc.svg?style=flat)](https://david-dm.org/sockethub/sockethub-platform-irc#info=devDependencies)
-[![Maintainability](https://api.codeclimate.com/v1/badges/95912fc801271faf44f6/maintainability)](https://codeclimate.com/github/sockethub/sockethub-platform-irc/maintainability)
-[![License](https://img.shields.io/npm/l/sockethub-platform-irc.svg?style=flat)](https://raw.githubusercontent.com/sockethub/sockethub-platform-irc/master/LICENSE)
-[![Release](http://img.shields.io/github/release/sockethub/sockethub-platform-irc.svg?style=flat)](https://github.com/sockethub/sockethub-platform-irc/releases)
-
 ## About
 
 This module contains all of the implementation details of an IRC client and is
