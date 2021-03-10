@@ -239,7 +239,7 @@ class Sockethub {
     socket.on(
       'activity-object',
       middleware.chain(validate('activity-object', socket.id),
-                       this.handleActivityObject(sessionLog))
+        this.handleActivityObject(sessionLog))
     );
   }
 }
