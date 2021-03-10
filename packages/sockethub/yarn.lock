@@ -905,10 +905,10 @@ acorn@^7.1.1, acorn@^7.4.0:
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-7.4.1.tgz#feaed255973d2e77555b83dbc08851a6c63520fa"
   integrity sha512-nQyp0o1/mNdbTO1PO6kHkwSrmgZ0MT/jCCpNiwbUjGoRN4dlBhqJtoQuCnEOKzgTVwg0ZWiCoQy6SxMebQVh8A==
 
-activity-streams@^4.3.3:
-  version "4.3.3"
-  resolved "https://registry.yarnpkg.com/activity-streams/-/activity-streams-4.3.3.tgz#8fdbd98c5363265d002c272b7486ef8465068368"
-  integrity sha512-aaKLZRSeIxeJ1kJmTuIFgtdz5AQvPDH7WbsQQ/aUSZXjZDJzGEYF6t6OkGb3tFxNDMEfl4SPRfksYMtVyVkNMg==
+activity-streams@^4.3.5:
+  version "4.3.5"
+  resolved "https://registry.yarnpkg.com/activity-streams/-/activity-streams-4.3.5.tgz#36da222926a5773ce31dab8bde2c3a9f8241d966"
+  integrity sha512-4YQQwAXma3AA5gK2LAg/tSWRV6ETRAT/Zwq51Zgheif93SOQWwrsS5mSWyYFzGhb/g5nesvU9Fn9AW4/eCoMhA==
   dependencies:
     event-emitter "^0.3.5"
 
@@ -1263,7 +1263,7 @@ blob@0.0.5:
   resolved "https://registry.yarnpkg.com/blob/-/blob-0.0.5.tgz#d680eeef25f8cd91ad533f5b01eed48e64caf683"
   integrity sha512-gaqbzQPqOoamawKg0LGVd7SzLgXS+JH61oWprSLH+P+abTczqJbhTR8CmJ2u9/bUYNmHTGJx/UEmn6doAvvuig==
 
-bluebird@^3, bluebird@^3.5.3:
+bluebird@^3.5.3, bluebird@^3.7.2:
   version "3.7.2"
   resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.7.2.tgz#9f229c15be272454ffa973ace0dbee79a1b0c36f"
   integrity sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==
@@ -2949,18 +2949,17 @@ ipaddr.js@1.9.1:
   resolved "https://registry.yarnpkg.com/ipaddr.js/-/ipaddr.js-1.9.1.tgz#bff38543eeb8984825079ff3a2a8e6cbd46781b3"
   integrity sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==
 
-irc-socket@^3.0.8:
+"irc-socket@https://github.com/silverbucket/irc-socket/archive/v4-alpha.tar.gz":
   version "3.0.8"
-  resolved "https://registry.yarnpkg.com/irc-socket/-/irc-socket-3.0.8.tgz#cf3fd789d0dff683f7cfaf6baa4d33d72f052596"
-  integrity sha1-zz/XidDf9oP3z69rqk0z1y8FJZY=
+  resolved "https://github.com/silverbucket/irc-socket/archive/v4-alpha.tar.gz#e00965eeab300dab38afca51afcfac1efe3457fd"
   dependencies:
-    bluebird "^3"
+    bluebird "^3.7.2"
     r-result "^1.4.0"
 
-irc2as@^3.0.2:
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/irc2as/-/irc2as-3.0.2.tgz#7d644c551d6bee6986ec673c3538e8043c1c57ba"
-  integrity sha512-PX2pRKyjqh6rXQxfQvOzDPKnv1Q757R1wdkZKR3ivX4rczYdhMDmSB41esIzJ1Bid4OARApo5Fazu+O+Y3+BfA==
+irc2as@^3.0.4:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/irc2as/-/irc2as-3.0.4.tgz#d196a3ea2034d6b04a71c2f230753cd9505c7e07"
+  integrity sha512-Wfcheb+KZDwnWnlanDThk3mxR3ukmEWhcPKdI27zmoxTs+V9C7zN76DCG30W0u7OvyUmWbKBx8N3G/tLD4slAQ==
   dependencies:
     debug "^4.3.1"
     fast-deep-equal "^3.1.1"
@@ -5369,35 +5368,35 @@ sockethub-platform-dummy@^2.0.2:
   dependencies:
     request "^2.83.0"
 
-sockethub-platform-feeds@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/sockethub-platform-feeds/-/sockethub-platform-feeds-2.1.0.tgz#e8756168f320bff3abb55927b4712ee9d35b3a89"
-  integrity sha512-q0wwhtESyLAyEA0ZW9WV5EkEJM5noeqrq1MHN1uXC5iIu3TpnURXKqoagbO4k1Dhr7iXihDgT/2zLwV3R4p89w==
+sockethub-platform-feeds@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/sockethub-platform-feeds/-/sockethub-platform-feeds-2.1.2.tgz#80156c9832d2a49c972b53d2cb552daff2b1824f"
+  integrity sha512-VnHZ1pMAiv/oy23c6bBJROqO42QQqQghFmId8Vixh8wIU0vHikYho/+lh3/M8i30QHQKnao5lN87ymb6tu4K3w==
   dependencies:
     feedparser "^2.2.9"
     request "^2.83.0"
 
-sockethub-platform-irc@^3.5.0:
-  version "3.5.0"
-  resolved "https://registry.yarnpkg.com/sockethub-platform-irc/-/sockethub-platform-irc-3.5.0.tgz#3c02c04079b86cf9136df8b59f05fa1c5cb6e745"
-  integrity sha512-9MKW9Oqatl5Kg78VHFjdPRofaZijhx34N0iXTKJm0wpcVmZr8X2cfzUn+Jkus+Sj5tDRinpSNqWhSrstMeImcg==
+sockethub-platform-irc@^3.5.2:
+  version "3.5.2"
+  resolved "https://registry.yarnpkg.com/sockethub-platform-irc/-/sockethub-platform-irc-3.5.2.tgz#f136744dfd13811e1d340ad064432fae36067538"
+  integrity sha512-6XR/t69GowG9vcT4i0SaSXQGNnMSsn6p5hBgB9MgDJs4k5J02f/SDw6xM3z1cq/hfSgfkTJp7fxnhPMvh2dNXA==
   dependencies:
     debug "^4.3.1"
-    irc-socket "^3.0.8"
-    irc2as "^3.0.2"
+    irc-socket "https://github.com/silverbucket/irc-socket/archive/v4-alpha.tar.gz"
+    irc2as "^3.0.4"
 
-sockethub-platform-xmpp@^3.2.2:
-  version "3.2.2"
-  resolved "https://registry.yarnpkg.com/sockethub-platform-xmpp/-/sockethub-platform-xmpp-3.2.2.tgz#49ea4f2082767543b4b1a61a72361a717b443407"
-  integrity sha512-WDBEeMP/6iLsjy3L5dAc0Nb5XOfpfSBBDKQYw/pRgd7Ab8FdG7mwyxraEaIJ8bOdiUhO2NII9YEcypGwxSCYyA==
+sockethub-platform-xmpp@^3.2.4:
+  version "3.2.4"
+  resolved "https://registry.yarnpkg.com/sockethub-platform-xmpp/-/sockethub-platform-xmpp-3.2.4.tgz#023e87917c3448af5e530289de8c19986cf6a3bf"
+  integrity sha512-rt8dce8obV/sa4pjVmDuZKCqReT9LmWHtWwnERZVjmNCmbRDwIRGM0ALMnBbJp83FmQAicPg4LBx9x1KsnXGcQ==
   dependencies:
     ltx "^2.9.2"
     simple-xmpp "^1.3.1"
 
-sockethub-schemas@^2.0.2:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/sockethub-schemas/-/sockethub-schemas-2.0.2.tgz#f985ccf24089980e71d03cd9aac3939f9c8b20fb"
-  integrity sha512-V4RZBIL49eOkBkiCVir2ohXgYJXSbEd4WHQUh55PKIyHcpPceV3MVWuIjThwqhWb3hVSIhovggCrouUSlKYukw==
+sockethub-schemas@^2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/sockethub-schemas/-/sockethub-schemas-2.0.4.tgz#a07cebcc12884e25d445de7f6da3f5145709a88c"
+  integrity sha512-AqGvKb2WX4B82wxiRydkMoF+W+qeY4vY0c4jsTPESkcuD4Yn6odVw+Xl6vp6toEBoy3o2vbUXg2DLasvZqFOLQ==
   dependencies:
     debug "^4.3.1"
 
