@@ -155,7 +155,8 @@ IRC.prototype.schema = {
 
 
 IRC.prototype.config = {
-  persist: true
+  persist: true,
+  requireCredentials: [ 'join', 'leave', 'send', 'update', 'observe' ]
 };
 
 
