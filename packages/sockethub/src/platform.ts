@@ -135,8 +135,7 @@ function startQueueListener(refresh: boolean = false) {
         const params = [ job.data.msg ];
         if ((Array.isArray(platform.config.requireCredentials)) &&
             (platform.config.requireCredentials.includes(job.data.msg['@type']))) {
-          // pass credentials object as second param if this method is defined in the
-          // `requireCredentials` list in the platform config.
+          // add the credentials object if this method requires it
           params.push(credentials);
         }
         params.push(done);
@@ -144,4 +143,3 @@ function startQueueListener(refresh: boolean = false) {
       });
   });
 }
-
