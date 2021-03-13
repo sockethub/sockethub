@@ -22,16 +22,7 @@ class Config {
       },
       'redis_url': {
         alias: 'redis.url'
-      },
-      'kue_host': {
-        alias: 'kue.host'
-      },
-      'kue_port': {
-        alias: 'kue.port'
-      },
-      'kue_url': {
-        alias: 'kue.url'
-      },
+      }
     });
     nconf.env();
 
