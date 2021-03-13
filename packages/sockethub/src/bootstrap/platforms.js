@@ -78,7 +78,7 @@ module.exports = function platformLoad(moduleList) {
             // register the platforms credentials schema
             types.push('credentials');
             tv4.addSchema(`http://sockethub.org/schemas/v0/context/${platformName}/credentials`,
-                          p.schema.credentials);
+              p.schema.credentials);
           } else {
             p.config.noCredentials = true;
           }
@@ -86,7 +86,7 @@ module.exports = function platformLoad(moduleList) {
         }
 
         tv4.addSchema(`http://sockethub.org/schemas/v0/context/${platformName}/messages`,
-                      p.schema.messages);
+          p.schema.messages);
 
         if (platformListsSupportedTypes(p)) {
           types = [...types, ...p.schema.messages.properties['@type'].enum];
