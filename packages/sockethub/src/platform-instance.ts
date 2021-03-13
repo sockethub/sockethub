@@ -1,8 +1,11 @@
 import { ChildProcess, fork } from 'child_process';
 import { join } from 'path';
 import { debug, Debugger } from 'debug';
+import Queue from 'bull';
 
 import SharedResources from "./shared-resources";
+import redisConfig from "./services/redis";
+import crypto from "./crypto";
 
 export interface ActivityObject {
   '@type': string,
@@ -18,6 +21,7 @@ export interface ActivityObject {
 export interface PlatformInstanceParams {
   identifier: string,
   platform: string,
+  secret: string,
   parentId?: string,
   actor?: string
 }
@@ -35,6 +39,7 @@ export default class PlatformInstance {
   readonly debug: Debugger;
   readonly parentId: string;
   readonly sessions: Set<string> = new Set();
+  readonly queue: Queue;
   private readonly actor?: string;
   public readonly global?: boolean = false;
   private readonly sessionCallbacks: object = {
@@ -51,6 +56,8 @@ export default class PlatformInstance {
     } else {
       this.global = true;
     }
+    this.queue = new Queue(this.parentId + this.id, redisConfig);
+    this.registerQueueListeners(params.secret);
     this.debug = debug(`sockethub:platform-instance:${this.id}`);
     // spin off a process
     this.process = fork(join(__dirname, 'platform.js'), [this.parentId, this.name, this.id]);
@@ -67,6 +74,25 @@ export default class PlatformInstance {
       this.process.unref();
       this.process.kill();
     } catch (e) { console.log(e); }
+  }
+
+  /**
+   * When jobs are completed or failed, we prepare the results and send them to the client socket
+   */
+  public registerQueueListeners(secret: string) {
+    this.queue.on('global:completed', (jobId, result) => {
+      this.queue.getJob(jobId).then((job) => {
+        this.handleJobResult(secret, 'completed', job, result);
+      });
+    });
+    this.queue.on('global:error', (jobId, result) => {
+      console.log("global error", jobId, result);
+    });
+    this.queue.on('global:failed', (jobId, result) => {
+      this.queue.getJob(jobId).then((job) => {
+        this.handleJobResult(secret, 'failed', job, result);
+      });
+    });
   }
 
   /**
@@ -88,15 +114,53 @@ export default class PlatformInstance {
    * Sends a message to client (user), can be registered with an event emitted from the platform
    * process.
    * @param sessionId ID of the socket connection to send the message to
+   * @param type type of message to emit. 'message', 'completed', 'failed'
    * @param msg ActivityStream object to send to client
    */
-  public sendToClient(sessionId: string, msg: any) {
+  public sendToClient(sessionId: string, type: string, msg: any) {
     const socket = SharedResources.sessionConnections.get(sessionId);
-    if (socket) { // send message
+    if (socket) {
       msg.context = this.name;
-      // this.log(`sending message to socket ${sessionId}`);
-      socket.emit('message', msg);
+      socket.emit(type, msg);
     }
+  }
+
+  // send message to every connected socket associated with this platform instance.
+  private broadcastToSharedPeers(origSocket, msg: ActivityObject) {
+    this.debug(`broadcasting called, originating socket ${origSocket}`);
+    for (let sessionId of this.sessions.values()) {
+      if (sessionId !== origSocket) {
+        this.debug(`broadcasting message to ${sessionId}`);
+        this.sendToClient(sessionId, 'message', msg);
+      }
+    }
+  };
+
+  // handle job results coming in on the queue from platform instances
+  private handleJobResult(secret: string, type: string, job, result) {
+    // log('job result called ' + type, result, job);
+    job.data.msg = crypto.decrypt(job.data.msg, secret);
+    delete job.data.msg.sessionSecret;
+    if (type === 'completed') { // let all related peers know of result
+      this.broadcastToSharedPeers(job.data.socket, job.data.msg);
+    }
+
+    if (result) {
+      if (type === 'completed') {
+        job.data.msg.object = {
+          '@type': 'result',
+          content: result
+        };
+      } else if (type === 'failed') {
+        job.data.msg.object = {
+          '@type': 'error',
+          content: result
+        };
+      }
+    }
+    this.debug(`job #${job.id} on socket ${job.data.socket} ${type}`);
+    this.sendToClient(job.data.socket, type, job.data.msg);
+    job.remove();
   }
 
   /**
@@ -104,7 +168,7 @@ export default class PlatformInstance {
    * @param sessionId
    * @param errorMessage
    */
-  private reportFailure(sessionId: string, errorMessage: any) {
+  private reportError(sessionId: string, errorMessage: any) {
     const errorObject = {
       context: this.name,
       '@type': 'error',
@@ -114,7 +178,7 @@ export default class PlatformInstance {
         content: errorMessage
       }
     };
-    this.sendToClient(sessionId, errorObject);
+    this.sendToClient(sessionId, 'message', errorObject);
     this.sessions.clear();
     this.destroy();
   }
@@ -138,19 +202,19 @@ export default class PlatformInstance {
   private callbackFunction(listener: string, sessionId: string) {
     const funcs = {
       'close': (e: object) => {
-        this.debug('close even triggered ' + this.id);
-        this.reportFailure(sessionId, `Error: session thread closed unexpectedly`);
+        this.debug(`close even triggered ${this.id}: ${e}`);
+        this.reportError(sessionId, `Error: session thread closed unexpectedly ${e}`);
       },
       'message': (data: MessageFromPlatform) => {
         if (data[0] === 'updateActor') {
           // We need to update the key to the store in order to find it in the future.
           this.updateIdentifier(data[2]);
         } else if (data[0] === 'error') {
-          this.reportFailure(sessionId, data[1]);
+          this.reportError(sessionId, data[1]);
         } else {
           // treat like a message to clients
           this.debug(`handling ${data[1]['@type']} message from platform process`);
-          this.sendToClient(sessionId, data[1]);
+          this.sendToClient(sessionId, 'message', data[1]);
         }
       }
     };

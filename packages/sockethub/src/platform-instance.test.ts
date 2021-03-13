@@ -38,6 +38,7 @@ describe("PlatformInstance", () => {
     const params: PlatformInstanceParams = {
       identifier: 'platform identifier',
       platform: 'a platform name',
+      secret: 'abracadabra',
       parentId: 'the parentId'
     };
     pi = new PlatformInstance(params);
@@ -101,6 +102,7 @@ describe('private instance per-actor', () => {
     const params: PlatformInstanceParams = {
       identifier: 'id',
       platform: 'name',
+      secret: "abracadabra",
       parentId: 'parentId',
       actor: 'actor string'
     };

@@ -15,36 +15,39 @@ class ProcessManager {
     this.parentSecret2 = parentSecret2;
   }
 
-  register(msg: any, sessionId?: string) {
-    const platformDetails = init.platforms.get(msg.context);
+  get(platform: string, actorId: string, sessionId?: string): PlatformInstance {
+    const platformDetails = init.platforms.get(platform);
 
     if (platformDetails.config.persist) {
       // ensure process is started - one for each actor
-      return this.ensureProcess(msg.context, sessionId, msg.actor['@id']);
+      return this.ensureProcess(platform, sessionId, actorId);
     } else {
       // ensure process is started - one for all jobs
-      return this.ensureProcess(msg.context);
+      return this.ensureProcess(platform);
     }
   }
 
-  private createPlatformInstance(identifier: string, platform: string, actor?: string) {
+  private createPlatformInstance(identifier: string, platform: string,
+                                 actor?: string): PlatformInstance {
     const secrets: MessageFromParent = [
       'secrets', {
         parentSecret1: this.parentSecret1,
         parentSecret2: this.parentSecret2
       }
     ];
-    const platformInstance = new PlatformInstance({
+    const platformInstanceConfig: PlatformInstanceParams = {
       identifier: identifier,
       platform: platform,
+      secret: this.parentSecret1 + this.parentSecret2,
       parentId: this.parentId,
       actor: actor
-    });
+    };
+    const platformInstance = new PlatformInstance(platformInstanceConfig);
     platformInstance.process.send(secrets);
     return platformInstance;
   }
 
-  private ensureProcess(platform: string, sessionId?: string, actor?: string) {
+  private ensureProcess(platform: string, sessionId?: string, actor?: string): PlatformInstance {
     const identifier = getPlatformId(platform, actor);
     const platformInstance = SharedResources.platformInstances.get(identifier) ||
               this.createPlatformInstance(identifier, platform, actor);
@@ -52,7 +55,7 @@ class ProcessManager {
       platformInstance.registerSession(sessionId);
     }
     SharedResources.platformInstances.set(identifier, platformInstance);
-    return identifier;
+    return platformInstance;
   }
 }
 

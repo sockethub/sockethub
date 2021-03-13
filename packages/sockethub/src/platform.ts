@@ -1,7 +1,8 @@
 import debug from 'debug';
 import hash from "object-hash";
-import services from './services';
+import redisConfig from './services/redis';
 import crypto from "./crypto";
+import Queue from 'bull';
 import { getSessionStore, getPlatformId } from "./common";
 import { MessageFromParent, ActivityObject } from './platform-instance';
 
@@ -11,9 +12,7 @@ const platformName = process.argv[3];
 let identifier = process.argv[4];
 let logger = debug(`sockethub:platform:${identifier}`);
 
-const queue = services.startQueue(parentId);
 const PlatformModule = require(`sockethub-platform-${platformName}`);
-
 
 let queueStarted = false;
 let parentSecret1: string, parentSecret2: string;
@@ -41,7 +40,6 @@ process.on('message', (data: MessageFromParent) => {
     startQueueListener();
   }
 });
-
 
 /**
  * sendFunction wrapper, generates a function to pass to the platform class. The platform can
@@ -122,19 +120,20 @@ function startQueueListener(refresh: boolean = false) {
     logger('start queue called multiple times, skipping');
     return;
   }
+  const queue = new Queue(parentId + identifier, redisConfig);
   queueStarted = true;
   logger('listening on the queue for incoming jobs');
-  queue.process(identifier, (job, done: Function) => {
+  queue.process((job, done: Function) => {
     job.data.msg = crypto.decrypt(job.data.msg, secret);
     logger(`platform process decrypted job ${job.data.msg['@type']}`);
     const sessionSecret = job.data.msg.sessionSecret;
     delete job.data.msg.sessionSecret;
-    getCredentials(job.data.msg.actor['@id'], job.data.socket, sessionSecret,
+    return getCredentials(job.data.msg.actor['@id'], job.data.socket, sessionSecret,
       (err, credentials) => {
         if (err) { return done(err); }
         const params = [ job.data.msg ];
         if ((Array.isArray(platform.config.requireCredentials)) &&
-            (platform.config.requireCredentials.includes(job.data.msg['@type']))) {
+          (platform.config.requireCredentials.includes(job.data.msg['@type']))) {
           // add the credentials object if this method requires it
           params.push(credentials);
         }
