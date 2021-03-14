@@ -86,7 +86,7 @@ export default class PlatformInstance {
       });
     });
     this.queue.on('global:error', (jobId, result) => {
-      console.log("global error", jobId, result);
+      this.debug("unknown queue error", jobId, result);
     });
     this.queue.on('global:failed', (jobId, result) => {
       this.queue.getJob(jobId).then((job) => {
@@ -127,7 +127,7 @@ export default class PlatformInstance {
 
   // send message to every connected socket associated with this platform instance.
   private broadcastToSharedPeers(origSocket, msg: ActivityObject) {
-    this.debug(`broadcasting called, originating socket ${origSocket}`);
+    // this.debug(`broadcasting called, originating socket ${origSocket}`);
     for (let sessionId of this.sessions.values()) {
       if (sessionId !== origSocket) {
         this.debug(`broadcasting message to ${sessionId}`);

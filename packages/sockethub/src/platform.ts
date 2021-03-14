@@ -10,7 +10,7 @@ import { MessageFromParent, ActivityObject } from './platform-instance';
 const parentId = process.argv[2];
 const platformName = process.argv[3];
 let identifier = process.argv[4];
-let logger = debug(`sockethub:platform:${identifier}`);
+let logger = debug(`sockethub:platform:${platformName}:${identifier}`);
 
 const PlatformModule = require(`sockethub-platform-${platformName}`);
 
@@ -125,7 +125,7 @@ function startQueueListener(refresh: boolean = false) {
   logger('listening on the queue for incoming jobs');
   queue.process((job, done: Function) => {
     job.data.msg = crypto.decrypt(job.data.msg, secret);
-    logger(`platform process decrypted job ${job.data.msg['@type']}`);
+    logger(`received job: ${job.data.msg['@type']}`);
     const sessionSecret = job.data.msg.sessionSecret;
     delete job.data.msg.sessionSecret;
     return getCredentials(job.data.msg.actor['@id'], job.data.socket, sessionSecret,
