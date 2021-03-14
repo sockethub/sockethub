@@ -1,7 +1,7 @@
 import nconf from 'nconf';
-import debug from 'debug';
+import { debug } from 'debug';
 
-const log = debug.debug('sockethub:bootstrap:config');
+const log = debug('sockethub:bootstrap:config');
 
 class Config {
   constructor() {
