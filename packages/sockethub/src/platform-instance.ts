@@ -7,6 +7,7 @@ import SharedResources from "./shared-resources";
 import redisConfig from "./services/redis";
 import crypto from "./crypto";
 
+
 export interface ActivityObject {
   '@type': string,
   actor: {
@@ -21,7 +22,6 @@ export interface ActivityObject {
 export interface PlatformInstanceParams {
   identifier: string,
   platform: string,
-  secret: string,
   parentId?: string,
   actor?: string
 }
@@ -34,14 +34,14 @@ export interface MessageFromParent extends Array<string|any>{0: string, 1: any}
 export default class PlatformInstance {
   flaggedForTermination: boolean = false;
   id: string;
+  queue: Queue;
   readonly name: string;
   readonly process: ChildProcess;
   readonly debug: Debugger;
   readonly parentId: string;
   readonly sessions: Set<string> = new Set();
-  readonly queue: Queue;
-  private readonly actor?: string;
   public readonly global?: boolean = false;
+  private readonly actor?: string;
   private readonly sessionCallbacks: object = {
     'close': (() => new Map())(),
     'message': (() => new Map())(),
@@ -56,8 +56,7 @@ export default class PlatformInstance {
     } else {
       this.global = true;
     }
-    this.queue = new Queue(this.parentId + this.id, redisConfig);
-    this.registerQueueListeners(params.secret);
+
     this.debug = debug(`sockethub:platform-instance:${this.id}`);
     // spin off a process
     this.process = fork(join(__dirname, 'platform.js'), [this.parentId, this.name, this.id]);
@@ -69,20 +68,24 @@ export default class PlatformInstance {
   public destroy() {
     this.flaggedForTermination = true;
     SharedResources.platformInstances.delete(this.id);
-    this.process.removeAllListeners('close');
     try {
+      this.queue.clean();
+    } catch (e) { }
+    try {
+      this.process.removeAllListeners('close');
       this.process.unref();
       this.process.kill();
-    } catch (e) { console.log(e); }
+    } catch (e) { }
   }
 
   /**
    * When jobs are completed or failed, we prepare the results and send them to the client socket
    */
-  public registerQueueListeners(secret: string) {
+  public initQueue(secret: string) {
+    this.queue = new Queue(this.parentId + this.id, redisConfig);
     this.queue.on('global:completed', (jobId, result) => {
       this.queue.getJob(jobId).then((job) => {
-        this.handleJobResult(secret, 'completed', job, result);
+        this.handleJobResult('completed', crypto.decrypt(job.data.msg, secret), result);
       });
     });
     this.queue.on('global:error', (jobId, result) => {
@@ -90,7 +93,7 @@ export default class PlatformInstance {
     });
     this.queue.on('global:failed', (jobId, result) => {
       this.queue.getJob(jobId).then((job) => {
-        this.handleJobResult(secret, 'failed', job, result);
+        this.handleJobResult('failed', crypto.decrypt(job.data.msg, secret), result);
       });
     });
   }
@@ -120,6 +123,10 @@ export default class PlatformInstance {
   public sendToClient(sessionId: string, type: string, msg: any) {
     const socket = SharedResources.sessionConnections.get(sessionId);
     if (socket) {
+      try {
+        // this should never be exposed externally
+        delete msg.sessionSecret;
+      } catch (e) {}
       msg.context = this.name;
       socket.emit(type, msg);
     }
@@ -127,7 +134,6 @@ export default class PlatformInstance {
 
   // send message to every connected socket associated with this platform instance.
   private broadcastToSharedPeers(origSocket, msg: ActivityObject) {
-    // this.debug(`broadcasting called, originating socket ${origSocket}`);
     for (let sessionId of this.sessions.values()) {
       if (sessionId !== origSocket) {
         this.debug(`broadcasting message to ${sessionId}`);
@@ -137,10 +143,7 @@ export default class PlatformInstance {
   };
 
   // handle job results coming in on the queue from platform instances
-  private handleJobResult(secret: string, type: string, job, result) {
-    // log('job result called ' + type, result, job);
-    job.data.msg = crypto.decrypt(job.data.msg, secret);
-    delete job.data.msg.sessionSecret;
+  private handleJobResult(type: string, job, result) {
     if (type === 'completed') { // let all related peers know of result
       this.broadcastToSharedPeers(job.data.socket, job.data.msg);
     }
@@ -203,7 +206,7 @@ export default class PlatformInstance {
     const funcs = {
       'close': (e: object) => {
         this.debug(`close even triggered ${this.id}: ${e}`);
-        this.reportError(sessionId, `Error: session thread closed unexpectedly ${e}`);
+        this.reportError(sessionId, `Error: session thread closed unexpectedly: ${e}`);
       },
       'message': (data: MessageFromPlatform) => {
         if (data[0] === 'updateActor') {
