@@ -23,4 +23,4 @@ describe('crypto', () => {
   it('hashes', () => {
     expect(crypto.hash('foobar')).toBe('8843d7f');
   });
-})
+});
