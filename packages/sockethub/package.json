@@ -75,12 +75,11 @@
     "test": "yarn run build && c8 jaribu && jest --coverage",
     "start": "yarn run build && DEBUG=sockethub* ./bin/sockethub",
     "dev": "yarn run build && DEBUG=sockethub* ./bin/sockethub --examples",
-    "dev-old": "DEBUG=sockethub* DEV=1 ts-node --pretty --skip-ignore -T -P ./src/tsconfig.json ./bin/sockethub --examples",
     "coverage": "jest --coverage",
     "lint": "eslint \"**/*.ts\" ./bin/sockethub",
     "lint:fix": "eslint --fix \"**/*.ts\" ./bin/sockethub",
-    "tsc": "tsc -p src",
-    "build": "tsc -p src && cp ./src/defaults.json ./dist/defaults.json",
+    "tsc": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && cp ./src/defaults.json ./dist/defaults.json",
     "travis": "yarn run test"
   },
   "engines": {
