@@ -124,17 +124,3 @@ describe('ActivityStream validation', () => {
     expect(msg).toBe(expectedFailureMessage);
   })
 });
-
-//
-// testGroups.forEach(function (entry, i) {
-//   suite.tests.push({
-//     desc: entry.name,
-//     run: function (env, test) {
-//       const result = tv4.validate(entry.input, env.schemaId + entry.type + '#');
-//       const msg = (tv4.error) ? tv4.error.dataPath + ': ' + tv4.error.message : '';
-//       test.assert(result, entry.result, msg);
-//     }
-//   });
-// });
-//
-// return [ suite ];
