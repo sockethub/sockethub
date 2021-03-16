@@ -1,4 +1,4 @@
-import debug from 'debug';
+const debug = require('debug');
 const log = debug('sockethub:schemas');
 log('loading sockethub activity stream schemas');
 module.exports = {
