@@ -14,9 +14,9 @@
         "indent": ["error", 2, {
             "SwitchCase": 1,
             "VariableDeclarator": { "var": 2, "let": 2, "const": 3 },
-            "FunctionDeclaration": { "parameters": "first" },
+            "FunctionDeclaration": { "parameters":  "first" },
             "FunctionExpression": { "parameters":  "first" },
-            "CallExpression": { "arguments":  "first" }
+            "CallExpression": { "arguments":  1 }
         }],
         "keyword-spacing": 2,
         "max-len": [2, { "code": 99 }],
@@ -24,7 +24,6 @@
         "no-eval": 2,
         "no-tabs": 2,
         "no-var": 2,
-//        "quotes": [2, "single", { "allowTemplateLiterals": true }],
         "semi": 2,
         "space-before-blocks": 2,
         "space-before-function-paren": [2, {"anonymous": "always", "named": "never"}]

@@ -172,8 +172,7 @@ class Sockethub {
   private handleIncomingMessage(socket: any, sessionLog: any) {
     return (msg) => {
       const identifier = this.processManager.register(msg, socket.id);
-      sessionLog(`queueing incoming job ${msg.context} for socket 
-        ${socket.id} to channel ${identifier}`);
+      sessionLog(`queueing incoming job ${msg.context} to channel ${identifier}`);
       const job = this.queue.create(identifier, {
         title: socket.id + '-' + msg.context + '-' + (msg['@id']) ? msg['@id'] : this.counter++,
         socket: socket.id,
@@ -217,13 +216,13 @@ class Sockethub {
     socket.on(
       'credentials',
       middleware.chain(
-        validate('credentials'), this.handleStoreCredentials(store, sessionLog))
+        validate('credentials', socket.id), this.handleStoreCredentials(store, sessionLog))
     );
 
     socket.on(
       'message',
       middleware.chain(
-        validate('message'),
+        validate('message', socket.id),
         (next, msg) => {
           // middleware which attaches the sessionSecret to the message. The platform thread
           // must find the credentials on their own using the given sessionSecret, which indicates
@@ -239,7 +238,8 @@ class Sockethub {
     // fired and we receive a copy on the server side.
     socket.on(
       'activity-object',
-      middleware.chain(validate('activity-object'), this.handleActivityObject(sessionLog))
+      middleware.chain(validate('activity-object', socket.id),
+        this.handleActivityObject(sessionLog))
     );
   }
 }

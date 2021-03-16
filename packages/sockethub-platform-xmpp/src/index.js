@@ -99,7 +99,9 @@ class XMPP {
 
   get config() {
     return {
-      persist: true
+      persist: true,
+      requireCredentials: [ 'connect', 'join', 'send', 'update', 'request-friend', 'remove-friend', 'make-friend',
+        'observe' ]
     }
   };
 

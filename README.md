@@ -2,11 +2,12 @@
 
 A protocol gateway for the web.
 
-[![Build Status](http://img.shields.io/travis/sockethub/sockethub.svg?style=flat)](https://travis-ci.org/sockethub/sockethub)
+[![Build Status](https://www.travis-ci.com/sockethub/sockethub.svg?branch=master)](https://travis-ci.com/sockethub/sockethub)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/sockethub/sockethub.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/sockethub/sockethub/alerts/)
 [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/sockethub/sockethub.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/sockethub/sockethub/context:javascript)
 [![Maintainability](https://api.codeclimate.com/v1/badges/95912fc801271faf44f6/maintainability)](https://codeclimate.com/github/sockethub/sockethub/maintainability)
 [![Release](https://img.shields.io/npm/v/sockethub.svg?style=flat)](https://github.com/sockethub/sockethub/releases)
+[![Lerna](https://img.shields.io/badge/maintained%20with-lerna-cc00ff.svg)](https://lerna.js.org/)
 
 ## About
 
@@ -25,6 +26,14 @@ Sockethub is a translation layer for web applications to communicate with other 
 ### Run Tests
 
 ```$ yarn test```
+
+### Run Linter
+
+```$ yarn lint:js```
+
+Or, to automatically fix linting errors:
+
+```$ yarn lint:fix```
 
 ## Running
 
@@ -50,9 +59,6 @@ For production, with examples disabled.
 * [sockethub-platform-irc](packages/sockethub-platform-irc)
 * [sockethub-platform-xmpp](packages/sockethub-platform-xmpp)
 * [sockethub-schemas](packages/sockethub-schemas)
-
-## License
-Sockethub is licensed under the [LGPL](https://github.com/sockethub/sockethub/blob/master/LICENSE)
 
 ## Credits
 

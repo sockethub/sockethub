@@ -18,6 +18,7 @@
     this.socket = socket;
     this.ActivityStreams = ASFactory({specialObjs: ['credentials']});
     this.online = false;
+    this.debug = false;
 
     this.__registerSocketIOHandlers();
 
@@ -29,6 +30,12 @@
       this.ActivityStreams.Object.create(obj);
     });
   }
+
+  SockethubClient.prototype.log = function (msg, obj) {
+    if (this.debug) {
+      console.log(msg, obj);
+    }
+  };
 
   SockethubClient.prototype.__handlers = {
     // wrapping the `on` method in order to automatically unpack Activity Streams objects
@@ -62,6 +69,7 @@
   SockethubClient.prototype.__registerSocketIOHandlers = function () {
     let storedCredentials     = new Map(),
         storedActivityObjects = new Map(),
+        storedConnects        = new Map(),
         storedJoins           = new Map();
 
     // middleware for events which don't deal in AS objects
@@ -71,6 +79,7 @@
           this.online = true;
           this.__replay('activity-object', storedActivityObjects);
           this.__replay('credentials', storedCredentials);
+          this.__replay('message', storedConnects);
           this.__replay('message', storedJoins);
         } else if (event === 'connect') {
           this.online = true;
@@ -122,6 +131,10 @@
               storedJoins['set'](this.__getKey(content), content);
             } else if (content['@type'] === 'leave') {
               storedJoins['delete'](this.__getKey(content), content);
+            } if (content['@type'] === 'connect') {
+              storedConnects['set'](this.__getKey(content), content);
+            } else if (content['@type'] === 'disconnect') {
+              storedConnects['delete'](this.__getKey(content), content);
             }
           } else {
             // reject message if we're not online
@@ -146,6 +159,7 @@
 
   SockethubClient.prototype.__replay = function (name, asMap) {
     asMap.forEach((obj) => {
+      this.log(`replaying ${name}`, obj);
       this.socket._emit(name, obj);
     });
   };
@@ -161,7 +175,7 @@
 
   SockethubClient.prototype.__getKey = function (content) {
     let actor = content.actor['@id'] || content.actor;
-    let target = content.target['@id'] || content.target;
+    let target = content.target ? content.target['@id'] || content.target : '';
     return actor + '-' + target;
   };
 

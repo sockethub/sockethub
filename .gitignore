@@ -1,3 +1,4 @@
+**/package-lock.json
 node_modules
 *~
 config.js
@@ -5,3 +6,4 @@ config.secrets.js
 connect-config.js
 coverage
 .idea
+**/dist/

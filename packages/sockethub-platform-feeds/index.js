@@ -112,7 +112,8 @@ class Feeds {
 
   get config() {
     return {
-      persist: false
+      persist: false,
+      requireCredentials: []
     }
   }
 

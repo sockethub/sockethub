@@ -1,1 +1,0 @@
-{"version":3,"file":"shared-resources.js","sourceRoot":"","sources":["../src/shared-resources.ts"],"names":[],"mappings":";;AAAA,MAAM,eAAe,GAAG;IACtB,mDAAmD;IACnD,iBAAiB,EAAE,CAAC,GAAG,EAAE,CAAC,IAAI,GAAG,EAAE,CAAC,EAAE;IACtC,sEAAsE;IACtE,uCAAuC;IACvC,kBAAkB,EAAE,CAAC,GAAG,EAAE,CAAC,IAAI,GAAG,EAAE,CAAC,EAAE;CACxC,CAAC;AACF,kBAAe,eAAe,CAAC"}
