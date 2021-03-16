@@ -1,7 +1,7 @@
 module.exports = {
   "id": "http://sockethub.org/schemas/v0/activity-object#",
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "description": "schema for Sockethub Activity Objects",
+  "description": "Schema for Sockethub Activity Objects",
   "type": "object",
   "required": [
     "object"

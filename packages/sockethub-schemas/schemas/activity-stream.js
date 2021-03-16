@@ -1,12 +1,12 @@
 module.exports = {
   "id": "http://sockethub.org/schemas/v0/activity-stream#",
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "description": "schema for Sockethub Activity Streams",
+  "description": "Schema for Sockethub Activity Streams",
   "type": "object",
   "required": [
-    "context",
     "@type",
-    "actor"
+    "actor",
+    "context"
   ],
   "properties": {
     "@id": {
