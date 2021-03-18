@@ -186,7 +186,6 @@ class XMPP {
    * Join a room, optionally defining a display name for that room.
    *
    * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
    * @example
@@ -217,8 +216,7 @@ class XMPP {
     // TODO investigate implementation reserved nickname discovery
     this.__client.send(xml("presence",
       { from: job.actor['@id'], to: `${job.target['@id']}/${job.actor.displayName || id}` }
-    ));
-    done();
+    )).then(done);
   };
 
   /**
@@ -227,7 +225,6 @@ class XMPP {
    * Send a message to a room or private conversation.
    *
    * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
    * @example
@@ -290,7 +287,6 @@ class XMPP {
    * Indicate presence and status message.
    *
    * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
    * @example
@@ -315,10 +311,7 @@ class XMPP {
       const status = job.object.content || '';
       // setting presence
       this.debug('setting presence: ' + show + ' status: ' + status);
-      this.__client.setPresence(show, status);
-      this.debug('requesting XMPP roster');
-      this.__client.getRoster();
-      done();
+      this.__client.send(xml(show, { type: status })).then(done);
     } else {
       done('unknown object type (should be presence?): ' + job.object['@type']);
     }
@@ -331,7 +324,6 @@ class XMPP {
    * Send friend request
    *
    * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
    * @example
@@ -360,7 +352,6 @@ class XMPP {
    * Send a remove friend request
    *
    * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
    * @example
@@ -389,7 +380,6 @@ class XMPP {
    * Confirm a friend request
    *
    * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
    * @example
@@ -417,7 +407,6 @@ class XMPP {
    * Indicate an intent to observe something (ie. get a list of users in a room).
    *
    * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
    * @example

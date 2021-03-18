@@ -7,7 +7,7 @@ jest.mock('@xmpp/client', () => ({
     on: jest.fn(),
     start: jest.fn(() => Promise.resolve()),
     send: jest.fn(() => Promise.resolve()),
-    join: jest.fn()
+    join: jest.fn(() => Promise.resolve()),
   })),
   xml: jest.fn()
 }));
@@ -148,7 +148,15 @@ describe('xmpp platform initialization', () => {
       done();
     })
   })
-  
+
+  it('calls xmpp.js correctly when #update is called', (done) => {
+    xp.update(job.update.presence, () => {
+      expect(xp.__client.send).toHaveBeenCalled();
+      expect(xp.__client.send).toHaveBeenCalledWith(xml("presence", { type: "available" }))
+      done();
+    })
+  })
+
   it('calls xmpp.js correctly when #observe is called', (done) => {
     xp.observe(job.observe, () => {
       expect(xp.__client.send).toHaveBeenCalled();
