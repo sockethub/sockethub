@@ -83,6 +83,18 @@ const job = {
       }
     }
   },
+  'request-friend': {
+    actor: actor,
+    target: target.mrfoobar
+  },
+  'remove-friend': {
+    actor: actor,
+    target: target.mrfoobar
+  },
+  'make-friend': {
+    actor: actor,
+    target: target.mrfoobar
+  },
   observe: {
     actor: actor,
     target: target.partyroom,
@@ -153,6 +165,30 @@ describe('xmpp platform initialization', () => {
     xp.update(job.update.presence, () => {
       expect(xp.__client.send).toHaveBeenCalled();
       expect(xp.__client.send).toHaveBeenCalledWith(xml("presence", { type: "available" }))
+      done();
+    })
+  })
+
+  it('calls xmpp.js correctly when #request-friend is called', (done) => {
+    xp['request-friend'](job['request-friend'], () => {
+      expect(xp.__client.send).toHaveBeenCalled();
+      expect(xp.__client.send).toHaveBeenCalledWith(xml("presence", { type: "subscribe", to: job['request-friend'].target['@id'] }))
+      done();
+    })
+  })
+
+  it('calls xmpp.js correctly when #remove-friend is called', (done) => {
+    xp['remove-friend'](job['remove-friend'], () => {
+      expect(xp.__client.send).toHaveBeenCalled();
+      expect(xp.__client.send).toHaveBeenCalledWith(xml("presence", { type: "subscribe", to: job['remove-friend'].target['@id'] }))
+      done();
+    })
+  })
+
+  it('calls xmpp.js correctly when #make-friend is called', (done) => {
+    xp['remove-friend'](job['remove-friend'], () => {
+      expect(xp.__client.send).toHaveBeenCalled();
+      expect(xp.__client.send).toHaveBeenCalledWith(xml("presence", { type: "subscribe", to: job['make-friend'].target['@id'] }))
       done();
     })
   })

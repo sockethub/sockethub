@@ -341,8 +341,7 @@ class XMPP {
    */
   'request-friend'(job,  done) {
     this.debug('request-friend() called for ' + job.actor['@id']);
-    this.debug('request friend ' + job.target['@id']);
-    this.__client.subscribe(job.target['@id']);
+    this.__client.send(xml("presence", { type: "subscribe", to:job.target['@id'] })).then(done);
   };
 
   /**
@@ -369,8 +368,7 @@ class XMPP {
    */
   'remove-friend'(job, done) {
     this.debug('remove-friend() called for ' + job.actor['@id']);
-    this.debug('remove friend ' + job.target['@id']);
-    this.__client.unsubscribe(job.target['@id']);
+    this.__client.send(xml("presence", { type: "unsubscribe", to:job.target['@id'] })).then(done);
   };
 
   /**
@@ -397,8 +395,7 @@ class XMPP {
    */
   'make-friend'(job, done) {
     this.debug('make-friend() called for ' + job.actor['@id']);
-    this.debug('make friend ' + job.target['@id']);
-    this.__client.acceptSubscription(job.target['@id']);
+    this.__client.send(xml("presence", { type: "subscribe", to:job.target['@id'] })).then(done);
   };
 
   /**
@@ -459,8 +456,7 @@ class XMPP {
       type: 'get',
       from: job.actor['@id'],
       to: job.target['@id']
-    }, xml("query", {xmlns: 'http://jabber.org/protocol/disco#items'})));
-    done();
+    }, xml("query", {xmlns: 'http://jabber.org/protocol/disco#items'}))).then(done);
   };
 
   cleanup(done) {
