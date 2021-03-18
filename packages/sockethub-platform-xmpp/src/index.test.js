@@ -6,7 +6,7 @@ jest.mock('@xmpp/client', () => ({
   client: jest.fn(() => ({
     on: jest.fn(),
     start: jest.fn(() => Promise.resolve()),
-    send: jest.fn(),
+    send: jest.fn(() => Promise.resolve()),
     join: jest.fn()
   })),
   xml: jest.fn()
@@ -118,7 +118,7 @@ describe('xmpp platform initialization', () => {
   });
 
   it('calls xmpp.js correctly when #join is called', (done) => {
-    xp.join(job.join, {}, () => {
+    xp.join(job.join, () => {
       expect(xp.__client.send).toHaveBeenCalled()
       expect(xml).toHaveBeenCalledWith("presence", {"from": "testingham@jabber.net", "to": "partyroom@jabber.net/testing ham"})
       done();
@@ -126,21 +126,31 @@ describe('xmpp platform initialization', () => {
   })
 
   it('calls xmpp.js correctly when #send is called', (done) => {
-    xp.send(job.send.chat, {}, () => {
-      expect(xp.__client.send).toHaveBeenCalledWith(job.send.chat.target['@id'], job.send.chat.object.content, "chat")
+    const message = xml(
+      "message",
+      { type: job.send.chat.target['@type'] === 'room' ? 'groupchat' : 'chat', to: job.send.chat.target['@id'] },
+      xml("body", {}, job.send.chat.object.content),
+    );
+    xp.send(job.send.chat, () => {
+      expect(xp.__client.send).toHaveBeenCalledWith(message);
       done();
     })
   })
 
   it('calls xmpp.js correctly when #send is called for a groupchat', (done) => {
-    xp.send(job.send.groupchat, {}, () => {
-      expect(xp.__client.send).toHaveBeenCalledWith(job.send.groupchat.target['@id'], job.send.groupchat.object.content, "groupchat")
+    const message = xml(
+      "message",
+      { type: job.send.chat.target['@type'] === 'room' ? 'groupchat' : 'chat', to: job.send.chat.target['@id'] },
+      xml("body", {}, job.send.chat.object.content),
+    );
+    xp.send(job.send.groupchat, () => {
+      expect(xp.__client.send).toHaveBeenCalledWith(message)
       done();
     })
   })
   
   it('calls xmpp.js correctly when #observe is called', (done) => {
-    xp.observe(job.observe, {}, () => {
+    xp.observe(job.observe, () => {
       expect(xp.__client.send).toHaveBeenCalled();
       expect(xml).toHaveBeenCalledWith("presence", {"from": "testingham@jabber.net", "to": "partyroom@jabber.net/testing ham"})
       done();

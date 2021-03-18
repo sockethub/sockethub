@@ -100,8 +100,7 @@ class XMPP {
   get config() {
     return {
       persist: true,
-      requireCredentials: [ 'connect', 'join', 'send', 'update', 'request-friend', 'remove-friend', 'make-friend',
-        'observe' ]
+      requireCredentials: [ 'connect' ]
     }
   };
 
@@ -165,7 +164,7 @@ class XMPP {
     this.__client.start().then(() => {
       // connected
       this.debug('connection successful');
-      this.__registerListeners();
+      this.__registerHandlers();
       return done();
     }).catch((err) => {
       this.debug(`connect error: ${err}`);
@@ -211,7 +210,7 @@ class XMPP {
    * }
    *
    */
-  join(job, credentials, done) {
+  join(job, done) {
     this.debug(`sending join from ${job.actor['@id']} to ${job.target['@id']}/${job.actor.displayName}`);
     let id = job.target['@id'].split('/')[0];
     // TODO optional passwords not handled for now
@@ -273,16 +272,15 @@ class XMPP {
    * }
    *
    */
-  send(job, credentials, done) {
+  send(job, done) {
     this.debug('send() called for ' + job.actor['@id']);
     // send message
-    this.debug('sending message to ' + job.target['@id']);
-    this.__client.send(
-        job.target['@id'],
-        job.object.content,
-        job.target['@type'] === 'room' ? 'groupchat' : 'chat'
+    const message = xml(
+      "message",
+      { type: job.target['@type'] === 'room' ? 'groupchat' : 'chat', to: job.target['@id'] },
+      xml("body", {}, job.object.content),
     );
-    done();
+    this.__client.send(message).then(done);
   };
 
   /**
@@ -310,7 +308,7 @@ class XMPP {
    *   }
    * }
    */
-  update(job, credentials, done) {
+  update(job, done) {
     this.debug('update() called for ' + job.actor['@id']);
     if (job.object['@type'] === 'presence') {
       const show = job.object.presence === 'available' ? 'chat' : job.object.show;
@@ -349,7 +347,7 @@ class XMPP {
    *   }
    * }
    */
-  'request-friend'(job, credentials, done) {
+  'request-friend'(job,  done) {
     this.debug('request-friend() called for ' + job.actor['@id']);
     this.debug('request friend ' + job.target['@id']);
     this.__client.subscribe(job.target['@id']);
@@ -378,7 +376,7 @@ class XMPP {
    *   }
    * }
    */
-  'remove-friend'(job, credentials, done) {
+  'remove-friend'(job, done) {
     this.debug('remove-friend() called for ' + job.actor['@id']);
     this.debug('remove friend ' + job.target['@id']);
     this.__client.unsubscribe(job.target['@id']);
@@ -407,7 +405,7 @@ class XMPP {
    *   }
    * }
    */
-  'make-friend'(job, credentials, done) {
+  'make-friend'(job, done) {
     this.debug('make-friend() called for ' + job.actor['@id']);
     this.debug('make friend ' + job.target['@id']);
     this.__client.acceptSubscription(job.target['@id']);
@@ -465,7 +463,7 @@ class XMPP {
    *    }
    *  }
    */
-  observe(job, credentials, done) {
+  observe(job, done) {
     this.debug('sending observe from ' + job.actor['@id'] + ' for ' + job.target['@id']);
     this.__client.send(xml("iq",  {
       id: 'muc_id',
@@ -488,7 +486,7 @@ class XMPP {
     done();
   };
 
-  __registerListeners() {
+  __registerHandlers() {
     const ih = new IncomingHandlers(this);
     this.__client.on('close', ih.close.bind(ih));
     this.__client.on('error', ih.error.bind(ih));
