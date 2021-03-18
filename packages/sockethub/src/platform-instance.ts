@@ -149,7 +149,6 @@ export default class PlatformInstance {
           this.reportFailure(sessionId, data[1]);
         } else {
           // treat like a message to clients
-          this.debug(`handling ${data[1]['@type']} message from platform process`);
           this.sendToClient(sessionId, data[1]);
         }
       }
