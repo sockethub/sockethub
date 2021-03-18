@@ -101,7 +101,7 @@ class XMPP {
     return {
       persist: true,
       requireCredentials: [ 'connect' ]
-    }
+    };
   };
 
   /**
@@ -210,7 +210,8 @@ class XMPP {
    *
    */
   join(job, done) {
-    this.debug(`sending join from ${job.actor['@id']} to ${job.target['@id']}/${job.actor.displayName}`);
+    this.debug(`sending join from ${job.actor['@id']} to 
+               ${job.target['@id']}/${job.actor.displayName}`);
     let id = job.target['@id'].split('/')[0];
     // TODO optional passwords not handled for now
     // TODO investigate implementation reserved nickname discovery

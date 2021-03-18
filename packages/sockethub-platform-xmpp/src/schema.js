@@ -6,14 +6,16 @@ module.exports = {
     "required": ['@type'],
     "properties": {
       "@type": {
-        "enum": ['connect', 'update', 'send', 'join', 'observe', 'request-friend', 'remove-friend', 'make-friend']
+        "enum": ['connect', 'update', 'send', 'join', 'observe', 'request-friend',
+          'remove-friend', 'make-friend']
       }
     }
   },
   "credentials": {
     "required": ['object'],
     "properties": {
-      // TODO platforms shouldn't have to define the actor property if they don't want to, just credential specifics
+      // TODO platforms shouldn't have to define the actor property if
+      //  they don't want to, just credential specifics
       "actor": {
         "type": "object",
         "required": ["@id"]

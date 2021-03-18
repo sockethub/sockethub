@@ -4,26 +4,6 @@ function nextId() {
   return ++idCounter;
 }
 
-// if the platform throws an exception, the worker will kill & restart it, however if a callback comes in there could
-// be a race condition which tries to still access session functions which have already been terminated by the worker.
-// this function wrapper only calls the session functions if they still exist.
-// TODO: remove once confirmed this is no longer needed (after moving to threads from domains)
-// function referenceProtection(session) {
-//   if (typeof session === 'undefined') { throw new Error('session object not provided'); }
-//   function checkScope(funcName) {
-//     return (msg) => {
-//       if (typeof session[funcName] === 'function') {
-//         session[funcName](msg);
-//       }
-//     }
-//   }
-//   return {
-//     actor: session.actor,
-//     debug: checkScope('debug'),
-//     sendToClient: checkScope('sendToClient')
-//   }
-// }
-
 function getMessageBody(stanza) {
   for (let elem of stanza.children) {
     if (elem.name === 'body') {
@@ -58,7 +38,7 @@ class IncomingHandlers {
           content: err.text || err.toString(),
           condition: err.condition || 'unknown'
         }
-      })
+      });
     } catch (e) {
       this.session.debug('*** XMPP ERROR (rl catch): ', e);
     }
@@ -76,7 +56,7 @@ class IncomingHandlers {
         status: stanza.getChildText('status') || "",
         presence: (stanza.getChild('show'))? stanza.getChild('show').getText(): "online"
       }
-    }
+    };
     if (stanza.attrs.to) {
       obj.target = {'@id': stanza.attrs.to};
     } else {
@@ -109,7 +89,7 @@ class IncomingHandlers {
   // }
 
   notifyChatMessage(stanza) {
-    const from = stanza.attrs.from
+    const from = stanza.attrs.from;
     const message = getMessageBody(stanza);
     let to = stanza.attrs.to;
     const actorObj =  {
@@ -262,7 +242,7 @@ class IncomingHandlers {
              * can't figure out how to know if one of these query stanzas are from
              * added contacts or pending requests
              */
-            this.subscribe(this.session.actor, entries[e].attrs.jid, entries[e].attrs.name)
+            this.subscribe(this.session.actor, entries[e].attrs.jid, entries[e].attrs.name);
           }
         }
       }

@@ -12,4 +12,4 @@ module.exports  = {
     }
     return xmpp_creds;
   }
-}
+};
