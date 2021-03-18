@@ -33,3 +33,4 @@ exclude_patterns:
 - "**/packages/activity-streams.js/"
 - "**/packages/sockethub-platform-irc/"
 - "**/packages/sockethub-schemas/"
+- "**/packages/sockethub-platform-xmpp/"
