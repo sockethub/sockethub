@@ -38,22 +38,6 @@ class IncomingHandlers {
     this.session = session;
   }
 
-  // buddy(from, state, statusText) {
-  //   if (from !== this.session.actor['@id']) {
-  //     this.session.debug('received buddy presence update: ' + from + ' - ' + state);
-  //     this.session.sendToClient({
-  //       '@type': 'update',
-  //       actor: { '@id': from },
-  //       target: this.session.actor,
-  //       object: {
-  //         '@type': 'presence',
-  //         status: statusText,
-  //         presence: state
-  //       }
-  //     });
-  //   }
-  // }
-
   close() {
     this.session.debug('received close event with no handler specified');
     this.session.sendToClient({
@@ -80,26 +64,27 @@ class IncomingHandlers {
     }
   }
 
-  // groupBuddy(id, groupBuddy, state, statusText) {
-  //   this.session.debug('received groupbuddy event: ' + id);
-  //   this.session.sendToClient({
-  //     '@type': 'update',
-  //     actor: {
-  //       '@id': `${id}/${groupBuddy}`,
-  //       '@type': 'person',
-  //       displayName: groupBuddy
-  //     },
-  //     target: {
-  //       '@id': id,
-  //       '@type': 'room'
-  //     },
-  //     object: {
-  //       '@type': 'presence',
-  //       status: statusText,
-  //       presence: state
-  //     }
-  //   });
-  // }
+  presence(stanza) {
+    const obj = {
+      '@type': 'update',
+      actor: {
+        '@type': 'person',
+        '@id': stanza.attrs.from,
+      },
+      object: {
+        '@type': 'presence',
+        status: stanza.getChildText('status') || "",
+        presence: (stanza.getChild('show'))? stanza.getChild('show').getText(): "online"
+      }
+    }
+    if (stanza.attrs.to) {
+      obj.target = {'@id': stanza.attrs.to};
+    } else {
+      obj.actor.displayName = stanza.attrs.from.split('/')[1];
+    }
+    this.session.debug('received contact presence update from ' + stanza.attrs.from);
+    this.session.sendToClient(obj);
+  }
 
   subscribe(to, from, displayName) {
     this.session.debug('received subscribe request from ' + from);
@@ -122,9 +107,6 @@ class IncomingHandlers {
   //     target: this.session.actor
   //   });
   // }
-
-  handlePresence(stanza) {
-  }
 
   notifyChatMessage(stanza) {
     const from = stanza.attrs.from
@@ -236,25 +218,22 @@ class IncomingHandlers {
     } else if (stanza.is('message')) {
       this.notifyChatMessage(stanza);
     } else if (stanza.is('presence')) {
-      this.handlePresence(stanza);
+      this.presence(stanza);
     } else if (stanza.is('iq')) {
       if (stanza.attrs.id === 'muc_id' && stanza.attrs.type === 'result') {
         this.session.debug('got room attendance list');
         return this.notifyRoomAttendance(stanza);
       }
 
+      // todo: clean up this area, unsure of what these are
       const query = stanza.getChild('query');
-
       if (query) {
         const entries = query.getChildren('item');
-
         for (let e in entries) {
           if (! entries.hasOwnProperty(e)) {
             continue;
           }
-
           this.session.debug('STANZA ATTRS: ', entries[e].attrs);
-
           if (entries[e].attrs.subscription === 'both') {
             this.session.sendToClient({
               '@type': 'update',
@@ -287,8 +266,8 @@ class IncomingHandlers {
           }
         }
       }
-    // } else {
-    //   this.session.debug("got XMPP unknown stanza... " + stanza);
+    } else {
+      this.session.debug("got XMPP unknown stanza... " + stanza);
     }
   }
 }
