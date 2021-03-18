@@ -132,11 +132,10 @@ class XMPP {
     this.__client = client(utils.buildXmppCredentials(credentials));
     this.__client.on("offline", (a) => {
       console.log("offline", a);
-      console.log(xmpp.status);
     });
-    this.__client.on('status', (status) => {
-      console.log('status: ', status);
-    });
+    // this.__client.on('status', (status) => {
+    //   console.log('status: ', status);
+    // });
 
     // xmpp.on("stanza", async (stanza) => {
     //   // console.log(`stanza ${stanza}`);
