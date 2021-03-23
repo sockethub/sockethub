@@ -32,5 +32,4 @@ exclude_patterns:
 - "**/packages/sockethub-platform-feeds/"
 - "**/packages/activity-streams.js/"
 - "**/packages/sockethub-platform-irc/"
-- "**/packages/sockethub-schemas/"
 - "**/packages/sockethub-platform-xmpp/"
