@@ -1,5 +1,6 @@
-var debug = require('debug')('sockethub:schemas');
-debug('loading sockethub activity stream schemas');
+const debug = require('debug');
+const log = debug('sockethub:schemas');
+log('loading sockethub activity stream schemas');
 module.exports = {
   ActivityStream: require('./schemas/activity-stream.js'),
   ActivityObject: require('./schemas/activity-object.js'),
