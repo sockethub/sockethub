@@ -113,7 +113,6 @@ class Sockethub {
     for (let sessionId of platformInstance.sessions.values()) {
       if (sessionId !== origSocket) {
         log(`broadcasting message to ${sessionId}`);
-        console.log(this.io.sockets.connected);
         if (this.io.sockets.connected[sessionId]) {
           this.io.sockets.connected[sessionId].emit('message', msg);
         }

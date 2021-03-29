@@ -50,7 +50,6 @@ process.on('message', (data: MessageFromParent) => {
  */
 function sendFunction(command: string) {
   return function (msg: ActivityObject, special?: string) {
-    logger(`sending ${command} to client`);
     process.send([command, msg, special]);
   };
 }
