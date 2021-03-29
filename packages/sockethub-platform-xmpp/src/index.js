@@ -16,68 +16,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-if (typeof (xmpp) !== 'object') {
-  xmpp = require('simple-xmpp');
-}
+const { client, xml } = require("@xmpp/client");
 
-const IncomingHandlers = require('./lib/incoming-handlers');
-const packageJSON = require('./package.json');
-
-const PlatformSchema = {
-  "version": packageJSON.version,
-  "messages": {
-    "required": ['@type'],
-    "properties": {
-      "@type": {
-        "enum": ['connect', 'update', 'send', 'join', 'observe', 'request-friend', 'remove-friend', 'make-friend']
-      }
-    }
-  },
-  "credentials": {
-    "required": ['object'],
-    "properties": {
-      // TODO platforms shouldn't have to define the actor property if they don't want to, just credential specifics
-      "actor": {
-        "type": "object",
-        "required": ["@id"]
-      },
-      "object": {
-        "name": "object",
-        "type": "object",
-        "required": ['@type', 'username', 'password', 'server', 'resource'],
-        "additionalProperties": false,
-        "properties": {
-          "@type": {
-            "name": "@type",
-            "type": "string"
-          },
-          "username": {
-            "name": "username",
-            "type": "string"
-          },
-          "password": {
-            "name": "password",
-            "type": "string"
-          },
-          "server": {
-            "name": "server",
-            "type": "string"
-          },
-          "port": {
-            "name": "port",
-            "type": "number"
-          },
-          "resource": {
-            "name": "resource",
-            "type": "string"
-          }
-        }
-      }
-    }
-  }
-};
-
-
+const IncomingHandlers = require('./incoming-handlers');
+const PlatformSchema = require('./schema.js');
+const utils = require('./utils.js');
 
 
 /**
@@ -157,18 +100,16 @@ class XMPP {
   get config() {
     return {
       persist: true,
-      requireCredentials: [ 'connect', 'join', 'send', 'update', 'request-friend', 'remove-friend', 'make-friend',
-        'observe' ]
-    }
+      requireCredentials: [ 'connect' ]
+    };
   };
-
 
   /**
    * Function: connect
    *
    * Connect to the XMPP server.
    *
-   * @param {object} job activiy streams object // TODO LINK
+   * @param {object} job activity streams object // TODO LINK
    * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
@@ -186,9 +127,55 @@ class XMPP {
    * }
    */
   connect(job, credentials, done) {
-    this.debug('connect() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
-      done();
+    if (this.__client) { return done(); } // TODO verify client is actually connected
+    this.debug('connect called for ' + job.actor['@id']);
+    this.__client = client(utils.buildXmppCredentials(credentials));
+    this.__client.on("offline", (a) => {
+      console.log("offline", a);
+    });
+    // this.__client.on('status', (status) => {
+    //   console.log('status: ', status);
+    // });
+
+    // xmpp.on("stanza", async (stanza) => {
+    //   // console.log(`stanza ${stanza}`);
+    //   console.log(stanza);
+    //   if (stanza.is("message")) {
+    //     await xmpp.send(xml("presence", { type: "unavailable" }));
+    //     // await xmpp.stop();
+    //   }
+    // });
+
+    // xmpp.on("online", async (address) => {
+    //   // Makes itself available
+    //   console.log('xmpp online event ', address);
+    //   await xmpp.send(xml("presence"));
+
+    //   // Sends a chat message to itself
+    //   const message = xml(
+    //     "message",
+    //     { type: "chat", to: address },
+    //     xml("body", {}, "hello world"),
+    //   );
+    //   await xmpp.send(message);
+    // });
+
+    this.__client.start().then(() => {
+      // connected
+      this.debug('connection successful');
+      this.__registerHandlers();
+      return done();
+    }).catch((err) => {
+      this.debug(`connect error: ${err}`);
+      this.sendToClient({
+        '@type': 'error',
+        object: {
+          '@type': 'error',
+          content: err.text || err.toString(),
+          condition: err.condition || 'connection-error'
+        }
+      });
+      return done(err);
     });
   };
 
@@ -198,7 +185,6 @@ class XMPP {
    * Join a room, optionally defining a display name for that room.
    *
    * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
    * @example
@@ -222,20 +208,16 @@ class XMPP {
    * }
    *
    */
-  join(job, credentials, done) {
-    this.debug('join() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
-      // send join
-      this.debug('sending join to ' + `${job.target['@id']}/${job.actor.displayName}`);
-      let id = job.target['@id'].split('/')[0];
-      client.join(
-          `${job.target['@id']}/${job.actor.displayName || id}`
-          // TODO optional passwords not handled for now
-      );
-      done();
-    });
+  join(job, done) {
+    this.debug(`sending join from ${job.actor['@id']} to ` +
+               `${job.target['@id']}/${job.actor.displayName}`);
+    let id = job.target['@id'].split('/')[0];
+    // TODO optional passwords not handled for now
+    // TODO investigate implementation reserved nickname discovery
+    this.__client.send(xml("presence",
+      { from: job.actor['@id'], to: `${job.target['@id']}/${job.actor.displayName || id}` }
+    )).then(done);
   };
-
 
   /**
    * Function: send
@@ -243,7 +225,6 @@ class XMPP {
    * Send a message to a room or private conversation.
    *
    * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
    * @example
@@ -288,20 +269,16 @@ class XMPP {
    * }
    *
    */
-  send(job, credentials, done) {
+  send(job, done) {
     this.debug('send() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
-      // send message
-      this.debug('sending message to ' + job.target['@id']);
-      client.send(
-          job.target['@id'],
-          job.object.content,
-          job.target['@type'] === 'room' ? 'groupchat' : 'chat'
-      );
-      done();
-    });
+    // send message
+    const message = xml(
+      "message",
+      { type: job.target['@type'] === 'room' ? 'groupchat' : 'chat', to: job.target['@id'] },
+      xml("body", {}, job.object.content),
+    );
+    this.__client.send(message).then(done);
   };
-
 
   /**
    * Function: update
@@ -310,7 +287,6 @@ class XMPP {
    * Indicate presence and status message.
    *
    * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
    * @example
@@ -328,22 +304,17 @@ class XMPP {
    *   }
    * }
    */
-  update(job, credentials, done) {
+  update(job, done) {
     this.debug('update() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
-      if (job.object['@type'] === 'presence') {
-        const show = job.object.presence === 'available' ? 'chat' : job.object.show;
-        const status = job.object.content || '';
-        // setting presence
-        this.debug('setting presence: ' + show + ' status: ' + status);
-        client.setPresence(show, status);
-        this.debug('requesting XMPP roster');
-        client.getRoster();
-        done();
-      } else {
-        done('unknown object type (should be presence?): ' + job.object['@type']);
-      }
-    });
+    if (job.object['@type'] === 'presence') {
+      const show = job.object.presence === 'available' ? 'chat' : job.object.show;
+      const status = job.object.content || '';
+      // setting presence
+      this.debug('setting presence: ' + show + ' status: ' + status);
+      this.__client.send(xml(show, { type: status })).then(done);
+    } else {
+      done('unknown object type (should be presence?): ' + job.object['@type']);
+    }
   };
 
   /**
@@ -353,7 +324,6 @@ class XMPP {
    * Send friend request
    *
    * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
    * @example
@@ -369,12 +339,9 @@ class XMPP {
    *   }
    * }
    */
-  'request-friend'(job, credentials, done) {
+  'request-friend'(job,  done) {
     this.debug('request-friend() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
-      this.debug('request friend ' + job.target['@id']);
-      client.subscribe(job.target['@id']);
-    });
+    this.__client.send(xml("presence", { type: "subscribe", to:job.target['@id'] })).then(done);
   };
 
   /**
@@ -384,7 +351,6 @@ class XMPP {
    * Send a remove friend request
    *
    * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
    * @example
@@ -400,12 +366,9 @@ class XMPP {
    *   }
    * }
    */
-  'remove-friend'(job, credentials, done) {
+  'remove-friend'(job, done) {
     this.debug('remove-friend() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
-      this.debug('remove friend ' + job.target['@id']);
-      client.unsubscribe(job.target['@id']);
-    });
+    this.__client.send(xml("presence", { type: "unsubscribe", to:job.target['@id'] })).then(done);
   };
 
   /**
@@ -415,7 +378,6 @@ class XMPP {
    * Confirm a friend request
    *
    * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
    * @example
@@ -431,12 +393,9 @@ class XMPP {
    *   }
    * }
    */
-  'make-friend'(job, credentials, done) {
+  'make-friend'(job, done) {
     this.debug('make-friend() called for ' + job.actor['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
-      this.debug('make friend ' + job.target['@id']);
-        client.acceptSubscription(job.target['@id']);
-      });
+    this.__client.send(xml("presence", { type: "subscribe", to:job.target['@id'] })).then(done);
   };
 
   /**
@@ -445,7 +404,6 @@ class XMPP {
    * Indicate an intent to observe something (ie. get a list of users in a room).
    *
    * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
    *
    * @example
@@ -491,19 +449,14 @@ class XMPP {
    *    }
    *  }
    */
-  observe(job, credentials, done) {
-    this.debug('observe() called by ' + job.actor['@id'] + ' for ' + job.target['@id']);
-    this.__getClient(job.actor['@id'], credentials, (client) => {
-      const stanza = new xmpp.Element('iq', {
-        id: 'muc_id',
-        type: 'get',
-        from: job.actor['@id'],
-        to: job.target['@id']
-      });
-      stanza.c('query', {xmlns: 'http://jabber.org/protocol/disco#items'});
-      client.conn.send(stanza);
-      done();
-    });
+  observe(job, done) {
+    this.debug('sending observe from ' + job.actor['@id'] + ' for ' + job.target['@id']);
+    this.__client.send(xml("iq",  {
+      id: 'muc_id',
+      type: 'get',
+      from: job.actor['@id'],
+      to: job.target['@id']
+    }, xml("query", {xmlns: 'http://jabber.org/protocol/disco#items'}))).then(done);
   };
 
   cleanup(done) {
@@ -518,112 +471,13 @@ class XMPP {
     done();
   };
 
-
-  __getClient(key, credentials, cb) {
-    if (this.__client) {
-      return cb(this.__client);
-    }
-
-    if (!credentials) {
-      throw new Error('no client found, and no credentials specified.');
-    }
-
-    this.actor = credentials.actor;
-
-    this.__connect(key, credentials, (client) => {
-      this.__client = client;
-      this.__registerListeners();
-      return cb(client);
-    });
-  };
-
-
-  __connect(key, credentials, cb) {
-    this.debug('calling connect for ' + credentials.actor['@id']);
-    const fullJid = this.__buildFullJid(credentials);
-    const xmppCreds = this.__buildXmppCredentials(fullJid, credentials);
-
-    function __removeListeners() {
-      xmpp.removeListener('online', handlers.online);
-      xmpp.removeListener('error', handlers.error);
-      xmpp.removeListener('close', handlers.close);
-    }
-
-    const handlers = {
-      error: (error) => {
-        let msg = 'failed connecting ' + fullJid;
-        msg = (error) ? msg + ' : ' + error : msg;
-        __removeListeners();
-        xmpp.disconnect();
-        throw new Error(msg);
-      },
-      online: () => {
-        this.debug('connected with jid: ' + fullJid);
-        __removeListeners();
-        cb(xmpp);
-      },
-      close: () => {
-        // FIXME - not sure in what cases this happens
-        this.debug('close received for ' + fullJid);
-        __removeListeners();
-        throw new Error('received close event for ' + fullJid);
-      }
-    };
-
-    xmpp.on('online', handlers.online);
-    xmpp.on('error', handlers.error);
-    xmpp.on('close', handlers.close);
-    xmpp.connect(xmppCreds);
-  };
-
-
-  __registerListeners() {
+  __registerHandlers() {
     const ih = new IncomingHandlers(this);
-    this.__client.on('buddy', ih.buddy.bind(ih));
-    this.__client.on('buddyCapabilities', ih.buddyCapabilities.bind(ih));
-    this.__client.on('chat', ih.chat.bind(ih));
     this.__client.on('close', ih.close.bind(ih));
-    this.__client.on('chatstate', ih.chatstate.bind(ih));
     this.__client.on('error', ih.error.bind(ih));
-    this.__client.on('groupbuddy', ih.groupBuddy.bind(ih));
-    this.__client.on('groupchat', ih.groupChat.bind(ih));
     this.__client.on('online', ih.online.bind(ih));
-    this.__client.on('subscribe', ih.subscribe.bind(ih));
-    this.__client.on('unsubscribe', ih.unsubscribe.bind(ih));
-    this.__client.on('stanza', ih.__stanza.bind(ih));
+    this.__client.on('stanza', ih.stanza.bind(ih));
   };
-
-
-  __buildFullJid(credentials) {
-    let fullJid;
-
-    // generate bareJid and fullJid
-    if (credentials.object.username.indexOf('@') === -1) {
-      fullJid = credentials.object.username + '@' + credentials.object.server + '/' + credentials.object.resource;
-    } else {
-      fullJid = credentials.object.username + '/' + credentials.object.resource;
-    }
-
-    return fullJid;
-  }
-
-  __buildXmppCredentials(fullJid, credentials) {
-    // credential object to pass to simple-xmpp
-    let xmpp_creds = {
-      jid: fullJid,
-      password: credentials.object.password
-    };
-
-    if (credentials.object.server) {
-      xmpp_creds.host = credentials.object.server;
-    }
-
-    if (credentials.object.port) {
-      xmpp_creds.port = credentials.object.port;
-    }
-
-    return xmpp_creds;
-  }
 }
 
 module.exports = XMPP;
