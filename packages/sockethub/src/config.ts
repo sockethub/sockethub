@@ -1,7 +1,7 @@
 import nconf from 'nconf';
-import debug from 'debug';
+import { debug } from 'debug';
 
-const log = debug.debug('sockethub:bootstrap:config');
+const log = debug('sockethub:bootstrap:config');
 
 class Config {
   constructor() {
@@ -22,16 +22,7 @@ class Config {
       },
       'redis_url': {
         alias: 'redis.url'
-      },
-      'kue_host': {
-        alias: 'kue.host'
-      },
-      'kue_port': {
-        alias: 'kue.port'
-      },
-      'kue_url': {
-        alias: 'kue.url'
-      },
+      }
     });
     nconf.env();
 

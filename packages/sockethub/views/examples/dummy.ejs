@@ -28,11 +28,11 @@
       localStorage.debug = '<%= debug_scope %>';
       var sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
 
-      // our irc user info
+      // our user info
       sc.ActivityStreams.Object.create({
-        id: 'https://sockethub.org/examples/dummy',
-        objectType: "website",
-        displayName: "Sockethub Examples - Dummy"
+        '@id': 'https://sockethub.org/examples/dummyUser',
+        '@type': "person",
+        displayName: "Sockethub Examples - Dummy User"
       });
 
       // errors
@@ -66,19 +66,20 @@
 
       // handler for user input, emit messages to sockethub server
       $('form').submit(function () {
-        var text = $('#m').val();
-
-        var msg = {
+        let text = $('#m').val();
+        const parts = text.split('fail:');
+        let type = 'echo';
+        text = parts[parts.length-1];
+        if (parts.length > 1) {
+          type = 'fail';
+        }
+        const msg = {
           context: 'dummy',
-          '@type': 'fetch',
-          actor: 'https://sockethub.org/examples/dummy',
+          '@type': type,
+          actor: 'https://sockethub.org/examples/dummyUser',
           object: {
             '@type': 'message',
             content: text
-          },
-          target: {
-            '@type': 'feed',
-            id: 'https://sockethub.org/examples/dummy'
           }
         };
         bdebug('sending message: ', msg);
