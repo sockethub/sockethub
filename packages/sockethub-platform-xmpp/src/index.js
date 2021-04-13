@@ -30,9 +30,9 @@ const utils = require('./utils.js');
  * @description
  * Handles all actions related to communication via. the XMPP protocol.
  *
- * Uses the `simple-xmpp` node module as a base tool for interacting with XMPP.
+ * Uses `xmpp.js` as a base tool for interacting with XMPP.
  *
- * {@link https://github.com/simple-xmpp/node-simple-xmpp}
+ * {@link https://github.com/xmppjs/xmpp.js}
  *
  * @param {object} session {@link Sockethub.Session#object}
  *
@@ -460,8 +460,8 @@ class XMPP {
   };
 
   cleanup(done) {
-    // FIXME - review this, simple-xmpp has a close func now i believe
-    this.debug('should be CLOSING connection now, NOT IMPLEMENTED in node-xmpp');
+    // FIXME - review this, there should be a close function of some sort
+    this.debug('attempting to close connection now');
     this.__forceDisconnect = true;
     if ((this.__client) &&
         (typeof this.__client === 'object') &&
