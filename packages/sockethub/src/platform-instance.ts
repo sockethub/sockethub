@@ -6,24 +6,14 @@ import Queue from 'bull';
 import SharedResources from "./shared-resources";
 import redisConfig from "./services/redis";
 import crypto from "./crypto";
+import { ActivityObject, Job } from "./sockethub";
 
-
-export interface ActivityObject {
-  '@type': string,
-  actor: {
-    '@type': string,
-    '@id': string
-  },
-  object: {
-    '@type': string
-  }
-}
 
 export interface PlatformInstanceParams {
-  identifier: string,
-  platform: string,
-  parentId?: string,
-  actor?: string
+  identifier: string;
+  platform: string;
+  parentId?: string;
+  actor?: string;
 }
 
 interface MessageFromPlatform extends Array<string|ActivityObject>{
@@ -69,7 +59,7 @@ export default class PlatformInstance {
     this.flaggedForTermination = true;
     SharedResources.platformInstances.delete(this.id);
     try {
-      this.queue.clean();
+      this.queue.clean(0);
     } catch (e) { }
     try {
       this.process.removeAllListeners('close');
@@ -122,7 +112,7 @@ export default class PlatformInstance {
    * @param type type of message to emit. 'message', 'completed', 'failed'
    * @param msg ActivityStream object to send to client
    */
-  public sendToClient(sessionId: string, type: string, msg: any) {
+  public sendToClient(sessionId: string, type: string, msg: ActivityObject) {
     const socket = SharedResources.sessionConnections.get(sessionId);
     if (socket) {
       try {
@@ -135,21 +125,20 @@ export default class PlatformInstance {
   }
 
   // send message to every connected socket associated with this platform instance.
-  private broadcastToSharedPeers(origSocket, msg: ActivityObject) {
-    for (let sessionId of this.sessions.values()) {
-      if (sessionId !== origSocket) {
-        this.debug(`broadcasting message to ${sessionId}`);
-        this.sendToClient(sessionId, 'message', msg);
+  private broadcastToSharedPeers(sessionId: string, msg: ActivityObject) {
+    for (let sid of this.sessions.values()) {
+      if (sid !== sessionId) {
+        this.debug(`broadcasting message to ${sid}`);
+        this.sendToClient(sid, 'message', msg);
       }
     }
-  };
+  }
 
   // handle job results coming in on the queue from platform instances
-  private handleJobResult(type: string, job, result) {
+  private handleJobResult(type: string, job: Job, result) {
     if (type === 'completed') { // let all related peers know of result
-      this.broadcastToSharedPeers(job.data.socket, job.data.msg);
+      this.broadcastToSharedPeers(job.data.sessionId, job.data.msg);
     }
-
     if (result) {
       if (type === 'completed') {
         job.data.msg.object = {
@@ -163,8 +152,7 @@ export default class PlatformInstance {
         };
       }
     }
-    this.debug(`job #${job.id} on socket ${job.data.socket} ${type}`);
-    this.sendToClient(job.data.socket, type, job.data.msg);
+    this.sendToClient(job.data.sessionId, type, job.data.msg);
     job.remove();
   }
 
@@ -174,10 +162,10 @@ export default class PlatformInstance {
    * @param errorMessage
    */
   private reportError(sessionId: string, errorMessage: any) {
-    const errorObject = {
+    const errorObject: ActivityObject = {
       context: this.name,
       '@type': 'error',
-      target: this.actor || {},
+      target: this.actor,
       object: {
         '@type': 'error',
         content: errorMessage
@@ -218,7 +206,6 @@ export default class PlatformInstance {
           this.reportError(sessionId, data[1]);
         } else {
           // treat like a message to clients
-          this.debug(`handling ${data[1]['@type']} message from platform process`);
           this.sendToClient(sessionId, 'message', data[1]);
         }
       }

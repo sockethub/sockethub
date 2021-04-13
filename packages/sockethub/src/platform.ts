@@ -3,8 +3,9 @@ import hash from "object-hash";
 import redisConfig from './services/redis';
 import crypto from "./crypto";
 import Queue from 'bull';
-import { getSessionStore, getPlatformId } from "./common";
-import { MessageFromParent, ActivityObject } from './platform-instance';
+import { getSessionStore, getPlatformId, Store } from "./common";
+import { ActivityObject } from "./sockethub";
+import { MessageFromParent } from './platform-instance';
 
 // command-line params
 const parentId = process.argv[2];
@@ -69,9 +70,9 @@ const platform = new PlatformModule({
  * @param sessionSecret
  * @param cb
  */
-function getCredentials(actorId, sessionId, sessionSecret, cb) {
+function getCredentials(actorId: string, sessionId: string, sessionSecret: string, cb: Function) {
   if (platform.config.noCredentials) { return cb(); }
-  const store = getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
+  const store: Store = getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
   store.get(actorId, (err, credentials) => {
     if (platform.config.persist) {
       // don't continue if we don't get credentials

@@ -17,7 +17,7 @@
  * number of params passed after the `false` will be passed to the failure callback.
  *
  */
-function Middleware(errorHandler) {
+function Middleware(errorHandler: Function) {
   this.errorHandler = errorHandler;
 }
 
@@ -29,7 +29,7 @@ Middleware.prototype.chain = function (...funcs) {
       throw new Error('middleware function can only take other functions as arguments.');
     }
 
-    function _callFunc(pos) {
+    function _callFunc(pos: number) {
       if (pos + 1 === funcs.length) {
         // last call, don't wait for next callback
         funcs[pos].apply(this, params);
