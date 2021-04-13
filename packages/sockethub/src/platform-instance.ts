@@ -85,7 +85,8 @@ export default class PlatformInstance {
     this.queue = new Queue(this.parentId + this.id, redisConfig);
     this.queue.on('global:completed', (jobId, result) => {
       this.queue.getJob(jobId).then((job) => {
-        this.handleJobResult('completed', crypto.decrypt(job.data.msg, secret), result);
+        job.data.msg = crypto.decrypt(job.data.msg, secret);
+        this.handleJobResult('completed', job, result);
       });
     });
     this.queue.on('global:error', (jobId, result) => {
@@ -93,7 +94,8 @@ export default class PlatformInstance {
     });
     this.queue.on('global:failed', (jobId, result) => {
       this.queue.getJob(jobId).then((job) => {
-        this.handleJobResult('failed', crypto.decrypt(job.data.msg, secret), result);
+        job.data.msg = crypto.decrypt(job.data.msg, secret);
+        this.handleJobResult('failed', job, result);
       });
     });
   }
