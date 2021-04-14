@@ -223,7 +223,7 @@ Indicate presence and status message.
 ```
 <a name="XMPP+request-friend"></a>
 
-### xmpP.request-friend(job, done)
+### xmpp.request-friend(job, done)
 Send friend request
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
