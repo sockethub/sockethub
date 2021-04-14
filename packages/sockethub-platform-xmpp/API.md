@@ -196,7 +196,7 @@ Send a message to a room or private conversation.
 ```
 <a name="XMPP+update"></a>
 
-### xmpP.update(job, done)
+### xmpp.update(job, done)
 Indicate presence and status message.
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
