@@ -141,7 +141,7 @@ Join a room, optionally defining a display name for that room.
 ```
 <a name="XMPP+send"></a>
 
-### xmpP.send(job, done)
+### xmpp.send(job, done)
 Function: send
 
 Send a message to a room or private conversation.
