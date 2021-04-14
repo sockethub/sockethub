@@ -133,32 +133,6 @@ class XMPP {
     this.__client.on("offline", (a) => {
       console.log("offline", a);
     });
-    // this.__client.on('status', (status) => {
-    //   console.log('status: ', status);
-    // });
-
-    // xmpp.on("stanza", async (stanza) => {
-    //   // console.log(`stanza ${stanza}`);
-    //   console.log(stanza);
-    //   if (stanza.is("message")) {
-    //     await xmpp.send(xml("presence", { type: "unavailable" }));
-    //     // await xmpp.stop();
-    //   }
-    // });
-
-    // xmpp.on("online", async (address) => {
-    //   // Makes itself available
-    //   console.log('xmpp online event ', address);
-    //   await xmpp.send(xml("presence"));
-
-    //   // Sends a chat message to itself
-    //   const message = xml(
-    //     "message",
-    //     { type: "chat", to: address },
-    //     xml("body", {}, "hello world"),
-    //   );
-    //   await xmpp.send(message);
-    // });
 
     this.__client.start().then(() => {
       // connected
@@ -460,14 +434,9 @@ class XMPP {
   };
 
   cleanup(done) {
-    // FIXME - review this, there should be a close function of some sort
     this.debug('attempting to close connection now');
     this.__forceDisconnect = true;
-    if ((this.__client) &&
-        (typeof this.__client === 'object') &&
-        (typeof this.__client.disconnect === 'function')) {
-      this.__client.disconnect();
-    }
+    this.__client.stop();
     done();
   };
 
