@@ -248,7 +248,7 @@ Send friend request
 ```
 <a name="XMPP+remove-friend"></a>
 
-### xmpP.remove-friend(job, done)
+### xmpp.remove-friend(job, done)
 Send a remove friend request
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
