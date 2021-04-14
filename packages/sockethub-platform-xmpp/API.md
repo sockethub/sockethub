@@ -107,7 +107,7 @@ Connect to the XMPP server.
 ```
 <a name="XMPP+join"></a>
 
-### xmpP.join(job, done)
+### xmpp.join(job, done)
 Function: join
 
 Join a room, optionally defining a display name for that room.
