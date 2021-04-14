@@ -298,7 +298,7 @@ Confirm a friend request
 ```
 <a name="XMPP+observe"></a>
 
-### xmpP.observe(job, done)
+### xmpp.observe(job, done)
 Function: observe
 
 Indicate an intent to observe something (ie. get a list of users in a room).
