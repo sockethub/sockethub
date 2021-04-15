@@ -9,22 +9,22 @@ XMPP
     * [new XMPP(session)](#new_XMPP_new)
     * [.schema](#XMPP+schema)
     * [.connect(job, credentials, done)](#XMPP+connect)
-    * [.join(job, credentials, done)](#XMPP+join)
-    * [.send(job, credentials, done)](#XMPP+send)
-    * [.update(job, credentials, done)](#XMPP+update)
-    * [.request-friend(job, credentials, done)](#XMPP+request-friend)
-    * [.remove-friend(job, credentials, done)](#XMPP+remove-friend)
-    * [.make-friend(job, credentials, done)](#XMPP+make-friend)
-    * [.observe(job, credentials, done)](#XMPP+observe)
+    * [.join(job, done)](#XMPP+join)
+    * [.send(job, done)](#XMPP+send)
+    * [.update(job, done)](#XMPP+update)
+    * [.request-friend(job, done)](#XMPP+request-friend)
+    * [.remove-friend(job, done)](#XMPP+remove-friend)
+    * [.make-friend(job, done)](#XMPP+make-friend)
+    * [.observe(job, done)](#XMPP+observe)
 
 <a name="new_XMPP_new"></a>
 
 ### new XMPP(session)
 Handles all actions related to communication via. the XMPP protocol.
 
-Uses the `simple-xmpp` node module as a base tool for interacting with XMPP.
+Uses `xmpp.js` as a base tool for interacting with XMPP.
 
-[https://github.com/simple-xmpp/node-simple-xmpp](https://github.com/simple-xmpp/node-simple-xmpp)
+[https://github.com/xmppjs/xmpp.js](https://github.com/xmppjs/xmpp.js)
 
 
 | Param | Type | Description |
@@ -88,7 +88,7 @@ Connect to the XMPP server.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| job | <code>object</code> | activiy streams object // TODO LINK |
+| job | <code>object</code> | activity streams object // TODO LINK |
 | credentials | <code>object</code> | credentials object // TODO LINK |
 | done | <code>object</code> | callback when job is done // TODO LINK |
 
@@ -107,7 +107,7 @@ Connect to the XMPP server.
 ```
 <a name="XMPP+join"></a>
 
-### xmpP.join(job, credentials, done)
+### xmpp.join(job, done)
 Function: join
 
 Join a room, optionally defining a display name for that room.
@@ -117,7 +117,6 @@ Join a room, optionally defining a display name for that room.
 | Param | Type | Description |
 | --- | --- | --- |
 | job | <code>object</code> | activity streams object // TODO LINK |
-| credentials | <code>object</code> | credentials object // TODO LINK |
 | done | <code>object</code> | callback when job is done // TODO LINK |
 
 **Example**  
@@ -142,7 +141,7 @@ Join a room, optionally defining a display name for that room.
 ```
 <a name="XMPP+send"></a>
 
-### xmpP.send(job, credentials, done)
+### xmpp.send(job, done)
 Function: send
 
 Send a message to a room or private conversation.
@@ -152,7 +151,6 @@ Send a message to a room or private conversation.
 | Param | Type | Description |
 | --- | --- | --- |
 | job | <code>object</code> | activity streams object // TODO LINK |
-| credentials | <code>object</code> | credentials object // TODO LINK |
 | done | <code>object</code> | callback when job is done // TODO LINK |
 
 **Example**  
@@ -198,7 +196,7 @@ Send a message to a room or private conversation.
 ```
 <a name="XMPP+update"></a>
 
-### xmpP.update(job, credentials, done)
+### xmpp.update(job, done)
 Indicate presence and status message.
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
@@ -206,7 +204,6 @@ Indicate presence and status message.
 | Param | Type | Description |
 | --- | --- | --- |
 | job | <code>object</code> | activity streams object // TODO LINK |
-| credentials | <code>object</code> | credentials object // TODO LINK |
 | done | <code>object</code> | callback when job is done // TODO LINK |
 
 **Example**  
@@ -226,7 +223,7 @@ Indicate presence and status message.
 ```
 <a name="XMPP+request-friend"></a>
 
-### xmpP.request-friend(job, credentials, done)
+### xmpp.request-friend(job, done)
 Send friend request
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
@@ -234,7 +231,6 @@ Send friend request
 | Param | Type | Description |
 | --- | --- | --- |
 | job | <code>object</code> | activity streams object // TODO LINK |
-| credentials | <code>object</code> | credentials object // TODO LINK |
 | done | <code>object</code> | callback when job is done // TODO LINK |
 
 **Example**  
@@ -252,7 +248,7 @@ Send friend request
 ```
 <a name="XMPP+remove-friend"></a>
 
-### xmpP.remove-friend(job, credentials, done)
+### xmpp.remove-friend(job, done)
 Send a remove friend request
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
@@ -260,7 +256,6 @@ Send a remove friend request
 | Param | Type | Description |
 | --- | --- | --- |
 | job | <code>object</code> | activity streams object // TODO LINK |
-| credentials | <code>object</code> | credentials object // TODO LINK |
 | done | <code>object</code> | callback when job is done // TODO LINK |
 
 **Example**  
@@ -278,7 +273,7 @@ Send a remove friend request
 ```
 <a name="XMPP+make-friend"></a>
 
-### xmpP.make-friend(job, credentials, done)
+### xmpp.make-friend(job, done)
 Confirm a friend request
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
@@ -286,7 +281,6 @@ Confirm a friend request
 | Param | Type | Description |
 | --- | --- | --- |
 | job | <code>object</code> | activity streams object // TODO LINK |
-| credentials | <code>object</code> | credentials object // TODO LINK |
 | done | <code>object</code> | callback when job is done // TODO LINK |
 
 **Example**  
@@ -304,7 +298,7 @@ Confirm a friend request
 ```
 <a name="XMPP+observe"></a>
 
-### xmpP.observe(job, credentials, done)
+### xmpp.observe(job, done)
 Function: observe
 
 Indicate an intent to observe something (ie. get a list of users in a room).
@@ -314,7 +308,6 @@ Indicate an intent to observe something (ie. get a list of users in a room).
 | Param | Type | Description |
 | --- | --- | --- |
 | job | <code>object</code> | activity streams object // TODO LINK |
-| credentials | <code>object</code> | credentials object // TODO LINK |
 | done | <code>object</code> | callback when job is done // TODO LINK |
 
 **Example**  
