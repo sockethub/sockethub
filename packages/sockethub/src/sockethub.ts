@@ -14,7 +14,7 @@ import SharedResources from "./shared-resources";
 import ProcessManager from "./process-manager";
 import { getSessionStore, Store } from "./common";
 
-const log = debug('sockethub:core  '),
+const log = debug('sockethub:core'),
       activity = ActivityStreams(config.get('activity-streams:opts'));
 
 
@@ -113,9 +113,10 @@ class Sockethub {
   private handleIncomingMessage(socket: Socket, sessionLog: Function) {
     return (msg) => {
       const platformInstance = this.processManager.get(msg.context, msg.actor['@id'], socket.id);
-      sessionLog(`queueing incoming job ${msg.context} to channel ${platformInstance.id}`);
+      const title = `${msg.context}-${(msg['@id']) ? msg['@id'] : this.counter++}`;
+      sessionLog(`queued to channel ${platformInstance.id}`);
       const job: JobData = {
-        title: `${socket.id}-${msg.context}-${(msg['@id']) ? msg['@id'] : this.counter++}`,
+        title: title,
         sessionId: socket.id,
         msg: crypto.encrypt(msg, this.parentSecret1 + this.parentSecret2)
       };
@@ -129,20 +130,20 @@ class Sockethub {
         if (err) {
           sessionLog('error saving credentials to store ' + err);
         } else {
-          sessionLog('credentials encrypted and saved with key: ' + creds.actor['@id']);
+          sessionLog('credentials encrypted and saved');
         }
       });
     };
   };
 
   private incomingConnection(socket: Socket) {
-    const sessionLog = debug('sockethub:core  :' + socket.id), // session-specific debug messages
+    const sessionLog = debug('sockethub:core:' + socket.id), // session-specific debug messages
           sessionSecret = randToken.generate(16),
           // store instance is session-specific
           store = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret),
           middleware = getMiddleware(socket, sessionLog);
 
-    sessionLog(`connection on socket.io channel ${socket.id}`);
+    sessionLog(`socket.io connection`);
 
     SharedResources.sessionConnections.set(socket.id, socket);
 

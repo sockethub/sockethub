@@ -11,7 +11,8 @@ import { MessageFromParent } from './platform-instance';
 const parentId = process.argv[2];
 const platformName = process.argv[3];
 let identifier = process.argv[4];
-let logger = debug(`sockethub:platform:${platformName}:${identifier}`);
+const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
+let logger = debug(loggerPrefix);
 
 const PlatformModule = require(`sockethub-platform-${platformName}`);
 
@@ -125,19 +126,30 @@ function startQueueListener(refresh: boolean = false) {
   logger('listening on the queue for incoming jobs');
   queue.process((job, done: Function) => {
     job.data.msg = crypto.decrypt(job.data.msg, secret);
-    logger(`received job: ${job.data.msg['@type']}`);
+    const jobLog = debug(`${loggerPrefix}:${job.data.sessionId}`);
+    jobLog(`job ${job.data.title}: ${job.data.msg['@type']}`);
     const sessionSecret = job.data.msg.sessionSecret;
     delete job.data.msg.sessionSecret;
     return getCredentials(job.data.msg.actor['@id'], job.data.socket, sessionSecret,
       (err, credentials) => {
-        if (err) { return done(err); }
+        if (err) {
+          return done(new Error(err));
+        }
         const params = [ job.data.msg ];
         if ((Array.isArray(platform.config.requireCredentials)) &&
           (platform.config.requireCredentials.includes(job.data.msg['@type']))) {
           // add the credentials object if this method requires it
           params.push(credentials);
         }
-        params.push(done);
+        params.push((err, result) => {
+          if (err) {
+            done(new Error(err));
+          } else if (result) {
+            done(null, result);
+          } else {
+            done();
+          }
+        });
         platform[job.data.msg['@type']](...params);
       });
   });
