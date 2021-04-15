@@ -69,7 +69,7 @@ export default class PlatformInstance {
     this.flaggedForTermination = true;
     SharedResources.platformInstances.delete(this.id);
     try {
-      this.queue.clean();
+      this.queue.clean(0);
     } catch (e) { }
     try {
       this.process.removeAllListeners('close');
