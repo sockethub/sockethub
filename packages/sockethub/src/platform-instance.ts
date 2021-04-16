@@ -137,24 +137,27 @@ export default class PlatformInstance {
   // handle job results coming in on the queue from platform instances
   private handleJobResult(type: string, job: Job, result) {
     this.debug(`job ${job.data.title}: ${type}`);
-    if (type === 'completed') { // let all related peers know of result
-      this.broadcastToSharedPeers(job.data.sessionId, job.data.msg);
-    }
 
-    if (type === 'completed') {
-      if (result) {
-        job.data.msg.object = {
-          '@type': 'result',
-          content: result
-        };
-      }
+    if ((type === 'completed') && (result)) {
+      job.data.msg.object = {
+        '@type': 'result',
+        content: result
+      };
     } else if (type === 'failed') {
       job.data.msg.object = {
         '@type': 'error',
         content: result ? result : "job failed for unknown reason"
       };
     }
+
+    // send message to client as completed for failed job
     this.sendToClient(job.data.sessionId, type, job.data.msg);
+
+    if (type === 'completed') {
+      // let all related peers know of result as an independent message
+      // (not as part of a job completion, or failure)
+      this.broadcastToSharedPeers(job.data.sessionId, job.data.msg);
+    }
     job.remove();
   }
 
