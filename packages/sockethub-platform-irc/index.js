@@ -305,7 +305,7 @@ IRC.prototype.send = function (job, credentials, done) {
     }
 
     if (job.object['@type'] === 'me') {
-      // message intented as command
+      // message intended as command
       const message = '\001ACTION ' + job.object.content + '\001';
       client.raw('PRIVMSG ' + job.target.displayName + ' :' + message);
     } else if (job.object['@type'] === 'notice') {

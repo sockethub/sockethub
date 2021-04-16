@@ -1,6 +1,6 @@
 <a name="IRC"></a>
 
-## IRC
+# IRC
 IRC
 
 **Kind**: global class  
@@ -16,21 +16,29 @@ IRC
 
 <a name="new_IRC_new"></a>
 
-### new IRC(cfg)
+## new IRC(cfg)
 Handles all actions related to communication via. the IRC protocol.
 
 Uses the `irc-factory` node module as a base tool for interacting with IRC.
 
 [https://github.com/ircanywhere/irc-factory](https://github.com/ircanywhere/irc-factory)
 
-
-| Param | Type | Description |
-| --- | --- | --- |
-| cfg | <code>object</code> | a unique config object for this instance // TODO LINK |
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>cfg</td><td><code>object</code></td><td><p>a unique config object for this instance // TODO LINK</p>
+</td>
+    </tr>  </tbody>
+</table>
 
 <a name="IRC+schema"></a>
 
-### irC.schema
+## irC.schema
 JSON schema defining the @types this platform accepts.
 
 
@@ -70,18 +78,30 @@ Valid AS object for setting IRC credentials:
 ```
 <a name="IRC+join"></a>
 
-### irC.join(job, credentials, done)
+## irC.join(job, credentials, done)
 Function: join
 
 Join a room or private conversation.
 
 **Kind**: instance method of [<code>IRC</code>](#IRC)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | activity streams object // TODO LINK |
-| credentials | <code>object</code> | credentials object // TODO LINK |
-| done | <code>object</code> | callback when job is done // TODO LINK |
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>credentials</td><td><code>object</code></td><td><p>credentials object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+</td>
+    </tr>  </tbody>
+</table>
 
 **Example**  
 ```js
@@ -103,18 +123,30 @@ Join a room or private conversation.
 ```
 <a name="IRC+leave"></a>
 
-### irC.leave(job, credentials, done)
+## irC.leave(job, credentials, done)
 Function leave
 
 Leave a room or private conversation.
 
 **Kind**: instance method of [<code>IRC</code>](#IRC)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | activity streams object // TODO LINK |
-| credentials | <code>object</code> | credentials object // TODO LINK |
-| done | <code>object</code> | callback when job is done // TODO LINK |
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>credentials</td><td><code>object</code></td><td><p>credentials object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+</td>
+    </tr>  </tbody>
+</table>
 
 **Example**  
 ```js
@@ -136,18 +168,30 @@ Leave a room or private conversation.
 ```
 <a name="IRC+send"></a>
 
-### irC.send(job, credentials, done)
+## irC.send(job, credentials, done)
 Function: send
 
 Send a message to a room or private conversation.
 
 **Kind**: instance method of [<code>IRC</code>](#IRC)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | activity streams object // TODO LINK |
-| credentials | <code>object</code> | credentials object // TODO LINK |
-| done | <code>object</code> | callback when job is done // TODO LINK |
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>credentials</td><td><code>object</code></td><td><p>credentials object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+</td>
+    </tr>  </tbody>
+</table>
 
 **Example**  
 ```js
@@ -173,18 +217,30 @@ Send a message to a room or private conversation.
 ```
 <a name="IRC+update"></a>
 
-### irC.update(job, credentials, done)
+## irC.update(job, credentials, done)
 Function: update
 
 Indicate a change (ie. room topic update, or nickname change).
 
 **Kind**: instance method of [<code>IRC</code>](#IRC)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | activity streams object // TODO LINK |
-| credentials | <code>object</code> | redentials object // TODO LINK |
-| done | <code>object</code> | callback when job is done // TODO LINK |
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>credentials</td><td><code>object</code></td><td><p>redentials object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+</td>
+    </tr>  </tbody>
+</table>
 
 **Example**  
 ```js
@@ -233,18 +289,30 @@ change nickname
 ```
 <a name="IRC+observe"></a>
 
-### irC.observe(job, credentials, done)
+## irC.observe(job, credentials, done)
 Function: observe
 
 Indicate an intent to observe something (ie. get a list of users in a room).
 
 **Kind**: instance method of [<code>IRC</code>](#IRC)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | activity streams object // TODO LINK |
-| credentials | <code>object</code> | credentials object // TODO LINK |
-| done | <code>object</code> | callback when job is done // TODO LINK |
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>credentials</td><td><code>object</code></td><td><p>credentials object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+</td>
+    </tr>  </tbody>
+</table>
 
 **Example**  
 ```js
