@@ -153,11 +153,10 @@ export default class PlatformInstance {
     // send message to client as completed for failed job
     this.sendToClient(job.data.sessionId, type, job.data.msg);
 
-    if (type === 'completed') {
-      // let all related peers know of result as an independent message
-      // (not as part of a job completion, or failure)
-      this.broadcastToSharedPeers(job.data.sessionId, job.data.msg);
-    }
+    // let all related peers know of result as an independent message
+    // (not as part of a job completion, or failure)
+    this.broadcastToSharedPeers(job.data.sessionId, job.data.msg);
+    
     job.remove();
   }
 
