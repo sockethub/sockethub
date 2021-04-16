@@ -156,7 +156,7 @@ export default class PlatformInstance {
     // let all related peers know of result as an independent message
     // (not as part of a job completion, or failure)
     this.broadcastToSharedPeers(job.data.sessionId, job.data.msg);
-    
+
     job.remove();
   }
 

@@ -136,7 +136,7 @@ describe("PlatformInstance", () => {
     pi.broadcastToSharedPeers = jest.fn();
     pi.handleJobResult('failed', {data: {msg: {foo: 'bar'}}, remove: function () {}},
       'a bad result message');
-    expect(pi.broadcastToSharedPeers).not.toHaveBeenCalled();
+    expect(pi.broadcastToSharedPeers).toHaveBeenCalled();
     expect(pi.sendToClient).toHaveBeenCalledWith(undefined, 'failed',
       {foo: 'bar', object: {'@type': 'error', content: 'a bad result message'}});
   });
