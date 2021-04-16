@@ -30,11 +30,11 @@
     "fs-then-native": "^2.0.0",
     "jaribu": "^2.2.3",
     "jsdoc": "^3.6.3",
-    "jsdoc-to-markdown": "^6.0.1"
+    "jsdoc-to-markdown": "^7.0.1"
   },
   "scripts": {
     "test": "jaribu",
-    "doc": "jsdoc2md index.js  > API.md",
+    "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md",
     "travis": "yarn run test"
   }
 }
