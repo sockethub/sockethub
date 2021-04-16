@@ -4,7 +4,7 @@ import redisConfig from './services/redis';
 import crypto from "./crypto";
 import Queue from 'bull';
 import { getSessionStore, getPlatformId, Store } from "./common";
-import { ActivityObject } from "./sockethub";
+import { ActivityObject, Job } from "./sockethub";
 import { MessageFromParent } from './platform-instance';
 
 // command-line params
@@ -43,28 +43,18 @@ process.on('message', (data: MessageFromParent) => {
   }
 });
 
-/**
- * sendFunction wrapper, generates a function to pass to the platform class. The platform can
- * call that function to send messages back to the client.
- * @param command
- */
-function sendFunction(command: string) {
-  return function (msg: ActivityObject, special?: string) {
-    process.send([command, msg, special]);
-  };
-}
 
 /**
  * Initialize platform module
  */
 const platform = new PlatformModule({
   debug: debug(`sockethub:platform:${platformName}:${identifier}`),
-  sendToClient: sendFunction('message'),
+  sendToClient: getSendFunction('message'),
   updateActor: updateActor
 });
 
 /**
- * get the credentials stored for this user in this sessions store, if given the correct
+ * Get the credentials stored for this user in this sessions store, if given the correct
  * sessionSecret.
  * @param actorId
  * @param sessionId
@@ -96,6 +86,50 @@ function getCredentials(actorId: string, sessionId: string, sessionSecret: strin
 }
 
 /**
+ * Returns a function used to handle completed jobs from the platform code (the `done` callback).
+ * @param secret the secret used to decrypt credentials
+ */
+function getJobHandler(secret: string) {
+  return (job: Job, done: Function) => {
+    job.data.msg = crypto.decrypt(job.data.msg, secret);
+    const jobLog = debug(`${loggerPrefix}:${job.data.sessionId}`);
+    jobLog(`job ${job.data.title}: ${job.data.msg['@type']}`);
+    const sessionSecret = job.data.msg.sessionSecret;
+    delete job.data.msg.sessionSecret;
+
+    return getCredentials(job.data.msg.actor['@id'], job.data.sessionId, sessionSecret,
+      (err, credentials) => {
+        if (err) { return done(new Error(err)); }
+        const doneCallback = (err, result) => {
+          if (err) {
+            done(new Error(err));
+          } else {
+            done(null, result);
+          }
+        };
+        if ((Array.isArray(platform.config.requireCredentials)) &&
+          (platform.config.requireCredentials.includes(job.data.msg['@type']))) {
+          // add the credentials object if this method requires it
+          platform[job.data.msg['@type']](job.data.msg, credentials, doneCallback);
+        } else {
+          platform[job.data.msg['@type']](job.data.msg, doneCallback);
+        }
+      });
+  };
+}
+
+/**
+ * Get an function which sends a message to the parent thread (PlatformInstance). The platform
+ * can call that function to send messages back to the client.
+ * @param command string containing the type of command to be sent. 'message' or 'close'
+ */
+function getSendFunction(command: string) {
+  return function (msg: ActivityObject, special?: string) {
+    process.send([command, msg, special]);
+  };
+}
+
+/**
  * When a user changes it's actor name, the channel identifier changes, we need to ensure that
  * both the queue thread (listening on the channel for jobs) and the logging object are updated.
  * @param credentials
@@ -124,33 +158,5 @@ function startQueueListener(refresh: boolean = false) {
   const queue = new Queue(parentId + identifier, redisConfig);
   queueStarted = true;
   logger('listening on the queue for incoming jobs');
-  queue.process((job, done: Function) => {
-    job.data.msg = crypto.decrypt(job.data.msg, secret);
-    const jobLog = debug(`${loggerPrefix}:${job.data.sessionId}`);
-    jobLog(`job ${job.data.title}: ${job.data.msg['@type']}`);
-    const sessionSecret = job.data.msg.sessionSecret;
-    delete job.data.msg.sessionSecret;
-    return getCredentials(job.data.msg.actor['@id'], job.data.socket, sessionSecret,
-      (err, credentials) => {
-        if (err) {
-          return done(new Error(err));
-        }
-        const params = [ job.data.msg ];
-        if ((Array.isArray(platform.config.requireCredentials)) &&
-          (platform.config.requireCredentials.includes(job.data.msg['@type']))) {
-          // add the credentials object if this method requires it
-          params.push(credentials);
-        }
-        params.push((err, result) => {
-          if (err) {
-            done(new Error(err));
-          } else if (result) {
-            done(null, result);
-          } else {
-            done();
-          }
-        });
-        platform[job.data.msg['@type']](...params);
-      });
-  });
+  queue.process(getJobHandler(secret));
 }
