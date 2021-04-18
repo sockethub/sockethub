@@ -1,6 +1,5 @@
 import debug from 'debug';
 import randToken from 'rand-token';
-import kue from 'kue';
 import ActivityStreams from 'activity-streams';
 
 import config from './config';
@@ -8,11 +7,11 @@ import crypto from './crypto';
 import init from './bootstrap/init';
 import Middleware from './middleware';
 import resourceManager from './resource-manager';
-import services from './services';
+import http from './services/http';
 import validate from './validate';
 import SharedResources from "./shared-resources";
 import ProcessManager from "./process-manager";
-import { getSessionStore, getPlatformId } from "./common";
+import { getSessionStore } from "./common";
 
 const log = debug('sockethub:core  '),
       activity = ActivityStreams(config.get('activity-streams:opts'));
@@ -38,19 +37,6 @@ function getMiddleware(socket, sessionLog) {
   });
 }
 
-function getPlatformInstance(msg: ActivityObject) {
-  if ((typeof msg.actor !== 'object') || (!msg.actor['@id'])) {
-    return;
-  }
-  const platformInstance = SharedResources.platformInstances.get(
-    getPlatformId(msg.context, msg.actor['@id'])
-  );
-  if (!platformInstance) {
-    return false;
-  }
-  return platformInstance;
-}
-
 class Sockethub {
   private readonly parentId: string;
   private readonly parentSecret1: string;
@@ -60,7 +46,7 @@ class Sockethub {
   status: boolean;
   queue: any;
   io: any;
-  processManager: any;
+  processManager: ProcessManager;
 
   constructor() {
     this.counter = 0;
@@ -84,16 +70,14 @@ class Sockethub {
       this.status = true;
     }
 
+    log('active platforms: ', [...init.platforms.keys()]);
     resourceManager.start();
 
-    // start internal and external services
-    this.queue = services.startQueue(this.parentId);
-    this.io = services.startExternal();
-    log('active platforms: ', [...init.platforms.keys()]);
-
+    // start external services
+    this.io = http.start();
     log('registering handlers');
-    this.queue.on('job complete', this.handleJobResult('completed'));
-    this.queue.on('job failed', this.handleJobResult('failed'));
+    // this.queue.on('job complete', this.handleJobResult('completed'));
+    // this.queue.on('job failed', this.handleJobResult('failed'));
     this.io.on('connection', this.incomingConnection.bind(this));
   }
 
@@ -103,84 +87,16 @@ class Sockethub {
     }
   }
 
-  // send message to every connected socket associated with the given platform instance.
-  private broadcastToSharedPeers(origSocket, msg: ActivityObject) {
-    log(`broadcasting called, originating socket ${origSocket}`);
-    const platformInstance = getPlatformInstance(msg);
-    if (!platformInstance) {
-      return;
-    }
-    for (let sessionId of platformInstance.sessions.values()) {
-      if (sessionId !== origSocket) {
-        log(`broadcasting message to ${sessionId}`);
-        if (this.io.sockets.connected[sessionId]) {
-          this.io.sockets.connected[sessionId].emit('message', msg);
-        }
-      }
-    }
-  };
-
-  private handleActivityObject(sessionLog) {
-    return (obj) => {
-      activity.Object.create(obj);
-    };
-  };
-
-  // handle job results coming in on the queue from platform instances
-  private handleJobResult(type: string) {
-    return (id, result) => {
-      kue.Job.get(id, (err, job) => {
-        if (err) {
-          return log(`error retrieving (${type}) job #${id}`);
-        }
-        if (this.io.sockets.connected[job.data.socket]) {
-          job.data.msg = crypto.decrypt(job.data.msg, this.parentSecret1 + this.parentSecret2);
-          delete job.data.msg.sessionSecret;
-          if (type === 'completed') { // let all related peers know of result
-            this.broadcastToSharedPeers(job.data.socket, job.data.msg);
-          }
-
-          if (result) {
-            if (type === 'completed') {
-              job.data.msg.object = {
-                '@type': 'result',
-                content: result
-              };
-            } else if (type === 'failed') {
-              job.data.msg.object = {
-                '@type': 'error',
-                content: result
-              };
-            }
-          }
-          log(`job #${job.id} on socket ${job.data.socket} ${type}`);
-          this.io.sockets.connected[job.data.socket].emit(type, job.data.msg);
-        } else {
-          log(`received (${type}) job for non-existent socket ${job.data.socket}`);
-        }
-
-        job.remove((err: string) => {
-          if (err) {
-            log(`error removing (${type}) job #${job.id}, ${err}`);
-          }
-        });
-      });
-    };
-  }
-
   private handleIncomingMessage(socket: any, sessionLog: any) {
     return (msg) => {
-      const identifier = this.processManager.register(msg, socket.id);
-      sessionLog(`queueing incoming job ${msg.context} to channel ${identifier}`);
-      const job = this.queue.create(identifier, {
-        title: socket.id + '-' + msg.context + '-' + (msg['@id']) ? msg['@id'] : this.counter++,
+      const platformInstance = this.processManager.get(msg.context, msg.actor['@id'], socket.id);
+      sessionLog(`queueing incoming job ${msg.context} to channel ${platformInstance.id}`);
+      platformInstance.queue.add({
+        title: `${socket.id}-${msg.context}-${(msg['@id']) ? msg['@id'] : this.counter++}`,
         socket: socket.id,
         msg: crypto.encrypt(msg, this.parentSecret1 + this.parentSecret2)
-      }).save((err) => {
-        if (err) {
-          sessionLog('error adding job [' + job.id + '] to queue: ', err);
-        }
       });
+
     };
   };
 
@@ -237,8 +153,10 @@ class Sockethub {
     // fired and we receive a copy on the server side.
     socket.on(
       'activity-object',
-      middleware.chain(validate('activity-object', socket.id),
-        this.handleActivityObject(sessionLog))
+      middleware.chain(
+        validate('activity-object', socket.id),
+        activity.Object.create
+      )
     );
   }
 }

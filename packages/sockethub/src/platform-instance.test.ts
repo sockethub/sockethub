@@ -1,11 +1,14 @@
+
 import { fork } from 'child_process';
-import { debug } from 'debug';
+import Queue from 'bull';
 
 import PlatformInstance, { PlatformInstanceParams } from "./platform-instance";
 import SharedResources from "./shared-resources";
 
+jest.mock('./crypto');
 jest.mock('child_process');
-jest.mock('debug');
+jest.mock('ioredis');
+jest.mock('bull');
 jest.mock('./shared-resources', () => ({
   __esModule: true,
   default: {
@@ -51,6 +54,10 @@ describe("PlatformInstance", () => {
     };
   });
 
+  afterEach(() => {
+    pi.destroy();
+  });
+
   it("has certain accessible properties", () => {
     expect(pi.id).toBe('platform identifier');
     expect(pi.name).toBe('a platform name');
@@ -72,10 +79,15 @@ describe("PlatformInstance", () => {
   it('is able to generate failure reports', () => {
     pi.registerSession('my session id');
     expect(pi.sessions.has('my session id')).toBe(true);
-    pi.reportFailure('my session id', 'an error message');
+    pi.reportError('my session id', 'an error message');
     pi.sendToClient = jest.fn();
     pi.destroy = jest.fn();
     expect(pi.sessions.size).toBe(0);
+  });
+
+  it('initializes the job queue', () => {
+    pi.initQueue('a secret');
+    expect(pi.queue).toBeInstanceOf(Queue);
   });
 
   it("cleans up its references when destroyed", () => {
@@ -91,10 +103,76 @@ describe("PlatformInstance", () => {
   });
 
   it('sends messages to client using socket session id', () => {
-    pi.sendToClient('my session id', {foo: 'this is a message object'});
+    pi.sendToClient('my session id', 'message', {foo: 'this is a message object',
+      sessionSecret: 'private data'});
     expect(SharedResources.sessionConnections.get).toBeCalledWith('my session id');
   });
+
+  it('broadcasts to peers', () => {
+    pi.sessions.add('other peer');
+    pi.broadcastToSharedPeers('myself', {foo: 'bar'});
+    expect(SharedResources.sessionConnections.get).toBeCalledWith('other peer');
+  });
+
+  it('broadcasts to peers when handling a completed job', () => {
+    pi.sessions.add('other peer');
+    pi.handleJobResult('completed', {data: {msg: {foo: 'bar'}}, remove: function () {}},
+      undefined);
+    expect(SharedResources.sessionConnections.get).toBeCalledWith('other peer');
+  });
+
+  it('appends completed result message when present', () => {
+    pi.sendToClient = jest.fn();
+    pi.broadcastToSharedPeers = jest.fn();
+    pi.handleJobResult('completed', {data: {msg: {foo: 'bar'}}, remove: function () {}},
+      'a good result message');
+    expect(pi.broadcastToSharedPeers).toHaveBeenCalled();
+    expect(pi.sendToClient).toHaveBeenCalledWith(undefined, 'completed',
+      {foo: 'bar', object: {'@type': 'result', content: 'a good result message'}});
+  });
+
+  it('appends failed result message when present', () => {
+    pi.sendToClient = jest.fn();
+    pi.broadcastToSharedPeers = jest.fn();
+    pi.handleJobResult('failed', {data: {msg: {foo: 'bar'}}, remove: function () {}},
+      'a bad result message');
+    expect(pi.broadcastToSharedPeers).not.toHaveBeenCalled();
+    expect(pi.sendToClient).toHaveBeenCalledWith(undefined, 'failed',
+      {foo: 'bar', object: {'@type': 'error', content: 'a bad result message'}});
+  });
+
+  it('close events from platform thread are reported', () => {
+    pi.reportError = jest.fn();
+    const close = pi.callbackFunction('close', 'my session id');
+    close('error msg');
+    expect(pi.reportError).toHaveBeenCalledWith(
+      'my session id', 'Error: session thread closed unexpectedly: error msg');
+  });
+
+  it('message events from platform thread are route based on command: error', () => {
+    pi.reportError = jest.fn();
+    const message = pi.callbackFunction('message', 'my session id');
+    message(['error', 'error message']);
+    expect(pi.reportError).toHaveBeenCalledWith(
+      'my session id', 'error message');
+  });
+
+  it('message events from platform thread are route based on command: updateActor', () => {
+    pi.updateIdentifier = jest.fn();
+    const message = pi.callbackFunction('message', 'my session id');
+    message(['updateActor', undefined, {foo: 'bar'}]);
+    expect(pi.updateIdentifier).toHaveBeenCalledWith({foo:'bar'});
+  });
+
+  it('message events from platform thread are route based on command: else', () => {
+    pi.sendToClient = jest.fn();
+    const message = pi.callbackFunction('message', 'my session id');
+    message(['blah', {foo: 'bar'}]);
+    expect(pi.sendToClient).toHaveBeenCalledWith(
+      'my session id', 'message', {foo:'bar'});
+  });
 });
+
 
 describe('private instance per-actor', () => {
   it("is set as non-global when an actor is provided", () => {
@@ -107,5 +185,6 @@ describe('private instance per-actor', () => {
     const pi = new PlatformInstance(params);
     expect(pi.global).toBe(false);
     expect(fork).toBeCalledWith(FORK_PATH, ['parentId', 'name', 'id']);
+    pi.destroy();
   });
 });

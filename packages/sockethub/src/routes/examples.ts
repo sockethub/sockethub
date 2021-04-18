@@ -1,7 +1,7 @@
 import path from 'path';
 import * as randToken from 'rand-token';
 
-import config from './../config';
+import config from '../config';
 
 const routes      = [],
       debug_scope = process.env.DEBUG || '',

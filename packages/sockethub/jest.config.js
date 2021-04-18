@@ -1,17 +1,18 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/src'],
-  transform: {
-    '^.+\\.tsx?$': 'ts-jest'
-  },
   coverageThreshold: {
     global: {
-      branches: 50,
+      branches: 75,
       functions: 80,
-      lines: 85,
-      statements: 85
-    }
+      lines: 90,
+      statements: 90,
+    },
   },
-  coverageReporters: ['json', 'lcov', 'text', 'clover']
+  coverageReporters: [
+    'json',
+    'lcov',
+    'text',
+    'clover',
+  ]
 };

@@ -2,32 +2,16 @@ import debug from 'debug';
 import bodyParser from 'body-parser';
 import express from 'express';
 import * as HTTP from 'http';
-import kue from 'kue';
 import SocketIO from 'socket.io';
 
-import config from './config';
-import routeBase from './routes/base';
-import routeExamples from './routes/examples';
+import config from '../config';
+import routeBase from '../routes/base';
+import routeExamples from '../routes/examples';
 
-const log = debug('sockethub:services');
+const log = debug('sockethub:services:http');
 
-let redisCfg = config.get('redis');
-if (redisCfg.url) {
-  redisCfg = redisCfg.url;
-}
-log('redis connection info ', redisCfg);
-
-const services = {
-  startQueue: function (parentId: string) {
-    const channel = `sockethub:${parentId}`;
-    log(`queue started on channel ${channel}`);
-    return kue.createQueue({
-      prefix: channel,
-      redis: redisCfg
-    });
-  },
-
-  startExternal: function () {
+const http = {
+  start: function () {
     const app = this.__initExpress();
     // initialize express and socket.io objects
     const http = new HTTP.Server(app);
@@ -41,19 +25,8 @@ const services = {
       return route.setup(app);
     });
 
-    this.__startKue();
     this.__startListener(http);
     return io;
-  },
-
-  __startKue: function () {
-    if (config.get('kue:enabled')) {
-      // start kue UI
-      kue.app.listen(config.get('kue:port'), config.get('kue:host'), () => {
-        log('service queue interface listening on ' + config.get('kue:host') + ':'
-          + config.get('kue:port'));
-      });
-    }
   },
 
   __startListener: function (http) {
@@ -75,4 +48,4 @@ const services = {
   }
 };
 
-export default services;
+export default http;

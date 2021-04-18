@@ -35,11 +35,6 @@ if (config.get('help')) {
   } else {
     console.log('redis: ' + config.get('redis:host') + ':' + config.get('redis:port'));
   }
-  if (config.get('kue:enabled')) {
-    console.log('kue: ' + config.get('kue:host') + ':' + config.get('kue:port'));
-  } else {
-    console.log('kue: disabled');
-  }
   console.log('public url: ' + config.get('public:host') + ':' + config.get('public:port')
               + config.get('public:path'));
 

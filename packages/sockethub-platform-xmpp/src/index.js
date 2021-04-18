@@ -30,9 +30,9 @@ const utils = require('./utils.js');
  * @description
  * Handles all actions related to communication via. the XMPP protocol.
  *
- * Uses the `simple-xmpp` node module as a base tool for interacting with XMPP.
+ * Uses `xmpp.js` as a base tool for interacting with XMPP.
  *
- * {@link https://github.com/simple-xmpp/node-simple-xmpp}
+ * {@link https://github.com/xmppjs/xmpp.js}
  *
  * @param {object} session {@link Sockethub.Session#object}
  *
@@ -133,32 +133,6 @@ class XMPP {
     this.__client.on("offline", (a) => {
       console.log("offline", a);
     });
-    // this.__client.on('status', (status) => {
-    //   console.log('status: ', status);
-    // });
-
-    // xmpp.on("stanza", async (stanza) => {
-    //   // console.log(`stanza ${stanza}`);
-    //   console.log(stanza);
-    //   if (stanza.is("message")) {
-    //     await xmpp.send(xml("presence", { type: "unavailable" }));
-    //     // await xmpp.stop();
-    //   }
-    // });
-
-    // xmpp.on("online", async (address) => {
-    //   // Makes itself available
-    //   console.log('xmpp online event ', address);
-    //   await xmpp.send(xml("presence"));
-
-    //   // Sends a chat message to itself
-    //   const message = xml(
-    //     "message",
-    //     { type: "chat", to: address },
-    //     xml("body", {}, "hello world"),
-    //   );
-    //   await xmpp.send(message);
-    // });
 
     this.__client.start().then(() => {
       // connected
@@ -460,14 +434,9 @@ class XMPP {
   };
 
   cleanup(done) {
-    // FIXME - review this, simple-xmpp has a close func now i believe
-    this.debug('should be CLOSING connection now, NOT IMPLEMENTED in node-xmpp');
+    this.debug('attempting to close connection now');
     this.__forceDisconnect = true;
-    if ((this.__client) &&
-        (typeof this.__client === 'object') &&
-        (typeof this.__client.disconnect === 'function')) {
-      this.__client.disconnect();
-    }
+    this.__client.stop();
     done();
   };
 
