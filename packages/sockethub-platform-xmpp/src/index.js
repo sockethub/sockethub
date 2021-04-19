@@ -24,32 +24,28 @@ const utils = require('./utils.js');
 
 
 /**
- * @class XMPP
- * @constructor
- *
- * @description
  * Handles all actions related to communication via. the XMPP protocol.
  *
  * Uses `xmpp.js` as a base tool for interacting with XMPP.
  *
  * {@link https://github.com/xmppjs/xmpp.js}
- *
- * @param {object} session {@link Sockethub.Session#object}
- *
  */
 class XMPP {
-  constructor(cfg) {
-    cfg = (typeof cfg === 'object') ? cfg : {};
-    this.id = cfg.id; // actor
-    this.debug = cfg.debug;
-    this.sendToClient = cfg.sendToClient;
+  /**
+   * Constructor called from the sockethub Platform instance, passing in a
+   * session object.
+   * @param {object} session - {@link Sockethub.Platform.PlatformSession#object}
+   */
+  constructor(session) {
+    session = (typeof session === 'object') ? session : {};
+    this.id = session.id; // actor
+    this.debug = session.debug;
+    this.sendToClient = session.sendToClient;
     this.__forceDisconnect = false;
     this.__channels = [];
   }
 
   /**
-   * Property: schema
-   *
    * @description
    * JSON schema defining the @types this platform accepts.
    *
@@ -105,8 +101,6 @@ class XMPP {
   };
 
   /**
-   * Function: connect
-   *
    * Connect to the XMPP server.
    *
    * @param {object} job activity streams object // TODO LINK
@@ -154,8 +148,6 @@ class XMPP {
   };
 
   /**
-   * Function: join
-   *
    * Join a room, optionally defining a display name for that room.
    *
    * @param {object} job activity streams object // TODO LINK
@@ -194,8 +186,6 @@ class XMPP {
   };
 
   /**
-   * Function: send
-   *
    * Send a message to a room or private conversation.
    *
    * @param {object} job activity streams object // TODO LINK
@@ -255,8 +245,6 @@ class XMPP {
   };
 
   /**
-   * Function: update
-   *
    * @description
    * Indicate presence and status message.
    *
@@ -292,8 +280,6 @@ class XMPP {
   };
 
   /**
-   * Function: request-friend
-   *
    * @description
    * Send friend request
    *
@@ -319,8 +305,6 @@ class XMPP {
   };
 
   /**
-   * Function: remove-friend
-   *
    * @description
    * Send a remove friend request
    *
@@ -346,8 +330,6 @@ class XMPP {
   };
 
   /**
-   * Function: make-friend
-   *
    * @description
    * Confirm a friend request
    *
@@ -373,8 +355,6 @@ class XMPP {
   };
 
   /**
-   * Function: observe
-   *
    * Indicate an intent to observe something (ie. get a list of users in a room).
    *
    * @param {object} job activity streams object // TODO LINK
@@ -397,7 +377,6 @@ class XMPP {
    *      '@type': 'attendance'
    *    }
    *  }
-   *
    *
    *  // The above object might return:
    *  {
@@ -433,6 +412,11 @@ class XMPP {
     }, xml("query", {xmlns: 'http://jabber.org/protocol/disco#items'}))).then(done);
   };
 
+  /**
+   * Called when it's time to close any connections or clean data before being wiped
+   * forcefully.
+   * @param {function} done - callback when complete
+   */
   cleanup(done) {
     this.debug('attempting to close connection now');
     this.__forceDisconnect = true;

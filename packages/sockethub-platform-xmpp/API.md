@@ -1,7 +1,11 @@
 <a name="XMPP"></a>
 
-## XMPP
-XMPP
+# XMPP
+Handles all actions related to communication via. the XMPP protocol.
+
+Uses `xmpp.js` as a base tool for interacting with XMPP.
+
+[https://github.com/xmppjs/xmpp.js](https://github.com/xmppjs/xmpp.js)
 
 **Kind**: global class  
 
@@ -16,24 +20,30 @@ XMPP
     * [.remove-friend(job, done)](#XMPP+remove-friend)
     * [.make-friend(job, done)](#XMPP+make-friend)
     * [.observe(job, done)](#XMPP+observe)
+    * [.cleanup(done)](#XMPP+cleanup)
 
 <a name="new_XMPP_new"></a>
 
-### new XMPP(session)
-Handles all actions related to communication via. the XMPP protocol.
+## new XMPP(session)
+Constructor called from the sockethub Platform instance, passing in a
+session object.
 
-Uses `xmpp.js` as a base tool for interacting with XMPP.
-
-[https://github.com/xmppjs/xmpp.js](https://github.com/xmppjs/xmpp.js)
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| session | <code>object</code> | [Sockethub.Session#object](Sockethub.Session#object) |
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>session</td><td><code>object</code></td><td><p><a href="Sockethub.Platform.PlatformSession#object">Sockethub.Platform.PlatformSession#object</a></p>
+</td>
+    </tr>  </tbody>
+</table>
 
 <a name="XMPP+schema"></a>
 
-### xmpP.schema
+## xmpP.schema
 JSON schema defining the @types this platform accepts.
 
 Actual handling of incoming 'set' commands are handled by dispatcher,
@@ -79,18 +89,28 @@ Valid AS object for setting XMPP credentials:
 ```
 <a name="XMPP+connect"></a>
 
-### xmpP.connect(job, credentials, done)
-Function: connect
-
+## xmpP.connect(job, credentials, done)
 Connect to the XMPP server.
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | activity streams object // TODO LINK |
-| credentials | <code>object</code> | credentials object // TODO LINK |
-| done | <code>object</code> | callback when job is done // TODO LINK |
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>credentials</td><td><code>object</code></td><td><p>credentials object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+</td>
+    </tr>  </tbody>
+</table>
 
 **Example**  
 ```js
@@ -107,17 +127,25 @@ Connect to the XMPP server.
 ```
 <a name="XMPP+join"></a>
 
-### xmpp.join(job, done)
-Function: join
-
+## xmpP.join(job, done)
 Join a room, optionally defining a display name for that room.
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | activity streams object // TODO LINK |
-| done | <code>object</code> | callback when job is done // TODO LINK |
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+</td>
+    </tr>  </tbody>
+</table>
 
 **Example**  
 ```js
@@ -141,17 +169,25 @@ Join a room, optionally defining a display name for that room.
 ```
 <a name="XMPP+send"></a>
 
-### xmpp.send(job, done)
-Function: send
-
+## xmpP.send(job, done)
 Send a message to a room or private conversation.
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | activity streams object // TODO LINK |
-| done | <code>object</code> | callback when job is done // TODO LINK |
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+</td>
+    </tr>  </tbody>
+</table>
 
 **Example**  
 ```js
@@ -196,15 +232,25 @@ Send a message to a room or private conversation.
 ```
 <a name="XMPP+update"></a>
 
-### xmpp.update(job, done)
+## xmpP.update(job, done)
 Indicate presence and status message.
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | activity streams object // TODO LINK |
-| done | <code>object</code> | callback when job is done // TODO LINK |
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+</td>
+    </tr>  </tbody>
+</table>
 
 **Example**  
 ```js
@@ -223,15 +269,25 @@ Indicate presence and status message.
 ```
 <a name="XMPP+request-friend"></a>
 
-### xmpp.request-friend(job, done)
+## xmpP.request-friend(job, done)
 Send friend request
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | activity streams object // TODO LINK |
-| done | <code>object</code> | callback when job is done // TODO LINK |
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+</td>
+    </tr>  </tbody>
+</table>
 
 **Example**  
 ```js
@@ -248,15 +304,25 @@ Send friend request
 ```
 <a name="XMPP+remove-friend"></a>
 
-### xmpp.remove-friend(job, done)
+## xmpP.remove-friend(job, done)
 Send a remove friend request
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | activity streams object // TODO LINK |
-| done | <code>object</code> | callback when job is done // TODO LINK |
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+</td>
+    </tr>  </tbody>
+</table>
 
 **Example**  
 ```js
@@ -273,15 +339,25 @@ Send a remove friend request
 ```
 <a name="XMPP+make-friend"></a>
 
-### xmpp.make-friend(job, done)
+## xmpP.make-friend(job, done)
 Confirm a friend request
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | activity streams object // TODO LINK |
-| done | <code>object</code> | callback when job is done // TODO LINK |
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+</td>
+    </tr>  </tbody>
+</table>
 
 **Example**  
 ```js
@@ -298,17 +374,25 @@ Confirm a friend request
 ```
 <a name="XMPP+observe"></a>
 
-### xmpp.observe(job, done)
-Function: observe
-
+## xmpP.observe(job, done)
 Indicate an intent to observe something (ie. get a list of users in a room).
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| job | <code>object</code> | activity streams object // TODO LINK |
-| done | <code>object</code> | callback when job is done // TODO LINK |
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+</td>
+    </tr>  </tbody>
+</table>
 
 **Example**  
 ```js
@@ -327,7 +411,6 @@ Indicate an intent to observe something (ie. get a list of users in a room).
      '@type': 'attendance'
    }
  }
-
 
  // The above object might return:
  {
@@ -353,3 +436,23 @@ Indicate an intent to observe something (ie. get a list of users in a room).
    }
  }
 ```
+<a name="XMPP+cleanup"></a>
+
+## xmpP.cleanup(done)
+Called when it's time to close any connections or clean data before being wiped
+forcefully.
+
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>done</td><td><code>function</code></td><td><p>callback when complete</p>
+</td>
+    </tr>  </tbody>
+</table>
+
