@@ -21,6 +21,12 @@ let parentSecret1: string, parentSecret2: string;
 
 logger(`platform handler initialized for ${platformName} ${identifier}`);
 
+export interface PlatformSession {
+  debug(msg: string): void;
+  sendToClient(msg: ActivityObject, special?: string): void;
+  updateActor(credentials: object): void;
+}
+
 /**
  * Handle any uncaught errors from the platform by alerting the worker and shutting down.
  */
@@ -47,11 +53,12 @@ process.on('message', (data: MessageFromParent) => {
 /**
  * Initialize platform module
  */
-const platform = new PlatformModule({
+const platformSession: PlatformSession = {
   debug: debug(`sockethub:platform:${platformName}:${identifier}`),
   sendToClient: getSendFunction('message'),
   updateActor: updateActor
-});
+};
+const platform = new PlatformModule(platformSession);
 
 /**
  * Get the credentials stored for this user in this sessions store, if given the correct

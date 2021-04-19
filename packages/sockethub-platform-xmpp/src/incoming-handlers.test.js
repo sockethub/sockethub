@@ -40,10 +40,31 @@ const stanzas = [
   ],
   [
     'message',
-    `<message from="radical@example.org/thinkpad" to="user@jabber.org" type="chat" id="purple9840c15f" xmlns:stream="http://etherx.jabber.org/streams"> <active xmlns="http://jabber.org/protocol/chatstates"/><body>ohai</body></message>`,
-    {'@type': 'send', actor: {'@type': 'person', '@id': 'radical@example.org/thinkpad'},
-      target: { '@type': 'person', '@id': 'user@jabber.org' }, object: {'@type': 'message',
-        content: 'ohai', '@id': 1}}
+    `<message from="radical@example.org/thinkpad" to="user@jabber.org" type="chat" id="purple9840c15f" xmlns:stream="http://etherx.jabber.org/streams">
+       <active xmlns="http://jabber.org/protocol/chatstates" />
+       <stanza-id xmlns="urn:xmpp:sid:0" id="purple9840c15f" />
+       <body>ohai</body>
+     </message>`,
+    {
+      '@type': 'send',
+      actor: { '@type': 'person', '@id': 'radical@example.org/thinkpad' },
+      target: { '@type': 'person', '@id': 'user@jabber.org' },
+      object: { '@type': 'message', content: 'ohai', '@id': 'purple9840c15f' } }
+  ],
+  [
+    'message with delay (e.g. offline message)',
+    `<message from="radical@example.org/thinkpad" to="user@jabber.org" type="chat" id="purple9840c15f" xmlns:stream="http://etherx.jabber.org/streams">
+       <active xmlns="http://jabber.org/protocol/chatstates" />
+       <stanza-id xmlns="urn:xmpp:sid:0" id="purple9840c15f" />
+       <delay xmlns="urn:xmpp:delay" from="jabber.org" stamp="2021-04-17T18:50:25Z">Offline Storage</delay>
+       <body>ohai</body>
+     </message>`,
+    {
+      '@type': 'send',
+      published: '2021-04-17T18:50:25Z',
+      actor: { '@type': 'person', '@id': 'radical@example.org/thinkpad' },
+      target: { '@type': 'person', '@id': 'user@jabber.org' },
+      object: { '@type': 'message', content: 'ohai', '@id': 'purple9840c15f' } }
   ],
   [
     'group presence',
@@ -54,12 +75,16 @@ const stanzas = [
   ],
   [
     'group message',
-    `<message from='coven@chat.shakespeare.lit/thirdwitch' id='hysf1v37' to='crone1@shakespeare.lit/desktop' type='groupchat'> <body>Thrice the brinded cat hath mew'd.</body></message>`,
-    {'@type': 'send',
-      actor: {'@type': 'person',
-        '@id': 'coven@chat.shakespeare.lit/thirdwitch', displayName: 'thirdwitch'},
-      target: { '@type': 'room', '@id': 'coven@chat.shakespeare.lit'},
-      object: { '@id': 2, '@type': 'message', content: 'Thrice the brinded cat hath mew\'d.'}}
+    `<message from='coven@chat.shakespeare.lit/thirdwitch' id='hysf1v37' to='crone1@shakespeare.lit/desktop' type='groupchat'>
+       <stanza-id id="hysf1v37" />
+       <body>Thrice the brinded cat hath mew'd.</body>
+     </message>`,
+    {
+      '@type': 'send',
+      actor: { '@type': 'person', '@id': 'coven@chat.shakespeare.lit/thirdwitch', displayName: 'thirdwitch' },
+      target: { '@type': 'room', '@id': 'coven@chat.shakespeare.lit' },
+      object: { '@id': 'hysf1v37', '@type': 'message', content: 'Thrice the brinded cat hath mew\'d.' }
+    }
   ],
   // [
   //   'subscribe',

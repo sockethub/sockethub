@@ -1,9 +1,3 @@
-let idCounter = 0;
-
-function nextId() {
-  return ++idCounter;
-}
-
 function getMessageBody(stanza) {
   for (let elem of stanza.children) {
     if (elem.name === 'body') {
@@ -12,6 +6,25 @@ function getMessageBody(stanza) {
   }
 }
 
+function getMessageTimestamp(stanza) {
+  try {
+    const delay = stanza.children.find(c => c.name === 'delay');
+    return delay.attrs.stamp;
+  } catch (e) {
+    // no timestamp
+    return null;
+  }
+}
+
+function getMessageId(stanza) {
+  try {
+    const stanzaId = stanza.children.find(c => c.name === 'stanza-id');
+    return stanzaId.attrs.id;
+  } catch (e) {
+    // no stanza id
+    return null;
+  }
+}
 
 class IncomingHandlers {
   constructor(session) {
@@ -89,35 +102,37 @@ class IncomingHandlers {
   // }
 
   notifyChatMessage(stanza) {
-    const from = stanza.attrs.from;
-    const message = getMessageBody(stanza);
-    let to = stanza.attrs.to;
-    const actorObj =  {
-      '@type': 'person',
-      '@id': from,
-    };
+    const message   = getMessageBody(stanza);
+    if (!message) { return; }
+    const from      = stanza.attrs.from;
+    const timestamp = getMessageTimestamp(stanza);
+    const messageId = getMessageId(stanza);
+    const type      = stanza.attrs.type === 'groupchat' ? 'room' : 'person';
 
-    let fromName;
-    let target_type = 'person';
-    if (stanza.attrs.type === 'groupchat') {
-      target_type = 'room';
-      [to, fromName] = from.split('/');
-      actorObj.displayName = fromName;
-    }
-
-    this.session.sendToClient({
+    const activity = {
       '@type': 'send',
-      actor: actorObj,
+      actor: {
+        '@type': 'person',
+        '@id': from,
+      },
       target: {
-        '@type': target_type,
-        '@id': to,
+        '@type': type,
+        '@id': stanza.attrs.to,
       },
       object: {
         '@type': 'message',
-        content: message,
-        '@id': nextId()
+        '@id': messageId,
+        content: message
       }
-    });
+    };
+
+    if (type === 'room') {
+      [activity.target['@id'], activity.actor.displayName] = from.split('/');
+    }
+
+    if (timestamp) { activity.published = timestamp; }
+
+    this.session.sendToClient(activity);
   }
 
   notifyError(stanza) {
