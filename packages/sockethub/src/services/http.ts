@@ -2,7 +2,7 @@ import debug from 'debug';
 import bodyParser from 'body-parser';
 import express from 'express';
 import * as HTTP from 'http';
-import SocketIO from 'socket.io';
+import { Server } from 'socket.io';
 
 import config from '../config';
 import routeBase from '../routes/base';
@@ -15,7 +15,7 @@ const http = {
     const app = this.__initExpress();
     // initialize express and socket.io objects
     const http = new HTTP.Server(app);
-    const io = SocketIO(http, {path: config.get('service:path')});
+    const io = new Server(http, {path: config.get('service:path')});
 
     // routes list
     [
