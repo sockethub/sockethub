@@ -1,6 +1,7 @@
 import debug from 'debug';
 import randToken from 'rand-token';
 import ActivityStreams from 'activity-streams';
+import { Socket } from "socket.io";
 
 import config from './config';
 import crypto from './crypto';
@@ -11,20 +12,44 @@ import http from './services/http';
 import validate from './validate';
 import SharedResources from "./shared-resources";
 import ProcessManager from "./process-manager";
-import { getSessionStore } from "./common";
+import { getSessionStore, Store } from "./common";
 
-const log = debug('sockethub:core  '),
+const log = debug('sockethub:core'),
       activity = ActivityStreams(config.get('activity-streams:opts'));
 
-interface ActivityObject {
-  actor?: {
-    '@id'?: string;
-  }
-  context: string;
-  error?: any;
+
+export interface JobData {
+  title?: string;
+  msg: ActivityObject;
+  sessionId: string;
 }
 
-function getMiddleware(socket, sessionLog) {
+export interface Job {
+  data: JobData,
+  remove?: Function;
+}
+
+export interface ActivityObject {
+  '@type'?: string;
+  actor?: string | {
+    '@type': string;
+    '@id'?: string;
+  },
+  object?: {
+    '@type': string;
+    content?: any;
+  },
+  target?: string | {
+    '@type': string;
+    '@id'?: string;
+  },
+  context: string;
+  error?: any;
+  sessionSecret?: string;
+}
+
+
+function getMiddleware(socket: Socket, sessionLog: Function) {
   return new Middleware((err, type: string, msg: ActivityObject) => {
     sessionLog('validation failed for ' + type + '. ' + err, msg);
     // called with validation fails
@@ -76,8 +101,6 @@ class Sockethub {
     // start external services
     this.io = http.start();
     log('registering handlers');
-    // this.queue.on('job complete', this.handleJobResult('completed'));
-    // this.queue.on('job failed', this.handleJobResult('failed'));
     this.io.on('connection', this.incomingConnection.bind(this));
   }
 
@@ -87,39 +110,40 @@ class Sockethub {
     }
   }
 
-  private handleIncomingMessage(socket: any, sessionLog: any) {
+  private handleIncomingMessage(socket: Socket, sessionLog: Function) {
     return (msg) => {
       const platformInstance = this.processManager.get(msg.context, msg.actor['@id'], socket.id);
-      sessionLog(`queueing incoming job ${msg.context} to channel ${platformInstance.id}`);
-      platformInstance.queue.add({
-        title: `${socket.id}-${msg.context}-${(msg['@id']) ? msg['@id'] : this.counter++}`,
-        socket: socket.id,
+      const title = `${msg.context}-${(msg['@id']) ? msg['@id'] : this.counter++}`;
+      sessionLog(`queued to channel ${platformInstance.id}`);
+      const job: JobData = {
+        title: title,
+        sessionId: socket.id,
         msg: crypto.encrypt(msg, this.parentSecret1 + this.parentSecret2)
-      });
-
+      };
+      platformInstance.queue.add(job);
     };
   };
 
-  private handleStoreCredentials(store, sessionLog) {
+  private handleStoreCredentials(store: Store, sessionLog: Function) {
     return (creds: ActivityObject) => {
       store.save(creds.actor['@id'], creds, (err) => {
         if (err) {
           sessionLog('error saving credentials to store ' + err);
         } else {
-          sessionLog('credentials encrypted and saved with key: ' + creds.actor['@id']);
+          sessionLog('credentials encrypted and saved');
         }
       });
     };
   };
 
-  private incomingConnection(socket: any) {
-    const sessionLog = debug('sockethub:core  :' + socket.id), // session-specific debug messages
+  private incomingConnection(socket: Socket) {
+    const sessionLog = debug('sockethub:core:' + socket.id), // session-specific debug messages
           sessionSecret = randToken.generate(16),
           // store instance is session-specific
           store = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret),
           middleware = getMiddleware(socket, sessionLog);
 
-    sessionLog(`connection on socket.io channel ${socket.id}`);
+    sessionLog(`socket.io connection`);
 
     SharedResources.sessionConnections.set(socket.id, socket);
 
