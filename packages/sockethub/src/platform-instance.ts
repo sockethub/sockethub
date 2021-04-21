@@ -2,6 +2,7 @@ import { ChildProcess, fork } from 'child_process';
 import { join } from 'path';
 import { debug, Debugger } from 'debug';
 import Queue from 'bull';
+import io from 'socket.io';
 
 import SharedResources from "./shared-resources";
 import redisConfig from "./services/redis";
@@ -114,6 +115,7 @@ export default class PlatformInstance {
    */
   public sendToClient(sessionId: string, type: string, msg: ActivityObject) {
     const socket = SharedResources.sessionConnections.get(sessionId);
+    console.log(io.in(sessionId).fetchSockets());
     if (socket) {
       try {
         // this should never be exposed externally
