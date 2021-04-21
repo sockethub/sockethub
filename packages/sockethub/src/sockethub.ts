@@ -7,10 +7,9 @@ import config from './config';
 import crypto from './crypto';
 import init from './bootstrap/init';
 import Middleware from './middleware';
-import resourceManager from './resource-manager';
-import http from './services/http';
+import janitor from './janitor';
+import serve from './serve';
 import validate from './validate';
-import SharedResources from "./shared-resources";
 import ProcessManager from "./process-manager";
 import { getSessionStore, Store } from "./common";
 
@@ -70,7 +69,6 @@ class Sockethub {
   platforms: Map<string, object>;
   status: boolean;
   queue: any;
-  io: any;
   processManager: ProcessManager;
 
   constructor() {
@@ -96,18 +94,12 @@ class Sockethub {
     }
 
     log('active platforms: ', [...init.platforms.keys()]);
-    resourceManager.start();
+    janitor.start();
 
     // start external services
-    this.io = http.start();
+    serve.start();
     log('registering handlers');
-    this.io.on('connection', this.incomingConnection.bind(this));
-  }
-
-  removeAllPlatformInstances() {
-    for (let platform of SharedResources.platformInstances.values()) {
-      platform.destroy();
-    }
+    serve.io.on('connection', this.incomingConnection.bind(this));
   }
 
   private handleIncomingMessage(socket: Socket, sessionLog: Function) {
@@ -145,11 +137,8 @@ class Sockethub {
 
     sessionLog(`socket.io connection`);
 
-    SharedResources.sessionConnections.set(socket.id, socket);
-
     socket.on('disconnect', () => {
       sessionLog('disconnect received from client.');
-      SharedResources.sessionConnections.delete(socket.id);
     });
 
     socket.on(

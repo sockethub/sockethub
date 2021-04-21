@@ -2,13 +2,14 @@ import { ChildProcess, fork } from 'child_process';
 import { join } from 'path';
 import { debug, Debugger } from 'debug';
 import Queue from 'bull';
-import io from 'socket.io';
 
-import SharedResources from "./shared-resources";
-import redisConfig from "./services/redis";
+import redisConfig from "./config";
 import crypto from "./crypto";
 import { ActivityObject, Job } from "./sockethub";
+import serve from "./serve";
 
+// collection of platform instances, stored by `id`
+export const platformInstances = new Map();
 
 export interface PlatformInstanceParams {
   identifier: string;
@@ -58,7 +59,7 @@ export default class PlatformInstance {
    */
   public destroy() {
     this.flaggedForTermination = true;
-    SharedResources.platformInstances.delete(this.id);
+    platformInstances.delete(this.id);
     try {
       this.queue.clean(0);
     } catch (e) { }
@@ -114,8 +115,7 @@ export default class PlatformInstance {
    * @param msg ActivityStream object to send to client
    */
   public sendToClient(sessionId: string, type: string, msg: ActivityObject) {
-    const socket = SharedResources.sessionConnections.get(sessionId);
-    console.log(io.in(sessionId).fetchSockets());
+    const socket = serve.io.in(sessionId).fetchSockets()[0];
     if (socket) {
       try {
         // this should never be exposed externally
@@ -187,9 +187,9 @@ export default class PlatformInstance {
    * @param identifier
    */
   private updateIdentifier(identifier: string) {
-    SharedResources.platformInstances.delete(this.id);
+    platformInstances.delete(this.id);
     this.id = identifier;
-    SharedResources.platformInstances.set(this.id, this);
+    platformInstances.set(this.id, this);
   }
 
   /**

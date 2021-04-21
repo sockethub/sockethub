@@ -1,5 +1,6 @@
 import nconf from 'nconf';
 import { debug } from 'debug';
+import Redis from 'ioredis';
 
 const log = debug('sockethub:bootstrap:config');
 
@@ -69,4 +70,24 @@ class Config {
 }
 
 const config = new Config();
+const client = new Redis(config.get('redis'));
+const subscriber = new Redis(config.get('redis'));
+
+/**
+ * config object that can be passed in to ioredis to make use of existing connections
+ * https://github.com/OptimalBits/bull/blob/master/PATTERNS.md#reusing-redis-connections
+ */
+export const redisConfig = {
+  createClient: function (type) {
+    switch (type) {
+      case 'client':
+        return client;
+      case 'subscriber':
+        return subscriber;
+      default:
+        return new Redis(config.get('redis'));
+    }
+  }
+};
+
 export default config;
