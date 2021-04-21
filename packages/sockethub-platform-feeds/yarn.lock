@@ -551,7 +551,7 @@ fresh@0.5.2:
   resolved "https://registry.yarnpkg.com/fresh/-/fresh-0.5.2.tgz#3d8cadd90d976569fa835ab1f8e4b23a105605a7"
   integrity sha1-PYyt2Q2XZWn6g1qx+OSyOhBWBac=
 
-fs-then-native@^2.0.0:
+fs-then-native@2.0.0, fs-then-native@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/fs-then-native/-/fs-then-native-2.0.0.tgz#19a124d94d90c22c8e045f2e8dd6ebea36d48c67"
   integrity sha1-GaEk2U2QwiyOBF8ujdbr6jbUjGc=
@@ -686,7 +686,7 @@ isstream@~0.1.2:
   resolved "https://registry.yarnpkg.com/isstream/-/isstream-0.1.2.tgz#47e63f7af55afa6f92e1500e690eb8b8529c099a"
   integrity sha1-R+Y/evVa+m+S4VAOaQ64uFKcCZo=
 
-jaribu@^2.2.3:
+jaribu@2.2.3:
   version "2.2.3"
   resolved "https://registry.yarnpkg.com/jaribu/-/jaribu-2.2.3.tgz#7fa7519aa7226f990fab0dcbe8162040f277fd4d"
   integrity sha512-iKlgTyYuSnXvYkKdgm4aWKwftrw2Ppo04mBZbde/5AEcj10wuPSNZu/99+4a3S3Kant77cV7iH7P1bis4ipa6g==
@@ -740,7 +740,7 @@ jsdoc-parse@^6.0.0:
     sort-array "^4.1.3"
     test-value "^3.0.0"
 
-jsdoc-to-markdown@^7.0.1:
+jsdoc-to-markdown@7.0.1:
   version "7.0.1"
   resolved "https://registry.yarnpkg.com/jsdoc-to-markdown/-/jsdoc-to-markdown-7.0.1.tgz#c0fb99db56a34c71198c840ad3ca094da35a9684"
   integrity sha512-wN6WAHAPiCyAU7m/+F3FbEEV40CGVWMae49SBPIvfy7kDq/2fBrOw86vdbnLdmjt6u/tHnoxHNrHWYbYFN+4UA==
@@ -753,7 +753,7 @@ jsdoc-to-markdown@^7.0.1:
     jsdoc-parse "^6.0.0"
     walk-back "^5.0.0"
 
-jsdoc@^3.6.3, jsdoc@^3.6.6:
+jsdoc@3.6.6, jsdoc@^3.6.6:
   version "3.6.6"
   resolved "https://registry.yarnpkg.com/jsdoc/-/jsdoc-3.6.6.tgz#9fe162bbdb13ee7988bf74352b5147565bcfd8e1"
   integrity sha512-znR99e1BHeyEkSvgDDpX0sTiTu+8aQyDl9DawrkOGZTTW8hv0deIFXx87114zJ7gRaDZKVQD/4tr1ifmJp9xhQ==

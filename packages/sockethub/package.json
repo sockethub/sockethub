@@ -86,15 +86,15 @@
     "node": ">= 12.0.0"
   },
   "devDependencies": {
-    "@types/jest": "^26.0.15",
-    "@typescript-eslint/parser": "^4.15.1",
-    "c8": "^7.7.1",
-    "eslint": "^7.13.0",
-    "eslint-cli": "^1.1.1",
-    "jaribu": "^2.2.3",
-    "jest": "^26.6.3",
-    "ts-jest": "^26.4.4",
-    "ts-node": "^9.0.0",
-    "typescript": "^4.0.5"
+    "@types/jest": "26.0.22",
+    "@typescript-eslint/parser": "4.22.0",
+    "c8": "7.7.1",
+    "eslint": "7.24.0",
+    "eslint-cli": "1.1.1",
+    "jaribu": "2.2.3",
+    "jest": "26.6.3",
+    "ts-jest": "26.5.4",
+    "ts-node": "9.1.1",
+    "typescript": "4.2.4"
   }
 }

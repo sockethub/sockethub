@@ -278,7 +278,7 @@ is-typedarray@^1.0.0:
   resolved "https://registry.yarnpkg.com/is-typedarray/-/is-typedarray-1.0.0.tgz#e479c80858df0c1b11ddda6940f96011fcda4a9a"
   integrity sha1-5HnICFjfDBsR3dppQPlgEfzaSpo=
 
-jaribu@^2.2.3:
+jaribu@2.2.3:
   version "2.2.3"
   resolved "https://registry.yarnpkg.com/jaribu/-/jaribu-2.2.3.tgz#7fa7519aa7226f990fab0dcbe8162040f277fd4d"
   integrity sha512-iKlgTyYuSnXvYkKdgm4aWKwftrw2Ppo04mBZbde/5AEcj10wuPSNZu/99+4a3S3Kant77cV7iH7P1bis4ipa6g==
