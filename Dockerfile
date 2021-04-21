@@ -1,4 +1,4 @@
-FROM "node:6"
+FROM node:14
 MAINTAINER Ben Kero <ben.kero@gmail.com>
 
 ADD packages/sockethub/package.json /tmp/package.json
@@ -12,4 +12,4 @@ WORKDIR /app
 ADD . /app
 
 EXPOSE 10550
-CMD DEBUG=* /app/bin/sockethub --examples --host 0.0.0.0
+CMD DEBUG=sockethub* /app/bin/sockethub --examples --host 0.0.0.0
