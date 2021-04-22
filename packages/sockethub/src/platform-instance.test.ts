@@ -3,13 +3,14 @@ import { fork } from 'child_process';
 import Queue from 'bull';
 
 import PlatformInstance, { platformInstances, PlatformInstanceParams } from "./platform-instance";
-import http from "./serve";
+import { getSocket } from "./serve";
 
 jest.mock('./crypto');
 jest.mock('child_process');
 jest.mock('ioredis');
 jest.mock('bull');
 jest.mock('socket.io');
+jest.mock('./serve');
 
 const socketMock = {
   emit: jest.fn()
@@ -27,7 +28,10 @@ jest.mock('./serve', () => ({
         }
       })
     }
-  }
+  },
+  getSocket: jest.fn().mockReturnValue(Promise.resolve({
+    emit: jest.fn()
+  }))
 }));
 
 const FORK_PATH = __dirname + '/platform.js';
@@ -55,6 +59,7 @@ describe("PlatformInstance", () => {
       platform: 'a platform name',
       parentId: 'the parentId'
     };
+
     pi = new PlatformInstance(params);
     platformInstances.set(pi.id, pi);
 
@@ -119,20 +124,20 @@ describe("PlatformInstance", () => {
   it('sends messages to client using socket session id', () => {
     pi.sendToClient('my session id', 'message', {foo: 'this is a message object',
       sessionSecret: 'private data'});
-    expect(http.io.in).toBeCalledWith('my session id');
+    expect(getSocket).toBeCalledWith('my session id');
   });
 
   it('broadcasts to peers', () => {
     pi.sessions.add('other peer');
     pi.broadcastToSharedPeers('myself', {foo: 'bar'});
-    expect(http.io.in).toBeCalledWith('other peer');
+    expect(getSocket).toBeCalledWith('other peer');
   });
 
   it('broadcasts to peers when handling a completed job', () => {
     pi.sessions.add('other peer');
     pi.handleJobResult('completed', {data: {msg: {foo: 'bar'}}, remove: function () {}},
       undefined);
-    expect(http.io.in).toBeCalledWith('other peer');
+    expect(getSocket).toBeCalledWith('other peer');
   });
 
   it('appends completed result message when present', () => {
@@ -185,6 +190,10 @@ describe("PlatformInstance", () => {
     expect(pi.sendToClient).toHaveBeenCalledWith(
       'my session id', 'message', {foo:'bar'});
   });
+
+  afterAll(() => {
+    pi.destroy();
+  })
 });
 
 

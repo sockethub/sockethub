@@ -12,6 +12,7 @@ import serve from './serve';
 import validate from './validate';
 import ProcessManager from "./process-manager";
 import { getSessionStore, Store } from "./common";
+import { platformInstances } from "./platform-instance";
 
 const log = debug('sockethub:core'),
       activity = ActivityStreams(config.get('activity-streams:opts'));
@@ -94,12 +95,16 @@ class Sockethub {
     }
 
     log('active platforms: ', [...init.platforms.keys()]);
-    janitor.start();
-
-    // start external services
-    serve.start();
+    janitor.start(); // start cleanup cycle
+    serve.start();   // start external services
     log('registering handlers');
     serve.io.on('connection', this.incomingConnection.bind(this));
+  }
+
+  removeAllPlatformInstances() {
+    for (let platform of platformInstances.values()) {
+      platform.destroy();
+    }
   }
 
   private handleIncomingMessage(socket: Socket, sessionLog: Function) {

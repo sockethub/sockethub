@@ -6,7 +6,7 @@ import Queue from 'bull';
 import redisConfig from "./config";
 import crypto from "./crypto";
 import { ActivityObject, Job } from "./sockethub";
-import serve from "./serve";
+import { getSocket } from "./serve";
 
 // collection of platform instances, stored by `id`
 export const platformInstances = new Map();
@@ -115,19 +115,20 @@ export default class PlatformInstance {
    * @param msg ActivityStream object to send to client
    */
   public sendToClient(sessionId: string, type: string, msg: ActivityObject) {
-    const socket = serve.io.in(sessionId).fetchSockets()[0];
-    if (socket) {
+    getSocket(sessionId).then((socket) => {
       try {
-        // this should never be exposed externally
+        // this property should never be exposed externally
         delete msg.sessionSecret;
       } catch (e) {}
       msg.context = this.name;
       socket.emit(type, msg);
-    }
+    }, () => {
+      this.debug(`sendToClient called for unknown session ${sessionId}`);
+    });
   }
 
   // send message to every connected socket associated with this platform instance.
-  private broadcastToSharedPeers(sessionId: string, msg: ActivityObject) {
+  private async broadcastToSharedPeers(sessionId: string, msg: ActivityObject) {
     for (let sid of this.sessions.values()) {
       if (sid !== sessionId) {
         this.debug(`broadcasting message to ${sid}`);

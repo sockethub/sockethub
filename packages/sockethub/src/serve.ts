@@ -59,4 +59,22 @@ class Serve {
 }
 
 const serve = new Serve();
+
+interface SocketInstance {
+  id: string;
+  emit: Function;
+}
+
+export async function getSocket(sessionId: string): Promise<SocketInstance> {
+  const sockets: Array<SocketInstance> = await serve.io.fetchSockets();
+  return new Promise((resolve, reject) => {
+    for (let socket of sockets) {
+      if (sessionId === socket.id) {
+        return resolve(socket);
+      }
+    }
+    return reject();
+  });
+}
+
 export default serve;
