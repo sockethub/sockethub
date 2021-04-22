@@ -33,10 +33,21 @@ const stanzas = [
   ],
   [
     'attendance',
-    `<iq id="muc_id" type="result" to="ernie@jabber.net/Home" from="PartyChatRoom@jabber.net" xmlns:stream="http://etherx.jabber.org/streams"> <query xmlns="http://jabber.org/protocol/disco#items"> <item jid="PartyChatRoom@jabber.net/ernie" name="ernie"/> <item jid="PartyChatRoom@jabber.net/bert" name="bert"/><item jid="PartyChatRoom@jabber.net/oscar" name="oscar"/> <item jid="PartyChatRoom@jabber.net/big_bird" name="big_bird"/> <item jid="PartyChatRoom@jabber.net/elmo" name="elmo"/></query></iq>`,
-    {'@type': 'observe', actor: {'@id': 'PartyChatRoom@jabber.net', '@type': 'room'},
-      target: {'@id': 'ernie@jabber.net/Home', '@type': 'person'}, object: {'@type': 'attendance',
-        members: ['ernie', 'bert', 'oscar', 'big_bird', 'elmo']}}
+    `<iq id="muc_id" type="result" to="ernie@jabber.net/Home" from="PartyChatRoom@jabber.net" xmlns:stream="http://etherx.jabber.org/streams">
+       <query xmlns="http://jabber.org/protocol/disco#items">
+         <item jid="PartyChatRoom@jabber.net/ernie" name="ernie"/>
+         <item jid="PartyChatRoom@jabber.net/bert" name="bert"/>
+         <item jid="PartyChatRoom@jabber.net/oscar" name="oscar"/>
+         <item jid="PartyChatRoom@jabber.net/big_bird" name="big_bird"/>
+         <item jid="PartyChatRoom@jabber.net/elmo" name="elmo"/>
+       </query>
+     </iq>`,
+    {
+      '@type': 'observe',
+      actor: { '@id': 'ernie@jabber.net/Home', '@type': 'person' },
+      target: { '@id': 'PartyChatRoom@jabber.net', '@type': 'room' },
+      object: { '@type': 'attendance', members: ['ernie', 'bert', 'oscar', 'big_bird', 'elmo'] }
+    }
   ],
   [
     'message',

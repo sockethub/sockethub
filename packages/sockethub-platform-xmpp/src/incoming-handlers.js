@@ -184,12 +184,12 @@ class IncomingHandlers {
       this.session.sendToClient({
         '@type': 'observe',
         actor: {
-          '@id': stanza.attrs.from,
-          '@type': 'room'
-        },
-        target: {
           '@id': stanza.attrs.to,
           '@type': 'person'
+        },
+        target: {
+          '@id': stanza.attrs.from,
+          '@type': 'room'
         },
         object: {
           '@type': 'attendance',
