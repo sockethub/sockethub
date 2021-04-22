@@ -190,10 +190,6 @@ describe("PlatformInstance", () => {
     expect(pi.sendToClient).toHaveBeenCalledWith(
       'my session id', 'message', {foo:'bar'});
   });
-
-  afterAll(() => {
-    pi.destroy();
-  })
 });
 
 

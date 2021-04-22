@@ -73,7 +73,7 @@ export async function getSocket(sessionId: string): Promise<SocketInstance> {
         return resolve(socket);
       }
     }
-    return reject();
+    return reject(`unable to find socket for sessionId ${sessionId}`);
   });
 }
 

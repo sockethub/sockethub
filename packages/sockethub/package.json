@@ -72,7 +72,7 @@
     "urijs": "^1.19.2"
   },
   "scripts": {
-    "test": "yarn run build && c8 jaribu && jest --coverage",
+    "test": "yarn run build && c8 jaribu && jest ---runInBand --detectOpenHandles --forceExit --coverage",
     "start": "yarn run build && DEBUG=sockethub* ./bin/sockethub",
     "dev": "yarn run build && DEBUG=sockethub* ./bin/sockethub --examples",
     "coverage": "jest --coverage",

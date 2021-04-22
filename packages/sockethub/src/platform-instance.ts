@@ -122,9 +122,7 @@ export default class PlatformInstance {
       } catch (e) {}
       msg.context = this.name;
       socket.emit(type, msg);
-    }, () => {
-      this.debug(`sendToClient called for unknown session ${sessionId}`);
-    });
+    }, (err) => this.debug(`sendToClient ${err}`));
   }
 
   // send message to every connected socket associated with this platform instance.
