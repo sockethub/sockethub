@@ -70,13 +70,14 @@ class Config {
 }
 
 const config = new Config();
-const client = new Redis(config.get('redis'));
-const subscriber = new Redis(config.get('redis'));
 
 /**
  * config object that can be passed in to ioredis to make use of existing connections
  * https://github.com/OptimalBits/bull/blob/master/PATTERNS.md#reusing-redis-connections
  */
+const client = new Redis(config.get('redis'));
+const subscriber = new Redis(config.get('redis'));
+
 export const redisConfig = {
   createClient: function (type) {
     switch (type) {

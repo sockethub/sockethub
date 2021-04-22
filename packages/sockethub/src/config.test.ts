@@ -4,11 +4,6 @@ import Redis from 'ioredis';
 
 jest.mock('ioredis');
 
-// jest.mock('ioredis', () => ({
-//   counter: 1,
-//   __esModule: true,
-//   default: jest.fn() )
-// }));
 
 describe('config', () => {
   beforeEach(() => {
