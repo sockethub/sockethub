@@ -27,10 +27,10 @@
     "request": "^2.83.0"
   },
   "devDependencies": {
-    "fs-then-native": "^2.0.0",
-    "jaribu": "^2.2.3",
-    "jsdoc": "^3.6.3",
-    "jsdoc-to-markdown": "^7.0.1"
+    "fs-then-native": "2.0.0",
+    "jaribu": "2.2.3",
+    "jsdoc": "3.6.6",
+    "jsdoc-to-markdown": "7.0.1"
   },
   "scripts": {
     "test": "jaribu",

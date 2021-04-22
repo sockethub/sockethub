@@ -17,7 +17,7 @@
     "url": "git://github.com/sockethub/sockethub-schemas.git"
   },
   "devDependencies": {
-    "tv4": "^1.1.4"
+    "tv4": "1.3.0"
   },
   "scripts": {
     "test": "jest",
