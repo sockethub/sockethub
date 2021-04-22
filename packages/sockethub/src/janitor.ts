@@ -39,28 +39,24 @@ function janitorCycle() {
 
 function removeStaleSessions(platformInstance, sockets) {
   for (let sessionId of platformInstance.sessions.values()) {
-    let match = false;
     for (let socket of sockets) {
-      if (socket.id === sessionId) { match = true; }
+      if (socket.id === sessionId) {
+        return;
+      }
     }
-    if (! match) {
-      rmLog('removing stale session reference ' + sessionId + ' in platform instance '
-        + platformInstance.id);
-      platformInstance.sessions.delete(sessionId);
-    }
+    rmLog('removing stale session reference ' + sessionId + ' in platform instance '
+      + platformInstance.id);
+    platformInstance.sessions.delete(sessionId);
   }
 }
 
 function removeStalePlatformInstances(platformInstance) {
-  if (platformInstance.global) {
-    // Static platforms are for global use, not tied to a unique to session / eg. credentials)
-    return;
-  } else if (platformInstance.sessions.size <= 0) {
+  // Static platforms are for global use, not tied to a unique to session / eg. credentials)
+  if ((! platformInstance.global) && (platformInstance.sessions.size <= 0)) {
     if (platformInstance.flaggedForTermination) {
-      // terminate
       rmLog(`terminating platform instance ${platformInstance.id} ` +
         `(flagged for termination: no registered sessions found)`);
-      platformInstance.destroy();
+      platformInstance.destroy(); // terminate
     } else {
       rmLog(`flagging for termination platform instance ${platformInstance.id} ` +
         `(no registered sessions found)`);
