@@ -32,38 +32,44 @@ function janitorCycle() {
 
     for (let platformInstance of platformInstances.values()) {
       removeStaleSessions(platformInstance, sockets);
-      removeStalePlatformInstances(platformInstance);
+      // Static platforms are for global use, not tied to a unique to session / eg. credentials)
+      if ((! platformInstance.global) && (platformInstance.sessions.size === 0)) {
+        removeStalePlatformInstance(platformInstance);
+      } else {
+        platformInstance.flaggedForTermination = false;
+      }
     }
   }, TICK);
 }
 
+function socketExists(sessionId, sockets) {
+  for (let socket of sockets) {
+    if (socket.id === sessionId) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function removeStaleSessions(platformInstance, sockets) {
   for (let sessionId of platformInstance.sessions.values()) {
-    for (let socket of sockets) {
-      if (socket.id === sessionId) {
-        return;
-      }
+    if (! socketExists(sessionId, sockets)) {
+      rmLog('removing stale session reference ' + sessionId + ' in platform instance '
+        + platformInstance.id);
+      platformInstance.sessions.delete(sessionId);
     }
-    rmLog('removing stale session reference ' + sessionId + ' in platform instance '
-      + platformInstance.id);
-    platformInstance.sessions.delete(sessionId);
   }
 }
 
-function removeStalePlatformInstances(platformInstance) {
-  // Static platforms are for global use, not tied to a unique to session / eg. credentials)
-  if ((! platformInstance.global) && (platformInstance.sessions.size <= 0)) {
-    if (platformInstance.flaggedForTermination) {
-      rmLog(`terminating platform instance ${platformInstance.id} ` +
-        `(flagged for termination: no registered sessions found)`);
-      platformInstance.destroy(); // terminate
-    } else {
-      rmLog(`flagging for termination platform instance ${platformInstance.id} ` +
-        `(no registered sessions found)`);
-      platformInstance.flaggedForTermination = true;
-    }
+function removeStalePlatformInstance(platformInstance) {
+  if (platformInstance.flaggedForTermination) {
+    rmLog(`terminating platform instance ${platformInstance.id} ` +
+      `(flagged for termination: no registered sessions found)`);
+    platformInstance.destroy(); // terminate
   } else {
-    platformInstance.flaggedForTermination = false;
+    rmLog(`flagging for termination platform instance ${platformInstance.id} ` +
+      `(no registered sessions found)`);
+    platformInstance.flaggedForTermination = true;
   }
 }
 
