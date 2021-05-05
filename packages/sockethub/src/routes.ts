@@ -1,7 +1,5 @@
 import path from 'path';
-import * as randToken from 'rand-token';
 import config from "./config";
-import crypto from "./crypto";
 
 const debug_scope = process.env.DEBUG || '',
       address     = config.get('public:protocol') + '://' +
