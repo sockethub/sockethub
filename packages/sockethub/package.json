@@ -93,7 +93,7 @@
     "eslint-cli": "1.1.1",
     "jaribu": "2.2.3",
     "jest": "26.6.3",
-    "ts-jest": "26.5.5",
+    "ts-jest": "26.5.6",
     "ts-node": "9.1.1",
     "typescript": "4.2.4"
   }
