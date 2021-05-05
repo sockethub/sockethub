@@ -40,7 +40,7 @@
     <div class="modal">
       <h3>Click `Join` to connect and join the IRC channel.</h3>
       <form id="intro" action="">
-        <input id="n" autocomplete="off" value="sh-<%= randToken %>"><button class="invis" disabled>nick</button>
+<!--        <input id="n" autocomplete="off" value="sh-"><button class="invis" disabled>nick</button>-->
         <input id="j" autocomplete="off" value=""><button id="join">Join</button>
       </form>
     </div>
@@ -61,7 +61,7 @@
       localStorage.debug = 'sockethub:*';
       const sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
       let channel = 'sockethub-test';
-      let nick = 'sh-<%= randToken %>';
+      let nick = `sh-${Math.random().toString(8)}`;
 
       $('#j').val('#' + channel);
 

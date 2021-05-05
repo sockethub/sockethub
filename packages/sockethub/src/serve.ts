@@ -5,8 +5,7 @@ import * as HTTP from 'http';
 import { Server } from 'socket.io';
 
 import config from './config';
-import routeBase from './routes/base';
-import routeExamples from './routes/examples';
+import routes from './routes';
 
 const log = debug('sockethub:services:http');
 
@@ -28,15 +27,7 @@ class Serve {
     const app = Serve.initExpress();
     this.http = new HTTP.Server(app);
     this.io = new Server(this.http, {path: config.get('service:path')});
-
-    // routes list
-    [
-      routeBase,
-      routeExamples
-    ].map((route) => {
-      return route.setup(app);
-    });
-
+    routes.setup(app);
     this.startListener();
   }
 
