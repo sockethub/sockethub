@@ -31,7 +31,7 @@ class Crypto {
   }
   randToken(len: number): string {
     if (len > 32) {
-      throw new Error('crypto.randToken only supports up to length of 32');
+      throw new Error(`crypto.randToken supports a length param of up to 32, ${len} given`);
     }
     const buf = randomBytes(len);
     return buf.toString('hex').substring(0, len);
