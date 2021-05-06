@@ -1,5 +1,4 @@
 import debug from 'debug';
-import randToken from 'rand-token';
 import ActivityStreams from 'activity-streams';
 import { Socket } from "socket.io";
 
@@ -76,9 +75,9 @@ class Sockethub {
     this.counter = 0;
     this.platforms = init.platforms;
     this.status = false;
-    this.parentId = randToken.generate(16);
-    this.parentSecret1 = randToken.generate(16);
-    this.parentSecret2 = randToken.generate(16);
+    this.parentId = crypto.randToken(16);
+    this.parentSecret1 = crypto.randToken(16);
+    this.parentSecret2 = crypto.randToken(16);
     this.processManager = new ProcessManager(
       this.parentId, this.parentSecret1, this.parentSecret2);
     log('sockethub session id: ' + this.parentId);
@@ -135,7 +134,7 @@ class Sockethub {
 
   private incomingConnection(socket: Socket) {
     const sessionLog = debug('sockethub:core:' + socket.id), // session-specific debug messages
-          sessionSecret = randToken.generate(16),
+          sessionSecret = crypto.randToken(16),
           // store instance is session-specific
           store = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret),
           middleware = getMiddleware(socket, sessionLog);
