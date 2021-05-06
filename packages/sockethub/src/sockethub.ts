@@ -94,7 +94,7 @@ class Sockethub {
     }
 
     log('active platforms: ', [...init.platforms.keys()]);
-    janitor.start(); // start cleanup cycle
+    janitor.clean(); // start cleanup cycle
     serve.start();   // start external services
     log('registering handlers');
     serve.io.on('connection', this.incomingConnection.bind(this));

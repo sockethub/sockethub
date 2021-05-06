@@ -74,7 +74,7 @@ function removeStalePlatformInstance(platformInstance) {
 }
 
 const janitor = {
-  start: janitorCycle,
+  clean: janitorCycle,
   alreadyCalled: alreadyCalled,
   cycleCount: cycleCount,
   reportCount: reportCount
