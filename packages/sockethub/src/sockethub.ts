@@ -134,7 +134,7 @@ class Sockethub {
 
   private incomingConnection(socket: Socket) {
     const sessionLog = debug('sockethub:core:' + socket.id), // session-specific debug messages
-          sessionSecret = randToken.generate(16),
+          sessionSecret = crypto.randToken(16),
           // store instance is session-specific
           store = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret),
           middleware = getMiddleware(socket, sessionLog);
