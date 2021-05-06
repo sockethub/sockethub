@@ -12,21 +12,29 @@ const log = debug('sockethub:services:http');
 /**
  * Handles the initialization and access of service objects.
  *
- * @example
- *
- * serve.start() // starts http, express, socket.io
- * serve.io // socket.io object
- * serve.http // http object
+ *  - HTTP Server
+ *  - Express (service resources and example routes)
+ *  - Socket.io (bidirectional websocket communication)
  */
 class Serve {
   io: Server;
   http: HTTP.Server;
 
+  /**
+   * Starts the services needed for sockethub to operate. After this command completes,
+   * the `http` and `io` class properties will be set.
+   */
   start() {
     // initialize express and socket.io objects
     const app = Serve.initExpress();
     this.http = new HTTP.Server(app);
-    this.io = new Server(this.http, {path: config.get('service:path')});
+    this.io = new Server(this.http, {
+      path: config.get('service:path'),
+      cors: {
+        origin: "*",
+        methods: [ "GET", "POST" ]
+      }
+    });
     routes.setup(app);
     this.startListener();
   }
