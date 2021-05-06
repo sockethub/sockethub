@@ -26,7 +26,7 @@
     "irc2as": "^3.0.4"
   },
   "devDependencies": {
-    "c8": "7.7.1",
+    "c8": "7.7.2",
     "eslint": "7.25.0",
     "jaribu": "2.2.3",
     "jsdoc-to-markdown": "7.0.1",

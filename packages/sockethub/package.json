@@ -88,7 +88,7 @@
   "devDependencies": {
     "@types/jest": "26.0.23",
     "@typescript-eslint/parser": "4.22.1",
-    "c8": "7.7.1",
+    "c8": "7.7.2",
     "eslint": "7.25.0",
     "eslint-cli": "1.1.1",
     "jaribu": "2.2.3",
