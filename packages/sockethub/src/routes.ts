@@ -32,35 +32,26 @@ export const examplePages = {
   '/examples/xmpp': path.resolve(`${__dirname}/../views/examples/xmpp.ejs`)
 };
 
-let baseRoutes = [];
-let exampleRoutes = [];
 
-Object.keys(basePaths).forEach((key) => {
-  baseRoutes.push({
-    meta: {
-      method: 'GET',
-      path: key
-    },
-    route: (req, res) => {
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.sendFile(basePaths[req.url]);
-    }
+function prepFileRoutes(pathMap) {
+  let _routes = [];
+  Object.keys(pathMap).forEach((key) => {
+    _routes.push({
+      meta: {
+        method: 'GET',
+        path: key
+      },
+      route: (req, res) => {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.sendFile(pathMap[req.url]);
+      }
+    });
   });
-});
+  return _routes;
+}
+const baseRoutes = prepFileRoutes(basePaths);
+const exampleRoutes = prepFileRoutes(examplePaths);
 
-
-Object.keys(examplePaths).forEach((key) => {
-  exampleRoutes.push({
-    meta: {
-      method: 'GET',
-      path: key
-    },
-    route: (req, res) => {
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.sendFile(examplePaths[req.url]);
-    }
-  });
-});
 
 Object.keys(examplePages).forEach((key) => {
   exampleRoutes.push({
@@ -85,6 +76,7 @@ function addRoute(app) {
     );
   };
 }
+
 /**
  * Setup
  */

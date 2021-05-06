@@ -60,25 +60,19 @@ describe('routes/base', () => {
     };
     routes.setup(app, true);
 
-    Object.keys(basePaths).forEach((path) => {
-      const res = {
-        setHeader: jest.fn(),
-        sendFile: jest.fn()
-      };
-      routeHandlers[path]({url: path}, res);
-      expect(res.setHeader).toHaveBeenCalled();
-      expect(res.sendFile).toHaveBeenCalledWith(basePaths[path]);
-    });
-
-    Object.keys(examplePaths).forEach((path) => {
-      const res = {
-        setHeader: jest.fn(),
-        sendFile: jest.fn()
-      };
-      routeHandlers[path]({url: path}, res);
-      expect(res.setHeader).toHaveBeenCalled();
-      expect(res.sendFile).toHaveBeenCalledWith(examplePaths[path]);
-    });
+    function verifyPathRoutes(pathMap) {
+      Object.keys(pathMap).forEach((path) => {
+        const res = {
+          setHeader: jest.fn(),
+          sendFile: jest.fn()
+        };
+        routeHandlers[path]({url: path}, res);
+        expect(res.setHeader).toHaveBeenCalled();
+        expect(res.sendFile).toHaveBeenCalledWith(pathMap[path]);
+      });
+    }
+    verifyPathRoutes(basePaths);
+    verifyPathRoutes(examplePaths);
 
     Object.keys(examplePages).forEach((path) => {
       const res = {
