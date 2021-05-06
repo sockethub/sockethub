@@ -29,6 +29,9 @@ class Crypto {
     shasum.update(text);
     return shasum.digest('hex').substring(0, 7);
   }
+  randToken(chars: number): string {
+    return cryptoLib.randomBytes(chars).toString('hex');
+  }
 }
 
 crypto = new Crypto();
