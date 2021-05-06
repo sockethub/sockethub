@@ -40,7 +40,7 @@
     <div class="modal">
       <h3>Click `Join` to connect and join the IRC channel.</h3>
       <form id="intro" action="">
-        <input id="n" autocomplete="off" value="sh-<%= randToken %>"><button class="invis" disabled>nick</button>
+<!--        <input id="n" autocomplete="off" value="sh-"><button class="invis" disabled>nick</button>-->
         <input id="j" autocomplete="off" value=""><button id="join">Join</button>
       </form>
     </div>
@@ -61,7 +61,8 @@
       localStorage.debug = 'sockethub:*';
       const sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
       let channel = 'sockethub-test';
-      let nick = 'sh-<%= randToken %>';
+      let nick = `sh-${Math.random().toString(36).substr(2)}`;
+      console.log('nick: ' + nick);
 
       $('#j').val('#' + channel);
 
@@ -130,6 +131,7 @@
         });
         __updateCredentials();
       }
+      __updateActor(nick);
 
       function __updateCredentials() {
         // sending irc credentials to sockethub server
@@ -205,7 +207,6 @@
 
       // handler for user input, emit messages to sockethub server
       $('#join').click(function () {
-        nick = $('#n').val();
         channel = $('#j').val();
 
         // the irc chatroom we're connecting to
@@ -214,7 +215,6 @@
           '@type': "room",
           displayName: channel
         });
-        __updateActor(nick);
         debug('socket id: ', sc.socket.id);
 
         const msg = {

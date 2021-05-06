@@ -3,11 +3,13 @@ import { join } from 'path';
 import { debug, Debugger } from 'debug';
 import Queue from 'bull';
 
-import SharedResources from "./shared-resources";
-import redisConfig from "./services/redis";
+import redisConfig from "./config";
 import crypto from "./crypto";
 import { ActivityObject, Job } from "./sockethub";
+import { getSocket } from "./serve";
 
+// collection of platform instances, stored by `id`
+export const platformInstances = new Map();
 
 export interface PlatformInstanceParams {
   identifier: string;
@@ -57,7 +59,7 @@ export default class PlatformInstance {
    */
   public destroy() {
     this.flaggedForTermination = true;
-    SharedResources.platformInstances.delete(this.id);
+    platformInstances.delete(this.id);
     try {
       this.queue.clean(0);
     } catch (e) { }
@@ -113,19 +115,18 @@ export default class PlatformInstance {
    * @param msg ActivityStream object to send to client
    */
   public sendToClient(sessionId: string, type: string, msg: ActivityObject) {
-    const socket = SharedResources.sessionConnections.get(sessionId);
-    if (socket) {
+    getSocket(sessionId).then((socket) => {
       try {
-        // this should never be exposed externally
+        // this property should never be exposed externally
         delete msg.sessionSecret;
       } catch (e) {}
       msg.context = this.name;
       socket.emit(type, msg);
-    }
+    }, (err) => this.debug(`sendToClient ${err}`));
   }
 
   // send message to every connected socket associated with this platform instance.
-  private broadcastToSharedPeers(sessionId: string, msg: ActivityObject) {
+  private async broadcastToSharedPeers(sessionId: string, msg: ActivityObject) {
     for (let sid of this.sessions.values()) {
       if (sid !== sessionId) {
         this.debug(`broadcasting message to ${sid}`);
@@ -185,9 +186,9 @@ export default class PlatformInstance {
    * @param identifier
    */
   private updateIdentifier(identifier: string) {
-    SharedResources.platformInstances.delete(this.id);
+    platformInstances.delete(this.id);
     this.id = identifier;
-    SharedResources.platformInstances.set(this.id, this);
+    platformInstances.set(this.id, this);
   }
 
   /**

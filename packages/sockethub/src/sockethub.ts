@@ -1,5 +1,4 @@
 import debug from 'debug';
-import randToken from 'rand-token';
 import ActivityStreams from 'activity-streams';
 import { Socket } from "socket.io";
 
@@ -7,12 +6,12 @@ import config from './config';
 import crypto from './crypto';
 import init from './bootstrap/init';
 import Middleware from './middleware';
-import resourceManager from './resource-manager';
-import http from './services/http';
+import janitor from './janitor';
+import serve from './serve';
 import validate from './validate';
-import SharedResources from "./shared-resources";
 import ProcessManager from "./process-manager";
 import { getSessionStore, Store } from "./common";
+import { platformInstances } from "./platform-instance";
 
 const log = debug('sockethub:core'),
       activity = ActivityStreams(config.get('activity-streams:opts'));
@@ -70,16 +69,15 @@ class Sockethub {
   platforms: Map<string, object>;
   status: boolean;
   queue: any;
-  io: any;
   processManager: ProcessManager;
 
   constructor() {
     this.counter = 0;
     this.platforms = init.platforms;
     this.status = false;
-    this.parentId = randToken.generate(16);
-    this.parentSecret1 = randToken.generate(16);
-    this.parentSecret2 = randToken.generate(16);
+    this.parentId = crypto.randToken(16);
+    this.parentSecret1 = crypto.randToken(16);
+    this.parentSecret2 = crypto.randToken(16);
     this.processManager = new ProcessManager(
       this.parentId, this.parentSecret1, this.parentSecret2);
     log('sockethub session id: ' + this.parentId);
@@ -96,16 +94,14 @@ class Sockethub {
     }
 
     log('active platforms: ', [...init.platforms.keys()]);
-    resourceManager.start();
-
-    // start external services
-    this.io = http.start();
+    janitor.clean(); // start cleanup cycle
+    serve.start();   // start external services
     log('registering handlers');
-    this.io.on('connection', this.incomingConnection.bind(this));
+    serve.io.on('connection', this.incomingConnection.bind(this));
   }
 
   removeAllPlatformInstances() {
-    for (let platform of SharedResources.platformInstances.values()) {
+    for (let platform of platformInstances.values()) {
       platform.destroy();
     }
   }
@@ -138,18 +134,15 @@ class Sockethub {
 
   private incomingConnection(socket: Socket) {
     const sessionLog = debug('sockethub:core:' + socket.id), // session-specific debug messages
-          sessionSecret = randToken.generate(16),
+          sessionSecret = crypto.randToken(16),
           // store instance is session-specific
           store = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret),
           middleware = getMiddleware(socket, sessionLog);
 
     sessionLog(`socket.io connection`);
 
-    SharedResources.sessionConnections.set(socket.id, socket);
-
     socket.on('disconnect', () => {
       sessionLog('disconnect received from client.');
-      SharedResources.sessionConnections.delete(socket.id);
     });
 
     socket.on(

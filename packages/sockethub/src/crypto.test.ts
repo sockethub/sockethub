@@ -23,4 +23,21 @@ describe('crypto', () => {
   it('hashes', () => {
     expect(crypto.hash('foobar')).toBe('8843d7f');
   });
+  it('randTokens 8', () => {
+    const token = crypto.randToken(8);
+    expect(token.length).toBe(8);
+  });
+  it('randTokens 16', () => {
+    const token = crypto.randToken(16);
+    expect(token.length).toBe(16);
+  });
+  it('randTokens 32', () => {
+    const token = crypto.randToken(32);
+    expect(token.length).toBe(32);
+  });
+  it('randTokens 33+ will fail', () => {
+    expect(() => {
+      crypto.randToken(33);
+    }).toThrowError();
+  });
 });

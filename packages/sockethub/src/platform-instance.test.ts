@@ -2,29 +2,45 @@
 import { fork } from 'child_process';
 import Queue from 'bull';
 
-import PlatformInstance, { PlatformInstanceParams } from "./platform-instance";
-import SharedResources from "./shared-resources";
+import PlatformInstance, { platformInstances, PlatformInstanceParams } from "./platform-instance";
+import { getSocket } from "./serve";
 
 jest.mock('./crypto');
 jest.mock('child_process');
 jest.mock('ioredis');
 jest.mock('bull');
-jest.mock('./shared-resources', () => ({
+jest.mock('socket.io');
+jest.mock('./serve');
+
+const socketMock = {
+  emit: jest.fn()
+};
+
+jest.mock('./serve', () => ({
   __esModule: true,
   default: {
-    sessionConnections: {
-      get: jest.fn().mockImplementation(() => {
-        return { emit: jest.fn() };
+    io: {
+      in: jest.fn().mockImplementation(() => {
+        return {
+          fetchSockets: jest.fn().mockImplementation(() => {
+            return [ socketMock ]
+          })
+        }
       })
-    },
-    platformInstances: {
-      delete: jest.fn(),
-      set: jest.fn()
     }
-  }
+  },
+  getSocket: jest.fn().mockReturnValue(Promise.resolve({
+    emit: jest.fn()
+  }))
 }));
 
 const FORK_PATH = __dirname + '/platform.js';
+
+describe("platformInstances", () => {
+  it('should have a platformInstances Map', () => {
+    expect(platformInstances instanceof Map).toBe(true);
+  });
+});
 
 describe("PlatformInstance", () => {
   let pi;
@@ -43,7 +59,9 @@ describe("PlatformInstance", () => {
       platform: 'a platform name',
       parentId: 'the parentId'
     };
+
     pi = new PlatformInstance(params);
+    platformInstances.set(pi.id, pi);
 
     pi.process = {
       on: jest.fn().mockName('pi.process.on'),
@@ -91,34 +109,35 @@ describe("PlatformInstance", () => {
   });
 
   it("cleans up its references when destroyed", () => {
+    expect(platformInstances.has('platform identifier')).toBeTruthy();
     pi.destroy();
-    expect(SharedResources.platformInstances.delete).toBeCalledWith('platform identifier');
+    expect(platformInstances.has('platform identifier')).toBeFalsy();
   });
 
   it("updates its identifier when changed", () => {
     pi.updateIdentifier('foo bar');
     expect(pi.id).toBe('foo bar');
-    expect(SharedResources.platformInstances.delete).toBeCalledWith('platform identifier');
-    expect(SharedResources.platformInstances.set).toBeCalledWith('foo bar', pi);
+    expect(platformInstances.has('platform identifier')).toBeFalsy();
+    expect(platformInstances.has('foo bar')).toBeTruthy();
   });
 
   it('sends messages to client using socket session id', () => {
     pi.sendToClient('my session id', 'message', {foo: 'this is a message object',
       sessionSecret: 'private data'});
-    expect(SharedResources.sessionConnections.get).toBeCalledWith('my session id');
+    expect(getSocket).toBeCalledWith('my session id');
   });
 
   it('broadcasts to peers', () => {
     pi.sessions.add('other peer');
     pi.broadcastToSharedPeers('myself', {foo: 'bar'});
-    expect(SharedResources.sessionConnections.get).toBeCalledWith('other peer');
+    expect(getSocket).toBeCalledWith('other peer');
   });
 
   it('broadcasts to peers when handling a completed job', () => {
     pi.sessions.add('other peer');
     pi.handleJobResult('completed', {data: {msg: {foo: 'bar'}}, remove: function () {}},
       undefined);
-    expect(SharedResources.sessionConnections.get).toBeCalledWith('other peer');
+    expect(getSocket).toBeCalledWith('other peer');
   });
 
   it('appends completed result message when present', () => {

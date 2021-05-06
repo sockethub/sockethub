@@ -58,9 +58,8 @@
     "jquery": "^3.4.1",
     "nconf": "^0.11.2",
     "object-hash": "^2.0.1",
-    "rand-token": "^1.0.1",
     "secure-store-redis": "^1.4.3",
-    "socket.io": "^2.4.1",
+    "socket.io": "^4.0.1",
     "sockethub-platform-dummy": "^2.0.2",
     "sockethub-platform-feeds": "^2.1.2",
     "sockethub-platform-irc": "^3.5.2",
@@ -72,7 +71,7 @@
     "urijs": "^1.19.2"
   },
   "scripts": {
-    "test": "yarn run build && c8 jaribu && jest --coverage",
+    "test": "yarn run build && c8 jaribu && jest ---runInBand --detectOpenHandles --forceExit --coverage",
     "start": "yarn run build && DEBUG=sockethub* ./bin/sockethub",
     "dev": "yarn run build && DEBUG=sockethub* ./bin/sockethub --examples",
     "coverage": "jest --coverage",
