@@ -19,13 +19,13 @@ export const basePaths = {
 };
 
 export const examplePaths = {
-  '/': path.resolve(`${__dirname}/../views/index.ejs`),
   '/jquery.js': path.resolve(`${__dirname}/../node_modules/jquery/dist/jquery.min.js`),
   '/jquery.min.map': path.resolve(`${__dirname}/../node_modules/jquery/dist/jquery.min.map`),
   '/examples/shared.js': path.resolve(`${__dirname}/../views/examples/shared.js`)
 };
 
 export const examplePages = {
+  '/': path.resolve(`${__dirname}/../views/index.ejs`),
   '/examples/dummy': path.resolve(`${__dirname}/../views/examples/dummy.ejs`),
   '/examples/feeds': path.resolve(`${__dirname}/../views/examples/feeds.ejs`),
   '/examples/irc': path.resolve(`${__dirname}/../views/examples/irc.ejs`),
