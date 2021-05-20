@@ -23,7 +23,5 @@
     "url": "git://github.com/sockethub/sockethub-platform-dummy.git"
   },
   "homepage": "http://github.com/sockethub/sockethub-platform-dummy",
-  "dependencies": {
-    "request": "^2.83.0"
-  }
+  "dependencies": {}
 }
