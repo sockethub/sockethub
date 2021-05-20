@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import tv4 from 'tv4';
-import debug from 'debug';
-import fs from 'fs';
+const tv4 = require('tv4');
+const debug = require('debug');
+const fs = require('fs');
 
 const log = debug('sockethub:schemas');
 let base = process.env.PWD;
