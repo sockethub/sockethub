@@ -1,0 +1,8 @@
+{
+  "labels": [ "kredits-1", "dependencies" ],
+  "reviewers": [ "silverbucket" ],
+  "additionalBranchPrefix": "{{parentDir}}-",
+  "extends": [
+    "config:base"
+  ]
+}
