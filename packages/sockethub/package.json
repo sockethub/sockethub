@@ -43,7 +43,6 @@
     "@types/nconf": "^0.10.0",
     "@types/node": "^15.0.2",
     "@types/object-hash": "^2.1.0",
-    "@types/socket.io": "^2.1.8",
     "@types/supports-color": "^8.1.0",
     "@types/tv4": "^1.2.29",
     "@types/urijs": "^1.19.13",
