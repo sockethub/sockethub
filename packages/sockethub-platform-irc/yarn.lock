@@ -996,6 +996,14 @@ ipaddr.js@1.9.1:
     bluebird "^3.7.2"
     r-result "^1.4.0"
 
+irc2as@^3.0.4:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/irc2as/-/irc2as-3.0.4.tgz#d196a3ea2034d6b04a71c2f230753cd9505c7e07"
+  integrity sha512-Wfcheb+KZDwnWnlanDThk3mxR3ukmEWhcPKdI27zmoxTs+V9C7zN76DCG30W0u7OvyUmWbKBx8N3G/tLD4slAQ==
+  dependencies:
+    debug "^4.3.1"
+    fast-deep-equal "^3.1.1"
+
 is-boolean-object@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/is-boolean-object/-/is-boolean-object-1.1.0.tgz#e2aaad3a3a8fca34c28f6eee135b156ed2587ff0"
