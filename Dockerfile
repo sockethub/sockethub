@@ -1,4 +1,4 @@
-FROM node:14
+FROM node:16
 MAINTAINER Ben Kero <ben.kero@gmail.com>
 
 ADD packages/sockethub/package.json /tmp/package.json
