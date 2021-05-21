@@ -66,6 +66,7 @@ describe('routes/base', () => {
           setHeader: jest.fn(),
           sendFile: jest.fn()
         };
+        expect(pathMap[path].endsWith('.ejs')).toBeFalsy();
         routeHandlers[path]({url: path}, res);
         expect(res.setHeader).toHaveBeenCalled();
         expect(res.sendFile).toHaveBeenCalledWith(pathMap[path]);
@@ -78,6 +79,7 @@ describe('routes/base', () => {
       const res = {
         render: jest.fn()
       };
+      expect(examplePages[path].endsWith('.ejs')).toBeTruthy();
       routeHandlers[path]({url: path}, res);
       expect(res.render).toHaveBeenCalled();
     });
