@@ -17,10 +17,10 @@ process.once('SIGINT', function () {
   process.exit(0);
 });
 
+const Sockethub = require(`./../${baseDir}/sockethub`).default;
+const sockethub = new Sockethub();
+
 process.once('exit', function () {
   sockethub.removeAllPlatformInstances();
 });
-
-const Sockethub = require(`./../${baseDir}/sockethub`).default;
-const sockethub = new Sockethub();
 sockethub.boot();
