@@ -22,5 +22,7 @@ install:
   - yarn add @typescript-eslint/parser
   - yarn install
 script:
-  - cd packages/sockethub/ && ./bin/sockethub --help; cd -
+  - cd packages/sockethub/ 
+  - ./bin/sockethub --help
+  - cd -
   - yarn run travis
