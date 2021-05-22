@@ -19,7 +19,9 @@ after_script:
 install:
   - npm update npm -g
   - npm install -g lerna yarn eslint
-  - yarn add @typescript-eslint/parser
-  - yarn install
+  - lerna add @typescript-eslint/parser
+  - lerna bootstrap
 script:
-  - yarn run travis
+  - lerna run build
+  - ./packages/sockethub/bin/sockethub --help
+  - lerna run travis
