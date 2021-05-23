@@ -10,9 +10,12 @@ sudo: false
 node_js:
   - 'lts/*'
   - 15
+stages:
+  - test
+  - integration
 jobs:
   include:
-    - stage: "tests"
+    - stage: test
       name: "Unit Tests"
       env:
         global:
@@ -32,7 +35,7 @@ jobs:
         - lerna run build
         - ./packages/sockethub/bin/sockethub --help
         - lerna run travis
-    - stage: "integration"
+    - stage: integration
       name: "Integration Tests"
       install:
         - npm update npm -g
