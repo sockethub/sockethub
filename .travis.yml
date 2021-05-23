@@ -32,9 +32,6 @@ script:
   - lerna run travis
 jobs:
   include:
-    - stage: test
-      name: "Unit Tests"
-
     - stage: integration
       name: "Integration Tests"
       install:
