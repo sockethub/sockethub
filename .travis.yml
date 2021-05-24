@@ -40,6 +40,7 @@ jobs:
         - npm update npm -g
         - npm install -g sockethub
         - docker run -d -t -h mongooseim-1 --name mongooseim-1 -p 5222:5222 mongooseim/mongooseim:latest
+        - sleep 10
         - docker exec -i -t mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
       script:
         - yarn run start &
