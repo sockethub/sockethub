@@ -78,7 +78,5 @@ describe('integration page', () => {
         context: "xmpp"
       });
     });
-
-  })
-
+  });
 });
