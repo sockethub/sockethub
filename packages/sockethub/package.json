@@ -85,14 +85,14 @@
   },
   "devDependencies": {
     "@types/jest": "26.0.23",
-    "@typescript-eslint/parser": "4.24.0",
+    "@typescript-eslint/parser": "4.25.0",
     "c8": "7.7.2",
     "eslint": "7.27.0",
     "eslint-cli": "1.1.1",
     "jaribu": "2.2.3",
     "jest": "26.6.3",
     "ts-jest": "26.5.6",
-    "ts-node": "9.1.1",
+    "ts-node": "10.0.0",
     "typescript": "4.2.4"
   }
 }
