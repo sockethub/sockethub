@@ -5,16 +5,18 @@ language: node_js
 os: linux
 dist: focal
 arch: amd64
+addons:
+  chrome: stable
+  firefox: stable
 services:
   - redis
   - docker
-sudo: false
 node_js:
   - 'lts/*'
   - 15
 env:
-global:
-  - CC_TEST_REPORTER_ID=24c64e68bbc0781513767008c1642fba33a168599950c490ed2c12a47e7d4cf2
+  global:
+    - CC_TEST_REPORTER_ID=24c64e68bbc0781513767008c1642fba33a168599950c490ed2c12a47e7d4cf2
 before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
@@ -38,7 +40,8 @@ jobs:
         - npm update npm -g
         - npm install -g sockethub
         - docker run -d -t -h mongooseim-1 --name mongooseim-1 -p 5222:5222 mongooseim/mongooseim:latest
-        - docker exec -i -t mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register jimmy localhost passw0rd
+        - docker exec -i -t mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
       script:
-        - sockethub --help
-        - which sockethub
+        - yarn run start &
+        - sleep 10
+        - yarn run integration
