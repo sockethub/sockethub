@@ -8,6 +8,7 @@ A protocol gateway for the web.
 [![Maintainability](https://api.codeclimate.com/v1/badges/95912fc801271faf44f6/maintainability)](https://codeclimate.com/github/sockethub/sockethub/maintainability)
 [![Release](https://img.shields.io/npm/v/sockethub.svg?style=flat)](https://github.com/sockethub/sockethub/releases)
 [![Lerna](https://img.shields.io/badge/maintained%20with-lerna-cc00ff.svg)](https://lerna.js.org/)
+[![Coverage Status](https://coveralls.io/repos/github/sockethub/sockethub/badge.svg?branch=master)](https://coveralls.io/github/sockethub/sockethub?branch=master)
 
 ## About
 
