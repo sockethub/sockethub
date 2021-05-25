@@ -57,13 +57,26 @@ export default class PlatformInstance {
   /**
    * Destroys all references to this platform instance, internal listeners and controlled processes
    */
-  public destroy() {
+  public async destroy() {
     this.flaggedForTermination = true;
     platformInstances.delete(this.id);
     try {
-      this.queue.clean(0);
+      await this.queue.empty();
     } catch (e) { }
     try {
+      await this.queue.clean(0);
+    } catch (e) { }
+    try {
+      await this.queue.close();
+    } catch (e) { }
+    try {
+      this.queue.removeAllListeners();
+    } catch (e) { }
+    try {
+      await this.queue.obliterate({ force: true });
+    } catch (e) { }
+    try {
+      delete this.queue;
       this.process.removeAllListeners('close');
       this.process.unref();
       this.process.kill();

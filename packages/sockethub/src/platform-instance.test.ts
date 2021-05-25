@@ -108,10 +108,13 @@ describe("PlatformInstance", () => {
     expect(pi.queue).toBeInstanceOf(Queue);
   });
 
-  it("cleans up its references when destroyed", () => {
+  it("cleans up its references when destroyed", async () => {
+    pi.initQueue('a secret');
+    expect(pi.queue).toBeInstanceOf(Queue);
     expect(platformInstances.has('platform identifier')).toBeTruthy();
-    pi.destroy();
+    await pi.destroy();
     expect(platformInstances.has('platform identifier')).toBeFalsy();
+    expect(pi.queue).not.toBeDefined();
   });
 
   it("updates its identifier when changed", () => {
