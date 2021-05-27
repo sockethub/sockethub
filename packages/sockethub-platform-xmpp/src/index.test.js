@@ -104,6 +104,42 @@ const job = {
   }
 };
 
+describe('bad initialization', () => {
+  it('existing __client object is returned', (done) => {
+    const xp = new shXmpp({
+      id: actor,
+      debug: jest.fn(),
+      sendToClient: jest.fn()
+    });
+
+    xp.__client = 'foo';
+
+    xp.connect(job.join, credentials, () => {
+      expect(xp.__client).toBe('foo');
+      expect(client).not.toHaveBeenCalled();
+      expect(xp.sendToClient).not.toHaveBeenCalled();
+      done();
+    });
+  });
+
+  it('failed connect will delete the __client property', (done) => {
+    const xp = new shXmpp({
+      id: actor,
+      debug: jest.fn(),
+      sendToClient: jest.fn()
+    });
+
+    client.start = jest.fn(() => Promise.reject('foo'));
+
+    xp.connect(job.join, credentials, () => {
+      expect(client).toHaveBeenCalled();
+      expect(xp.__client).not.toBeDefined();
+      expect(xp.sendToClient).toHaveBeenCalled();
+      done();
+    });
+  });
+})
+
 
 describe('xmpp platform initialization', () => {
   let xp;
@@ -120,6 +156,7 @@ describe('xmpp platform initialization', () => {
       expect(xp.__client).toHaveProperty('start');
       expect(xp.__client).toHaveProperty('send');
       expect(xp.__client.start).toHaveBeenCalled();
+      expect(xp.sendToClient).not.toHaveBeenCalled();
       expect(xp.__client.on).toHaveBeenCalledWith('close', expect.anything());
       expect(xp.__client.on).toHaveBeenCalledWith('error', expect.anything());
       expect(xp.__client.on).toHaveBeenCalledWith('online', expect.anything());
