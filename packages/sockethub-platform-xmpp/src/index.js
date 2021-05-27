@@ -121,7 +121,11 @@ class XMPP {
    * }
    */
   connect(job, credentials, done) {
-    if (this.__client) { return done(); } // TODO verify client is actually connected
+    if (this.__client) {
+      // TODO verify client is actually connected
+      this.debug('returning existing client for ' + job.actor['@id']);
+      return done();
+    }
     this.debug('connect called for ' + job.actor['@id']);
     this.__client = client(utils.buildXmppCredentials(credentials));
     this.__client.on("offline", (a) => {
@@ -135,6 +139,7 @@ class XMPP {
       return done();
     }).catch((err) => {
       this.debug(`connect error: ${err}`);
+      delete this.__client;
       this.sendToClient({
         '@type': 'error',
         object: {
