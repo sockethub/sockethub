@@ -3,8 +3,6 @@ import { randomBytes, createCipheriv, createDecipheriv, createHash } from 'crypt
 const ALGORITHM = 'aes-256-cbc',
       IV_LENGTH = 16; // For AES, this is always 16
 
-let crypto;
-
 class Crypto {
   constructor() {}
   encrypt(json: object, secret: string): string {
@@ -38,5 +36,5 @@ class Crypto {
   }
 }
 
-crypto = new Crypto();
+const crypto = new Crypto();
 export default crypto;

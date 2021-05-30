@@ -1,6 +1,6 @@
 import debug from 'debug';
 import hash from "object-hash";
-import redisConfig from './config';
+import redisConfig from './redis';
 import crypto from "./crypto";
 import Queue from 'bull';
 import { getSessionStore, getPlatformId, Store } from "./common";
