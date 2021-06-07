@@ -1180,10 +1180,10 @@ karma-chrome-launcher@3.1.0:
   dependencies:
     which "^1.2.1"
 
-karma-firefox-launcher@2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/karma-firefox-launcher/-/karma-firefox-launcher-2.1.0.tgz#d0d328c93dfcf9b46f1ac83b4bb32f43aadb2050"
-  integrity sha512-dkiyqN2R6fCWt78rciOXJLFDWcQ7QEQi++HgebPJlw1y0ycDjGNDHuSrhdh48QG02fzZKK20WHFWVyBZ6CPngg==
+karma-firefox-launcher@2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/karma-firefox-launcher/-/karma-firefox-launcher-2.1.1.tgz#6457226f8e4f091b664cef79bb5d39bf1e008765"
+  integrity sha512-VzDMgPseXak9DtfyE1O5bB2BwsMy1zzO1kUxVW1rP0yhC4tDNJ0p3JoFdzvrK4QqVzdqUMa9Rx9YzkdFp8hz3Q==
   dependencies:
     is-wsl "^2.2.0"
     which "^2.0.1"
@@ -1195,10 +1195,10 @@ karma-mocha@2.0.1:
   dependencies:
     minimist "^1.2.3"
 
-karma@6.3.2:
-  version "6.3.2"
-  resolved "https://registry.yarnpkg.com/karma/-/karma-6.3.2.tgz#24b62fbae3e8b5218cc32a0dac49ad08a541e76d"
-  integrity sha512-fo4Wt0S99/8vylZMxNj4cBFyOBBnC1bewZ0QOlePij/2SZVWxqbyLeIddY13q6URa2EpLRW8ixvFRUMjkmo1bw==
+karma@6.3.3:
+  version "6.3.3"
+  resolved "https://registry.yarnpkg.com/karma/-/karma-6.3.3.tgz#bd04c7c533f8de99b3c3e85e191d0a6ae2621ad1"
+  integrity sha512-JRAujkKWaOtO2LmyPH7K2XXRhrxuFAn9loIL9+iiah6vjz+ZLkqdKsySV9clRITGhj10t9baIfbCl6CJ5hu9gQ==
   dependencies:
     body-parser "^1.19.0"
     braces "^3.0.2"
