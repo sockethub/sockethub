@@ -8,7 +8,6 @@
   "lockFileMaintenance": { "enabled": true },
   "prCreation": "not-pending",
   "rebaseWhen": "behind-base-branch",
-  "rebaseStale": true,
   "schedule": "every weekday",
   "stabilityDays": 3,
   "updateNotScheduled": true
