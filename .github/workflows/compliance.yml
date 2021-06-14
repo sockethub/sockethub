@@ -32,5 +32,7 @@ jobs:
       - run: yarn run build
       - run: yarn run lint
       - run: yarn test
-      - name: Code Climate Coverage Action
+      - name: Code Climate Coverage
         uses: paambaati/codeclimate-action@v2.7.5
+        env:
+          CC_TEST_REPORTER_ID: 24c64e68bbc0781513767008c1642fba33a168599950c490ed2c12a47e7d4cf2
