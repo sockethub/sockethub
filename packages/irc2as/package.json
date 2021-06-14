@@ -7,6 +7,7 @@
     "test": "test"
   },
   "dependencies": {
+    "c8": "7.7.2",
     "debug": "^4.3.1",
     "fast-deep-equal": "^3.1.1"
   },
@@ -14,7 +15,7 @@
     "jaribu": "2.2.3"
   },
   "scripts": {
-    "test": "jaribu"
+    "test": "c8 jaribu"
   },
   "repository": {
     "type": "git",
