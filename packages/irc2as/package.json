@@ -14,8 +14,7 @@
     "jaribu": "2.2.3"
   },
   "scripts": {
-    "test": "jaribu",
-    "travis": "yarn run test"
+    "test": "jaribu"
   },
   "repository": {
     "type": "git",

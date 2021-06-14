@@ -36,7 +36,6 @@
     "test": "c8 jaribu",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md",
     "lint": "eslint --ignore-pattern \"coverage\" \"**/*.js\"",
-    "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\"",
-    "travis": "yarn run test"
+    "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\""
   }
 }
