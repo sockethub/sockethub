@@ -1,7 +1,7 @@
 {
   "name": "activity-streams",
   "version": "4.3.7",
-  "description": "A simple tool to facilitate handling and referencing activity streams without unecessary verbosity.",
+  "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
   "main": "./lib/activity-streams.js",
   "dependencies": {
     "event-emitter": "^0.3.5"
@@ -23,12 +23,12 @@
     "url": "https://github.com/silverbucket/activity-streams.js.git"
   },
   "scripts": {
-    "test": "c8 -r text mocha ./lib/**/*.test.js",
-    "test_lcov": "c8 -r lcov mocha ./lib/**/*.test.js",
-    "browser_test": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
+    "test:node": "c8 -r text mocha ./lib/**/*.test.js",
+    "test:node:lcov": "c8 -r lcov mocha ./lib/**/*.test.js",
+    "test:browser": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
     "build": "webpack --mode production",
-    "release": "yarn run travis",
-    "travis": "yarn run test_lcov && yarn run build && yarn run browser_test"
+    "release": "yarn run build && yarn run test",
+    "test": "yarn run test:node:lcov && yarn run test:browser"
   },
   "keywords": [
     "activity",

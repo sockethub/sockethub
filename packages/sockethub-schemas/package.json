@@ -21,8 +21,7 @@
   },
   "scripts": {
     "test": "jest",
-    "build": "./bin/build.js",
-    "travis": "yarn run test"
+    "build": "./bin/build.js"
   },
   "dependencies": {
     "debug": "^4.3.1",

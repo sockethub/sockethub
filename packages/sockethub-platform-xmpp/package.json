@@ -32,7 +32,6 @@
   },
   "scripts": {
     "test": "jest --coverage",
-    "doc": "jsdoc2md --no-gfm --heading-depth 1 src/index.js > API.md",
-    "travis": "yarn run test"
+    "doc": "jsdoc2md --no-gfm --heading-depth 1 src/index.js > API.md"
   }
 }

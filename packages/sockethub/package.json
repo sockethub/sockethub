@@ -70,15 +70,12 @@
     "urijs": "^1.19.2"
   },
   "scripts": {
-    "test": "yarn run build && c8 jaribu && jest ---runInBand --detectOpenHandles --forceExit --coverage",
-    "start": "yarn run build && DEBUG=sockethub* ./bin/sockethub",
+    "test": "c8 jaribu && jest ---runInBand --detectOpenHandles --forceExit --coverage",
+    "start": "DEBUG=sockethub* ./bin/sockethub",
     "dev": "yarn run build && DEBUG=sockethub* ./bin/sockethub --examples",
-    "coverage": "jest --coverage",
     "lint": "eslint \"**/*.ts\" ./bin/sockethub",
     "lint:fix": "eslint --fix \"**/*.ts\" ./bin/sockethub",
-    "tsc": "tsc -p tsconfig.json",
-    "build": "tsc -p tsconfig.json && cp ./src/defaults.json ./dist/defaults.json",
-    "travis": "yarn run test"
+    "build": "tsc -p tsconfig.json && cp ./src/defaults.json ./dist/defaults.json"
   },
   "engines": {
     "node": ">= 12.0.0"
