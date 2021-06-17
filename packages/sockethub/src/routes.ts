@@ -1,7 +1,9 @@
 import path from 'path';
 import config from "./config";
+import debug from 'debug';
 
 const debug_scope = process.env.DEBUG || '',
+      logger      = debug('sockethub:routes'),
       address     = config.get('public:protocol') + '://' +
                     config.get('public:host') + ':' +
                     config.get('public:port') +
@@ -42,6 +44,7 @@ function prepFileRoutes(pathMap) {
         path: key
       },
       route: (req, res) => {
+        logger(`serving resource ${req.url}`);
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.sendFile(pathMap[req.url]);
       }
@@ -60,6 +63,7 @@ Object.keys(examplePages).forEach((key) => {
       path: key
     },
     route: (req, res) => {
+      logger(`serving page ${req.url}`);
       res.render(examplePages[req.url], {
         debug_scope: debug_scope,
         address: address,

@@ -34,7 +34,6 @@
   },
   "scripts": {
     "test": "jaribu",
-    "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md",
-    "travis": "yarn run test"
+    "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md"
   }
 }

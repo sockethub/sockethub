@@ -70,16 +70,13 @@
     "urijs": "^1.19.2"
   },
   "scripts": {
-    "test": "yarn run build && nyc jaribu && jest ---runInBand --detectOpenHandles --forceExit --coverage",
+    "test": "nyc jaribu && jest ---runInBand --detectOpenHandles --forceExit --coverage",
     "mocha": "mocha -r ts-node/register src/**/*.test.ts",
-    "start": "yarn run build && DEBUG=sockethub* ./bin/sockethub",
+    "start": "DEBUG=sockethub* ./bin/sockethub",
     "dev": "yarn run build && DEBUG=sockethub* ./bin/sockethub --examples",
-    "coverage": "jest --coverage",
     "lint": "eslint \"**/*.ts\" ./bin/sockethub",
     "lint:fix": "eslint --fix \"**/*.ts\" ./bin/sockethub",
-    "tsc": "tsc -p tsconfig.json",
-    "build": "tsc -p tsconfig.json && cp ./src/defaults.json ./dist/defaults.json",
-    "travis": "yarn run test"
+    "build": "tsc -p tsconfig.json && cp ./src/defaults.json ./dist/defaults.json"
   },
   "engines": {
     "node": ">= 12.0.0"
@@ -88,10 +85,10 @@
     "@types/chai": "^4.2.18",
     "@types/jest": "26.0.23",
     "@types/mocha": "^8.2.2",
-    "@typescript-eslint/parser": "4.25.0",
+    "@typescript-eslint/parser": "4.26.0",
     "c8": "7.7.2",
     "chai": "^4.3.4",
-    "eslint": "7.27.0",
+    "eslint": "7.28.0",
     "eslint-cli": "1.1.1",
     "jaribu": "2.2.3",
     "jest": "26.6.3",
@@ -101,6 +98,6 @@
     "sinon": "^11.1.1",
     "ts-jest": "26.5.6",
     "ts-node": "10.0.0",
-    "typescript": "4.2.4"
+    "typescript": "4.3.2"
   }
 }
