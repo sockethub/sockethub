@@ -6,7 +6,7 @@
     "eslint": "7.28.0",
     "find-up": "5.0.0",
     "lerna": "4.0.0",
-    "typescript": "4.3.2",
+    "typescript": "4.3.4",
     "yarn": "1.22.10"
   },
   "scripts": {
