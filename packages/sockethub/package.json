@@ -87,8 +87,8 @@
     "eslint": "7.30.0",
     "eslint-cli": "1.1.1",
     "jaribu": "2.2.3",
-    "jest": "26.6.3",
-    "ts-jest": "26.5.6",
+    "jest": "27.0.6",
+    "ts-jest": "27.0.3",
     "ts-node": "10.0.0",
     "typescript": "4.3.5"
   }
