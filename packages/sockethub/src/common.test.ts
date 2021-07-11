@@ -1,14 +1,12 @@
-import { getPlatformId, getSessionStore } from './common';
-import crypto from './crypto';
-import Store from 'secure-store-redis';
-
+const proxyquire = require('proxyquire');
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 
-const proxyquire = require('proxyquire');
+import { getPlatformId, getSessionStore } from './common';
+import crypto from './crypto';
+
 proxyquire.noPreserveCache();
 proxyquire.noCallThru();
-
 
 describe("getPlatformId", () => {
   let cryptoHashStub;
@@ -36,27 +34,15 @@ describe("getPlatformId", () => {
 });
 
 describe('getSessionStore', () => {
-  let secureStoreRedisStub;
-
-  beforeEach(() => {
-    secureStoreRedisStub = sinon.stub(Store, 'default').returns('lol');
-    proxyquire('./common', { 'secure-store-redis': secureStoreRedisStub });
-  });
-
-  afterEach(() => {
-    secureStoreRedisStub.restore();
-  });
-
   it('returns a valid Store object', () => {
+    const secureStoreRedisSpy = sinon.spy();
     const store = getSessionStore('a parent id', 'a parent secret',
-      'a session id', 'a session secret');
-    // console.log(store);
-    console.log(secureStoreRedisStub);
-    sinon.assert.calledOnce(secureStoreRedisStub);
-    sinon.assert.calledWith(secureStoreRedisStub, {
+      'a session id', 'a session secret', secureStoreRedisSpy);
+    sinon.assert.calledOnce(secureStoreRedisSpy);
+    sinon.assert.calledWith(secureStoreRedisSpy, {
       namespace: 'sockethub:a parent id:session:a session id:store',
-      secret: 'a parent secret session secret',
-      redis: undefined
+      secret: 'a parent secreta session secret',
+      redis: { host: '127.0.0.1', port: 6379 }
     });
   });
 });
