@@ -1,3 +1,5 @@
+import { expect } from 'chai';
+import * as sinon from 'sinon';
 import { existsSync } from "fs";
 
 import routes, { basePaths, examplePaths, examplePages } from "./routes";
@@ -6,7 +8,7 @@ describe('routes/base', () => {
   it('can find each of the base files it serves', () => {
     Object.values(basePaths).forEach((fwd: string) => {
       try {
-        expect(existsSync(fwd)).toBeTruthy();
+        expect(existsSync(fwd)).to.be.true;
       } catch (e) {
         throw new Error(`Unable to resolve path ${fwd}`);
       }
@@ -16,7 +18,7 @@ describe('routes/base', () => {
   it('can find each of the example files it serves', () => {
     Object.values(examplePaths).forEach((fwd: string) => {
       try {
-        expect(existsSync(fwd)).toBeTruthy();
+        expect(existsSync(fwd)).to.be.true;
       } catch (e) {
         throw new Error(`Unable to resolve path ${fwd}`);
       }
@@ -26,7 +28,7 @@ describe('routes/base', () => {
   it('can find each of the example page files it serves', () => {
     Object.values(examplePages).forEach((fwd: string) => {
       try {
-        expect(existsSync(fwd)).toBeTruthy();
+        expect(existsSync(fwd)).to.be.true;
       } catch (e) {
         throw new Error(`Unable to resolve path ${fwd}`);
       }
@@ -34,19 +36,23 @@ describe('routes/base', () => {
   });
 
   it('adds base routes', () => {
-    let app = {
-      get: jest.fn()
+    const app = {
+      get: sinon.spy()
     };
     routes.setup(app);
-    expect(app['get']).toBeCalledTimes(Object.keys(basePaths).length);
+    sinon.assert.callCount(
+      app.get,
+      Object.keys(basePaths).length
+    );
   });
 
   it('adds base and example routes', () => {
-    let app = {
-      get: jest.fn()
+    const app = {
+      get: sinon.spy()
     };
     routes.setup(app, true);
-    expect(app['get']).toBeCalledTimes(
+    sinon.assert.callCount(
+      app.get,
       Object.keys(basePaths).length + Object.keys(examplePaths).length + Object.keys(examplePages).length
     );
   });
@@ -63,13 +69,13 @@ describe('routes/base', () => {
     function verifyPathRoutes(pathMap) {
       Object.keys(pathMap).forEach((path) => {
         const res = {
-          setHeader: jest.fn(),
-          sendFile: jest.fn()
+          setHeader: sinon.spy(),
+          sendFile: sinon.spy()
         };
-        expect(pathMap[path].endsWith('.ejs')).toBeFalsy();
+        expect(pathMap[path].endsWith('.ejs')).to.be.false;
         routeHandlers[path]({url: path}, res);
-        expect(res.setHeader).toHaveBeenCalled();
-        expect(res.sendFile).toHaveBeenCalledWith(pathMap[path]);
+        sinon.assert.called(res.setHeader);
+        sinon.assert.calledWith(res.sendFile, pathMap[path]);
       });
     }
     verifyPathRoutes(basePaths);
@@ -77,11 +83,11 @@ describe('routes/base', () => {
 
     Object.keys(examplePages).forEach((path) => {
       const res = {
-        render: jest.fn()
+        render: sinon.spy()
       };
-      expect(examplePages[path].endsWith('.ejs')).toBeTruthy();
+      expect(examplePages[path].endsWith('.ejs')).to.be.true;
       routeHandlers[path]({url: path}, res);
-      expect(res.render).toHaveBeenCalled();
+      sinon.assert.called(res.render);
     });
   });
 });

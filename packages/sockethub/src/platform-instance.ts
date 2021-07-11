@@ -3,7 +3,7 @@ import { join } from 'path';
 import { debug, Debugger } from 'debug';
 import Queue from 'bull';
 
-import redisConfig from "./config";
+import redisConfig from "./redis";
 import crypto from "./crypto";
 import { ActivityObject, Job } from "./sockethub";
 import { getSocket } from "./serve";

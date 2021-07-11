@@ -19,7 +19,7 @@ const log = debug('sockethub:core'),
 
 export interface JobData {
   title?: string;
-  msg: ActivityObject;
+  msg: ActivityObject | string;
   sessionId: string;
 }
 
