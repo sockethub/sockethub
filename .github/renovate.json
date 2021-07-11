@@ -10,5 +10,9 @@
   "rebaseWhen": "behind-base-branch",
   "schedule": "every weekday",
   "stabilityDays": 3,
-  "updateNotScheduled": true
+  "updateNotScheduled": true,
+  "packageRules": [{
+    "extends": ["monorepo:jest"],
+    "allowedVersions": "<27"
+  }]
 }
