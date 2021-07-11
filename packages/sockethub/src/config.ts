@@ -3,7 +3,7 @@ import { debug } from 'debug';
 
 const log = debug('sockethub:bootstrap:config');
 
-class Config {
+export class Config {
   constructor() {
     log('initializing config');
     // assign config loading priorities (command-line, environment, cfg, defaults)
