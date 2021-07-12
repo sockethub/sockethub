@@ -78,7 +78,7 @@ array-back@^5.0.0:
   resolved "https://registry.yarnpkg.com/array-back/-/array-back-5.0.0.tgz#e196609edcec48376236d163958df76e659a0d36"
   integrity sha512-kgVWwJReZWmVuWOQKEOohXKJX+nD02JAZ54D1RRWlv8L0NebauKAaFxACKzB74RTclt1+WNz5KHaLRDAPZbDEw==
 
-array-back@^6.1.1:
+array-back@^6.1.1, array-back@^6.1.2:
   version "6.1.2"
   resolved "https://registry.yarnpkg.com/array-back/-/array-back-6.1.2.tgz#e57a39091b3e8bf5dd1ad335155f81fd9e792106"
   integrity sha512-V/+UG3q3273RgjbayqQrWbdCEFJqGXa5gnvaBnDtmrFlMXQoTypYpu1DVSSrHytX1U72LzL8CkoQS9N86LV9Cw==
@@ -210,11 +210,11 @@ combined-stream@^1.0.6, combined-stream@~1.0.6:
     delayed-stream "~1.0.0"
 
 command-line-args@^5.0.0:
-  version "5.1.1"
-  resolved "https://registry.yarnpkg.com/command-line-args/-/command-line-args-5.1.1.tgz#88e793e5bb3ceb30754a86863f0401ac92fd369a"
-  integrity sha512-hL/eG8lrll1Qy1ezvkant+trihbGnaKaeEjj6Scyr3DN+RC7iQ5Rz84IeLERfAWDGo0HBSNAakczwgCilDXnWg==
+  version "5.1.2"
+  resolved "https://registry.yarnpkg.com/command-line-args/-/command-line-args-5.1.2.tgz#25908e573d2214bc23a8437e3df853b02dffa425"
+  integrity sha512-fytTsbndLbl+pPWtS0CxLV3BEWw9wJayB8NnU2cbQqVPsNdYezQeT+uIQv009m+GShnMNyuoBrRo8DTmuTfSCA==
   dependencies:
-    array-back "^3.0.1"
+    array-back "^6.1.2"
     find-replace "^3.0.0"
     lodash.camelcase "^4.3.0"
     typical "^4.0.0"
