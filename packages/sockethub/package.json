@@ -82,7 +82,7 @@
   },
   "devDependencies": {
     "@types/jest": "26.0.23",
-    "@typescript-eslint/parser": "4.28.2",
+    "@typescript-eslint/parser": "4.28.4",
     "c8": "7.7.3",
     "eslint": "7.30.0",
     "eslint-cli": "1.1.1",
