@@ -84,7 +84,7 @@
     "@types/jest": "26.0.23",
     "@typescript-eslint/parser": "4.28.4",
     "c8": "7.7.3",
-    "eslint": "7.30.0",
+    "eslint": "7.31.0",
     "eslint-cli": "1.1.1",
     "jaribu": "2.2.3",
     "jest": "26.6.3",
