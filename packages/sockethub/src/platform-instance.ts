@@ -4,9 +4,9 @@ import { debug, Debugger } from 'debug';
 import Queue from 'bull';
 
 import redisConfig from "./redis";
-import crypto from "./crypto";
-import {ActivityObject, JobDataDecrypted, JobEncrypted} from "./sockethub";
+import { ActivityObject, JobDataDecrypted, JobEncrypted } from "./sockethub";
 import { getSocket } from "./serve";
+import {decryptJobData} from "./common";
 
 // collection of platform instances, stored by `id`
 export const platformInstances = new Map();
@@ -90,11 +90,7 @@ export default class PlatformInstance {
     this.queue = new Queue(this.parentId + this.id, redisConfig);
     this.queue.on('global:completed', (jobId, result) => {
       this.queue.getJob(jobId).then(async (job: JobEncrypted) => {
-        await this.handleJobResult('completed', {
-          title: job.data.title,
-          msg: crypto.decrypt(job.data.msg, secret),
-          sessionId: job.data.sessionId
-        }, result);
+        await this.handleJobResult('completed', decryptJobData(job, secret), result);
         job.remove();
       });
     });
@@ -103,11 +99,7 @@ export default class PlatformInstance {
     });
     this.queue.on('global:failed', (jobId, result) => {
       this.queue.getJob(jobId).then(async (job: JobEncrypted) => {
-        await this.handleJobResult('failed', {
-          title: job.data.title,
-          msg: crypto.decrypt(job.data.msg, secret),
-          sessionId: job.data.sessionId
-        }, result);
+        await this.handleJobResult('failed', decryptJobData(job, secret), result);
         job.remove();
       });
     });
