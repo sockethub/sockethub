@@ -5,7 +5,7 @@ import Queue from 'bull';
 
 import redisConfig from "./redis";
 import crypto from "./crypto";
-import { ActivityObject, Job } from "./sockethub";
+import {ActivityObject, JobDataDecrypted, JobEncrypted} from "./sockethub";
 import { getSocket } from "./serve";
 
 // collection of platform instances, stored by `id`
@@ -89,18 +89,26 @@ export default class PlatformInstance {
   public initQueue(secret: string) {
     this.queue = new Queue(this.parentId + this.id, redisConfig);
     this.queue.on('global:completed', (jobId, result) => {
-      this.queue.getJob(jobId).then((job) => {
-        job.data.msg = crypto.decrypt(job.data.msg, secret);
-        this.handleJobResult('completed', job, result);
+      this.queue.getJob(jobId).then(async (job: JobEncrypted) => {
+        await this.handleJobResult('completed', {
+          title: job.data.title,
+          msg: crypto.decrypt(job.data.msg, secret),
+          sessionId: job.data.sessionId
+        }, result);
+        job.remove();
       });
     });
     this.queue.on('global:error', (jobId, result) => {
       this.debug("unknown queue error", jobId, result);
     });
     this.queue.on('global:failed', (jobId, result) => {
-      this.queue.getJob(jobId).then((job) => {
-        job.data.msg = crypto.decrypt(job.data.msg, secret);
-        this.handleJobResult('failed', job, result);
+      this.queue.getJob(jobId).then(async (job: JobEncrypted) => {
+        await this.handleJobResult('failed', {
+          title: job.data.title,
+          msg: crypto.decrypt(job.data.msg, secret),
+          sessionId: job.data.sessionId
+        }, result);
+        job.remove();
       });
     });
   }
@@ -143,35 +151,32 @@ export default class PlatformInstance {
     for (let sid of this.sessions.values()) {
       if (sid !== sessionId) {
         this.debug(`broadcasting message to ${sid}`);
-        this.sendToClient(sid, 'message', msg);
+        await this.sendToClient(sid, 'message', msg);
       }
     }
   }
 
   // handle job results coming in on the queue from platform instances
-  private handleJobResult(type: string, job: Job, result) {
-    this.debug(`job ${job.data.title}: ${type}`);
-
+  private async handleJobResult(type: string, jobData: JobDataDecrypted, result) {
+    this.debug(`job ${jobData.title}: ${type}`);
     if ((type === 'completed') && (result)) {
-      job.data.msg.object = {
+      jobData.msg.object = {
         '@type': 'result',
         content: result
       };
     } else if (type === 'failed') {
-      job.data.msg.object = {
+      jobData.msg.object = {
         '@type': 'error',
         content: result ? result : "job failed for unknown reason"
       };
     }
 
     // send message to client as completed for failed job
-    this.sendToClient(job.data.sessionId, type, job.data.msg);
+    await this.sendToClient(jobData.sessionId, type, jobData.msg);
 
     // let all related peers know of result as an independent message
     // (not as part of a job completion, or failure)
-    this.broadcastToSharedPeers(job.data.sessionId, job.data.msg);
-
-    job.remove();
+    await this.broadcastToSharedPeers(jobData.sessionId, jobData.msg);
   }
 
   /**
