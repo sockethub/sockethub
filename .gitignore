@@ -7,3 +7,4 @@ connect-config.js
 coverage
 .idea
 **/dist/
+.nyc_output
