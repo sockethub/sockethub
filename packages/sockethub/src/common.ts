@@ -2,6 +2,7 @@ import SecureStore from 'secure-store-redis';
 
 import config from "./config";
 import crypto from "./crypto";
+import {JobDataDecrypted, JobEncrypted} from "./sockethub";
 
 export interface ISecureStoreInstance {
   save(id: string, obj: any, cb: Function);
@@ -20,4 +21,12 @@ export function getSessionStore(parentId: string, parentSecret: string,
 
 export function getPlatformId(platform: string, actor?: string): string {
   return actor ? crypto.hash(platform + actor) : crypto.hash(platform);
+}
+
+export function decryptJobData(job: JobEncrypted, secret: string): JobDataDecrypted {
+  return {
+    title: job.data.title,
+    msg: crypto.decrypt(job.data.msg, secret),
+    sessionId: job.data.sessionId
+  };
 }

@@ -1,4 +1,4 @@
-const proxyquire = require('proxyquire');
+import proxyquire from 'proxyquire'
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 
