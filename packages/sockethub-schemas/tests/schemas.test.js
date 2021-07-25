@@ -1,8 +1,6 @@
 const chai = require('chai');
 const expect = chai.expect;
-
 const tv4 = require('tv4');
-// const {beforeAll} = require("@jest/globals");
 const schemaSHAS = require('./../schemas/activity-stream');
 const BASE_SCHEMA_ID = 'http://sockethub.org/schemas/v0/';
 
@@ -96,22 +94,6 @@ const testActivityStreams = [
   ]
 ];
 
-// expect.extend({
-//   toBeValidSchema(received, expected, msg) {
-//     if (received === expected) {
-//       return {
-//         message: () => `validation successful`,
-//         pass: true
-//       };
-//     } else {
-//       return {
-//         message: () => `validation failed: ${msg}`,
-//         pass: false
-//       };
-//     }
-//   }
-// });
-
 describe('ActivityStream validation', () => {
   const schemaId = BASE_SCHEMA_ID + 'activity-stream#';
 
@@ -129,10 +111,4 @@ describe('ActivityStream validation', () => {
       expect(msg).to.equal(expectedFailureMessage);
     })
   })
-  // it.each()("input object '%s'", (name, AS, expectedResult, expectedFailureMessage) => {
-  //   const result = tv4.validate(AS, schemaId);
-  //   const msg = (tv4.error) ? `${tv4.error.dataPath}:${tv4.error.message}` : '';
-  //   expect(result).toBeValidSchema(expectedResult, msg);
-  //   expect(msg).toBe(expectedFailureMessage);
-  // })
 });
