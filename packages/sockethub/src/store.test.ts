@@ -5,11 +5,12 @@ import * as sinon from 'sinon'
 proxyquire.noPreserveCache();
 proxyquire.noCallThru()
 
-// class MockRedis {}
 const MockRedis = sinon.fake();
+const MockSecureStore = sinon.fake();
 
 const StoreMod = proxyquire('./store', {
-  'ioredis': MockRedis
+  'ioredis': MockRedis,
+  'secure-store-redis': MockSecureStore
 });
 
 const getSessionStore = StoreMod.getSessionStore;
@@ -17,11 +18,10 @@ const redisConfig = StoreMod.redisConfig;
 
 describe('getSessionStore', () => {
   it('returns a valid Store object', () => {
-    const secureStoreRedisSpy = sinon.spy();
     const store = getSessionStore('a parent id', 'a parent secret',
-      'a session id', 'a session secret', secureStoreRedisSpy);
-    sinon.assert.calledOnce(secureStoreRedisSpy);
-    sinon.assert.calledWith(secureStoreRedisSpy, {
+      'a session id', 'a session secret');
+    sinon.assert.calledOnce(MockSecureStore);
+    sinon.assert.calledWith(MockSecureStore, {
       namespace: 'sockethub:a parent id:session:a session id:store',
       secret: 'a parent secreta session secret',
       redis: { host: '127.0.0.1', port: 6379 }
@@ -44,14 +44,14 @@ describe('config', () => {
   //     {"host": "127.0.0.1", "port": 6379, "url": "a redis url"});
   // });
 
-//   it('defaults to redis config', () => {
-//     process.env = { REDIS_URL: '' };
-//     const nconf = require('nconf');
-//     const config = require('./config');
-//     expect(config.default).toHaveProperty('get');
-//     expect(config.default.get('redis')).toStrictEqual(
-//       {"host": "127.0.0.1", "port": 6379});
-//   });
+  // it('defaults to redis config', () => {
+  //   process.env = { REDIS_URL: '' };
+  //   const nconf = require('nconf');
+  //   const config = require('./config');
+  //   expect(config.default).toHaveProperty('get');
+  //   expect(config.default.get('redis')).toStrictEqual(
+  //     {"host": "127.0.0.1", "port": 6379});
+  // });
 
   it('has a redisConfig object', () => {
     expect(redisConfig.createClient).to.be.ok;

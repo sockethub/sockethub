@@ -30,9 +30,8 @@ export const redisConfig = {
 };
 
 export function getSessionStore(parentId: string, parentSecret: string,
-                                sessionId: string, sessionSecret: string,
-                                StoreObject: SecureStore = SecureStore): ISecureStoreInstance {
-  return new StoreObject({
+                                sessionId: string, sessionSecret: string): ISecureStoreInstance {
+  return new SecureStore({
     namespace: 'sockethub:' + parentId + ':session:' + sessionId + ':store',
     secret: parentSecret + sessionSecret,
     redis: config.get('redis')
