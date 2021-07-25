@@ -5,6 +5,11 @@ import { existsSync } from "fs";
 import routes, { basePaths, examplePaths, examplePages } from "./routes";
 
 describe('routes/base', () => {
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
   it('can find each of the base files it serves', () => {
     Object.values(basePaths).forEach((fwd: string) => {
       try {
@@ -39,7 +44,7 @@ describe('routes/base', () => {
     const app = {
       get: sinon.spy()
     };
-    routes.setup(app);
+    routes.setup(app, false);
     sinon.assert.callCount(
       app.get,
       Object.keys(basePaths).length
