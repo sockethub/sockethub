@@ -10,8 +10,8 @@ import janitor from './janitor';
 import serve from './serve';
 import validate from './validate';
 import ProcessManager from "./process-manager";
-import { getSessionStore, ISecureStoreInstance } from "./common";
 import { platformInstances } from "./platform-instance";
+import {getSessionStore, ISecureStoreInstance} from "./store";
 
 const log = debug('sockethub:core'),
       activity = ActivityStreams(config.get('activity-streams:opts'));

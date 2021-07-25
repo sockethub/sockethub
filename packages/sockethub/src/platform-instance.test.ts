@@ -7,7 +7,6 @@ proxyquire.noCallThru();
 
 const FORK_PATH = __dirname + '/platform.js';
 
-
 describe("PlatformInstance", () => {
   let pi, sandbox, forkFake, socketMock, getSocketFake, PlatformInstance, platformInstances;
 
@@ -23,10 +22,9 @@ describe("PlatformInstance", () => {
       'bull': sandbox.stub().returns({
         on: sandbox.stub()
       }),
-      './redis': {
-        default: {
-          createClient: () => {
-          }
+      './store': {
+        redisConfig: {
+          createClient: () => {}
         }
       },
       'child_process': {

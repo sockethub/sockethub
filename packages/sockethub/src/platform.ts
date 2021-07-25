@@ -1,10 +1,11 @@
 import debug from 'debug';
 import hash from "object-hash";
-import redisConfig from './redis';
+import { redisConfig } from './store';
 import Queue from 'bull';
-import { getSessionStore, getPlatformId, decryptJobData } from "./common";
+import { getPlatformId, decryptJobData } from "./common";
 import { ActivityObject, JobDataDecrypted, JobEncrypted } from "./sockethub";
 import { MessageFromParent } from './platform-instance';
+import {getSessionStore} from "./store";
 
 // command-line params
 const parentId = process.argv[2];

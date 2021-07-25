@@ -3,7 +3,7 @@ import { join } from 'path';
 import { debug, Debugger } from 'debug';
 import Queue from 'bull';
 
-import redisConfig from "./redis";
+import { redisConfig } from "./store";
 import { ActivityObject, JobDataDecrypted, JobEncrypted } from "./sockethub";
 import { getSocket } from "./serve";
 import {decryptJobData} from "./common";
