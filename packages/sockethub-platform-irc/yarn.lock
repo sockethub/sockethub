@@ -983,14 +983,6 @@ ipaddr.js@1.9.1:
     bluebird "^3.7.2"
     r-result "^1.4.0"
 
-irc2as@^3.0.5:
-  version "3.0.5"
-  resolved "https://registry.yarnpkg.com/irc2as/-/irc2as-3.0.5.tgz#659e11d2557a0bb01aaac2dad2251e5d55e9c8f6"
-  integrity sha512-7yfxDyXEZp6oBYRUnYdAaFWQVrtoEB5nPz/MlVeAFn32Fo5UlUdMdmLcY5rLG1y4lAO917io04lh+zvzJ2dwUg==
-  dependencies:
-    debug "^4.3.1"
-    fast-deep-equal "^3.1.1"
-
 is-extglob@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/is-extglob/-/is-extglob-2.1.1.tgz#a88c02535791f02ed37c76a1b9ea9773c833f8c2"
