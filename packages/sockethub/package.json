@@ -87,7 +87,7 @@
     "@typescript-eslint/parser": "4.28.4",
     "c8": "7.7.3",
     "chai": "^4.3.4",
-    "eslint": "7.30.0",
+    "eslint": "7.31.0",
     "eslint-cli": "1.1.1",
     "jaribu": "2.2.3",
     "mocha": "^8.4.0",
