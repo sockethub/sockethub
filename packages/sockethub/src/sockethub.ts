@@ -10,21 +10,32 @@ import janitor from './janitor';
 import serve from './serve';
 import validate from './validate';
 import ProcessManager from "./process-manager";
-import { getSessionStore, Store } from "./common";
 import { platformInstances } from "./platform-instance";
+import {getSessionStore, ISecureStoreInstance} from "./store";
 
 const log = debug('sockethub:core'),
       activity = ActivityStreams(config.get('activity-streams:opts'));
 
 
-export interface JobData {
+export interface JobDataDecrypted {
   title?: string;
   msg: ActivityObject;
   sessionId: string;
 }
 
-export interface Job {
-  data: JobData,
+export interface JobDataEncrypted {
+  title?: string;
+  msg: string;
+  sessionId: string;
+}
+
+export interface JobDecrypted {
+  data: JobDataDecrypted,
+  remove?: Function;
+}
+
+export interface JobEncrypted {
+  data: JobDataEncrypted,
   remove?: Function;
 }
 
@@ -111,7 +122,7 @@ class Sockethub {
       const platformInstance = this.processManager.get(msg.context, msg.actor['@id'], socket.id);
       const title = `${msg.context}-${(msg['@id']) ? msg['@id'] : this.counter++}`;
       sessionLog(`queued to channel ${platformInstance.id}`);
-      const job: JobData = {
+      const job: JobDataEncrypted = {
         title: title,
         sessionId: socket.id,
         msg: crypto.encrypt(msg, this.parentSecret1 + this.parentSecret2)
@@ -120,7 +131,7 @@ class Sockethub {
     };
   };
 
-  private handleStoreCredentials(store: Store, sessionLog: Function) {
+  private handleStoreCredentials(store: ISecureStoreInstance, sessionLog: Function) {
     return (creds: ActivityObject) => {
       store.save(creds.actor['@id'], creds, (err) => {
         if (err) {

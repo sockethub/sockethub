@@ -1,50 +1,28 @@
-import { redisConfig } from "./config";
+import { expect } from 'chai';
 
-import Redis from 'ioredis';
-
-jest.mock('ioredis');
-
+import { Config } from './config';
 
 describe('config', () => {
-  beforeEach(() => {
-    jest.resetModules();
+
+  it('loads default values', () => {
+    const config = new Config();
+    expect(config).to.have.property('get');
+    expect(config.get('service:host')).to.eql('localhost');
   });
 
-  it('prioritizes redis url', () => {
-    process.env = { REDIS_URL: 'a redis url' };
-    const nconf = require('nconf');
-    const config = require('./config');
-    expect(config.default).toHaveProperty('get');
-    expect(config.default.get('redis')).toStrictEqual(
-      {"host": "127.0.0.1", "port": 6379, "url": "a redis url"});
+  it('overrides from env', () => {
+    const hostname = 'a host string';
+    process.env = { HOST: hostname };
+    const config = new Config();
+    expect(config).to.have.property('get');
+    expect(config.get('service:host')).to.eql(hostname);
   });
 
   it('defaults to redis config', () => {
     process.env = { REDIS_URL: '' };
-    const nconf = require('nconf');
-    const config = require('./config');
-    expect(config.default).toHaveProperty('get');
-    expect(config.default.get('redis')).toStrictEqual(
+    const config = new Config();
+    expect(config).to.have.property('get');
+    expect(config.get('redis')).to.eql(
       {"host": "127.0.0.1", "port": 6379});
-  });
-
-  it('has a redisConfig object', () => {
-    expect(redisConfig).toHaveProperty('createClient');
-    expect(Redis).toHaveBeenCalledTimes(2);
-  })
-
-  it('returns existing client', () => {
-    const client1 = redisConfig.createClient('client');
-    expect(Redis).toHaveBeenCalledTimes(2);
-  });
-
-  it('returns existing subscriber', () => {
-    const client1 = redisConfig.createClient('subscriber');
-    expect(Redis).toHaveBeenCalledTimes(2);
-  });
-
-  it('returns new client otherwise', () => {
-    const client1 = redisConfig.createClient('foo');
-    expect(Redis).toHaveBeenCalledTimes(3);
   });
 });
