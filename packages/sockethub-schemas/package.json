@@ -17,10 +17,10 @@
     "url": "git://github.com/sockethub/sockethub-schemas.git"
   },
   "devDependencies": {
-    "chai": "^4.3.4",
-    "mocha": "^9.0.3",
-    "nyc": "^15.1.0",
-    "proxyrequire": "^1.0.21",
+    "chai": "4.3.4",
+    "mocha": "9.0.3",
+    "nyc": "15.1.0",
+    "proxyrequire": "1.0.21",
     "tv4": "1.3.0"
   },
   "scripts": {
