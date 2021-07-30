@@ -2,7 +2,7 @@
   "name": "root",
   "private": true,
   "devDependencies": {
-    "@typescript-eslint/parser": "4.28.4",
+    "@typescript-eslint/parser": "4.28.5",
     "eslint": "7.31.0",
     "find-up": "5.0.0",
     "lerna": "4.0.0",
