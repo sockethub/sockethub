@@ -70,7 +70,8 @@
     "urijs": "^1.19.2"
   },
   "scripts": {
-    "test": "nyc mocha -r ts-node/register src/**/*.test.ts",
+    "test": "nyc mocha -r ts-node/register src/**/*.test.ts && yarn run coverage",
+    "coverage": "nyc check-coverage",
     "mocha": "mocha -r ts-node/register src/**/*.test.ts",
     "start": "DEBUG=sockethub* ./bin/sockethub",
     "dev": "yarn run build && DEBUG=sockethub* ./bin/sockethub --examples",
