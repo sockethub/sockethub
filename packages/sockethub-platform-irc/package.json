@@ -33,7 +33,8 @@
     "tv4": "1.3.0"
   },
   "scripts": {
-    "test": "c8 jaribu",
+    "test": "c8 jaribu && yarn run coverage",
+    "coverage": "c8 check-coverage --statements 80 --lines 80 --functions 85 --branches 55",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md",
     "lint": "eslint --ignore-pattern \"coverage\" \"**/*.js\"",
     "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\""
