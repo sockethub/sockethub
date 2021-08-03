@@ -3,7 +3,7 @@ module.exports = function (config) {
       frameworks: ['mocha', 'chai'],
       files: [
           'browser/**/*.js',
-          'lib/**/*.test.js'
+          'src/**/*.test.js'
       ],
       reporters: ['progress'],
       port: 9876,  // karma web server port

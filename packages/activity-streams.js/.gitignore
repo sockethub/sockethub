@@ -1,4 +1,4 @@
 node_modules
 .tmp
 .idea
-coverage
+.nyc_output
