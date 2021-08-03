@@ -7,15 +7,16 @@
     "test": "test"
   },
   "dependencies": {
-    "c8": "7.7.3",
     "debug": "^4.3.1",
     "fast-deep-equal": "^3.1.1"
   },
   "devDependencies": {
-    "jaribu": "2.2.3"
+    "jaribu": "2.2.3",
+    "nyc": "^15.1.0"
   },
   "scripts": {
-    "test": "c8 jaribu"
+    "test": "nyc jaribu && yarn run coverage",
+    "coverage": "nyc check-coverage"
   },
   "repository": {
     "type": "git",
