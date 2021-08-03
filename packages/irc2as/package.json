@@ -16,7 +16,7 @@
   },
   "scripts": {
     "test": "c8 jaribu && yarn run coverage",
-    "coverage": "c8 check-coverage --statements 90 --lines 90 --functions 95 --branches 90"
+    "coverage": "c8 check-coverage --statements 90 --branches 90 --functions 95 --lines 90"
   },
   "repository": {
     "type": "git",
