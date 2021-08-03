@@ -70,7 +70,7 @@
     "urijs": "^1.19.2"
   },
   "scripts": {
-    "test": "c8 mocha -r ts-node/register src/**/*.test.ts",
+    "test": "c8 mocha -r ts-node/register src/**/*.test.ts && yarn run coverage",
     "coverage": "c8 check-coverage --statements 90 --lines 90 --functions 90 --branches 85",
     "start": "DEBUG=sockethub* ./bin/sockethub",
     "dev": "yarn run build && DEBUG=sockethub* ./bin/sockethub --examples",
