@@ -49,16 +49,15 @@ jobs:
       - name: Create XMPP Account
         run: docker exec mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
 
-      - name: Start Sockethub
-        run: packages/sockethub/bin/sockethub &
+      - name: Run Integration Testsb
+        run: packages/sockethub/bin/sockethub; sleep 10 && nc -zv localhost 1055 && yarn run integration
         env:
           DEBUG: sockethub*
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
-      - run: sleep 10
 
-      - name: Verify Sockethub is Listening
-        run: nc -zv localhost 10550
-
-      - name: Run Integration Tests
-        run: yarn run integration
+#      - run: sleep 10
+#
+#      - name: Verify Sockethub is Listening
+#        run: nc -zv localhost 10550
+#
+#      - name: Run Integration Tests
+#        run: yarn run integration
