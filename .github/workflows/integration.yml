@@ -9,6 +9,8 @@ jobs:
         image: mongooseim/mongooseim:latest
         ports:
           - 5222:5222
+        options: >-
+          --name mongooseim-1
 
       redis:
         image: redis
@@ -42,7 +44,7 @@ jobs:
         run: nc -zv localhost 5222
 
       - name: Create XMPP account
-        run: docker exec -i ${{ job.services.mongooseim.id }} /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
+        run: docker exec mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
 
       - name: Install Yarn
         run: npm install -g yarn
