@@ -29,7 +29,7 @@ jobs:
       - run: yarn run build
       - run: docker run -d -t -h mongooseim-1 --name mongooseim-1 -p 5222:5222 mongooseim/mongooseim:latest
       - run: sleep 10
-      - run: docker exec -i -t mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
+      - run: docker exec mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
       - run: yarn run start &
       - run: sleep 10
       - run: yarn run integration
