@@ -44,11 +44,11 @@ jobs:
       - name: Install Dependencies
         run: yarn install
 
-      - name: Build Sockethub
-        run: yarn run build
-
       - name: Create XMPP Account
         run: docker exec -i ${{ job.services.mongooseim.id }} /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
+
+      - name: Build Sockethub
+        run: yarn run build
 
       - name: Run Integration Testsb
         run: |
