@@ -3,7 +3,6 @@ on: pull_request
 jobs:
   build:
     runs-on: ubuntu-latest
-
     services:
       redis:
         image: redis
@@ -13,11 +12,9 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     strategy:
       matrix:
         node-version: [14.x, 16.x]
-
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
@@ -33,7 +30,7 @@ jobs:
       - name: XMPP Account
         run: docker exec mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
       - name: Start Sockethub
-        run: yarn run start &
+        run: REDIS_HOST=redis yarn run start:defaults &
         env:
           REDIS_HOST: redis
       - run: sleep 10

@@ -26,6 +26,7 @@
     "build": "lerna run build",
     "dev": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run dev",
     "start": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run start",
+    "start:defaults": "cd packages/sockethub && yarn run start",
     "integration": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js"
   }
 }
