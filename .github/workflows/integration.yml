@@ -5,6 +5,10 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
+      mongooseim:
+        image: mongooseim
+        ports:
+          - 5222:5222
       redis:
         image: redis
         # Set health checks to wait until redis has started
@@ -42,12 +46,13 @@ jobs:
       - name: Build Sockethub
         run: yarn run build
 
-      - name: Initialize XMPP
-        run: docker run -d -t -h mongooseim-1 --name mongooseim-1 -p 5222:5222 mongooseim/mongooseim:latest
-      - run: sleep 10
+#      - name: Initialize XMPP
+#        run: docker run -d -t -h mongooseim-1 --name mongooseim-1 -p 5222:5222 mongooseim/mongooseim:latest
+#      - run: sleep 10
 
       - name: Create XMPP Account
-        run: docker exec mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
+#        run: docker exec mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
+        run: docker exec -i {{ job.services.mongooseim.id }} /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
 
       - name: Run Integration Testsb
         run: |

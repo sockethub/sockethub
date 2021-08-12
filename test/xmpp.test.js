@@ -65,7 +65,7 @@ describe('integration page', () => {
 
     it('send connect', (done) => {
       sc.socket.on('failed', (err) => {
-        console.log("ERROR: ", err);
+        console.error("ERROR: ", err);
         done(err.object.content);
       });
       sc.socket.on('completed', (obj) => {

@@ -192,7 +192,7 @@ const _Object = {
 
 function ASFactory(opts = {}) {
   specialObjs = opts.specialObjs || [];
-  failOnUnknownObjectProperties = opts.failOnUnknownObjectProperties || false;
+  failOnUnknownObjectProperties = typeof opts.failOnUnknownObjectProperties === 'boolean' ? opts.failOnUnknownObjectProperties : false;
   for (let propName of Object.keys(opts.customProps || {})) {
     if (typeof opts.customProps[propName] === 'object') {
       customProps[propName] = opts.customProps[propName];
