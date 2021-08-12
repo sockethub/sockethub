@@ -6,7 +6,7 @@ jobs:
 
     services:
       mongooseim:
-        image: mongooseim
+        image: mongooseim/mongooseim:latest
         ports:
           - 5222:5222
       redis:
