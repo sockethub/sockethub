@@ -41,14 +41,14 @@ jobs:
       - name: Verify MongooseIM is listening
         run: nc -zv localhost 5222
 
+      - name: Create XMPP account
+        run: docker exec -i ${{ job.services.mongooseim.id }} /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
+
       - name: Install Yarn
         run: npm install -g yarn
 
       - name: Install dependencies
         run: yarn install
-
-      - name: Create XMPP account
-        run: docker exec -i ${{ job.services.mongooseim.id }} /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
 
       - name: Build Sockethub
         run: yarn run build
