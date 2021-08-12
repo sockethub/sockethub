@@ -27,7 +27,7 @@ jobs:
         node-version: [14.x, 16.x]
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v2
 
       - name: Use Node.js ${{ matrix.node-version }}
@@ -35,22 +35,25 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Verify Redis is Listening
+      - name: Verify Redis is listening
         run: nc -zv localhost 6379
+
+      - name: Verify MongooseIM is listening
+        run: nc -zv localhost 5222
 
       - name: Install Yarn
         run: npm install -g yarn
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: yarn install
 
-      - name: Create XMPP Account
+      - name: Create XMPP account
         run: docker exec -i ${{ job.services.mongooseim.id }} /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
 
       - name: Build Sockethub
         run: yarn run build
 
-      - name: Run Integration Testsb
+      - name: Run integration tests
         run: |
           packages/sockethub/bin/sockethub &
           sleep 5
