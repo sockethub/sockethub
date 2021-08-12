@@ -16,24 +16,43 @@ jobs:
       matrix:
         node-version: [14.x, 16.x]
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm install -g yarn
-      - run: yarn install
-      - run: yarn run build
+
+      - name: Verify Redis is Listening
+        run: nc -zv localhost 6379
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - name: Install Dependencies
+        run: yarn install
+
+      - name: Build Sockethub
+        run: yarn run build
+
       - name: Initialize XMPP
         run: docker run -d -t -h mongooseim-1 --name mongooseim-1 -p 5222:5222 mongooseim/mongooseim:latest
       - run: sleep 10
-      - name: XMPP Account
+
+      - name: Create XMPP Account
         run: docker exec mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
+
       - name: Start Sockethub
         run: packages/sockethub/bin/sockethub &
         env:
           DEBUG: sockethub*
           REDIS_HOST: redis
+          REDIS_PORT: 6379
       - run: sleep 10
-      - run: nc -zv localhost 10550
-      - run: yarn run integration
+
+      - name: Verify Sockethub is Listening
+        run: nc -zv localhost 10550
+
+      - name: Run Integration Tests
+        run: yarn run integration
