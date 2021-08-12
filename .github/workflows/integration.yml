@@ -3,6 +3,7 @@ on: pull_request
 jobs:
   build:
     runs-on: ubuntu-latest
+
     services:
       redis:
         image: redis
@@ -12,9 +13,14 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          # Maps port 6379 on service container to the host
+          - 6379:6379
+
     strategy:
       matrix:
         node-version: [14.x, 16.x]
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
