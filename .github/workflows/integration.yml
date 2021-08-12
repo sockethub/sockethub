@@ -47,7 +47,7 @@ jobs:
         run: packages/sockethub/bin/sockethub &
         env:
           DEBUG: sockethub*
-          REDIS_HOST: redis
+          REDIS_HOST: localhost
           REDIS_PORT: 6379
       - run: sleep 10
 
