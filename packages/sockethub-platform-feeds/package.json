@@ -19,9 +19,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/sockethub/sockethub-platform-feeds.git"
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/sockethub-platform-feeds"
   },
-  "homepage": "http://github.com/sockethub/sockethub-platform-feeds",
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/sockethub-platform-feeds",
   "dependencies": {
     "feedparser": "^2.2.9",
     "request": "^2.83.0"
