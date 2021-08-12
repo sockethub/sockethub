@@ -50,7 +50,11 @@ jobs:
         run: docker exec mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
 
       - name: Run Integration Testsb
-        run: { packages/sockethub/bin/sockethub & } && sleep 10 && nc -zv localhost 10550 && yarn run integration
+        run: |
+          packages/sockethub/bin/sockethub &
+          sleep 10
+          nc -zv localhost 10550
+          yarn run integration
         env:
           DEBUG: sockethub*
 
