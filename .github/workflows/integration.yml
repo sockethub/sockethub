@@ -46,8 +46,14 @@ jobs:
       - name: check process 1
         run: docker exec -i ${{ job.services.mongooseim.id }}  ps ax
 
+      - name: check process 2
+        run: docker logs -i ${{ job.services.mongooseim.id }}
+
       - name: sleep
         run: sleep 20
+
+      - name: check logs 2
+        run: docker logs -i ${{ job.services.mongooseim.id }}
 
       - name: check process 2
         run: docker exec -i ${{ job.services.mongooseim.id }}  ps ax
