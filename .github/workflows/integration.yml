@@ -11,7 +11,7 @@ jobs:
           - 5222:5222
         options: >-
           --name mongooseim-1
-          --host mongooseim-1
+          --hostname mongooseim-1
           --tty
 
       redis:
