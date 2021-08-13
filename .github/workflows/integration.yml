@@ -43,6 +43,9 @@ jobs:
       - name: Verify MongooseIM is listening
         run: nc -zv localhost 5222
 
+      - name: check process
+        run: docker exec mongooseim-1 ps ax
+
       - name: Create XMPP account
         run: docker exec mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
 
