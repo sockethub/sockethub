@@ -9,8 +9,10 @@ jobs:
         image: mongooseim/mongooseim:latest
         ports:
           - 5222:5222
-#        options: >-
-#          --name mongooseim-1
+        options: >-
+          --name mongooseim-1
+          --host mongooseim-1
+          --tty
 
       redis:
         image: redis
@@ -44,22 +46,22 @@ jobs:
         run: nc -zv localhost 5222
 
       - name: check process 1
-        run: docker exec -i ${{ job.services.mongooseim.id }}  ps ax
+        run: docker exec mongooseim-1  ps ax
 
       - name: check logs 1
-        run: docker logs ${{ job.services.mongooseim.id }}
+        run: docker logs mongooseim-1
 
       - name: sleep
         run: sleep 20
 
       - name: check logs 2
-        run: docker logs ${{ job.services.mongooseim.id }}
+        run: docker logs mongooseim-1
 
       - name: check process 2
-        run: docker exec -i ${{ job.services.mongooseim.id }}  ps ax
+        run: docker exec mongooseim-1  ps ax
 
       - name: Create XMPP account
-        run: docker exec -i ${{ job.services.mongooseim.id }} /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
+        run: docker exec mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
 
       - name: Install Yarn
         run: npm install -g yarn
