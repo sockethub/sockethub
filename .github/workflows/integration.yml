@@ -47,7 +47,7 @@ jobs:
         run: docker exec mongooseim-1 ps ax
 
       - name: sleep
-        run: sleep 5
+        run: sleep 20
 
       - name: check process 2
         run: docker exec mongooseim-1 ps ax
