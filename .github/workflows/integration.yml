@@ -39,26 +39,17 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Wait for services to start-up
+        run: sleep 20
+
       - name: Verify Redis is listening
         run: nc -zv localhost 6379
 
       - name: Verify MongooseIM is listening
         run: nc -zv localhost 5222
 
-      - name: check process 1
-        run: docker exec mongooseim-1  ps ax
-
-      - name: check logs 1
+      - name: MongooseIM logs
         run: docker logs mongooseim-1
-
-      - name: sleep
-        run: sleep 20
-
-      - name: check logs 2
-        run: docker logs mongooseim-1
-
-      - name: check process 2
-        run: docker exec mongooseim-1  ps ax
 
       - name: Create XMPP account
         run: docker exec mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
