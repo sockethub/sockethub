@@ -9,9 +9,7 @@ jobs:
         image: prosody/prosody:latest
         ports:
           - 5222:5222
-        options: >-
-        --name prosody
-        -v /home/runner/work/sockethub/sockethub/test/prosody:/etc/prosody
+        options: --name prosody -v ${{ github.workspace }}/test/prosody:/etc/prosody
         env:
           LOCAL: jimmy
           DOMAIN: localhost
