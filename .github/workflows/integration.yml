@@ -6,6 +6,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          clean: false
       - run: mkdir -p ${{ github.workspace }}/../../prosody
       - run: cp test/prosody/* ${{ github.workspace }}/../../prosody/
       - run: ls -al ${{ github.workspace }}/../../prosody/
@@ -46,6 +48,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          clean: false
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
