@@ -21,11 +21,11 @@ jobs:
       matrix:
         node-version: [ 14.x, 16.x ]
     steps:
-      - run: ls -al
-      - name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          clean: false
+#      - run: ls -al
+#      - name: Checkout repository
+#        uses: actions/checkout@v2
+#        with:
+#          clean: false
       - run: ls -al
 
       - name: Use Node.js ${{ matrix.node-version }}
@@ -76,10 +76,10 @@ jobs:
 
     steps:
       - run: ls -al
-      - name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          clean: false
+#      - name: Checkout repository
+#        uses: actions/checkout@v2
+#        with:
+#          clean: false
 
       - run: sleep 10
       - run: ls -al
