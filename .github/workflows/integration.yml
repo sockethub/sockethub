@@ -8,9 +8,9 @@ jobs:
         uses: actions/checkout@v2
         with:
           clean: false
-      - run: mkdir -p ${{ github.workspace }}/../../prosody
-      - run: cp test/prosody/* ${{ github.workspace }}/../../prosody/
-      - run: ls -al ${{ github.workspace }}/../../prosody/
+#      - run: mkdir -p ${{ github.workspace }}/../../prosody
+#      - run: cp test/prosody/* ${{ github.workspace }}/../../prosody/
+#      - run: ls -al ${{ github.workspace }}/../../prosody/
       - run: touch HELLOWORLD.txt
       - run: ls -al
 
@@ -21,13 +21,11 @@ jobs:
       matrix:
         node-version: [ 14.x, 16.x ]
     steps:
-      - run: ls -al ${{ github.workspace }}/../../prosody/
       - run: ls -al
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
           clean: false
-      - run: ls -al ${{ github.workspace }}/../../prosody/
       - run: ls -al
 
       - name: Use Node.js ${{ matrix.node-version }}
@@ -54,7 +52,7 @@ jobs:
           - 5222:5222
         options: --name prosody
         volumes:
-          - ${{ github.workspace }}/../../prosody:/etc/prosody
+          - ${{ github.workspace }}/test/prosody:/etc/prosody
         env:
           LOCAL: jimmy
           DOMAIN: localhost
@@ -77,13 +75,13 @@ jobs:
         node-version: [14.x, 16.x]
 
     steps:
+      - run: ls -al
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
           clean: false
 
       - run: sleep 10
-      - run: ls -al ${{ github.workspace }}/../../prosody/
       - run: ls -al
 
       - name: Prosody logs
