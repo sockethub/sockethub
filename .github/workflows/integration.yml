@@ -9,7 +9,9 @@ jobs:
         image: prosody/prosody:latest
         ports:
           - 5222:5222
-        options: --name prosody -v ${{ github.workspace }}/test/prosody:/etc/prosody
+        options: --name prosody
+        volumes:
+          - ${{ github.workspace }}/test/prosody:/etc/prosody
         env:
           LOCAL: jimmy
           DOMAIN: localhost
@@ -32,7 +34,7 @@ jobs:
         node-version: [14.x, 16.x]
 
     steps:
-      - run: sudo chown -R $USER:$USER ${{ github.workspace }}
+#      - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
         uses: actions/checkout@v2
 
