@@ -48,7 +48,6 @@ describe('integration page', () => {
     });
 
     it('send credentials', (done) => {
-      sc.socket.on('callback', done);
       sc.socket.emit('credentials', {
         actor: "jimmy@localhost/SockethubExample",
         context: "xmpp",
@@ -59,9 +58,11 @@ describe('integration page', () => {
           resource: "SockethubExample",
           server: "localhost",
           username: "jimmy"
+          // TODO FIXME: create test to verify setting credentials without server property
+          //  eg. username: jimmy@localhost
         }
-      });
-    });
+      }, done);
+    }).timeout(10000);
 
     it('send connect', (done) => {
       sc.socket.on('failed', (err) => {
