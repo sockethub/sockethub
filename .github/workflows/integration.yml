@@ -5,14 +5,16 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      mongooseim:
-        image: mongooseim/mongooseim:latest
+      prosody:
+        image: prosody/prosody:latest
         ports:
           - 5222:5222
         options: >-
-          --name mongooseim-1
-          --hostname mongooseim-1
-          --tty
+        --name prosody
+        -e LOCAL=jimmy
+        -e DOMAIN=localhost
+        -e PASSWORD=passw0rd
+        -v /home/runner/work/sockethub/sockethub/test/prosody:/etc/prosody
 
       redis:
         image: redis
@@ -40,19 +42,16 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Wait for services to start-up
-        run: sleep 20
+        run: sleep 10
 
       - name: Verify Redis is listening
         run: nc -zv localhost 6379
 
-      - name: Verify MongooseIM is listening
+      - name: Verify Prosody is listening
         run: nc -zv localhost 5222
 
-      - name: MongooseIM logs
+      - name: Prosody logs
         run: docker logs mongooseim-1
-
-      - name: Create XMPP account
-        run: docker exec mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
 
       - name: Install Yarn
         run: npm install -g yarn
@@ -71,6 +70,3 @@ jobs:
           yarn run integration
         env:
           DEBUG: sockethub*
-
-#  docker run -d -t -h mongooseim-1 --name mongooseim-1 -p 5222:5222 mongooseim/mongooseim:latest
-#  docker exec mongooseim-1 /usr/lib/mongooseim/bin/mongooseimctl register_identified jimmy localhost passw0rd
