@@ -6,11 +6,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      - run: mkdir -p /__w/prosody
-      - run: cp test/prosody/* /__w/prosody/
+      - run: mkdir -p ${{ github.workspace }}/../../prosody
+      - run: cp test/prosody/* ${{ github.workspace }}/../../prosody/
 
   build:
     runs-on: ubuntu-latest
+    needs: checkout
 
     services:
       prosody:
@@ -19,7 +20,7 @@ jobs:
           - 5222:5222
         options: --name prosody
         volumes:
-          - /__w/prosody:/etc/prosody
+          - ${{ github.workspace }}/../../prosody:/etc/prosody
         env:
           LOCAL: jimmy
           DOMAIN: localhost
