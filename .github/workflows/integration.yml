@@ -5,17 +5,17 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      prosody:
-        image: prosody/prosody:latest
-        ports:
-          - 5222:5222
-        options: --name prosody
-        volumes:
-          - ${{ github.workspace }}/test/prosody:/etc/prosody
-        env:
-          LOCAL: jimmy
-          DOMAIN: localhost
-          PASSWORD: passw0rd
+#      prosody:
+#        image: prosody/prosody:latest
+#        ports:
+#          - 5222:5222
+#        options: --name prosody
+#        volumes:
+#          - /__w/prosody:/etc/prosody
+#        env:
+#          LOCAL: jimmy
+#          DOMAIN: localhost
+#          PASSWORD: passw0rd
 
       redis:
         image: redis
@@ -38,10 +38,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      services:
+        prosody:
+          image: prosody/prosody:latest
+          ports:
+            - 5222:5222
+          options: --name prosody
+          volumes:
+            - ${{ github.workspace }}/test/prosody:/etc/prosody
+          env:
+            LOCAL: jimmy
+            DOMAIN: localhost
+            PASSWORD: passw0rd
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
+
+      - run: sleep 10
 
       - name: Prosody logs
         run: docker logs prosody
