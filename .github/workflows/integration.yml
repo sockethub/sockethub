@@ -11,6 +11,7 @@ jobs:
       - run: mkdir -p ${{ github.workspace }}/../../prosody
       - run: cp test/prosody/* ${{ github.workspace }}/../../prosody/
       - run: ls -al ${{ github.workspace }}/../../prosody/
+      - run: touch HELLOWORLD.txt
 
   build:
     runs-on: ubuntu-latest
@@ -55,8 +56,11 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
+
       - run: sleep 10
       - run: ls -al ${{ github.workspace }}/../../prosody/
+      - run: ls -al
+
       - name: Prosody logs
         run: docker logs prosody
 
