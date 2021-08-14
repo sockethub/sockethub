@@ -11,10 +11,11 @@ jobs:
           - 5222:5222
         options: >-
         --name prosody
-        -e LOCAL=jimmy
-        -e DOMAIN=localhost
-        -e PASSWORD=passw0rd
         -v /home/runner/work/sockethub/sockethub/test/prosody:/etc/prosody
+        env:
+          LOCAL: jimmy
+          DOMAIN: localhost
+          PASSWORD: passw0rd
 
       redis:
         image: redis
