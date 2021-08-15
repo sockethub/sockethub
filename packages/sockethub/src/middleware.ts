@@ -17,41 +17,47 @@
  * number of params passed after the `false` will be passed to the failure callback.
  *
  */
-function Middleware(errorHandler: Function) {
-  this.errorHandler = errorHandler;
-}
+export default function middleware(...chain) {
 
-Middleware.prototype.chain = function (...funcs) {
-  let self = this;
-  return (...params) => {
-    let count = 0;
-    if (typeof funcs[count] !== 'function') {
-      throw new Error('middleware function can only take other functions as arguments.');
+  for (let func of chain) {
+    if (typeof func !== 'function') {
+      throw new Error('middleware chain can only take other functions as arguments.');
+    }
+  }
+
+  return (...originalParams) => {
+    let position = 0;
+    let complete = originalParams.pop();
+    if (typeof complete !== 'function') {
+      // throw new Error('initial incoming parameters contain no final callback');
+      originalParams.push(complete);
+      complete = (data) => { console.log('middleware completed: ', data); };
     }
 
-    function _callFunc(pos: number) {
-      if (pos + 1 === funcs.length) {
-        // last call, don't wait for next callback
-        funcs[pos].apply(this, params);
-        return;
-      }
-
-      function _nextFunc(status, ..._params) {
-        if ((typeof status === 'boolean') && (! status)) {
-          // failed, abort.
-          self.errorHandler(..._params);
-        } else if ((status) && (_params.length > -1)) {
-          // re-assign/update the payload object
-          params = _params;
-        }
-        count = count + 1;
-        setTimeout(_callFunc.bind(this, count), 0);
-      }
-
-      funcs[pos].apply(this, [_nextFunc].concat(params));
+    if (typeof complete !== 'function') {
+      throw new Error('middleware received incoming parameters with no callback');
     }
-    _callFunc(count);
+
+    function callback(...params) {
+      if (params.length === 0) { throw new Error('callback call with no data'); }
+      if (params[0] instanceof Error) {
+        return complete(params[0]);
+      } else {
+        setTimeout(() => {
+          callFunc(...params);
+        }, 0);
+      }
+    }
+
+    function callFunc(...params) {
+      if (typeof chain[position] === 'function') {
+        params.push(callback);
+        chain[position++](...params);
+      } else {
+        complete();
+      }
+    }
+
+    callFunc(...originalParams);
   };
-};
-
-export default Middleware;
+}
