@@ -140,31 +140,3 @@ export default function validate(type: string, sockethubId: string) {
     }
   };
 };
-
-
-// // called when registered with the middleware function, define the type of validation
-// // that will be called when the middleware eventually does.
-// export default function validate(type: string, sockethubId: string) {
-//   const sessionLog = debug(`sockethub:validate:${sockethubId}`);
-//   // called by the middleware with the message and the next (callback) in the chain
-//   return (msg: ActivityObject, done: Function) => {
-//     sessionLog('applying schema validation for ' + type);
-//     const error = errorHandler(type, msg, done);
-//
-//     if (! ensureObject(msg)) {
-//       error(`message received is not an object.`);
-//     } else if (type === 'activity-object') {
-//       processActivityObject(msg, error, done);
-//     } else if (typeof msg.context !== 'string') {
-//       error('message must contain a context property');
-//     } else if (! init.platforms.has(msg.context)) {
-//       error(`platform context ${msg.context} not registered with this sockethub instance.`);
-//     } else if ((type === 'message') && (typeof msg['@type'] !== 'string')) {
-//       error('message must contain a @type property.');
-//     } else if (type === 'credentials') {
-//       processCredentials(msg, error, done);
-//     } else {
-//       processActivityStream(msg, error, done);
-//     }
-//   };
-// };
