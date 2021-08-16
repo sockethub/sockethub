@@ -14,7 +14,8 @@
   "main": "./index.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/sockethub/sockethub-schemas.git"
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/sockethub-schemas"
   },
   "devDependencies": {
     "c8": "^7.8.0",

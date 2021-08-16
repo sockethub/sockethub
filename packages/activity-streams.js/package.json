@@ -20,7 +20,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/silverbucket/activity-streams.js.git"
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/activity-streams.js"
   },
   "scripts": {
     "test:node": "c8 -r text mocha ./lib/**/*.test.js",
@@ -40,7 +41,7 @@
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/silverbucket/activity-streams.js/issues"
+    "url": "https://github.com/sockethub/sockethub/issues"
   },
-  "homepage": "https://github.com/silverbucket/activity-streams.js"
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/activity-streams.js"
 }
