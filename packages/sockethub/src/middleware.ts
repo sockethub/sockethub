@@ -6,7 +6,8 @@
  * is an instance of Error, then the call stack will be aborted, and the final callback
  * (callback of first input) will be called with the Error as the first parameter.
  *
- * @param {array} chain An array of functions, each expecting a callback as the final parameter.
+ * @param {function} middleware Any number of functions, each expecting a callback as the final
+ * parameter.
  * @return {function} entry The entry function, which will start calling functions defined in the
  * chain.
  *
