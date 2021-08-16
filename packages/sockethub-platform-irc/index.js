@@ -285,7 +285,7 @@ IRC.prototype.send = function (job, credentials, done) {
       return done('cannot send message with no object.content');
     }
 
-    let msg = job.object.content.replace(/^\s+|\s+$/g, "");
+    let msg = job.object.content.replace(/^\s+/g, "").trim();
     if (msg.indexOf('/') === 0) {
       // message intented as command
       msg += ' ';
