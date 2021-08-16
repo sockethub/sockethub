@@ -15,7 +15,8 @@
     "jaribu": "2.2.3"
   },
   "scripts": {
-    "test": "c8 jaribu"
+    "test": "c8 jaribu && yarn run coverage",
+    "coverage": "c8 check-coverage --statements 90 --branches 90 --functions 95 --lines 90"
   },
   "repository": {
     "type": "git",

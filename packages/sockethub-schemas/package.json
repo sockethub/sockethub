@@ -18,14 +18,15 @@
     "directory": "packages/sockethub-schemas"
   },
   "devDependencies": {
+    "c8": "^7.8.0",
     "chai": "4.3.4",
     "mocha": "9.0.3",
-    "nyc": "15.1.0",
     "proxyrequire": "1.0.21",
     "tv4": "1.3.0"
   },
   "scripts": {
-    "test": "nyc mocha **/*.test.js",
+    "test": "c8 mocha **/*.test.js && yarn run coverage",
+    "coverage": "c8 check-coverage --statements 100 --branches 100 --functions 100 --lines 100",
     "build": "./bin/build.js"
   },
   "dependencies": {
