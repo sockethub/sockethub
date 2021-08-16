@@ -8,7 +8,7 @@ import janitor from './janitor';
 import serve from './serve';
 import ProcessManager from "./process-manager";
 import { platformInstances } from "./platform-instance";
-import {getSessionStore, ISecureStoreInstance} from "./store";
+import { getSessionStore } from "./store";
 import validate from './middleware/validate';
 import storeCredentials from "./middleware/store-credentials";
 import createActivityObject from "./middleware/create-activity-object";
