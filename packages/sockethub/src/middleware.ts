@@ -18,46 +18,39 @@
  *
  */
 export default function middleware(...chain) {
-
   for (let func of chain) {
     if (typeof func !== 'function') {
       throw new Error('middleware chain can only take other functions as arguments.');
     }
   }
+  return getMiddlewareInstance(chain);
+}
 
-  return (...originalParams) => {
-    let position = 0;
-    let complete = originalParams.pop();
-    if (typeof complete !== 'function') {
-      // throw new Error('initial incoming parameters contain no final callback');
-      originalParams.push(complete);
-      complete = (data) => { console.log('middleware completed: ', data); };
-    }
-
-    if (typeof complete !== 'function') {
-      throw new Error('middleware received incoming parameters with no callback');
-    }
-
-    function callback(...params) {
-      if (params.length === 0) { throw new Error('callback call with no data'); }
-      if (params[0] instanceof Error) {
-        return complete(params[0]);
-      } else {
-        setTimeout(() => {
-          callFunc(...params);
-        }, 0);
+function getMiddlewareInstance(chain) {
+  return (...initialParams) => {
+    // placeholder callback in case one is not provided
+    let complete = (err?: Error) => {
+      if (err) {
+        throw err;
       }
+    };
+    let position = 0;
+
+    if (typeof initialParams[initialParams.length - 1] === 'function') {
+      complete = initialParams.pop();
     }
 
     function callFunc(...params) {
-      if (typeof chain[position] === 'function') {
-        params.push(callback);
+      if (params[0] instanceof Error) {
+        complete(params[0]);
+      } else if (typeof chain[position] === 'function') {
+        params.push(callFunc);
         chain[position++](...params);
       } else {
         complete();
       }
     }
 
-    callFunc(...originalParams);
+    callFunc(...initialParams);
   };
 }
