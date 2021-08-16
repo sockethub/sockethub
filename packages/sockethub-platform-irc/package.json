@@ -17,9 +17,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/sockethub/sockethub-platform-irc.git"
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/sockethub-platform-irc"
   },
-  "homepage": "https://github.com/sockethub/sockethub-platform-irc",
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/sockethub-platform-irc",
   "dependencies": {
     "debug": "^4.3.1",
     "irc-socket": "https://github.com/silverbucket/irc-socket/archive/v4-alpha.tar.gz",

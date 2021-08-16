@@ -17,9 +17,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/sockethub/sockethub-platform-xmpp.git"
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/sockethub-platform-xmpp"
   },
-  "homepage": "https://github.com/sockethub/sockethub-platform-xmpp",
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/sockethub-platform-xmpp",
   "dependencies": {
     "@xmpp/client": "^0.12.0",
     "ltx": "^2.9.2"

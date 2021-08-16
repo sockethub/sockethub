@@ -29,9 +29,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/sockethub/sockethub.git"
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/sockethub"
   },
-  "homepage": "http://github.com/sockethub/sockethub",
+  "homepage": "https://sockethub.org",
   "dependencies": {
     "@types/body-parser": "^1.19.0",
     "@types/debug": "^4.1.5",
