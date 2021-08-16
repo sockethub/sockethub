@@ -2,7 +2,7 @@ import proxyquire from 'proxyquire'
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 
-import { getPlatformId} from './common';
+import { decryptJobData, getPlatformId } from './common';
 import crypto from './crypto';
 
 proxyquire.noPreserveCache();
@@ -30,5 +30,25 @@ describe("getPlatformId", () => {
     expect(getPlatformId('foo', 'bar')).to.be.equal('foobar');
     sinon.assert.calledOnce(cryptoHashStub);
     sinon.assert.calledWith(cryptoHashStub, 'foobar');
+  });
+});
+
+describe("decryptJobData", () => {
+  let cryptoDecryptStub;
+
+  beforeEach(() => {
+    cryptoDecryptStub = sinon.stub(crypto, 'decrypt');
+    cryptoDecryptStub.returnsArg(0);
+    proxyquire('./common', { crypto: { hash: cryptoDecryptStub }});
+  });
+
+  afterEach(() => {
+    cryptoDecryptStub.restore();
+  });
+
+  it("decrypts and returns expected object", () => {
+    const jobData = {data:{title:"foo",msg:'encryptedjobdata',sessionId:'foobar'}};
+    const secret = 'secretstring';
+    expect(decryptJobData(jobData, secret)).to.be.eql(jobData.data);
   });
 });

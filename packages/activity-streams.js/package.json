@@ -2,7 +2,7 @@
   "name": "activity-streams",
   "version": "4.3.7",
   "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
-  "main": "./lib/activity-streams.js",
+  "main": "./src/activity-streams.js",
   "dependencies": {
     "event-emitter": "^0.3.5"
   },
@@ -24,13 +24,13 @@
     "directory": "packages/activity-streams.js"
   },
   "scripts": {
-    "test:node": "c8 -r text mocha ./lib/**/*.test.js",
-    "test:node:lcov": "c8 -r lcov mocha ./lib/**/*.test.js",
+    "test:node": "c8 -r text mocha ./src/**/*.test.js",
+    "test:node:lcov": "c8 -r lcov mocha ./src/**/*.test.js",
     "test:browser": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
-    "coverage": "c8 check-coverage --statements 90 --branches 85 --functions 85 --lines 90",
+    "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 85 --lines 95",
     "build": "webpack --mode production",
     "release": "yarn run build && yarn run test",
-    "test": "yarn run test:node:lcov && yarn run test:browser && yarn run coverage"
+    "test": "yarn run test:node && yarn run test:browser && yarn run coverage"
   },
   "keywords": [
     "activity",
