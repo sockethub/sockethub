@@ -1,20 +1,36 @@
 /**
- * a very simple middleware handler
+ * When calling the middleware function, pass in a list of functions to call in order.
+ * Each function can expect any number of params, but the final param should expect a callback.
  *
- * When initialized, provide a function which will be called if there were any failures during
- * the execution of functions along the chain.
+ * When each function is completed, be sure to call the callback function. If the first parameter
+ * is an instance of Error, then the call stack will be aborted, and the final callback
+ * (callback of first input) will be called with the Error as the first parameter.
  *
- * Use middleware.chain, passing in a list of functions to call in order. It then returns
- * a function which accepts the message from the input. That function then will
- * call each of the originally passed in functions, in order, with a `next` callback as
- * the first parameter, and any number of originating parameters.
+ * @param {array} chain An array of functions, each expecting a callback as the final parameter.
+ * @return {function} entry The entry function, which will start calling functions defined in the
+ * chain.
  *
- * As one middleware function is done, they call `next` with the first argument `true`
- * (succeeded, continue) any parameters to pass along.
+ * @example
  *
- * If any of the middleware function calls the `next` handler with `false` as the first param, the
- * execution of the function chain is halted, and the failure callback is called. Again, any
- * number of params passed after the `false` will be passed to the failure callback.
+ *  const entry = middleware(
+ *    (data, cb) => {
+ *      //... do something with data
+ *      cb(data);
+ *    },
+ *    (data, cb) => {
+ *      //... do more with data
+ *      cb(data);
+ *    },
+ *    (data, cb) => {
+ *      //... do last stuff with data
+ *      cb();
+ *    }
+ *  );
+ *
+ *  entry(initialData, (err) => {
+ *    // this function is called when complete or an error occurs anywhere on the chain
+ *    // in which case execution is aborted.
+ *  });
  *
  */
 export default function middleware(...chain) {
