@@ -35,7 +35,7 @@ describe("PlatformInstance", () => {
         'io': {
           'in': sandbox.stub().returns({
             fetchSockets: () => {
-              return [socketMock]
+              return [socketMock];
             }
           })
         },
@@ -59,7 +59,7 @@ describe("PlatformInstance", () => {
         actor: 'actor string'
       });
       expect(pi.global).to.be.equal(false);
-      sandbox.assert.calledWith(forkFake, FORK_PATH, ['parentId', 'name', 'id'])
+      sandbox.assert.calledWith(forkFake, FORK_PATH, ['parentId', 'name', 'id']);
       pi.destroy();
     });
   });
@@ -113,8 +113,8 @@ describe("PlatformInstance", () => {
       it('adds a close and message handler when a session is registered', () => {
         pi.registerSession('my session id');
         expect(pi.callbackFunction.callCount).to.equal(2);
-        sandbox.assert.calledWith(pi.callbackFunction, 'close', 'my session id')
-        sandbox.assert.calledWith(pi.callbackFunction, 'message', 'my session id')
+        sandbox.assert.calledWith(pi.callbackFunction, 'close', 'my session id');
+        sandbox.assert.calledWith(pi.callbackFunction, 'message', 'my session id');
         expect(pi.sessions.has('my session id')).to.be.equal(true);
       });
 
@@ -159,7 +159,7 @@ describe("PlatformInstance", () => {
       sandbox.assert.calledOnce(getSocketFake);
       sandbox.assert.calledWith(getSocketFake, 'my session id');
       sandbox.assert.calledOnce(socketMock.emit);
-      sandbox.assert.calledWith(socketMock.emit, 'message', {foo:'this is a message object', context: 'a platform name'})
+      sandbox.assert.calledWith(socketMock.emit, 'message', {foo:'this is a message object', context: 'a platform name'});
     });
 
     it('broadcasts to peers', async () => {
@@ -180,8 +180,8 @@ describe("PlatformInstance", () => {
         pi.sessions.add('other peer');
         await pi.handleJobResult('completed', {msg: {foo: 'bar'}},
           undefined);
-        expect(pi.sendToClient.callCount).to.equal(1)
-        expect(pi.broadcastToSharedPeers.callCount).to.equal(1)
+        expect(pi.sendToClient.callCount).to.equal(1);
+        expect(pi.broadcastToSharedPeers.callCount).to.equal(1);
       });
 
       it('appends completed result message when present', async () => {

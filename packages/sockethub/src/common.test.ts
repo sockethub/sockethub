@@ -1,4 +1,4 @@
-import proxyquire from 'proxyquire'
+import proxyquire from 'proxyquire';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 
@@ -47,7 +47,7 @@ describe("decryptJobData", () => {
   });
 
   it("decrypts and returns expected object", () => {
-    const jobData = {data:{title:"foo",msg:'encryptedjobdata',sessionId:'foobar'}};
+    const jobData = {data:{title:"foo", msg:'encryptedjobdata', sessionId:'foobar'}};
     const secret = 'secretstring';
     expect(decryptJobData(jobData, secret)).to.be.eql(jobData.data);
   });
