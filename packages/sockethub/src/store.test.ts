@@ -1,9 +1,9 @@
 import proxyquire from 'proxyquire';
 import { expect } from 'chai';
-import * as sinon from 'sinon'
+import * as sinon from 'sinon';
 
 proxyquire.noPreserveCache();
-proxyquire.noCallThru()
+proxyquire.noCallThru();
 
 const MockRedis = sinon.fake();
 const MockSecureStore = sinon.fake();
@@ -56,7 +56,7 @@ describe('config', () => {
   it('has a redisConfig object', () => {
     expect(redisConfig.createClient).to.be.ok;
     expect(MockRedis.callCount).to.equal(2);
-  })
+  });
 
   it('returns existing client', () => {
     const client1 = redisConfig.createClient('client');

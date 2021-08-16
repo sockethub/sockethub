@@ -1,4 +1,4 @@
-import { expect } from 'chai'
+import { expect } from 'chai';
 import proxyquire from 'proxyquire';
 
 const crypto = proxyquire('./crypto', {

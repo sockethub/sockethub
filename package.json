@@ -13,9 +13,8 @@
     "version": "lerna run build",
     "install": "lerna bootstrap",
     "test": "lerna run test",
-    "lint": "lerna run lint:js",
-    "lint:js": "eslint '**/*.ts' '**/*.js' ./packages/sockethub/bin/sockethub",
-    "lint:fix": "yarn run lint:js --fix",
+    "lint": "lerna run lint",
+    "lint:fix": "lerna run lint:fix",
     "build": "lerna run build",
     "dev": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run dev",
     "start": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run start"
