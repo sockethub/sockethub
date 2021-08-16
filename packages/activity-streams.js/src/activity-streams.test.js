@@ -8,12 +8,59 @@ if (typeof chai !== 'object') {
 const assert = chai.assert;
 const expect = chai.expect;
 
+describe('warn test', () => {
+  let activity;
+
+  before('initialize activity module', () => {
+    assert.typeOf(ASFactory, 'function');
+    activity = ASFactory();
+  });
+
+  it('rejects nondefined special types', () => {
+    expect(() => {
+      activity.Stream({
+        '@type': 'lol',
+        platform: 'irc',
+        actor: 'thingy',
+        object: {'@type': 'hola', content: 'har', secure: true},
+        target: ['thingy1', 'thingy2']
+      })
+    }).not.to.throw(Error);
+  })
+});
+
+describe('no special props', () => {
+  let activity;
+
+  before('initialize activity module', () => {
+    assert.typeOf(ASFactory, 'function');
+    activity = ASFactory({specialObjs: [ 'send' ],});
+  });
+
+  it('returns expected object with no special types', () => {
+    expect(activity.Stream({
+      '@type': 'send',
+      context: 'irc',
+      actor: 'thingy',
+      object: {'@type': 'hola', content: 'har'},
+      target: ['thingy1', 'thingy2']
+    })).to.eql({
+      '@type': 'send',
+      context: 'irc',
+      actor: { '@id': 'thingy' },
+      object: { '@type': 'hola', content: 'har' },
+      target: [ 'thingy1', 'thingy2' ]
+    });
+  })
+});
+
 describe('basic tests', () => {
   const config = {
     customProps: {
       credentials: [ 'secure' ]
     },
-    specialObjs: [ 'dude']
+    specialObjs: [ 'dude'],
+    failOnUnknownObjectProperties: true
   };
   let activity;
 
@@ -110,6 +157,18 @@ describe('basic tests', () => {
         target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
         object: { '@type': 'dude', foo: 'bar', content: 'har', secure: true }
       });
+    })
+
+    it('rejects nondefined special types', () => {
+      expect(() => {
+        activity.Stream({
+          '@type': 'lol',
+          platform: 'irc',
+          actor: 'thingy',
+          object: { '@type': 'hola', foo: 'bar', content: 'har', secure: true },
+          target: [ 'thingy1', 'thingy2' ]
+        })
+      }).to.throw('invalid property: "foo"');
     })
   });
 

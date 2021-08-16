@@ -149,7 +149,7 @@ function Stream(meta) {
   const stream = expandStream(meta)
   ee.emit('activity-stream', stream);
   return stream;
-};
+}
 
 
 const _Object = {
