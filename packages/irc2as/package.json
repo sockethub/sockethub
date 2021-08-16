@@ -20,7 +20,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/silverbucket/irc2as.git"
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/irc2as"
   },
   "keywords": [
     "irc",
@@ -31,7 +32,7 @@
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/silverbucket/irc2as/issues"
+    "url": "https://github.com/sockethub/sockethub/issues"
   },
-  "homepage": "https://github.com/silverbucket/irc2as#readme"
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/irc2as"
 }
