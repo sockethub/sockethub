@@ -8,7 +8,8 @@ describe("middleware", () => {
     expect(typeof middleware).to.be.equal('function');
   });
   it("only accepts functions", () => {
-    expect(()=>{middleware(()=>{}, 'foobar')}).to.throw('middleware chain can only take other functions as arguments.');
+    expect(()=>{middleware(()=>{}, 'foobar');}).to.throw(
+      'middleware chain can only take other functions as arguments.');
   });
   it("calls each member of chain", (done) => {
     const callback = (data, cb) => { cb(data); };
@@ -43,7 +44,7 @@ describe("middleware", () => {
       expect(funcs[1].calledWith('foobar', funcs[0]));
       expect(funcs[2].calledOnce).to.be.false;
       done();
-    })
+    });
   });
   it("completes as expected with last call on error", (done) => {
     const callback = (data, cb) => { cb(data); };
@@ -59,7 +60,7 @@ describe("middleware", () => {
       expect(funcs[2].calledOnce).to.be.true;
       expect(funcs[2].calledWith('foobar', funcs[1]));
       done();
-    })
+    });
   });
   it("calls each member of chain (50)", (done) => {
     const callback = (data, cb) => { cb(data); };
@@ -77,4 +78,4 @@ describe("middleware", () => {
       done();
     });
   });
-})
+});
