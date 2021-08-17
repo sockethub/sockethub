@@ -73,7 +73,8 @@ function IRC(cfg) {
  * It will also check if the incoming AS object uses a @type which exists in the
  * `@types` portion of the schema object (should be an array of @type names).
  *
- * * **NOTE**: For more information on using the credentials object from a client, see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
+ * * **NOTE**: For more information on using the credentials object from a client,
+ * see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
  *
  * Valid AS object for setting IRC credentials:
  * @example
@@ -112,7 +113,8 @@ IRC.prototype.schema = {
   "credentials" : {
     "required": [ 'object' ],
     "properties": {
-      // TODO platforms shouldn't have to define the actor property if they don't want to, just credential specifics
+      // TODO platforms shouldn't have to define the actor property
+      //  if they don't want to, just credential specifics
       "actor": {
         "type": "object",
         "required": [ "@id" ]
@@ -557,14 +559,16 @@ IRC.prototype.__getClient = function (key, credentials, cb) {
 
 IRC.prototype.__connect = function (key, credentials, cb) {
   this.__clientConnecting = true;
-  const is_secure = (typeof credentials.object.secure === 'boolean') ? credentials.object.secure : true;
+  const is_secure = (typeof credentials.object.secure === 'boolean') ?
+    credentials.object.secure : true;
 
   const module_creds = {
     username: credentials.object.nick,
     nicknames: [ credentials.object.nick ],
     server: credentials.object.server || 'irc.freenode.net',
     realname: credentials.actor.displayName || credentials.object.nick,
-    port: (credentials.object.port) ? parseInt(credentials.object.port, 10) : (is_secure) ? 6697 : 6667,
+    port: (credentials.object.port) ?
+      parseInt(credentials.object.port, 10) : (is_secure) ? 6697 : 6667,
     debug: console.log
   };
   if (is_secure) {
@@ -643,7 +647,8 @@ IRC.prototype.__registerListeners = function (server) {
         (this.__handledActors.has(asObject.actor['@id']))) {
       this.__completeJob();
     } else {
-      this.debug('calling sendToClient for ' + asObject.actor['@id'], [...this.__handledActors.keys()]);
+      this.debug(
+        'calling sendToClient for ' + asObject.actor['@id'], [...this.__handledActors.keys()]);
       this.sendToClient(asObject);
     }
   });
