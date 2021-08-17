@@ -159,7 +159,8 @@ describe("PlatformInstance", () => {
       sandbox.assert.calledOnce(getSocketFake);
       sandbox.assert.calledWith(getSocketFake, 'my session id');
       sandbox.assert.calledOnce(socketMock.emit);
-      sandbox.assert.calledWith(socketMock.emit, 'message', {foo:'this is a message object', context: 'a platform name'});
+      sandbox.assert.calledWith(
+        socketMock.emit, 'message', {foo:'this is a message object', context: 'a platform name'});
     });
 
     it('broadcasts to peers', async () => {
