@@ -40,30 +40,14 @@
   SockethubClient.prototype.__handlers = {
     // wrapping the `on` method in order to automatically unpack Activity Streams objects
     // that come in on the 'messages' channel, so that app developers don't need to.
-    message: function (msg) {
-      console.warn(`message event received with no handler registered: `, msg);
-    },
-    completed: function (msg) {
-      console.warn('completed event received with no handler registered: ', msg);
-    },
-    failed: function (msg) {
-      console.warn('failed event received with no handler registered: ', msg);
-    },
-    reconnecting: function (msg) {
-      console.warn('reconnecting: ', msg);
-    },
-    reconnect_failed: function (msg) {
-      console.warn('reconnect failed: ', msg);
-    },
-    connect: function () {
-      console.warn('connected.');
-    },
-    reconnect: function (msg) {
-      console.warn('reconnected: ', msg);
-    },
-    disconnect: function (msg) {
-      console.warn('disconnected: ', msg);
-    }
+    message: [],
+    completed: [],
+    failed: [],
+    reconnecting: [],
+    reconnect_failed: [],
+    connect: [],
+    reconnect: [],
+    disconnect: []
   };
 
   SockethubClient.prototype.__registerSocketIOHandlers = function () {
@@ -86,7 +70,9 @@
         } else if (event === 'disconnect') {
           this.online = false;
         }
-        this.__handlers[event](obj);
+        for (let cb of this.__handlers[event]) {
+          cb(obj);
+        }
       };
     };
 
@@ -149,7 +135,7 @@
     this.socket.on = (event, cb) => {
       if (Object.keys(this.__handlers).includes(event)) {
         // store the desired message channel callback, because we use our own first
-        this.__handlers[event] = cb;
+        this.__handlers[event].push(cb);
       } else {
         // pass on any other handlers
         this.socket._on(event, cb);
@@ -169,7 +155,9 @@
   SockethubClient.prototype.__unpackAndCallHandler = function (event) {
     return (obj) => {
       let unpackedObject = this.ActivityStreams.Stream(obj);
-      this.__handlers[event](unpackedObject);
+      for (let cb of this.__handlers[event]) {
+        cb(unpackedObject);
+      }
     };
   };
 
