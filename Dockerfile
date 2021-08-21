@@ -5,7 +5,7 @@ RUN mkdir -p /app
 WORKDIR /app
 ADD . /app
 
-RUN npm install
+RUN yarn install
 RUN npx lerna bootstrap
 RUN npx lerna run build
 
