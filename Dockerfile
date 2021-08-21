@@ -1,15 +1,15 @@
 FROM node:16
 MAINTAINER Ben Kero <ben.kero@gmail.com>
 
-ADD packages/sockethub/package.json /tmp/package.json
-ADD packages/sockethub/yarn.lock /tmp/yarn.lock
-RUN cd /tmp && npm install
 RUN mkdir -p /app
-ADD packages/sockethub/config.json.example /app/config.json
-RUN cp -a /tmp/node_modules /app/
-
 WORKDIR /app
 ADD . /app
 
+RUN npm install
+RUN npx lerna bootstrap
+RUN npx lerna run build
+
+ADD packages/sockethub/config.json.example /app/packages/sockethub/config.json
+
 EXPOSE 10550
-CMD DEBUG=sockethub* /app/bin/sockethub --examples --host 0.0.0.0
+CMD DEBUG=sockethub* /app/packages/sockethub/bin/sockethub --examples --host 0.0.0.0
