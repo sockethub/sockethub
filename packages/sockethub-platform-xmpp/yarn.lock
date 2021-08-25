@@ -2042,12 +2042,17 @@ log-symbols@4.1.0:
     chalk "^4.1.0"
     is-unicode-supported "^0.1.0"
 
-ltx@^2.10.0, ltx@^2.9.2:
+ltx@^2.10.0:
   version "2.10.0"
   resolved "https://registry.yarnpkg.com/ltx/-/ltx-2.10.0.tgz#0b794b898e01d9dcc61b54b160e78869003bbb20"
   integrity sha512-RB4zR6Mrp/0wTNS9WxMvpgfht/7u/8QAC9DpPD19opL/4OASPa28uoliFqeDkLUU8pQ4aeAfATBZmz1aSAHkMw==
   dependencies:
     inherits "^2.0.4"
+
+ltx@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/ltx/-/ltx-3.0.0.tgz#f2a2260814165c5e28d455f9f7db2178ed295187"
+  integrity sha512-bu3/4/ApUmMqVNuIkHaRhqVtEi6didYcBDIF56xhPRCzVpdztCipZ62CUuaxMlMBUzaVL93+4LZRqe02fuAG6A==
 
 make-dir@^2.0.0, make-dir@^2.1.0:
   version "2.1.0"
