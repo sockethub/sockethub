@@ -1,9 +1,17 @@
+version: "3.6"
 services:
   sockethub:
     build: .
     ports:
-    - "10550:10550"
-    links:
-    - redis
+      - "10550:10550"
+    networks:
+      - sockethub-net
+    depends_on:
+      - redis
   redis:
     image: redis
+    networks:
+      - sockethub-net
+
+networks:
+  sockethub-net:
