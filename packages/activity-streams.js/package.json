@@ -2,12 +2,12 @@
   "name": "activity-streams",
   "version": "4.3.7",
   "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
-  "main": "./lib/activity-streams.js",
+  "main": "./src/activity-streams.js",
   "dependencies": {
     "event-emitter": "^0.3.5"
   },
   "devDependencies": {
-    "c8": "7.7.3",
+    "c8": "7.8.0",
     "chai": "4.3.4",
     "karma": "6.3.4",
     "karma-chai": "0.1.0",
@@ -15,20 +15,22 @@
     "karma-firefox-launcher": "2.1.1",
     "karma-mocha": "2.0.1",
     "mocha": "9.0.3",
-    "webpack": "5.48.0",
-    "webpack-cli": "4.7.2"
+    "webpack": "5.51.1",
+    "webpack-cli": "4.8.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/silverbucket/activity-streams.js.git"
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/activity-streams.js"
   },
   "scripts": {
-    "test:node": "c8 -r text mocha ./lib/**/*.test.js",
-    "test:node:lcov": "c8 -r lcov mocha ./lib/**/*.test.js",
+    "test:node": "c8 -r text mocha ./src/**/*.test.js",
+    "test:node:lcov": "c8 -r lcov mocha ./src/**/*.test.js",
     "test:browser": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
+    "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 85 --lines 95",
     "build": "webpack --mode production",
     "release": "yarn run build && yarn run test",
-    "test": "yarn run test:node:lcov && yarn run test:browser"
+    "test": "yarn run test:node && yarn run test:browser && yarn run coverage"
   },
   "keywords": [
     "activity",
@@ -39,7 +41,7 @@
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/silverbucket/activity-streams.js/issues"
+    "url": "https://github.com/sockethub/sockethub/issues"
   },
-  "homepage": "https://github.com/silverbucket/activity-streams.js"
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/activity-streams.js"
 }
