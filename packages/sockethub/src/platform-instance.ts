@@ -3,7 +3,7 @@ import { join } from 'path';
 import { debug, Debugger } from 'debug';
 import Queue from 'bull';
 
-import redisConfig from "./config";
+import config from "./config";
 import crypto from "./crypto";
 import { ActivityObject, Job } from "./sockethub";
 import { getSocket } from "./serve";
@@ -74,7 +74,7 @@ export default class PlatformInstance {
    * When jobs are completed or failed, we prepare the results and send them to the client socket
    */
   public initQueue(secret: string) {
-    this.queue = new Queue(this.parentId + this.id, redisConfig);
+    this.queue = new Queue(this.parentId + this.id, { redis: config.get('redis') });
     this.queue.on('global:completed', (jobId, result) => {
       this.queue.getJob(jobId).then((job) => {
         job.data.msg = crypto.decrypt(job.data.msg, secret);
