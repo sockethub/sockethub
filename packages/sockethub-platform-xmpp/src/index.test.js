@@ -182,8 +182,10 @@ describe('Platform', () => {
         expect(xp.__client).to.not.be.undefined;
         xp.join(job.join, () => {
           sinon.assert.calledOnce(xp.__client.send);
-          sinon.assert.calledWith(xmlFake,
-            "presence", {"from": "testingham@jabber.net", "to": "partyroom@jabber.net/testing ham"});
+          sinon.assert.calledWith(xmlFake, "presence", {
+            "from": "testingham@jabber.net",
+            "to": "partyroom@jabber.net/testing ham"
+          });
           done();
         });
       });
@@ -194,12 +196,11 @@ describe('Platform', () => {
         expect(xp.__client).to.not.be.undefined;
         xp.leave(job.leave, () => {
           sinon.assert.calledOnce(xp.__client.send);
-          sinon.assert.calledWith(xmlFake,
-            "presence", {
-              "from": "testingham@jabber.net",
-              "to": "partyroom@jabber.net/testing ham",
-              "type": "unavailable"
-            });
+          sinon.assert.calledWith(xmlFake, "presence", {
+            "from": "testingham@jabber.net",
+            "to": "partyroom@jabber.net/testing ham",
+            "type": "unavailable"
+          });
           done();
         });
       });
