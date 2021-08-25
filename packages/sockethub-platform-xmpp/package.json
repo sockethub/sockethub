@@ -24,7 +24,7 @@
   "dependencies": {
     "@xmpp/client": "^0.12.0",
     "c8": "^7.8.0",
-    "ltx": "^2.9.2"
+    "ltx": "^3.0.0"
   },
   "devDependencies": {
     "chai": "4.3.4",
