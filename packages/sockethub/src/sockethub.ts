@@ -3,15 +3,12 @@ import { Socket } from "socket.io";
 
 import crypto from './crypto';
 import init from './bootstrap/init';
-import middleware from './middleware';
+import * as middleware from './middleware';
 import janitor from './janitor';
 import serve from './serve';
 import ProcessManager from "./process-manager";
 import { platformInstances } from "./platform-instance";
 import { getSessionStore } from "./store";
-import validate from './middleware/validate';
-import storeCredentials from "./middleware/store-credentials";
-import createActivityObject from "./middleware/create-activity-object";
 
 const log = debug('sockethub:core');
 
@@ -130,15 +127,15 @@ class Sockethub {
       sessionLog('disconnect received from client.');
     });
 
-    socket.on( 'credentials', middleware(
-      validate('credentials', socket.id),
-      storeCredentials(store, sessionLog)
+    socket.on( 'credentials', middleware.chain(
+      middleware.validate('credentials', socket.id),
+      middleware.storeCredentials(store, sessionLog)
     ));
 
     socket.on(
       'message',
-      middleware(
-        validate('message', socket.id),
+      middleware.chain(
+        middleware.validate('message', socket.id),
         (msg, done) => {
           // middleware which attaches the sessionSecret to the message. The platform thread
           // must find the credentials on their own using the given sessionSecret, which indicates
@@ -154,9 +151,9 @@ class Sockethub {
     // fired and we receive a copy on the server side.
     socket.on(
       'activity-object',
-      middleware(
-        validate('activity-object', socket.id),
-        createActivityObject
+      middleware.chain(
+        middleware.validate('activity-object', socket.id),
+        middleware.createActivityObject
       )
     );
   }

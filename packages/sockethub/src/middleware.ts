@@ -1,3 +1,7 @@
+export { default as validate } from './middleware/validate';
+export { default as storeCredentials } from "./middleware/store-credentials";
+export { default as createActivityObject } from "./middleware/create-activity-object";
+
 /**
  * When calling the middleware function, pass in a list of functions to call in order.
  * Each function can expect any number of params, but the final param should expect a callback.
@@ -13,7 +17,7 @@
  *
  * @example
  *
- *  const entry = middleware(
+ *  const entry = middleware.chain(
  *    (data, cb) => {
  *      //... do something with data
  *      cb(data);
@@ -34,7 +38,7 @@
  *  });
  *
  */
-export default function middleware(...chain) {
+export function chain(...chain) {
   for (let func of chain) {
     if (typeof func !== 'function') {
       throw new Error('middleware chain can only take other functions as arguments.');
