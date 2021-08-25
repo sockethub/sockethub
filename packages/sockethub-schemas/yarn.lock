@@ -92,7 +92,7 @@ browser-stdout@1.3.1:
   resolved "https://registry.yarnpkg.com/browser-stdout/-/browser-stdout-1.3.1.tgz#baa559ee14ced73452229bad7326467c61fabd60"
   integrity sha512-qhAVI1+Av2X7qelOfAIYwXONood6XlZE/fXaBSmW/T5SzLAmCgzi+eiWE7fUvbHaeNBQH13UftjpXxsfLkMpgw==
 
-c8@^7.8.0:
+c8@7.8.0:
   version "7.8.0"
   resolved "https://registry.yarnpkg.com/c8/-/c8-7.8.0.tgz#8fcfe848587d9d5796f22e9b0546a387a66d1b3b"
   integrity sha512-x2Bx+IIEd608B1LmjiNQ/kizRPkCWo5XzuV57J9afPjAHSnYXALwbCSOkQ7cSaNXBNblfqcvdycj+klmL+j6yA==
