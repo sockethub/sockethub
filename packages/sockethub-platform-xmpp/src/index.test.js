@@ -48,6 +48,10 @@ const job = {
     },
     target: target.partyroom
   },
+  leave: {
+    actor: actor,
+    target: target.partyroom
+  },
   send: {
     chat: {
       actor: actor,
@@ -180,6 +184,22 @@ describe('Platform', () => {
           sinon.assert.calledOnce(xp.__client.send);
           sinon.assert.calledWith(xmlFake,
             "presence", {"from": "testingham@jabber.net", "to": "partyroom@jabber.net/testing ham"});
+          done();
+        });
+      });
+    });
+
+    describe('#leave', () => {
+      it('calls xmpp.js correctly', (done) => {
+        expect(xp.__client).to.not.be.undefined;
+        xp.leave(job.leave, () => {
+          sinon.assert.calledOnce(xp.__client.send);
+          sinon.assert.calledWith(xmlFake,
+            "presence", {
+              "from": "testingham@jabber.net",
+              "to": "partyroom@jabber.net/testing ham",
+              "type": "unavailable"
+            });
           done();
         });
       });
