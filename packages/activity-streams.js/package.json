@@ -15,7 +15,7 @@
     "karma-firefox-launcher": "2.1.1",
     "karma-mocha": "2.0.1",
     "mocha": "9.0.3",
-    "webpack": "5.50.0",
+    "webpack": "5.51.1",
     "webpack-cli": "4.8.0"
   },
   "repository": {
