@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import proxyquire from 'proxyquire';
 import * as sinon from 'sinon';
 
