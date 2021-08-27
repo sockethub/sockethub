@@ -27,6 +27,6 @@ describe('Middleware: createActivityObject', () => {
   it('Calls activity.Object.create with incoming data', () => {
     createActivityObject({foo: 'bar'}, () => {
       sandbox.assert.calledWith(createStub, {foo: 'bar'});
-    })
+    });
   });
 });

@@ -43,7 +43,7 @@ describe('Middleware: storeCredentials', () => {
 
   afterEach(() => {
     sinon.reset();
-  })
+  });
 
   it('returns a middleware handler', () => {
     const sc = storeCredentials(storeSuccess, sessionLogStub);
