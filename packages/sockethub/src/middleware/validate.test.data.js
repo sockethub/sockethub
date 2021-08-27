@@ -1,7 +1,7 @@
 export default [
   {
     "name": "basic",
-    "result":true,
+    "valid":true,
     "type":"credentials",
     "input":{
       "@id":"blah",
@@ -25,7 +25,7 @@ export default [
   },
   {
     "name":"new format",
-    "result":true,
+    "valid":true,
     "type":"credentials",
     "input":{
       "context":"irc",
@@ -53,7 +53,7 @@ export default [
   },
   {
     "name":"no type specified",
-    "result":false,
+    "valid":false,
     "type":"credentials",
     "input":{
       "actor":"hyper_rau@localhost",
@@ -70,7 +70,7 @@ export default [
   {
     "name":"person",
     "type":"activity-object",
-    "result":true,
+    "valid":true,
     "input":{
       "@id":"blah",
       "@type":"person",
@@ -80,7 +80,7 @@ export default [
   },
   {
     "name":"person with extras",
-    "result":true,
+    "valid":true,
     "type":"activity-object",
     "input":{
       "@id":"blah",
@@ -96,7 +96,7 @@ export default [
   },
   {
     "name":"alone credentials (as activity-object)",
-    "result":false,
+    "valid":false,
     "type":"activity-object",
     "input":{
       "@type":"credentials",
@@ -108,7 +108,7 @@ export default [
   },
   {
     "name":"alone credentials (as credentials)",
-    "result":false,
+    "valid":false,
     "type":"credentials",
     "input":{
       "@type":"credentials",
@@ -120,7 +120,7 @@ export default [
   },
   {
     "name":"new person",
-    "result":true,
+    "valid":true,
     "type":"activity-object",
     "input":{
       "@id":"sh-9K3Vk@irc.freenode.net",
@@ -138,7 +138,7 @@ export default [
   },
   {
     "name":"new person",
-    "result":true,
+    "valid":true,
     "type":"activity-object",
     "input":{
       "@id":"irc://sh-9K3Vk@irc.freenode.net",
@@ -150,7 +150,7 @@ export default [
   },
   {
     "name":"bad parent object",
-    "result":false,
+    "valid":false,
     "type":"activity-object",
     "input":{
       "string":"this is a string",
@@ -190,7 +190,7 @@ export default [
   },
   {
     "name":"expand actor and target of unknowns",
-    "result":true,
+    "valid":true,
     "type":"message",
     "input":{
       "actor":"irc://uuu@localhost",
@@ -213,7 +213,7 @@ export default [
   },
   {
     "name":"expand actor and target of unknowns",
-    "result":true,
+    "valid":true,
     "type":"message",
     "input":{
       "actor":"hyper_rau@localhost",
@@ -242,7 +242,7 @@ export default [
   },
   {
     "name":"expand known person",
-    "result":true,
+    "valid":true,
     "type":"message",
     "input":{
       "actor":"sh-9K3Vk@irc.freenode.net",
