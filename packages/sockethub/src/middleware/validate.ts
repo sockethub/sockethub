@@ -7,9 +7,9 @@ import URI from 'urijs';
 import ActivityStreams from 'activity-streams';
 import * as SockethubSchemas from 'sockethub-schemas';
 
-import init from './../bootstrap/init';
-import config from './../config';
-import {ActivityObject} from "./../sockethub";
+import init from '../bootstrap/init';
+import config from '../config';
+import {ActivityObject} from "../sockethub";
 
 const activity = ActivityStreams(config.get('activity-streams:opts'));
 

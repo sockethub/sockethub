@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import validate from './validate';
-import asObjects from "./validate.test.data.js";
+import asObjects from "./validate.test.data";
 import ActivityStreams from 'activity-streams';
 
 const activity = ActivityStreams();
@@ -9,7 +9,7 @@ const activity = ActivityStreams();
 describe('Middleware: Validate', () => {
   describe('AS object validations', () => {
     asObjects.forEach((obj) => {
-      it(`${obj.type}: ${obj.name}, should ${obj.valid ? 'pass' : 'fail'}`, () => {
+      it(`${obj.type}: ${obj.name}, should ${obj.valid ? 'pass' : 'fail'}`, (done) => {
         // @ts-ignore
         validate(obj.type, 'tests')(obj.input, (msg) => {
           if (obj.output) {
@@ -27,6 +27,7 @@ describe('Middleware: Validate', () => {
           if ((obj.valid) && (obj.type === 'activity-object')) {
             activity.Object.create(msg);
           }
+          done();
         });
       });
     });
