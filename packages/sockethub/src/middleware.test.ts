@@ -3,7 +3,7 @@ import * as sinon from 'sinon';
 
 import * as middleware from './middleware';
 
-describe("middleware", () => {
+describe("Middleware", () => {
   it("is a function", () => {
     expect(typeof middleware.chain).to.be.equal('function');
   });
