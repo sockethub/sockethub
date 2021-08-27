@@ -7,13 +7,13 @@ proxyquire.noCallThru();
 // @ts-ignore
 import platformLoad from './../bootstrap/platforms';
 const packageJSON = require('./../../package.json');
-const platforms = platformLoad(Object.keys(packageJSON.dependencies))
+const platforms = platformLoad(Object.keys(packageJSON.dependencies));
 
 const validateMod = proxyquire('./validate', {
   '../bootstrap/init': {
     platforms: platforms
   }
-})
+});
 const validate = validateMod.default;
 
 import asObjects from "./validate.test.data";
