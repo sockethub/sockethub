@@ -283,4 +283,4 @@ export default [
       }
     }
   }
-]
+];
