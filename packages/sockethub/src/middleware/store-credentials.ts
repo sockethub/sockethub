@@ -8,7 +8,7 @@ export default function storeCredentials(store: ISecureStoreInstance, sessionLog
         sessionLog('error saving credentials to store ' + err);
         done(err);
       } else {
-        sessionLog('credentials encrypted and saved', done);
+        sessionLog('credentials encrypted and saved');
         done();
       }
     });
