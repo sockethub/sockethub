@@ -6,7 +6,7 @@ import ActivityStreams from 'activity-streams';
 
 const activity = ActivityStreams();
 
-describe('Validates given AS object', () => {
+describe('AS object validations', () => {
   asObjects.forEach((obj) => {
     it(`${obj.type}: ${obj.name}, should ${obj.result ? 'pass' : 'fail'}`, () => {
       // @ts-ignore
