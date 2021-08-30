@@ -110,7 +110,7 @@ function getJobHandler(secret: string) {
         if (err) { return done(new Error(err)); }
         const doneCallback = (err, result) => {
           if (err) {
-            done(new Error(err));
+            done(err instanceof Error ? err : new Error(err));
           } else {
             done(null, result);
           }

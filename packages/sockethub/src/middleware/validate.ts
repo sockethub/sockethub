@@ -128,7 +128,6 @@ export default function validate(type: string, sockethubId: string) {
     } else if (typeof msg.context !== 'string') {
       done(new Error('message must contain a context property'));
     } else if (! init.platforms.has(msg.context)) {
-      console.log("*****", init.platforms);
       done(
         new Error(`platform context ${msg.context} not registered with this sockethub instance.`)
       );
