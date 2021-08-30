@@ -15,9 +15,7 @@ describe('routes/base', () => {
       try {
         expect(existsSync(fwd)).to.be.true;
       } catch (e) {
-        if (fwd.endsWith('.map')) { } else {
-          throw new Error(`Unable to resolve path ${fwd}`);
-        }
+        throw new Error(`Unable to resolve path ${fwd}`);
       }
     });
   });
