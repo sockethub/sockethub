@@ -88,7 +88,8 @@ export default class PlatformInstance {
    */
   public initQueue(secret: string) {
     this.queue = new Queue(this.parentId + this.id, redisConfig);
-    this.queue.on('global:completed', (jobId, result) => {
+    this.queue.on('global:completed', (jobId, resultString) => {
+      const result = JSON.parse(resultString);
       this.queue.getJob(jobId).then(async (job: JobEncrypted) => {
         await this.handleJobResult('completed', decryptJobData(job, secret), result);
         job.remove();

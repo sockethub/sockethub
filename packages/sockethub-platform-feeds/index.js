@@ -125,7 +125,6 @@ class Feeds {
    * and total count.
    *
    * @param {object} job Activity streams object containing job data.
-   * @param {object} credentials
    * @param {object} cb
    *
    * @example
@@ -207,7 +206,7 @@ class Feeds {
    *   }
    *
    */
-  fetch(job, credentials, cb) {
+  fetch(job, cb) {
     // ready to execute job
     this.fetchFeed(job.target['@id'], job.object)
       .then((results) => {
