@@ -1,7 +1,7 @@
 name: Unit Tests
 on: pull_request
 jobs:
-  build:
+  tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -13,6 +13,11 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm install -g yarn
-      - run: yarn install
-      - run: yarn run build
-      - run: yarn test
+      - name: Install Dependencies
+        run: yarn install
+      - name: Build
+        run: yarn run build
+      - name: Test
+        run: yarn test
+      - name: Coverage
+        run: yarn run coverage
