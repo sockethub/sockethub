@@ -20,7 +20,7 @@
     </form>
 
     <script src="<%= address %>jquery.js"></script>
-    <script src="<%= address %>sockethub/socket.io.js"></script>
+    <script src="<%= address %>socket.io.js"></script>
     <script src="<%= address %>activity-streams.min.js"></script>
     <script src="<%= address %>sockethub-client.js"></script>
     <script>
@@ -74,7 +74,7 @@
         };
 
         console.log('sending message: ', msg);
-        sc.socket.emit('message', msg);
+        sc.socket.emit('message', msg, (data) => { console.log('CALLBACK', data); });
         $('#m').val('');
         return false;
       });

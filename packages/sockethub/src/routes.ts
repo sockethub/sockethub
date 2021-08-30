@@ -1,14 +1,18 @@
 import path from 'path';
 import config from "./config";
+import debug from 'debug';
 
 const debug_scope = process.env.DEBUG || '',
+      logger      = debug('sockethub:routes'),
       address     = config.get('public:protocol') + '://' +
                     config.get('public:host') + ':' +
                     config.get('public:port') +
                     config.get('public:path');
 
 export const basePaths = {
-  '/sockethub-client.js': path.resolve(`${__dirname}/js/client.js`),
+  '/sockethub-client.js': path.resolve(`${__dirname}/js/sockethub-client.js`),
+  '/sockethub-client.js.map': path.resolve(`${__dirname}/js/sockethub-client.js.map`),
+  '/js/sockethub-client.js.map': path.resolve(`${__dirname}/js/sockethub-client.js.map`),
   '/socket.io.js': path.resolve(`${__dirname}/../node_modules/socket.io/client-dist/socket.io.js`),
   '/socket.io.js.map': path.resolve(
     `${__dirname}/../node_modules/socket.io/client-dist/socket.io.js.map`),
@@ -42,6 +46,7 @@ function prepFileRoutes(pathMap) {
         path: key
       },
       route: (req, res) => {
+        logger(`serving resource ${req.url}`);
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.sendFile(pathMap[req.url]);
       }
@@ -60,6 +65,7 @@ Object.keys(examplePages).forEach((key) => {
       path: key
     },
     route: (req, res) => {
+      logger(`serving page ${req.url}`);
       res.render(examplePages[req.url], {
         debug_scope: debug_scope,
         address: address,

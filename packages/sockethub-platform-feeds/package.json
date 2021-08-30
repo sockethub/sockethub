@@ -19,9 +19,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/sockethub/sockethub-platform-feeds.git"
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/sockethub-platform-feeds"
   },
-  "homepage": "http://github.com/sockethub/sockethub-platform-feeds",
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/sockethub-platform-feeds",
   "dependencies": {
     "feedparser": "^2.2.9",
     "request": "^2.83.0"
@@ -33,8 +34,8 @@
     "jsdoc-to-markdown": "7.0.1"
   },
   "scripts": {
+    "compliance": "yarn run test",
     "test": "jaribu",
-    "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md",
-    "travis": "yarn run test"
+    "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md"
   }
 }

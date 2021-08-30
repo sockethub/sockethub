@@ -14,18 +14,23 @@
   "main": "./index.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/sockethub/sockethub-schemas.git"
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/sockethub-schemas"
   },
   "devDependencies": {
+    "c8": "7.8.0",
+    "chai": "4.3.4",
+    "mocha": "9.1.0",
+    "proxyrequire": "1.0.21",
     "tv4": "1.3.0"
   },
   "scripts": {
-    "test": "jest",
-    "build": "./bin/build.js",
-    "travis": "yarn run test"
+    "compliance": "yarn run test && yarn run coverage",
+    "test": "c8 mocha **/*.test.js",
+    "coverage": "c8 check-coverage --statements 100 --branches 100 --functions 100 --lines 100",
+    "build": "./bin/build.js"
   },
   "dependencies": {
-    "debug": "^4.3.1",
-    "jest": "^26.6.3"
+    "debug": "^4.3.1"
   }
 }

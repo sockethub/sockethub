@@ -1,7 +1,7 @@
 {
   "name": "sockethub",
   "description": "A polyglot messaging service",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
@@ -29,9 +29,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/sockethub/sockethub.git"
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/sockethub"
   },
-  "homepage": "http://github.com/sockethub/sockethub",
+  "homepage": "https://sockethub.org",
   "dependencies": {
     "@types/body-parser": "^1.19.0",
     "@types/debug": "^4.1.5",
@@ -46,12 +47,12 @@
     "@types/supports-color": "^8.1.0",
     "@types/tv4": "^1.2.29",
     "@types/urijs": "^1.19.13",
-    "activity-streams": "^4.3.6",
+    "activity-streams": "^4.3.7",
     "body-parser": "^1.19.0",
     "bull": "^3.20.1",
     "debug": "^4.3.1",
     "ejs": "^3.0.1",
-    "espree": "^7.3.0",
+    "espree": "^8.0.0",
     "express": "^4.17.1",
     "findup-sync": "^4.0.0",
     "jquery": "^3.4.1",
@@ -61,38 +62,41 @@
     "socket.io": "^4.0.1",
     "sockethub-platform-dummy": "^2.1.0",
     "sockethub-platform-feeds": "^2.2.0",
-    "sockethub-platform-irc": "^3.6.0",
+    "sockethub-platform-irc": "^3.6.1",
     "sockethub-platform-xmpp": "^4.0.0",
     "sockethub-schemas": "^2.1.0",
-    "source-map-loader": "^2.0.1",
+    "source-map-loader": "^3.0.0",
     "supports-color": "^9.0.0",
     "tv4": "^1.3.0",
     "urijs": "^1.19.2"
   },
   "scripts": {
-    "test": "yarn run build && c8 jaribu && jest ---runInBand --detectOpenHandles --forceExit --coverage",
-    "start": "yarn run build && DEBUG=sockethub* ./bin/sockethub",
+    "compliance": "yarn run lint && yarn run test && yarn run coverage",
+    "test": "c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts src/**/*.test.ts",
+    "coverage": "c8 check-coverage --statements 95 --branches 85 --functions 95 --lines 95",
+    "start": "DEBUG=sockethub* ./bin/sockethub",
     "dev": "yarn run build && DEBUG=sockethub* ./bin/sockethub --examples",
-    "coverage": "jest --coverage",
     "lint": "eslint \"**/*.ts\" ./bin/sockethub",
     "lint:fix": "eslint --fix \"**/*.ts\" ./bin/sockethub",
-    "tsc": "tsc -p tsconfig.json",
-    "build": "tsc -p tsconfig.json && cp ./src/defaults.json ./dist/defaults.json",
-    "travis": "yarn run test"
+    "build": "tsc && cp ./src/defaults.json ./dist/defaults.json"
   },
   "engines": {
     "node": ">= 12.0.0"
   },
   "devDependencies": {
-    "@types/jest": "26.0.23",
-    "@typescript-eslint/parser": "4.24.0",
-    "c8": "7.7.2",
-    "eslint": "7.26.0",
+    "@types/chai": "4.2.21",
+    "@types/mocha": "9.0.0",
+    "@typescript-eslint/parser": "4.29.3",
+    "c8": "7.8.0",
+    "chai": "4.3.4",
+    "eslint": "7.32.0",
     "eslint-cli": "1.1.1",
     "jaribu": "2.2.3",
-    "jest": "26.6.3",
+    "mocha": "9.1.0",
+    "proxyquire": "2.1.3",
+    "sinon": "11.1.2",
     "ts-jest": "26.5.6",
-    "ts-node": "9.1.1",
-    "typescript": "4.2.4"
+    "ts-node": "10.2.1",
+    "typescript": "4.4.2"
   }
 }

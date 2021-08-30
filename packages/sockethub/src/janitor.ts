@@ -63,8 +63,7 @@ function removeStaleSessions(platformInstance, sockets) {
 
 function removeStalePlatformInstance(platformInstance) {
   if (platformInstance.flaggedForTermination) {
-    rmLog(`terminating platform instance ${platformInstance.id} ` +
-      `(flagged for termination: no registered sessions found)`);
+    rmLog(`terminating platform instance ${platformInstance.id}`);
     platformInstance.destroy(); // terminate
   } else {
     rmLog(`flagging for termination platform instance ${platformInstance.id} ` +

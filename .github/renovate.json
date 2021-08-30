@@ -1,8 +1,18 @@
 {
   "labels": [ "kredits-1", "dependencies" ],
   "reviewers": [ "silverbucket" ],
-  "additionalBranchPrefix": "{{parentDir}}-",
   "extends": [
     "config:base"
-  ]
+  ],
+  "dependencyDashboard": true,
+  "lockFileMaintenance": { "enabled": true },
+  "prCreation": "not-pending",
+  "rebaseWhen": "behind-base-branch",
+  "schedule": "every weekday",
+  "stabilityDays": 3,
+  "updateNotScheduled": true,
+  "packageRules": [{
+    "extends": ["monorepo:jest"],
+    "allowedVersions": "<27"
+  }]
 }

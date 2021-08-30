@@ -1,5 +1,8 @@
+const chai = require('chai');
+const sinon = require('sinon');
 const IncomingHandler = require('./incoming-handlers');
 const parse = require('@xmpp/xml/lib/parse');
+const expect = chai.expect;
 
 const stanzas = [
   [
@@ -155,19 +158,24 @@ const stanzas = [
   // ]
 ];
 
-describe('incoming XML stanzas should result in the expected AS objects', () => {
-  let ih, sendToClient;
-  beforeEach(() => {
-    sendToClient = jest.fn();
-    ih = new IncomingHandler({
-      sendToClient: sendToClient,
-      debug: jest.fn()
-    });
-  });
+describe('Incoming handlers', () => {
+  describe('XML stanzas result in the expected AS objects', () => {
+    let ih, sendToClient;
 
-  it.each(stanzas)('%s', (name, stanza, asobject) => {
-    const xmlObj = parse(stanza);
-    ih.stanza(xmlObj);
-    expect(sendToClient).toHaveBeenCalledWith(asobject);
+    beforeEach(() => {
+      sendToClient = sinon.fake();
+      ih = new IncomingHandler({
+        sendToClient: sendToClient,
+        debug: sinon.fake()
+      });
+    });
+
+    stanzas.forEach(([name, stanza, asobject]) => {
+      it(name, () => {
+        const xmlObj = parse(stanza);
+        ih.stanza(xmlObj);
+        sinon.assert.calledWith(sendToClient, asobject);
+      });
+    });
   });
 });
