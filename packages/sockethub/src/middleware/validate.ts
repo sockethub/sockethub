@@ -7,8 +7,9 @@ import URI from 'urijs';
 import ActivityStreams from 'activity-streams';
 import * as SockethubSchemas from 'sockethub-schemas';
 
-import init from './bootstrap/init';
-import config from './config';
+import init from '../bootstrap/init';
+import config from '../config';
+import {ActivityObject} from "../sockethub";
 
 const activity = ActivityStreams(config.get('activity-streams:opts'));
 
@@ -33,12 +34,6 @@ function ensureObject(msg: any) {
   return !((typeof msg !== 'object') || (Array.isArray(msg)));
 }
 
-function errorHandler(type: any, msg: any, next: any) {
-  return (err) => {
-    return next(false, err, type, msg);
-  };
-}
-
 // expand given prop to full object if they are just strings
 // FIXME are we sure this works? What's propName for?
 function expandProp(propName, prop) {
@@ -58,48 +53,47 @@ function getUriFragment(uri: any) {
   return (frag) ? '#' + frag : undefined;
 }
 
-function processActivityObject(msg: any, error: any, next: any) {
+function processActivityObject(msg: any, done: Function) {
   if (! validateActivityObject(msg)) {
-    return error(
-      `activity-object schema validation failed: ${tv4.error.dataPath} = ${tv4.error.message}`
-    );
+    return done(new Error(
+      `activity-object schema validation failed: ${tv4.error.dataPath} = ${tv4.error.message}`));
   }
   msg.displayName = ensureDisplayName(msg);
-  return next(true, msg); // passed validation, on to next handler in middleware chain
+  return done(msg); // passed validation, on to next handler in middleware chain
 }
 
-function processActivityStream(msg: any, error: any, next: any) {
+function processActivityStream(msg: any, done: Function) {
   let stream;
   try { // expands the AS object to a full object with the expected properties
     stream = activity.Stream(msg);
   } catch (e) {
-    return error(e);
+    return done(new Error(e));
   }
   msg = stream; // overwrite message with expanded as object stream
 
   if (! validateActivityStream(msg)) {
-    return error(
-      `actvity-stream schema validation failed: ${tv4.error.dataPath}: ${tv4.error.message}`);
+    return done(new Error(
+      `actvity-stream schema validation failed: ${tv4.error.dataPath}: ${tv4.error.message}`));
   }
   // passed validation, on to next handler in middleware chain
-  return next(true, expandStream(msg));
+  return done(expandStream(msg));
 }
 
-function processCredentials(msg: any, error: any, next: any) {
+function processCredentials(msg: any, done: Function) {
   msg.actor = expandProp('actor', msg.actor);
   msg.target = expandProp('target', msg.target);
   let credentialsSchema = tv4.getSchema(
     `http://sockethub.org/schemas/v0/context/${msg.context}/credentials`);
   if (! credentialsSchema) {
-    return error(`no credentials schema found for ${msg.context} context`);
+    return done(new Error(`no credentials schema found for ${msg.context} context`));
   }
 
   if (! validateCredentials(msg, credentialsSchema)) {
-    return error(
-      `credentials schema validation failed: ${tv4.error.dataPath} = ${tv4.error.message}`);
+    return done(new Error(
+      `credentials schema validation failed: ${tv4.error.dataPath} = ${tv4.error.message}`));
   }
   // passed validation, on to next handler in middleware chain
-  return next(true, expandStream(msg));
+  return done(expandStream(msg));
 }
 
 function validateActivityObject(msg: any) {
@@ -124,24 +118,25 @@ function validateActivityStream(msg: any) {
 export default function validate(type: string, sockethubId: string) {
   const sessionLog = debug(`sockethub:validate:${sockethubId}`);
   // called by the middleware with the message and the next (callback) in the chain
-  return (next, msg) => {
+  return (msg: ActivityObject, done: Function) => {
     sessionLog('applying schema validation for ' + type);
-    const error = errorHandler(type, msg, next);
 
     if (! ensureObject(msg)) {
-      error(`message received is not an object.`);
+      done(new Error(`message received is not an object.`));
     } else if (type === 'activity-object') {
-      processActivityObject(msg, error, next);
+      processActivityObject(msg, done);
     } else if (typeof msg.context !== 'string') {
-      error('message must contain a context property');
+      done(new Error('message must contain a context property'));
     } else if (! init.platforms.has(msg.context)) {
-      error(`platform context ${msg.context} not registered with this sockethub instance.`);
+      done(
+        new Error(`platform context ${msg.context} not registered with this sockethub instance.`)
+      );
     } else if ((type === 'message') && (typeof msg['@type'] !== 'string')) {
-      error('message must contain a @type property.');
+      done(new Error('message must contain a @type property.'));
     } else if (type === 'credentials') {
-      processCredentials(msg, error, next);
+      processCredentials(msg, done);
     } else {
-      processActivityStream(msg, error, next);
+      processActivityStream(msg, done);
     }
   };
 };

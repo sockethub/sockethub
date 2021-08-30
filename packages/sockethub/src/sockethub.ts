@@ -1,20 +1,19 @@
 import debug from 'debug';
-import ActivityStreams from 'activity-streams';
 import { Socket } from "socket.io";
 
-import config from './config';
 import crypto from './crypto';
 import init from './bootstrap/init';
-import Middleware from './middleware';
+import createMiddleware from './middleware';
+import createActivityObject from "./middleware/create-activity-object";
+import storeCredentials from "./middleware/store-credentials";
+import validate from "./middleware/validate";
 import janitor from './janitor';
 import serve from './serve';
-import validate from './validate';
 import ProcessManager from "./process-manager";
 import { platformInstances } from "./platform-instance";
-import {getSessionStore, ISecureStoreInstance} from "./store";
+import { getSessionStore } from "./store";
 
-const log = debug('sockethub:core'),
-      activity = ActivityStreams(config.get('activity-streams:opts'));
+const log = debug('sockethub:core');
 
 
 export interface JobDataDecrypted {
@@ -58,18 +57,15 @@ export interface ActivityObject {
   sessionSecret?: string;
 }
 
-
-function getMiddleware(socket: Socket, sessionLog: Function) {
-  return new Middleware((err, type: string, msg: ActivityObject) => {
-    sessionLog('validation failed for ' + type + '. ' + err, msg);
-    // called with validation fails
+function errorHandler(type, socket, log) {
+  return function reportError(err, msg) {
+    log('failure handling ' + type + '. ' + err);
     if (typeof msg !== 'object') {
       msg = { context: 'error' };
     }
     msg.error = err;
-    // send failure
     socket.emit('failure', msg);
-  });
+  };
 }
 
 class Sockethub {
@@ -118,7 +114,7 @@ class Sockethub {
   }
 
   private handleIncomingMessage(socket: Socket, sessionLog: Function) {
-    return (msg) => {
+    return (msg, done: Function) => {
       const platformInstance = this.processManager.get(msg.context, msg.actor['@id'], socket.id);
       const title = `${msg.context}-${(msg['@id']) ? msg['@id'] : this.counter++}`;
       sessionLog(`queued to channel ${platformInstance.id}`);
@@ -128,18 +124,7 @@ class Sockethub {
         msg: crypto.encrypt(msg, this.parentSecret1 + this.parentSecret2)
       };
       platformInstance.queue.add(job);
-    };
-  };
-
-  private handleStoreCredentials(store: ISecureStoreInstance, sessionLog: Function) {
-    return (creds: ActivityObject) => {
-      store.save(creds.actor['@id'], creds, (err) => {
-        if (err) {
-          sessionLog('error saving credentials to store ' + err);
-        } else {
-          sessionLog('credentials encrypted and saved');
-        }
-      });
+      done(job);
     };
   };
 
@@ -147,8 +132,7 @@ class Sockethub {
     const sessionLog = debug('sockethub:core:' + socket.id), // session-specific debug messages
           sessionSecret = crypto.randToken(16),
           // store instance is session-specific
-          store = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret),
-          middleware = getMiddleware(socket, sessionLog);
+          store = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret);
 
     sessionLog(`socket.io connection`);
 
@@ -156,22 +140,23 @@ class Sockethub {
       sessionLog('disconnect received from client.');
     });
 
-    socket.on(
-      'credentials',
-      middleware.chain(
-        validate('credentials', socket.id), this.handleStoreCredentials(store, sessionLog))
+    socket.on('credentials',
+      createMiddleware(errorHandler('credentials', socket, sessionLog))(
+        validate('credentials', socket.id),
+        storeCredentials(store, sessionLog)
+      )
     );
 
     socket.on(
       'message',
-      middleware.chain(
+      createMiddleware(errorHandler('message', socket, sessionLog))(
         validate('message', socket.id),
-        (next, msg) => {
+        (msg, done) => {
           // middleware which attaches the sessionSecret to the message. The platform thread
           // must find the credentials on their own using the given sessionSecret, which indicates
           // that this specific session (socket connection) has provided credentials.
           msg.sessionSecret = sessionSecret;
-          next(true, msg);
+          done(msg);
         },
         this.handleIncomingMessage(socket, sessionLog)
       )
@@ -181,9 +166,9 @@ class Sockethub {
     // fired and we receive a copy on the server side.
     socket.on(
       'activity-object',
-      middleware.chain(
+      createMiddleware(errorHandler('message', socket, sessionLog))(
         validate('activity-object', socket.id),
-        activity.Object.create
+        createActivityObject
       )
     );
   }

@@ -15,7 +15,9 @@ describe('routes/base', () => {
       try {
         expect(existsSync(fwd)).to.be.true;
       } catch (e) {
-        throw new Error(`Unable to resolve path ${fwd}`);
+        if (fwd.endsWith('.map')) { } else {
+          throw new Error(`Unable to resolve path ${fwd}`);
+        }
       }
     });
   });
@@ -58,7 +60,9 @@ describe('routes/base', () => {
     routes.setup(app, true);
     sinon.assert.callCount(
       app.get,
-      Object.keys(basePaths).length + Object.keys(examplePaths).length + Object.keys(examplePages).length
+      Object.keys(basePaths).length
+      + Object.keys(examplePaths).length
+      + Object.keys(examplePages).length
     );
   });
 

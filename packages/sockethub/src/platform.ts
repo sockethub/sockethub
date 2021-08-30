@@ -31,7 +31,8 @@ export interface PlatformSession {
  * Handle any uncaught errors from the platform by alerting the worker and shutting down.
  */
 process.on('uncaughtException', (err) => {
-  console.log(`\nUNCAUGHT EXCEPTION IN PLATFORM\n`);
+  console.log('UNCAUGHT EXCEPTION IN PLATFORM');
+  // eslint-disable-next-line security-node/detect-crlf
   console.log(err.stack);
   process.send(['error', err.toString()]);
   process.exit(1);
@@ -109,7 +110,7 @@ function getJobHandler(secret: string) {
         if (err) { return done(new Error(err)); }
         const doneCallback = (err, result) => {
           if (err) {
-            done(new Error(err));
+            done(err instanceof Error ? err : new Error(err));
           } else {
             done(null, result);
           }

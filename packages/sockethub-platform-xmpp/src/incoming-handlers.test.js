@@ -158,22 +158,24 @@ const stanzas = [
   // ]
 ];
 
-describe('incoming XML stanzas should result in the expected AS objects', () => {
-  let ih, sendToClient;
+describe('Incoming handlers', () => {
+  describe('XML stanzas result in the expected AS objects', () => {
+    let ih, sendToClient;
 
-  beforeEach(() => {
-    sendToClient = sinon.fake();
-    ih = new IncomingHandler({
-      sendToClient: sendToClient,
-      debug: sinon.fake()
+    beforeEach(() => {
+      sendToClient = sinon.fake();
+      ih = new IncomingHandler({
+        sendToClient: sendToClient,
+        debug: sinon.fake()
+      });
     });
-  });
 
-  stanzas.forEach(([name, stanza, asobject]) => {
-    it(name, () => {
-      const xmlObj = parse(stanza);
-      ih.stanza(xmlObj);
-      sinon.assert.calledWith(sendToClient, asobject);
+    stanzas.forEach(([name, stanza, asobject]) => {
+      it(name, () => {
+        const xmlObj = parse(stanza);
+        ih.stanza(xmlObj);
+        sinon.assert.calledWith(sendToClient, asobject);
+      });
     });
   });
 });

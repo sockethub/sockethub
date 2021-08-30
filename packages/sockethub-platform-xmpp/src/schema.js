@@ -23,7 +23,7 @@ module.exports = {
       "object": {
         "name": "object",
         "type": "object",
-        "required": ['@type', 'username', 'password', 'server', 'resource'],
+        "required": ['@type', 'username', 'password', 'resource'],
         "additionalProperties": false,
         "properties": {
           "@type": {
