@@ -63,7 +63,7 @@ describe('integration page', () => {
           //  eg. username: jimmy@localhost
         }
       }, done);
-    }).timeout(10000);
+    }).timeout(3000);
 
     it('send connect', (done) => {
       sc.socket.on('failed', (err) => {
