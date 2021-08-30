@@ -1,26 +1,11 @@
 name: Compliance
-
 on: pull_request
-
 jobs:
-  build:
-
+  lint:
     runs-on: ubuntu-latest
-
-    services:
-      redis:
-        image: redis
-        # Set health checks to wait until redis has started
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     strategy:
       matrix:
-        node-version: [14.x, 16.x]
-
+        node-version: [16.x]
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
@@ -29,6 +14,42 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm install -g yarn
       - run: yarn install
-      - run: yarn run build
       - run: yarn run lint
-      - run: yarn test
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ 14.x, 16.x ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm install -g yarn
+      - name: Install Dependencies
+        run: yarn install
+      - name: Build
+        run: yarn run build
+      - name: Test
+        run: yarn test
+  coverage:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ 16.x ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm install -g yarn
+      - name: Install Dependencies
+        run: yarn install
+      - name: Build
+        run: yarn run build
+      - name: Test
+        run: yarn test
+      - name: Coverage
+        run: yarn run coverage
