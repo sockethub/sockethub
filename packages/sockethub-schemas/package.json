@@ -25,7 +25,8 @@
     "tv4": "1.3.0"
   },
   "scripts": {
-    "test": "c8 mocha **/*.test.js && yarn run coverage",
+    "compliance": "yarn run test && yarn run coverage",
+    "test": "c8 mocha **/*.test.js",
     "coverage": "c8 check-coverage --statements 100 --branches 100 --functions 100 --lines 100",
     "build": "./bin/build.js"
   },

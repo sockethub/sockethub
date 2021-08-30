@@ -24,13 +24,14 @@
     "directory": "packages/activity-streams.js"
   },
   "scripts": {
+    "compliance": "yarn run test && yarn run coverage",
     "test:node": "c8 -r text mocha ./src/**/*.test.js",
     "test:node:lcov": "c8 -r lcov mocha ./src/**/*.test.js",
     "test:browser": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
     "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 85 --lines 95",
     "build": "webpack --mode production",
     "release": "yarn run build && yarn run test",
-    "test": "yarn run test:node && yarn run test:browser && yarn run coverage"
+    "test": "yarn run test:node && yarn run test:browser"
   },
   "keywords": [
     "activity",
