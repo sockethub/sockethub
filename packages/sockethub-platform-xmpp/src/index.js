@@ -142,6 +142,7 @@ class XMPP {
       delete this.__client;
       this.sendToClient({
         '@type': 'error',
+        actor: job.actor['@id'],
         object: {
           '@type': 'error',
           content: err.text || err.toString(),
