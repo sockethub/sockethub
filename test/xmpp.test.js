@@ -6,6 +6,7 @@ const assert = chai.assert;
 const expect = chai.expect;
 
 async function loadScript(url) {
+  console.log('loadScript: ' + url);
   let response = await fetch(url);
   let script = await response.text();
   eval(script);
