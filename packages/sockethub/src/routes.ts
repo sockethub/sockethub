@@ -12,7 +12,8 @@ const debug_scope = process.env.DEBUG || '',
 export const basePaths = {
   '/sockethub-client.js': path.resolve(`${__dirname}/../dist/client/sockethub-client.js`),
   '/sockethub-client.js.map': path.resolve(`${__dirname}/../dist/client/sockethub-client.js.map`),
-  '/js/sockethub-client.js.map': path.resolve(`${__dirname}/../dist/client/sockethub-client.js.map`),
+  '/js/sockethub-client.js.map':
+    path.resolve(`${__dirname}/../dist/client/sockethub-client.js.map`),
   '/socket.io.js': path.resolve(`${__dirname}/../node_modules/socket.io/client-dist/socket.io.js`),
   '/socket.io.js.map': path.resolve(
     `${__dirname}/../node_modules/socket.io/client-dist/socket.io.js.map`),
