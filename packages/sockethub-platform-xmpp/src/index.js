@@ -164,30 +164,63 @@ class XMPP {
    *   context: 'xmpp',
    *   '@type': 'join',
    *   actor: {
-   *     '@type': 'person'
-   *     '@id': 'slvrbckt@jabber.net/Home',
-   *   },
-   *   object: {
    *     '@type': 'person',
    *     '@id': 'slvrbckt@jabber.net/Home',
    *     displayName: 'Mr. Pimp'
+   *   },
+   *   target: {
+   *     '@type': 'room',
+   *     '@id': 'PartyChatRoom@muc.jabber.net'
+   *   }
+   * }
+   */
+  join(job, done) {
+    this.debug(`sending join from ${job.actor['@id']} to ` +
+               `${job.target['@id']}/${job.actor.displayName}`);
+    // TODO optional passwords not handled for now
+    // TODO investigate implementation reserved nickname discovery
+
+    let id = job.target['@id'].split('/')[0];
+
+    this.__client.send(xml("presence", {
+      from: job.actor['@id'],
+      to: `${job.target['@id']}/${job.actor.displayName || id}`
+    })).then(done);
+  };
+
+  /**
+   * Leave a room
+   *
+   * @param {object} job activity streams object // TODO LINK
+   * @param {object} done callback when job is done // TODO LINK
+   *
+   * @example
+   *
+   * {
+   *   context: 'xmpp',
+   *   '@type': 'leave',
+   *   actor: {
+   *     '@type': 'person',
+   *     '@id': 'slvrbckt@jabber.net/Home',
+   *     displayName: 'slvrbckt'
    *   },
    *   target: {
    *     '@type': 'room'
    *     '@id': 'PartyChatRoom@muc.jabber.net',
    *   }
    * }
-   *
    */
-  join(job, done) {
-    this.debug(`sending join from ${job.actor['@id']} to ` +
+  leave(job, done) {
+    this.debug(`sending leave from ${job.actor['@id']} to ` +
                `${job.target['@id']}/${job.actor.displayName}`);
+
     let id = job.target['@id'].split('/')[0];
-    // TODO optional passwords not handled for now
-    // TODO investigate implementation reserved nickname discovery
-    this.__client.send(xml("presence",
-      { from: job.actor['@id'], to: `${job.target['@id']}/${job.actor.displayName || id}` }
-    )).then(done);
+
+    this.__client.send(xml("presence", {
+      from: job.actor['@id'],
+      to: `${job.target['@id']}/${job.actor.displayName}` || id,
+      type: 'unavailable'
+    })).then(done);
   };
 
   /**

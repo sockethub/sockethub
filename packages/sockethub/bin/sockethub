@@ -2,7 +2,8 @@
 const baseDir = process.env.DEV ? 'src' : 'dist';
 
 process.once('uncaughtException', function (err) {
-  console.log(`\nUNCAUGHT EXCEPTION\n`);
+  console.log('UNCAUGHT EXCEPTION');
+  // eslint-disable-next-line security-node/detect-crlf
   console.log(err.stack);
   process.exit(1);
 });

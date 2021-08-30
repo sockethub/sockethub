@@ -74,7 +74,7 @@
         };
 
         console.log('sending message: ', msg);
-        sc.socket.emit('message', msg);
+        sc.socket.emit('message', msg, (data) => { console.log('CALLBACK', data); });
         $('#m').val('');
         return false;
       });

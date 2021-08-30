@@ -3,15 +3,15 @@ import { Socket } from "socket.io";
 
 import crypto from './crypto';
 import init from './bootstrap/init';
-import middleware from './middleware';
+import createMiddleware from './middleware';
+import createActivityObject from "./middleware/create-activity-object";
+import storeCredentials from "./middleware/store-credentials";
+import validate from "./middleware/validate";
 import janitor from './janitor';
 import serve from './serve';
 import ProcessManager from "./process-manager";
 import { platformInstances } from "./platform-instance";
-import {getSessionStore, ISecureStoreInstance} from "./store";
-import validate from './middleware/validate';
-import storeCredentials from "./middleware/store-credentials";
-import createActivityObject from "./middleware/create-activity-object";
+import { getSessionStore } from "./store";
 
 const log = debug('sockethub:core');
 
@@ -57,6 +57,16 @@ export interface ActivityObject {
   sessionSecret?: string;
 }
 
+function errorHandler(type, socket, log) {
+  return function reportError(err, msg) {
+    log('failure handling ' + type + '. ' + err);
+    if (typeof msg !== 'object') {
+      msg = { context: 'error' };
+    }
+    msg.error = err;
+    socket.emit('failure', msg);
+  };
+}
 
 class Sockethub {
   private readonly parentId: string;
@@ -130,14 +140,16 @@ class Sockethub {
       sessionLog('disconnect received from client.');
     });
 
-    socket.on( 'credentials', middleware(
-      validate('credentials', socket.id),
-      storeCredentials(store, sessionLog)
-    ));
+    socket.on('credentials',
+      createMiddleware(errorHandler('credentials', socket, sessionLog))(
+        validate('credentials', socket.id),
+        storeCredentials(store, sessionLog)
+      )
+    );
 
     socket.on(
       'message',
-      middleware(
+      createMiddleware(errorHandler('message', socket, sessionLog))(
         validate('message', socket.id),
         (msg, done) => {
           // middleware which attaches the sessionSecret to the message. The platform thread
@@ -154,7 +166,7 @@ class Sockethub {
     // fired and we receive a copy on the server side.
     socket.on(
       'activity-object',
-      middleware(
+      createMiddleware(errorHandler('message', socket, sessionLog))(
         validate('activity-object', socket.id),
         createActivityObject
       )

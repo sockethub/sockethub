@@ -29,9 +29,9 @@ Below is a list of platform contexts we're currently working on and their types,
 
 ## Platforms
 
-* [Feeds](packages/sockethub-platform-feeds) *(RSS, Atom)*
-* [IRC](packages/sockethub-platform-irc) 
-* [XMPP](packages/sockethub-platform-xmpp) 
+* [Feeds](../sockethub-platform-feeds) *(RSS, Atom)*
+* [IRC](../sockethub-platform-irc) 
+* [XMPP](../sockethub-platform-xmpp) 
 
 ## Install
 

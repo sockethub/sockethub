@@ -48,6 +48,10 @@ const job = {
     },
     target: target.partyroom
   },
+  leave: {
+    actor: actor,
+    target: target.partyroom
+  },
   send: {
     chat: {
       actor: actor,
@@ -97,7 +101,7 @@ const job = {
   }
 };
 
-describe('initial loaded properties', () => {
+describe('Platform', () => {
   let shXmpp, clientFake, xmlFake, clientObjectFake, xp;
 
   beforeEach(() => {
@@ -131,9 +135,22 @@ describe('initial loaded properties', () => {
     sinon.restore();
   })
 
-  describe('bad initialization', () => {
+  describe('Successful initialization', () => {
+    it('works as intended', (done) => {
+      xp.connect(job.join, credentials, () => {
+        sinon.assert.calledOnce(clientFake);
+        expect(xp.__client.on).to.exist;
+        expect(xp.__client.start).to.exist;
+        expect(xp.__client.send).to.exist;
+        sinon.assert.calledOnce(clientObjectFake.start);
+        sinon.assert.notCalled(xp.sendToClient);
+        done();
+      });
+    });
+  });
 
-    it('existing __client object is returned',   (done) => {
+  describe('Bad initialization', () => {
+    it('returns the existing __client object',   (done) => {
       xp.__client = 'foo';
       xp.connect(job.join, credentials, () => {
         expect(xp.__client).to.equal('foo');
@@ -145,7 +162,7 @@ describe('initial loaded properties', () => {
       });
     });
 
-    it('failed connect will delete the __client property', (done) => {
+    it('deletes the __client property on failed connect', (done) => {
       clientObjectFake.start = sinon.fake.rejects('foo');
       xp.connect(job.join, credentials, () => {
         expect(xp.__client).to.be.undefined;
@@ -155,102 +172,124 @@ describe('initial loaded properties', () => {
     });
   });
 
-  describe('xmpp platform initialization', () => {
+  describe('Platform functionality', () => {
+    beforeEach(done => {
+      xp.connect(job.join, credentials, () => done());
+    });
 
-    beforeEach((done) => {
-      xp.connect(job.join, credentials, () => {
-        sinon.assert.calledOnce(clientFake);
-        expect(xp.__client.on).to.exist;
-        expect(xp.__client.start).to.exist;
-        expect(xp.__client.send).to.exist;
-        sinon.assert.calledOnce(clientObjectFake.start);
-        sinon.assert.notCalled(xp.sendToClient);
-        done();
+    describe('#join', () => {
+      it('calls xmpp.js correctly', (done) => {
+        expect(xp.__client).to.not.be.undefined;
+        xp.join(job.join, () => {
+          sinon.assert.calledOnce(xp.__client.send);
+          sinon.assert.calledWith(xmlFake, "presence", {
+            "from": "testingham@jabber.net",
+            "to": "partyroom@jabber.net/testing ham"
+          });
+          done();
+        });
       });
     });
 
-    it('calls xmpp.js correctly when #join is called', (done) => {
-      expect(xp.__client).to.not.be.undefined;
-      xp.join(job.join, () => {
-        sinon.assert.calledOnce(xp.__client.send);
-        sinon.assert.calledWith(xmlFake,
-          "presence", {"from": "testingham@jabber.net", "to": "partyroom@jabber.net/testing ham"});
-        done();
+    describe('#leave', () => {
+      it('calls xmpp.js correctly', (done) => {
+        expect(xp.__client).to.not.be.undefined;
+        xp.leave(job.leave, () => {
+          sinon.assert.calledOnce(xp.__client.send);
+          sinon.assert.calledWith(xmlFake, "presence", {
+            "from": "testingham@jabber.net",
+            "to": "partyroom@jabber.net/testing ham",
+            "type": "unavailable"
+          });
+          done();
+        });
       });
     });
 
-    it('calls xmpp.js correctly when #send is called', (done) => {
-      const message = xmlFake(
-        "message",
-        {type: job.send.chat.target['@type'] === 'room' ? 'groupchat' : 'chat',
-          to: job.send.chat.target['@id']},
-        xmlFake("body", {}, job.send.chat.object.content),
-      );
-      xp.send(job.send.chat, () => {
-        sinon.assert.calledWith(xp.__client.send, message);
-        done();
+    describe('#send', () => {
+      it('calls xmpp.js correctly', (done) => {
+        const message = xmlFake(
+          "message",
+          {type: job.send.chat.target['@type'] === 'room' ? 'groupchat' : 'chat',
+            to: job.send.chat.target['@id']},
+          xmlFake("body", {}, job.send.chat.object.content),
+        );
+        xp.send(job.send.chat, () => {
+          sinon.assert.calledWith(xp.__client.send, message);
+          done();
+        });
+      });
+
+      it('calls xmpp.js correctly when called for a groupchat', (done) => {
+        const message = xmlFake(
+          "message",
+          {type: job.send.chat.target['@type'] === 'room' ? 'groupchat' : 'chat',
+            to: job.send.chat.target['@id']},
+          xmlFake("body", {}, job.send.chat.object.content),
+        );
+        xp.send(job.send.groupchat, () => {
+          sinon.assert.calledWith(xp.__client.send, message);
+          done();
+        });
+      });
+    })
+
+    describe('#update', () => {
+      it('calls xmpp.js correctly', (done) => {
+        xp.update(job.update.presence, () => {
+          sinon.assert.calledOnce(xp.__client.send);
+          sinon.assert.calledWith(xp.__client.send, xmlFake("presence", { type: "available" }));
+          done();
+        });
       });
     });
 
-    it('calls xmpp.js correctly when #send is called for a groupchat', (done) => {
-      const message = xmlFake(
-        "message",
-        {type: job.send.chat.target['@type'] === 'room' ? 'groupchat' : 'chat',
-          to: job.send.chat.target['@id']},
-        xmlFake("body", {}, job.send.chat.object.content),
-      );
-      xp.send(job.send.groupchat, () => {
-        sinon.assert.calledWith(xp.__client.send, message);
-        done();
+    describe('#request-friend', () => {
+      it('calls xmpp.js correctly', (done) => {
+        xp['request-friend'](job['request-friend'], () => {
+          sinon.assert.calledOnce(xp.__client.send);
+          sinon.assert.calledWith(xp.__client.send,
+            xmlFake("presence", { type: "subscribe", to: job['request-friend'].target['@id'] }));
+          done();
+        });
       });
     });
 
-    it('calls xmpp.js correctly when #update is called', (done) => {
-      xp.update(job.update.presence, () => {
-        sinon.assert.calledOnce(xp.__client.send);
-        sinon.assert.calledWith(xp.__client.send, xmlFake("presence", { type: "available" }));
-        done();
+    describe('#remove-friend', () => {
+      it('calls xmpp.js correctly', (done) => {
+        xp['remove-friend'](job['remove-friend'], () => {
+          sinon.assert.calledOnce(xp.__client.send);
+          sinon.assert.calledWith(xp.__client.send,
+            xmlFake("presence", { type: "subscribe", to: job['remove-friend'].target['@id'] }));
+          done();
+        });
       });
     });
 
-    it('calls xmpp.js correctly when #request-friend is called', (done) => {
-      xp['request-friend'](job['request-friend'], () => {
-        sinon.assert.calledOnce(xp.__client.send);
-        sinon.assert.calledWith(xp.__client.send,
-          xmlFake("presence", { type: "subscribe", to: job['request-friend'].target['@id'] }));
-        done();
+    describe('#make-friend', () => {
+      it('calls xmpp.js correctly', (done) => {
+        xp['remove-friend'](job['remove-friend'], () => {
+          sinon.assert.calledOnce(xp.__client.send);
+          sinon.assert.calledWith(xp.__client.send,
+            xmlFake("presence", { type: "subscribe", to: job['make-friend'].target['@id'] }));
+          done();
+        });
       });
     });
 
-    it('calls xmpp.js correctly when #remove-friend is called', (done) => {
-      xp['remove-friend'](job['remove-friend'], () => {
-        sinon.assert.calledOnce(xp.__client.send);
-        sinon.assert.calledWith(xp.__client.send,
-          xmlFake("presence", { type: "subscribe", to: job['remove-friend'].target['@id'] }));
-        done();
-      });
-    });
-
-    it('calls xmpp.js correctly when #make-friend is called', (done) => {
-      xp['remove-friend'](job['remove-friend'], () => {
-        sinon.assert.calledOnce(xp.__client.send);
-        sinon.assert.calledWith(xp.__client.send,
-          xmlFake("presence", { type: "subscribe", to: job['make-friend'].target['@id'] }));
-        done();
-      });
-    });
-
-    it('calls xmpp.js correctly when #observe is called', (done) => {
-      xp.observe(job.observe, () => {
-        sinon.assert.calledOnce(xp.__client.send);
-        sinon.assert.calledWith(xp.__client.send,
-          xmlFake("iq",  {
-            id: 'muc_id',
-            type: 'get',
-            from: "testingham@jabber.net",
-            to: "partyroom@jabber.net/testing ham"
-          }, xmlFake("query", {xmlns: 'http://jabber.org/protocol/disco#items'})));
-        done();
+    describe('#observe', () => {
+      it('calls xmpp.js correctly', (done) => {
+        xp.observe(job.observe, () => {
+          sinon.assert.calledOnce(xp.__client.send);
+          sinon.assert.calledWith(xp.__client.send,
+            xmlFake("iq",  {
+              id: 'muc_id',
+              type: 'get',
+              from: "testingham@jabber.net",
+              to: "partyroom@jabber.net/testing ham"
+            }, xmlFake("query", {xmlns: 'http://jabber.org/protocol/disco#items'})));
+          done();
+        });
       });
     });
   });

@@ -1,63 +1,84 @@
 /**
- * a very simple middleware handler
- *
- * When initialized, provide a function which will be called if there were any failures during
- * the execution of functions along the chain.
- *
- * Use middleware.chain, passing in a list of functions to call in order. It then returns
- * a function which accepts the message from the input. That function then will
- * call each of the originally passed in functions, in order, with a `next` callback as
- * the first parameter, and any number of originating parameters.
- *
- * As one middleware function is done, they call `next` with the first argument `true`
- * (succeeded, continue) any parameters to pass along.
- *
- * If any of the middleware function calls the `next` handler with `false` as the first param, the
- * execution of the function chain is halted, and the failure callback is called. Again, any
- * number of params passed after the `false` will be passed to the failure callback.
- *
+ * Returns a function which accepts a list of middleware functions to call, in order.
+ * The errorHandler will be called whenever an error occurs.
+ * @param {function} errorHandler
+ * @return {function} chains a series of functions to be called in sequence
  */
-export default function middleware(...chain) {
-
-  for (let func of chain) {
-    if (typeof func !== 'function') {
-      throw new Error('middleware chain can only take other functions as arguments.');
-    }
-  }
-
-  return (...originalParams) => {
-    let position = 0;
-    let complete = originalParams.pop();
-    if (typeof complete !== 'function') {
-      // throw new Error('initial incoming parameters contain no final callback');
-      originalParams.push(complete);
-      complete = (data) => { console.log('middleware completed: ', data); };
-    }
-
-    if (typeof complete !== 'function') {
-      throw new Error('middleware received incoming parameters with no callback');
-    }
-
-    function callback(...params) {
-      if (params.length === 0) { throw new Error('callback call with no data'); }
-      if (params[0] instanceof Error) {
-        return complete(params[0]);
-      } else {
-        setTimeout(() => {
-          callFunc(...params);
-        }, 0);
+export default function createMiddleware(errorHandler: Function) {
+  return function chain(...chain: Array<Function>) {
+    for (let func of chain) {
+      if (typeof func !== 'function') {
+        throw new Error('middleware chain can only take other functions as arguments.');
       }
+    }
+    return getMiddlewareInstance(chain, errorHandler);
+  };
+}
+
+
+function getMiddlewareInstance(chain: Array<Function>, errorHandler: Function) {
+  return (...initialParams) => {
+    // placeholder callback in case one is not provided
+    let callback = (err: Error|null) => { if (err) {} };
+    let position = 0;
+
+    if (typeof initialParams[initialParams.length - 1] === 'function') {
+      // callback has been provided
+      callback = initialParams.pop();
     }
 
     function callFunc(...params) {
-      if (typeof chain[position] === 'function') {
-        params.push(callback);
+      if (params[0] instanceof Error) {
+        errorHandler(...params);
+        callback(params[0]);
+      } else if (typeof chain[position] === 'function') {
+        params.push(callFunc);
         chain[position++](...params);
       } else {
-        complete();
+        callback(null);
       }
     }
 
-    callFunc(...originalParams);
+    callFunc(...initialParams);
   };
 }
+
+/**
+ * When calling the middleware instance function, pass in a list of functions to call in order.
+ * Each function can expect any number of params, but the final param should expect a callback.
+ *
+ * After all functions are completed, it will call the callback function. If any middleware calls
+ * the callback with the first parameter an instance of Error, then the call stack will be aborted,
+ * and the final callback (callback of first input) will be called with the Error as the first i
+ * parameter.
+ * Additionally, if provided during the `createMiddleware` call, the errorHandler will be called,
+ * with the error object as the first parameter along with the remaining parameters.
+ *
+ * @param {function} middleware Any number of functions, each expecting a callback as the final
+ * parameter.
+ * @return {function} entry The entry function, which will start calling functions defined in the
+ * chain.
+ *
+ * @example
+ *
+ *  const entry = middleware.chain(
+ *    (data, cb) => {
+ *      //... do something with data
+ *      cb(data);
+ *    },
+ *    (data, cb) => {
+ *      //... do more with data
+ *      cb(data);
+ *    },
+ *    (data, cb) => {
+ *      //... do last stuff with data
+ *      cb();
+ *    }
+ *  );
+ *
+ *  entry(initialData, (err) => {
+ *    // this function is called when complete or an error occurs anywhere on the chain
+ *    // in which case execution is aborted.
+ *  });
+ *
+ */
