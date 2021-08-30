@@ -34,6 +34,7 @@
     "jsdoc-to-markdown": "7.0.1"
   },
   "scripts": {
+    "compliance": "yarn run test",
     "test": "jaribu",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md"
   }
