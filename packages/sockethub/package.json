@@ -78,7 +78,8 @@
     "dev": "yarn run build && DEBUG=sockethub* ./bin/sockethub --examples",
     "lint": "eslint \"**/*.ts\" ./bin/sockethub",
     "lint:fix": "eslint --fix \"**/*.ts\" ./bin/sockethub",
-    "build": "tsc && cp ./src/defaults.json ./dist/defaults.json"
+    "clean": "find . -maxdepth 1 -name dist -exec rm -rv {} +",
+    "build": "yarn run clean && tsc && cp ./src/defaults.json ./dist/defaults.json && cp src/bootstrap/platforms.js dist/bootstrap/ && tsc --sourceMap --outDir dist/client --allowJs src/client/sockethub-client.js"
   },
   "engines": {
     "node": ">= 12.0.0"
