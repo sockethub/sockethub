@@ -67,7 +67,8 @@ class IncomingHandlers {
       object: {
         '@type': 'presence',
         status: stanza.getChildText('status') || "",
-        presence: (stanza.getChild('show'))? stanza.getChild('show').getText(): "online"
+        presence: (stanza.getChild('show')) ? stanza.getChild('show').getText() :
+          stanza.attrs.type || "online"
       }
     };
     if (stanza.attrs.to) {
