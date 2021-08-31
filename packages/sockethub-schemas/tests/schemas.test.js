@@ -1,5 +1,6 @@
+const chai = require('chai');
+const expect = chai.expect;
 const tv4 = require('tv4');
-const {beforeAll} = require("@jest/globals");
 const schemaSHAS = require('./../schemas/activity-stream');
 const BASE_SCHEMA_ID = 'http://sockethub.org/schemas/v0/';
 
@@ -93,34 +94,21 @@ const testActivityStreams = [
   ]
 ];
 
-expect.extend({
-  toBeValidSchema(received, expected, msg) {
-    if (received === expected) {
-      return {
-        message: () => `validation successful`,
-        pass: true
-      };
-    } else {
-      return {
-        message: () => `validation failed: ${msg}`,
-        pass: false
-      };
-    }
-  }
-});
-
 describe('ActivityStream validation', () => {
   const schemaId = BASE_SCHEMA_ID + 'activity-stream#';
-  beforeAll(() => {
-    expect(typeof schemaSHAS).toBe('object')
-    expect(schemaSHAS.id).toBe(schemaId);
+
+  beforeEach(() => {
+    expect(typeof schemaSHAS).to.equal('object')
+    expect(schemaSHAS.id).to.equal(schemaId);
     tv4.addSchema(schemaSHAS.id, schemaSHAS);
   });
 
-  it.each(testActivityStreams)("input object '%s'", (name, AS, expectedResult, expectedFailureMessage) => {
-    const result = tv4.validate(AS, schemaId);
-    const msg = (tv4.error) ? `${tv4.error.dataPath}:${tv4.error.message}` : '';
-    expect(result).toBeValidSchema(expectedResult, msg);
-    expect(msg).toBe(expectedFailureMessage);
+  testActivityStreams.forEach(([name, AS, expectedResult, expectedFailureMessage]) => {
+    it(`input object ` + name, () => {
+      const result = tv4.validate(AS, schemaId);
+      const msg = (tv4.error) ? `${tv4.error.dataPath}:${tv4.error.message}` : '';
+      expect(result).to.eql(expectedResult);
+      expect(msg).to.equal(expectedFailureMessage);
+    })
   })
 });

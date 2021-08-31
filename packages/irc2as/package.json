@@ -7,6 +7,7 @@
     "test": "test"
   },
   "dependencies": {
+    "c8": "7.8.0",
     "debug": "^4.3.1",
     "fast-deep-equal": "^3.1.1"
   },
@@ -14,12 +15,14 @@
     "jaribu": "2.2.3"
   },
   "scripts": {
-    "test": "jaribu",
-    "travis": "yarn run test"
+    "compliance": "yarn run test && yarn run coverage",
+    "test": "c8 jaribu",
+    "coverage": "c8 check-coverage --statements 90 --branches 90 --functions 95 --lines 90"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/silverbucket/irc2as.git"
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/irc2as"
   },
   "keywords": [
     "irc",
@@ -30,7 +33,7 @@
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/silverbucket/irc2as/issues"
+    "url": "https://github.com/sockethub/sockethub/issues"
   },
-  "homepage": "https://github.com/silverbucket/irc2as#readme"
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/irc2as"
 }

@@ -1,11 +1,11 @@
 import debug from 'debug';
 import hash from "object-hash";
-import redisConfig from './config';
-import crypto from "./crypto";
+import config from './config';
 import Queue from 'bull';
-import { getSessionStore, getPlatformId, Store } from "./common";
-import { ActivityObject, Job } from "./sockethub";
+import { getPlatformId, decryptJobData } from "./common";
+import { ActivityObject, JobDataDecrypted, JobEncrypted } from "./sockethub";
 import { MessageFromParent } from './platform-instance';
+import {getSessionStore} from "./store";
 
 // command-line params
 const parentId = process.argv[2];
@@ -31,7 +31,8 @@ export interface PlatformSession {
  * Handle any uncaught errors from the platform by alerting the worker and shutting down.
  */
 process.on('uncaughtException', (err) => {
-  console.log(`\nUNCAUGHT EXCEPTION IN PLATFORM\n`);
+  console.log('UNCAUGHT EXCEPTION IN PLATFORM');
+  // eslint-disable-next-line security-node/detect-crlf
   console.log(err.stack);
   process.send(['error', err.toString()]);
   process.exit(1);
@@ -70,7 +71,7 @@ const platform = new PlatformModule(platformSession);
  */
 function getCredentials(actorId: string, sessionId: string, sessionSecret: string, cb: Function) {
   if (platform.config.noCredentials) { return cb(); }
-  const store: Store = getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
+  const store = getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
   store.get(actorId, (err, credentials) => {
     if (platform.config.persist) {
       // don't continue if we don't get credentials
@@ -97,29 +98,29 @@ function getCredentials(actorId: string, sessionId: string, sessionSecret: strin
  * @param secret the secret used to decrypt credentials
  */
 function getJobHandler(secret: string) {
-  return (job: Job, done: Function) => {
-    job.data.msg = crypto.decrypt(job.data.msg, secret);
-    const jobLog = debug(`${loggerPrefix}:${job.data.sessionId}`);
-    jobLog(`job ${job.data.title}: ${job.data.msg['@type']}`);
-    const sessionSecret = job.data.msg.sessionSecret;
-    delete job.data.msg.sessionSecret;
+  return (job: JobEncrypted, done: Function) => {
+    const jobData: JobDataDecrypted = decryptJobData(job, secret);
+    const jobLog = debug(`${loggerPrefix}:${jobData.sessionId}`);
+    jobLog(`job ${jobData.title}: ${jobData.msg['@type']}`);
+    const sessionSecret = jobData.msg.sessionSecret;
+    delete jobData.msg.sessionSecret;
 
-    return getCredentials(job.data.msg.actor['@id'], job.data.sessionId, sessionSecret,
+    return getCredentials(jobData.msg.actor['@id'], jobData.sessionId, sessionSecret,
       (err, credentials) => {
         if (err) { return done(new Error(err)); }
         const doneCallback = (err, result) => {
           if (err) {
-            done(new Error(err));
+            done(err instanceof Error ? err : new Error(err));
           } else {
             done(null, result);
           }
         };
         if ((Array.isArray(platform.config.requireCredentials)) &&
-          (platform.config.requireCredentials.includes(job.data.msg['@type']))) {
+          (platform.config.requireCredentials.includes(jobData.msg['@type']))) {
           // add the credentials object if this method requires it
-          platform[job.data.msg['@type']](job.data.msg, credentials, doneCallback);
+          platform[jobData.msg['@type']](jobData.msg, credentials, doneCallback);
         } else {
-          platform[job.data.msg['@type']](job.data.msg, doneCallback);
+          platform[jobData.msg['@type']](jobData.msg, doneCallback);
         }
       });
   };
@@ -162,7 +163,7 @@ function startQueueListener(refresh: boolean = false) {
     logger('start queue called multiple times, skipping');
     return;
   }
-  const queue = new Queue(parentId + identifier, redisConfig);
+  const queue = new Queue(parentId + identifier, { redis: config.get('redis') });
   queueStarted = true;
   logger('listening on the queue for incoming jobs');
   queue.process(getJobHandler(secret));
