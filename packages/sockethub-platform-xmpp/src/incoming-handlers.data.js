@@ -30,8 +30,8 @@ module.exports = [
   ],
   [
     `presence unavailable`,
-    `<presence to="foo@bar.org/hyperchannel" from="baz@bag.org" type="unavailable"><x xmlns="http://jabber.org/protocol/muc#user"><item affiliation="owner" role="none"></item></x></presence>`,
-    { "@type": "update", actor: { "@type": "person", "@id": "baz@bag.org" },
+    `<presence to="foo@bar.org/hyperchannel" from="baz@bag.org/yarg" type="unavailable"><x xmlns="http://jabber.org/protocol/muc#user"><item affiliation="owner" role="none"></item></x></presence>`,
+    { "@type": "update", actor: { "@type": "person", "@id": "baz@bag.org/yarg" },
       target: { "@id": "foo@bar.org/hyperchannel" },
       object: { "@type": "presence", "status": "", "presence": "unavailable" },
     }
