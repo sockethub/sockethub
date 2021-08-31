@@ -1,6 +1,6 @@
 import debug from 'debug';
 import hash from "object-hash";
-import { redisConfig } from './store';
+import config from './config';
 import Queue from 'bull';
 import { getPlatformId, decryptJobData } from "./common";
 import { ActivityObject, JobDataDecrypted, JobEncrypted } from "./sockethub";
@@ -163,7 +163,7 @@ function startQueueListener(refresh: boolean = false) {
     logger('start queue called multiple times, skipping');
     return;
   }
-  const queue = new Queue(parentId + identifier, redisConfig);
+  const queue = new Queue(parentId + identifier, { redis: config.get('redis') });
   queueStarted = true;
   logger('listening on the queue for incoming jobs');
   queue.process(getJobHandler(secret));
