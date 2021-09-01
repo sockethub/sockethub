@@ -29,7 +29,7 @@ ExamplesShared.prototype.__displayUnknownContent = function (msg) {
 };
 
 ExamplesShared.prototype.processIncomingMessage = function (msg) {
-  console.log('incoming message: ', msg);
+  // console.log('incoming message: ', msg);
   if (msg['@type'] === 'observe') {
     $('#messages').append($('<li>').text(` users in ${msg.actor.displayName}`))
       .append($('<li>').text(`  [ ${msg.object.members.join(', ')} ]`));

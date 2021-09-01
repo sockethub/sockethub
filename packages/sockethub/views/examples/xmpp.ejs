@@ -55,7 +55,6 @@
 
     <script src="<%= address %>jquery.js"></script>
     <script src="<%= address %>socket.io.js"></script>
-    <script src="<%= address %>activity-streams.min.js"></script>
     <script src="<%= address %>sockethub-client.js"></script>
     <script src="<%= address %>examples/shared.js"></script>
 
@@ -157,8 +156,8 @@
 
         console.log('[normalize?] sending ', msg);
         // msg = __normalizeMessage(msg);
-        debug('sending message: ', msg);
-        sc.socket.emit('message', msg);
+        console.log('sending message ', msg);
+        sc.socket.emit('message', msg, () => { console.log('message delivered'); });
         $('#m').val('');
         return false;
       });
@@ -178,20 +177,19 @@
           // sending irc credentials to sockethub server
           const credentials = {
             actor: actorString,
+            '@type': 'credentials',
             context: 'xmpp',
             object: config
           };
-          debug('sending credentials: ', credentials);
-          sc.socket.emit('credentials', credentials);
+          sc.socket.emit('credentials', credentials, () => { console.log('credentials stored'); });
 
           const msg = {
             '@type': 'connect',
             context: 'xmpp',
             actor: actorString
           };
-
-          debug('sending message: ', msg);
-          sc.socket.emit('message', msg);
+          console.log('sending message ', msg);
+          sc.socket.emit('message', msg, () => { console.log('message delivered'); });
         }, 100);
         return false;
       });

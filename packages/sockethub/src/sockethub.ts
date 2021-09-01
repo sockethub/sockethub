@@ -4,6 +4,7 @@ import { Socket } from "socket.io";
 import crypto from './crypto';
 import init from './bootstrap/init';
 import createMiddleware from './middleware';
+import expandActivityStream from "./middleware/expand-activity-stream";
 import createActivityObject from "./middleware/create-activity-object";
 import storeCredentials from "./middleware/store-credentials";
 import validate from "./middleware/validate";
@@ -117,7 +118,7 @@ class Sockethub {
     return (msg, done: Function) => {
       const platformInstance = this.processManager.get(msg.context, msg.actor['@id'], socket.id);
       const title = `${msg.context}-${(msg['@id']) ? msg['@id'] : this.counter++}`;
-      sessionLog(`queued to channel ${platformInstance.id}`);
+      sessionLog(`job ${msg.context}-${msg['@type']} queued to channel ${platformInstance.id}`);
       const job: JobDataEncrypted = {
         title: title,
         sessionId: socket.id,
@@ -142,6 +143,13 @@ class Sockethub {
 
     socket.on('credentials',
       createMiddleware(errorHandler('credentials', socket, sessionLog))(
+        (msg: any, done: Function) => {
+          if ((! msg['@type']) && (typeof msg.object === 'object') && (msg.object['@type'])) {
+            msg['@type'] = msg.object['@type'];
+          }
+          done(msg);
+        },
+        expandActivityStream,
         validate('credentials', socket.id),
         storeCredentials(store, sessionLog)
       )
@@ -150,6 +158,7 @@ class Sockethub {
     socket.on(
       'message',
       createMiddleware(errorHandler('message', socket, sessionLog))(
+        expandActivityStream,
         validate('message', socket.id),
         (msg, done) => {
           // middleware which attaches the sessionSecret to the message. The platform thread

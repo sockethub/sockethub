@@ -27,19 +27,18 @@ function getMiddlewareInstance(chain: Array<Function>, errorHandler: Function) {
       callback = initialParams.pop();
     }
 
-    function callFunc(...params) {
-      if (params[0] instanceof Error) {
-        errorHandler(...params);
-        callback(params[0]);
+    function callFunc(data: any) {
+      if (data instanceof Error) {
+        errorHandler(data);
+        callback(data);
       } else if (typeof chain[position] === 'function') {
-        params.push(callFunc);
-        chain[position++](...params);
+        chain[position++](data, callFunc);
       } else {
         callback(null);
       }
     }
 
-    callFunc(...initialParams);
+    callFunc(initialParams[0]);
   };
 }
 
