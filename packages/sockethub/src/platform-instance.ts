@@ -135,6 +135,10 @@ export default class PlatformInstance {
         delete msg.sessionSecret;
       } catch (e) {}
       msg.context = this.name;
+      if ((msg['@type'] === 'error') && (typeof msg.actor === 'undefined') && (this.actor)) {
+        // ensure an actor is present if not otherwise defined
+        msg.actor = this.actor;
+      }
       socket.emit(type, msg);
     }, (err) => this.debug(`sendToClient ${err}`));
   }
@@ -181,7 +185,7 @@ export default class PlatformInstance {
     const errorObject: ActivityObject = {
       context: this.name,
       '@type': 'error',
-      target: this.actor,
+      actor: this.actor,
       object: {
         '@type': 'error',
         content: errorMessage
