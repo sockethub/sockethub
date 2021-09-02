@@ -2049,11 +2049,6 @@ ltx@^2.10.0:
   dependencies:
     inherits "^2.0.4"
 
-ltx@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/ltx/-/ltx-3.0.0.tgz#f2a2260814165c5e28d455f9f7db2178ed295187"
-  integrity sha512-bu3/4/ApUmMqVNuIkHaRhqVtEi6didYcBDIF56xhPRCzVpdztCipZ62CUuaxMlMBUzaVL93+4LZRqe02fuAG6A==
-
 make-dir@^2.0.0, make-dir@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/make-dir/-/make-dir-2.1.0.tgz#5f0310e18b8be898cc07009295a30ae41e91e6f5"
@@ -2780,11 +2775,6 @@ snapdragon@^0.8.1:
     source-map "^0.5.6"
     source-map-resolve "^0.5.0"
     use "^3.1.0"
-
-sockethub-testing-mocks@1.2.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/sockethub-testing-mocks/-/sockethub-testing-mocks-1.2.1.tgz#c2cb353344c899a1e24a3373db31ce9a66a79f67"
-  integrity sha1-wss1M0TImaHiSjNz2zHOmmann2c=
 
 sort-array@^4.1.4:
   version "4.1.4"
