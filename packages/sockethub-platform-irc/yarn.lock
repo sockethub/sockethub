@@ -977,7 +977,6 @@ ipaddr.js@1.9.1:
 
 "irc-socket@https://github.com/silverbucket/irc-socket/archive/v4-alpha.tar.gz":
   version "3.0.8"
-  uid e00965eeab300dab38afca51afcfac1efe3457fd
   resolved "https://github.com/silverbucket/irc-socket/archive/v4-alpha.tar.gz#e00965eeab300dab38afca51afcfac1efe3457fd"
   dependencies:
     bluebird "^3.7.2"
