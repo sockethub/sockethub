@@ -123,7 +123,7 @@ class XMPP {
   connect(job, credentials, done) {
     if (this.__client) {
       // TODO verify client is actually connected
-      this.debug('returning existing client for ' + job.actor['@id']);
+      this.debug('client connection already exists for ' + job.actor['@id']);
       return done();
     }
     this.debug('connect called for ' + job.actor['@id']);
@@ -140,15 +140,6 @@ class XMPP {
     }).catch((err) => {
       this.debug(`connect error: ${err}`);
       delete this.__client;
-      this.sendToClient({
-        '@type': 'error',
-        actor: job.actor['@id'],
-        object: {
-          '@type': 'error',
-          content: err.text || err.toString(),
-          condition: err.condition || 'connection-error'
-        }
-      });
       return done(err);
     });
   };
