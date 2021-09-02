@@ -588,7 +588,7 @@ IRC.prototype.__connect = function (key, credentials, cb) {
     if ((this.__client) && (typeof this.__client.end === 'function')) {
       this.__client.end();
     }
-    throw new Error(err);
+    cb(err);
   };
 
   client.once('error', (err) => {
@@ -604,7 +604,6 @@ IRC.prototype.__connect = function (key, credentials, cb) {
   client.once('timeout', () => {
     this.debug('timeout occurred, force-disconnect');
     __forceDisconnect('connection timeout to server.');
-    return cb('timeout during connect');
   });
 
   client.connect().then((res) => {

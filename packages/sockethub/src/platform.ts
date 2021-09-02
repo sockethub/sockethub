@@ -108,7 +108,10 @@ function getJobHandler(secret: string) {
     return getCredentials(jobData.msg.actor['@id'], jobData.sessionId, sessionSecret,
       (err, credentials) => {
         if (err) { return done(new Error(err)); }
+        let jobCallbackCalled = false;
         const doneCallback = (err, result) => {
+          if (jobCallbackCalled) { return; }
+          jobCallbackCalled = true;
           if (err) {
             done(err instanceof Error ? err : new Error(err));
           } else {

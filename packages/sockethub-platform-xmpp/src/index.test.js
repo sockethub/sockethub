@@ -166,7 +166,7 @@ describe('Platform', () => {
       clientObjectFake.start = sinon.fake.rejects('foo');
       xp.connect(job.join, credentials, () => {
         expect(xp.__client).to.be.undefined;
-        sinon.assert.calledOnce(xp.sendToClient);
+        sinon.assert.notCalled(xp.sendToClient);
         done();
       });
     });
