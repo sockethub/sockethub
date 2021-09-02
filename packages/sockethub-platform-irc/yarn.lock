@@ -441,7 +441,7 @@ debug@2.6.9, debug@^2.2.0:
   dependencies:
     ms "2.0.0"
 
-debug@^4.0.1, debug@^4.1.1, debug@^4.3.1:
+debug@^4.0.1, debug@^4.1.1:
   version "4.3.2"
   resolved "https://registry.yarnpkg.com/debug/-/debug-4.3.2.tgz#f0a49c18ac8779e31d4a0c6029dfb76873c7428b"
   integrity sha512-mOp8wKcvj7XxC78zLgw/ZA+6TSgkoE2C/ienthhRD298T7UNwAg9diBpLRxC0mOezLl4B0xV7M0cCO6P/O0Xhw==
@@ -977,7 +977,6 @@ ipaddr.js@1.9.1:
 
 "irc-socket@https://github.com/silverbucket/irc-socket/archive/v4-alpha.tar.gz":
   version "3.0.8"
-  uid e00965eeab300dab38afca51afcfac1efe3457fd
   resolved "https://github.com/silverbucket/irc-socket/archive/v4-alpha.tar.gz#e00965eeab300dab38afca51afcfac1efe3457fd"
   dependencies:
     bluebird "^3.7.2"

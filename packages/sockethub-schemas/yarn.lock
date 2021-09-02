@@ -547,11 +547,6 @@ picomatch@^2.0.4, picomatch@^2.2.1:
   resolved "https://registry.yarnpkg.com/picomatch/-/picomatch-2.3.0.tgz#f1f061de8f6a4bf022892e2d128234fb98302972"
   integrity sha512-lY1Q/PiJGC2zOv/z391WOTD+Z02bCgsFfvxoXXf6h7kv9o+WmsmzYqrAwY63sNgOxE4xEdq0WyUnXfKeBrSvYw==
 
-proxyrequire@1.0.21:
-  version "1.0.21"
-  resolved "https://registry.yarnpkg.com/proxyrequire/-/proxyrequire-1.0.21.tgz#4b912813abd304ca45c75e236b4f155850c8fad4"
-  integrity sha512-3Jz9yl4gtRf6dXeY7gL8XAXy2QPF7pglsGkT5DyE62zcH+aEXb9Q4vdZwYd+XDsHT5r6Gmb8Nh7F13z4mfu5IA==
-
 randombytes@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/randombytes/-/randombytes-2.1.0.tgz#df6f84372f0270dc65cdf6291349ab7a473d4f2a"
