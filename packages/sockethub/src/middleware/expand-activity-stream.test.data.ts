@@ -1,5 +1,12 @@
 export default [
   {
+    "name": "not an object",
+    "valid": false,
+    "type": "message",
+    "input": "hello world",
+    "error": "Error: message received is not an object."
+  },
+  {
     "name": "basic invalid type",
     "valid":true,
     "type":"credentials",
