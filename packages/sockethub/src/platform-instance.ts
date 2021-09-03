@@ -137,7 +137,7 @@ export default class PlatformInstance {
       msg.context = this.name;
       if ((msg['@type'] === 'error') && (typeof msg.actor === 'undefined') && (this.actor)) {
         // ensure an actor is present if not otherwise defined
-        msg.actor = this.actor;
+        msg.actor = { "@id": this.actor };
       }
       socket.emit(type, msg);
     }, (err) => this.debug(`sendToClient ${err}`));
@@ -185,7 +185,7 @@ export default class PlatformInstance {
     const errorObject: ActivityObject = {
       context: this.name,
       '@type': 'error',
-      actor: this.actor,
+      actor: { "@id": this.actor },
       object: {
         '@type': 'error',
         content: errorMessage

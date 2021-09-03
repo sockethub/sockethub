@@ -43,8 +43,8 @@ export interface ActivityObject {
   '@type': string;
   context: string;
   actor: {
-    '@type': string;
     '@id': string;
+    '@type'?: string;
     displayName?: string;
   },
   object?: {
