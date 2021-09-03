@@ -60,12 +60,12 @@ export default function validate(type: string, sockethubId: string) {
   const sessionLog = debug(`sockethub:validate:${sockethubId}`);
   return (msg: ActivityObject, done: Function) => {
     sessionLog('applying schema validation for ' + type);
-    if (! init.platforms.has(msg.context)) {
+    if (type === 'activity-object') {
+      validateActivityObject(msg, done);
+    } else if (! init.platforms.has(msg.context)) {
       return done(
         new Error(`platform context ${msg.context} not registered with this sockethub instance.`)
       );
-    } else if (type === 'activity-object') {
-      validateActivityObject(msg, done);
     } else if (type === 'credentials') {
       validateCredentials(msg, done);
     } else {

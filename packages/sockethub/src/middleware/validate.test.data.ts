@@ -172,7 +172,7 @@ export default [
       "secure":false,
       "server":"irc.freenode.net"
     },
-    "error": "Error: no credentials schema found for undefined context"
+    "error": "Error: platform context undefined not registered with this sockethub instance."
   },
   {
     "name":"new person",
