@@ -13,7 +13,7 @@ import init from "../bootstrap/init";
 export const ajv = new Ajv({strictTypes: false});
 apply(ajv); // ajv-formats-draft2019
 
-const schemaURL = 'http://sockethub.org/schemas/v0';
+const schemaURL = 'https://sockethub.org/schemas/v0';
 const log = debug('sockethub:validate');
 
 log(`registering schema ${schemaURL}/activity-stream`);
@@ -56,7 +56,7 @@ function validateCredentials(msg: any, done: Function) {
     return done(new Error('credential activity streams must have credentials set as @type'));
   }
   const validate_credentials = ajv.getSchema(
-    `http://sockethub.org/schemas/v0/context/${msg.context}/credentials`);
+    `${schemaURL}/context/${msg.context}/credentials`);
   if (! validate_credentials(msg)) {
     // return done(new Error(`no credentials schema found for ${msg.context} context`));
   // } else if (! ajv.validate(credentialsSchema, msg)) {
