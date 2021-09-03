@@ -1,25 +1,8 @@
 import { expect } from 'chai';
-import proxyquire from 'proxyquire';
 
-proxyquire.noPreserveCache();
-proxyquire.noCallThru();
-
-// @ts-ignore
-import platformLoad from './../bootstrap/platforms';
-const packageJSON = require('./../../package.json');
-const platforms = platformLoad(Object.keys(packageJSON.dependencies));
-
-const validateMod = proxyquire('./validate', {
-  '../bootstrap/init': {
-    platforms: platforms
-  }
-});
-const validate = validateMod.default;
+import validate from './validate';
 
 import asObjects from "./validate.test.data";
-import ActivityStreams from 'activity-streams';
-
-const activity = ActivityStreams();
 
 describe('Middleware: Validate', () => {
   describe('AS object validations', () => {
@@ -38,9 +21,9 @@ describe('Middleware: Validate', () => {
             expect(msg instanceof Error).to.be.false;
           } else {
             expect(msg instanceof Error).to.be.true;
-          }
-          if ((obj.valid) && (obj.type === 'activity-object')) {
-            activity.Object.create(msg);
+            if (obj.error) {
+              expect(obj.error).to.equal(msg.toString());
+            }
           }
           done();
         });
