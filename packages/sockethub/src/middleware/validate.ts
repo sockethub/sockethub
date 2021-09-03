@@ -8,6 +8,7 @@ import { ActivityObject } from "../sockethub";
 
 // @ts-ignore
 import platformLoad from './../bootstrap/platforms';
+import init from "../bootstrap/init";
 const packageJSON = require('./../../package.json');
 const platforms = platformLoad(Object.keys(packageJSON.dependencies));
 
@@ -59,7 +60,11 @@ export default function validate(type: string, sockethubId: string) {
   const sessionLog = debug(`sockethub:validate:${sockethubId}`);
   return (msg: ActivityObject, done: Function) => {
     sessionLog('applying schema validation for ' + type);
-    if (type === 'activity-object') {
+    if (! init.platforms.has(msg.context)) {
+      return done(
+        new Error(`platform context ${msg.context} not registered with this sockethub instance.`)
+      );
+    } else if (type === 'activity-object') {
       validateActivityObject(msg, done);
     } else if (type === 'credentials') {
       validateCredentials(msg, done);
