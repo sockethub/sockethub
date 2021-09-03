@@ -7,8 +7,8 @@ import * as SockethubSchemas from 'sockethub-schemas';
 import { ActivityObject } from "../sockethub";
 
 // @ts-ignore
-import platformLoad from './../bootstrap/platforms';
 import init from "../bootstrap/init";
+import platformLoad from './../bootstrap/platforms';
 const packageJSON = require('./../../package.json');
 const platforms = platformLoad(Object.keys(packageJSON.dependencies));
 
