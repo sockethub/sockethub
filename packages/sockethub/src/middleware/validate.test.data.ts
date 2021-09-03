@@ -103,7 +103,7 @@ export default [
       }
     },
     "error":
-      "Error: credentials schema validation failed: /object = Missing required property: nick"
+      "Error: credentials schema validation failed: must have required property \'nick\'"
   },
   {
     "name":"no type specified",
@@ -161,8 +161,7 @@ export default [
       "server":"irc.freenode.net"
     },
     "error":
-      "Error: activity-object schema validation failed: /object = " +
-      "Data does not match any schemas from \"oneOf\""
+      "Error: activity-object schema validation failed: must have required property \'@id\'"
   },
   {
     "name":"alone credentials (as credentials)",
@@ -247,8 +246,7 @@ export default [
       }
     },
     "error":
-      "Error: activity-object schema validation failed: /object = " +
-      "Data does not match any schemas from \"oneOf\""
+      "Error: activity-object schema validation failed: must have required property '@id'"
   },
   {
     "name":"non-expected AS will fail",
@@ -259,6 +257,50 @@ export default [
       "@type":"join",
       "context":"irc",
       "target":"irc://irc.dooder.net/a-room"
+    }
+  },
+  {
+    "name":"missing @type property",
+    "valid":false,
+    "type":"message",
+    "input":{
+      "actor": { "@id": "irc://uuu@localhost", "@type": "person" },
+      "context":"irc",
+      "target": { "@id": "irc://irc.dooder.net/a-room", "@type": "room" }
+    },
+    "error": "Error: actvity-stream schema validation failed: must have required property \'@type\'"
+  },
+  {
+    "name":"invalid context property",
+    "valid":false,
+    "type":"message",
+    "input":{
+      "actor": { "@id": "irc://uuu@localhost", "@type": "person" },
+      "@type":"foo",
+      "context": "foobar",
+      "target": { "@id": "irc://irc.dooder.net/a-room", "@type": "room" }
+    },
+    "error": "Error: platform context foobar not registered with this sockethub instance."
+  },
+  {
+    "name":"missing actor property",
+    "valid":false,
+    "type":"message",
+    "input":{
+      "@type": "foo",
+      "context":"irc",
+      "target": { "@id": "irc://irc.dooder.net/a-room", "@type": "room" }
+    },
+    "error": "Error: actvity-stream schema validation failed: must have required property \'actor\'"
+  },
+  {
+    "name":"traditional message",
+    "valid":true,
+    "type":"message",
+    "input":{
+      "@type": "foo",
+      "context": "irc",
+      "actor": { "@id": "irc://uuu@localhost", "@type": "person" }
     }
   }
 ];
