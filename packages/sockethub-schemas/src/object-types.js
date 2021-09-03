@@ -17,7 +17,7 @@ module.exports = {
     "properties": {
       "@id": {
         "type": "string",
-        "format": "uri"
+        "format": "iri"
       },
       "@type": {
         "enum": [ "feed" ]
@@ -38,7 +38,7 @@ module.exports = {
   },
 
   "message": {
-    "required": [ "@type", "displayName", "content" ],
+    "required": [ "@type", "content" ],
     "additionalProperties": true,
     "properties": {
       "@id": {
@@ -58,12 +58,11 @@ module.exports = {
 
   "person": {
     "activity-object": true,
-    "required": [ "@id", "@type", "displayName" ],
+    "required": [ "@id", "@type" ],
     "additionalProperties": true,
     "properties": {
       "@id": {
-        "type": "string",
-        "format": "uri"
+        "type": "string"
       },
       "@type": {
         "enum": [ "person" ]
@@ -76,12 +75,11 @@ module.exports = {
 
   "room": {
     "activity-object": true,
-    "required": [ "@id", "@type", "displayName" ],
+    "required": [ "@id", "@type" ],
     "additionalProperties": true,
     "properties": {
       "@id": {
-        "type": "string",
-        "format": "uri"
+        "type": "string"
       },
       "@type": {
         "enum": [ "room" ]
@@ -94,12 +92,12 @@ module.exports = {
 
   "website": {
     "activity-object": true,
-    "required": [ "@id", "@type", "displayName" ],
+    "required": [ "@id", "@type" ],
     "additionalProperties": true,
     "properties": {
       "@id": {
         "type": "string",
-        "format": "uri"
+        "format": "iri"
       },
       "@type": {
         "enum": [ "website" ]
@@ -109,6 +107,5 @@ module.exports = {
       }
     }
   }
-
 };
 

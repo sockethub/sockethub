@@ -19,8 +19,7 @@ const typeSchema = {
 };
 
 module.exports = {
-  "id": "http://sockethub.org/schemas/v0/activity-stream#",
-  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$id": "https://sockethub.org/schemas/v0/activity-stream#",
   "description": "schema for Sockethub Activity Streams",
 
   "type": "object",

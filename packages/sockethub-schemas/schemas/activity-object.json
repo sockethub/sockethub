@@ -1,6 +1,5 @@
 {
-	"id": "http://sockethub.org/schemas/v0/activity-object#",
-	"$schema": "http://json-schema.org/draft-04/schema#",
+	"$id": "https://sockethub.org/schemas/v0/activity-object#",
 	"description": "schema for Sockethub Activity Objects",
 	"type": "object",
 	"required": [
@@ -11,16 +10,16 @@
 			"type": "object",
 			"oneOf": [
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/feed"
+					"$ref": "#/definitions/type/feed"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/person"
+					"$ref": "#/definitions/type/person"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/room"
+					"$ref": "#/definitions/type/room"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/website"
+					"$ref": "#/definitions/type/website"
 				}
 			]
 		}
@@ -28,7 +27,6 @@
 	"definitions": {
 		"type": {
 			"feed": {
-				"activity-object": true,
 				"required": [
 					"@id",
 					"@type"
@@ -37,7 +35,7 @@
 				"properties": {
 					"@id": {
 						"type": "string",
-						"format": "uri"
+						"format": "iri"
 					},
 					"@type": {
 						"enum": [
@@ -59,17 +57,14 @@
 				}
 			},
 			"person": {
-				"activity-object": true,
 				"required": [
 					"@id",
-					"@type",
-					"displayName"
+					"@type"
 				],
 				"additionalProperties": true,
 				"properties": {
 					"@id": {
-						"type": "string",
-						"format": "uri"
+						"type": "string"
 					},
 					"@type": {
 						"enum": [
@@ -82,17 +77,14 @@
 				}
 			},
 			"room": {
-				"activity-object": true,
 				"required": [
 					"@id",
-					"@type",
-					"displayName"
+					"@type"
 				],
 				"additionalProperties": true,
 				"properties": {
 					"@id": {
-						"type": "string",
-						"format": "uri"
+						"type": "string"
 					},
 					"@type": {
 						"enum": [
@@ -105,17 +97,15 @@
 				}
 			},
 			"website": {
-				"activity-object": true,
 				"required": [
 					"@id",
-					"@type",
-					"displayName"
+					"@type"
 				],
 				"additionalProperties": true,
 				"properties": {
 					"@id": {
 						"type": "string",
-						"format": "uri"
+						"format": "iri"
 					},
 					"@type": {
 						"enum": [

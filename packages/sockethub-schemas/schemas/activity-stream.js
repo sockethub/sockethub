@@ -1,6 +1,5 @@
 module.exports = {
-	"id": "http://sockethub.org/schemas/v0/activity-stream#",
-	"$schema": "http://json-schema.org/draft-04/schema#",
+	"$id": "https://sockethub.org/schemas/v0/activity-stream#",
 	"description": "schema for Sockethub Activity Streams",
 	"type": "object",
 	"required": [
@@ -22,16 +21,16 @@ module.exports = {
 			"type": "object",
 			"oneOf": [
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/feed"
+					"$ref": "#/definitions/type/feed"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/person"
+					"$ref": "#/definitions/type/person"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/room"
+					"$ref": "#/definitions/type/room"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/website"
+					"$ref": "#/definitions/type/website"
 				}
 			]
 		},
@@ -39,16 +38,16 @@ module.exports = {
 			"type": "object",
 			"oneOf": [
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/feed"
+					"$ref": "#/definitions/type/feed"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/person"
+					"$ref": "#/definitions/type/person"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/room"
+					"$ref": "#/definitions/type/room"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/website"
+					"$ref": "#/definitions/type/website"
 				}
 			]
 		},
@@ -56,22 +55,22 @@ module.exports = {
 			"type": "object",
 			"oneOf": [
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/credentials"
+					"$ref": "#/definitions/type/credentials"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/feed"
+					"$ref": "#/definitions/type/feed"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/message"
+					"$ref": "#/definitions/type/message"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/person"
+					"$ref": "#/definitions/type/person"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/room"
+					"$ref": "#/definitions/type/room"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/website"
+					"$ref": "#/definitions/type/website"
 				}
 			]
 		}
@@ -92,7 +91,6 @@ module.exports = {
 				}
 			},
 			"feed": {
-				"activity-object": true,
 				"required": [
 					"@id",
 					"@type"
@@ -101,7 +99,7 @@ module.exports = {
 				"properties": {
 					"@id": {
 						"type": "string",
-						"format": "uri"
+						"format": "iri"
 					},
 					"@type": {
 						"enum": [
@@ -125,7 +123,6 @@ module.exports = {
 			"message": {
 				"required": [
 					"@type",
-					"displayName",
 					"content"
 				],
 				"additionalProperties": true,
@@ -147,17 +144,14 @@ module.exports = {
 				}
 			},
 			"person": {
-				"activity-object": true,
 				"required": [
 					"@id",
-					"@type",
-					"displayName"
+					"@type"
 				],
 				"additionalProperties": true,
 				"properties": {
 					"@id": {
-						"type": "string",
-						"format": "uri"
+						"type": "string"
 					},
 					"@type": {
 						"enum": [
@@ -170,17 +164,14 @@ module.exports = {
 				}
 			},
 			"room": {
-				"activity-object": true,
 				"required": [
 					"@id",
-					"@type",
-					"displayName"
+					"@type"
 				],
 				"additionalProperties": true,
 				"properties": {
 					"@id": {
-						"type": "string",
-						"format": "uri"
+						"type": "string"
 					},
 					"@type": {
 						"enum": [
@@ -193,17 +184,15 @@ module.exports = {
 				}
 			},
 			"website": {
-				"activity-object": true,
 				"required": [
 					"@id",
-					"@type",
-					"displayName"
+					"@type"
 				],
 				"additionalProperties": true,
 				"properties": {
 					"@id": {
 						"type": "string",
-						"format": "uri"
+						"format": "iri"
 					},
 					"@type": {
 						"enum": [
