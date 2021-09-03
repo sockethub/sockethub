@@ -4,14 +4,14 @@
 	"type": "object",
 	"required": [
 		"context",
-		"@type",
+		"type",
 		"actor"
 	],
 	"properties": {
-		"@id": {
+		"id": {
 			"type": "string"
 		},
-		"@type": {
+		"type": {
 			"type": "string"
 		},
 		"context": {
@@ -79,11 +79,11 @@
 		"type": {
 			"credentials": {
 				"required": [
-					"@type"
+					"type"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@type": {
+					"type": {
 						"enum": [
 							"credentials"
 						]
@@ -92,21 +92,21 @@
 			},
 			"feed": {
 				"required": [
-					"@id",
-					"@type"
+					"id",
+					"type"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@id": {
-						"type": "string",
-						"format": "iri"
-					},
-					"@type": {
+					"type": {
 						"enum": [
 							"feed"
 						]
 					},
-					"displayName": {
+					"id": {
+						"type": "string",
+						"format": "iri"
+					},
+					"name": {
 						"type": "string"
 					},
 					"description": {
@@ -122,20 +122,20 @@
 			},
 			"message": {
 				"required": [
-					"@type",
+					"type",
 					"content"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@id": {
-						"type": "string"
-					},
-					"@type": {
+					"type": {
 						"enum": [
 							"message"
 						]
 					},
-					"displayName": {
+					"id": {
+						"type": "string"
+					},
+					"name": {
 						"type": "string"
 					},
 					"content": {
@@ -145,61 +145,61 @@
 			},
 			"person": {
 				"required": [
-					"@id",
-					"@type"
+					"id",
+					"type"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@id": {
+					"id": {
 						"type": "string"
 					},
-					"@type": {
+					"type": {
 						"enum": [
 							"person"
 						]
 					},
-					"displayName": {
+					"name": {
 						"type": "string"
 					}
 				}
 			},
 			"room": {
 				"required": [
-					"@id",
-					"@type"
+					"id",
+					"type"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@id": {
+					"id": {
 						"type": "string"
 					},
-					"@type": {
+					"type": {
 						"enum": [
 							"room"
 						]
 					},
-					"displayName": {
+					"name": {
 						"type": "string"
 					}
 				}
 			},
 			"website": {
 				"required": [
-					"@id",
-					"@type"
+					"id",
+					"type"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@id": {
+					"id": {
 						"type": "string",
 						"format": "iri"
 					},
-					"@type": {
+					"type": {
 						"enum": [
 							"website"
 						]
 					},
-					"displayName": {
+					"name": {
 						"type": "string"
 					}
 				}

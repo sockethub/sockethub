@@ -190,7 +190,7 @@ describe("PlatformInstance", () => {
           'a good result message');
         expect(pi.broadcastToSharedPeers.callCount).to.equal(1);
         sandbox.assert.calledWith(pi.sendToClient, undefined, 'completed',
-          {foo: 'bar', object: {'@type': 'result', content: 'a good result message'}});
+          {foo: 'bar', object: {'type': 'result', content: 'a good result message'}});
       });
 
       it('appends failed result message when present', async () => {
@@ -198,7 +198,7 @@ describe("PlatformInstance", () => {
           'a bad result message');
         expect(pi.broadcastToSharedPeers.callCount).to.equal(1);
         sandbox.assert.calledWith(pi.sendToClient, undefined, 'failed',
-          {foo: 'bar', object: {'@type': 'error', content: 'a bad result message'}});
+          {foo: 'bar', object: {'type': 'error', content: 'a bad result message'}});
       });
     });
 

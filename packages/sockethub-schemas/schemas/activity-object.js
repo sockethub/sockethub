@@ -28,21 +28,21 @@ module.exports = {
 		"type": {
 			"feed": {
 				"required": [
-					"@id",
-					"@type"
+					"id",
+					"type"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@id": {
-						"type": "string",
-						"format": "iri"
-					},
-					"@type": {
+					"type": {
 						"enum": [
 							"feed"
 						]
 					},
-					"displayName": {
+					"id": {
+						"type": "string",
+						"format": "iri"
+					},
+					"name": {
 						"type": "string"
 					},
 					"description": {
@@ -58,61 +58,61 @@ module.exports = {
 			},
 			"person": {
 				"required": [
-					"@id",
-					"@type"
+					"id",
+					"type"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@id": {
+					"id": {
 						"type": "string"
 					},
-					"@type": {
+					"type": {
 						"enum": [
 							"person"
 						]
 					},
-					"displayName": {
+					"name": {
 						"type": "string"
 					}
 				}
 			},
 			"room": {
 				"required": [
-					"@id",
-					"@type"
+					"id",
+					"type"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@id": {
+					"id": {
 						"type": "string"
 					},
-					"@type": {
+					"type": {
 						"enum": [
 							"room"
 						]
 					},
-					"displayName": {
+					"name": {
 						"type": "string"
 					}
 				}
 			},
 			"website": {
 				"required": [
-					"@id",
-					"@type"
+					"id",
+					"type"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@id": {
+					"id": {
 						"type": "string",
 						"format": "iri"
 					},
-					"@type": {
+					"type": {
 						"enum": [
 							"website"
 						]
 					},
-					"displayName": {
+					"name": {
 						"type": "string"
 					}
 				}

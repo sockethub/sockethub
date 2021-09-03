@@ -73,16 +73,16 @@
           if (target.indexOf('#') === 0) {
             msg.target = ircServer + '/' + target;
             sc.ActivityStreams.Object.create({
-              '@id': ircServer + '/' + target,
-              '@type': "room",
-              displayName: target
+              'id': ircServer + '/' + target,
+              'type': "room",
+              name: target
             });
           } else {
             msg.target = target + '@' + ircServer;
             sc.ActivityStreams.Object.create({
-              '@id': target + '@' + ircServer,
-              '@type': "person",
-              displayName: target
+              'id': target + '@' + ircServer,
+              'type': "person",
+              name: target
             });
           }
         }
@@ -93,19 +93,19 @@
           if (msg.object.content.indexOf('/me') === 0) {
             // show completed emotes from us
             // rewrite as object to what the incoming objects should look like
-            msg.object['@type'] = 'me';
+            msg.object['type'] = 'me';
             msg.object.content = msg.object.content.substr(4);
           } else if (msg.object.content.indexOf('/nick') === 0) {
-            msg.object['@type'] = 'address';
-            msg['@type'] = 'update';
+            msg.object['type'] = 'address';
+            msg['type'] = 'update';
             __normalizeTargetFromContent('/nick');
             delete msg.object.content;
           } else if (msg.object.content.indexOf('/notice') === 0) {
             // show completed emotes from us
             // rewrite as object to what the incoming objects should look like
-            msg.object['@type'] = 'notice';
+            msg.object['type'] = 'notice';
             __normalizeTargetFromContent('/notice');
-            msg.object.content = msg.object.content.substr(8 + object.target.displayName.length + 1);
+            msg.object.content = msg.object.content.substr(8 + object.target.name.length + 1);
           }
 
         }
@@ -118,9 +118,9 @@
         // our irc user info
         nick = _nick; // set global nick
         sc.ActivityStreams.Object.create({
-          '@id': nick + '@' + ircServer,
-          '@type': "person",
-          displayName: nick,
+          'id': nick + '@' + ircServer,
+          'type': "person",
+          name: nick,
           url: "http://sockethub.org",
           image: {
             url: "http://example.org/image.jpg",
@@ -139,7 +139,7 @@
           actor: nick + '@' + ircServer,
           context: 'irc',
           object: {
-            '@type': 'credentials',
+            'type': 'credentials',
             nick: nick,
             server: ircServer,
             secure: true
@@ -163,13 +163,13 @@
         if ((typeof msg.object === 'object') &&
             (typeof msg.object.content === 'string')) {
           examplesShared.processIncomingMessage(msg);
-        } else if ((msg['@type'] === 'update') &&
-                   (msg.object['@type'] === 'address') &&
-                   (msg.actor.displayName === nick)) {
+        } else if ((msg['type'] === 'update') &&
+                   (msg.object['type'] === 'address') &&
+                   (msg.actor.name === nick)) {
           // our nick has been updated
-          __updateActor(msg.target.displayName);
+          __updateActor(msg.target.name);
           examplesShared.processIncomingMessage(msg);
-        } else if (msg['@type'] === 'join') {
+        } else if (msg['type'] === 'join') {
           $('.modal').css('display', 'none');
           $('input#m').prop('disabled', false);
           $('button#send').prop('disabled', false);
@@ -188,11 +188,11 @@
       // handler for user input, emit messages to sockethub server
       $('#chat').submit(function () {
         let msg = {
-          '@type': 'send',
+          'type': 'send',
           context: 'irc',
           actor: nick + '@' + ircServer,
           object: {
-            '@type': 'message',
+            'type': 'message',
             content: $('#m').val()
           },
           target: ircServer + '/' + channel
@@ -211,14 +211,14 @@
 
         // the irc chatroom we're connecting to
         sc.ActivityStreams.Object.create({
-          '@id': ircServer + '/' + channel.replace('#', ''),
-          '@type': "room",
-          displayName: channel
+          'id': ircServer + '/' + channel.replace('#', ''),
+          'type': "room",
+          name: channel
         });
         debug('socket id: ', sc.socket.id);
 
         const msg = {
-          '@type': 'join',
+          'type': 'join',
           context: 'irc',
           actor: nick + '@' + ircServer,
           target: ircServer + '/' + channel.replace('#', '')

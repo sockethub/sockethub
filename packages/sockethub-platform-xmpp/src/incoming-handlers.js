@@ -34,20 +34,20 @@ class IncomingHandlers {
   close() {
     this.session.debug('received close event with no handler specified');
     this.session.sendToClient({
-      '@type': 'close',
+      'type': 'close',
       actor: this.session.actor,
       target: this.session.actor
     });
-    this.session.debug('**** xmpp this.session.for ' + this.session.actor['@id'] + ' closed');
+    this.session.debug('**** xmpp this.session.for ' + this.session.actor['id'] + ' closed');
     this.session.connection.disconnect();
   }
 
   error(err) {
     try {
       this.session.sendToClient({
-        '@type': 'error',
+        'type': 'error',
         object: {
-          '@type': 'error',
+          'type': 'error',
           content: err.text || err.toString(),
           condition: err.condition || 'unknown'
         }
@@ -59,35 +59,35 @@ class IncomingHandlers {
 
   presence(stanza) {
     const obj = {
-      '@type': 'update',
+      'type': 'update',
       actor: {
-        '@type': 'person',
-        '@id': stanza.attrs.from,
+        'type': 'person',
+        'id': stanza.attrs.from,
       },
       object: {
-        '@type': 'presence',
+        'type': 'presence',
         status: stanza.getChildText('status') || "",
         presence: (stanza.getChild('show')) ? stanza.getChild('show').getText() :
           stanza.attrs.type || "online"
       }
     };
     if (stanza.attrs.to) {
-      obj.target = {'@id': stanza.attrs.to};
+      obj.target = {'id': stanza.attrs.to};
     } else {
-      obj.actor.displayName = stanza.attrs.from.split('/')[1];
+      obj.actor.name = stanza.attrs.from.split('/')[1];
     }
     this.session.debug('received contact presence update from ' + stanza.attrs.from);
     this.session.sendToClient(obj);
   }
 
-  subscribe(to, from, displayName) {
+  subscribe(to, from, name) {
     this.session.debug('received subscribe request from ' + from);
-    const actor = { '@id': from };
-    if (displayName) {
-      actor.displayName = displayName;
+    const actor = { 'id': from };
+    if (name) {
+      actor.name = name;
     }
     this.session.sendToClient({
-      '@type': "request-friend",
+      'type': "request-friend",
       actor: actor,
       target: to
     });
@@ -96,8 +96,8 @@ class IncomingHandlers {
   // unsubscribe(from) {
   //   this.session.debug('received unsubscribe request from ' + from);
   //   this.session.sendToClient({
-  //     '@type': "remove-friend",
-  //     actor: { '@id': from },
+  //     'type': "remove-friend",
+  //     actor: { 'id': from },
   //     target: this.session.actor
   //   });
   // }
@@ -111,24 +111,24 @@ class IncomingHandlers {
     const type      = stanza.attrs.type === 'groupchat' ? 'room' : 'person';
 
     const activity = {
-      '@type': 'send',
+      'type': 'send',
       actor: {
-        '@type': 'person',
-        '@id': from,
+        'type': 'person',
+        'id': from,
       },
       target: {
-        '@type': type,
-        '@id': stanza.attrs.to,
+        'type': type,
+        'id': stanza.attrs.to,
       },
       object: {
-        '@type': 'message',
-        '@id': messageId,
+        'type': 'message',
+        'id': messageId,
         content: message
       }
     };
 
     if (type === 'room') {
-      [activity.target['@id'], activity.actor.displayName] = from.split('/');
+      [activity.target['id'], activity.actor.name] = from.split('/');
     }
 
     if (timestamp) { activity.published = timestamp; }
@@ -154,18 +154,18 @@ class IncomingHandlers {
     }
 
     this.session.sendToClient({
-      '@type': type,
+      'type': type,
       actor: {
-        '@id': stanza.attrs.from,
-        '@type': 'room'
+        'id': stanza.attrs.from,
+        'type': 'room'
       },
       object: {
-        '@type': 'error', // type error
+        'type': 'error', // type error
         content: message
       },
       target: {
-        '@id': stanza.attrs.to,
-        '@type': 'person'
+        'id': stanza.attrs.to,
+        'type': 'person'
       }
     });
   }
@@ -183,17 +183,17 @@ class IncomingHandlers {
       }
 
       this.session.sendToClient({
-        '@type': 'observe',
+        'type': 'observe',
         actor: {
-          '@id': stanza.attrs.from,
-          '@type': 'room'
+          'id': stanza.attrs.from,
+          'type': 'room'
         },
         target: {
-          '@id': stanza.attrs.to,
-          '@type': 'person'
+          'id': stanza.attrs.to,
+          'type': 'person'
         },
         object: {
-          '@type': 'attendance',
+          'type': 'attendance',
           members: members
         }
       });
@@ -232,11 +232,11 @@ class IncomingHandlers {
           this.session.debug('STANZA ATTRS: ', entries[e].attrs);
           if (entries[e].attrs.subscription === 'both') {
             this.session.sendToClient({
-              '@type': 'update',
-              actor: { '@id': entries[e].attrs.jid, displayName: entries[e].attrs.name },
+              'type': 'update',
+              actor: { 'id': entries[e].attrs.jid, name: entries[e].attrs.name },
               target: this.session.actor,
               object: {
-                '@type': 'presence',
+                'type': 'presence',
                 status: '',
                 presence: state
               }
@@ -244,11 +244,11 @@ class IncomingHandlers {
           } else if ((entries[e].attrs.subscription === 'from') &&
               (entries[e].attrs.ask) && (entries[e].attrs.ask === 'subscribe')) {
             this.session.sendToClient({
-              '@type': 'update',
-              actor: { '@id': entries[e].attrs.jid, displayName: entries[e].attrs.name },
+              'type': 'update',
+              actor: { 'id': entries[e].attrs.jid, name: entries[e].attrs.name },
               target: this.session.actor,
               object: {
-                '@type': 'presence',
+                'type': 'presence',
                 statusText: '',
                 presence: 'notauthorized'
               }

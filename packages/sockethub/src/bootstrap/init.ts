@@ -55,7 +55,7 @@ if (config.get('help')) {
       // eslint-disable-next-line security-node/detect-crlf
       console.log('  ' + platform.id + ' v' + platform.version);
       // eslint-disable-next-line security-node/detect-crlf
-      console.log('    AS @types: ' + platform['@types']);
+      console.log('    AS types: ' + platform.types);
     }
     console.log();
     process.exit();
@@ -80,7 +80,7 @@ export interface IInitObject {
       messages?: object
     },
     version: string,
-    '@types': string
+    types: string
   }>,
 }
 

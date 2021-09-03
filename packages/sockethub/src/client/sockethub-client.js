@@ -100,26 +100,26 @@
       }
       switch (channel) {
         case 'credentials':
-          if ((content.object) && (content.object['@type'] === 'credentials')) {
-            storedCredentials.set(content.actor['@id'] || content.actor, content);
+          if ((content.object) && (content.object.type === 'credentials')) {
+            storedCredentials.set(content.actor.id || content.actor, content);
           }
           break;
         case 'activity-object':
-          if (content['@id']) {
-            storedActivityObjects.set(content['@id'], content);
+          if (content.id) {
+            storedActivityObjects.set(content.id, content);
           }
           break;
         case 'message':
           if (this.online) {
             // either store or delete the specified content onto the storedJoins map,
             // for reply once we're back online.
-            if (content['@type'] === 'join') {
+            if (content.type === 'join') {
               storedJoins['set'](this.__getKey(content), content);
-            } else if (content['@type'] === 'leave') {
+            } else if (content.type === 'leave') {
               storedJoins['delete'](this.__getKey(content), content);
-            } if (content['@type'] === 'connect') {
+            } if (content.type === 'connect') {
               storedConnects['set'](this.__getKey(content), content);
-            } else if (content['@type'] === 'disconnect') {
+            } else if (content.type === 'disconnect') {
               storedConnects['delete'](this.__getKey(content), content);
             }
           } else {
@@ -162,8 +162,8 @@
   };
 
   SockethubClient.prototype.__getKey = function (content) {
-    let actor = content.actor['@id'] || content.actor;
-    let target = content.target ? content.target['@id'] || content.target : '';
+    let actor = content.actor.id || content.actor;
+    let target = content.target ? content.target.id || content.target : '';
     return actor + '-' + target;
   };
 

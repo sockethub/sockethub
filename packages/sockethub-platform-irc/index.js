@@ -62,7 +62,7 @@ function IRC(cfg) {
  * Property: schema
  *
  * @description
- * JSON schema defining the @types this platform accepts.
+ * JSON schema defining the types this platform accepts.
  *
  *
  * In the below example, sockethub will validate the incoming credentials object
@@ -70,8 +70,8 @@ function IRC(cfg) {
  * object.
  *
  *
- * It will also check if the incoming AS object uses a @type which exists in the
- * `@types` portion of the schema object (should be an array of @type names).
+ * It will also check if the incoming AS object uses a type which exists in the
+ * `types` portion of the schema object (should be an array of type names).
  *
  * * **NOTE**: For more information on using the credentials object from a client,
  * see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
@@ -80,16 +80,16 @@ function IRC(cfg) {
  * @example
  *
  *  {
- *    '@type': 'set',
+ *    'type': 'set',
  *    context: 'irc',
  *    actor: {
- *      '@id': 'testuser@irc.host.net',
- *      '@type': 'person',
- *      displayName: 'Mr. Test User',
+ *      'id': 'testuser@irc.host.net',
+ *      'type': 'person',
+ *      name: 'Mr. Test User',
  *      userName: 'testuser'
  *    },
  *    object: {
- *      '@type': 'credentials',
+ *      'type': 'credentials',
  *      server: 'irc.host.net',
  *      nick: 'testuser',
  *      password: 'asdasdasdasd',
@@ -103,9 +103,9 @@ function IRC(cfg) {
 IRC.prototype.schema = {
   "version": packageJSON.version,
   "messages" : {
-    "required": [ '@type' ],
+    "required": [ 'type' ],
     "properties": {
-      "@type": {
+      "type": {
         "enum": [ 'update', 'join', 'leave', 'send', 'observe', 'announce' ]
       }
     }
@@ -117,14 +117,14 @@ IRC.prototype.schema = {
       //  if they don't want to, just credential specifics
       "actor": {
         "type": "object",
-        "required": [ "@id" ]
+        "required": [ "id" ]
       },
       "object": {
         "type": "object",
-        "required": [ '@type', 'nick', 'server' ],
+        "required": [ 'type', 'nick', 'server' ],
         "additionalProperties": false,
         "properties" : {
-          "@type": {
+          "type": {
             "type": "string"
           },
           "nick" : {
@@ -168,36 +168,36 @@ IRC.prototype.config = {
  *
  * {
  *   context: 'irc',
- *   '@type': 'join',
+ *   'type': 'join',
  *   actor: {
- *     '@id': 'slvrbckt@irc.freenode.net',
- *     '@type': 'person',
- *     displayName: 'slvrbckt'
+ *     'id': 'slvrbckt@irc.freenode.net',
+ *     'type': 'person',
+ *     name: 'slvrbckt'
  *   },
  *   target: {
- *     '@id': 'irc.freenode.net/sockethub',
- *     '@type': 'room',
- *     displayName: '#sockethub'
+ *     'id': 'irc.freenode.net/sockethub',
+ *     'type': 'room',
+ *     name: '#sockethub'
  *   },
  *   object: {}
  * }
  *
  */
 IRC.prototype.join = function (job, credentials, done) {
-  this.debug('join() called for ' + job.actor['@id']);
-  this.__getClient(job.actor['@id'], credentials, (err, client) => {
+  this.debug('join() called for ' + job.actor.id);
+  this.__getClient(job.actor.id, credentials, (err, client) => {
     if (err) { return done(err); }
-    if (this.__channels.has(job.target.displayName)) {
-      this.debug(`channel ${job.target.displayName} already joined`);
+    if (this.__channels.has(job.target.name)) {
+      this.debug(`channel ${job.target.name} already joined`);
       return done();
     }
     // join channel
     this.__jobQueue.push(() => {
-      this.__hasJoined(job.target.displayName);
+      this.__hasJoined(job.target.name);
       done();
     });
-    this.debug('sending join ' + job.target.displayName);
-    client.raw(['JOIN', job.target.displayName]);
+    this.debug('sending join ' + job.target.name);
+    client.raw(['JOIN', job.target.name]);
   });
 };
 
@@ -213,28 +213,28 @@ IRC.prototype.join = function (job, credentials, done) {
  * @example
  * {
  *   context: 'irc',
- *   '@type': 'leave',
+ *   'type': 'leave',
  *   actor: {
- *     '@id': 'slvrbckt@irc.freenode.net',
- *     '@type': 'person',
- *     displayName: 'slvrbckt'
+ *     'id': 'slvrbckt@irc.freenode.net',
+ *     'type': 'person',
+ *     name: 'slvrbckt'
  *   },
  *   target: {
- *     '@id': 'irc.freenode.net/remotestorage',
- *     '@type': 'room',
- *     displayName: '#remotestorage'
+ *     'id': 'irc.freenode.net/remotestorage',
+ *     'type': 'room',
+ *     name: '#remotestorage'
  *   },
  *   object: {}
  * }
  *
  */
 IRC.prototype.leave = function (job, credentials, done) {
-  this.debug('leave() called for ' + job.actor.displayName);
-  this.__getClient(job.actor['@id'], credentials, (err, client) => {
+  this.debug('leave() called for ' + job.actor.name);
+  this.__getClient(job.actor.id, credentials, (err, client) => {
     if (err) { return done(err); }
     // leave channel
-    this.__hasLeft(job.target.displayName);
-    client.raw(['PART', job.target.displayName]);
+    this.__hasLeft(job.target.name);
+    client.raw(['PART', job.target.name]);
     done();
   });
 };
@@ -252,28 +252,28 @@ IRC.prototype.leave = function (job, credentials, done) {
  *
  *  {
  *    context: 'irc',
- *    '@type': 'send',
+ *    'type': 'send',
  *    actor: {
- *      '@id': 'slvrbckt@irc.freenode.net',
- *      '@type': 'person',
- *      displayName: 'Nick Jennings',
+ *      'id': 'slvrbckt@irc.freenode.net',
+ *      'type': 'person',
+ *      name: 'Nick Jennings',
  *      userName: 'slvrbckt'
  *    },
  *    target: {
- *      '@id': 'irc.freenode.net/remotestorage',
- *      '@type': 'room',
- *      displayName: '#remotestorage'
+ *      'id': 'irc.freenode.net/remotestorage',
+ *      'type': 'room',
+ *      name: '#remotestorage'
  *    },
  *    object: {
- *      '@type': 'message',
+ *      'type': 'message',
  *      content: 'Hello from Sockethub!'
  *    }
  *  }
  *
  */
 IRC.prototype.send = function (job, credentials, done) {
-  this.debug('send() called for ' + job.actor['@id'] + ' target: ' + job.target['@id']);
-  this.__getClient(job.actor['@id'], credentials, (err, client) => {
+  this.debug('send() called for ' + job.actor.id + ' target: ' + job.target.id);
+  this.__getClient(job.actor.id, credentials, (err, client) => {
     if (err) { return done(err); }
 
     if (typeof job.object.content !== 'string') {
@@ -288,31 +288,31 @@ IRC.prototype.send = function (job, credentials, done) {
       msg = msg.substr(msg.indexOf(' ') + 1).replace(/\s\s*$/, ''); // remove command from message
       if (cmd === 'ME') {
         // handle /me messages uniquely
-        job.object['@type'] = 'me';
+        job.object.type = 'me';
         job.object.content = msg;
       } else if (cmd === 'NOTICE') {
         // attempt to send as raw command
-        job.object['@type'] = 'notice';
+        job.object.type = 'notice';
         job.object.content = msg;
       }
     } else {
       job.object.content = msg;
     }
 
-    if (job.object['@type'] === 'me') {
+    if (job.object.type === 'me') {
       // message intended as command
       const message = '\001ACTION ' + job.object.content + '\001';
-      client.raw('PRIVMSG ' + job.target.displayName + ' :' + message);
-    } else if (job.object['@type'] === 'notice') {
+      client.raw('PRIVMSG ' + job.target.name + ' :' + message);
+    } else if (job.object.type === 'notice') {
       // attempt to send as raw command
-      client.raw('NOTICE ' + job.target.displayName + ' :' + job.object.content);
-    } else if (this.__isJoined(job.target.displayName)) {
-      client.raw('PRIVMSG ' + job.target.displayName + ' :' + job.object.content);
+      client.raw('NOTICE ' + job.target.name + ' :' + job.object.content);
+    } else if (this.__isJoined(job.target.name)) {
+      client.raw('PRIVMSG ' + job.target.name + ' :' + job.object.content);
     } else {
       return done("cannot send message to a channel of which you've not first joined.");
     }
     this.__jobQueue.push(done);
-    client.raw('PING ' + job.actor.displayName);
+    client.raw('PING ' + job.actor.name);
   });
 };
 
@@ -329,20 +329,20 @@ IRC.prototype.send = function (job, credentials, done) {
  *
  * {
  *   context: 'irc',
- *   '@type': 'update',
+ *   'type': 'update',
  *   actor: {
- *     '@id': 'slvrbckt@irc.freenode.net',
- *     '@type': 'person',
- *     displayName: 'Nick Jennings',
+ *     'id': 'slvrbckt@irc.freenode.net',
+ *     'type': 'person',
+ *     name: 'Nick Jennings',
  *     userName: 'slvrbckt'
  *   },
  *   target: {
- *     '@id': 'irc.freenode.net/sockethub',
- *     '@type': 'room',
- *     displayName: '#sockethub'
+ *     'id': 'irc.freenode.net/sockethub',
+ *     'type': 'room',
+ *     name: '#sockethub'
  *   },
  *   object: {
- *     '@type': 'topic',
+ *     'type': 'topic',
  *     topic: 'New version of Socekthub released!'
  *   }
  * }
@@ -350,47 +350,47 @@ IRC.prototype.send = function (job, credentials, done) {
  * @example change nickname
  *  {
  *    context: 'irc'
- *    '@type': 'udpate',
+ *    'type': 'udpate',
  *    actor: {
- *      '@id': 'slvrbckt@irc.freenode.net',
- *      '@type': 'person',
- *      displayName: 'slvrbckt'
+ *      'id': 'slvrbckt@irc.freenode.net',
+ *      'type': 'person',
+ *      name: 'slvrbckt'
  *    },
  *    object: {
- *      '@type': "address",
+ *      'type': "address",
  *    },
  *    target: {
- *      '@id': 'cooldude@irc.freenode.net',
- *      '@type': 'person',
- *      displayName: cooldude
+ *      'id': 'cooldude@irc.freenode.net',
+ *      'type': 'person',
+ *      name: cooldude
  *    }
  *  }
  */
 IRC.prototype.update = function (job, credentials, done) {
-  this.debug('update() called for ' + job.actor['@id']);
-  this.__getClient(job.actor['@id'], credentials, (err, client) => {
+  this.debug('update() called for ' + job.actor.id);
+  this.__getClient(job.actor.id, credentials, (err, client) => {
     if (err) { return done(err); }
-    if (job.object['@type'] === 'address')  {
-      this.debug('changing nick from ' + job.actor.displayName + ' to ' + job.target.displayName);
-      this.__handledActors.add(job.target['@id']);
+    if (job.object.type === 'address')  {
+      this.debug('changing nick from ' + job.actor.name + ' to ' + job.target.name);
+      this.__handledActors.add(job.target.id);
       this.__jobQueue.push((err) => {
         if (err) {
-          this.__handledActors.delete(job.target['@id']);
+          this.__handledActors.delete(job.target.id);
           return done(err);
         }
-        credentials.object.nick = job.target.displayName;
-        credentials.actor['@id'] = `${job.target.displayName}@${credentials.object.server}`;
-        credentials.actor.displayName = job.target.displayName;
+        credentials.object.nick = job.target.name;
+        credentials.actor.id = `${job.target.name}@${credentials.object.server}`;
+        credentials.actor.name = job.target.name;
         this.updateActor(credentials);
         done();
       });
       // send nick change command
-      client.raw(['NICK', job.target.displayName]);
-    } else if (job.object['@type'] === 'topic') {
+      client.raw(['NICK', job.target.name]);
+    } else if (job.object.type === 'topic') {
       // update topic
-      this.debug('changing topic in channel ' + job.target.displayName);
+      this.debug('changing topic in channel ' + job.target.name);
       this.__jobQueue.push(done);
-      client.raw(['topic', job.target.displayName, job.object.topic]);
+      client.raw(['topic', job.target.name, job.object.topic]);
     } else {
       return done(`unknown update action.`);
     }
@@ -410,20 +410,20 @@ IRC.prototype.update = function (job, credentials, done) {
  *
  *  {
  *    context: 'irc',
- *    '@type': 'observe',
+ *    'type': 'observe',
  *    actor: {
- *      '@id': 'slvrbckt@irc.freenode.net',
- *      '@type': 'person',
- *      displayName: 'Nick Jennings',
+ *      'id': 'slvrbckt@irc.freenode.net',
+ *      'type': 'person',
+ *      name: 'Nick Jennings',
  *      userName: 'slvrbckt'
  *    },
  *    target: {
- *      '@id': 'irc.freenode.net/sockethub',
- *      '@type': 'room',
- *      displayName: '#sockethub'
+ *      'id': 'irc.freenode.net/sockethub',
+ *      'type': 'room',
+ *      name: '#sockethub'
  *    },
  *    object: {
- *      '@type': 'attendance'
+ *      'type': 'attendance'
  *    }
  *  }
  *
@@ -431,15 +431,15 @@ IRC.prototype.update = function (job, credentials, done) {
  *  // The above object might return:
  *  {
  *    context: 'irc',
- *    '@type': 'observe',
+ *    'type': 'observe',
  *    actor: {
- *      '@id': 'irc.freenode.net/sockethub',
- *      '@type': 'room',
- *      displayName: '#sockethub'
+ *      'id': 'irc.freenode.net/sockethub',
+ *      'type': 'room',
+ *      name: '#sockethub'
  *    },
  *    target: {},
  *    object: {
- *      '@type': 'attendance'
+ *      'type': 'attendance'
  *      members: [
  *        'RyanGosling',
  *        'PeeWeeHerman',
@@ -452,16 +452,16 @@ IRC.prototype.update = function (job, credentials, done) {
  *
  */
 IRC.prototype.observe = function (job, credentials, done) {
-  this.debug('observe() called for ' + job.actor['@id']);
-  this.__getClient(job.actor['@id'], credentials, (err, client) => {
+  this.debug('observe() called for ' + job.actor.id);
+  this.__getClient(job.actor.id, credentials, (err, client) => {
     if (err) { return done(err); }
 
-    if (job.object['@type'] === 'attendance') {
-      this.debug('observe() - sending NAMES for ' + job.target.displayName);
-      client.raw(['NAMES', job.target.displayName]);
+    if (job.object.type === 'attendance') {
+      this.debug('observe() - sending NAMES for ' + job.target.name);
+      client.raw(['NAMES', job.target.name]);
       done();
     } else {
-      done("unknown '@type' '" + job.object['@type'] + "'");
+      done("unknown 'type' '" + job.object.type + "'");
     }
   });
 };
@@ -559,7 +559,7 @@ IRC.prototype.__connect = function (key, credentials, cb) {
     username: credentials.object.nick,
     nicknames: [ credentials.object.nick ],
     server: credentials.object.server || 'irc.freenode.net',
-    realname: credentials.actor.displayName || credentials.object.nick,
+    realname: credentials.actor.name || credentials.object.nick,
     port: (credentials.object.port) ?
       parseInt(credentials.object.port, 10) : (is_secure) ? 6697 : 6667,
     debug: console.log
@@ -635,12 +635,12 @@ IRC.prototype.__registerListeners = function (server) {
 
   this.irc2as.events.on('incoming', (asObject) => {
     if ((typeof asObject.actor === 'object') &&
-        (typeof asObject.actor.displayName === 'string') &&
-        (this.__handledActors.has(asObject.actor['@id']))) {
+        (typeof asObject.actor.name === 'string') &&
+        (this.__handledActors.has(asObject.actor.id))) {
       this.__completeJob();
     } else {
       this.debug(
-        'calling sendToClient for ' + asObject.actor['@id'], [...this.__handledActors.keys()]);
+        'calling sendToClient for ' + asObject.actor.id, [...this.__handledActors.keys()]);
       this.sendToClient(asObject);
     }
   });

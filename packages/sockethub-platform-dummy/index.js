@@ -12,9 +12,9 @@ class Dummy {
     return {
       version: packageJSON.version,
       messages: {
-        "required": ["@type"],
+        "required": ["type"],
         "properties": {
-          "@type": {
+          "type": {
             "enum": ["echo", "fail"]
           }
         }

@@ -3,6 +3,7 @@ const objectTypes     = require('./object-types.js');
 
 const validActorRefs  = activityObjects.properties.object.oneOf;
 const validTargetRefs = activityObjects.properties.object.oneOf;
+console.log(validActorRefs);
 
 let validObjectRefs = [];
 
@@ -23,12 +24,12 @@ module.exports = {
   "description": "schema for Sockethub Activity Streams",
 
   "type": "object",
-  "required" : [ "context", "@type", "actor" ],
+  "required" : [ "context", "type", "actor" ],
   "properties": {
-    "@id": {
+    "id": {
       "type": "string"
     },
-    "@type": typeSchema,
+    "type": typeSchema,
     "context": contextSchema,
     "actor": {
       "type": "object",

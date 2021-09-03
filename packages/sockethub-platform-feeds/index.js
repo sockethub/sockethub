@@ -24,9 +24,9 @@ const packageJSON = require('./package.json');
 const PlatformSchema = {
   "version": packageJSON.version,
   "messages": {
-    "required": [ "@type" ],
+    "required": [ "type" ],
     "properties": {
-      "@type": {
+      "type": {
         "type": "string",
         "enum": [ "fetch" ]
       },
@@ -131,18 +131,18 @@ class Feeds {
    *
    *  {
    *    context: "feeds",
-   *    '@type': "fetch",
+   *    'type': "fetch",
    *    actor: {
-   *      '@id': 'https://dogfeed.com/user/nick@silverbucket',
-   *      '@type': "person",
-   *      displayName: "nick@silverbucket.net"
+   *      'id': 'https://dogfeed.com/user/nick@silverbucket',
+   *      'type': "person",
+   *      name: "nick@silverbucket.net"
    *    },
    *    target: {
-   *      '@id': 'http://blog.example.com/rss',
-   *      '@type': "feed"
+   *      'id': 'http://blog.example.com/rss',
+   *      'type': "feed"
    *    },
    *    object: {
-   *      '@type': "parameters",
+   *      'type': "parameters",
    *      limit: 10,    // default 10
    *      property: 'date'
    *      after: 'Tue Nov 26 2013 02:11:59 GMT+0100 (CET)',
@@ -162,11 +162,11 @@ class Feeds {
    *
    *   {
    *     context: 'feeds',
-   *     '@type': 'post',
+   *     'type': 'post',
    *     actor: {
-   *       '@type': 'feed',
-   *       displayName: 'Best Feed Inc.',
-   *       '@id': 'http://blog.example.com/rss',
+   *       'type': 'feed',
+   *       name: 'Best Feed Inc.',
+   *       'id': 'http://blog.example.com/rss',
    *       description: 'Where the best feed comes to be the best',
    *       image: {
    *         width: '144',
@@ -179,13 +179,13 @@ class Feeds {
    *       author: 'John Doe'
    *     },
    *     target: {
-   *       '@id': 'https://dogfeed.com/user/nick@silverbucket',
-   *       '@type': "person",
-   *       displayName: "nick@silverbucket.net"
+   *       'id': 'https://dogfeed.com/user/nick@silverbucket',
+   *       'type': "person",
+   *       name: "nick@silverbucket.net"
    *     },
    *     object: {
-   *       '@id': "http://example.com/articles/about-stuff"
-   *       '@type': 'post',
+   *       'id': "http://example.com/articles/about-stuff"
+   *       'type': 'post',
    *       title: 'About stuff...',
    *       url: "http://example.com/articles/about-stuff"
    *       date: "2013-05-28T12:00:00.000Z",
@@ -208,7 +208,7 @@ class Feeds {
    */
   fetch(job, cb) {
     // ready to execute job
-    this.fetchFeed(job.target['@id'], job.object)
+    this.fetchFeed(job.target.id, job.object)
       .then((results) => {
         // result.target = job.actor;
         return cb(null, results);
@@ -252,8 +252,8 @@ class Feeds {
 
 function buildFeedObject(dateNum, item) {
   return {
-    '@type': 'feedEntry',
-    displayName: item.title,
+    type: 'feedEntry',
+    name: item.title,
     title: item.title,
     date: item.date,
     datenum: dateNum,
@@ -263,7 +263,7 @@ function buildFeedObject(dateNum, item) {
     brief_text: item.description,
     brief_html: item.description,
     url: item.origlink || item.link || item.meta.link,
-    '@id': item.origlink || item.link || item.meta.link + '#' + dateNum,
+    id: item.origlink || item.link || item.meta.link + '#' + dateNum,
     media: item.enclosures,
     source: item.source
   };
@@ -272,25 +272,25 @@ function buildFeedObject(dateNum, item) {
 function buildFeedEntry(actor) {
   return {
     actor: {
-      '@type': 'feed',
-        displayName: actor.name,
-        '@id': actor.address,
-        description: actor.description,
-        image: actor.image,
-        favicon: actor.favicon,
-        categories: actor.categories,
-        language: actor.language,
-        author: actor.author
+      type: 'feed',
+      name: actor.name,
+      id: actor.address,
+      description: actor.description,
+      image: actor.image,
+      favicon: actor.favicon,
+      categories: actor.categories,
+      language: actor.language,
+      author: actor.author
     },
     status: true,
-    '@type': "post",
+    type: "post",
     object: {}
   };
 }
 
 function buildFeedChannel(url, meta) {
   return {
-    '@type': 'feedChannel',
+    type: 'feedChannel',
     name: (meta.title) ? meta.title : (meta.link) ? meta.link : url,
     address: url,
     description: (meta.description) ? meta.description : '',

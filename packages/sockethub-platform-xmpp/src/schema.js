@@ -3,9 +3,9 @@ const packageJSON = require('../package.json');
 module.exports = {
   "version": packageJSON.version,
   "messages": {
-    "required": ['@type'],
+    "required": ['type'],
     "properties": {
-      "@type": {
+      "type": {
         "enum": ['connect', 'update', 'send', 'join', 'observe', 'request-friend',
           'remove-friend', 'make-friend']
       }
@@ -18,14 +18,14 @@ module.exports = {
       //  they don't want to, just credential specifics
       "actor": {
         "type": "object",
-        "required": ["@id"]
+        "required": ["id"]
       },
       "object": {
         "type": "object",
-        "required": ['@type', 'username', 'password', 'resource'],
+        "required": ['type', 'username', 'password', 'resource'],
         "additionalProperties": false,
         "properties": {
-          "@type": {
+          "type": {
             "type": "string"
           },
           "username": {

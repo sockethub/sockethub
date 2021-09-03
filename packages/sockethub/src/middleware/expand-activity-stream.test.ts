@@ -9,14 +9,14 @@ const activity = ActivityStreams();
 // register known activity objects
 [
   {
-    "@id":"blah",
-    "@type":"person",
-    "displayName":"dood"
+    "id":"blah",
+    "type":"person",
+    "name":"dood"
   },
   {
-    "@id":"blah2",
-    "@type":"person",
-    "displayName":"bob",
+    "id":"blah2",
+    "type":"person",
+    "name":"bob",
     "hello":"there",
     "i":[
       "am",
@@ -24,9 +24,9 @@ const activity = ActivityStreams();
     ]
   },
   {
-    "@id":"sh-9K3Vk@irc.freenode.net",
-    "@type":"person",
-    "displayName":"sh-9K3Vk",
+    "id":"sh-9K3Vk@irc.freenode.net",
+    "type":"person",
+    "name":"sh-9K3Vk",
     "image":{
       "height":250,
       "mediaType":"image/jpeg",
@@ -36,9 +36,9 @@ const activity = ActivityStreams();
     "url":"http://sockethub.org"
   },
   {
-    "@id":"blah3",
-    "@type":"person",
-    "displayName":"bob",
+    "id":"blah3",
+    "type":"person",
+    "name":"bob",
     "hello":"there",
     "i":[
       "am",

@@ -7,15 +7,15 @@ proxyquire.noPreserveCache();
 proxyquire.noCallThru()
 
 const actor = {
-  '@type': 'person',
-  '@id': 'testingham@jabber.net',
-  displayName:'testing ham'
+  'type': 'person',
+  'id': 'testingham@jabber.net',
+  name:'testing ham'
 };
 
 const credentials = {
   actor: actor,
   object: {
-    '@type': 'credentials',
+    'type': 'credentials',
     username: 'testingham',
     server: 'jabber.net',
     password: 'foobar',
@@ -25,17 +25,17 @@ const credentials = {
 
 const target = {
   mrfoobar: {
-    '@type': 'person',
-    '@id': 'mrfoobar@jabber.net',
-    displayName: 'Mr FooBar'
+    'type': 'person',
+    'id': 'mrfoobar@jabber.net',
+    name: 'Mr FooBar'
   },
   partyroom: {
-    '@type': 'room',
-    '@id': 'partyroom@jabber.net'
+    'type': 'room',
+    'id': 'partyroom@jabber.net'
   },
   roomuser: {
-    '@type': 'room',
-    '@id': 'partyroom@jabber.net/ms tut'
+    'type': 'room',
+    'id': 'partyroom@jabber.net/ms tut'
   }
 };
 
@@ -43,8 +43,8 @@ const job = {
   join: {
     actor: actor,
     object: {
-      '@type': 'update',
-      displayName: 'Frank'
+      'type': 'update',
+      name: 'Frank'
     },
     target: target.partyroom
   },
@@ -56,7 +56,7 @@ const job = {
     chat: {
       actor: actor,
       object: {
-        '@type': 'message',
+        'type': 'message',
         content: 'hello'
       },
       target: target.mrfoobar
@@ -64,7 +64,7 @@ const job = {
     groupchat: {
       actor: actor,
       object: {
-        '@type': 'message',
+        'type': 'message',
         content: 'hello'
       },
       target: target.roomuser
@@ -74,7 +74,7 @@ const job = {
     presence: {
       actor: actor,
       object: {
-        '@type': 'presence',
+        'type': 'presence',
         presence: 'available',
         status: 'available'
       }
@@ -96,7 +96,7 @@ const job = {
     actor: actor,
     target: target.partyroom,
     object: {
-      '@type': 'attendance'
+      'type': 'attendance'
     }
   }
 };
@@ -210,8 +210,8 @@ describe('Platform', () => {
       it('calls xmpp.js correctly', (done) => {
         const message = xmlFake(
           "message",
-          {type: job.send.chat.target['@type'] === 'room' ? 'groupchat' : 'chat',
-            to: job.send.chat.target['@id']},
+          {type: job.send.chat.target['type'] === 'room' ? 'groupchat' : 'chat',
+            to: job.send.chat.target['id']},
           xmlFake("body", {}, job.send.chat.object.content),
         );
         xp.send(job.send.chat, () => {
@@ -223,8 +223,8 @@ describe('Platform', () => {
       it('calls xmpp.js correctly when called for a groupchat', (done) => {
         const message = xmlFake(
           "message",
-          {type: job.send.chat.target['@type'] === 'room' ? 'groupchat' : 'chat',
-            to: job.send.chat.target['@id']},
+          {type: job.send.chat.target['type'] === 'room' ? 'groupchat' : 'chat',
+            to: job.send.chat.target['id']},
           xmlFake("body", {}, job.send.chat.object.content),
         );
         xp.send(job.send.groupchat, () => {
@@ -249,7 +249,7 @@ describe('Platform', () => {
         xp['request-friend'](job['request-friend'], () => {
           sinon.assert.calledOnce(xp.__client.send);
           sinon.assert.calledWith(xp.__client.send,
-            xmlFake("presence", { type: "subscribe", to: job['request-friend'].target['@id'] }));
+            xmlFake("presence", { type: "subscribe", to: job['request-friend'].target['id'] }));
           done();
         });
       });
@@ -260,7 +260,7 @@ describe('Platform', () => {
         xp['remove-friend'](job['remove-friend'], () => {
           sinon.assert.calledOnce(xp.__client.send);
           sinon.assert.calledWith(xp.__client.send,
-            xmlFake("presence", { type: "subscribe", to: job['remove-friend'].target['@id'] }));
+            xmlFake("presence", { type: "subscribe", to: job['remove-friend'].target['id'] }));
           done();
         });
       });
@@ -271,7 +271,7 @@ describe('Platform', () => {
         xp['remove-friend'](job['remove-friend'], () => {
           sinon.assert.calledOnce(xp.__client.send);
           sinon.assert.calledWith(xp.__client.send,
-            xmlFake("presence", { type: "subscribe", to: job['make-friend'].target['@id'] }));
+            xmlFake("presence", { type: "subscribe", to: job['make-friend'].target['id'] }));
           done();
         });
       });
