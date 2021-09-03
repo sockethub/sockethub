@@ -56,7 +56,6 @@ describe('Middleware: storeCredentials', () => {
     const sc = storeCredentials(storeSuccess, sessionLogStub);
     sc(creds, (err) => {
       expect(saveSuccessFake.callCount).to.equal(1);
-      console.log(saveSuccessFake.firstArg);
       expect(saveSuccessFake.firstArg).to.equal(creds.actor.id);
       expect(err).to.be.undefined;
     });
