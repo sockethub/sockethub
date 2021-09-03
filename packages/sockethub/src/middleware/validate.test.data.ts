@@ -268,7 +268,8 @@ export default [
       "context":"irc",
       "target": { "@id": "irc://irc.dooder.net/a-room", "@type": "room" }
     },
-    "error": "Error: actvity-stream schema validation failed: must have required property \'@type\'"
+    "error": "Error: actvity-stream schema validation failed: " +
+      "must have required property \'@type\'"
   },
   {
     "name":"invalid context property",
@@ -291,7 +292,8 @@ export default [
       "context":"irc",
       "target": { "@id": "irc://irc.dooder.net/a-room", "@type": "room" }
     },
-    "error": "Error: actvity-stream schema validation failed: must have required property \'actor\'"
+    "error": "Error: actvity-stream schema validation failed: " +
+      "must have required property \'actor\'"
   },
   {
     "name":"traditional message",
