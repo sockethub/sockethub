@@ -102,7 +102,8 @@ export default [
         "host":"irc.freenode.net"
       }
     },
-    "error": "Error: credentials schema validation failed: /object = Missing required property: nick"
+    "error":
+      "Error: credentials schema validation failed: /object = Missing required property: nick"
   },
   {
     "name":"no type specified",
@@ -159,7 +160,9 @@ export default [
       "secure":false,
       "server":"irc.freenode.net"
     },
-    "error": "Error: activity-object schema validation failed: /object = Data does not match any schemas from \"oneOf\""
+    "error":
+      "Error: activity-object schema validation failed: /object = " +
+      "Data does not match any schemas from \"oneOf\""
   },
   {
     "name":"alone credentials (as credentials)",
@@ -243,7 +246,9 @@ export default [
         "@id":"larg"
       }
     },
-    "error": "Error: activity-object schema validation failed: /object = Data does not match any schemas from \"oneOf\""
+    "error":
+      "Error: activity-object schema validation failed: /object = " +
+      "Data does not match any schemas from \"oneOf\""
   },
   {
     "name":"non-expected AS will fail",

@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import proxyquire from 'proxyquire';
 
 proxyquire.noPreserveCache();
-proxyquire.noCallThru()
+proxyquire.noCallThru();
 
 // @ts-ignore
 import platformLoad from './../bootstrap/platforms';
