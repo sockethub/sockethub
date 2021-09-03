@@ -21,33 +21,26 @@ module.exports = {
         "required": ["@id"]
       },
       "object": {
-        "name": "object",
         "type": "object",
         "required": ['@type', 'username', 'password', 'resource'],
         "additionalProperties": false,
         "properties": {
           "@type": {
-            "name": "@type",
             "type": "string"
           },
           "username": {
-            "name": "username",
             "type": "string"
           },
           "password": {
-            "name": "password",
             "type": "string"
           },
           "server": {
-            "name": "server",
             "type": "string"
           },
           "port": {
-            "name": "port",
             "type": "number"
           },
           "resource": {
-            "name": "resource",
             "type": "string"
           }
         }
