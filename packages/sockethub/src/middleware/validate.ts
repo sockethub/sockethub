@@ -41,7 +41,6 @@ function validateActivityObject(msg: any, done: Function) {
 }
 
 function validateActivityStream(msg: any, done: Function) {
-  // tv4.getSchema(`http://sockethub.org/schemas/v0/context/${msg.context}/messages`)
   const validate_activity_stream = ajv.getSchema(`${schemaURL}/activity-stream`);
   if (! validate_activity_stream(msg)) {
     done(new Error(
@@ -58,8 +57,6 @@ function validateCredentials(msg: any, done: Function) {
   const validate_credentials = ajv.getSchema(
     `${schemaURL}/context/${msg.context}/credentials`);
   if (! validate_credentials(msg)) {
-    // return done(new Error(`no credentials schema found for ${msg.context} context`));
-  // } else if (! ajv.validate(credentialsSchema, msg)) {
     done(new Error(
       `credentials schema validation failed: ${validate_credentials.errors[0].message}`));
   } else {
