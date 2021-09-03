@@ -39,21 +39,22 @@ export interface JobEncrypted {
 }
 
 export interface ActivityObject {
-  '@type'?: string;
-  actor?: string | {
+  '@type': string;
+  context: string;
+  actor: {
     '@type': string;
-    '@id'?: string;
+    '@id': string;
+    displayName?: string;
   },
   object?: {
     '@type': string;
     content?: any;
   },
-  target?: string | {
+  target?: {
     '@type': string;
-    '@id'?: string;
+    '@id': string;
+    displayName?: string;
   },
-  context: string;
-  error?: any;
   sessionSecret?: string;
 }
 
