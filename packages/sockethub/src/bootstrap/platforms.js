@@ -5,13 +5,14 @@
  * platforms, and whitelisting or blacklisting (or neither) based on the
  * config.
  */
-const tv4     = require('tv4'),
+const Ajv     = require('ajv'),
       debug   = require('debug'),
       schemas = require('sockethub-schemas'),
       findup  = require('findup-sync');
 
 const config = require('../config').default;
 const log = debug('sockethub:bootstrap:platforms');
+const ajv = new Ajv();
 
 const whitelist = config.get('platforms:whitelist'),
       blacklist = config.get('platforms:blacklist');
@@ -66,10 +67,11 @@ module.exports = function platformLoad(moduleList) {
         const packageJson = require(path + '/package.json');
         let types = [];
 
+        const validate_platform_schema = ajv.compile(schemas.platform);
         // validate schema property
-        if (! tv4.validate(p.schema, schemas.platform)) {
+        if (! validate_platform_schema(p.schema)) {
           throw new Error(
-            `${platformName} platform schema failed to validate: ${tv4.error.message}`);
+            `${platformName} platform schema failed to validate: `, ajv.errors);
         } else if (typeof p.config !== 'object') {
           throw new Error(
             `${platformName} platform must have a config property that is an object.`);
@@ -77,16 +79,10 @@ module.exports = function platformLoad(moduleList) {
           if (p.schema.credentials) {
             // register the platforms credentials schema
             types.push('credentials');
-            tv4.addSchema(`http://sockethub.org/schemas/v0/context/${platformName}/credentials`,
-              p.schema.credentials);
           } else {
             p.config.noCredentials = true;
           }
-
         }
-
-        tv4.addSchema(`http://sockethub.org/schemas/v0/context/${platformName}/messages`,
-          p.schema.messages);
 
         if (platformListsSupportedTypes(p)) {
           types = [...types, ...p.schema.messages.properties['@type'].enum];
@@ -96,6 +92,10 @@ module.exports = function platformLoad(moduleList) {
           id: platformName,
           moduleName: moduleName,
           config: p.config,
+          schemas: {
+            credentials: p.schema.credentials || {},
+            messages: p.schema.messages || {}
+          },
           version: packageJson.version,
           '@types': types.join(', ')
         });
