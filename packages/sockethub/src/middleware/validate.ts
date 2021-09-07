@@ -8,9 +8,6 @@ import { ActivityObject } from "../sockethub";
 
 // @ts-ignore
 import init from "../bootstrap/init";
-import platformLoad from './../bootstrap/platforms';
-const packageJSON = require('./../../package.json');
-const platforms = platformLoad(Object.keys(packageJSON.dependencies));
 
 // load sockethub-activity-stream schema and register it with tv4
 // http://sockethub.org/schemas/v0/activity-stream#
