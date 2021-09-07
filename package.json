@@ -2,7 +2,7 @@
   "name": "root",
   "private": true,
   "devDependencies": {
-    "@typescript-eslint/parser": "4.29.3",
+    "@typescript-eslint/parser": "4.30.0",
     "eslint": "7.32.0",
     "eslint-plugin-security-node": "^1.0.14",
     "find-up": "6.0.0",
