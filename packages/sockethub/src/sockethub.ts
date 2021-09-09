@@ -5,6 +5,7 @@ import crypto from './crypto';
 import init from './bootstrap/init';
 import createMiddleware from './middleware';
 import createActivityObject from "./middleware/create-activity-object";
+import expandActivityStream from "./middleware/expand-activity-stream";
 import storeCredentials from "./middleware/store-credentials";
 import validate from "./middleware/validate";
 import janitor from './janitor';
@@ -39,21 +40,22 @@ export interface JobEncrypted {
 }
 
 export interface ActivityObject {
-  '@type'?: string;
-  actor?: string | {
-    '@type': string;
-    '@id'?: string;
+  '@type': string;
+  context: string;
+  actor: {
+    '@id': string;
+    '@type'?: string;
+    displayName?: string;
   },
   object?: {
     '@type': string;
     content?: any;
   },
-  target?: string | {
+  target?: {
     '@type': string;
-    '@id'?: string;
+    '@id': string;
+    displayName?: string;
   },
-  context: string;
-  error?: any;
   sessionSecret?: string;
 }
 
@@ -142,6 +144,13 @@ class Sockethub {
 
     socket.on('credentials',
       createMiddleware(errorHandler('credentials', socket, sessionLog))(
+        (msg: any, done: Function) => {
+          if ((! msg['@type']) && (typeof msg.object === 'object') && (msg.object['@type'])) {
+            msg['@type'] = msg.object['@type'];
+          }
+          done(msg);
+        },
+        expandActivityStream,
         validate('credentials', socket.id),
         storeCredentials(store, sessionLog)
       )
@@ -150,6 +159,7 @@ class Sockethub {
     socket.on(
       'message',
       createMiddleware(errorHandler('message', socket, sessionLog))(
+        expandActivityStream,
         validate('message', socket.id),
         (msg, done) => {
           // middleware which attaches the sessionSecret to the message. The platform thread

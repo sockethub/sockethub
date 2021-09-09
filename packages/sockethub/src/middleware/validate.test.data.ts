@@ -1,8 +1,8 @@
 export default [
   {
-    "name": "basic",
-    "valid":true,
-    "type":"credentials",
+    "name": "mismatched types",
+    "valid": false,
+    "type": "credentials",
     "input":{
       "@id":"blah",
       "@type":"send",
@@ -18,17 +18,41 @@ export default [
         "displayName":"sockethub"
       },
       "object":{
-        "@type":"credentials"
+        "@type":"credentials",
+        "user": 'foo',
+        "pass": 'bar'
+      }
+    },
+    'error': "Error: credential activity streams must have credentials set as @type"
+  },
+  {
+    "name": "basic",
+    "valid":true,
+    "type":"credentials",
+    "input":{
+      "@id":"blah",
+      "@type":"credentials",
+      "context":"dummy",
+      "actor":{
+        "@id":"dood@irc.freenode.net",
+        "@type":"person",
+        "displayName":"dood"
+      },
+      "object":{
+        '@type': 'credentials',
+        "user": 'foo',
+        "pass": 'bar'
       }
     },
     "output":"same"
   },
   {
-    "name":"new format",
+    "name":"irc credentials",
     "valid":true,
     "type":"credentials",
     "input":{
       "context":"irc",
+      "@type":"credentials",
       "actor":{
         "@id":"sh-9K3Vk@irc.freenode.net",
         "@type":"person",
@@ -52,6 +76,36 @@ export default [
     "output":"same"
   },
   {
+    "name":"bad irc credentials: user/nick host/server",
+    "valid":false,
+    "type":"credentials",
+    "input":{
+      "context":"irc",
+      "@type":"credentials",
+      "actor":{
+        "@id":"sh-9K3Vk@irc.freenode.net",
+        "@type":"person",
+        "displayName":"sh-9K3Vk",
+        "image":{
+          "height":250,
+          "mediaType":"image/jpeg",
+          "url":"http://example.org/image.jpg",
+          "width":250
+        },
+        "url":"http://sockethub.org"
+      },
+      "object":{
+        "@type":"credentials",
+        "user":"sh-9K3Vk",
+        "port":6667,
+        "secure":false,
+        "host":"irc.freenode.net"
+      }
+    },
+    "error":
+      "Error: credentials schema validation failed: /object = Missing required property: nick"
+  },
+  {
     "name":"no type specified",
     "valid":false,
     "type":"credentials",
@@ -65,7 +119,8 @@ export default [
         "port":5222,
         "resource":"laptop"
       }
-    }
+    },
+    "error": "Error: credential activity streams must have credentials set as @type"
   },
   {
     "name":"person",
@@ -104,7 +159,10 @@ export default [
       "port":6667,
       "secure":false,
       "server":"irc.freenode.net"
-    }
+    },
+    "error":
+      "Error: activity-object schema validation failed: /object = " +
+      "Data does not match any schemas from \"oneOf\""
   },
   {
     "name":"alone credentials (as credentials)",
@@ -116,7 +174,8 @@ export default [
       "port":6667,
       "secure":false,
       "server":"irc.freenode.net"
-    }
+    },
+    "error": "Error: platform context undefined not registered with this sockethub instance."
   },
   {
     "name":"new person",
@@ -186,101 +245,20 @@ export default [
       "noDisplayName":{
         "@id":"larg"
       }
-    }
+    },
+    "error":
+      "Error: activity-object schema validation failed: /object = " +
+      "Data does not match any schemas from \"oneOf\""
   },
   {
-    "name":"expand actor and target of unknowns",
-    "valid":true,
+    "name":"non-expected AS will fail",
+    "valid":false,
     "type":"message",
     "input":{
       "actor":"irc://uuu@localhost",
       "@type":"join",
       "context":"irc",
       "target":"irc://irc.dooder.net/a-room"
-    },
-    "output":{
-      "actor":{
-        "@id":"irc://uuu@localhost",
-        "displayName":"uuu"
-      },
-      "@type":"join",
-      "context":"irc",
-      "target":{
-        "@id":"irc://irc.dooder.net/a-room",
-        "displayName":"/a-room"
-      }
-    }
-  },
-  {
-    "name":"expand actor and target of unknowns",
-    "valid":true,
-    "type":"message",
-    "input":{
-      "actor":"hyper_rau@localhost",
-      "@type":"join",
-      "context":"xmpp",
-      "object":{
-
-      },
-      "target":"dooder"
-    },
-    "output":{
-      "actor":{
-        "@id":"hyper_rau@localhost",
-        "displayName":"hyper_rau@localhost"
-      },
-      "@type":"join",
-      "context":"xmpp",
-      "object":{
-
-      },
-      "target":{
-        "@id":"dooder",
-        "displayName":"dooder"
-      }
-    }
-  },
-  {
-    "name":"expand known person",
-    "valid":true,
-    "type":"message",
-    "input":{
-      "actor":"sh-9K3Vk@irc.freenode.net",
-      "target":"blah",
-      "@type":"send",
-      "context":"irc",
-      "object":{
-
-      }
-    },
-    "output":{
-      "actor":{
-        "@id":"sh-9K3Vk@irc.freenode.net",
-        "@type":"person",
-        "displayName":"sh-9K3Vk",
-        "image":{
-          "height":250,
-          "mediaType":"image/jpeg",
-          "url":"http://example.org/image.jpg",
-          "width":250
-        },
-        "url":"http://sockethub.org"
-      },
-      "target":{
-        "@id":"blah",
-        "@type":"person",
-        "displayName":"bob",
-        "hello":"there",
-        "i":[
-          "am",
-          "extras"
-        ]
-      },
-      "@type":"send",
-      "context":"irc",
-      "object":{
-
-      }
     }
   }
 ];
