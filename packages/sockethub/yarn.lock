@@ -330,10 +330,10 @@
   resolved "https://registry.yarnpkg.com/@types/tv4/-/tv4-1.2.31.tgz#b33f3e6f082782a90f1fc5f414ad8722db8c9baa"
   integrity sha512-P97XU07fcpauSw3/fE2Q7eF6bHl4oHhwkikjnM7zlQLENrdC2rZuHSdNlMBhnW82NyBEsVJHII1Jk3d/MtQsQQ==
 
-"@types/urijs@^1.19.13":
-  version "1.19.16"
-  resolved "https://registry.yarnpkg.com/@types/urijs/-/urijs-1.19.16.tgz#156658c47438fa867db5dce4d2949fe1ca0878e2"
-  integrity sha512-WgxqcUSEYijGnNWHSln/uqay+AywS3mEhLC+d2PwLsru2fLeMblvxP67Y/SCfB2Pxe+dX/zbIoNNzXY+VKOtNA==
+"@types/urijs@1.19.17":
+  version "1.19.17"
+  resolved "https://registry.yarnpkg.com/@types/urijs/-/urijs-1.19.17.tgz#232ac9884b6a2aeab5dbe70b79cdb91d5067c325"
+  integrity sha512-ShIlp+8iNGo/yVVfYFoNRqUiaE9wMCzsSl85qTg2/C5l56BTJokU7QeMgVBQ9xhcyhWQP0zGXPBZPPvEG/sRmQ==
 
 "@typescript-eslint/parser@4.31.0":
   version "4.31.0"
