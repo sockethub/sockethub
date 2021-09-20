@@ -7,7 +7,7 @@
     "test": "test"
   },
   "dependencies": {
-    "c8": "7.8.0",
+    "c8": "7.9.0",
     "debug": "^4.3.1",
     "fast-deep-equal": "^3.1.1"
   },
