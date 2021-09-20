@@ -80,7 +80,7 @@
     "@types/mocha": "9.0.0",
     "@types/nconf": "^0.10.0",
     "@types/node": "14.17.15",
-    "@types/object-hash": "^2.1.0",
+    "@types/object-hash": "2.2.1",
     "@types/tv4": "^1.2.29",
     "@types/urijs": "1.19.17",
     "@typescript-eslint/parser": "4.31.0",
