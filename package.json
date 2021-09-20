@@ -7,7 +7,7 @@
     "eslint-plugin-security-node": "^1.0.14",
     "find-up": "6.0.0",
     "lerna": "4.0.0",
-    "typescript": "4.4.2",
+    "typescript": "4.4.3",
     "yarn": "1.22.11"
   },
   "scripts": {
