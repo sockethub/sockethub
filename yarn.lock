@@ -1810,7 +1810,7 @@ escape-string-regexp@^4.0.0:
   resolved "https://registry.yarnpkg.com/escape-string-regexp/-/escape-string-regexp-4.0.0.tgz#14ba83a5d373e3d311e5afca29cf5bfad965bf34"
   integrity sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==
 
-eslint-plugin-security-node@^1.0.14:
+eslint-plugin-security-node@1.0.14:
   version "1.0.14"
   resolved "https://registry.yarnpkg.com/eslint-plugin-security-node/-/eslint-plugin-security-node-1.0.14.tgz#14fdba09e8aafb6f6bc53110ff72dcd3c2dc2e91"
   integrity sha512-PVN8vGDzXHiQJcGLB6Db/yqC2o43ZnTWgckjSiZKRu0jqpyFPCkT4tZPJ1FPqPDQsdgHHD//f18EOb7yw+N/Ig==
