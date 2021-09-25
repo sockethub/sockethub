@@ -117,19 +117,19 @@ class SockethubClient {
   }
 
   private eventMessage(content: any) {
-    if (this.online) {
-      // either store or delete the specified content onto the storedJoins map,
-      // for reply once we're back online.
-      if (content['@type'] === 'join') {
-        this.events['join'].set(SockethubClient.getKey(content), content);
-      } else if (content['@type'] === 'leave') {
-        this.events['join'].delete(SockethubClient.getKey(content));
-      }
-      if (content['@type'] === 'connect') {
-        this.events['connect'].set(SockethubClient.getKey(content), content);
-      } else if (content['@type'] === 'disconnect') {
-        this.events['connect'].delete(SockethubClient.getKey(content));
-      }
+    if (! this.online) { return; }
+    // either store or delete the specified content onto the storedJoins map,
+    // for reply once we're back online.
+    const key = SockethubClient.getKey(content);
+    if (content['@type'] === 'join') {
+      this.events['join'].set(key, content);
+    } else if (content['@type'] === 'leave') {
+      this.events['join'].delete(key);
+    }
+    if (content['@type'] === 'connect') {
+      this.events['connect'].set(key, content);
+    } else if (content['@type'] === 'disconnect') {
+      this.events['connect'].delete(key);
     }
   }
 
