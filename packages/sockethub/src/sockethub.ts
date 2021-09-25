@@ -40,21 +40,21 @@ export interface JobEncrypted {
 }
 
 export interface ActivityObject {
-  '@type': string;
+  type: string;
   context: string;
   actor: {
-    '@id': string;
-    '@type'?: string;
-    displayName?: string;
+    id: string;
+    type?: string;
+    name?: string;
   },
   object?: {
-    '@type': string;
+    type: string;
     content?: any;
   },
   target?: {
-    '@type': string;
-    '@id': string;
-    displayName?: string;
+    type: string;
+    id: string;
+    name?: string;
   },
   sessionSecret?: string;
 }
@@ -117,8 +117,8 @@ class Sockethub {
 
   private handleIncomingMessage(socket: Socket, sessionLog: Function) {
     return (msg, done: Function) => {
-      const platformInstance = this.processManager.get(msg.context, msg.actor['@id'], socket.id);
-      const title = `${msg.context}-${(msg['@id']) ? msg['@id'] : this.counter++}`;
+      const platformInstance = this.processManager.get(msg.context, msg.actor.id, socket.id);
+      const title = `${msg.context}-${(msg.id) ? msg.id : this.counter++}`;
       sessionLog(`queued to channel ${platformInstance.id}`);
       const job: JobDataEncrypted = {
         title: title,
@@ -145,8 +145,8 @@ class Sockethub {
     socket.on('credentials',
       createMiddleware(errorHandler('credentials', socket, sessionLog))(
         (msg: any, done: Function) => {
-          if ((! msg['@type']) && (typeof msg.object === 'object') && (msg.object['@type'])) {
-            msg['@type'] = msg.object['@type'];
+          if ((! msg.type) && (typeof msg.object === 'object') && (msg.object.type)) {
+            msg.type = msg.object.type;
           }
           done(msg);
         },

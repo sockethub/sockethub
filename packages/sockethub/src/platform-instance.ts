@@ -135,9 +135,9 @@ export default class PlatformInstance {
         delete msg.sessionSecret;
       } catch (e) {}
       msg.context = this.name;
-      if ((msg['@type'] === 'error') && (typeof msg.actor === 'undefined') && (this.actor)) {
+      if ((msg.type === 'error') && (typeof msg.actor === 'undefined') && (this.actor)) {
         // ensure an actor is present if not otherwise defined
-        msg.actor = { "@id": this.actor };
+        msg.actor = { id: this.actor };
       }
       socket.emit(type, msg);
     }, (err) => this.debug(`sendToClient ${err}`));
@@ -158,12 +158,12 @@ export default class PlatformInstance {
     this.debug(`job ${jobData.title}: ${type}`);
     if ((type === 'completed') && (result)) {
       jobData.msg.object = {
-        '@type': 'result',
+        type: 'result',
         content: result
       };
     } else if (type === 'failed') {
       jobData.msg.object = {
-        '@type': 'error',
+        type: 'error',
         content: result ? result : "job failed for unknown reason"
       };
     }
@@ -184,10 +184,10 @@ export default class PlatformInstance {
   private reportError(sessionId: string, errorMessage: any) {
     const errorObject: ActivityObject = {
       context: this.name,
-      '@type': 'error',
-      actor: { "@id": this.actor },
+      type: 'error',
+      actor: { id: this.actor },
       object: {
-        '@type': 'error',
+        type: 'error',
         content: errorMessage
       }
     };

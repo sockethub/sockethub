@@ -1,21 +1,21 @@
 module.exports = [
   [
-    '@type:send, object:message',
+    'type:send, object:message',
     {
-      '@type': 'send',
+      type: 'send',
       context: 'irc',
       actor: {
-        '@id': 'dood@irc.freenode.net',
-        '@type': 'person',
-        displayName: 'dood'
+        id: 'dood@irc.freenode.net',
+        type: 'person',
+        name: 'dood'
       },
       target: {
-        '@id': 'irc.freenode.net/sockethub',
-        '@type': 'room',
-        displayName: 'sockethub'
+        id: 'irc.freenode.net/sockethub',
+        type: 'room',
+        name: 'sockethub'
       },
       object: {
-        '@type': 'message',
+        type: 'message',
         content: 'some kind of message'
       }
     },
@@ -24,22 +24,22 @@ module.exports = [
   ],
 
   [
-    '@type:credentials, object:credentials',
+    'type:credentials, object:credentials',
     {
-      '@type': 'credentials',
+      type: 'credentials',
       context: 'irc',
       actor: {
-        '@id': 'dood@irc.freenode.net',
-        '@type': 'person',
-        displayName: 'dood'
+        id: 'dood@irc.freenode.net',
+        type: 'person',
+        name: 'dood'
       },
       target: {
-        '@id': 'irc.freenode.net/sockethub',
-        '@type': 'room',
-        displayName: 'sockethub'
+        id: 'irc.freenode.net/sockethub',
+        type: 'room',
+        name: 'sockethub'
       },
       object: {
-        '@type': 'credentials'
+        type: 'credentials'
       }
     },
     true,
@@ -47,17 +47,17 @@ module.exports = [
   ],
 
   [
-    '@type credentials',
+    'type:credentials',
     {
       context: 'irc',
-      '@type': 'credentials',
+      type: 'credentials',
       actor: {
-        '@id': 'dood@irc.freenode.net',
-        '@type': 'person',
-        displayName: 'dood'
+        id: 'dood@irc.freenode.net',
+        type: 'person',
+        name: 'dood'
       },
       object: {
-        '@type': 'credentials',
+        type: 'credentials',
         user: "foo",
         pass: "bar"
       }
@@ -69,56 +69,56 @@ module.exports = [
   [
     'bad target',
     {
-      '@id': 'blah',
-      '@type': 'send',
+    'id': 'blah',
+      'type': 'send',
       context: 'dood',
       actor: {
-        '@id': 'dood@irc.freenode.net',
-        '@type': 'person',
-        displayName: 'dood'
+        id: 'dood@irc.freenode.net',
+        'type': 'person',
+        name: 'dood'
       },
       target: {
-        '@type': 'person',
-        displayName: 'bob'
+        'type': 'person',
+        name: 'bob'
       },
       object: {
-        '@type': 'credentials'
+        'type': 'credentials'
       }
     },
     false,
-    '/target: must have required property \'@id\''
+    '/target: must have required property \'id\''
   ],
 
   [
     'bad iri in object id',
     {
-      '@type': 'feed',
+      'type': 'feed',
       context: 'dood',
       actor: {
-        '@id': 'dood@irc.freenode.net',
-        '@type': 'person'
+        'id': 'dood@irc.freenode.net',
+        'type': 'person'
       },
       object: {
-        '@id': 'example.org/some/path.html',
-        '@type': 'website'
+        'id': 'example.org/some/path.html',
+        'type': 'website'
       }
     },
     false,
-    '/object/@type: must be equal to one of the allowed values'
+    '/object/type: must be equal to one of the allowed values'
   ],
 
   [
     'valid iri in object id',
     {
-      '@type': 'feed',
+      'type': 'feed',
       context: 'dood',
       actor: {
-        '@id': 'dood@irc.freenode.net',
-        '@type': 'person'
+        'id': 'dood@irc.freenode.net',
+        'type': 'person'
       },
       object: {
-        '@id': 'https://example.org/some/path.html',
-        '@type': 'website'
+        'id': 'https://example.org/some/path.html',
+        'type': 'website'
       }
     },
     true,
@@ -128,48 +128,43 @@ module.exports = [
   [
     'wrong actor type',
     {
-      '@type': 'send',
+      type: 'send',
       context: 'dood',
       actor: {
         id: 'doobar@freenode.net/channel',
-        '@type': 'message',
+        type: 'foo',
         content: 'hi there'
       },
-      target: {
-        '@id': 'bob@crusty.net/Home',
-        '@type': 'person',
-        displayName: 'bob'
-      },
       object: {
-        '@type': 'feed',
-        '@id': 'http://rss.example.org/feed.rss'
+        type: 'feed',
+        id: 'http://rss.example.org/feed.rss'
       }
     },
     false,
-    '/actor: must have required property \'@id\''
+    '/actor/type: must be equal to one of the allowed values'
   ],
 
   [
     'missing actor id',
     {
-      '@id': 'blah',
-      '@type': 'send',
+      'id': 'blah',
+      'type': 'send',
       context: 'dood',
       actor: {
-        '@type': 'person',
-        displayName: 'dood'
+        'type': 'person',
+        name: 'dood'
       },
       target: {
-        '@id': 'bob@crusty.net/Home',
-        '@type': 'person',
-        displayName: 'bob'
+        id: 'bob@crusty.net/Home',
+        type: 'person',
+        name: 'bob'
       },
       object: {
-        '@type': 'feed',
-        '@id': 'http://rss.example.org/feed.rss'
+        type: 'feed',
+        id: 'http://rss.example.org/feed.rss'
       }
     },
     false,
-    '/actor: must have required property \'@id\''
+    '/actor: must have required property \'id\''
   ]
 ];

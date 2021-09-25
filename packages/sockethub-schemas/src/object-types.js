@@ -1,10 +1,10 @@
 module.exports = {
 
   "credentials": {
-    "required": [ "@type" ],
+    "required": [ "type" ],
     "additionalProperties": true,
     "properties": {
-      "@type": {
+      "type": {
         "enum": [ "credentials" ]
       }
     }
@@ -12,17 +12,17 @@ module.exports = {
 
   "feed": {
     "activity-object": true,
-    "required": [ "@id", "@type" ],
+    "required": [ "id", "type" ],
     "additionalProperties": true,
     "properties": {
-      "@id": {
+      "type": {
+        "enum": [ "feed" ]
+      },
+      "id": {
         "type": "string",
         "format": "iri"
       },
-      "@type": {
-        "enum": [ "feed" ]
-      },
-      "displayName": {
+      "name": {
         "type": "string"
       },
       "description": {
@@ -38,16 +38,16 @@ module.exports = {
   },
 
   "message": {
-    "required": [ "@type", "content" ],
+    "required": [ "type", "content" ],
     "additionalProperties": true,
     "properties": {
-      "@id": {
-        "type": "string",
-      },
-      "@type": {
+      "type": {
         "enum": [ "message" ]
       },
-      "displayName": {
+      "id": {
+        "type": "string",
+      },
+      "name": {
         "type": "string"
       },
       "content": {
@@ -58,16 +58,16 @@ module.exports = {
 
   "person": {
     "activity-object": true,
-    "required": [ "@id", "@type" ],
+    "required": [ "id", "type" ],
     "additionalProperties": true,
     "properties": {
-      "@id": {
+      "id": {
         "type": "string"
       },
-      "@type": {
+      "type": {
         "enum": [ "person" ]
       },
-      "displayName": {
+      "name": {
         "type": "string"
       }
     }
@@ -75,16 +75,16 @@ module.exports = {
 
   "room": {
     "activity-object": true,
-    "required": [ "@id", "@type" ],
+    "required": [ "id", "type" ],
     "additionalProperties": true,
     "properties": {
-      "@id": {
+      "id": {
         "type": "string"
       },
-      "@type": {
+      "type": {
         "enum": [ "room" ]
       },
-      "displayName": {
+      "name": {
         "type": "string"
       }
     }
@@ -92,17 +92,17 @@ module.exports = {
 
   "website": {
     "activity-object": true,
-    "required": [ "@id", "@type" ],
+    "required": [ "id", "type" ],
     "additionalProperties": true,
     "properties": {
-      "@id": {
+      "id": {
         "type": "string",
         "format": "iri"
       },
-      "@type": {
+      "type": {
         "enum": [ "website" ]
       },
-      "displayName": {
+      "name": {
         "type": "string"
       }
     }

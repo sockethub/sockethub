@@ -4,42 +4,42 @@ export default [
     "valid": false,
     "type": "credentials",
     "input":{
-      "@id":"blah",
-      "@type":"send",
+      "id":"blah",
+      "type":"send",
       "context":"dummy",
       "actor":{
-        "@id":"dood@irc.freenode.net",
-        "@type":"person",
-        "displayName":"dood"
+        "id":"dood@irc.freenode.net",
+        "type":"person",
+        "name":"dood"
       },
       "target":{
-        "@id":"irc.freenode.net/sockethub",
-        "@type":"person",
-        "displayName":"sockethub"
+        "id":"irc.freenode.net/sockethub",
+        "type":"person",
+        "name":"sockethub"
       },
       "object":{
-        "@type":"credentials",
+        "type":"credentials",
         "user": 'foo',
         "pass": 'bar'
       }
     },
-    'error': "Error: credential activity streams must have credentials set as @type"
+    'error': "Error: credential activity streams must have credentials set as type"
   },
   {
     "name": "basic",
     "valid":true,
     "type":"credentials",
     "input":{
-      "@id":"blah",
-      "@type":"credentials",
+      "id":"blah",
+      "type":"credentials",
       "context":"dummy",
       "actor":{
-        "@id":"dood@irc.freenode.net",
-        "@type":"person",
-        "displayName":"dood"
+        "id":"dood@irc.freenode.net",
+        "type":"person",
+        "name":"dood"
       },
       "object":{
-        '@type': 'credentials',
+        'type': 'credentials',
         "user": 'foo',
         "pass": 'bar'
       }
@@ -52,11 +52,11 @@ export default [
     "type":"credentials",
     "input":{
       "context":"irc",
-      "@type":"credentials",
+      "type":"credentials",
       "actor":{
-        "@id":"sh-9K3Vk@irc.freenode.net",
-        "@type":"person",
-        "displayName":"sh-9K3Vk",
+        "id":"sh-9K3Vk@irc.freenode.net",
+        "type":"person",
+        "name":"sh-9K3Vk",
         "image":{
           "height":250,
           "mediaType":"image/jpeg",
@@ -66,7 +66,7 @@ export default [
         "url":"http://sockethub.org"
       },
       "object":{
-        "@type":"credentials",
+        "type":"credentials",
         "nick":"sh-9K3Vk",
         "port":6667,
         "secure":false,
@@ -81,11 +81,11 @@ export default [
     "type":"credentials",
     "input":{
       "context":"irc",
-      "@type":"credentials",
+      "type":"credentials",
       "actor":{
-        "@id":"sh-9K3Vk@irc.freenode.net",
-        "@type":"person",
-        "displayName":"sh-9K3Vk",
+        "id":"sh-9K3Vk@irc.freenode.net",
+        "type":"person",
+        "name":"sh-9K3Vk",
         "image":{
           "height":250,
           "mediaType":"image/jpeg",
@@ -95,7 +95,7 @@ export default [
         "url":"http://sockethub.org"
       },
       "object":{
-        "@type":"credentials",
+        "type":"credentials",
         "user":"sh-9K3Vk",
         "port":6667,
         "secure":false,
@@ -120,16 +120,16 @@ export default [
         "resource":"laptop"
       }
     },
-    "error": "Error: credential activity streams must have credentials set as @type"
+    "error": "Error: credential activity streams must have credentials set as type"
   },
   {
     "name":"person",
     "type":"activity-object",
     "valid":true,
     "input":{
-      "@id":"blah",
-      "@type":"person",
-      "displayName":"dood"
+      "id":"blah",
+      "type":"person",
+      "name":"dood"
     },
     "output":"same"
   },
@@ -138,9 +138,9 @@ export default [
     "valid":true,
     "type":"activity-object",
     "input":{
-      "@id":"blah",
-      "@type":"person",
-      "displayName":"bob",
+      "id":"blah",
+      "type":"person",
+      "name":"bob",
       "hello":"there",
       "i":[
         "am",
@@ -154,21 +154,21 @@ export default [
     "valid":false,
     "type":"activity-object",
     "input":{
-      "@type":"credentials",
+      "type":"credentials",
       "nick":"sh-9K3Vk",
       "port":6667,
       "secure":false,
       "server":"irc.freenode.net"
     },
     "error":
-      "Error: activity-object schema validation failed: must have required property \'@id\'"
+      "Error: activity-object schema validation failed: must have required property \'id\'"
   },
   {
     "name":"alone credentials (as credentials)",
     "valid":false,
     "type":"credentials",
     "input":{
-      "@type":"credentials",
+      "type":"credentials",
       "nick":"sh-9K3Vk",
       "port":6667,
       "secure":false,
@@ -181,9 +181,9 @@ export default [
     "valid":true,
     "type":"activity-object",
     "input":{
-      "@id":"sh-9K3Vk@irc.freenode.net",
-      "@type":"person",
-      "displayName":"sh-9K3Vk",
+      "id":"sh-9K3Vk@irc.freenode.net",
+      "type":"person",
+      "name":"sh-9K3Vk",
       "image":{
         "height":250,
         "mediaType":"image/jpeg",
@@ -199,9 +199,9 @@ export default [
     "valid":true,
     "type":"activity-object",
     "input":{
-      "@id":"irc://sh-9K3Vk@irc.freenode.net",
-      "@type":"person",
-      "displayName":"sh-9K3Vk",
+      "id":"irc://sh-9K3Vk@irc.freenode.net",
+      "type":"person",
+      "name":"sh-9K3Vk",
       "url":"http://sockethub.org"
     },
     "output":"same"
@@ -220,33 +220,33 @@ export default [
         }
       ],
       "as":{
-        "@id":"blah",
-        "@type":"send",
+        "id":"blah",
+        "type":"send",
         "context":"hello",
         "actor":{
-          "displayName":"dood"
+          "name":"dood"
         },
         "target":{
-          "@type":"person",
-          "displayName":"bob"
+          "type":"person",
+          "name":"bob"
         },
         "object":{
-          "@type":"credentials"
+          "type":"credentials"
         }
       },
       "noId":{
-        "displayName":"dood"
+        "name":"dood"
       },
       "noId2":{
-        "@type":"person",
-        "displayName":"bob"
+        "type":"person",
+        "name":"bob"
       },
       "noDisplayName":{
-        "@id":"larg"
+        "id":"larg"
       }
     },
     "error":
-      "Error: activity-object schema validation failed: must have required property '@id'"
+      "Error: activity-object schema validation failed: must have required property 'id'"
   },
   {
     "name":"non-expected AS will fail",
@@ -254,32 +254,32 @@ export default [
     "type":"message",
     "input":{
       "actor":"irc://uuu@localhost",
-      "@type":"join",
+      "type":"join",
       "context":"irc",
       "target":"irc://irc.dooder.net/a-room"
     }
   },
   {
-    "name":"missing @type property",
+    "name":"missing type property",
     "valid":false,
     "type":"message",
     "input":{
-      "actor": { "@id": "irc://uuu@localhost", "@type": "person" },
+      "actor": { "id": "irc://uuu@localhost", "type": "person" },
       "context":"irc",
-      "target": { "@id": "irc://irc.dooder.net/a-room", "@type": "room" }
+      "target": { "id": "irc://irc.dooder.net/a-room", "type": "room" }
     },
     "error": "Error: actvity-stream schema validation failed: " +
-      "must have required property \'@type\'"
+      "must have required property \'type\'"
   },
   {
     "name":"invalid context property",
     "valid":false,
     "type":"message",
     "input":{
-      "actor": { "@id": "irc://uuu@localhost", "@type": "person" },
-      "@type":"foo",
+      "actor": { "id": "irc://uuu@localhost", "type": "person" },
+      "type":"foo",
       "context": "foobar",
-      "target": { "@id": "irc://irc.dooder.net/a-room", "@type": "room" }
+      "target": { "id": "irc://irc.dooder.net/a-room", "type": "room" }
     },
     "error": "Error: platform context foobar not registered with this sockethub instance."
   },
@@ -288,9 +288,9 @@ export default [
     "valid":false,
     "type":"message",
     "input":{
-      "@type": "foo",
+      "type": "foo",
       "context":"irc",
-      "target": { "@id": "irc://irc.dooder.net/a-room", "@type": "room" }
+      "target": { "id": "irc://irc.dooder.net/a-room", "type": "room" }
     },
     "error": "Error: actvity-stream schema validation failed: " +
       "must have required property \'actor\'"
@@ -300,9 +300,9 @@ export default [
     "valid":true,
     "type":"message",
     "input":{
-      "@type": "foo",
+      "type": "foo",
       "context": "irc",
-      "actor": { "@id": "irc://uuu@localhost", "@type": "person" }
+      "actor": { "id": "irc://uuu@localhost", "type": "person" }
     }
   }
 ];

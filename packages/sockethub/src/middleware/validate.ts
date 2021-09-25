@@ -51,8 +51,8 @@ function validateActivityStream(msg: any, done: Function) {
 }
 
 function validateCredentials(msg: any, done: Function) {
-  if (msg['@type'] !== 'credentials') {
-    return done(new Error('credential activity streams must have credentials set as @type'));
+  if (msg.type !== 'credentials') {
+    return done(new Error('credential activity streams must have credentials set as type'));
   }
   const validate_credentials = ajv.getSchema(
     `${schemaURL}/context/${msg.context}/credentials`);

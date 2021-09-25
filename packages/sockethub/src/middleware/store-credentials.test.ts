@@ -4,21 +4,21 @@ import * as sinon from 'sinon';
 import storeCredentials from "./store-credentials";
 
 const creds = {
-  "@id":"blah",
-  "@type":"send",
+  "id":"blah",
+  "type":"credentials",
   "context":"dummy",
   "actor":{
-    "@id":"dood@irc.freenode.net",
-    "@type":"person",
-    "displayName":"dood"
+    "id":"dood@irc.freenode.net",
+    "type":"person",
+    "name":"dood"
   },
   "target":{
-    "@id":"irc.freenode.net/sockethub",
-    "@type":"person",
-    "displayName":"sockethub"
+    "id":"irc.freenode.net/sockethub",
+    "type":"person",
+    "name":"sockethub"
   },
   "object":{
-    "@type":"credentials"
+    "type":"credentials"
   }
 };
 
@@ -56,7 +56,7 @@ describe('Middleware: storeCredentials', () => {
     const sc = storeCredentials(storeSuccess, sessionLogStub);
     sc(creds, (err) => {
       expect(saveSuccessFake.callCount).to.equal(1);
-      expect(saveSuccessFake.firstArg).to.equal(creds.actor['@id']);
+      expect(saveSuccessFake.firstArg).to.equal(creds.actor.id);
       expect(err).to.be.undefined;
     });
   });
@@ -65,8 +65,8 @@ describe('Middleware: storeCredentials', () => {
     const sc = storeCredentials(storeError, sessionLogStub);
     sc(creds, (err) => {
       expect(saveErrorFake.callCount).to.equal(1);
-      expect(saveErrorFake.firstArg).to.equal(creds.actor['@id']);
-      expect(err).to.eql('some error');;
+      expect(saveErrorFake.firstArg).to.equal(creds.actor.id);
+      expect(err).to.eql('some error');
     });
   });
 });

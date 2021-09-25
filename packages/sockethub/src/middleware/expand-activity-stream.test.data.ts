@@ -11,21 +11,21 @@ export default [
     "valid":true,
     "type":"credentials",
     "input":{
-      "@id":"foo",
-      "@type":"send",
+      "id":"foo",
+      "type":"send",
       "context":"dummy",
       "actor":{
-        "@id":"dood@irc.freenode.net",
-        "@type":"person",
-        "displayName":"dood"
+        "id":"dood@irc.freenode.net",
+        "type":"person",
+        "name":"dood"
       },
       "target":{
-        "@id":"irc.freenode.net/sockethub",
-        "@type":"person",
-        "displayName":"sockethub"
+        "id":"irc.freenode.net/sockethub",
+        "type":"person",
+        "name":"sockethub"
       },
       "object":{
-        "@type":"credentials"
+        "type":"credentials"
       }
     },
     "output": "same"
@@ -35,21 +35,21 @@ export default [
     "valid":true,
     "type":"credentials",
     "input":{
-      "@id":"foo",
-      "@type":"credentials",
+      "id":"foo",
+      "type":"credentials",
       "context":"dummy",
       "actor":{
-        "@id":"dood@irc.freenode.net",
-        "@type":"person",
-        "displayName":"dood"
+        "id":"dood@irc.freenode.net",
+        "type":"person",
+        "name":"dood"
       },
       "target":{
-        "@id":"irc.freenode.net/sockethub",
-        "@type":"person",
-        "displayName":"sockethub"
+        "id":"irc.freenode.net/sockethub",
+        "type":"person",
+        "name":"sockethub"
       },
       "object":{
-        "@type":"credentials"
+        "type":"credentials"
       }
     },
     "output":"same"
@@ -59,12 +59,12 @@ export default [
     "valid":true,
     "type":"credentials",
     "input":{
-      "@type":"credentials",
+      "type":"credentials",
       "context":"irc",
       "actor":{
-        "@id":"sh-9K3Vk@irc.freenode.net",
-        "@type":"person",
-        "displayName":"sh-9K3Vk",
+        "id":"sh-9K3Vk@irc.freenode.net",
+        "type":"person",
+        "name":"sh-9K3Vk",
         "image":{
           "height":250,
           "mediaType":"image/jpeg",
@@ -74,7 +74,7 @@ export default [
         "url":"http://sockethub.org"
       },
       "object":{
-        "@type":"credentials",
+        "type":"credentials",
         "nick":"sh-9K3Vk",
         "port":6667,
         "secure":false,
@@ -98,7 +98,7 @@ export default [
         "resource":"laptop"
       }
     },
-    "error": "Error: activity stream must contain a @type property."
+    "error": "Error: activity stream must contain a type property."
   },
   {
     "name": "expand unknown actor",
@@ -106,7 +106,7 @@ export default [
     "valid": "true",
     "input": {
       "context": "foo",
-      "@type": "bar",
+      "type": "bar",
       "actor": "foo@bar",
       "object": {
         "content": "bar"
@@ -114,9 +114,9 @@ export default [
     },
     "output": {
       "context": "foo",
-      "@type": "bar",
+      "type": "bar",
       "actor": {
-        "@id": "foo@bar"
+        "id": "foo@bar"
       },
       "object": {
         "content": "bar"
@@ -129,7 +129,7 @@ export default [
     "valid": "true",
     "input": {
       "context": "foo",
-      "@type": "bar",
+      "type": "bar",
       "actor": "someone@example.org/resource",
       "object": {
         "content": "bar"
@@ -137,9 +137,9 @@ export default [
     },
     "output": {
       "context": "foo",
-      "@type": "bar",
+      "type": "bar",
       "actor": {
-        "@id": "someone@example.org/resource"
+        "id": "someone@example.org/resource"
       },
       "object": {
         "content": "bar"
@@ -152,7 +152,7 @@ export default [
     "valid": "true",
     "input": {
       "context": "foo",
-      "@type": "bar",
+      "type": "bar",
       "actor": "xmpp:someone@example.org/resource",
       "object": {
         "content": "bar"
@@ -160,9 +160,9 @@ export default [
     },
     "output": {
       "context": "foo",
-      "@type": "bar",
+      "type": "bar",
       "actor": {
-        "@id": "xmpp:someone@example.org/resource"
+        "id": "xmpp:someone@example.org/resource"
       },
       "object": {
         "content": "bar"
@@ -175,17 +175,17 @@ export default [
     "valid":true,
     "input":{
       "context": "some context",
-      "@type": "some type",
+      "type": "some type",
       "actor": "blah",
       "object": {}
     },
     "output": {
       "context": "some context",
-      "@type": "some type",
+      "type": "some type",
       "actor": {
-        "@id":"blah",
-        "@type":"person",
-        "displayName":"dood"
+        "id":"blah",
+        "type":"person",
+        "name":"dood"
       },
       "object": {}
     }
@@ -196,17 +196,17 @@ export default [
     "type":"message",
     "input": {
       "context": "some context",
-      "@type": "some type",
+      "type": "some type",
       "actor": "blah2",
       "object": {}
     },
     "output": {
       "context": "some context",
-      "@type": "some type",
+      "type": "some type",
       "actor": {
-        "@id":"blah2",
-        "@type":"person",
-        "displayName":"bob",
+        "id":"blah2",
+        "type":"person",
+        "name":"bob",
         "hello":"there",
         "i":[
           "am",
@@ -230,29 +230,29 @@ export default [
         }
       ],
       "as":{
-        "@id":"blah",
-        "@type":"send",
+        "id":"blah",
+        "type":"send",
         "context":"hello",
         "actor":{
-          "displayName":"dood"
+          "name":"dood"
         },
         "target":{
-          "@type":"person",
-          "displayName":"bob"
+          "type":"person",
+          "name":"bob"
         },
         "object":{
-          "@type":"credentials"
+          "type":"credentials"
         }
       },
       "noId":{
-        "displayName":"dood"
+        "name":"dood"
       },
       "noId2":{
-        "@type":"person",
-        "displayName":"bob"
+        "type":"person",
+        "name":"bob"
       },
       "noDisplayName":{
-        "@id":"larg"
+        "id":"larg"
       }
     },
     "error": "Error: activity stream must contain a context property"
@@ -262,10 +262,10 @@ export default [
     "valid":false,
     "type":"message",
     "input":{
-      "@type": "some type",
+      "type": "some type",
       "context":"xmpp",
       "object":{
-        "@type": "error",
+        "type": "error",
         "content": "error message"
       }
     },
@@ -277,18 +277,18 @@ export default [
     "type":"message",
     "input":{
       "actor":"irc://uuu@localhost",
-      "@type":"join",
+      "type":"join",
       "context":"irc",
       "target":"irc://irc.dooder.net/a-room"
     },
     "output":{
       "actor":{
-        "@id":"irc://uuu@localhost"
+        "id":"irc://uuu@localhost"
       },
-      "@type":"join",
+      "type":"join",
       "context":"irc",
       "target":{
-        "@id":"irc://irc.dooder.net/a-room"
+        "id":"irc://irc.dooder.net/a-room"
       }
     }
   },
@@ -298,7 +298,7 @@ export default [
     "type":"message",
     "input":{
       "actor":"hyper_rau@localhost",
-      "@type":"join",
+      "type":"join",
       "context":"xmpp",
       "object":{
 
@@ -307,15 +307,15 @@ export default [
     },
     "output":{
       "actor":{
-        "@id":"hyper_rau@localhost"
+        "id":"hyper_rau@localhost"
       },
-      "@type":"join",
+      "type":"join",
       "context":"xmpp",
       "object":{
 
       },
       "target":{
-        "@id":"dooder"
+        "id":"dooder"
       }
     }
   },
@@ -326,7 +326,7 @@ export default [
     "input":{
       "actor":"sh-9K3Vk@irc.freenode.net",
       "target":"blah3",
-      "@type":"send",
+      "type":"send",
       "context":"irc",
       "object":{
 
@@ -334,9 +334,9 @@ export default [
     },
     "output":{
       "actor":{
-        "@id":"sh-9K3Vk@irc.freenode.net",
-        "@type":"person",
-        "displayName":"sh-9K3Vk",
+        "id":"sh-9K3Vk@irc.freenode.net",
+        "type":"person",
+        "name":"sh-9K3Vk",
         "image":{
           "height":250,
           "mediaType":"image/jpeg",
@@ -346,16 +346,16 @@ export default [
         "url":"http://sockethub.org"
       },
       "target":{
-        "@id":"blah3",
-        "@type":"person",
-        "displayName":"bob",
+        "id":"blah3",
+        "type":"person",
+        "name":"bob",
         "hello":"there",
         "i":[
           "am",
           "extras"
         ]
       },
-      "@type":"send",
+      "type":"send",
       "context":"irc",
       "object":{
 

@@ -11,21 +11,21 @@ define(['require', 'tv4'], function (require, tv4Module) {
     setup: function (env, test) {
       env.Platform = require('./../index');
       env.actor = {
-        '@type': 'person',
-        '@id': 'testingham@irc.example.com',
-        displayName:'testingham'
+        'type': 'person',
+        'id': 'testingham@irc.example.com',
+        name:'testingham'
       };
 
       env.newActor = {
-        '@type': 'person',
-        '@id': 'testler@irc.example.com',
-        displayName:'testler'
+        'type': 'person',
+        'id': 'testler@irc.example.com',
+        name:'testler'
       };
 
       env.credentials = {
         actor: env.actor,
         object: {
-          '@type': 'credentials',
+          'type': 'credentials',
           nick: 'testingham',
           server: 'irc.example.com'
         }
@@ -48,14 +48,14 @@ define(['require', 'tv4'], function (require, tv4Module) {
 
       env.target = {
         sockethub: {
-          '@type': 'room',
-          '@id': 'irc.example.com/sockethub',
-          displayName: '#sockethub'
+          'type': 'room',
+          'id': 'irc.example.com/sockethub',
+          name: '#sockethub'
         },
         remotestorage: {
-          '@type': 'room',
-          '@id': 'irc.example.com/remotestorage',
-          displayName: '#remotestorage'
+          'type': 'room',
+          'id': 'irc.example.com/remotestorage',
+          name: '#remotestorage'
         }
       };
 
@@ -73,7 +73,7 @@ define(['require', 'tv4'], function (require, tv4Module) {
         send: {
           actor: env.actor,
           object: {
-            '@type': 'message',
+            'type': 'message',
             content: 'hello'
           },
           target: env.target.sockethub
@@ -86,7 +86,7 @@ define(['require', 'tv4'], function (require, tv4Module) {
         observe: {
           actor: env.actor,
           object: {
-            '@type': 'attendance'
+            'type': 'attendance'
           },
           target: env.target.sockethub
         },
@@ -94,7 +94,7 @@ define(['require', 'tv4'], function (require, tv4Module) {
           topic: {
             actor: env.actor,
             object: {
-              '@type': 'topic',
+              'type': 'topic',
               topic: 'welcome to unit testing, enjoy your stay - the management'
             },
             target: env.target.sockethub
@@ -102,7 +102,7 @@ define(['require', 'tv4'], function (require, tv4Module) {
           nick: {
             actor: env.actor,
             object: {
-              '@type': 'address'
+              'type': 'address'
             },
             target: env.newActor
           }
@@ -118,7 +118,7 @@ define(['require', 'tv4'], function (require, tv4Module) {
       env.schema = env.platform.schema;
 
       // types
-      env.types = env.schema.messages.properties['@type'].enum;
+      env.types = env.schema.messages.properties.type.enum;
       test.assertAnd(env.types, [ 'update', 'join', 'leave', 'send', 'observe', 'announce' ]);
 
       env.tv4 = tv4Module;
