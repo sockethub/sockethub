@@ -90,7 +90,7 @@ module.exports = [
   ],
 
   [
-    'bad iri in target',
+    'bad iri in object id',
     {
       '@type': 'feed',
       context: 'dood',
@@ -108,7 +108,7 @@ module.exports = [
   ],
 
   [
-    'valid iri in target',
+    'valid iri in object id',
     {
       '@type': 'feed',
       context: 'dood',
@@ -147,7 +147,9 @@ module.exports = [
     },
     false,
     '/actor: must have required property \'@id\''
-  ], [
+  ],
+
+  [
     'missing actor id',
     {
       '@id': 'blah',

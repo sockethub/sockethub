@@ -71,7 +71,7 @@ module.exports = function platformLoad(moduleList) {
         // validate schema property
         if (! validate_platform_schema(p.schema)) {
           throw new Error(
-            `${platformName} platform schema failed to validate: `, ajv.errors);
+            `${platformName} platform schema failed to validate: ${validate.errors[0].instancePath} ${ajv.errors[0].message}`);
         } else if (typeof p.config !== 'object') {
           throw new Error(
             `${platformName} platform must have a config property that is an object.`);
