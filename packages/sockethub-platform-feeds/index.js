@@ -1,7 +1,7 @@
 /**
  * This is a platform for sockethub implementing Atom/RSS fetching functionality.
  *
- * Developed by Nick Jennings (https://github.com/silverbucket)
+ * Developed by Nick Jennings (nick@silverbucket.net)
  *
  * sockethub is licensed under the LGPLv3.
  * See the LICENSE file for details.
@@ -131,18 +131,17 @@ class Feeds {
    *
    *  {
    *    context: "feeds",
-   *    '@type': "fetch",
+   *    type: "fetch",
    *    actor: {
-   *      '@id': 'https://dogfeed.com/user/nick@silverbucket',
-   *      '@type': "person",
-   *      displayName: "nick@silverbucket.net"
+   *      id: 'aUniqueUserString',
+   *      type: "person",
    *    },
    *    target: {
-   *      '@id': 'http://blog.example.com/rss',
-   *      '@type': "feed"
+   *      id: 'https://blog.example.com/rss',
+   *      type: "page"
    *    },
    *    object: {
-   *      '@type': "parameters",
+   *      type: "parameters",
    *      limit: 10,    // default 10
    *      property: 'date'
    *      after: 'Tue Nov 26 2013 02:11:59 GMT+0100 (CET)',
@@ -150,7 +149,7 @@ class Feeds {
    *      // ... OR ...
    *
    *      property: 'link',
-   *      after: 'http://www.news.com/articles/man-eats-car',
+   *      after: 'https://www.news.com/articles/man-eats-car',
    *    }
    *  }
    *
@@ -162,32 +161,30 @@ class Feeds {
    *
    *   {
    *     context: 'feeds',
-   *     '@type': 'post',
+   *     type: 'collection',
    *     actor: {
-   *       '@type': 'feed',
-   *       displayName: 'Best Feed Inc.',
-   *       '@id': 'http://blog.example.com/rss',
+   *       type: 'page',
+   *       name: 'Best Feed Inc.',
+   *       id: 'https://blog.example.com/rss',
    *       description: 'Where the best feed comes to be the best',
    *       image: {
+   *         type: 'image',
    *         width: '144',
    *         height: '144',
-   *         url: 'http://example.com/images/bestfeed.jpg',
+   *         url: 'https://example.com/images/bestfeed.jpg',
+   *         mediaType: "image/jpeg"
    *       }
-   *       favicon: 'http://example.com/favicon.ico',
+   *       favicon: 'https://example.com/favicon.ico',
    *       categories: ['best', 'feed', 'aminals'],
    *       language: 'en',
    *       author: 'John Doe'
    *     },
-   *     target: {
-   *       '@id': 'https://dogfeed.com/user/nick@silverbucket',
-   *       '@type': "person",
-   *       displayName: "nick@silverbucket.net"
-   *     },
-   *     object: {
-   *       '@id': "http://example.com/articles/about-stuff"
-   *       '@type': 'post',
+   *     totalItems: 10,
+   *     items: [{
+   *       id: "https://example.com/articles/about-stuff"
+   *       type: 'document',
    *       title: 'About stuff...',
-   *       url: "http://example.com/articles/about-stuff"
+   *       url: "https://example.com/articles/about-stuff"
    *       date: "2013-05-28T12:00:00.000Z",
    *       datenum: 1369742400000,
    *       brief_html: "Brief synopsis of stuff...",
@@ -196,13 +193,33 @@ class Feeds {
    *       text: "Once upon a time..."
    *       media: [
    *         {
+   *           type: 'audio',
    *           length: '13908973',
-   *           type: 'audio/mpeg',
-   *           url: 'http://example.com/media/thing.mpg'
+   *           mediaType: 'audio/mpeg',
+   *           url: 'https://example.com/media/thing.mpg'
    *         }
    *       ]
    *       tags: ['foo', 'bar']
-   *     }
+   *     }, {
+   *       id: "https://example.com/articles/blog-post"
+   *       type: 'document',
+   *       title: 'Blog post...',
+   *       url: "https://example.com/articles/blog-post"
+   *       date: "2013-05-29T14:00:00.000Z",
+   *       datenum: 1369742400000,
+   *       brief_html: "Brief synopsis of stuff...",
+   *       brief_text: "Brief synopsis of stuff...",
+   *       html: "Another blog post...",
+   *       text: "Another blog post..."
+   *       media: [
+   *         {
+   *           length: '13908973',
+   *           type: 'audio/mpeg',
+   *           url: 'https://example.com/media/thing.mpg'
+   *         }
+   *       ]
+   *       tags: ['foo']
+   *     }, { ... }]
    *   }
    *
    */
