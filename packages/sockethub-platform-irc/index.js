@@ -120,33 +120,26 @@ IRC.prototype.schema = {
         "required": [ "@id" ]
       },
       "object": {
-        "name": "object",
         "type": "object",
         "required": [ '@type', 'nick', 'server' ],
         "additionalProperties": false,
         "properties" : {
           "@type": {
-            "name": "@type",
             "type": "string"
           },
           "nick" : {
-            "name" : "nick",
             "type": "string"
           },
           "password" : {
-            "name" : "password",
             "type": "string"
           },
           "server" : {
-            "name" : "server",
             "type": "string"
           },
           "port" : {
-            "name": "port",
             "type": "number"
           },
           "secure": {
-            "name": "secure",
             "type": "boolean"
           }
         }

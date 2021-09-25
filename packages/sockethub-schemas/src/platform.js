@@ -9,7 +9,7 @@
  * The latest version of sockethub can be found here:
  *   git://github.com/sockethub/sockethub.git
  *
- * For more information about sockethub visit http://sockethub.org/.
+ * For more information about sockethub visit https://sockethub.org/.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of

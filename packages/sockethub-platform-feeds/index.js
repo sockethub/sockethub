@@ -24,9 +24,9 @@ const packageJSON = require('./package.json');
 const PlatformSchema = {
   "version": packageJSON.version,
   "messages": {
-    "required": [ "verb" ],
+    "required": [ "@type" ],
     "properties": {
-      "verb": {
+      "@type": {
         "type": "string",
         "enum": [ "fetch" ]
       },

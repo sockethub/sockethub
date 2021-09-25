@@ -75,6 +75,10 @@ export interface IInitObject {
     config: {
       persist?: boolean
     },
+    schemas: {
+      credentials?: object,
+      messages?: object
+    },
     version: string,
     '@types': string
   }>,
