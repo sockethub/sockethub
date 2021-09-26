@@ -17,9 +17,6 @@ const validateMod = proxyquire('./validate', {
 const validate = validateMod.default;
 
 import asObjects from "./validate.test.data";
-import ActivityStreams from 'activity-streams';
-
-const activity = ActivityStreams();
 
 describe('Middleware: Validate', () => {
   describe('AS object validations', () => {
@@ -34,13 +31,9 @@ describe('Middleware: Validate', () => {
               expect(obj.output).to.eql(msg);
             }
           }
-          if (obj.valid) {
-            expect(msg instanceof Error).to.be.false;
-          } else {
-            expect(msg instanceof Error).to.be.true;
-          }
-          if ((obj.valid) && (obj.type === 'activity-object')) {
-            activity.Object.create(msg);
+          expect(obj.valid).to.not.equal(msg instanceof Error);
+          if (obj.error) {
+            expect(obj.error).to.equal(msg.toString());
           }
           done();
         });

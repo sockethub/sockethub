@@ -64,7 +64,7 @@
       const examplesShared = new ExamplesShared();
       localStorage.debug = 'sockethub:*';
       let config = {
-        '@type': 'credentials',
+        'type': 'credentials',
         server: 'jabber.org',
         username: 'username',
         password: '123456',
@@ -86,9 +86,9 @@
           actorString = config.username + '@' + config.server + '/' + config.resource;
         }
         sc.ActivityStreams.Object.create({
-          '@id': actorString,
-          '@type': "person",
-          displayName: new URL('http://' + username).username,
+          'id': actorString,
+          'type': "person",
+          name: new URL('http://' + username).username,
           url: "http://sockethub.org",
           image: {
             url: "http://example.org/image.jpg",
@@ -112,15 +112,15 @@
         // msg = __normalizeMessage(msg);
         if ((typeof msg.object === 'object') &&
             (typeof msg.object.content === 'string')) {
-          if (msg.object['@type'] === 'message') {
+          if (msg.object['type'] === 'message') {
             examplesShared.processIncomingMessage(msg);
           }
-        } else if ((msg['@type'] === 'update') &&
-                   (msg.object['@type'] === 'address') &&
-                   (msg.actor.displayName === nick)) {
+        } else if ((msg['type'] === 'update') &&
+                   (msg.object['type'] === 'address') &&
+                   (msg.actor.name === nick)) {
           // our nick has been updated
-          __updateActor(msg.target.displayName);
-        } else if (msg['@type'] === 'connect') {
+          __updateActor(msg.target.name);
+        } else if (msg['type'] === 'connect') {
           $('.modal').css('display', 'none');
           $('input#m').prop('disabled', false);
           $('button#send').prop('disabled', false);
@@ -145,11 +145,11 @@
           console.log('unable to send message without target specified [room@server.org: hello world]: ', target, text_message, input);
         }
         const msg = {
-          '@type': 'send',
+          'type': 'send',
           context: 'xmpp',
           actor: actorString,
           object: {
-            '@type': 'message',
+            'type': 'message',
             content: text_message
           },
           target: target
@@ -185,7 +185,7 @@
           sc.socket.emit('credentials', credentials);
 
           const msg = {
-            '@type': 'connect',
+            'type': 'connect',
             context: 'xmpp',
             actor: actorString
           };

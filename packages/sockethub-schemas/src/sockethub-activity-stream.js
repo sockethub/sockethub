@@ -3,6 +3,7 @@ const objectTypes     = require('./object-types.js');
 
 const validActorRefs  = activityObjects.properties.object.oneOf;
 const validTargetRefs = activityObjects.properties.object.oneOf;
+console.log(validActorRefs);
 
 let validObjectRefs = [];
 
@@ -19,17 +20,16 @@ const typeSchema = {
 };
 
 module.exports = {
-  "id": "http://sockethub.org/schemas/v0/activity-stream#",
-  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$id": "https://sockethub.org/schemas/v0/activity-stream#",
   "description": "schema for Sockethub Activity Streams",
 
   "type": "object",
-  "required" : [ "context", "@type", "actor" ],
+  "required" : [ "context", "type", "actor" ],
   "properties": {
-    "@id": {
+    "id": {
       "type": "string"
     },
-    "@type": typeSchema,
+    "type": typeSchema,
     "context": contextSchema,
     "actor": {
       "type": "object",

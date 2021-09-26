@@ -1,7 +1,7 @@
 {
   "name": "sockethub-platform-irc",
   "description": "A sockethub platform module implementing IRC functionality",
-  "version": "3.6.1",
+  "version": "3.6.2",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
@@ -23,10 +23,10 @@
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/sockethub-platform-irc",
   "dependencies": {
     "irc-socket": "https://github.com/silverbucket/irc-socket/archive/v4-alpha.tar.gz",
-    "irc2as": "^3.0.5"
+    "irc2as": "^3.0.6"
   },
   "devDependencies": {
-    "c8": "7.8.0",
+    "c8": "7.9.0",
     "eslint": "7.32.0",
     "jaribu": "2.2.3",
     "jsdoc-to-markdown": "7.0.1",

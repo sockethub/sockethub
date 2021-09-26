@@ -8,12 +8,12 @@ keys.forEach(function (type, i) {
   if (objectTypes[type]["activity-object"]) {
     validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
     validObjectDefs[type] = objectTypes[type];
+    delete objectTypes[type]["activity-object"];
   }
 });
 
 module.exports = {
-  "id": "http://sockethub.org/schemas/v0/activity-object#",
-  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$id": "https://sockethub.org/schemas/v0/activity-object#",
   "description": "schema for Sockethub Activity Objects",
 
   "type": "object",

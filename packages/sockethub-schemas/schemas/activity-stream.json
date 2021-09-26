@@ -1,18 +1,17 @@
 {
-	"id": "http://sockethub.org/schemas/v0/activity-stream#",
-	"$schema": "http://json-schema.org/draft-04/schema#",
+	"$id": "https://sockethub.org/schemas/v0/activity-stream#",
 	"description": "schema for Sockethub Activity Streams",
 	"type": "object",
 	"required": [
 		"context",
-		"@type",
+		"type",
 		"actor"
 	],
 	"properties": {
-		"@id": {
+		"id": {
 			"type": "string"
 		},
-		"@type": {
+		"type": {
 			"type": "string"
 		},
 		"context": {
@@ -22,16 +21,16 @@
 			"type": "object",
 			"oneOf": [
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/feed"
+					"$ref": "#/definitions/type/feed"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/person"
+					"$ref": "#/definitions/type/person"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/room"
+					"$ref": "#/definitions/type/room"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/website"
+					"$ref": "#/definitions/type/website"
 				}
 			]
 		},
@@ -39,16 +38,16 @@
 			"type": "object",
 			"oneOf": [
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/feed"
+					"$ref": "#/definitions/type/feed"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/person"
+					"$ref": "#/definitions/type/person"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/room"
+					"$ref": "#/definitions/type/room"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/website"
+					"$ref": "#/definitions/type/website"
 				}
 			]
 		},
@@ -56,22 +55,22 @@
 			"type": "object",
 			"oneOf": [
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/credentials"
+					"$ref": "#/definitions/type/credentials"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/feed"
+					"$ref": "#/definitions/type/feed"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/message"
+					"$ref": "#/definitions/type/message"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/person"
+					"$ref": "#/definitions/type/person"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/room"
+					"$ref": "#/definitions/type/room"
 				},
 				{
-					"$ref": "http://sockethub.org/schemas/v0/activity-stream#/definitions/type/website"
+					"$ref": "#/definitions/type/website"
 				}
 			]
 		}
@@ -80,11 +79,11 @@
 		"type": {
 			"credentials": {
 				"required": [
-					"@type"
+					"type"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@type": {
+					"type": {
 						"enum": [
 							"credentials"
 						]
@@ -92,23 +91,22 @@
 				}
 			},
 			"feed": {
-				"activity-object": true,
 				"required": [
-					"@id",
-					"@type"
+					"id",
+					"type"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@id": {
-						"type": "string",
-						"format": "uri"
-					},
-					"@type": {
+					"type": {
 						"enum": [
 							"feed"
 						]
 					},
-					"displayName": {
+					"id": {
+						"type": "string",
+						"format": "iri"
+					},
+					"name": {
 						"type": "string"
 					},
 					"description": {
@@ -124,21 +122,20 @@
 			},
 			"message": {
 				"required": [
-					"@type",
-					"displayName",
+					"type",
 					"content"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@id": {
-						"type": "string"
-					},
-					"@type": {
+					"type": {
 						"enum": [
 							"message"
 						]
 					},
-					"displayName": {
+					"id": {
+						"type": "string"
+					},
+					"name": {
 						"type": "string"
 					},
 					"content": {
@@ -147,70 +144,62 @@
 				}
 			},
 			"person": {
-				"activity-object": true,
 				"required": [
-					"@id",
-					"@type",
-					"displayName"
+					"id",
+					"type"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@id": {
-						"type": "string",
-						"format": "uri"
+					"id": {
+						"type": "string"
 					},
-					"@type": {
+					"type": {
 						"enum": [
 							"person"
 						]
 					},
-					"displayName": {
+					"name": {
 						"type": "string"
 					}
 				}
 			},
 			"room": {
-				"activity-object": true,
 				"required": [
-					"@id",
-					"@type",
-					"displayName"
+					"id",
+					"type"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@id": {
-						"type": "string",
-						"format": "uri"
+					"id": {
+						"type": "string"
 					},
-					"@type": {
+					"type": {
 						"enum": [
 							"room"
 						]
 					},
-					"displayName": {
+					"name": {
 						"type": "string"
 					}
 				}
 			},
 			"website": {
-				"activity-object": true,
 				"required": [
-					"@id",
-					"@type",
-					"displayName"
+					"id",
+					"type"
 				],
 				"additionalProperties": true,
 				"properties": {
-					"@id": {
+					"id": {
 						"type": "string",
-						"format": "uri"
+						"format": "iri"
 					},
-					"@type": {
+					"type": {
 						"enum": [
 							"website"
 						]
 					},
-					"displayName": {
+					"name": {
 						"type": "string"
 					}
 				}

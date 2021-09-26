@@ -84,7 +84,7 @@ function getCredentials(actorId: string, sessionId: string, sessionSecret: strin
     if (platform.credentialsHash) {
       if (platform.credentialsHash !== hash(credentials.object)) {
         return cb('provided credentials do not match existing platform instance for actor '
-            + platform.actor['@id']);
+            + platform.actor.id);
       }
     } else {
       platform.credentialsHash = hash(credentials.object);
@@ -101,11 +101,11 @@ function getJobHandler(secret: string) {
   return (job: JobEncrypted, done: Function) => {
     const jobData: JobDataDecrypted = decryptJobData(job, secret);
     const jobLog = debug(`${loggerPrefix}:${jobData.sessionId}`);
-    jobLog(`job ${jobData.title}: ${jobData.msg['@type']}`);
+    jobLog(`job ${jobData.title}: ${jobData.msg.type}`);
     const sessionSecret = jobData.msg.sessionSecret;
     delete jobData.msg.sessionSecret;
 
-    return getCredentials(jobData.msg.actor['@id'], jobData.sessionId, sessionSecret,
+    return getCredentials(jobData.msg.actor.id, jobData.sessionId, sessionSecret,
       (err, credentials) => {
         if (err) { return done(new Error(err)); }
         let jobCallbackCalled = false;
@@ -119,11 +119,11 @@ function getJobHandler(secret: string) {
           }
         };
         if ((Array.isArray(platform.config.requireCredentials)) &&
-          (platform.config.requireCredentials.includes(jobData.msg['@type']))) {
+          (platform.config.requireCredentials.includes(jobData.msg.type))) {
           // add the credentials object if this method requires it
-          platform[jobData.msg['@type']](jobData.msg, credentials, doneCallback);
+          platform[jobData.msg.type](jobData.msg, credentials, doneCallback);
         } else {
-          platform[jobData.msg['@type']](jobData.msg, doneCallback);
+          platform[jobData.msg.type](jobData.msg, doneCallback);
         }
       });
   };
@@ -146,8 +146,8 @@ function getSendFunction(command: string) {
  * @param credentials
  */
 function updateActor(credentials) {
-  identifier = getPlatformId(platformName, credentials.actor['@id']);
-  logger(`platform actor updated to ${credentials.actor['@id']} identifier ${identifier}`);
+  identifier = getPlatformId(platformName, credentials.actor.id);
+  logger(`platform actor updated to ${credentials.actor.id} identifier ${identifier}`);
   logger = debug(`sockethub:platform:${identifier}`);
   platform.credentialsHash = hash(credentials.object);
   platform.debug = debug(`sockethub:platform:${platformName}:${identifier}`);

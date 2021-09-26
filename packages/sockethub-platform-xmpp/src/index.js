@@ -47,11 +47,11 @@ class XMPP {
 
   /**
    * @description
-   * JSON schema defining the @types this platform accepts.
+   * JSON schema defining the types this platform accepts.
    *
    * Actual handling of incoming 'set' commands are handled by dispatcher,
    * but the dispatcher uses this defined schema to validate credentials
-   * received, so that when a @context @type is called, it can fetch the
+   * received, so that when a @context type is called, it can fetch the
    * credentials (`session.getConfig()`), knowing they will have already been
    * validated against this schema.
    *
@@ -61,8 +61,8 @@ class XMPP {
    * object.
    *
    *
-   * It will also check if the incoming AS object uses a @type which exists in the
-   * `@types` portion of the schema object (should be an array of @type names).
+   * It will also check if the incoming AS object uses a type which exists in the
+   * `types` portion of the schema object (should be an array of type names).
    *
    * **NOTE**: For more information on using the credentials object from a client,
    * see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
@@ -72,15 +72,15 @@ class XMPP {
    * @example
    *
    * {
-   *   '@type': 'set',
+   *   'type': 'set',
    *   context: 'xmpp',
    *   actor: {
-   *     '@id': 'testuser@jabber.net',
-   *     '@type': 'person',
-   *     displayName: 'Mr. Test User'
+   *     'id': 'testuser@jabber.net',
+   *     'type': 'person',
+   *     name: 'Mr. Test User'
    *   },
    *   object: {
-   *     '@type': 'credentials',
+   *     'type': 'credentials',
    *     server: 'jabber.net',
    *     username: 'testuser',
    *     password: 'asdasdasdasd',
@@ -111,11 +111,11 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   '@type': 'connect',
+   *   'type': 'connect',
    *   actor: {
-   *     '@id': 'slvrbckt@jabber.net/Home',
-   *     '@type': 'person',
-   *     displayName: 'Nick Jennings',
+   *     'id': 'slvrbckt@jabber.net/Home',
+   *     'type': 'person',
+   *     name: 'Nick Jennings',
    *     userName: 'slvrbckt'
    *   }
    * }
@@ -123,10 +123,10 @@ class XMPP {
   connect(job, credentials, done) {
     if (this.__client) {
       // TODO verify client is actually connected
-      this.debug('client connection already exists for ' + job.actor['@id']);
+      this.debug('client connection already exists for ' + job.actor.id);
       return done();
     }
-    this.debug('connect called for ' + job.actor['@id']);
+    this.debug('connect called for ' + job.actor.id);
     this.__client = client(utils.buildXmppCredentials(credentials));
     this.__client.on("offline", (a) => {
       console.log("offline", a);
@@ -154,29 +154,29 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   '@type': 'join',
+   *   'type': 'join',
    *   actor: {
-   *     '@type': 'person',
-   *     '@id': 'slvrbckt@jabber.net/Home',
-   *     displayName: 'Mr. Pimp'
+   *     'type': 'person',
+   *     'id': 'slvrbckt@jabber.net/Home',
+   *     name: 'Mr. Pimp'
    *   },
    *   target: {
-   *     '@type': 'room',
-   *     '@id': 'PartyChatRoom@muc.jabber.net'
+   *     'type': 'room',
+   *     'id': 'PartyChatRoom@muc.jabber.net'
    *   }
    * }
    */
   join(job, done) {
-    this.debug(`sending join from ${job.actor['@id']} to ` +
-               `${job.target['@id']}/${job.actor.displayName}`);
+    this.debug(`sending join from ${job.actor.id} to ` +
+               `${job.target.id}/${job.actor.name}`);
     // TODO optional passwords not handled for now
     // TODO investigate implementation reserved nickname discovery
-
-    let id = job.target['@id'].split('/')[0];
+    console.log(job.target.id);
+    let id = job.target.id.split('/')[0];
 
     this.__client.send(xml("presence", {
-      from: job.actor['@id'],
-      to: `${job.target['@id']}/${job.actor.displayName || id}`
+      from: job.actor.id,
+      to: `${job.target.id}/${job.actor.name || id}`
     })).then(done);
   };
 
@@ -190,27 +190,27 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   '@type': 'leave',
+   *   'type': 'leave',
    *   actor: {
-   *     '@type': 'person',
-   *     '@id': 'slvrbckt@jabber.net/Home',
-   *     displayName: 'slvrbckt'
+   *     'type': 'person',
+   *     'id': 'slvrbckt@jabber.net/Home',
+   *     name: 'slvrbckt'
    *   },
    *   target: {
-   *     '@type': 'room'
-   *     '@id': 'PartyChatRoom@muc.jabber.net',
+   *     'type': 'room'
+   *     'id': 'PartyChatRoom@muc.jabber.net',
    *   }
    * }
    */
   leave(job, done) {
-    this.debug(`sending leave from ${job.actor['@id']} to ` +
-               `${job.target['@id']}/${job.actor.displayName}`);
+    this.debug(`sending leave from ${job.actor.id} to ` +
+               `${job.target.id}/${job.actor.name}`);
 
-    let id = job.target['@id'].split('/')[0];
+    let id = job.target.id.split('/')[0];
 
     this.__client.send(xml("presence", {
-      from: job.actor['@id'],
-      to: `${job.target['@id']}/${job.actor.displayName}` || id,
+      from: job.actor.id,
+      to: `${job.target.id}/${job.actor.name}` || id,
       type: 'unavailable'
     })).then(done);
   };
@@ -225,50 +225,50 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   '@type': 'send',
+   *   'type': 'send',
    *   actor: {
-   *     '@id': 'slvrbckt@jabber.net/Home',
-   *     '@type': 'person',
-   *     displayName: 'Nick Jennings',
+   *     'id': 'slvrbckt@jabber.net/Home',
+   *     'type': 'person',
+   *     name: 'Nick Jennings',
    *     userName: 'slvrbckt'
    *   },
    *   target: {
-   *     '@id': 'homer@jabber.net/Home',
-   *     '@type': 'user',
-   *     displayName: 'Homer'
+   *     'id': 'homer@jabber.net/Home',
+   *     'type': 'user',
+   *     name: 'Homer'
    *   },
    *   object: {
-   *     '@type': 'message',
+   *     'type': 'message',
    *     content: 'Hello from Sockethub!'
    *   }
    * }
    *
    * {
    *   context: 'xmpp',
-   *   '@type': 'send',
+   *   'type': 'send',
    *   actor: {
-   *     '@id': 'slvrbckt@jabber.net/Home',
-   *     '@type': 'person',
-   *     displayName: 'Nick Jennings',
+   *     'id': 'slvrbckt@jabber.net/Home',
+   *     'type': 'person',
+   *     name: 'Nick Jennings',
    *     userName: 'slvrbckt'
    *   },
    *   target: {
-   *     '@id': 'party-room@jabber.net',
-   *     '@type': 'room'
+   *     'id': 'party-room@jabber.net',
+   *     'type': 'room'
    *   },
    *   object: {
-   *     '@type': 'message',
+   *     'type': 'message',
    *     content: 'Hello from Sockethub!'
    *   }
    * }
    *
    */
   send(job, done) {
-    this.debug('send() called for ' + job.actor['@id']);
+    this.debug('send() called for ' + job.actor.id);
     // send message
     const message = xml(
       "message",
-      { type: job.target['@type'] === 'room' ? 'groupchat' : 'chat', to: job.target['@id'] },
+      { type: job.target.type === 'room' ? 'groupchat' : 'chat', to: job.target.id },
       xml("body", {}, job.object.content),
     );
     this.__client.send(message).then(done);
@@ -285,27 +285,27 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   '@type': 'update',
+   *   'type': 'update',
    *   actor: {
-   *     '@id': 'user@host.org/Home'
+   *     'id': 'user@host.org/Home'
    *   },
    *   object: {
-   *     '@type': 'presence'
+   *     'type': 'presence'
    *     presence: 'chat',
    *     content: '...clever saying goes here...'
    *   }
    * }
    */
   update(job, done) {
-    this.debug('update() called for ' + job.actor['@id']);
-    if (job.object['@type'] === 'presence') {
+    this.debug('update() called for ' + job.actor.id);
+    if (job.object.type === 'presence') {
       const show = job.object.presence === 'available' ? 'chat' : job.object.show;
       const status = job.object.content || '';
       // setting presence
       this.debug('setting presence: ' + show + ' status: ' + status);
       this.__client.send(xml(show, { type: status })).then(done);
     } else {
-      done('unknown object type (should be presence?): ' + job.object['@type']);
+      done('unknown object type (should be presence?): ' + job.object.type);
     }
   };
 
@@ -320,18 +320,18 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   '@type': 'request-friend',
+   *   'type': 'request-friend',
    *   actor: {
-   *     '@id': 'user@host.org/Home'
+   *     'id': 'user@host.org/Home'
    *   },
    *   target: {
-   *     '@id': 'homer@jabber.net/Home',
+   *     'id': 'homer@jabber.net/Home',
    *   }
    * }
    */
   'request-friend'(job,  done) {
-    this.debug('request-friend() called for ' + job.actor['@id']);
-    this.__client.send(xml("presence", { type: "subscribe", to:job.target['@id'] })).then(done);
+    this.debug('request-friend() called for ' + job.actor.id);
+    this.__client.send(xml("presence", { type: "subscribe", to:job.target.id })).then(done);
   };
 
   /**
@@ -345,18 +345,18 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   '@type': 'remove-friend',
+   *   'type': 'remove-friend',
    *   actor: {
-   *     '@id': 'user@host.org/Home'
+   *     'id': 'user@host.org/Home'
    *   },
    *   target: {
-   *     '@id': 'homer@jabber.net/Home',
+   *     'id': 'homer@jabber.net/Home',
    *   }
    * }
    */
   'remove-friend'(job, done) {
-    this.debug('remove-friend() called for ' + job.actor['@id']);
-    this.__client.send(xml("presence", { type: "unsubscribe", to:job.target['@id'] })).then(done);
+    this.debug('remove-friend() called for ' + job.actor.id);
+    this.__client.send(xml("presence", { type: "unsubscribe", to:job.target.id })).then(done);
   };
 
   /**
@@ -370,18 +370,18 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   '@type': 'make-friend',
+   *   'type': 'make-friend',
    *   actor: {
-   *     '@id': 'user@host.org/Home'
+   *     'id': 'user@host.org/Home'
    *   },
    *   target: {
-   *     '@id': 'homer@jabber.net/Home',
+   *     'id': 'homer@jabber.net/Home',
    *   }
    * }
    */
   'make-friend'(job, done) {
-    this.debug('make-friend() called for ' + job.actor['@id']);
-    this.__client.send(xml("presence", { type: "subscribe", to:job.target['@id'] })).then(done);
+    this.debug('make-friend() called for ' + job.actor.id);
+    this.__client.send(xml("presence", { type: "subscribe", to:job.target.id })).then(done);
   };
 
   /**
@@ -394,34 +394,34 @@ class XMPP {
    *
    *  {
    *    context: 'xmpp',
-   *    '@type': 'observe',
+   *    'type': 'observe',
    *    actor: {
-   *      '@id': 'slvrbckt@jabber.net/Home',
-   *      '@type': 'person'
+   *      'id': 'slvrbckt@jabber.net/Home',
+   *      'type': 'person'
    *    },
    *    target: {
-   *      '@id': 'PartyChatRoom@muc.jabber.net',
-   *      '@type': 'room'
+   *      'id': 'PartyChatRoom@muc.jabber.net',
+   *      'type': 'room'
    *    },
    *    object: {
-   *      '@type': 'attendance'
+   *      'type': 'attendance'
    *    }
    *  }
    *
    *  // The above object might return:
    *  {
    *    context: 'xmpp',
-   *    '@type': 'observe',
+   *    'type': 'observe',
    *    actor: {
-   *      '@id': 'PartyChatRoom@muc.jabber.net',
-   *      '@type': 'room'
+   *      'id': 'PartyChatRoom@muc.jabber.net',
+   *      'type': 'room'
    *    },
    *    target: {
-   *      '@id': 'slvrbckt@jabber.net/Home',
-   *      '@type': 'person'
+   *      'id': 'slvrbckt@jabber.net/Home',
+   *      'type': 'person'
    *    },
    *    object: {
-   *      '@type': 'attendance'
+   *      'type': 'attendance'
    *      members: [
    *        'RyanGosling',
    *        'PeeWeeHerman',
@@ -433,12 +433,12 @@ class XMPP {
    *  }
    */
   observe(job, done) {
-    this.debug('sending observe from ' + job.actor['@id'] + ' for ' + job.target['@id']);
+    this.debug('sending observe from ' + job.actor.id + ' for ' + job.target.id);
     this.__client.send(xml("iq",  {
       id: 'muc_id',
       type: 'get',
-      from: job.actor['@id'],
-      to: job.target['@id']
+      from: job.actor.id,
+      to: job.target.id
     }, xml("query", {xmlns: 'http://jabber.org/protocol/disco#items'}))).then(done);
   };
 

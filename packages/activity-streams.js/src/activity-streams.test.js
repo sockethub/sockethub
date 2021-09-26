@@ -19,10 +19,10 @@ describe('warn test', () => {
   it('rejects nondefined special types', () => {
     expect(() => {
       activity.Stream({
-        '@type': 'lol',
+        'type': 'lol',
         platform: 'irc',
         actor: 'thingy',
-        object: {'@type': 'hola', content: 'har', secure: true},
+        object: {'type': 'hola', content: 'har', secure: true},
         target: ['thingy1', 'thingy2']
       })
     }).not.to.throw(Error);
@@ -39,16 +39,16 @@ describe('no special props', () => {
 
   it('returns expected object with no special types', () => {
     expect(activity.Stream({
-      '@type': 'send',
+      'type': 'send',
       context: 'irc',
       actor: 'thingy',
-      object: {'@type': 'hola', content: 'har'},
+      object: {'type': 'hola', content: 'har'},
       target: ['thingy1', 'thingy2']
     })).to.eql({
-      '@type': 'send',
+      'type': 'send',
       context: 'irc',
-      actor: { '@id': 'thingy' },
-      object: { '@type': 'hola', content: 'har' },
+      actor: { 'id': 'thingy' },
+      object: { 'type': 'hola', content: 'har' },
       target: [ 'thingy1', 'thingy2' ]
     });
   })
@@ -84,8 +84,8 @@ describe('basic tests', () => {
     });
 
     it('returns object when given a valid lookup id', () => {
-      expect(activity.Object.create({id: 'thingy1'})).to.deep.equal({'@id': 'thingy1'});
-      expect(activity.Object.get('thingy1')).to.deep.equal({'@id':'thingy1'});
+      expect(activity.Object.create({id: 'thingy1'})).to.deep.equal({'id': 'thingy1'});
+      expect(activity.Object.get('thingy1')).to.deep.equal({'id':'thingy1'});
     });
 
     it('throws an exception when called with no identifier', () => {
@@ -93,16 +93,16 @@ describe('basic tests', () => {
     });
 
     it('creates a second object and returns is as expected', () => {
-      expect(activity.Object.create({id: 'thingy2'})).to.deep.equal({'@id':'thingy2'});
-      expect(activity.Object.get('thingy2')).to.deep.equal({'@id':'thingy2'});
+      expect(activity.Object.create({id: 'thingy2'})).to.deep.equal({'id':'thingy2'});
+      expect(activity.Object.get('thingy2')).to.deep.equal({'id':'thingy2'});
     });
 
     it('returns a basic ActivtyObject when receiving an unknown id with expand=true', () => {
-      expect(activity.Object.get('thingy3', true)).to.deep.equal({'@id':'thingy3'});
+      expect(activity.Object.get('thingy3', true)).to.deep.equal({'id':'thingy3'});
     });
 
     it('returns given id param when lookup fails and expand=false', () => {
-      expect(activity.Object.get({'@id': 'thingy3', 'foo': 'bar'})).to.deep.equal({'@id': 'thingy3', 'foo': 'bar'});
+      expect(activity.Object.get({'id': 'thingy3', 'foo': 'bar'})).to.deep.equal({'id': 'thingy3', 'foo': 'bar'});
     });
   });
 
@@ -121,7 +121,7 @@ describe('basic tests', () => {
     });
 
     it('renames mapped props', () => {
-      expect(stream['@type']).to.equal('lol');
+      expect(stream.type).to.equal('lol');
       expect(stream.verb).to.not.exist;
       expect(stream.context).to.equal('irc');
       expect(stream.platform).to.not.exist;
@@ -129,43 +129,43 @@ describe('basic tests', () => {
 
     it('expands existing objects', () => {
       expect(stream.target).to.deep.equal([
-        { '@id': 'thingy1' },
-        { '@id': 'thingy2' }
+        { 'id': 'thingy1' },
+        { 'id': 'thingy2' }
       ]);
-      expect(stream.actor).to.deep.equal({ '@id': 'thingy1' });
+      expect(stream.actor).to.deep.equal({ 'id': 'thingy1' });
     });
 
     it('handles customProps as expected', () => {
       expect(stream.object).to.deep.equal(
-        { '@type': 'credentials', content: 'har', secure: true }
+        { 'type': 'credentials', content: 'har', secure: true }
       );
       expect(stream.object.objectType).to.not.exist;
     });
 
     it('respects specialObj properties', () => {
       let stream2 = activity.Stream({
-        '@type': 'lol',
+        'type': 'lol',
         platform: 'irc',
         actor: 'thingy',
-        object: { '@type': 'dude', foo: 'bar', content: 'har', secure: true },
+        object: { 'type': 'dude', foo: 'bar', content: 'har', secure: true },
         target: [ 'thingy1', 'thingy2' ]
       });
       expect(stream2).to.deep.equal({
-        '@type': 'lol',
+        'type': 'lol',
         context: 'irc',
-        actor: { '@id': 'thingy' },
-        target: [ { '@id': 'thingy1' }, { '@id': 'thingy2' }],
-        object: { '@type': 'dude', foo: 'bar', content: 'har', secure: true }
+        actor: { 'id': 'thingy' },
+        target: [ { 'id': 'thingy1' }, { 'id': 'thingy2' }],
+        object: { 'type': 'dude', foo: 'bar', content: 'har', secure: true }
       });
     })
 
     it('rejects nondefined special types', () => {
       expect(() => {
         activity.Stream({
-          '@type': 'lol',
+          'type': 'lol',
           platform: 'irc',
           actor: 'thingy',
-          object: { '@type': 'hola', foo: 'bar', content: 'har', secure: true },
+          object: { 'type': 'hola', foo: 'bar', content: 'har', secure: true },
           target: [ 'thingy1', 'thingy2' ]
         })
       }).to.throw('invalid property: "foo"');
@@ -175,7 +175,7 @@ describe('basic tests', () => {
   describe('emitters', () => {
     it('emits an event on object creation', () => {
       function onHandler(obj) {
-        expect(obj).to.deep.equal({ '@id': 'thingy3' });
+        expect(obj).to.deep.equal({ 'id': 'thingy3' });
         activity.off('activity-object-create', onHandler);
       }
       activity.on('activity-object-create', onHandler);

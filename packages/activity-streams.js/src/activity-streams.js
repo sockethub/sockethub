@@ -1,6 +1,6 @@
 /*!
  * activity-streams
- *   http://github.com/silverbucket/activity-streams
+ *   https://github.com/silverbucket/activity-streams
  *
  * Developed and Maintained by:
  *   Nick Jennings <nick@silverbucket.net>
@@ -21,13 +21,13 @@ const EventEmitter = require('event-emitter');
 const ee = EventEmitter(),
       baseProps = {
         stream: [
-          '@id', '@type', 'actor', 'target', 'object', '@context', 'context',
+          'id', 'type', 'actor', 'target', 'object', 'context', 'context',
           'published', 'error'
         ],
         object: [
-          '@id', '@type', '@context',
+          'id', 'type', 'context',
           'alias', 'attachedTo', 'attachment', 'attributedTo', 'attributedWith',
-          'content', 'contentMap', 'context', 'contextOf', 'displayName', 'endTime', 'generator',
+          'content', 'contentMap', 'context', 'contextOf', 'name', 'endTime', 'generator',
           'generatorOf', 'group', 'icon', 'image', 'inReplyTo', 'members', 'memberOf', 
           'message', 'location', 'locationOf', 'objectOf', 'originOf', 'presence', 
           'preview', 'previewOf', 'provider', 'providerOf', 'published', 'rating', 
@@ -37,18 +37,20 @@ const ee = EventEmitter(),
         ]
       },
       rename = {
-        'id': '@id',
-        'verb': '@type',
-        'objectType': '@type',
+        '@id': 'id',
+        '@type': 'type',
+        'verb': 'type',
+        'displayName': 'name',
+        'objectType': 'type',
         'platform': 'context'
       },
       expand = {
         'actor' : {
-          'primary': '@id',
+          'primary': 'id',
           'props': baseProps
         },
         'target': {
-          'primary': '@id',
+          'primary': 'id',
           'props': baseProps
         },
         'object': {
@@ -87,12 +89,12 @@ function validateObject(type, obj = {}) {
       continue;
     }
 
-    if (matchesCustomProp(obj['@type'], key)) {
+    if (matchesCustomProp(obj.type, key)) {
       // custom property matches, continue
       continue;
     }
 
-    if (! specialObjs.includes(obj['@type'])) {
+    if (! specialObjs.includes(obj.type)) {
       // not defined as a special prop
       // don't know what to do with it, so throw error
       const err = `invalid property: "${key}"`;
@@ -107,8 +109,8 @@ function validateObject(type, obj = {}) {
 
 
 function ensureProps(obj) {
-  // ensure the displayName property, which can general be inferred from the @id
-  // displayName = obj.match(/(?(?\w+):\/\/)(?:.+@)?(.+?)(?:\/|$)/)[1]
+  // ensure the name property, which can general be inferred from the id
+  // name = obj.match(/(?(?\w+):\/\/)(?:.+@)?(.+?)(?:\/|$)/)[1]
   return obj;
 }
 
@@ -156,7 +158,7 @@ const _Object = {
   create: function (obj) {
     validateObject('object', obj);
     obj = ensureProps(obj);
-    objs.set(obj['@id'], obj);
+    objs.set(obj.id, obj);
     ee.emit('activity-object-create', obj);
     return obj;
   },
@@ -175,7 +177,7 @@ const _Object = {
       if (! expand) {
         return id;
       }
-      obj = {'@id': id};
+      obj = {'id': id};
     }
     return ensureProps(obj);
   },
