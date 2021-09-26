@@ -97,7 +97,8 @@ class SockethubClient {
   }
 
   private static getKey(content: any) {
-    let actor = content.actor.id || content.actor;
+    let actor = content.actor?.id || content.actor;
+    if (! actor) { throw new Error("actor property not present"); }
     let target = content.target ? content.target.id || content.target : '';
     return actor + '-' + target;
   }

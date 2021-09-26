@@ -125,14 +125,13 @@ describe("SockethubClient", () => {
   describe("event emitting", () => {
     it("message", (done) => {
       sc.online = true;
-      const callback = (res) => {
-        expect(socket.emit.calledWithMatch("message", {foo: "bar"}, callback));
+      const callback = (res) => {};
+      socket.once("message", (data, cb) => {
+        expect(data).to.be.eql({actor: "bar"});
+        expect(cb).to.be.eql(callback);
         done();
-      };
-      socket.on("message", (data, cb) => {
-        console.log(data, cb);
-      })
-      sc.socket.emit("message", {foo:"bar"}, callback);
+      });
+      sc.socket.emit("message", {actor:"bar"}, callback);
     });
   });
 });
