@@ -84,13 +84,10 @@ class SockethubClient {
     // either store or delete the specified content onto the storedJoins map,
     // for reply once we're back online.
     const key = SockethubClient.getKey(content);
-    if (content.type === 'join') {
-      this.events['join'].set(key, content);
+    if (content.type === 'join' || content.type === 'connect') {
+      this.events[content.type].set(key, content);
     } else if (content.type === 'leave') {
       this.events['join'].delete(key);
-    }
-    if (content.type === 'connect') {
-      this.events['connect'].set(key, content);
     } else if (content.type === 'disconnect') {
       this.events['connect'].delete(key);
     }
