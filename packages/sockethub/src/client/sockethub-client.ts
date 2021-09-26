@@ -1,5 +1,4 @@
 import { EventEmitter2 } from 'eventemitter2';
-import { Socket } from "socket.io";
 import ASFactory from 'activity-streams';
 
 export interface ActivityObjectManager {
@@ -18,19 +17,19 @@ export interface ASManager {
 }
 
 class SockethubClient {
-  public socket;
   private _socket;
-  public ActivityStreams: ASManager;
-  public online = false;
-  public debug = true;
   private events = {
     'credentials': new Map(),
     'activity-object': new Map(),
     'connect': new Map(),
     'join': new Map()
   };
+  public socket;
+  public ActivityStreams: ASManager;
+  public online = false;
+  public debug = true;
 
-  constructor(socket: Socket) {
+  constructor(socket) {
     if (! socket) { throw new Error('SockethubClient requires a socket.io instance'); }
     this._socket = socket;
     // @ts-ignore
@@ -38,7 +37,6 @@ class SockethubClient {
 
     this.socket = this.createPublicEmitter();
     this.registerSocketIOHandlers();
-    // this.listenToUserActivity();
 
     this.ActivityStreams.on('activity-object-create', (obj) => {
       socket.emit('activity-object', obj);
@@ -48,13 +46,6 @@ class SockethubClient {
       this.ActivityStreams.Object.create(obj);
     });
   }
-
-  public log(msg: string, obj?: any) {
-    if (this.debug) {
-      // eslint-disable-next-line security-node/detect-crlf
-      console.log(msg, obj);
-    }
-  };
 
   private createPublicEmitter(): EventEmitter2 {
     let socket = new EventEmitter2({
@@ -74,7 +65,49 @@ class SockethubClient {
       this._socket.emit(event, content, callback);
     };
     return socket;
-  };
+  }
+
+  private eventActivityObject(content: any) {
+    if (content.id) {
+      this.events['activity-object'].set(content.id, content);
+    }
+  }
+
+  private eventCredentials(content: any) {
+    if ((content.object) && (content.object.type === 'credentials')) {
+      this.events['credentials'].set(content.actor.id || content.actor, content);
+    }
+  }
+
+  private eventMessage(content: any) {
+    if (! this.online) { return; }
+    // either store or delete the specified content onto the storedJoins map,
+    // for reply once we're back online.
+    const key = SockethubClient.getKey(content);
+    if (content.type === 'join') {
+      this.events['join'].set(key, content);
+    } else if (content.type === 'leave') {
+      this.events['join'].delete(key);
+    }
+    if (content.type === 'connect') {
+      this.events['connect'].set(key, content);
+    } else if (content.type === 'disconnect') {
+      this.events['connect'].delete(key);
+    }
+  }
+
+  private static getKey(content: any) {
+    let actor = content.actor.id || content.actor;
+    let target = content.target ? content.target.id || content.target : '';
+    return actor + '-' + target;
+  }
+
+  private log(msg: string, obj?: any) {
+    if (this.debug) {
+      // eslint-disable-next-line security-node/detect-crlf
+      console.log(msg, obj);
+    }
+  }
 
   private registerSocketIOHandlers() {
     // middleware for events which don't deal in AS objects
@@ -98,39 +131,11 @@ class SockethubClient {
     this._socket.on('connect_error', callHandler('connect_error'));
     this._socket.on('disconnect', callHandler('disconnect'));
 
-    // do our middle-ware stuff then call the stored handler
-    this._socket.on('message', this.unpackAndCallHandler('message'));
-    this._socket.on('completed', this.unpackAndCallHandler('completed'));
-    this._socket.on('failed', this.unpackAndCallHandler('failed'));
-  }
-
-  private eventCredentials(content: any) {
-    if ((content.object) && (content.object['@type'] === 'credentials')) {
-      this.events['credentials'].set(content.actor['@id'] || content.actor, content);
-    }
-  }
-
-  private eventActivityObject(content: any) {
-    if (content['@id']) {
-      this.events['activity-object'].set(content['@id'], content);
-    }
-  }
-
-  private eventMessage(content: any) {
-    if (! this.online) { return; }
-    // either store or delete the specified content onto the storedJoins map,
-    // for reply once we're back online.
-    const key = SockethubClient.getKey(content);
-    if (content['@type'] === 'join') {
-      this.events['join'].set(key, content);
-    } else if (content['@type'] === 'leave') {
-      this.events['join'].delete(key);
-    }
-    if (content['@type'] === 'connect') {
-      this.events['connect'].set(key, content);
-    } else if (content['@type'] === 'disconnect') {
-      this.events['connect'].delete(key);
-    }
+    // use as a middleware to receive incoming Sockethub messages and unpack them
+    // using the ActivityStreams library before passing them along to the app.
+    this._socket.on('message', (obj, cb) => {
+      this.socket._emit('message', this.ActivityStreams.Stream(obj), cb);
+    });
   }
 
   private replay(name: string, asMap: any) {
@@ -138,20 +143,6 @@ class SockethubClient {
       this.log(`replaying ${name}`, obj);
       this._socket.emit(name, obj);
     });
-  };
-
-  // use as a middleware to receive incoming Sockethub messages and unpack them
-  // using the ActivityStreams library before passing them along to the app.
-  private unpackAndCallHandler(event: string) {
-    return (obj, cb) => {
-      this.socket._emit(event, this.ActivityStreams.Stream(obj), cb);
-    };
-  };
-
-  private static getKey(content: any) {
-    let actor = content.actor['@id'] || content.actor;
-    let target = content.target ? content.target['@id'] || content.target : '';
-    return actor + '-' + target;
   };
 }
 
