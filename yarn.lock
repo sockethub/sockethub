@@ -2032,10 +2032,10 @@ filter-obj@^1.1.0:
   resolved "https://registry.yarnpkg.com/filter-obj/-/filter-obj-1.1.0.tgz#9b311112bc6c6127a16e016c6c5d7f19e0805c5b"
   integrity sha1-mzERErxsYSehbgFsbF1/GeCAXFs=
 
-find-up@6.0.0:
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/find-up/-/find-up-6.0.0.tgz#7e321c34ecfea17dfffc4d78017bb025b9dfff71"
-  integrity sha512-NU20P/qRR4fbjbfQgf5SL6L7AbQbUG69OmBJ3o+DEmHwSwKaaeZ+9ok/zuE5Z8pyFSGPerTen16gLZTs1v1zjQ==
+find-up@6.1.0:
+  version "6.1.0"
+  resolved "https://registry.yarnpkg.com/find-up/-/find-up-6.1.0.tgz#96009919bff6cfba2bad6ceb5520c26082ecf370"
+  integrity sha512-aBlseiBgQ1RSiF/brMW+toDud3NHJ2Hn3pgNJLmBf2+gBwwNbfhE/Lbg2wwwoHfD3qXReOvDH4hlywQCXp4/Lw==
   dependencies:
     locate-path "^7.0.0"
     path-exists "^5.0.0"
