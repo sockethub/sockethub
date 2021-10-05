@@ -1,8 +1,15 @@
 {
   "labels": [ "kredits-1", "type:dependencies" ],
-  "reviewers": [ "silverbucket" ],
+  "reviewers": [ "silverbucket", "galfert", "raucao" ],
   "extends": [
     "config:base"
+  ],
+  "packageRules": [
+    {
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "devDependencies (non-major)"
+    }
   ],
   "dependencyDashboard": true,
   "lockFileMaintenance": { "enabled": true },
@@ -10,5 +17,6 @@
   "rebaseWhen": "behind-base-branch",
   "schedule": "on monday",
   "stabilityDays": 4,
+  "internalChecksFilter": "strict",
   "updateNotScheduled": true
 }
