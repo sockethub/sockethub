@@ -1,6 +1,6 @@
 {
   "labels": [ "kredits-1", "type:dependencies" ],
-  "reviewers": [ "silverbucket", "galfert", "raucao" ],
+  "reviewers": [ "silverbucket", "galfert" ],
   "extends": [
     "config:base"
   ],
