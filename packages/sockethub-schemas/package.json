@@ -18,11 +18,11 @@
     "directory": "packages/sockethub-schemas"
   },
   "devDependencies": {
-    "ajv": "^8.6.2",
-    "ajv-formats-draft2019": "^1.6.1",
+    "ajv": "8.6.3",
+    "ajv-formats-draft2019": "1.6.1",
     "c8": "7.9.0",
     "chai": "4.3.4",
-    "mocha": "9.1.1"
+    "mocha": "9.1.2"
   },
   "scripts": {
     "compliance": "yarn run test && yarn run coverage",
