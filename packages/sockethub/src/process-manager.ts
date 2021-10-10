@@ -43,7 +43,7 @@ class ProcessManager {
       actor: actor
     };
     const platformInstance = new PlatformInstance(platformInstanceConfig);
-    platformInstance.init(this.parentSecret1 + this.parentSecret2);
+    platformInstance.initQueue(this.parentSecret1 + this.parentSecret2);
     platformInstance.process.send(secrets);
     return platformInstance;
   }
