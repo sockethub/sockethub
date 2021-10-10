@@ -3,7 +3,7 @@ import { Socket } from "socket.io";
 
 import crypto from './crypto';
 import init from './bootstrap/init';
-import createMiddleware from './middleware';
+import middleware from './middleware';
 import createActivityObject from "./middleware/create-activity-object";
 import expandActivityStream from "./middleware/expand-activity-stream";
 import storeCredentials from "./middleware/store-credentials";
@@ -11,8 +11,9 @@ import validate from "./middleware/validate";
 import janitor from './janitor';
 import serve from './serve';
 import ProcessManager from "./process-manager";
-import { platformInstances } from "./platform-instance";
+import PlatformInstance, { platformInstances } from "./platform-instance";
 import { getSessionStore } from "./store";
+import { decryptJobData } from './common';
 
 const log = debug('sockethub:core');
 
@@ -56,18 +57,17 @@ export interface ActivityObject {
     id: string;
     name?: string;
   },
+  error?: string;
   sessionSecret?: string;
 }
 
-function errorHandler(type, socket, log) {
-  return function reportError(err, msg) {
-    log('failure handling ' + type + '. ' + err);
-    if (typeof msg !== 'object') {
-      msg = { context: 'error' };
-    }
-    msg.error = err;
-    socket.emit('failure', msg);
-  };
+function attachError(err, msg) {
+  log('middleware failure ' + err);
+  if (typeof msg !== 'object') {
+    msg = { context: 'error' };
+  }
+  msg.error = err.toString();
+  return msg;
 }
 
 class Sockethub {
@@ -106,31 +106,26 @@ class Sockethub {
     janitor.clean(); // start cleanup cycle
     serve.start();   // start external services
     log('registering handlers');
-    serve.io.on('connection', this.incomingConnection.bind(this));
+    serve.io.on('connection', this.handleIncomingConnection.bind(this));
   }
 
-  removeAllPlatformInstances() {
-    for (let platform of platformInstances.values()) {
-      platform.destroy();
+  async removeAllPlatformInstances() {
+    for (let [key, platform] of platformInstances) {
+      await platform.destroy();
     }
   }
 
-  private handleIncomingMessage(socket: Socket, sessionLog: Function) {
-    return (msg, done: Function) => {
-      const platformInstance = this.processManager.get(msg.context, msg.actor.id, socket.id);
-      const title = `${msg.context}-${(msg.id) ? msg.id : this.counter++}`;
-      sessionLog(`queued to channel ${platformInstance.id}`);
-      const job: JobDataEncrypted = {
-        title: title,
-        sessionId: socket.id,
-        msg: crypto.encrypt(msg, this.parentSecret1 + this.parentSecret2)
-      };
-      platformInstance.queue.add(job);
-      done(job);
+  private createJob(socketId: string, platformInstance: PlatformInstance, msg): JobDataEncrypted {
+    const title = `${msg.context}-${(msg.id) ? msg.id : this.counter++}`;
+    const job: JobDataEncrypted = {
+      title: title,
+      sessionId: socketId,
+      msg: crypto.encrypt(msg, this.parentSecret1 + this.parentSecret2)
     };
+    return job;
   };
 
-  private incomingConnection(socket: Socket) {
+  private handleIncomingConnection(socket: Socket) {
     const sessionLog = debug('sockethub:core:' + socket.id), // session-specific debug messages
           sessionSecret = crypto.randToken(16),
           // store instance is session-specific
@@ -139,48 +134,50 @@ class Sockethub {
     sessionLog(`socket.io connection`);
 
     socket.on('disconnect', () => {
-      sessionLog('disconnect received from client.');
+      sessionLog('disconnect received from client');
     });
 
     socket.on('credentials',
-      createMiddleware(errorHandler('credentials', socket, sessionLog))(
-        (msg: any, done: Function) => {
-          if ((! msg.type) && (typeof msg.object === 'object') && (msg.object.type)) {
-            msg.type = msg.object.type;
-          }
-          done(msg);
-        },
-        expandActivityStream,
-        validate('credentials', socket.id),
-        storeCredentials(store, sessionLog)
-      )
-    );
-
-    socket.on(
-      'message',
-      createMiddleware(errorHandler('message', socket, sessionLog))(
-        expandActivityStream,
-        validate('message', socket.id),
-        (msg, done) => {
-          // middleware which attaches the sessionSecret to the message. The platform thread
-          // must find the credentials on their own using the given sessionSecret, which indicates
-          // that this specific session (socket connection) has provided credentials.
-          msg.sessionSecret = sessionSecret;
-          done(msg);
-        },
-        this.handleIncomingMessage(socket, sessionLog)
-      )
-    );
+      middleware('credentials')
+        .use(expandActivityStream)
+        .use(validate('credentials', socket.id))
+        .use(storeCredentials(store, sessionLog))
+        .use((err, data, next) => {
+          // error handler
+          next(attachError(err, data));
+        }).use((data, next) => { next(); })
+        .done());
 
     // when new activity objects are created on the client side, an event is
     // fired and we receive a copy on the server side.
-    socket.on(
-      'activity-object',
-      createMiddleware(errorHandler('message', socket, sessionLog))(
-        validate('activity-object', socket.id),
-        createActivityObject
-      )
-    );
+    socket.on('activity-object',
+      middleware('activity-object')
+        .use(validate('activity-object', socket.id))
+        .use(createActivityObject)
+        .use((err, data, next) => {
+          next(attachError(err, data));
+        }).use((data, next) => { next(); })
+        .done());
+
+    socket.on('message',
+      middleware('message')
+        .use(expandActivityStream)
+        .use(validate('message', socket.id))
+        .use((msg, next) => {
+          // The platform thread must find the credentials on their own using the given sessionSecret,
+          // which indicates that this specific session (socket connection) has provided credentials.
+          msg.sessionSecret = sessionSecret;
+          next(msg);
+        }).use((err, data, next) => {
+          next(attachError(err, data));
+        }).use((msg, next) => {
+          const platformInstance = this.processManager.get(msg.context, msg.actor.id, socket.id);
+          sessionLog(`queued to channel ${platformInstance.id}`);
+          const job = this.createJob(socket.id, platformInstance, msg);
+          // job validated and queued, store socket.io callback for when job is completed
+          platformInstance.completedJobHandlers.set(job.title, next);
+          platformInstance.queue.add(job);
+      }).done());
   }
 }
 
