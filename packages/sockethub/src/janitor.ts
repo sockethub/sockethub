@@ -27,11 +27,11 @@ function janitorCycle() {
 
     if (! (cycleCount % 4)) {
       reportCount++;
-      rmLog(`sessions: ${sockets.length} instances: ${platformInstances.size}`);
+      rmLog(`socket sessions: ${sockets.length} platform instances: ${platformInstances.size}`);
     }
 
     for (let platformInstance of platformInstances.values()) {
-      removeStaleSessions(platformInstance, sockets);
+      removeStaleSocketSessions(platformInstance, sockets);
       // Static platforms are for global use, not tied to a unique to session / eg. credentials)
       if ((! platformInstance.global) && (platformInstance.sessions.size === 0)) {
         removeStalePlatformInstance(platformInstance);
@@ -51,10 +51,10 @@ function socketExists(sessionId, sockets) {
   return false;
 }
 
-function removeStaleSessions(platformInstance, sockets) {
+function removeStaleSocketSessions(platformInstance, sockets) {
   for (let sessionId of platformInstance.sessions.values()) {
     if (! socketExists(sessionId, sockets)) {
-      rmLog('removing stale session reference ' + sessionId + ' in platform instance '
+      rmLog('removing stale socket session reference ' + sessionId + ' in platform instance '
         + platformInstance.id);
       platformInstance.sessions.delete(sessionId);
     }
