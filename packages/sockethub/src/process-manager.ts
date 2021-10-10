@@ -1,7 +1,6 @@
 import init from './bootstrap/init';
-import PlatformInstance, { platformInstances, PlatformInstanceParams } from "./platform-instance";
+import PlatformInstance, { platformInstances, PlatformInstanceParams, MessageFromParent } from "./platform-instance";
 import { getPlatformId } from "./common";
-import { MessageFromParent } from "./platform-instance";
 
 class ProcessManager {
   private readonly parentId: string;
@@ -16,14 +15,17 @@ class ProcessManager {
 
   get(platform: string, actorId: string, sessionId?: string): PlatformInstance {
     const platformDetails = init.platforms.get(platform);
+    let pi;
 
     if (platformDetails.config.persist) {
       // ensure process is started - one for each actor
-      return this.ensureProcess(platform, sessionId, actorId);
+      pi = this.ensureProcess(platform, sessionId, actorId);
     } else {
       // ensure process is started - one for all jobs
-      return this.ensureProcess(platform);
+      pi = this.ensureProcess(platform);
     }
+    pi.config = platformDetails.config;
+    return pi;
   }
 
   private createPlatformInstance(identifier: string, platform: string,
@@ -41,7 +43,7 @@ class ProcessManager {
       actor: actor
     };
     const platformInstance = new PlatformInstance(platformInstanceConfig);
-    platformInstance.initQueue(this.parentSecret1 + this.parentSecret2);
+    platformInstance.init(this.parentSecret1 + this.parentSecret2);
     platformInstance.process.send(secrets);
     return platformInstance;
   }
