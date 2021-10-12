@@ -7,11 +7,11 @@
     "test": "test"
   },
   "dependencies": {
-    "c8": "7.10.0",
     "debug": "^4.3.1",
     "fast-deep-equal": "^3.1.1"
   },
   "devDependencies": {
+    "c8": "7.10.0",
     "jaribu": "2.2.3"
   },
   "scripts": {
