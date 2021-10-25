@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:17
 MAINTAINER Ben Kero <ben.kero@gmail.com>
 
 RUN mkdir -p /app
