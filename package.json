@@ -2,8 +2,8 @@
   "name": "root",
   "private": true,
   "devDependencies": {
-    "@typescript-eslint/parser": "5.1.0",
-    "eslint": "8.0.1",
+    "@typescript-eslint/parser": "5.2.0",
+    "eslint": "8.1.0",
     "eslint-plugin-security-node": "1.0.14",
     "find-up": "6.2.0",
     "lerna": "4.0.0",
