@@ -1205,10 +1205,10 @@ karma-mocha@2.0.1:
   dependencies:
     minimist "^1.2.3"
 
-karma@6.3.5:
-  version "6.3.5"
-  resolved "https://registry.yarnpkg.com/karma/-/karma-6.3.5.tgz#78c76dc40230590f89d2c1749a8eb049a6968dcc"
-  integrity sha512-uAwOPXtfEdIHIZdK7QcnKEv0BK/bg+AZikZ7TK1ZLk3apW/wNH74rbdamJby1CVVYw3I9PXxqeEo78OaiHeErA==
+karma@6.3.6:
+  version "6.3.6"
+  resolved "https://registry.yarnpkg.com/karma/-/karma-6.3.6.tgz#6f64cdd558c7d0c9da6fcdece156089582694611"
+  integrity sha512-xsiu3D6AjCv6Uq0YKXJgC6TvXX2WloQ5+XtHXmC1lwiLVG617DDV3W2DdM4BxCMKHlmz6l3qESZHFQGHAKvrew==
   dependencies:
     body-parser "^1.19.0"
     braces "^3.0.2"
@@ -1231,7 +1231,7 @@ karma@6.3.5:
     socket.io "^4.2.0"
     source-map "^0.6.1"
     tmp "^0.2.1"
-    ua-parser-js "^0.7.28"
+    ua-parser-js "^0.7.30"
     yargs "^16.1.1"
 
 kind-of@^6.0.2:
@@ -1854,10 +1854,10 @@ type@^2.5.0:
   resolved "https://registry.yarnpkg.com/type/-/type-2.5.0.tgz#0a2e78c2e77907b252abe5f298c1b01c63f0db3d"
   integrity sha512-180WMDQaIMm3+7hGXWf12GtdniDEy7nYcyFMKJn/eZz/6tSLXrUN9V0wKSbMjej0I1WHWbpREDEKHtqPQa9NNw==
 
-ua-parser-js@^0.7.28:
-  version "0.7.30"
-  resolved "https://registry.yarnpkg.com/ua-parser-js/-/ua-parser-js-0.7.30.tgz#4cf5170e8b55ac553fe8b38df3a82f0669671f0b"
-  integrity sha512-uXEtSresNUlXQ1QL4/3dQORcGv7+J2ookOG2ybA/ga9+HYEXueT2o+8dUJQkpedsyTyCJ6jCCirRcKtdtx1kbg==
+ua-parser-js@^0.7.30:
+  version "0.7.31"
+  resolved "https://registry.yarnpkg.com/ua-parser-js/-/ua-parser-js-0.7.31.tgz#649a656b191dffab4f21d5e053e27ca17cbff5c6"
+  integrity sha512-qLK/Xe9E2uzmYI3qLeOmI0tEOt+TBBQyUIAh4aAgU05FVYzeZrKUdkAZfBNVGRaHVgV0TDkdEngJSw/SyQchkQ==
 
 universalify@^0.1.0:
   version "0.1.2"
@@ -1939,10 +1939,10 @@ webpack-sources@^3.2.0:
   resolved "https://registry.yarnpkg.com/webpack-sources/-/webpack-sources-3.2.1.tgz#251a7d9720d75ada1469ca07dbb62f3641a05b6d"
   integrity sha512-t6BMVLQ0AkjBOoRTZgqrWm7xbXMBzD+XDq2EZ96+vMfn3qKgsvdXZhbPZ4ElUOpdv4u+iiGe+w3+J75iy/bYGA==
 
-webpack@5.59.1:
-  version "5.59.1"
-  resolved "https://registry.yarnpkg.com/webpack/-/webpack-5.59.1.tgz#60c77e9aad796252153d4d7ab6b2d4c11f0e548c"
-  integrity sha512-I01IQV9K96FlpXX3V0L4nvd7gb0r7thfuu1IfT2P4uOHOA77nKARAKDYGe/tScSHKnffNIyQhLC8kRXzY4KEHQ==
+webpack@5.60.0:
+  version "5.60.0"
+  resolved "https://registry.yarnpkg.com/webpack/-/webpack-5.60.0.tgz#9c26f38a57c9688b0a8c5c885e05197344eae67d"
+  integrity sha512-OL5GDYi2dKxnwJPSOg2tODgzDxAffN0osgWkZaBo/l3ikCxDFP+tuJT3uF7GyBE3SDBpKML/+a8EobyWAQO3DQ==
   dependencies:
     "@types/eslint-scope" "^3.7.0"
     "@types/estree" "^0.0.50"
