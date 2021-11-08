@@ -84,7 +84,7 @@
     "@types/object-hash": "2.2.1",
     "@types/tv4": "1.2.31",
     "@types/urijs": "1.19.17",
-    "@typescript-eslint/parser": "5.2.0",
+    "@typescript-eslint/parser": "5.3.0",
     "c8": "7.10.0",
     "chai": "4.3.4",
     "eslint": "8.1.0",
