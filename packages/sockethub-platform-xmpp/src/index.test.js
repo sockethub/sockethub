@@ -104,10 +104,10 @@ const job = {
   }
 };
 
+describe('XMPP platform initialization', () => {
+  it('initializes the client correctly', done => {
+    let xp;
 
-describe('xmpp platform initialization', () => {
-  let xp;
-  beforeEach((done) => {
     xp = new shXmpp({
       id: actor,
       debug: jest.fn(),
@@ -127,83 +127,106 @@ describe('xmpp platform initialization', () => {
       done();
     });
   });
+});
 
-  it('calls xmpp.js correctly when #join is called', (done) => {
-    xp.join(job.join, () => {
-      expect(xp.__client.send).toHaveBeenCalled();
-      expect(xml).toHaveBeenCalledWith(
-        "presence", {"from": "testingham@jabber.net", "to": "partyroom@jabber.net/testing ham"});
-      done();
+describe('xmpp.js calls', () => {
+  let xp;
+
+  beforeEach(done => {
+    xp = new shXmpp({ id: actor, debug: jest.fn(), sendToClient: jest.fn() });
+    xp.connect(job.join, credentials, () => done());
+  });
+
+  describe('#join', () => {
+    it('is called correctly', done => {
+      xp.join(job.join, () => {
+        expect(xp.__client.send).toHaveBeenCalled();
+        expect(xml).toHaveBeenCalledWith(
+          "presence", {"from": "testingham@jabber.net", "to": "partyroom@jabber.net/testing ham"});
+        done();
+      });
     });
   });
 
-  it('calls xmpp.js correctly when #send is called', (done) => {
-    const message = xml(
-      "message",
-      {type: job.send.chat.target['@type'] === 'room' ? 'groupchat' : 'chat',
-        to: job.send.chat.target['@id']},
-      xml("body", {}, job.send.chat.object.content),
-    );
-    xp.send(job.send.chat, () => {
-      expect(xp.__client.send).toHaveBeenCalledWith(message);
-      done();
+  describe('#send', () => {
+    it('is called correctly for a 1:1 chat', done => {
+      const message = xml(
+        "message",
+        {type: job.send.chat.target['@type'] === 'room' ? 'groupchat' : 'chat',
+          to: job.send.chat.target['@id']},
+        xml("body", {}, job.send.chat.object.content),
+      );
+      xp.send(job.send.chat, () => {
+        expect(xp.__client.send).toHaveBeenCalledWith(message);
+        done();
+      });
+    });
+
+    it('is called correctly for a groupchat', (done) => {
+      const message = xml(
+        "message",
+        {type: job.send.groupchat.target['@type'] === 'room' ? 'groupchat' : 'chat',
+          to: job.send.groupchat.target['@id']},
+        xml("body", {}, job.send.chat.object.content),
+      );
+      xp.send(job.send.groupchat, () => {
+        expect(xp.__client.send).toHaveBeenCalledWith(message);
+        done();
+      });
     });
   });
 
-  it('calls xmpp.js correctly when #send is called for a groupchat', (done) => {
-    const message = xml(
-      "message",
-      {type: job.send.chat.target['@type'] === 'room' ? 'groupchat' : 'chat',
-        to: job.send.chat.target['@id']},
-      xml("body", {}, job.send.chat.object.content),
-    );
-    xp.send(job.send.groupchat, () => {
-      expect(xp.__client.send).toHaveBeenCalledWith(message);
-      done();
+  describe('#update', () => {
+    it('is called correctly', done => {
+      xp.update(job.update.presence, () => {
+        expect(xp.__client.send).toHaveBeenCalled();
+        expect(xp.__client.send).toHaveBeenCalledWith(xml("presence", { type: "available" }));
+        done();
+      });
     });
   });
 
-  it('calls xmpp.js correctly when #update is called', (done) => {
-    xp.update(job.update.presence, () => {
-      expect(xp.__client.send).toHaveBeenCalled();
-      expect(xp.__client.send).toHaveBeenCalledWith(xml("presence", { type: "available" }));
-      done();
+  describe('#request-friend', () => {
+    it('is called correctly', done => {
+      xp['request-friend'](job['request-friend'], () => {
+        expect(xp.__client.send).toHaveBeenCalled();
+        expect(xp.__client.send).toHaveBeenCalledWith(
+          xml("presence", { type: "subscribe", to: job['request-friend'].target['@id'] }));
+        done();
+      });
     });
   });
 
-  it('calls xmpp.js correctly when #request-friend is called', (done) => {
-    xp['request-friend'](job['request-friend'], () => {
-      expect(xp.__client.send).toHaveBeenCalled();
-      expect(xp.__client.send).toHaveBeenCalledWith(
-        xml("presence", { type: "subscribe", to: job['request-friend'].target['@id'] }));
-      done();
+  describe('#remove-friend', () => {
+    it('is called correctly', done => {
+      xp['remove-friend'](job['remove-friend'], () => {
+        expect(xp.__client.send).toHaveBeenCalled();
+        expect(xp.__client.send).toHaveBeenCalledWith(
+          xml("presence", { type: "subscribe", to: job['remove-friend'].target['@id'] }));
+        done();
+      });
     });
   });
 
-  it('calls xmpp.js correctly when #remove-friend is called', (done) => {
-    xp['remove-friend'](job['remove-friend'], () => {
-      expect(xp.__client.send).toHaveBeenCalled();
-      expect(xp.__client.send).toHaveBeenCalledWith(
-        xml("presence", { type: "subscribe", to: job['remove-friend'].target['@id'] }));
-      done();
+  describe('#make-friend', () => {
+    it('is called correctly', done => {
+      xp['remove-friend'](job['remove-friend'], () => {
+        expect(xp.__client.send).toHaveBeenCalled();
+        expect(xp.__client.send).toHaveBeenCalledWith(
+          xml("presence", { type: "subscribe", to: job['make-friend'].target['@id'] }));
+        done();
+      });
     });
   });
 
-  it('calls xmpp.js correctly when #make-friend is called', (done) => {
-    xp['remove-friend'](job['remove-friend'], () => {
-      expect(xp.__client.send).toHaveBeenCalled();
-      expect(xp.__client.send).toHaveBeenCalledWith(
-        xml("presence", { type: "subscribe", to: job['make-friend'].target['@id'] }));
-      done();
-    });
-  });
-
-  it('calls xmpp.js correctly when #observe is called', (done) => {
-    xp.observe(job.observe, () => {
-      expect(xp.__client.send).toHaveBeenCalled();
-      expect(xml).toHaveBeenCalledWith(
-        "presence", {"from": "testingham@jabber.net", "to": "partyroom@jabber.net/testing ham"});
-      done();
+  describe('#observe', () => {
+    it('is called correctly for room attendance', done => {
+      xp.observe(job.observe, () => {
+        expect(xp.__client.send).toHaveBeenCalled();
+        expect(xml).toHaveBeenCalledWith(
+          "presence", {"from": "testingham@jabber.net", "to": "partyroom@jabber.net/testing ham"});
+        done();
+      });
     });
   });
 });
