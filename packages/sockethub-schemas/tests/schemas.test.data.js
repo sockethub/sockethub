@@ -399,5 +399,23 @@ module.exports = [
     },
     false,
     'activity stream: must have required property \'type\''
+  ],
+
+  [
+    'invalid room',
+    {
+      "context":"irc",
+      "type":"credentials",
+      "actor":{
+        "id":"sh-9K3Vk@irc.freenode.net",
+        "type":"person",
+      },
+      "target": {
+        "type":"room",
+        "name":"sh-9K3Vk"
+      }
+    },
+    false,
+    '/target: must have required property \'id\''
   ]
 ];
