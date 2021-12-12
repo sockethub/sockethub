@@ -1,3 +1,5 @@
+const objectTypes = require('./../src/object-types');
+
 module.exports = [
   [
     'type:send, object:message',
@@ -69,20 +71,20 @@ module.exports = [
   [
     'bad target',
     {
-    'id': 'blah',
-      'type': 'send',
+    id: 'blah',
+      type: 'send',
       context: 'dood',
       actor: {
         id: 'dood@irc.freenode.net',
-        'type': 'person',
+        type: 'person',
         name: 'dood'
       },
       target: {
-        'type': 'person',
+        type: 'person',
         name: 'bob'
       },
       object: {
-        'type': 'credentials'
+        type: 'credentials'
       }
     },
     false,
@@ -92,33 +94,33 @@ module.exports = [
   [
     'bad iri in object id',
     {
-      'type': 'feed',
+      type: 'feed',
       context: 'dood',
       actor: {
-        'id': 'dood@irc.freenode.net',
-        'type': 'person'
+        id: 'dood@irc.freenode.net',
+        type: 'person'
       },
       object: {
-        'id': 'example.org/some/path.html',
-        'type': 'website'
+        id: 'example.org/some/path.html',
+        type: 'website'
       }
     },
     false,
-    '/object/type: must be equal to one of the allowed values'
+    '/object/id: must match format "iri"'
   ],
 
   [
     'valid iri in object id',
     {
-      'type': 'feed',
+      type: 'feed',
       context: 'dood',
       actor: {
-        'id': 'dood@irc.freenode.net',
-        'type': 'person'
+        id: 'dood@irc.freenode.net',
+        type: 'person'
       },
       object: {
-        'id': 'https://example.org/some/path.html',
-        'type': 'website'
+        id: 'https://example.org/some/path.html',
+        type: 'website'
       }
     },
     true,
@@ -141,17 +143,17 @@ module.exports = [
       }
     },
     false,
-    '/actor/type: must be equal to one of the allowed values'
+    `/actor: must match exactly one schema in oneOf: ${Object.keys(objectTypes).join(', ')}`
   ],
 
   [
     'missing actor id',
     {
-      'id': 'blah',
-      'type': 'send',
+      id: 'blah',
+      type: 'send',
       context: 'dood',
       actor: {
-        'type': 'person',
+        type: 'person',
         name: 'dood'
       },
       target: {
@@ -166,5 +168,225 @@ module.exports = [
     },
     false,
     '/actor: must have required property \'id\''
-  ]
+  ],
+
+  [
+    'attendance request',
+    {
+      id: 'blah',
+      type: 'observe',
+      context: 'dood',
+      actor: {
+        id: 'dood',
+        type: 'person'
+      },
+      target: {
+        id: 'chatroom@crusty.net',
+        type: 'room'
+      },
+      object: {
+        type: 'attendance',
+      }
+    },
+    true,
+    ''
+  ],
+
+  [
+    'attendance response',
+    {
+      id: 'blah',
+      type: 'observe',
+      context: 'dood',
+      actor: {
+        id: 'chatroom@crusty.net',
+        type: 'room',
+        name: 'chatroom'
+      },
+      object: {
+        type: 'attendance',
+        members: ['bill', 'bob', 'hank']
+      }
+    },
+    true,
+    ''
+  ],
+
+  [
+    'invalid attendance request',
+    {
+      id: 'blah',
+      type: 'observe',
+      context: 'dood',
+      actor: {
+        id: 'dood',
+        type: 'person'
+      },
+      target: {
+        id: 'chatroom@crusty.net',
+        type: 'room'
+      },
+      object: {
+        type: 'attendance',
+        status: 'foobar'
+      }
+    },
+    false,
+    '/object: must NOT have additional properties: status'
+  ],
+
+  [
+    'setting presence',
+    {
+      id: 'blah',
+      type: 'observe',
+      context: 'dood',
+      actor: {
+        id: 'dood',
+        type: 'person'
+      },
+      object: {
+        type: 'presence',
+        presence: 'unavailable',
+        status: 'forgot the milk'
+      },
+      target: {
+        id: 'chatroom@crusty.net',
+        type: 'room'
+      }
+    },
+    true,
+    ''
+  ],
+
+  [
+    'setting invalid presence',
+    {
+      id: 'blah',
+      type: 'observe',
+      context: 'dood',
+      actor: {
+        id: 'dood',
+        type: 'person'
+      },
+      object: {
+        type: 'presence',
+        presence: 'away',
+        status: 'forgot the milk'
+      },
+      target: {
+        id: 'chatroom@crusty.net',
+        type: 'room'
+      }
+    },
+    false,
+    '/object/presence: must be equal to one of the allowed values: offline, unavailable, online'
+  ],
+
+  [
+    'setting topic',
+    {
+      id: 'blah',
+      type: 'observe',
+      context: 'dood',
+      actor: {
+        id: 'dood',
+        type: 'person'
+      },
+      object: {
+        type: 'topic',
+        content: 'the topic is goats'
+      },
+      target: {
+        id: 'chatroom@crusty.net',
+        type: 'room'
+      }
+    },
+    true,
+    ''
+  ],
+
+  [
+    'setting topic incorrectly',
+    {
+      id: 'blah',
+      type: 'observe',
+      context: 'dood',
+      actor: {
+        id: 'dood',
+        type: 'person'
+      },
+      object: {
+        type: 'topic',
+        topic: 'the topic is goats'
+      },
+      target: {
+        id: 'chatroom@crusty.net',
+        type: 'room'
+      }
+    },
+    false,
+    '/object: must NOT have additional properties: topic'
+  ],
+
+
+  [
+    'receive topic',
+    {
+      id: 'blah',
+      type: 'observe',
+      context: 'dood',
+      actor: {
+        id: 'chatroom@crusty.net',
+        type: 'room'
+      },
+      object: {
+        type: 'topic',
+        content: 'the topic is goats'
+      }
+    },
+    true,
+    ''
+  ],
+
+  [
+    'change user address',
+    {
+      id: 'blah',
+      type: 'update',
+      context: 'dood',
+      actor: {
+        id: 'foobar@example.com',
+        type: 'person'
+      },
+      object: {
+        type: 'address'
+      },
+      target: {
+        id: 'futurebar@example.com',
+        type: 'person'
+      },
+    },
+    true,
+    ''
+  ],
+
+  [
+    'change user address incorrectly',
+    {
+      id: 'blah',
+      type: 'update',
+      context: 'dood',
+      actor: {
+        id: 'foobar@example.com',
+        type: 'person'
+      },
+      object: {
+        type: 'address',
+        id: 'futurebar@example.com',
+      }
+    },
+    false,
+    '/object: must NOT have additional properties: id'
+  ],
 ];
