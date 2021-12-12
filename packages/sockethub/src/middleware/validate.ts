@@ -51,10 +51,10 @@ function handleValidation(validator, msg, done, isObject=false) {
   if (isObject) {
     result = validator({ object: msg });
   } else {
-    result = validator(msg)
+    result = validator(msg);
   }
   if (! result) {
-    done(new Error(SockethubSchemas.util.getErrorMessage(msg, validator.errors)))
+    done(new Error(SockethubSchemas.util.getErrorMessage(msg, validator.errors)));
   } else {
     done(msg);
   }

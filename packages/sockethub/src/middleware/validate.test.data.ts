@@ -161,7 +161,8 @@ export default [
       "server":"irc.freenode.net"
     },
     "error":
-      "Error: /object: must match exactly one schema in oneOf: credentials, feed, message, person, room, website, attendance, presence, topic, address"
+      "Error: /object: must match exactly one schema in oneOf: " +
+      "credentials, feed, message, person, room, website, attendance, presence, topic, address"
   },
   {
     "name":"alone credentials (as credentials)",
@@ -246,7 +247,8 @@ export default [
       }
     },
     "error":
-      "Error: /object: must match exactly one schema in oneOf: credentials, feed, message, person, room, website, attendance, presence, topic, address"
+      "Error: /object: must match exactly one schema in oneOf: " +
+      "credentials, feed, message, person, room, website, attendance, presence, topic, address"
   },
   {
     "name":"non-expected AS will fail",
