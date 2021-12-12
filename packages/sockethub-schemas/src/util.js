@@ -15,23 +15,25 @@ module.exports = {
     for (error of errors) {
       // if the base instancepath and AS type match, use that error
       if (error.instancePath.startsWith('/object') &&
-          error.schemaPath.startsWith(`#/definitions/type/${AS.object.type}`)) {
+          error.schemaPath.startsWith(`#/definitions/type/${AS.object?.type}`)) {
         return parseMsg(error);
       } else if (error.instancePath.startsWith('/actor') &&
-                 error.schemaPath.startsWith(`#/definitions/type/${AS.actor.type}`)) {
+                 error.schemaPath.startsWith(`#/definitions/type/${AS.actor?.type}`)) {
         return parseMsg(error);
       } else if (error.instancePath.startsWith('/target') &&
-                 error.schemaPath.startsWith(`#/definitions/type/${AS.target.type}`)) {
+                 error.schemaPath.startsWith(`#/definitions/type/${AS.target?.type}`)) {
         return parseMsg(error);
       }
     }
 
-    if (errors.length) {
+    if (errors.length > 0) {
       // if no errors found so far, assume this is an invalid type value (oneOf),
       // try to build a list of valid types
       const finalError = errors[errors.length - 1];
       if (finalError.keyword === 'oneOf') {
         return `${finalError.instancePath}: ${finalError.message}: ${Object.keys(objectTypes).join(', ')}`;
+      } else {
+        return `${finalError.instancePath ? finalError.instancePath : 'activity stream'}: ${finalError.message}`;
       }
     }
 
