@@ -70,7 +70,7 @@ Valid AS object for setting XMPP credentials:
 **Example**  
 ```js
 {
-  '@type': 'set',
+  '@type': 'credentials',
   context: 'xmpp',
   actor: {
     '@id': 'testuser@jabber.net',
