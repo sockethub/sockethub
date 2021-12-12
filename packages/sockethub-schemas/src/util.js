@@ -42,12 +42,12 @@ module.exports = {
         i = 0;
     while (!msg && errors[i]) {
       const error = errors[i];
-      msg = findObjectTypeError(AS, error)
+      msg = findObjectTypeError(AS, error);
       i += 1;
     }
 
     if (!msg) {
-      msg = composeFinalError(errors[errors.length - 1])
+      msg = composeFinalError(errors[errors.length - 1]);
     }
     return msg;
   }
