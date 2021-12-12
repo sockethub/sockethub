@@ -389,4 +389,15 @@ module.exports = [
     false,
     '/object: must NOT have additional properties: id'
   ],
+
+  [
+    'invalid activity stream',
+    {
+      "actor": { "id": "irc://uuu@localhost", "type": "person" },
+      "context":"irc",
+      "target": { "id": "irc://irc.dooder.net/a-room", "type": "room" }
+    },
+    false,
+    'activity stream: must have required property \'type\''
+  ]
 ];

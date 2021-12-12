@@ -30,8 +30,7 @@ function composeFinalError(error) {
     msg = `${error.instancePath}: ${error.message}: ` +
       `${Object.keys(objectTypes).join(', ')}`;
   } else {
-    msg = `${error.instancePath ?
-      error.instancePath : 'activity stream'}: ${error.message}`;
+    msg = `activity stream: ${error.message}`;
   }
   return msg;
 }
