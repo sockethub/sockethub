@@ -58,7 +58,7 @@ Valid AS object for setting IRC credentials:
 **Example**  
 ```js
 {
-   '@type': 'set',
+   '@type': 'credentials',
    context: 'irc',
    actor: {
      '@id': 'testuser@irc.host.net',

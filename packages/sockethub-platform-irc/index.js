@@ -80,7 +80,7 @@ function IRC(cfg) {
  * @example
  *
  *  {
- *    'type': 'set',
+ *    type: 'credentials',
  *    context: 'irc',
  *    actor: {
  *      'id': 'testuser@irc.host.net',

@@ -72,7 +72,7 @@ class XMPP {
    * @example
    *
    * {
-   *   'type': 'set',
+   *   type: 'credentials',
    *   context: 'xmpp',
    *   actor: {
    *     'id': 'testuser@jabber.net',
