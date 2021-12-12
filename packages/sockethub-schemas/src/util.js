@@ -10,33 +10,44 @@ function parseMsg(error) {
   return msg;
 }
 
+function findObjectTypeError(AS, error) {
+  let msg = "";
+  for (let prop of ['object', 'actor', 'target']) {
+    // if the base instancepath and AS type match, use that error
+    if (error.instancePath.startsWith(`/${prop}`) &&
+      error.schemaPath.startsWith(`#/definitions/type/${AS[prop]?.type}`)) {
+      msg = parseMsg(error);
+    }
+  }
+  return msg;
+}
+
+function composeFinalError(error) {
+  // if we have yet to build an error message, assume this is an invalid type value (oneOf),
+  // try to build a list of valid types
+  let msg = "";
+  if (error.keyword === 'oneOf') {
+    msg = `${error.instancePath}: ${error.message}: ` +
+      `${Object.keys(objectTypes).join(', ')}`;
+  } else {
+    msg = `${error.instancePath ?
+      error.instancePath : 'activity stream'}: ${error.message}`;
+  }
+  return msg;
+}
+
 module.exports = {
   getErrorMessage: function (AS, errors) {
     let msg = "",
         i = 0;
-    while (msg === "" && errors[i]) {
+    while (!msg && errors[i]) {
       const error = errors[i];
-      for (let prop of ['object', 'actor', 'target']) {
-        // if the base instancepath and AS type match, use that error
-        if (error.instancePath.startsWith(`/${prop}`) &&
-            error.schemaPath.startsWith(`#/definitions/type/${AS[prop]?.type}`)) {
-          msg = parseMsg(error);
-        }
-      }
+      msg = findObjectTypeError(AS, error)
       i += 1;
     }
 
-    if (msg === "") {
-      // if we have yet to build an error message, assume this is an invalid type value (oneOf),
-      // try to build a list of valid types
-      const finalError = errors[errors.length - 1];
-      if (finalError.keyword === 'oneOf') {
-        msg = `${finalError.instancePath}: ${finalError.message}: ` +
-          `${Object.keys(objectTypes).join(', ')}`;
-      } else {
-        msg = `${finalError.instancePath ? 
-          finalError.instancePath : 'activity stream'}: ${finalError.message}`;
-      }
+    if (!msg) {
+      msg = composeFinalError(errors[errors.length - 1])
     }
     return msg;
   }
