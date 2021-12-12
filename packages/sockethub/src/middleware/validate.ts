@@ -33,8 +33,7 @@ function validateActivityObject(msg: any, done: Function) {
   const validate_activity_object = ajv.getSchema(
     `${schemaURL}/activity-object`);
   if (! validate_activity_object({ object: msg })) {
-    done(new Error(
-      `activity-object schema validation failed: ${validate_activity_object.errors[0].message}`));
+    done(new Error(SockethubSchemas.util.getErrorMessage(msg, validate_activity_object.errors)));
   } else {
     done(msg);
   }
@@ -43,8 +42,7 @@ function validateActivityObject(msg: any, done: Function) {
 function validateActivityStream(msg: any, done: Function) {
   const validate_activity_stream = ajv.getSchema(`${schemaURL}/activity-stream`);
   if (! validate_activity_stream(msg)) {
-    done(new Error(
-      `actvity-stream schema validation failed: ${validate_activity_stream.errors[0].message}`));
+    done(new Error(SockethubSchemas.util.getErrorMessage(msg, validate_activity_stream.errors)));
   } else {
     done(msg);
   }
@@ -57,8 +55,7 @@ function validateCredentials(msg: any, done: Function) {
   const validate_credentials = ajv.getSchema(
     `${schemaURL}/context/${msg.context}/credentials`);
   if (! validate_credentials(msg)) {
-    done(new Error(
-      `credentials schema validation failed: ${validate_credentials.errors[0].message}`));
+    done(new Error(SockethubSchemas.util.getErrorMessage(msg, validate_credentials.errors)));
   } else {
     done(msg);
   }

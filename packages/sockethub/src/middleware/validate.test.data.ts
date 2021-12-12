@@ -103,7 +103,7 @@ export default [
       }
     },
     "error":
-      "Error: credentials schema validation failed: must have required property \'nick\'"
+      "Error: /object: must have required property \'nick\'"
   },
   {
     "name":"no type specified",
@@ -161,7 +161,7 @@ export default [
       "server":"irc.freenode.net"
     },
     "error":
-      "Error: activity-object schema validation failed: must have required property \'id\'"
+      "Error: /object: must match exactly one schema in oneOf: credentials, feed, message, person, room, website, attendance, presence, topic, address"
   },
   {
     "name":"alone credentials (as credentials)",
@@ -246,7 +246,7 @@ export default [
       }
     },
     "error":
-      "Error: activity-object schema validation failed: must have required property 'id'"
+      "Error: /object: must match exactly one schema in oneOf: credentials, feed, message, person, room, website, attendance, presence, topic, address"
   },
   {
     "name":"non-expected AS will fail",
@@ -268,8 +268,7 @@ export default [
       "context":"irc",
       "target": { "id": "irc://irc.dooder.net/a-room", "type": "room" }
     },
-    "error": "Error: actvity-stream schema validation failed: " +
-      "must have required property \'type\'"
+    "error": "Error: activity stream: must have required property \'type\'"
   },
   {
     "name":"invalid context property",
@@ -292,8 +291,7 @@ export default [
       "context":"irc",
       "target": { "id": "irc://irc.dooder.net/a-room", "type": "room" }
     },
-    "error": "Error: actvity-stream schema validation failed: " +
-      "must have required property \'actor\'"
+    "error": "Error: activity stream: must have required property \'actor\'"
   },
   {
     "name":"traditional message",

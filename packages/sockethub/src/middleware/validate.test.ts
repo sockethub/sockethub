@@ -26,14 +26,14 @@ describe('Middleware: Validate', () => {
         validate(obj.type, 'tests')(obj.input, (msg) => {
           if (obj.output) {
             if (obj.output === 'same') {
-              expect(obj.input).to.eql(msg);
+              expect(msg).to.eql(obj.input);
             } else {
-              expect(obj.output).to.eql(msg);
+              expect(msg).to.eql(obj.output);
             }
           }
           expect(obj.valid).to.not.equal(msg instanceof Error);
           if (obj.error) {
-            expect(obj.error).to.equal(msg.toString());
+            expect(msg.toString()).to.equal(obj.error);
           }
           done();
         });
