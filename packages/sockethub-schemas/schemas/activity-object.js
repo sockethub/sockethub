@@ -20,6 +20,18 @@ module.exports = {
 				},
 				{
 					"$ref": "#/definitions/type/website"
+				},
+				{
+					"$ref": "#/definitions/type/attendance"
+				},
+				{
+					"$ref": "#/definitions/type/presence"
+				},
+				{
+					"$ref": "#/definitions/type/topic"
+				},
+				{
+					"$ref": "#/definitions/type/address"
 				}
 			]
 		}
@@ -114,6 +126,77 @@ module.exports = {
 					},
 					"name": {
 						"type": "string"
+					}
+				}
+			},
+			"attendance": {
+				"required": [
+					"type"
+				],
+				"additionalProperties": false,
+				"properties": {
+					"type": {
+						"enum": [
+							"attendance"
+						]
+					},
+					"members": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					}
+				}
+			},
+			"presence": {
+				"required": [
+					"type"
+				],
+				"additionalProperties": false,
+				"properties": {
+					"type": {
+						"enum": [
+							"presence"
+						]
+					},
+					"presence": {
+						"enum": [
+							"offline",
+							"unavailable",
+							"online"
+						]
+					},
+					"status": {
+						"type": "string"
+					}
+				}
+			},
+			"topic": {
+				"required": [
+					"type"
+				],
+				"additionalProperties": false,
+				"properties": {
+					"type": {
+						"enum": [
+							"topic"
+						]
+					},
+					"content": {
+						"type": "string"
+					}
+				}
+			},
+			"address": {
+				"required": [
+					"type"
+				],
+				"additionalProperties": false,
+				"properties": {
+					"type": {
+						"enum": [
+							"address"
+						]
 					}
 				}
 			}
