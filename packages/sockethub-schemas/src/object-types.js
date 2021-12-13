@@ -106,6 +106,65 @@ module.exports = {
         "type": "string"
       }
     }
+  },
+
+  "attendance": {
+    "activity-object": true,
+    "required": [ "type" ],
+    "additionalProperties": false,
+    "properties": {
+      "type": {
+        "enum": [ "attendance" ]
+      },
+      "members": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+
+  "presence": {
+    "activity-object": true,
+    "required": [ "type" ],
+    "additionalProperties": false,
+    "properties": {
+      "type": {
+        "enum": [ "presence" ]
+      },
+      "presence": {
+        "enum": [ "offline", "unavailable", "online" ]
+      },
+      "status": {
+        "type": "string"
+      }
+    }
+  },
+
+  "topic": {
+    "activity-object": true,
+    "required": [ "type" ],
+    "additionalProperties": false,
+    "properties": {
+      "type": {
+        "enum": [ "topic" ]
+      },
+      "content": {
+        "type": "string"
+      }
+    }
+  },
+
+  "address": {
+    "activity-object": true,
+    "required": [ "type" ],
+    "additionalProperties": false,
+    "properties": {
+      "type": {
+        "enum": [ "address" ]
+      }
+    }
   }
 };
 

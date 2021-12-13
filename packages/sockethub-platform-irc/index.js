@@ -343,7 +343,7 @@ IRC.prototype.send = function (job, credentials, done) {
  *   },
  *   object: {
  *     'type': 'topic',
- *     topic: 'New version of Socekthub released!'
+ *     content: 'New version of Socekthub released!'
  *   }
  * }
  *
@@ -390,7 +390,7 @@ IRC.prototype.update = function (job, credentials, done) {
       // update topic
       this.debug('changing topic in channel ' + job.target.name);
       this.__jobQueue.push(done);
-      client.raw(['topic', job.target.name, job.object.topic]);
+      client.raw(['topic', job.target.name, job.object.content]);
     } else {
       return done(`unknown update action.`);
     }

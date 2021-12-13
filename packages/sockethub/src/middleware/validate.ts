@@ -30,35 +30,31 @@ init.platforms.forEach((platform) => {
 });
 
 function validateActivityObject(msg: any, done: Function) {
-  const validate_activity_object = ajv.getSchema(
-    `${schemaURL}/activity-object`);
-  if (! validate_activity_object({ object: msg })) {
-    done(new Error(
-      `activity-object schema validation failed: ${validate_activity_object.errors[0].message}`));
-  } else {
-    done(msg);
-  }
+  handleValidation(ajv.getSchema(
+    `${schemaURL}/activity-object`), msg, done, true);
 }
 
 function validateActivityStream(msg: any, done: Function) {
-  const validate_activity_stream = ajv.getSchema(`${schemaURL}/activity-stream`);
-  if (! validate_activity_stream(msg)) {
-    done(new Error(
-      `actvity-stream schema validation failed: ${validate_activity_stream.errors[0].message}`));
-  } else {
-    done(msg);
-  }
+  handleValidation(ajv.getSchema(`${schemaURL}/activity-stream`), msg, done);
 }
 
 function validateCredentials(msg: any, done: Function) {
   if (msg.type !== 'credentials') {
     return done(new Error('credential activity streams must have credentials set as type'));
   }
-  const validate_credentials = ajv.getSchema(
-    `${schemaURL}/context/${msg.context}/credentials`);
-  if (! validate_credentials(msg)) {
-    done(new Error(
-      `credentials schema validation failed: ${validate_credentials.errors[0].message}`));
+  handleValidation(ajv.getSchema(
+    `${schemaURL}/context/${msg.context}/credentials`), msg, done);
+}
+
+function handleValidation(validator, msg, done, isObject=false) {
+  let result = "";
+  if (isObject) {
+    result = validator({ object: msg });
+  } else {
+    result = validator(msg);
+  }
+  if (! result) {
+    done(new Error(SockethubSchemas.util.getErrorMessage(msg, validator.errors)));
   } else {
     done(msg);
   }
