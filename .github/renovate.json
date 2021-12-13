@@ -6,7 +6,7 @@
   ],
   "packageRules": [
     {
-      "matchDepTypes": ["devDependencies"],
+      "matchDepTypes": ["devDependencies", "dependencies"],
       "matchUpdateTypes": ["patch", "minor"],
       "groupName": "devDependencies (non-major)"
     }
@@ -15,8 +15,8 @@
   "lockFileMaintenance": { "enabled": true },
   "prCreation": "not-pending",
   "rebaseWhen": "behind-base-branch",
-  "schedule": "on monday",
-  "stabilityDays": 4,
+  "schedule": "before 7am on the first day of the month",
+  "stabilityDays": 7,
   "internalChecksFilter": "strict",
   "updateNotScheduled": true
 }
