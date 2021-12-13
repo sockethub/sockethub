@@ -144,14 +144,14 @@ class IrcToActivityStreams {
         case MOTD: // MOTD
         if (! this.__buffer[MOTD]) {
             this.__buffer[MOTD] = {
-                '@type': 'update',
+                type: 'update',
                 actor: {
-                    '@type': 'service',
-                    '@id': this.server,
-                    displayName: this.server
+                    type: 'service',
+                    id: this.server,
+                    name: this.server
                 },
                 object: {
-                    '@type': 'topic',
+                    type: 'topic',
                     content: [ content ]
                 }
             }
@@ -217,15 +217,15 @@ class IrcToActivityStreams {
         /** */
         case TOPIC_IS: // topic currently set to
         this.__buffer[TOPIC_IS] = {
-            '@type': 'update',
+            type: 'update',
             actor: undefined,
             target: {
-                '@type': 'room',
-                '@id': this.server + '/' + channel,
-                displayName: channel
+                type: 'room',
+                id: this.server + '/' + channel,
+                name: channel
             },
             object: {
-                '@type': 'topic',
+                type: 'topic',
                 topic: content
             }
         };
@@ -234,9 +234,9 @@ class IrcToActivityStreams {
         if (! this.__buffer[TOPIC_IS]) { break; }
         nick = pos3.split('!')[0];
         this.__buffer[TOPIC_IS].actor = {
-            '@type': 'person',
-            '@id': nick + '@' + this.server,
-            displayName: nick
+            type: 'person',
+            id: nick + '@' + this.server,
+            name: nick
         };
         this.__buffer[TOPIC_IS].published = msg[0];
         ase.emitEvent(EVENT_INCOMING, this.__buffer[TOPIC_IS]);
