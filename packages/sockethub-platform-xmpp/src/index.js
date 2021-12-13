@@ -75,12 +75,12 @@ class XMPP {
    *   type: 'credentials',
    *   context: 'xmpp',
    *   actor: {
-   *     'id': 'testuser@jabber.net',
-   *     'type': 'person',
+   *     id: 'testuser@jabber.net',
+   *     type: 'person',
    *     name: 'Mr. Test User'
    *   },
    *   object: {
-   *     'type': 'credentials',
+   *     type: 'credentials',
    *     server: 'jabber.net',
    *     username: 'testuser',
    *     password: 'asdasdasdasd',
@@ -111,10 +111,10 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   'type': 'connect',
+   *   type: 'connect',
    *   actor: {
-   *     'id': 'slvrbckt@jabber.net/Home',
-   *     'type': 'person',
+   *     id: 'slvrbckt@jabber.net/Home',
+   *     type: 'person',
    *     name: 'Nick Jennings',
    *     userName: 'slvrbckt'
    *   }
@@ -154,15 +154,15 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   'type': 'join',
+   *   type: 'join',
    *   actor: {
-   *     'type': 'person',
-   *     'id': 'slvrbckt@jabber.net/Home',
+   *     type: 'person',
+   *     id: 'slvrbckt@jabber.net/Home',
    *     name: 'Mr. Pimp'
    *   },
    *   target: {
-   *     'type': 'room',
-   *     'id': 'PartyChatRoom@muc.jabber.net'
+   *     type: 'room',
+   *     id: 'PartyChatRoom@muc.jabber.net'
    *   }
    * }
    */
@@ -190,15 +190,15 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   'type': 'leave',
+   *   type: 'leave',
    *   actor: {
-   *     'type': 'person',
-   *     'id': 'slvrbckt@jabber.net/Home',
+   *     type: 'person',
+   *     id: 'slvrbckt@jabber.net/Home',
    *     name: 'slvrbckt'
    *   },
    *   target: {
-   *     'type': 'room'
-   *     'id': 'PartyChatRoom@muc.jabber.net',
+   *     type: 'room'
+   *     id: 'PartyChatRoom@muc.jabber.net',
    *   }
    * }
    */
@@ -225,39 +225,39 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   'type': 'send',
+   *   type: 'send',
    *   actor: {
-   *     'id': 'slvrbckt@jabber.net/Home',
-   *     'type': 'person',
+   *     id: 'slvrbckt@jabber.net/Home',
+   *     type: 'person',
    *     name: 'Nick Jennings',
    *     userName: 'slvrbckt'
    *   },
    *   target: {
-   *     'id': 'homer@jabber.net/Home',
-   *     'type': 'user',
+   *     id: 'homer@jabber.net/Home',
+   *     type: 'user',
    *     name: 'Homer'
    *   },
    *   object: {
-   *     'type': 'message',
+   *     type: 'message',
    *     content: 'Hello from Sockethub!'
    *   }
    * }
    *
    * {
    *   context: 'xmpp',
-   *   'type': 'send',
+   *   type: 'send',
    *   actor: {
-   *     'id': 'slvrbckt@jabber.net/Home',
-   *     'type': 'person',
+   *     id: 'slvrbckt@jabber.net/Home',
+   *     type: 'person',
    *     name: 'Nick Jennings',
    *     userName: 'slvrbckt'
    *   },
    *   target: {
-   *     'id': 'party-room@jabber.net',
-   *     'type': 'room'
+   *     id: 'party-room@jabber.net',
+   *     type: 'room'
    *   },
    *   object: {
-   *     'type': 'message',
+   *     type: 'message',
    *     content: 'Hello from Sockethub!'
    *   }
    * }
@@ -285,12 +285,12 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   'type': 'update',
+   *   type: 'update',
    *   actor: {
-   *     'id': 'user@host.org/Home'
+   *     id: 'user@host.org/Home'
    *   },
    *   object: {
-   *     'type': 'presence'
+   *     type: 'presence'
    *     presence: 'chat',
    *     content: '...clever saying goes here...'
    *   }
@@ -320,12 +320,12 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   'type': 'request-friend',
+   *   type: 'request-friend',
    *   actor: {
-   *     'id': 'user@host.org/Home'
+   *     id: 'user@host.org/Home'
    *   },
    *   target: {
-   *     'id': 'homer@jabber.net/Home',
+   *     id: 'homer@jabber.net/Home',
    *   }
    * }
    */
@@ -345,12 +345,12 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   'type': 'remove-friend',
+   *   type: 'remove-friend',
    *   actor: {
-   *     'id': 'user@host.org/Home'
+   *     id: 'user@host.org/Home'
    *   },
    *   target: {
-   *     'id': 'homer@jabber.net/Home',
+   *     id: 'homer@jabber.net/Home',
    *   }
    * }
    */
@@ -370,12 +370,12 @@ class XMPP {
    *
    * {
    *   context: 'xmpp',
-   *   'type': 'make-friend',
+   *   type: 'make-friend',
    *   actor: {
-   *     'id': 'user@host.org/Home'
+   *     id: 'user@host.org/Home'
    *   },
    *   target: {
-   *     'id': 'homer@jabber.net/Home',
+   *     id: 'homer@jabber.net/Home',
    *   }
    * }
    */
@@ -394,34 +394,34 @@ class XMPP {
    *
    *  {
    *    context: 'xmpp',
-   *    'type': 'observe',
+   *    type: 'observe',
    *    actor: {
-   *      'id': 'slvrbckt@jabber.net/Home',
-   *      'type': 'person'
+   *      id: 'slvrbckt@jabber.net/Home',
+   *      type: 'person'
    *    },
    *    target: {
-   *      'id': 'PartyChatRoom@muc.jabber.net',
-   *      'type': 'room'
+   *      id: 'PartyChatRoom@muc.jabber.net',
+   *      type: 'room'
    *    },
    *    object: {
-   *      'type': 'attendance'
+   *      type: 'attendance'
    *    }
    *  }
    *
    *  // The above object might return:
    *  {
    *    context: 'xmpp',
-   *    'type': 'observe',
+   *    type: 'observe',
    *    actor: {
-   *      'id': 'PartyChatRoom@muc.jabber.net',
-   *      'type': 'room'
+   *      id: 'PartyChatRoom@muc.jabber.net',
+   *      type: 'room'
    *    },
    *    target: {
-   *      'id': 'slvrbckt@jabber.net/Home',
-   *      'type': 'person'
+   *      id: 'slvrbckt@jabber.net/Home',
+   *      type: 'person'
    *    },
    *    object: {
-   *      'type': 'attendance'
+   *      type: 'attendance'
    *      members: [
    *        'RyanGosling',
    *        'PeeWeeHerman',
