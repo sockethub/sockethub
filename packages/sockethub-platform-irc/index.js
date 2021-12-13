@@ -303,7 +303,8 @@ IRC.prototype.send = function (job, credentials, done) {
       // message intended as command
       // jsdoc does not like this octal escape sequence but it's needed for proper behavior in IRC
       // so the following line needs to be commented out when the API doc is built.
-      // investigate: https://github.com/jsdoc2md/jsdoc-to-markdown/issues/197#issuecomment-976851915
+      // investigate:
+      // https://github.com/jsdoc2md/jsdoc-to-markdown/issues/197#issuecomment-976851915
       const message = '\001ACTION ' + job.object.content + '\001';
       client.raw('PRIVMSG ' + job.target.name + ' :' + message);
     } else if (job.object.type === 'notice') {
