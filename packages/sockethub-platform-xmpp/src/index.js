@@ -267,8 +267,11 @@ class XMPP {
     this.debug('send() called for ' + job.actor.id);
     // send message
     const message = xml(
-      "message",
-      { type: job.target.type === 'room' ? 'groupchat' : 'chat', to: job.target.id },
+      "message", {
+        type: job.target.type === 'room' ? 'groupchat' : 'chat',
+        to: job.target.id,
+        id: job.object.id
+      },
       xml("body", {}, job.object.content),
     );
     this.__client.send(message).then(done);
