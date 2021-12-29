@@ -57,6 +57,7 @@ const job = {
       actor: actor,
       object: {
         'type': 'message',
+        id: 'hc-1234abcd',
         content: 'hello'
       },
       target: target.mrfoobar
@@ -65,6 +66,7 @@ const job = {
       actor: actor,
       object: {
         'type': 'message',
+        id: 'hc-1234abcd',
         content: 'hello'
       },
       target: target.roomuser
@@ -207,6 +209,7 @@ describe('Platform', () => {
     });
 
     describe('#send', () => {
+      // FIXME, this is not testing the origin input from above
       it('calls xmpp.js correctly', (done) => {
         const message = xmlFake(
           "message",
@@ -220,6 +223,7 @@ describe('Platform', () => {
         });
       });
 
+      // FIXME, this is not testing the original input from above
       it('calls xmpp.js correctly when called for a groupchat', (done) => {
         const message = xmlFake(
           "message",
