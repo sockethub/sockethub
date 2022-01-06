@@ -273,8 +273,8 @@ class XMPP {
         id: job.object.id
       },
       xml("body", {}, job.object.content),
-      job.object.replace ? xml("replace", {
-        id: job.object.replace.id,
+      job.object['xmpp:replace'] ? xml("replace", {
+        id: job.object['xmpp:replace'].id,
         xmlns: 'urn:xmpp:message-correct:0'
       }) : undefined
     );

@@ -76,8 +76,8 @@ const job = {
       object: {
         'type': 'message',
         id: 'hc-1234abcd',
-        replace: { id: 'hc-234bcde' },
-        content: 'hi yall'
+        content: 'hi yall',
+        'xmpp:replace': { id: 'hc-234bcde' }
       },
       target: target.roomuser
     }
@@ -261,7 +261,7 @@ describe('Platform', () => {
           },
           xmlFake("body", {}, job.send.correction.object.content),
           xmlFake("replace", {
-            id: job.send.correction.object.replace.id,
+            id: job.send.correction.object['xmpp:replace'].id,
             xmlns: 'urn:xmpp:message-correct:0' }
           )
         );
