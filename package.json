@@ -2,13 +2,13 @@
   "name": "root",
   "private": true,
   "devDependencies": {
-    "@typescript-eslint/parser": "4.33.0",
-    "eslint": "7.32.0",
-    "eslint-plugin-security-node": "1.0.14",
-    "find-up": "6.1.0",
+    "@typescript-eslint/parser": "5.8.0",
+    "eslint": "8.5.0",
+    "eslint-plugin-security-node": "1.1.0",
+    "find-up": "6.2.0",
     "lerna": "4.0.0",
-    "typescript": "4.4.3",
-    "yarn": "1.22.15"
+    "typescript": "4.5.4",
+    "yarn": "1.22.17"
   },
   "scripts": {
     "version": "lerna run build",

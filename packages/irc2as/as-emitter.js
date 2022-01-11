@@ -16,38 +16,38 @@ class ASTemplates {
 
   __generalError(nick, content) {
     return {
-      '@type': 'update',
+      type: 'update',
       actor: {
-          '@type': 'service',
-          '@id': this.server
+          type: 'service',
+          id: this.server
       },
       object: {
-          '@type': 'error',
+          type: 'error',
           content: content
       },
       target: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
+          type: 'person',
+          id: nick + '@' + this.server,
+          name: nick
       }
     };
   }
 
   presence(nick, role, channel) {
     this.emitEvent(EVENT_INCOMING, {
-        '@type': 'update',
+        type: 'update',
         actor: {
-            '@type': 'person',
-            '@id': `${nick}@${this.server}`,
-            'displayName': nick,
+            type: 'person',
+            id: `${nick}@${this.server}`,
+            'name': nick,
         },
         target: {
-            '@type': 'room',
-            '@id': this.server + '/' + channel,
-            displayName: channel
+            type: 'room',
+            id: this.server + '/' + channel,
+            name: channel
         },
         object: {
-            '@type': 'presence',
+            type: 'presence',
             role: role
         }
     });
@@ -55,17 +55,17 @@ class ASTemplates {
 
   channelError(channel, nick, content) {
     this.emitEvent(EVENT_ERROR, {
-      '@type': 'send',
+      type: 'send',
       actor: {
-        '@type': 'room',
-        '@id': this.server + '/' + channel
+        type: 'room',
+        id: this.server + '/' + channel
       },
       target: {
-        '@type': 'person',
-        '@id': nick + '@' + this.server
+        type: 'person',
+        id: nick + '@' + this.server
       },
       object: {
-        '@type': 'error',
+        type: 'error',
         content: content
       }
     });
@@ -85,37 +85,37 @@ class ASTemplates {
 
   joinError(nick) {
     this.emitEvent(EVENT_ERROR, {
-      '@type': 'join',
+      type: 'join',
       actor: {
-          '@id': this.server,
-          '@type': 'service'
+          id: this.server,
+          type: 'service'
       },
       object: {
-          '@type': 'error',
+          type: 'error',
           content: 'no such channel ' + nick
       },
       target: {
-          '@id': nick + '@' + this.server,
-          '@type': 'person'
+          id: nick + '@' + this.server,
+          type: 'person'
       }
     });
   }
 
   topicChange(channel, nick, content) {
     this.emitEvent(EVENT_INCOMING, {
-      '@type': 'update',
+      type: 'update',
       actor: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
+          type: 'person',
+          id: nick + '@' + this.server,
+          name: nick
       },
       target: {
-          '@type': 'room',
-          '@id': this.server + '/' + channel,
-          displayName: channel
+          type: 'room',
+          id: this.server + '/' + channel,
+          name: channel
       },
       object: {
-          '@type': 'topic',
+          type: 'topic',
           topic: content
       }
     });
@@ -123,16 +123,16 @@ class ASTemplates {
 
   joinRoom(channel, nick) {
     this.emitEvent(EVENT_INCOMING, {
-      '@type': 'join',
+      type: 'join',
       actor: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
+          type: 'person',
+          id: nick + '@' + this.server,
+          name: nick
       },
       target: {
-          '@type': 'room',
-          '@id': this.server + '/' + channel,
-          displayName: channel
+          type: 'room',
+          id: this.server + '/' + channel,
+          name: channel
       },
       object: {}
     });
@@ -140,18 +140,18 @@ class ASTemplates {
 
   userQuit(nick) {
     this.emitEvent(EVENT_INCOMING, {
-      '@type': 'leave',
+      type: 'leave',
       actor: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
+          type: 'person',
+          id: nick + '@' + this.server,
+          name: nick
       },
       target: {
-          '@type': 'service',
-          '@id': this.server
+          type: 'service',
+          id: this.server
       },
       object: {
-          '@type': 'message',
+          type: 'message',
           content: 'user has quit'
       }
     });
@@ -159,19 +159,19 @@ class ASTemplates {
 
   userPart(channel, nick) {
     this.emitEvent(EVENT_INCOMING, {
-      '@type': 'leave',
+      type: 'leave',
       actor: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
+          type: 'person',
+          id: nick + '@' + this.server,
+          name: nick
       },
       target: {
-          '@type': 'room',
-          '@id': this.server + '/' + channel,
-          displayName: channel
+          type: 'room',
+          id: this.server + '/' + channel,
+          name: channel
       },
       object: {
-          '@type': 'message',
+          type: 'message',
           content: 'user has left the channel'
       }
     });
@@ -187,17 +187,17 @@ class ASTemplates {
       message = content;
     }
     this.emitEvent(EVENT_INCOMING, {
-      '@type': 'send',
+      type: 'send',
       actor: {
-        '@type': 'person',
-        '@id': nick + '@' + this.server,
-        displayName: nick
+        type: 'person',
+        id: nick + '@' + this.server,
+        name: nick
       },
       target: {
-        displayName: target
+        name: target
       },
       object: {
-        '@type': type,
+        type: type,
         content: message
       }
     });
@@ -205,28 +205,28 @@ class ASTemplates {
 
   role(type, nick, target, role, channel) {
     this.emitEvent(EVENT_INCOMING, {
-      '@type': type,
+      type: type,
       actor: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
+          type: 'person',
+          id: nick + '@' + this.server,
+          name: nick
       },
       target: {
-          '@type': 'person',
-          '@id': target + '@' + this.server,
-          displayName: target
+          type: 'person',
+          id: target + '@' + this.server,
+          name: target
       },
       object: {
-          "@type": "relationship",
+          type: "relationship",
           "relationship": 'role',
           "subject": {
-              '@type': 'presence',
+              type: 'presence',
               role: role
           },
           "object": {
-              '@type': 'room',
-              '@id': this.server + '/' + channel,
-              displayName: channel
+              type: 'room',
+              id: this.server + '/' + channel,
+              name: channel
           }
       }
     });
@@ -234,19 +234,19 @@ class ASTemplates {
 
   nickChange(nick, content) {
     this.emitEvent(EVENT_INCOMING, {
-      '@type': 'update',
+      type: 'update',
       actor: {
-          '@type': 'person',
-          '@id': nick + '@' + this.server,
-          displayName: nick
+          type: 'person',
+          id: nick + '@' + this.server,
+          name: nick
       },
       target: {
-          '@type': 'person',
-          '@id': content + '@' + this.server,
-          displayName: content
+          type: 'person',
+          id: content + '@' + this.server,
+          name: content
       },
       object: {
-          '@type': 'address'
+          type: 'address'
       }
     });
   }

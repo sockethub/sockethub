@@ -80,16 +80,16 @@ function IRC(cfg) {
  * @example
  *
  *  {
- *    'type': 'set',
+ *    type: 'credentials',
  *    context: 'irc',
  *    actor: {
- *      'id': 'testuser@irc.host.net',
- *      'type': 'person',
+ *      id: 'testuser@irc.host.net',
+ *      type: 'person',
  *      name: 'Mr. Test User',
  *      userName: 'testuser'
  *    },
  *    object: {
- *      'type': 'credentials',
+ *      type: 'credentials',
  *      server: 'irc.host.net',
  *      nick: 'testuser',
  *      password: 'asdasdasdasd',
@@ -168,15 +168,15 @@ IRC.prototype.config = {
  *
  * {
  *   context: 'irc',
- *   'type': 'join',
+ *   type: 'join',
  *   actor: {
- *     'id': 'slvrbckt@irc.freenode.net',
- *     'type': 'person',
+ *     id: 'slvrbckt@irc.freenode.net',
+ *     type: 'person',
  *     name: 'slvrbckt'
  *   },
  *   target: {
- *     'id': 'irc.freenode.net/sockethub',
- *     'type': 'room',
+ *     id: 'irc.freenode.net/sockethub',
+ *     type: 'room',
  *     name: '#sockethub'
  *   },
  *   object: {}
@@ -213,15 +213,15 @@ IRC.prototype.join = function (job, credentials, done) {
  * @example
  * {
  *   context: 'irc',
- *   'type': 'leave',
+ *   type: 'leave',
  *   actor: {
- *     'id': 'slvrbckt@irc.freenode.net',
- *     'type': 'person',
+ *     id: 'slvrbckt@irc.freenode.net',
+ *     type: 'person',
  *     name: 'slvrbckt'
  *   },
  *   target: {
- *     'id': 'irc.freenode.net/remotestorage',
- *     'type': 'room',
+ *     id: 'irc.freenode.net/remotestorage',
+ *     type: 'room',
  *     name: '#remotestorage'
  *   },
  *   object: {}
@@ -252,20 +252,20 @@ IRC.prototype.leave = function (job, credentials, done) {
  *
  *  {
  *    context: 'irc',
- *    'type': 'send',
+ *    type: 'send',
  *    actor: {
- *      'id': 'slvrbckt@irc.freenode.net',
- *      'type': 'person',
+ *      id: 'slvrbckt@irc.freenode.net',
+ *      type: 'person',
  *      name: 'Nick Jennings',
  *      userName: 'slvrbckt'
  *    },
  *    target: {
- *      'id': 'irc.freenode.net/remotestorage',
- *      'type': 'room',
+ *      id: 'irc.freenode.net/remotestorage',
+ *      type: 'room',
  *      name: '#remotestorage'
  *    },
  *    object: {
- *      'type': 'message',
+ *      type: 'message',
  *      content: 'Hello from Sockethub!'
  *    }
  *  }
@@ -301,6 +301,10 @@ IRC.prototype.send = function (job, credentials, done) {
 
     if (job.object.type === 'me') {
       // message intended as command
+      // jsdoc does not like this octal escape sequence but it's needed for proper behavior in IRC
+      // so the following line needs to be commented out when the API doc is built.
+      // investigate:
+      // https://github.com/jsdoc2md/jsdoc-to-markdown/issues/197#issuecomment-976851915
       const message = '\001ACTION ' + job.object.content + '\001';
       client.raw('PRIVMSG ' + job.target.name + ' :' + message);
     } else if (job.object.type === 'notice') {
@@ -329,39 +333,39 @@ IRC.prototype.send = function (job, credentials, done) {
  *
  * {
  *   context: 'irc',
- *   'type': 'update',
+ *   type: 'update',
  *   actor: {
- *     'id': 'slvrbckt@irc.freenode.net',
- *     'type': 'person',
+ *     id: 'slvrbckt@irc.freenode.net',
+ *     type: 'person',
  *     name: 'Nick Jennings',
  *     userName: 'slvrbckt'
  *   },
  *   target: {
- *     'id': 'irc.freenode.net/sockethub',
- *     'type': 'room',
+ *     id: 'irc.freenode.net/sockethub',
+ *     type: 'room',
  *     name: '#sockethub'
  *   },
  *   object: {
- *     'type': 'topic',
- *     topic: 'New version of Socekthub released!'
+ *     type: 'topic',
+ *     content: 'New version of Socekthub released!'
  *   }
  * }
  *
  * @example change nickname
  *  {
  *    context: 'irc'
- *    'type': 'udpate',
+ *    type: 'udpate',
  *    actor: {
- *      'id': 'slvrbckt@irc.freenode.net',
- *      'type': 'person',
+ *      id: 'slvrbckt@irc.freenode.net',
+ *      type: 'person',
  *      name: 'slvrbckt'
  *    },
  *    object: {
- *      'type': "address",
+ *      type: "address",
  *    },
  *    target: {
- *      'id': 'cooldude@irc.freenode.net',
- *      'type': 'person',
+ *      id: 'cooldude@irc.freenode.net',
+ *      type: 'person',
  *      name: cooldude
  *    }
  *  }
@@ -390,7 +394,7 @@ IRC.prototype.update = function (job, credentials, done) {
       // update topic
       this.debug('changing topic in channel ' + job.target.name);
       this.__jobQueue.push(done);
-      client.raw(['topic', job.target.name, job.object.topic]);
+      client.raw(['topic', job.target.name, job.object.content]);
     } else {
       return done(`unknown update action.`);
     }
@@ -410,20 +414,20 @@ IRC.prototype.update = function (job, credentials, done) {
  *
  *  {
  *    context: 'irc',
- *    'type': 'observe',
+ *    type: 'observe',
  *    actor: {
- *      'id': 'slvrbckt@irc.freenode.net',
- *      'type': 'person',
+ *      id: 'slvrbckt@irc.freenode.net',
+ *      type: 'person',
  *      name: 'Nick Jennings',
  *      userName: 'slvrbckt'
  *    },
  *    target: {
- *      'id': 'irc.freenode.net/sockethub',
- *      'type': 'room',
+ *      id: 'irc.freenode.net/sockethub',
+ *      type: 'room',
  *      name: '#sockethub'
  *    },
  *    object: {
- *      'type': 'attendance'
+ *      type: 'attendance'
  *    }
  *  }
  *
@@ -431,15 +435,15 @@ IRC.prototype.update = function (job, credentials, done) {
  *  // The above object might return:
  *  {
  *    context: 'irc',
- *    'type': 'observe',
+ *    type: 'observe',
  *    actor: {
- *      'id': 'irc.freenode.net/sockethub',
- *      'type': 'room',
+ *      id: 'irc.freenode.net/sockethub',
+ *      type: 'room',
  *      name: '#sockethub'
  *    },
  *    target: {},
  *    object: {
- *      'type': 'attendance'
+ *      type: 'attendance'
  *      members: [
  *        'RyanGosling',
  *        'PeeWeeHerman',

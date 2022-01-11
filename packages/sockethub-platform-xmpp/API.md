@@ -14,6 +14,7 @@ Uses `xmpp.js` as a base tool for interacting with XMPP.
     * [.schema](#XMPP+schema)
     * [.connect(job, credentials, done)](#XMPP+connect)
     * [.join(job, done)](#XMPP+join)
+    * [.leave(job, done)](#XMPP+leave)
     * [.send(job, done)](#XMPP+send)
     * [.update(job, done)](#XMPP+update)
     * [.request-friend(job, done)](#XMPP+request-friend)
@@ -44,11 +45,11 @@ session object.
 <a name="XMPP+schema"></a>
 
 ## xmpP.schema
-JSON schema defining the @types this platform accepts.
+JSON schema defining the types this platform accepts.
 
 Actual handling of incoming 'set' commands are handled by dispatcher,
 but the dispatcher uses this defined schema to validate credentials
-received, so that when a @context @type is called, it can fetch the
+received, so that when a @context type is called, it can fetch the
 credentials (`session.getConfig()`), knowing they will have already been
 validated against this schema.
 
@@ -58,8 +59,8 @@ against whatever is defined in the `credentials` portion of the schema
 object.
 
 
-It will also check if the incoming AS object uses a @type which exists in the
-`@types` portion of the schema object (should be an array of @type names).
+It will also check if the incoming AS object uses a type which exists in the
+`types` portion of the schema object (should be an array of type names).
 
 **NOTE**: For more information on using the credentials object from a client,
 see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
@@ -70,15 +71,15 @@ Valid AS object for setting XMPP credentials:
 **Example**  
 ```js
 {
-  '@type': 'set',
+  type: 'credentials',
   context: 'xmpp',
   actor: {
-    '@id': 'testuser@jabber.net',
-    '@type': 'person',
-    displayName: 'Mr. Test User'
+    id: 'testuser@jabber.net',
+    type: 'person',
+    name: 'Mr. Test User'
   },
   object: {
-    '@type': 'credentials',
+    type: 'credentials',
     server: 'jabber.net',
     username: 'testuser',
     password: 'asdasdasdasd',
@@ -116,11 +117,11 @@ Connect to the XMPP server.
 ```js
 {
   context: 'xmpp',
-  '@type': 'connect',
+  type: 'connect',
   actor: {
-    '@id': 'slvrbckt@jabber.net/Home',
-    '@type': 'person',
-    displayName: 'Nick Jennings',
+    id: 'slvrbckt@jabber.net/Home',
+    type: 'person',
+    name: 'Nick Jennings',
     userName: 'slvrbckt'
   }
 }
@@ -151,19 +152,53 @@ Join a room, optionally defining a display name for that room.
 ```js
 {
   context: 'xmpp',
-  '@type': 'join',
+  type: 'join',
   actor: {
-    '@type': 'person'
-    '@id': 'slvrbckt@jabber.net/Home',
-  },
-  object: {
-    '@type': 'person',
-    '@id': 'slvrbckt@jabber.net/Home',
-    displayName: 'Mr. Pimp'
+    type: 'person',
+    id: 'slvrbckt@jabber.net/Home',
+    name: 'Mr. Pimp'
   },
   target: {
-    '@type': 'room'
-    '@id': 'PartyChatRoom@muc.jabber.net',
+    type: 'room',
+    id: 'PartyChatRoom@muc.jabber.net'
+  }
+}
+```
+<a name="XMPP+leave"></a>
+
+## xmpP.leave(job, done)
+Leave a room
+
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+</td>
+    </tr><tr>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+**Example**  
+```js
+{
+  context: 'xmpp',
+  type: 'leave',
+  actor: {
+    type: 'person',
+    id: 'slvrbckt@jabber.net/Home',
+    name: 'slvrbckt'
+  },
+  target: {
+    type: 'room'
+    id: 'PartyChatRoom@muc.jabber.net',
   }
 }
 ```
@@ -193,39 +228,39 @@ Send a message to a room or private conversation.
 ```js
 {
   context: 'xmpp',
-  '@type': 'send',
+  type: 'send',
   actor: {
-    '@id': 'slvrbckt@jabber.net/Home',
-    '@type': 'person',
-    displayName: 'Nick Jennings',
+    id: 'slvrbckt@jabber.net/Home',
+    type: 'person',
+    name: 'Nick Jennings',
     userName: 'slvrbckt'
   },
   target: {
-    '@id': 'homer@jabber.net/Home',
-    '@type': 'user',
-    displayName: 'Homer'
+    id: 'homer@jabber.net/Home',
+    type: 'user',
+    name: 'Homer'
   },
   object: {
-    '@type': 'message',
+    type: 'message',
     content: 'Hello from Sockethub!'
   }
 }
 
 {
   context: 'xmpp',
-  '@type': 'send',
+  type: 'send',
   actor: {
-    '@id': 'slvrbckt@jabber.net/Home',
-    '@type': 'person',
-    displayName: 'Nick Jennings',
+    id: 'slvrbckt@jabber.net/Home',
+    type: 'person',
+    name: 'Nick Jennings',
     userName: 'slvrbckt'
   },
   target: {
-    '@id': 'party-room@jabber.net',
-    '@type': 'room'
+    id: 'party-room@jabber.net',
+    type: 'room'
   },
   object: {
-    '@type': 'message',
+    type: 'message',
     content: 'Hello from Sockethub!'
   }
 }
@@ -256,12 +291,12 @@ Indicate presence and status message.
 ```js
 {
   context: 'xmpp',
-  '@type': 'update',
+  type: 'update',
   actor: {
-    '@id': 'user@host.org/Home'
+    id: 'user@host.org/Home'
   },
   object: {
-    '@type': 'presence'
+    type: 'presence'
     presence: 'chat',
     content: '...clever saying goes here...'
   }
@@ -293,12 +328,12 @@ Send friend request
 ```js
 {
   context: 'xmpp',
-  '@type': 'request-friend',
+  type: 'request-friend',
   actor: {
-    '@id': 'user@host.org/Home'
+    id: 'user@host.org/Home'
   },
   target: {
-    '@id': 'homer@jabber.net/Home',
+    id: 'homer@jabber.net/Home',
   }
 }
 ```
@@ -328,12 +363,12 @@ Send a remove friend request
 ```js
 {
   context: 'xmpp',
-  '@type': 'remove-friend',
+  type: 'remove-friend',
   actor: {
-    '@id': 'user@host.org/Home'
+    id: 'user@host.org/Home'
   },
   target: {
-    '@id': 'homer@jabber.net/Home',
+    id: 'homer@jabber.net/Home',
   }
 }
 ```
@@ -363,12 +398,12 @@ Confirm a friend request
 ```js
 {
   context: 'xmpp',
-  '@type': 'make-friend',
+  type: 'make-friend',
   actor: {
-    '@id': 'user@host.org/Home'
+    id: 'user@host.org/Home'
   },
   target: {
-    '@id': 'homer@jabber.net/Home',
+    id: 'homer@jabber.net/Home',
   }
 }
 ```
@@ -398,34 +433,34 @@ Indicate an intent to observe something (ie. get a list of users in a room).
 ```js
 {
    context: 'xmpp',
-   '@type': 'observe',
+   type: 'observe',
    actor: {
-     '@id': 'slvrbckt@jabber.net/Home',
-     '@type': 'person'
+     id: 'slvrbckt@jabber.net/Home',
+     type: 'person'
    },
    target: {
-     '@id': 'PartyChatRoom@muc.jabber.net',
-     '@type': 'room'
+     id: 'PartyChatRoom@muc.jabber.net',
+     type: 'room'
    },
    object: {
-     '@type': 'attendance'
+     type: 'attendance'
    }
  }
 
  // The above object might return:
  {
    context: 'xmpp',
-   '@type': 'observe',
+   type: 'observe',
    actor: {
-     '@id': 'PartyChatRoom@muc.jabber.net',
-     '@type': 'room'
+     id: 'PartyChatRoom@muc.jabber.net',
+     type: 'room'
    },
    target: {
-     '@id': 'slvrbckt@jabber.net/Home',
-     '@type': 'person'
+     id: 'slvrbckt@jabber.net/Home',
+     type: 'person'
    },
    object: {
-     '@type': 'attendance'
+     type: 'attendance'
      members: [
        'RyanGosling',
        'PeeWeeHerman',
