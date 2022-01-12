@@ -35,7 +35,8 @@ describe("Middleware", () => {
 
   it("does not throw exception on error with no callback provided", (done) => {
     let errorHandlerCalled = false;
-    const callbackError = (data, cb) => { console.log('WEEROE CALLWED'); cb(new Error('some error')); };
+    const callbackError = (data, cb) => {
+      console.log('WEEROE CALLWED'); cb(new Error('some error')); };
     const funcs = [ sinon.spy(callbackError) ];
     const mw = middleware('test');
     for (let func of funcs) {
@@ -64,7 +65,7 @@ describe("Middleware", () => {
     mw.use((err, data, next) => {
       expect(err.toString()).to.equal('Error: some error');
       errorHandlerCalled = true;
-      next(err)
+      next(err);
     });
     mw.done()('foobar', (data) => {
       // FIXME -- We need to also handle socket.io callbacks!

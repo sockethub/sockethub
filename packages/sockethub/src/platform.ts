@@ -118,7 +118,7 @@ function getJobHandler(secret: string) {
             // so we have to do this little dance
             try {
               errMsg = err.toString();
-            } catch(e) {
+            } catch (e) {
               errMsg = err;
             }
             done(new Error(errMsg));

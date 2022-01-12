@@ -18,7 +18,7 @@ class MiddlewareChain {
   private logger: Function;
 
   constructor(name: string) {
-    this.name = name
+    this.name = name;
     this.logger = debug(`sockethub:middleware:${name}`);
   }
 
@@ -31,7 +31,8 @@ class MiddlewareChain {
     } else if (func.length === 2) {
       this.chain.push(func);
     } else {
-      throw new Error('middleware function provided with incorrect number of params: ' + func.length);
+      throw new Error(
+        'middleware function provided with incorrect number of params: ' + func.length);
     }
     return this;
   }
@@ -51,9 +52,9 @@ class MiddlewareChain {
         } else {
           callback(_data);
         }
-      }
+      };
       next(data);
-    }
+    };
   }
 }
 

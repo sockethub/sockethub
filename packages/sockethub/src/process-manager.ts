@@ -1,5 +1,6 @@
 import init from './bootstrap/init';
-import PlatformInstance, { platformInstances, PlatformInstanceParams, MessageFromParent } from "./platform-instance";
+import PlatformInstance, {
+  platformInstances, PlatformInstanceParams, MessageFromParent } from "./platform-instance";
 import { getPlatformId } from "./common";
 
 class ProcessManager {

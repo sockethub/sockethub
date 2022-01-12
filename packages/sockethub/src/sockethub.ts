@@ -164,8 +164,9 @@ class Sockethub {
         .use(expandActivityStream)
         .use(validate('message', socket.id))
         .use((msg, next) => {
-          // The platform thread must find the credentials on their own using the given sessionSecret,
-          // which indicates that this specific session (socket connection) has provided credentials.
+          // The platform thread must find the credentials on their own using the given
+          // sessionSecret, which indicates that this specific session (socket
+          // connection) has provided credentials.
           msg.sessionSecret = sessionSecret;
           next(msg);
         }).use((err, data, next) => {
@@ -177,7 +178,7 @@ class Sockethub {
           // job validated and queued, store socket.io callback for when job is completed
           platformInstance.completedJobHandlers.set(job.title, next);
           platformInstance.queue.add(job);
-      }).done());
+        }).done());
   }
 }
 

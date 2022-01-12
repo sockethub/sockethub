@@ -66,15 +66,6 @@ export default class PlatformInstance {
   public async destroy() {
     this.debug(`cleaning up`);
     this.flaggedForTermination = true;
-    // try {
-    //   await this.queue.empty();
-    // } catch (e) { }
-    // try {
-    //   await this.queue.clean(0);
-    // } catch (e) { }
-    // try {
-    //   // await this.queue.close().catch((err) => { console.log('caught 5a0 catch eexception: ', err); });
-    // } catch (e) { console.log('caught exception ', e); }
     try {
       await this.queue.removeAllListeners();
     } catch (e) { }
@@ -167,9 +158,9 @@ export default class PlatformInstance {
     this.debug(`job ${jobData.title}: ${type}`);
     let msg = jobData.msg;
     if (type === 'failed') {
-      msg.error = result ? result : "job failed for unknown reason"
+      msg.error = result ? result : "job failed for unknown reason";
       if ((this.config.persist) && (this.config.requireCredentials.includes(jobData.msg.type))) {
-        this.debug(`critical job type ${jobData.msg.type} failed, terminating platform instance`)
+        this.debug(`critical job type ${jobData.msg.type} failed, terminating platform instance`);
         await this.destroy();
       }
     }
