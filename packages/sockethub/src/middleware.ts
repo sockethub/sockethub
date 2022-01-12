@@ -11,7 +11,7 @@ export default function middleware(name: string): MiddlewareChain {
   return new MiddlewareChain(name);
 }
 
-class MiddlewareChain {
+export class MiddlewareChain {
   public name: string;
   private chain: Array<Function> = [];
   private errHandler: Function = (err: Error) => { throw err; };

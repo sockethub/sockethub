@@ -1,11 +1,18 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 
-import middleware from "./middleware";
+import middleware, { MiddlewareChain } from "./middleware";
 
 describe("Middleware", () => {
   it("middleware() is a function", () => {
     expect(typeof middleware).to.be.equal('function');
+  });
+
+  it('returns a MiddlewareChain instance', () => {
+    const mw = middleware('testa');
+    expect(mw).to.be.instanceof(MiddlewareChain);
+    const mwc = new MiddlewareChain('testa');
+    expect(mw.name).to.be.eql(mwc.name);
   });
 
   it("only accepts functions", () => {
@@ -13,6 +20,13 @@ describe("Middleware", () => {
     // @ts-ignore
     expect(()=>{mw.use('foobar');}).to.throw(
       'middleware use() can only take a function as an argument');
+  });
+
+  it("only accepts functions that expect 2 or 3 params", () => {
+    const mw = middleware('test');
+    // @ts-ignore
+    expect(()=>{mw.use((one, two, three, four) => {});}).to.throw(
+      'middleware function provided with incorrect number of params: 4');
   });
 
   it("calls each member of call list", (done) => {
@@ -36,7 +50,7 @@ describe("Middleware", () => {
   it("does not throw exception on error with no callback provided", (done) => {
     let errorHandlerCalled = false;
     const callbackError = (data, cb) => {
-      console.log('WEEROE CALLWED'); cb(new Error('some error')); };
+      cb(new Error('some error')); };
     const funcs = [ sinon.spy(callbackError) ];
     const mw = middleware('test');
     for (let func of funcs) {
