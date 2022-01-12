@@ -126,9 +126,7 @@ describe("PlatformInstance", () => {
         pi.destroy = sandbox.stub();
         expect(pi.sessions.size).to.be.equal(0);
       });
-
     });
-
 
     it('initializes the job queue', () => {
       expect(pi.queue).to.be.undefined;
@@ -153,7 +151,7 @@ describe("PlatformInstance", () => {
     });
 
     it('sends messages to client using socket session id', async () => {
-      await pi.sendToClient('my session id', 'message',
+      await pi.sendToClient('my session id',
         {foo: 'this is a message object', sessionSecret: 'private data'});
       expect(getSocketFake.callCount).to.equal(1);
       sandbox.assert.calledOnce(getSocketFake);
@@ -186,19 +184,19 @@ describe("PlatformInstance", () => {
       });
 
       it('appends completed result message when present', async () => {
-        await pi.handleJobResult('completed', {msg: {foo: 'bar'}},
+        await pi.handleJobResult('completed', {sessionId: 'a session id', msg: {foo: 'bar'}},
           'a good result message');
         expect(pi.broadcastToSharedPeers.callCount).to.equal(1);
-        sandbox.assert.calledWith(pi.sendToClient, undefined, 'completed',
-          {foo: 'bar', object: {'type': 'result', content: 'a good result message'}});
+        sandbox.assert.calledWith(pi.sendToClient, 'a session id',
+          {foo: 'bar'});
       });
 
       it('appends failed result message when present', async () => {
-        await pi.handleJobResult('failed', {msg: {foo: 'bar'}},
+        await pi.handleJobResult('failed', {sessionId: 'a session id', msg: {foo: 'bar'}},
           'a bad result message');
         expect(pi.broadcastToSharedPeers.callCount).to.equal(1);
-        sandbox.assert.calledWith(pi.sendToClient, undefined, 'failed',
-          {foo: 'bar', object: {'type': 'error', content: 'a bad result message'}});
+        sandbox.assert.calledWith(pi.sendToClient, 'a session id',
+          {foo: 'bar', error: 'a bad result message'});
       });
     });
 
@@ -232,7 +230,7 @@ describe("PlatformInstance", () => {
         const message = pi.callbackFunction('message', 'my session id');
         message(['blah', {foo: 'bar'}]);
         sandbox.assert.calledWith(pi.sendToClient,
-          'my session id', 'message', {foo:'bar'});
+          'my session id', {foo:'bar'});
       });
     });
   });
