@@ -13,7 +13,6 @@ import serve from './serve';
 import ProcessManager from "./process-manager";
 import PlatformInstance, { platformInstances } from "./platform-instance";
 import { getSessionStore } from "./store";
-import { decryptJobData } from './common';
 
 const log = debug('sockethub:core');
 
@@ -110,8 +109,8 @@ class Sockethub {
   }
 
   async removeAllPlatformInstances() {
-    for (let [key, platform] of platformInstances) {
-      await platform.destroy();
+    for (let platform of platformInstances) {
+      await platform[1].destroy();
     }
   }
 

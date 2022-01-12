@@ -150,7 +150,7 @@ if (typeof module === 'object' && module.exports) {
 }
 
 if (typeof exports === 'object') {
-  exports = SockethubClient;
+  exports = SockethubClient;  // lgtm [js/useless-assignment-to-local]
 }
 
 // @ts-ignore
