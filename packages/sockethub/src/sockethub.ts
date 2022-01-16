@@ -61,7 +61,6 @@ export interface ActivityObject {
 }
 
 function attachError(err, msg) {
-  log('middleware failure ' + err);
   if (typeof msg !== 'object') {
     msg = { context: 'error' };
   }
