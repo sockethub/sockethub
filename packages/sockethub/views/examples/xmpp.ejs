@@ -121,8 +121,12 @@
         const input = $('#m').val();
         const [target, text_message] = input.split(':');
 
-        if ((! target) && (! text_message)) {
-          console.log('unable to send message without target specified [room@server.org: hello world]: ', target, text_message, input);
+        if ((!target || !text_message)) {
+          console.log(
+                  'unable to send message without target specified ' +
+                  '[room@server.org: hello world]: ',
+                  target, text_message, input);
+          return false;
         }
         const msg = {
           type: 'send',
