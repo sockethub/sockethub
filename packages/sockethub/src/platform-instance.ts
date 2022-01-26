@@ -156,6 +156,7 @@ export default class PlatformInstance {
   // handle job results coming in on the queue from platform instances
   private async handleJobResult(type: string, jobData: JobDataDecrypted, result) {
     this.debug(`job ${jobData.title}: ${type}`);
+    delete jobData.msg.sessionSecret;
     let msg = jobData.msg;
     if (type === 'failed') {
       msg.error = result ? result : "job failed for unknown reason";
@@ -176,7 +177,7 @@ export default class PlatformInstance {
 
     // let all related peers know of result as an independent message
     // (not as part of a job completion, or failure)
-    await this.broadcastToSharedPeers(jobData.sessionId, jobData.msg);
+    await this.broadcastToSharedPeers(jobData.sessionId, msg);
   }
 
   /**
