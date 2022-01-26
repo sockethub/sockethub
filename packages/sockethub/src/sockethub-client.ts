@@ -40,7 +40,9 @@ class SockethubClient {
 
     this.ActivityStreams.on('activity-object-create', (obj) => {
       socket.emit('activity-object', obj, (err) => {
-        if (err) { console.error('failed to create activity-object ', err); }});
+        if (err) { console.error('failed to create activity-object ', err); }
+        else { this.eventActivityObject(obj); }
+      });
     });
 
     socket.on('activity-object', (obj) => {
