@@ -47,20 +47,22 @@ module.exports = [
     'message',
     `<message from="radical@example.org/thinkpad" to="user@jabber.org" type="chat" id="purple9840c15f" xmlns:stream="http://etherx.jabber.org/streams">
        <active xmlns="http://jabber.org/protocol/chatstates" />
-       <stanza-id xmlns="urn:xmpp:sid:0" id="purple9840c15f" />
+       <stanza-id xmlns="urn:xmpp:sid:0" id="123456789" />
        <body>ohai</body>
      </message>`,
     {
       'type': 'send',
       actor: { 'type': 'person', 'id': 'radical@example.org/thinkpad' },
       target: { 'type': 'person', 'id': 'user@jabber.org' },
-      object: { 'type': 'message', content: 'ohai', 'id': 'purple9840c15f' } }
+      object: { 'type': 'message', content: 'ohai',
+                'id': 'purple9840c15f', 'xmpp:stanza-id': '123456789' }
+    }
   ],
   [
     'message with delay (e.g. offline message)',
     `<message from="radical@example.org/thinkpad" to="user@jabber.org" type="chat" id="purple9840c15f" xmlns:stream="http://etherx.jabber.org/streams">
        <active xmlns="http://jabber.org/protocol/chatstates" />
-       <stanza-id xmlns="urn:xmpp:sid:0" id="purple9840c15f" />
+       <stanza-id xmlns="urn:xmpp:sid:0" id="123456789" />
        <delay xmlns="urn:xmpp:delay" from="jabber.org" stamp="2021-04-17T18:50:25Z">Offline Storage</delay>
        <body>ohai</body>
      </message>`,
@@ -69,7 +71,26 @@ module.exports = [
       published: '2021-04-17T18:50:25Z',
       actor: { 'type': 'person', 'id': 'radical@example.org/thinkpad' },
       target: { 'type': 'person', 'id': 'user@jabber.org' },
-      object: { 'type': 'message', content: 'ohai', 'id': 'purple9840c15f' } }
+      object: { 'type': 'message', content: 'ohai',
+                'id': 'purple9840c15f', 'xmpp:stanza-id': '123456789' }
+    }
+  ],
+  [
+    'message correction (XEP-0308)',
+    `<message from="radical@example.org/thinkpad" to="user@jabber.org" type="chat" id="purple9840c15f" xmlns:stream="http://etherx.jabber.org/streams">
+       <active xmlns="http://jabber.org/protocol/chatstates" />
+       <stanza-id xmlns="urn:xmpp:sid:0" id="123456789" />
+       <replace id="purple1234c15f" />
+       <body>oh hey</body>
+     </message>`,
+    {
+      'type': 'send',
+      actor: { 'type': 'person', 'id': 'radical@example.org/thinkpad' },
+      target: { 'type': 'person', 'id': 'user@jabber.org' },
+      object: { 'type': 'message', content: 'oh hey',
+                'id': 'purple9840c15f', 'xmpp:stanza-id': '123456789',
+                'xmpp:replace': { 'id': 'purple1234c15f' } }
+    }
   ],
   [
     'group presence',
@@ -81,14 +102,15 @@ module.exports = [
   [
     'group message',
     `<message from='coven@chat.shakespeare.lit/thirdwitch' id='hysf1v37' to='crone1@shakespeare.lit/desktop' type='groupchat'>
-       <stanza-id id="hysf1v37" />
+       <stanza-id id="123456789" />
        <body>Thrice the brinded cat hath mew'd.</body>
      </message>`,
     {
       'type': 'send',
       actor: { 'type': 'person', 'id': 'coven@chat.shakespeare.lit/thirdwitch', name: 'thirdwitch' },
       target: { 'type': 'room', 'id': 'coven@chat.shakespeare.lit' },
-      object: { 'id': 'hysf1v37', 'type': 'message', content: 'Thrice the brinded cat hath mew\'d.' }
+      object: { 'id': 'hysf1v37', 'type': 'message', content: 'Thrice the brinded cat hath mew\'d.',
+                'xmpp:stanza-id': '123456789'}
     }
   ],
   // [

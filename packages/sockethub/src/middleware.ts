@@ -17,29 +17,21 @@ export default function createMiddleware(errorHandler: Function) {
 
 
 function getMiddlewareInstance(chain: Array<Function>, errorHandler: Function) {
-  return (...initialParams) => {
-    // placeholder callback in case one is not provided
-    let callback = (err: Error|null) => { if (err) {} };
+  return (data: any, callback: Function = (err: Error|null) => { if (err) {} }) => {
     let position = 0;
 
-    if (typeof initialParams[initialParams.length - 1] === 'function') {
-      // callback has been provided
-      callback = initialParams.pop();
-    }
-
-    function callFunc(...params) {
-      if (params[0] instanceof Error) {
-        errorHandler(...params);
-        callback(params[0]);
+    function callFunc(_data: any) {
+      if (_data instanceof Error) {
+        errorHandler(_data);
+        callback(_data);
       } else if (typeof chain[position] === 'function') {
-        params.push(callFunc);
-        chain[position++](...params);
+        chain[position++](_data, callFunc);
       } else {
         callback(null);
       }
     }
 
-    callFunc(...initialParams);
+    callFunc(data);
   };
 }
 

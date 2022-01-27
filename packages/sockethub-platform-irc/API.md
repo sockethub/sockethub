@@ -39,7 +39,7 @@ Uses the `irc-factory` node module as a base tool for interacting with IRC.
 <a name="IRC+schema"></a>
 
 ## irC.schema
-JSON schema defining the @types this platform accepts.
+JSON schema defining the types this platform accepts.
 
 
 In the below example, sockethub will validate the incoming credentials object
@@ -47,10 +47,11 @@ against whatever is defined in the `credentials` portion of the schema
 object.
 
 
-It will also check if the incoming AS object uses a @type which exists in the
-`@types` portion of the schema object (should be an array of @type names).
+It will also check if the incoming AS object uses a type which exists in the
+`types` portion of the schema object (should be an array of type names).
 
-* **NOTE**: For more information on using the credentials object from a client, see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
+* **NOTE**: For more information on using the credentials object from a client,
+see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
 
 Valid AS object for setting IRC credentials:
 
@@ -58,16 +59,16 @@ Valid AS object for setting IRC credentials:
 **Example**  
 ```js
 {
-   '@type': 'set',
+   type: 'credentials',
    context: 'irc',
    actor: {
-     '@id': 'testuser@irc.host.net',
-     '@type': 'person',
-     displayName: 'Mr. Test User',
+     id: 'testuser@irc.host.net',
+     type: 'person',
+     name: 'Mr. Test User',
      userName: 'testuser'
    },
    object: {
-     '@type': 'credentials',
+     type: 'credentials',
      server: 'irc.host.net',
      nick: 'testuser',
      password: 'asdasdasdasd',
@@ -107,16 +108,16 @@ Join a room or private conversation.
 ```js
 {
   context: 'irc',
-  '@type': 'join',
+  type: 'join',
   actor: {
-    '@id': 'slvrbckt@irc.freenode.net',
-    '@type': 'person',
-    displayName: 'slvrbckt'
+    id: 'slvrbckt@irc.freenode.net',
+    type: 'person',
+    name: 'slvrbckt'
   },
   target: {
-    '@id': 'irc.freenode.net/sockethub',
-    '@type': 'room',
-    displayName: '#sockethub'
+    id: 'irc.freenode.net/sockethub',
+    type: 'room',
+    name: '#sockethub'
   },
   object: {}
 }
@@ -152,16 +153,16 @@ Leave a room or private conversation.
 ```js
 {
   context: 'irc',
-  '@type': 'leave',
+  type: 'leave',
   actor: {
-    '@id': 'slvrbckt@irc.freenode.net',
-    '@type': 'person',
-    displayName: 'slvrbckt'
+    id: 'slvrbckt@irc.freenode.net',
+    type: 'person',
+    name: 'slvrbckt'
   },
   target: {
-    '@id': 'irc.freenode.net/remotestorage',
-    '@type': 'room',
-    displayName: '#remotestorage'
+    id: 'irc.freenode.net/remotestorage',
+    type: 'room',
+    name: '#remotestorage'
   },
   object: {}
 }
@@ -197,20 +198,20 @@ Send a message to a room or private conversation.
 ```js
 {
    context: 'irc',
-   '@type': 'send',
+   type: 'send',
    actor: {
-     '@id': 'slvrbckt@irc.freenode.net',
-     '@type': 'person',
-     displayName: 'Nick Jennings',
+     id: 'slvrbckt@irc.freenode.net',
+     type: 'person',
+     name: 'Nick Jennings',
      userName: 'slvrbckt'
    },
    target: {
-     '@id': 'irc.freenode.net/remotestorage',
-     '@type': 'room',
-     displayName: '#remotestorage'
+     id: 'irc.freenode.net/remotestorage',
+     type: 'room',
+     name: '#remotestorage'
    },
    object: {
-     '@type': 'message',
+     type: 'message',
      content: 'Hello from Sockethub!'
    }
  }
@@ -248,21 +249,21 @@ change topic
 
 {
   context: 'irc',
-  '@type': 'update',
+  type: 'update',
   actor: {
-    '@id': 'slvrbckt@irc.freenode.net',
-    '@type': 'person',
-    displayName: 'Nick Jennings',
+    id: 'slvrbckt@irc.freenode.net',
+    type: 'person',
+    name: 'Nick Jennings',
     userName: 'slvrbckt'
   },
   target: {
-    '@id': 'irc.freenode.net/sockethub',
-    '@type': 'room',
-    displayName: '#sockethub'
+    id: 'irc.freenode.net/sockethub',
+    type: 'room',
+    name: '#sockethub'
   },
   object: {
-    '@type': 'topic',
-    topic: 'New version of Socekthub released!'
+    type: 'topic',
+    content: 'New version of Socekthub released!'
   }
 }
 ```
@@ -271,19 +272,19 @@ change topic
 change nickname
  {
    context: 'irc'
-   '@type': 'udpate',
+   type: 'udpate',
    actor: {
-     '@id': 'slvrbckt@irc.freenode.net',
-     '@type': 'person',
-     displayName: 'slvrbckt'
+     id: 'slvrbckt@irc.freenode.net',
+     type: 'person',
+     name: 'slvrbckt'
    },
    object: {
-     '@type': "address",
+     type: "address",
    },
    target: {
-     '@id': 'cooldude@irc.freenode.net',
-     '@type': 'person',
-     displayName: cooldude
+     id: 'cooldude@irc.freenode.net',
+     type: 'person',
+     name: cooldude
    }
  }
 ```
@@ -318,20 +319,20 @@ Indicate an intent to observe something (ie. get a list of users in a room).
 ```js
 {
    context: 'irc',
-   '@type': 'observe',
+   type: 'observe',
    actor: {
-     '@id': 'slvrbckt@irc.freenode.net',
-     '@type': 'person',
-     displayName: 'Nick Jennings',
+     id: 'slvrbckt@irc.freenode.net',
+     type: 'person',
+     name: 'Nick Jennings',
      userName: 'slvrbckt'
    },
    target: {
-     '@id': 'irc.freenode.net/sockethub',
-     '@type': 'room',
-     displayName: '#sockethub'
+     id: 'irc.freenode.net/sockethub',
+     type: 'room',
+     name: '#sockethub'
    },
    object: {
-     '@type': 'attendance'
+     type: 'attendance'
    }
  }
 
@@ -339,15 +340,15 @@ Indicate an intent to observe something (ie. get a list of users in a room).
  // The above object might return:
  {
    context: 'irc',
-   '@type': 'observe',
+   type: 'observe',
    actor: {
-     '@id': 'irc.freenode.net/sockethub',
-     '@type': 'room',
-     displayName: '#sockethub'
+     id: 'irc.freenode.net/sockethub',
+     type: 'room',
+     name: '#sockethub'
    },
    target: {},
    object: {
-     '@type': 'attendance'
+     type: 'attendance'
      members: [
        'RyanGosling',
        'PeeWeeHerman',

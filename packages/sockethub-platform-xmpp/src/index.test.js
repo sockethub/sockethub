@@ -57,6 +57,7 @@ const job = {
       actor: actor,
       object: {
         'type': 'message',
+        id: 'hc-1234abcd',
         content: 'hello'
       },
       target: target.mrfoobar
@@ -65,7 +66,18 @@ const job = {
       actor: actor,
       object: {
         'type': 'message',
-        content: 'hello'
+        id: 'hc-1234abcd',
+        content: 'hi all'
+      },
+      target: target.roomuser
+    },
+    correction: {
+      actor: actor,
+      object: {
+        'type': 'message',
+        id: 'hc-1234abcd',
+        content: 'hi yall',
+        'xmpp:replace': { id: 'hc-234bcde' }
       },
       target: target.roomuser
     }
@@ -208,10 +220,13 @@ describe('Platform', () => {
 
     describe('#send', () => {
       it('calls xmpp.js correctly', (done) => {
+        // FIXME wrong message also passes
         const message = xmlFake(
-          "message",
-          {type: job.send.chat.target['type'] === 'room' ? 'groupchat' : 'chat',
-            to: job.send.chat.target['id']},
+          "message", {
+            type: "chat",
+            to: job.send.chat.target['id'],
+            id: job.send.chat.object['id'],
+          },
           xmlFake("body", {}, job.send.chat.object.content),
         );
         xp.send(job.send.chat, () => {
@@ -220,14 +235,37 @@ describe('Platform', () => {
         });
       });
 
-      it('calls xmpp.js correctly when called for a groupchat', (done) => {
+      it('calls xmpp.js correctly for a groupchat', (done) => {
+        // FIXME wrong message also passes
         const message = xmlFake(
-          "message",
-          {type: job.send.chat.target['type'] === 'room' ? 'groupchat' : 'chat',
-            to: job.send.chat.target['id']},
-          xmlFake("body", {}, job.send.chat.object.content),
+          "message", {
+            type: 'groupchat',
+            to: job.send.groupchat.target['id'],
+            id: job.send.groupchat.object['id']
+          },
+          xmlFake("body", {}, job.send.groupchat.object.content),
         );
         xp.send(job.send.groupchat, () => {
+          sinon.assert.calledWith(xp.__client.send, message);
+          done();
+        });
+      });
+
+      it('calls xmpp.js correctly for a message correction', (done) => {
+        // FIXME wrong message also passes
+        const message = xmlFake(
+          "message", {
+            type: 'groupchat',
+            to: job.send.correction.target['id'],
+            id: job.send.correction.object['id'],
+          },
+          xmlFake("body", {}, job.send.correction.object.content),
+          xmlFake("replace", {
+            id: job.send.correction.object['xmpp:replace'].id,
+            xmlns: 'urn:xmpp:message-correct:0' }
+          )
+        );
+        xp.send(job.send.correction, () => {
           sinon.assert.calledWith(xp.__client.send, message);
           done();
         });

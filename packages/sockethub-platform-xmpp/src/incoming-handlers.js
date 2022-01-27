@@ -18,10 +18,29 @@ function getMessageTimestamp(stanza) {
 
 function getMessageId(stanza) {
   try {
+    return stanza.attrs.id;
+  } catch (e) {
+    // no message id
+    return null;
+  }
+}
+
+function getMessageStanzaId(stanza) {
+  try {
     const stanzaId = stanza.children.find(c => c.name === 'stanza-id');
     return stanzaId.attrs.id;
   } catch (e) {
     // no stanza id
+    return null;
+  }
+}
+
+function getMessageReplaceId(stanza) {
+  try {
+    const replaceEl = stanza.children.find(c => c.name === 'replace');
+    return replaceEl.attrs.id;
+  } catch (e) {
+    // no origin id
     return null;
   }
 }
@@ -123,9 +142,17 @@ class IncomingHandlers {
       object: {
         'type': 'message',
         'id': messageId,
-        content: message
+        content: message,
       }
     };
+
+    const messageStanzaId  = getMessageStanzaId(stanza);
+    if (messageStanzaId) { activity.object['xmpp:stanza-id'] = messageStanzaId; }
+
+    const messageReplaceId = getMessageReplaceId(stanza);
+    if (messageReplaceId) {
+      activity.object['xmpp:replace'] = { id: messageReplaceId };
+    }
 
     if (type === 'room') {
       [activity.target['id'], activity.actor.name] = from.split('/');
