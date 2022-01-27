@@ -39,6 +39,7 @@ class XMPP {
   constructor(session) {
     session = (typeof session === 'object') ? session : {};
     this.id = session.id; // actor
+    this.initialized = false;
     this.debug = session.debug;
     this.sendToClient = session.sendToClient;
     this.__forceDisconnect = false;
@@ -96,7 +97,8 @@ class XMPP {
   get config() {
     return {
       persist: true,
-      requireCredentials: [ 'connect' ]
+      requireCredentials: [ 'connect' ],
+      initialized: false
     };
   };
 
@@ -124,6 +126,7 @@ class XMPP {
     if (this.__client) {
       // TODO verify client is actually connected
       this.debug('client connection already exists for ' + job.actor.id);
+      this.initialized = true;
       return done();
     }
     this.debug('connect called for ' + job.actor.id);
@@ -135,6 +138,7 @@ class XMPP {
     this.__client.start().then(() => {
       // connected
       this.debug('connection successful');
+      this.initialized = true;
       this.__registerHandlers();
       return done();
     }).catch((err) => {
@@ -171,7 +175,6 @@ class XMPP {
                `${job.target.id}/${job.actor.name}`);
     // TODO optional passwords not handled for now
     // TODO investigate implementation reserved nickname discovery
-    console.log(job.target.id);
     let id = job.target.id.split('/')[0];
 
     this.__client.send(xml("presence", {

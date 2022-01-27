@@ -40,10 +40,8 @@
     <div class="modal">
       <h3>Click `Join` to connect to the XMPP server.</h3>
       <form id="intro" action="">
-        <input id="username" autocomplete="off" value="username"><button class="invis" disabled>&nbsp;</button>
+        <input id="username" autocomplete="off" value="username@jabber.org"><button class="invis" disabled>&nbsp;</button>
         <input id="password" type="password" autocomplete="off" value="password"><button class="invis" disabled>&nbsp;</button>
-        <input id="server" autocomplete="off" value="jabber.org"><button class="invis" disabled>&nbsp;</button>
-        <input id="port" type="number" autocomplete="off" value="5222"><button class="invis" disabled>&nbsp;</button>
         <input id="resource" autocomplete="off" value="SockethubExample" disabled><button id="join">Join</button>
       </form>
     </div>
@@ -55,7 +53,6 @@
 
     <script src="<%= address %>jquery.js"></script>
     <script src="<%= address %>socket.io.js"></script>
-    <script src="<%= address %>activity-streams.min.js"></script>
     <script src="<%= address %>sockethub-client.js"></script>
     <script src="<%= address %>examples/shared.js"></script>
 
@@ -64,11 +61,9 @@
       const examplesShared = new ExamplesShared();
       localStorage.debug = 'sockethub:*';
       let config = {
-        'type': 'credentials',
-        server: 'jabber.org',
-        username: 'username',
+        type: 'credentials',
+        username: 'username@jabber.org',
         password: '123456',
-        port: 5222,
         resource: 'Home'
       };
       let actorString = '';
@@ -80,14 +75,10 @@
         console.log('updating actor object for: ' + username);
         // our xmpp user info
         config.username = username; // set global nick
-        if (config.username.includes('@')) {
-          actorString = config.username + '/' + config.resource;
-        } else {
-          actorString = config.username + '@' + config.server + '/' + config.resource;
-        }
-        sc.ActivityStreams.Object.create({
-          'id': actorString,
-          'type': "person",
+        actorString = config.username + '/' + config.resource;
+        const asObject = {
+          id: actorString,
+          type: "person",
           name: new URL('http://' + username).username,
           url: "http://sockethub.org",
           image: {
@@ -96,39 +87,28 @@
             width: 250,
             height: 250
           }
-        });
+        };
+        console.log('creating activity stream object ', asObject);
+        sc.ActivityStreams.Object.create(asObject);
       }
 
-      // errors
-      sc.socket.on('failed', function (msg) {
-        debug('received failure: ', msg);
-        console.error(msg.object.content);
-      });
-
-      sc.socket.on('completed', function (msg) {
-        msg = sc.ActivityStreams.Stream(msg);
-        debug('received completed job: ', msg);
-
-        // msg = __normalizeMessage(msg);
-        if ((typeof msg.object === 'object') &&
-            (typeof msg.object.content === 'string')) {
-          if (msg.object['type'] === 'message') {
-            examplesShared.processIncomingMessage(msg);
-          }
-        } else if ((msg['type'] === 'update') &&
-                   (msg.object['type'] === 'address') &&
-                   (msg.actor.name === nick)) {
-          // our nick has been updated
-          __updateActor(msg.target.name);
+      function handleMessage(msg) {
+        if (msg.error) {
+          debug('received error: ', msg);
+          console.error(msg.error);
         } else if (msg['type'] === 'connect') {
           $('.modal').css('display', 'none');
+        } else if (msg['type'] === 'join') {
           $('input#m').prop('disabled', false);
           $('button#send').prop('disabled', false);
+        } else {
+          msg = sc.ActivityStreams.Stream(msg);
+          debug('received incoming message: ', msg);
+          examplesShared.processIncomingMessage(msg);
         }
-      });
-
+      }
       // handle incoming messages from the sockethub server
-      sc.socket.on('message', examplesShared.processIncomingMessage.bind(examplesShared));
+      sc.socket.on('message', handleMessage);
 
       $('.actor').click(function (e) {
         e.preventDefault();
@@ -141,24 +121,27 @@
         const input = $('#m').val();
         const [target, text_message] = input.split(':');
 
-        if ((! target) && (! text_message)) {
-          console.log('unable to send message without target specified [room@server.org: hello world]: ', target, text_message, input);
+        if ((!target || !text_message)) {
+          console.log(
+                  'unable to send message without target specified ' +
+                  '[room@server.org: hello world]: ',
+                  target, text_message, input);
+          return false;
         }
         const msg = {
-          'type': 'send',
+          type: 'send',
           context: 'xmpp',
           actor: actorString,
           object: {
-            'type': 'message',
+            type: 'message',
             content: text_message
           },
           target: target
         };
 
         console.log('[normalize?] sending ', msg);
-        // msg = __normalizeMessage(msg);
         debug('sending message: ', msg);
-        sc.socket.emit('message', msg);
+        sc.socket.emit('message', msg, handleMessage);
         $('#m').val('');
         return false;
       });
@@ -168,8 +151,6 @@
         e.preventDefault();
         config.username = $('#username').val();
         config.password = $('#password').val();
-        config.server = $('#server').val();
-        config.port = parseInt($('#port').val(), 0);
         config.resource = $('#resource').val();
 
         __updateActor(config.username);
@@ -178,20 +159,32 @@
           // sending irc credentials to sockethub server
           const credentials = {
             actor: actorString,
+            type: 'credentials',
             context: 'xmpp',
             object: config
           };
           debug('sending credentials: ', credentials);
-          sc.socket.emit('credentials', credentials);
+          sc.socket.emit('credentials', credentials, (err) => {
+            if (err) {
+              console.error('failed to create credentials: ', err);
+            }
+          });
 
           const msg = {
-            'type': 'connect',
+            type: 'connect',
             context: 'xmpp',
             actor: actorString
           };
 
           debug('sending message: ', msg);
-          sc.socket.emit('message', msg);
+          sc.socket.emit('message', msg, handleMessage);
+          msg.type = 'join';
+          msg.target = {
+            type: 'room',
+            id: 'kosmos-random@kosmos.chat'
+          };
+          debug('sending message: ', msg);
+          sc.socket.emit('message', msg, handleMessage);
         }, 100);
         return false;
       });

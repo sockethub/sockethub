@@ -6,10 +6,10 @@ import Queue from 'bull';
 import config from "./config";
 import { ActivityObject, JobDataDecrypted, JobEncrypted } from "./sockethub";
 import { getSocket } from "./serve";
-import {decryptJobData} from "./common";
+import { decryptJobData } from "./common";
 
 // collection of platform instances, stored by `id`
-export const platformInstances = new Map();
+export const platformInstances = new Map<string, PlatformInstance>();
 
 export interface PlatformInstanceParams {
   identifier: string;
@@ -22,11 +22,17 @@ interface MessageFromPlatform extends Array<string|ActivityObject>{
   0: string, 1: ActivityObject, 2: string}
 export interface MessageFromParent extends Array<string|any>{0: string, 1: any}
 
+interface PlatformConfig {
+  persist?: boolean;
+  requireCredentials?: Array<string>;
+}
 
 export default class PlatformInstance {
   flaggedForTermination: boolean = false;
   id: string;
   queue: Queue;
+  completedJobHandlers: Map<string, Function> = new Map();
+  config: PlatformConfig = {};
   readonly name: string;
   readonly process: ChildProcess;
   readonly debug: Debugger;
@@ -36,7 +42,7 @@ export default class PlatformInstance {
   private readonly actor?: string;
   private readonly sessionCallbacks: object = {
     'close': (() => new Map())(),
-    'message': (() => new Map())(),
+    'message': (() => new Map())()
   };
 
   constructor(params: PlatformInstanceParams) {
@@ -58,29 +64,21 @@ export default class PlatformInstance {
    * Destroys all references to this platform instance, internal listeners and controlled processes
    */
   public async destroy() {
+    this.debug(`cleaning up`);
     this.flaggedForTermination = true;
-    platformInstances.delete(this.id);
     try {
-      await this.queue.empty();
-    } catch (e) { }
-    try {
-      await this.queue.clean(0);
-    } catch (e) { }
-    try {
-      await this.queue.close();
-    } catch (e) { }
-    try {
-      this.queue.removeAllListeners();
+      await this.queue.removeAllListeners();
     } catch (e) { }
     try {
       await this.queue.obliterate({ force: true });
     } catch (e) { }
     try {
       delete this.queue;
-      this.process.removeAllListeners('close');
-      this.process.unref();
-      this.process.kill();
+      await this.process.removeAllListeners('close');
+      await this.process.unref();
+      await this.process.kill();
     } catch (e) { }
+    platformInstances.delete(this.id);
   }
 
   /**
@@ -88,20 +86,23 @@ export default class PlatformInstance {
    */
   public initQueue(secret: string) {
     this.queue = new Queue(this.parentId + this.id, { redis: config.get('redis') });
+
     this.queue.on('global:completed', (jobId, resultString) => {
       const result = resultString ? JSON.parse(resultString) : "";
       this.queue.getJob(jobId).then(async (job: JobEncrypted) => {
         await this.handleJobResult('completed', decryptJobData(job, secret), result);
-        job.remove();
+        await job.remove();
       });
     });
+
     this.queue.on('global:error', (jobId, result) => {
       this.debug("unknown queue error", jobId, result);
     });
+
     this.queue.on('global:failed', (jobId, result) => {
       this.queue.getJob(jobId).then(async (job: JobEncrypted) => {
         await this.handleJobResult('failed', decryptJobData(job, secret), result);
-        job.remove();
+        await job.remove();
       });
     });
   }
@@ -125,10 +126,9 @@ export default class PlatformInstance {
    * Sends a message to client (user), can be registered with an event emitted from the platform
    * process.
    * @param sessionId ID of the socket connection to send the message to
-   * @param type type of message to emit. 'message', 'completed', 'failed'
    * @param msg ActivityStream object to send to client
    */
-  public sendToClient(sessionId: string, type: string, msg: ActivityObject) {
+  public sendToClient(sessionId: string, msg: ActivityObject) {
     getSocket(sessionId).then((socket) => {
       try {
         // this property should never be exposed externally
@@ -139,7 +139,7 @@ export default class PlatformInstance {
         // ensure an actor is present if not otherwise defined
         msg.actor = { id: this.actor };
       }
-      socket.emit(type, msg);
+      socket.emit('message', msg);
     }, (err) => this.debug(`sendToClient ${err}`));
   }
 
@@ -148,7 +148,7 @@ export default class PlatformInstance {
     for (let sid of this.sessions.values()) {
       if (sid !== sessionId) {
         this.debug(`broadcasting message to ${sid}`);
-        await this.sendToClient(sid, 'message', msg);
+        await this.sendToClient(sid, msg);
       }
     }
   }
@@ -156,24 +156,28 @@ export default class PlatformInstance {
   // handle job results coming in on the queue from platform instances
   private async handleJobResult(type: string, jobData: JobDataDecrypted, result) {
     this.debug(`job ${jobData.title}: ${type}`);
-    if ((type === 'completed') && (result)) {
-      jobData.msg.object = {
-        type: 'result',
-        content: result
-      };
-    } else if (type === 'failed') {
-      jobData.msg.object = {
-        type: 'error',
-        content: result ? result : "job failed for unknown reason"
-      };
+    delete jobData.msg.sessionSecret;
+    let msg = jobData.msg;
+    if (type === 'failed') {
+      msg.error = result ? result : "job failed for unknown reason";
+      if ((this.config.persist) && (this.config.requireCredentials.includes(jobData.msg.type))) {
+        this.debug(`critical job type ${jobData.msg.type} failed, terminating platform instance`);
+        await this.destroy();
+      }
     }
 
-    // send message to client as completed for failed job
-    await this.sendToClient(jobData.sessionId, type, jobData.msg);
+    // send result to client
+    const callback = this.completedJobHandlers.get(jobData.title);
+    if (callback) {
+      callback(msg);
+      this.completedJobHandlers.delete(jobData.title);
+    } else {
+      await this.sendToClient(jobData.sessionId, msg);
+    }
 
     // let all related peers know of result as an independent message
     // (not as part of a job completion, or failure)
-    await this.broadcastToSharedPeers(jobData.sessionId, jobData.msg);
+    await this.broadcastToSharedPeers(jobData.sessionId, msg);
   }
 
   /**
@@ -181,19 +185,16 @@ export default class PlatformInstance {
    * @param sessionId
    * @param errorMessage
    */
-  private reportError(sessionId: string, errorMessage: any) {
+  private async reportError(sessionId: string, errorMessage: any) {
     const errorObject: ActivityObject = {
       context: this.name,
       type: 'error',
       actor: { id: this.actor },
-      object: {
-        type: 'error',
-        content: errorMessage
-      }
+      error: errorMessage
     };
-    this.sendToClient(sessionId, 'message', errorObject);
+    this.sendToClient(sessionId, errorObject);
     this.sessions.clear();
-    this.destroy();
+    await this.destroy();
   }
 
   /**
@@ -226,7 +227,7 @@ export default class PlatformInstance {
           this.reportError(sessionId, data[1]);
         } else {
           // treat like a message to clients
-          this.sendToClient(sessionId, 'message', data[1]);
+          this.sendToClient(sessionId, data[1]);
         }
       }
     };
