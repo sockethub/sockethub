@@ -50,7 +50,10 @@ describe('integration page', () => {
 
     it('send credentials', (done) => {
       sc.socket.emit('credentials', {
-        actor: "jimmy@localhost/SockethubExample",
+        actor: {
+          id: "jimmy@localhost/SockethubExample",
+          type: 'person'
+        },
         context: "xmpp",
         type: "credentials",
         object: {
@@ -69,7 +72,10 @@ describe('integration page', () => {
     it('send connect', (done) => {
       sc.socket.emit('message', {
         type: "connect",
-        actor: "jimmy@localhost/SockethubExample",
+        actor: {
+          id: "jimmy@localhost/SockethubExample",
+          type: "person"
+        },
         context: "xmpp"
       }, done);
     });
