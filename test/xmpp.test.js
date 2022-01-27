@@ -19,11 +19,6 @@ describe('integration page', () => {
     return loadScript(scriptUrl);
   });
 
-  it("must load activity-stream.min.js", async () => {
-    let scriptUrl = 'http://localhost:10550/activity-streams.min.js'
-    return loadScript(scriptUrl);
-  });
-
   it("must load sockethub-client.js", async () => {
     let scriptUrl = 'http://localhost:10550/sockethub-client.js'
     return loadScript(scriptUrl);
