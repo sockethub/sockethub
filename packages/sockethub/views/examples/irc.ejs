@@ -51,13 +51,12 @@
 
     <script src="<%= address %>jquery.js"></script>
     <script src="<%= address %>socket.io.js"></script>
-    <script src="<%= address %>activity-streams.min.js"></script>
     <script src="<%= address %>sockethub-client.js"></script>
     <script src="<%= address %>examples/shared.js"></script>
     <script>
       debug = function (msg, obj) { console.log(msg, obj); };
       const examplesShared = new ExamplesShared();
-      const ircServer = 'irc.freenode.net';
+      const ircServer = 'libera.chat';
       localStorage.debug = 'sockethub:*';
       const sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
       let channel = 'sockethub-test';
@@ -131,41 +130,40 @@
         });
         __updateCredentials();
       }
-      __updateActor(nick);
 
       function __updateCredentials() {
         // sending irc credentials to sockethub server
         const credentials = {
           actor: nick + '@' + ircServer,
           context: 'irc',
+          type: 'credentials',
           object: {
-            'type': 'credentials',
+            type: 'credentials',
             nick: nick,
             server: ircServer,
             secure: true
           }
         };
         debug('sending credentials: ', credentials);
-        sc.socket.emit('credentials', credentials);
+        sc.socket.emit('credentials', credentials, (err) => {
+          if (err) { console.log('failed to set credentials ', err); }
+          else { console.log('credentials set'); }
+        });
       }
 
-      // errors
-      sc.socket.on('failed', function (msg) {
-        debug('failed ', msg);
-        $('#messages').append($('<li>').text(msg.error));
-      });
-
-      sc.socket.on('completed', function (msg) {
+      function handleMessage(msg) {
         msg = sc.ActivityStreams.Stream(msg);
-        debug('completed ', msg);
 
         msg = __normalizeMessage(msg);
-        if ((typeof msg.object === 'object') &&
-            (typeof msg.object.content === 'string')) {
+        if (msg.error) {
+          debug('error', msg);
+          $('#messages').append($('<li>').text(msg.error));
+        } else if ((typeof msg.object === 'object') &&
+          (typeof msg.object.content === 'string')) {
           examplesShared.processIncomingMessage(msg);
         } else if ((msg['type'] === 'update') &&
-                   (msg.object['type'] === 'address') &&
-                   (msg.actor.name === nick)) {
+          (msg.object['type'] === 'address') &&
+          (msg.actor.name === nick)) {
           // our nick has been updated
           __updateActor(msg.target.name);
           examplesShared.processIncomingMessage(msg);
@@ -174,15 +172,15 @@
           $('input#m').prop('disabled', false);
           $('button#send').prop('disabled', false);
         } else {
-          debug('nothing to do for completed message ', msg)
+          debug('nothing to do for message ', msg);
+          examplesShared.processIncomingMessage(msg);
         }
-      });
+      }
 
       // handle incoming messages from the sockethub server
-      sc.socket.on('message', (msg) => {
-        msg = sc.ActivityStreams.Stream(msg);
-        debug('processing message: ', msg);
-        examplesShared.processIncomingMessage(msg);
+      sc.socket.on('message', handleMessage);
+      sc.socket.on('connect', () => {
+        __updateActor(nick);
       });
 
       // handler for user input, emit messages to sockethub server
@@ -200,7 +198,7 @@
 
         msg = __normalizeMessage(msg);
         debug('sending message: ', msg);
-        sc.socket.emit('message', msg);
+        sc.socket.emit('message', msg, handleMessage);
         $('#m').val('');
         return false;
       });
@@ -225,7 +223,7 @@
         };
 
         debug('sending message: ', msg);
-        sc.socket.emit('message', msg);
+        sc.socket.emit('message', msg, handleMessage);
         return false;
       });
     </script>

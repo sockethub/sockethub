@@ -10,15 +10,12 @@ const debug_scope = process.env.DEBUG || '',
                     config.get('public:path');
 
 export const basePaths = {
-  '/sockethub-client.js': path.resolve(`${__dirname}/../dist/client/sockethub-client.js`),
-  '/sockethub-client.js.map': path.resolve(`${__dirname}/../dist/client/sockethub-client.js.map`),
+  '/sockethub-client.js': path.resolve(`${__dirname}/../dist/sockethub-client.js`),
+  '/sockethub-client.min.js': path.resolve(`${__dirname}/../dist/sockethub-client.min.js`),
+  '/sockethub-client.js.map': path.resolve(`${__dirname}/../dist/sockethub-client.js.map`),
   '/socket.io.js': path.resolve(`${__dirname}/../node_modules/socket.io/client-dist/socket.io.js`),
   '/socket.io.js.map': path.resolve(
     `${__dirname}/../node_modules/socket.io/client-dist/socket.io.js.map`),
-  // '/activity-streams.js':
-  // path.resolve(`${__dirname}/../node_modules/activity-streams/browser/activity-streams.js`),
-  '/activity-streams.min.js':
-    path.resolve(`${__dirname}/../node_modules/activity-streams/browser/activity-streams.min.js`),
 };
 
 export const examplePaths = {

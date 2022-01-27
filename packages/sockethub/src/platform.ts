@@ -113,7 +113,15 @@ function getJobHandler(secret: string) {
           if (jobCallbackCalled) { return; }
           jobCallbackCalled = true;
           if (err) {
-            done(err instanceof Error ? err : new Error(err));
+            let errMsg;
+            // some error objects (eg. TimeoutError) don't interoplate correctly to human-readable
+            // so we have to do this little dance
+            try {
+              errMsg = err.toString();
+            } catch (e) {
+              errMsg = err;
+            }
+            done(new Error(errMsg));
           } else {
             done(null, result);
           }
@@ -122,6 +130,12 @@ function getJobHandler(secret: string) {
           (platform.config.requireCredentials.includes(jobData.msg.type))) {
           // add the credentials object if this method requires it
           platform[jobData.msg.type](jobData.msg, credentials, doneCallback);
+        } else if (platform.config.persist) {
+          if (platform.initialized) {
+            platform[jobData.msg.type](jobData.msg, doneCallback);
+          } else {
+            done(new Error(`${jobData.msg.type} called on uninitialized platform`));
+          }
         } else {
           platform[jobData.msg.type](jobData.msg, doneCallback);
         }
