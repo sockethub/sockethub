@@ -52,8 +52,9 @@ describe('integration page', () => {
       sc.socket.emit('credentials', {
         actor: "jimmy@localhost/SockethubExample",
         context: "xmpp",
+        type: "credentials",
         object: {
-          '@type': "credentials",
+          type: "credentials",
           password: "passw0rd",
           port: 5222,
           resource: "SockethubExample",
@@ -67,7 +68,7 @@ describe('integration page', () => {
 
     it('send connect', (done) => {
       sc.socket.emit('message', {
-        '@type': "connect",
+        type: "connect",
         actor: "jimmy@localhost/SockethubExample",
         context: "xmpp"
       }, done);
