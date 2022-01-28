@@ -25,7 +25,7 @@ jobs:
         run: npm install -g yarn
 
       - name: Run docker compose build
-        run: docker compose build -build-arg node_version=${{ matrix.node-version }}
+        run: docker compose build --build-arg node_version=${{ matrix.node-version }}
 
       - name: Run docker compose up
         run: docker compose -f docker-compose.yml up -d
