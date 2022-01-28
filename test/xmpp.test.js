@@ -53,7 +53,7 @@ describe('integration page', () => {
     it('send credentials', (done) => {
       sc.socket.emit('credentials', {
         actor: {
-          id: "jimmy@localhost/SockethubExample",
+          id: "jimmy@prosody/SockethubExample",
           type: 'person'
         },
         context: "xmpp",
@@ -63,10 +63,10 @@ describe('integration page', () => {
           password: "passw0rd",
           port: 5222,
           resource: "SockethubExample",
-          server: "localhost",
+          server: "prosody",
           username: "jimmy"
           // TODO FIXME: create test to verify setting credentials without server property
-          //  eg. username: jimmy@localhost
+          //  eg. username: jimmy@prosody
         }
       }, genHandler(done));
     }).timeout(3000);
@@ -75,7 +75,7 @@ describe('integration page', () => {
       sc.socket.emit('message', {
         type: "connect",
         actor: {
-          id: "jimmy@localhost/SockethubExample",
+          id: "jimmy@prosody/SockethubExample",
           type: "person"
         },
         context: "xmpp"

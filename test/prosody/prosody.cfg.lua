@@ -192,6 +192,7 @@ certificates = "certs"
 -- Settings under each VirtualHost entry apply *only* to that host.
 
 VirtualHost "localhost"
+VirtualHost "prosody"
 
 --VirtualHost "example.com"
 --	certificate = "/path/to/example.crt"

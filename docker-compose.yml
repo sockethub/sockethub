@@ -8,8 +8,21 @@ services:
       - sockethub-net
     depends_on:
       - redis
+      - prosody
   redis:
     image: redis
+    networks:
+      - sockethub-net
+  prosody:
+    image: prosody/prosody:latest
+    ports:
+      - 5222:5222
+    volumes:
+      - ./test/prosody:/etc/prosody
+    environment:
+      LOCAL: jimmy
+      DOMAIN: prosody
+      PASSWORD: passw0rd
     networks:
       - sockethub-net
 
