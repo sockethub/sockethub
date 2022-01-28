@@ -9,8 +9,7 @@ WORKDIR /app
 ADD . /app
 
 RUN yarn install
-RUN npx lerna bootstrap
-RUN npx lerna run build
+RUN yarn run build
 
 ADD packages/sockethub/config.json.example /app/packages/sockethub/config.json
 

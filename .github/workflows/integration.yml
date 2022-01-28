@@ -24,6 +24,12 @@ jobs:
       - name: Install Yarn
         run: npm install -g yarn
 
+      - name: Install dependencies
+        run: yarn run install
+
+      - name: Sockethub build
+        run: yarn run build
+
       - name: Run docker compose build
         run: docker compose build --build-arg node_version=${{ matrix.node-version }}
 
