@@ -24,14 +24,8 @@ jobs:
       - name: Install Yarn
         run: npm install -g yarn
 
-      - name: Install dependencies
-        run: yarn install
-
-      - name: Build Sockethub
-        run: yarn run build
-
       - name: Run docker compose
-        run: yarn run integration-setup
+        run: docker compose -f docker-compose.yml up -d -e NODE_VERSION=${{ matrix.node-version }}
 
       - run: sleep 5
 
@@ -39,4 +33,4 @@ jobs:
         run: nc -zv localhost 10550
 
       - name: Run integration tests
-        run: yarn run integration
+        run: yarn run integration:run

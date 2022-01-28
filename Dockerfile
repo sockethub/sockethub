@@ -1,5 +1,7 @@
-FROM node:16
+ENV NODE_VERSION 16
+FROM node:${NODE_VERSION}
 MAINTAINER Ben Kero <ben.kero@gmail.com>
+ECHO "Building Sockethub docker image with Node version $node_version"
 
 RUN mkdir -p /app
 WORKDIR /app
