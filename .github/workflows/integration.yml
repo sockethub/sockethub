@@ -25,7 +25,9 @@ jobs:
         run: npm install -g yarn
 
       - name: Run docker compose
-        run: docker compose -f docker-compose.yml up --environment NODE_VERSION=${{ matrix.node-version }} -d
+        env:
+          NODE_VERSION: ${{ matrix.node-version }}
+        run: docker compose -f docker-compose.yml up -d
 
       - run: sleep 5
 
