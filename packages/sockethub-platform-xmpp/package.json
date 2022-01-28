@@ -23,7 +23,7 @@
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/sockethub-platform-xmpp",
   "dependencies": {
     "@xmpp/client": "^0.13.0",
-    "c8": "^7.8.0"
+    "c8": "7.11.0"
   },
   "devDependencies": {
     "chai": "4.3.4",
