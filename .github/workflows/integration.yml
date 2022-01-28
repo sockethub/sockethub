@@ -38,11 +38,5 @@ jobs:
       - name: Verify Sockethub is listening
         run: nc -zv localhost 10550
 
-      - name: Verify Redis is listening
-        run: nc -zv localhost 6379
-
-      - name: Verify Prosody is listening
-        run: nc -zv localhost 5222
-
       - name: Run integration tests
         run: yarn run integration

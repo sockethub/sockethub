@@ -3,7 +3,7 @@ services:
   sockethub:
     build: .
     ports:
-      - "10550:10550"
+      - 10550:10550
     networks:
       - sockethub-net
     depends_on:
@@ -15,8 +15,6 @@ services:
       - sockethub-net
   prosody:
     image: prosody/prosody:latest
-    ports:
-      - 5222:5222
     volumes:
       - ./test/prosody:/etc/prosody
     environment:
