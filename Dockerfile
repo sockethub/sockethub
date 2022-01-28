@@ -1,5 +1,6 @@
 ARG node_version=16
 FROM node:${node_version}
+ARG node_version
 MAINTAINER Ben Kero <ben.kero@gmail.com>
 RUN echo "Building Sockethub docker image with Node version ${node_version}"
 
