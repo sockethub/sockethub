@@ -30,7 +30,7 @@
     "start": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run start",
     "start:defaults": "cd packages/sockethub && yarn run start",
     "integration": "yarn run integration:setup && yarn run integration:run",
-    "integration:run": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
+    "integration:run": "npx karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
     "integration:setup": "docker compose -f docker-compose.yml up -d"
   }
 }
