@@ -4,8 +4,8 @@
   "devDependencies": {
     "@typescript-eslint/parser": "5.8.0",
     "chai": "^4.3.4",
-    "eslint-plugin-security-node": "1.1.0",
     "eslint": "8.5.0",
+    "eslint-plugin-security-node": "1.1.0",
     "find-up": "6.2.0",
     "karma": "^6.3.4",
     "karma-chai": "^0.1.0",
@@ -19,7 +19,7 @@
   },
   "scripts": {
     "version": "lerna run build",
-    "install": "lerna bootstrap --use-workspaces",
+    "install": "yarn run upgrade && lerna bootstrap",
     "test": "lerna run test",
     "coverage": "lerna run coverage",
     "compliance": "lerna run compliance",
