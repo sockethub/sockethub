@@ -36,6 +36,13 @@ describe('integration page', () => {
     assert.typeOf(SockethubClient, 'function');
   });
 
+  let genHandler = function (done) {
+    return function (msg) {
+      if (msg && msg.error) { done(msg.error); }
+      else { done(); }
+    }
+  }
+
   describe('with an initialized SockethubClient', () => {
     let sc;
 
@@ -61,7 +68,7 @@ describe('integration page', () => {
           // TODO FIXME: create test to verify setting credentials without server property
           //  eg. username: jimmy@localhost
         }
-      }, done);
+      }, genHandler(done));
     }).timeout(3000);
 
     it('send connect', (done) => {
@@ -72,7 +79,7 @@ describe('integration page', () => {
           type: "person"
         },
         context: "xmpp"
-      }, done);
+      }, genHandler(done));
     });
   });
 });
