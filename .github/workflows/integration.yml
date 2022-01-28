@@ -28,7 +28,7 @@ jobs:
         run: npm install -g karma
 
       - name: Install dependencies
-        run: yarn run install
+        run: yarn run deps
 
       - name: Sockethub build
         run: yarn run build

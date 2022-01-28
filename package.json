@@ -19,7 +19,7 @@
   },
   "scripts": {
     "version": "lerna run build",
-    "install": "yarn run upgrade && lerna bootstrap",
+    "deps": "yarn install && lerna bootstrap",
     "test": "lerna run test",
     "coverage": "lerna run coverage",
     "compliance": "lerna run compliance",
