@@ -1,7 +1,7 @@
 ARG node_version=16
 FROM node:${node_version}
 MAINTAINER Ben Kero <ben.kero@gmail.com>
-RUN ECHO "Building Sockethub docker image with Node version ${node_version}"
+RUN echo "Building Sockethub docker image with Node version ${node_version}"
 
 RUN mkdir -p /app
 WORKDIR /app
