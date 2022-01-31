@@ -232,24 +232,6 @@ c8@7.11.0:
     yargs "^16.2.0"
     yargs-parser "^20.2.7"
 
-c8@7.8.0:
-  version "7.8.0"
-  resolved "https://registry.yarnpkg.com/c8/-/c8-7.8.0.tgz#8fcfe848587d9d5796f22e9b0546a387a66d1b3b"
-  integrity sha512-x2Bx+IIEd608B1LmjiNQ/kizRPkCWo5XzuV57J9afPjAHSnYXALwbCSOkQ7cSaNXBNblfqcvdycj+klmL+j6yA==
-  dependencies:
-    "@bcoe/v8-coverage" "^0.2.3"
-    "@istanbuljs/schema" "^0.1.2"
-    find-up "^5.0.0"
-    foreground-child "^2.0.0"
-    istanbul-lib-coverage "^3.0.0"
-    istanbul-lib-report "^3.0.0"
-    istanbul-reports "^3.0.2"
-    rimraf "^3.0.0"
-    test-exclude "^6.0.0"
-    v8-to-istanbul "^8.0.0"
-    yargs "^16.2.0"
-    yargs-parser "^20.2.7"
-
 cache-point@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/cache-point/-/cache-point-2.0.0.tgz#91e03c38da9cfba9d95ac6a34d24cfe6eff8920f"
@@ -395,7 +377,7 @@ cross-spawn@^7.0.0, cross-spawn@^7.0.2:
     shebang-command "^2.0.0"
     which "^2.0.1"
 
-debug@^4.1.1, debug@^4.3.1, debug@^4.3.2:
+debug@^4.1.1, debug@^4.3.2:
   version "4.3.3"
   resolved "https://registry.yarnpkg.com/debug/-/debug-4.3.3.tgz#04266e0b70a98d4462e6e288e38259213332b664"
   integrity sha512-/zxw5+vh1Tfv+4Qn7a5nsbcJKPaSvCDhojn6FEl9vupwK2VCSDtEiEtqr8DFtzYFOdz63LBkxec7DYuc2jon6Q==
@@ -794,15 +776,6 @@ inherits@2:
   dependencies:
     bluebird "^3.7.2"
     r-result "^1.4.0"
-
-irc2as@^3.0.6:
-  version "3.0.6"
-  resolved "https://registry.yarnpkg.com/irc2as/-/irc2as-3.0.6.tgz#abb1a175f7e82afc94e12997cc060c3533dd9f70"
-  integrity sha512-ajqot7t5YKFYPuJHvk2rTr5QbEw/lNln7BOo6/81CtXTP2++MfkLNQlU9zNgQONh8OnU7kAdhoWwuEe9T5UjaQ==
-  dependencies:
-    c8 "7.8.0"
-    debug "^4.3.1"
-    fast-deep-equal "^3.1.1"
 
 is-core-module@^2.8.1:
   version "2.8.1"
@@ -1384,13 +1357,6 @@ smtp-address-parser@^1.0.3:
   integrity sha512-Osg9LmvGeAG/hyao4mldbflLOkkr3a+h4m1lwKCK5U8M6ZAr7tdXEz/+/vr752TSGE4MNUlUl9cIK2cB8cgzXg==
   dependencies:
     nearley "^2.20.1"
-
-sockethub-schemas@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/sockethub-schemas/-/sockethub-schemas-2.1.1.tgz#d99fa538039610c04df8975985d88e0149a9d3d5"
-  integrity sha512-W6VXqDSaxNvorF6ZOi+XjNleoR7hoZPxw+Dx8QZx71b+2XZT/AOaUaUwCjRX0epgDTZMm5+IMGIQH/O1ho195A==
-  dependencies:
-    debug "^4.3.1"
 
 sort-array@^4.1.4:
   version "4.1.4"

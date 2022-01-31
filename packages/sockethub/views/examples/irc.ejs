@@ -56,7 +56,7 @@
     <script>
       debug = function (msg, obj) { console.log(msg, obj); };
       const examplesShared = new ExamplesShared();
-      const ircServer = 'libera.chat';
+      const ircServer = 'irc.libera.chat';
       localStorage.debug = 'sockethub:*';
       const sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
       let channel = 'sockethub-test';
@@ -106,7 +106,6 @@
             __normalizeTargetFromContent('/notice');
             msg.object.content = msg.object.content.substr(8 + object.target.name.length + 1);
           }
-
         }
         return msg;
       }
@@ -117,8 +116,8 @@
         // our irc user info
         nick = _nick; // set global nick
         sc.ActivityStreams.Object.create({
-          'id': nick + '@' + ircServer,
-          'type': "person",
+          id: nick,
+          type: "person",
           name: nick,
           url: "http://sockethub.org",
           image: {
@@ -134,7 +133,7 @@
       function __updateCredentials() {
         // sending irc credentials to sockethub server
         const credentials = {
-          actor: nick + '@' + ircServer,
+          actor: nick,
           context: 'irc',
           type: 'credentials',
           object: {
@@ -185,14 +184,14 @@
       // handler for user input, emit messages to sockethub server
       $('#chat').submit(function () {
         let msg = {
-          'type': 'send',
+          type: 'send',
           context: 'irc',
-          actor: nick + '@' + ircServer,
+          actor: nick,
           object: {
-            'type': 'message',
+            type: 'message',
             content: $('#m').val()
           },
-          target: ircServer + '/' + channel
+          target: channel
         };
 
         msg = __normalizeMessage(msg);
@@ -206,11 +205,11 @@
       $('#join').click(function () {
         channel = $('#j').val();
 
-        __updateActor(nick + '@' + ircServer);
+        __updateActor(nick);
         // the irc chatroom we're connecting to
         sc.ActivityStreams.Object.create({
-          'id': ircServer + '/' + channel.replace('#', ''),
-          'type': "room",
+          id: channel,
+          type: "room",
           name: channel
         });
         debug('socket id: ', sc.socket.id);
@@ -218,19 +217,20 @@
         const connect = {
           type: 'connect',
           context: 'irc',
-          actor: nick + '@' + ircServer
+          actor: nick,
         }
 
         const join = {
           type: 'join',
           context: 'irc',
-          actor: nick + '@' + ircServer,
-          target: ircServer + '/' + channel.replace('#', '')
+          actor: nick,
+          target: channel
         };
 
-        debug('sending message: ', connect);
+        debug('sending connect: ', connect);
         sc.socket.emit('message', connect, (msg) => {
           handleMessage(msg);
+          debug('sending join: ', join);
           sc.socket.emit('message', join, handleMessage);
         });
         return false;
