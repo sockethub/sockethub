@@ -13,7 +13,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm install -g yarn
-      - run: yarn install
+      - run: yarn deps
       - run: yarn run lint
   test:
     runs-on: ubuntu-latest
@@ -28,7 +28,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm install -g yarn
       - name: Install Dependencies
-        run: yarn install
+        run: yarn deps
       - name: Build
         run: yarn run build
       - name: Test
@@ -46,7 +46,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm install -g yarn
       - name: Install Dependencies
-        run: yarn install
+        run: yarn deps
       - name: Build
         run: yarn run build
       - name: Test

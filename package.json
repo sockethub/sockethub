@@ -3,16 +3,23 @@
   "private": true,
   "devDependencies": {
     "@typescript-eslint/parser": "5.8.0",
+    "chai": "^4.3.4",
     "eslint": "8.5.0",
     "eslint-plugin-security-node": "1.1.0",
     "find-up": "6.2.0",
+    "karma": "^6.3.4",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-firefox-launcher": "^2.1.1",
+    "karma-mocha": "^2.0.1",
     "lerna": "4.0.0",
+    "mocha": "^9.0.3",
     "typescript": "4.5.4",
     "yarn": "1.22.17"
   },
   "scripts": {
     "version": "lerna run build",
-    "install": "lerna bootstrap",
+    "deps": "yarn install && lerna bootstrap",
     "test": "lerna run test",
     "coverage": "lerna run coverage",
     "compliance": "lerna run compliance",
@@ -20,6 +27,11 @@
     "lint:fix": "lerna run lint:fix",
     "build": "lerna run build",
     "dev": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run dev",
-    "start": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run start"
+    "start": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run start",
+    "start:defaults": "cd packages/sockethub && yarn run start",
+    "integration": "yarn run integration:setup && yarn run integration:run && yarn run integration:teardown",
+    "integration:run": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
+    "integration:setup": "docker compose -f docker-compose.yml up -d",
+    "integration:teardown": "docker compose stop"
   }
 }
