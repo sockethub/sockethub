@@ -1,0 +1,48 @@
+name: Integration
+on: pull_request
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14, 16]
+
+    steps:
+      - run: sudo chown -R $USER:$USER ${{ github.workspace }}
+       
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          clean: false
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - name: Install Karma
+        run: npm install -g karma
+
+      - name: Install dependencies
+        run: yarn run deps
+
+      - name: Sockethub build
+        run: yarn run build
+
+      - name: Run docker compose build
+        run: docker compose build --build-arg node_version=${{ matrix.node-version }}
+
+      - name: Run docker compose up
+        run: docker compose -f docker-compose.yml up -d
+
+      - run: sleep 5
+
+      - name: Verify Sockethub is listening
+        run: nc -zv localhost 10550
+
+      - name: Run integration tests
+        run: yarn run integration:run
