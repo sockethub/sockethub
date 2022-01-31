@@ -106,7 +106,7 @@ IRC.prototype.schema = {
     "required": [ 'type' ],
     "properties": {
       "type": {
-        "enum": [ 'update', 'join', 'leave', 'send', 'observe', 'announce' ]
+        "enum": [ 'connect', 'update', 'join', 'leave', 'send', 'observe', 'announce' ]
       }
     }
   },
@@ -151,7 +151,7 @@ IRC.prototype.schema = {
 
 IRC.prototype.config = {
   persist: true,
-  requireCredentials: [ 'connect' ],
+  requireCredentials: [ 'connect', 'update' ],
   initialized: false
 };
 
@@ -383,7 +383,7 @@ IRC.prototype.send = function (job, done) {
  *    }
  *  }
  */
-IRC.prototype.update = function (job, done) {
+IRC.prototype.update = function (job, credentials, done) {
   this.debug('update() called for ' + job.actor.id);
   this.__getClient(job.actor.id, false, (err, client) => {
     if (err) { return done(err); }
@@ -491,6 +491,7 @@ IRC.prototype.cleanup = function (done) {
       this.__client.end();
     }
   }
+  this.initialized = false;
   delete this.__client;
   return done();
 };
@@ -645,7 +646,6 @@ IRC.prototype.__completeJob = function (err) {
 
 
 IRC.prototype.__registerListeners = function (server) {
-  this.debug('adding listener for \'data\'');
   this.irc2as = new IRC2AS({ server: server });
   this.__client.on('data', (data) => {
     this.irc2as.input(data);
