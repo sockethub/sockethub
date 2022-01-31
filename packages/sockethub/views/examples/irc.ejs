@@ -158,16 +158,18 @@
         if (msg.error) {
           debug('error', msg);
           $('#messages').append($('<li>').text(msg.error));
+        } else if (msg.type === 'connect') {
+          __updateActor(nick);
         } else if ((typeof msg.object === 'object') &&
           (typeof msg.object.content === 'string')) {
           examplesShared.processIncomingMessage(msg);
-        } else if ((msg['type'] === 'update') &&
-          (msg.object['type'] === 'address') &&
+        } else if ((msg.type === 'update') &&
+          (msg.object.type === 'address') &&
           (msg.actor.name === nick)) {
           // our nick has been updated
           __updateActor(msg.target.name);
           examplesShared.processIncomingMessage(msg);
-        } else if (msg['type'] === 'join') {
+        } else if (msg.type === 'join') {
           $('.modal').css('display', 'none');
           $('input#m').prop('disabled', false);
           $('button#send').prop('disabled', false);
@@ -179,9 +181,6 @@
 
       // handle incoming messages from the sockethub server
       sc.socket.on('message', handleMessage);
-      sc.socket.on('connect', () => {
-        __updateActor(nick);
-      });
 
       // handler for user input, emit messages to sockethub server
       $('#chat').submit(function () {
@@ -207,6 +206,7 @@
       $('#join').click(function () {
         channel = $('#j').val();
 
+        __updateActor(nick + '@' + ircServer);
         // the irc chatroom we're connecting to
         sc.ActivityStreams.Object.create({
           'id': ircServer + '/' + channel.replace('#', ''),
@@ -215,15 +215,24 @@
         });
         debug('socket id: ', sc.socket.id);
 
-        const msg = {
-          'type': 'join',
+        const connect = {
+          type: 'connect',
+          context: 'irc',
+          actor: nick + '@' + ircServer
+        }
+
+        const join = {
+          type: 'join',
           context: 'irc',
           actor: nick + '@' + ircServer,
           target: ircServer + '/' + channel.replace('#', '')
         };
 
-        debug('sending message: ', msg);
-        sc.socket.emit('message', msg, handleMessage);
+        debug('sending message: ', connect);
+        sc.socket.emit('message', connect, (msg) => {
+          handleMessage(msg);
+          sc.socket.emit('message', join, handleMessage);
+        });
         return false;
       });
     </script>
