@@ -214,6 +214,7 @@ IRC.prototype.join = function (job, done) {
     });
     this.debug('sending join ' + job.target.name);
     client.raw(['JOIN', job.target.name]);
+    client.raw('PING ' + job.actor.name);
   });
 };
 
@@ -411,6 +412,7 @@ IRC.prototype.update = function (job, credentials, done) {
     } else {
       return done(`unknown update action.`);
     }
+    client.raw('PING ' + job.actor.name);
   });
 };
 
@@ -673,12 +675,13 @@ IRC.prototype.__registerListeners = function (server) {
   });
 
   this.irc2as.events.on('pong', (timestamp) => {
-    // this.debug('received PONG at ' + timestamp);
+    this.debug('received PONG at ' + timestamp);
     this.__completeJob();
   });
 
   this.irc2as.events.on('ping', (timestamp) => {
-    // this.debug('sending PING at ' + timestamp);
+    this.debug('received PING at ' + timestamp);
+    client.raw('PONG ' + job.actor.name);
   });
 };
 
