@@ -311,7 +311,7 @@ class XMPP {
       const status = job.object.content || '';
       // setting presence
       this.debug('setting presence: ' + show + ' status: ' + status);
-      this.__client.send(xml("presence", { show: show }, { status: status })).then(done);
+      this.__client.send(xml("presence", { show }, { status })).then(done);
     } else {
       done('unknown object type (should be presence?): ' + job.object.type);
     }
