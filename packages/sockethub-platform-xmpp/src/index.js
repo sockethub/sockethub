@@ -82,10 +82,8 @@ class XMPP {
    *   },
    *   object: {
    *     type: 'credentials',
-   *     server: 'jabber.net',
-   *     username: 'testuser',
+   *     userAddress: 'testuser@jabber.net',
    *     password: 'asdasdasdasd',
-   *     port: 5223,
    *     resource: 'phone'
    *   }
    * }

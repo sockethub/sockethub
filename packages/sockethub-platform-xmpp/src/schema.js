@@ -22,13 +22,13 @@ module.exports = {
       },
       "object": {
         "type": "object",
-        "required": ['type', 'username', 'password', 'resource'],
+        "required": ['type', 'userAddress', 'password', 'resource'],
         "additionalProperties": false,
         "properties": {
           "type": {
             "type": "string"
           },
-          "username": {
+          "userAddress": {
             "type": "string"
           },
           "password": {

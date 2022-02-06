@@ -7,17 +7,16 @@ proxyquire.noPreserveCache();
 proxyquire.noCallThru()
 
 const actor = {
-  'type': 'person',
-  'id': 'testingham@jabber.net',
+  type: 'person',
+  id: 'testingham@jabber.net',
   name:'testing ham'
 };
 
 const credentials = {
   actor: actor,
   object: {
-    'type': 'credentials',
-    username: 'testingham',
-    server: 'jabber.net',
+    type: 'credentials',
+    userAddress: 'testingham@jabber.net',
     password: 'foobar',
     resource: 'home'
   }
@@ -25,17 +24,17 @@ const credentials = {
 
 const target = {
   mrfoobar: {
-    'type': 'person',
-    'id': 'mrfoobar@jabber.net',
+    type: 'person',
+    id: 'mrfoobar@jabber.net',
     name: 'Mr FooBar'
   },
   partyroom: {
-    'type': 'room',
-    'id': 'partyroom@jabber.net'
+    type: 'room',
+    id: 'partyroom@jabber.net'
   },
   roomuser: {
-    'type': 'room',
-    'id': 'partyroom@jabber.net/ms tut'
+    type: 'room',
+    id: 'partyroom@jabber.net/ms tut'
   }
 };
 
@@ -43,7 +42,7 @@ const job = {
   join: {
     actor: actor,
     object: {
-      'type': 'update',
+      type: 'update',
       name: 'Frank'
     },
     target: target.partyroom
@@ -56,7 +55,7 @@ const job = {
     chat: {
       actor: actor,
       object: {
-        'type': 'message',
+        type: 'message',
         id: 'hc-1234abcd',
         content: 'hello'
       },
@@ -65,7 +64,7 @@ const job = {
     groupchat: {
       actor: actor,
       object: {
-        'type': 'message',
+        type: 'message',
         id: 'hc-1234abcd',
         content: 'hi all'
       },
@@ -74,7 +73,7 @@ const job = {
     correction: {
       actor: actor,
       object: {
-        'type': 'message',
+        type: 'message',
         id: 'hc-1234abcd',
         content: 'hi yall',
         'xmpp:replace': { id: 'hc-234bcde' }
@@ -86,7 +85,7 @@ const job = {
     presence: {
       actor: actor,
       object: {
-        'type': 'presence',
+        type: 'presence',
         presence: 'available',
         status: 'available'
       }
@@ -108,7 +107,7 @@ const job = {
     actor: actor,
     target: target.partyroom,
     object: {
-      'type': 'attendance'
+      type: 'attendance'
     }
   }
 };
