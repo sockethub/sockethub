@@ -29,9 +29,11 @@
     "dev": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run dev",
     "start": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run start",
     "start:defaults": "cd packages/sockethub && yarn run start",
-    "integration": "yarn run integration:setup && yarn run integration:run && yarn run integration:teardown",
+    "integration": "yarn run integration:setup && yarn run integration:run; RES=$?; if [[ \"$RES\" != \"0\" ]]; then yarn run integration:log; fi; yarn run integration:teardown; exit $RES",
     "integration:run": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
+    "integration:log": "docker logs sockethub-sockethub-1",
     "integration:setup": "docker compose -f docker-compose.yml up -d",
-    "integration:teardown": "docker compose stop"
+    "integration:teardown": "docker compose stop",
+    "integration:clean": "docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub"
   }
 }
