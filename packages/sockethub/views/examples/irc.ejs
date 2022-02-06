@@ -152,13 +152,12 @@
 
       function handleMessage(msg) {
         msg = sc.ActivityStreams.Stream(msg);
-
         msg = __normalizeMessage(msg);
         if (msg.error) {
           debug('error', msg);
           $('#messages').append($('<li>').text(msg.error));
-        } else if (msg.type === 'connect') {
-          __updateActor(nick);
+        // } else if (msg.type === 'connect') {
+        //   __updateActor(nick);
         } else if ((typeof msg.object === 'object') &&
           (typeof msg.object.content === 'string')) {
           examplesShared.processIncomingMessage(msg);
