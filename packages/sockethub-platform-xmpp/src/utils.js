@@ -3,7 +3,7 @@ module.exports  = {
   buildXmppCredentials: function (credentials) {
     const [ username, server ] = credentials.object.userAddress.split('@');
     let xmpp_creds = {
-      service: server ? server : credentials.object.server ? credentials.object.server : undefined,
+      service: credentials.object.server ? credentials.object.server : server ? server : undefined,
       username: username,
       password: credentials.object.password
     };
