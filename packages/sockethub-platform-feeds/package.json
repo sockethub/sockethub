@@ -30,8 +30,8 @@
   "devDependencies": {
     "fs-then-native": "2.0.0",
     "jaribu": "2.2.3",
-    "jsdoc": "3.6.7",
-    "jsdoc-to-markdown": "7.1.0"
+    "jsdoc": "3.6.10",
+    "jsdoc-to-markdown": "7.1.1"
   },
   "scripts": {
     "compliance": "yarn run test",
