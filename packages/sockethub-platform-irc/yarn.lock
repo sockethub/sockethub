@@ -770,11 +770,11 @@ inherits@2:
   resolved "https://registry.yarnpkg.com/inherits/-/inherits-2.0.4.tgz#0fa2c64f932917c3433a0ded55363aae37416b7c"
   integrity sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==
 
-"irc-socket@https://github.com/silverbucket/irc-socket/archive/v4-alpha.tar.gz":
-  version "3.0.8"
-  resolved "https://github.com/silverbucket/irc-socket/archive/v4-alpha.tar.gz#e00965eeab300dab38afca51afcfac1efe3457fd"
+irc-socket-sasl@4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/irc-socket-sasl/-/irc-socket-sasl-4.0.0.tgz#40494c54dfece12e2e00fff68177d8f4abd0115a"
+  integrity sha512-wyJrOoBCdfqAj103JaWy0N5eTmXCyAMQnwTcM6UKWVMPWuDyl5YAPPGltgd/P/APp08UY//4KeZMlcfei3YFQg==
   dependencies:
-    bluebird "^3.7.2"
     r-result "^1.4.0"
 
 is-core-module@^2.8.1:
