@@ -101,7 +101,7 @@ function getJobHandler(secret: string) {
   return (job: JobEncrypted, done: Function) => {
     const jobData: JobDataDecrypted = decryptJobData(job, secret);
     const jobLog = debug(`${loggerPrefix}:${jobData.sessionId}`);
-    jobLog(`job ${jobData.title}: ${jobData.msg.type}`);
+    jobLog(`job ${jobData.title} ${jobData.msg.type} - received`);
     const sessionSecret = jobData.msg.sessionSecret;
     delete jobData.msg.sessionSecret;
 
@@ -113,6 +113,7 @@ function getJobHandler(secret: string) {
           if (jobCallbackCalled) { return; }
           jobCallbackCalled = true;
           if (err) {
+            jobLog(`job ${jobData.title} ${jobData.msg.type} - errored`);
             let errMsg;
             // some error objects (eg. TimeoutError) don't interoplate correctly to human-readable
             // so we have to do this little dance
@@ -123,6 +124,7 @@ function getJobHandler(secret: string) {
             }
             done(new Error(errMsg));
           } else {
+            jobLog(`job ${jobData.title} ${jobData.msg.type} - completed`);
             done(null, result);
           }
         };

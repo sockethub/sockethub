@@ -64,7 +64,7 @@ function attachError(err, msg) {
   if (typeof msg !== 'object') {
     msg = { context: 'error' };
   }
-  msg.error = err;
+  msg.error = err.toString();
   delete msg.sessionSecret;
   return msg;
 }

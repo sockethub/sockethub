@@ -106,7 +106,7 @@ IRC.prototype.schema = {
     "required": [ 'type' ],
     "properties": {
       "type": {
-        "enum": [ 'update', 'join', 'leave', 'send', 'query', 'announce' ]
+        "enum": [ 'connect', 'update', 'join', 'leave', 'send', 'query', 'announce' ]
       }
     }
   },
@@ -151,9 +151,26 @@ IRC.prototype.schema = {
 
 IRC.prototype.config = {
   persist: true,
-  requireCredentials: [ 'join', 'leave', 'send', 'update', 'query' ]
+  requireCredentials: [ 'connect', 'update' ],
+  initialized: false
 };
 
+/**
+ * Function: connect
+ *
+ * Conenct to an IRC server.
+ *
+ * @param {object} job activity streams object
+ * @param {object} credentials credentials object
+ * @param {object} done callback when job is done
+ */
+
+IRC.prototype.connect = function (job, credentials, done) {
+  this.__getClient(job.actor.id, credentials, (err, client) => {
+    if (err) { return done(err); }
+    return done();
+  });
+};
 
 /**
  * Function: join
@@ -161,7 +178,6 @@ IRC.prototype.config = {
  * Join a room or private conversation.
  *
  * @param {object} job activity streams object // TODO LINK
- * @param {object} credentials credentials object // TODO LINK
  * @param {object} done callback when job is done // TODO LINK
  *
  * @example
@@ -183,9 +199,9 @@ IRC.prototype.config = {
  * }
  *
  */
-IRC.prototype.join = function (job, credentials, done) {
+IRC.prototype.join = function (job, done) {
   this.debug('join() called for ' + job.actor.id);
-  this.__getClient(job.actor.id, credentials, (err, client) => {
+  this.__getClient(job.actor.id, false, (err, client) => {
     if (err) { return done(err); }
     if (this.__channels.has(job.target.name)) {
       this.debug(`channel ${job.target.name} already joined`);
@@ -198,6 +214,7 @@ IRC.prototype.join = function (job, credentials, done) {
     });
     this.debug('sending join ' + job.target.name);
     client.raw(['JOIN', job.target.name]);
+    client.raw('PING ' + job.actor.name);
   });
 };
 
@@ -207,7 +224,6 @@ IRC.prototype.join = function (job, credentials, done) {
  * Leave a room or private conversation.
  *
  * @param {object} job activity streams object // TODO LINK
- * @param {object} credentials credentials object // TODO LINK
  * @param {object} done callback when job is done // TODO LINK
  *
  * @example
@@ -228,9 +244,9 @@ IRC.prototype.join = function (job, credentials, done) {
  * }
  *
  */
-IRC.prototype.leave = function (job, credentials, done) {
+IRC.prototype.leave = function (job, done) {
   this.debug('leave() called for ' + job.actor.name);
-  this.__getClient(job.actor.id, credentials, (err, client) => {
+  this.__getClient(job.actor.id, false, (err, client) => {
     if (err) { return done(err); }
     // leave channel
     this.__hasLeft(job.target.name);
@@ -245,7 +261,6 @@ IRC.prototype.leave = function (job, credentials, done) {
  * Send a message to a room or private conversation.
  *
  * @param {object} job activity streams object // TODO LINK
- * @param {object} credentials credentials object // TODO LINK
  * @param {object} done callback when job is done // TODO LINK
  *
  * @example
@@ -271,9 +286,9 @@ IRC.prototype.leave = function (job, credentials, done) {
  *  }
  *
  */
-IRC.prototype.send = function (job, credentials, done) {
+IRC.prototype.send = function (job, done) {
   this.debug('send() called for ' + job.actor.id + ' target: ' + job.target.id);
-  this.__getClient(job.actor.id, credentials, (err, client) => {
+  this.__getClient(job.actor.id, false, (err, client) => {
     if (err) { return done(err); }
 
     if (typeof job.object.content !== 'string') {
@@ -326,7 +341,6 @@ IRC.prototype.send = function (job, credentials, done) {
  * Indicate a change (ie. room topic update, or nickname change).
  *
  * @param {object} job activity streams object // TODO LINK
- * @param {object} credentials redentials object // TODO LINK
  * @param {object} done callback when job is done // TODO LINK
  *
  * @example change topic
@@ -372,7 +386,7 @@ IRC.prototype.send = function (job, credentials, done) {
  */
 IRC.prototype.update = function (job, credentials, done) {
   this.debug('update() called for ' + job.actor.id);
-  this.__getClient(job.actor.id, credentials, (err, client) => {
+  this.__getClient(job.actor.id, false, (err, client) => {
     if (err) { return done(err); }
     if (job.object.type === 'address')  {
       this.debug('changing nick from ' + job.actor.name + ' to ' + job.target.name);
@@ -398,6 +412,7 @@ IRC.prototype.update = function (job, credentials, done) {
     } else {
       return done(`unknown update action.`);
     }
+    client.raw('PING ' + job.actor.name);
   });
 };
 
@@ -407,7 +422,6 @@ IRC.prototype.update = function (job, credentials, done) {
  * Indicate an intent to query something (ie. get a list of users in a room).
  *
  * @param {object} job activity streams object // TODO LINK
- * @param {object} credentials credentials object // TODO LINK
  * @param {object} done callback when job is done // TODO LINK
  *
  * @example
@@ -455,9 +469,9 @@ IRC.prototype.update = function (job, credentials, done) {
  *  }
  *
  */
-IRC.prototype.query = function (job, credentials, done) {
+IRC.prototype.query = function (job, done) {
   this.debug('query() called for ' + job.actor.id);
-  this.__getClient(job.actor.id, credentials, (err, client) => {
+  this.__getClient(job.actor.id, false, (err, client) => {
     if (err) { return done(err); }
 
     if (job.object.type === 'attendance') {
@@ -479,6 +493,7 @@ IRC.prototype.cleanup = function (done) {
       this.__client.end();
     }
   }
+  this.initialized = false;
   delete this.__client;
   return done();
 };
@@ -539,18 +554,20 @@ IRC.prototype.__getClient = function (key, credentials, cb) {
   }
 
   if (! credentials) {
-    return cb('no client found, and no credentials specified.');
+    return cb('no client found, and no credentials specified. you must connect first');
+  } else {
+    this.__connect(key, credentials, (err, client) => {
+      if (err) {
+        this.initialized = false;
+        return cb(err);
+      }
+      this.__handledActors.add(key);
+      this.__client = client;
+      this.__registerListeners(credentials.object.server);
+      this.initialized = true;
+      return cb(null, client);
+    });
   }
-
-  this.__connect(key, credentials, (err, client) => {
-    if (err) {
-      return cb(err);
-    }
-    this.__handledActors.add(key);
-    this.__client = client;
-    this.__registerListeners(credentials.object.server);
-    return cb(null, client);
-  });
 };
 
 
@@ -631,7 +648,6 @@ IRC.prototype.__completeJob = function (err) {
 
 
 IRC.prototype.__registerListeners = function (server) {
-  this.debug('adding listener for \'data\'');
   this.irc2as = new IRC2AS({ server: server });
   this.__client.on('data', (data) => {
     this.irc2as.input(data);
@@ -659,12 +675,13 @@ IRC.prototype.__registerListeners = function (server) {
   });
 
   this.irc2as.events.on('pong', (timestamp) => {
-    // this.debug('received PONG at ' + timestamp);
+    this.debug('received PONG at ' + timestamp);
     this.__completeJob();
   });
 
   this.irc2as.events.on('ping', (timestamp) => {
-    // this.debug('sending PING at ' + timestamp);
+    this.debug('received PING at ' + timestamp);
+    client.raw('PONG ' + job.actor.name);
   });
 };
 
