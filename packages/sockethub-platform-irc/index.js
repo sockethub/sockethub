@@ -23,7 +23,7 @@ if (typeof (TlsSocket) !== 'object') {
   tls = require('tls');
 }
 if (typeof (IrcSocket) !== 'object') {
-  IrcSocket = require('irc-socket');
+  IrcSocket = require('irc-socket-sasl');
 }
 if (typeof (IRC2AS) !== 'object') {
   IRC2AS = require('irc2as');
@@ -94,11 +94,10 @@ function IRC(cfg) {
  *      nick: 'testuser',
  *      password: 'asdasdasdasd',
  *      port: 6697,
- *      secure: true
+ *      secure: true,
+ *      sasl: true
  *    }
  *  }
- *
- *
  */
 IRC.prototype.schema = {
   "version": packageJSON.version,
@@ -140,6 +139,9 @@ IRC.prototype.schema = {
             "type": "number"
           },
           "secure": {
+            "type": "boolean"
+          },
+          "sasl": {
             "type": "boolean"
           }
         }
@@ -576,22 +578,27 @@ IRC.prototype.__connect = function (key, credentials, cb) {
   const is_secure = (typeof credentials.object.secure === 'boolean') ?
     credentials.object.secure : true;
 
-  const module_creds = {
+  const module_options = {
     username: credentials.object.nick,
     nicknames: [ credentials.object.nick ],
-    server: credentials.object.server || 'irc.freenode.net',
+    server: credentials.object.server || 'irc.libera.chat',
     realname: credentials.actor.name || credentials.object.nick,
     port: (credentials.object.port) ?
       parseInt(credentials.object.port, 10) : (is_secure) ? 6697 : 6667,
     debug: console.log
   };
   if (is_secure) {
-    module_creds.connectOptions = { rejectUnauthorized: false };
+    module_options.connectOptions = { rejectUnauthorized: false };
   }
-  this.debug('attempting to connect to ' + module_creds.server + ':' + module_creds.port +
-    ` transport: ${is_secure?'secure':'clear'}`);
+  if (credentials.object.sasl) {
+    module_options.saslPassword = credentials.object.password;
+    module_options.capabilities = { requires: [ "sasl" ] };
+  }
 
-  const client = IrcSocket(module_creds, is_secure ? tls : net);
+  this.debug('attempting to connect to ' + module_options.server + ':' + module_options.port +
+    ` transport: ${is_secure?'secure':'clear'} sasl: ${credentials.object.sasl}`);
+
+  const client = new IrcSocket(module_options, is_secure ? tls : net);
 
   const __forceDisconnect = (err) => {
     this.__forceDisconnect = true;
@@ -621,16 +628,17 @@ IRC.prototype.__connect = function (key, credentials, cb) {
   });
 
   client.connect().then((res) => {
+    if (res.isFail()) {
+      return cb(`unable to connect to server: ${res.fail()}`);
+    }
+    const capabilities = res.ok();
     this.__clientConnecting = false;
-    if (res.isOk()) {
-      if (this.__forceDisconnect) {
-        client.end();
-        return cb('force disconnect active, aborting connect.');
-      }
-      this.debug('connected to ' + module_creds.server);
-      return cb(null, client);
+    if (this.__forceDisconnect) {
+      client.end();
+      return cb('force disconnect active, aborting connect.');
     } else {
-      return cb('unable to connect to server');
+      this.debug(`connected to ${module_options.server} capabilities: `, capabilities);
+      return cb(null, client);
     }
   });
 };
@@ -681,7 +689,7 @@ IRC.prototype.__registerListeners = function (server) {
 
   this.irc2as.events.on('ping', (timestamp) => {
     this.debug('received PING at ' + timestamp);
-    client.raw('PONG ' + job.actor.name);
+    this.__client.raw('PONG');
   });
 };
 
