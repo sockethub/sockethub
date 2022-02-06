@@ -40,7 +40,7 @@
     <div class="modal">
       <h3>Click `Join` to connect to the XMPP server.</h3>
       <form id="intro" action="">
-        <input id="username" autocomplete="off" value="username@jabber.org"><button class="invis" disabled>&nbsp;</button>
+        <input id="userAddress" autocomplete="off" value="username@jabber.org"><button class="invis" disabled>&nbsp;</button>
         <input id="password" type="password" autocomplete="off" value="password"><button class="invis" disabled>&nbsp;</button>
         <input id="resource" autocomplete="off" value="SockethubExample" disabled><button id="join">Join</button>
       </form>
@@ -62,7 +62,7 @@
       localStorage.debug = 'sockethub:*';
       let config = {
         type: 'credentials',
-        username: 'username@jabber.org',
+        userAddress: 'username@jabber.org',
         password: '123456',
         resource: 'Home'
       };
@@ -74,8 +74,8 @@
       function __updateActor(username) {
         console.log('updating actor object for: ' + username);
         // our xmpp user info
-        config.username = username; // set global nick
-        actorString = config.username + '/' + config.resource;
+        config.userAddress = username; // set global userAddress
+        actorString = config.userAddress + '/' + config.resource;
         const asObject = {
           id: actorString,
           type: "person",
@@ -149,11 +149,11 @@
       // handler for user input, emit messages to sockethub server
       $('#join').click(function (e) {
         e.preventDefault();
-        config.username = $('#username').val();
+        config.userAddress = $('#userAddress').val();
         config.password = $('#password').val();
         config.resource = $('#resource').val();
 
-        __updateActor(config.username);
+        __updateActor(config.userAddress);
 
         setTimeout(function () {
           // sending irc credentials to sockethub server
