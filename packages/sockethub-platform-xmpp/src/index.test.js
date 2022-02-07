@@ -96,7 +96,7 @@ const job = {
       actor: actor,
       object: {
         type: 'presence',
-        presence: 'available',
+        presence: 'online',
         content: 'ready to chat'
       }
     },
@@ -104,7 +104,7 @@ const job = {
       actor: actor,
       object: {
         type: 'presence',
-        presence: 'unavailable',
+        presence: 'away',
         content: 'eating popcorn'
       }
     },

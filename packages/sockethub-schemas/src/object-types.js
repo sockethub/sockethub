@@ -134,7 +134,7 @@ module.exports = {
         "enum": [ "presence" ]
       },
       "presence": {
-        "enum": [ "offline", "unavailable", "online" ]
+        "enum": [ "away", "chat", "dnd", "xa", "offline", "online" ]
       },
       "content": {
         "type": "string"

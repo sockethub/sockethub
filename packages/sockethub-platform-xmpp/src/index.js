@@ -308,7 +308,7 @@ class XMPP {
     this.debug(`update() called for ${job.actor.id}`);
     if (job.object.type === 'presence') {
       const type = job.object.presence === "offline" ? 'unavailable' : '';
-      const show = job.object.presence === "unavailable" && !type ? 'away' : '';
+      const show = job.object.presence !== "online" && job.object.presence !== "offline" ? job.object.presence : '';
       const status = job.object.content ? job.object.content : '';
       // setting presence
       this.debug(`setting presence: ${type} ${show}`);

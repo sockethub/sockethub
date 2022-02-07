@@ -162,8 +162,11 @@ module.exports = {
 					},
 					"presence": {
 						"enum": [
+							"away",
+							"chat",
+							"dnd",
+							"xa",
 							"offline",
-							"unavailable",
 							"online"
 						]
 					},

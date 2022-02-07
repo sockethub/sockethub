@@ -247,7 +247,7 @@ module.exports = [
       },
       object: {
         type: 'presence',
-        presence: 'unavailable',
+        presence: 'away',
         content: 'forgot the milk'
       },
       target: {
@@ -271,7 +271,7 @@ module.exports = [
       },
       object: {
         type: 'presence',
-        presence: 'away',
+        presence: 'afk',
         content: 'forgot the milk'
       },
       target: {
@@ -280,7 +280,7 @@ module.exports = [
       }
     },
     false,
-    '/object/presence: must be equal to one of the allowed values: offline, unavailable, online'
+    '/object/presence: must be equal to one of the allowed values: away, chat, dnd, xa, offline, online'
   ],
 
   [
