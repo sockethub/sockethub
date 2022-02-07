@@ -261,7 +261,8 @@
 			},
 			"presence": {
 				"required": [
-					"type"
+					"type",
+					"presence"
 				],
 				"additionalProperties": false,
 				"properties": {
@@ -277,7 +278,7 @@
 							"online"
 						]
 					},
-					"status": {
+					"content": {
 						"type": "string"
 					}
 				}

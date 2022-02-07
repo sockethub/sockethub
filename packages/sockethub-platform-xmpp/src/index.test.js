@@ -92,13 +92,28 @@ const job = {
     }
   },
   update: {
-    presence: {
+    presenceOnline: {
       actor: actor,
       object: {
         type: 'presence',
         presence: 'available',
-        status: 'available',
+        content: 'ready to chat'
+      }
+    },
+    presenceUnavailable: {
+      actor: actor,
+      object: {
+        type: 'presence',
+        presence: 'unavailable',
         content: 'eating popcorn'
+      }
+    },
+    presenceOffline: {
+      actor: actor,
+      object: {
+        type: 'presence',
+        presence: 'offline',
+        content: ''
       }
     }
   },
@@ -271,10 +286,24 @@ describe('Platform', () => {
     })
 
     describe('#update', () => {
-      it('calls xmpp.js correctly', (done) => {
-        xp.update(job.update.presence, () => {
+      it('calls xml() correctly for available', (done) => {
+        xp.update(job.update.presenceOnline, () => {
           sinon.assert.calledOnce(xp.__client.send);
-          expect(xmlFake.getCall(0).args).to.eql([ 'presence', { show: 'chat' }, { status: 'eating popcorn' } ]);
+          expect(xmlFake.getCall(0).args).to.eql([ 'presence', { type: '' }, { show: '' }, { status: 'ready to chat' } ]);
+          done();
+        });
+      });
+      it('calls xml() correctly for unavailable', (done) => {
+        xp.update(job.update.presenceUnavailable, () => {
+          sinon.assert.calledOnce(xp.__client.send);
+          expect(xmlFake.getCall(0).args).to.eql([ 'presence', { type: '' }, { show: 'away' }, { status: 'eating popcorn' } ]);
+          done();
+        });
+      });
+      it('calls xml() correctly for offline', (done) => {
+        xp.update(job.update.presenceOffline, () => {
+          sinon.assert.calledOnce(xp.__client.send);
+          expect(xmlFake.getCall(0).args).to.eql([ 'presence', { type: 'unavailable' }, { show: '' }, { status: '' } ]);
           done();
         });
       });

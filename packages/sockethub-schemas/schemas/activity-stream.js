@@ -261,7 +261,8 @@ module.exports = {
 			},
 			"presence": {
 				"required": [
-					"type"
+					"type",
+					"presence"
 				],
 				"additionalProperties": false,
 				"properties": {
@@ -277,7 +278,7 @@ module.exports = {
 							"online"
 						]
 					},
-					"status": {
+					"content": {
 						"type": "string"
 					}
 				}
