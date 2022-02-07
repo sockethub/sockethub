@@ -248,7 +248,7 @@ module.exports = [
       object: {
         type: 'presence',
         presence: 'unavailable',
-        status: 'forgot the milk'
+        content: 'forgot the milk'
       },
       target: {
         id: 'chatroom@crusty.net',
@@ -272,7 +272,7 @@ module.exports = [
       object: {
         type: 'presence',
         presence: 'away',
-        status: 'forgot the milk'
+        content: 'forgot the milk'
       },
       target: {
         id: 'chatroom@crusty.net',
