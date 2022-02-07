@@ -7,6 +7,9 @@ module.exports  = {
       username: username,
       password: credentials.object.password
     };
+    if (credentials.object.port) {
+      xmpp_creds.service = `${xmpp_creds.service}:${credentials.object.port}`;
+    }
     if (credentials.object.resource) {
       xmpp_creds.resource = credentials.object.resource;
     }
