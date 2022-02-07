@@ -39,6 +39,16 @@ const target = {
 };
 
 const job = {
+  connect: {
+    context: 'xmpp',
+    type: 'connect',
+    actor: {
+      id: 'slvrbckt@jabber.net/Home',
+      type: 'person',
+      name: 'Nick Jennings',
+      userName: 'slvrbckt'
+    }
+  },
   join: {
     actor: actor,
     object: {
@@ -82,12 +92,28 @@ const job = {
     }
   },
   update: {
-    presence: {
+    presenceOnline: {
       actor: actor,
       object: {
         type: 'presence',
-        presence: 'available',
-        status: 'available'
+        presence: 'online',
+        content: 'ready to chat'
+      }
+    },
+    presenceUnavailable: {
+      actor: actor,
+      object: {
+        type: 'presence',
+        presence: 'away',
+        content: 'eating popcorn'
+      }
+    },
+    presenceOffline: {
+      actor: actor,
+      object: {
+        type: 'presence',
+        presence: 'offline',
+        content: ''
       }
     }
   },
@@ -148,11 +174,12 @@ describe('Platform', () => {
 
   describe('Successful initialization', () => {
     it('works as intended', (done) => {
-      xp.connect(job.join, credentials, () => {
+      xp.connect(job.connect, credentials, () => {
         sinon.assert.calledOnce(clientFake);
         expect(xp.__client.on).to.exist;
         expect(xp.__client.start).to.exist;
         expect(xp.__client.send).to.exist;
+        expect(xp.__client.send.callCount).to.eql(0);
         sinon.assert.calledOnce(clientObjectFake.start);
         sinon.assert.notCalled(xp.sendToClient);
         done();
@@ -163,7 +190,7 @@ describe('Platform', () => {
   describe('Bad initialization', () => {
     it('returns the existing __client object',   (done) => {
       xp.__client = 'foo';
-      xp.connect(job.join, credentials, () => {
+      xp.connect(job.connect, credentials, () => {
         expect(xp.__client).to.equal('foo');
         sinon.assert.notCalled(clientFake);
         sinon.assert.notCalled(xp.sendToClient);
@@ -175,7 +202,7 @@ describe('Platform', () => {
 
     it('deletes the __client property on failed connect', (done) => {
       clientObjectFake.start = sinon.fake.rejects('foo');
-      xp.connect(job.join, credentials, () => {
+      xp.connect(job.connect, credentials, () => {
         expect(xp.__client).to.be.undefined;
         sinon.assert.notCalled(xp.sendToClient);
         done();
@@ -190,7 +217,7 @@ describe('Platform', () => {
 
     describe('#join', () => {
       it('calls xmpp.js correctly', (done) => {
-        expect(xp.__client).to.not.be.undefined;
+        expect(xp.__client.send).to.be.instanceof(Function);
         xp.join(job.join, () => {
           sinon.assert.calledOnce(xp.__client.send);
           sinon.assert.calledWith(xmlFake, "presence", {
@@ -205,12 +232,13 @@ describe('Platform', () => {
     describe('#leave', () => {
       it('calls xmpp.js correctly', (done) => {
         expect(xp.__client).to.not.be.undefined;
+        expect(xp.__client.send).to.be.instanceof(Function);
         xp.leave(job.leave, () => {
           sinon.assert.calledOnce(xp.__client.send);
           sinon.assert.calledWith(xmlFake, "presence", {
-            "from": "testingham@jabber.net",
-            "to": "partyroom@jabber.net/testing ham",
-            "type": "unavailable"
+            from: "testingham@jabber.net",
+            to: "partyroom@jabber.net/testing ham",
+            type: "unavailable"
           });
           done();
         });
@@ -219,63 +247,63 @@ describe('Platform', () => {
 
     describe('#send', () => {
       it('calls xmpp.js correctly', (done) => {
-        // FIXME wrong message also passes
-        const message = xmlFake(
-          "message", {
-            type: "chat",
-            to: job.send.chat.target['id'],
-            id: job.send.chat.object['id'],
-          },
-          xmlFake("body", {}, job.send.chat.object.content),
-        );
+        expect(xp.__client).to.not.be.undefined;
+        expect(xp.__client.send).to.be.instanceof(Function);
         xp.send(job.send.chat, () => {
-          sinon.assert.calledWith(xp.__client.send, message);
+          sinon.assert.calledOnce(xp.__client.send);
+          expect(xmlFake.getCall(0).args).to.eql(["body", {}, job.send.chat.object.content]);
+          expect(xmlFake.getCall(1).args).to.eql(["message", {
+            type: 'chat', to: job.send.chat.target.id, id: job.send.chat.object.id
+          }, undefined, undefined]);
           done();
         });
       });
 
       it('calls xmpp.js correctly for a groupchat', (done) => {
-        // FIXME wrong message also passes
-        const message = xmlFake(
-          "message", {
-            type: 'groupchat',
-            to: job.send.groupchat.target['id'],
-            id: job.send.groupchat.object['id']
-          },
-          xmlFake("body", {}, job.send.groupchat.object.content),
-        );
         xp.send(job.send.groupchat, () => {
-          sinon.assert.calledWith(xp.__client.send, message);
+          sinon.assert.calledOnce(xp.__client.send);
+          expect(xmlFake.getCall(0).args).to.eql(["body", {}, job.send.groupchat.object.content]);
+          expect(xmlFake.getCall(1).args).to.eql(["message", {
+            type: 'groupchat', to: job.send.groupchat.target.id, id: job.send.groupchat.object.id
+          }, undefined, undefined]);
           done();
         });
       });
 
       it('calls xmpp.js correctly for a message correction', (done) => {
-        // FIXME wrong message also passes
-        const message = xmlFake(
-          "message", {
-            type: 'groupchat',
-            to: job.send.correction.target['id'],
-            id: job.send.correction.object['id'],
-          },
-          xmlFake("body", {}, job.send.correction.object.content),
-          xmlFake("replace", {
-            id: job.send.correction.object['xmpp:replace'].id,
-            xmlns: 'urn:xmpp:message-correct:0' }
-          )
-        );
         xp.send(job.send.correction, () => {
-          sinon.assert.calledWith(xp.__client.send, message);
+          sinon.assert.calledOnce(xp.__client.send);
+          expect(xmlFake.getCall(0).args).to.eql(["body", {}, job.send.correction.object.content]);
+          expect(xmlFake.getCall(1).args).to.eql(["replace", {
+            id: job.send.correction.object['xmpp:replace'].id, xmlns: 'urn:xmpp:message-correct:0'
+          }]);
+          expect(xmlFake.getCall(2).args).to.eql(["message", {
+            type: 'groupchat', to: job.send.correction.target.id, id: job.send.correction.object.id
+          }, undefined, undefined]);
           done();
         });
       });
     })
 
     describe('#update', () => {
-      it('calls xmpp.js correctly', (done) => {
-        xp.update(job.update.presence, () => {
+      it('calls xml() correctly for available', (done) => {
+        xp.update(job.update.presenceOnline, () => {
           sinon.assert.calledOnce(xp.__client.send);
-          sinon.assert.calledWith(xp.__client.send, xmlFake("presence", { type: "available" }));
+          expect(xmlFake.getCall(0).args).to.eql([ 'presence', {}, {}, { status: 'ready to chat' } ]);
+          done();
+        });
+      });
+      it('calls xml() correctly for unavailable', (done) => {
+        xp.update(job.update.presenceUnavailable, () => {
+          sinon.assert.calledOnce(xp.__client.send);
+          expect(xmlFake.getCall(0).args).to.eql([ 'presence', {}, { show: 'away' }, { status: 'eating popcorn' } ]);
+          done();
+        });
+      });
+      it('calls xml() correctly for offline', (done) => {
+        xp.update(job.update.presenceOffline, () => {
+          sinon.assert.calledOnce(xp.__client.send);
+          expect(xmlFake.getCall(0).args).to.eql([ 'presence', { type: 'unavailable' }, {}, {} ]);
           done();
         });
       });
@@ -285,8 +313,9 @@ describe('Platform', () => {
       it('calls xmpp.js correctly', (done) => {
         xp['request-friend'](job['request-friend'], () => {
           sinon.assert.calledOnce(xp.__client.send);
-          sinon.assert.calledWith(xp.__client.send,
-            xmlFake("presence", { type: "subscribe", to: job['request-friend'].target['id'] }));
+          expect(xmlFake.getCall(0).args).to.eql(["presence", {
+            type: "subscribe", to: job['request-friend'].target['id']
+          }]);
           done();
         });
       });
@@ -296,8 +325,9 @@ describe('Platform', () => {
       it('calls xmpp.js correctly', (done) => {
         xp['remove-friend'](job['remove-friend'], () => {
           sinon.assert.calledOnce(xp.__client.send);
-          sinon.assert.calledWith(xp.__client.send,
-            xmlFake("presence", { type: "subscribe", to: job['remove-friend'].target['id'] }));
+          expect(xmlFake.getCall(0).args).to.eql(["presence", {
+            type: "unsubscribe", to: job['remove-friend'].target['id']
+          }]);
           done();
         });
       });
@@ -307,8 +337,9 @@ describe('Platform', () => {
       it('calls xmpp.js correctly', (done) => {
         xp['remove-friend'](job['remove-friend'], () => {
           sinon.assert.calledOnce(xp.__client.send);
-          sinon.assert.calledWith(xp.__client.send,
-            xmlFake("presence", { type: "subscribe", to: job['make-friend'].target['id'] }));
+          expect(xmlFake.getCall(0).args).to.eql(["presence", {
+            type: "unsubscribe", to: job['make-friend'].target['id']
+          }]);
           done();
         });
       });
@@ -318,13 +349,13 @@ describe('Platform', () => {
       it('calls xmpp.js correctly', (done) => {
         xp.query(job.query, () => {
           sinon.assert.calledOnce(xp.__client.send);
-          sinon.assert.calledWith(xp.__client.send,
-            xmlFake("iq",  {
+          expect(xmlFake.getCall(0).args).to.eql(["query", {xmlns: 'http://jabber.org/protocol/disco#items'}]);
+          expect(xmlFake.getCall(1).args).to.eql(["iq",  {
               id: 'muc_id',
               type: 'get',
               from: "testingham@jabber.net",
-              to: "partyroom@jabber.net/testing ham"
-            }, xmlFake("query", {xmlns: 'http://jabber.org/protocol/disco#items'})));
+              to: "partyroom@jabber.net"
+            }, undefined]);
           done();
         });
       });

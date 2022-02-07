@@ -261,7 +261,8 @@ module.exports = {
 			},
 			"presence": {
 				"required": [
-					"type"
+					"type",
+					"presence"
 				],
 				"additionalProperties": false,
 				"properties": {
@@ -272,12 +273,15 @@ module.exports = {
 					},
 					"presence": {
 						"enum": [
+							"away",
+							"chat",
+							"dnd",
+							"xa",
 							"offline",
-							"unavailable",
 							"online"
 						]
 					},
-					"status": {
+					"content": {
 						"type": "string"
 					}
 				}

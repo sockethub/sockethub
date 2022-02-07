@@ -284,7 +284,7 @@ class XMPP {
 
   /**
    * @description
-   * Indicate presence and status message.
+   * Indicate presence and status message. Valid presence values are "away", "chat", "dnd", "xa", "offline", "online".
    *
    * @param {object} job activity streams object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
@@ -299,21 +299,30 @@ class XMPP {
    *   },
    *   object: {
    *     type: 'presence'
-   *     presence: 'chat',
+   *     presence: 'away',
    *     content: '...clever saying goes here...'
    *   }
    * }
    */
   update(job, done) {
-    this.debug('update() called for ' + job.actor.id);
+    this.debug(`update() called for ${job.actor.id}`);
+    const props = {};
+    const show = {};
+    const status = {};
     if (job.object.type === 'presence') {
-      const show = job.object.presence === 'available' ? 'chat' : '';
-      const status = job.object.content || '';
+      if (job.object.presence === "offline") {
+        props.type = 'unavailable';
+      } else if (job.object.presence !== "online") {
+        show.show = job.object.presence;
+      }
+      if (job.object.content) {
+        status.status = job.object.content;
+      }
       // setting presence
-      this.debug('setting presence: ' + show + ' status: ' + status);
-      this.__client.send(xml(show, { type: status })).then(done);
+      this.debug(`setting presence: ${job.object.presence}`);
+      this.__client.send(xml("presence", props, show, status)).then(done);
     } else {
-      done('unknown object type (should be presence?): ' + job.object.type);
+      done(`unknown update object type: ${job.object.type}`);
     }
   };
 
