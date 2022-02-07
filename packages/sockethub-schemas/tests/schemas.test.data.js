@@ -247,8 +247,8 @@ module.exports = [
       },
       object: {
         type: 'presence',
-        presence: 'unavailable',
-        status: 'forgot the milk'
+        presence: 'away',
+        content: 'forgot the milk'
       },
       target: {
         id: 'chatroom@crusty.net',
@@ -271,8 +271,8 @@ module.exports = [
       },
       object: {
         type: 'presence',
-        presence: 'away',
-        status: 'forgot the milk'
+        presence: 'afk',
+        content: 'forgot the milk'
       },
       target: {
         id: 'chatroom@crusty.net',
@@ -280,7 +280,7 @@ module.exports = [
       }
     },
     false,
-    '/object/presence: must be equal to one of the allowed values: offline, unavailable, online'
+    '/object/presence: must be equal to one of the allowed values: away, chat, dnd, xa, offline, online'
   ],
 
   [
