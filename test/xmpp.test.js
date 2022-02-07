@@ -38,8 +38,12 @@ describe('integration page', () => {
 
   let genHandler = function (done) {
     return function (msg) {
-      if (msg && msg.error) { done(msg.error); }
-      else { done(); }
+      if (msg && msg.error) {
+        console.log("ERROR: ", msg.error);
+        done(msg.error);
+      } else {
+        done();
+      }
     }
   }
 
@@ -61,12 +65,8 @@ describe('integration page', () => {
         object: {
           type: "credentials",
           password: "passw0rd",
-          port: 5222,
           resource: "SockethubExample",
-          server: "prosody",
-          username: "jimmy"
-          // TODO FIXME: create test to verify setting credentials without server property
-          //  eg. username: jimmy@prosody
+          userAddress: "jimmy@prosody"
         }
       }, genHandler(done));
     }).timeout(3000);
@@ -80,6 +80,6 @@ describe('integration page', () => {
         },
         context: "xmpp"
       }, genHandler(done));
-    });
+    }).timeout(6000);
   });
 });
