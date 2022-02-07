@@ -127,16 +127,16 @@ module.exports = {
 
   "presence": {
     "activity-object": true,
-    "required": [ "type" ],
+    "required": [ "type", "presence" ],
     "additionalProperties": false,
     "properties": {
       "type": {
         "enum": [ "presence" ]
       },
       "presence": {
-        "enum": [ "offline", "unavailable", "online" ]
+        "enum": [ "away", "chat", "dnd", "xa", "offline", "online" ]
       },
-      "status": {
+      "content": {
         "type": "string"
       }
     }

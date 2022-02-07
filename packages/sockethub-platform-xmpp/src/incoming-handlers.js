@@ -78,18 +78,23 @@ class IncomingHandlers {
 
   presence(stanza) {
     const obj = {
-      'type': 'update',
+      type: 'update',
       actor: {
-        'type': 'person',
-        'id': stanza.attrs.from,
+        type: 'person',
+        id: stanza.attrs.from,
       },
       object: {
-        'type': 'presence',
-        status: stanza.getChildText('status') || "",
-        presence: (stanza.getChild('show')) ? stanza.getChild('show').getText() :
-          stanza.attrs.type || "online"
+        type: 'presence'
       }
     };
+    if (stanza.getChildText('status')) {
+      obj.object.content = stanza.getChildText('status');
+    }
+    if (stanza.getChild('show')) {
+      obj.object.presence = stanza.getChild('show').getText();
+    } else {
+      obj.object.presence = stanza.attrs.type === "unavailable" ? "offline" : "online"
+    }
     if (stanza.attrs.to) {
       obj.target = {'id': stanza.attrs.to};
     } else {
