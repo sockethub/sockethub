@@ -17,31 +17,30 @@ module.exports = [
   [
     `initial presence`,
     `<presence to="foo@bar.org" from="baz@bag.org"></presence>`,
-    {'type': 'update', actor: { 'id': "baz@bag.org", 'type': "person" },
-      target: { 'id': "foo@bar.org" }, object: {'type': 'presence', content: "",
-        presence: "online"}}
+    {type: 'update', actor: { id: "baz@bag.org", type: "person" },
+      target: { id: "foo@bar.org" }, object: {type: 'presence', presence: "online"}}
   ],
   [
     `presence body`,
     `<presence to="foo@bar.org" from="baz@bag.org"><show>online</show> <status>away message!</status></presence>`,
-    {'type': 'update', actor: { 'id': "baz@bag.org", 'type': "person" },
-      target: { 'id': "foo@bar.org" }, object: {'type': 'presence', content: "away message!",
+    {type: 'update', actor: { id: "baz@bag.org", type: "person" },
+      target: { id: "foo@bar.org" }, object: {type: 'presence', content: "away message!",
         presence: "online"}}
   ],
   [
     `presence unavailable`,
     `<presence to="foo@bar.org/hyperchannel" from="baz@bag.org/yarg" type="unavailable"><x xmlns="http://jabber.org/protocol/muc#user"><item affiliation="owner" role="none"></item></x></presence>`,
-    { type: "update", actor: { "type": "person", "id": "baz@bag.org/yarg" },
+    { type: "update", actor: { type: "person", id: "baz@bag.org/yarg" },
       target: { id: "foo@bar.org/hyperchannel" },
-      object: { type: "presence", content: "", presence: "offline" },
+      object: { type: "presence", presence: "offline" },
     }
   ],
   [
     `presence away`,
     `<presence to="foo@bar.org/hyperchannel" from="baz@bag.org/yarg" type="available"><show>away</show><x xmlns="http://jabber.org/protocol/muc#user"><item affiliation="owner" role="none"></item></x></presence>`,
-    { type: "update", actor: { "type": "person", "id": "baz@bag.org/yarg" },
+    { type: "update", actor: { type: "person", id: "baz@bag.org/yarg" },
       target: { id: "foo@bar.org/hyperchannel" },
-      object: { type: "presence", content: "", presence: "away" },
+      object: { type: "presence", presence: "away" },
     }
   ],
   [

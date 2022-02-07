@@ -289,21 +289,21 @@ describe('Platform', () => {
       it('calls xml() correctly for available', (done) => {
         xp.update(job.update.presenceOnline, () => {
           sinon.assert.calledOnce(xp.__client.send);
-          expect(xmlFake.getCall(0).args).to.eql([ 'presence', { type: '' }, { show: '' }, { status: 'ready to chat' } ]);
+          expect(xmlFake.getCall(0).args).to.eql([ 'presence', {}, {}, { status: 'ready to chat' } ]);
           done();
         });
       });
       it('calls xml() correctly for unavailable', (done) => {
         xp.update(job.update.presenceUnavailable, () => {
           sinon.assert.calledOnce(xp.__client.send);
-          expect(xmlFake.getCall(0).args).to.eql([ 'presence', { type: '' }, { show: 'away' }, { status: 'eating popcorn' } ]);
+          expect(xmlFake.getCall(0).args).to.eql([ 'presence', {}, { show: 'away' }, { status: 'eating popcorn' } ]);
           done();
         });
       });
       it('calls xml() correctly for offline', (done) => {
         xp.update(job.update.presenceOffline, () => {
           sinon.assert.calledOnce(xp.__client.send);
-          expect(xmlFake.getCall(0).args).to.eql([ 'presence', { type: 'unavailable' }, { show: '' }, { status: '' } ]);
+          expect(xmlFake.getCall(0).args).to.eql([ 'presence', { type: 'unavailable' }, {}, {} ]);
           done();
         });
       });

@@ -306,13 +306,21 @@ class XMPP {
    */
   update(job, done) {
     this.debug(`update() called for ${job.actor.id}`);
+    const props = {};
+    const show = {};
+    const status = {};
     if (job.object.type === 'presence') {
-      const type = job.object.presence === "offline" ? 'unavailable' : '';
-      const show = job.object.presence !== "online" && job.object.presence !== "offline" ? job.object.presence : '';
-      const status = job.object.content ? job.object.content : '';
+      if (job.object.presence === "offline") {
+        props.type = 'unavailable';
+      } else if (job.object.presence !== "online") {
+        show.show = job.object.presence;
+      }
+      if (job.object.content) {
+        status.status = job.object.content;
+      }
       // setting presence
-      this.debug(`setting presence: ${type} ${show}`);
-      this.__client.send(xml("presence", { type: type }, { show }, { status })).then(done);
+      this.debug(`setting presence: ${job.object.presence}`);
+      this.__client.send(xml("presence", props, show, status)).then(done);
     } else {
       done(`unknown update object type: ${job.object.type}`);
     }
