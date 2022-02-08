@@ -60,7 +60,7 @@ describe('Initialize IRC Platform', () => {
 
   it('lists required types enum', () => {
     expect(platform.schema.messages.properties.type.enum).to.eql([
-      'connect', 'update', 'join', 'leave', 'send', 'observe', 'announce'
+      'connect', 'update', 'join', 'leave', 'send', 'query', 'announce'
     ]);
   });
   
@@ -169,10 +169,10 @@ describe('Initialize IRC Platform', () => {
         platform.__completeJob();
       });
 
-      it('observe()', (done) => {
-        platform.observe({
+      it('query()', (done) => {
+        platform.query({
           context: 'irc',
-          type: 'observe',
+          type: 'query',
           actor: actor,
           target: targetRoom,
           object: { type: 'attendance' },

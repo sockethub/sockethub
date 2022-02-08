@@ -3,9 +3,9 @@ import hash from "object-hash";
 import config from './config';
 import Queue from 'bull';
 import { getPlatformId, decryptJobData } from "./common";
-import { ActivityObject, JobDataDecrypted, JobEncrypted } from "./sockethub";
+import { ActivityStream, JobDataDecrypted, JobEncrypted } from "./sockethub";
 import { MessageFromParent } from './platform-instance';
-import {getSessionStore} from "./store";
+import { getSessionStore } from "./store";
 
 // command-line params
 const parentId = process.argv[2];
@@ -23,7 +23,7 @@ logger(`platform handler initialized for ${platformName} ${identifier}`);
 
 export interface PlatformSession {
   debug(msg: string): void;
-  sendToClient(msg: ActivityObject, special?: string): void;
+  sendToClient(msg: ActivityStream, special?: string): void;
   updateActor(credentials: object): void;
 }
 
@@ -101,7 +101,7 @@ function getJobHandler(secret: string) {
   return (job: JobEncrypted, done: Function) => {
     const jobData: JobDataDecrypted = decryptJobData(job, secret);
     const jobLog = debug(`${loggerPrefix}:${jobData.sessionId}`);
-    jobLog(`job ${jobData.title} ${jobData.msg.type} - received`);
+    jobLog(`received ${jobData.title} ${jobData.msg.type}`);
     const sessionSecret = jobData.msg.sessionSecret;
     delete jobData.msg.sessionSecret;
 
@@ -113,7 +113,7 @@ function getJobHandler(secret: string) {
           if (jobCallbackCalled) { return; }
           jobCallbackCalled = true;
           if (err) {
-            jobLog(`job ${jobData.title} ${jobData.msg.type} - errored`);
+            jobLog(`errored ${jobData.title} ${jobData.msg.type}`);
             let errMsg;
             // some error objects (eg. TimeoutError) don't interoplate correctly to human-readable
             // so we have to do this little dance
@@ -124,7 +124,7 @@ function getJobHandler(secret: string) {
             }
             done(new Error(errMsg));
           } else {
-            jobLog(`job ${jobData.title} ${jobData.msg.type} - completed`);
+            jobLog(`completed ${jobData.title} ${jobData.msg.type}`);
             done(null, result);
           }
         };
@@ -151,7 +151,7 @@ function getJobHandler(secret: string) {
  * @param command string containing the type of command to be sent. 'message' or 'close'
  */
 function getSendFunction(command: string) {
-  return function (msg: ActivityObject, special?: string) {
+  return function (msg: ActivityStream, special?: string) {
     process.send([command, msg, special]);
   };
 }

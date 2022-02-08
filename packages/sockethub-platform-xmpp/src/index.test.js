@@ -129,7 +129,7 @@ const job = {
     actor: actor,
     target: target.mrfoobar
   },
-  observe: {
+  query: {
     actor: actor,
     target: target.partyroom,
     object: {
@@ -345,9 +345,9 @@ describe('Platform', () => {
       });
     });
 
-    describe('#observe', () => {
+    describe('#query', () => {
       it('calls xmpp.js correctly', (done) => {
-        xp.observe(job.observe, () => {
+        xp.query(job.query, () => {
           sinon.assert.calledOnce(xp.__client.send);
           expect(xmlFake.getCall(0).args).to.eql(["query", {xmlns: 'http://jabber.org/protocol/disco#items'}]);
           expect(xmlFake.getCall(1).args).to.eql(["iq",  {

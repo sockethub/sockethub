@@ -37,7 +37,7 @@ function platformIsAccepted(platformName) {
 }
 
 // if the platform schema lists valid types it implements (essentially methods/verbs for
-// sockethub to call) the add it to the supported types list.
+// sockethub to call) then add it to the supported types list.
 function platformListsSupportedTypes(p) {
   return ((p.schema.messages.properties) && (p.schema.messages.properties.type) &&
     (p.schema.messages.properties.type.enum) &&
@@ -99,7 +99,7 @@ module.exports = function platformLoad(moduleList) {
             messages: p.schema.messages || {}
           },
           version: packageJson.version,
-          types: types.join(', ')
+          types: types
         });
       }
     }

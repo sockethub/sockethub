@@ -1,7 +1,7 @@
 import ActivityStreams from 'activity-streams';
 
 import config from "../config";
-import {ActivityObject} from "../sockethub";
+import { ActivityStream } from "../sockethub";
 
 const activity = ActivityStreams(config.get('activity-streams:opts'));
 
@@ -9,7 +9,7 @@ function ensureObject(msg: any) {
   return !((typeof msg !== 'object') || (Array.isArray(msg)));
 }
 
-export default function expandActivityStream(msg: ActivityObject, done: Function) {
+export default function expandActivityStream(msg: ActivityStream, done: Function) {
   if (! ensureObject(msg)) {
     done(new Error(`message received is not an object.`));
   } else if (typeof msg.context !== 'string') {

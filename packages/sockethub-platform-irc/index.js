@@ -106,7 +106,7 @@ IRC.prototype.schema = {
     "required": [ 'type' ],
     "properties": {
       "type": {
-        "enum": [ 'connect', 'update', 'join', 'leave', 'send', 'observe', 'announce' ]
+        "enum": [ 'connect', 'update', 'join', 'leave', 'send', 'query', 'announce' ]
       }
     }
   },
@@ -417,9 +417,9 @@ IRC.prototype.update = function (job, credentials, done) {
 };
 
 /**
- * Function: observe
+ * Function: query
  *
- * Indicate an intent to observe something (ie. get a list of users in a room).
+ * Indicate an intent to query something (e.g. get a list of users in a room).
  *
  * @param {object} job activity streams object // TODO LINK
  * @param {object} done callback when job is done // TODO LINK
@@ -428,7 +428,7 @@ IRC.prototype.update = function (job, credentials, done) {
  *
  *  {
  *    context: 'irc',
- *    type: 'observe',
+ *    type: 'query',
  *    actor: {
  *      id: 'slvrbckt@irc.freenode.net',
  *      type: 'person',
@@ -449,7 +449,7 @@ IRC.prototype.update = function (job, credentials, done) {
  *  // The above object might return:
  *  {
  *    context: 'irc',
- *    type: 'observe',
+ *    type: 'query',
  *    actor: {
  *      id: 'irc.freenode.net/sockethub',
  *      type: 'room',
@@ -469,13 +469,13 @@ IRC.prototype.update = function (job, credentials, done) {
  *  }
  *
  */
-IRC.prototype.observe = function (job, done) {
-  this.debug('observe() called for ' + job.actor.id);
+IRC.prototype.query = function (job, done) {
+  this.debug('query() called for ' + job.actor.id);
   this.__getClient(job.actor.id, false, (err, client) => {
     if (err) { return done(err); }
 
     if (job.object.type === 'attendance') {
-      this.debug('observe() - sending NAMES for ' + job.target.name);
+      this.debug('query() - sending NAMES for ' + job.target.name);
       client.raw(['NAMES', job.target.name]);
       done();
     } else {
