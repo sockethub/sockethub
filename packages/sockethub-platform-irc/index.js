@@ -129,6 +129,9 @@ IRC.prototype.schema = {
           "nick" : {
             "type": "string"
           },
+          "username" : {
+            "type": "string"
+          },
           "password" : {
             "type": "string"
           },
@@ -579,7 +582,7 @@ IRC.prototype.__connect = function (key, credentials, cb) {
     credentials.object.secure : true;
 
   const module_options = {
-    username: credentials.object.nick,
+    username: credentials.object.username || credentials.object.nick,
     nicknames: [ credentials.object.nick ],
     server: credentials.object.server || 'irc.libera.chat',
     realname: credentials.actor.name || credentials.object.nick,
