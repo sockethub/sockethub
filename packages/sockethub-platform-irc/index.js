@@ -419,7 +419,7 @@ IRC.prototype.update = function (job, credentials, done) {
 /**
  * Function: query
  *
- * Indicate an intent to query something (ie. get a list of users in a room).
+ * Indicate an intent to query something (e.g. get a list of users in a room).
  *
  * @param {object} job activity streams object // TODO LINK
  * @param {object} done callback when job is done // TODO LINK
