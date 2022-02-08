@@ -1,5 +1,4 @@
 import ActivityStreams from 'activity-streams';
-import {ActivityObject} from "../sockethub";
 import config from "../config";
 const activity = ActivityStreams(config.get('activity-streams:opts'));
 
@@ -8,7 +7,7 @@ const activity = ActivityStreams(config.get('activity-streams:opts'));
  * @param obj
  * @param done
  */
-export default function createActivityObject(obj: ActivityObject, done: Function) {
+export default function createActivityObject(obj: any, done: Function) {
   activity.Object.create(obj);
   done(obj);
 }

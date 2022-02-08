@@ -4,7 +4,7 @@ import { debug, Debugger } from 'debug';
 import Queue from 'bull';
 
 import config from "./config";
-import { ActivityObject, JobDataDecrypted, JobEncrypted } from "./sockethub";
+import { ActivityStream, JobDataDecrypted, JobEncrypted } from "./sockethub";
 import { getSocket } from "./serve";
 import { decryptJobData } from "./common";
 
@@ -18,8 +18,8 @@ export interface PlatformInstanceParams {
   actor?: string;
 }
 
-interface MessageFromPlatform extends Array<string|ActivityObject>{
-  0: string, 1: ActivityObject, 2: string}
+interface MessageFromPlatform extends Array<string|ActivityStream>{
+  0: string, 1: ActivityStream, 2: string}
 export interface MessageFromParent extends Array<string|any>{0: string, 1: any}
 
 interface PlatformConfig {
@@ -128,7 +128,7 @@ export default class PlatformInstance {
    * @param sessionId ID of the socket connection to send the message to
    * @param msg ActivityStream object to send to client
    */
-  public sendToClient(sessionId: string, msg: ActivityObject) {
+  public sendToClient(sessionId: string, msg: ActivityStream) {
     getSocket(sessionId).then((socket) => {
       try {
         // this property should never be exposed externally
@@ -144,7 +144,7 @@ export default class PlatformInstance {
   }
 
   // send message to every connected socket associated with this platform instance.
-  private async broadcastToSharedPeers(sessionId: string, msg: ActivityObject) {
+  private async broadcastToSharedPeers(sessionId: string, msg: ActivityStream) {
     for (let sid of this.sessions.values()) {
       if (sid !== sessionId) {
         this.debug(`broadcasting message to ${sid}`);
@@ -155,7 +155,7 @@ export default class PlatformInstance {
 
   // handle job results coming in on the queue from platform instances
   private async handleJobResult(type: string, jobData: JobDataDecrypted, result) {
-    this.debug(`job ${jobData.title}: ${type}`);
+    this.debug(`${type} job ${jobData.title}`);
     delete jobData.msg.sessionSecret;
     let msg = jobData.msg;
     if (type === 'failed') {
@@ -186,7 +186,7 @@ export default class PlatformInstance {
    * @param errorMessage
    */
   private async reportError(sessionId: string, errorMessage: any) {
-    const errorObject: ActivityObject = {
+    const errorObject: ActivityStream = {
       context: this.name,
       type: 'error',
       actor: { id: this.actor },

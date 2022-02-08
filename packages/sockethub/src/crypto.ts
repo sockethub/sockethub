@@ -1,12 +1,12 @@
 import { randomBytes, createCipheriv, createDecipheriv, createHash } from 'crypto';
-import {ActivityObject} from "./sockethub";
+import { ActivityStream } from "./sockethub";
 
 const ALGORITHM = 'aes-256-cbc',
       IV_LENGTH = 16; // For AES, this is always 16
 
 class Crypto {
   constructor() {}
-  encrypt(json: ActivityObject, secret: string): string {
+  encrypt(json: ActivityStream, secret: string): string {
     const iv = randomBytes(IV_LENGTH);
     const cipher = createCipheriv(ALGORITHM, Buffer.from(secret), iv);
     let encrypted = cipher.update(JSON.stringify(json));
@@ -14,7 +14,7 @@ class Crypto {
     encrypted = Buffer.concat([encrypted, cipher.final()]);
     return iv.toString('hex') + ':' + encrypted.toString('hex');
   }
-  decrypt(text: string, secret: string): ActivityObject {
+  decrypt(text: string, secret: string): ActivityStream {
     let parts = text.split(':');
     const iv = Buffer.from(parts.shift(), 'hex');
     const encryptedText = Buffer.from(parts.join(':'), 'hex');
