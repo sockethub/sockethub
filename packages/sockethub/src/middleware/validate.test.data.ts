@@ -251,7 +251,7 @@ export default [
       "credentials, feed, message, person, room, website, attendance, presence, topic, address"
   },
   {
-    "name":"non-expected AS will fail",
+    "name":"unexpected AS",
     "valid":false,
     "type":"message",
     "input":{
@@ -259,7 +259,8 @@ export default [
       "type":"join",
       "context":"irc",
       "target":"irc://irc.dooder.net/a-room"
-    }
+    },
+    "error": "Error: /actor: must be object"
   },
   {
     "name":"missing type property",
@@ -300,9 +301,21 @@ export default [
     "valid":true,
     "type":"message",
     "input":{
-      "type": "foo",
+      "type": "update",
       "context": "irc",
       "actor": { "id": "irc://uuu@localhost", "type": "person" }
     }
+  },
+  {
+    "name":"message with wrong type",
+    "valid":false,
+    "type":"message",
+    "input":{
+      "type": "foorg",
+      "context": "irc",
+      "actor": { "id": "irc://uuu@localhost", "type": "person" }
+    },
+    "error": "Error: platform type foorg not supported by irc platform. " +
+      "(types: credentials, connect, update, join, leave, send, query, announce)"
   }
 ];

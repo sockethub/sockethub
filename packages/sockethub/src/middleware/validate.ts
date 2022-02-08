@@ -5,7 +5,7 @@ import Ajv from 'ajv';
 import apply from 'ajv-formats-draft2019';
 import debug from 'debug';
 import * as SockethubSchemas from 'sockethub-schemas';
-import { ActivityObject } from "../sockethub";
+import { ActivityStream } from "../sockethub";
 
 // @ts-ignore
 import init from "../bootstrap/init";
@@ -34,8 +34,20 @@ function validateActivityObject(msg: any, done: Function) {
     `${schemaURL}/activity-object`), msg, done, true);
 }
 
-function validateActivityStream(msg: any, done: Function) {
-  handleValidation(ajv.getSchema(`${schemaURL}/activity-stream`), msg, done);
+function validateActivityStream(msg: ActivityStream, done: Function) {
+  handleValidation(ajv.getSchema(`${schemaURL}/activity-stream`), msg, (res) => {
+    if (res instanceof Error) {
+      done(res);
+    } else {
+      const platformMeta = init.platforms.get(msg.context);
+      if (! platformMeta.types.includes(msg.type)) {
+        return done(new Error(`platform type ${msg.type} not supported by ${msg.context} ` +
+         `platform. (types: ${platformMeta.types.join(', ')})`));
+      } else {
+        done(res);
+      }
+    }
+  });
 }
 
 function validateCredentials(msg: any, done: Function) {
@@ -65,7 +77,7 @@ function handleValidation(validator, msg, done, isObject=false) {
 // that will be called when the middleware eventually does.
 export default function validate(type: string, sockethubId: string) {
   const sessionLog = debug(`sockethub:validate:${sockethubId}`);
-  return (msg: ActivityObject, done: Function) => {
+  return (msg: ActivityStream, done: Function) => {
     sessionLog('applying schema validation for ' + type);
     if (type === 'activity-object') {
       validateActivityObject(msg, done);

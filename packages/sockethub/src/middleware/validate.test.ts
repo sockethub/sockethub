@@ -31,9 +31,13 @@ describe('Middleware: Validate', () => {
               expect(msg).to.eql(obj.output);
             }
           }
-          expect(obj.valid).to.not.equal(msg instanceof Error);
-          if (obj.error) {
-            expect(msg.toString()).to.equal(obj.error);
+          if (obj.valid) {
+            expect(msg).to.not.be.instanceof(Error);
+          } else {
+            expect(msg).to.be.instanceof(Error);
+            if (obj.error) {
+              expect(msg.toString()).to.equal(obj.error);
+            }
           }
           done();
         });
