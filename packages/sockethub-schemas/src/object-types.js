@@ -127,7 +127,7 @@ module.exports = {
 
   "presence": {
     "activity-object": true,
-    "required": [ "type", "presence" ],
+    "required": [ "type" ],
     "additionalProperties": false,
     "properties": {
       "type": {
