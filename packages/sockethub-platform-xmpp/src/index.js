@@ -402,7 +402,7 @@ class XMPP {
   };
 
   /**
-   * Indicate an intent to observe something (ie. get a list of users in a room).
+   * Indicate an intent to query something (ie. get a list of users in a room).
    *
    * @param {object} job activity streams object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
@@ -411,7 +411,7 @@ class XMPP {
    *
    *  {
    *    context: 'xmpp',
-   *    type: 'observe',
+   *    type: 'query',
    *    actor: {
    *      id: 'slvrbckt@jabber.net/Home',
    *      type: 'person'
@@ -428,7 +428,7 @@ class XMPP {
    *  // The above object might return:
    *  {
    *    context: 'xmpp',
-   *    type: 'observe',
+   *    type: 'query',
    *    actor: {
    *      id: 'PartyChatRoom@muc.jabber.net',
    *      type: 'room'
@@ -449,8 +449,8 @@ class XMPP {
    *    }
    *  }
    */
-  observe(job, done) {
-    this.debug('sending observe from ' + job.actor.id + ' for ' + job.target.id);
+  query(job, done) {
+    this.debug('sending query from ' + job.actor.id + ' for ' + job.target.id);
     this.__client.send(xml("iq",  {
       id: 'muc_id',
       type: 'get',

@@ -261,8 +261,7 @@ module.exports = {
 			},
 			"presence": {
 				"required": [
-					"type",
-					"presence"
+					"type"
 				],
 				"additionalProperties": false,
 				"properties": {

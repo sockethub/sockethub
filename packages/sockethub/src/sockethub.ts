@@ -19,7 +19,7 @@ const log = debug('sockethub:core');
 
 export interface JobDataDecrypted {
   title?: string;
-  msg: ActivityObject;
+  msg: ActivityStream;
   sessionId: string;
 }
 
@@ -39,7 +39,7 @@ export interface JobEncrypted {
   remove?: Function;
 }
 
-export interface ActivityObject {
+export interface ActivityStream {
   type: string;
   context: string;
   actor: {
