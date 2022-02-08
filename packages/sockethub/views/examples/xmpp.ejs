@@ -102,8 +102,6 @@
           $('input#m').prop('disabled', false);
           $('button#send').prop('disabled', false);
         } else {
-          msg = sc.ActivityStreams.Stream(msg);
-          debug('received incoming message: ', msg);
           examplesShared.processIncomingMessage(msg);
         }
       }

@@ -31,8 +31,10 @@ ExamplesShared.prototype.__displayUnknownContent = function (msg) {
 ExamplesShared.prototype.processIncomingMessage = function (msg) {
   console.log('incoming message: ', msg);
   if (msg.type === 'query') {
-    $('#messages').append($('<li>').text(` users in ${msg.actor.name}`))
-      .append($('<li>').text(`  [ ${msg.object.members.join(', ')} ]`));
+    if (msg.object.members) {
+      $('#messages').append($('<li>').text(` users in ${msg.actor.name}`))
+        .append($('<li>').text(`  [ ${msg.object.members.join(', ')} ]`));
+    }
   } else if ((msg.type === 'pong') || (msg.type === 'ping')) {
     $('#messages').append($('<li>').text(
       `${msg.type} received from ${msg.actor.id} at ${msg.published}`));
