@@ -4,7 +4,7 @@ const apply = require('ajv-formats-draft2019');
 const ajv = new Ajv({strictTypes: false});
 apply(ajv);
 
-const objectTypes = require('./object-types');
+const o = require('./object-types');
 const ActivityStream = require('./../schemas/activity-stream.js');
 const ActivityObject = require('./../schemas/activity-object.js');
 const schemaURL = 'https://sockethub.org/schemas/v0';
@@ -25,8 +25,7 @@ function parseMsg(error) {
 }
 
 function getErrorMessage(AS, errors) {
-  let msg = "",
-    i = 0;
+  let msg = "", i = 0;
   while (!msg && errors[i]) {
     const error = errors[i];
     msg = findObjectTypeError(AS, error);
@@ -57,7 +56,7 @@ function composeFinalError(error) {
   let msg = "";
   if (error.keyword === 'oneOf') {
     msg = `${error.instancePath}: ${error.message}: ` +
-      `${Object.keys(objectTypes).join(', ')}`;
+      `${Object.keys(o.objectTypes).join(', ')}`;
   } else {
     msg = `${error.instancePath ?
       error.instancePath : 'activity stream'}: ${error.message}`;

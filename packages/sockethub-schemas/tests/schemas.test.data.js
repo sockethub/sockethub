@@ -1,4 +1,4 @@
-const objectTypes = require('./../src/object-types');
+const o = require('./../src/object-types');
 
 module.exports = [
   [
@@ -143,7 +143,7 @@ module.exports = [
       }
     },
     false,
-    `/actor: must match exactly one schema in oneOf: ${Object.keys(objectTypes).join(', ')}`
+    `/actor: must match exactly one schema in oneOf: ${Object.keys(o.objectTypes).join(', ')}`
   ],
 
   [
@@ -464,6 +464,6 @@ module.exports = [
         }
       }
     },
-    false, `/object: must match exactly one schema in oneOf: ${Object.keys(objectTypes).join(', ')}`
+    false, `/object: must match exactly one schema in oneOf: ${Object.keys(o.objectTypes).join(', ')}`
   ]
 ];
