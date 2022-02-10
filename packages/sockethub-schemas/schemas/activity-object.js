@@ -13,10 +13,19 @@ module.exports = {
 					"$ref": "#/definitions/type/feed"
 				},
 				{
+					"$ref": "#/definitions/type/message"
+				},
+				{
+					"$ref": "#/definitions/type/me"
+				},
+				{
 					"$ref": "#/definitions/type/person"
 				},
 				{
 					"$ref": "#/definitions/type/room"
+				},
+				{
+					"$ref": "#/definitions/type/service"
 				},
 				{
 					"$ref": "#/definitions/type/website"
@@ -26,6 +35,9 @@ module.exports = {
 				},
 				{
 					"$ref": "#/definitions/type/presence"
+				},
+				{
+					"$ref": "#/definitions/type/relationship"
 				},
 				{
 					"$ref": "#/definitions/type/topic"
@@ -68,6 +80,46 @@ module.exports = {
 					}
 				}
 			},
+			"message": {
+				"required": [
+					"type",
+					"content"
+				],
+				"additionalProperties": true,
+				"properties": {
+					"type": {
+						"enum": [
+							"message"
+						]
+					},
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"content": {
+						"type": "string"
+					}
+				}
+			},
+			"me": {
+				"required": [
+					"type",
+					"content"
+				],
+				"additionalProperties": true,
+				"properties": {
+					"type": {
+						"enum": [
+							"me"
+						]
+					},
+					"content": {
+						"type": "string"
+					}
+				}
+			},
 			"person": {
 				"required": [
 					"id",
@@ -101,6 +153,26 @@ module.exports = {
 					"type": {
 						"enum": [
 							"room"
+						]
+					},
+					"name": {
+						"type": "string"
+					}
+				}
+			},
+			"service": {
+				"required": [
+					"id",
+					"type"
+				],
+				"additionalProperties": true,
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"type": {
+						"enum": [
+							"service"
 						]
 					},
 					"name": {
@@ -169,8 +241,87 @@ module.exports = {
 							"online"
 						]
 					},
+					"role": {
+						"enum": [
+							"owner",
+							"member",
+							"participant",
+							"admin"
+						]
+					},
 					"content": {
 						"type": "string"
+					}
+				}
+			},
+			"relationship": {
+				"required": [
+					"type",
+					"relationship"
+				],
+				"additionalProperties": false,
+				"properties": {
+					"type": {
+						"enum": [
+							"relationship"
+						]
+					},
+					"relationship": {
+						"enum": [
+							"role"
+						]
+					},
+					"subject": {
+						"type": "object",
+						"oneOf": [
+							{
+								"$ref": "#/definitions/type/presence"
+							}
+						]
+					},
+					"object": {
+						"type": "object",
+						"oneOf": [
+							{
+								"$ref": "#/definitions/type/credentials"
+							},
+							{
+								"$ref": "#/definitions/type/feed"
+							},
+							{
+								"$ref": "#/definitions/type/message"
+							},
+							{
+								"$ref": "#/definitions/type/me"
+							},
+							{
+								"$ref": "#/definitions/type/person"
+							},
+							{
+								"$ref": "#/definitions/type/room"
+							},
+							{
+								"$ref": "#/definitions/type/service"
+							},
+							{
+								"$ref": "#/definitions/type/website"
+							},
+							{
+								"$ref": "#/definitions/type/attendance"
+							},
+							{
+								"$ref": "#/definitions/type/presence"
+							},
+							{
+								"$ref": "#/definitions/type/relationship"
+							},
+							{
+								"$ref": "#/definitions/type/topic"
+							},
+							{
+								"$ref": "#/definitions/type/address"
+							}
+						]
 					}
 				}
 			},

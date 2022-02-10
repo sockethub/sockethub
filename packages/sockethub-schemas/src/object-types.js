@@ -1,4 +1,7 @@
-module.exports = {
+const validObjectRefs = [];
+
+
+const objectTypes = {
 
   "credentials": {
     "required": [ "type" ],
@@ -38,6 +41,7 @@ module.exports = {
   },
 
   "message": {
+    "activity-object": true,
     "required": [ "type", "content" ],
     "additionalProperties": true,
     "properties": {
@@ -49,6 +53,20 @@ module.exports = {
       },
       "name": {
         "type": "string"
+      },
+      "content": {
+        "type": "string"
+      }
+    }
+  },
+
+  "me": {
+    "activity-object": true,
+    "required": ["type", "content"],
+    "additionalProperties": true,
+    "properties": {
+      "type": {
+        "enum": ["me"]
       },
       "content": {
         "type": "string"
@@ -83,6 +101,23 @@ module.exports = {
       },
       "type": {
         "enum": [ "room" ]
+      },
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+
+  "service": {
+    "activity-object": true,
+    "required": [ "id", "type" ],
+    "additionalProperties": true,
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "type": {
+        "enum": [ "service" ]
       },
       "name": {
         "type": "string"
@@ -136,8 +171,36 @@ module.exports = {
       "presence": {
         "enum": [ "away", "chat", "dnd", "xa", "offline", "online" ]
       },
+      "role": {
+        "enum": [ "owner", "member", "participant", "admin" ]
+      },
       "content": {
         "type": "string"
+      }
+    }
+  },
+
+  // inspired by https://www.w3.org/ns/activitystreams#Relationship
+  "relationship": {
+    "activity-object": true,
+    "required": [ "type", "relationship" ],
+    "additionalProperties": false,
+    "properties": {
+      "type": {
+        "enum": [ "relationship" ]
+      },
+      "relationship": {
+        "enum": [ "role" ]
+      },
+      "subject": {
+        "type": "object",
+        "oneOf": [
+          { "$ref": "#/definitions/type/presence" }
+        ]
+      },
+      "object": {
+        "type": "object",
+        "oneOf": validObjectRefs,
       }
     }
   },
@@ -168,3 +231,9 @@ module.exports = {
   }
 };
 
+const keys = Object.keys(objectTypes);
+keys.forEach(function (type, i) {
+  validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
+});
+
+module.exports = objectTypes;
