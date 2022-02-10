@@ -1,5 +1,5 @@
 const activityObjects = require('./sockethub-activity-object.js');
-const objectTypes     = require('./object-types.js');
+const o = require('./object-types.js');
 
 const validActorRefs  = activityObjects.properties.object.oneOf;
 const validTargetRefs = activityObjects.properties.object.oneOf;
@@ -7,7 +7,7 @@ console.log(validActorRefs);
 
 let validObjectRefs = [];
 
-const keys = Object.keys(objectTypes);
+const keys = Object.keys(o.objectTypes);
 keys.forEach(function (type, i) {
   validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
 });
@@ -21,7 +21,7 @@ const typeSchema = {
 
 module.exports = {
   "$id": "https://sockethub.org/schemas/v0/activity-stream#",
-  "description": "schema for Sockethub Activity Streams",
+  "description": "Schema for Sockethub Activity Streams",
 
   "type": "object",
   "required" : [ "context", "type", "actor" ],
@@ -46,6 +46,6 @@ module.exports = {
   },
 
   "definitions": {
-    "type": objectTypes
+    "type": o.objectTypes
   }
 };

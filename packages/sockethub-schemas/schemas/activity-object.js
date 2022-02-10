@@ -1,6 +1,6 @@
 module.exports = {
 	"$id": "https://sockethub.org/schemas/v0/activity-object#",
-	"description": "schema for Sockethub Activity Objects",
+	"description": "Schema for Sockethub Activity Objects",
 	"type": "object",
 	"required": [
 		"object"
@@ -282,9 +282,6 @@ module.exports = {
 					"object": {
 						"type": "object",
 						"oneOf": [
-							{
-								"$ref": "#/definitions/type/credentials"
-							},
 							{
 								"$ref": "#/definitions/type/feed"
 							},

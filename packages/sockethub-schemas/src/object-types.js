@@ -1,5 +1,5 @@
 const validObjectRefs = [];
-
+const validObjectDefs = {};
 
 const objectTypes = {
 
@@ -233,7 +233,15 @@ const objectTypes = {
 
 const keys = Object.keys(objectTypes);
 keys.forEach(function (type, i) {
-  validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
+  if (objectTypes[type]["activity-object"]) {
+    validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
+    validObjectDefs[type] = objectTypes[type];
+    delete objectTypes[type]["activity-object"];
+  }
 });
 
-module.exports = objectTypes;
+module.exports = {
+  objectTypes,
+  validObjectRefs,
+  validObjectDefs
+};
