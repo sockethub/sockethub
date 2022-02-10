@@ -12,11 +12,14 @@
   },
   "devDependencies": {
     "c8": "7.11.0",
-    "jaribu": "2.2.3"
+    "chai": "^4.3.6",
+    "mocha": "^9.2.0",
+    "sinon": "^13.0.1",
+    "sockethub-schemas": "^2.1.1"
   },
   "scripts": {
     "compliance": "yarn run test && yarn run coverage",
-    "test": "c8 jaribu",
+    "test": "c8 mocha src/**.test.js",
     "coverage": "c8 check-coverage --statements 90 --branches 90 --functions 95 --lines 90"
   },
   "repository": {

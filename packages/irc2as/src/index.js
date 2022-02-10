@@ -144,6 +144,7 @@ class IrcToActivityStreams {
         case MOTD: // MOTD
         if (! this.__buffer[MOTD]) {
             this.__buffer[MOTD] = {
+                context: 'irc',
                 type: 'update',
                 actor: {
                     type: 'service',
@@ -152,11 +153,11 @@ class IrcToActivityStreams {
                 },
                 object: {
                     type: 'topic',
-                    content: [ content ]
+                    content: content
                 }
             }
         } else {
-            this.__buffer[MOTD].object.content.push(content);
+            this.__buffer[MOTD].object.content += " " + content;
         }
         break;
         case MOTD_END: // end of MOTD
@@ -217,6 +218,7 @@ class IrcToActivityStreams {
         /** */
         case TOPIC_IS: // topic currently set to
         this.__buffer[TOPIC_IS] = {
+            context: 'irc',
             type: 'update',
             actor: undefined,
             target: {
@@ -226,7 +228,7 @@ class IrcToActivityStreams {
             },
             object: {
                 type: 'topic',
-                topic: content
+                content: content
             }
         };
         break;
