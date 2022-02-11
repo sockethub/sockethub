@@ -284,7 +284,8 @@ class XMPP {
 
   /**
    * @description
-   * Indicate presence and status message. Valid presence values are "away", "chat", "dnd", "xa", "offline", "online".
+   * Indicate presence and status message.
+   * Valid presence values are "away", "chat", "dnd", "xa", "offline", "online".
    *
    * @param {object} job activity streams object // TODO LINK
    * @param {object} done callback when job is done // TODO LINK
