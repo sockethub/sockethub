@@ -103,7 +103,7 @@ export default [
       }
     },
     "error":
-      "Error: /object: must have required property \'nick\'"
+      "Error: /object: must NOT have additional properties"
   },
   {
     "name":"no type specified",
@@ -123,7 +123,7 @@ export default [
     "error": "Error: credential activity streams must have credentials set as type"
   },
   {
-    "name":"person",
+    "name":"basic person",
     "type":"activity-object",
     "valid":true,
     "input":{
@@ -162,7 +162,8 @@ export default [
     },
     "error":
       "Error: /object: must match exactly one schema in oneOf: " +
-      "credentials, feed, message, person, room, website, attendance, presence, topic, address"
+      "credentials, feed, message, me, person, room, service, website, " +
+      "attendance, presence, relationship, topic, address"
   },
   {
     "name":"alone credentials (as credentials)",
@@ -210,7 +211,7 @@ export default [
   {
     "name":"bad parent object",
     "valid":false,
-    "type":"activity-object",
+    "type":"activity-stream",
     "input":{
       "string":"this is a string",
       "array":[
@@ -246,9 +247,7 @@ export default [
         "id":"larg"
       }
     },
-    "error":
-      "Error: /object: must match exactly one schema in oneOf: " +
-      "credentials, feed, message, person, room, website, attendance, presence, topic, address"
+    "error": "Error: platform context undefined not registered with this sockethub instance."
   },
   {
     "name":"unexpected AS",

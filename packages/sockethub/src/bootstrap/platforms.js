@@ -5,14 +5,12 @@
  * platforms, and whitelisting or blacklisting (or neither) based on the
  * config.
  */
-const Ajv     = require('ajv'),
-      debug   = require('debug'),
+const debug   = require('debug'),
       schemas = require('sockethub-schemas'),
       findup  = require('findup-sync');
 
 const config = require('../config').default;
 const log = debug('sockethub:bootstrap:platforms');
-const ajv = new Ajv();
 
 const whitelist = config.get('platforms:whitelist'),
       blacklist = config.get('platforms:blacklist');
@@ -67,13 +65,9 @@ module.exports = function platformLoad(moduleList) {
         const packageJson = require(path + '/package.json');
         let types = [];
 
-        const validate_platform_schema = ajv.compile(schemas.platform);
-        // validate schema property
-        if (! validate_platform_schema(p.schema)) {
-          throw new Error(
-            `${platformName} platform schema failed to validate: ` +
-            `${validate.errors[0].instancePath} ${ajv.errors[0].message}`
-          );
+        const err = schemas.validator.validatePlatformSchema(p.schema);
+        if (err) {
+          throw new Error(`${platformName} ${err}`);
         } else if (typeof p.config !== 'object') {
           throw new Error(
             `${platformName} platform must have a config property that is an object.`);
