@@ -37,6 +37,13 @@ function getTypeList(msg) {
   return types;
 }
 
+/**
+ * Traverses the errors array from ajv, and makes a series of filtering decisions to
+ * try to arrive at the most useful error.
+ * @param msg
+ * @param errors
+ * @returns {string}
+ */
 function getErrorMessage(msg, errors) {
   let deepest_entry = 0, highest_depth = -1;
   const types = {
@@ -46,11 +53,12 @@ function getErrorMessage(msg, errors) {
   };
 
   for (let i = 0; i < errors.length; i++) {
-    const schemaType = errors[i].schemaPath.match(/#\/\w+\/\w+\/([\w-]+)\//);
-    if (!schemaType) { continue; }
+    const schemaTypeRes = errors[i].schemaPath.match(/#\/\w+\/\w+\/([\w-]+)\//);
+    let schemaType = undefined;
+    if (schemaTypeRes) { schemaType = schemaTypeRes[1]; }
     const errType = errors[i].instancePath.match(/\/([\w]+)/);
     if (!errType) { continue; }
-    if (!types[errType[1]].includes(schemaType[1])) {  continue; }
+    if (!types[errType[1]].includes(schemaType)) {  continue; }
     let parts = errors[i].instancePath.split('/');
     if (parts.length > highest_depth) {
       highest_depth = parts.length;
