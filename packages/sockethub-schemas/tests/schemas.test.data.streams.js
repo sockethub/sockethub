@@ -374,7 +374,6 @@ module.exports = [
   [
     'change user address incorrectly',
     {
-      id: 'blah',
       type: 'update',
       context: 'dood',
       actor: {
@@ -464,6 +463,6 @@ module.exports = [
         }
       }
     },
-    false, `/object: must match exactly one schema in oneOf: ${Object.keys(o.objectTypes).join(', ')}`
+    false, `/object/subject/role: must be equal to one of the allowed values: owner, member, participant, admin`
   ]
 ];

@@ -1,53 +1,67 @@
 const log = require('debug')('sockethub:schemas');
 const Ajv = require('ajv');
-const apply = require('ajv-formats-draft2019');
-const ajv = new Ajv({strictTypes: false});
-apply(ajv);
+const ajvFormat2019 = require('ajv-formats-draft2019');
+
+const ajv = new Ajv({strictTypes: false, allErrors: true});
+ajvFormat2019(ajv);
 
 const o = require('./object-types');
-const ActivityStream = require('./../schemas/activity-stream.js');
-const ActivityObject = require('./../schemas/activity-object.js');
 const schemaURL = 'https://sockethub.org/schemas/v0';
+const schemas = {};
+schemas[`${schemaURL}/activity-stream`] = require('./../schemas/activity-stream.json');
+schemas[`${schemaURL}/activity-object`] = require('./../schemas/activity-object.json');
+const platformSchema = require('./platform');
 
-log(`registering schema ${schemaURL}/activity-stream`);
-ajv.addSchema(ActivityStream, `${schemaURL}/activity-stream`);
-log(`registering schema ${schemaURL}/activity-object`);
-ajv.addSchema(ActivityObject, `${schemaURL}/activity-object`);
+for (let uri in schemas) {
+  log(`registering schema ${uri}`);
+  ajv.addSchema(schemas[uri], uri);
+}
 
 function parseMsg(error) {
-  let msg = `${error.instancePath}: ${error.message}`;
+  let err = `${error.instancePath ? error.instancePath : 'activity stream'}: ${error.message}`;
   if (error.keyword === 'additionalProperties') {
-    msg += `: ${error.params.additionalProperty}`;
+    err += `: ${error.params.additionalProperty}`;
   } else if (error.keyword === 'enum') {
-    msg += `: ${error.params.allowedValues.join(', ')}`;
+    err += `: ${error.params.allowedValues.join(', ')}`;
   }
-  return msg;
+  return err;
 }
 
-function getErrorMessage(AS, errors) {
-  let msg = "", i = 0;
-  while (!msg && errors[i]) {
-    const error = errors[i];
-    msg = findObjectTypeError(AS, error);
-    i += 1;
-  }
-
-  if (!msg) {
-    msg = composeFinalError(errors[errors.length - 1]);
-  }
-  return msg;
-}
-
-function findObjectTypeError(AS, error) {
-  let msg = "";
-  for (let prop of ['object', 'actor', 'target']) {
-    // if the base instancepath and AS type match, use that error
-    if (error.instancePath.startsWith(`/${prop}`) &&
-      error.schemaPath.startsWith(`#/definitions/type/${AS[prop]?.type}`)) {
-      msg = parseMsg(error);
+function getTypeList(msg) {
+  let types = [ msg?.type ];
+  for (let prop in msg) {
+    if (msg[prop]?.type) {
+      types = [...types, ...getTypeList(msg[prop])];
     }
   }
-  return msg;
+  return types;
+}
+
+function getErrorMessage(msg, errors) {
+  let deepest_entry = 0, highest_depth = -1;
+  const types = {
+    actor: getTypeList(msg.actor),
+    target: getTypeList(msg.target),
+    object: getTypeList(msg.context ? msg.object : msg)
+  };
+
+  for (let i = 0; i < errors.length; i++) {
+    const schemaType = errors[i].schemaPath.match(/#\/\w+\/\w+\/([\w-]+)\//);
+    if (!schemaType) { continue; }
+    const errType = errors[i].instancePath.match(/\/([\w]+)/);
+    if (!errType) { continue; }
+    if (!types[errType[1]].includes(schemaType[1])) {  continue; }
+    let parts = errors[i].instancePath.split('/');
+    if (parts.length > highest_depth) {
+      highest_depth = parts.length;
+      deepest_entry = i;
+    }
+  }
+  if (highest_depth < 0) {
+    return composeFinalError(errors[errors.length - 1]);
+  } else {
+    return parseMsg(errors[deepest_entry]);
+  }
 }
 
 function composeFinalError(error) {
@@ -65,23 +79,25 @@ function composeFinalError(error) {
 }
 
 function validateActivityObject(msg) {
-  return handleValidation(ajv.getSchema(
-    `${schemaURL}/activity-object`), msg, true);
+  return handleValidation(`${schemaURL}/activity-object`, msg, true);
 }
 
 function validateActivityStream(msg) {
-  return handleValidation(ajv.getSchema(`${schemaURL}/activity-stream`), msg);
+  return handleValidation(`${schemaURL}/activity-stream`, msg);
 }
 
 function validateCredentials(msg) {
+  if (!msg.context) {
+    return 'credential activity streams must have a context set';
+  }
   if (msg.type !== 'credentials') {
     return 'credential activity streams must have credentials set as type';
   }
-  return handleValidation(ajv.getSchema(
-    `${schemaURL}/context/${msg.context}/credentials`), msg);
+  return handleValidation(`${schemaURL}/context/${msg.context}/credentials`, msg);
 }
 
-function handleValidation(validator, msg, isObject=false) {
+function handleValidation(schemaRef, msg, isObject=false) {
+  const validator = ajv.getSchema(schemaRef);
   let result = "";
   if (isObject) {
     result = validator({ object: msg });
@@ -94,6 +110,19 @@ function handleValidation(validator, msg, isObject=false) {
   return "";
 }
 
+function validatePlatformSchema(schema) {
+  const validate = ajv.compile(platformSchema);
+  // validate schema property
+  const err = validate(schema);
+  if (! err) {
+    console.log('res: ', validate);
+    return `platform schema failed to validate: ` +
+      `${validate.errors[0].instancePath} ${validate.errors[0].message}`;
+  } else {
+    return false;
+  }
+}
+
 function addPlatformSchema(schema, platform_type) {
   log(`registering schema ${schemaURL}/context/${platform_type}`);
   ajv.addSchema(schema, `${schemaURL}/context/${platform_type}`);
@@ -103,5 +132,6 @@ module.exports = {
   addPlatformSchema,
   validateCredentials,
   validateActivityObject,
-  validateActivityStream
+  validateActivityStream,
+  validatePlatformSchema
 };

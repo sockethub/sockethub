@@ -14,7 +14,6 @@ const objectTypes = {
   },
 
   "feed": {
-    "activity-object": true,
     "required": [ "id", "type" ],
     "additionalProperties": true,
     "properties": {
@@ -41,7 +40,6 @@ const objectTypes = {
   },
 
   "message": {
-    "activity-object": true,
     "required": [ "type", "content" ],
     "additionalProperties": true,
     "properties": {
@@ -61,7 +59,6 @@ const objectTypes = {
   },
 
   "me": {
-    "activity-object": true,
     "required": ["type", "content"],
     "additionalProperties": true,
     "properties": {
@@ -75,7 +72,6 @@ const objectTypes = {
   },
 
   "person": {
-    "activity-object": true,
     "required": [ "id", "type" ],
     "additionalProperties": true,
     "properties": {
@@ -92,7 +88,6 @@ const objectTypes = {
   },
 
   "room": {
-    "activity-object": true,
     "required": [ "id", "type" ],
     "additionalProperties": true,
     "properties": {
@@ -109,7 +104,6 @@ const objectTypes = {
   },
 
   "service": {
-    "activity-object": true,
     "required": [ "id", "type" ],
     "additionalProperties": true,
     "properties": {
@@ -126,7 +120,6 @@ const objectTypes = {
   },
 
   "website": {
-    "activity-object": true,
     "required": [ "id", "type" ],
     "additionalProperties": true,
     "properties": {
@@ -144,7 +137,6 @@ const objectTypes = {
   },
 
   "attendance": {
-    "activity-object": true,
     "required": [ "type" ],
     "additionalProperties": false,
     "properties": {
@@ -161,7 +153,6 @@ const objectTypes = {
   },
 
   "presence": {
-    "activity-object": true,
     "required": [ "type" ],
     "additionalProperties": false,
     "properties": {
@@ -182,7 +173,6 @@ const objectTypes = {
 
   // inspired by https://www.w3.org/ns/activitystreams#Relationship
   "relationship": {
-    "activity-object": true,
     "required": [ "type", "relationship" ],
     "additionalProperties": false,
     "properties": {
@@ -206,7 +196,6 @@ const objectTypes = {
   },
 
   "topic": {
-    "activity-object": true,
     "required": [ "type" ],
     "additionalProperties": false,
     "properties": {
@@ -220,7 +209,6 @@ const objectTypes = {
   },
 
   "address": {
-    "activity-object": true,
     "required": [ "type" ],
     "additionalProperties": false,
     "properties": {
@@ -233,11 +221,11 @@ const objectTypes = {
 
 const keys = Object.keys(objectTypes);
 keys.forEach(function (type, i) {
-  if (objectTypes[type]["activity-object"]) {
-    validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
-    validObjectDefs[type] = objectTypes[type];
-    delete objectTypes[type]["activity-object"];
+  if (type === 'credentials') {
+    return;
   }
+  validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
+  validObjectDefs[type] = objectTypes[type];
 });
 
 module.exports = {

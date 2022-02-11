@@ -27,7 +27,7 @@
   "scripts": {
     "compliance": "yarn run test && yarn run coverage",
     "test": "yarn run build && c8 mocha **/*.test.js",
-    "coverage": "c8 check-coverage --statements 80 --branches 60 --functions 90 --lines 80",
+    "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 95 --lines 95",
     "build": "./bin/build.js"
   },
   "dependencies": {
