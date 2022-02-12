@@ -56,6 +56,14 @@ function getPartsCount(error, types) {
   return parts.length;
 }
 
+function getTypes(msg) {
+  return {
+    actor: getTypeList(msg.actor),
+    target: getTypeList(msg.target),
+    object: getTypeList(msg.context ? msg.object : msg)
+  };
+}
+
 /**
  * Traverses the errors array from ajv, and makes a series of filtering decisions to
  * try to arrive at the most useful error.
@@ -64,12 +72,8 @@ function getPartsCount(error, types) {
  * @returns {string}
  */
 function getErrorMessage(msg, errors) {
+  const types = getTypes(msg);
   let deepest_entry = 0, highest_depth = -1;
-  const types = {
-    actor: getTypeList(msg.actor),
-    target: getTypeList(msg.target),
-    object: getTypeList(msg.context ? msg.object : msg)
-  };
 
   for (let i = 0; i < errors.length; i++) {
     const partsCount = getPartsCount(errors[i], types);
@@ -79,11 +83,9 @@ function getErrorMessage(msg, errors) {
     }
   }
 
-  if (highest_depth < 0) {
-    return composeFinalError(errors[errors.length - 1]);
-  } else {
-    return parseMsg(errors[deepest_entry]);
-  }
+  return highest_depth >= 0 ?
+    parseMsg(errors[deepest_entry]) :
+    composeFinalError(errors[errors.length - 1]);
 }
 
 function composeFinalError(error) {
