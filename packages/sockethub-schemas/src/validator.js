@@ -46,6 +46,16 @@ function getErrType(error) {
   const errTypeRes = error.instancePath.match(/\/([\w]+)/);
   return errTypeRes ? errTypeRes[1] : undefined;
 }
+
+function getPartsCount(error, types) {
+  const schemaType = getSchemaType(error);
+  const errType = getErrType(error);
+  if (!errType) { return -1; }
+  if (!types[errType].includes(schemaType)) { return -1; }
+  const parts = error.instancePath.split('/');
+  return parts.length;
+}
+
 /**
  * Traverses the errors array from ajv, and makes a series of filtering decisions to
  * try to arrive at the most useful error.
@@ -62,16 +72,13 @@ function getErrorMessage(msg, errors) {
   };
 
   for (let i = 0; i < errors.length; i++) {
-    const schemaType = getSchemaType(errors[i]);
-    const errType = getErrType(errors[i]);
-    if (!errType) { continue; }
-    if (!types[errType].includes(schemaType)) {  continue; }
-    let parts = errors[i].instancePath.split('/');
-    if (parts.length > highest_depth) {
-      highest_depth = parts.length;
+    const partsCount = getPartsCount(errors[i], types);
+    if (partsCount > highest_depth) {
+      highest_depth = partsCount;
       deepest_entry = i;
     }
   }
+
   if (highest_depth < 0) {
     return composeFinalError(errors[errors.length - 1]);
   } else {
