@@ -57,6 +57,9 @@ function removeStaleSocketSessions(platformInstance, sockets) {
       rmLog('removing stale socket session reference ' + sessionId + ' in platform instance '
         + platformInstance.id);
       platformInstance.sessions.delete(sessionId);
+      for (let key in platformInstance.sessionCallbacks) {
+        platformInstance.sessionCallbacks[key].delete(sessionId);
+      }
     }
   }
 }
