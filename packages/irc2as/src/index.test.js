@@ -18,6 +18,7 @@ function matchStream(done) {
     for (let i = 0; i <= outputs.length; i++) {
       matched = equal(stream, outputs[i]);
       if (matched) {
+        // when matched, remove output entry from list
         outputs.splice(i, 1);
         break;
       }
@@ -30,15 +31,18 @@ function matchStream(done) {
     }
     const err = schemas.validator.validateActivityStream(stream);
     if (err) {
-      done(err + ' - ' + JSON.stringify(stream));
+      return done(new Error(err + ' - ' + JSON.stringify(stream)));
     }
-  }
+  };
 }
 
-describe("irc2as converts incoming IRC data to ActivityStreams", () => {
+describe('IRC2AS', () => {
   let irc2as, pongs = 0, pings = 0;
+  // it("provides expected properties", () => {
   beforeEach(() => {
     irc2as = new IRC2AS({server: 'localhost'});
+    expect(irc2as).to.have.property('events');
+    expect(typeof irc2as.events.on).to.equal('function');
     irc2as.events.on('unprocessed', (string) => {
       console.log('unprocessed> ' + string);
     });
@@ -50,38 +54,41 @@ describe("irc2as converts incoming IRC data to ActivityStreams", () => {
     });
   });
 
-  it("inputs generate expected outputs", (done) => {
-    irc2as.events.on('incoming', matchStream(done));
-    irc2as.events.on('error', matchStream(done));
-    for (let i = 0; inputs.length > i; i++) {
-      irc2as.input(inputs[i]);
-    }
-    setTimeout(() => {
-      expect(outputs.length).to.equal(0);
-      done();
-    }, 0);
-  });
-
-  it("verifies ping and pong count", () => {
-    expect(pings).to.eql(2);
-    expect(pongs).to.eql(3);
-  });
-
-  it("handles many room joins", (done) => {
-    let totalCount = 0;
-    irc2as.events.on('incoming', (msg) => {
-      totalCount += 1;
-      if (totalCount === 5 * 100) {
+  describe('inputs generate expected outputs', () => {
+    it("inputs generate expected outputs", (done) => {
+      irc2as.events.on('incoming', matchStream(done));
+      irc2as.events.on('error', matchStream(done));
+      for (let i = 0; inputs.length > i; i++) {
+        irc2as.input(inputs[i]);
+      }
+      setTimeout(() => {
+        expect(outputs.length).to.equal(0);
         done();
-      }
+      }, 0);
     });
-    for (let i = 0; i < 5; i++) {
-      let names = ':hitchcock.freenode.net 353 hyper_slvrbckt @ #kosmos-random :hyper_slvrbckt ';
-      for (let n = 0; n < 100; n++) {
-        names += ` gregkare${i}${n} hal8000${i}${n} botka${i}${n} raucao${i}${n} galfert${i}${n}`;
+    it("ping and pong count", () => {
+      expect(pings).to.eql(2);
+      expect(pongs).to.eql(3);
+    });
+  });
+
+  describe('handle many room joins', () => {
+    let totalCount = 0;
+    it('send join messages', (done) => {
+      irc2as.events.on('incoming', () => {
+        totalCount += 1;
+        if (totalCount === 5 * 100) {
+          done();
+        }
+      });
+      for (let i = 0; i < 5; i++) {
+        let names = ':hitchcock.freenode.net 353 hyper_slvrbckt @ #kosmos-random :hyper_slvrbckt ';
+        for (let n = 0; n < 100; n++) {
+          names += ` gregkare${i}${n} hal8000${i}${n} botka${i}${n} raucao${i}${n} galfert${i}${n}`;
+        }
+        irc2as.input(names);
       }
-      irc2as.input(names);
-    }
-    irc2as.input(':hitchcock.freenode.net 366 hyper_slvrbckt #kosmos-random :End of /NAMES list.')
+      irc2as.input(':hitchcock.freenode.net 366 hyper_slvrbckt #kosmos-random :End of /NAMES list.');
+    });
   });
 });
