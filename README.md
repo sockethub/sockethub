@@ -21,7 +21,7 @@ Sockethub is a translation layer for web applications to communicate with other 
 
 ### Install Dependencies
 
-```$ yarn install```
+```$ yarn deps```
 
 ### Run Tests
 
@@ -34,6 +34,10 @@ Sockethub is a translation layer for web applications to communicate with other 
 Or, to automatically fix linting errors:
 
 ```$ yarn lint:fix```
+
+### Integration Tests
+
+```$ yarn run integration```
 
 ## Running
 
