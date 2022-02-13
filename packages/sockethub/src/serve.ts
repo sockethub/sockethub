@@ -59,7 +59,7 @@ class Serve {
 
 const serve = new Serve();
 
-interface SocketInstance {
+export interface SocketInstance {
   id: string;
   emit: Function;
 }
