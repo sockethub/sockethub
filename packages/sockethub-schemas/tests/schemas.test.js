@@ -11,7 +11,7 @@ const platformSchema = require('./schemas.test.data.platform.schema');
 describe('Platform schema validation', () => {
   it('validate correct platform schema', () => {
     let err = validator.validatePlatformSchema(platformSchema);
-    expect(err).to.be.false;
+    expect(err).to.equal("");
   });
   it('validate incorrect platform schema', () => {
     let err = validator.validatePlatformSchema({foo:'bar'});
