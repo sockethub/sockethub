@@ -53,6 +53,7 @@ class IncomingHandlers {
   close() {
     this.session.debug('received close event with no handler specified');
     this.session.sendToClient({
+      context: 'xmpp',
       type: 'close',
       actor: this.session.actor,
       target: this.session.actor
@@ -64,10 +65,11 @@ class IncomingHandlers {
   error(err) {
     try {
       this.session.sendToClient({
+        context: 'xmpp',
         type: 'error',
+        error: err.text || err.toString(),
         object: {
-          type: 'error',
-          content: err.text || err.toString(),
+          type: 'message',
           condition: err.condition || 'unknown'
         }
       });
@@ -78,6 +80,7 @@ class IncomingHandlers {
 
   presence(stanza) {
     const obj = {
+      context: 'xmpp',
       type: 'update',
       actor: {
         type: 'person',
@@ -93,10 +96,10 @@ class IncomingHandlers {
     if (stanza.getChild('show')) {
       obj.object.presence = stanza.getChild('show').getText();
     } else {
-      obj.object.presence = stanza.attrs.type === "unavailable" ? "offline" : "online"
+      obj.object.presence = stanza.attrs.type === "unavailable" ? "offline" : "online";
     }
     if (stanza.attrs.to) {
-      obj.target = {id: stanza.attrs.to};
+      obj.target = {id: stanza.attrs.to, type: 'person'};
     } else {
       obj.actor.name = stanza.attrs.from.split('/')[1];
     }
@@ -106,11 +109,12 @@ class IncomingHandlers {
 
   subscribe(to, from, name) {
     this.session.debug('received subscribe request from ' + from);
-    const actor = { id: from };
+    const actor = { id: from, type: 'person' };
     if (name) {
       actor.name = name;
     }
     this.session.sendToClient({
+      context: 'xmpp',
       type: "request-friend",
       actor: actor,
       target: to
@@ -135,6 +139,7 @@ class IncomingHandlers {
     const type      = stanza.attrs.type === 'groupchat' ? 'room' : 'person';
 
     const activity = {
+      context: 'xmpp',
       type: 'send',
       actor: {
         type: 'person',
@@ -186,15 +191,13 @@ class IncomingHandlers {
     }
 
     this.session.sendToClient({
+      context: 'xmpp',
       type: type,
       actor: {
         id: stanza.attrs.from,
         type: 'room'
       },
-      object: {
-        type: 'error', // type error
-        content: message
-      },
+      error: message,
       target: {
         id: stanza.attrs.to,
         type: 'person'
@@ -215,6 +218,7 @@ class IncomingHandlers {
       }
 
       this.session.sendToClient({
+        context: 'xmpp',
         type: 'query',
         actor: {
           id: stanza.attrs.from,
@@ -264,6 +268,7 @@ class IncomingHandlers {
           this.session.debug('STANZA ATTRS: ', entries[e].attrs);
           if (entries[e].attrs.subscription === 'both') {
             this.session.sendToClient({
+              context: 'xmpp',
               type: 'update',
               actor: { id: entries[e].attrs.jid, name: entries[e].attrs.name },
               target: this.session.actor,
@@ -276,6 +281,7 @@ class IncomingHandlers {
           } else if ((entries[e].attrs.subscription === 'from') &&
               (entries[e].attrs.ask) && (entries[e].attrs.ask === 'subscribe')) {
             this.session.sendToClient({
+              context: 'xmpp',
               type: 'update',
               actor: { id: entries[e].attrs.jid, name: entries[e].attrs.name },
               target: this.session.actor,
