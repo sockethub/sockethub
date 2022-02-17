@@ -38,12 +38,12 @@ export default class PlatformInstance {
   readonly debug: Debugger;
   readonly parentId: string;
   readonly sessions: Set<string> = new Set();
-  public readonly global?: boolean = false;
-  private readonly actor?: string;
-  private readonly sessionCallbacks: object = {
+  readonly sessionCallbacks: object = {
     'close': (() => new Map())(),
     'message': (() => new Map())()
   };
+  public readonly global?: boolean = false;
+  private readonly actor?: string;
 
   constructor(params: PlatformInstanceParams) {
     this.id = params.identifier;
