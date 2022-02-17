@@ -1,7 +1,7 @@
 import debug from 'debug';
 
-import { platformInstances } from './platform-instance';
-import serve from "./serve";
+import PlatformInstance, { platformInstances } from './platform-instance';
+import serve, { SocketInstance } from "./serve";
 
 const rmLog = debug('sockethub:janitor');
 
@@ -23,7 +23,7 @@ function janitorCycle() {
   rmLog('initializing resource manager');
   setInterval(async () => {
     cycleCount++;
-    const sockets = await serve.io.fetchSockets();
+    const sockets: Array<SocketInstance> = await serve.io.fetchSockets();
 
     if (! (cycleCount % 4)) {
       reportCount++;
@@ -42,7 +42,7 @@ function janitorCycle() {
   }, TICK);
 }
 
-function socketExists(sessionId, sockets) {
+function socketExists(sessionId: string, sockets: Array<SocketInstance>) {
   for (let socket of sockets) {
     if (socket.id === sessionId) {
       return true;
@@ -51,17 +51,25 @@ function socketExists(sessionId, sockets) {
   return false;
 }
 
-function removeStaleSocketSessions(platformInstance, sockets) {
-  for (let sessionId of platformInstance.sessions.values()) {
+function removeSessionCallbacks(platformInstance: PlatformInstance, sessionId: string) {
+  for (const key in platformInstance.sessionCallbacks) {
+    platformInstance.sessionCallbacks[key].delete(sessionId);
+  }
+}
+
+function removeStaleSocketSessions(platformInstance: PlatformInstance,
+                                   sockets: Array<SocketInstance>) {
+  for (const sessionId of platformInstance.sessions.values()) {
     if (! socketExists(sessionId, sockets)) {
       rmLog('removing stale socket session reference ' + sessionId + ' in platform instance '
         + platformInstance.id);
       platformInstance.sessions.delete(sessionId);
+      removeSessionCallbacks(platformInstance, sessionId);
     }
   }
 }
 
-function removeStalePlatformInstance(platformInstance) {
+function removeStalePlatformInstance(platformInstance: PlatformInstance) {
   if (platformInstance.flaggedForTermination) {
     rmLog(`terminating platform instance ${platformInstance.id}`);
     platformInstance.destroy(); // terminate
