@@ -1,4 +1,4 @@
-const objectTypes = require('./../src/object-types');
+const o = require('./../src/object-types');
 
 module.exports = [
   [
@@ -143,7 +143,7 @@ module.exports = [
       }
     },
     false,
-    `/actor: must match exactly one schema in oneOf: ${Object.keys(objectTypes).join(', ')}`
+    `/actor: must match exactly one schema in oneOf: ${Object.keys(o.objectTypes).join(', ')}`
   ],
 
   [
@@ -374,7 +374,6 @@ module.exports = [
   [
     'change user address incorrectly',
     {
-      id: 'blah',
       type: 'update',
       context: 'dood',
       actor: {
@@ -417,5 +416,53 @@ module.exports = [
     },
     false,
     '/target: must have required property \'id\''
+  ],
+
+  [
+    'relationship',
+    {
+      "context":"irc",
+      "type":"add",
+      "actor":{"type":"person","id":"alice@localhost","name":"alice"},
+      "target":{"type":"person","id":"Kilroy@localhost","name":"Kilroy"},
+      "object":{
+        "type":"relationship",
+        "relationship":"role",
+        "subject": {
+          "type":"presence",
+          "role":"owner"
+        },
+        "object":{
+          "type":"room",
+          "id":"localhost/#Finnish",
+          "name":"#Finnish"
+        }
+      }
+    },
+    true, ""
+  ],
+
+  [
+    'invalid role in relationship',
+    {
+      "context":"irc",
+      "type":"add",
+      "actor":{"type":"person","id":"alice@localhost","name":"alice"},
+      "target":{"type":"person","id":"Kilroy@localhost","name":"Kilroy"},
+      "object":{
+        "type":"relationship",
+        "relationship":"role",
+        "subject": {
+          "type":"presence",
+          "role":"manager"
+        },
+        "object":{
+          "type":"room",
+          "id":"localhost/#Finnish",
+          "name":"#Finnish"
+        }
+      }
+    },
+    false, `/object/subject/role: must be equal to one of the allowed values: owner, member, participant, admin`
   ]
 ];

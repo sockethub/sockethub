@@ -1,4 +1,7 @@
-module.exports = {
+const validObjectRefs = [];
+const validObjectDefs = {};
+
+const objectTypes = {
 
   "credentials": {
     "required": [ "type" ],
@@ -11,7 +14,6 @@ module.exports = {
   },
 
   "feed": {
-    "activity-object": true,
     "required": [ "id", "type" ],
     "additionalProperties": true,
     "properties": {
@@ -56,8 +58,20 @@ module.exports = {
     }
   },
 
+  "me": {
+    "required": ["type", "content"],
+    "additionalProperties": true,
+    "properties": {
+      "type": {
+        "enum": ["me"]
+      },
+      "content": {
+        "type": "string"
+      }
+    }
+  },
+
   "person": {
-    "activity-object": true,
     "required": [ "id", "type" ],
     "additionalProperties": true,
     "properties": {
@@ -74,7 +88,6 @@ module.exports = {
   },
 
   "room": {
-    "activity-object": true,
     "required": [ "id", "type" ],
     "additionalProperties": true,
     "properties": {
@@ -90,8 +103,23 @@ module.exports = {
     }
   },
 
+  "service": {
+    "required": [ "id", "type" ],
+    "additionalProperties": true,
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "type": {
+        "enum": [ "service" ]
+      },
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+
   "website": {
-    "activity-object": true,
     "required": [ "id", "type" ],
     "additionalProperties": true,
     "properties": {
@@ -109,7 +137,6 @@ module.exports = {
   },
 
   "attendance": {
-    "activity-object": true,
     "required": [ "type" ],
     "additionalProperties": false,
     "properties": {
@@ -126,7 +153,6 @@ module.exports = {
   },
 
   "presence": {
-    "activity-object": true,
     "required": [ "type" ],
     "additionalProperties": false,
     "properties": {
@@ -136,14 +162,40 @@ module.exports = {
       "presence": {
         "enum": [ "away", "chat", "dnd", "xa", "offline", "online" ]
       },
+      "role": {
+        "enum": [ "owner", "member", "participant", "admin" ]
+      },
       "content": {
         "type": "string"
       }
     }
   },
 
+  // inspired by https://www.w3.org/ns/activitystreams#Relationship
+  "relationship": {
+    "required": [ "type", "relationship" ],
+    "additionalProperties": false,
+    "properties": {
+      "type": {
+        "enum": [ "relationship" ]
+      },
+      "relationship": {
+        "enum": [ "role" ]
+      },
+      "subject": {
+        "type": "object",
+        "oneOf": [
+          { "$ref": "#/definitions/type/presence" }
+        ]
+      },
+      "object": {
+        "type": "object",
+        "oneOf": validObjectRefs,
+      }
+    }
+  },
+
   "topic": {
-    "activity-object": true,
     "required": [ "type" ],
     "additionalProperties": false,
     "properties": {
@@ -157,7 +209,6 @@ module.exports = {
   },
 
   "address": {
-    "activity-object": true,
     "required": [ "type" ],
     "additionalProperties": false,
     "properties": {
@@ -168,3 +219,17 @@ module.exports = {
   }
 };
 
+const keys = Object.keys(objectTypes);
+keys.forEach(function (type, i) {
+  if (type === 'credentials') {
+    return;
+  }
+  validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
+  validObjectDefs[type] = objectTypes[type];
+});
+
+module.exports = {
+  objectTypes,
+  validObjectRefs,
+  validObjectDefs
+};

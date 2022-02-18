@@ -2,6 +2,7 @@
   "name": "root",
   "private": true,
   "devDependencies": {
+    "@types/mocha": "^9.1.0",
     "@typescript-eslint/parser": "5.10.1",
     "chai": "^4.3.4",
     "eslint": "8.8.0",

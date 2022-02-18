@@ -78,3 +78,9 @@ PING :moon.freenode.net
 :asimov.freenode.net 437 sh-mhJLD boo :Nick/channel is temporarily unavailable
 :wilhelm.freenode.net 433 sh-4a3LB slvrbckt :Nickname is already in use.
 :sh-WjwOE!~sh-WjwOE@194.228.76.203 NICK :woooo
+:SaslServ!SaslServ@services.libera.chat NOTICE slvrbckt :Last login from: ~slvrbckt@localhost on Feb 09 18:45:19 2022 +0000.
+:myuser!~myuser@2a02:8308:7080:4100:41fa:f0ec:594e:771f JOIN #kosmos-random slvrbckt :myuser
+:tungsten.libera.chat 353 myuser @ #kosmos-random :myuser @botka foouser
+:tungsten.libera.chat 366 myuser #kosmos-random :End of /NAMES list.
+:tungsten.libera.chat 324 myuser #kosmos-random +Cnst
+:tungsten.libera.chat 329 myuser #kosmos-random 1642793393

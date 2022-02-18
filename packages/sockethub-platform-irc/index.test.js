@@ -1,14 +1,7 @@
 const proxyquire = require('proxyquire');
 const chai = require('chai');
-const sinon = require('sinon');
 const schemas = require('sockethub-schemas');
-const Ajv = require('ajv');
-const apply = require('ajv-formats-draft2019');
 const expect = chai.expect;
-
-const BASE_SCHEMA_ID = 'https://sockethub.org/schemas/v0/';
-const ajv = new Ajv({strictTypes: false});
-apply(ajv);
 
 const IRCPlatform = require('./index');
 
@@ -34,13 +27,17 @@ const targetRoom = {
 };
 
 const validCredentials = {
+  context: 'irc',
+  type: 'credentials',
   actor: actor,
   object: {
-    'type': 'credentials',
+    type: 'credentials',
     nick: 'testingham',
     server: 'irc.example.com'
   }
 };
+
+let loadedSchema = false;
 
 describe('Initialize IRC Platform', () => {
   let platform;
@@ -56,6 +53,10 @@ describe('Initialize IRC Platform', () => {
         raw: () => {}
       });
     };
+    if (!loadedSchema) {
+      schemas.validator.addPlatformSchema(platform.schema.credentials, `irc/credentials`);
+      loadedSchema = true;
+    }
   });
 
   it('lists required types enum', () => {
@@ -72,34 +73,46 @@ describe('Initialize IRC Platform', () => {
     });
   });
 
-  it('schema format validation', (done) => {
-    validate = ajv.compile(schemas.platform);
-    if (! validate(platform.schema)) {
-      done('schema validation failed');
-    } else {
-      done();
-    }
+  it('schema format validation', () => {
+    expect(schemas.validator.validatePlatformSchema(platform.schema)).to.equal("");
   });
 
-  it('valid credentials', (done) => {
-    validate = ajv.compile(platform.schema.credentials);
-    if (! validate(validCredentials)) {
-      done('valid credentials did not pass validation');
-    } else {
-      done();
-    }
-  });
+  describe('credential schema', () => {
+    it('valid credentials', () => {
+      expect(schemas.validator.validateCredentials(validCredentials)).to.equal("");
+    });
 
-  it('invalid credentials', (done) => {
-    validate = ajv.compile(platform.schema.credentials);
-    if (! validate({
-      host: 'example.com',
-      port: '6667'
-    })) {
-      done();
-    } else {
-      done('invalid credentials passed validation');
-    }
+    it('invalid credentials type', () => {
+      expect(schemas.validator.validateCredentials({
+        context: 'irc',
+        type: 'credentials',
+        object: {
+          host: 'example.com',
+          port: '6667'
+        }})).to.equal("/object: must have required property 'type'");
+    });
+
+    it('invalid credentials port', () => {
+      expect(schemas.validator.validateCredentials({
+        context: 'irc',
+        type: 'credentials',
+        object: {
+          type: 'credentials',
+          host: 'example.com',
+          port: '6667'
+        }})).to.equal("/object/port: must be number");
+    });
+
+    it('invalid credentials additional prop', () => {
+      expect(schemas.validator.validateCredentials({
+        context: 'irc',
+        type: 'credentials',
+        object: {
+          type: 'credentials',
+          host: 'example.com',
+          port: 6667
+        }})).to.equal("/object: must NOT have additional properties");
+    });
   });
 
   describe('platform type methods', () => {

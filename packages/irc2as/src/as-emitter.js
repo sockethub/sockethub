@@ -16,30 +16,29 @@ class ASTemplates {
 
   __generalError(nick, content) {
     return {
+      context: 'irc',
       type: 'update',
       actor: {
+        type: 'person',
+        id: nick + '@' + this.server,
+        name: nick
+      },
+      target: {
           type: 'service',
           id: this.server
       },
-      object: {
-          type: 'error',
-          content: content
-      },
-      target: {
-          type: 'person',
-          id: nick + '@' + this.server,
-          name: nick
-      }
+      error: content
     };
   }
 
   presence(nick, role, channel) {
     this.emitEvent(EVENT_INCOMING, {
+        context: 'irc',
         type: 'update',
         actor: {
             type: 'person',
             id: `${nick}@${this.server}`,
-            'name': nick,
+            name: nick,
         },
         target: {
             type: 'room',
@@ -55,19 +54,17 @@ class ASTemplates {
 
   channelError(channel, nick, content) {
     this.emitEvent(EVENT_ERROR, {
-      type: 'send',
+      context: 'irc',
+      type: 'update',
       actor: {
-        type: 'room',
-        id: this.server + '/' + channel
-      },
-      target: {
         type: 'person',
         id: nick + '@' + this.server
       },
-      object: {
-        type: 'error',
-        content: content
-      }
+      target: {
+        type: 'room',
+        id: this.server + '/' + channel
+      },
+      error: content
     });
   }
 
@@ -76,7 +73,23 @@ class ASTemplates {
   }
 
   notice(nick, content) {
-    this.emitEvent(EVENT_INCOMING, this.__generalError(nick, content));
+    this.emitEvent(EVENT_INCOMING, {
+      context: 'irc',
+      type: 'send',
+      actor: {
+        type: 'service',
+        id: this.server
+      },
+      object: {
+        type: 'message',
+        content: content
+      },
+      target: {
+        type: 'person',
+        id: nick + '@' + this.server,
+        name: nick
+      }
+    });
   }
 
   serviceError(nick, content) {
@@ -85,15 +98,13 @@ class ASTemplates {
 
   joinError(nick) {
     this.emitEvent(EVENT_ERROR, {
+      context: 'irc',
       type: 'join',
       actor: {
           id: this.server,
           type: 'service'
       },
-      object: {
-          type: 'error',
-          content: 'no such channel ' + nick
-      },
+      error: 'no such channel ' + nick,
       target: {
           id: nick + '@' + this.server,
           type: 'person'
@@ -103,6 +114,7 @@ class ASTemplates {
 
   topicChange(channel, nick, content) {
     this.emitEvent(EVENT_INCOMING, {
+      context: 'irc',
       type: 'update',
       actor: {
           type: 'person',
@@ -116,13 +128,14 @@ class ASTemplates {
       },
       object: {
           type: 'topic',
-          topic: content
+          content: content
       }
     });
   }
 
   joinRoom(channel, nick) {
     this.emitEvent(EVENT_INCOMING, {
+      context: 'irc',
       type: 'join',
       actor: {
           type: 'person',
@@ -133,13 +146,13 @@ class ASTemplates {
           type: 'room',
           id: this.server + '/' + channel,
           name: channel
-      },
-      object: {}
+      }
     });
   }
 
   userQuit(nick) {
     this.emitEvent(EVENT_INCOMING, {
+      context: 'irc',
       type: 'leave',
       actor: {
           type: 'person',
@@ -159,6 +172,7 @@ class ASTemplates {
 
   userPart(channel, nick) {
     this.emitEvent(EVENT_INCOMING, {
+      context: 'irc',
       type: 'leave',
       actor: {
           type: 'person',
@@ -187,6 +201,7 @@ class ASTemplates {
       message = content;
     }
     this.emitEvent(EVENT_INCOMING, {
+      context: 'irc',
       type: 'send',
       actor: {
         type: 'person',
@@ -194,6 +209,8 @@ class ASTemplates {
         name: nick
       },
       target: {
+        type: target.startsWith('#') ? "room" : "person",
+        id: this.server + '/' + target,
         name: target
       },
       object: {
@@ -205,6 +222,7 @@ class ASTemplates {
 
   role(type, nick, target, role, channel) {
     this.emitEvent(EVENT_INCOMING, {
+      context: 'irc',
       type: type,
       actor: {
           type: 'person',
@@ -234,6 +252,7 @@ class ASTemplates {
 
   nickChange(nick, content) {
     this.emitEvent(EVENT_INCOMING, {
+      context: 'irc',
       type: 'update',
       actor: {
           type: 'person',
