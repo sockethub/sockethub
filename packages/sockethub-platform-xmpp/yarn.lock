@@ -982,7 +982,7 @@ cross-spawn@^7.0.0:
     shebang-command "^2.0.0"
     which "^2.0.1"
 
-debug@4.3.3, debug@^4.1.0, debug@^4.3.1:
+debug@4.3.3, debug@^4.1.0:
   version "4.3.3"
   resolved "https://registry.yarnpkg.com/debug/-/debug-4.3.3.tgz#04266e0b70a98d4462e6e288e38259213332b664"
   integrity sha512-/zxw5+vh1Tfv+4Qn7a5nsbcJKPaSvCDhojn6FEl9vupwK2VCSDtEiEtqr8DFtzYFOdz63LBkxec7DYuc2jon6Q==
@@ -2236,13 +2236,6 @@ slash@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/slash/-/slash-2.0.0.tgz#de552851a1759df3a8f206535442f5ec4ddeab44"
   integrity sha512-ZYKh3Wh2z1PpEXWr0MpSBZ0V6mZHAQfYevttO11c51CaWjGTaadiKZ+wVt1PbMlDV5qhMFslpZCemhwOK7C89A==
-
-sockethub-schemas@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/sockethub-schemas/-/sockethub-schemas-2.1.1.tgz#d99fa538039610c04df8975985d88e0149a9d3d5"
-  integrity sha512-W6VXqDSaxNvorF6ZOi+XjNleoR7hoZPxw+Dx8QZx71b+2XZT/AOaUaUwCjRX0epgDTZMm5+IMGIQH/O1ho195A==
-  dependencies:
-    debug "^4.3.1"
 
 sort-array@^4.1.4:
   version "4.1.4"
