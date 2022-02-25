@@ -5,7 +5,7 @@ const IncomingHandler = require('./incoming-handlers');
 const parse = require('@xmpp/xml/lib/parse');
 const schemas = require('sockethub-schemas');
 
-const stanzas = require('./incoming-handlers.data')
+const stanzas = require('./incoming-handlers.data');
 const {os} = require("yarn/lib/cli");
 
 describe('Incoming handlers', () => {
