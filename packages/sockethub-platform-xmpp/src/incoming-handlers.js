@@ -169,6 +169,8 @@ class IncomingHandlers {
     }
 
     if (timestamp) { activity.published = timestamp; }
+    // TODO Use once schema tests are working
+    // if (timestamp) { activity.published = (new Date(timestamp)).toISOString(); }
 
     this.session.sendToClient(activity);
   }
