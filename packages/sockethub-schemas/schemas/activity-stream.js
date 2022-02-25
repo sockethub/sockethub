@@ -209,6 +209,11 @@ module.exports = {
 					},
 					"content": {
 						"type": "string"
+					},
+					"published": {
+						"enum": [
+							"this is not a timestamp"
+						]
 					}
 				}
 			},
