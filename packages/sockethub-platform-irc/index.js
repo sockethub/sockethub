@@ -680,6 +680,9 @@ IRC.prototype.__registerListeners = function (server) {
     this.debug('unprocessed irc message:> ' + string);
   });
 
+  // The generated eslint error expects that the `error` event is propagating an Error object
+  // however for irc2as this event delivers an AS object of type `error`.
+  // eslint-disable-next-line security-node/detect-unhandled-event-errors
   this.irc2as.events.on('error', (asObject) => {
     this.debug('message error response ' + asObject.object.content);
     this.__completeJob(asObject.object.content);
