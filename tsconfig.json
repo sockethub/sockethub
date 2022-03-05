@@ -1,0 +1,72 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "incremental": true,
+    "baseUrl": ".",
+    "moduleResolution": "node",
+    "module": "commonjs",
+    "target": "ES2018",
+    "sourceMap": true,
+    "lib": [
+      "esnext"
+    ],
+    "esModuleInterop": true,
+    "alwaysStrict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "activity-streams.js": [
+        "packages/activity-streams.js/src/activity-streams.js"
+      ],
+      "irc2as": [
+        "packages/irc2as/src/index.js"
+      ],
+      "sockethub": [
+        "packages/sockethub/src/index.ts"
+      ],
+      "@sockethub/platform-feeds": [
+        "packages/platform-feeds/index.js"
+      ],
+      "@sockethub/platform-irc": [
+        "packages/platform-irc/index.js"
+      ],
+      "@sockethub/platform-xmpp": [
+        "packages/platform-xmpp/src/index.js"
+      ],
+      "@sockethub/schemas": [
+        "packages/schemas/index.js"
+      ]
+    }
+  },
+  "references": [
+    {
+      "path": "packages/activity-streams.js"
+    },
+    {
+      "path": "packages/irc2as"
+    },
+    {
+      "path": "packages/server"
+    },
+    {
+      "path": "packages/platform-dummy"
+    },
+    {
+      "path": "packages/platform-feeds"
+    },
+    {
+      "path": "packages/platform-irc"
+    },
+    {
+      "path": "packages/platform-xmpp"
+    },
+    {
+      "path": "packages/schemas"
+    }
+  ],
+  "exclude": ["node_modules", "dist", "*.d.ts"]
+}
