@@ -1,6 +1,6 @@
 const chai = require('chai');
 const sinon = require('sinon');
-const schemas = require('sockethub-schemas');
+const schemas = require('@sockethub/schemas');
 const fs = require("fs");
 const equal = require('fast-deep-equal');
 const expect = chai.expect;

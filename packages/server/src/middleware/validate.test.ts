@@ -8,7 +8,6 @@ proxyquire.noCallThru();
 import platformLoad from './../bootstrap/platforms';
 const packageJSON = require('./../../package.json');
 const platforms = platformLoad(Object.keys(packageJSON.dependencies));
-console.log(Object.keys(packageJSON.dependencies))
 const validateMod = proxyquire('./validate', {
   '../bootstrap/init': {
     platforms: platforms

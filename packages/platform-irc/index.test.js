@@ -1,6 +1,6 @@
 const proxyquire = require('proxyquire');
 const chai = require('chai');
-const schemas = require('sockethub-schemas');
+const schemas = require('@sockethub/schemas');
 const expect = chai.expect;
 
 const IRCPlatform = require('./index');
