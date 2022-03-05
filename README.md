@@ -73,4 +73,3 @@ Logo design by [Jan-Christoph Borchardt](http://jancborchardt.net)
 Sponsored by [NLNET](http://nlnet.nl)
 
 [![NLNET Logo](http://sockethub.org/res/img/nlnet-logo.svg)](http://nlnet.nl)
-
