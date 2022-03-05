@@ -25,6 +25,7 @@
   "scripts": {
     "version": "nx run-many --target=build --all --parallel",
     "deps": "yarn install && lerna bootstrap",
+    "publish": "lerna publish --dist-tag latest --pre-dist-tag next",
     "test": "nx run-many --target=test --all --parallel",
     "coverage": "nx run-many --target=coverage --all --parallel",
     "compliance": "nx run-many --target=compliance --all --parallel",
@@ -40,5 +41,8 @@
     "integration:setup": "docker compose -f docker-compose.yml up -d",
     "integration:teardown": "docker compose stop",
     "integration:clean": "docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub"
+  },
+  "dependencies": {
+    "@nrwl/js": "^13.8.4"
   }
 }
