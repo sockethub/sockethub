@@ -19,14 +19,14 @@
     "noUnusedLocals": true,
     "resolveJsonModule": true,
     "paths": {
-      "activity-streams.js": [
+      "@sockethub/activity-streams.js": [
         "packages/activity-streams.js/src/activity-streams.js"
       ],
-      "irc2as": [
+      "@sockethub/irc2as": [
         "packages/irc2as/src/index.js"
       ],
-      "sockethub": [
-        "packages/sockethub/src/index.ts"
+      "@sockethub/server": [
+        "packages/server/src/index.ts"
       ],
       "@sockethub/platform-feeds": [
         "packages/platform-feeds/index.js"

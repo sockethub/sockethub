@@ -64,7 +64,7 @@
 		"clean": "find . -maxdepth 1 -name dist -exec rm -rv {} +",
 		"build": "yarn run clean && yarn run build:server && yarn run build:client",
 		"build:server": "tsc && cp ./src/defaults.json ./dist/defaults.json && cp src/bootstrap/platforms.js dist/bootstrap/",
-		"build:client": "webpack --config webpack.minified.config.js && webpack --config webpack.normal.config.js"
+		"build:client": "cp node_modules/@sockethub/client/dist/* dist/"
 	},
 	"engines": {
 		"node": ">= 12.0.0"
