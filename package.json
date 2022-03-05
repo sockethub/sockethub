@@ -29,7 +29,7 @@
     "coverage": "nx affected:coverage --parallel=2 --base=origin/master",
     "clean": "nx affected:clean --parallel=2 --base=origin/master",
     "compliance": "nx affected:compliance --parallel=2 --base=origin/master",
-    "lint": "nx affected:lint --parallel=2 --base=origin/master",
+    "lint": "nx affected --target=lint --parallel=2",
     "lint:fix": "nx affected --target=lint:fix --parallel=2 --base=origin/master",
     "build": "nx affected:build --parallel=2 --base=origin/master",
     "dev": "[[ -f config.json ]] && cp config.json packages/server/; cd packages/server && yarn run dev",
