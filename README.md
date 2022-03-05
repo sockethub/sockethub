@@ -51,7 +51,9 @@ For production, with examples disabled.
 
 `$ DEBUG=sockethub* yarn run start`
 
-*For more info on configuration options, see the [Sockethub README](packages/server/README.md#environment-variables)* section on environment variables.*
+*For more info on configuration options, see the
+[Sockethub README](packages/server/README.md#environment-variables)*
+section on environment variables.*
 
 ## Packages
 

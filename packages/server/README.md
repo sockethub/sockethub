@@ -54,9 +54,9 @@ in the `config.json`.
 
 * [Feeds](../platform-feeds) *(RSS, Atom)*
 
-* [IRC](../platform-irc) 
+* [IRC](../platform-irc)
 
-* [XMPP](../platform-xmpp) 
+* [XMPP](../platform-xmpp)
 
 ## Install
 
@@ -122,7 +122,7 @@ For production, with examples disabled.
 
 ## License
 
-Sockethub is licensed under the 
+Sockethub is licensed under the
 [LGPL](https://github.com/sockethub/sockethub/blob/master/LICENSE)
 
 ## Credits
