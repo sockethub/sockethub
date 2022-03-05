@@ -20,13 +20,13 @@ Uses `xmpp.js` as a base tool for interacting with XMPP.
     * [.request-friend(job, done)](#XMPP+request-friend)
     * [.remove-friend(job, done)](#XMPP+remove-friend)
     * [.make-friend(job, done)](#XMPP+make-friend)
-    * [.observe(job, done)](#XMPP+observe)
+    * [.query(job, done)](#XMPP+query)
     * [.cleanup(done)](#XMPP+cleanup)
 
 <a name="new_XMPP_new"></a>
 
 ## new XMPP(session)
-Constructor called from the sockethub Platform instance, passing in a
+Constructor called from the Sockethub `Platform` instance, passing in a
 session object.
 
 <table>
@@ -54,7 +54,7 @@ credentials (`session.getConfig()`), knowing they will have already been
 validated against this schema.
 
 
-In the below example, sockethub will validate the incoming credentials object
+In the below example, Sockethub will validate the incoming credentials object
 against whatever is defined in the `credentials` portion of the schema
 object.
 
@@ -80,10 +80,8 @@ Valid AS object for setting XMPP credentials:
   },
   object: {
     type: 'credentials',
-    server: 'jabber.net',
-    username: 'testuser',
+    userAddress: 'testuser@jabber.net',
     password: 'asdasdasdasd',
-    port: 5223,
     resource: 'phone'
   }
 }
@@ -269,6 +267,7 @@ Send a message to a room or private conversation.
 
 ## xmpP.update(job, done)
 Indicate presence and status message.
+Valid presence values are "away", "chat", "dnd", "xa", "offline", "online".
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
 <table>
@@ -297,7 +296,7 @@ Indicate presence and status message.
   },
   object: {
     type: 'presence'
-    presence: 'chat',
+    presence: 'away',
     content: '...clever saying goes here...'
   }
 }
@@ -407,10 +406,10 @@ Confirm a friend request
   }
 }
 ```
-<a name="XMPP+observe"></a>
+<a name="XMPP+query"></a>
 
-## xmpP.observe(job, done)
-Indicate an intent to observe something (ie. get a list of users in a room).
+## xmpP.query(job, done)
+Indicate an intent to query something (ie. get a list of users in a room).
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
 <table>
@@ -433,7 +432,7 @@ Indicate an intent to observe something (ie. get a list of users in a room).
 ```js
 {
    context: 'xmpp',
-   type: 'observe',
+   type: 'query',
    actor: {
      id: 'slvrbckt@jabber.net/Home',
      type: 'person'
@@ -450,7 +449,7 @@ Indicate an intent to observe something (ie. get a list of users in a room).
  // The above object might return:
  {
    context: 'xmpp',
-   type: 'observe',
+   type: 'query',
    actor: {
      id: 'PartyChatRoom@muc.jabber.net',
      type: 'room'
