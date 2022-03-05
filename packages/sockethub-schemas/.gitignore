@@ -1,7 +1,0 @@
-.idea
-node_modules
-*~
-./config.js
-./config.secrets.js
-./examples/connect-config.js
-coverage
