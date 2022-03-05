@@ -184,10 +184,6 @@ const _Object = {
 
   list: function () {
     return objs.keys();
-  },
-
-  getByType: function (type) {
-    // TODO not implemented
   }
 };
 
