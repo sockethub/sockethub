@@ -26,7 +26,7 @@ export default function validate(type: string, sockethubId: string) {
       err ? done(new Error(err)) : done(msg);
     } else if (! init.platforms.has(msg.context)) {
       return done(
-        new Error(`platform context ${msg.context} not registered with this sockethub instance.`)
+        new Error(`platform context ${msg.context} not registered with this Sockethub instance.`)
       );
     } else if (type === 'credentials') {
       const err = Schemas.validator.validateCredentials(msg);

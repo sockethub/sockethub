@@ -8,7 +8,7 @@
     "enabled": false,
     "secret": 1234567890
   },
-  "service": {
+  "sockethub": {
     "port": 10550,
     "host": "localhost",
     "path": "/sockethub"

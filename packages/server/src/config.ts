@@ -9,10 +9,10 @@ export class Config {
     // assign config loading priorities (command-line, environment, cfg, defaults)
     nconf.argv({
       'port': {
-        alias: 'service.port'
+        alias: 'sockethub.port'
       },
       'host': {
-        alias: 'service.host'
+        alias: 'sockethub.host'
       },
       'redis_host': {
         alias: 'redis.host'
