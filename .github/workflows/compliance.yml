@@ -8,13 +8,10 @@ jobs:
         node-version: [16.x]
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      - run: git fetch --no-tags --prune --depth=100 origin master
       - run: npm install -g yarn
       - run: yarn deps
       - run: yarn run lint
@@ -25,14 +22,10 @@ jobs:
         node-version: [ 14.x, 16.x ]
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      - run: git fetch --no-tags --prune --depth=5 origin master
       - run: npm install -g yarn
       - name: Install Dependencies
         run: yarn deps
@@ -47,14 +40,10 @@ jobs:
         node-version: [ 16.x ]
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      - run: git fetch --no-tags --prune --depth=5 origin master
       - run: npm install -g yarn
       - name: Install Dependencies
         run: yarn deps
