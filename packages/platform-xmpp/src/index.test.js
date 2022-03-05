@@ -4,7 +4,7 @@ const sinon = require('sinon');
 const expect = chai.expect;
 
 proxyquire.noPreserveCache();
-proxyquire.noCallThru()
+proxyquire.noCallThru();
 
 const actor = {
   type: 'person',
@@ -147,7 +147,7 @@ describe('Platform', () => {
       start: sinon.fake.resolves(),
       send: sinon.fake.resolves(),
       join: sinon.fake.resolves(),
-    }
+    };
     clientFake = sinon.fake.returns(clientObjectFake);
     xmlFake = sinon.fake();
 
@@ -170,7 +170,7 @@ describe('Platform', () => {
 
   afterEach(() => {
     sinon.restore();
-  })
+  });
 
   describe('Successful initialization', () => {
     it('works as intended', (done) => {
@@ -283,20 +283,22 @@ describe('Platform', () => {
           done();
         });
       });
-    })
+    });
 
     describe('#update', () => {
       it('calls xml() correctly for available', (done) => {
         xp.update(job.update.presenceOnline, () => {
           sinon.assert.calledOnce(xp.__client.send);
-          expect(xmlFake.getCall(0).args).to.eql([ 'presence', {}, {}, { status: 'ready to chat' } ]);
+          expect(xmlFake.getCall(0).args).to.eql(
+            [ 'presence', {}, {}, { status: 'ready to chat' } ]);
           done();
         });
       });
       it('calls xml() correctly for unavailable', (done) => {
         xp.update(job.update.presenceUnavailable, () => {
           sinon.assert.calledOnce(xp.__client.send);
-          expect(xmlFake.getCall(0).args).to.eql([ 'presence', {}, { show: 'away' }, { status: 'eating popcorn' } ]);
+          expect(xmlFake.getCall(0).args).to.eql(
+            [ 'presence', {}, { show: 'away' }, { status: 'eating popcorn' } ]);
           done();
         });
       });
@@ -349,13 +351,14 @@ describe('Platform', () => {
       it('calls xmpp.js correctly', (done) => {
         xp.query(job.query, () => {
           sinon.assert.calledOnce(xp.__client.send);
-          expect(xmlFake.getCall(0).args).to.eql(["query", {xmlns: 'http://jabber.org/protocol/disco#items'}]);
+          expect(xmlFake.getCall(0).args).to.eql(
+            ["query", {xmlns: 'http://jabber.org/protocol/disco#items'}]);
           expect(xmlFake.getCall(1).args).to.eql(["iq",  {
-              id: 'muc_id',
-              type: 'get',
-              from: "testingham@jabber.net",
-              to: "partyroom@jabber.net"
-            }, undefined]);
+            id: 'muc_id',
+            type: 'get',
+            from: "testingham@jabber.net",
+            to: "partyroom@jabber.net"
+          }, undefined]);
           done();
         });
       });

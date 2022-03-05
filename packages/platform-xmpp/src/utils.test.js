@@ -17,8 +17,8 @@ describe('Utils', () => {
   });
   it('allows overriding server value', () => {
     expect(utils.buildXmppCredentials({object: {
-        userAddress: 'barney@dinosaur.com.au', server:'foo', password:'bar', resource: 'Home'
-      }})).to.eql({
+      userAddress: 'barney@dinosaur.com.au', server:'foo', password:'bar', resource: 'Home'
+    }})).to.eql({
       password: 'bar',
       service: "foo",
       username: "barney",
@@ -27,8 +27,8 @@ describe('Utils', () => {
   });
   it('allows a custom port', () => {
     expect(utils.buildXmppCredentials({object: {
-        userAddress: 'barney@dinosaur.com.au', port:123, password:'bar', resource: 'Home'
-      }})).to.eql({
+      userAddress: 'barney@dinosaur.com.au', port:123, password:'bar', resource: 'Home'
+    }})).to.eql({
       password: 'bar',
       service: "dinosaur.com.au:123",
       username: "barney",

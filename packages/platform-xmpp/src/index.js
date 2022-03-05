@@ -130,7 +130,8 @@ class XMPP {
     this.debug('connect called for ' + job.actor.id);
     this.__client = client(utils.buildXmppCredentials(credentials));
     this.__client.on("offline", (a) => {
-      console.log("offline", a);
+      this.debug('offline');
+      // console.log("offline", a);
     });
 
     this.__client.start().then(() => {
