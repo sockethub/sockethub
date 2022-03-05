@@ -35,7 +35,7 @@ Below is a list of platform contexts we're currently working on and their types,
 
 ## Install
 
-`$ npm install -g @sockethub/service`
+`$ npm install -g @sockethub/server`
 
 ## Running
 
