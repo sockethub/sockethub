@@ -1,5 +1,7 @@
 [![Sockethub](http://sockethub.org/res/img/sockethub-logo.svg)](http://sockethub.org)
 
+# Sockethub
+
 A protocol gateway for the web.
 
 ## About
@@ -68,7 +70,7 @@ in the `config.json`.
 
 Default: `10550`
 
-* HOST 
+* HOST
 
 Default: `localhost`
 
