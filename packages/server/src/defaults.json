@@ -1,0 +1,32 @@
+{
+  "activity-streams": {
+    "opts": {
+      "specialObjs": [ "credentials" ]
+    }
+  },
+  "examples": {
+    "enabled": false,
+    "secret": 1234567890
+  },
+  "service": {
+    "port": 10550,
+    "host": "localhost",
+    "path": "/sockethub"
+  },
+  "log_file": "",
+  "platforms": {
+    "whitelist": [],
+    "blacklist": []
+  },
+  "public": {
+    "protocol": "http",
+    "host": "localhost",
+    "port": 10550,
+    "path": "/"
+  },
+  "redis": {
+    "host": "127.0.0.1",
+    "port": 6379
+  },
+  "workers": 1
+}
