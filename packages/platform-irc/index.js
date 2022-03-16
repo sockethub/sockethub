@@ -26,7 +26,7 @@ if (typeof (IrcSocket) !== 'object') {
   IrcSocket = require('irc-socket-sasl');
 }
 if (typeof (IRC2AS) !== 'object') {
-  IRC2AS = require('irc2as');
+  IRC2AS = require('@sockethub/irc2as');
 }
 
 const packageJSON = require('./package.json');
