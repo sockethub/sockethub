@@ -25,9 +25,9 @@
   "scripts": {
     "deps": "yarn install && lerna bootstrap",
     "publish": "yarn run build && yarn run compliance && lerna publish --dist-tag latest --pre-dist-tag next",
-    "test": "nx run-many --target=test --all",
+    "test": "nx run-many --target=test --all --skip-nx-cache",
     "coverage": "nx run-many --target=coverage --all",
-    "clean": "nx run-many --target=clean --all",
+    "clean": "nx run-many --target=clean --all && npx rimraf node_modules",
     "compliance": "nx run-many --target=compliance --all",
     "lint": "nx run-many --target=lint --all",
     "lint:fix": "nx run-many --target=lint:fix --all",

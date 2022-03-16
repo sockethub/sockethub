@@ -26,6 +26,7 @@
     "mocha": "9.2.1"
   },
   "scripts": {
+    "clean": "npx rimraf coverage node_modules",
     "compliance": "yarn run test && yarn run coverage",
     "test": "yarn run build && c8 mocha **/*.test.js",
     "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 95 --lines 95",

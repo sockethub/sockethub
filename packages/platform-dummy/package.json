@@ -11,6 +11,7 @@
     "dummy"
   ],
   "scripts": {
+    "clean": "npx rimraf node_modules",
     "test": "exit 0"
   },
   "repository": {

@@ -35,6 +35,7 @@
     "sinon": "13.0.1"
   },
   "scripts": {
+    "clean": "npx rimraf coverage node_modules",
     "compliance": "yarn run lint && yarn run test && yarn run coverage",
     "test": "c8 mocha *.test.js",
     "coverage": "c8 check-coverage --statements 80 --branches 55 --functions 85 --lines 80",

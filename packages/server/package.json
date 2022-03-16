@@ -54,6 +54,7 @@
 		"urijs": "^1.19.2"
 	},
 	"scripts": {
+		"clean": "npx rimraf dist coverage node_modules",
 		"compliance": "yarn run lint && yarn run test && yarn run coverage",
 		"test": "c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts src/**/*.test.ts",
 		"coverage": "c8 check-coverage --statements 90 --branches 80 --functions 90 --lines 90",
@@ -61,8 +62,7 @@
 		"dev": "yarn run build && DEBUG=sockethub* ./bin/sockethub --examples",
 		"lint": "eslint \"**/*.ts\" ./bin/sockethub",
 		"lint:fix": "eslint --fix \"**/*.ts\" ./bin/sockethub",
-		"clean": "find . -maxdepth 1 -name dist -exec rm -rv {} +",
-		"build": "yarn run clean && yarn run build:server && yarn run build:client",
+		"build": "npx rimraf dist && yarn run build:server && yarn run build:client",
 		"build:server": "tsc && cp ./src/defaults.json ./dist/defaults.json && cp src/bootstrap/platforms.js dist/bootstrap/",
 		"build:client": "cp ../client/dist/* dist/"
 	},

@@ -18,6 +18,7 @@
     "sinon": "13.0.1"
   },
   "scripts": {
+    "clean": "npx rimraf coverage node_modules",
     "compliance": "yarn run test && yarn run coverage",
     "test": "c8 mocha src/**.test.js",
     "coverage": "c8 check-coverage --statements 90 --branches 90 --functions 95 --lines 90"

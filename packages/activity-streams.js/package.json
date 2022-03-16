@@ -24,6 +24,7 @@
     "directory": "packages/activity-streams.js"
   },
   "scripts": {
+    "clean": "npx rimraf browser coverage node_modules",
     "compliance": "yarn run test && yarn run coverage",
     "test:node": "c8 -r text mocha ./src/**/*.test.js",
     "test:node:lcov": "c8 -r lcov mocha ./src/**/*.test.js",
