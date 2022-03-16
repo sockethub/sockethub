@@ -363,7 +363,7 @@ cross-spawn@^7.0.0, cross-spawn@^7.0.2:
     shebang-command "^2.0.0"
     which "^2.0.1"
 
-debug@^4.1.1, debug@^4.3.1, debug@^4.3.2:
+debug@^4.1.1, debug@^4.3.2:
   version "4.3.3"
   resolved "https://registry.yarnpkg.com/debug/-/debug-4.3.3.tgz#04266e0b70a98d4462e6e288e38259213332b664"
   integrity sha512-/zxw5+vh1Tfv+4Qn7a5nsbcJKPaSvCDhojn6FEl9vupwK2VCSDtEiEtqr8DFtzYFOdz63LBkxec7DYuc2jon6Q==
@@ -1265,13 +1265,6 @@ sinon@13.0.1:
     diff "^5.0.0"
     nise "^5.1.1"
     supports-color "^7.2.0"
-
-sockethub-schemas@^3.0.0-alpha.0:
-  version "3.0.0-alpha.0"
-  resolved "https://registry.yarnpkg.com/sockethub-schemas/-/sockethub-schemas-3.0.0-alpha.0.tgz#bba0031b3210dbf81dda16776685d6c5bd91abeb"
-  integrity sha512-a6oIH8qcz/tEdP/Zz+1jc//RoXUlh1m4bfLoiUDCBoBmgKsxHpIuzVqxj954f7dy3VblFBGC5pwz1xP5LJ1TPQ==
-  dependencies:
-    debug "^4.3.1"
 
 sort-array@^4.1.4:
   version "4.1.4"
