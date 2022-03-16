@@ -20,7 +20,6 @@ exclude_patterns:
 - "**/script/"
 - "**/spec/"
 - "**/test/"
-- "**/tests/"
 - "**/vendor/"
 - "**/*_test.go"
 - "**/*.d.ts"
