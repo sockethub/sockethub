@@ -25,7 +25,7 @@
   "scripts": {
     "deps": "yarn install && lerna bootstrap",
     "publish": "yarn run build && yarn run compliance && lerna publish --dist-tag latest --pre-dist-tag next",
-    "test": "nx run-many --target=test --base=all",
+    "test": "nx run-many --target=test --all",
     "coverage": "nx run-many --target=coverage --all",
     "clean": "nx run-many --target=clean --all",
     "compliance": "nx run-many --target=compliance --all",
