@@ -8,10 +8,7 @@
 const debug   = require('debug'),
       schemas = require('@sockethub/schemas');
 
-const config = require('../config').default;
 const log = debug('sockethub:server:bootstrap:platforms');
-
-const platformsList = config.get('platforms');
 
 log('loading platforms');
 
@@ -23,55 +20,63 @@ function platformListsSupportedTypes(p) {
     (p.schema.messages.properties.type.enum.length > 0));
 }
 
-module.exports = function platformLoad() {
-  // load platforms from config.platforms
-  const platforms = new Map();
+const inject = {
+  require: require
+};
 
-  if (platformsList.length <= 0) {
-    throw new Error('No platforms defined in Sockethub config, nothing to load');
-  }
-  log(`attempting to register platforms from config: ${platformsList}`);
+module.exports = {
+  injectRequire: (r) => {
+    inject.require = r;
+  },
+  platformLoad: (platformsList) => {
+    // load platforms from config.platforms
+    const platforms = new Map();
 
-  for (let platformName of platformsList) {
-    log(`registering ${platformName} platform`);
+    if (platformsList.length <= 0) {
+      throw new Error('No platforms defined in Sockethub config, nothing to load');
+    }
+    log(`attempting to register platforms from config: ${platformsList}`);
 
-    // try to load platform
-    // eslint-disable-next-line security-node/detect-non-literal-require-calls
-    const P = require(platformName);
-    const p = new P();
-    let types = [];
+    for (let moduleName of platformsList) {
+      log(`registering ${moduleName}`);
+      // try to load platform
+      // eslint-disable-next-line security-node/detect-non-literal-require-calls
+      const P = inject.require(moduleName);
+      const p = new P();
+      let types = [];
 
-    const err = schemas.validator.validatePlatformSchema(p.schema);
-    if (err) {
-      throw new Error(`${platformName} ${err}`);
-    } else if (typeof p.config !== 'object') {
-      throw new Error(
-        `${platformName} platform must have a config property that is an object.`);
-    } else {
-      if (p.schema.credentials) {
-        // register the platforms credentials schema
-        types.push('credentials');
+      const err = schemas.validator.validatePlatformSchema(p.schema);
+      if (err) {
+        throw new Error(`${moduleName} ${err}`);
+      } else if (typeof p.config !== 'object') {
+        throw new Error(
+          `${moduleName} platform must have a config property that is an object.`);
       } else {
-        p.config.noCredentials = true;
+        if (p.schema.credentials) {
+          // register the platforms credentials schema
+          types.push('credentials');
+        } else {
+          p.config.noCredentials = true;
+        }
       }
-    }
 
-    if (platformListsSupportedTypes(p)) {
-      types = [...types, ...p.schema.messages.properties.type.enum];
-    }
+      if (platformListsSupportedTypes(p)) {
+        types = [...types, ...p.schema.messages.properties.type.enum];
+      }
 
-    platforms.set(platformName, {
-      id: platformName,
-      moduleName: moduleName,
-      config: p.config,
-      schemas: {
-        credentials: p.schema.credentials || {},
-        messages: p.schema.messages || {}
-      },
-      version: p.version,
-      types: types
-    });
+      const platformName = p.name || moduleName;
+      platforms.set(platformName, {
+        id: platformName,
+        moduleName: moduleName,
+        config: p.config,
+        schemas: {
+          credentials: p.schema.credentials || {},
+          messages: p.schema.messages || {}
+        },
+        version: p.version,
+        types: types
+      });
+    }
+    return platforms;
   }
-
-  return platforms;
 };
