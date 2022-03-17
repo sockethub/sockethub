@@ -33,7 +33,7 @@
     "compliance": "nx run-many --target=compliance --all",
     "lint": "nx run-many --target=lint --all",
     "lint:fix": "nx run-many --target=lint:fix --all",
-    "build": "nx run-many --target=build --all --exclude=@sockethub/server && nx run-many --target=build --projects=@sockethub/server",
+    "build": "nx run-many --target=build --all --exclude=@sockethub/server,sockethub && nx run-many --target=build --projects=@sockethub/server && nx run-many --target=build --projects=sockethub",
     "dev": "yarn run build && cd apps/sockethub; yarn run dev",
     "start": "cd apps/sockethub; yarn run start",
     "integration": "yarn run integration:setup && yarn run integration:run; RES=$?; if [[ \"$RES\" != \"0\" ]]; then yarn run integration:log; fi; yarn run integration:teardown; exit $RES",
