@@ -65,9 +65,7 @@ describe("SockethubClient", () => {
   });
 
   it("registers listeners for ActivityStream events", () => {
-    // @ts-ignore
     expect(asinstance.on.callCount).to.equal(1);
-    // @ts-ignore
     expect(asinstance.on.calledWithMatch('activity-object-create')).to.be.true;
   });
 

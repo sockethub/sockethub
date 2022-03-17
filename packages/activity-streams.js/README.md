@@ -39,7 +39,6 @@ ActivityStreams.Object.create({
   id: 'irc://exampleUser@irc.freenode.net',
   type: "person",
   name: 'Example User',
-  name: 'Example User',
   url: "http://activitystrea.ms",
   image: {
     url: "http://activitystrea.ms/avatar.jpg",
