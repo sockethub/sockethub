@@ -39,7 +39,7 @@ jobs:
       - name: Run docker compose up
         run: yarn integration:setup
 
-      - run: sleep 5
+      - run: sleep 25
 
       - name: Verify Sockethub is listening
         run: nc -zv localhost 10550
