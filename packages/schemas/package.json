@@ -19,8 +19,6 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/schemas",
   "devDependencies": {
-    "ajv": "8.10.0",
-    "ajv-formats-draft2019": "1.6.1",
     "c8": "7.11.0",
     "chai": "4.3.6",
     "mocha": "9.2.1"
@@ -33,6 +31,8 @@
     "build": "./bin/build.js"
   },
   "dependencies": {
+    "ajv": "8.10.0",
+    "ajv-formats-draft2019": "1.6.1",
     "debug": "^4.3.1"
   }
 }
