@@ -1,0 +1,33 @@
+{
+  "activity-streams": {
+    "opts": {
+      "specialObjs": [ "credentials" ]
+    }
+  },
+  "examples": {
+    "enabled": false,
+    "secret": 1234567890
+  },
+  "sockethub": {
+    "port": 10550,
+    "host": "localhost",
+    "path": "/sockethub"
+  },
+  "log_file": "",
+  "platforms": [
+    "@sockethub/platform-dummy",
+    "@sockethub/platform-feeds",
+    "@sockethub/platform-irc",
+    "@sockethub/platform-xmpp"
+  ],
+  "public": {
+    "protocol": "http",
+    "host": "localhost",
+    "port": 10550,
+    "path": "/"
+  },
+  "redis": {
+    "host": "redis",
+    "port": 6379
+  }
+}
