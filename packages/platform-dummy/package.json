@@ -10,6 +10,9 @@
     "sockethub",
     "dummy"
   ],
+  "peerDependencies": {
+    "@sockethub/server": ">=5.0.0-alpha.1"
+  },
   "scripts": {
     "clean": "npx rimraf node_modules",
     "test": "exit 0"

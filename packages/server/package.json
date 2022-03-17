@@ -1,6 +1,6 @@
 {
 	"name": "@sockethub/server",
-	"description": "A polyglot messaging service",
+	"description": "A polyglot messaging service, server libraries",
 	"version": "5.0.0-alpha.0",
 	"private": false,
 	"author": "Nick Jennings <nick@silverbucket.net>",
@@ -30,15 +30,11 @@
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/sockethub/sockethub.git",
-		"directory": "packages/sockethub"
+		"directory": "packages/server"
 	},
 	"homepage": "https://sockethub.org",
 	"dependencies": {
 		"@sockethub/activity-streams": "^4.4.0-alpha.0",
-		"@sockethub/platform-dummy": "^3.0.0-alpha.0",
-		"@sockethub/platform-feeds": "^3.0.0-alpha.0",
-		"@sockethub/platform-irc": "^4.0.0-alpha.0",
-		"@sockethub/platform-xmpp": "^5.0.0-alpha.0",
 		"@sockethub/schemas": "^3.0.0-alpha.0",
 		"body-parser": "^1.19.0",
 		"bull": "^4.0.0",
@@ -48,6 +44,7 @@
 		"findup-sync": "^5.0.0",
 		"jquery": "^3.4.1",
 		"nconf": "^0.11.2",
+		"npm": "8.5.4",
 		"object-hash": "^3.0.0",
 		"secure-store-redis": "^1.4.7",
 		"socket.io": "^4.0.1",

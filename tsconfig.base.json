@@ -16,10 +16,10 @@
     ],
     "esModuleInterop": true,
     "alwaysStrict": true,
-    "strictNullChecks": false, // TODO improve linting with this set to true
-    "noImplicitAny": false, // TODO improve linting with this set to true
+    "strictNullChecks": false,
+    "noImplicitAny": false,
     "noImplicitReturns": true,
-    "noImplicitThis": false, // TODO improve linting with this set to true
+    "noImplicitThis": false,
     "noUnusedLocals": true,
     "resolveJsonModule": true,
     "downlevelIteration": true,
@@ -29,9 +29,6 @@
       ],
       "@sockethub/irc2as": [
         "packages/irc2as/src/index.js"
-      ],
-      "@sockethub/server": [
-        "packages/server/src/index.ts"
       ],
       "@sockethub/platform-feeds": [
         "packages/platform-feeds/index.js"
@@ -44,6 +41,12 @@
       ],
       "@sockethub/schemas": [
         "packages/schemas/index.js"
+      ],
+      "@sockethub/server": [
+        "packages/server/src/index.ts"
+      ],
+      "@sockethub/testlib": [
+        "packages/testlib/string/src/index.ts"
       ]
     }
   },
@@ -73,5 +76,9 @@
       "path": "packages/schemas"
     }
   ],
-  "exclude": ["node_modules", "dist", "*.d.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "*.d.ts"
+  ]
 }

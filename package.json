@@ -45,6 +45,7 @@
     "integration:clean": "docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub"
   },
   "dependencies": {
-    "@nrwl/js": "^13.8.4"
+    "@nrwl/js": "^13.8.4",
+    "tslib": "^2.0.0"
   }
 }

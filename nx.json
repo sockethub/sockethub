@@ -43,5 +43,9 @@
     "@nrwl/js": {
       "analyzeSourceFiles": false
     }
-  }
+  },
+  "cli": {
+    "defaultCollection": "@nrwl/node"
+  },
+  "defaultProject": "sockethub"
 }

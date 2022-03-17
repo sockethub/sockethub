@@ -33,6 +33,9 @@
     "jsdoc": "3.6.10",
     "jsdoc-to-markdown": "7.1.1"
   },
+  "peerDependencies": {
+    "@sockethub/server": ">=5.0.0-alpha.1"
+  },
   "scripts": {
     "build": "yarn run doc",
     "clean": "npx rimraf node_modules",
