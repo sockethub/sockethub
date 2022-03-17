@@ -35,10 +35,9 @@ module.exports = {
     if (platformsList.length <= 0) {
       throw new Error('No platforms defined in Sockethub config, nothing to load');
     }
-    log(`attempting to register platforms from config: ${platformsList}`);
 
     for (let moduleName of platformsList) {
-      log(`registering ${moduleName}`);
+      log(`loading ${moduleName}`);
       // try to load platform
       // eslint-disable-next-line security-node/detect-non-literal-require-calls
       const P = inject.require(moduleName);

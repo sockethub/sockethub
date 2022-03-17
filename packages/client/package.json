@@ -30,7 +30,7 @@
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
   "devDependencies": {
-    "@sockethub/activity-streams": "4.4.0-alpha.0",
+    "@sockethub/activity-streams": "4.4.0-alpha.1",
     "@types/chai": "4.3.0",
     "@types/eslint": "8.4.1",
     "@types/eventemitter2": "4.1.0",
