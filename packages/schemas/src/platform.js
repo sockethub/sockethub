@@ -34,6 +34,11 @@ module.exports = {
       'type': 'object',
     },
 
+    'name' : {
+      'title': 'name',
+      'type': 'string',
+    },
+
     'version' : {
       'title': 'version',
       'type': 'string',

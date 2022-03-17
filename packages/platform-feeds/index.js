@@ -19,10 +19,9 @@
 const FeedParser = require('feedparser');
 const request = require('request');
 
-const packageJSON = require('./package.json');
-
 const PlatformSchema = {
-  "version": packageJSON.version,
+  "name": "feeds",
+  "version": require('./package.json').version,
   "messages": {
     "required": [ "type" ],
     "properties": {
@@ -101,8 +100,6 @@ const PlatformSchema = {
  */
 class Feeds {
   constructor(cfg) {
-    this.name = 'feeds';
-    this.version = require('./package.json').version;
     cfg = (typeof cfg === 'object') ? cfg : {};
     this.id = cfg.id; // actor
     this.debug = cfg.debug;

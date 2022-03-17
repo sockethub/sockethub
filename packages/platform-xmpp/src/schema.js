@@ -1,7 +1,6 @@
-const packageJSON = require('../package.json');
-
 module.exports = {
-  "version": packageJSON.version,
+  "name": "xmpp",
+  "version": require('../package.json').version,
   "messages": {
     "required": ['type'],
     "properties": {

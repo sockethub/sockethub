@@ -63,7 +63,7 @@ module.exports = {
         types = [...types, ...p.schema.messages.properties.type.enum];
       }
 
-      const platformName = p.name || moduleName;
+      const platformName = p.schema.name;
       platforms.set(platformName, {
         id: platformName,
         moduleName: moduleName,
@@ -72,7 +72,7 @@ module.exports = {
           credentials: p.schema.credentials || {},
           messages: p.schema.messages || {}
         },
-        version: p.version,
+        version: p.schema.version,
         types: types
       });
     }

@@ -5,13 +5,13 @@ proxyquire.noPreserveCache();
 proxyquire.noCallThru();
 
 class FakeSockethubPlatform {
-  name: string = 'fake';
   constructor() {}
   get config() {
     return {};
   }
   get schema() {
     return {
+      name: 'fake',
       version: 'infinity',
       credentials: {},
       messages: {
