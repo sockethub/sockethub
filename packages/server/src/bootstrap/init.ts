@@ -1,14 +1,13 @@
 import debug from 'debug';
 
 import config from '../config';
-import platformLoad from './platforms';
+import * as platformBootstrap from './platforms';
 
 const log = debug('sockethub:server:bootstrap:init');
 log('running init routines');
 
 const packageJSON = require('./../../package.json');
-// const platforms = platformLoad(Object.keys(packageJSON.dependencies));
-const platforms = platformLoad();
+const platforms = platformBootstrap.platformLoad(config.get('platforms'));
 
 log('loaded platforms');
 
@@ -45,9 +44,11 @@ if (config.get('info')) {
     for (let platform of platforms.values()) {
       console.log();
       // eslint-disable-next-line security-node/detect-crlf
-      console.log('  ' + platform.id + ' v' + platform.version);
+      console.log(platform.moduleName);
       // eslint-disable-next-line security-node/detect-crlf
-      console.log('    AS types: ' + platform.types.join(', '));
+      console.log(' name: ' + platform.id + ' version: ' + platform.version);
+      // eslint-disable-next-line security-node/detect-crlf
+      console.log(' AS types: ' + platform.types.join(', '));
     }
     console.log();
     process.exit();
