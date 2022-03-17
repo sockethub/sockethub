@@ -1,6 +1,6 @@
 {
   "name": "@sockethub/client",
-  "version": "1.0.0",
+  "version": "5.0.0-alpha.1",
   "description": "A JavaScript client for the Sockethub protocol gateway",
   "main": "dist/sockethub-client.js",
   "keywords": [

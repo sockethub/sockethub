@@ -14,10 +14,7 @@
     "path": "/sockethub"
   },
   "log_file": "",
-  "platforms": {
-    "whitelist": [],
-    "blacklist": []
-  },
+  "platforms": [],
   "public": {
     "protocol": "http",
     "host": "localhost",
@@ -27,6 +24,5 @@
   "redis": {
     "host": "redis",
     "port": 6379
-  },
-  "workers": 1
+  }
 }
