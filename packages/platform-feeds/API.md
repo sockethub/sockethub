@@ -101,18 +101,18 @@ and total count.
 ```js
 {
    context: "feeds",
-   'type': "fetch",
+   type: "fetch",
    actor: {
-     'id': 'https://dogfeed.com/user/nick@silverbucket',
-     'type': "person",
+     id: 'https://dogfeed.com/user/nick@silverbucket',
+     type: "person",
      name: "nick@silverbucket.net"
    },
    target: {
-     'id': 'http://blog.example.com/rss',
-     'type': "feed"
+     id: 'http://blog.example.com/rss',
+     type: "feed"
    },
    object: {
-     'type': "parameters",
+     type: "parameters",
      limit: 10,    // default 10
      property: 'date'
      after: 'Tue Nov 26 2013 02:11:59 GMT+0100 (CET)',
@@ -132,11 +132,11 @@ and total count.
 
   {
     context: 'feeds',
-    'type': 'post',
+    type: 'post',
     actor: {
-      'type': 'feed',
+      type: 'feed',
       name: 'Best Feed Inc.',
-      'id': 'http://blog.example.com/rss',
+      id: 'http://blog.example.com/rss',
       description: 'Where the best feed comes to be the best',
       image: {
         width: '144',
@@ -149,13 +149,13 @@ and total count.
       author: 'John Doe'
     },
     target: {
-      'id': 'https://dogfeed.com/user/nick@silverbucket',
-      'type': "person",
+      id: 'https://dogfeed.com/user/nick@silverbucket',
+      type: "person",
       name: "nick@silverbucket.net"
     },
     object: {
-      'id': "http://example.com/articles/about-stuff"
-      'type': 'post',
+      id: "http://example.com/articles/about-stuff"
+      type: 'post',
       title: 'About stuff...',
       url: "http://example.com/articles/about-stuff"
       date: "2013-05-28T12:00:00.000Z",
