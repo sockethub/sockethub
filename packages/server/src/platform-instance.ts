@@ -5,7 +5,7 @@ import Queue from 'bull';
 
 import config from "./config";
 import { ActivityStream, JobDataDecrypted, JobEncrypted } from "./sockethub";
-import { getSocket } from "./serve";
+import { getSocket } from "./listener";
 import { decryptJobData } from "./common";
 
 // collection of platform instances, stored by `id`
