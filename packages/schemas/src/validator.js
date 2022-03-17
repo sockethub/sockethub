@@ -28,10 +28,7 @@ function parseMsg(error) {
 }
 
 function getTypeList(msg) {
-  let types = [];
-  if (msg?.type) {
-    types = [ msg.type ];
-  }
+  let types = [ msg?.type ];
   for (let prop in msg) {
     if (msg[prop]?.type) {
       types = [...types, ...getTypeList(msg[prop])];
