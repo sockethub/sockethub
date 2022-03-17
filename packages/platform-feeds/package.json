@@ -34,6 +34,7 @@
     "jsdoc-to-markdown": "7.1.1"
   },
   "scripts": {
+    "build": "yarn run doc",
     "clean": "npx rimraf node_modules",
     "compliance": "yarn run test",
     "test": "jaribu",
