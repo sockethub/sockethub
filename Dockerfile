@@ -8,8 +8,8 @@ RUN mkdir -p /app
 WORKDIR /app
 ADD . /app
 
-RUN yarn run deps
-RUN yarn run build
+RUN yarn deps
+RUN yarn build
 
 EXPOSE 10550
-CMD DEBUG=sockethub* /app/apps/sockethub/bin/sockethub --examples --host 0.0.0.0
+CMD DEBUG=sockethub* /app/apps/sockethub/bin/sockethub --host 0.0.0.0

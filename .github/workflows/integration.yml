@@ -41,6 +41,9 @@ jobs:
 
       - run: sleep 25
 
+      - name: Check docker logs
+        run: yarn integration:log
+
       - name: Verify Sockethub is listening
         run: nc -zv localhost 10550
 
