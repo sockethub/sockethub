@@ -11,7 +11,5 @@ ADD . /app
 RUN yarn run deps
 RUN yarn run build
 
-ADD packages/server/config.json.example /app/packages/server/config.json
-
 EXPOSE 10550
-CMD DEBUG=sockethub* /app/packages/server/bin/sockethub --examples --host 0.0.0.0
+CMD DEBUG=sockethub* /app/apps/sockethub/bin/sockethub --examples --host 0.0.0.0
