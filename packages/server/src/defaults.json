@@ -14,10 +14,7 @@
     "path": "/sockethub"
   },
   "log_file": "",
-  "platforms": {
-    "whitelist": [],
-    "blacklist": []
-  },
+  "platforms": [],
   "public": {
     "protocol": "http",
     "host": "localhost",

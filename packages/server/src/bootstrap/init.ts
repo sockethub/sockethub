@@ -7,33 +7,28 @@ const log = debug('sockethub:server:bootstrap:init');
 log('running init routines');
 
 const packageJSON = require('./../../package.json');
-const platforms = platformLoad(Object.keys(packageJSON.dependencies));
+// const platforms = platformLoad(Object.keys(packageJSON.dependencies));
+const platforms = platformLoad();
+
 log('loaded platforms');
 
-if (config.get('help')) {
+if (config.get('info')) {
   // eslint-disable-next-line security-node/detect-crlf
-  console.log(packageJSON.name + ' ' + packageJSON.version);
-  console.log('command line args: ');
+  console.log('sockethub ' + packageJSON.version);
   console.log();
-  console.log('  --help     : this help screen');
-  console.log('  --info     : displays some basic runtime info');
-  console.log();
-  console.log('  --examples : enables examples page and serves helper files like jquery');
-  console.log();
-  console.log('  --host     : hostname to bind to');
-  console.log('  --port     : port to bind to');
-  console.log();
-  process.exit();
-} else if (config.get('info')) {
+
   // eslint-disable-next-line security-node/detect-crlf
-  console.log(packageJSON.name + ' ' + packageJSON.version);
+  console.log('websocket: ' + config.get('sockethub:host') + ':' + config.get('sockethub:port')
+              + config.get('sockethub:path'));
+
   console.log();
   // eslint-disable-next-line security-node/detect-crlf
   console.log('examples enabled: ' + config.get('examples:enabled'));
   // eslint-disable-next-line security-node/detect-crlf
-  console.log('sockethub: ' + config.get('sockethub:host') + ':' + config.get('sockethub:port')
-              + config.get('sockethub:path'));
+  console.log('examples url: ' + config.get('public:host') + ':' + config.get('public:port')
+    + config.get('public:path') + 'examples');
 
+  console.log();
   if (config.get('redis:url')) {
     // eslint-disable-next-line security-node/detect-crlf
     console.log('redis URL: ' + config.get('redis:url'));
@@ -41,9 +36,6 @@ if (config.get('help')) {
     // eslint-disable-next-line security-node/detect-crlf
     console.log('redis: ' + config.get('redis:host') + ':' + config.get('redis:port'));
   }
-  // eslint-disable-next-line security-node/detect-crlf
-  console.log('public url: ' + config.get('public:host') + ':' + config.get('public:port')
-              + config.get('public:path'));
 
   console.log();
   // eslint-disable-next-line security-node/detect-crlf
