@@ -1,0 +1,49 @@
+{
+	"name": "sockethub",
+	"description": "A polyglot messaging service",
+	"version": "5.0.0-alpha.1",
+	"private": false,
+	"author": "Nick Jennings <nick@silverbucket.net>",
+	"license": "LGPL-3.0+",
+	"main": "",
+	"bin": "bin/sockethub",
+	"preferGlobal": true,
+	"keywords": [
+		"sockethub",
+		"messaging",
+		"polyglot",
+		"unhosted",
+		"apis",
+		"api",
+		"protocols",
+		"protocol",
+		"irc",
+		"xmpp",
+		"facebook",
+		"rss",
+		"atom",
+		"twitter",
+		"smtp",
+		"imap",
+		"email"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/sockethub/sockethub.git",
+		"directory": "apps/sockethub"
+	},
+	"homepage": "https://sockethub.org",
+	"dependencies": {
+		"@sockethub/server": "5.0.0-alpha.1",
+		"@sockethub/platform-dummy": "^3.0.0-alpha.1",
+		"@sockethub/platform-feeds": "^3.0.0-alpha.1",
+		"@sockethub/platform-irc": "^4.0.0-alpha.1",
+		"@sockethub/platform-xmpp": "^5.0.0-alpha.1"
+	},
+	"scripts": {
+		"clean": "npx rimraf node_modules"
+	},
+	"engines": {
+		"node": ">= 12.0.0"
+	}
+}

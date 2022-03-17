@@ -1,0 +1,52 @@
+{
+  "root": "apps/testapp",
+  "sourceRoot": "apps/testapp/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/node:webpack",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/apps/testapp",
+        "main": "apps/testapp/src/main.ts",
+        "tsConfig": "apps/testapp/tsconfig.app.json",
+        "assets": [
+          "apps/testapp/src/assets"
+        ]
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": [
+            {
+              "replace": "apps/testapp/src/environments/environment.ts",
+              "with": "apps/testapp/src/environments/environment.prod.ts"
+            }
+          ]
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/node:node",
+      "options": {
+        "buildTarget": "testapp:build"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "apps/testapp/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
