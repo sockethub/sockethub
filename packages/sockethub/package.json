@@ -1,7 +1,7 @@
 {
   "name": "sockethub",
   "description": "A polyglot messaging service",
-  "version": "5.0.0-alpha.0",
+  "version": "5.0.0-alpha.1",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
@@ -48,9 +48,9 @@
     "socket.io": "^4.0.1",
     "sockethub-platform-dummy": "^3.0.0-alpha.0",
     "sockethub-platform-feeds": "^3.0.0-alpha.0",
-    "sockethub-platform-irc": "^4.0.0-alpha.0",
-    "sockethub-platform-xmpp": "^5.0.0-alpha.0",
-    "sockethub-schemas": "^3.0.0-alpha.0",
+    "sockethub-platform-irc": "^4.0.0-alpha.1",
+    "sockethub-platform-xmpp": "^5.0.0-alpha.1",
+    "sockethub-schemas": "^3.0.0-alpha.1",
     "urijs": "^1.19.2"
   },
   "scripts": {

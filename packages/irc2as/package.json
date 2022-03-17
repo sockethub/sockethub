@@ -1,6 +1,6 @@
 {
   "name": "irc2as",
-  "version": "4.0.0-alpha.0",
+  "version": "4.0.0-alpha.1",
   "description": "IRC to ActivityStreams objects",
   "main": "src/index.js",
   "directories": {
@@ -15,7 +15,7 @@
     "chai": "4.3.6",
     "mocha": "9.2.1",
     "sinon": "13.0.1",
-    "sockethub-schemas": "^3.0.0-alpha.0"
+    "sockethub-schemas": "^3.0.0-alpha.1"
   },
   "scripts": {
     "compliance": "yarn run test && yarn run coverage",
