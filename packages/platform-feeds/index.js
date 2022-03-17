@@ -101,6 +101,8 @@ const PlatformSchema = {
  */
 class Feeds {
   constructor(cfg) {
+    this.name = 'feeds';
+    this.version = require('./package.json').version;
     cfg = (typeof cfg === 'object') ? cfg : {};
     this.id = cfg.id; // actor
     this.debug = cfg.debug;

@@ -37,6 +37,8 @@ class XMPP {
    * @param {object} session - {@link Sockethub.Platform.PlatformSession#object}
    */
   constructor(session) {
+    this.name = 'xmpp';
+    this.version = require('../package.json').version;
     session = (typeof session === 'object') ? session : {};
     this.id = session.id; // actor
     this.initialized = false;
