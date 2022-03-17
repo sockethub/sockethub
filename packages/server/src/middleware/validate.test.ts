@@ -4,10 +4,37 @@ import proxyquire from 'proxyquire';
 proxyquire.noPreserveCache();
 proxyquire.noCallThru();
 
+class FakeSockethubPlatform {
+  name: string = 'fake';
+  constructor() {}
+  get config() {
+    return {};
+  }
+  get schema() {
+    return {
+      version: 'infinity',
+      credentials: {},
+      messages: {
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "enum": ["echo", "fail"]
+          }
+        }
+      }
+    }
+  }
+}
+const modules = {
+  'fake-sockethub-platform': FakeSockethubPlatform
+}
+
 // @ts-ignore
-import platformLoad from './../bootstrap/platforms';
-const packageJSON = require('./../../package.json');
-const platforms = platformLoad(Object.keys(packageJSON.dependencies));
+import * as platformBootstrap from './../bootstrap/platforms';
+platformBootstrap.injectRequire((module) => {
+  return modules[module];
+});
+const platforms = platformBootstrap.platformLoad(['fake-sockethub-platform']);
 const validateMod = proxyquire('./validate', {
   '../bootstrap/init': {
     platforms: platforms
@@ -19,7 +46,7 @@ import asObjects from "./validate.test.data";
 
 describe('platformLoad', () => {
   it('loads all platforms', () => {
-    const expectedPlatforms = ['dummy', 'feeds', 'irc', 'xmpp'];
+    const expectedPlatforms = ['fake'];
     expect(platforms.size).to.equal(expectedPlatforms.length);
     for (let platform of expectedPlatforms) {
       expect(platforms.has(platform)).to.be.true;
