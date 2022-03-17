@@ -8,6 +8,7 @@
     "@nrwl/workspace": "latest",
     "@types/mocha": "9.1.0",
     "@typescript-eslint/parser": "5.12.1",
+    "@typescript-eslint/eslint-plugin": "latest",
     "chai": "4.3.6",
     "eslint": "8.9.0",
     "eslint-plugin-security-node": "1.1.1",

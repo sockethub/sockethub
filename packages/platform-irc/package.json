@@ -40,7 +40,7 @@
     "test": "c8 mocha *.test.js",
     "coverage": "c8 check-coverage --statements 80 --branches 55 --functions 85 --lines 80",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md",
-    "lint": "eslint --ignore-pattern \"coverage\" \"**/*.js\"",
-    "lint:fix": "eslint --ignore-pattern \"coverage\" --fix \"**/*.js\""
+    "lint": "eslint \"**/*.js\"",
+    "lint:fix": "eslint --fix \"**/*.js\""
   }
 }

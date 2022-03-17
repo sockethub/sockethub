@@ -1,9 +1,11 @@
 {
     "root": true,
-    "parser": "@typescript-eslint/parser",
-    "ignorePatterns": [
-        "**/*"
-    ],
+    "env": {
+        "browser": true,
+        "es6": true,
+        "node": true,
+        "mocha": true
+    },
     "parserOptions": {
         "ecmaVersion": 6,
         "sourceType": "module",
@@ -36,6 +38,28 @@
         "security-node"
     ],
     "extends": [
+//        "eslint:recommended",
         "plugin:security-node/recommended"
+    ],
+    "ignorePatterns": ["*.d.ts", "*.test.ts", "*.data.js"],
+    "overrides": [
+        {
+            "files": [
+                "**/*.ts"
+            ],
+            "parser": "@typescript-eslint/parser",
+            "parserOptions": {
+                "project": [
+                    "./tsconfig.json"
+                ]
+            },
+            "plugins": [
+                "@typescript-eslint",
+                "security-node"
+            ]
+//            "extends": [
+//                "plugin:@typescript-eslint/recommended"
+//            ]
+        }
     ]
 }
