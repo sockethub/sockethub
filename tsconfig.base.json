@@ -1,7 +1,7 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "incremental": true,
+    "incremental": false,
     "baseUrl": ".",
     "moduleResolution": "node",
     "module": "commonjs",
@@ -16,10 +16,10 @@
     ],
     "esModuleInterop": true,
     "alwaysStrict": true,
-    "strictNullChecks": true,
-    "noImplicitAny": true,
+    "strictNullChecks": false, // TODO improve linting with this set to true
+    "noImplicitAny": false, // TODO improve linting with this set to true
     "noImplicitReturns": true,
-    "noImplicitThis": true,
+    "noImplicitThis": false, // TODO improve linting with this set to true
     "noUnusedLocals": true,
     "resolveJsonModule": true,
     "downlevelIteration": true,

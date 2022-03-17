@@ -5,7 +5,6 @@
     "outDir": "dist",
     "rootDir": "src",
     "baseUrl": "/",
-
     "sourceRoot": "/",
     "mapRoot": "/",
   },
@@ -13,6 +12,6 @@
     "src"
   ],
   "exclude": [
-    "**/test", "**/node_modules", "**/dist", "**/*.test.ts"
+    "**/*.test.ts"
   ]
 }
