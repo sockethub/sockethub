@@ -9,7 +9,7 @@ import expandActivityStream from "./middleware/expand-activity-stream";
 import storeCredentials from "./middleware/store-credentials";
 import validate from "./middleware/validate";
 import janitor from './janitor';
-import serve from './serve';
+import listener from './listener';
 import ProcessManager from "./process-manager";
 import PlatformInstance, { platformInstances } from "./platform-instance";
 import { getSessionStore } from "./store";
@@ -103,9 +103,9 @@ class Sockethub {
 
     log('active platforms: ', [...init.platforms.keys()]);
     janitor.clean(); // start cleanup cycle
-    serve.start();   // start external services
+    listener.start();   // start external services
     log('registering handlers');
-    serve.io.on('connection', this.handleIncomingConnection.bind(this));
+    listener.io.on('connection', this.handleIncomingConnection.bind(this));
   }
 
   async removeAllPlatformInstances() {

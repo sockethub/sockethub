@@ -1,7 +1,7 @@
 import debug from 'debug';
 
 import PlatformInstance, { platformInstances } from './platform-instance';
-import serve, { SocketInstance } from "./serve";
+import listener, { SocketInstance } from "./listener";
 
 const rmLog = debug('sockethub:server:janitor');
 
@@ -23,7 +23,7 @@ function janitorCycle() {
   rmLog('initializing resource manager');
   setInterval(async () => {
     cycleCount++;
-    const sockets: Array<SocketInstance> = await serve.io.fetchSockets();
+    const sockets: Array<SocketInstance> = await listener.io.fetchSockets();
 
     if (! (cycleCount % 4)) {
       reportCount++;
