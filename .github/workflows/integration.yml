@@ -39,7 +39,7 @@ jobs:
       - name: Run docker compose up
         run: yarn integration:setup
 
-      - run: sleep 25
+      - run: sleep 5
 
       - name: Check docker logs
         run: yarn integration:log
