@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
-       
+
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
@@ -28,16 +28,16 @@ jobs:
         run: npm install -g karma
 
       - name: Install dependencies
-        run: yarn run deps
+        run: yarn deps
 
       - name: Sockethub build
-        run: yarn run build
+        run: yarn build
 
       - name: Run docker compose build
         run: docker compose build --build-arg node_version=${{ matrix.node-version }}
 
       - name: Run docker compose up
-        run: docker compose -f docker-compose.yml up -d
+        run: yarn integration:setup
 
       - run: sleep 5
 
@@ -45,4 +45,4 @@ jobs:
         run: nc -zv localhost 10550
 
       - name: Run integration tests
-        run: yarn run integration:run
+        run: yarn integration:run
