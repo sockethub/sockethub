@@ -16,7 +16,7 @@ COPY . .
 RUN yarn deps
 RUN yarn build
 
-COPY apps/sockethub/sockethub.config.json /app/apps/sockethub.config.json
+COPY /app/apps/sockethub/sockethub.config.json /app/apps/sockethub.config.json
 
 EXPOSE 10550
 CMD DEBUG=sockethub* /app/apps/sockethub/bin/sockethub --host 0.0.0.0 -c /app/apps/sockethub.config.json
