@@ -33,19 +33,20 @@ jobs:
       - name: Sockethub build
         run: yarn build
 
-      - name: Run docker compose build
+      - name: Run Docker compose build
         run: docker compose build --build-arg node_version=${{ matrix.node-version }}
 
-      - name: Run docker compose up
+      - name: Run Docker compose up
         run: yarn integration:setup
 
       - run: sleep 5
-
-      - name: Check docker logs
-        run: yarn integration:log
 
       - name: Verify Sockethub is listening
         run: nc -zv localhost 10550
 
       - name: Run integration tests
         run: yarn integration:run
+
+      - name: Print Docker logs
+        if: always()
+        run: yarn integration:log
