@@ -35,7 +35,12 @@
     "sinon": "13.0.1"
   },
   "peerDependencies": {
-    "@sockethub/server": ">=5.0.0-alpha.2"
+    "@sockethub/server": ">=5.0.0-alpha.1"
+  },
+  "peerDependenciesMeta": {
+    "@sockethub/server": {
+      "optional": true
+    }
   },
   "scripts": {
     "build": "yarn run doc",

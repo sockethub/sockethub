@@ -8,9 +8,7 @@
         "cacheableOperations": [
           "build",
           "test",
-          "lint",
-          "package",
-          "prepare"
+          "lint"
         ],
         "accessToken": "OGJhNTAzNjMtM2E4MS00Mjc2LTk2NTgtZDg0ZTJmMjkwYzZhfHJlYWQtd3JpdGU="
       }
@@ -20,18 +18,6 @@
     "build": [
       {
         "target": "build",
-        "projects": "dependencies"
-      }
-    ],
-    "prepare": [
-      {
-        "target": "prepare",
-        "projects": "dependencies"
-      }
-    ],
-    "package": [
-      {
-        "target": "package",
         "projects": "dependencies"
       }
     ]
@@ -45,7 +31,8 @@
     }
   },
   "cli": {
-    "defaultCollection": "@nrwl/node"
+    "defaultCollection": "@nrwl/node",
+    "packageManager": "yarn"
   },
   "defaultProject": "sockethub"
 }

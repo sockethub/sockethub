@@ -11,7 +11,12 @@
     "dummy"
   ],
   "peerDependencies": {
-    "@sockethub/server": ">=5.0.0-alpha.2"
+    "@sockethub/server": ">=5.0.0-alpha.1"
+  },
+  "peerDependenciesMeta": {
+    "@sockethub/server": {
+      "optional": true
+    }
   },
   "scripts": {
     "clean:deps": "npx rimraf node_modules",

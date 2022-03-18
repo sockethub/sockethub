@@ -45,20 +45,20 @@
       "@sockethub/server": [
         "packages/server/src/index.ts"
       ],
-      "@sockethub/testlib": [
-        "packages/testlib/string/src/index.ts"
+      "sockethub": [
+        "apps/sockethub/bin/sockethub"
       ]
     }
   },
   "references": [
     {
+      "path": "apps/sockethub"
+    },
+    {
       "path": "packages/activity-streams.js"
     },
     {
       "path": "packages/irc2as"
-    },
-    {
-      "path": "packages/server"
     },
     {
       "path": "packages/platform-dummy"
@@ -74,6 +74,9 @@
     },
     {
       "path": "packages/schemas"
+    },
+    {
+      "path": "packages/server"
     }
   ],
   "exclude": [
