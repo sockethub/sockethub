@@ -14,7 +14,7 @@
     "@sockethub/server": ">=5.0.0-alpha.2"
   },
   "scripts": {
-    "clean": "npx rimraf node_modules",
+    "clean:deps": "npx rimraf node_modules",
     "test": "exit 0"
   },
   "repository": {

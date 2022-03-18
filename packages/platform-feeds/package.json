@@ -38,7 +38,7 @@
   },
   "scripts": {
     "build": "yarn run doc",
-    "clean": "npx rimraf node_modules",
+    "clean:deps": "npx rimraf node_modules",
     "compliance": "yarn run test",
     "test": "jaribu",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md"

@@ -42,7 +42,7 @@
 	},
 	"scripts": {
 		"build": "node build.js",
-		"clean": "npx rimraf node_modules",
+		"clean:deps": "npx rimraf node_modules",
 		"dev": "yarn build && DEBUG=sockethub* ./bin/sockethub --examples",
 		"start": "DEBUG=sockethub* ./bin/sockethub"
 	},

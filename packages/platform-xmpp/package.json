@@ -39,7 +39,8 @@
   },
   "scripts": {
     "build": "yarn run doc",
-    "clean": "npx rimraf coverage node_modules",
+    "clean": "npx rimraf coverage",
+    "clean:deps": "npx rimraf node_modules",
     "compliance": "yarn run test && yarn run coverage",
     "test": "c8 mocha **/*.test.js",
     "lint": "eslint \"**/*.js\"",
