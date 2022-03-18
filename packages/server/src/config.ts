@@ -1,5 +1,6 @@
 import nconf from 'nconf';
 import { debug } from 'debug';
+import * as fs from "fs";
 
 const log = debug('sockethub:server:bootstrap:config');
 
@@ -18,8 +19,8 @@ export class Config {
       },
       'config': {
         alias: 'c',
-        default: 'sockethub.config.json',
-        describe: 'Path to config.json'
+        default: '',
+        describe: 'Path to sockethub.config.json'
       },
       'port': {
         alias: 'sockethub.port'
@@ -43,7 +44,15 @@ export class Config {
     const examples = nconf.get('examples');
 
     // Load the main config
-    nconf.file(nconf.get('config'));
+    let configFile = nconf.get('config');
+    if (configFile) {
+      if (! fs.existsSync(configFile)) {
+        throw new Error(`Config file not found: ${configFile}`);
+      }
+    } else {
+      configFile = 'sockethub.config.json';
+    }
+    nconf.file(configFile);
 
     // only override config file if explicitly mentioned in command-line params
     nconf.set('examples:enabled', (examples ? true : nconf.get('examples:enabled')));

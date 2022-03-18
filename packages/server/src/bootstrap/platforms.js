@@ -33,7 +33,7 @@ module.exports = {
     const platforms = new Map();
 
     if (platformsList.length <= 0) {
-      throw new Error('No platforms defined in Sockethub config, nothing to load');
+      throw new Error('No platforms defined. Please check your sockethub.config.json');
     }
 
     for (let moduleName of platformsList) {
