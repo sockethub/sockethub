@@ -139,7 +139,6 @@ function validatePlatformSchema(schema) {
   // validate schema property
   const err = validate(schema);
   if (! err) {
-    console.log('res: ', validate);
     return `platform schema failed to validate: ` +
       `${validate.errors[0].instancePath} ${validate.errors[0].message}`;
   } else {

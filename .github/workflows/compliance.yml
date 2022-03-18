@@ -32,7 +32,7 @@ jobs:
       - name: Build
         run: yarn build
       - name: Check for sockethub-client.js in dist
-        run: test -f packages/server/dist/sockethub-client.js
+        run: test -f packages/server/dist/sockethub-client.js && test -f packages/server/dist/sockethub-client.min.js
       - name: Test
         run: yarn test
   coverage:
@@ -52,7 +52,7 @@ jobs:
       - name: Build
         run: yarn build
       - name: Check for sockethub-client.js in dist
-        run: test -f packages/server/dist/sockethub-client.js
+        run: test -f packages/server/dist/sockethub-client.js && test -f packages/server/dist/sockethub-client.min.js
       - name: Test
         run: yarn test
       - name: Coverage
