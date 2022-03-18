@@ -7,7 +7,7 @@ import { Server } from 'socket.io';
 import config from './config';
 import routes from './routes';
 
-const log = debug('sockethub:server:http');
+const log = debug('sockethub:server:listener');
 
 /**
  * Handles the initialization and access of Sockethub resources.
