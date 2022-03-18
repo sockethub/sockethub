@@ -17,15 +17,16 @@ if (config.get('info')) {
   console.log();
 
   // eslint-disable-next-line security-node/detect-crlf
-  console.log('websocket: ' + config.get('sockethub:host') + ':' + config.get('sockethub:port')
-              + config.get('sockethub:path'));
+  console.log('websocket: ws://' + config.get('sockethub:host') + ':'
+    + config.get('sockethub:port')
+    + config.get('sockethub:path'));
 
   console.log();
   // eslint-disable-next-line security-node/detect-crlf
-  console.log('examples enabled: ' + config.get('examples:enabled'));
-  // eslint-disable-next-line security-node/detect-crlf
-  console.log('examples url: ' + config.get('public:host') + ':' + config.get('public:port')
-    + config.get('public:path') + 'examples');
+  console.log('examples: ' + (config.get('examples:enabled') ?
+    'http://' +
+    config.get('public:host') + ':' + config.get('public:port') + config.get('public:path')
+    : 'disabled'));
 
   console.log();
   if (config.get('redis:url')) {
