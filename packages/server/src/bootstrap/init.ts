@@ -9,8 +9,6 @@ log('running init routines');
 const packageJSON = require('./../../package.json');
 const platforms = platformLoad(config.get('platforms'));
 
-log('loaded platforms');
-
 if (config.get('info')) {
   // eslint-disable-next-line security-node/detect-crlf
   console.log('sockethub ' + packageJSON.version);

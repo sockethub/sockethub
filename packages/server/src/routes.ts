@@ -3,7 +3,7 @@ import config from "./config";
 import debug from 'debug';
 
 const debug_scope = process.env.DEBUG || '',
-      logger      = debug('sockethub:routes'),
+      logger      = debug('sockethub:server:routes'),
       address     = config.get('public:protocol') + '://' +
                     config.get('public:host') + ':' +
                     config.get('public:port') +
@@ -20,9 +20,7 @@ export const basePaths: IRoutePaths = {
     path.resolve(`${__dirname}/../node_modules/@sockethub/client/dist/sockethub-client.min.js`),
   '/sockethub-client.js.map':
     path.resolve(`${__dirname}/../node_modules/@sockethub/client/dist/sockethub-client.js.map`),
-  '/socket.io.js': path.resolve(`${__dirname}/../node_modules/socket.io/client-dist/socket.io.js`),
-  '/socket.io.js.map': path.resolve(
-    `${__dirname}/../node_modules/socket.io/client-dist/socket.io.js.map`),
+  '/socket.io.js': path.resolve(`${__dirname}/../node_modules/socket.io/client-dist/socket.io.js`)
 };
 
 export const examplePaths: IRoutePaths = {

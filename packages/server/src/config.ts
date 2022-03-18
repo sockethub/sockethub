@@ -50,7 +50,7 @@ export class Config {
         throw new Error(`Config file not found: ${configFile}`);
       }
     } else {
-      configFile = 'sockethub.config.json';
+      configFile = __dirname + '/../sockethub.config.json';
     }
     nconf.file(configFile);
 
