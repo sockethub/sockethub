@@ -4,4 +4,5 @@ node_modules
 coverage
 .idea
 **/dist/
+**/browser/
 sockethub.config.json
