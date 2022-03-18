@@ -62,7 +62,7 @@
 		"lint:fix": "eslint --fix \"**/*.ts\" ./bin/sockethub",
 		"build": "npx rimraf dist && yarn run build:server && yarn run build:client",
 		"build:server": "tsc && cp ./src/defaults.json ./dist/defaults.json && cp src/bootstrap/platforms.js dist/bootstrap/",
-		"build:client": "cp ../client/dist/* dist/"
+		"build:client": "cp ../client/dist/* dist/ && test -f dist/sockethub-client.js && test -f dist/sockethub-client.min.js && test -f dist/sockethub-client.js.map"
 	},
 	"engines": {
 		"node": ">= 12.0.0"
