@@ -92,5 +92,11 @@
 		"sinon": "13.0.1",
 		"ts-node": "10.5.0",
 		"typescript": "4.5.5"
+	},
+	"optionalDependencies": {
+		"@sockethub/platform-dummy": "^3.0.0-alpha.1",
+		"@sockethub/platform-feeds": "^3.0.0-alpha.1",
+		"@sockethub/platform-irc": "^4.0.0-alpha.1",
+		"@sockethub/platform-xmpp": "^5.0.0-alpha.1"
 	}
 }

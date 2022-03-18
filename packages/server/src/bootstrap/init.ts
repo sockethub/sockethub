@@ -1,13 +1,13 @@
 import debug from 'debug';
 
 import config from '../config';
-import * as platformBootstrap from './platforms';
+import platformLoad from './platforms';
 
 const log = debug('sockethub:server:bootstrap:init');
 log('running init routines');
 
 const packageJSON = require('./../../package.json');
-const platforms = platformBootstrap.platformLoad(config.get('platforms'));
+const platforms = platformLoad(config.get('platforms'));
 
 log('loaded platforms');
 

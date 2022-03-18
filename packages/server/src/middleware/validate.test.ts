@@ -30,11 +30,10 @@ const modules = {
 }
 
 // @ts-ignore
-import * as platformBootstrap from './../bootstrap/platforms';
-platformBootstrap.injectRequire((module) => {
+import platformLoad from './../bootstrap/platforms';
+const platforms = platformLoad(['fake-sockethub-platform'], (module) => {
   return modules[module];
 });
-const platforms = platformBootstrap.platformLoad(['fake-sockethub-platform']);
 const validateMod = proxyquire('./validate', {
   '../bootstrap/init': {
     platforms: platforms

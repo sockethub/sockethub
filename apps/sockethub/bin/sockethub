@@ -1,7 +1,3 @@
 #!/usr/bin/env node
-const platformBoostrap = require('@sockethub/server/dist/bootstrap/platforms');
-platformBoostrap.injectRequire(function sReq(module) {
-  return require(module);
-});
 const SockethubServer = require('@sockethub/server');
-SockethubServer({require: require});
+SockethubServer();
