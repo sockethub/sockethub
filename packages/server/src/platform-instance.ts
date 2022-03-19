@@ -57,7 +57,12 @@ export default class PlatformInstance {
 
     this.debug = debug(`sockethub:platform-instance:${this.id}`);
     // spin off a process
-    this.process = fork(join(__dirname, 'platform.js'), [this.parentId, this.name, this.id]);
+    const env = config.get('redis:url') ? { REDIS_URL: config.get('redis:url') }
+      : { REDIS_HOST: config.get('redis:host'), REDIS_PORT: config.get('redis:port') };
+    this.process = fork(
+      join(__dirname, 'platform.js'),
+      [this.parentId, this.name, this.id],
+      { env: env });
   }
 
   /**
