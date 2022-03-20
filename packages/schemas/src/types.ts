@@ -9,11 +9,12 @@ export interface IActivityStream {
 }
 
 export interface IActivityObject {
-  id: string;
+  id?: string;
   type: string;
 }
 
 export interface IActivityObjectActor extends IActivityObject {
+  id: string;
   name?: string;
 }
 
