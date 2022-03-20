@@ -5,7 +5,7 @@
 	"private": false,
 	"author": "Nick Jennings <nick@silverbucket.net>",
 	"license": "LGPL-3.0+",
-	"main": "dist/server.js",
+	"main": "dist/index.js",
 	"bin": "bin/sockethub",
 	"preferGlobal": true,
 	"keywords": [
