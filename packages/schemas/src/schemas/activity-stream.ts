@@ -1,13 +1,14 @@
-const activityObjects = require('./sockethub-activity-object.js');
-const o = require('./object-types.js');
+import activityObject from "./activity-object";
+import { objectSchemas } from "../schema-partials/object-schemas";
 
-const validActorRefs  = activityObjects.properties.object.oneOf;
-const validTargetRefs = activityObjects.properties.object.oneOf;
+const validActorRefs  = activityObject.properties.object.oneOf;
+const validTargetRefs = activityObject.properties.object.oneOf;
+// eslint-disable-next-line security-node/detect-crlf
 console.log(validActorRefs);
 
 let validObjectRefs = [];
 
-const keys = Object.keys(o.objectTypes);
+const keys = Object.keys(objectSchemas);
 keys.forEach(function (type, i) {
   validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
 });
@@ -19,7 +20,7 @@ const typeSchema = {
   "type": "string"
 };
 
-module.exports = {
+export default {
   "$id": "https://sockethub.org/schemas/v0/activity-stream#",
   "description": "Schema for Sockethub Activity Streams",
 
@@ -46,6 +47,6 @@ module.exports = {
   },
 
   "definitions": {
-    "type": o.objectTypes
+    "type": objectSchemas
   }
 };

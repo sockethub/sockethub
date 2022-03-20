@@ -1,4 +1,4 @@
-const o = require('./../src/object-types');
+const o = require('../src/schema-templates/object-schemas');
 
 module.exports = [
   [
@@ -18,7 +18,7 @@ module.exports = [
       type: 'credentials'
     },
     false,
-    `/object: must match exactly one schema in oneOf: ${Object.keys(o.objectTypes).join(', ')}`
+    `/object: must match exactly one schema in oneOf: ${Object.keys(o.objectSchemas).join(', ')}`
   ],
 
   [
@@ -29,7 +29,7 @@ module.exports = [
       pass: "bar"
     },
     false,
-    `/object: must match exactly one schema in oneOf: ${Object.keys(o.objectTypes).join(', ')}`
+    `/object: must match exactly one schema in oneOf: ${Object.keys(o.objectSchemas).join(', ')}`
   ],
 
   [
@@ -70,7 +70,7 @@ module.exports = [
       content: 'hi there'
     },
     false,
-    `/object: must match exactly one schema in oneOf: ${Object.keys(o.objectTypes).join(', ')}`
+    `/object: must match exactly one schema in oneOf: ${Object.keys(o.objectSchemas).join(', ')}`
   ],
 
   [

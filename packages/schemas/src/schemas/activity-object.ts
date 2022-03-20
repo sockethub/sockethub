@@ -1,6 +1,6 @@
-const o = require('./object-types');
+import { validObjectRefs, validObjectDefs } from "../schema-partials/object-schemas";
 
-module.exports = {
+export default {
   "$id": "https://sockethub.org/schemas/v0/activity-object#",
   "description": "Schema for Sockethub Activity Objects",
 
@@ -9,11 +9,11 @@ module.exports = {
   "properties": {
     "object": {
       "type": "object",
-      "oneOf": o.validObjectRefs
+      "oneOf": validObjectRefs
     }
   },
 
   "definitions": {
-    "type": o.validObjectDefs
+    "type": validObjectDefs
   }
 };
