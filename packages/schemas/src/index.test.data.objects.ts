@@ -229,7 +229,7 @@ export default [
         "name":"#Finnish"
       }
     },
-    false, `/object/subject/role: must be equal to one of the allowed values: 
-    owner, member, participant, admin`
+    false, "/object/subject/role: must be equal to one of the allowed values: " +
+    "owner, member, participant, admin"
   ]
 ];
