@@ -1,6 +1,6 @@
 const proxyquire = require('proxyquire');
 const chai = require('chai');
-const schemas = require('@sockethub/schemas');
+const schemas = require('@sockethub/schemas').default;
 const expect = chai.expect;
 
 const IRCPlatform = require('./index');
@@ -54,7 +54,7 @@ describe('Initialize IRC Platform', () => {
       });
     };
     if (!loadedSchema) {
-      schemas.validator.addPlatformSchema(platform.schema.credentials, `irc/credentials`);
+      schemas.addPlatformSchema(platform.schema.credentials, `irc/credentials`);
       loadedSchema = true;
     }
   });
@@ -64,7 +64,7 @@ describe('Initialize IRC Platform', () => {
       'connect', 'update', 'join', 'leave', 'send', 'query', 'announce'
     ]);
   });
-  
+
   it('returns a config object', () => {
     expect(platform.config).to.eql({
       persist: true,
@@ -74,16 +74,16 @@ describe('Initialize IRC Platform', () => {
   });
 
   it('schema format validation', () => {
-    expect(schemas.validator.validatePlatformSchema(platform.schema)).to.equal("");
+    expect(schemas.validatePlatformSchema(platform.schema)).to.equal("");
   });
 
   describe('credential schema', () => {
     it('valid credentials', () => {
-      expect(schemas.validator.validateCredentials(validCredentials)).to.equal("");
+      expect(schemas.validateCredentials(validCredentials)).to.equal("");
     });
 
     it('invalid credentials type', () => {
-      expect(schemas.validator.validateCredentials({
+      expect(schemas.validateCredentials({
         context: 'irc',
         type: 'credentials',
         object: {
@@ -93,7 +93,7 @@ describe('Initialize IRC Platform', () => {
     });
 
     it('invalid credentials port', () => {
-      expect(schemas.validator.validateCredentials({
+      expect(schemas.validateCredentials({
         context: 'irc',
         type: 'credentials',
         object: {
@@ -104,7 +104,7 @@ describe('Initialize IRC Platform', () => {
     });
 
     it('invalid credentials additional prop', () => {
-      expect(schemas.validator.validateCredentials({
+      expect(schemas.validateCredentials({
         context: 'irc',
         type: 'credentials',
         object: {

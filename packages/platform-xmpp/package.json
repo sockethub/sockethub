@@ -35,7 +35,7 @@
     "sinon": "13.0.1"
   },
   "peerDependencies": {
-    "@sockethub/server": ">=5.0.0-alpha.1"
+    "@sockethub/server": ">=5.0.0-alpha.2"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {
