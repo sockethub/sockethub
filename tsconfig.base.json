@@ -6,7 +6,6 @@
     "moduleResolution": "node",
     "module": "commonjs",
     "target": "ES2018",
-    "sourceMap": true,
     "lib": [
       "esnext"
     ],
@@ -14,6 +13,7 @@
       "mocha",
       "node"
     ],
+    "declaration": true,
     "esModuleInterop": true,
     "alwaysStrict": true,
     "strictNullChecks": false,
