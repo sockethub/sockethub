@@ -1,6 +1,6 @@
 import {ErrorObject} from "ajv";
-import {objectTypes} from "./schema-partials/object-schemas";
-import {IActivityStream, IActivityObject} from "./types";
+import {ObjectTypesList} from "./objects";
+import {IActivityStream, IActivityObject} from "../types";
 
 interface TypeBreakdown {
   actor: Array<string>,
@@ -90,7 +90,7 @@ function composeFinalError(error) {
   let msg = "";
   if (error.keyword === 'oneOf') {
     msg = `${error.instancePath}: ${error.message}: ` +
-      `${Object.keys(objectTypes).join(', ')}`;
+      `${ObjectTypesList.join(', ')}`;
   } else {
     msg = `${error.instancePath ?
       error.instancePath : 'activity stream'}: ${error.message}`;

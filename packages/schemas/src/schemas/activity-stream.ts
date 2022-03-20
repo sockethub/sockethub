@@ -1,5 +1,5 @@
 import activityObject from "./activity-object";
-import { objectSchemas } from "../schema-partials/object-schemas";
+import { ObjectTypesList, ObjectTypesSchema } from "../helpers/objects";
 
 const validActorRefs  = activityObject.properties.object.oneOf;
 const validTargetRefs = activityObject.properties.object.oneOf;
@@ -8,8 +8,7 @@ console.log(validActorRefs);
 
 let validObjectRefs = [];
 
-const keys = Object.keys(objectSchemas);
-keys.forEach(function (type, i) {
+ObjectTypesList.forEach(function (type, i) {
   validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
 });
 
@@ -47,6 +46,6 @@ export default {
   },
 
   "definitions": {
-    "type": objectSchemas
+    "type": ObjectTypesSchema
   }
 };

@@ -1,7 +1,7 @@
 export const validObjectRefs = [];
 export const validObjectDefs = {};
 
-export const objectSchemas = {
+export const ObjectTypesSchema = {
 
   "credentials": {
     "required": [ "type" ],
@@ -219,12 +219,12 @@ export const objectSchemas = {
   }
 };
 
-export const objectTypes = Object.keys(objectSchemas);
+export const ObjectTypesList = Object.keys(ObjectTypesSchema);
 
-objectTypes.forEach(function (type, i) {
+ObjectTypesList.forEach(function (type, i) {
   if (type === 'credentials') {
     return;
   }
   validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
-  validObjectDefs[type] = objectSchemas[type];
+  validObjectDefs[type] = ObjectTypesSchema[type];
 });

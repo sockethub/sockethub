@@ -1,6 +1,6 @@
-const o = require('../src/schema-templates/object-schemas');
+import { ObjectTypesList } from './helpers/objects';
 
-module.exports = [
+export default [
   [
     'room object',
     {
@@ -18,7 +18,7 @@ module.exports = [
       type: 'credentials'
     },
     false,
-    `/object: must match exactly one schema in oneOf: ${Object.keys(o.objectSchemas).join(', ')}`
+    `/object: must match exactly one schema in oneOf: ${ObjectTypesList.join(', ')}`
   ],
 
   [
@@ -29,7 +29,7 @@ module.exports = [
       pass: "bar"
     },
     false,
-    `/object: must match exactly one schema in oneOf: ${Object.keys(o.objectSchemas).join(', ')}`
+    `/object: must match exactly one schema in oneOf: ${ObjectTypesList.join(', ')}`
   ],
 
   [
@@ -70,7 +70,7 @@ module.exports = [
       content: 'hi there'
     },
     false,
-    `/object: must match exactly one schema in oneOf: ${Object.keys(o.objectSchemas).join(', ')}`
+    `/object: must match exactly one schema in oneOf: ${ObjectTypesList.join(', ')}`
   ],
 
   [

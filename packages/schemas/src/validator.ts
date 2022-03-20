@@ -1,10 +1,11 @@
 import debug from 'debug';
 import Ajv, {Schema} from 'ajv';
 import ajvFormat2019 from 'ajv-formats-draft2019';
-import getErrorMessage from "./error-parser";
+import getErrorMessage from "./helpers/error-parser";
 import {IActivityStream} from "./types";
 import PlatformSchema from './schemas/platform';
-
+import ActivityStreamsSchema from './schemas/activity-stream';
+import ActivityObjectSchema from './schemas/activity-object';
 const log = debug('sockethub:schemas');
 const ajv = new Ajv({strictTypes: false, allErrors: true});
 ajvFormat2019(ajv);
@@ -15,8 +16,9 @@ interface SchemasDict {
 
 const schemaURL = 'https://sockethub.org/schemas/v0';
 const schemas: SchemasDict = {};
-schemas[`${schemaURL}/activity-stream`] = require('./../schemas/activity-stream.json');
-schemas[`${schemaURL}/activity-object`] = require('./../schemas/activity-object.json');
+
+schemas[`${schemaURL}/activity-stream`] = ActivityStreamsSchema;
+schemas[`${schemaURL}/activity-object`] = ActivityObjectSchema;
 
 for (let uri in schemas) {
   log(`registering schema ${uri}`);

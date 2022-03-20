@@ -1,4 +1,4 @@
-import { validObjectRefs, validObjectDefs } from "../schema-partials/object-schemas";
+import { validObjectRefs, validObjectDefs } from "../helpers/objects";
 
 export default {
   "$id": "https://sockethub.org/schemas/v0/activity-object#",

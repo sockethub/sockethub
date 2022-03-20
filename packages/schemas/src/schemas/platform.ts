@@ -20,7 +20,7 @@
 // be returned from platforms.
 export default {
   'type' : 'object',
-  'required': [ 'version', 'messages' ],
+  'required': [ 'name', 'version', 'messages' ],
   'additionalProperties': false,
   'properties' : {
 

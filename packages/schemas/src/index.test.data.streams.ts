@@ -1,6 +1,6 @@
-const o = require('../src/schema-templates/object-schemas');
+import {ObjectTypesList} from './helpers/objects';
 
-module.exports = [
+export default [
   [
     'type:send, object:message',
     {
@@ -143,7 +143,7 @@ module.exports = [
       }
     },
     false,
-    `/actor: must match exactly one schema in oneOf: ${Object.keys(o.objectSchemas).join(', ')}`
+    `/actor: must match exactly one schema in oneOf: ${ObjectTypesList.join(', ')}`
   ],
 
   [

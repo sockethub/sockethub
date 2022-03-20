@@ -1,4 +1,4 @@
-module.exports = [
+export default [
   [
     'credentials with no context',
     {
