@@ -17,4 +17,4 @@ RUN yarn deps
 RUN yarn build
 
 EXPOSE 10550
-CMD DEBUG=* /app/apps/sockethub/bin/sockethub --host 0.0.0.0 -c /app/test/sockethub.config.docker.json
+CMD DEBUG=* /app/packages/sockethub/bin/sockethub --host 0.0.0.0 -c /app/test/sockethub.config.docker.json

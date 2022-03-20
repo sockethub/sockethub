@@ -46,13 +46,13 @@
         "packages/server/src/index.ts"
       ],
       "sockethub": [
-        "apps/sockethub/bin/sockethub"
+        "packages/sockethub/bin/sockethub"
       ]
     }
   },
   "references": [
     {
-      "path": "apps/sockethub"
+      "path": "packages/sockethub"
     },
     {
       "path": "packages/activity-streams.js"
