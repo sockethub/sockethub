@@ -1,6 +1,6 @@
 {
   "name": "@sockethub/client",
-  "version": "5.0.0-alpha.1",
+  "version": "5.0.0-alpha.2",
   "description": "A JavaScript client for the Sockethub protocol gateway",
   "main": "dist/sockethub-client.js",
   "keywords": [
@@ -31,7 +31,7 @@
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
   "devDependencies": {
-    "@sockethub/activity-streams": "4.4.0-alpha.1",
+    "@sockethub/activity-streams": "4.4.0-alpha.2",
     "@types/chai": "4.3.0",
     "@types/eslint": "8.4.1",
     "@types/eventemitter2": "4.1.0",
