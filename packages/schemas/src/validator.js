@@ -28,9 +28,14 @@ function parseMsg(error) {
 }
 
 function getTypeList(msg) {
-  let types = [ msg?.type ];
+  let types = [];
+  if ((typeof msg === 'object') && (msg.type)) {
+    types.push(msg.type);
+  } else {
+    types.push(undefined);
+  }
   for (let prop in msg) {
-    if (msg[prop]?.type) {
+    if ((typeof msg[prop] === 'object') && (msg[prop].type)) {
       types = [...types, ...getTypeList(msg[prop])];
     }
   }
@@ -139,7 +144,6 @@ function validatePlatformSchema(schema) {
   // validate schema property
   const err = validate(schema);
   if (! err) {
-    console.log('res: ', validate);
     return `platform schema failed to validate: ` +
       `${validate.errors[0].instancePath} ${validate.errors[0].message}`;
   } else {
