@@ -131,7 +131,8 @@ export default [
       content: 'forgot the milk'
     },
     false,
-    '/object/presence: must be equal to one of the allowed values: away, chat, dnd, xa, offline, online'
+    '/object/presence: must be equal to one of the allowed values: ' +
+    'away, chat, dnd, xa, offline, online'
   ],
 
   [
@@ -228,6 +229,7 @@ export default [
         "name":"#Finnish"
       }
     },
-    false, `/object/subject/role: must be equal to one of the allowed values: owner, member, participant, admin`
+    false, `/object/subject/role: must be equal to one of the allowed values: 
+    owner, member, participant, admin`
   ]
 ];

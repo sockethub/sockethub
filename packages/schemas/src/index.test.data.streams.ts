@@ -71,7 +71,7 @@ export default [
   [
     'bad target',
     {
-    id: 'blah',
+      id: 'blah',
       type: 'send',
       context: 'dood',
       actor: {
@@ -280,7 +280,8 @@ export default [
       }
     },
     false,
-    '/object/presence: must be equal to one of the allowed values: away, chat, dnd, xa, offline, online'
+    '/object/presence: must be equal to one of the allowed values: ' +
+    'away, chat, dnd, xa, offline, online'
   ],
 
   [
@@ -423,8 +424,8 @@ export default [
     {
       "context":"irc",
       "type":"add",
-      "actor":{"type":"person","id":"alice@localhost","name":"alice"},
-      "target":{"type":"person","id":"Kilroy@localhost","name":"Kilroy"},
+      "actor":{"type":"person", "id":"alice@localhost", "name":"alice"},
+      "target":{"type":"person", "id":"Kilroy@localhost", "name":"Kilroy"},
       "object":{
         "type":"relationship",
         "relationship":"role",
@@ -447,8 +448,8 @@ export default [
     {
       "context":"irc",
       "type":"add",
-      "actor":{"type":"person","id":"alice@localhost","name":"alice"},
-      "target":{"type":"person","id":"Kilroy@localhost","name":"Kilroy"},
+      "actor":{"type":"person", "id":"alice@localhost", "name":"alice"},
+      "target":{"type":"person", "id":"Kilroy@localhost", "name":"Kilroy"},
       "object":{
         "type":"relationship",
         "relationship":"role",
@@ -463,6 +464,7 @@ export default [
         }
       }
     },
-    false, `/object/subject/role: must be equal to one of the allowed values: owner, member, participant, admin`
+    false, `/object/subject/role: must be equal to one of the allowed values: 
+    owner, member, participant, admin`
   ]
 ];
