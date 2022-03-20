@@ -13,6 +13,7 @@
       "mocha",
       "node"
     ],
+    "sourceMap": true,
     "declaration": true,
     "esModuleInterop": true,
     "alwaysStrict": true,
