@@ -6,7 +6,7 @@
  * config.
  */
 const debug   = require('debug'),
-      schemas = require('@sockethub/schemas');
+      schemas = require('@sockethub/schemas').default;
 
 const log = debug('sockethub:server:bootstrap:platforms');
 
@@ -39,7 +39,7 @@ module.exports = function platformLoad(platformsList, requireModule) {
     const p = new P();
     let types = [];
 
-    const err = schemas.validator.validatePlatformSchema(p.schema);
+    const err = schemas.validatePlatformSchema(p.schema);
     if (err) {
       throw new Error(`${moduleName} ${err}`);
     } else if (typeof p.config !== 'object') {

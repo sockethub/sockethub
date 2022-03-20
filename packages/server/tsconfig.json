@@ -5,6 +5,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "baseUrl": "/",
+    "sourceMap": true,
     "sourceRoot": "/",
     "mapRoot": "/",
   },

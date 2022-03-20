@@ -1,5 +1,6 @@
 import debug from 'debug';
 import { Socket } from "socket.io";
+import { IActivityStream } from "@sockethub/schemas";
 
 import crypto from './crypto';
 import init from './bootstrap/init';
@@ -19,7 +20,7 @@ const log = debug('sockethub:server:core');
 
 export interface JobDataDecrypted {
   title?: string;
-  msg: ActivityStream;
+  msg: IActivityStream;
   sessionId: string;
 }
 
@@ -37,27 +38,6 @@ export interface JobDecrypted {
 export interface JobEncrypted {
   data: JobDataEncrypted,
   remove?: Function;
-}
-
-export interface ActivityStream {
-  type: string;
-  context: string;
-  actor: {
-    id: string;
-    type?: string;
-    name?: string;
-  },
-  object?: {
-    type: string;
-    content?: any;
-  },
-  target?: {
-    type: string;
-    id: string;
-    name?: string;
-  },
-  error?: string;
-  sessionSecret?: string;
 }
 
 function attachError(err, msg) {
