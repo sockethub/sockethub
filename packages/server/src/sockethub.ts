@@ -104,12 +104,13 @@ class Sockethub {
     return job;
   };
 
-  private handleIncomingConnection(socket: Socket) {
+  private async handleIncomingConnection(socket: Socket) {
     // session-specific debug messages
     const sessionLog = debug('sockethub:server:core:' + socket.id),
           sessionSecret = crypto.randToken(16),
           // store instance is session-specific
-          store = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret);
+          store = await getSessionStore(
+            this.parentId, this.parentSecret1, socket.id, sessionSecret);
 
     sessionLog(`socket.io connection`);
 

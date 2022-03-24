@@ -2,15 +2,14 @@ import { IActivityStream } from "@sockethub/schemas";
 import { ISecureStoreInstance } from "../store";
 
 export default function storeCredentials(store: ISecureStoreInstance, sessionLog: Function) {
-  return (creds: IActivityStream, done: Function) => {
-    store.save(creds.actor.id, creds, (err) => {
-      if (err) {
-        sessionLog('error saving credentials to store ' + err);
-        done(err);
-      } else {
-        sessionLog('credentials encrypted and saved');
-        done();
-      }
-    });
+  return async (creds: IActivityStream, done: Function) => {
+    try {
+      await store.save(creds.actor.id, creds);
+    } catch (e) {
+      sessionLog('error saving credentials to store ' + e);
+      done(e);
+    }
+    sessionLog('credentials encrypted and saved');
+    done();
   };
 };
