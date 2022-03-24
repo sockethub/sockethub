@@ -14,7 +14,9 @@ export async function getSessionStore(parentId: string, parentSecret: string,
   const store = new SecureStore(
     'sockethub:' + parentId + ':session:' + sessionId + ':store',
     parentSecret + sessionSecret,
-    config.get('redis')
+    {
+      redis: config.get('redis')
+    }
   );
   await store.init();
   return store;

@@ -3277,10 +3277,10 @@ redis-commands@1.7.0:
   resolved "https://registry.npmjs.org/redis-commands/-/redis-commands-1.7.0.tgz"
   integrity sha512-nJWqw3bTFy21hX/CPKHth6sfhZbdiHP6bTawSgQBlKOVRG7EZkfHbbHwQJnrE4vsQf0CMNE+3gJ4Fmm16vdVlQ==
 
-redis-connection-pool@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.npmjs.org/redis-connection-pool/-/redis-connection-pool-2.0.1.tgz"
-  integrity sha512-b7v5z7I7MdFMFqQ1CmoSeAgcyhH8uaQb5T14hIKOdLm4DfVULTwer7izi0vGcvla6knvtFKbOD/tIUt2kZQ+HQ==
+redis-connection-pool@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/redis-connection-pool/-/redis-connection-pool-2.0.2.tgz#c755e1823cf1acfc6723acf37c994b49cc259df4"
+  integrity sha512-o+Pqkk0b57MoTY0d9e4pCR379J9yht+gwk8hhM/p4EQjPGbJf91b0UCw/fIIEdO1jQFQ4WskAVnw8vsXomK3vQ==
   dependencies:
     debug "^4.3.4"
     generic-pool "^3.8.2"
@@ -3391,12 +3391,12 @@ secure-keys@^1.0.0:
   resolved "https://registry.npmjs.org/secure-keys/-/secure-keys-1.0.0.tgz"
   integrity sha1-8MgtmKOxOah3aogIBQuCRDEIf8o=
 
-secure-store-redis@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/secure-store-redis/-/secure-store-redis-2.0.1.tgz#4cdf6ea5f2ba5163052cc65cf1a17f4383a6d486"
-  integrity sha512-9xbmrFLx0wnyXx0PVHxsVP8GRrFCABfLGNGSl+8bxhr7GE15AHch0BbQdGLqb/3Q6bmS5g5h/gzhDIpvgvmxQA==
+secure-store-redis@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/secure-store-redis/-/secure-store-redis-2.0.2.tgz#4240844784a1df5dc54a8c10ec80700fb94875cc"
+  integrity sha512-a+EAEfpe5r3VgFTA86njLb4wno2qrllK9tmgXkKJPeYx6fYZA6ZVeLEMQ0w2d4LjsahehpmHEKZFsEZokbvfWA==
   dependencies:
-    redis-connection-pool "^2.0.1"
+    redis-connection-pool "^2.0.2"
 
 semver@^6.0.0:
   version "6.3.0"

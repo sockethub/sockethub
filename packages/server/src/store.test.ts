@@ -21,7 +21,7 @@ describe('getSessionStore', () => {
     sinon.assert.calledWith(MockSecureStore,
       'sockethub:a parent id:session:a session id:store',
       'a parent secreta session secret',
-      { host: '127.0.0.1', port: 6379 }
+      { redis: { host: '127.0.0.1', port: 6379 } }
     );
     expect(typeof store).to.equal('object');
   });

@@ -47,7 +47,7 @@
 		"nconf": "^0.11.2",
 		"npm": "8.5.4",
 		"object-hash": "^3.0.0",
-		"secure-store-redis": "^2.0.1",
+		"secure-store-redis": "^2.0.2",
 		"socket.io": "^4.0.1",
 		"urijs": "^1.19.2"
 	},
