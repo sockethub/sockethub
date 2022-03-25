@@ -12,7 +12,7 @@ import validate from "./middleware/validate";
 import janitor from './janitor';
 import listener from './listener';
 import ProcessManager from "./process-manager";
-import PlatformInstance, { platformInstances } from "./platform-instance";
+import { platformInstances } from "./platform-instance";
 import { getSessionStore } from "./store";
 
 const log = debug('sockethub:server:core');
@@ -94,7 +94,7 @@ class Sockethub {
     }
   }
 
-  private createJob(socketId: string, platformInstance: PlatformInstance, msg): JobDataEncrypted {
+  private createJob(socketId: string, msg: IActivityStream): JobDataEncrypted {
     const title = `${msg.context}-${(msg.id) ? msg.id : this.counter++}`;
     const job: JobDataEncrypted = {
       title: title,
@@ -154,8 +154,8 @@ class Sockethub {
           next(attachError(err, data));
         }).use((msg, next) => {
           const platformInstance = this.processManager.get(msg.context, msg.actor.id, socket.id);
-          sessionLog(`queued to channel ${platformInstance.id}`);
-          const job = this.createJob(socket.id, platformInstance, msg);
+          sessionLog(`job queued to channel ${platformInstance.id}`);
+          const job = this.createJob(socket.id, msg);
           // job validated and queued, store socket.io callback for when job is completed
           platformInstance.completedJobHandlers.set(job.title, next);
           platformInstance.queue.add(job);

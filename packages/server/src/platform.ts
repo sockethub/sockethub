@@ -21,7 +21,7 @@ const PlatformModule = require(`@sockethub/platform-${platformName}`);
 let queueStarted = false;
 let parentSecret1: string, parentSecret2: string;
 
-logger(`platform handler initialized for ${platformName} ${identifier}`);
+logger(`platform handler initialized for ${platformName}`);
 
 export interface PlatformSession {
   debug(msg: string): void;
@@ -72,13 +72,14 @@ const platform = new PlatformModule(platformSession);
  */
 async function getCredentials(
   actorId: string, sessionId: string, sessionSecret: string): Promise<IActivityStream|undefined> {
+  logger("retrieving credentials for " + actorId);
   if (platform.config.noCredentials) { return undefined; }
   const store = await getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
   const credentials = await store.get(actorId);
   if (platform.config.persist) {
     // don't continue if we don't get credentials
     if (!credentials) {
-      throw new Error("Unable to find credentials");
+      throw new Error("unable to find credentials");
     }
   } else if (!credentials) {
     // also skip without error if this is a non-persist platform with no credentials

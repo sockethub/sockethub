@@ -1,4 +1,5 @@
 export interface IActivityStream {
+  id?: string | number;
   type: string;
   context: string;
   actor: IActivityObjectActor;
