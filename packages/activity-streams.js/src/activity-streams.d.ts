@@ -1,1 +1,1 @@
-declare module 'activity-streams';
+declare module '@sockethub/activity-streams';

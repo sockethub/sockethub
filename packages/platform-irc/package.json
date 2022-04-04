@@ -1,0 +1,46 @@
+{
+  "name": "@sockethub/platform-irc",
+  "description": "A sockethub platform module implementing IRC functionality",
+  "version": "4.0.0-alpha.2",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "LGPL-3.0+",
+  "main": "index.js",
+  "keywords": [
+    "sockethub",
+    "messaging",
+    "activitystreams",
+    "activity",
+    "streams",
+    "protocol",
+    "irc"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/platform-irc"
+  },
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-irc",
+  "dependencies": {
+    "@sockethub/irc2as": "^4.0.0-alpha.2",
+    "irc-socket-sasl": "4.0.0"
+  },
+  "devDependencies": {
+    "@sockethub/schemas": "^3.0.0-alpha.2",
+    "c8": "7.11.0",
+    "chai": "4.3.6",
+    "eslint": "8.9.0",
+    "jsdoc-to-markdown": "7.1.1",
+    "proxyquire": "2.1.3",
+    "sinon": "13.0.1"
+  },
+  "scripts": {
+    "clean": "npx rimraf coverage node_modules",
+    "compliance": "yarn run lint && yarn run test && yarn run coverage",
+    "test": "c8 mocha *.test.js",
+    "coverage": "c8 check-coverage --statements 80 --branches 55 --functions 85 --lines 80",
+    "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md",
+    "lint": "eslint \"**/*.js\"",
+    "lint:fix": "eslint --fix \"**/*.js\""
+  }
+}

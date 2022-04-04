@@ -1,5 +1,5 @@
 {
-  "name": "irc2as",
+  "name": "@sockethub/irc2as",
   "version": "4.0.0-alpha.2",
   "description": "IRC to ActivityStreams objects",
   "main": "src/index.js",
@@ -11,13 +11,14 @@
     "fast-deep-equal": "^3.1.1"
   },
   "devDependencies": {
+    "@sockethub/schemas": "^3.0.0-alpha.2",
     "c8": "7.11.0",
     "chai": "4.3.6",
     "mocha": "9.2.1",
-    "sinon": "13.0.1",
-    "sockethub-schemas": "^3.0.0-alpha.2"
+    "sinon": "13.0.1"
   },
   "scripts": {
+    "clean": "npx rimraf coverage node_modules",
     "compliance": "yarn run test && yarn run coverage",
     "test": "c8 mocha src/**.test.js",
     "coverage": "c8 check-coverage --statements 90 --branches 90 --functions 95 --lines 90"

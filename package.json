@@ -2,7 +2,13 @@
   "name": "root",
   "private": true,
   "devDependencies": {
+    "@nrwl/cli": "latest",
+    "@nrwl/node": "^13.9.2",
+    "@nrwl/nx-cloud": "latest",
+    "@nrwl/tao": "latest",
+    "@nrwl/workspace": "latest",
     "@types/mocha": "9.1.0",
+    "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "5.12.1",
     "chai": "4.3.6",
     "eslint": "8.9.0",
@@ -19,22 +25,26 @@
     "yarn": "1.22.17"
   },
   "scripts": {
-    "version": "lerna run build",
     "deps": "yarn install && lerna bootstrap",
-    "test": "lerna run test",
-    "coverage": "lerna run coverage",
-    "compliance": "lerna run compliance",
-    "lint": "lerna run lint",
-    "lint:fix": "lerna run lint:fix",
-    "build": "lerna run build",
-    "dev": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run dev",
-    "start": "[[ -f config.json ]] && cp config.json packages/sockethub/; cd packages/sockethub && yarn run start",
-    "start:defaults": "cd packages/sockethub && yarn run start",
+    "publish": "yarn run build && yarn run compliance && lerna publish --dist-tag latest --pre-dist-tag next",
+    "test": "nx run-many --target=test --all --skip-nx-cache",
+    "coverage": "nx run-many --target=coverage --all",
+    "clean": "nx run-many --target=clean --all && npx rimraf node_modules",
+    "compliance": "nx run-many --target=compliance --all",
+    "lint": "nx run-many --target=lint --all",
+    "lint:fix": "nx run-many --target=lint:fix --all",
+    "build": "nx run-many --target=build --all --exclude=@sockethub/server && nx run-many --target=build --projects=@sockethub/server",
+    "dev": "[[ -f config.json ]] && cp config.json packages/server/; cd packages/server && yarn run dev",
+    "start": "[[ -f config.json ]] && cp config.json packages/server/; cd packages/server && yarn run start",
+    "start:defaults": "cd packages/server && yarn run start",
     "integration": "yarn run integration:setup && yarn run integration:run; RES=$?; if [[ \"$RES\" != \"0\" ]]; then yarn run integration:log; fi; yarn run integration:teardown; exit $RES",
     "integration:run": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
     "integration:log": "docker logs sockethub-sockethub-1",
     "integration:setup": "docker compose -f docker-compose.yml up -d",
     "integration:teardown": "docker compose stop",
     "integration:clean": "docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub"
+  },
+  "dependencies": {
+    "@nrwl/js": "^13.8.4"
   }
 }

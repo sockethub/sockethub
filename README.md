@@ -15,7 +15,7 @@ A protocol gateway for the web.
 
 Sockethub is a translation layer for web applications to communicate with other protocols and services that are traditionally either inaccessible or impractical to use from in-browser JavaScript.
 
-**For more information on Sockethub see the [Sockethub README](packages/sockethub/README.md)**
+**For more information on Sockethub see the [Sockethub README](packages/server/README.md)**
 
 ## Setup
 
@@ -51,18 +51,20 @@ For production, with examples disabled.
 
 `$ DEBUG=sockethub* yarn run start`
 
-*For more info on configuration options, see the [Sockethub README](packages/sockethub/README.md#environment-variables)* section on environment variables.*
+*For more info on configuration options, see the
+[Sockethub README](packages/server/README.md#environment-variables)*
+section on environment variables.*
 
 ## Packages
 
-* [activity-streams.js](packages/activity-streams.js)
-* [irc2as](packages/irc2as)
-* [sockethub](packages/sockethub)
-* [sockethub-platform-dummy](packages/sockethub-platform-dummy)
-* [sockethub-platform-feeds](packages/sockethub-platform-feeds)
-* [sockethub-platform-irc](packages/sockethub-platform-irc)
-* [sockethub-platform-xmpp](packages/sockethub-platform-xmpp)
-* [sockethub-schemas](packages/sockethub-schemas)
+* [@sockethub/activity-streams.js](packages/activity-streams.js)
+* [@sockethub/irc2as](packages/irc2as)
+* [@sockethub/platform-dummy](packages/platform-dummy)
+* [@sockethub/platform-feeds](packages/platform-feeds)
+* [@sockethub/platform-irc](packages/platform-irc)
+* [@sockethub/platform-xmpp](packages/platform-xmpp)
+* [@sockethub/schemas](packages/schemas)
+* [@sockethub/server](packages/server)
 
 ## Credits
 
@@ -73,4 +75,3 @@ Logo design by [Jan-Christoph Borchardt](http://jancborchardt.net)
 Sponsored by [NLNET](http://nlnet.nl)
 
 [![NLNET Logo](http://sockethub.org/res/img/nlnet-logo.svg)](http://nlnet.nl)
-

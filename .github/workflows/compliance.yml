@@ -14,7 +14,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm install -g yarn
       - run: yarn deps
-      - run: yarn run lint
+      - run: yarn lint
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -30,7 +30,7 @@ jobs:
       - name: Install Dependencies
         run: yarn deps
       - name: Build
-        run: yarn run build
+        run: yarn build
       - name: Test
         run: yarn test
   coverage:
@@ -48,8 +48,8 @@ jobs:
       - name: Install Dependencies
         run: yarn deps
       - name: Build
-        run: yarn run build
+        run: yarn build
       - name: Test
         run: yarn test
       - name: Coverage
-        run: yarn run coverage
+        run: yarn coverage

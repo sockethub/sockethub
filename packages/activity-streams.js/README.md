@@ -1,7 +1,7 @@
-# activity-streams.js
+# @sockethub/activity-streams.js
 
-[![License](https://img.shields.io/npm/l/activity-streams.svg?style=flat)](https://npmjs.org/package/activity-streams)
-[![Downloads](http://img.shields.io/npm/dm/activity-streams.svg?style=flat)](https://npmjs.org/package/activity-streams)
+[![License](https://img.shields.io/npm/l/activity-streams.svg?style=flat)](https://npmjs.org/package/@sockethub/activity-streams)
+[![Downloads](http://img.shields.io/npm/dm/activity-streams.svg?style=flat)](https://npmjs.org/package/@sockethub/activity-streams)
 
 A simple tool to facilitate handling and referencing activity streams and it's objects, cutting down on verbosity.
 
@@ -13,10 +13,10 @@ I am learning about JSON-LD and ActivityStreams2 as I write this library, so sug
 
 ### Node.js
 
-`$ npm install activity-streams`
+`$ npm install @sockethub/activity-streams`
 
 ```javascript
-const ASFactory = require('activity-streams');
+const ASFactory = require('@sockethub/activity-streams');
 const ActivityStreams = ASFactory({
   failOnUnkownObjectProperties: false // default
 });
@@ -36,9 +36,9 @@ Once included in a web-page, the `ActivityStreams` base object should be on the 
 const ActivityStreams = ASFactory();
 
 ActivityStreams.Object.create({
-  '@id': 'irc://exampleUser@irc.freenode.net',
-  '@type': "person",
-  displayName: 'Example User',
+  id: 'irc://exampleUser@irc.freenode.net',
+  type: "person",
+  name: 'Example User',
   url: "http://activitystrea.ms",
   image: {
     url: "http://activitystrea.ms/avatar.jpg",
@@ -53,17 +53,17 @@ ActivityStreams.on('activity-object-create', function (obj) {
 });
 
 ActivityStreams.Object.create({
-  '@id': 'irc://irc.freenode.net/activitystreams',
-  '@type': "chatroom",
-  displayName: '#activitystreams'
+  id: 'irc://irc.freenode.net/activitystreams',
+  type: "chatroom",
+  name: '#activitystreams'
 });
 
 const exampleUser = ActivityStreams.Object.get('irc://exampleUser@irc.freenode.net');
     // ... returns:
     //  {
-    //    '@id': 'irc://exampleUser@irc.freenode.net',
-    //    '@type': "person",
-    //    displayName: 'Example User',
+    //    id: 'irc://exampleUser@irc.freenode.net',
+    //    type: "person",
+    //    name: 'Example User',
     //    url: "http://activitystrea.ms",
     //    image: {
     //      url: "http://activitystrea.ms/avatar.jpg",
@@ -74,10 +74,10 @@ const exampleUser = ActivityStreams.Object.get('irc://exampleUser@irc.freenode.n
     //  }
 
 ActivityStreams.Stream({
-  '@context': 'send',
+  context: 'send',
   actor: 'irc://exampleUser@irc.freenode.net',
   object: {
-    '@type': "message",
+    type: "message",
     content: "hello world!"
   },
   target: 'irc://irc.freenode.net/activitystreams'
@@ -86,9 +86,9 @@ ActivityStreams.Stream({
     //  {
     //    '@context': 'send',
     //    actor: {
-    //      '@id': 'irc://exampleUser@irc.freenode.net',
-    //      '@type': "person",
-    //      displayName: 'Example User',
+    //      id: 'irc://exampleUser@irc.freenode.net',
+    //      type: "person",
+    //      name: 'Example User',
     //      url: "http://activitystrea.ms",
     //      image: {
     //        url: "http://activitystrea.ms/avatar.jpg",
@@ -98,13 +98,13 @@ ActivityStreams.Stream({
     //      }
     //    },
     //    object: {
-    //      '@type': "message",
+    //      type: "message",
     //      content: "hello world!"
     //    },
     //    target: {
-    //      '@id': 'irc://irc.freenode.net/activitystreams',
-    //      '@type': "chatroom",
-    //      displayName: '#activitystreams'
+    //      id: 'irc://irc.freenode.net/activitystreams',
+    //      type: "chatroom",
+    //      name: '#activitystreams'
     //    }
     //  }
 ```

@@ -5,7 +5,7 @@ plugins:
     enabled: true
   eslint:
     enabled: true
-    channel: "eslint-7"
+    channel: "eslint-8"
   fixme:
     enabled: true
   markdownlint:
@@ -17,19 +17,13 @@ exclude_patterns:
 - "**/dist/"
 - "**/browser/"
 - "**/node_modules/"
-- "**/script/"
-- "**/spec/"
 - "**/test/"
-- "**/tests/"
-- "**/vendor/"
-- "**/*_test.go"
 - "**/*.d.ts"
-- "**/views/"
-- "**/src/routes/"
-- "**/schemas/"
 - "**/*.test.*"
-- "**/packages/irc2as/"
-- "**/packages/sockethub-platform-feeds/"
-- "**/packages/activity-streams.js/"
-- "**/packages/sockethub-platform-irc/"
-- "**/packages/sockethub-platform-xmpp/"
+- "packages/server/views/examples/"
+- "packages/schemas/schemas/"
+- "packages/irc2as/"
+- "packages/platform-feeds/"
+- "packages/activity-streams.js/"
+- "packages/platform-irc/"
+- "packages/platform-xmpp/"
