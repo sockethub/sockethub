@@ -7,10 +7,10 @@
   "license": "MIT",
   "keywords": [
     "sockethub",
-    "schema",
+    "sockethub schema",
     "activity streams",
     "activity objects",
-    "platforms"
+    "sockethub platforms"
   ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
