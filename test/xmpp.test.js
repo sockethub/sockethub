@@ -71,22 +71,24 @@ describe('Page', () => {
       }, genHandler(done));
     }).timeout(3000);
 
-    it('`create activity-object', () => {
-      const actor = {
-        id: "jimmy@prosody/SockethubExample",
-        type: "person",
-        name: "Jimmy Userson"
-      };
-      sc.ActivityStreams.Object.create(actor);
-      expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
-    });
+    describe('create activity-object', () => {
+      it('results in a fetch-able actor object', () =>  {
+        const actor = {
+          id: "jimmy@prosody/SockethubExample",
+          type: "person",
+          name: "Jimmy Userson"
+        };
+        sc.ActivityStreams.Object.create(actor);
+        expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
+      });
 
-    it('send connect', (done) => {
-      sc.socket.emit('message', {
-        type: "connect",
-        actor: "jimmy@prosody/SockethubExample",
-        context: "xmpp"
-      }, genHandler(done));
-    }).timeout(12000);
+      it('can send connect with actor string', (done) => {
+        sc.socket.emit('message', {
+          type: "connect",
+          actor: "jimmy@prosody/SockethubExample",
+          context: "xmpp"
+        }, genHandler(done));
+      }).timeout(12000);
+    });
   });
 });
