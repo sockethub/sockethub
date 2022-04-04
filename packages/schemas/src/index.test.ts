@@ -1,9 +1,12 @@
 const chai = require('chai');
 const expect = chai.expect;
+
 import ActivityStreamSchema from './schemas/activity-stream';
 import ActivityObjectSchema from './schemas/activity-object';
-import {validatePlatformSchema, addPlatformSchema, validateActivityObject,
-  validateActivityStream, validateCredentials} from './validator';
+import {
+  validatePlatformSchema, addPlatformSchema, validateActivityObject,
+  validateActivityStream, validateCredentials, getPlatformSchema
+} from './validator';
 import testCredentialsData from './index.test.data.credentials';
 import testActivityObjectsData from './index.test.data.objects';
 import testActivityStreamsData from './index.test.data.streams';
@@ -19,7 +22,10 @@ describe('Platform schema validation', () => {
     expect(err).to.eql('platform schema failed to validate:  must have required property \'name\'');
   });
   it('add platform schema', () => {
-    addPlatformSchema(testPlatformSchemaData.credentials, `test-platform/credentials`);
+    const platform_type = 'test-platform/credentials';
+    addPlatformSchema(testPlatformSchemaData.credentials, platform_type);
+    const compiledSchema = getPlatformSchema(platform_type)
+    expect(compiledSchema.schema).to.eql(testPlatformSchemaData.credentials);
   });
 })
 
