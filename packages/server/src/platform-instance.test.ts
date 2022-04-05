@@ -31,7 +31,7 @@ describe("PlatformInstance", () => {
         fork: forkFake,
         ChildProcess: sandbox.stub()
       },
-      './serve': {
+      './listener': {
         'io': {
           'in': sandbox.stub().returns({
             fetchSockets: () => {

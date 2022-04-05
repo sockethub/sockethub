@@ -1,6 +1,5 @@
 import debug from 'debug';
 import hash from "object-hash";
-import config from './config';
 import Queue from 'bull';
 import { getPlatformId, decryptJobData } from "./common";
 import { ActivityStream, JobDataDecrypted, JobEncrypted } from "./sockethub";
@@ -14,6 +13,8 @@ let identifier = process.argv[4];
 const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
 let logger = debug(loggerPrefix);
 
+const redisConfig = process.env.REDIS_URL ? process.env.REDIS_URL
+  : { host: process.env.REDIS_HOST, port: process.env.REDIS_PORT };
 const PlatformModule = require(`@sockethub/platform-${platformName}`);
 
 let queueStarted = false;
@@ -182,7 +183,7 @@ function startQueueListener(refresh: boolean = false) {
     logger('start queue called multiple times, skipping');
     return;
   }
-  const queue = new Queue(parentId + identifier, { redis: config.get('redis') });
+  const queue = new Queue(parentId + identifier, { redis: redisConfig });
   queueStarted = true;
   logger('listening on the queue for incoming jobs');
   queue.process(getJobHandler(secret));

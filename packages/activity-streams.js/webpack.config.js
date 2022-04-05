@@ -4,7 +4,7 @@ module.exports = {
   entry: './src/activity-streams.js',
   output: {
     filename: 'activity-streams.min.js',
-    path: path.resolve(__dirname, 'browser'),
+    path: path.resolve(__dirname, 'dist'),
     libraryTarget: 'umd'
   }
 };

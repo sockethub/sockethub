@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/platform-feeds",
   "description": "A sockethub platform module implementing RSS/Atom functionality",
-  "version": "3.0.0-alpha.0",
+  "version": "3.0.0-alpha.2",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
@@ -33,9 +33,17 @@
     "jsdoc": "3.6.10",
     "jsdoc-to-markdown": "7.1.1"
   },
+  "peerDependencies": {
+    "@sockethub/server": ">=5.0.0-alpha.2"
+  },
+  "peerDependenciesMeta": {
+    "@sockethub/server": {
+      "optional": true
+    }
+  },
   "scripts": {
     "build": "yarn run doc",
-    "clean": "npx rimraf node_modules",
+    "clean:deps": "npx rimraf node_modules",
     "compliance": "yarn run test",
     "test": "jaribu",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md"

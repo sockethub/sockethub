@@ -29,15 +29,17 @@
     "publish": "yarn run build && yarn run compliance && lerna publish --dist-tag latest --pre-dist-tag next",
     "test": "nx run-many --target=test --all --skip-nx-cache",
     "coverage": "nx run-many --target=coverage --all",
-    "clean": "nx run-many --target=clean --all && npx rimraf node_modules",
+    "clean": "nx run-many --target=clean --all",
+    "clean:deps": "nx run-many --target=clean:deps --all && npx rimraf node_modules",
     "compliance": "nx run-many --target=compliance --all",
     "lint": "nx run-many --target=lint --all",
     "lint:fix": "nx run-many --target=lint:fix --all",
-    "build": "nx run-many --target=build --all --exclude=@sockethub/server && nx run-many --target=build --projects=@sockethub/server",
-    "dev": "[[ -f config.json ]] && cp config.json packages/server/; cd packages/server && yarn run dev",
-    "start": "[[ -f config.json ]] && cp config.json packages/server/; cd packages/server && yarn run start",
-    "start:defaults": "cd packages/server && yarn run start",
+    "build": "nx run-many --target=build --all",
+    "dev": "yarn run build && cd packages/sockethub && yarn run dev",
+    "start": "cd packages/sockethub && yarn run start",
     "integration": "yarn run integration:setup && yarn run integration:run; RES=$?; if [[ \"$RES\" != \"0\" ]]; then yarn run integration:log; fi; yarn run integration:teardown; exit $RES",
+    "integration:single": "yarn run integration:setup && yarn run integration:run:single; RES=$?; if [[ \"$RES\" != \"0\" ]]; then yarn run integration:log; fi; yarn run integration:teardown; exit $RES",
+    "integration:run:single": "karma start --single-run --browsers FirefoxHeadless ./karma.config.js",
     "integration:run": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
     "integration:log": "docker logs sockethub-sockethub-1",
     "integration:setup": "docker compose -f docker-compose.yml up -d",
@@ -45,6 +47,7 @@
     "integration:clean": "docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub"
   },
   "dependencies": {
-    "@nrwl/js": "^13.8.4"
+    "@nrwl/js": "^13.8.4",
+    "tslib": "^2.0.0"
   }
 }

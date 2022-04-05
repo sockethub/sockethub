@@ -1,5 +1,3 @@
-const packageJSON = require('./package.json');
-
 class Dummy {
   constructor(cfg) {
     cfg = (typeof cfg === 'object') ? cfg : {};
@@ -10,7 +8,8 @@ class Dummy {
 
   get schema() {
     return {
-      version: packageJSON.version,
+      name: "dummy",
+      version: require('./package.json').version,
       messages: {
         "required": ["type"],
         "properties": {

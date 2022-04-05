@@ -1,0 +1,52 @@
+{
+  "name": "sockethub",
+  "description": "A polyglot messaging service",
+  "version": "5.0.0-alpha.2",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "LGPL-3.0+",
+  "main": "",
+  "bin": "bin/sockethub",
+  "preferGlobal": true,
+  "keywords": [
+    "sockethub",
+    "messaging",
+    "polyglot",
+    "unhosted",
+    "apis",
+    "api",
+    "protocols",
+    "protocol",
+    "irc",
+    "xmpp",
+    "facebook",
+    "rss",
+    "atom",
+    "twitter",
+    "smtp",
+    "imap",
+    "email"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "apps/sockethub"
+  },
+  "homepage": "https://sockethub.org",
+  "dependencies": {
+    "@sockethub/server": "5.0.0-alpha.2",
+    "@sockethub/platform-dummy": "^3.0.0-alpha.2",
+    "@sockethub/platform-feeds": "^3.0.0-alpha.2",
+    "@sockethub/platform-irc": "^4.0.0-alpha.2",
+    "@sockethub/platform-xmpp": "^5.0.0-alpha.2"
+  },
+  "scripts": {
+    "build": "node build.js && test -f sockethub.config.json",
+    "clean:deps": "npx rimraf node_modules",
+    "dev": "DEBUG=sockethub* ./bin/sockethub --examples -c sockethub.config.json",
+    "start": "DEBUG=sockethub* ./bin/sockethub -c sockethub.config.json"
+  },
+  "engines": {
+    "node": ">= 12.4.0"
+  }
+}

@@ -34,9 +34,18 @@
     "proxyquire": "2.1.3",
     "sinon": "13.0.1"
   },
+  "peerDependencies": {
+    "@sockethub/server": ">=5.0.0-alpha.2"
+  },
+  "peerDependenciesMeta": {
+    "@sockethub/server": {
+      "optional": true
+    }
+  },
   "scripts": {
     "build": "yarn run doc",
-    "clean": "npx rimraf coverage node_modules",
+    "clean": "npx rimraf coverage",
+    "clean:deps": "npx rimraf node_modules",
     "compliance": "yarn run test && yarn run coverage",
     "test": "c8 mocha **/*.test.js",
     "lint": "eslint \"**/*.js\"",

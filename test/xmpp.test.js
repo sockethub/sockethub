@@ -12,27 +12,27 @@ async function loadScript(url) {
   eval(script);
 }
 
-describe('integration page', () => {
+describe('Page', () => {
 
-  it("must load socket.io.js", async () => {
+  it("loads socket.io.js", async () => {
     let scriptUrl = 'http://localhost:10550/socket.io.js'
     return loadScript(scriptUrl);
   });
 
-  it("must load sockethub-client.js", async () => {
+  it("loads sockethub-client.js", async () => {
     let scriptUrl = 'http://localhost:10550/sockethub-client.js'
     return loadScript(scriptUrl);
   });
 
-  it('has expected global io', () => {
+  it('has global `io`', () => {
     assert.typeOf(io, 'function');
   });
 
-  it('has expected global ASFactory', () => {
+  it('has global `ASFactory`', () => {
     assert.typeOf(ASFactory, 'function');
   });
 
-  it('has expected global SockethubClient', () => {
+  it('has global `SockethubClient`', () => {
     assert.typeOf(SockethubClient, 'function');
   });
 
@@ -47,7 +47,7 @@ describe('integration page', () => {
     }
   }
 
-  describe('with an initialized SockethubClient', () => {
+  describe('new SockethubClient()', () => {
     let sc;
 
     before(() => {
@@ -71,15 +71,24 @@ describe('integration page', () => {
       }, genHandler(done));
     }).timeout(3000);
 
-    it('send connect', (done) => {
-      sc.socket.emit('message', {
-        type: "connect",
-        actor: {
+    describe('create activity-object', () => {
+      it('results in a fetch-able actor object', () =>  {
+        const actor = {
           id: "jimmy@prosody/SockethubExample",
-          type: "person"
-        },
-        context: "xmpp"
-      }, genHandler(done));
-    }).timeout(6000);
+          type: "person",
+          name: "Jimmy Userson"
+        };
+        sc.ActivityStreams.Object.create(actor);
+        expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
+      });
+
+      it('can send connect with actor string', (done) => {
+        sc.socket.emit('message', {
+          type: "connect",
+          actor: "jimmy@prosody/SockethubExample",
+          context: "xmpp"
+        }, genHandler(done));
+      }).timeout(12000);
+    });
   });
 });

@@ -7,7 +7,7 @@ import { Server } from 'socket.io';
 import config from './config';
 import routes from './routes';
 
-const log = debug('sockethub:server:http');
+const log = debug('sockethub:server:listener');
 
 /**
  * Handles the initialization and access of Sockethub resources.
@@ -16,7 +16,7 @@ const log = debug('sockethub:server:http');
  *  - Express (serves resources and example routes)
  *  - Socket.io (bidirectional websocket communication)
  */
-class Serve {
+class Listener {
   io: Server;
   http: HTTP.Server;
 
@@ -26,7 +26,7 @@ class Serve {
    */
   start() {
     // initialize express and socket.io objects
-    const app = Serve.initExpress();
+    const app = Listener.initExpress();
     this.http = new HTTP.Server(app);
     this.io = new Server(this.http, {
       path: config.get('sockethub:path'),
@@ -36,10 +36,10 @@ class Serve {
       }
     });
     routes.setup(app);
-    this.startListener();
+    this.startHttp();
   }
 
-  private startListener() {
+  private startHttp() {
     this.http.listen(config.get('sockethub:port'), config.get('sockethub:host'), () => {
       log(`sockethub listening on ` +
         `http://${config.get('sockethub:host')}:${config.get('sockethub:port')}`);
@@ -57,7 +57,7 @@ class Serve {
   }
 }
 
-const serve = new Serve();
+const listener = new Listener();
 
 export interface SocketInstance {
   id: string;
@@ -65,7 +65,7 @@ export interface SocketInstance {
 }
 
 export async function getSocket(sessionId: string): Promise<SocketInstance> {
-  const sockets: Array<SocketInstance> = await serve.io.fetchSockets();
+  const sockets: Array<SocketInstance> = await listener.io.fetchSockets();
   return new Promise((resolve, reject) => {
     for (let socket of sockets) {
       if (sessionId === socket.id) {
@@ -76,4 +76,4 @@ export async function getSocket(sessionId: string): Promise<SocketInstance> {
   });
 }
 
-export default serve;
+export default listener;

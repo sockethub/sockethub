@@ -29,8 +29,6 @@ if (typeof (IRC2AS) !== 'object') {
   IRC2AS = require('@sockethub/irc2as');
 }
 
-const packageJSON = require('./package.json');
-
 
 /**
  * @class IRC
@@ -100,7 +98,8 @@ function IRC(cfg) {
  *  }
  */
 IRC.prototype.schema = {
-  "version": packageJSON.version,
+  "name": "irc",
+  "version": require('./package.json').version,
   "messages" : {
     "required": [ 'type' ],
     "properties": {

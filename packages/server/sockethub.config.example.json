@@ -14,7 +14,12 @@
     "path": "/sockethub"
   },
   "log_file": "",
-  "platforms": [],
+  "platforms": [
+    "@sockethub/platform-dummy",
+    "@sockethub/platform-feeds",
+    "@sockethub/platform-irc",
+    "@sockethub/platform-xmpp"
+  ],
   "public": {
     "protocol": "http",
     "host": "localhost",

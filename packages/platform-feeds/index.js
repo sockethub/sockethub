@@ -19,10 +19,9 @@
 const FeedParser = require('feedparser');
 const request = require('request');
 
-const packageJSON = require('./package.json');
-
 const PlatformSchema = {
-  "version": packageJSON.version,
+  "name": "feeds",
+  "version": require('./package.json').version,
   "messages": {
     "required": [ "type" ],
     "properties": {
