@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/platform-irc",
   "description": "A sockethub platform module implementing IRC functionality",
-  "version": "4.0.0-alpha.2",
+  "version": "4.0.0-alpha.3",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
@@ -22,11 +22,11 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-irc",
   "dependencies": {
-    "@sockethub/irc2as": "^4.0.0-alpha.2",
+    "@sockethub/irc2as": "^4.0.0-alpha.3",
     "irc-socket-sasl": "4.0.0"
   },
   "devDependencies": {
-    "@sockethub/schemas": "^3.0.0-alpha.2",
+    "@sockethub/schemas": "^3.0.0-alpha.3",
     "c8": "7.11.0",
     "chai": "4.3.6",
     "eslint": "8.9.0",

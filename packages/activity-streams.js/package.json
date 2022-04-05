@@ -1,6 +1,6 @@
 {
   "name": "@sockethub/activity-streams",
-  "version": "4.4.0-alpha.2",
+  "version": "4.4.0-alpha.3",
   "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
   "main": "./src/activity-streams.js",
   "dependencies": {
