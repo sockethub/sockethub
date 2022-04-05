@@ -3,26 +3,26 @@
   "private": true,
   "devDependencies": {
     "@nrwl/cli": "latest",
-    "@nrwl/node": "^13.9.2",
+    "@nrwl/node": "13.9.5",
     "@nrwl/nx-cloud": "latest",
     "@nrwl/tao": "latest",
     "@nrwl/workspace": "latest",
     "@types/mocha": "9.1.0",
     "@typescript-eslint/eslint-plugin": "latest",
-    "@typescript-eslint/parser": "5.12.1",
+    "@typescript-eslint/parser": "5.17.0",
     "chai": "4.3.6",
-    "eslint": "8.9.0",
+    "eslint": "8.12.0",
     "eslint-plugin-security-node": "1.1.1",
     "find-up": "6.3.0",
-    "karma": "6.3.16",
+    "karma": "6.3.17",
     "karma-chai": "0.1.0",
-    "karma-chrome-launcher": "3.1.0",
+    "karma-chrome-launcher": "3.1.1",
     "karma-firefox-launcher": "2.1.2",
     "karma-mocha": "2.0.1",
     "lerna": "4.0.0",
-    "mocha": "9.2.1",
-    "typescript": "4.5.5",
-    "yarn": "1.22.17"
+    "mocha": "9.2.2",
+    "typescript": "4.6.3",
+    "yarn": "1.22.18"
   },
   "scripts": {
     "deps": "yarn install && lerna bootstrap",
@@ -47,7 +47,7 @@
     "integration:clean": "docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub"
   },
   "dependencies": {
-    "@nrwl/js": "^13.8.4",
+    "@nrwl/js": "13.9.5",
     "tslib": "^2.0.0"
   }
 }
