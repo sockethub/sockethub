@@ -1,18 +1,20 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "lib": ["ES2018", "DOM"],
     "allowJs": false,
+    "sourceMap": false,
     "outDir": "dist",
     "rootDir": "src",
-    "baseUrl": "/",
-    "sourceMap": true,
-    "sourceRoot": "/",
-    "mapRoot": "/",
+    "baseUrl": "/"
   },
   "include": [
     "src"
   ],
   "exclude": [
-    "**/*.test.ts"
+    "**/*.test.ts",
+    "node_modules/",
+    "dist/",
+    "*.d.ts"
   ]
 }

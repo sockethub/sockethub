@@ -2,9 +2,10 @@ import { ChildProcess, fork } from 'child_process';
 import { join } from 'path';
 import { debug, Debugger } from 'debug';
 import Queue from 'bull';
+import { IActivityStream } from '@sockethub/schemas';
 
 import config from "./config";
-import { ActivityStream, JobDataDecrypted, JobEncrypted } from "./sockethub";
+import { JobDataDecrypted, JobEncrypted } from "./sockethub";
 import { getSocket } from "./listener";
 import { decryptJobData } from "./common";
 
@@ -18,8 +19,8 @@ export interface PlatformInstanceParams {
   actor?: string;
 }
 
-interface MessageFromPlatform extends Array<string|ActivityStream>{
-  0: string, 1: ActivityStream, 2: string}
+interface MessageFromPlatform extends Array<string | IActivityStream>{
+  0: string, 1: IActivityStream, 2: string}
 export interface MessageFromParent extends Array<string|any>{0: string, 1: any}
 
 interface PlatformConfig {
@@ -133,7 +134,7 @@ export default class PlatformInstance {
    * @param sessionId ID of the socket connection to send the message to
    * @param msg ActivityStream object to send to client
    */
-  public sendToClient(sessionId: string, msg: ActivityStream) {
+  public sendToClient(sessionId: string, msg: IActivityStream) {
     getSocket(sessionId).then((socket) => {
       try {
         // this property should never be exposed externally
@@ -142,14 +143,14 @@ export default class PlatformInstance {
       msg.context = this.name;
       if ((msg.type === 'error') && (typeof msg.actor === 'undefined') && (this.actor)) {
         // ensure an actor is present if not otherwise defined
-        msg.actor = { id: this.actor };
+        msg.actor = { id: this.actor, type: 'unknown' };
       }
       socket.emit('message', msg);
     }, (err) => this.debug(`sendToClient ${err}`));
   }
 
   // send message to every connected socket associated with this platform instance.
-  private async broadcastToSharedPeers(sessionId: string, msg: ActivityStream) {
+  private async broadcastToSharedPeers(sessionId: string, msg: IActivityStream) {
     for (let sid of this.sessions.values()) {
       if (sid !== sessionId) {
         this.debug(`broadcasting message to ${sid}`);
@@ -191,10 +192,10 @@ export default class PlatformInstance {
    * @param errorMessage
    */
   private async reportError(sessionId: string, errorMessage: any) {
-    const errorObject: ActivityStream = {
+    const errorObject: IActivityStream = {
       context: this.name,
       type: 'error',
-      actor: { id: this.actor },
+      actor: { id: this.actor, type: 'unknown' },
       error: errorMessage
     };
     this.sendToClient(sessionId, errorObject);

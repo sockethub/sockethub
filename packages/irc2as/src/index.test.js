@@ -1,6 +1,5 @@
 const chai = require('chai');
-const sinon = require('sinon');
-const schemas = require('@sockethub/schemas');
+const schemas = require('@sockethub/schemas').default;
 const fs = require("fs");
 const equal = require('fast-deep-equal');
 const expect = chai.expect;
@@ -29,7 +28,7 @@ function matchStream(done) {
       console.log('failed to find match for: ' + JSON.stringify(stream));
       return done(new Error('failed matching ' + JSON.stringify(stream)));
     }
-    const err = schemas.validator.validateActivityStream(stream);
+    const err = schemas.validateActivityStream(stream);
     if (err) {
       return done(new Error(err + ' - ' + JSON.stringify(stream)));
     }

@@ -5,7 +5,7 @@ module.exports = {
     "required": ['type'],
     "properties": {
       "type": {
-        "enum": ['connect', 'update', 'send', 'join', 'query', 'request-friend',
+        "enum": ['connect', 'update', 'send', 'join', 'leave', 'query', 'request-friend',
           'remove-friend', 'make-friend']
       }
     }

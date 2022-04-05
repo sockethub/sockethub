@@ -2,8 +2,8 @@
  * responsible for handling the validation and expansion (when applicable) of all incoming objects
  */
 import debug from 'debug';
-import * as Schemas from '@sockethub/schemas';
-import { ActivityStream } from "../sockethub";
+import schemas from '@sockethub/schemas';
+import { IActivityStream } from "@sockethub/schemas";
 
 // @ts-ignore
 import init from "../bootstrap/init";
@@ -11,7 +11,7 @@ import init from "../bootstrap/init";
 init.platforms.forEach((platform) => {
   Object.keys(platform.schemas).forEach((key) => {
     if (! platform.schemas[key]) { return; }
-    Schemas.validator.addPlatformSchema(platform.schemas[key], `${platform.id}/${key}`);
+    schemas.addPlatformSchema(platform.schemas[key], `${platform.id}/${key}`);
   });
 });
 
@@ -19,20 +19,20 @@ init.platforms.forEach((platform) => {
 // that will be called when the middleware eventually does.
 export default function validate(type: string, sockethubId: string) {
   const sessionLog = debug(`sockethub:validate:${sockethubId}`);
-  return (msg: ActivityStream, done: Function) => {
+  return (msg: IActivityStream, done: Function) => {
     sessionLog('applying schema validation for ' + type);
     if (type === 'activity-object') {
-      const err = Schemas.validator.validateActivityObject(msg);
+      const err = schemas.validateActivityObject(msg);
       err ? done(new Error(err)) : done(msg);
     } else if (! init.platforms.has(msg.context)) {
       return done(
         new Error(`platform context ${msg.context} not registered with this Sockethub instance.`)
       );
     } else if (type === 'credentials') {
-      const err = Schemas.validator.validateCredentials(msg);
+      const err = schemas.validateCredentials(msg);
       err ? done(new Error(err)) : done(msg);
     } else {
-      const err = Schemas.validator.validateActivityStream(msg);
+      const err = schemas.validateActivityStream(msg);
       if (err) {
         done(new Error(err));
       } else {

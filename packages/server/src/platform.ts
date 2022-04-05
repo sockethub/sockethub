@@ -1,8 +1,9 @@
 import debug from 'debug';
 import hash from "object-hash";
 import Queue from 'bull';
+import { IActivityStream } from "@sockethub/schemas";
 import { getPlatformId, decryptJobData } from "./common";
-import { ActivityStream, JobDataDecrypted, JobEncrypted } from "./sockethub";
+import { JobDataDecrypted, JobEncrypted } from "./sockethub";
 import { MessageFromParent } from './platform-instance';
 import { getSessionStore } from "./store";
 
@@ -24,7 +25,7 @@ logger(`platform handler initialized for ${platformName} ${identifier}`);
 
 export interface PlatformSession {
   debug(msg: string): void;
-  sendToClient(msg: ActivityStream, special?: string): void;
+  sendToClient(msg: IActivityStream, special?: string): void;
   updateActor(credentials: object): void;
 }
 
@@ -152,7 +153,7 @@ function getJobHandler(secret: string) {
  * @param command string containing the type of command to be sent. 'message' or 'close'
  */
 function getSendFunction(command: string) {
-  return function (msg: ActivityStream, special?: string) {
+  return function (msg: IActivityStream, special?: string) {
     process.send([command, msg, special]);
   };
 }

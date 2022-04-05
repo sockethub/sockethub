@@ -18,9 +18,9 @@
 
 // this schema defines the general structure of the schema object which should
 // be returned from platforms.
-module.exports = {
+export default {
   'type' : 'object',
-  'required': [ 'version', 'messages' ],
+  'required': [ 'name', 'version', 'messages' ],
   'additionalProperties': false,
   'properties' : {
 

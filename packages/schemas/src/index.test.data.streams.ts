@@ -1,6 +1,6 @@
-const o = require('./../src/object-types');
+import {ObjectTypesList} from './helpers/objects';
 
-module.exports = [
+export default [
   [
     'type:send, object:message',
     {
@@ -71,7 +71,7 @@ module.exports = [
   [
     'bad target',
     {
-    id: 'blah',
+      id: 'blah',
       type: 'send',
       context: 'dood',
       actor: {
@@ -143,7 +143,7 @@ module.exports = [
       }
     },
     false,
-    `/actor: must match exactly one schema in oneOf: ${Object.keys(o.objectTypes).join(', ')}`
+    `/actor: must match exactly one schema in oneOf: ${ObjectTypesList.join(', ')}`
   ],
 
   [
@@ -280,7 +280,8 @@ module.exports = [
       }
     },
     false,
-    '/object/presence: must be equal to one of the allowed values: away, chat, dnd, xa, offline, online'
+    '/object/presence: must be equal to one of the allowed values: ' +
+    'away, chat, dnd, xa, offline, online'
   ],
 
   [
@@ -423,8 +424,8 @@ module.exports = [
     {
       "context":"irc",
       "type":"add",
-      "actor":{"type":"person","id":"alice@localhost","name":"alice"},
-      "target":{"type":"person","id":"Kilroy@localhost","name":"Kilroy"},
+      "actor":{"type":"person", "id":"alice@localhost", "name":"alice"},
+      "target":{"type":"person", "id":"Kilroy@localhost", "name":"Kilroy"},
       "object":{
         "type":"relationship",
         "relationship":"role",
@@ -447,8 +448,8 @@ module.exports = [
     {
       "context":"irc",
       "type":"add",
-      "actor":{"type":"person","id":"alice@localhost","name":"alice"},
-      "target":{"type":"person","id":"Kilroy@localhost","name":"Kilroy"},
+      "actor":{"type":"person", "id":"alice@localhost", "name":"alice"},
+      "target":{"type":"person", "id":"Kilroy@localhost", "name":"Kilroy"},
       "object":{
         "type":"relationship",
         "relationship":"role",
@@ -463,6 +464,7 @@ module.exports = [
         }
       }
     },
-    false, `/object/subject/role: must be equal to one of the allowed values: owner, member, participant, admin`
+    false, "/object/subject/role: must be equal to one of the allowed values: " +
+    "owner, member, participant, admin"
   ]
 ];

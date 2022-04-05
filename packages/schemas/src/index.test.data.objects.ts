@@ -1,6 +1,6 @@
-const o = require('./../src/object-types');
+import { ObjectTypesList } from './helpers/objects';
 
-module.exports = [
+export default [
   [
     'room object',
     {
@@ -18,7 +18,7 @@ module.exports = [
       type: 'credentials'
     },
     false,
-    `/object: must match exactly one schema in oneOf: ${Object.keys(o.objectTypes).join(', ')}`
+    `/object: must match exactly one schema in oneOf: ${ObjectTypesList.join(', ')}`
   ],
 
   [
@@ -29,7 +29,7 @@ module.exports = [
       pass: "bar"
     },
     false,
-    `/object: must match exactly one schema in oneOf: ${Object.keys(o.objectTypes).join(', ')}`
+    `/object: must match exactly one schema in oneOf: ${ObjectTypesList.join(', ')}`
   ],
 
   [
@@ -70,7 +70,7 @@ module.exports = [
       content: 'hi there'
     },
     false,
-    `/object: must match exactly one schema in oneOf: ${Object.keys(o.objectTypes).join(', ')}`
+    `/object: must match exactly one schema in oneOf: ${ObjectTypesList.join(', ')}`
   ],
 
   [
@@ -131,7 +131,8 @@ module.exports = [
       content: 'forgot the milk'
     },
     false,
-    '/object/presence: must be equal to one of the allowed values: away, chat, dnd, xa, offline, online'
+    '/object/presence: must be equal to one of the allowed values: ' +
+    'away, chat, dnd, xa, offline, online'
   ],
 
   [
@@ -228,6 +229,7 @@ module.exports = [
         "name":"#Finnish"
       }
     },
-    false, `/object/subject/role: must be equal to one of the allowed values: owner, member, participant, admin`
+    false, "/object/subject/role: must be equal to one of the allowed values: " +
+    "owner, member, participant, admin"
   ]
 ];

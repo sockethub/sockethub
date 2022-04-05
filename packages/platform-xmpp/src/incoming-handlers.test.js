@@ -3,7 +3,7 @@ const chai = require('chai');
 const expect = chai.expect;
 const IncomingHandler = require('./incoming-handlers');
 const parse = require('@xmpp/xml/lib/parse');
-const schemas = require('@sockethub/schemas');
+const schemas = require('@sockethub/schemas').default;
 
 const stanzas = require('./incoming-handlers.data');
 const {os} = require("yarn/lib/cli");
@@ -28,7 +28,7 @@ describe('Incoming handlers', () => {
       });
 
       it(`${name} - passes @sockethub/schemas validator`, () => {
-        expect(schemas.validator.validateActivityStream(asobject)).to.equal("");
+        expect(schemas.validateActivityStream(asobject)).to.equal("");
       });
     });
   });
