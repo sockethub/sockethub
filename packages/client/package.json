@@ -1,6 +1,6 @@
 {
   "name": "@sockethub/client",
-  "version": "5.0.0-alpha.2",
+  "version": "5.0.0-alpha.3",
   "description": "A JavaScript client for the Sockethub protocol gateway",
   "main": "dist/sockethub-client.js",
   "keywords": [
@@ -31,7 +31,7 @@
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
   "devDependencies": {
-    "@sockethub/activity-streams": "4.4.0-alpha.2",
+    "@sockethub/activity-streams": "^4.4.0-alpha.3",
     "@types/chai": "4.3.0",
     "@types/eslint": "8.4.1",
     "@types/eventemitter2": "4.1.0",
@@ -39,17 +39,17 @@
     "@types/node": "17.0.21",
     "@types/proxyquire": "^1.3.28",
     "@types/sinon": "10.0.11",
-    "@typescript-eslint/parser": "5.13.0",
+    "@typescript-eslint/parser": "5.17.0",
     "c8": "7.11.0",
     "chai": "4.3.6",
-    "eslint": "8.10.0",
+    "eslint": "8.12.0",
     "eslint-cli": "1.1.1",
     "eventemitter2": "6.4.5",
-    "mocha": "9.2.1",
+    "mocha": "9.2.2",
     "proxyquire": "2.1.3",
     "sinon": "13.0.1",
-    "ts-node": "10.6.0",
-    "typescript": "4.6.2",
+    "ts-node": "10.7.0",
+    "typescript": "4.6.3",
     "webpack": "5.70.0",
     "webpack-cli": "4.9.2"
   }

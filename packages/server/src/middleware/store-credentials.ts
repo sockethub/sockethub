@@ -7,7 +7,7 @@ export default function storeCredentials(store: ISecureStoreInstance, sessionLog
       await store.save(creds.actor.id, creds);
     } catch (e) {
       sessionLog('error saving credentials to store ' + e);
-      done(e);
+      return done(e);
     }
     sessionLog('credentials encrypted and saved');
     done();

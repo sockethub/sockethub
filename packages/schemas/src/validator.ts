@@ -73,3 +73,7 @@ export function addPlatformSchema(schema: Schema, platform_type: string) {
   log(`registering schema ${schemaURL}/context/${platform_type}`);
   ajv.addSchema(schema, `${schemaURL}/context/${platform_type}`);
 }
+
+export function getPlatformSchema(platform_type: string) {
+  return ajv.getSchema(`${schemaURL}/context/${platform_type}`);
+}

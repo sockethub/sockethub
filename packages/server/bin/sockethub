@@ -1,3 +1,3 @@
 #!/usr/bin/env node
-const SockethubServer = require(`./../dist/index`);
-SockethubServer();
+const sockethubServer = require(`./../dist/index`);
+sockethubServer();
