@@ -3,7 +3,7 @@
   "private": true,
   "devDependencies": {
     "@nrwl/cli": "latest",
-    "@nrwl/node": "13.10.3",
+    "@nrwl/node": "14.0.2",
     "@nrwl/nx-cloud": "latest",
     "@nrwl/tao": "latest",
     "@nrwl/workspace": "latest",
@@ -47,7 +47,7 @@
     "integration:clean": "docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub"
   },
   "dependencies": {
-    "@nrwl/js": "13.10.3",
+    "@nrwl/js": "14.0.2",
     "tslib": "2.4.0"
   }
 }
