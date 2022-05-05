@@ -20,11 +20,7 @@ function parseMsg(error: ErrorObject): string {
 
 function getTypeList(msg: IActivityStream | IActivityObject): Array<string> {
   let types = [];
-  if ((typeof msg === 'object') && (msg.type)) {
-    types.push(msg.type);
-  } else {
-    types.push(undefined);
-  }
+  types.push(msg?.type);
   for (let prop in msg) {
     if ((typeof msg[prop] === 'object') && (msg[prop].type)) {
       types = [...types, ...getTypeList(msg[prop])];
@@ -39,7 +35,7 @@ function getSchemaType(error: ErrorObject): string {
 }
 
 function getErrType(error: ErrorObject): string {
-  const errTypeRes = error.instancePath.match(/\/([\w]+)/);
+  const errTypeRes = error.instancePath.match(/\/(\w+)/);
   return errTypeRes ? errTypeRes[1] : undefined;
 }
 
@@ -87,7 +83,7 @@ export default function getErrorMessage(msg, errors: Array<ErrorObject>): string
 function composeFinalError(error) {
   // if we have yet to build an error message, assume this is an invalid type value (oneOf),
   // try to build a list of valid types
-  let msg = "";
+  let msg: string;
   if (error.keyword === 'oneOf') {
     msg = `${error.instancePath}: ${error.message}: ` +
       `${ObjectTypesList.join(', ')}`;
