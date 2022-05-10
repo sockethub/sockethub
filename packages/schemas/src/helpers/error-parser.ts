@@ -22,7 +22,7 @@ function getTypeList(msg: IActivityStream | IActivityObject): Array<string> {
   let types = [];
   types.push(msg?.type);
   for (let prop in msg) {
-    if ((typeof msg[prop] === 'object') && (msg[prop].type)) {
+    if (msg[prop]?.type) {
       types = [...types, ...getTypeList(msg[prop])];
     }
   }
