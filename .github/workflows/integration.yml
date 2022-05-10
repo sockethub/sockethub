@@ -1,5 +1,7 @@
 name: Integration
 on: pull_request
+env:
+  NX_BRANCH: ${{ github.event.number }}
 jobs:
   integration:
     runs-on: ubuntu-latest

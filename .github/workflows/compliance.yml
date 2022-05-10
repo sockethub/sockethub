@@ -1,5 +1,7 @@
 name: Compliance
 on: pull_request
+env:
+  NX_BRANCH: ${{ github.event.number }}
 jobs:
   lint:
     runs-on: ubuntu-latest
