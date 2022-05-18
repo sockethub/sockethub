@@ -1,15 +1,16 @@
 import { EventEmitter2 } from 'eventemitter2';
 import ASFactory from '@sockethub/activity-streams';
+import {IActivityObject, IActivityStream} from "@sockethub/schemas";
 
 export interface ActivityObjectManager {
-  create(obj: any): any;
+  create(obj: unknown): unknown;
   delete(id: string): boolean;
   list(): Array<string>,
-  get(id: string, expand: boolean): any;
+  get(id: string, expand: boolean): unknown;
 }
 
 export interface ASManager {
-  Stream(meta: any): any,
+  Stream(meta: unknown): unknown,
   Object: ActivityObjectManager,
   emit(event, obj): void;
   on(event, func): void;
@@ -17,9 +18,16 @@ export interface ASManager {
   off(event, funcName): void;
 }
 
+interface EventMapping {
+  credentials: Map<string, IActivityStream>;
+  'activity-object': Map<string, IActivityObject>;
+  connect: Map<string, IActivityStream>;
+  join: Map<string, IActivityStream>;
+}
+
 class SockethubClient {
   private _socket;
-  private events = {
+  private events: EventMapping = {
     'credentials': new Map(),
     'activity-object': new Map(),
     'connect': new Map(),
@@ -33,7 +41,6 @@ class SockethubClient {
   constructor(socket) {
     if (! socket) { throw new Error('SockethubClient requires a socket.io instance'); }
     this._socket = socket;
-    // @ts-ignore
     this.ActivityStreams = ASFactory({specialObjs: ['credentials']});
 
     this.socket = this.createPublicEmitter();
@@ -52,13 +59,16 @@ class SockethubClient {
   }
 
   private createPublicEmitter(): EventEmitter2 {
-    let socket = new EventEmitter2({
+    const socket = new EventEmitter2({
       wildcard: true,
       verboseMemoryLeak: false
     });
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     socket._emit = socket.emit;
-    socket.emit = (event, content, callback): any => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    socket.emit = (event, content, callback): void => {
       if (event === 'credentials') {
         this.eventCredentials(content);
       } else if (event === 'activity-object') {
@@ -71,25 +81,26 @@ class SockethubClient {
     return socket;
   }
 
-  private eventActivityObject(content: any) {
+  private eventActivityObject(content: IActivityObject) {
     if (content.id) {
       this.events['activity-object'].set(content.id, content);
     }
   }
 
-  private eventCredentials(content: any) {
+  private eventCredentials(content: IActivityStream) {
     if ((content.object) && (content.object.type === 'credentials')) {
-      this.events['credentials'].set(content.actor.id || content.actor, content);
+      const key: string = content.actor.id || content.actor as unknown as string;
+      this.events['credentials'].set(key, content);
     }
   }
 
-  private eventMessage(content: any) {
+  private eventMessage(content: IActivityObject) {
     if (! this.online) { return; }
     // either store or delete the specified content onto the storedJoins map,
     // for reply once we're back online.
-    const key = SockethubClient.getKey(content);
+    const key = SockethubClient.getKey(content as IActivityStream);
     if (content.type === 'join' || content.type === 'connect') {
-      this.events[content.type].set(key, content);
+      this.events[content.type].set(key, content as IActivityStream);
     } else if (content.type === 'leave') {
       this.events['join'].delete(key);
     } else if (content.type === 'disconnect') {
@@ -97,16 +108,16 @@ class SockethubClient {
     }
   }
 
-  private static getKey(content: any) {
-    let actor = content.actor?.id || content.actor;
+  private static getKey(content: IActivityStream) {
+    const actor = content.actor?.id || content.actor;
     if (! actor) {
       throw new Error("actor property not present for message type: " + content?.type);
     }
-    let target = content.target ? content.target.id || content.target : '';
+    const target = content.target ? content.target.id || content.target : '';
     return actor + '-' + target;
   }
 
-  private log(msg: string, obj?: any) {
+  private log(msg: string, obj?: unknown) {
     if (this.debug) {
       // eslint-disable-next-line security-node/detect-crlf
       console.log(msg, obj);
@@ -142,12 +153,12 @@ class SockethubClient {
     });
   }
 
-  private replay(name: string, asMap: any) {
+  private replay(name: string, asMap: Map<string, unknown>) {
     asMap.forEach((obj) => {
       this.log(`replaying ${name}`, obj);
       this._socket.emit(name, obj);
     });
-  };
+  }
 }
 
 if (typeof module === 'object' && module.exports) {
@@ -158,8 +169,8 @@ if (typeof exports === 'object') {
   exports = SockethubClient;  // lgtm [js/useless-assignment-to-local]
 }
 
-// @ts-ignore
 if (typeof window === 'object') {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   window.SockethubClient = SockethubClient;
 }

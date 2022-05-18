@@ -29,7 +29,7 @@ class Listener {
     const app = Listener.initExpress();
     this.http = new HTTP.Server(app);
     this.io = new Server(this.http, {
-      path: config.get('sockethub:path'),
+      path: config.get('sockethub:path') as string,
       cors: {
         origin: "*",
         methods: [ "GET", "POST" ]
@@ -40,14 +40,14 @@ class Listener {
   }
 
   private startHttp() {
-    this.http.listen(config.get('sockethub:port'), config.get('sockethub:host'), () => {
+    this.http.listen(config.get('sockethub:port'), config.get('sockethub:host') as number, () => {
       log(`sockethub listening on ` +
-        `http://${config.get('sockethub:host')}:${config.get('sockethub:port')}`);
+        `${config.get('sockethub:host')}:${config.get('sockethub:port')}`);
     });
-  };
+  }
 
   private static initExpress() {
-    let app = express();
+    const app = express();
     // templating engines
     app.set('view engine', 'ejs');
     // use bodyParser
@@ -59,15 +59,19 @@ class Listener {
 
 const listener = new Listener();
 
+interface EmitFunction {
+  (type: string, data: unknown)
+}
+
 export interface SocketInstance {
   id: string;
-  emit: Function;
+  emit: EmitFunction;
 }
 
 export async function getSocket(sessionId: string): Promise<SocketInstance> {
   const sockets: Array<SocketInstance> = await listener.io.fetchSockets();
   return new Promise((resolve, reject) => {
-    for (let socket of sockets) {
+    for (const socket of sockets) {
       if (sessionId === socket.id) {
         return resolve(socket);
       }

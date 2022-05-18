@@ -1,10 +1,10 @@
 import debug from 'debug';
-import { Socket } from "socket.io";
-import { IActivityStream } from "@sockethub/schemas";
+import {Socket} from "socket.io";
+import {IActivityStream} from "@sockethub/schemas";
 
 import crypto from './crypto';
 import init from './bootstrap/init';
-import middleware from './middleware';
+import middleware, {MiddlewareChainInterface} from './middleware';
 import createActivityObject from "./middleware/create-activity-object";
 import expandActivityStream from "./middleware/expand-activity-stream";
 import storeCredentials from "./middleware/store-credentials";
@@ -12,8 +12,9 @@ import validate from "./middleware/validate";
 import janitor from './janitor';
 import listener from './listener';
 import ProcessManager from "./process-manager";
-import PlatformInstance, { platformInstances } from "./platform-instance";
-import { getSessionStore } from "./store";
+import {platformInstances} from "./platform-instance";
+import {getSessionStore} from "./store";
+import {BasicFunctionInterface} from "./basic-types";
 
 const log = debug('sockethub:server:core');
 
@@ -30,14 +31,9 @@ export interface JobDataEncrypted {
   sessionId: string;
 }
 
-export interface JobDecrypted {
-  data: JobDataDecrypted,
-  remove?: Function;
-}
-
 export interface JobEncrypted {
   data: JobDataEncrypted,
-  remove?: Function;
+  remove?: BasicFunctionInterface;
 }
 
 function attachError(err, msg) {
@@ -56,7 +52,6 @@ class Sockethub {
   counter: number;
   platforms: Map<string, object>;
   status: boolean;
-  queue: any;
   processManager: ProcessManager;
 
   constructor() {
@@ -89,20 +84,19 @@ class Sockethub {
   }
 
   async removeAllPlatformInstances() {
-    for (let platform of platformInstances) {
+    for (const platform of platformInstances) {
       await platform[1].destroy();
     }
   }
 
-  private createJob(socketId: string, platformInstance: PlatformInstance, msg): JobDataEncrypted {
+  private createJob(socketId: string, msg): JobDataEncrypted {
     const title = `${msg.context}-${(msg.id) ? msg.id : this.counter++}`;
-    const job: JobDataEncrypted = {
+    return {
       title: title,
       sessionId: socketId,
       msg: crypto.encrypt(msg, this.parentSecret1 + this.parentSecret2)
     };
-    return job;
-  };
+  }
 
   private handleIncomingConnection(socket: Socket) {
     // session-specific debug messages
@@ -121,7 +115,7 @@ class Sockethub {
       middleware('credentials')
         .use(expandActivityStream)
         .use(validate('credentials', socket.id))
-        .use(storeCredentials(store, sessionLog))
+        .use(storeCredentials(store, sessionLog) as MiddlewareChainInterface)
         .use((err, data, next) => {
           // error handler
           next(attachError(err, data));
@@ -154,7 +148,7 @@ class Sockethub {
         }).use((msg, next) => {
           const platformInstance = this.processManager.get(msg.context, msg.actor.id, socket.id);
           sessionLog(`queued to channel ${platformInstance.id}`);
-          const job = this.createJob(socket.id, platformInstance, msg);
+          const job = this.createJob(socket.id, msg);
           // job validated and queued, store socket.io callback for when job is completed
           platformInstance.completedJobHandlers.set(job.title, next);
           platformInstance.queue.add(job);

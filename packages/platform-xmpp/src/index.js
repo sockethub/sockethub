@@ -98,7 +98,7 @@ class XMPP {
       requireCredentials: [ 'connect' ],
       initialized: false
     };
-  };
+  }
 
   /**
    * Connect to the XMPP server.
@@ -129,9 +129,8 @@ class XMPP {
     }
     this.debug('connect called for ' + job.actor.id);
     this.__client = client(utils.buildXmppCredentials(credentials));
-    this.__client.on("offline", (a) => {
+    this.__client.on("offline", () => {
       this.debug('offline');
-      // console.log("offline", a);
     });
 
     this.__client.start().then(() => {
@@ -145,7 +144,7 @@ class XMPP {
       delete this.__client;
       return done(err);
     });
-  };
+  }
 
   /**
    * Join a room, optionally defining a display name for that room.
@@ -180,7 +179,7 @@ class XMPP {
       from: job.actor.id,
       to: `${job.target.id}/${job.actor.name || id}`
     })).then(done);
-  };
+  }
 
   /**
    * Leave a room
@@ -215,7 +214,7 @@ class XMPP {
       to: `${job.target.id}/${job.actor.name}` || id,
       type: 'unavailable'
     })).then(done);
-  };
+  }
 
   /**
    * Send a message to a room or private conversation.
@@ -281,7 +280,7 @@ class XMPP {
       }) : undefined
     );
     this.__client.send(message).then(done);
-  };
+  }
 
   /**
    * @description
@@ -326,7 +325,7 @@ class XMPP {
     } else {
       done(`unknown update object type: ${job.object.type}`);
     }
-  };
+  }
 
   /**
    * @description
@@ -351,7 +350,7 @@ class XMPP {
   'request-friend'(job,  done) {
     this.debug('request-friend() called for ' + job.actor.id);
     this.__client.send(xml("presence", { type: "subscribe", to:job.target.id })).then(done);
-  };
+  }
 
   /**
    * @description
@@ -376,7 +375,7 @@ class XMPP {
   'remove-friend'(job, done) {
     this.debug('remove-friend() called for ' + job.actor.id);
     this.__client.send(xml("presence", { type: "unsubscribe", to:job.target.id })).then(done);
-  };
+  }
 
   /**
    * @description
@@ -401,7 +400,7 @@ class XMPP {
   'make-friend'(job, done) {
     this.debug('make-friend() called for ' + job.actor.id);
     this.__client.send(xml("presence", { type: "subscribe", to:job.target.id })).then(done);
-  };
+  }
 
   /**
    * Indicate an intent to query something (ie. get a list of users in a room).
@@ -459,7 +458,7 @@ class XMPP {
       from: job.actor.id,
       to: job.target.id
     }, xml("query", {xmlns: 'http://jabber.org/protocol/disco#items'}))).then(done);
-  };
+  }
 
   /**
    * Called when it's time to close any connections or clean data before being wiped
@@ -471,7 +470,7 @@ class XMPP {
     this.__forceDisconnect = true;
     this.__client.stop();
     done();
-  };
+  }
 
   __registerHandlers() {
     const ih = new IncomingHandlers(this);
@@ -479,7 +478,7 @@ class XMPP {
     this.__client.on('error', ih.error.bind(ih));
     this.__client.on('online', ih.online.bind(ih));
     this.__client.on('stanza', ih.stanza.bind(ih));
-  };
+  }
 }
 
 module.exports = XMPP;

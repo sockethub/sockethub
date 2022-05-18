@@ -45,6 +45,14 @@ function getMessageReplaceId(stanza) {
   }
 }
 
+function getPresence(stanza) {
+  if (stanza.getChild('show')) {
+    return stanza.getChild('show').getText();
+  } else {
+    return stanza.attrs.type === "unavailable" ? "offline" : "online";
+  }
+}
+
 class IncomingHandlers {
   constructor(session) {
     this.session = session;
@@ -93,11 +101,7 @@ class IncomingHandlers {
     if (stanza.getChildText('status')) {
       obj.object.content = stanza.getChildText('status');
     }
-    if (stanza.getChild('show')) {
-      obj.object.presence = stanza.getChild('show').getText();
-    } else {
-      obj.object.presence = stanza.attrs.type === "unavailable" ? "offline" : "online";
-    }
+    obj.object.presence = getPresence(stanza);
     if (stanza.attrs.to) {
       obj.target = {id: stanza.attrs.to, type: 'person'};
     } else {
@@ -211,7 +215,7 @@ class IncomingHandlers {
       let members = [];
       const entries = query.getChildren('item');
       for (let e in entries) {
-        if (!entries.hasOwnProperty(e)) {
+        if (!entries.hasOwn(e)) {
           continue;
         }
         members.push(entries[e].attrs.name);
@@ -262,7 +266,7 @@ class IncomingHandlers {
       if (query) {
         const entries = query.getChildren('item');
         for (let e in entries) {
-          if (! entries.hasOwnProperty(e)) {
+          if (! entries.hasOwn(e)) {
             continue;
           }
           this.session.debug('STANZA ATTRS: ', entries[e].attrs);
@@ -275,7 +279,7 @@ class IncomingHandlers {
               object: {
                 type: 'presence',
                 status: '',
-                presence: state
+                presence: getPresence(entries[e])
               }
             });
           } else if ((entries[e].attrs.subscription === 'from') &&

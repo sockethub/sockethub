@@ -1,11 +1,11 @@
 import debug from 'debug';
 import hash from "object-hash";
 import Queue from 'bull';
-import { IActivityStream } from "@sockethub/schemas";
-import { getPlatformId, decryptJobData } from "./common";
-import { JobDataDecrypted, JobEncrypted } from "./sockethub";
-import { MessageFromParent } from './platform-instance';
-import { getSessionStore } from "./store";
+import {IActivityStream} from "@sockethub/schemas";
+import {decryptJobData, getPlatformId} from "./common";
+import {JobDataDecrypted, JobEncrypted} from "./sockethub";
+import {getSessionStore} from "./store";
+import {CallbackInterface} from "./basic-types";
 
 // command-line params
 const parentId = process.argv[2];
@@ -16,6 +16,7 @@ let logger = debug(loggerPrefix);
 
 const redisConfig = process.env.REDIS_URL ? process.env.REDIS_URL
   : { host: process.env.REDIS_HOST, port: process.env.REDIS_PORT };
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const PlatformModule = require(`@sockethub/platform-${platformName}`);
 
 let queueStarted = false;
@@ -28,6 +29,11 @@ export interface PlatformSession {
   sendToClient(msg: IActivityStream, special?: string): void;
   updateActor(credentials: object): void;
 }
+interface SecretInterface {
+  parentSecret1: string,
+  parentSecret2: string
+}
+interface SecretFromParent extends Array<string|SecretInterface>{0: string, 1: SecretInterface}
 
 /**
  * Handle any uncaught errors from the platform by alerting the worker and shutting down.
@@ -44,12 +50,14 @@ process.on('uncaughtException', (err) => {
  * Incoming messages from the worker to this platform. Data is an array, the first property is the
  * method to call, the rest are params.
  */
-process.on('message', (data: MessageFromParent) => {
-  if (data[0] === 'secrets') {
-    parentSecret1 = data[1].parentSecret1;
-    parentSecret2 = data[1].parentSecret2;
-    startQueueListener();
+process.on('message', (data: SecretFromParent) => {
+  if (data[0] !== 'secrets') {
+    return;
   }
+  const {parentSecret2: parentSecret3, parentSecret1: parentSecret} = data[1];
+  parentSecret1 = parentSecret;
+  parentSecret2 = parentSecret3;
+  startQueueListener();
 });
 
 
@@ -71,13 +79,14 @@ const platform = new PlatformModule(platformSession);
  * @param sessionSecret
  * @param cb
  */
-function getCredentials(actorId: string, sessionId: string, sessionSecret: string, cb: Function) {
+function getCredentials(actorId: string, sessionId: string, sessionSecret: string,
+                        cb: CallbackInterface) {
   if (platform.config.noCredentials) { return cb(); }
   const store = getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
   store.get(actorId, (err, credentials) => {
     if (platform.config.persist) {
       // don't continue if we don't get credentials
-      if (err) { return cb(err); }
+      if (err) { return cb(err.toString()); }
     } else if (! credentials) {
       // also skip if this is a non-persist platform with no credentials
       return cb();
@@ -100,7 +109,7 @@ function getCredentials(actorId: string, sessionId: string, sessionSecret: strin
  * @param secret the secret used to decrypt credentials
  */
 function getJobHandler(secret: string) {
-  return (job: JobEncrypted, done: Function) => {
+  return (job: JobEncrypted, done: CallbackInterface) => {
     const jobData: JobDataDecrypted = decryptJobData(job, secret);
     const jobLog = debug(`${loggerPrefix}:${jobData.sessionId}`);
     jobLog(`received ${jobData.title} ${jobData.msg.type}`);
@@ -109,7 +118,7 @@ function getJobHandler(secret: string) {
 
     return getCredentials(jobData.msg.actor.id, jobData.sessionId, sessionSecret,
       (err, credentials) => {
-        if (err) { return done(new Error(err)); }
+        if (err) { return done(new Error(err.toString())); }
         let jobCallbackCalled = false;
         const doneCallback = (err, result) => {
           if (jobCallbackCalled) { return; }
@@ -178,7 +187,7 @@ function updateActor(credentials) {
  * @param refresh boolean if the param is true, we re-init the queue.process
  * (used when identifier changes)
  */
-function startQueueListener(refresh: boolean = false) {
+function startQueueListener(refresh = false) {
   const secret = parentSecret1 + parentSecret2;
   if ((queueStarted) && (!refresh)) {
     logger('start queue called multiple times, skipping');

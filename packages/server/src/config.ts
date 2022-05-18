@@ -58,6 +58,7 @@ export class Config {
     nconf.set('examples:enabled', (examples ? true : nconf.get('examples:enabled')));
 
     // load defaults
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const defaults: object = require(__dirname + '/defaults.json');
     nconf.defaults(defaults);
 
@@ -87,7 +88,7 @@ export class Config {
       nconf.clear('redis:port');
     }
   }
-  get = (key: string): any => nconf.get(key);
+  get = (key: string): unknown => nconf.get(key);
 }
 
 const config = new Config();
