@@ -215,7 +215,7 @@ class IncomingHandlers {
       let members = [];
       const entries = query.getChildren('item');
       for (let e in entries) {
-        if (!entries.hasOwn(e)) {
+        if (!Object.hasOwnProperty.call(entries, e)) {
           continue;
         }
         members.push(entries[e].attrs.name);

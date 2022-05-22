@@ -46,7 +46,7 @@ export class MiddlewareChain {
   }
 
   done() {
-    return (data: IActivityStream, callback: MiddlewareChainInterface) => {
+    return (data: unknown, callback: MiddlewareChainInterface) => {
       let position = 0;
       if (typeof callback !== 'function') {
         callback = () => {
