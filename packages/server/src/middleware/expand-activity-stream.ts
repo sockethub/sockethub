@@ -4,7 +4,10 @@ import { IActivityStream } from "@sockethub/schemas";
 import config from "../config";
 import {MiddlewareChainInterface} from "../middleware";
 
-const activity = ActivityStreams(config.get('activity-streams:opts'));
+const asConfig = config.get('activity-streams:opts');
+asConfig.warnOnUnknownObjectProperties = false;
+asConfig.failOnUnknownObjectProperties = false;
+const activity = ActivityStreams(asConfig);
 
 function ensureObject(msg: unknown) {
   return !((typeof msg !== 'object') || (Array.isArray(msg)));
