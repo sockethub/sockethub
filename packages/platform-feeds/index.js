@@ -53,7 +53,7 @@ const PlatformSchema = {
               "enum": [ "date" ]
             },
             "after": {
-              "type": "date"
+              "type": "date-time"
             }
           }
         },
@@ -71,7 +71,7 @@ const PlatformSchema = {
               "enum": [ "url" ]
             },
             "after": {
-              "type": "string"
+              "type": "date-time"
             }
           }
         }
@@ -144,7 +144,7 @@ class Feeds {
    *      type: "parameters",
    *      limit: 10,    // default 10
    *      property: 'date'
-   *      after: 'Tue Nov 26 2013 02:11:59 GMT+0100 (CET)',
+   *      after: '2013-11-25T18:50:25Z',
    *
    *      // ... OR ...
    *
