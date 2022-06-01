@@ -28,10 +28,10 @@ const ee = EventEmitter(),
           'id', 'type', 'context',
           'alias', 'attachedTo', 'attachment', 'attributedTo', 'attributedWith',
           'content', 'contentMap', 'context', 'contextOf', 'name', 'endTime', 'generator',
-          'generatorOf', 'group', 'icon', 'image', 'inReplyTo', 'members', 'memberOf', 
-          'message', 'location', 'locationOf', 'objectOf', 'originOf', 'presence', 
-          'preview', 'previewOf', 'provider', 'providerOf', 'published', 'rating', 
-          'relationship', 'resultOf', 'replies', 'role', 'scope', 'scopeOf', 'startTime', 
+          'generatorOf', 'group', 'icon', 'image', 'inReplyTo', 'members', 'memberOf',
+          'message', 'location', 'locationOf', 'objectOf', 'originOf', 'presence',
+          'preview', 'previewOf', 'provider', 'providerOf', 'published', 'rating',
+          'relationship', 'resultOf', 'replies', 'role', 'scope', 'scopeOf', 'startTime',
           'status', 'summary', 'topic', 'tag', 'tagOf', 'targetOf', 'title', 'titleMap',
           'updated', 'url'
         ]
@@ -61,6 +61,7 @@ const ee = EventEmitter(),
 
 let objs = new Map(),
     failOnUnknownObjectProperties = false,
+    warnOnUnknownObjectProperties = true,
     specialObjs = [], // the objects don't get rejected for bad props
     customProps  = {};
 
@@ -85,7 +86,7 @@ function validateObject(type, obj = {}) {
   for (let key of unknownKeys) {
     if (rename[key]) {
       // rename property instead of fail
-      obj = renameProp(obj, key)
+      obj = renameProp(obj, key);
       continue;
     }
 
@@ -100,7 +101,7 @@ function validateObject(type, obj = {}) {
       const err = `invalid property: "${key}"`;
       if (failOnUnknownObjectProperties) {
         throw new Error(err);
-      } else {
+      } else if (warnOnUnknownObjectProperties) {
         console.warn(err);
       }
     }
@@ -148,7 +149,7 @@ function Stream(meta) {
   if (typeof meta.object === 'object') {
     validateObject('object', meta.object);
   }
-  const stream = expandStream(meta)
+  const stream = expandStream(meta);
   ee.emit('activity-stream', stream);
   return stream;
 }
@@ -190,7 +191,10 @@ const _Object = {
 
 function ASFactory(opts = {}) {
   specialObjs = opts.specialObjs || [];
-  failOnUnknownObjectProperties = typeof opts.failOnUnknownObjectProperties === 'boolean' ? opts.failOnUnknownObjectProperties : false;
+  failOnUnknownObjectProperties = typeof opts.failOnUnknownObjectProperties === 'boolean' ?
+    opts.failOnUnknownObjectProperties : failOnUnknownObjectProperties;
+  warnOnUnknownObjectProperties = typeof opts.warnOnUnknownObjectProperties === 'boolean' ?
+    opts.warnOnUnknownObjectProperties : warnOnUnknownObjectProperties;
   for (let propName of Object.keys(opts.customProps || {})) {
     if (typeof opts.customProps[propName] === 'object') {
       customProps[propName] = opts.customProps[propName];
@@ -213,7 +217,7 @@ function ASFactory(opts = {}) {
 }
 
 if (typeof module === 'object' && module.exports) {
-  module.exports = ASFactory
+  module.exports = ASFactory;
 }
 if (typeof window === 'object') {
   window.ASFactory = ASFactory;

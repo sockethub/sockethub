@@ -38,7 +38,7 @@
         "security-node"
     ],
     "extends": [
-//        "eslint:recommended",
+        "eslint:recommended",
         "plugin:security-node/recommended"
     ],
     "ignorePatterns": ["*.d.ts", "*.test.ts", "*.data.js", "packages/platform-irc/index.js"],
@@ -56,10 +56,10 @@
             "plugins": [
                 "@typescript-eslint",
                 "security-node"
+            ],
+            "extends": [
+                "plugin:@typescript-eslint/recommended"
             ]
-//            "extends": [
-//                "plugin:@typescript-eslint/recommended"
-//            ]
         }
     ]
 }

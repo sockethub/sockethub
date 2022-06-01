@@ -4,6 +4,13 @@ import * as fs from "fs";
 
 const log = debug('sockethub:server:bootstrap:config');
 
+export type ActivityStreamConfigOptions = {
+  warnOnUnknownObjectProperties?: boolean;
+  failOnUnknownObjectProperties?: boolean;
+  specialObjs?: object;
+  customProps?: object;
+}
+
 export class Config {
   constructor() {
     log('initializing config');
@@ -58,6 +65,7 @@ export class Config {
     nconf.set('examples:enabled', (examples ? true : nconf.get('examples:enabled')));
 
     // load defaults
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const defaults: object = require(__dirname + '/defaults.json');
     nconf.defaults(defaults);
 
@@ -87,7 +95,7 @@ export class Config {
       nconf.clear('redis:port');
     }
   }
-  get = (key: string): any => nconf.get(key);
+  get = (key: string): unknown => nconf.get(key);
 }
 
 const config = new Config();

@@ -1,4 +1,4 @@
-import { ChildProcess, fork } from 'child_process';
+import {ChildProcess, fork } from 'child_process';
 import { join } from 'path';
 import { debug, Debugger } from 'debug';
 import Queue from 'bull';
@@ -8,6 +8,7 @@ import config from "./config";
 import { JobDataDecrypted, JobEncrypted } from "./sockethub";
 import { getSocket } from "./listener";
 import { decryptJobData } from "./common";
+import {CompletedJobHandler} from "./basic-types";
 
 // collection of platform instances, stored by `id`
 export const platformInstances = new Map<string, PlatformInstance>();
@@ -21,7 +22,7 @@ export interface PlatformInstanceParams {
 
 interface MessageFromPlatform extends Array<string | IActivityStream>{
   0: string, 1: IActivityStream, 2: string}
-export interface MessageFromParent extends Array<string|any>{0: string, 1: any}
+export interface MessageFromParent extends Array<string|unknown>{0: string, 1: unknown}
 
 interface PlatformConfig {
   persist?: boolean;
@@ -29,10 +30,10 @@ interface PlatformConfig {
 }
 
 export default class PlatformInstance {
-  flaggedForTermination: boolean = false;
+  flaggedForTermination = false;
   id: string;
   queue: Queue;
-  completedJobHandlers: Map<string, Function> = new Map();
+  completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
   config: PlatformConfig = {};
   readonly name: string;
   readonly process: ChildProcess;
@@ -63,6 +64,8 @@ export default class PlatformInstance {
     this.process = fork(
       join(__dirname, 'platform.js'),
       [this.parentId, this.name, this.id],
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       { env: env });
   }
 
@@ -74,17 +77,22 @@ export default class PlatformInstance {
     this.flaggedForTermination = true;
     try {
       await this.queue.removeAllListeners();
-    } catch (e) { }
+    } catch (e) {
+      // this needs to happen
+    }
     try {
       await this.queue.obliterate({ force: true });
-    } catch (e) { }
+    } catch (e) {
+      // this needs to happen
+    }
     try {
       delete this.queue;
       await this.process.removeAllListeners('close');
       await this.process.unref();
-      await this.process.kill();
-    } catch (e) { }
-    platformInstances.delete(this.id);
+      this.process.kill();
+    } finally {
+      platformInstances.delete(this.id);
+    }
   }
 
   /**
@@ -120,7 +128,7 @@ export default class PlatformInstance {
   public registerSession(sessionId: string) {
     if (! this.sessions.has(sessionId)) {
       this.sessions.add(sessionId);
-      for (let type of Object.keys(this.sessionCallbacks)) {
+      for (const type of Object.keys(this.sessionCallbacks)) {
         const cb = this.callbackFunction(type, sessionId);
         this.process.on(type, cb);
         this.sessionCallbacks[type].set(sessionId, cb);
@@ -139,19 +147,20 @@ export default class PlatformInstance {
       try {
         // this property should never be exposed externally
         delete msg.sessionSecret;
-      } catch (e) {}
-      msg.context = this.name;
-      if ((msg.type === 'error') && (typeof msg.actor === 'undefined') && (this.actor)) {
-        // ensure an actor is present if not otherwise defined
-        msg.actor = { id: this.actor, type: 'unknown' };
+      } finally {
+        msg.context = this.name;
+        if ((msg.type === 'error') && (typeof msg.actor === 'undefined') && (this.actor)) {
+          // ensure an actor is present if not otherwise defined
+          msg.actor = { id: this.actor, type: 'unknown' };
+        }
+        socket.emit('message', msg);
       }
-      socket.emit('message', msg);
     }, (err) => this.debug(`sendToClient ${err}`));
   }
 
   // send message to every connected socket associated with this platform instance.
   private async broadcastToSharedPeers(sessionId: string, msg: IActivityStream) {
-    for (let sid of this.sessions.values()) {
+    for (const sid of this.sessions.values()) {
       if (sid !== sessionId) {
         this.debug(`broadcasting message to ${sid}`);
         await this.sendToClient(sid, msg);
@@ -163,7 +172,7 @@ export default class PlatformInstance {
   private async handleJobResult(type: string, jobData: JobDataDecrypted, result) {
     this.debug(`${type} job ${jobData.title}`);
     delete jobData.msg.sessionSecret;
-    let msg = jobData.msg;
+    const msg = jobData.msg;
     if (type === 'failed') {
       msg.error = result ? result : "job failed for unknown reason";
       if ((this.config.persist) && (this.config.requireCredentials.includes(jobData.msg.type))) {
@@ -191,7 +200,7 @@ export default class PlatformInstance {
    * @param sessionId
    * @param errorMessage
    */
-  private async reportError(sessionId: string, errorMessage: any) {
+  private async reportError(sessionId: string, errorMessage: string) {
     const errorObject: IActivityStream = {
       context: this.name,
       type: 'error',
@@ -221,19 +230,19 @@ export default class PlatformInstance {
    */
   private callbackFunction(listener: string, sessionId: string) {
     const funcs = {
-      'close': (e: object) => {
+      'close': async (e: object) => {
         this.debug(`close even triggered ${this.id}: ${e}`);
-        this.reportError(sessionId, `Error: session thread closed unexpectedly: ${e}`);
+        await this.reportError(sessionId, `Error: session thread closed unexpectedly: ${e}`);
       },
-      'message': (data: MessageFromPlatform) => {
-        if (data[0] === 'updateActor') {
+      'message': async ([first, second, third]: MessageFromPlatform) => {
+        if (first === 'updateActor') {
           // We need to update the key to the store in order to find it in the future.
-          this.updateIdentifier(data[2]);
-        } else if (data[0] === 'error') {
-          this.reportError(sessionId, data[1]);
+          this.updateIdentifier(third);
+        } else if ((first === 'error') && (typeof second === "string")) {
+          await this.reportError(sessionId, second);
         } else {
           // treat like a message to clients
-          this.sendToClient(sessionId, data[1]);
+          this.sendToClient(sessionId, second);
         }
       }
     };
