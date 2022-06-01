@@ -64,7 +64,7 @@
     "build": "npx rimraf dist && tsc && cp ./src/defaults.json ./dist/defaults.json && cp src/bootstrap/platforms.js dist/bootstrap/"
   },
   "engines": {
-    "node": ">= 12.4.0"
+    "node": ">= 14.19.3"
   },
   "devDependencies": {
     "@types/body-parser": "1.19.2",
