@@ -5,8 +5,8 @@ import debug from 'debug';
 import schemas from '@sockethub/schemas';
 import { IActivityStream } from "@sockethub/schemas";
 
-// @ts-ignore
 import init from "../bootstrap/init";
+import {CallbackActivityStreamInterface} from "../basic-types";
 
 init.platforms.forEach((platform) => {
   Object.keys(platform.schemas).forEach((key) => {
@@ -19,7 +19,7 @@ init.platforms.forEach((platform) => {
 // that will be called when the middleware eventually does.
 export default function validate(type: string, sockethubId: string) {
   const sessionLog = debug(`sockethub:validate:${sockethubId}`);
-  return (msg: IActivityStream, done: Function) => {
+  return (msg: IActivityStream, done: CallbackActivityStreamInterface) => {
     sessionLog('applying schema validation for ' + type);
     if (type === 'activity-object') {
       const err = schemas.validateActivityObject(msg);
@@ -46,4 +46,4 @@ export default function validate(type: string, sockethubId: string) {
       }
     }
   };
-};
+}

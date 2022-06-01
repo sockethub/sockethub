@@ -130,10 +130,10 @@ export default [
       "image":{
         "height":250,
         "mediaType":"image/jpeg",
-        "url":"http://example.org/image.jpg",
+        "url":"https://example.org/image.jpg",
         "width":250
       },
-      "url":"http://sockethub.org"
+      "url":"https://sockethub.org"
     },
     "output":"same"
   },
@@ -145,7 +145,7 @@ export default [
       "id":"irc://sh-9K3Vk@irc.freenode.net",
       "type":"person",
       "name":"sh-9K3Vk",
-      "url":"http://sockethub.org"
+      "url":"https://sockethub.org"
     },
     "output":"same"
   },
@@ -211,7 +211,7 @@ export default [
       "context":"fake",
       "target": { "id": "irc://irc.dooder.net/a-room", "type": "room" }
     },
-    "error": "Error: activity stream: must have required property \'type\'"
+    "error": "Error: activity stream: must have required property 'type'"
   },
   {
     "name":"invalid context property",
@@ -234,7 +234,7 @@ export default [
       "context":"fake",
       "target": { "id": "irc://irc.dooder.net/a-room", "type": "room" }
     },
-    "error": "Error: activity stream: must have required property \'actor\'"
+    "error": "Error: activity stream: must have required property 'actor'"
   },
   {
     "name":"traditional message",

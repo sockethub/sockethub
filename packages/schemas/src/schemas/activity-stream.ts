@@ -6,9 +6,9 @@ const validTargetRefs = activityObject.properties.object.oneOf;
 // eslint-disable-next-line security-node/detect-crlf
 console.log(validActorRefs);
 
-let validObjectRefs = [];
+const validObjectRefs = [];
 
-ObjectTypesList.forEach(function (type, i) {
+ObjectTypesList.forEach(function (type) {
   validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
 });
 

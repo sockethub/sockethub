@@ -1,4 +1,5 @@
-const Sockethub = require('./sockethub').default;
+import Sockethub from "./sockethub";
+
 const sockethub = new Sockethub();
 
 module.exports = async () => {

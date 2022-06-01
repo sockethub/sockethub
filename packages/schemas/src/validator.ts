@@ -20,7 +20,7 @@ const schemas: SchemasDict = {};
 schemas[`${schemaURL}/activity-stream`] = ActivityStreamsSchema;
 schemas[`${schemaURL}/activity-object`] = ActivityObjectSchema;
 
-for (let uri in schemas) {
+for (const uri in schemas) {
   log(`registering schema ${uri}`);
   ajv.addSchema(schemas[uri], uri);
 }

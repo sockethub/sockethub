@@ -39,7 +39,7 @@ export const examplePages: IRoutePaths = {
 
 
 function prepFileRoutes(pathMap) {
-  let _routes = [];
+  const _routes = [];
   Object.keys(pathMap).forEach((key) => {
     _routes.push({
       meta: {
@@ -88,7 +88,8 @@ function addRoute(app) {
  * Setup
  */
 const routes = {
-  setup: function (app: any, examplesEnabled: boolean = config.get('examples:enabled')) {
+  setup: function (app: unknown,
+                   examplesEnabled: boolean = config.get('examples:enabled') as boolean) {
     baseRoutes.forEach(addRoute(app));
     if (examplesEnabled) {
       exampleRoutes.forEach(addRoute(app));

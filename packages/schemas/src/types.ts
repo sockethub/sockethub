@@ -19,5 +19,5 @@ export interface IActivityObjectActor extends IActivityObject {
 }
 
 export interface IActivityObjectObject extends IActivityObject {
-  content?: any;
+  content?: never;
 }

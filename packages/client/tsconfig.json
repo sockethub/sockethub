@@ -7,6 +7,9 @@
     "baseUrl": "/",
     "sourceRoot": "/",
     "mapRoot": "/",
+    "lib": [
+      "dom"
+    ]
   },
   "include": [
     "src"

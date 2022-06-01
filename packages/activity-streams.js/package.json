@@ -7,15 +7,15 @@
     "event-emitter": "^0.3.5"
   },
   "devDependencies": {
-    "c8": "7.11.2",
+    "c8": "7.11.3",
     "chai": "4.3.6",
-    "karma": "6.3.19",
+    "karma": "6.3.20",
     "karma-chai": "0.1.0",
     "karma-chrome-launcher": "3.1.1",
     "karma-firefox-launcher": "2.1.2",
     "karma-mocha": "2.0.1",
-    "mocha": "9.2.2",
-    "webpack": "5.72.0",
+    "mocha": "10.0.0",
+    "webpack": "5.72.1",
     "webpack-cli": "4.9.2"
   },
   "repository": {
