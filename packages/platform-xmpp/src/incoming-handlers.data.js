@@ -78,7 +78,7 @@ module.exports = [
     {
       context: 'xmpp',
       type: 'send',
-      published: '2021-04-17T18:50:25Z',
+      published: '2021-04-17T18:50:25.000Z',
       actor: { type: 'person', id: 'radical@example.org/thinkpad' },
       target: { type: 'person', id: 'user@jabber.org' },
       object: { type: 'message', content: 'ohai',

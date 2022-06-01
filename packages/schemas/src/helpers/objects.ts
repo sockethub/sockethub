@@ -54,6 +54,9 @@ export const ObjectTypesSchema = {
       },
       "content": {
         "type": "string"
+      },
+      "published": {
+        "type": "date-time"
       }
     }
   },
