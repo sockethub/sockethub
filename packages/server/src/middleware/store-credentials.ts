@@ -1,8 +1,9 @@
 import { IActivityStream } from "@sockethub/schemas";
 import { ISecureStoreInstance } from "../store";
+import {CallbackInterface, LogInterface} from "../basic-types";
 
-export default function storeCredentials(store: ISecureStoreInstance, sessionLog: Function) {
-  return (creds: IActivityStream, done: Function) => {
+export default function storeCredentials(store: ISecureStoreInstance, sessionLog: LogInterface) {
+  return (creds: IActivityStream, done: CallbackInterface) => {
     store.save(creds.actor.id, creds, (err) => {
       if (err) {
         sessionLog('error saving credentials to store ' + err);
@@ -13,4 +14,4 @@ export default function storeCredentials(store: ISecureStoreInstance, sessionLog
       }
     });
   };
-};
+}

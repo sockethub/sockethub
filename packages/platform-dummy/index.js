@@ -27,20 +27,20 @@ class Dummy {
       persist: false,
       requireCredentials: []
     };
-  };
+  }
 
   echo(job, cb) {
     this.sendToClient(job.object.content);
     cb();
-  };
+  }
 
   fail(job, cb) {
     cb(new Error(job.object.content));
-  };
+  }
 
   cleanup(cb) {
     cb();
-  };
+  }
 }
 
 module.exports = Dummy;

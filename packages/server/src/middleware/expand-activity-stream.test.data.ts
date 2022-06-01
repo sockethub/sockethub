@@ -68,10 +68,10 @@ export default [
         "image":{
           "height":250,
           "mediaType":"image/jpeg",
-          "url":"http://example.org/image.jpg",
+          "url":"https://example.org/image.jpg",
           "width":250
         },
-        "url":"http://sockethub.org"
+        "url":"https://sockethub.org"
       },
       "object":{
         "type":"credentials",
@@ -340,10 +340,10 @@ export default [
         "image":{
           "height":250,
           "mediaType":"image/jpeg",
-          "url":"http://example.org/image.jpg",
+          "url":"https://example.org/image.jpg",
           "width":250
         },
-        "url":"http://sockethub.org"
+        "url":"https://sockethub.org"
       },
       "target":{
         "id":"blah3",

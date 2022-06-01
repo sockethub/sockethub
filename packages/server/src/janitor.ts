@@ -6,9 +6,9 @@ import listener, { SocketInstance } from "./listener";
 const rmLog = debug('sockethub:server:janitor');
 
 const TICK = 15000;
-let alreadyCalled: boolean = false;
-let cycleCount: number = 0;   // a counter for each setInterval call
-let reportCount: number = 0;  // number of times a report is printed
+let alreadyCalled = false;
+let cycleCount = 0;   // a counter for each setInterval call
+let reportCount = 0;  // number of times a report is printed
 
 /**
  * Every TICK the Janitor will compare existing platform instances with socket.ids (aka. sessionId)
@@ -30,7 +30,7 @@ function janitorCycle() {
       rmLog(`socket sessions: ${sockets.length} platform instances: ${platformInstances.size}`);
     }
 
-    for (let platformInstance of platformInstances.values()) {
+    for (const platformInstance of platformInstances.values()) {
       removeStaleSocketSessions(platformInstance, sockets);
       // Static platforms are for global use, not tied to a unique to session / eg. credentials)
       if ((! platformInstance.global) && (platformInstance.sessions.size === 0)) {
@@ -43,7 +43,7 @@ function janitorCycle() {
 }
 
 function socketExists(sessionId: string, sockets: Array<SocketInstance>) {
-  for (let socket of sockets) {
+  for (const socket of sockets) {
     if (socket.id === sessionId) {
       return true;
     }

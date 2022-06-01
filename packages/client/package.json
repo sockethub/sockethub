@@ -23,7 +23,7 @@
     "clean:deps": "npx rimraf node_modules",
     "compliance": "yarn run lint && yarn run test && yarn run coverage",
     "test": "c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts src/**/*.test.ts",
-    "coverage": "c8 check-coverage --statements 95 --branches 85 --functions 90 --lines 95",
+    "coverage": "c8 check-coverage --statements 85 --branches 84 --functions 90 --lines 85",
     "lint": "eslint \"**/*.ts\"",
     "lint:fix": "eslint --fix \"**/*.ts\"",
     "build": "tsc && webpack --config webpack.minified.config.js && webpack --config webpack.normal.config.js"
@@ -32,6 +32,7 @@
   "license": "LGPL-3.0+",
   "devDependencies": {
     "@sockethub/activity-streams": "^4.4.0-alpha.3",
+    "@sockethub/schemas": "^3.0.0-alpha.3",
     "@types/chai": "4.3.1",
     "@types/eslint": "8.4.1",
     "@types/eventemitter2": "4.1.0",

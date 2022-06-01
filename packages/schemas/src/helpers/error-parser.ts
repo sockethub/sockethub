@@ -21,7 +21,7 @@ function parseMsg(error: ErrorObject): string {
 function getTypeList(msg: IActivityStream | IActivityObject): Array<string> {
   let types = [];
   types.push(msg?.type);
-  for (let prop in msg) {
+  for (const prop in msg) {
     if (msg[prop]?.type) {
       types = [...types, ...getTypeList(msg[prop])];
     }

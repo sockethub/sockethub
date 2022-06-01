@@ -6,6 +6,7 @@ import platformLoad from './platforms';
 const log = debug('sockethub:server:bootstrap:init');
 log('running init routines');
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const packageJSON = require('./../../package.json');
 const platforms = platformLoad(config.get('platforms'));
 
@@ -40,7 +41,7 @@ if (config.get('info')) {
   console.log('platforms: ' + Array.from(platforms.keys()).join(', '));
 
   if (platforms.size > 0) {
-    for (let platform of platforms.values()) {
+    for (const platform of platforms.values()) {
       console.log();
       // eslint-disable-next-line security-node/detect-crlf
       console.log(platform.moduleName);
