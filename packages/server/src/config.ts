@@ -4,6 +4,13 @@ import * as fs from "fs";
 
 const log = debug('sockethub:server:bootstrap:config');
 
+export type ActivityStreamConfigOptions = {
+  warnOnUnknownObjectProperties?: boolean;
+  failOnUnknownObjectProperties?: boolean;
+  specialObjs?: object;
+  customProps?: object;
+}
+
 export class Config {
   constructor() {
     log('initializing config');
