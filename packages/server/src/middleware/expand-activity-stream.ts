@@ -3,7 +3,10 @@ import { IActivityStream } from "@sockethub/schemas";
 
 import config from "../config";
 
-const activity = ActivityStreams(config.get('activity-streams:opts'));
+const asConfig = config.get('activity-streams:opts');
+asConfig.warnOnUnknownObjectProperties = false;
+asConfig.failOnUnknownObjectProperties = false;
+const activity = ActivityStreams(asConfig);
 
 function ensureObject(msg: any) {
   return !((typeof msg !== 'object') || (Array.isArray(msg)));
