@@ -1,6 +1,7 @@
 import debug from 'debug';
 import Ajv, {Schema} from 'ajv';
-import ajvFormat2019 from 'ajv-formats-draft2019';
+import addFormats from 'ajv-formats';
+import additionsFormats2019 from 'ajv-formats-draft2019';
 import getErrorMessage from "./helpers/error-parser";
 import {IActivityStream} from "./types";
 import PlatformSchema from './schemas/platform';
@@ -8,7 +9,8 @@ import ActivityStreamsSchema from './schemas/activity-stream';
 import ActivityObjectSchema from './schemas/activity-object';
 const log = debug('sockethub:schemas');
 const ajv = new Ajv({strictTypes: false, allErrors: true});
-ajvFormat2019(ajv);
+addFormats(ajv);
+additionsFormats2019(ajv);
 
 interface SchemasDict {
   string?: Schema

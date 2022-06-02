@@ -56,7 +56,8 @@ export const ObjectTypesSchema = {
         "type": "string"
       },
       "published": {
-        "type": "date-time"
+        "type": "string",
+        "format": "date-time"
       }
     }
   },

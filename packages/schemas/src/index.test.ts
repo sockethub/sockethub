@@ -1,3 +1,5 @@
+import {IActivityStream} from "./types";
+
 const chai = require('chai');
 const expect = chai.expect;
 
@@ -56,8 +58,7 @@ describe('ActivityObject', () => {
   testActivityObjectsData.forEach(([name, ao, expectedResult, expectedFailureMessage]) => {
     describe("validateActivityObject " + name, () => {
       it(`returns expected result`, () => {
-        // @ts-ignore
-        const err = validateActivityObject(ao);
+        const err = validateActivityObject(ao as IActivityStream);
         expect(err).to.equal(expectedFailureMessage);
         expect(!err).to.equal(expectedResult);
       });
