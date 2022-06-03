@@ -57,7 +57,7 @@ export const ObjectTypesSchema = {
       },
       "published": {
         "type": "string",
-        "format": "date-time"
+        "enum": ["foo", "bar"]
       }
     }
   },
