@@ -26,6 +26,31 @@ export default [
   ],
 
   [
+    'type:send, object:message bad published value',
+    {
+      type: 'send',
+      context: 'irc',
+      published: "foo",
+      actor: {
+        id: 'dood@irc.freenode.net',
+        type: 'person',
+        name: 'dood'
+      },
+      target: {
+        id: 'irc.freenode.net/server',
+        type: 'room',
+        name: 'sockethub'
+      },
+      object: {
+        type: 'message',
+        content: 'some kind of message'
+      }
+    },
+    false,
+    '/published: must match format "date-time"'
+  ],
+
+  [
     'type:credentials, object:credentials',
     {
       type: 'credentials',
