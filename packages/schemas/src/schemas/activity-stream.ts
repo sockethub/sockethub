@@ -42,6 +42,10 @@ export default {
     "object": {
       "type": "object",
       "oneOf": validObjectRefs
+    },
+    "published": {
+      "type": "string",
+      "format": "date-time"
     }
   },
 

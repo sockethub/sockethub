@@ -54,10 +54,6 @@ export const ObjectTypesSchema = {
       },
       "content": {
         "type": "string"
-      },
-      "published": {
-        "type": "string",
-        "enum": ["foo", "bar"]
       }
     }
   },

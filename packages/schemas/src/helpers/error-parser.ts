@@ -43,6 +43,7 @@ function getPartsCount(error: ErrorObject, types: TypeBreakdown): number {
   const schemaType = getSchemaType(error);
   const errType = getErrType(error);
   if (!errType) { return -1; }
+  if (!types[errType]) { return -1; }
   if (!types[errType].includes(schemaType)) { return -1; }
   const parts = error.instancePath.split('/');
   return parts.length;
