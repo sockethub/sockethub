@@ -172,7 +172,7 @@ class IncomingHandlers {
       [activity.target['id'], activity.actor.name] = from.split('/');
     }
 
-    if (timestamp) { activity.published = timestamp; }
+    if (timestamp) { activity.published = (new Date(timestamp)).toISOString(); }
 
     this.session.sendToClient(activity);
   }
