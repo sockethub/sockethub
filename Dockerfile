@@ -13,7 +13,7 @@ RUN npm install -g yarn@latest
 
 COPY . .
 
-RUN yarn deps
+RUN yarn install
 RUN yarn build
 
 EXPOSE 10550
