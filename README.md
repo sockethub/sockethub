@@ -17,17 +17,28 @@ Sockethub is a translation layer for web applications to communicate with other 
 
 **For more information on Sockethub see the [Sockethub README](packages/server/README.md)**
 
-## Setup
+## Run
 
-### Install Dependencies
+To get up and running quickly, you only need the following commands:
 
-```$ yarn deps```
+```bash
+$ yarn install
+$ yarn run dev
+```
 
-### Run Tests
+### Dependencies
+
+```$ yarn install```
+
+### Build
+
+```$ yarn run build```
+
+### Tests
 
 ```$ yarn test```
 
-### Run Linter
+### Linter
 
 ```$ yarn lint:js```
 
@@ -39,7 +50,7 @@ Or, to automatically fix linting errors:
 
 ```$ yarn run integration```
 
-## Running
+## Start
 
 For development purposes, with examples enabled, run:
 
