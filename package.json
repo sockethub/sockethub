@@ -25,7 +25,7 @@
     "yarn": "1.22.19"
   },
   "scripts": {
-    "postinstall": "lerna bootstrap",
+    "postinstall": "lerna bootstrap && nx run-many --target=build --skip-nx-cache",
     "publish": "yarn run build && yarn run compliance && lerna publish --dist-tag latest --pre-dist-tag next",
     "test": "nx run-many --target=test --all --skip-nx-cache",
     "coverage": "nx run-many --target=coverage --all",
