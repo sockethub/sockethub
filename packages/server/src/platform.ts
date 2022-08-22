@@ -82,26 +82,24 @@ const platform = new PlatformModule(platformSession);
 function getCredentials(actorId: string, sessionId: string, sessionSecret: string,
                         cb: CallbackInterface) {
   if (platform.config.noCredentials) { return cb(); }
-  const store = getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
-  store.get(actorId, (err, credentials) => {
-    if (platform.config.persist) {
-      // don't continue if we don't get credentials
-      if (err) { return cb(err.toString()); }
-    } else if (! credentials) {
-      // also skip if this is a non-persist platform with no credentials
-      return cb();
-    }
+  getSessionStore(parentId, parentSecret1, sessionId, sessionSecret).then((store) => {
+    store.get(actorId).then((credentials) => {
+      if (!credentials) { return cb(); }
 
-    if (platform.credentialsHash) {
-      if (platform.credentialsHash !== hash(credentials.object)) {
-        return cb('provided credentials do not match existing platform instance for actor '
-            + platform.actor.id);
+      if (platform.credentialsHash) {
+        if (platform.credentialsHash !== hash(credentials.object)) {
+          return cb('provided credentials do not match existing platform instance for actor '
+              + platform.actor.id);
+        }
+      } else {
+        platform.credentialsHash = hash(credentials.object);
       }
-    } else {
-      platform.credentialsHash = hash(credentials.object);
-    }
-    cb(undefined, credentials);
+      cb(undefined, credentials);
+    }).catch((err) => {
+      cb(err.toString());
+    });
   });
+
 }
 
 /**

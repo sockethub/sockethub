@@ -101,9 +101,7 @@ class Sockethub {
   private handleIncomingConnection(socket: Socket) {
     // session-specific debug messages
     const sessionLog = debug('sockethub:server:core:' + socket.id),
-          sessionSecret = crypto.randToken(16),
-          // store instance is session-specific
-          store = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret);
+          sessionSecret = crypto.randToken(16);
 
     sessionLog(`socket.io connection`);
 
@@ -111,48 +109,51 @@ class Sockethub {
       sessionLog('disconnect received from client');
     });
 
-    socket.on('credentials',
-      middleware('credentials')
-        .use(expandActivityStream)
-        .use(validate('credentials', socket.id))
-        .use(storeCredentials(store, sessionLog) as MiddlewareChainInterface)
-        .use((err, data, next) => {
+    // store instance is session-specific
+    getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret).then((store) => {
+      socket.on('credentials',
+        middleware('credentials')
+          .use(expandActivityStream)
+          .use(validate('credentials', socket.id))
+          .use(storeCredentials(store, sessionLog) as MiddlewareChainInterface)
+          .use((err, data, next) => {
           // error handler
-          next(attachError(err, data));
-        }).use((data, next) => { next(); })
-        .done());
+            next(attachError(err, data));
+          }).use((data, next) => { next(); })
+          .done());
 
-    // when new activity objects are created on the client side, an event is
-    // fired and we receive a copy on the server side.
-    socket.on('activity-object',
-      middleware('activity-object')
-        .use(validate('activity-object', socket.id))
-        .use(createActivityObject)
-        .use((err, data, next) => {
-          next(attachError(err, data));
-        }).use((data, next) => { next(); })
-        .done());
+      // when new activity objects are created on the client side, an event is
+      // fired and we receive a copy on the server side.
+      socket.on('activity-object',
+        middleware('activity-object')
+          .use(validate('activity-object', socket.id))
+          .use(createActivityObject)
+          .use((err, data, next) => {
+            next(attachError(err, data));
+          }).use((data, next) => { next(); })
+          .done());
 
-    socket.on('message',
-      middleware('message')
-        .use(expandActivityStream)
-        .use(validate('message', socket.id))
-        .use((msg, next) => {
+      socket.on('message',
+        middleware('message')
+          .use(expandActivityStream)
+          .use(validate('message', socket.id))
+          .use((msg, next) => {
           // The platform thread must find the credentials on their own using the given
           // sessionSecret, which indicates that this specific session (socket
           // connection) has provided credentials.
-          msg.sessionSecret = sessionSecret;
-          next(msg);
-        }).use((err, data, next) => {
-          next(attachError(err, data));
-        }).use((msg, next) => {
-          const platformInstance = this.processManager.get(msg.context, msg.actor.id, socket.id);
-          sessionLog(`queued to channel ${platformInstance.id}`);
-          const job = this.createJob(socket.id, msg);
-          // job validated and queued, store socket.io callback for when job is completed
-          platformInstance.completedJobHandlers.set(job.title, next);
-          platformInstance.queue.add(job);
-        }).done());
+            msg.sessionSecret = sessionSecret;
+            next(msg);
+          }).use((err, data, next) => {
+            next(attachError(err, data));
+          }).use((msg, next) => {
+            const platformInstance = this.processManager.get(msg.context, msg.actor.id, socket.id);
+            sessionLog(`queued to channel ${platformInstance.id}`);
+            const job = this.createJob(socket.id, msg);
+            // job validated and queued, store socket.io callback for when job is completed
+            platformInstance.completedJobHandlers.set(job.title, next);
+            platformInstance.queue.add(job);
+          }).done());
+    });
   }
 }
 
