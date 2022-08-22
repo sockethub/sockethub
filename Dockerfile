@@ -17,4 +17,4 @@ RUN yarn install
 RUN yarn build
 
 EXPOSE 10550
-CMD DEBUG=* /app/packages/sockethub/bin/sockethub --host 0.0.0.0 -c /app/test/sockethub.config.docker.json
+CMD DEBUG=ioredis*,sockethub*,redis* /app/packages/sockethub/bin/sockethub --host 0.0.0.0 -c /app/test/sockethub.config.docker.json
