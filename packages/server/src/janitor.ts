@@ -53,6 +53,8 @@ function socketExists(sessionId: string, sockets: Array<SocketInstance>) {
 
 function removeSessionCallbacks(platformInstance: PlatformInstance, sessionId: string) {
   for (const key in platformInstance.sessionCallbacks) {
+    platformInstance.process.removeListener(
+      key, platformInstance.sessionCallbacks[key].get(sessionId));
     platformInstance.sessionCallbacks[key].delete(sessionId);
   }
 }
