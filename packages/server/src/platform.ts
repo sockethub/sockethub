@@ -198,6 +198,8 @@ function startQueueListener(refresh = false) {
     logger('start queue called multiple times, skipping');
     return;
   }
+  // eslint-disable-next-line security-node/detect-crlf
+  console.log('platform instance redis config: ', redisConfig);
   const queue = new Queue(parentId + identifier, { redis: redisConfig });
   queueStarted = true;
   logger('listening on the queue for incoming jobs');
