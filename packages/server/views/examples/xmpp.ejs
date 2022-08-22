@@ -134,7 +134,10 @@
             type: 'message',
             content: text_message
           },
-          target: target
+          target: {
+            id: target,
+            type: 'person'
+          }
         };
 
         console.log('[normalize?] sending ', msg);
