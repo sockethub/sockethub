@@ -99,8 +99,14 @@ export default class PlatformInstance {
    * When jobs are completed or failed, we prepare the results and send them to the client socket
    */
   public initQueue(secret: string) {
-    this.debug(`platform instance redis config: ${{ redis: config.get('redis') }}`);
-    this.queue = new Queue(this.parentId + this.id, { redis: config.get('redis') });
+    let redisConfig = config.get('redis');
+    if (redisConfig["url"]) {
+      redisConfig = redisConfig["url"];
+    } else {
+      redisConfig = { redis: redisConfig };
+    }
+    this.debug(`redis config: `, redisConfig);
+    this.queue = new Queue(this.parentId + this.id, redisConfig);
 
     this.queue.on('global:completed', (jobId, resultString) => {
       const result = resultString ? JSON.parse(resultString) : "";
