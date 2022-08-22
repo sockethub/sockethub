@@ -88,7 +88,7 @@ describe('Page', () => {
           actor: "jimmy@prosody/SockethubExample",
           context: "xmpp"
         }, genHandler(done));
-      }).timeout(12000);
+      }).timeout(24000);
     });
   });
 });
