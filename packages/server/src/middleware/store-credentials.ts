@@ -3,14 +3,13 @@ import {CallbackInterface, LogInterface} from "../basic-types";
 import SecureStore from "secure-store-redis";
 
 export default function storeCredentials(store: SecureStore, sessionLog: LogInterface) {
-  return async (creds: IActivityStream, done: CallbackInterface) => {
-    try {
-      store.save(creds.actor.id, creds as never);
+  return (creds: IActivityStream, done: CallbackInterface) => {
+    store.save(creds.actor.id, creds).then(() =>{
       sessionLog('credentials encrypted and saved');
       done();
-    } catch (err) {
+    }).catch((err) => {
       sessionLog('error saving credentials to store ' + err);
-      return done(err);
-    }
+      done(err);
+    });
   };
 }

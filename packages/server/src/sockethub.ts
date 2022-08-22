@@ -124,7 +124,7 @@ class Sockethub {
         .done());
 
     // when new activity objects are created on the client side, an event is
-    // fired and we receive a copy on the server side.
+    // fired, and we receive a copy on the server side.
     socket.on('activity-object',
       middleware('activity-object')
         .use(validate('activity-object', socket.id))

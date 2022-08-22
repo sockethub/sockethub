@@ -28,13 +28,13 @@ describe('Middleware: storeCredentials', () => {
 
   beforeEach(() => {
     storeSuccess = {
-      save: (id: any, creds: any, cb: Function) => {
-        cb();
+      save: async (id: any, creds: any) => {
+        return {};
       }
     };
     storeError = {
-      save: (id: any, creds: any, cb: Function) => {
-        cb('some error');
+      save: async (id: any, creds: any) => {
+        throw new Error('some error');
       }
     };
     saveSuccessFake = sinon.replace(storeSuccess, 'save', sinon.fake(storeSuccess.save));

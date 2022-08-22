@@ -118,10 +118,10 @@ describe("PlatformInstance", () => {
         expect(pi.sessions.has('my session id')).to.be.equal(true);
       });
 
-      it('is able to generate failure reports', () => {
+      it('is able to generate failure reports', async () => {
         pi.registerSession('my session id');
         expect(pi.sessions.has('my session id')).to.be.equal(true);
-        pi.reportError('my session id', 'an error message');
+        await pi.reportError('my session id', 'an error message');
         pi.sendToClient = sandbox.stub();
         pi.destroy = sandbox.stub();
         expect(pi.sessions.size).to.be.equal(0);
