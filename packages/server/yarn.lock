@@ -4743,10 +4743,10 @@ redis-commands@1.7.0:
   resolved "https://registry.yarnpkg.com/redis-commands/-/redis-commands-1.7.0.tgz#15a6fea2d58281e27b1cd1acfb4b293e278c3a89"
   integrity sha512-nJWqw3bTFy21hX/CPKHth6sfhZbdiHP6bTawSgQBlKOVRG7EZkfHbbHwQJnrE4vsQf0CMNE+3gJ4Fmm16vdVlQ==
 
-redis-connection-pool@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/redis-connection-pool/-/redis-connection-pool-3.0.0.tgz#7d3ebc9466ad13c508d0f031b63f0fc887e29502"
-  integrity sha512-2Lkk3nrEurByFX92RKhEK6c6z9B5IRwHSLEMSiPlElmptMqvksitvUPS5lT28NBSCN02N/xBgopAiKHdtOfSUA==
+redis-connection-pool@^3.0.2:
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/redis-connection-pool/-/redis-connection-pool-3.0.2.tgz#cce21d38472091a220e798a1ff4c930fdfedf183"
+  integrity sha512-K8UnspuNb2pv/WbVo7Spe2PetyEaewaFNciBon/dMxUy+CK+Vl2YZ8mX1LKKYfbjiuSIQmmhABODzCSiZ/4aaw==
   dependencies:
     debug "^4.3.4"
     generic-pool "^3.8.2"
@@ -4952,12 +4952,12 @@ secure-keys@^1.0.0:
   resolved "https://registry.yarnpkg.com/secure-keys/-/secure-keys-1.0.0.tgz#f0c82d98a3b139a8776a8808050b824431087fca"
   integrity sha512-nZi59hW3Sl5P3+wOO89eHBAAGwmCPd2aE1+dLZV5MO+ItQctIvAqihzaAXIQhvtH4KJPxM080HsnqltR2y8cWg==
 
-secure-store-redis@^2.0.3:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/secure-store-redis/-/secure-store-redis-2.0.3.tgz#916f157bcc96f9e7b948ad1cd9ac6b7005744ea8"
-  integrity sha512-NSGqaQ6umuhaysGkThV9fSiutUnC9pIddYgCMl83PSr0wK/yFVSHWep4h8jR6GeOnLLnjvPzFqK+78ImP1BcYg==
+secure-store-redis@^2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/secure-store-redis/-/secure-store-redis-2.0.4.tgz#44b5b72ee59c10b7e59bdc9e0dd571c5414bdf6c"
+  integrity sha512-+mUu5EGTo0xzaW980n9WmCzcoj5gUbgkqieADbGk9BJ4DOI0iQPnsN3le2wjSiseh2wwO4ZzS1GyNgKmmi0nVg==
   dependencies:
-    redis-connection-pool "^3.0.0"
+    redis-connection-pool "^3.0.2"
 
 semver@^5.6.0, semver@^5.7.0:
   version "5.7.1"
