@@ -149,20 +149,23 @@ export default class PlatformInstance {
    * @param sessionId ID of the socket connection to send the message to
    * @param msg ActivityStream object to send to client
    */
-  public sendToClient(sessionId: string, msg: IActivityStream) {
-    getSocket(sessionId).then((socket) => {
-      try {
-        // this property should never be exposed externally
-        delete msg.sessionSecret;
-      } finally {
-        msg.context = this.name;
-        if ((msg.type === 'error') && (typeof msg.actor === 'undefined') && (this.actor)) {
-          // ensure an actor is present if not otherwise defined
-          msg.actor = { id: this.actor, type: 'unknown' };
-        }
-        socket.emit('message', msg);
+  public async sendToClient(sessionId: string, msg: IActivityStream) {
+    const socket = await getSocket(sessionId);
+    if (!socket) {
+      this.debug(`unable to find open socket connection for session ${sessionId}`);
+      return;
+    }
+    try {
+      // this property should never be exposed externally
+      delete msg.sessionSecret;
+    } finally {
+      msg.context = this.name;
+      if ((msg.type === 'error') && (typeof msg.actor === 'undefined') && (this.actor)) {
+        // ensure an actor is present if not otherwise defined
+        msg.actor = { id: this.actor, type: 'unknown' };
       }
-    }, (err) => this.debug(`sendToClient ${err}`));
+      socket.emit('message', msg);
+    }
   }
 
   // send message to every connected socket associated with this platform instance.
@@ -214,7 +217,7 @@ export default class PlatformInstance {
       actor: { id: this.actor, type: 'unknown' },
       error: errorMessage
     };
-    this.sendToClient(sessionId, errorObject);
+    await this.sendToClient(sessionId, errorObject);
     this.sessions.clear();
     await this.destroy();
   }
@@ -249,7 +252,7 @@ export default class PlatformInstance {
           await this.reportError(sessionId, second);
         } else {
           // treat like a message to clients
-          this.sendToClient(sessionId, second);
+          await this.sendToClient(sessionId, second);
         }
       }
     };

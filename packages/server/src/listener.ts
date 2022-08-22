@@ -70,14 +70,12 @@ export interface SocketInstance {
 
 export async function getSocket(sessionId: string): Promise<SocketInstance> {
   const sockets: Array<SocketInstance> = await listener.io.fetchSockets();
-  return new Promise((resolve, reject) => {
-    for (const socket of sockets) {
-      if (sessionId === socket.id) {
-        return resolve(socket);
-      }
+  for (const socket of sockets) {
+    if (sessionId === socket.id) {
+      return socket;
     }
-    return reject(`unable to find socket for sessionId ${sessionId}`);
-  });
+  }
+  return undefined;
 }
 
 export default listener;
