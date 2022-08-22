@@ -18,11 +18,13 @@ describe('getSessionStore', () => {
     const store = getSessionStore('a parent id', 'a parent secret',
       'a session id', 'a session secret');
     sinon.assert.calledOnce(MockSecureStore);
-    sinon.assert.calledWith(MockSecureStore, {
-      namespace: 'sockethub:a parent id:session:a session id:store',
-      secret: 'a parent secreta session secret',
-      redis: { host: '127.0.0.1', port: 6379 }
-    });
+    sinon.assert.calledWith(MockSecureStore,
+      'sockethub:a parent id:session:a session id:store',
+      'a parent secreta session secret',
+      {
+        redis: { host: '127.0.0.1', port: 6379 }
+      }
+    );
     expect(typeof store).to.equal('object');
   });
 });

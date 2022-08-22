@@ -22,7 +22,7 @@ const PlatformModule = require(`@sockethub/platform-${platformName}`);
 let queueStarted = false;
 let parentSecret1: string, parentSecret2: string;
 
-logger(`platform handler initialized for ${platformName} ${identifier}`);
+logger(`platform handler initialized for ${platformName}`);
 
 export interface PlatformSession {
   debug(msg: string): void;
@@ -77,31 +77,32 @@ const platform = new PlatformModule(platformSession);
  * @param actorId
  * @param sessionId
  * @param sessionSecret
- * @param cb
  */
-function getCredentials(actorId: string, sessionId: string, sessionSecret: string,
-                        cb: CallbackInterface) {
-  if (platform.config.noCredentials) { return cb(); }
-  const store = getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
-  store.get(actorId, (err, credentials) => {
-    if (platform.config.persist) {
-      // don't continue if we don't get credentials
-      if (err) { return cb(err.toString()); }
-    } else if (! credentials) {
-      // also skip if this is a non-persist platform with no credentials
-      return cb();
+async function getCredentials(
+  actorId: string, sessionId: string, sessionSecret: string
+) {
+  if (platform.config.noCredentials) { return undefined; }
+  const store = await getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
+  const credentials = await store.get(actorId);
+  if (platform.config.persist) {
+    // don't continue if we don't get credentials
+    if (!credentials) {
+      throw new Error("unable to find credentials");
     }
+  } else if (!credentials) {
+    // also skip without error if this is a non-persist platform with no credentials
+    return undefined;
+  }
 
-    if (platform.credentialsHash) {
-      if (platform.credentialsHash !== hash(credentials.object)) {
-        return cb('provided credentials do not match existing platform instance for actor '
-            + platform.actor.id);
-      }
-    } else {
-      platform.credentialsHash = hash(credentials.object);
+  if (platform.credentialsHash) {
+    if (platform.credentialsHash !== hash(credentials.object)) {
+      throw new Error('provided credentials do not match existing platform instance for actor '
+          + platform.actor.id);
     }
-    cb(undefined, credentials);
-  });
+  } else {
+    platform.credentialsHash = hash(credentials.object);
+  }
+  return credentials;
 }
 
 /**
@@ -109,55 +110,59 @@ function getCredentials(actorId: string, sessionId: string, sessionSecret: strin
  * @param secret the secret used to decrypt credentials
  */
 function getJobHandler(secret: string) {
-  return (job: JobEncrypted, done: CallbackInterface) => {
+  return async (job: JobEncrypted, done: CallbackInterface) => {
     const jobData: JobDataDecrypted = decryptJobData(job, secret);
     const jobLog = debug(`${loggerPrefix}:${jobData.sessionId}`);
     jobLog(`received ${jobData.title} ${jobData.msg.type}`);
     const sessionSecret = jobData.msg.sessionSecret;
     delete jobData.msg.sessionSecret;
 
-    return getCredentials(jobData.msg.actor.id, jobData.sessionId, sessionSecret,
-      (err, credentials) => {
-        if (err) { return done(new Error(err.toString())); }
-        let jobCallbackCalled = false;
-        const doneCallback = (err, result) => {
-          if (jobCallbackCalled) { return; }
-          jobCallbackCalled = true;
-          if (err) {
-            jobLog(`errored ${jobData.title} ${jobData.msg.type}`);
-            let errMsg;
-            // some error objects (eg. TimeoutError) don't interoplate correctly to human-readable
-            // so we have to do this little dance
-            try {
-              errMsg = err.toString();
-            } catch (e) {
-              errMsg = err;
-            }
-            done(new Error(errMsg));
-          } else {
-            jobLog(`completed ${jobData.title} ${jobData.msg.type}`);
-            done(null, result);
-          }
-        };
-        if ((Array.isArray(platform.config.requireCredentials)) &&
-          (platform.config.requireCredentials.includes(jobData.msg.type))) {
-          // add the credentials object if this method requires it
-          platform[jobData.msg.type](jobData.msg, credentials, doneCallback);
-        } else if (platform.config.persist) {
-          if (platform.initialized) {
-            platform[jobData.msg.type](jobData.msg, doneCallback);
-          } else {
-            done(new Error(`${jobData.msg.type} called on uninitialized platform`));
-          }
-        } else {
-          platform[jobData.msg.type](jobData.msg, doneCallback);
+    let credentials;
+    try {
+      credentials = await getCredentials(
+        jobData.msg.actor.id, jobData.sessionId, sessionSecret
+      );
+    } catch (err) {
+      return done(err);
+    }
+    let jobCallbackCalled = false;
+    const doneCallback = (err, result) => {
+      if (jobCallbackCalled) { return; }
+      jobCallbackCalled = true;
+      if (err) {
+        jobLog(`errored ${jobData.title} ${jobData.msg.type}`);
+        let errMsg;
+        // some error objects (eg. TimeoutError) don't interpolate correctly to human-readable
+        // so, we have to do this little dance
+        try {
+          errMsg = err.toString();
+        } catch (e) {
+          errMsg = err;
         }
-      });
+        done(new Error(errMsg));
+      } else {
+        jobLog(`completed ${jobData.title} ${jobData.msg.type}`);
+        done(null, result);
+      }
+    };
+    if ((Array.isArray(platform.config.requireCredentials)) &&
+      (platform.config.requireCredentials.includes(jobData.msg.type))) {
+      // add the credentials object if this method requires it
+      platform[jobData.msg.type](jobData.msg, credentials, doneCallback);
+    } else if (platform.config.persist) {
+      if (platform.initialized) {
+        platform[jobData.msg.type](jobData.msg, doneCallback);
+      } else {
+        done(new Error(`${jobData.msg.type} called on uninitialized platform`));
+      }
+    } else {
+      platform[jobData.msg.type](jobData.msg, doneCallback);
+    }
   };
 }
 
 /**
- * Get an function which sends a message to the parent thread (PlatformInstance). The platform
+ * Get a function which sends a message to the parent thread (PlatformInstance). The platform
  * can call that function to send messages back to the client.
  * @param command string containing the type of command to be sent. 'message' or 'close'
  */
@@ -168,7 +173,7 @@ function getSendFunction(command: string) {
 }
 
 /**
- * When a user changes it's actor name, the channel identifier changes, we need to ensure that
+ * When a user changes its actor name, the channel identifier changes, we need to ensure that
  * both the queue thread (listening on the channel for jobs) and the logging object are updated.
  * @param credentials
  */
@@ -184,7 +189,7 @@ function updateActor(credentials) {
 
 /**
  * starts listening on the queue for incoming jobs
- * @param refresh boolean if the param is true, we re-init the queue.process
+ * @param refresh boolean if the param is true, we re-init the `queue.process`
  * (used when identifier changes)
  */
 function startQueueListener(refresh = false) {
