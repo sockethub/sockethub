@@ -15,7 +15,7 @@ const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
 let logger = debug(loggerPrefix);
 
 const redisConfig = process.env.REDIS_URL ? process.env.REDIS_URL
-  : { host: process.env.REDIS_HOST, port: process.env.REDIS_PORT };
+  : { redis: { host: process.env.REDIS_HOST, port: process.env.REDIS_PORT }};
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PlatformModule = require(`@sockethub/platform-${platformName}`);
 
@@ -199,7 +199,7 @@ function startQueueListener(refresh = false) {
     return;
   }
   // eslint-disable-next-line security-node/detect-crlf
-  console.log('platform instance redis config: ', redisConfig);
+  logger(`platform thread redis config: ${redisConfig}`);
   const queue = new Queue(parentId + identifier, { redis: redisConfig });
   queueStarted = true;
   logger('listening on the queue for incoming jobs');
