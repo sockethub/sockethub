@@ -15,14 +15,14 @@ const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
 let logger = debug(loggerPrefix);
 
 const redisConfig = process.env.REDIS_URL ? process.env.REDIS_URL
-  : { host: process.env.REDIS_HOST, port: process.env.REDIS_PORT };
+  : { redis: { host: process.env.REDIS_HOST, port: process.env.REDIS_PORT }};
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PlatformModule = require(`@sockethub/platform-${platformName}`);
 
 let queueStarted = false;
 let parentSecret1: string, parentSecret2: string;
 
-logger(`platform handler initialized for ${platformName} ${identifier}`);
+logger(`platform handler initialized for ${platformName}`);
 
 export interface PlatformSession {
   debug(msg: string): void;
@@ -124,8 +124,8 @@ function getJobHandler(secret: string) {
           if (err) {
             jobLog(`errored ${jobData.title} ${jobData.msg.type}`);
             let errMsg;
-            // some error objects (eg. TimeoutError) don't interoplate correctly to human-readable
-            // so we have to do this little dance
+            // some error objects (eg. TimeoutError) don't interpolate correctly to human-readable
+            // so, we have to do this little dance
             try {
               errMsg = err.toString();
             } catch (e) {
@@ -155,7 +155,7 @@ function getJobHandler(secret: string) {
 }
 
 /**
- * Get an function which sends a message to the parent thread (PlatformInstance). The platform
+ * Get a function which sends a message to the parent thread (PlatformInstance). The platform
  * can call that function to send messages back to the client.
  * @param command string containing the type of command to be sent. 'message' or 'close'
  */
@@ -166,7 +166,7 @@ function getSendFunction(command: string) {
 }
 
 /**
- * When a user changes it's actor name, the channel identifier changes, we need to ensure that
+ * When a user changes its actor name, the channel identifier changes, we need to ensure that
  * both the queue thread (listening on the channel for jobs) and the logging object are updated.
  * @param credentials
  */
@@ -182,7 +182,7 @@ function updateActor(credentials) {
 
 /**
  * starts listening on the queue for incoming jobs
- * @param refresh boolean if the param is true, we re-init the queue.process
+ * @param refresh boolean if the param is true, we re-init the `queue.process`
  * (used when identifier changes)
  */
 function startQueueListener(refresh = false) {

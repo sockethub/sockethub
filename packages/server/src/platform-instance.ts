@@ -99,7 +99,14 @@ export default class PlatformInstance {
    * When jobs are completed or failed, we prepare the results and send them to the client socket
    */
   public initQueue(secret: string) {
-    this.queue = new Queue(this.parentId + this.id, { redis: config.get('redis') });
+    let redisConfig = config.get('redis');
+    if (redisConfig["url"]) {
+      redisConfig = redisConfig["url"];
+    } else {
+      redisConfig = { redis: redisConfig };
+    }
+    this.debug(`redis config: `, redisConfig);
+    this.queue = new Queue(this.parentId + this.id, redisConfig);
 
     this.queue.on('global:completed', (jobId, resultString) => {
       const result = resultString ? JSON.parse(resultString) : "";
@@ -142,7 +149,7 @@ export default class PlatformInstance {
    * @param sessionId ID of the socket connection to send the message to
    * @param msg ActivityStream object to send to client
    */
-  public sendToClient(sessionId: string, msg: IActivityStream) {
+  public async sendToClient(sessionId: string, msg: IActivityStream) {
     getSocket(sessionId).then((socket) => {
       try {
         // this property should never be exposed externally
@@ -155,7 +162,7 @@ export default class PlatformInstance {
         }
         socket.emit('message', msg);
       }
-    }, (err) => this.debug(`sendToClient ${err}`));
+    }).catch((err) => this.debug(`sendToClient ${err}`));
   }
 
   // send message to every connected socket associated with this platform instance.
@@ -207,7 +214,7 @@ export default class PlatformInstance {
       actor: { id: this.actor, type: 'unknown' },
       error: errorMessage
     };
-    this.sendToClient(sessionId, errorObject);
+    await this.sendToClient(sessionId, errorObject);
     this.sessions.clear();
     await this.destroy();
   }
@@ -242,7 +249,7 @@ export default class PlatformInstance {
           await this.reportError(sessionId, second);
         } else {
           // treat like a message to clients
-          this.sendToClient(sessionId, second);
+          await this.sendToClient(sessionId, second);
         }
       }
     };

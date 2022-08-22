@@ -2,6 +2,7 @@ import debug from 'debug';
 
 import config from '../config';
 import platformLoad from './platforms';
+import {createClient} from "redis";
 
 const log = debug('sockethub:server:bootstrap:init');
 log('running init routines');
@@ -9,6 +10,20 @@ log('running init routines');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const packageJSON = require('./../../package.json');
 const platforms = platformLoad(config.get('platforms'));
+
+async function verifyRedis() {
+  log('verifying redis connection');
+  const client = createClient(config.get('redis'));
+  client.on('error', (err) => {
+    throw new Error(err);
+  });
+  client.on('ready', () => {
+    log('redis connection verified');
+    client.quit();
+  });
+  await client.connect();
+}
+verifyRedis();
 
 if (config.get('info')) {
   // eslint-disable-next-line security-node/detect-crlf
