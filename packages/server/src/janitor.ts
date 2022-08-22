@@ -12,7 +12,7 @@ let reportCount = 0;  // number of times a report is printed
 
 /**
  * Every TICK the Janitor will compare existing platform instances with socket.ids (aka. sessionId)
- * If all of the sessionIds associated with a platformInstance have no corresponding socket.id
+ * If all the sessionIds associated with a platformInstance have no corresponding `socket.id`
  * (from the http.io socket.io instance), then the platformInstance will first be flagged, if after
  * the next TICK the same state is determined, the platform will be destroyed (this allows for page
  * refreshes not destroying platform instances)
