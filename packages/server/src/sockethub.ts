@@ -83,7 +83,7 @@ class Sockethub {
   }
 
   async shutdown() {
-    janitor.stop();
+    await janitor.stop();
   }
 
   private createJob(socketId: string, msg): JobDataEncrypted {

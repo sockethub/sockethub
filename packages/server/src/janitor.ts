@@ -28,7 +28,17 @@ class Janitor {
     });
   }
 
-  removeSessionCallbacks(platformInstance: PlatformInstance, sessionId: string): void {
+  async stop(): Promise<void> {
+    this.stopTriggered = true;
+    rmLog('stopping, terminating all sessions');
+    for (const platformInstance of platformInstances.values()) {
+      this.removeStaleSocketSessions(platformInstance);
+      await this.removeStalePlatformInstance(platformInstance);
+      await platformInstance.destroy();
+    }
+  }
+
+  private removeSessionCallbacks(platformInstance: PlatformInstance, sessionId: string): void {
     for (const key in platformInstance.sessionCallbacks) {
       platformInstance.process.removeListener(
         key, platformInstance.sessionCallbacks[key].get(sessionId));
@@ -36,22 +46,26 @@ class Janitor {
     }
   }
 
-  removeStaleSocketSessions(
+  private removeStaleSocketSessions(
     platformInstance: PlatformInstance
   ): void {
     for (const sessionId of platformInstance.sessions.values()) {
       if ((this.stopTriggered) || (!this.socketExists(sessionId))) {
-        rmLog(
-          `removing ${!this.stopTriggered ? 'stale ' : ''}socket session reference ${sessionId} 
-          in platform instance ${platformInstance.id}`
-        );
-        platformInstance.sessions.delete(sessionId);
-        this.removeSessionCallbacks(platformInstance, sessionId);
+        this.removeStaleSocketSession(platformInstance, sessionId);
       }
     }
   }
 
-  async removeStalePlatformInstance(platformInstance: PlatformInstance): Promise<void> {
+  private removeStaleSocketSession(platformInstance: PlatformInstance, sessionId: string) {
+    rmLog(
+      `removing ${!this.stopTriggered ? 'stale ' : ''}socket session reference ${sessionId} 
+          in platform instance ${platformInstance.id}`
+    );
+    platformInstance.sessions.delete(sessionId);
+    this.removeSessionCallbacks(platformInstance, sessionId);
+  }
+
+  private async removeStalePlatformInstance(platformInstance: PlatformInstance): Promise<void> {
     if ((platformInstance.flaggedForTermination) || (this.stopTriggered)) {
       rmLog(`terminating platform instance ${platformInstance.id}`);
       await platformInstance.destroy(); // terminate
@@ -60,10 +74,6 @@ class Janitor {
         `(no registered sessions found)`);
       platformInstance.flaggedForTermination = true;
     }
-  }
-
-  stop(): void {
-    this.stopTriggered = true;
   }
 
   private socketExists(sessionId: string) {
@@ -83,23 +93,26 @@ class Janitor {
     return await listener.io.fetchSockets();
   }
 
+  private async performStaleCheck(platformInstance: PlatformInstance) {
+    this.removeStaleSocketSessions(platformInstance);
+    // Static platforms are for global use, not tied to a unique to session / eg. credentials)
+    if ((!platformInstance.global) && (platformInstance.sessions.size === 0)) {
+      await this.removeStalePlatformInstance(platformInstance);
+    } else {
+      platformInstance.flaggedForTermination = false;
+    }
+  }
+
   private async clean(): Promise<void> {
-    if (this.cycleRunning) {
+    if (this.stopTriggered) {
+      this.cycleRunning = false;
+      return;
+    } else if (this.cycleRunning) {
       throw new Error('janitor cleanup cycle called while already running');
     }
     this.cycleRunning = true;
     this.cycleCount++;
     this.sockets = await this.getSockets();
-
-    if (this.stopTriggered) {
-      rmLog('stopping, terminating all sessions');
-      for (const platformInstance of platformInstances.values()) {
-        this.removeStaleSocketSessions(platformInstance);
-        await this.removeStalePlatformInstance(platformInstance);
-        await platformInstance.destroy();
-      }
-      return;
-    }
 
     if (!(this.cycleCount % 4)) {
       this.reportCount++;
@@ -108,13 +121,7 @@ class Janitor {
     }
 
     for (const platformInstance of platformInstances.values()) {
-      this.removeStaleSocketSessions(platformInstance);
-      // Static platforms are for global use, not tied to a unique to session / eg. credentials)
-      if ((!platformInstance.global) && (platformInstance.sessions.size === 0)) {
-        await this.removeStalePlatformInstance(platformInstance);
-      } else {
-        platformInstance.flaggedForTermination = false;
-      }
+      await this.performStaleCheck(platformInstance);
     }
     this.cycleRunning = false;
     await this.delay(this.cycleInterval);
