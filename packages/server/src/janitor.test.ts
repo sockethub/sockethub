@@ -51,7 +51,7 @@ describe('Janitor', () => {
     expect(janitor.cycleInterval).to.not.equal(cycleInterval);
     janitor.cycleInterval = cycleInterval;
     expect(janitor.cycleInterval).to.equal(cycleInterval);
-    janitor.clean();
+    janitor.start();
     setTimeout(() => {
       expect(janitor.cycleCount).to.equal(1);
       done();

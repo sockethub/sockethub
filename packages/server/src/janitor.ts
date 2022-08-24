@@ -21,9 +21,9 @@ class Janitor {
    * state is determined, the platform will be destroyed (this allows for page
    * refreshes not destroying platform instances)
    */
-  clean(): void {
+  start(): void {
     rmLog('initializing');
-    this.cycle().then(() => {
+    this.clean().then(() => {
       rmLog('cleaning cycle started');
     });
   }
@@ -83,9 +83,9 @@ class Janitor {
     return await listener.io.fetchSockets();
   }
 
-  private async cycle(): Promise<void> {
+  private async clean(): Promise<void> {
     if (this.cycleRunning) {
-      throw new Error('janitor clean cycle called while already running');
+      throw new Error('janitor cleanup cycle called while already running');
     }
     this.cycleRunning = true;
     this.cycleCount++;
@@ -118,7 +118,7 @@ class Janitor {
     }
     this.cycleRunning = false;
     await this.delay(this.cycleInterval);
-    return this.cycle();
+    return this.clean();
   }
 }
 

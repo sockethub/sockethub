@@ -76,8 +76,8 @@ class Sockethub {
     }
 
     log('active platforms: ', [...init.platforms.keys()]);
-    janitor.clean(); // start cleanup cycle
     listener.start();   // start external services
+    janitor.start(); // start cleanup cycle
     log('registering handlers');
     listener.io.on('connection', this.handleIncomingConnection.bind(this));
   }
