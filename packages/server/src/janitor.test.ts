@@ -147,11 +147,11 @@ describe('Janitor', () => {
     const prevCycle = janitor.cycleCount;
     janitor.stop();
     setTimeout(() => {
-      expect(janitor.cycleCount).to.equal(prevCycle + 1);
+      expect(janitor.cycleCount).to.equal(prevCycle);
       setTimeout(() => {
-        expect(janitor.cycleCount).to.equal(prevCycle + 1);
+        expect(janitor.cycleCount).to.equal(prevCycle);
         setTimeout(() => {
-          expect(janitor.cycleCount).to.equal(prevCycle + 1);
+          expect(janitor.cycleCount).to.equal(prevCycle);
           done();
         }, cycleInterval)
       }, cycleInterval)
