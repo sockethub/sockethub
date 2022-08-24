@@ -12,7 +12,6 @@ import validate from "./middleware/validate";
 import janitor from './janitor';
 import listener from './listener';
 import ProcessManager from "./process-manager";
-import {platformInstances} from "./platform-instance";
 import {getSessionStore} from "./store";
 import {BasicFunctionInterface} from "./basic-types";
 
@@ -83,10 +82,8 @@ class Sockethub {
     listener.io.on('connection', this.handleIncomingConnection.bind(this));
   }
 
-  async removeAllPlatformInstances() {
-    for (const platform of platformInstances) {
-      await platform[1].destroy();
-    }
+  async shutdown() {
+    janitor.stop();
   }
 
   private createJob(socketId: string, msg): JobDataEncrypted {
