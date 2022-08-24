@@ -2,7 +2,7 @@
 
 A protocol gateway for the web.
 
-![Compliance](https://github.com/sockethub/sockethub/actions/workflows/master.yml/badge.svg)
+![Compliance](https://github.com/sockethub/sockethub/actions/workflows/compliance.yml/badge.svg)
 ![CodeQL](https://github.com/sockethub/sockethub/actions/workflows/codeql-analysis.yml/badge.svg)
 [![Maintainability](https://api.codeclimate.com/v1/badges/95912fc801271faf44f6/maintainability)](https://codeclimate.com/github/sockethub/sockethub/maintainability)
 [![Release](https://img.shields.io/npm/v/sockethub.svg?style=flat)](https://github.com/sockethub/sockethub/releases)
