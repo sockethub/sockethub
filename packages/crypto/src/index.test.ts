@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import proxyquire from 'proxyquire';
 
-const crypto = proxyquire('./crypto', {
-  'crypto': {
+const crypto = proxyquire('./index', {
+  crypto: {
     randomBytes: () => Buffer.alloc(16)
   }
 }).default;
