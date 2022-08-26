@@ -28,6 +28,12 @@
       "@sockethub/activity-streams.js": [
         "packages/activity-streams.js/src/activity-streams.js"
       ],
+      "@sockethub/crypto": [
+        "packages/crypto/src/index.ts"
+      ],
+      "@sockethub/data-layer": [
+        "packages/data-layer/src/index.ts"
+      ],
       "@sockethub/irc2as": [
         "packages/irc2as/src/index.js"
       ],
@@ -57,6 +63,12 @@
     },
     {
       "path": "packages/activity-streams.js"
+    },
+    {
+      "path": "packages/crypto"
+    },
+    {
+      "path": "packages/data-layer"
     },
     {
       "path": "packages/irc2as"
