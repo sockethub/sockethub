@@ -1,8 +1,8 @@
 import debug from 'debug';
 import {Socket} from "socket.io";
-import {IActivityStream} from "@sockethub/schemas";
+import crypto from "@sockethub/crypto";
+import {CredentialsStore} from "@sockethub/data-layer";
 
-import crypto from './crypto';
 import init from './bootstrap/init';
 import middleware, {MiddlewareChainInterface} from './middleware';
 import createActivityObject from "./middleware/create-activity-object";
@@ -12,28 +12,9 @@ import validate from "./middleware/validate";
 import janitor from './janitor';
 import listener from './listener';
 import ProcessManager from "./process-manager";
-import {getSessionStore} from "./store";
-import {BasicFunctionInterface} from "./basic-types";
+import nconf from "nconf";
 
 const log = debug('sockethub:server:core');
-
-
-export interface JobDataDecrypted {
-  title?: string;
-  msg: IActivityStream;
-  sessionId: string;
-}
-
-export interface JobDataEncrypted {
-  title?: string;
-  msg: string;
-  sessionId: string;
-}
-
-export interface JobEncrypted {
-  data: JobDataEncrypted,
-  remove?: BasicFunctionInterface;
-}
 
 function attachError(err, msg) {
   if (typeof msg !== 'object') {
@@ -54,7 +35,6 @@ class Sockethub {
   processManager: ProcessManager;
 
   constructor() {
-    this.counter = 0;
     this.platforms = init.platforms;
     this.status = false;
     this.parentId = crypto.randToken(16);
@@ -86,21 +66,17 @@ class Sockethub {
     await janitor.stop();
   }
 
-  private createJob(socketId: string, msg): JobDataEncrypted {
-    const title = `${msg.context}-${(msg.id) ? msg.id : this.counter++}`;
-    return {
-      title: title,
-      sessionId: socketId,
-      msg: crypto.encrypt(msg, this.parentSecret1 + this.parentSecret2)
-    };
-  }
-
   private handleIncomingConnection(socket: Socket) {
     // session-specific debug messages
     const sessionLog = debug('sockethub:server:core:' + socket.id),
           sessionSecret = crypto.randToken(16),
           // store instance is session-specific
-          store = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret);
+          // store = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret);
+          credentialsStore = new CredentialsStore(
+            this.parentId, socket.id,
+            this.parentSecret1 + sessionSecret,
+            nconf.get('redis')
+          );
 
     sessionLog(`socket.io connection`);
 
@@ -112,7 +88,7 @@ class Sockethub {
       middleware('credentials')
         .use(expandActivityStream)
         .use(validate('credentials', socket.id))
-        .use(storeCredentials(store, sessionLog) as MiddlewareChainInterface)
+        .use(storeCredentials(credentialsStore, sessionLog) as MiddlewareChainInterface)
         .use((err, data, next) => {
           // error handler
           next(attachError(err, data));
@@ -145,10 +121,9 @@ class Sockethub {
         }).use((msg, next) => {
           const platformInstance = this.processManager.get(msg.context, msg.actor.id, socket.id);
           sessionLog(`queued to channel ${platformInstance.id}`);
-          const job = this.createJob(socket.id, msg);
           // job validated and queued, store socket.io callback for when job is completed
+          const job = platformInstance.jobQueue.add(socket.id, msg);
           platformInstance.completedJobHandlers.set(job.title, next);
-          platformInstance.queue.add(job);
         }).done());
   }
 }

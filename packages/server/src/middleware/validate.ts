@@ -2,11 +2,9 @@
  * responsible for handling the validation and expansion (when applicable) of all incoming objects
  */
 import debug from 'debug';
-import schemas from '@sockethub/schemas';
-import { IActivityStream } from "@sockethub/schemas";
+import schemas, {IActivityStream, CallbackActivityStreamInterface} from '@sockethub/schemas';
 
 import init from "../bootstrap/init";
-import {CallbackActivityStreamInterface} from "../basic-types";
 
 init.platforms.forEach((platform) => {
   Object.keys(platform.schemas).forEach((key) => {

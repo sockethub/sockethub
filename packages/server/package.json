@@ -35,10 +35,11 @@
   "homepage": "https://sockethub.org",
   "dependencies": {
     "@sockethub/activity-streams": "^4.4.0-alpha.3",
+    "@sockethub/crypto": "1.0.0-alpha.3",
+    "@sockethub/data-layer": "1.0.0-alpha.3",
     "@sockethub/client": "^5.0.0-alpha.3",
     "@sockethub/schemas": "^3.0.0-alpha.3",
     "body-parser": "^1.19.0",
-    "bull": "^4.0.0",
     "debug": "^4.3.1",
     "ejs": "^3.0.1",
     "express": "^4.17.1",
@@ -47,7 +48,6 @@
     "nconf": "^0.12.0",
     "npm": "8.16.0",
     "object-hash": "^3.0.0",
-    "secure-store-redis": "^1.4.7",
     "socket.io": "^4.0.1",
     "urijs": "^1.19.2"
   },

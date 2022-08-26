@@ -1,14 +1,12 @@
 import {ChildProcess, fork } from 'child_process';
 import { join } from 'path';
 import { debug, Debugger } from 'debug';
-import Queue from 'bull';
-import { IActivityStream } from '@sockethub/schemas';
+import {IActivityStream, CompletedJobHandler} from "@sockethub/schemas";
+import {JobQueue, JobDataDecrypted} from "@sockethub/data-layer";
 
 import config from "./config";
-import { JobDataDecrypted, JobEncrypted } from "./sockethub";
 import { getSocket } from "./listener";
-import { decryptJobData } from "./common";
-import {CompletedJobHandler} from "./basic-types";
+import nconf from "nconf";
 
 // collection of platform instances, stored by `id`
 export const platformInstances = new Map<string, PlatformInstance>();
@@ -32,7 +30,7 @@ interface PlatformConfig {
 export default class PlatformInstance {
   flaggedForTermination = false;
   id: string;
-  queue: Queue;
+  jobQueue: JobQueue;
   completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
   config: PlatformConfig = {};
   readonly name: string;
@@ -59,14 +57,14 @@ export default class PlatformInstance {
 
     this.debug = debug(`sockethub:platform-instance:${this.id}`);
     // spin off a process
-    const env = config.get('redis:url') ? { REDIS_URL: config.get('redis:url') }
-      : { REDIS_HOST: config.get('redis:host'), REDIS_PORT: config.get('redis:port') };
     this.process = fork(
       join(__dirname, 'platform.js'),
       [this.parentId, this.name, this.id],
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      { env: env });
+      { env: config.get('redis:url') ? { REDIS_URL: config.get('redis:url') }
+        : { REDIS_HOST: config.get('redis:host'), REDIS_PORT: config.get('redis:port') }}
+    );
   }
 
   /**
@@ -76,17 +74,12 @@ export default class PlatformInstance {
     this.debug(`cleaning up`);
     this.flaggedForTermination = true;
     try {
-      await this.queue.removeAllListeners();
+      await this.jobQueue.shutdown();
     } catch (e) {
       // this needs to happen
     }
     try {
-      await this.queue.obliterate({ force: true });
-    } catch (e) {
-      // this needs to happen
-    }
-    try {
-      delete this.queue;
+      delete this.jobQueue;
       await this.process.removeAllListeners('close');
       await this.process.unref();
       this.process.kill();
@@ -99,25 +92,23 @@ export default class PlatformInstance {
    * When jobs are completed or failed, we prepare the results and send them to the client socket
    */
   public initQueue(secret: string) {
-    this.queue = new Queue(this.parentId + this.id, { redis: config.get('redis') });
+    this.jobQueue = new JobQueue(this.parentId, this.id, secret, nconf.get('redis'));
 
-    this.queue.on('global:completed', (jobId, resultString) => {
+    this.jobQueue.on('global:completed', async (jobId, resultString) => {
       const result = resultString ? JSON.parse(resultString) : "";
-      this.queue.getJob(jobId).then(async (job: JobEncrypted) => {
-        await this.handleJobResult('completed', decryptJobData(job, secret), result);
-        await job.remove();
-      });
+      const job = await this.jobQueue.getJob(jobId);
+      await this.handleJobResult('completed', job.data, result);
+      await job.remove();
     });
 
-    this.queue.on('global:error', (jobId, result) => {
+    this.jobQueue.on('global:error', (jobId, result) => {
       this.debug("unknown queue error", jobId, result);
     });
 
-    this.queue.on('global:failed', (jobId, result) => {
-      this.queue.getJob(jobId).then(async (job: JobEncrypted) => {
-        await this.handleJobResult('failed', decryptJobData(job, secret), result);
-        await job.remove();
-      });
+    this.jobQueue.on('global:failed', async (jobId, result) => {
+      const job = await this.jobQueue.getJob(jobId);
+      await this.handleJobResult('failed', job.data, result);
+      await job.remove();
     });
   }
 

@@ -1,11 +1,8 @@
 import debug from 'debug';
-import hash from "object-hash";
-import Queue from 'bull';
-import {IActivityStream} from "@sockethub/schemas";
-import {decryptJobData, getPlatformId} from "./common";
-import {JobDataDecrypted, JobEncrypted} from "./sockethub";
-import {getSessionStore} from "./store";
-import {CallbackInterface} from "./basic-types";
+import {IActivityStream, CallbackInterface} from "@sockethub/schemas";
+import crypto, {getPlatformId} from "@sockethub/crypto";
+import {CredentialsStore, JobQueue, RedisConfig} from "@sockethub/data-layer";
+import {JobDataDecrypted} from "@sockethub/data-layer/dist";
 
 // command-line params
 const parentId = process.argv[2];
@@ -71,88 +68,60 @@ const platformSession: PlatformSession = {
 };
 const platform = new PlatformModule(platformSession);
 
-/**
- * Get the credentials stored for this user in this sessions store, if given the correct
- * sessionSecret.
- * @param actorId
- * @param sessionId
- * @param sessionSecret
- * @param cb
- */
-function getCredentials(actorId: string, sessionId: string, sessionSecret: string,
-                        cb: CallbackInterface) {
-  if (platform.config.noCredentials) { return cb(); }
-  const store = getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
-  store.get(actorId, (err, credentials) => {
-    if (platform.config.persist) {
-      // don't continue if we don't get credentials
-      if (err) { return cb(err.toString()); }
-    } else if (! credentials) {
-      // also skip if this is a non-persist platform with no credentials
-      return cb();
-    }
-
-    if (platform.credentialsHash) {
-      if (platform.credentialsHash !== hash(credentials.object)) {
-        return cb('provided credentials do not match existing platform instance for actor '
-            + platform.actor.id);
-      }
-    } else {
-      platform.credentialsHash = hash(credentials.object);
-    }
-    cb(undefined, credentials);
-  });
-}
 
 /**
  * Returns a function used to handle completed jobs from the platform code (the `done` callback).
  * @param secret the secret used to decrypt credentials
  */
 function getJobHandler(secret: string) {
-  return (job: JobEncrypted, done: CallbackInterface) => {
-    const jobData: JobDataDecrypted = decryptJobData(job, secret);
-    const jobLog = debug(`${loggerPrefix}:${jobData.sessionId}`);
-    jobLog(`received ${jobData.title} ${jobData.msg.type}`);
-    const sessionSecret = jobData.msg.sessionSecret;
-    delete jobData.msg.sessionSecret;
+  return (job: JobDataDecrypted, done: CallbackInterface) => {
+    const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
+    jobLog(`received ${job.title} ${job.msg.type}`);
+    // const sessionSecret = job.msg.sessionSecret;
+    delete job.msg.sessionSecret;
 
-    return getCredentials(jobData.msg.actor.id, jobData.sessionId, sessionSecret,
-      (err, credentials) => {
-        if (err) { return done(new Error(err.toString())); }
-        let jobCallbackCalled = false;
-        const doneCallback = (err, result) => {
-          if (jobCallbackCalled) { return; }
-          jobCallbackCalled = true;
-          if (err) {
-            jobLog(`errored ${jobData.title} ${jobData.msg.type}`);
-            let errMsg;
-            // some error objects (eg. TimeoutError) don't interoplate correctly to human-readable
-            // so we have to do this little dance
-            try {
-              errMsg = err.toString();
-            } catch (e) {
-              errMsg = err;
-            }
-            done(new Error(errMsg));
-          } else {
-            jobLog(`completed ${jobData.title} ${jobData.msg.type}`);
-            done(null, result);
-          }
-        };
-        if ((Array.isArray(platform.config.requireCredentials)) &&
-          (platform.config.requireCredentials.includes(jobData.msg.type))) {
-          // add the credentials object if this method requires it
-          platform[jobData.msg.type](jobData.msg, credentials, doneCallback);
-        } else if (platform.config.persist) {
-          if (platform.initialized) {
-            platform[jobData.msg.type](jobData.msg, doneCallback);
-          } else {
-            done(new Error(`${jobData.msg.type} called on uninitialized platform`));
-          }
-        } else {
-          platform[jobData.msg.type](jobData.msg, doneCallback);
+    const credentialStore = new CredentialsStore(
+      parentId, job.sessionId, secret, redisConfig as RedisConfig);
+
+    let jobCallbackCalled = false;
+    const doneCallback = (err, result) => {
+      if (jobCallbackCalled) { return; }
+      jobCallbackCalled = true;
+      if (err) {
+        jobLog(`errored ${job.title} ${job.msg.type}`);
+        let errMsg;
+        // some error objects (eg. TimeoutError) don't interpolate correctly to human-readable
+        // so we have to do this little dance
+        try {
+          errMsg = err.toString();
+        } catch (e) {
+          errMsg = err;
         }
+        done(new Error(errMsg));
+      } else {
+        jobLog(`completed ${job.title} ${job.msg.type}`);
+        done(null, result);
+      }
+    };
+
+    if ((platform.config.persist) && (!platform.initialized)) {
+      done(new Error(`${job.msg.type} called on uninitialized platform`));
+    } else if (!platform.config.noCredentials) {
+      credentialStore.get(job.msg.actor.id, platform.credentialsHash).then((credentials) => {
+        if ((Array.isArray(platform.config.requireCredentials)) &&
+          (platform.config.requireCredentials.includes(job.msg.type))) {
+          // add the credentials object if this method requires it
+          platform[job.msg.type](job.msg, credentials, doneCallback);
+        } else {
+          platform[job.msg.type](job.msg, doneCallback);
+        }
+      }).catch((err) => {
+        return done(new Error(err.toString()));
       });
+    } else {
+      platform[job.msg.type](job.msg, doneCallback);
+    }
+
   };
 }
 
@@ -176,7 +145,7 @@ function updateActor(credentials) {
   identifier = getPlatformId(platformName, credentials.actor.id);
   logger(`platform actor updated to ${credentials.actor.id} identifier ${identifier}`);
   logger = debug(`sockethub:platform:${identifier}`);
-  platform.credentialsHash = hash(credentials.object);
+  platform.credentialsHash = crypto.objectHash(credentials.object);
   platform.debug = debug(`sockethub:platform:${platformName}:${identifier}`);
   process.send(['updateActor', undefined, identifier]);
   startQueueListener(true);
@@ -193,8 +162,9 @@ function startQueueListener(refresh = false) {
     logger('start queue called multiple times, skipping');
     return;
   }
-  const queue = new Queue(parentId + identifier, { redis: redisConfig });
-  queueStarted = true;
+  const queue = new JobQueue(parentId, identifier, secret, redisConfig as RedisConfig);
   logger('listening on the queue for incoming jobs');
-  queue.process(getJobHandler(secret));
+  queue.onJob(getJobHandler(secret));
+  queueStarted = true;
+  // queue.process(getJobHandler(secret));
 }
