@@ -5,6 +5,9 @@ if (typeof chai !== 'object') {
 const assert = chai.assert;
 const expect = chai.expect;
 
+mocha.bail(true);
+mocha.timeout('30s');
+
 async function loadScript(url) {
   console.log('loadScript: ' + url);
   let response = await fetch(url);
@@ -21,7 +24,7 @@ function genHandler (done) {
     }
     done();
   }
-};
+}
 
 describe('Page', () => {
   it("loads socket.io.js", async () => {
@@ -47,7 +50,6 @@ describe('Page', () => {
   });
 
   describe('new SockethubClient()', () => {
-    mocha.timeout(20000);
     let sc;
     before(() => {
       sc = new SockethubClient(io('http://localhost:10550/', {path: '/sockethub'}));
@@ -95,7 +97,7 @@ describe('Page', () => {
         }, genHandler(done));
       });
 
-      it('creates activity-object', () => {
+      it('creates activity-object', (id, expand) => {
         const actor = {
           id: "jimmy@prosody/SockethubExample",
           type: "person",
@@ -111,7 +113,7 @@ describe('Page', () => {
           actor: "jimmy@prosody/SockethubExample",
           context: "xmpp"
         }, genHandler(done));
-      });
+      }).timeout(30000);
     });
   })
 });
