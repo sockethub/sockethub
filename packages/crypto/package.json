@@ -33,7 +33,7 @@
     "clean": "npx rimraf dist coverage",
     "clean:deps": "npx rimraf node_modules",
     "compliance": "yarn run lint && yarn run test && yarn run coverage",
-    "test": "c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts src/**/*.test.ts",
+    "test": "c8 -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts",
     "coverage": "c8 check-coverage --statements 100 --branches 90 --functions 85 --lines 100",
     "lint": "eslint \"**/*.ts\"",
     "lint:fix": "eslint --fix \"**/*.ts\"",
