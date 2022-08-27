@@ -94,21 +94,12 @@ export default class PlatformInstance {
   public initQueue(secret: string) {
     this.jobQueue = new JobQueue(this.parentId, this.id, secret, nconf.get('redis'));
 
-    this.jobQueue.on('global:completed', async (jobId, resultString) => {
-      const result = resultString ? JSON.parse(resultString) : "";
-      const job = await this.jobQueue.getJob(jobId);
-      await this.handleJobResult('completed', job.data, result);
-      await job.remove();
+    this.jobQueue.on('global:completed', async (job: JobDataDecrypted, result: string) => {
+      await this.handleJobResult('completed', job, result);
     });
 
-    this.jobQueue.on('global:error', (jobId, result) => {
-      this.debug("unknown queue error", jobId, result);
-    });
-
-    this.jobQueue.on('global:failed', async (jobId, result) => {
-      const job = await this.jobQueue.getJob(jobId);
-      await this.handleJobResult('failed', job.data, result);
-      await job.remove();
+    this.jobQueue.on('global:failed', async (job: JobDataDecrypted, result: string) => {
+      await this.handleJobResult('failed', job, result);
     });
   }
 

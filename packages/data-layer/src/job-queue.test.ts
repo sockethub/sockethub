@@ -8,6 +8,7 @@ proxyquire.noCallThru();
 describe('JobQueue', () => {
   let jobQueue, MockBull, MockObjectHash, MockAdd, MockGetJob, MockObliterate, MockProcess,
     MockDecrypt, MockEncrypt, MockHash, MockClean;
+
   beforeEach(() => {
     MockObjectHash = sinon.stub();
     MockAdd = sinon.stub();
@@ -23,7 +24,9 @@ describe('JobQueue', () => {
       getJob: MockGetJob,
       process: MockProcess,
       obliterate: MockObliterate,
-      clean: MockClean
+      clean: MockClean,
+      close: sinon.stub(),
+      on: sinon.stub()
     });
 
     const JobQueueMod = proxyquire('./job-queue', {

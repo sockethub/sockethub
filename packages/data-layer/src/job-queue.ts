@@ -7,12 +7,13 @@ import {
   RedisConfig
 } from "./types";
 import debug, {Debugger} from 'debug';
+import EventEmitter from "events";
 
 interface JobHandler {
   (job: JobDataDecrypted, done: CallableFunction)
 }
 
-export default class JobQueue {
+export default class JobQueue extends EventEmitter {
   readonly uid: string;
   private readonly bull: Queue;
   private readonly log: Debugger;
@@ -21,10 +22,25 @@ export default class JobQueue {
   private counter = 0;
 
   constructor(instanceId: string, sessionId: string, secret: string, redisConfig: RedisConfig) {
+    super();
+    this.bull = new Queue(instanceId + sessionId, { redis: redisConfig });
     this.uid = `sockethub:data-layer:job-queue:${instanceId}:${sessionId}`;
     this.secret = secret;
-    this.bull = new Queue(instanceId + sessionId, { redis: redisConfig });
     this.log = debug(this.uid);
+    this.bull.on('global:completed', async (jobId: string, result: string) => {
+      const r = result ? JSON.parse(result) : "";
+      const job = await this.getJob(jobId);
+      this.emit('global:completed', job.data, r);
+      await job.remove();
+    });
+    this.bull.on('global:error', async (jobId: string, result: string) => {
+      this.log("unknown queue error", jobId, result);
+    });
+    this.bull.on('global:failed', async (jobId, result: string) => {
+      const job = await this.getJob(jobId);
+      this.emit('global:failed', job.data, result);
+      await job.remove();
+    });
   }
 
   add(socketId: string, msg): JobDataEncrypted {
@@ -48,6 +64,7 @@ export default class JobQueue {
   async shutdown() {
     await this.bull.clean(0);
     await this.bull.obliterate({ force: true });
+    await this.bull.close();
   }
 
   private createJob(socketId: string, msg): JobDataEncrypted {
