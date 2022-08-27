@@ -1,7 +1,6 @@
 name: Compliance
 on:
   pull_request:
-  push:
 
 jobs:
 
