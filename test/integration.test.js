@@ -47,6 +47,7 @@ describe('Page', () => {
   });
 
   describe('new SockethubClient()', () => {
+    this.timeout(20000);
     let sc;
     before(() => {
       sc = new SockethubClient(io('http://localhost:10550/', {path: '/sockethub'}));
@@ -92,7 +93,7 @@ describe('Page', () => {
             userAddress: "jimmy@prosody"
           }
         }, genHandler(done));
-      }).timeout(3000);
+      });
 
       it('creates activity-object', () => {
         const actor = {
@@ -110,7 +111,7 @@ describe('Page', () => {
           actor: "jimmy@prosody/SockethubExample",
           context: "xmpp"
         }, genHandler(done));
-      }).timeout(12000);
+      });
     });
   })
 });
