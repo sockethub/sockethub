@@ -54,23 +54,6 @@ describe('Page', () => {
       sc = new SockethubClient(io('http://localhost:10550/', { path: '/sockethub' }));
     });
 
-    it('send credentials', (done) => {
-      sc.socket.emit('credentials', {
-        actor: {
-          id: "jimmy@prosody/SockethubExample",
-          type: 'person'
-        },
-        context: "xmpp",
-        type: "credentials",
-        object: {
-          type: "credentials",
-          password: "passw0rd",
-          resource: "SockethubExample",
-          userAddress: "jimmy@prosody"
-        }
-      }, genHandler(done));
-    }).timeout(3000);
-
     describe('create activity-object', () => {
       it('results in a fetch-able actor object', () =>  {
         const actor = {
@@ -84,9 +67,10 @@ describe('Page', () => {
 
       it('can send connect with actor string', (done) => {
         sc.socket.emit('message', {
-          type: "connect",
+          type: "echo",
           actor: "jimmy@prosody/SockethubExample",
-          context: "xmpp"
+          context: "dummy",
+          object: {type: 'message', content: 'hello world'}
         }, genHandler(done));
       }).timeout(12000);
     });

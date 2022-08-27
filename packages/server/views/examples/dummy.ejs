@@ -83,7 +83,9 @@
           }
         };
         bdebug('sending message: ', msg);
-        sc.socket.emit('message', msg);
+        sc.socket.emit('message', msg, (d) => {
+          bdebug('completed', d)
+        });
 
         $('#m').val('');
         return false;
