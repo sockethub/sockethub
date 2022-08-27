@@ -19,13 +19,12 @@ describe("PlatformInstance", () => {
     getSocketFake = sinon.fake.resolves(socketMock);
 
     const PlatformInstanceMod = proxyquire('./platform-instance', {
-      'bull': sandbox.stub().returns({
-        on: sandbox.stub()
-      }),
-      './store': {
-        redisConfig: {
-          createClient: () => {}
-        }
+      '@sockethub/data-layer': {
+        JobQueue: sandbox.stub().returns({
+          shutdown: sandbox.stub(),
+          on: sandbox.stub(),
+          getJob: sandbox.stub()
+        })
       },
       'child_process': {
         fork: forkFake,
@@ -129,17 +128,17 @@ describe("PlatformInstance", () => {
     });
 
     it('initializes the job queue', () => {
-      expect(pi.queue).to.be.undefined;
+      expect(pi.jobQueue).to.be.undefined;
       pi.initQueue('a secret');
-      expect(pi.queue).to.be.ok;
+      expect(pi.jobQueue).to.be.ok;
     });
 
     it("cleans up its references when destroyed", async () => {
       pi.initQueue('a secret');
-      expect(pi.queue).to.be.ok;
+      expect(pi.jobQueue).to.be.ok;
       expect(platformInstances.has('platform identifier')).to.be.true;
       await pi.destroy();
-      expect(pi.queue).not.to.be.ok;
+      expect(pi.jobQueue).not.to.be.ok;
       expect(platformInstances.has('platform identifier')).to.be.false;
     });
 
