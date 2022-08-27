@@ -55,7 +55,7 @@ export default class PlatformInstance {
       this.global = true;
     }
 
-    this.debug = debug(`sockethub:platform-instance:${this.id}`);
+    this.debug = debug(`sockethub:server:platform-instance:${this.id}`);
     // spin off a process
     this.process = fork(
       join(__dirname, 'platform.js'),
