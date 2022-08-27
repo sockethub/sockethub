@@ -7,26 +7,28 @@ proxyquire.noCallThru();
 
 describe('JobQueue', () => {
   let jobQueue, MockBull, MockObjectHash, MockAdd, MockGetJob, MockObliterate, MockProcess,
-    MockDecrypt, MockEncrypt, MockHash, MockClean;
+    MockDecrypt, MockEncrypt, MockHash, MockClean, MockOn, sandbox;
 
   beforeEach(() => {
-    MockObjectHash = sinon.stub();
-    MockAdd = sinon.stub();
-    MockGetJob = sinon.stub();
-    MockProcess = sinon.stub();
-    MockClean = sinon.stub();
-    MockObliterate = sinon.stub();
-    MockDecrypt = sinon.stub();
-    MockEncrypt = sinon.stub();
-    MockHash = sinon.stub();
-    MockBull = sinon.stub().returns({
+    sandbox = sinon.createSandbox();
+    MockObjectHash = sandbox.stub();
+    MockAdd = sandbox.stub();
+    MockGetJob = sandbox.stub();
+    MockProcess = sandbox.stub();
+    MockClean = sandbox.stub();
+    MockObliterate = sandbox.stub();
+    MockDecrypt = sandbox.stub();
+    MockEncrypt = sandbox.stub();
+    MockHash = sandbox.stub();
+    MockOn = sandbox.stub().callsArgWith(1, 'a job id', 'a result string');
+
+    MockBull = sandbox.stub().returns({
       add: MockAdd,
       getJob: MockGetJob,
       process: MockProcess,
       obliterate: MockObliterate,
       clean: MockClean,
-      close: sinon.stub(),
-      on: sinon.stub()
+      on: MockOn
     });
 
     const JobQueueMod = proxyquire('./job-queue', {
@@ -40,6 +42,11 @@ describe('JobQueue', () => {
     });
     const JobQueue = JobQueueMod.default;
     jobQueue = new JobQueue('a parent id', 'a session id', 'a secret', 'redis config');
+    jobQueue.emit = sandbox.stub();
+  });
+
+  afterEach(() => {
+    sinon.restore();
   });
 
   it('returns a valid JobQueue object', () => {
@@ -53,6 +60,8 @@ describe('JobQueue', () => {
     expect(typeof jobQueue.getJob).to.equal('function');
     expect(typeof jobQueue.onJob).to.equal('function');
     expect(typeof jobQueue.shutdown).to.equal('function');
+    sinon.assert.calledThrice(MockOn);
+    sinon.assert.calledOnceWithExactly(MockGetJob, 'a job id')
   });
 
 
@@ -112,16 +121,18 @@ describe('JobQueue', () => {
       }
     };
 
-    it('handles fetching valid job', async () => {
+    it('handles fetching a valid job', async () => {
       MockGetJob.returns(encryptedJob);
       MockDecrypt.returns('an unencrypted message')
       const job = await jobQueue.getJob('a valid job');
-      sinon.assert.calledOnceWithExactly(MockGetJob, 'a valid job');
+      sinon.assert.calledTwice(MockGetJob);
+      sinon.assert.calledWith(MockGetJob, 'a valid job');
       encryptedJob.data.msg = 'an unencrypted message';
       expect(job).to.eql(encryptedJob);
     });
 
-    it('handles fetching invalid job', async () => {
+    it('handles fetching an invalid job', async () => {
+      MockGetJob.reset();
       MockGetJob.returns(undefined);
       const job = await jobQueue.getJob('an invalid job');
       expect(job).to.eql(undefined);

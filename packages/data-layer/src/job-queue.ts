@@ -64,7 +64,6 @@ export default class JobQueue extends EventEmitter {
   async shutdown() {
     await this.bull.clean(0);
     await this.bull.obliterate({ force: true });
-    await this.bull.close();
   }
 
   private createJob(socketId: string, msg): JobDataEncrypted {

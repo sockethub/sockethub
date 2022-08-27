@@ -44,7 +44,7 @@ describe('Initialize IRC Platform', () => {
   beforeEach(() => {
     platform = new IRCPlatform({
       debug: function () {},
-      updateActor: function async () { return Promise.resolve(); }
+      updateActor: function async() { return Promise.resolve(); }
     });
     platform.__connect = function (key, credentials, cb) {
       cb(null, {

@@ -38,7 +38,7 @@
     "clean:deps": "npx rimraf node_modules",
     "compliance": "yarn run lint && yarn run test && yarn run coverage",
     "test": "c8 -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts",
-    "coverage": "c8 check-coverage --statements 100 --branches 90 --functions 100 --lines 100",
+    "coverage": "c8 check-coverage --statements 98 --branches 85 --functions 100 --lines 98",
     "lint": "eslint \"**/*.ts\"",
     "lint:fix": "eslint --fix \"**/*.ts\"",
     "build": "tsc"
