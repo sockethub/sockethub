@@ -16,7 +16,8 @@ const redisConfig = process.env.REDIS_URL ? process.env.REDIS_URL
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PlatformModule = require(`@sockethub/platform-${platformName}`);
 
-let queueStarted = false;
+let jobQueue: JobQueue;
+let jobQueueStarted = false;
 let parentSecret1: string, parentSecret2: string;
 
 logger(`platform handler initialized for ${platformName} ${identifier}`);
@@ -47,14 +48,14 @@ process.on('uncaughtException', (err) => {
  * Incoming messages from the worker to this platform. Data is an array, the first property is the
  * method to call, the rest are params.
  */
-process.on('message', (data: SecretFromParent) => {
+process.on('message', async (data: SecretFromParent) => {
   if (data[0] !== 'secrets') {
     return;
   }
   const {parentSecret2: parentSecret3, parentSecret1: parentSecret} = data[1];
   parentSecret1 = parentSecret;
   parentSecret2 = parentSecret3;
-  startQueueListener();
+  await startQueueListener();
 });
 
 
@@ -71,17 +72,16 @@ const platform = new PlatformModule(platformSession);
 
 /**
  * Returns a function used to handle completed jobs from the platform code (the `done` callback).
- * @param secret the secret used to decrypt credentials
  */
-function getJobHandler(secret: string) {
+function getJobHandler() {
   return (job: JobDataDecrypted, done: CallbackInterface) => {
     const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
     jobLog(`received ${job.title} ${job.msg.type}`);
-    // const sessionSecret = job.msg.sessionSecret;
-    delete job.msg.sessionSecret;
 
     const credentialStore = new CredentialsStore(
-      parentId, job.sessionId, secret, redisConfig as RedisConfig);
+      parentId, job.sessionId, parentSecret1 + job.msg.sessionSecret, redisConfig as RedisConfig
+    );
+    delete job.msg.sessionSecret;
 
     let jobCallbackCalled = false;
     const doneCallback = (err, result) => {
@@ -141,30 +141,34 @@ function getSendFunction(command: string) {
  * both the queue thread (listening on the channel for jobs) and the logging object are updated.
  * @param credentials
  */
-function updateActor(credentials) {
+async function updateActor(credentials) {
   identifier = getPlatformId(platformName, credentials.actor.id);
   logger(`platform actor updated to ${credentials.actor.id} identifier ${identifier}`);
   logger = debug(`sockethub:platform:${identifier}`);
   platform.credentialsHash = crypto.objectHash(credentials.object);
   platform.debug = debug(`sockethub:platform:${platformName}:${identifier}`);
   process.send(['updateActor', undefined, identifier]);
-  startQueueListener(true);
+  await startQueueListener(true);
 }
 
 /**
- * starts listening on the queue for incoming jobs
+ * Starts listening on the queue for incoming jobs
  * @param refresh boolean if the param is true, we re-init the queue.process
  * (used when identifier changes)
  */
-function startQueueListener(refresh = false) {
-  const secret = parentSecret1 + parentSecret2;
-  if ((queueStarted) && (!refresh)) {
-    logger('start queue called multiple times, skipping');
-    return;
+async function startQueueListener(refresh = false) {
+  if (jobQueueStarted) {
+    if (refresh) {
+      await jobQueue.shutdown();
+    } else {
+      logger('start queue called multiple times, skipping');
+      return;
+    }
   }
-  const queue = new JobQueue(parentId, identifier, secret, redisConfig as RedisConfig);
+  jobQueue = new JobQueue(
+    parentId, identifier, parentSecret1 + parentSecret2, redisConfig as RedisConfig
+  );
   logger('listening on the queue for incoming jobs');
-  queue.onJob(getJobHandler(secret));
-  queueStarted = true;
-  // queue.process(getJobHandler(secret));
+  jobQueue.onJob(getJobHandler());
+  jobQueueStarted = true;
 }

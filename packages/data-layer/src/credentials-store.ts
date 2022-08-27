@@ -5,13 +5,19 @@ import crypto from "@sockethub/crypto";
 import {RedisConfigProps, RedisConfigUrl} from "./types";
 
 /**
- * Encapsulates the storing and fetching of credential objects
+ * Encapsulates the storing and fetching of credential objects.
  */
 export default class CredentialsStore {
   readonly uid: string;
   private readonly store: SecureStore;
   private readonly log: Debugger;
 
+  /**
+   * @param parentId - The ID of the parent instance (eg. sockethub itself)
+   * @param sessionId - The ID of the session (socket.io connection)
+   * @param secret - The encryption secret (parent + session secrets)
+   * @param redisConfig - Connect info for redis
+   */
   constructor(
     parentId: string,
     sessionId: string,

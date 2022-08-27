@@ -13,6 +13,7 @@ import janitor from './janitor';
 import listener from './listener';
 import ProcessManager from "./process-manager";
 import nconf from "nconf";
+import {IActivityStream} from "@sockethub/schemas";
 
 const log = debug('sockethub:server:core');
 
@@ -90,7 +91,7 @@ class Sockethub {
         .use(validate('credentials', socket.id))
         .use(storeCredentials(credentialsStore, sessionLog) as MiddlewareChainInterface)
         .use((err, data, next) => {
-          // error handler
+        // error handler
           next(attachError(err, data));
         }).use((data, next) => { next(); })
         .done());
@@ -111,18 +112,18 @@ class Sockethub {
         .use(expandActivityStream)
         .use(validate('message', socket.id))
         .use((msg, next) => {
-          // The platform thread must find the credentials on their own using the given
-          // sessionSecret, which indicates that this specific session (socket
-          // connection) has provided credentials.
+        // The platform thread must find the credentials on their own using the given
+        // sessionSecret, which indicates that this specific session (socket
+        // connection) has provided credentials.
           msg.sessionSecret = sessionSecret;
           next(msg);
         }).use((err, data, next) => {
           next(attachError(err, data));
-        }).use((msg, next) => {
+        }).use((msg: IActivityStream, next) => {
           const platformInstance = this.processManager.get(msg.context, msg.actor.id, socket.id);
-          sessionLog(`queued to channel ${platformInstance.id}`);
           // job validated and queued, store socket.io callback for when job is completed
           const job = platformInstance.jobQueue.add(socket.id, msg);
+          sessionLog(`queued ${job.title} ${msg.type} to channel ${platformInstance.id}`);
           platformInstance.completedJobHandlers.set(job.title, next);
         }).done());
   }
