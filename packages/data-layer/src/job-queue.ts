@@ -7,13 +7,12 @@ import {
   RedisConfig
 } from "./types";
 import debug, {Debugger} from 'debug';
-import EventEmitter from "events";
 
 interface JobHandler {
   (job: JobDataDecrypted, done: CallableFunction)
 }
 
-export default class JobQueue extends EventEmitter {
+export default class JobQueue {
   readonly uid: string;
   private readonly bull: Queue;
   private readonly log: Debugger;
@@ -22,7 +21,6 @@ export default class JobQueue extends EventEmitter {
   private counter = 0;
 
   constructor(instanceId: string, sessionId: string, secret: string, redisConfig: RedisConfig) {
-    super();
     this.uid = `sockethub:data-layer:job-queue:${instanceId}:${sessionId}`;
     this.secret = secret;
     this.bull = new Queue(instanceId + sessionId, { redis: redisConfig });
@@ -37,6 +35,7 @@ export default class JobQueue extends EventEmitter {
 
   async getJob(jobId: string): Promise<JobDecrypted> {
     const job = await this.bull.getJob(jobId);
+    if (!job) { return job; }
     job.data.msg = this.decryptJobData(job);
     return job;
   }
@@ -47,7 +46,7 @@ export default class JobQueue extends EventEmitter {
   }
 
   async shutdown() {
-    await this.bull.obliterate({ force: true });
+    await this.bull.clean(0);
     await this.bull.obliterate({ force: true });
   }
 
