@@ -47,7 +47,7 @@ describe('Page', () => {
   });
 
   describe('new SockethubClient()', () => {
-    this.timeout(20000);
+    mocha.timeout(20000);
     let sc;
     before(() => {
       sc = new SockethubClient(io('http://localhost:10550/', {path: '/sockethub'}));
