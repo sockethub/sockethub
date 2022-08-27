@@ -40,7 +40,7 @@ describe('Page', () => {
     assert.typeOf(SockethubClient, 'function');
   });
 
-  describe('new SockethubClient()', () => {
+  describe('SockethubClient()', () => {
     let sc, handler;
     before(() => {
       sc = new SockethubClient(io('http://localhost:10550/', {path: '/sockethub'}));
