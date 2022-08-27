@@ -58,7 +58,6 @@ process.on('message', async (data: SecretFromParent) => {
   await startQueueListener();
 });
 
-
 /**
  * Initialize platform module
  */
@@ -68,7 +67,6 @@ const platformSession: PlatformSession = {
   updateActor: updateActor
 };
 const platform = new PlatformModule(platformSession);
-
 
 /**
  * Returns a function used to handle completed jobs from the platform code (the `done` callback).
@@ -104,24 +102,20 @@ function getJobHandler() {
       }
     };
 
-    if ((platform.config.persist) && (!platform.initialized)) {
-      done(new Error(`${job.msg.type} called on uninitialized platform`));
-    } else if (!platform.config.noCredentials) {
+    platform.config.requireCredentials ? platform.config.requireCredentials : [];
+    if (platform.config.requireCredentials.includes(job.msg.type)) {
+      // this method requires credentials and should be called even if the platform is not
+      // yet initialized, because they need to authenticate before they are initialized.
       credentialStore.get(job.msg.actor.id, platform.credentialsHash).then((credentials) => {
-        if ((Array.isArray(platform.config.requireCredentials)) &&
-          (platform.config.requireCredentials.includes(job.msg.type))) {
-          // add the credentials object if this method requires it
-          platform[job.msg.type](job.msg, credentials, doneCallback);
-        } else {
-          platform[job.msg.type](job.msg, doneCallback);
-        }
+        platform[job.msg.type](job.msg, credentials, doneCallback);
       }).catch((err) => {
         return done(new Error(err.toString()));
       });
+    } else if ((platform.config.persist) && (!platform.initialized)) {
+      done(new Error(`${job.msg.type} called on uninitialized platform`));
     } else {
       platform[job.msg.type](job.msg, doneCallback);
     }
-
   };
 }
 

@@ -16,7 +16,7 @@ interface JobHandler {
 export default class JobQueue extends EventEmitter {
   readonly uid: string;
   private readonly bull: Queue;
-  private readonly log: Debugger;
+  private readonly debug: Debugger;
   private readonly secret: string;
   private handler: JobHandler;
   private counter = 0;
@@ -26,20 +26,24 @@ export default class JobQueue extends EventEmitter {
     this.bull = new Queue(instanceId + sessionId, { redis: redisConfig });
     this.uid = `sockethub:data-layer:job-queue:${instanceId}:${sessionId}`;
     this.secret = secret;
-    this.log = debug(this.uid);
+    this.debug = debug(this.uid);
     this.bull.on('global:completed', async (jobId: string, result: string) => {
       const r = result ? JSON.parse(result) : "";
       const job = await this.getJob(jobId);
-      this.emit('global:completed', job.data, r);
-      await job.remove();
+      if (job) {
+        this.emit('global:completed', job.data.msg, r);
+        await job.remove();
+      }
     });
     this.bull.on('global:error', async (jobId: string, result: string) => {
-      this.log("unknown queue error", jobId, result);
+      this.debug("unknown queue error", jobId, result);
     });
     this.bull.on('global:failed', async (jobId, result: string) => {
       const job = await this.getJob(jobId);
-      this.emit('global:failed', job.data, result);
-      await job.remove();
+      if (job) {
+        this.emit('global:failed', job.data.msg, result);
+        await job.remove();
+      }
     });
   }
 
@@ -51,14 +55,15 @@ export default class JobQueue extends EventEmitter {
 
   async getJob(jobId: string): Promise<JobDecrypted> {
     const job = await this.bull.getJob(jobId);
-    if (!job) { return job; }
-    job.data.msg = this.decryptJobData(job);
+    if (job) {
+      job.data.msg = this.decryptJobData(job);
+    }
     return job;
   }
 
   onJob(handler: JobHandler): void {
     this.handler = handler;
-    this.bull.process(this.jobHandler);
+    this.bull.process(this.jobHandler.bind(this));
   }
 
   async shutdown() {
@@ -76,7 +81,7 @@ export default class JobQueue extends EventEmitter {
   }
 
   private jobHandler(encryptedJob: JobEncrypted, done: CallableFunction): void {
-    this.log('incoming job from queue');
+    this.debug('incoming job from queue');
     const job = this.decryptJobData(encryptedJob);
     this.handler(job, done);
   }
