@@ -15,16 +15,7 @@ async function loadScript(url) {
   eval(script);
 }
 
-function genHandler (done) {
-  return function (msg) {
-    console.log('CALLBACK HANDLER for: ', msg);
-    if ((msg) && (msg.error)) {
-      console.log("CALLBACK ERROR: ", msg.error);
-      return done(msg.error);
-    }
-    done();
-  }
-}
+
 
 describe('Page', () => {
   it("loads socket.io.js", async () => {
@@ -50,7 +41,7 @@ describe('Page', () => {
   });
 
   describe('new SockethubClient()', () => {
-    let sc;
+    let sc, handler;
     before(() => {
       sc = new SockethubClient(io('http://localhost:10550/', {path: '/sockethub'}));
     });
@@ -72,10 +63,11 @@ describe('Page', () => {
           actor: "jimmy@dummy",
           context: "dummy",
           object: {type: 'message', content: 'hello world'}
-        }, genHandler((err) => {
-          console.log('Dummy message callback! ', err);
-          done(err);
-        }));
+        }, (msg) => {
+          console.log('Dummy message callback! ', msg);
+          if (msg?.error) { done(msg.error); }
+          else { done(); }
+        });
       });
     });
 
@@ -94,7 +86,11 @@ describe('Page', () => {
             resource: "SockethubExample",
             userAddress: "jimmy@prosody"
           }
-        }, genHandler(done));
+        }, (msg) => {
+          console.log('XMPP credentials callback! ', msg);
+          if (msg?.error) { done(msg.error); }
+          else { done(); }
+        });
       });
 
       it('creates activity-object', (id, expand) => {
@@ -112,8 +108,12 @@ describe('Page', () => {
           type: "connect",
           actor: "jimmy@prosody/SockethubExample",
           context: "xmpp"
-        }, genHandler(done));
-      }).timeout(30000);
+        }, (msg) => {
+          console.log('XMPP message callback! ', msg);
+          if (msg?.error) { done(msg.error); }
+          else { done(); }
+        });
+      });
     });
   })
 });
