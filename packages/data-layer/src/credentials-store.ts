@@ -58,9 +58,9 @@ export default class CredentialsStore {
             return reject(
               `provided credentials do not match existing platform instance for actor ${actor}`);
           }
-        } else {
-          // FIXME this needs to be updated back in the caller namespace
-          credentialHash = crypto.objectHash(credentials.object);
+        // } else {
+        //   // FIXME this needs to be updated back in the caller namespace
+        //   credentialHash = crypto.objectHash(credentials.object);
         }
         return resolve(credentials);
       });
