@@ -72,7 +72,7 @@ describe('Page', () => {
           context: "dummy",
           object: {type: 'message', content: 'hello world'}
         }, genHandler(done));
-      }).timeout(2000);
+      });
     });
   });
 });
