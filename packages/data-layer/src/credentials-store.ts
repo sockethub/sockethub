@@ -19,7 +19,11 @@ export default class CredentialsStore {
     redisConfig: RedisConfigProps | RedisConfigUrl
   ) {
     this.uid = `sockethub:data-layer:credentials-store:${parentId}:${sessionId}`;
-    this.store = new SecureStore(this.uid, secret, redisConfig);
+    this.store = new SecureStore({
+      namespace: this.uid,
+      secret: secret,
+      redis: redisConfig
+    });
     this.log = debug(this.uid);
   }
 
