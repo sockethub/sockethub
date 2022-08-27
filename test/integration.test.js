@@ -14,13 +14,12 @@ async function loadScript(url) {
 
 function genHandler (done) {
   return function (msg) {
-    console.log('CALLBACK HANDLER CALLED for: ', msg);
-    if (msg && msg.error) {
-      console.log("ERROR: ", msg.error);
-      done(msg.error);
-    } else {
-      done();
+    console.log('CALLBACK HANDLER for: ', msg);
+    if ((msg) && (msg.error)) {
+      console.log("CALLBACK ERROR: ", msg.error);
+      return done(msg.error);
     }
+    done();
   }
 };
 
@@ -54,7 +53,7 @@ describe('Page', () => {
     });
 
     describe('Dummy', () => {
-      it('activity-object results in a fetch-able actor object', () => {
+      it('creates activity-object', () => {
         const actor = {
           id: "jimmy@dummy",
           type: "person",
@@ -64,18 +63,21 @@ describe('Page', () => {
         expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
       });
 
-      it('can send message with actor string', (done) => {
+      it('sends message', (done) => {
         sc.socket.emit('message', {
           type: "echo",
           actor: "jimmy@dummy",
           context: "dummy",
           object: {type: 'message', content: 'hello world'}
-        }, genHandler(done));
+        }, genHandler((err) => {
+          console.log('Dummy message callback! ', err);
+          done(err);
+        }));
       });
     });
 
     describe('XMPP', () => {
-      it('send credentials', (done) => {
+      it('sends credentials', (done) => {
         sc.socket.emit('credentials', {
           actor: {
             id: "jimmy@prosody/SockethubExample",
@@ -92,7 +94,7 @@ describe('Page', () => {
         }, genHandler(done));
       }).timeout(3000);
 
-      it('create activity-object results in a fetch-able actor object', () => {
+      it('creates activity-object', () => {
         const actor = {
           id: "jimmy@prosody/SockethubExample",
           type: "person",
@@ -102,7 +104,7 @@ describe('Page', () => {
         expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
       });
 
-      it('can send connect with actor string', (done) => {
+      it('sends connect', (done) => {
         sc.socket.emit('message', {
           type: "connect",
           actor: "jimmy@prosody/SockethubExample",
