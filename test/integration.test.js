@@ -50,11 +50,11 @@ describe('Page', () => {
   describe('new SockethubClient()', () => {
     let sc;
     before(() => {
-      sc = new SockethubClient(io('http://localhost:10550/', { path: '/sockethub' }));
+      sc = new SockethubClient(io('http://localhost:10550/', {path: '/sockethub'}));
     });
 
     describe('Dummy', () => {
-      it('activity-object results in a fetch-able actor object', () =>  {
+      it('activity-object results in a fetch-able actor object', () => {
         const actor = {
           id: "jimmy@dummy",
           type: "person",
@@ -73,42 +73,42 @@ describe('Page', () => {
         }, genHandler(done));
       });
     });
-  });
 
-  describe('XMPP', () => {
-    it('send credentials', (done) => {
-      sc.socket.emit('credentials', {
-        actor: {
-          id: "jimmy@prosody/SockethubExample",
-          type: 'person'
-        },
-        context: "xmpp",
-        type: "credentials",
-        object: {
+    describe('XMPP', () => {
+      it('send credentials', (done) => {
+        sc.socket.emit('credentials', {
+          actor: {
+            id: "jimmy@prosody/SockethubExample",
+            type: 'person'
+          },
+          context: "xmpp",
           type: "credentials",
-          password: "passw0rd",
-          resource: "SockethubExample",
-          userAddress: "jimmy@prosody"
-        }
-      }, genHandler(done));
-    }).timeout(3000);
+          object: {
+            type: "credentials",
+            password: "passw0rd",
+            resource: "SockethubExample",
+            userAddress: "jimmy@prosody"
+          }
+        }, genHandler(done));
+      }).timeout(3000);
 
-    it('create activity-object results in a fetch-able actor object', () =>  {
-      const actor = {
-        id: "jimmy@prosody/SockethubExample",
-        type: "person",
-        name: "Jimmy Userson"
-      };
-      sc.ActivityStreams.Object.create(actor);
-      expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
+      it('create activity-object results in a fetch-able actor object', () => {
+        const actor = {
+          id: "jimmy@prosody/SockethubExample",
+          type: "person",
+          name: "Jimmy Userson"
+        };
+        sc.ActivityStreams.Object.create(actor);
+        expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
+      });
+
+      it('can send connect with actor string', (done) => {
+        sc.socket.emit('message', {
+          type: "connect",
+          actor: "jimmy@prosody/SockethubExample",
+          context: "xmpp"
+        }, genHandler(done));
+      }).timeout(12000);
     });
-
-    it('can send connect with actor string', (done) => {
-      sc.socket.emit('message', {
-        type: "connect",
-        actor: "jimmy@prosody/SockethubExample",
-        context: "xmpp"
-      }, genHandler(done));
-    }).timeout(12000);
-  });
+  })
 });
