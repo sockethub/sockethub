@@ -12,15 +12,14 @@ module.exports = function (config) {
     port: 9876,  // karma web server port
     colors: true,
     logLevel: config.LOG_INFO,
-    browsers: ['ChromeHeadless'],
-    // browsers: ['ChromeHeadless', 'Firefox'],
+    browsers: ['ChromeHeadless', 'Firefox'],
     autoWatch: false,
     concurrency: Infinity,
-    // customLaunchers: {
-    //   FirefoxHeadless: {
-    //     base: 'Firefox',
-    //     flags: ['-headless'],
-    //   },
-    // }
+    customLaunchers: {
+      FirefoxHeadless: {
+        base: 'Firefox',
+        flags: ['-headless'],
+      },
+    }
   });
 };
