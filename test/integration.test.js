@@ -85,7 +85,7 @@ describe('Page', () => {
           },
           target: {
             type: 'feed',
-            id: 'http://httpd/feed.xml'
+            id: 'http://localhost:10550/examples/feed.xml'
           }
         }, (msg) => {
           console.log(`Feed fetch callback! `, msg);
