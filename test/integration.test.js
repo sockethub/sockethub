@@ -57,18 +57,21 @@ describe('Page', () => {
         expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
       });
 
-      it('sends message', (done) => {
+      let dummyMessageCount = 5;
+      for (let i = 0; i < dummyMessageCount; i++) {
+      it(`sends message ${i}`, (done) => {
         sc.socket.emit('message', {
           type: "echo",
           actor: "jimmy@dummy",
           context: "dummy",
-          object: {type: 'message', content: 'hello world'}
+          object: {type: 'message', content: `hello world ${i}`}
         }, (msg) => {
-          console.log('Dummy message callback! ', msg);
+          console.log(`Dummy message ${1} callback! `, msg);
           if (msg?.error) { done(msg.error); }
           else { done(); }
         });
       });
+      }
     });
 
     describe('XMPP', () => {
