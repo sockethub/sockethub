@@ -74,6 +74,23 @@ describe('Page', () => {
       }
     });
 
+    describe('Feeds', () => {
+      it(`fetch an XML feed`, (done) => {
+        sc.socket.emit('message', {
+          type: "fetch",
+          actor: "https://sockethub.org/examples/feeds",
+          context: "feeds",
+          target: {
+            type: 'feed',
+            id: 'http://httpd/feed.xml'
+          }
+        }, (msg) => {
+          console.log(`Feed fetch callback! `, msg);
+          expect(msg.length).to.eql(20);
+        });
+      });
+    })
+
     describe('XMPP', () => {
       it('sends credentials', (done) => {
         sc.socket.emit('credentials', {

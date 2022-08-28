@@ -13,6 +13,12 @@ services:
     image: redis
     networks:
       - sockethub-net
+  httpd:
+    image: httpd:2.4
+    volumes:
+      - ./test/docroot:/usr/local/apache2/htdocs
+    networks:
+      - sockethub-net
   prosody:
     image: prosody/prosody:latest
     volumes:
