@@ -14,7 +14,7 @@ RUN npm install -g yarn@latest
 COPY . .
 
 RUN yarn install
-RUN yarn build
+RUN yarn build``
 
 EXPOSE 10550
 CMD DEBUG=sockethub*,*redis* /app/packages/sockethub/bin/sockethub --examples --host 0.0.0.0 -c /app/test/sockethub.config.docker.json
