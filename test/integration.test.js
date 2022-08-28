@@ -96,14 +96,16 @@ describe('Page', () => {
         });
       });
 
-      it('creates activity-object', (id, expand) => {
+      it('creates activity-object', (done) => {
         const actor = {
           id: "jimmy@prosody/SockethubExample",
           type: "person",
           name: "Jimmy Userson"
         };
-        sc.ActivityStreams.Object.create(actor);
+        const obj = sc.ActivityStreams.Object.create(actor);
         expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
+        console.log('activity-object create result: ', obj);
+        done();
       });
 
       it('sends connect', (done) => {
