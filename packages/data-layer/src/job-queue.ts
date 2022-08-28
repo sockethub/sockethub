@@ -45,7 +45,7 @@ export default class JobQueue extends EventEmitter {
   }
 
   initResultEvents() {
-    this.bull.on('global:completed', async (jobId: string, result: string) => {
+    this.bull.on('global:completed', async (jobId: string, result: any) => {
       const r = result ? JSON.parse(result) : "";
       const job = await this.getJob(jobId);
       if (job) {
