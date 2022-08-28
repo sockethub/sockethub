@@ -16,7 +16,7 @@
   <body>
     <ul id="messages"></ul>
     <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
+      <input id="m" autocomplete="off" value="https://sockethub.org/feed.xml" /><button>Send</button>
     </form>
 
     <script src="<%= address %>jquery.js"></script>
@@ -64,9 +64,6 @@
           context: 'feeds',
           'type': 'fetch',
           actor: 'https://sockethub.org/examples/feeds',
-          object: {
-            'type': 'parameters'
-          },
           target: {
             'type': 'feed',
             'id': $('#m').val()
@@ -74,7 +71,14 @@
         };
 
         console.log('sending message: ', msg);
-        sc.socket.emit('message', msg, (data) => { console.log('CALLBACK', data); });
+        sc.socket.emit('message', msg, (data) => {
+          console.log('CALLBACK', data);
+          if (Array.isArray(data)) {
+            data.forEach((entry) => {
+              displayMessage(entry);
+            })
+          }
+        });
         $('#m').val('');
         return false;
       });

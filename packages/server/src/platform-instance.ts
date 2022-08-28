@@ -177,29 +177,29 @@ export default class PlatformInstance {
 
   // handle job results coming in on the queue from platform instances
   private async handleJobResult(type: string, job: JobDataDecrypted, result) {
-    const msg = job.msg;
+    let payload = result;
     if (type === 'failed') {
-      msg.error = result ? result : "job failed for unknown reason";
-      this.debug(`${job.title} ${type}: ${msg.error}`);
-
+      payload = job.msg;
+      payload.error = result ? result : "job failed for unknown reason";
+      this.debug(`${job.title} ${type}: ${payload.error}`);
     }
 
     // send result to client
     const callback = this.completedJobHandlers.get(job.title);
     if (callback) {
-      callback(msg);
+      callback(payload);
       this.completedJobHandlers.delete(job.title);
     } else {
-      await this.sendToClient(job.sessionId, msg);
+      await this.sendToClient(job.sessionId, payload);
     }
 
     // let all related peers know of result as an independent message
     // (not as part of a job completion, or failure)
-    await this.broadcastToSharedPeers(job.sessionId, msg);
+    await this.broadcastToSharedPeers(job.sessionId, payload);
 
-    if ((this.config.persist) && (this.config.requireCredentials.includes(job.msg.type))) {
+    if ((this.config.persist) && (this.config.requireCredentials.includes(payload.type))) {
       if (type === 'failed') {
-        this.debug(`critical job type ${job.msg.type} failed, flagging for termination`);
+        this.debug(`critical job type ${payload.type} failed, flagging for termination`);
         await this.jobQueue.pause();
         this.initialized = false;
         this.flaggedForTermination = true;

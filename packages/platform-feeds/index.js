@@ -41,11 +41,7 @@ const PlatformSchema = {
       "objectTypes": {
         "feed-parameters-date": {
           "additionalProperties": false,
-          "required": [ "objectType" ],
           "properties": {
-            "objectType": {
-              "enum": [ "parameters" ]
-            },
             "limit": {
               "type": "number",
             },
@@ -59,11 +55,7 @@ const PlatformSchema = {
         },
         "feed-parameters-url": {
           "additionalProperties": false,
-          "required": [ "objectType" ],
           "properties": {
-            "objectType": {
-              "enum": [ "parameters" ]
-            },
             "limit": {
               "type": "number",
             },
@@ -207,9 +199,8 @@ class Feeds {
    */
   fetch(job, cb) {
     // ready to execute job
-    this.fetchFeed(job.target.id, job.object)
+    this.fetchFeed(job.target.id, job.object || {})
       .then((results) => {
-        // result.target = job.actor;
         return cb(null, results);
       }).catch(cb);
   }
@@ -225,14 +216,12 @@ class Feeds {
     let articles = [],
       actor; // queue of articles to buffer and filter before sending out.
     let cfg = parseConfig(options);
-    this.debug('FEED URL: ' + url);
     return new Promise((resolve, reject) => {
       request(url)
       .on('error', reject)
       .pipe(new FeedParser(cfg))
       .on('error', reject)
       .on('meta', (meta)  => {
-        this.debug('fetched feed: ' + meta.title);
         actor = buildFeedChannel(url, meta);
       }).on('readable', function() {
         const stream = this;
