@@ -101,7 +101,7 @@ export default class JobQueue extends EventEmitter {
   }
 
   async resume() {
-    await this.bull.unpause();
+    await this.bull.resume();
     this.debug('resumed');
   }
 

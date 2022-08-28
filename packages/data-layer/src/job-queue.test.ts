@@ -22,7 +22,7 @@ describe('JobQueue', () => {
       process: sandbox.stub(),
       removeAllListeners: sandbox.stub(),
       pause: sandbox.stub(),
-      unpause: sandbox.stub(),
+      resume: sandbox.stub(),
       isPaused: sandbox.stub(),
       obliterate: sandbox.stub(),
       emit: sandbox.stub(),
@@ -189,11 +189,11 @@ describe('JobQueue', () => {
 
   it('resume', async () => {
     await jobQueue.resume();
-    sinon.assert.calledOnce(bullMocks.unpause)
+    sinon.assert.calledOnce(bullMocks.resume)
   });
 
   describe('shutdown', () => {
-    it('unpaused is sure to pause', async () => {
+    it('is sure to pause when not already paused', async () => {
       bullMocks.isPaused.returns(false)
       await jobQueue.shutdown()
       sinon.assert.calledOnce(bullMocks.isPaused);
@@ -201,7 +201,7 @@ describe('JobQueue', () => {
       sinon.assert.calledOnce(bullMocks.removeAllListeners);
       sinon.assert.calledOnce(bullMocks.obliterate);
     });
-    it('paused can skip pausing', async () => {
+    it('skips pausing when already paused', async () => {
       bullMocks.isPaused.returns(true)
       await jobQueue.shutdown()
       sinon.assert.calledOnce(bullMocks.isPaused);
