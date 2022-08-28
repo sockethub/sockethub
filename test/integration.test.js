@@ -90,6 +90,7 @@ describe('Page', () => {
         }, (msg) => {
           console.log(`Feed fetch callback! `, msg);
           expect(msg.length).to.eql(20);
+          done();
         });
       });
     })
