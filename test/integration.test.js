@@ -77,9 +77,12 @@ describe('Page', () => {
     describe('Feeds', () => {
       it(`fetch an XML feed`, (done) => {
         sc.socket.emit('message', {
-          type: "fetch",
-          actor: "https://sockethub.org/examples/feeds",
           context: "feeds",
+          type: "fetch",
+          actor: {
+            type: "website",
+            id: "https://sockethub.org/examples/feeds"
+          },
           target: {
             type: 'feed',
             id: 'http://httpd/feed.xml'
