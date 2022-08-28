@@ -74,11 +74,12 @@ export default class CredentialsStore {
    * @param done
    */
   save(actor: string, creds: IActivityStream, done: CallbackInterface): void {
-    this.log(`save credentials for ${actor}`);
     this.store.save(actor, creds, (err) => {
       if (err) {
+        this.log('error saving credentials to store ' + err);
         return done(err);
       } else {
+        this.log(`credentials encrypted and saved`);
         return done();
       }
     });

@@ -8,6 +8,7 @@ import {
 } from "./types";
 import debug, {Debugger} from 'debug';
 import EventEmitter from "events";
+import {IActivityStream} from "@sockethub/schemas";
 
 interface JobHandler {
   (job: JobDataDecrypted, done: CallableFunction)
@@ -27,11 +28,29 @@ export default class JobQueue extends EventEmitter {
     this.uid = `sockethub:data-layer:job-queue:${instanceId}:${sessionId}`;
     this.secret = secret;
     this.debug = debug(this.uid);
+
+    this.debug('initialized');
+  }
+
+  async add(socketId: string, msg: IActivityStream): Promise<JobDataEncrypted> {
+    const job = this.createJob(socketId, msg);
+    const isPaused = await this.bull.isPaused();
+    if (isPaused) {
+      this.bull.emit('failed', job, 'queue closed');
+      return undefined;
+    }
+    this.debug(`adding ${job.title} ${msg.type}`);
+    this.bull.add(job);
+    return job;
+  }
+
+  initResultEvents() {
     this.bull.on('global:completed', async (jobId: string, result: string) => {
       const r = result ? JSON.parse(result) : "";
       const job = await this.getJob(jobId);
       if (job) {
-        this.emit('global:completed', job.data.msg, r);
+        this.debug(`completed ${job.data.title} ${job.data.msg.type}`);
+        this.emit('global:completed', job.data, r);
         await job.remove();
       }
     });
@@ -41,22 +60,32 @@ export default class JobQueue extends EventEmitter {
     this.bull.on('global:failed', async (jobId, result: string) => {
       const job = await this.getJob(jobId);
       if (job) {
-        this.emit('global:failed', job.data.msg, result);
+        this.debug(`failed ${job.data.title} ${job.data.msg.type}`);
+        this.emit('global:failed', job.data, result);
         await job.remove();
       }
     });
-  }
-
-  add(socketId: string, msg): JobDataEncrypted {
-    const job = this.createJob(socketId, msg);
-    this.bull.add(job);
-    return job;
+    this.bull.on('failed', (job: JobDataEncrypted, result: string) => {
+      // locally failed jobs (eg. due to paused queue)
+      const unencryptedJobData: JobDataDecrypted = {
+        title: job.title,
+        msg: this.decryptActivityStream(job.msg),
+        sessionId: job.sessionId
+      };
+      this.debug(`failed ${unencryptedJobData.title} ${unencryptedJobData.msg.type}`);
+      this.emit('global:failed', unencryptedJobData, result);
+    });
   }
 
   async getJob(jobId: string): Promise<JobDecrypted> {
     const job = await this.bull.getJob(jobId);
     if (job) {
-      job.data.msg = this.decryptJobData(job);
+      job.data = this.decryptJobData(job);
+      try {
+        delete job.data.msg.sessionSecret;
+      } catch (e) {
+        // this property should never be exposed externally
+      }
     }
     return job;
   }
@@ -66,9 +95,24 @@ export default class JobQueue extends EventEmitter {
     this.bull.process(this.jobHandler.bind(this));
   }
 
+  async pause() {
+    await this.bull.pause();
+    this.debug('paused');
+  }
+
+  async resume() {
+    await this.bull.unpause();
+    this.debug('resumed');
+  }
+
   async shutdown() {
-    await this.bull.clean(0);
+    this.debug('shutdown');
+    const isPaused = await this.bull.isPaused(true);
+    if (!isPaused) {
+      await this.bull.pause();
+    }
     await this.bull.obliterate({ force: true });
+    await this.bull.removeAllListeners();
   }
 
   private createJob(socketId: string, msg): JobDataEncrypted {
@@ -81,8 +125,8 @@ export default class JobQueue extends EventEmitter {
   }
 
   private jobHandler(encryptedJob: JobEncrypted, done: CallableFunction): void {
-    this.debug('incoming job from queue');
     const job = this.decryptJobData(encryptedJob);
+    this.debug(`handling ${job.title} ${job.msg.type}`);
     this.handler(job, done);
   }
 
@@ -93,8 +137,12 @@ export default class JobQueue extends EventEmitter {
   private decryptJobData(job: JobEncrypted): JobDataDecrypted {
     return {
       title: job.data.title,
-      msg: crypto.decrypt(job.data.msg, this.secret),
+      msg: this.decryptActivityStream(job.data.msg),
       sessionId: job.data.sessionId
     };
+  }
+
+  private decryptActivityStream(msg: string): IActivityStream {
+    return crypto.decrypt(msg, this.secret);
   }
 }
