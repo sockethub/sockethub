@@ -18,6 +18,13 @@ export interface PlatformInstanceParams {
   actor?: string;
 }
 
+type EnvFormat = {
+  DEBUG?: string,
+  REDIS_URL?: string,
+  REDIS_HOST?: string,
+  REDIS_PORT?: string
+}
+
 interface MessageFromPlatform extends Array<string | IActivityStream>{
   0: string, 1: IActivityStream, 2: string}
 export interface MessageFromParent extends Array<string|unknown>{0: string, 1: unknown}
@@ -28,11 +35,13 @@ interface PlatformConfig {
 }
 
 export default class PlatformInstance {
-  flaggedForTermination = false;
   id: string;
+  flaggedForTermination = false;
+  initialized = false;
   jobQueue: JobQueue;
-  completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
-  config: PlatformConfig = {};
+  readonly global: boolean = false;
+  readonly completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
+  readonly config: PlatformConfig = {};
   readonly name: string;
   readonly process: ChildProcess;
   readonly debug: Debugger;
@@ -42,7 +51,6 @@ export default class PlatformInstance {
     'close': (() => new Map())(),
     'message': (() => new Map())()
   };
-  public readonly global?: boolean = false;
   private readonly actor?: string;
 
   constructor(params: PlatformInstanceParams) {
@@ -56,35 +64,51 @@ export default class PlatformInstance {
     }
 
     this.debug = debug(`sockethub:server:platform-instance:${this.id}`);
+    const env: EnvFormat = {};
+    if (process.env.DEBUG) {
+      env.DEBUG = process.env.DEBUG;
+    }
+    if (config.get('redis:url')) {
+      env.REDIS_URL = config.get('redis:url') as string;
+    } else {
+      env.REDIS_HOST = config.get('redis:host') as string;
+      env.REDIS_PORT = config.get('redis:port') as string;
+    }
+
     // spin off a process
     this.process = fork(
       join(__dirname, 'platform.js'),
       [this.parentId, this.name, this.id],
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      { env: config.get('redis:url') ? { REDIS_URL: config.get('redis:url') }
-        : { REDIS_HOST: config.get('redis:host'), REDIS_PORT: config.get('redis:port') }}
+      { env: env }
     );
   }
 
   /**
    * Destroys all references to this platform instance, internal listeners and controlled processes
    */
-  public async destroy() {
-    this.debug(`cleaning up`);
+  public async shutdown() {
+    this.debug('shutdown');
     this.flaggedForTermination = true;
+
     try {
-      await this.jobQueue.shutdown();
-    } catch (e) {
-      // this needs to happen
-    }
-    try {
-      delete this.jobQueue;
       await this.process.removeAllListeners('close');
       await this.process.unref();
       this.process.kill();
-    } finally {
+    } catch (e) {
+      // needs to happen
+    }
+
+    try {
+      await this.jobQueue.shutdown();
+      delete this.jobQueue;
+    } catch (e) {
+      // this needs to happen
+    }
+
+    try {
       platformInstances.delete(this.id);
+    } catch (e) {
+      // this needs to happen
     }
   }
 
@@ -93,6 +117,7 @@ export default class PlatformInstance {
    */
   public initQueue(secret: string) {
     this.jobQueue = new JobQueue(this.parentId, this.id, secret, nconf.get('redis'));
+    this.jobQueue.initResultEvents();
 
     this.jobQueue.on('global:completed', async (job: JobDataDecrypted, result: string) => {
       await this.handleJobResult('completed', job, result);
@@ -151,30 +176,39 @@ export default class PlatformInstance {
   }
 
   // handle job results coming in on the queue from platform instances
-  private async handleJobResult(type: string, jobData: JobDataDecrypted, result) {
-    this.debug(`${type} job ${jobData.title}`);
-    delete jobData.msg.sessionSecret;
-    const msg = jobData.msg;
+  private async handleJobResult(type: string, job: JobDataDecrypted, result) {
+    const msg = job.msg;
     if (type === 'failed') {
       msg.error = result ? result : "job failed for unknown reason";
-      if ((this.config.persist) && (this.config.requireCredentials.includes(jobData.msg.type))) {
-        this.debug(`critical job type ${jobData.msg.type} failed, terminating platform instance`);
-        await this.destroy();
-      }
+      this.debug(`${job.title} ${type}: ${msg.error}`);
+
     }
 
     // send result to client
-    const callback = this.completedJobHandlers.get(jobData.title);
+    const callback = this.completedJobHandlers.get(job.title);
     if (callback) {
       callback(msg);
-      this.completedJobHandlers.delete(jobData.title);
+      this.completedJobHandlers.delete(job.title);
     } else {
-      await this.sendToClient(jobData.sessionId, msg);
+      await this.sendToClient(job.sessionId, msg);
     }
 
     // let all related peers know of result as an independent message
     // (not as part of a job completion, or failure)
-    await this.broadcastToSharedPeers(jobData.sessionId, msg);
+    await this.broadcastToSharedPeers(job.sessionId, msg);
+
+    if ((this.config.persist) && (this.config.requireCredentials.includes(job.msg.type))) {
+      if (type === 'failed') {
+        this.debug(`critical job type ${job.msg.type} failed, flagging for termination`);
+        await this.jobQueue.pause();
+        this.initialized = false;
+        this.flaggedForTermination = true;
+      } else {
+        await this.jobQueue.resume();
+        this.initialized = true;
+        this.flaggedForTermination = false;
+      }
+    }
   }
 
   /**
@@ -191,7 +225,7 @@ export default class PlatformInstance {
     };
     this.sendToClient(sessionId, errorObject);
     this.sessions.clear();
-    await this.destroy();
+    await this.shutdown();
   }
 
   /**
