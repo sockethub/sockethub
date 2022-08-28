@@ -58,6 +58,7 @@
 
     <script>
       debug = function (msg, obj) { console.log(msg, obj); };
+      let counter = 0;
       const examplesShared = new ExamplesShared();
       localStorage.debug = 'sockethub:*';
       let config = {
@@ -168,24 +169,44 @@
           sc.socket.emit('credentials', credentials, (err) => {
             if (err) {
               console.error('failed to create credentials: ', err);
+            } else {
+              console.log('completed credentials');
             }
           });
 
-          const msg = {
+          const connectMsg = {
             type: 'connect',
             context: 'xmpp',
-            actor: actorString
+            actor: actorString,
+            object: {
+              type: 'message',
+              content: `debug:${++counter}`
+            }
           };
+          debug('sending connect message: ', connectMsg);
+          sc.socket.emit('message', connectMsg, (msg) => {
+            console.log('connect callback fired');
+            handleMessage(msg);
+          });
 
-          debug('sending message: ', msg);
-          sc.socket.emit('message', msg, handleMessage);
-          msg.type = 'join';
-          msg.target = {
-            type: 'room',
-            id: 'kosmos-random@kosmos.chat'
+          const joinMsg = {
+            type: 'join',
+            context: 'xmpp',
+            actor: actorString,
+            target: {
+              type: 'room',
+              id: 'kosmos-random@kosmos.chat'
+            },
+            object: {
+              type: 'message',
+              content: `debug:${counter}`
+            }
           };
-          debug('sending message: ', msg);
-          sc.socket.emit('message', msg, handleMessage);
+          debug('sending join message: ', joinMsg);
+          sc.socket.emit('message', joinMsg, (msg) => {
+            console.log('join callback fired');
+            handleMessage(msg);
+          });
         }, 100);
         return false;
       });
