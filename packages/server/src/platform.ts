@@ -49,13 +49,14 @@ process.on('uncaughtException', (err) => {
  * method to call, the rest are params.
  */
 process.on('message', async (data: SecretFromParent) => {
-  if (data[0] !== 'secrets') {
-    return;
+  if (data[0] === 'secrets') {
+    const {parentSecret2: parentSecret3, parentSecret1: parentSecret} = data[1];
+    parentSecret1 = parentSecret;
+    parentSecret2 = parentSecret3;
+    await startQueueListener();
+  } else {
+    throw new Error('received unknown command from parent thread');
   }
-  const {parentSecret2: parentSecret3, parentSecret1: parentSecret} = data[1];
-  parentSecret1 = parentSecret;
-  parentSecret2 = parentSecret3;
-  await startQueueListener();
 });
 
 /**
@@ -75,7 +76,6 @@ function getJobHandler() {
   return (job: JobDataDecrypted, done: CallbackInterface) => {
     const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
     jobLog(`received ${job.title} ${job.msg.type}`);
-
     const credentialStore = new CredentialsStore(
       parentId, job.sessionId, parentSecret1 + job.msg.sessionSecret, redisConfig as RedisConfig
     );
@@ -86,7 +86,7 @@ function getJobHandler() {
       if (jobCallbackCalled) { return; }
       jobCallbackCalled = true;
       if (err) {
-        jobLog(`errored ${job.title} ${job.msg.type}`);
+        jobLog(`failed ${job.title} ${job.msg.type}`);
         let errMsg;
         // some error objects (eg. TimeoutError) don't interpolate correctly to human-readable
         // so we have to do this little dance
@@ -109,6 +109,7 @@ function getJobHandler() {
       credentialStore.get(job.msg.actor.id, platform.credentialsHash).then((credentials) => {
         platform[job.msg.type](job.msg, credentials, doneCallback);
       }).catch((err) => {
+        jobLog('error ' + err.toString());
         return done(new Error(err.toString()));
       });
     } else if ((platform.config.persist) && (!platform.initialized)) {
