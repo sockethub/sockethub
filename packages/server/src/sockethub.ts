@@ -89,7 +89,7 @@ class Sockethub {
       middleware('credentials')
         .use(expandActivityStream)
         .use(validate('credentials', socket.id))
-        .use(storeCredentials(credentialsStore, sessionLog) as MiddlewareChainInterface)
+        .use(storeCredentials(credentialsStore) as MiddlewareChainInterface)
         .use((err, data, next) => {
         // error handler
           next(attachError(err, data));
@@ -119,12 +119,17 @@ class Sockethub {
           next(msg);
         }).use((err, data, next) => {
           next(attachError(err, data));
-        }).use((msg: IActivityStream, next) => {
+        }).use(async (msg: IActivityStream, next) => {
           const platformInstance = this.processManager.get(msg.context, msg.actor.id, socket.id);
           // job validated and queued, store socket.io callback for when job is completed
-          const job = platformInstance.jobQueue.add(socket.id, msg);
-          sessionLog(`queued ${job.title} ${msg.type} to channel ${platformInstance.id}`);
-          platformInstance.completedJobHandlers.set(job.title, next);
+          const job = await platformInstance.jobQueue.add(socket.id, msg);
+          if (job) {
+            platformInstance.completedJobHandlers.set(job.title, next);
+          } else {
+            // failed to add job to queue, reject handler immediately
+            msg.error = 'failed to add job to queue';
+            next(msg);
+          }
         }).done());
   }
 }
