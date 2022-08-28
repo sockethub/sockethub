@@ -24,7 +24,7 @@ const creds = {
 
 describe('Middleware: storeCredentials', () => {
   let storeSuccess: any, storeError: any, saveErrorFake: any,
-      saveSuccessFake: any, sessionLogStub: any;
+      saveSuccessFake: any;
 
   beforeEach(() => {
     storeSuccess = {
@@ -39,7 +39,6 @@ describe('Middleware: storeCredentials', () => {
     };
     saveSuccessFake = sinon.replace(storeSuccess, 'save', sinon.fake(storeSuccess.save));
     saveErrorFake = sinon.replace(storeError, 'save', sinon.fake(storeError.save));
-    sessionLogStub = sinon.stub();
   });
 
   afterEach(() => {
@@ -47,14 +46,13 @@ describe('Middleware: storeCredentials', () => {
   });
 
   it('returns a middleware handler', () => {
-    const sc = storeCredentials(storeSuccess, sessionLogStub);
+    const sc = storeCredentials(storeSuccess);
     expect(typeof sc).to.equal('function');
     expect(saveSuccessFake.callCount).to.equal(0);
-    expect(sessionLogStub.callCount).to.equal(0);
   });
 
   it('successfully store credentials', () => {
-    const sc = storeCredentials(storeSuccess, sessionLogStub);
+    const sc = storeCredentials(storeSuccess);
     sc(creds, (err: any) => {
       expect(saveSuccessFake.callCount).to.equal(1);
       expect(saveSuccessFake.firstArg).to.equal(creds.actor.id);
@@ -63,7 +61,7 @@ describe('Middleware: storeCredentials', () => {
   });
 
   it('handle error while storing credentials', () => {
-    const sc = storeCredentials(storeError, sessionLogStub);
+    const sc = storeCredentials(storeError);
     sc(creds, (err: any) => {
       expect(saveErrorFake.callCount).to.equal(1);
       expect(saveErrorFake.firstArg).to.equal(creds.actor.id);
