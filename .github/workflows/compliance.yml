@@ -84,7 +84,11 @@ jobs:
       - name: Verify Sockethub is listening
         run: nc -zv localhost 10550
 
+      - name: Verify httpd is listening
+        run: nc -zv localhost 80
+
       - run: yarn integration:run
+
       - name: Print Docker logs
         if: always()
         run: yarn integration:log
