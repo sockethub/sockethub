@@ -61,23 +61,22 @@ describe('Page', () => {
         expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
       });
 
-
       let dummyMessageCount = 5;
-      let dummyObj = {
-        type: "echo",
-        actor: "jimmy@dummy",
-        context: "dummy",
-        object: {type: 'message', content: ''}
-      };
       for (let i = 0; i < dummyMessageCount; i++) {
         it(`sends echo ${i}`, (done) => {
-          dummyObj.object.content = `hello world ${i}`;
+          let dummyObj = {
+            type: "echo",
+            actor: "jimmy@dummy",
+            context: "dummy",
+            object: {type: 'message', content: `hello world ${i}`}
+          };
           sc.socket.emit('message', dummyObj, (msg) => {
             console.log(`Dummy message ${i} callback! `, msg);
             if (msg?.error) {
               done(msg.error);
             } else {
               expect(msg.target).to.eql(sc.ActivityStreams.Object.get(dummyObj.id));
+              expect(msg.actor).to.equal('platform');
               done();
             }
           });
