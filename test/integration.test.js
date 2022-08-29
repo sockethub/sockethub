@@ -41,9 +41,13 @@ describe('Page', () => {
   });
 
   describe('SockethubClient()', () => {
-    let sc, handler;
+    let sc, incomingMessages = [];
     before(() => {
       sc = new SockethubClient(io('http://localhost:10550/', {path: '/sockethub'}));
+      sc.socket.on('message', (msg) => {
+        console.log('** incoming message: ', msg);
+        incomingMessages.push(msg);
+      })
     });
 
     describe('Dummy', () => {
@@ -57,19 +61,44 @@ describe('Page', () => {
         expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
       });
 
+      describe('sending respond', () => {
+        it('should callback with message', () => {
+          const respondObj = {
+            type: 'respond',
+            actor: 'jimmy@dummy',
+            context: 'dummy',
+            object: {type: 'message', content: 'respond please'}
+          };
+          sc.socket.emit('message', respondObj, (msg) => {
+            console.log('received: ', msg);
+            expect(msg).to.eql(respondObj);
+          })
+        });
+      });
+
       let dummyMessageCount = 5;
+      let dummyObj = {
+        type: "echo",
+        actor: "jimmy@dummy",
+        context: "dummy",
+        object: {type: 'message', content: ''}
+      };
       for (let i = 0; i < dummyMessageCount; i++) {
-      it(`sends message ${i}`, (done) => {
-        sc.socket.emit('message', {
-          type: "echo",
-          actor: "jimmy@dummy",
-          context: "dummy",
-          object: {type: 'message', content: `hello world ${i}`}
-        }, (msg) => {
-          console.log(`Dummy message ${1} callback! `, msg);
+      it(`sends echo ${i}`, (done) => {
+        dummyObj.object.content = `hello world ${i}`;
+        sc.socket.emit('message', dummyObj, (msg) => {
+          console.log(`Dummy message ${i} callback! `, msg);
           if (msg?.error) { done(msg.error); }
           else { done(); }
         });
+      });
+      }
+
+      for (let i = 0; i < dummyMessageCount; i++) {
+      it(`expects echo message ${i}`, () => {
+        const msg = incomingMessages.shift();
+        dummyObj.object.content = `hello world ${i}`;
+        expect(msg).to.eql(dummyObj);
       });
       }
     });
@@ -89,7 +118,6 @@ describe('Page', () => {
               id: 'http://localhost:10550/examples/feed.xml'
             }
           }, (msg) => {
-            console.log(`Feed fetch callback!`);
             expect(msg.length).to.eql(20);
             for (const m of msg) {
               expect(m.object.text.length >= m.object.brief_text.length).to.be.true;
@@ -147,7 +175,7 @@ describe('Page', () => {
             actor: actorId,
             context: "xmpp"
           }, (msg) => {
-            console.log('XMPP message callback!');
+            console.log('XMPP connect callback! ', msg);
             if (msg?.error) { done(msg.error); }
             else {
               expect(msg.type).to.equal('connect');
@@ -157,6 +185,12 @@ describe('Page', () => {
             }
           });
         });
+      });
+    });
+
+    describe('Incoming Message queue', () => {
+      it('should be empty', () => {
+        expect(incomingMessages).to.eql([]);
       });
     });
   })
