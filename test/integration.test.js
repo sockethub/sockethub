@@ -91,9 +91,13 @@ describe('Page', () => {
           }, (msg) => {
             console.log(`Feed fetch callback!`);
             expect(msg.length).to.eql(20);
-            msg.forEach((m) => {
+            for (const m of msg) {
               expect(m.object.text.length >= m.object.brief_text.length).to.be.true;
-            }).finally(done)
+              expect(m.object.type).to.equal('feedEntry');
+              expect(m.actor.type).to.equal('feed');
+              expect(m.type).to.equal('post');
+            }
+            done();
           });
         });
       });
@@ -116,9 +120,13 @@ describe('Page', () => {
               userAddress: "jimmy@prosody"
             }
           }, (msg) => {
-            console.log('XMPP credentials callback! ', msg);
+            console.log('XMPP credentials callback!', msg);
             if (msg?.error) { done(msg.error); }
-            else { done(); }
+            else {
+              expect(msg.type).to.equal('credentials');
+              expect(msg.object.type).to.equal('credentials');
+              done();
+            }
           });
         });
       });
@@ -131,23 +139,30 @@ describe('Page', () => {
             name: "Jimmy Userson"
           };
           const obj = sc.ActivityStreams.Object.create(actor);
-          expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
-          console.log('activity-object create result: ', obj);
+          const getObj = sc.ActivityStreams.Object.get(actor.id);
+          expect(obj).to.eql(actor);
+          expect(getObj).to.eql(actor);
           done();
         });
       });
       
 
       describe('connect', () => {
-        it('sends successfully with callback fired', (done) => {
+        it('sends successfully with callback fired, with AS expanded', (done) => {
+          const actorId = "jimmy@prosody/SockethubExample";
           sc.socket.emit('message', {
             type: "connect",
-            actor: "jimmy@prosody/SockethubExample",
+            actor: actorId,
             context: "xmpp"
           }, (msg) => {
-            console.log('XMPP message callback! ', msg);
+            console.log('XMPP message callback!');
             if (msg?.error) { done(msg.error); }
-            else { done(); }
+            else {
+              expect(msg.type).to.equal('connect');
+              expect(msg.context).to.equal('xmpp');
+              expect(msg.actor).to.equal(sc.ActivityStreams.Object.get(actorId));
+              done();
+            }
           });
         });
       });
