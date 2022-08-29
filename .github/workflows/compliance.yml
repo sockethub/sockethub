@@ -1,6 +1,11 @@
 name: Compliance
-on: pull_request
+on:
+  pull_request:
+    branches: [ "master" ]
+  push:
+    branches: [ "master" ]
 jobs:
+
   lint:
     runs-on: ubuntu-latest
     strategy:
@@ -15,6 +20,7 @@ jobs:
       - run: npm install -g yarn
       - run: yarn install
       - run: yarn lint
+
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -33,6 +39,7 @@ jobs:
         run: yarn build
       - name: Test
         run: yarn test
+
   coverage:
     runs-on: ubuntu-latest
     strategy:
@@ -53,3 +60,53 @@ jobs:
         run: yarn test
       - name: Coverage
         run: yarn coverage
+
+  integration:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [ 14, 16, 18 ]
+
+    steps:
+      - run: sudo chown -R $USER:$USER ${{ github.workspace }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          clean: false
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - name: Install Karma
+        run: npm install -g karma
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Sockethub build
+        run: yarn build
+
+      - name: Run Docker compose build
+        run: docker compose build --build-arg node_version=${{ matrix.node-version }}
+
+      - name: Run Docker compose up
+        run: yarn integration:setup
+
+      - run: sleep 5
+
+      - name: Verify Sockethub is listening
+        run: nc -zv localhost 10550
+
+      - name: Run integration tests
+        run: yarn integration:run
+
+      - name: Print Docker logs
+        if: always()
+        run: yarn integration:log

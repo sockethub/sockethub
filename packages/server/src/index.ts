@@ -22,7 +22,7 @@ module.exports = async () => {
 
   process.once('exit', async function () {
     console.log('destroying all platform instances');
-    await sockethub.removeAllPlatformInstances();
+    await sockethub.shutdown();
   });
 
   sockethub.boot();
