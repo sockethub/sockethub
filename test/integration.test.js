@@ -61,6 +61,24 @@ describe('Page', () => {
         expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
       });
 
+      it('sends fail and returns error', (done) => {
+        let dummyObj = {
+          type: "fail",
+          actor: actor.id,
+          context: "dummy",
+          object: {type: 'message', content: `failure message`}
+        };
+        sc.socket.emit('message', dummyObj, (msg) => {
+          if (msg?.error) {
+            dummyObj.error = 'Error: failure message';
+            expect(msg).to.eql(dummyObj);
+            done();
+          } else {
+            done("didn't receive expected failure from dummy platform");
+          }
+        });
+      });
+
       let dummyMessageCount = 5;
       for (let i = 0; i < dummyMessageCount; i++) {
         it(`sends echo ${i} and gets response`, (done) => {
@@ -149,22 +167,13 @@ describe('Page', () => {
       
 
       describe('connect', () => {
-        it('sends successfully with callback fired, with AS expanded', (done) => {
+        it('sends successfully with callback fired', (done) => {
           const actorId = "jimmy@prosody/SockethubExample";
           sc.socket.emit('message', {
             type: "connect",
             actor: actorId,
             context: "xmpp"
-          }, (msg) => {
-            console.log('XMPP connect callback! ', msg);
-            if (msg?.error) { done(msg.error); }
-            else {
-              expect(msg.type).to.equal('connect');
-              expect(msg.context).to.equal('xmpp');
-              expect(msg.actor).to.equal(sc.ActivityStreams.Object.get(actorId));
-              done();
-            }
-          });
+          }, done);
         });
       });
     });
