@@ -69,6 +69,7 @@ describe('Page', () => {
           object: {type: 'message', content: `failure message`}
         };
         sc.socket.emit('message', dummyObj, (msg) => {
+          console.log("dummy fail callback: ", msg);
           if (msg?.error) {
             dummyObj.error = 'Error: failure message';
             expect(msg).to.eql(dummyObj);
