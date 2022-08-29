@@ -67,6 +67,8 @@ section on environment variables.*
 ## Packages
 
 * [@sockethub/activity-streams.js](packages/activity-streams.js)
+* [@sockethub/crypto](packages/crypto)
+* [@sockethub/data-layer](packages/data-layer)
 * [@sockethub/irc2as](packages/irc2as)
 * [@sockethub/platform-dummy](packages/platform-dummy)
 * [@sockethub/platform-feeds](packages/platform-feeds)
