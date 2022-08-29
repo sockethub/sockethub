@@ -51,22 +51,22 @@ describe('Page', () => {
     });
 
     describe('Dummy', () => {
+      const actor = {
+        id: "jimmy@dummy",
+        type: "person",
+        name: "Jimmy"
+      };
       it('creates activity-object', () => {
-        const actor = {
-          id: "jimmy@dummy",
-          type: "person",
-          name: "Jimmy"
-        };
         sc.ActivityStreams.Object.create(actor);
         expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
       });
 
       let dummyMessageCount = 5;
       for (let i = 0; i < dummyMessageCount; i++) {
-        it(`sends echo ${i}`, (done) => {
+        it(`sends echo ${i} and gets response`, (done) => {
           let dummyObj = {
             type: "echo",
-            actor: "jimmy@dummy",
+            actor: actor.id,
             context: "dummy",
             object: {type: 'message', content: `hello world ${i}`}
           };
@@ -75,8 +75,8 @@ describe('Page', () => {
             if (msg?.error) {
               done(msg.error);
             } else {
-              expect(msg.target).to.eql(sc.ActivityStreams.Object.get(dummyObj.id));
-              expect(msg.actor).to.equal('platform');
+              expect(msg.target).to.eql(sc.ActivityStreams.Object.get(actor.actor));
+              expect(msg.actor.type).to.equal('platform');
               done();
             }
           });
