@@ -72,6 +72,7 @@ describe('Page', () => {
           console.log("dummy fail callback: ", msg);
           if (msg?.error) {
             dummyObj.error = 'Error: failure message';
+            dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
             expect(msg).to.eql(dummyObj);
             done();
           } else {
