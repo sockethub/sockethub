@@ -61,21 +61,6 @@ describe('Page', () => {
         expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
       });
 
-      describe('sending respond', () => {
-        it('should callback with message', (done) => {
-          const respondObj = {
-            type: 'respond',
-            actor: 'jimmy@dummy',
-            context: 'dummy',
-            object: {type: 'message', content: 'respond please'}
-          };
-          sc.socket.emit('message', respondObj, (msg) => {
-            console.log('received: ', msg);
-            expect(msg).to.eql(respondObj);
-            done();
-          })
-        });
-      });
 
       let dummyMessageCount = 5;
       let dummyObj = {
@@ -85,22 +70,18 @@ describe('Page', () => {
         object: {type: 'message', content: ''}
       };
       for (let i = 0; i < dummyMessageCount; i++) {
-      it(`sends echo ${i}`, (done) => {
-        dummyObj.object.content = `hello world ${i}`;
-        sc.socket.emit('message', dummyObj, (msg) => {
-          console.log(`Dummy message ${i} callback! `, msg);
-          if (msg?.error) { done(msg.error); }
-          else { done(); }
+        it(`sends echo ${i}`, (done) => {
+          dummyObj.object.content = `hello world ${i}`;
+          sc.socket.emit('message', dummyObj, (msg) => {
+            console.log(`Dummy message ${i} callback! `, msg);
+            if (msg?.error) {
+              done(msg.error);
+            } else {
+              expect(msg.target).to.eql(sc.ActivityStreams.Object.get(dummyObj.id));
+              done();
+            }
+          });
         });
-      });
-      }
-
-      for (let i = 0; i < dummyMessageCount; i++) {
-      it(`expects echo message ${i}`, () => {
-        const msg = incomingMessages.shift();
-        dummyObj.object.content = `hello world ${i}`;
-        expect(msg).to.eql(dummyObj);
-      });
       }
     });
 
