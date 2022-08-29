@@ -197,9 +197,9 @@ export default class PlatformInstance {
     // (not as part of a job completion, or failure)
     await this.broadcastToSharedPeers(job.sessionId, payload);
 
-    if ((this.config.persist) && (this.config.requireCredentials.includes(payload.type))) {
+    if (this.config.persist && this.config.requireCredentials.includes(job.msg.type)) {
       if (type === 'failed') {
-        this.debug(`critical job type ${payload.type} failed, flagging for termination`);
+        this.debug(`critical job type ${job.msg.type} failed, flagging for termination`);
         await this.jobQueue.pause();
         this.initialized = false;
         this.flaggedForTermination = true;
