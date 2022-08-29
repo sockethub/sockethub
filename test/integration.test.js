@@ -75,7 +75,7 @@ describe('Page', () => {
             if (msg?.error) {
               done(msg.error);
             } else {
-              expect(msg.target).to.eql(sc.ActivityStreams.Object.get(actor.actor));
+              expect(msg.target).to.eql(sc.ActivityStreams.Object.get(actor.id));
               expect(msg.actor.type).to.equal('platform');
               done();
             }
