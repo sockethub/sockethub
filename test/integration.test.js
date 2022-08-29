@@ -62,7 +62,7 @@ describe('Page', () => {
       });
 
       describe('sending respond', () => {
-        it('should callback with message', () => {
+        it('should callback with message', (done) => {
           const respondObj = {
             type: 'respond',
             actor: 'jimmy@dummy',
@@ -72,6 +72,7 @@ describe('Page', () => {
           sc.socket.emit('message', respondObj, (msg) => {
             console.log('received: ', msg);
             expect(msg).to.eql(respondObj);
+            done();
           })
         });
       });
