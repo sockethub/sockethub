@@ -14,7 +14,7 @@ class Dummy {
         "required": ["type"],
         "properties": {
           "type": {
-            "enum": ["echo", "fail"]
+            "enum": ["echo", "fail", "respond"]
           }
         }
       },
@@ -30,12 +30,16 @@ class Dummy {
   }
 
   echo(job, cb) {
-    this.sendToClient(job.object.content);
+    this.sendToClient(job);
     cb();
   }
 
   fail(job, cb) {
     cb(new Error(job.object.content));
+  }
+
+  respond(job, cb) {
+    cb(job.object.content);
   }
 
   cleanup(cb) {
