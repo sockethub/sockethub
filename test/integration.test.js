@@ -105,7 +105,7 @@ describe('Page', () => {
 
     describe('XMPP', () => {
       describe('emit on credentials channel', () => {
-        it('successfully fires callback', (done) => {
+        it('fires and empty callback', (done) => {
           sc.socket.emit('credentials', {
             actor: {
               id: "jimmy@prosody/SockethubExample",
@@ -119,15 +119,7 @@ describe('Page', () => {
               resource: "SockethubExample",
               userAddress: "jimmy@prosody"
             }
-          }, (msg) => {
-            console.log('XMPP credentials callback!', msg);
-            if (msg?.error) { done(msg.error); }
-            else {
-              expect(msg.type).to.equal('credentials');
-              expect(msg.object.type).to.equal('credentials');
-              done();
-            }
-          });
+          }, done);
         });
       });
 
