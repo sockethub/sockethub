@@ -45,22 +45,11 @@ export default class CredentialsStore {
         if (err) { return reject(err.toString()); }
         if (!credentials) { return resolve(undefined); }
 
-        // if (platform.config.persist) {
-        // // don't continue if we don't get credentials
-        //   if (err) { return cb(err.toString()); }
-        // } else if (! credentials) {
-        // // also skip if this is a non-persist platform with no credentials
-        //   return cb();
-        // }
-
         if (credentialHash) {
           if (credentialHash !== crypto.objectHash(credentials.object)) {
             return reject(
               `provided credentials do not match existing platform instance for actor ${actor}`);
           }
-        // } else {
-        //   // FIXME this needs to be updated back in the caller namespace
-        //   credentialHash = crypto.objectHash(credentials.object);
         }
         return resolve(credentials);
       });
