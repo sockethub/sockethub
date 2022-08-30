@@ -13,7 +13,7 @@ class Dummy {
         "required": ["type"],
         "properties": {
           "type": {
-            "enum": ["echo", "fail", "respond"]
+            "enum": ["echo", "fail"]
           }
         }
       },
