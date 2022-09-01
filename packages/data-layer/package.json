@@ -30,7 +30,7 @@
     "@sockethub/schemas": "^3.0.0-alpha.3",
     "bull": "^4.0.0",
     "debug": "^4.3.1",
-    "secure-store-redis": "^1.4.7"
+    "secure-store-redis": "^2.0.5"
   },
   "scripts": {
     "clean": "npx rimraf dist coverage",

@@ -1,6 +1,6 @@
 import SecureStore from 'secure-store-redis';
 import debug, {Debugger} from 'debug';
-import {IActivityStream, CallbackInterface} from "@sockethub/schemas";
+import {IActivityStream} from "@sockethub/schemas";
 import crypto from "@sockethub/crypto";
 import {RedisConfigProps, RedisConfigUrl} from "./types";
 
@@ -11,6 +11,7 @@ export default class CredentialsStore {
   readonly uid: string;
   private readonly store: SecureStore;
   private readonly log: Debugger;
+  protected initialized = false;
 
   /**
    * @param parentId - The ID of the parent instance (eg. sockethub itself)
@@ -25,12 +26,13 @@ export default class CredentialsStore {
     redisConfig: RedisConfigProps | RedisConfigUrl
   ) {
     this.uid = `sockethub:data-layer:credentials-store:${parentId}:${sessionId}`;
-    this.store = new SecureStore({
-      namespace: this.uid,
-      secret: secret,
-      redis: redisConfig
-    });
+    this.store = new SecureStore(this.uid, secret, { redis: redisConfig });
     this.log = debug(this.uid);
+  }
+
+  async init() {
+    this.initialized = true;
+    await this.store.init();
   }
 
   /**
@@ -38,50 +40,30 @@ export default class CredentialsStore {
    * @param actor
    * @param credentialHash
    */
-  async get(actor: string, credentialHash: string): Promise<IActivityStream> {
+  async get(actor: string, credentialHash: string = undefined): Promise<IActivityStream> {
     this.log(`get credentials for ${actor}`);
-    return new Promise((resolve, reject) => {
-      this.store.get(actor, (err, credentials) => {
-        if (err) { return reject(err.toString()); }
-        if (!credentials) { return resolve(undefined); }
+    if (!this.initialized) { throw new Error('CredentialsStore not initialized'); }
+    const credentials = await this.store.get(actor);
+    if (!credentials) { return undefined; }
 
-        // if (platform.config.persist) {
-        // // don't continue if we don't get credentials
-        //   if (err) { return cb(err.toString()); }
-        // } else if (! credentials) {
-        // // also skip if this is a non-persist platform with no credentials
-        //   return cb();
-        // }
-
-        if (credentialHash) {
-          if (credentialHash !== crypto.objectHash(credentials.object)) {
-            return reject(
-              `provided credentials do not match existing platform instance for actor ${actor}`);
-          }
-        // } else {
-        //   // FIXME this needs to be updated back in the caller namespace
-        //   credentialHash = crypto.objectHash(credentials.object);
-        }
-        return resolve(credentials);
-      });
-    });
+    if (credentialHash) {
+      if (credentialHash !== crypto.objectHash(credentials.object)) {
+        throw new Error(
+          `provided credentials do not match existing platform instance for actor ${actor}`
+        );
+      }
+    }
+    return credentials;
   }
 
   /**
    * Saves the credentials for a given actor ID
    * @param actor
    * @param creds
-   * @param done
    */
-  save(actor: string, creds: IActivityStream, done: CallbackInterface): void {
-    this.store.save(actor, creds, (err) => {
-      if (err) {
-        this.log('error saving credentials to store ' + err);
-        return done(err);
-      } else {
-        this.log(`credentials encrypted and saved`);
-        return done();
-      }
-    });
+  async save(actor: string, creds: IActivityStream): Promise<void> {
+    if (!this.initialized) { throw new Error('CredentialsStore not initialized'); }
+    await this.store.save(actor, creds);
+    this.log(`credentials encrypted and saved`);
   }
 }
