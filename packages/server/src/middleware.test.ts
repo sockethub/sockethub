@@ -29,7 +29,7 @@ describe("Middleware", () => {
       'middleware function provided with incorrect number of params: 4');
   });
 
-  it("calls each member of call list", async () => {
+  it("calls each member of call list", (done) => {
     const asyncFunc = async (data: any) => {
       return data;
     };
@@ -39,17 +39,19 @@ describe("Middleware", () => {
       mw.use(func);
     }
     const doneFunc = mw.done()
-    const data = await doneFunc('some data');
-    expect(data).to.eql('some data');
-    // @ts-ignore
-    funcs.unshift(asyncFunc);
-    for (let i = 1; i < funcs.length; i++) {
-      expect(funcs[i].calledOnce).to.be.true;
-      expect(funcs[i].calledWith('foobar'));
-    }
+    doneFunc('some data', (data) => {
+      expect(data).to.eql('some data');
+      // @ts-ignore
+      funcs.unshift(asyncFunc);
+      for (let i = 1; i < funcs.length; i++) {
+        expect(funcs[i].calledOnce).to.be.true;
+        expect(funcs[i].calledWith('foobar'));
+      }
+      done();
+    });
   });
 
-  it("does not throw exception on error with no callback provided", async () => {
+  it("does not throw exception on error with no callback provided", (done) => {
     let errorHandlerCalled = false;
     const funcs = [
       sinon.spy((data) => {
@@ -67,53 +69,51 @@ describe("Middleware", () => {
       return err;
     });
     const doneFunc = mw.done()
-    await doneFunc('foobar');
-    expect(errorHandlerCalled).to.be.true;
+    doneFunc('foobar', () => {
+      expect(errorHandlerCalled).to.be.true;
+      done();
+    });
   });
 
-  it("aborts call stack on error - calls error handler, and callback", async () => {
+  it("aborts call stack on error - calls error handler, and callback", (done) => {
     let errorHandlerCalled = false;
     const asyncFunc = async (data: any) => {
       return data;
     };
-    const callbackError = (data: any) => {
-      throw new Error('some error');
+    const asyncFuncError = (data: any) => {
+      throw new Error('A Unique Error 3');
     };
-    const funcs = [ sinon.spy(asyncFunc), sinon.spy(callbackError), sinon.spy(asyncFunc) ];
+    const funcs = [ sinon.spy(asyncFunc), sinon.spy(asyncFuncError), sinon.spy(asyncFunc) ];
     const mw = middleware('test');
     for (let func of funcs) {
       mw.use(func);
     }
     // error handler
     mw.use(async (err: any, data: any) => {
-      expect(err.toString()).to.equal('Error: some error');
+      expect(err.toString()).to.equal('Error: A Unique Error 3');
       errorHandlerCalled = true;
-      return err;
+      return data;
     });
-    const doneFunc = mw.done()
-    try {
-      await doneFunc('foobar');
-    } catch (err) {
-      expect(err instanceof Error).to.be.true;
-    }
-    // FIXME -- We need to also handle socket.io callbacks!
-    expect(funcs[0].calledOnce).to.be.true;
-    expect(funcs[0].calledWith('foobar'));
-    expect(funcs[1].calledOnce).to.be.true;
-    expect(funcs[1].calledWith('foobar'));
-    expect(funcs[2].calledOnce).to.be.false;
-    expect(errorHandlerCalled).to.be.true;
+    mw.done()('foobar', (data) => {
+      expect(funcs[0].calledOnce).to.be.true;
+      expect(funcs[0].calledWith('foobar'));
+      expect(funcs[1].calledOnce).to.be.true;
+      expect(funcs[1].calledWith('foobar'));
+      expect(funcs[2].calledOnce).to.be.false;
+      expect(errorHandlerCalled).to.be.true;
+      done();
+    });
   });
 
-  it("error handler receives error and no callback provided", async () => {
+  it("error handler receives error and no callback provided", (done) => {
     let errorHandlerCalled = false;
     const asyncFunc = async (data: any): Promise<any> => {
       return data + 'l';
     };
-    const callbackError = (data: any): Promise<any> => {
+    const asyncFuncError = (data: any): Promise<any> => {
       throw new Error('some error');
     };
-    const funcs = [ sinon.spy(asyncFunc), sinon.spy(asyncFunc), sinon.spy(callbackError) ];
+    const funcs = [ sinon.spy(asyncFunc), sinon.spy(asyncFunc), sinon.spy(asyncFuncError) ];
     const mw = middleware('test');
     for (let func of funcs) {
       mw.use(func);
@@ -129,12 +129,16 @@ describe("Middleware", () => {
       expect(funcs[1].calledWith('foobarl'));
       expect(funcs[2].calledOnce).to.be.true;
       expect(funcs[2].calledWith('foobarll'));
-      expect(errorHandlerCalled).to.be.true;
+      return data;
     });
-    await mw.done()('foobar');
+    mw.done()('foobar', (res) => {
+      expect(errorHandlerCalled).to.be.true;
+      expect(res).to.equal('foobarll');
+      done();
+    });
   });
 
-  it("calls each member of chain (50)", async () => {
+  it("calls each member of chain (50)", (done) => {
     let errorHandlerCalled = false;
     const asyncFunc = async (data: any): Promise<any> => {
       return data + 'l';
@@ -152,13 +156,15 @@ describe("Middleware", () => {
       errorHandlerCalled = true;
       return data;
     });
-    const data = await mw.done()('some data');
-    expect(data).to.equal('some data' + 'l'.repeat(50));
-    funcs.unshift(asyncFunc);
-    for (let i = 1; i < funcs.length; i++) {
-      expect(funcs[i].calledOnce).to.be.true;
-      expect(funcs[i].calledWith('foo', funcs[i - 1]));
-    }
-    expect(errorHandlerCalled).to.be.false;
+    mw.done()('some data', (data) => {
+      expect(data).to.equal('some data' + 'l'.repeat(50));
+      funcs.unshift(asyncFunc);
+      for (let i = 1; i < funcs.length; i++) {
+        expect(funcs[i].calledOnce).to.be.true;
+        expect(funcs[i].calledWith('foo', funcs[i - 1]));
+      }
+      expect(errorHandlerCalled).to.be.false;
+      done();
+    });
   });
 });

@@ -72,14 +72,14 @@ const platform = new PlatformModule(platformSession);
 /**
  * Function used to handle incoming Jobs, call the platform and handle it's result.
  */
-const jobHandler = async (job: JobDataDecrypted): Promise<void> => {
-  const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
-  jobLog(`received ${job.title} ${job.msg.type}`);
+function getJobHandler() {
+  return (job: JobDataDecrypted, done): void => {
+    const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
+    jobLog(`received ${job.title} ${job.msg.type}`);
 
-  delete job.msg.sessionSecret;
-  let jobCallbackCalled = false;
+    delete job.msg.sessionSecret;
+    let jobCallbackCalled = false;
 
-  return new Promise( (resolve, reject) => {
     // function the platform calls when it completes the job (success or failure)
     const doneCallback = (err, result) => {
       if (jobCallbackCalled) { return; }
@@ -94,10 +94,10 @@ const jobHandler = async (job: JobDataDecrypted): Promise<void> => {
         } catch (e) {
           errMsg = err;
         }
-        reject(new Error(errMsg));
+        return done(new Error(errMsg));
       } else {
         jobLog(`completed ${job.title} ${job.msg.type}`);
-        resolve(result);
+        return done(undefined, result);
       }
     };
 
@@ -106,23 +106,26 @@ const jobHandler = async (job: JobDataDecrypted): Promise<void> => {
       // this method requires credentials and should be called even if the platform is not
       // yet initialized, because they need to authenticate before they are initialized.
       const credentialStore = new CredentialsStore(
-        parentId, job.sessionId, parentSecret1 + job.msg.sessionSecret, redisConfig as RedisConfig
+        parentId, job.sessionId,
+        parentSecret1 + job.msg.sessionSecret,
+          redisConfig as RedisConfig
       );
       credentialStore.init().then(() => {
         credentialStore.get(job.msg.actor.id, platform.credentialsHash).then((credentials) => {
           platform[job.msg.type](job.msg, credentials, doneCallback);
         }).catch((err) => {
           jobLog('error ' + err.toString());
-          return reject(err);
+          return done(err);
         });
       });
     } else if ((platform.config.persist) && (!platform.initialized)) {
-      reject(new Error(`${job.msg.type} called on uninitialized platform`));
+      done(new Error(`${job.msg.type} called on uninitialized platform`));
     } else {
       platform[job.msg.type](job.msg, doneCallback);
     }
-  });
-};
+    // });
+  };
+}
 
 /**
  * Get an function which sends a message to the parent thread (PlatformInstance). The platform
@@ -172,6 +175,6 @@ async function startQueueListener(refresh = false) {
     parentId, identifier, parentSecret1 + parentSecret2, redisConfig as RedisConfig
   );
   logger('listening on the queue for incoming jobs');
-  jobQueue.onJob(jobHandler);
+  jobQueue.onJob(getJobHandler());
   jobQueueStarted = true;
 }

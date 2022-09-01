@@ -41,7 +41,7 @@ export class MiddlewareChain {
   }
 
   done() {
-    return async (data: any) => {
+    return async (data: any, done) => {
       let currData = data;
       for (let i = 0; i < this.chain.length; i++) {
         try {
@@ -51,7 +51,7 @@ export class MiddlewareChain {
           break;
         }
       }
-      return currData;
+      done(currData);
     };
   }
 }
