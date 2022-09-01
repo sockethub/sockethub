@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 
-import storeCredentials from "./store-credentials";
+import storeCredentialsWrapper from "./store-credentials";
 
 const creds = {
   "id":"blah",
@@ -28,13 +28,13 @@ describe('Middleware: storeCredentials', () => {
 
   beforeEach(() => {
     storeSuccess = {
-      save: (id: any, creds: any, cb: Function) => {
-        cb();
+      save: async (id: any, creds: any) => {
+        return;
       }
     };
     storeError = {
-      save: (id: any, creds: any, cb: Function) => {
-        cb('some error');
+      save: async (id: any, creds: any) => {
+        throw new Error('some error');
       }
     };
     saveSuccessFake = sinon.replace(storeSuccess, 'save', sinon.fake(storeSuccess.save));
@@ -46,26 +46,26 @@ describe('Middleware: storeCredentials', () => {
   });
 
   it('returns a middleware handler', () => {
-    const sc = storeCredentials(storeSuccess);
+    const sc = storeCredentialsWrapper(storeSuccess);
     expect(typeof sc).to.equal('function');
     expect(saveSuccessFake.callCount).to.equal(0);
   });
 
-  it('successfully store credentials', () => {
-    const sc = storeCredentials(storeSuccess);
-    sc(creds, (err: any) => {
-      expect(saveSuccessFake.callCount).to.equal(1);
-      expect(saveSuccessFake.firstArg).to.equal(creds.actor.id);
-      expect(err).to.be.undefined;
-    });
+  it('successfully store credentials', async () => {
+    const sc = storeCredentialsWrapper(storeSuccess);
+    await sc(creds);
+    expect(saveSuccessFake.callCount).to.equal(1);
+    expect(saveSuccessFake.firstArg).to.equal(creds.actor.id);
   });
 
-  it('handle error while storing credentials', () => {
-    const sc = storeCredentials(storeError);
-    sc(creds, (err: any) => {
+  it('handle error while storing credentials', async () => {
+    const sc = storeCredentialsWrapper(storeError);
+    try {
+      await sc(creds);
+    } catch (err) {
       expect(saveErrorFake.callCount).to.equal(1);
       expect(saveErrorFake.firstArg).to.equal(creds.actor.id);
-      expect(err).to.eql('some error');
-    });
+      expect(err.toString()).to.eql('Error: some error');
+    }
   });
 });

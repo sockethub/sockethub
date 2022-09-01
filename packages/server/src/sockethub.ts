@@ -4,11 +4,11 @@ import crypto from "@sockethub/crypto";
 import {CredentialsStore} from "@sockethub/data-layer";
 
 import init from './bootstrap/init';
-import middleware, {MiddlewareChainInterface} from './middleware';
+import middleware from './middleware';
 import createActivityObject from "./middleware/create-activity-object";
 import expandActivityStream from "./middleware/expand-activity-stream";
-import storeCredentials from "./middleware/store-credentials";
-import validate from "./middleware/validate";
+import storeCredentialsWrapper from "./middleware/store-credentials";
+import validateWrapper from "./middleware/validate";
 import janitor from './janitor';
 import listener from './listener';
 import ProcessManager from "./process-manager";
@@ -88,48 +88,43 @@ class Sockethub {
     socket.on('credentials',
       middleware('credentials')
         .use(expandActivityStream)
-        .use(validate('credentials', socket.id))
-        .use(storeCredentials(credentialsStore) as MiddlewareChainInterface)
-        .use((err, data, next) => {
-        // error handler
-          next(attachError(err, data));
-        }).use((data, next) => { next(); })
+        .use(validateWrapper('credentials', socket.id))
+        .use(storeCredentialsWrapper(credentialsStore))
+        .use(attachError)
         .done());
 
     // when new activity objects are created on the client side, an event is
     // fired and we receive a copy on the server side.
     socket.on('activity-object',
       middleware('activity-object')
-        .use(validate('activity-object', socket.id))
+        .use(validateWrapper('activity-object', socket.id))
         .use(createActivityObject)
-        .use((err, data, next) => {
-          next(attachError(err, data));
-        }).use((data, next) => { next(); })
+        .use(attachError)
         .done());
 
     socket.on('message',
       middleware('message')
         .use(expandActivityStream)
-        .use(validate('message', socket.id))
-        .use((msg, next) => {
+        .use(validateWrapper('message', socket.id))
+        .use((msg) => {
         // The platform thread must find the credentials on their own using the given
         // sessionSecret, which indicates that this specific session (socket
         // connection) has provided credentials.
           msg.sessionSecret = sessionSecret;
-          next(msg);
-        }).use((err, data, next) => {
-          next(attachError(err, data));
-        }).use(async (msg: IActivityStream, next) => {
+          return msg;
+        }).use(attachError)
+        .use(async (msg: IActivityStream): Promise<IActivityStream> => {
           const platformInstance = this.processManager.get(msg.context, msg.actor.id, socket.id);
           // job validated and queued, store socket.io callback for when job is completed
           const job = await platformInstance.jobQueue.add(socket.id, msg);
-          if (job) {
-            platformInstance.completedJobHandlers.set(job.title, next);
-          } else {
+          if (! job) {
             // failed to add job to queue, reject handler immediately
-            msg.error = 'failed to add job to queue';
-            next(msg);
+            throw new Error('failed to add job to queue');
           }
+          return new Promise((resolve) => {
+            // set callback handler for when job is completed
+            platformInstance.completedJobHandlers.set(job.title, resolve);
+          });
         }).done());
   }
 }

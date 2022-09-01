@@ -4,6 +4,7 @@ import expandActivityStream from "./expand-activity-stream";
 
 import asObjects from "./expand-activity-stream.test.data";
 import ActivityStreams from '@sockethub/activity-streams';
+import {IActivityStream} from "@sockethub/schemas";
 
 const activity = ActivityStreams();
 // register known activity objects
@@ -52,26 +53,27 @@ const activity = ActivityStreams();
 describe('Middleware: Expand Activity Stream', () => {
   describe('AS object expansion', () => {
     asObjects.forEach((obj) => {
-      it(`${obj.type}: ${obj.name}, should ${obj.valid ? 'pass' : 'fail'}`, (done) => {
-        // @ts-ignore
-        expandActivityStream(obj.input, (msg) => {
-          if (obj.output) {
-            if (obj.output === 'same') {
-              expect(obj.input).to.eql(msg);
-            } else {
-              expect(obj.output).to.eql(msg);
-            }
-          }
+      it(`${obj.type}: ${obj.name}, should ${obj.valid ? 'pass' : 'fail'}`, async () => {
+        let msg;
+        try {
+          msg = await expandActivityStream(obj.input as IActivityStream);
+        } catch (err) {
           if (obj.valid) {
-            expect(msg instanceof Error).to.be.false;
+            expect(err instanceof Error).to.be.false;
           } else {
-            expect(msg instanceof Error).to.be.true;
+            expect(err instanceof Error).to.be.true;
             if (obj.error) {
-              expect(obj.error).to.equal(msg.toString());
+              expect(obj.error).to.equal(err.toString());
             }
           }
-          done();
-        });
+        }
+        if (obj.output) {
+          if (obj.output === 'same') {
+            expect(obj.input).to.eql(msg);
+          } else {
+            expect(obj.output).to.eql(msg);
+          }
+        }
       });
     });
   });

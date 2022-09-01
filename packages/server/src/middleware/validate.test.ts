@@ -57,26 +57,27 @@ describe('Middleware: Validate', () => {
 
   describe('AS object validations', () => {
     asObjects.forEach((obj) => {
-      it(`${obj.type}: ${obj.name}, should ${obj.valid ? 'pass' : 'fail'}`, (done) => {
-        // @ts-ignore
-        validate(obj.type, 'tests')(obj.input, (msg) => {
-          if (obj.output) {
-            if (obj.output === 'same') {
-              expect(msg).to.eql(obj.input);
-            } else {
-              expect(msg).to.eql(obj.output);
-            }
-          }
+      it(`${obj.type}: ${obj.name}, should ${obj.valid ? 'pass' : 'fail'}`, async () => {
+        let msg;
+        try {
+          msg = await validate(obj.type, 'tests')(obj.input);
+        } catch (err) {
           if (obj.valid) {
-            expect(msg).to.not.be.instanceof(Error);
+            expect(err instanceof Error).to.be.false;
           } else {
-            expect(msg).to.be.instanceof(Error);
+            expect(err instanceof Error).to.be.true;
             if (obj.error) {
-              expect(msg.toString()).to.equal(obj.error);
+              expect(obj.error).to.equal(err.toString());
             }
           }
-          done();
-        });
+        }
+        if (obj.output) {
+          if (obj.output === 'same') {
+            expect(obj.input).to.eql(msg);
+          } else {
+            expect(obj.output).to.eql(msg);
+          }
+        }
       });
     });
   });
