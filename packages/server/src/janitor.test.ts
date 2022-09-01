@@ -38,7 +38,8 @@ const cycleInterval = 10;
 describe('Janitor', () => {
   let sandbox, fetchSocketsFake, janitor;
 
-  beforeEach((done) => {
+  beforeEach(function (done) {
+    this.timeout(4000);
     sandbox = sinon.createSandbox();
     fetchSocketsFake = sandbox.stub().returns(sockets);
     const janitorMod = proxyquire('./janitor', {
