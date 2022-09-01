@@ -67,7 +67,7 @@ class Sockethub {
     await janitor.stop();
   }
 
-  private handleIncomingConnection(socket: Socket) {
+  private async handleIncomingConnection(socket: Socket) {
     // session-specific debug messages
     const sessionLog = debug('sockethub:server:core:' + socket.id),
           sessionSecret = crypto.randToken(16),
@@ -78,6 +78,8 @@ class Sockethub {
             this.parentSecret1 + sessionSecret,
             nconf.get('redis')
           );
+
+    await credentialsStore.init();
 
     sessionLog(`socket.io connection`);
 

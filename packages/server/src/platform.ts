@@ -1,5 +1,5 @@
 import debug from 'debug';
-import {IActivityStream, CallbackInterface} from "@sockethub/schemas";
+import {IActivityStream} from "@sockethub/schemas";
 import crypto, {getPlatformId} from "@sockethub/crypto";
 import {CredentialsStore, JobQueue, RedisConfig} from "@sockethub/data-layer";
 import {JobDataDecrypted} from "@sockethub/data-layer/dist";
@@ -70,18 +70,17 @@ const platformSession: PlatformSession = {
 const platform = new PlatformModule(platformSession);
 
 /**
- * Returns a function used to handle completed jobs from the platform code (the `done` callback).
+ * Function used to handle incoming Jobs, call the platform and handle it's result.
  */
-function getJobHandler() {
-  return (job: JobDataDecrypted, done: CallbackInterface) => {
-    const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
-    jobLog(`received ${job.title} ${job.msg.type}`);
-    const credentialStore = new CredentialsStore(
-      parentId, job.sessionId, parentSecret1 + job.msg.sessionSecret, redisConfig as RedisConfig
-    );
-    delete job.msg.sessionSecret;
+const jobHandler = async (job: JobDataDecrypted): Promise<void> => {
+  const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
+  jobLog(`received ${job.title} ${job.msg.type}`);
 
-    let jobCallbackCalled = false;
+  delete job.msg.sessionSecret;
+  let jobCallbackCalled = false;
+
+  return new Promise( (resolve, reject) => {
+    // function the platform calls when it completes the job (success or failure)
     const doneCallback = (err, result) => {
       if (jobCallbackCalled) { return; }
       jobCallbackCalled = true;
@@ -95,10 +94,10 @@ function getJobHandler() {
         } catch (e) {
           errMsg = err;
         }
-        done(new Error(errMsg));
+        reject(new Error(errMsg));
       } else {
         jobLog(`completed ${job.title} ${job.msg.type}`);
-        done(null, result);
+        resolve(result);
       }
     };
 
@@ -106,19 +105,24 @@ function getJobHandler() {
     if (platform.config.requireCredentials.includes(job.msg.type)) {
       // this method requires credentials and should be called even if the platform is not
       // yet initialized, because they need to authenticate before they are initialized.
-      credentialStore.get(job.msg.actor.id, platform.credentialsHash).then((credentials) => {
-        platform[job.msg.type](job.msg, credentials, doneCallback);
-      }).catch((err) => {
-        jobLog('error ' + err.toString());
-        return done(new Error(err.toString()));
+      const credentialStore = new CredentialsStore(
+        parentId, job.sessionId, parentSecret1 + job.msg.sessionSecret, redisConfig as RedisConfig
+      );
+      credentialStore.init().then(() => {
+        credentialStore.get(job.msg.actor.id, platform.credentialsHash).then((credentials) => {
+          platform[job.msg.type](job.msg, credentials, doneCallback);
+        }).catch((err) => {
+          jobLog('error ' + err.toString());
+          return reject(err);
+        });
       });
     } else if ((platform.config.persist) && (!platform.initialized)) {
-      done(new Error(`${job.msg.type} called on uninitialized platform`));
+      reject(new Error(`${job.msg.type} called on uninitialized platform`));
     } else {
       platform[job.msg.type](job.msg, doneCallback);
     }
-  };
-}
+  });
+};
 
 /**
  * Get an function which sends a message to the parent thread (PlatformInstance). The platform
@@ -168,6 +172,6 @@ async function startQueueListener(refresh = false) {
     parentId, identifier, parentSecret1 + parentSecret2, redisConfig as RedisConfig
   );
   logger('listening on the queue for incoming jobs');
-  jobQueue.onJob(getJobHandler());
+  jobQueue.onJob(jobHandler);
   jobQueueStarted = true;
 }
