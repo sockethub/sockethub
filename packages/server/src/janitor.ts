@@ -34,7 +34,7 @@ class Janitor {
     for (const platformInstance of platformInstances.values()) {
       this.removeStaleSocketSessions(platformInstance);
       await this.removeStalePlatformInstance(platformInstance);
-      await platformInstance.destroy();
+      await platformInstance.shutdown();
     }
   }
 
@@ -68,7 +68,7 @@ class Janitor {
   private async removeStalePlatformInstance(platformInstance: PlatformInstance): Promise<void> {
     if ((platformInstance.flaggedForTermination) || (this.stopTriggered)) {
       rmLog(`terminating platform instance ${platformInstance.id}`);
-      await platformInstance.destroy(); // terminate
+      await platformInstance.shutdown(); // terminate
     } else {
       rmLog(`flagging for termination platform instance ${platformInstance.id} ` +
         `(no registered sessions found)`);
@@ -96,10 +96,11 @@ class Janitor {
   private async performStaleCheck(platformInstance: PlatformInstance) {
     this.removeStaleSocketSessions(platformInstance);
     // Static platforms are for global use, not tied to a unique to session / eg. credentials)
-    if ((!platformInstance.global) && (platformInstance.sessions.size === 0)) {
-      await this.removeStalePlatformInstance(platformInstance);
-    } else {
-      platformInstance.flaggedForTermination = false;
+    if (!platformInstance.global) {
+      if ((!platformInstance.initialized) || (platformInstance.sessions.size === 0)) {
+        // either the platform failed to initialize, or there are no more sessions linked to it
+        await this.removeStalePlatformInstance(platformInstance);
+      }
     }
   }
 

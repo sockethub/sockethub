@@ -1,14 +1,12 @@
 import {ChildProcess, fork } from 'child_process';
 import { join } from 'path';
 import { debug, Debugger } from 'debug';
-import Queue from 'bull';
-import { IActivityStream } from '@sockethub/schemas';
+import {IActivityStream, CompletedJobHandler} from "@sockethub/schemas";
+import {JobQueue, JobDataDecrypted} from "@sockethub/data-layer";
 
 import config from "./config";
-import { JobDataDecrypted, JobEncrypted } from "./sockethub";
 import { getSocket } from "./listener";
-import { decryptJobData } from "./common";
-import {CompletedJobHandler} from "./basic-types";
+import nconf from "nconf";
 
 // collection of platform instances, stored by `id`
 export const platformInstances = new Map<string, PlatformInstance>();
@@ -18,6 +16,13 @@ export interface PlatformInstanceParams {
   platform: string;
   parentId?: string;
   actor?: string;
+}
+
+type EnvFormat = {
+  DEBUG?: string,
+  REDIS_URL?: string,
+  REDIS_HOST?: string,
+  REDIS_PORT?: string
 }
 
 interface MessageFromPlatform extends Array<string | IActivityStream>{
@@ -30,11 +35,13 @@ interface PlatformConfig {
 }
 
 export default class PlatformInstance {
-  flaggedForTermination = false;
   id: string;
-  queue: Queue;
-  completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
-  config: PlatformConfig = {};
+  flaggedForTermination = false;
+  initialized = false;
+  jobQueue: JobQueue;
+  readonly global: boolean = false;
+  readonly completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
+  readonly config: PlatformConfig = {};
   readonly name: string;
   readonly process: ChildProcess;
   readonly debug: Debugger;
@@ -44,7 +51,6 @@ export default class PlatformInstance {
     'close': (() => new Map())(),
     'message': (() => new Map())()
   };
-  public readonly global?: boolean = false;
   private readonly actor?: string;
 
   constructor(params: PlatformInstanceParams) {
@@ -57,41 +63,52 @@ export default class PlatformInstance {
       this.global = true;
     }
 
-    this.debug = debug(`sockethub:platform-instance:${this.id}`);
+    this.debug = debug(`sockethub:server:platform-instance:${this.id}`);
+    const env: EnvFormat = {};
+    if (process.env.DEBUG) {
+      env.DEBUG = process.env.DEBUG;
+    }
+    if (config.get('redis:url')) {
+      env.REDIS_URL = config.get('redis:url') as string;
+    } else {
+      env.REDIS_HOST = config.get('redis:host') as string;
+      env.REDIS_PORT = config.get('redis:port') as string;
+    }
+
     // spin off a process
-    const env = config.get('redis:url') ? { REDIS_URL: config.get('redis:url') }
-      : { REDIS_HOST: config.get('redis:host'), REDIS_PORT: config.get('redis:port') };
     this.process = fork(
       join(__dirname, 'platform.js'),
       [this.parentId, this.name, this.id],
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      { env: env });
+      { env: env }
+    );
   }
 
   /**
    * Destroys all references to this platform instance, internal listeners and controlled processes
    */
-  public async destroy() {
-    this.debug(`cleaning up`);
+  public async shutdown() {
+    this.debug('shutdown');
     this.flaggedForTermination = true;
+
     try {
-      await this.queue.removeAllListeners();
-    } catch (e) {
-      // this needs to happen
-    }
-    try {
-      await this.queue.obliterate({ force: true });
-    } catch (e) {
-      // this needs to happen
-    }
-    try {
-      delete this.queue;
       await this.process.removeAllListeners('close');
       await this.process.unref();
       this.process.kill();
-    } finally {
+    } catch (e) {
+      // needs to happen
+    }
+
+    try {
+      await this.jobQueue.shutdown();
+      delete this.jobQueue;
+    } catch (e) {
+      // this needs to happen
+    }
+
+    try {
       platformInstances.delete(this.id);
+    } catch (e) {
+      // this needs to happen
     }
   }
 
@@ -99,25 +116,15 @@ export default class PlatformInstance {
    * When jobs are completed or failed, we prepare the results and send them to the client socket
    */
   public initQueue(secret: string) {
-    this.queue = new Queue(this.parentId + this.id, { redis: config.get('redis') });
+    this.jobQueue = new JobQueue(this.parentId, this.id, secret, nconf.get('redis'));
+    this.jobQueue.initResultEvents();
 
-    this.queue.on('global:completed', (jobId, resultString) => {
-      const result = resultString ? JSON.parse(resultString) : "";
-      this.queue.getJob(jobId).then(async (job: JobEncrypted) => {
-        await this.handleJobResult('completed', decryptJobData(job, secret), result);
-        await job.remove();
-      });
+    this.jobQueue.on('global:completed', async (job: JobDataDecrypted, result: string) => {
+      await this.handleJobResult('completed', job, result);
     });
 
-    this.queue.on('global:error', (jobId, result) => {
-      this.debug("unknown queue error", jobId, result);
-    });
-
-    this.queue.on('global:failed', (jobId, result) => {
-      this.queue.getJob(jobId).then(async (job: JobEncrypted) => {
-        await this.handleJobResult('failed', decryptJobData(job, secret), result);
-        await job.remove();
-      });
+    this.jobQueue.on('global:failed', async (job: JobDataDecrypted, result: string) => {
+      await this.handleJobResult('failed', job, result);
     });
   }
 
@@ -169,30 +176,39 @@ export default class PlatformInstance {
   }
 
   // handle job results coming in on the queue from platform instances
-  private async handleJobResult(type: string, jobData: JobDataDecrypted, result) {
-    this.debug(`${type} job ${jobData.title}`);
-    delete jobData.msg.sessionSecret;
-    const msg = jobData.msg;
+  private async handleJobResult(type: string, job: JobDataDecrypted, result) {
+    const msg = job.msg;
     if (type === 'failed') {
       msg.error = result ? result : "job failed for unknown reason";
-      if ((this.config.persist) && (this.config.requireCredentials.includes(jobData.msg.type))) {
-        this.debug(`critical job type ${jobData.msg.type} failed, terminating platform instance`);
-        await this.destroy();
-      }
+      this.debug(`${job.title} ${type}: ${msg.error}`);
+
     }
 
     // send result to client
-    const callback = this.completedJobHandlers.get(jobData.title);
+    const callback = this.completedJobHandlers.get(job.title);
     if (callback) {
       callback(msg);
-      this.completedJobHandlers.delete(jobData.title);
+      this.completedJobHandlers.delete(job.title);
     } else {
-      await this.sendToClient(jobData.sessionId, msg);
+      await this.sendToClient(job.sessionId, msg);
     }
 
     // let all related peers know of result as an independent message
     // (not as part of a job completion, or failure)
-    await this.broadcastToSharedPeers(jobData.sessionId, msg);
+    await this.broadcastToSharedPeers(job.sessionId, msg);
+
+    if ((this.config.persist) && (this.config.requireCredentials.includes(job.msg.type))) {
+      if (type === 'failed') {
+        this.debug(`critical job type ${job.msg.type} failed, flagging for termination`);
+        await this.jobQueue.pause();
+        this.initialized = false;
+        this.flaggedForTermination = true;
+      } else {
+        await this.jobQueue.resume();
+        this.initialized = true;
+        this.flaggedForTermination = false;
+      }
+    }
   }
 
   /**
@@ -209,7 +225,7 @@ export default class PlatformInstance {
     };
     this.sendToClient(sessionId, errorObject);
     this.sessions.clear();
-    await this.destroy();
+    await this.shutdown();
   }
 
   /**

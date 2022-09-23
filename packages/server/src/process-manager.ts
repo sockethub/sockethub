@@ -1,7 +1,7 @@
 import init from './bootstrap/init';
 import PlatformInstance, {
   platformInstances, PlatformInstanceParams, MessageFromParent } from "./platform-instance";
-import { getPlatformId } from "./common";
+import {getPlatformId} from "@sockethub/crypto";
 
 class ProcessManager {
   private readonly parentId: string;

@@ -6,7 +6,7 @@ export interface ActivityObjectManager {
   create(obj: unknown): unknown;
   delete(id: string): boolean;
   list(): Array<string>,
-  get(id: string, expand: boolean): unknown;
+  get(id: string, expand?: boolean): unknown;
 }
 
 export interface ASManager {

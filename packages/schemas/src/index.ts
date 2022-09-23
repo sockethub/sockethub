@@ -20,7 +20,4 @@ export {
   ObjectTypesList
 };
 
-export {
-  IActivityStream,
-  IActivityObject
-} from "./types";
+export * from "./types";

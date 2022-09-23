@@ -29,7 +29,7 @@ ExamplesShared.prototype.__displayUnknownContent = function (msg) {
 };
 
 ExamplesShared.prototype.processIncomingMessage = function (msg) {
-  console.log('incoming message: ', msg);
+  console.log(msg);
   if (msg.type === 'query') {
     if (msg.object.members) {
       $('#messages').append($('<li>').text(` users in ${msg.actor.name}`))

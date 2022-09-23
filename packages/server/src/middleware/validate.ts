@@ -2,11 +2,9 @@
  * responsible for handling the validation and expansion (when applicable) of all incoming objects
  */
 import debug from 'debug';
-import schemas from '@sockethub/schemas';
-import { IActivityStream } from "@sockethub/schemas";
+import schemas, {IActivityStream, CallbackActivityStreamInterface} from '@sockethub/schemas';
 
 import init from "../bootstrap/init";
-import {CallbackActivityStreamInterface} from "../basic-types";
 
 init.platforms.forEach((platform) => {
   Object.keys(platform.schemas).forEach((key) => {
@@ -18,7 +16,7 @@ init.platforms.forEach((platform) => {
 // called when registered with the middleware function, define the type of validation
 // that will be called when the middleware eventually does.
 export default function validate(type: string, sockethubId: string) {
-  const sessionLog = debug(`sockethub:validate:${sockethubId}`);
+  const sessionLog = debug(`sockethub:server:validate:${sockethubId}`);
   return (msg: IActivityStream, done: CallbackActivityStreamInterface) => {
     sessionLog('applying schema validation for ' + type);
     if (type === 'activity-object') {

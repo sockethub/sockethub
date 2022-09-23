@@ -13,7 +13,9 @@ proxyquire.noCallThru();
 function getPlatformInstanceFake() {
   return {
     flaggedForTermination: false,
-    destroy: sinon.stub(),
+    initialized: false,
+    global: false,
+    shutdown: sinon.stub(),
     process: {
       removeListener: sinon.stub()
     },
@@ -36,7 +38,8 @@ const cycleInterval = 10;
 describe('Janitor', () => {
   let sandbox, fetchSocketsFake, janitor;
 
-  beforeEach((done) => {
+  beforeEach(function (done) {
+    this.timeout(3000);
     sandbox = sinon.createSandbox();
     fetchSocketsFake = sandbox.stub().returns(sockets);
     const janitorMod = proxyquire('./janitor', {
@@ -126,12 +129,38 @@ describe('Janitor', () => {
     });
   });
 
+  describe('performStaleCheck', () => {
+    it('removes flagged and uninitialized platform instances', async () => {
+      const pi = getPlatformInstanceFake();
+      pi.flaggedForTermination = true;
+      pi.initialized = false;
+      janitor.removeStaleSocketSessions = sandbox.stub();
+      janitor.removeStalePlatformInstance = sandbox.stub();
+      await janitor.performStaleCheck(pi);
+      sinon.assert.calledOnce(janitor.removeStaleSocketSessions);
+      sinon.assert.calledOnce(janitor.removeStalePlatformInstance);
+      expect(pi.flaggedForTermination).to.be.true;
+    });
+
+    it('flags for termination when there are not sockets', async () => {
+      const pi = getPlatformInstanceFake();
+      pi.sessions = new Set();
+      pi.flaggedForTermination = false;
+      pi.initialized = true;
+      janitor.removeStaleSocketSessions = sandbox.stub();
+      janitor.removeStalePlatformInstance = sandbox.stub();
+      await janitor.performStaleCheck(pi);
+      sinon.assert.calledOnce(janitor.removeStaleSocketSessions);
+      sinon.assert.calledOnce(janitor.removeStalePlatformInstance);
+    });
+  });
+
   describe('removeStalePlatformInstance', () => {
     it('flags stale platform', async () => {
       const pi = getPlatformInstanceFake();
       expect(pi.flaggedForTermination).to.be.false;
       await janitor.removeStalePlatformInstance(pi);
-      sinon.assert.notCalled(pi.destroy);
+      sinon.assert.notCalled(pi.shutdown);
       expect(pi.flaggedForTermination).to.be.true;
     });
 
@@ -139,7 +168,7 @@ describe('Janitor', () => {
       const pi = getPlatformInstanceFake();
       pi.flaggedForTermination = true;
       await janitor.removeStalePlatformInstance(pi);
-      sinon.assert.calledOnce(pi.destroy);
+      sinon.assert.calledOnce(pi.shutdown);
     });
   });
 

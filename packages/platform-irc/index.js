@@ -403,8 +403,7 @@ IRC.prototype.update = function (job, credentials, done) {
         credentials.object.nick = job.target.name;
         credentials.actor.id = `${job.target.name}@${credentials.object.server}`;
         credentials.actor.name = job.target.name;
-        this.updateActor(credentials);
-        done();
+        this.updateActor(credentials).then(done);
       });
       // send nick change command
       client.raw(['NICK', job.target.name]);

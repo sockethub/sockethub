@@ -19,13 +19,13 @@ describe("PlatformInstance", () => {
     getSocketFake = sinon.fake.resolves(socketMock);
 
     const PlatformInstanceMod = proxyquire('./platform-instance', {
-      'bull': sandbox.stub().returns({
-        on: sandbox.stub()
-      }),
-      './store': {
-        redisConfig: {
-          createClient: () => {}
-        }
+      '@sockethub/data-layer': {
+        JobQueue: sandbox.stub().returns({
+          shutdown: sandbox.stub(),
+          on: sandbox.stub(),
+          getJob: sandbox.stub(),
+          initResultEvents: sandbox.stub()
+        })
       },
       'child_process': {
         fork: forkFake,
@@ -51,7 +51,7 @@ describe("PlatformInstance", () => {
   });
 
   describe('private instance per-actor', () => {
-    it("is set as non-global when an actor is provided", () => {
+    it("is set as non-global when an actor is provided", async () => {
       const pi = new PlatformInstance({
         identifier: 'id',
         platform: 'name',
@@ -60,7 +60,7 @@ describe("PlatformInstance", () => {
       });
       expect(pi.global).to.be.equal(false);
       sandbox.assert.calledWith(forkFake, FORK_PATH, ['parentId', 'name', 'id']);
-      pi.destroy();
+      await pi.shutdown();
     });
   });
 
@@ -82,8 +82,8 @@ describe("PlatformInstance", () => {
       };
     });
 
-    afterEach(() => {
-      pi.destroy();
+    afterEach(async () => {
+      await pi.shutdown();
     });
 
     it('has expected properties', () => {
@@ -123,23 +123,23 @@ describe("PlatformInstance", () => {
         expect(pi.sessions.has('my session id')).to.be.equal(true);
         pi.reportError('my session id', 'an error message');
         pi.sendToClient = sandbox.stub();
-        pi.destroy = sandbox.stub();
+        pi.shutdown = sandbox.stub();
         expect(pi.sessions.size).to.be.equal(0);
       });
     });
 
     it('initializes the job queue', () => {
-      expect(pi.queue).to.be.undefined;
+      expect(pi.jobQueue).to.be.undefined;
       pi.initQueue('a secret');
-      expect(pi.queue).to.be.ok;
+      expect(pi.jobQueue).to.be.ok;
     });
 
-    it("cleans up its references when destroyed", async () => {
+    it("cleans up its references when shutdown", async () => {
       pi.initQueue('a secret');
-      expect(pi.queue).to.be.ok;
+      expect(pi.jobQueue).to.be.ok;
       expect(platformInstances.has('platform identifier')).to.be.true;
-      await pi.destroy();
-      expect(pi.queue).not.to.be.ok;
+      await pi.shutdown();
+      expect(pi.jobQueue).not.to.be.ok;
       expect(platformInstances.has('platform identifier')).to.be.false;
     });
 

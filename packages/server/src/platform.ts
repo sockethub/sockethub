@@ -1,11 +1,8 @@
 import debug from 'debug';
-import hash from "object-hash";
-import Queue from 'bull';
-import {IActivityStream} from "@sockethub/schemas";
-import {decryptJobData, getPlatformId} from "./common";
-import {JobDataDecrypted, JobEncrypted} from "./sockethub";
-import {getSessionStore} from "./store";
-import {CallbackInterface} from "./basic-types";
+import {IActivityStream, CallbackInterface} from "@sockethub/schemas";
+import crypto, {getPlatformId} from "@sockethub/crypto";
+import {CredentialsStore, JobQueue, RedisConfig} from "@sockethub/data-layer";
+import {JobDataDecrypted} from "@sockethub/data-layer/dist";
 
 // command-line params
 const parentId = process.argv[2];
@@ -19,7 +16,8 @@ const redisConfig = process.env.REDIS_URL ? process.env.REDIS_URL
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PlatformModule = require(`@sockethub/platform-${platformName}`);
 
-let queueStarted = false;
+let jobQueue: JobQueue;
+let jobQueueStarted = false;
 let parentSecret1: string, parentSecret2: string;
 
 logger(`platform handler initialized for ${platformName} ${identifier}`);
@@ -50,16 +48,16 @@ process.on('uncaughtException', (err) => {
  * Incoming messages from the worker to this platform. Data is an array, the first property is the
  * method to call, the rest are params.
  */
-process.on('message', (data: SecretFromParent) => {
-  if (data[0] !== 'secrets') {
-    return;
+process.on('message', async (data: SecretFromParent) => {
+  if (data[0] === 'secrets') {
+    const {parentSecret2: parentSecret3, parentSecret1: parentSecret} = data[1];
+    parentSecret1 = parentSecret;
+    parentSecret2 = parentSecret3;
+    await startQueueListener();
+  } else {
+    throw new Error('received unknown command from parent thread');
   }
-  const {parentSecret2: parentSecret3, parentSecret1: parentSecret} = data[1];
-  parentSecret1 = parentSecret;
-  parentSecret2 = parentSecret3;
-  startQueueListener();
 });
-
 
 /**
  * Initialize platform module
@@ -72,87 +70,53 @@ const platformSession: PlatformSession = {
 const platform = new PlatformModule(platformSession);
 
 /**
- * Get the credentials stored for this user in this sessions store, if given the correct
- * sessionSecret.
- * @param actorId
- * @param sessionId
- * @param sessionSecret
- * @param cb
- */
-function getCredentials(actorId: string, sessionId: string, sessionSecret: string,
-                        cb: CallbackInterface) {
-  if (platform.config.noCredentials) { return cb(); }
-  const store = getSessionStore(parentId, parentSecret1, sessionId, sessionSecret);
-  store.get(actorId, (err, credentials) => {
-    if (platform.config.persist) {
-      // don't continue if we don't get credentials
-      if (err) { return cb(err.toString()); }
-    } else if (! credentials) {
-      // also skip if this is a non-persist platform with no credentials
-      return cb();
-    }
-
-    if (platform.credentialsHash) {
-      if (platform.credentialsHash !== hash(credentials.object)) {
-        return cb('provided credentials do not match existing platform instance for actor '
-            + platform.actor.id);
-      }
-    } else {
-      platform.credentialsHash = hash(credentials.object);
-    }
-    cb(undefined, credentials);
-  });
-}
-
-/**
  * Returns a function used to handle completed jobs from the platform code (the `done` callback).
- * @param secret the secret used to decrypt credentials
  */
-function getJobHandler(secret: string) {
-  return (job: JobEncrypted, done: CallbackInterface) => {
-    const jobData: JobDataDecrypted = decryptJobData(job, secret);
-    const jobLog = debug(`${loggerPrefix}:${jobData.sessionId}`);
-    jobLog(`received ${jobData.title} ${jobData.msg.type}`);
-    const sessionSecret = jobData.msg.sessionSecret;
-    delete jobData.msg.sessionSecret;
+function getJobHandler() {
+  return (job: JobDataDecrypted, done: CallbackInterface) => {
+    const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
+    jobLog(`received ${job.title} ${job.msg.type}`);
+    const credentialStore = new CredentialsStore(
+      parentId, job.sessionId, parentSecret1 + job.msg.sessionSecret, redisConfig as RedisConfig
+    );
+    delete job.msg.sessionSecret;
 
-    return getCredentials(jobData.msg.actor.id, jobData.sessionId, sessionSecret,
-      (err, credentials) => {
-        if (err) { return done(new Error(err.toString())); }
-        let jobCallbackCalled = false;
-        const doneCallback = (err, result) => {
-          if (jobCallbackCalled) { return; }
-          jobCallbackCalled = true;
-          if (err) {
-            jobLog(`errored ${jobData.title} ${jobData.msg.type}`);
-            let errMsg;
-            // some error objects (eg. TimeoutError) don't interoplate correctly to human-readable
-            // so we have to do this little dance
-            try {
-              errMsg = err.toString();
-            } catch (e) {
-              errMsg = err;
-            }
-            done(new Error(errMsg));
-          } else {
-            jobLog(`completed ${jobData.title} ${jobData.msg.type}`);
-            done(null, result);
-          }
-        };
-        if ((Array.isArray(platform.config.requireCredentials)) &&
-          (platform.config.requireCredentials.includes(jobData.msg.type))) {
-          // add the credentials object if this method requires it
-          platform[jobData.msg.type](jobData.msg, credentials, doneCallback);
-        } else if (platform.config.persist) {
-          if (platform.initialized) {
-            platform[jobData.msg.type](jobData.msg, doneCallback);
-          } else {
-            done(new Error(`${jobData.msg.type} called on uninitialized platform`));
-          }
-        } else {
-          platform[jobData.msg.type](jobData.msg, doneCallback);
+    let jobCallbackCalled = false;
+    const doneCallback = (err, result) => {
+      if (jobCallbackCalled) { return; }
+      jobCallbackCalled = true;
+      if (err) {
+        jobLog(`failed ${job.title} ${job.msg.type}`);
+        let errMsg;
+        // some error objects (eg. TimeoutError) don't interpolate correctly to human-readable
+        // so we have to do this little dance
+        try {
+          errMsg = err.toString();
+        } catch (e) {
+          errMsg = err;
         }
+        done(new Error(errMsg));
+      } else {
+        jobLog(`completed ${job.title} ${job.msg.type}`);
+        done(null, result);
+      }
+    };
+
+    platform.config.requireCredentials ? platform.config.requireCredentials : [];
+    if (platform.config.requireCredentials.includes(job.msg.type)) {
+      // this method requires credentials and should be called even if the platform is not
+      // yet initialized, because they need to authenticate before they are initialized.
+      credentialStore.get(job.msg.actor.id, platform.credentialsHash).then((credentials) => {
+        platform[job.msg.type](job.msg, credentials, doneCallback);
+      }).catch((err) => {
+        jobLog('error ' + err.toString());
+        return done(new Error(err.toString()));
       });
+    } else if ((platform.config.persist) && (!platform.initialized)) {
+      done(new Error(`${job.msg.type} called on uninitialized platform`));
+    } else {
+      platform[job.msg.type](job.msg, doneCallback);
+    }
   };
 }
 
@@ -172,29 +136,34 @@ function getSendFunction(command: string) {
  * both the queue thread (listening on the channel for jobs) and the logging object are updated.
  * @param credentials
  */
-function updateActor(credentials) {
+async function updateActor(credentials) {
   identifier = getPlatformId(platformName, credentials.actor.id);
   logger(`platform actor updated to ${credentials.actor.id} identifier ${identifier}`);
   logger = debug(`sockethub:platform:${identifier}`);
-  platform.credentialsHash = hash(credentials.object);
+  platform.credentialsHash = crypto.objectHash(credentials.object);
   platform.debug = debug(`sockethub:platform:${platformName}:${identifier}`);
   process.send(['updateActor', undefined, identifier]);
-  startQueueListener(true);
+  await startQueueListener(true);
 }
 
 /**
- * starts listening on the queue for incoming jobs
+ * Starts listening on the queue for incoming jobs
  * @param refresh boolean if the param is true, we re-init the queue.process
  * (used when identifier changes)
  */
-function startQueueListener(refresh = false) {
-  const secret = parentSecret1 + parentSecret2;
-  if ((queueStarted) && (!refresh)) {
-    logger('start queue called multiple times, skipping');
-    return;
+async function startQueueListener(refresh = false) {
+  if (jobQueueStarted) {
+    if (refresh) {
+      await jobQueue.shutdown();
+    } else {
+      logger('start queue called multiple times, skipping');
+      return;
+    }
   }
-  const queue = new Queue(parentId + identifier, { redis: redisConfig });
-  queueStarted = true;
+  jobQueue = new JobQueue(
+    parentId, identifier, parentSecret1 + parentSecret2, redisConfig as RedisConfig
+  );
   logger('listening on the queue for incoming jobs');
-  queue.process(getJobHandler(secret));
+  jobQueue.onJob(getJobHandler());
+  jobQueueStarted = true;
 }
