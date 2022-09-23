@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/crypto",
   "description": "Crypto functions and helpers for Sockethub",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0-alpha.4",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
   "dependencies": {
-    "@sockethub/schemas": "^3.0.0-alpha.3",
+    "@sockethub/schemas": "^3.0.0-alpha.4",
     "object-hash": "^3.0.0"
   },
   "scripts": {

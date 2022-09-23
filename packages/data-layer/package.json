@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/data-layer",
   "description": "Storing and RPC of data for Sockethub",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0-alpha.4",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
@@ -26,8 +26,8 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
   "dependencies": {
-    "@sockethub/crypto": "^1.0.0-alpha.3",
-    "@sockethub/schemas": "^3.0.0-alpha.3",
+    "@sockethub/crypto": "^1.0.0-alpha.4",
+    "@sockethub/schemas": "^3.0.0-alpha.4",
     "bull": "^4.0.0",
     "debug": "^4.3.1",
     "secure-store-redis": "^1.4.7"

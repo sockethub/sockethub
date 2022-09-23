@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/server",
   "description": "A polyglot messaging service, server libraries",
-  "version": "5.0.0-alpha.3",
+  "version": "5.0.0-alpha.4",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
@@ -34,11 +34,11 @@
   },
   "homepage": "https://sockethub.org",
   "dependencies": {
-    "@sockethub/activity-streams": "^4.4.0-alpha.3",
-    "@sockethub/client": "^5.0.0-alpha.3",
-    "@sockethub/crypto": "1.0.0-alpha.3",
-    "@sockethub/data-layer": "1.0.0-alpha.3",
-    "@sockethub/schemas": "^3.0.0-alpha.3",
+    "@sockethub/activity-streams": "^4.4.0-alpha.4",
+    "@sockethub/client": "^5.0.0-alpha.4",
+    "@sockethub/crypto": "^1.0.0-alpha.4",
+    "@sockethub/data-layer": "^1.0.0-alpha.4",
+    "@sockethub/schemas": "^3.0.0-alpha.4",
     "body-parser": "^1.19.0",
     "debug": "^4.3.1",
     "ejs": "^3.0.1",
@@ -88,9 +88,9 @@
     "typescript": "4.8.3"
   },
   "optionalDependencies": {
-    "@sockethub/platform-dummy": "^3.0.0-alpha.3",
-    "@sockethub/platform-feeds": "^3.0.0-alpha.3",
-    "@sockethub/platform-irc": "^4.0.0-alpha.3",
-    "@sockethub/platform-xmpp": "^5.0.0-alpha.3"
+    "@sockethub/platform-dummy": "^3.0.0-alpha.4",
+    "@sockethub/platform-feeds": "^3.0.0-alpha.4",
+    "@sockethub/platform-irc": "^4.0.0-alpha.4",
+    "@sockethub/platform-xmpp": "^5.0.0-alpha.4"
   }
 }
