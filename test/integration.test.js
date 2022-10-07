@@ -120,13 +120,13 @@ describe('Page', () => {
             }
           }, (msg) => {
             expect(msg.length).to.eql(20);
-            // for (const m of msg) {
-            //   expect(m.object.content.length).to.be.true;
-            //   expect(m.object.type).to.equal('feedEntry');
-            //   expect(m.object.contentType).to.equal('html');
-            //   expect(m.actor.type).to.equal('feed');
-            //   expect(m.type).to.equal('post');
-            // }
+            for (const m of msg) {
+              expect(m.object.content.length).to.be.true;
+              expect(m.object.type).to.equal('feedEntry');
+              expect(m.object.contentType).to.equal('html');
+              expect(m.actor.type).to.equal('feed');
+              expect(m.type).to.equal('post');
+            }
             done();
           });
         });
