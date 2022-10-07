@@ -118,9 +118,8 @@ describe('Page', () => {
               type: 'feed',
               id: 'http://localhost:10550/examples/feed.xml'
             }
-          }, done);
-          // }, (msg) => {
-            // expect(msg.length).to.eql(20);
+          }, (msg) => {
+            expect(msg.length).to.eql(20);
             // for (const m of msg) {
             //   expect(m.object.content.length).to.be.true;
             //   expect(m.object.type).to.equal('feedEntry');
@@ -128,8 +127,8 @@ describe('Page', () => {
             //   expect(m.actor.type).to.equal('feed');
             //   expect(m.type).to.equal('post');
             // }
-            // done();
-          // });
+            done();
+          });
         });
       });
     });

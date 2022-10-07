@@ -24,7 +24,7 @@
     <script src="<%= address %>sockethub-client.js"></script>
     <script>
       localStorage.debug = '<%= debug_scope %>';
-      const sc = new SockethubClient(io('<%= address %>', { path: '/sockethub' }));
+      const sc = new SockethubClient(io('<%= address %>',  { path: '/sockethub' }));
 
       // errors
       sc.socket.on('failure', function (msg) {

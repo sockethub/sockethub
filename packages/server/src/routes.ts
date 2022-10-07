@@ -28,7 +28,6 @@ export const examplePaths: IRoutePaths = {
   '/jquery.min.map': path.resolve(`${__dirname}/../node_modules/jquery/dist/jquery.min.map`),
   '/examples/shared.js': path.resolve(`${__dirname}/../views/examples/shared.js`),
   '/examples/feed.xml': path.resolve(`${__dirname}/../views/examples/feed.xml`)
-
 };
 
 export const examplePages: IRoutePaths = {
