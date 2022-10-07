@@ -1,7 +1,7 @@
 **/dist/
-**/browser/
+browser
 **/coverage/
-**/node_modules/
+/node_modules
 **/*.d.ts
 **/*.test.*
 packages/server/views/examples/
@@ -9,3 +9,15 @@ packages/irc2as/
 packages/platform-feeds/
 packages/platform-irc
 packages/schemas/schemas/
+.DS_Store
+/build
+/.svelte-kit
+/package
+.env
+.env.*
+!.env.example
+
+# Ignore files for PNPM, NPM and YARN
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
