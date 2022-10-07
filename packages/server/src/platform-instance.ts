@@ -177,7 +177,7 @@ export default class PlatformInstance {
 
   // handle job results coming in on the queue from platform instances
   private async handleJobResult(type: string, job: JobDataDecrypted, result) {
-    let payload = result ? result : job.msg; // some platforms return new AS objects as result
+    let payload = result; // some platforms return new AS objects as result
     if (type === 'failed') {
       payload = job.msg; // failures always use original AS job object
       payload.error = result ? result : "job failed for unknown reason";

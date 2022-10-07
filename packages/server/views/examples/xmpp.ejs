@@ -93,8 +93,9 @@
         sc.ActivityStreams.Object.create(asObject);
       }
 
-      function handleMessage(text) {
+      function handleMessage(text, origObject) {
         return (msg) => {
+          msg = msg || origObject;
           console.log(text);
           if (msg.error) {
             debug('error: ', msg);
@@ -151,7 +152,7 @@
         };
 
         debug('sending message: ', msg);
-        sc.socket.emit('message', msg, handleMessage('callback from sent message'));
+        sc.socket.emit('message', msg, handleMessage('callback from sent message', msg));
         $('#m').val('');
         return false;
       });
@@ -192,7 +193,7 @@
             }
           };
           debug('sending connect message: ', connectMsg);
-          sc.socket.emit('message', connectMsg, handleMessage('callback from connect'));
+          sc.socket.emit('message', connectMsg, handleMessage('callback from connect', msg));
 
           const joinMsg = {
             type: 'join',
