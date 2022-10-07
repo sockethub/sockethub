@@ -121,7 +121,7 @@ describe('Page', () => {
           }, (msg) => {
             expect(msg.length).to.eql(20);
             for (const m of msg) {
-              expect(m.object.text.length >= m.object.brief.length).to.be.true;
+              expect(m.object.content.length).to.be.true;
               expect(m.object.type).to.equal('feedEntry');
               expect(m.object.contentType).to.equal('html');
               expect(m.actor.type).to.equal('feed');
