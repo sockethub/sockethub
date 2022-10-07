@@ -18,6 +18,16 @@
 
 const FeedParser = require('feedparser');
 const request = require('request');
+const htmlTags = require('html-tags');
+
+const basic = /\s?<!doctype html>|(<html\b[^>]*>|<body\b[^>]*>|<x-[^>]+>)+/i;
+const full = new RegExp(htmlTags.map(tag => `<${tag}\\b[^>]*>`).join('|'), 'i');
+
+function isHtml(string) {
+  // limit it to a reasonable length to improve performance.
+  string = string.trim().slice(0, 1000);
+  return basic.test(string) || full.test(string);
+}
 
 const PlatformSchema = {
   "name": "feeds",
@@ -111,12 +121,12 @@ class Feeds {
   /**
    * Function: fetch
    *
-   * Fetches feeds from specified source. Upon completion it will send back a
+   * Fetch feeds from specified source. Upon completion, it will send back a
    * response to the original request with a complete list of URLs in the feed
    * and total count.
    *
    * @param {object} job Activity streams object containing job data.
-   * @param {object} cb
+   * @param {object} done
    *
    * @example
    *
@@ -197,16 +207,16 @@ class Feeds {
    *   }
    *
    */
-  fetch(job, cb) {
+  fetch(job, done) {
     // ready to execute job
     this.fetchFeed(job.target.id, job.object || {})
       .then((results) => {
-        return cb(null, results);
-      }).catch(cb);
+        return done(null, results);
+      }).catch(done);
   }
 
-  cleanup(cb) {
-    cb();
+  cleanup(done) {
+    done();
   }
 
   //
@@ -242,16 +252,15 @@ function buildFeedObject(dateNum, item) {
   return {
     type: 'feedEntry',
     name: item.title,
-    title: item.title,
-    date: item.date,
+    id: item.origlink || item.link || item.meta.link + '#' + dateNum,
+    brief: item.description === item.summary ? undefined : item.summary,
+    content: item.description,
+    contentType: isHtml(item.description) ? 'html' : 'text',
+    url: item.origlink || item.link || item.meta.link,
+    published: item.pubdate || item.date,
+    updated: item.date,
     datenum: dateNum,
     tags: item.categories,
-    brief_text: item.summary,
-    brief_html: item.summary,
-    text: item.description,
-    html: item.description,
-    url: item.origlink || item.link || item.meta.link,
-    id: item.origlink || item.link || item.meta.link + '#' + dateNum,
     media: item.enclosures,
     source: item.source
   };
