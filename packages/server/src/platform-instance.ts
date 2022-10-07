@@ -177,9 +177,9 @@ export default class PlatformInstance {
 
   // handle job results coming in on the queue from platform instances
   private async handleJobResult(type: string, job: JobDataDecrypted, result) {
-    let payload = result;
+    let payload = result ? result : job.msg; // some platforms return new AS objects as result
     if (type === 'failed') {
-      payload = job.msg;
+      payload = job.msg; // failures always use original AS job object
       payload.error = result ? result : "job failed for unknown reason";
       this.debug(`${job.title} ${type}: ${payload.error}`);
     }
@@ -258,6 +258,7 @@ export default class PlatformInstance {
           await this.reportError(sessionId, second);
         } else {
           // treat like a message to clients
+          console.log('received callback: ', second);
           this.sendToClient(sessionId, second);
         }
       }
