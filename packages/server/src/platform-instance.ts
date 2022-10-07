@@ -258,7 +258,6 @@ export default class PlatformInstance {
           await this.reportError(sessionId, second);
         } else {
           // treat like a message to clients
-          console.log('received callback: ', second);
           this.sendToClient(sessionId, second);
         }
       }

@@ -193,7 +193,7 @@
             }
           };
           debug('sending connect message: ', connectMsg);
-          sc.socket.emit('message', connectMsg, handleMessage('callback from connect', msg));
+          sc.socket.emit('message', connectMsg, handleMessage('callback from connect', connectMsg));
 
           const joinMsg = {
             type: 'join',
@@ -209,7 +209,7 @@
             }
           };
           debug('sending join message: ', joinMsg);
-          sc.socket.emit('message', joinMsg, handleMessage('callback from join'));
+          sc.socket.emit('message', joinMsg, handleMessage('callback from join', joinMsg));
         }, 100);
         return false;
       });
