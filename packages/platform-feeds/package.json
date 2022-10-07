@@ -43,7 +43,7 @@
   "scripts": {
     "build": "yarn run doc",
     "clean:deps": "npx rimraf node_modules",
-    "compliance": "yarn run test",
-    "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md"
+    "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md",
+    "test": "exit 0"
   }
 }
