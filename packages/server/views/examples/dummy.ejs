@@ -29,8 +29,8 @@
 
       // our user info
       sc.ActivityStreams.Object.create({
-        'id': 'https://sockethub.org/examples/dummyUser',
-        'type': "person",
+        id: 'https://sockethub.org/examples/dummyUser',
+        type: "person",
         name: "Sockethub Examples - Dummy User"
       });
 
@@ -47,7 +47,6 @@
 
       // handle incoming messages from the Sockethub server
       sc.socket.on('message', function (msg) {
-        console.log('-HI', msg);
         bdebug('received message: ', msg);
         if (Array.isArray(msg)) {
           bdebug('is array len:' + msg.length);
@@ -62,20 +61,27 @@
 
       // handler for user input, emit messages to Sockethub server
       $('form').submit(function () {
-        const [command, text] = $('#m').val().split(':');
-        let type = command;
+        let [type, text] = $('#m').val().split(':');
+        if (! text) {
+          text = type;
+          type = 'echo';
+        } else {
+
+        }
         const msg = {
           context: 'dummy',
-          'type': type,
+          type: type,
           actor: 'https://sockethub.org/examples/dummyUser',
           object: {
-            'type': 'message',
+            type: 'message',
             content: text
           }
         };
         bdebug('sending message: ', msg);
         sc.socket.emit('message', msg, (d) => {
           bdebug('completed', d)
+          $('#messages').append($('<li>').text(
+                  `${d.type} received from ${d.actor.id} ${d.actor.type}: ` + d.object.content));
         });
 
         $('#m').val('');
