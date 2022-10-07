@@ -121,8 +121,9 @@ describe('Page', () => {
           }, (msg) => {
             expect(msg.length).to.eql(20);
             for (const m of msg) {
-              expect(m.object.text.length >= m.object.brief_text.length).to.be.true;
+              expect(m.object.text.length >= m.object.brief.length).to.be.true;
               expect(m.object.type).to.equal('feedEntry');
+              expect(m.object.contentType).to.equal('html');
               expect(m.actor.type).to.equal('feed');
               expect(m.type).to.equal('post');
             }
@@ -166,7 +167,7 @@ describe('Page', () => {
           done();
         });
       });
-      
+
 
       describe('connect', () => {
         it('sends successfully with callback fired', (done) => {
