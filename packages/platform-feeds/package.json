@@ -29,8 +29,6 @@
     "request": "^2.83.0"
   },
   "devDependencies": {
-    "fs-then-native": "2.0.0",
-    "jaribu": "2.2.3",
     "jsdoc": "3.6.11",
     "jsdoc-to-markdown": "7.1.1"
   },
@@ -46,7 +44,6 @@
     "build": "yarn run doc",
     "clean:deps": "npx rimraf node_modules",
     "compliance": "yarn run test",
-    "test": "jaribu",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md"
   }
 }
