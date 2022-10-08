@@ -30,6 +30,7 @@
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.25.0",
+		"@sockethub/client": "^5.0.0-alpha.3",
 		"@sveltejs/adapter-auto": "next",
 		"@sveltejs/kit": "next",
 		"@typescript-eslint/eslint-plugin": "^5.27.0",
@@ -41,6 +42,7 @@
 		"postcss": "^8.4.17",
 		"prettier": "^2.6.2",
 		"prettier-plugin-svelte": "^2.7.0",
+		"socket.io-client": "^4.5.2",
 		"svelte": "^3.44.0",
 		"svelte-check": "^2.7.1",
 		"svelte-preprocess": "^4.10.7",
