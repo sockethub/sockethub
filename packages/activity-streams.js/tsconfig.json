@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "allowJs": false,
-    "outDir": "dist",
+    "outDir": "build",
     "rootDir": "src",
     "baseUrl": "/",
     "sourceRoot": "/",
@@ -10,7 +10,6 @@
     "lib": [
       "dom"
     ],
-
   },
   "include": [
     "src"

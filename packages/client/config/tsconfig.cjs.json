@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../build/cjs/",
+    "module": "commonjs",
+    "target": "es2018",
+    "declaration": false,
+    "esModuleInterop": true
+  }
+}

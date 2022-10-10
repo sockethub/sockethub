@@ -2,7 +2,6 @@
   "name": "@sockethub/client",
   "version": "5.0.0-alpha.4",
   "description": "A JavaScript client for the Sockethub protocol gateway",
-  "main": "dist/sockethub-client.js",
   "keywords": [
     "sockethub",
     "messaging",
@@ -11,6 +10,25 @@
     "streams",
     "protocol",
     "client"
+  ],
+  "main": "./build/cjs/sockethub-client.js",
+  "module": "./build/esm/sockethub-client.js",
+  "types": "./build/esm/sockethub-client.d.ts",
+  "exports": {
+    "./dist/sockethub-client.js": "./dist/sockethub-client.js",
+    "./dist/sockethub-client.js.map": "./dist/sockethub-client.js.map",
+    ".": {
+      "import": {
+        "node": "./build/esm/sockethub-client.js",
+        "default": "./build/esm/sockethub-client.js"
+      },
+      "require": "./build/cjs/sockethub-client.js",
+      "types": "./build/esm/sockethub-client.d.ts"
+    }
+  },
+  "files": [
+    "dist/",
+    "build/"
   ],
   "repository": {
     "type": "git",
@@ -26,11 +44,18 @@
     "coverage": "c8 check-coverage --statements 85 --branches 84 --functions 90 --lines 85",
     "lint": "eslint \"**/*.ts\"",
     "lint:fix": "eslint --fix \"**/*.ts\"",
-    "build": "tsc && webpack --config webpack.minified.config.js && webpack --config webpack.normal.config.js"
+    "compile": "rimraf ./build && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
+    "build": "yarn run compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs"
   },
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
   "devDependencies": {
+    "@babel/core": "^7.19.3",
+    "@babel/plugin-transform-object-assign": "^7.18.6",
+    "@babel/preset-env": "^7.19.4",
+    "@rollup/plugin-babel": "^6.0.0",
+    "@rollup/plugin-commonjs": "^23.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
     "@sockethub/activity-streams": "^4.4.0-alpha.4",
     "@sockethub/schemas": "^3.0.0-alpha.4",
     "@types/chai": "4.3.3",
@@ -48,10 +73,10 @@
     "eventemitter2": "6.4.9",
     "mocha": "10.0.0",
     "proxyquire": "2.1.3",
+    "rollup": "^2.79.1",
+    "rollup-plugin-terser": "^7.0.2",
     "sinon": "14.0.0",
     "ts-node": "10.9.1",
-    "typescript": "4.8.3",
-    "webpack": "5.74.0",
-    "webpack-cli": "4.10.0"
+    "typescript": "4.8.3"
   }
 }
