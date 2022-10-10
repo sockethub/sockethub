@@ -1,4 +1,5 @@
 **/dist/
+**/build/
 **/browser/
 **/coverage/
 **/node_modules/
