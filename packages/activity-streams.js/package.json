@@ -22,7 +22,6 @@
     "build/"
   ],
   "dependencies": {
-    "event-emitter": "^0.3.5",
     "eventemitter2": "^6.4.9"
   },
   "devDependencies": {
@@ -55,8 +54,8 @@
     "clean": "npx rimraf browser coverage",
     "clean:deps": "npx rimraf node_modules",
     "compliance": "yarn run test && yarn run coverage",
-    "test:node": "c8 -r text mocha ./src/**/*.test.js",
-    "test:node:lcov": "c8 -r lcov mocha ./src/**/*.test.js",
+    "test:node": "c8 -r text mocha -r ts-node/register ./src/**/*.test.ts",
+    "test:node:lcov": "c8 -r lcov mocha -r ts-node/register ./src/**/*.test.ts",
     "test:browser": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
     "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 85 --lines 95",
     "release": "yarn run build && yarn run test",

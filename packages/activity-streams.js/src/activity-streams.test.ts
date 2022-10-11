@@ -1,12 +1,5 @@
-import ASFactory from "./activity-streams";
+import ASFactory from "./activity-streams"
 import chai from "chai";
-
-// if (typeof ASFactory !== 'function') {
-//   ASFactory = require('./activity-streams');
-// }
-// if (typeof chai !== 'object') {
-//   chai = require('chai');
-// }
 
 const assert = chai.assert;
 const expect = chai.expect;
