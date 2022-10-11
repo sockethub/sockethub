@@ -12,6 +12,9 @@
     a {
         @apply text-blue-600 underline;
     }
+    button:disabled {
+        background-color: lightgrey;
+    }
 }
 @tailwind components;
 @tailwind utilities;

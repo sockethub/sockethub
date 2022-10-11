@@ -1,3 +1,7 @@
+<svelte:head>
+	{@html edgeLight}
+</svelte:head>
+
 <h1>Dummy Example</h1>
 <div class="px-4 py-2">
 <p>The dummy platform is the most basic test to communicate via Sockethub to a platform, and receive a response back.</p>
@@ -7,8 +11,8 @@
 	<h2 class="py-2">Message Content</h2>
 	<input bind:value={content} class="border-4" placeholder="Text to send as content">
 	<h2 class="py-2">Send Object Type</h2>
-	<button on:click={sendEcho} class="hover:bg-blue-700 bg-blue-500 text-white font-bold py-2 px-4 rounded">Echo</button>
-	<button on:click={sendFail} class="hover:bg-blue-700 bg-blue-500 text-white font-bold py-2 px-4 rounded">Fail</button>
+	<button on:click={sendEcho} class="hover:bg-blue-700 bg-blue-500 text-white font-bold py-2 px-4 rounded" disabled="{!online}">Echo</button>
+	<button on:click={sendFail} class="hover:bg-blue-700 bg-blue-500 text-white font-bold py-2 px-4 rounded" disabled="{!online}">Fail</button>
 </div>
 <div class="py-4">
 	<h2 class="py-2">Response from Sockethub</h2>
@@ -27,15 +31,15 @@
 	</div>
 </div>
 <div class="{logModalState ? '' : 'hidden'} bg-slate-800 bg-opacity-50 flex justify-center items-center absolute top-0 right-0 bottom-0 left-0">
-	<div class="bg-white px-2 py-2 rounded-md text-left">
+	<div style="background-color: #fafafa;" class="px-2 py-2 rounded-md text-left">
 		<div class="flex flex-row">
 			<div class="text-xs mb-4 text-slate-500 font-mono py-1 basis-1/2">
 				<h2>Sent</h2>
-				<pre>{JSON.stringify(log[selectedLog].send, undefined, 2)}</pre>
+				<Highlight language={json} code={jsonSend} />
 			</div>
 			<div class="text-xs mb-4 text-slate-500 font-mono py-1 basis-1/2">
 				<h2>Response</h2>
-				<pre>{JSON.stringify(log[selectedLog].resp, undefined, 2)}</pre>
+				<Highlight language={json} code={jsonResp} />
 			</div>
 		</div>
 		<div class="flex flex-col text-center">
@@ -47,9 +51,10 @@
 <script>
 	import '@sockethub/client/dist/sockethub-client.js';
 	import { io } from 'socket.io-client';
-	let SockethubClient = window.SockethubClient;
+	import Highlight from "svelte-highlight";
+	import json from "svelte-highlight/languages/json";
+	import edgeLight from "svelte-highlight/styles/edge-light";
 
-	const sc = new SockethubClient(io('http://localhost:10550', { path: '/sockethub' }));
 	const activityObject = {
 		context: "dummy",
 		type: "",
@@ -59,25 +64,43 @@
 			content: ""
 		}
 	};
+	let sc;
+	let online = false;
 	let counter = 0;
 	let messages = [];
 	let content = "";
+	let jsonSend = "";
+	let jsonResp = "";
 	let logModalState = false;
 	let selectedLog = 0;
-	let log = {0:{send:"hi",resp:"lo"}};
+	let log = {0:{send:{"hi":"foo"},resp:{"lo":"foo"}}};
 
-	sc.ActivityStreams.Object.create({
-		id: 'https://sockethub.org/examples/dummyUser',
-		type: "person",
-		name: "Sockethub Examples - Dummy User"
-	});
+	// eslint-disable-next-line no-constant-condition
+	if (typeof window) {
+		let SockethubClient = window.SockethubClient;
+		sc = new SockethubClient(io('http://localhost:10550', { path: '/sockethub' }));
+		sc.socket.on('connect', () => {
+			online = true;
+		});
+		sc.socket.on('disconnect', () => {
+			online = false;
+		})
+		sc.ActivityStreams.Object.create({
+			id: 'https://sockethub.org/examples/dummyUser',
+			type: "person",
+			name: "Sockethub Examples - Dummy User"
+		});
+	}
 
 	function showLog(uid) {
 		return () => {
 			selectedLog = uid;
 			logModalState = true;
+			jsonSend = JSON.stringify(log[selectedLog].send, undefined, 2);
+			jsonResp = JSON.stringify(log[selectedLog].resp, undefined, 2);
 		}
 	}
+
 	function send(uid, obj) {
 		obj.id = "" + uid;
 		log[uid] = {};

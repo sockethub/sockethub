@@ -4,7 +4,7 @@ import type { UserConfig } from 'vite';
 const config: UserConfig = {
 	plugins: [sveltekit()],
 	optimizeDeps: {
-		include: []
+		include: ["highlight.js", "highlight.js/lib/core"],
 	}
 };
 
