@@ -1,61 +1,48 @@
-<svelte:head>
-	{@html edgeLight}
-</svelte:head>
+<Head title="Dummy Platform Example">
+	<title>test2</title>
+	<p>The dummy platform is the most basic test to communicate via Sockethub to a platform, and receive a response back.</p>
+	<p>You can use either the echo or fail types on your Activity Stream object.</p>
+</Head>
 
-<div class="grid grid-cols-8 gap-4">
-<div class="col-start-3 col-end-7">
-		<h1>Dummy Example</h1>
-		<div class="px-4 py-2">
-			<p>The dummy platform is the most basic test to communicate via Sockethub to a platform, and receive a response back.</p>
-			<p>You can use either the echo or fail types on your Activity Stream object.</p>
-		</div>
-</div>
-<div class="col-start-3 col-end-7 grow">
-	<div class="flex gap-4 grow">
-		<div class="w-1/4 ml-20">
-			<h2 class="py-2">Message Content</h2>
-			<input bind:value={content} class="border-4" placeholder="Text to send as content">
-		</div>
-		<div class="w-1/4">
-			<h2 class="py-2">Send Object Type</h2>
-			<div class="flex gap-4">
-				<button on:click={sendEcho}
-								class="hover:bg-blue-700 bg-blue-500 text-white font-bold py-2 px-4 rounded"
-								disabled="{!online}">Echo</button>
-				<button on:click={sendFail}
-								class="hover:bg-blue-700 bg-blue-500 text-white font-bold py-2 px-4 rounded"
-								disabled="{!online}">Fail</button>
-			</div>
-		</div>
-		<div>
-			<h2 class="py-2">Status</h2>
-			<div class="pt-1 pl-2 pr-2 pb-1.5 rounded-xl text-white font-bold {online ? 'bg-green-300' : 'bg-gray-300 '}">{online ? 'connected' : 'disconnected'}</div>
+<Module>
+	<div class="w-1/4 ml-20">
+		<h2 class="py-2">Message Content</h2>
+		<input bind:value={content} class="border-4" placeholder="Text to send as content">
+	</div>
+	<div class="w-1/4">
+		<h2 class="py-2">Object Type</h2>
+		<div class="flex gap-4">
+			<button on:click={sendEcho}
+							class="hover:bg-blue-700 bg-blue-500 text-white font-bold py-2 px-4 rounded"
+							disabled="{!online}">Echo</button>
+			<button on:click={sendFail}
+							class="hover:bg-blue-700 bg-blue-500 text-white font-bold py-2 px-4 rounded"
+							disabled="{!online}">Fail</button>
 		</div>
 	</div>
-</div>
-<div class="col-start-3 col-end-7 grow">
-	<div class="py-4 grow">
-		<div class=" ml-20">
-			<h2 class="py-2">Response from Sockethub</h2>
-			<div id="messages">
-				<ul>
-					{#each messages as msg}
-						<li>
-							<button on:click="{showLog(msg.id)}"
-											data-modal-toggle="defaultModal"
-											class="hover:bg-blue-400 bg-blue-300 text-black py-0 px-2 rounded mr-3 mb-1">view log</button>
-							<span>#{msg.id} {msg.actor.id}</span> [<span>{msg.type}</span>]: <span>{msg.object.content}</span>
-							{#if msg.error}
-								<span class="ml-5 text-red-500">{msg.error}</span>
-							{/if}
-						</li>
-					{/each}
-				</ul>
-			</div>
+	<ConnectStatus status={online} />
+</Module>
+
+<Module>
+	<div class=" ml-20">
+		<h2 class="py-2">Response from Sockethub</h2>
+		<div id="messages">
+			<ul>
+				{#each messages as msg}
+					<li>
+						<button on:click="{showLog(msg.id)}"
+										data-modal-toggle="defaultModal"
+										class="hover:bg-blue-400 bg-blue-300 text-black py-0 px-2 rounded mr-3 mb-1">view log</button>
+						<span>#{msg.id} {msg.actor.id}</span> [<span>{msg.type}</span>]: <span>{msg.object.content}</span>
+						{#if msg.error}
+							<span class="ml-5 text-red-500">{msg.error}</span>
+						{/if}
+					</li>
+				{/each}
+			</ul>
 		</div>
 	</div>
-</div>
-</div>
+</Module>
 
 <div class="{logModalState ? '' : 'hidden'} bg-slate-800 bg-opacity-50 flex justify-center items-center absolute top-0 right-0 bottom-0 left-0">
 	<div style="" class="bg-offwhite px-2 py-2 rounded-md text-left">
@@ -76,11 +63,13 @@
 </div>
 
 <script>
+	import Head from "../../components/Head.svelte";
+	import Module from "../../components/Module.svelte";
+	import ConnectStatus from "../../components/ConnectStatus.svelte";
 	import '@sockethub/client/dist/sockethub-client.js';
 	import { io } from 'socket.io-client';
 	import Highlight from "svelte-highlight";
 	import json from "svelte-highlight/languages/json";
-	import edgeLight from "svelte-highlight/styles/edge-light";
 
 	const activityObject = {
 		context: "dummy",
@@ -109,7 +98,11 @@
 		sc.socket.on('connect', () => {
 			online = true;
 		});
-		sc.socket.on('disconnect', () => {
+		sc.socket.on('error', (e) => {
+			console.log('error: ', e);
+		})
+		sc.socket.on('disconnect', (e) => {
+			console.log('disconnect: ', e);
 			online = false;
 		})
 		sc.ActivityStreams.Object.create({
