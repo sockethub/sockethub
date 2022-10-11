@@ -9,7 +9,7 @@
     "mapRoot": "/",
     "lib": [
       "dom",
-      "esnext"
+      "es2020"
     ]
   },
   "include": [

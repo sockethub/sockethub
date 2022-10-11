@@ -2,15 +2,6 @@
   "name": "@sockethub/client",
   "version": "5.0.0-alpha.4",
   "description": "A JavaScript client for the Sockethub protocol gateway",
-  "keywords": [
-    "sockethub",
-    "messaging",
-    "activitystreams",
-    "activity",
-    "streams",
-    "protocol",
-    "client"
-  ],
   "main": "./build/cjs/sockethub-client.js",
   "module": "./build/esm/sockethub-client.js",
   "types": "./build/esm/sockethub-client.d.ts",
@@ -39,16 +30,15 @@
   "scripts": {
     "clean": "npx rimraf dist coverage",
     "clean:deps": "npx rimraf node_modules",
-    "compliance": "yarn run lint && yarn run test && yarn run coverage",
-    "release": "yarn run build && yarn run lint && yarn run test",
-    "test": "yarn run build && yarn run test:node",
-    "test:node": "c8 -x \"src/**/*.test.*\" mocha -r ts-node/register ./src/**/*.test.ts",
+    "compliance": "yarn lint && yarn test && yarn coverage",
+    "test": "yarn test:node",
+    "test:node": "c8 -x \"./src/**/*.test.ts\" mocha -r ts-node/register ./src/**/*.test.ts",
     "test:node:lcov": "c8 -r lcov mocha -r ts-node/register ./src/**/*.test.ts",
     "coverage": "c8 check-coverage --statements 85 --branches 84 --functions 90 --lines 85",
     "lint": "eslint \"**/*.ts\"",
     "lint:fix": "eslint --fix \"**/*.ts\"",
     "compile": "rimraf ./build && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
-    "build": "yarn run compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs"
+    "build": "yarn compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs"
   },
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
@@ -83,5 +73,14 @@
   },
   "dependencies": {
     "eventemitter2": "^6.4.9"
-  }
+  },
+  "keywords": [
+    "sockethub",
+    "messaging",
+    "activitystreams",
+    "activity",
+    "streams",
+    "protocol",
+    "client"
+  ]
 }
