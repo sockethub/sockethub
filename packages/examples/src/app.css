@@ -15,6 +15,9 @@
     button:disabled {
         background-color: lightgrey;
     }
+    button:disabled:hover {
+        background-color: lightgrey;
+    }
 }
 @tailwind components;
 @tailwind utilities;
