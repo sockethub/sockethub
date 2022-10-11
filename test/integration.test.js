@@ -15,8 +15,6 @@ async function loadScript(url) {
   eval(script);
 }
 
-
-
 describe('Page', () => {
   it("loads socket.io.js", async () => {
     let scriptUrl = 'http://localhost:10550/socket.io.js'
@@ -30,10 +28,6 @@ describe('Page', () => {
 
   it('has global `io`', () => {
     assert.typeOf(io, 'function');
-  });
-
-  it('has global `ASFactory`', () => {
-    assert.typeOf(ASFactory, 'function');
   });
 
   it('has global `SockethubClient`', () => {
