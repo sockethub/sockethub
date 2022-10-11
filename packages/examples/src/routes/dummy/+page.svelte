@@ -13,32 +13,41 @@
 <div class="py-4">
 	<h2 class="py-2">Response from Sockethub</h2>
 	<div id="messages">
-		{#each messages as msg}
-			<p>
-				<button on:click="{showLog(msg.id)}" data-modal-toggle="defaultModal" class="hover:bg-blue-400 bg-blue-300 text-black py-0 px-2 rounded mr-3 mb-1">log</button>
-				<span>{msg.actor.id}</span> [<span>{msg.type}</span>]: <span>{msg.object.content}</span>
-				{#if msg.error}
-					<span class="ml-5 text-red-500">{msg.error}</span>
-				{/if}
-			</p>
-		{/each}
+		<ul>
+			{#each messages as msg}
+				<li>
+					<button on:click="{showLog(msg.id)}" data-modal-toggle="defaultModal" class="hover:bg-blue-400 bg-blue-300 text-black py-0 px-2 rounded mr-3 mb-1">log</button>
+					<span>#{msg.id} {msg.actor.id}</span> [<span>{msg.type}</span>]: <span>{msg.object.content}</span>
+					{#if msg.error}
+						<span class="ml-5 text-red-500">{msg.error}</span>
+					{/if}
+				</li>
+			{/each}
+		</ul>
 	</div>
 </div>
 <div class="{logModalState ? '' : 'hidden'} bg-slate-800 bg-opacity-50 flex justify-center items-center absolute top-0 right-0 bottom-0 left-0">
 	<div class="bg-white px-2 py-2 rounded-md text-left">
-		<div class="text-xs mb-4 text-slate-500 font-mono py-1">
-			<pre>{JSON.stringify(log[selectedLog].send, undefined, 2)}</pre>
+		<div class="flex flex-row">
+			<div class="text-xs mb-4 text-slate-500 font-mono py-1 basis-1/2">
+				<h2>Sent</h2>
+				<pre>{JSON.stringify(log[selectedLog].send, undefined, 2)}</pre>
+			</div>
+			<div class="text-xs mb-4 text-slate-500 font-mono py-1 basis-1/2">
+				<h2>Response</h2>
+				<pre>{JSON.stringify(log[selectedLog].resp, undefined, 2)}</pre>
+			</div>
 		</div>
-		<div class="text-xs mb-4 text-slate-500 font-mono py-1">
-			<pre>{JSON.stringify(log[selectedLog].resp, undefined, 2)}</pre>
+		<div class="flex flex-col text-center">
+			<button on:click="{() => logModalState = false }" class="bg-indigo-500 px-7 py-2 ml-2 rounded-md text-sm text-white font-semibold">Ok</button>
 		</div>
-		<button on:click="{() => logModalState = false }" class="bg-indigo-500 px-7 py-2 ml-2 rounded-md text-sm text-white font-semibold">Ok</button>
 	</div>
 </div>
 
 <script>
-	import SockethubClient from '@sockethub/client';
+	import '@sockethub/client/dist/sockethub-client.js';
 	import { io } from 'socket.io-client';
+	let SockethubClient = window.SockethubClient;
 
 	const sc = new SockethubClient(io('http://localhost:10550', { path: '/sockethub' }));
 	const activityObject = {
@@ -81,15 +90,19 @@
 		});
 	}
 
+	function getASObj(type) {
+		const obj = {};
+		Object.assign(obj, activityObject);
+		obj.type = type;
+		obj.object.content = content;
+		return obj;
+	}
+
 	function sendEcho() {
-		activityObject.type = "echo";
-		activityObject.object.content = content;
-		send(++counter, activityObject)
+		send(++counter, getASObj("echo"))
 	}
 
 	function sendFail() {
-		activityObject.type = "fail";
-		activityObject.object.content = content;
-		send(++counter, activityObject);
+		send(++counter, getASObj("fail"));
 	}
 </script>
