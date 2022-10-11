@@ -15,10 +15,10 @@
  *
  */
 
-import EventEmitter from "event-emitter";
+import { EventEmitter2 } from 'eventemitter2';
 import { IActivityObject, IActivityStream } from '@sockethub/schemas';
 
-const ee = EventEmitter(),
+const ee = new EventEmitter2(),
       baseProps = {
         stream: [
           'id', 'type', 'actor', 'target', 'object', 'context', 'context',
@@ -204,7 +204,6 @@ export interface ASFactoryOptions {
 interface ASManager {
   Stream(meta: unknown): unknown,
   Object: ActivityObjectManager,
-  emit(event, obj): void;
   on(event, func): void;
   once(event, func): void;
   off(event, funcName): void;

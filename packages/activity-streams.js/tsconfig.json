@@ -8,13 +8,11 @@
     "sourceRoot": "/",
     "mapRoot": "/",
     "lib": [
-      "dom"
+      "dom",
+      "esnext"
     ],
   },
   "include": [
     "src"
-  ],
-  "exclude": [
-    "**/*.test.ts"
   ]
 }
