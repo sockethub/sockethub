@@ -1,23 +1,15 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from "@rollup/plugin-commonjs";
-import { terser } from "rollup-plugin-terser";
 import babel from "@rollup/plugin-babel";
 
 export default {
-	input: "./build/esm/activity-streams.js",
+	input: "./build/esm/activity-streams.test.js",
 	output: [
 		{
-			file: "./dist/activity-streams.js",
+			file: "./dist/activity-streams.test.js",
 			format: "umd",
 			name: "ASFactory",
 			sourcemap: true
-		},
-		{
-			file: "./dist/activity-streams.min.js",
-			format: "umd",
-			name: "ASFactory",
-			sourcemap: true,
-			plugins: [terser()]
 		},
 	],
 	plugins: [
