@@ -1,6 +1,6 @@
 import proxyquire from 'proxyquire';
 import { expect } from 'chai';
-import * as sinon from 'sinon';
+import { createSandbox, restore } from 'sinon';
 import { EventEmitter2 } from 'eventemitter2';
 
 proxyquire.noPreserveCache();
@@ -10,7 +10,7 @@ describe("SockethubClient bad initialization", () => {
   it("no socket.io instance", () => {
     const SockethubClient = proxyquire('./sockethub-client', {
       '@sockethub/activity-streams': (config: any) => {}
-    });
+    }).default;
     expect(() => {
       // @ts-ignore
       const junk = new SockethubClient();
@@ -22,7 +22,7 @@ describe("SockethubClient", () => {
   let asinstance: any, socket: any, sc: any, sandbox: any;
 
   beforeEach(() => {
-    sandbox = sandbox = sinon.createSandbox();
+    sandbox = sandbox = createSandbox();
     socket = new EventEmitter2();
     socket.__instance = 'socketio'; // used to uniquely identify the object we're passing in
     sandbox.spy(socket, 'on');
@@ -38,7 +38,7 @@ describe("SockethubClient", () => {
       '@sockethub/activity-streams': (config: any) => {
         return asinstance;
       }
-    });
+    }).default;
     sc = new SockethubClient(socket);
     sandbox.spy(sc.socket, 'on');
     sandbox.spy(sc.socket, '_on');
@@ -47,7 +47,7 @@ describe("SockethubClient", () => {
   });
 
   afterEach(() => {
-    sinon.restore();
+    restore();
   });
 
   it("contains the ActivityStreams property", () => {

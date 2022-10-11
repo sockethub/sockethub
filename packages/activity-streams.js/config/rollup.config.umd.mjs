@@ -2,7 +2,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from "@rollup/plugin-commonjs";
 import { terser } from "rollup-plugin-terser";
 import babel from "@rollup/plugin-babel";
-import multi from "@rollup/plugin-multi-entry"
+import multi from "@rollup/plugin-multi-entry";
 
 export default {
 	input: "./build/esm/**/*.js",

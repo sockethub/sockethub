@@ -2,7 +2,6 @@ import { EventEmitter2 } from 'eventemitter2';
 import ASFactory from '@sockethub/activity-streams';
 import {IActivityObject, IActivityStream} from "@sockethub/schemas";
 
-
 interface EventMapping {
   credentials: Map<string, IActivityStream>;
   'activity-object': Map<string, IActivityObject>;

@@ -201,7 +201,7 @@ export interface ASFactoryOptions {
   customProps?: any;
 }
 
-interface ASManager {
+export interface ASManager {
   Stream(meta: unknown): unknown,
   Object: ActivityObjectManager,
   on(event, func): void;

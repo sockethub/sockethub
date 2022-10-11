@@ -2,20 +2,17 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "allowJs": false,
-    "outDir": "dist",
+    "outDir": "build",
     "rootDir": "src",
     "baseUrl": "/",
     "sourceRoot": "/",
     "mapRoot": "/",
     "lib": [
-      "dom"
-    ],
-
+      "dom",
+      "esnext"
+    ]
   },
   "include": [
     "src"
-  ],
-  "exclude": [
-    "**/*.test.ts"
   ]
 }
