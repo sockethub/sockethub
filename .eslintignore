@@ -1,8 +1,7 @@
-**/dist/
-**/build/
-**/browser/
-**/coverage/
-**/node_modules/
+dist
+build
+coverage
+node_modules
 **/*.d.ts
 **/*.test.*
 packages/server/views/examples/
