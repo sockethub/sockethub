@@ -1,5 +1,9 @@
-<div class="col-start-3 col-end-7 grow">
-  <div class="flex gap-4 grow">
+<ContentArea>
+  <div class="md:flex gap-4 grow">
     <slot/>
   </div>
-</div>
+</ContentArea>
+
+<script>
+  import ContentArea from "./ContentArea.svelte";
+</script>

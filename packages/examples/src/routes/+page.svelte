@@ -1,2 +1,7 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+<Head heading="Sockethub Examples">
+  <title>Sockethub Examples</title>
+  <p>A collection of examples demonstrating the basic functionality of the various Sockethub platforms.</p>
+</Head>
+<script>
+  import Head from "../components/Head.svelte";
+</script>

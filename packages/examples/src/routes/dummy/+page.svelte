@@ -1,15 +1,16 @@
-<Head title="Dummy Platform Example">
-	<title>test2</title>
+<Head heading="Dummy Platform Example">
+	<title>Dummy Example</title>
 	<p>The dummy platform is the most basic test to communicate via Sockethub to a platform, and receive a response back.</p>
 	<p>You can use either the echo or fail types on your Activity Stream object.</p>
 </Head>
 
 <Module>
-	<div class="w-1/4 ml-20">
+	<ConnectStatus status={online} />
+	<div class="w-16 md:w-32 lg:w-48 grow w-full">
 		<h2 class="py-2">Message Content</h2>
-		<input bind:value={content} class="border-4" placeholder="Text to send as content">
+		<input bind:value={content} class="border-4 grow w-full" placeholder="Text to send as content">
 	</div>
-	<div class="w-1/4">
+	<div class="w-16 md:w-32 lg:w-48 w-full">
 		<h2 class="py-2">Object Type</h2>
 		<div class="flex gap-4">
 			<button on:click={sendEcho}
@@ -20,11 +21,10 @@
 							disabled="{!online}">Fail</button>
 		</div>
 	</div>
-	<ConnectStatus status={online} />
 </Module>
 
 <Module>
-	<div class=" ml-20">
+	<div>
 		<h2 class="py-2">Response from Sockethub</h2>
 		<div id="messages">
 			<ul>
@@ -93,8 +93,7 @@
 
 	// eslint-disable-next-line no-constant-condition
 	if (typeof window) {
-		let SockethubClient = window.SockethubClient;
-		sc = new SockethubClient(io('http://localhost:10550', { path: '/sockethub' }));
+		sc = new window.SockethubClient(io('http://localhost:10550', { path: '/sockethub' }));
 		sc.socket.on('connect', () => {
 			online = true;
 		});

@@ -1,10 +1,11 @@
-<div class="col-start-3 col-end-7">
-  <h1>{title}</h1>
+<ContentArea>
+  <h1>{heading}</h1>
   <div class="px-4 py-2">
     <slot/>
   </div>
-</div>
+</ContentArea>
 
 <script>
-  export let title = "";
+  import ContentArea from "./ContentArea.svelte";
+  export let heading = "";
 </script>

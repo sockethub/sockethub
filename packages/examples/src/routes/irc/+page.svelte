@@ -1,6 +1,6 @@
-<Head heading="Feeds Platform Example">
-  <title>Feeds Example</title>
-  <p>Example for the Feeds platform</p>
+<Head heading="IRC Platform Example">
+  <title>IRC Example</title>
+  <p>Example for the IRC platform</p>
 </Head>
 
 <Module>

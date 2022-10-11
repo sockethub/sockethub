@@ -1,6 +1,6 @@
-<Head heading="Feeds Platform Example">
-  <title>Feeds Example</title>
-  <p>Example for the Feeds platform</p>
+<Head heading="XMPP Platform Example">
+  <title>XMPP Example</title>
+  <p>Example for the XMPP platform</p>
 </Head>
 
 <Module>
