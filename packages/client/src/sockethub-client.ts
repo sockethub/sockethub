@@ -1,8 +1,8 @@
 import { EventEmitter2 } from 'eventemitter2';
-import ASFactory from '@sockethub/activity-streams';
 import {IActivityObject, IActivityStream} from "@sockethub/schemas";
+import ASFactory, { ASManager } from "@sockethub/activity-streams";
 
-interface EventMapping {
+export interface EventMapping {
   credentials: Map<string, IActivityStream>;
   'activity-object': Map<string, IActivityObject>;
   connect: Map<string, IActivityStream>;
@@ -17,7 +17,7 @@ export default class SockethubClient {
     'join': new Map()
   };
   private _socket;
-  public ActivityStreams = ASFactory({specialObjs: ['credentials']});
+  public ActivityStreams: ASManager = ASFactory({specialObjs: ['credentials']});
   public socket;
   public online = false;
   public debug = true;

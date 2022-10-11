@@ -42,7 +42,7 @@
     "compliance": "yarn run lint && yarn run test && yarn run coverage",
     "release": "yarn run build && yarn run lint && yarn run test",
     "test": "yarn run build && yarn run test:node",
-    "test:node": "c8 -r text mocha -r ts-node/register ./src/**/*.test.ts",
+    "test:node": "c8 -x \"src/**/*.test.*\" mocha -r ts-node/register ./src/**/*.test.ts",
     "test:node:lcov": "c8 -r lcov mocha -r ts-node/register ./src/**/*.test.ts",
     "coverage": "c8 check-coverage --statements 85 --branches 84 --functions 90 --lines 85",
     "lint": "eslint \"**/*.ts\"",
