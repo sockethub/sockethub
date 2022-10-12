@@ -160,10 +160,9 @@ and total count.
       url: "http://example.com/articles/about-stuff"
       date: "2013-05-28T12:00:00.000Z",
       datenum: 1369742400000,
-      brief_html: "Brief synopsis of stuff...",
-      brief_text: "Brief synopsis of stuff...",
-      html: "Once upon a time...",
-      text: "Once upon a time..."
+      brief: "Brief synopsis of stuff...",
+      content: "Once upon a time...",
+      contentType: "text",
       media: [
         {
           length: '13908973',
