@@ -3,7 +3,6 @@ class Dummy {
     cfg = (typeof cfg === 'object') ? cfg : {};
     this.id = cfg.id;
     this.debug = cfg.debug;
-    this.sendToClient = cfg.sendToClient;
   }
 
   get schema() {
@@ -30,8 +29,12 @@ class Dummy {
   }
 
   echo(job, cb) {
-    this.sendToClient(job.object.content);
-    cb();
+    job.target = job.actor;
+    job.actor = {
+      id: 'dummy',
+      type: 'platform'
+    };
+    cb(undefined, job);
   }
 
   fail(job, cb) {

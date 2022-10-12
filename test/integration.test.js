@@ -41,83 +41,149 @@ describe('Page', () => {
   });
 
   describe('SockethubClient()', () => {
-    let sc, handler;
+    let sc, incomingMessages = [];
     before(() => {
       sc = new SockethubClient(io('http://localhost:10550/', {path: '/sockethub'}));
+      sc.socket.on('message', (msg) => {
+        console.log('** incoming message: ', msg);
+        incomingMessages.push(msg);
+      })
     });
 
     describe('Dummy', () => {
+      const actor = {
+        id: "jimmy@dummy",
+        type: "person",
+        name: "Jimmy"
+      };
       it('creates activity-object', () => {
-        const actor = {
-          id: "jimmy@dummy",
-          type: "person",
-          name: "Jimmy"
-        };
         sc.ActivityStreams.Object.create(actor);
         expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
       });
 
-      let dummyMessageCount = 5;
-      for (let i = 0; i < dummyMessageCount; i++) {
-      it(`sends message ${i}`, (done) => {
-        sc.socket.emit('message', {
-          type: "echo",
-          actor: "jimmy@dummy",
+      it('sends fail and returns error', (done) => {
+        let dummyObj = {
+          type: "fail",
+          actor: actor.id,
           context: "dummy",
-          object: {type: 'message', content: `hello world ${i}`}
-        }, (msg) => {
-          console.log(`Dummy message ${1} callback! `, msg);
-          if (msg?.error) { done(msg.error); }
-          else { done(); }
+          object: {type: 'message', content: `failure message`}
+        };
+        sc.socket.emit('message', dummyObj, (msg) => {
+          console.log("dummy fail callback: ", msg);
+          if (msg?.error) {
+            dummyObj.error = 'Error: failure message';
+            dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
+            expect(msg).to.eql(dummyObj);
+            done();
+          } else {
+            done("didn't receive expected failure from dummy platform");
+          }
         });
       });
+
+      let dummyMessageCount = 5;
+      for (let i = 0; i < dummyMessageCount; i++) {
+        it(`sends echo ${i} and gets response`, (done) => {
+          let dummyObj = {
+            type: "echo",
+            actor: actor.id,
+            context: "dummy",
+            object: {type: 'message', content: `hello world ${i}`}
+          };
+          sc.socket.emit('message', dummyObj, (msg) => {
+            console.log(`Dummy message ${i} callback! `, msg);
+            if (msg?.error) {
+              done(msg.error);
+            } else {
+              expect(msg.target).to.eql(sc.ActivityStreams.Object.get(actor.id));
+              expect(msg.actor.type).to.equal('platform');
+              done();
+            }
+          });
+        });
       }
     });
 
+    describe('Feeds', () => {
+      describe('fetches a feed', () => {
+        it(`gets expected results`, (done) => {
+          sc.socket.emit('message', {
+            context: "feeds",
+            type: "fetch",
+            actor: {
+              type: "website",
+              id: "https://sockethub.org/examples/feeds"
+            },
+            target: {
+              type: 'feed',
+              id: 'http://localhost:10550/examples/feed.xml'
+            }
+          }, (msg) => {
+            expect(msg.length).to.eql(20);
+            for (const m of msg) {
+              expect(typeof m.object.content).to.equal('string');
+              expect(m.object.type).to.equal('feedEntry');
+              expect(m.object.contentType).to.equal('html');
+              expect(m.actor.type).to.equal('feed');
+              expect(m.type).to.equal('post');
+            }
+            done();
+          });
+        });
+      });
+    });
+
     describe('XMPP', () => {
-      it('sends credentials', (done) => {
-        sc.socket.emit('credentials', {
-          actor: {
-            id: "jimmy@prosody/SockethubExample",
-            type: 'person'
-          },
-          context: "xmpp",
-          type: "credentials",
-          object: {
+      describe('emit on credentials channel', () => {
+        it('fires and empty callback', (done) => {
+          sc.socket.emit('credentials', {
+            actor: {
+              id: "jimmy@prosody/SockethubExample",
+              type: 'person'
+            },
+            context: "xmpp",
             type: "credentials",
-            password: "passw0rd",
-            resource: "SockethubExample",
-            userAddress: "jimmy@prosody"
-          }
-        }, (msg) => {
-          console.log('XMPP credentials callback! ', msg);
-          if (msg?.error) { done(msg.error); }
-          else { done(); }
+            object: {
+              type: "credentials",
+              password: "passw0rd",
+              resource: "SockethubExample",
+              userAddress: "jimmy@prosody"
+            }
+          }, done);
         });
       });
 
-      it('creates activity-object', (done) => {
-        const actor = {
-          id: "jimmy@prosody/SockethubExample",
-          type: "person",
-          name: "Jimmy Userson"
-        };
-        const obj = sc.ActivityStreams.Object.create(actor);
-        expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
-        console.log('activity-object create result: ', obj);
-        done();
+      describe('ActivityStreams.create', () => {
+        it('successfully creates and stores an activity-object', (done) => {
+          const actor = {
+            id: "jimmy@prosody/SockethubExample",
+            type: "person",
+            name: "Jimmy Userson"
+          };
+          const obj = sc.ActivityStreams.Object.create(actor);
+          const getObj = sc.ActivityStreams.Object.get(actor.id);
+          expect(obj).to.eql(actor);
+          expect(getObj).to.eql(actor);
+          done();
+        });
       });
 
-      it('sends connect', (done) => {
-        sc.socket.emit('message', {
-          type: "connect",
-          actor: "jimmy@prosody/SockethubExample",
-          context: "xmpp"
-        }, (msg) => {
-          console.log('XMPP message callback! ', msg);
-          if (msg?.error) { done(msg.error); }
-          else { done(); }
+
+      describe('connect', () => {
+        it('sends successfully with callback fired', (done) => {
+          const actorId = "jimmy@prosody/SockethubExample";
+          sc.socket.emit('message', {
+            type: "connect",
+            actor: actorId,
+            context: "xmpp"
+          }, done);
         });
+      });
+    });
+
+    describe('Incoming Message queue', () => {
+      it('should be empty', () => {
+        expect(incomingMessages).to.eql([]);
       });
     });
   })

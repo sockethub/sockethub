@@ -26,7 +26,8 @@ export const basePaths: IRoutePaths = {
 export const examplePaths: IRoutePaths = {
   '/jquery.js': path.resolve(`${__dirname}/../node_modules/jquery/dist/jquery.min.js`),
   '/jquery.min.map': path.resolve(`${__dirname}/../node_modules/jquery/dist/jquery.min.map`),
-  '/examples/shared.js': path.resolve(`${__dirname}/../views/examples/shared.js`)
+  '/examples/shared.js': path.resolve(`${__dirname}/../views/examples/shared.js`),
+  '/examples/feed.xml': path.resolve(`${__dirname}/../views/examples/feed.xml`)
 };
 
 export const examplePages: IRoutePaths = {
@@ -36,7 +37,6 @@ export const examplePages: IRoutePaths = {
   '/examples/irc': path.resolve(`${__dirname}/../views/examples/irc.ejs`),
   '/examples/xmpp': path.resolve(`${__dirname}/../views/examples/xmpp.ejs`)
 };
-
 
 function prepFileRoutes(pathMap) {
   const _routes = [];

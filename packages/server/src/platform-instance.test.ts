@@ -188,7 +188,7 @@ describe("PlatformInstance", () => {
           'a good result message');
         expect(pi.broadcastToSharedPeers.callCount).to.equal(1);
         sandbox.assert.calledWith(pi.sendToClient, 'a session id',
-          {foo: 'bar'});
+          'a good result message');
       });
 
       it('appends failed result message when present', async () => {

@@ -54,7 +54,7 @@ https://github.com/danmactough/node-feedparser
 
 * [Feeds](#Feeds)
     * [new Feeds(cfg)](#new_Feeds_new)
-    * [.fetch(job, cb)](#Feeds+fetch)
+    * [.fetch(job, done)](#Feeds+fetch)
 
 <a name="new_Feeds_new"></a>
 
@@ -74,10 +74,10 @@ https://github.com/danmactough/node-feedparser
 
 <a name="Feeds+fetch"></a>
 
-## feeds.fetch(job, cb)
+## feeds.fetch(job, done)
 Function: fetch
 
-Fetches feeds from specified source. Upon completion it will send back a
+Fetch feeds from specified source. Upon completion, it will send back a
 response to the original request with a complete list of URLs in the feed
 and total count.
 
@@ -93,7 +93,7 @@ and total count.
     <td>job</td><td><code>object</code></td><td><p>Activity streams object containing job data.</p>
 </td>
     </tr><tr>
-    <td>cb</td><td><code>object</code></td><td></td>
+    <td>done</td><td><code>object</code></td><td></td>
     </tr>  </tbody>
 </table>
 

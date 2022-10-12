@@ -24,7 +24,7 @@ logger(`platform handler initialized for ${platformName} ${identifier}`);
 
 export interface PlatformSession {
   debug(msg: string): void;
-  sendToClient(msg: IActivityStream, special?: string): void;
+  sendToClient?(msg: IActivityStream, special?: string): void;
   updateActor(credentials: object): void;
 }
 interface SecretInterface {
@@ -127,7 +127,11 @@ function getJobHandler() {
  */
 function getSendFunction(command: string) {
   return function (msg: IActivityStream, special?: string) {
-    process.send([command, msg, special]);
+    if (platform.config.persist) {
+      process.send([command, msg, special]);
+    } else {
+      logger('sendToClient called on non-persistent platform, rejecting.');
+    }
   };
 }
 
