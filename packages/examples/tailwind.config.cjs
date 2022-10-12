@@ -4,7 +4,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        "offwhite": "#fafafa"
+        "offwhite": "#fafafa",
+        "sockethub": "#F65E0A"
       }
     },
   },

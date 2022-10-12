@@ -1,7 +1,7 @@
-<Head heading="IRC Platform Example">
+<Intro heading="IRC Platform Example">
   <title>IRC Example</title>
   <p>Example for the IRC platform</p>
-</Head>
+</Intro>
 
 <Module>
   <div class="w-1/4">
@@ -11,9 +11,9 @@
 </Module>
 
 <script>
-  import Head from "../../components/Head.svelte";
+  import Intro from "../../components/Intro.svelte";
   import Module from "../../components/Module.svelte";
-  import ConnectStatus from "../../components/ConnectStatus.svelte";
+  import ConnectStatus from "../../components/ConnectWidget.svelte";
   import '@sockethub/client/dist/sockethub-client.js';
   import { io } from 'socket.io-client';
 

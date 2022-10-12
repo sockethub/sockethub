@@ -1,31 +1,52 @@
-<Head heading="Dummy Platform Example">
+<Intro title="Dummy Platform Example">
 	<title>Dummy Example</title>
 	<p>The dummy platform is the most basic test to communicate via Sockethub to a platform, and receive a response back.</p>
 	<p>You can use either the echo or fail types on your Activity Stream object.</p>
-</Head>
+</Intro>
 
 <Module>
-	<ConnectStatus status={online} />
 	<div class="w-16 md:w-32 lg:w-48 grow w-full">
-		<h2 class="py-2">Message Content</h2>
-		<input bind:value={content} class="border-4 grow w-full" placeholder="Text to send as content">
+		<label for="activityStreamActor" class="form-label inline-block text-gray-900 font-bold mb-2">Activity Stream Actor</label>
+		<pre><textarea
+			bind:value={actorString}
+			class="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"
+			id="activityStreamActor" rows="5"></textarea></pre>
 	</div>
 	<div class="w-16 md:w-32 lg:w-48 w-full">
-		<h2 class="py-2">Object Type</h2>
 		<div class="flex gap-4">
-			<button on:click={sendEcho}
-							class="hover:bg-blue-700 bg-blue-500 text-white font-bold py-2 px-4 rounded"
-							disabled="{!online}">Echo</button>
-			<button on:click={sendFail}
-							class="hover:bg-blue-700 bg-blue-500 text-white font-bold py-2 px-4 rounded"
-							disabled="{!online}">Fail</button>
+			<div>
+				<label class="form-label inline-block text-gray-900 font-bold mb-2">Activity Object Create</label>
+				<button on:click={sendActivityObjectCreate}
+								class="hover:bg-blue-700 bg-blue-500 text-white font-bold py-2 px-4 rounded"
+								disabled="{!connected}">Send</button>
+			</div>
+		</div>
+	</div>
+</Module>
+<Module>
+
+	<div class="w-16 md:w-32 lg:w-48 grow w-full">
+		<label for="objectContent" class="form-label inline-block text-gray-900 font-bold mb-2">Message Content</label>
+		<input id="objectContent" bind:value={content} class="border-4 grow w-full" placeholder="Text to send as content">
+	</div>
+	<div class="w-16 md:w-32 lg:w-48 w-full">
+		<label class="form-label inline-block text-gray-900 font-bold mb-2">Object Type</label>
+		<div class="flex gap-4">
+			<div>
+				<button on:click={sendEcho}
+								class="hover:bg-blue-700 bg-blue-500 text-white font-bold py-2 px-4 rounded"
+								disabled="{!connected}">Echo</button>
+				<button on:click={sendFail}
+								class="hover:bg-blue-700 bg-blue-500 text-white font-bold py-2 px-4 rounded"
+								disabled="{!connected}">Fail</button>
+			</div>
 		</div>
 	</div>
 </Module>
 
 <Module>
 	<div>
-		<h2 class="py-2">Response from Sockethub</h2>
+		<label class="form-label inline-block text-gray-900 font-bold mb-2">Response from Sockethub</label>
 		<div id="messages">
 			<ul>
 				{#each messages as msg}
@@ -33,7 +54,7 @@
 						<button on:click="{showLog(msg.id)}"
 										data-modal-toggle="defaultModal"
 										class="hover:bg-blue-400 bg-blue-300 text-black py-0 px-2 rounded mr-3 mb-1">view log</button>
-						<span>#{msg.id} {msg.actor.id}</span> [<span>{msg.type}</span>]: <span>{msg.object.content}</span>
+						<span>#{msg.id} {msg.actor.name || msg.actor.id}</span> [<span>{msg.type}</span>]: <span>{msg.object.content}</span>
 						{#if msg.error}
 							<span class="ml-5 text-red-500">{msg.error}</span>
 						{/if}
@@ -63,13 +84,11 @@
 </div>
 
 <script>
-	import Head from "../../components/Head.svelte";
+	import Intro from "../../components/Intro.svelte";
 	import Module from "../../components/Module.svelte";
-	import ConnectStatus from "../../components/ConnectStatus.svelte";
-	import '@sockethub/client/dist/sockethub-client.js';
-	import { io } from 'socket.io-client';
 	import Highlight from "svelte-highlight";
 	import json from "svelte-highlight/languages/json";
+	import { connected, sc } from "$lib/sockethub";
 
 	const activityObject = {
 		context: "dummy",
@@ -80,8 +99,13 @@
 			content: ""
 		}
 	};
-	let sc;
-	let online = false;
+	let actor = {
+		id: 'https://sockethub.org/examples/dummyUser',
+		type: "person",
+		name: "Sockethub Examples - Dummy User"
+	};
+	let actorString = JSON.stringify(actor, undefined, 3).trim();
+
 	let counter = 0;
 	let messages = [];
 	let content = "";
@@ -89,34 +113,20 @@
 	let jsonResp = "";
 	let logModalState = false;
 	let selectedLog = 0;
-	let log = {0:{send:{"hi":"foo"},resp:{"lo":"foo"}}};
+	let log = {};
 
-	// eslint-disable-next-line no-constant-condition
-	if (typeof window) {
-		sc = new window.SockethubClient(io('http://localhost:10550', { path: '/sockethub' }));
-		sc.socket.on('connect', () => {
-			online = true;
-		});
-		sc.socket.on('error', (e) => {
-			console.log('error: ', e);
-		})
-		sc.socket.on('disconnect', (e) => {
-			console.log('disconnect: ', e);
-			online = false;
-		})
-		sc.ActivityStreams.Object.create({
-			id: 'https://sockethub.org/examples/dummyUser',
-			type: "person",
-			name: "Sockethub Examples - Dummy User"
-		});
+	function sendActivityObjectCreate() {
+		actor = JSON.parse(actorString);
+		console.log('creating activity object:  ', actor);
+		sc.ActivityStreams.Object.create(actor);
 	}
 
 	function showLog(uid) {
 		return () => {
 			selectedLog = uid;
 			logModalState = true;
-			jsonSend = JSON.stringify(log[selectedLog].send, undefined, 2);
-			jsonResp = JSON.stringify(log[selectedLog].resp, undefined, 2);
+			jsonSend = JSON.stringify(log[uid].send, undefined, 2);
+			jsonResp = JSON.stringify(log[uid].resp, undefined, 2);
 		}
 	}
 
@@ -124,10 +134,11 @@
 		obj.id = "" + uid;
 		log[uid] = {};
 		log[uid].send = obj;
+		console.log('sending: ', obj);
 		sc.socket.emit('message', obj, (resp) => {
+			console.log('response: ', resp);
 			resp.id = "" + uid;
-			log[uid].resp = resp;
-			console.log(resp);
+			log[uid].resp = resp
 			messages = [resp, ...messages];
 		});
 	}

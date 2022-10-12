@@ -1,5 +1,5 @@
 <ContentArea>
-  <h1>{heading}</h1>
+  <h1>{title}</h1>
   <div class="px-4 py-2">
     <slot/>
   </div>
@@ -7,5 +7,5 @@
 
 <script>
   import ContentArea from "./ContentArea.svelte";
-  export let heading = "";
+  export let title = "";
 </script>
