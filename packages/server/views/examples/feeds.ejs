@@ -54,7 +54,7 @@
 
       function displayMessage(msg) {
         console.log('displaying message: ', msg);
-        $('#messages').append($('<li>').html(`<b>${msg.object.name}</b>: ${msg.object.content} <i>published: ${msg.object.published}</i>`));
+        $('#messages').append($('<li>').html(`<b>${msg.object.title}</b>: ${msg.object.content} <i>published: ${msg.object.published}</i>`));
       }
 
       // handler for user input, emit messages to Sockethub server
