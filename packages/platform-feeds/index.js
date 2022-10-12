@@ -191,10 +191,9 @@ class Feeds {
    *       url: "http://example.com/articles/about-stuff"
    *       date: "2013-05-28T12:00:00.000Z",
    *       datenum: 1369742400000,
-   *       brief_html: "Brief synopsis of stuff...",
-   *       brief_text: "Brief synopsis of stuff...",
-   *       html: "Once upon a time...",
-   *       text: "Once upon a time..."
+   *       brief: "Brief synopsis of stuff...",
+   *       content: "Once upon a time...",
+   *       contentType: "text",
    *       media: [
    *         {
    *           length: '13908973',
@@ -251,7 +250,7 @@ class Feeds {
 function buildFeedObject(dateNum, item) {
   return {
     type: 'feedEntry',
-    name: item.title,
+    title: item.title,
     id: item.origlink || item.link || item.meta.link + '#' + dateNum,
     brief: item.description === item.summary ? undefined : item.summary,
     content: item.description,
