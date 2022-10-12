@@ -255,7 +255,7 @@ function buildFeedObject(dateNum, item) {
     id: item.origlink || item.link || item.meta.link + '#' + dateNum,
     brief: item.description === item.summary ? undefined : item.summary,
     content: item.description,
-    contentType: isHtml(item.description) ? 'html' : 'text',
+    contentType: isHtml(item.description || "") ? 'html' : 'text',
     url: item.origlink || item.link || item.meta.link,
     published: item.pubdate || item.date,
     updated: item.date,
@@ -279,7 +279,6 @@ function buildFeedEntry(actor) {
       language: actor.language,
       author: actor.author
     },
-    status: true,
     type: "post",
     object: {}
   };
