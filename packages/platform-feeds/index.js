@@ -257,7 +257,7 @@ function buildFeedObject(dateNum, item) {
     contentType: isHtml(item.description || "") ? 'html' : 'text',
     url: item.origlink || item.link || item.meta.link,
     published: item.pubdate || item.date,
-    updated: item.date,
+    updated: item.pubdate === item.date ? undefined : item.date,
     datenum: dateNum,
     tags: item.categories,
     media: item.enclosures,
