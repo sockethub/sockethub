@@ -1,6 +1,20 @@
 {
 	"extends": "./.svelte-kit/tsconfig.json",
 	"compilerOptions": {
+		"paths": {
+			"$lib": [
+				"src/lib"
+			],
+			"$lib/*": [
+				"src/lib/*"
+			],
+			"$components": [
+				"src/components"
+			],
+			"$components/*": [
+				"src/components/*"
+			]
+		},
 		"allowJs": true,
 		"checkJs": true,
 		"esModuleInterop": true,

@@ -1,19 +1,14 @@
 import "@sockethub/client/dist/sockethub-client.js"
-import { io, Socket } from 'socket.io-client';
-import { createEventDispatcher } from "svelte";
+import { io } from 'socket.io-client';
+import type SockethubClient from "@sockethub/client";
 
 export const ssr = false;
-export let sc: {socket: Socket};
+export let sc: SockethubClient;
 export let connected = false;
 
 function stateChange(state: string) {
   return (e?: any) => {
     connected = state === 'connect';
-    // dispatch("change", {
-    //   connected: connected,
-    //   sc: sc,
-    //   err: e
-    // });
   }
 }
 
