@@ -1,6 +1,7 @@
-import "@sockethub/client/dist/sockethub-client.js"
+// import "@sockethub/client/dist/sockethub-client.js"
 import { io } from 'socket.io-client';
-import type SockethubClient from "@sockethub/client";
+import SockethubClient from "@sockethub/client";
+// import type SockethubClient from "@sockethub/client";
 
 export const ssr = false;
 export let sc: SockethubClient;
@@ -16,7 +17,7 @@ function stateChange(state: string) {
 if (typeof window === 'object') {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  sc = new window.SockethubClient(io('http://localhost:10550', { path: '/sockethub' }));
+  sc = new SockethubClient(io('http://localhost:10550', { path: '/sockethub' }));
   sc.socket.on('connect', stateChange('connect'));
   sc.socket.on('error', stateChange('error'));
   sc.socket.on('disconnect', stateChange('disconnect'));

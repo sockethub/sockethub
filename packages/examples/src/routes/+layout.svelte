@@ -3,6 +3,8 @@
 	import edgeLight from "svelte-highlight/styles/edge-light";
 	import ConnectStatus from "../components/ConnectWidget.svelte";
 	import Nav from "../components/Nav.svelte";
+
+
 </script>
 
 <svelte:head>

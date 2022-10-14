@@ -31,7 +31,7 @@
 	"devDependencies": {
 		"@playwright/test": "^1.25.0",
 		"@sockethub/client": "^5.0.0-alpha.3",
-		"@sveltejs/adapter-auto": "next",
+		"@sveltejs/adapter-static": "^1.0.0-next.44",
 		"@sveltejs/kit": "next",
 		"@typescript-eslint/eslint-plugin": "^5.27.0",
 		"@typescript-eslint/parser": "^5.27.0",
