@@ -29,8 +29,13 @@ const sc = SockethubClient(io(SOCKETHUB_SERVER);
 ### Browser
 
 The browser bundle is availble in the dist folder:
-`import '@sockethub/client/dist/sockethub-client.js`;
+```
+import '@sockethub/client/dist/sockethub-client.js';
+```
 
-`<script src="http://example.com/sockethub-client.js"></script>`
+You can place it somewhere accessible from the web and include it via a `script` tag.
+```
+<script src="http://example.com/sockethub-client.js"></script>
+```
 
 Once included in a web-page, the `SockethubClient` base object should be on the global scope.
