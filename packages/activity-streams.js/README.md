@@ -15,6 +15,8 @@ I am learning about JSON-LD and ActivityStreams2 as I write this library, so sug
 
 `$ npm install @sockethub/activity-streams`
 
+#### CommonJS
+
 ```javascript
 const ASFactory = require('@sockethub/activity-streams');
 const ActivityStreams = ASFactory({
@@ -22,7 +24,19 @@ const ActivityStreams = ASFactory({
 });
 ```
 
+#### ESM
+
+```javascript
+import ASFactory from '@sockethub/activity-streams';
+const ActivityStreams = ASFactory({
+  failOnUnkownObjectProperties: false // default
+});
+```
+
 ### Browser
+
+The browser bundle is availble in the dist folder:
+`import '@sockethub/activity-streams/dist/sockethub-client.js`;
 
 `<script src="http://example.com/activity-streams.js"></script>`
 
