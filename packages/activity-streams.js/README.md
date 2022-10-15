@@ -36,9 +36,13 @@ const ActivityStreams = ASFactory({
 ### Browser
 
 The browser bundle is availble in the dist folder:
-`import '@sockethub/activity-streams/dist/sockethub-client.js`;
-
-`<script src="http://example.com/activity-streams.js"></script>`
+```
+import '@sockethub/activity-streams/dist/sockethub-client.js';
+```
+You can place it somewhere accessible from the web and include it via a `script` tag.
+```
+<script src="http://example.com/activity-streams.js"></script>
+```
 
 Once included in a web-page, the `ActivityStreams` base object should be on the global scope, with the sub-properties `ActivityStreams.Object` and `ActivityStreams.Stream`.
 
