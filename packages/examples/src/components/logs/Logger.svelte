@@ -2,17 +2,30 @@
   <label for="messages" class="form-label inline-block text-gray-900 font-bold mb-2">Response from Sockethub</label>
   <div id="messages">
     <ul>
-      {#each Object.entries(logs).reverse() as [id, log]}
-        <span class="hidden">{log = log[log.length - 1] }</span>
-        <li>
-          <button on:click="{showLog(id)}"
-                  data-modal-toggle="defaultModal"
-                  class="hover:bg-blue-400 bg-blue-300 text-black py-0 px-2 rounded mr-3 mb-1">view log</button>
-          <span>#{id} {log.actor.name || log.actor.id}</span> [<span>{log.type}</span>]: <span>{log.object.content}</span>
-          {#if log.error}
-            <span class="ml-5 text-red-500">{log.error}</span>
-          {/if}
-        </li>
+      {#each Object.entries(logs).sort((a, b) => {
+        let i = a[0], j;
+        let k = b[0], l;
+        if (a[0].includes('-')) {
+          [i, j] = a[0].split('-');
+        }
+        if (b[0].includes('-')) {
+          [k, l] = b[0].split('-');
+        }
+        if (j && l) {
+          return parseInt(j) >= parseInt(l) ? -1 : 1;
+        } else {
+          return parseInt(i) >= parseInt(k) ? -1 : 1;
+        }
+      }) as [id, v]}
+        {#if Array.isArray(v[v.length - 1])}
+          {#each Object.entries(v[v.length - 1]) as [i, r]}
+            {#if r}
+              <LogEntry buttonAction={showLog(`${id}-${i}`)} id={`${id}-${i}`} entry={r} ({r.id})/>
+            {/if}
+          {/each}
+        {:else}
+          <LogEntry buttonAction={showLog(id)} id={id} entry={v[v.length - 1]} />
+        {/if}
       {/each}
     </ul>
   </div>
@@ -40,26 +53,34 @@
   import { writable } from "svelte/store";
 
   const Logs = writable({});
+  let counter = 0;
 
   export enum ObjectType {
     send = "SEND",
     resp = "RESP"
   }
 
-  export function addObject(type: ObjectType, obj) {
-    console.log(`logger ${type}: `, obj);
+  export function addObject(type: ObjectType, obj, id) {
+    if (!id) {
+      obj.id = "" + ++counter;
+    } else {
+      obj.id = id;
+    }
     Logs.update(currentLogs => {
       if (!currentLogs[obj.id]) {
         currentLogs[obj.id] = [obj];
       } else {
-        currentLogs[obj.id] = [...currentLogs[obj.id], obj]
+        currentLogs[obj.id].push(obj);
+        // = [...currentLogs[obj.id], obj]
       }
       return currentLogs;
     });
+    return obj;
   }
 </script>
 
 <script lang="ts">
+  import LogEntry from "./LogEntry.svelte";
   import Highlight from "svelte-highlight";
   import json from "svelte-highlight/languages/json";
 
@@ -75,10 +96,17 @@
 
   function showLog(uid) {
     return () => {
+      let indexSend = uid;
+      let indexResp = uid;
+      if (uid.includes('-')) {
+        indexSend = uid.split('-')[0];
+      }
+      console.log(`indexSend:${indexSend} indexResp:${indexResp}`);
+      console.log('logs: ', logs);
       selectedLog = uid;
       logModalState = true;
-      jsonSend = JSON.stringify(logs[uid][0], undefined, 2);
-      jsonResp = JSON.stringify(logs[uid][1], undefined, 2);
+      jsonSend = JSON.stringify(logs[indexSend][0], undefined, 2);
+      jsonResp = JSON.stringify(logs[indexResp][logs[indexResp].length - 1], undefined, 2);
     }
   }
 </script>

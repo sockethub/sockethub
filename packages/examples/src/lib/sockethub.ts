@@ -1,15 +1,17 @@
-// import "@sockethub/client/dist/sockethub-client.js"
 import { io } from 'socket.io-client';
 import SockethubClient from "@sockethub/client";
-// import type SockethubClient from "@sockethub/client";
+import { writable } from "svelte/store";
 
-export const ssr = false;
 export let sc: SockethubClient;
-export let connected = false;
+export const connected = writable(false);
 
 function stateChange(state: string) {
   return (e?: any) => {
-    connected = state === 'connect';
+    const c = state === 'connect';
+    connected.update(() => {
+      return c;
+    });
+    console.log(`sockethub ${state} [connected: ${c}]`, e ? e : '');
   }
 }
 
@@ -17,6 +19,7 @@ function stateChange(state: string) {
 if (typeof window === 'object') {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
+  console.log('connecting to sockethub');
   sc = new SockethubClient(io('http://localhost:10550', { path: '/sockethub' }));
   sc.socket.on('connect', stateChange('connect'));
   sc.socket.on('error', stateChange('error'));
