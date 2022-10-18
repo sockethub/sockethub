@@ -60,7 +60,7 @@
     "test:browser": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
     "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 85 --lines 95",
     "test": "yarn test:node && yarn test:browser",
-    "compile": "rimraf ./build && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
+    "compile": "rimraf build dist && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
     "build": "yarn compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs && rollup -c config/rollup.config.test.mjs"
   },
   "keywords": [
