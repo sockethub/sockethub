@@ -15,10 +15,10 @@
  *
  */
 
-import { EventEmitter2 } from 'eventemitter2';
+import EventEmitter from 'eventemitter3';
 import { IActivityObject, IActivityStream } from '@sockethub/schemas';
 
-const ee = new EventEmitter2(),
+const ee = new EventEmitter(),
       baseProps = {
         stream: [
           'id', 'type', 'actor', 'target', 'object', 'context', 'context',

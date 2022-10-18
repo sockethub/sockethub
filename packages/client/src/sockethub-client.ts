@@ -1,6 +1,6 @@
-import { EventEmitter2 } from 'eventemitter2';
+import EventEmitter from 'eventemitter3';
 import {IActivityObject, IActivityStream} from "@sockethub/schemas";
-import ASFactory, { ASManager } from "@sockethub/activity-streams";
+import ASFactory from "@sockethub/activity-streams";
 
 export interface EventMapping {
   credentials: Map<string, IActivityStream>;
@@ -17,7 +17,7 @@ export default class SockethubClient {
     'join': new Map()
   };
   private _socket;
-  public ActivityStreams: ASManager = ASFactory({specialObjs: ['credentials']});
+  public ActivityStreams = ASFactory({specialObjs: ['credentials']});
   public socket;
   public online = false;
   public debug = true;
@@ -41,11 +41,8 @@ export default class SockethubClient {
     });
   }
 
-  private createPublicEmitter(): EventEmitter2 {
-    const socket = new EventEmitter2({
-      wildcard: true,
-      verboseMemoryLeak: false
-    });
+  private createPublicEmitter(): EventEmitter {
+    const socket = new EventEmitter();
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     socket._emit = socket.emit;
