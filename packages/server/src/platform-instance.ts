@@ -91,8 +91,8 @@ export default class PlatformInstance {
     this.flaggedForTermination = true;
 
     try {
-      await this.process.removeAllListeners('close');
-      await this.process.unref();
+      this.process.removeAllListeners('close');
+      this.process.unref();
       this.process.kill();
     } catch (e) {
       // needs to happen
@@ -119,11 +119,11 @@ export default class PlatformInstance {
     this.jobQueue = new JobQueue(this.parentId, this.id, secret, nconf.get('redis'));
     this.jobQueue.initResultEvents();
 
-    this.jobQueue.on('global:completed', async (job: JobDataDecrypted, result: string) => {
+    this.jobQueue.on('global:completed', async (job: JobDataDecrypted, result: IActivityStream|undefined) => {
       await this.handleJobResult('completed', job, result);
     });
 
-    this.jobQueue.on('global:failed', async (job: JobDataDecrypted, result: string) => {
+    this.jobQueue.on('global:failed', async (job: JobDataDecrypted, result: IActivityStream|undefined) => {
       await this.handleJobResult('failed', job, result);
     });
   }
@@ -170,18 +170,22 @@ export default class PlatformInstance {
     for (const sid of this.sessions.values()) {
       if (sid !== sessionId) {
         this.debug(`broadcasting message to ${sid}`);
-        await this.sendToClient(sid, msg);
+        this.sendToClient(sid, msg);
       }
     }
   }
 
   // handle job results coming in on the queue from platform instances
-  private async handleJobResult(type: string, job: JobDataDecrypted, result) {
+  private async handleJobResult(type: string, job: JobDataDecrypted, result: IActivityStream|undefined) {
     let payload = result; // some platforms return new AS objects as result
     if (type === 'failed') {
       payload = job.msg; // failures always use original AS job object
-      payload.error = result ? result : "job failed for unknown reason";
+      payload.error = result ? result.toString() : "job failed for unknown reason";
       this.debug(`${job.title} ${type}: ${payload.error}`);
+    }
+
+    if (typeof payload === 'string') {
+      payload = undefined;
     }
 
     // send result to client
@@ -189,13 +193,13 @@ export default class PlatformInstance {
     if (callback) {
       callback(payload);
       this.completedJobHandlers.delete(job.title);
-    } else {
-      await this.sendToClient(job.sessionId, payload);
     }
 
-    // let all related peers know of result as an independent message
-    // (not as part of a job completion, or failure)
-    await this.broadcastToSharedPeers(job.sessionId, payload);
+    if (payload) {
+      // let all related peers know of result as an independent message
+      // (not as part of a job completion, or failure)
+      this.broadcastToSharedPeers(job.sessionId, payload);
+    }
 
     if (this.config.persist && this.config.requireCredentials.includes(job.msg.type)) {
       if (type === 'failed') {
