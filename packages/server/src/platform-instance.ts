@@ -1,11 +1,11 @@
-import {ChildProcess, fork } from 'child_process';
-import { join } from 'path';
-import { debug, Debugger } from 'debug';
+import {ChildProcess, fork} from 'child_process';
+import {join} from 'path';
+import {debug, Debugger} from 'debug';
 import {IActivityStream, CompletedJobHandler} from "@sockethub/schemas";
 import {JobQueue, JobDataDecrypted} from "@sockethub/data-layer";
 
 import config from "./config";
-import { getSocket } from "./listener";
+import {getSocket} from "./listener";
 import nconf from "nconf";
 
 // collection of platform instances, stored by `id`
@@ -25,9 +25,16 @@ type EnvFormat = {
   REDIS_PORT?: string
 }
 
-interface MessageFromPlatform extends Array<string | IActivityStream>{
-  0: string, 1: IActivityStream, 2: string}
-export interface MessageFromParent extends Array<string|unknown>{0: string, 1: unknown}
+interface MessageFromPlatform extends Array<string | IActivityStream> {
+  0: string,
+  1: IActivityStream,
+  2: string
+}
+
+export interface MessageFromParent extends Array<string | unknown> {
+  0: string,
+  1: unknown
+}
 
 interface PlatformConfig {
   persist?: boolean;
@@ -79,7 +86,7 @@ export default class PlatformInstance {
     this.process = fork(
       join(__dirname, 'platform.js'),
       [this.parentId, this.name, this.id],
-      { env: env }
+      {env: env}
     );
   }
 
@@ -119,13 +126,19 @@ export default class PlatformInstance {
     this.jobQueue = new JobQueue(this.parentId, this.id, secret, nconf.get('redis'));
     this.jobQueue.initResultEvents();
 
-    this.jobQueue.on('global:completed', async (job: JobDataDecrypted, result: IActivityStream|undefined) => {
-      await this.handleJobResult('completed', job, result);
-    });
+    this.jobQueue.on(
+      'global:completed',
+      async (job: JobDataDecrypted, result: IActivityStream | undefined) => {
+        await this.handleJobResult('completed', job, result);
+      }
+    );
 
-    this.jobQueue.on('global:failed', async (job: JobDataDecrypted, result: IActivityStream|undefined) => {
-      await this.handleJobResult('failed', job, result);
-    });
+    this.jobQueue.on(
+      'global:failed',
+      async (job: JobDataDecrypted, result: IActivityStream | undefined) => {
+        await this.handleJobResult('failed', job, result);
+      }
+    );
   }
 
   /**
@@ -133,7 +146,7 @@ export default class PlatformInstance {
    * @param sessionId ID of socket connection that will receive messages from platform emits
    */
   public registerSession(sessionId: string) {
-    if (! this.sessions.has(sessionId)) {
+    if (!this.sessions.has(sessionId)) {
       this.sessions.add(sessionId);
       for (const type of Object.keys(this.sessionCallbacks)) {
         const cb = this.callbackFunction(type, sessionId);
@@ -158,7 +171,7 @@ export default class PlatformInstance {
         msg.context = this.name;
         if ((msg.type === 'error') && (typeof msg.actor === 'undefined') && (this.actor)) {
           // ensure an actor is present if not otherwise defined
-          msg.actor = { id: this.actor, type: 'unknown' };
+          msg.actor = {id: this.actor, type: 'unknown'};
         }
         socket.emit('message', msg);
       }
@@ -166,7 +179,7 @@ export default class PlatformInstance {
   }
 
   // send message to every connected socket associated with this platform instance.
-  private async broadcastToSharedPeers(sessionId: string, msg: IActivityStream) {
+  private broadcastToSharedPeers(sessionId: string, msg: IActivityStream) {
     for (const sid of this.sessions.values()) {
       if (sid !== sessionId) {
         this.debug(`broadcasting message to ${sid}`);
@@ -176,7 +189,11 @@ export default class PlatformInstance {
   }
 
   // handle job results coming in on the queue from platform instances
-  private async handleJobResult(type: string, job: JobDataDecrypted, result: IActivityStream|undefined) {
+  private async handleJobResult(
+    type: string,
+    job: JobDataDecrypted,
+    result: IActivityStream | undefined
+  ) {
     let payload = result; // some platforms return new AS objects as result
     if (type === 'failed') {
       payload = job.msg; // failures always use original AS job object
@@ -184,8 +201,8 @@ export default class PlatformInstance {
       this.debug(`${job.title} ${type}: ${payload.error}`);
     }
 
-    if (typeof payload === 'string') {
-      payload = undefined;
+    if (!payload || typeof payload === 'string') {
+      payload = job.msg;
     }
 
     // send result to client
@@ -201,6 +218,7 @@ export default class PlatformInstance {
       this.broadcastToSharedPeers(job.sessionId, payload);
     }
 
+    // persistent
     if (this.config.persist && this.config.requireCredentials.includes(job.msg.type)) {
       if (type === 'failed') {
         this.debug(`critical job type ${job.msg.type} failed, flagging for termination`);
@@ -224,7 +242,7 @@ export default class PlatformInstance {
     const errorObject: IActivityStream = {
       context: this.name,
       type: 'error',
-      actor: { id: this.actor, type: 'unknown' },
+      actor: {id: this.actor, type: 'unknown'},
       error: errorMessage
     };
     this.sendToClient(sessionId, errorObject);
