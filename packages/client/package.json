@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/client",
   "scripts": {
-    "clean": "npx rimraf dist coverage",
+    "clean": "npx rimraf build dist coverage",
     "clean:deps": "npx rimraf node_modules",
     "compliance": "yarn lint && yarn test && yarn coverage",
     "test": "yarn test:node",
@@ -37,7 +37,7 @@
     "coverage": "c8 check-coverage --statements 85 --branches 84 --functions 90 --lines 85",
     "lint": "eslint \"**/*.ts\"",
     "lint:fix": "eslint --fix \"**/*.ts\"",
-    "compile": "rimraf ./build && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
+    "compile": "rimraf build dist && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
     "build": "yarn compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs"
   },
   "author": "Nick Jennings <nick@silverbucket.net>",

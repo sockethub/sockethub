@@ -16,12 +16,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-const FeedParser = require('feedparser');
-const request = require('request');
-const htmlTags = require('html-tags');
+const FeedParser = require("feedparser");
+const request = require("request");
+const htmlTags = require("html-tags");
 
 const basic = /\s?<!doctype html>|(<html\b[^>]*>|<body\b[^>]*>|<x-[^>]+>)+/i;
-const full = new RegExp(htmlTags.map(tag => `<${tag}\\b[^>]*>`).join('|'), 'i');
+const full = new RegExp(
+  htmlTags.map((tag) => `<${tag}\\b[^>]*>`).join("|"),
+  "i"
+);
 
 function isHtml(string) {
   // limit it to a reasonable length to improve performance.
@@ -30,56 +33,24 @@ function isHtml(string) {
 }
 
 const PlatformSchema = {
-  "name": "feeds",
-  "version": require('./package.json').version,
-  "messages": {
-    "required": [ "type" ],
-    "properties": {
-      "type": {
-        "type": "string",
-        "enum": [ "fetch" ]
+  name: "feeds",
+  version: require("./package.json").version,
+  messages: {
+    required: ["type"],
+    properties: {
+      type: {
+        type: "string",
+        enum: ["fetch"],
       },
-      "object": {
-        "type": "object",
-        "oneOf": [
-          { "$ref": "#/definitions/objectTypes/feed-parameters-date" },
-          { "$ref": "#/definitions/objectTypes/feed-parameters-url" },
-        ]
-      }
+      object: {
+        type: "object",
+        oneOf: [
+          { $ref: "#/definitions/objectTypes/feed-parameters-date" },
+          { $ref: "#/definitions/objectTypes/feed-parameters-url" },
+        ],
+      },
     },
-    "definitions": {
-      "objectTypes": {
-        "feed-parameters-date": {
-          "additionalProperties": false,
-          "properties": {
-            "limit": {
-              "type": "number",
-            },
-            "property": {
-              "enum": [ "date" ]
-            },
-            "after": {
-              "type": "date-time"
-            }
-          }
-        },
-        "feed-parameters-url": {
-          "additionalProperties": false,
-          "properties": {
-            "limit": {
-              "type": "number",
-            },
-            "property": {
-              "enum": [ "url" ]
-            },
-            "after": {
-              "type": "date-time"
-            }
-          }
-        }
-      }
-    }
-  }
+  },
 };
 
 /**
@@ -102,7 +73,7 @@ const PlatformSchema = {
  */
 class Feeds {
   constructor(cfg) {
-    cfg = (typeof cfg === 'object') ? cfg : {};
+    cfg = typeof cfg === "object" ? cfg : {};
     this.id = cfg.id; // actor
     this.debug = cfg.debug;
   }
@@ -114,8 +85,8 @@ class Feeds {
   get config() {
     return {
       persist: false,
-      requireCredentials: []
-    }
+      requireCredentials: [],
+    };
   }
 
   /**
@@ -141,17 +112,6 @@ class Feeds {
    *    target: {
    *      id: 'http://blog.example.com/rss',
    *      type: "feed"
-   *    },
-   *    object: {
-   *      type: "parameters",
-   *      limit: 10,    // default 10
-   *      property: 'date'
-   *      after: '2013-11-25T18:50:25Z',
-   *
-   *      // ... OR ...
-   *
-   *      property: 'link',
-   *      after: 'http://www.news.com/articles/man-eats-car',
    *    }
    *  }
    *
@@ -208,10 +168,11 @@ class Feeds {
    */
   fetch(job, done) {
     // ready to execute job
-    this.fetchFeed(job.target.id, job.object || {})
+    this.fetchFeed(job.target.id, job.id)
       .then((results) => {
         return done(null, results);
-      }).catch(done);
+      })
+      .catch(done);
   }
 
   cleanup(done) {
@@ -221,54 +182,57 @@ class Feeds {
   //
   // fetches the articles from a feed, adding them to an array
   // for processing
-  fetchFeed(url, options) {
+  fetchFeed(url, id) {
     let articles = [],
       actor; // queue of articles to buffer and filter before sending out.
-    let cfg = parseConfig(options);
     return new Promise((resolve, reject) => {
       request(url)
-      .on('error', reject)
-      .pipe(new FeedParser(cfg))
-      .on('error', reject)
-      .on('meta', (meta)  => {
-        actor = buildFeedChannel(url, meta);
-      }).on('readable', function() {
-        const stream = this;
-        let item;
-        while (item = stream.read()) {
-          let article = buildFeedEntry(actor);
-          article.object = buildFeedObject(Date.parse(item.date) || 0, item);
-          articles.push(article); // add to articles stack
-        }
-      }).on('end', () => {
-        return resolve(articles);
-      });
+        .on("error", reject)
+        .pipe(new FeedParser())
+        .on("error", reject)
+        .on("meta", (meta) => {
+          actor = buildFeedChannel(url, meta);
+        })
+        .on("readable", function () {
+          const stream = this;
+          let item;
+          while ((item = stream.read())) {
+            let article = buildFeedEntry(actor);
+            article.object = buildFeedObject(Date.parse(item.date) || 0, item);
+            article.id = id;
+            articles.push(article); // add to articles stack
+          }
+        })
+        .on("end", () => {
+          return resolve(articles);
+        });
     });
-  };
+  }
 }
 
 function buildFeedObject(dateNum, item) {
   return {
-    type: 'feedEntry',
+    type: "feedEntry",
     title: item.title,
-    id: item.origlink || item.link || item.meta.link + '#' + dateNum,
+    id: item.origlink || item.link || item.meta.link + "#" + dateNum,
     brief: item.description === item.summary ? undefined : item.summary,
     content: item.description,
-    contentType: isHtml(item.description || "") ? 'html' : 'text',
+    contentType: isHtml(item.description || "") ? "html" : "text",
     url: item.origlink || item.link || item.meta.link,
     published: item.pubdate || item.date,
     updated: item.pubdate === item.date ? undefined : item.date,
     datenum: dateNum,
     tags: item.categories,
     media: item.enclosures,
-    source: item.source
+    source: item.source,
   };
 }
 
 function buildFeedEntry(actor) {
   return {
+    context: "feeds",
     actor: {
-      type: 'feed',
+      type: "feed",
       name: actor.name,
       id: actor.address,
       description: actor.description,
@@ -276,54 +240,25 @@ function buildFeedEntry(actor) {
       favicon: actor.favicon,
       categories: actor.categories,
       language: actor.language,
-      author: actor.author
+      author: actor.author,
     },
     type: "post",
-    object: {}
+    object: {},
   };
 }
 
 function buildFeedChannel(url, meta) {
   return {
-    type: 'feedChannel',
-    name: (meta.title) ? meta.title : (meta.link) ? meta.link : url,
+    type: "feedChannel",
+    name: meta.title ? meta.title : meta.link ? meta.link : url,
     address: url,
-    description: (meta.description) ? meta.description : '',
-    image: (meta.image) ? meta.image : {},
-    favicon: (meta.favicon) ? meta.favicon : '',
-    categories: (meta.categories) ? meta.categories : [],
-    language: (meta.language) ? meta.language : '',
-    author: (meta.author) ? meta.author : ''
+    description: meta.description ? meta.description : "",
+    image: meta.image ? meta.image : {},
+    favicon: meta.favicon ? meta.favicon : "",
+    categories: meta.categories ? meta.categories : [],
+    language: meta.language ? meta.language : "",
+    author: meta.author ? meta.author : "",
   };
-}
-
-function extractDate(prop) {
-  let date;
-  try {
-    date  = (typeof prop  === 'string') ? Date.parse(prop)  : (typeof prop  === 'number') ? prop  : 0;
-  } catch (e) {
-    return 'invalid date string passed: ' + prop + ' - ' + e;
-  }
-  return date;
-}
-
-/*
- * setting defaults and normalizing
- */
-function parseConfig(options) {
-  let cfg = {};
-  cfg.limit = (options.limit) ? options.limit : 10;
-  cfg.datenum = 0;
-  if ((!cfg.property) || (cfg.property === 'date')) {
-    cfg.after_datenum = extractDate(options.after);
-    cfg.before_datenum = extractDate(options.before);
-  }
-  cfg.url = (options.url) ? options.url : null;
-  cfg.from = 'after';
-  if ((options.from) && (options.from === 'before')) {
-    cfg.from = 'before';
-  }
-  return cfg;
 }
 
 module.exports = Feeds;

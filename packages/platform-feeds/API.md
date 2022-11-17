@@ -110,17 +110,6 @@ and total count.
    target: {
      id: 'http://blog.example.com/rss',
      type: "feed"
-   },
-   object: {
-     type: "parameters",
-     limit: 10,    // default 10
-     property: 'date'
-     after: '2013-11-25T18:50:25Z',
-
-     // ... OR ...
-
-     property: 'link',
-     after: 'http://www.news.com/articles/man-eats-car',
    }
  }
 
