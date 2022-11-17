@@ -54,7 +54,13 @@
       ],
       "sockethub": [
         "packages/sockethub/bin/sockethub"
-      ]
+      ],
+      "$components": ["packages/examples/src/components"],
+      "$components/*": ["packages/examples/src/components/*"],
+      "$stores": ["packages/examples/src/stores"],
+      "$stores/*": ["packages/examples/src/stores/*"],
+      "$lib": ["packages/examples/src/lib"],
+      "$lib/*": ["packages/examples/src/lib/*"]
     }
   },
   "references": [

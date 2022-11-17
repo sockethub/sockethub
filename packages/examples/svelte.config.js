@@ -12,7 +12,15 @@ const config = {
 		adapter: adapter(),
 		paths: {
 			base: "/examples"
-		}
+		},
+		alias: {
+			$components: "src/components",
+			"$components/*": "src/components/*",
+			$stores: "src/stores",
+			"$stores/*": "src/stores/*",
+			$lib: "src/lib",
+			"$lib/*": "src/lib/*",
+		},
 	}
 };
 

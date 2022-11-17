@@ -26,11 +26,12 @@
 </Module>
 
 <script lang="ts">
-  import Intro from "../../components/Intro.svelte";
-  import Module from "../../components/Module.svelte";
-  import ActivityActor from "../../components/ActivityActor.svelte";
-  import SockethubButton from "../../components/SockethubButton.svelte";
-  import Logger, { addObject, ObjectType } from "../../components/logs/Logger.svelte";
+  import Intro from "$components/Intro.svelte";
+  import Module from "$components/Module.svelte";
+  import ActivityActor from "$components/ActivityActor.svelte";
+  import SockethubButton from "$components/SockethubButton.svelte";
+  import Logger, { addObject } from "$components/logs/Logger.svelte";
+  import type { ObjectType } from "$components/logs/Logger.svelte";
   import { sc } from "$lib/sockethub";
 
   const defaultActorId = 'https://sockethub.org/examples/feedsUser';
