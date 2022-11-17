@@ -6,7 +6,7 @@ export let sc: SockethubClient;
 export const connected = writable(false);
 
 function stateChange(state: string) {
-  return (e?: any) => {
+  return (e?: never) => {
     const c = state === 'connect';
     connected.update(() => {
       return c;
