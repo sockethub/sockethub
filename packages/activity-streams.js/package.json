@@ -55,7 +55,7 @@
     "clean": "npx rimraf build dist coverage",
     "clean:deps": "npx rimraf node_modules",
     "compliance": "yarn test && yarn coverage",
-    "test:node": "c8 -x \"./src/**/*.test.ts\" mocha -r ts-node/register ./src/**/*.test.ts",
+    "test:node": "c8 -x \"**/*.test.ts\" mocha -r ts-node/register ./src/**/*.test.ts",
     "test:node:lcov": "c8 -r lcov mocha -r ts-node/register ./src/**/*.test.ts",
     "test:browser": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
     "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 85 --lines 95",
