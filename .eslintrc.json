@@ -47,9 +47,6 @@
         "svelte3/typescript": "() => require('typescript')"
     },
     "overrides": [
-        { "files": [
-            "*.svelte"
-        ], "processor": "svelte3/svelte3" },
         {
             "files": [
                 "**/*.ts"
