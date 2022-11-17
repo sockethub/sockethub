@@ -91,6 +91,7 @@
     "@sockethub/platform-dummy": "^3.0.0-alpha.4",
     "@sockethub/platform-feeds": "^3.0.0-alpha.4",
     "@sockethub/platform-irc": "^4.0.0-alpha.4",
-    "@sockethub/platform-xmpp": "^5.0.0-alpha.4"
+    "@sockethub/platform-xmpp": "^5.0.0-alpha.4",
+    "@sockethub/examples": "^1.0.0-alpha.4"
   }
 }
