@@ -1,11 +1,11 @@
-import {ChildProcess, fork} from 'child_process';
-import {join} from 'path';
-import {debug, Debugger} from 'debug';
-import {IActivityStream, CompletedJobHandler} from "@sockethub/schemas";
-import {JobQueue, JobDataDecrypted} from "@sockethub/data-layer";
+import { ChildProcess, fork } from "child_process";
+import { join } from "path";
+import { debug, Debugger } from "debug";
+import { IActivityStream, CompletedJobHandler } from "@sockethub/schemas";
+import { JobQueue, JobDataDecrypted } from "@sockethub/data-layer";
 
 import config from "./config";
-import {getSocket} from "./listener";
+import { getSocket } from "./listener";
 import nconf from "nconf";
 
 // collection of platform instances, stored by `id`
@@ -19,21 +19,21 @@ export interface PlatformInstanceParams {
 }
 
 type EnvFormat = {
-  DEBUG?: string,
-  REDIS_URL?: string,
-  REDIS_HOST?: string,
-  REDIS_PORT?: string
-}
+  DEBUG?: string;
+  REDIS_URL?: string;
+  REDIS_HOST?: string;
+  REDIS_PORT?: string;
+};
 
 interface MessageFromPlatform extends Array<string | IActivityStream> {
-  0: string,
-  1: IActivityStream,
-  2: string
+  0: string;
+  1: IActivityStream;
+  2: string;
 }
 
 export interface MessageFromParent extends Array<string | unknown> {
-  0: string,
-  1: unknown
+  0: string;
+  1: unknown;
 }
 
 interface PlatformConfig {
@@ -55,8 +55,8 @@ export default class PlatformInstance {
   readonly parentId: string;
   readonly sessions: Set<string> = new Set();
   readonly sessionCallbacks: object = {
-    'close': (() => new Map())(),
-    'message': (() => new Map())()
+    close: (() => new Map())(),
+    message: (() => new Map())(),
   };
   private readonly actor?: string;
 
@@ -75,18 +75,18 @@ export default class PlatformInstance {
     if (process.env.DEBUG) {
       env.DEBUG = process.env.DEBUG;
     }
-    if (config.get('redis:url')) {
-      env.REDIS_URL = config.get('redis:url') as string;
+    if (config.get("redis:url")) {
+      env.REDIS_URL = config.get("redis:url") as string;
     } else {
-      env.REDIS_HOST = config.get('redis:host') as string;
-      env.REDIS_PORT = config.get('redis:port') as string;
+      env.REDIS_HOST = config.get("redis:host") as string;
+      env.REDIS_PORT = config.get("redis:port") as string;
     }
 
     // spin off a process
     this.process = fork(
-      join(__dirname, 'platform.js'),
+      join(__dirname, "platform.js"),
       [this.parentId, this.name, this.id],
-      {env: env}
+      { env: env }
     );
   }
 
@@ -94,11 +94,11 @@ export default class PlatformInstance {
    * Destroys all references to this platform instance, internal listeners and controlled processes
    */
   public async shutdown() {
-    this.debug('shutdown');
+    this.debug("shutdown");
     this.flaggedForTermination = true;
 
     try {
-      this.process.removeAllListeners('close');
+      this.process.removeAllListeners("close");
       this.process.unref();
       this.process.kill();
     } catch (e) {
@@ -123,20 +123,25 @@ export default class PlatformInstance {
    * When jobs are completed or failed, we prepare the results and send them to the client socket
    */
   public initQueue(secret: string) {
-    this.jobQueue = new JobQueue(this.parentId, this.id, secret, nconf.get('redis'));
+    this.jobQueue = new JobQueue(
+      this.parentId,
+      this.id,
+      secret,
+      nconf.get("redis")
+    );
     this.jobQueue.initResultEvents();
 
     this.jobQueue.on(
-      'global:completed',
+      "global:completed",
       async (job: JobDataDecrypted, result: IActivityStream | undefined) => {
-        await this.handleJobResult('completed', job, result);
+        await this.handleJobResult("completed", job, result);
       }
     );
 
     this.jobQueue.on(
-      'global:failed',
+      "global:failed",
       async (job: JobDataDecrypted, result: IActivityStream | undefined) => {
-        await this.handleJobResult('failed', job, result);
+        await this.handleJobResult("failed", job, result);
       }
     );
   }
@@ -163,19 +168,26 @@ export default class PlatformInstance {
    * @param msg ActivityStream object to send to client
    */
   public sendToClient(sessionId: string, msg: IActivityStream) {
-    getSocket(sessionId).then((socket) => {
-      try {
-        // this property should never be exposed externally
-        delete msg.sessionSecret;
-      } finally {
-        msg.context = this.name;
-        if ((msg.type === 'error') && (typeof msg.actor === 'undefined') && (this.actor)) {
-          // ensure an actor is present if not otherwise defined
-          msg.actor = {id: this.actor, type: 'unknown'};
+    getSocket(sessionId).then(
+      (socket) => {
+        try {
+          // this property should never be exposed externally
+          delete msg.sessionSecret;
+        } finally {
+          msg.context = this.name;
+          if (
+            msg.type === "error" &&
+            typeof msg.actor === "undefined" &&
+            this.actor
+          ) {
+            // ensure an actor is present if not otherwise defined
+            msg.actor = { id: this.actor, type: "unknown" };
+          }
+          socket.emit("message", msg);
         }
-        socket.emit('message', msg);
-      }
-    }, (err) => this.debug(`sendToClient ${err}`));
+      },
+      (err) => this.debug(`sendToClient ${err}`)
+    );
   }
 
   // send message to every connected socket associated with this platform instance.
@@ -195,13 +207,15 @@ export default class PlatformInstance {
     result: IActivityStream | undefined
   ) {
     let payload = result; // some platforms return new AS objects as result
-    if (type === 'failed') {
+    if (type === "failed") {
       payload = job.msg; // failures always use original AS job object
-      payload.error = result ? result.toString() : "job failed for unknown reason";
+      payload.error = result
+        ? result.toString()
+        : "job failed for unknown reason";
       this.debug(`${job.title} ${type}: ${payload.error}`);
     }
 
-    if (!payload || typeof payload === 'string') {
+    if (!payload || typeof payload === "string") {
       payload = job.msg;
     }
 
@@ -210,6 +224,8 @@ export default class PlatformInstance {
     if (callback) {
       callback(payload);
       this.completedJobHandlers.delete(job.title);
+    } else {
+      await this.sendToClient(job.sessionId, payload);
     }
 
     if (payload) {
@@ -219,9 +235,14 @@ export default class PlatformInstance {
     }
 
     // persistent
-    if (this.config.persist && this.config.requireCredentials.includes(job.msg.type)) {
-      if (type === 'failed') {
-        this.debug(`critical job type ${job.msg.type} failed, flagging for termination`);
+    if (
+      this.config.persist &&
+      this.config.requireCredentials.includes(job.msg.type)
+    ) {
+      if (type === "failed") {
+        this.debug(
+          `critical job type ${job.msg.type} failed, flagging for termination`
+        );
         await this.jobQueue.pause();
         this.initialized = false;
         this.flaggedForTermination = true;
@@ -241,9 +262,9 @@ export default class PlatformInstance {
   private async reportError(sessionId: string, errorMessage: string) {
     const errorObject: IActivityStream = {
       context: this.name,
-      type: 'error',
-      actor: {id: this.actor, type: 'unknown'},
-      error: errorMessage
+      type: "error",
+      actor: { id: this.actor, type: "unknown" },
+      error: errorMessage,
     };
     this.sendToClient(sessionId, errorObject);
     this.sessions.clear();
@@ -268,21 +289,24 @@ export default class PlatformInstance {
    */
   private callbackFunction(listener: string, sessionId: string) {
     const funcs = {
-      'close': async (e: object) => {
+      close: async (e: object) => {
         this.debug(`close even triggered ${this.id}: ${e}`);
-        await this.reportError(sessionId, `Error: session thread closed unexpectedly: ${e}`);
+        await this.reportError(
+          sessionId,
+          `Error: session thread closed unexpectedly: ${e}`
+        );
       },
-      'message': async ([first, second, third]: MessageFromPlatform) => {
-        if (first === 'updateActor') {
+      message: async ([first, second, third]: MessageFromPlatform) => {
+        if (first === "updateActor") {
           // We need to update the key to the store in order to find it in the future.
           this.updateIdentifier(third);
-        } else if ((first === 'error') && (typeof second === "string")) {
+        } else if (first === "error" && typeof second === "string") {
           await this.reportError(sessionId, second);
         } else {
           // treat like a message to clients
           this.sendToClient(sessionId, second);
         }
-      }
+      },
     };
     return funcs[listener];
   }
