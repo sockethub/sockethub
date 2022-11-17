@@ -47,7 +47,7 @@
     "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 95 --lines 95",
     "lint": "eslint \"**/*.ts\"",
     "lint:fix": "eslint --fix \"**/*.ts\"",
-    "test": "c8 mocha -r ts-node/register src/**/*.test.ts"
+    "test": "c8 -x \"**/*.test.*\" mocha -r ts-node/register src/**/*.test.ts"
   },
   "dependencies": {
     "ajv": "8.11.0",
