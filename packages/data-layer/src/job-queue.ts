@@ -107,7 +107,6 @@ export default class JobQueue extends EventEmitter {
   }
 
   async shutdown() {
-    this.debug('shutdown');
     const isPaused = await this.bull.isPaused(true);
     if (!isPaused) {
       await this.bull.pause();

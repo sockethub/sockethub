@@ -32,9 +32,9 @@
     "clean:deps": "npx rimraf node_modules",
     "compliance": "yarn lint && yarn test && yarn coverage",
     "test": "yarn test:node",
-    "test:node": "c8 -x \"./src/**/*.test.ts\" mocha -r ts-node/register ./src/**/*.test.ts",
+    "test:node": "c8 -x \"**/*.test.ts\" mocha -r ts-node/register ./src/**/*.test.ts",
     "test:node:lcov": "c8 -r lcov mocha -r ts-node/register ./src/**/*.test.ts",
-    "coverage": "c8 check-coverage --statements 85 --branches 84 --functions 90 --lines 85",
+    "coverage": "c8 check-coverage --statements 85 --branches 84 --functions 85 --lines 85",
     "lint": "eslint \"**/*.ts\"",
     "lint:fix": "eslint --fix \"**/*.ts\"",
     "compile": "rimraf build dist && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
@@ -72,7 +72,7 @@
   "dependencies": {
     "@sockethub/activity-streams": "^4.4.0-alpha.4",
     "@sockethub/schemas": "^3.0.0-alpha.4",
-    "eventemitter2": "^6.4.9"
+    "eventemitter3": "^4.0.7"
   },
   "keywords": [
     "sockethub",

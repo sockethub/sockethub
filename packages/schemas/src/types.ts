@@ -33,7 +33,7 @@ export interface CallbackActivityStreamInterface {
 }
 
 export interface CompletedJobHandler {
-  (data: IActivityStream): void;
+  (data: IActivityStream|undefined): void;
 }
 
 export interface LogInterface {

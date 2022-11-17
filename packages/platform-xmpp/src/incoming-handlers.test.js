@@ -5,7 +5,7 @@ const IncomingHandler = require('./incoming-handlers');
 const parse = require('@xmpp/xml/lib/parse');
 const schemas = require('@sockethub/schemas').default;
 
-const stanzas = require('./incoming-handlers.data');
+const stanzas = require('./incoming-handlers.test.data');
 
 describe('Incoming handlers', () => {
   describe('XML stanzas result in the expected AS objects', () => {
