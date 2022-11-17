@@ -32,13 +32,13 @@
 </div>
 
 <div class="{logModalState ? '' : 'hidden'} bg-slate-800 bg-opacity-50 flex justify-center items-center absolute top-0 right-0 bottom-0 left-0">
-  <div style="" class="bg-offwhite px-2 py-2 rounded-md text-left">
+  <div class="max-w-[90%] bg-offwhite px-2 py-2 rounded-md text-left">
     <div class="flex flex-row">
-      <div class="text-xs mb-4 text-slate-500 font-mono py-1 basis-1/2">
+      <div class="max-w-[45%] text-xs mb-4 text-slate-500 font-mono py-1 basis-1/2">
         <h2>Sent</h2>
         <Highlight language={json} code={jsonSend} />
       </div>
-      <div class="text-xs mb-4 text-slate-500 font-mono py-1 basis-1/2">
+      <div class="max-w-[45%] text-xs mb-4 text-slate-500 font-mono py-1 basis-1/2">
         <h2>Response</h2>
         <Highlight language={json} code={jsonResp} />
       </div>
