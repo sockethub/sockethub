@@ -47,7 +47,7 @@
     "clean": "npx rimraf coverage",
     "clean:deps": "npx rimraf node_modules",
     "compliance": "yarn run test && yarn run coverage",
-    "test": "c8 mocha **/*.test.js",
+    "test": "c8 -x \"**/*.test.*\" mocha **/*.test.js",
     "lint": "eslint \"**/*.js\"",
     "lint:fix": "eslint --fix \"**/*.js\"",
     "coverage": "c8 check-coverage --statements 85 --branches 80 --functions 70 --lines 85",

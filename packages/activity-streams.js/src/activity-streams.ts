@@ -15,10 +15,10 @@
  *
  */
 
+import EventEmitter from 'eventemitter3';
+import { IActivityObject, IActivityStream } from '@sockethub/schemas';
 
-const EventEmitter = require('event-emitter');
-
-const ee = EventEmitter(),
+const ee = new EventEmitter(),
       baseProps = {
         stream: [
           'id', 'type', 'actor', 'target', 'object', 'context', 'context',
@@ -59,12 +59,12 @@ const ee = EventEmitter(),
         }
       };
 
-let objs = new Map(),
-    failOnUnknownObjectProperties = false,
-    warnOnUnknownObjectProperties = true,
-    specialObjs = [], // the objects don't get rejected for bad props
-    customProps  = {};
+const objs = new Map(),
+      customProps  = {};
 
+let failOnUnknownObjectProperties = false,
+    warnOnUnknownObjectProperties = true,
+    specialObjs = []; // the objects don't get rejected for bad props
 
 function matchesCustomProp(type, key) {
   return !!((typeof customProps[type] === 'object') && (customProps[type].includes(key)));
@@ -76,14 +76,14 @@ function renameProp(obj, key) {
   return obj;
 }
 
-function validateObject(type, obj = {}) {
-  const unknownKeys = Object.keys(obj).filter((key) => {
+function validateObject(type, obj: IActivityObject = {type:""}) {
+  const unknownKeys = Object.keys(obj).filter((key): void|string => {
     if (! baseProps[type].includes(key)) {
       return key;
     }
   });
 
-  for (let key of unknownKeys) {
+  for (const key of unknownKeys) {
     if (rename[key]) {
       // rename property instead of fail
       obj = renameProp(obj, key);
@@ -110,19 +110,19 @@ function validateObject(type, obj = {}) {
 
 
 function ensureProps(obj) {
-  // ensure the name property, which can general be inferred from the id
+  // ensure the name property, which can generally be inferred from the id
   // name = obj.match(/(?(?\w+):\/\/)(?:.+@)?(.+?)(?:\/|$)/)[1]
   return obj;
 }
 
 function expandStream(meta) {
-  let stream = {};
-  for (let key of Object.keys(meta)) {
+  const stream = {};
+  for (const key of Object.keys(meta)) {
     if (typeof meta[key] === 'string') {
       stream[key] = objs.get(meta[key]) || meta[key];
     } else if (Array.isArray(meta[key])) {
       stream[key] = [];
-      for (let entry of meta[key]) {
+      for (const entry of meta[key]) {
         if (typeof entry === 'string') {
           stream[key].push(objs.get(entry) || entry);
         }
@@ -133,10 +133,10 @@ function expandStream(meta) {
   }
 
   // only expand string into objects if they are in the expand list
-  for (let key of Object.keys(expand)) {
+  for (const key of Object.keys(expand)) {
     if (typeof stream[key] === 'string') {
       const idx = expand[key].primary;
-      let obj = {};
+      const obj = {};
       obj[idx] = stream[key];
       stream[key] = obj;
     }
@@ -144,7 +144,7 @@ function expandStream(meta) {
   return stream;
 }
 
-function Stream(meta) {
+function Stream(meta): IActivityStream|IActivityObject|Record<string, never> {
   validateObject('stream', meta);
   if (typeof meta.object === 'object') {
     validateObject('object', meta.object);
@@ -154,9 +154,15 @@ function Stream(meta) {
   return stream;
 }
 
+export interface ActivityObjectManager {
+  create(obj: unknown): unknown;
+  delete(id: string): boolean;
+  list(): IterableIterator<any>,
+  get(id: string, expand?: boolean): unknown;
+}
 
-const _Object = {
-  create: function (obj) {
+const _Object: ActivityObjectManager = {
+  create: function (obj: IActivityObject) {
     validateObject('object', obj);
     obj = ensureProps(obj);
     objs.set(obj.id, obj);
@@ -183,19 +189,33 @@ const _Object = {
     return ensureProps(obj);
   },
 
-  list: function () {
+  list: function (): IterableIterator<any> {
     return objs.keys();
   }
 };
 
+export interface ASFactoryOptions {
+  specialObjs?: Array<string>;
+  failOnUnknownObjectProperties?: boolean;
+  warnOnUnknownObjectProperties?: boolean;
+  customProps?: any;
+}
 
-function ASFactory(opts = {}) {
-  specialObjs = opts.specialObjs || [];
+export interface ASManager {
+  Stream(meta: unknown): unknown,
+  Object: ActivityObjectManager,
+  on(event, func): void;
+  once(event, func): void;
+  off(event, funcName): void;
+}
+
+export default function ASFactory(opts: ASFactoryOptions = {}): ASManager {
+  specialObjs = opts?.specialObjs || [];
   failOnUnknownObjectProperties = typeof opts.failOnUnknownObjectProperties === 'boolean' ?
     opts.failOnUnknownObjectProperties : failOnUnknownObjectProperties;
   warnOnUnknownObjectProperties = typeof opts.warnOnUnknownObjectProperties === 'boolean' ?
     opts.warnOnUnknownObjectProperties : warnOnUnknownObjectProperties;
-  for (let propName of Object.keys(opts.customProps || {})) {
+  for (const propName of Object.keys(opts.customProps || {})) {
     if (typeof opts.customProps[propName] === 'object') {
       customProps[propName] = opts.customProps[propName];
     }
@@ -213,12 +233,5 @@ function ASFactory(opts = {}) {
     off: function (event, funcName) {
       return ee.off(event, funcName);
     }
-  };
-}
-
-if (typeof module === 'object' && module.exports) {
-  module.exports = ASFactory;
-}
-if (typeof window === 'object') {
-  window.ASFactory = ASFactory;
+  } as ASManager;
 }

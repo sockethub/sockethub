@@ -1,47 +1,30 @@
-import { EventEmitter2 } from 'eventemitter2';
-import ASFactory from '@sockethub/activity-streams';
+import EventEmitter from 'eventemitter3';
 import {IActivityObject, IActivityStream} from "@sockethub/schemas";
+import ASFactory from "@sockethub/activity-streams";
 
-export interface ActivityObjectManager {
-  create(obj: unknown): unknown;
-  delete(id: string): boolean;
-  list(): Array<string>,
-  get(id: string, expand?: boolean): unknown;
-}
-
-export interface ASManager {
-  Stream(meta: unknown): unknown,
-  Object: ActivityObjectManager,
-  emit(event, obj): void;
-  on(event, func): void;
-  once(event, func): void;
-  off(event, funcName): void;
-}
-
-interface EventMapping {
+export interface EventMapping {
   credentials: Map<string, IActivityStream>;
   'activity-object': Map<string, IActivityObject>;
   connect: Map<string, IActivityStream>;
   join: Map<string, IActivityStream>;
 }
 
-class SockethubClient {
-  private _socket;
+export default class SockethubClient {
   private events: EventMapping = {
     'credentials': new Map(),
     'activity-object': new Map(),
     'connect': new Map(),
     'join': new Map()
   };
+  private _socket;
+  public ActivityStreams = ASFactory({specialObjs: ['credentials']});
   public socket;
-  public ActivityStreams: ASManager;
   public online = false;
   public debug = true;
 
   constructor(socket) {
     if (! socket) { throw new Error('SockethubClient requires a socket.io instance'); }
     this._socket = socket;
-    this.ActivityStreams = ASFactory({specialObjs: ['credentials']});
 
     this.socket = this.createPublicEmitter();
     this.registerSocketIOHandlers();
@@ -58,11 +41,8 @@ class SockethubClient {
     });
   }
 
-  private createPublicEmitter(): EventEmitter2 {
-    const socket = new EventEmitter2({
-      wildcard: true,
-      verboseMemoryLeak: false
-    });
+  private createPublicEmitter(): EventEmitter {
+    const socket = new EventEmitter();
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     socket._emit = socket.emit;
@@ -159,18 +139,4 @@ class SockethubClient {
       this._socket.emit(name, obj);
     });
   }
-}
-
-if (typeof module === 'object' && module.exports) {
-  module.exports = SockethubClient;
-}
-
-if (typeof exports === 'object') {
-  exports = SockethubClient;  // lgtm [js/useless-assignment-to-local]
-}
-
-if (typeof window === 'object') {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  window.SockethubClient = SockethubClient;
 }

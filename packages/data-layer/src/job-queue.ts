@@ -2,7 +2,8 @@ import Queue from 'bull';
 import crypto from '@sockethub/crypto';
 import {
   JobDataDecrypted,
-  JobDataEncrypted, JobDecrypted,
+  JobDataEncrypted,
+  JobDecrypted,
   JobEncrypted,
   RedisConfig
 } from "./types";
@@ -106,7 +107,6 @@ export default class JobQueue extends EventEmitter {
   }
 
   async shutdown() {
-    this.debug('shutdown');
     const isPaused = await this.bull.isPaused(true);
     if (!isPaused) {
       await this.bull.pause();
