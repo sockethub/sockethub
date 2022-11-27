@@ -29,7 +29,7 @@
     "request": "^2.83.0"
   },
   "devDependencies": {
-    "jsdoc": "3.6.11",
+    "jsdoc": "4.0.0",
     "jsdoc-to-markdown": "7.1.1"
   },
   "peerDependencies": {
