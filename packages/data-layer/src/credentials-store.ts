@@ -1,8 +1,8 @@
-import SecureStore from 'secure-store-redis';
-import debug, {Debugger} from 'debug';
-import {IActivityStream, CallbackInterface} from "@sockethub/schemas";
+import SecureStore from "secure-store-redis";
+import debug, { Debugger } from "debug";
+import { IActivityStream, CallbackInterface } from "@sockethub/schemas";
 import crypto from "@sockethub/crypto";
-import {RedisConfigProps, RedisConfigUrl} from "./types";
+import { RedisConfigProps, RedisConfigUrl } from "./types";
 
 /**
  * Encapsulates the storing and fetching of credential objects.
@@ -28,7 +28,7 @@ export default class CredentialsStore {
     this.store = new SecureStore({
       namespace: this.uid,
       secret: secret,
-      redis: redisConfig
+      redis: redisConfig,
     });
     this.log = debug(this.uid);
   }
@@ -42,13 +42,18 @@ export default class CredentialsStore {
     this.log(`get credentials for ${actor}`);
     return new Promise((resolve, reject) => {
       this.store.get(actor, (err, credentials) => {
-        if (err) { return reject(err.toString()); }
-        if (!credentials) { return resolve(undefined); }
+        if (err) {
+          return reject("credentials " + err.toString());
+        }
+        if (!credentials) {
+          return resolve(undefined);
+        }
 
         if (credentialHash) {
           if (credentialHash !== crypto.objectHash(credentials.object)) {
             return reject(
-              `provided credentials do not match existing platform instance for actor ${actor}`);
+              `provided credentials do not match existing platform instance for actor ${actor}`
+            );
           }
         }
         return resolve(credentials);
@@ -65,7 +70,7 @@ export default class CredentialsStore {
   save(actor: string, creds: IActivityStream, done: CallbackInterface): void {
     this.store.save(actor, creds, (err) => {
       if (err) {
-        this.log('error saving credentials to store ' + err);
+        this.log("error saving credentials to stores " + err);
         return done(err);
       } else {
         this.log(`credentials encrypted and saved`);

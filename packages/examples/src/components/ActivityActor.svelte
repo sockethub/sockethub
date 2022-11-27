@@ -16,12 +16,15 @@
 
 <script lang="ts">
   import SockethubButton from "./SockethubButton.svelte";
-  import { sc } from "../lib/sockethub";
-  export let actorString = "{}";
+  import { sc } from "$lib/sockethub";
+  export let actor;
+
+  $: actorString = JSON.stringify(actor);
 
   function sendActivityObjectCreate() {
-    const actor = JSON.parse(actorString);
-    console.log('creating activity object:  ', actor);
-    sc.ActivityStreams.Object.create(actor);
+    const actorObj = JSON.parse(actorString);
+    actor.set(actorObj);
+    console.log('creating activity object:  ', actorObj);
+    sc.ActivityStreams.Object.create(actorObj);
   }
 </script>

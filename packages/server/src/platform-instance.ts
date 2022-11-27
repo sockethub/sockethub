@@ -298,7 +298,7 @@ export default class PlatformInstance {
       },
       message: async ([first, second, third]: MessageFromPlatform) => {
         if (first === "updateActor") {
-          // We need to update the key to the store in order to find it in the future.
+          // We need to update the key to the stores in order to find it in the future.
           this.updateIdentifier(third);
         } else if (first === "error" && typeof second === "string") {
           await this.reportError(sessionId, second);

@@ -13,7 +13,7 @@
     <input id="URL" bind:value={url} class="border-4 grow w-full">
   </div>
   <div class="w-16 md:w-32 lg:w-48 w-full">
-    <div class="flex gap-4">
+    <div class="flex gap-4 mt-6">
       <div>
         <SockethubButton buttonAction={sendFetch}>Fetch</SockethubButton>
       </div>
@@ -30,8 +30,7 @@
   import Module from "$components/Module.svelte";
   import ActivityActor from "$components/ActivityActor.svelte";
   import SockethubButton from "$components/SockethubButton.svelte";
-  import Logger, { addObject } from "$components/logs/Logger.svelte";
-  import type { ObjectType } from "$components/logs/Logger.svelte";
+  import Logger, { addObject, ObjectType } from "$components/logs/Logger.svelte";
   import { sc } from "$lib/sockethub";
 
   const defaultActorId = 'https://sockethub.org/examples/feedsUser';
