@@ -18,6 +18,9 @@
     button:disabled:hover {
         background-color: lightgrey;
     }
+    pre {
+        white-space: pre-wrap;
+    }
 }
 @tailwind components;
 @tailwind utilities;
