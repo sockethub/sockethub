@@ -239,10 +239,10 @@ ajv-formats-draft2019@1.6.1:
     smtp-address-parser "^1.0.3"
     uri-js "^4.4.1"
 
-ajv-formats@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/ajv-formats/-/ajv-formats-2.1.1.tgz#6e669400659eb74973bbf2e33327180a0996b520"
-  integrity sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==
+ajv-formats@3.0.0-rc.0:
+  version "3.0.0-rc.0"
+  resolved "https://registry.yarnpkg.com/ajv-formats/-/ajv-formats-3.0.0-rc.0.tgz#d345d205242072ee8877e3a19f100f41a2106e5f"
+  integrity sha512-eyqaGv4OE7RMgW2GNujqwJZWFjOT4z0tQZTVnYiWtSDh9TFwD8CIsJ6ta065IblpZXcV3wFuy8y2gKFb1d0uPw==
   dependencies:
     ajv "^8.0.0"
 
