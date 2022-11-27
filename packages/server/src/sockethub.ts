@@ -73,15 +73,15 @@ class Sockethub {
   private handleIncomingConnection(socket: Socket) {
     // session-specific debug messages
     const sessionLog = debug("sockethub:server:core:" + socket.id),
-      sessionSecret = crypto.randToken(16),
-      // stores instance is session-specific
-      // stores = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret);
-      credentialsStore = new CredentialsStore(
-        this.parentId,
-        socket.id,
-        this.parentSecret1 + sessionSecret,
-        nconf.get("redis")
-      );
+          sessionSecret = crypto.randToken(16),
+          // stores instance is session-specific
+          // stores = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret);
+          credentialsStore = new CredentialsStore(
+            this.parentId,
+            socket.id,
+            this.parentSecret1 + sessionSecret,
+            nconf.get("redis")
+          );
 
     sessionLog(`socket.io connection`);
 

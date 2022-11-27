@@ -19,7 +19,7 @@ describe("CredentialsStore", () => {
       get: MockStoreGet,
       save: MockStoreSave,
     });
-    const StoreMod = proxyquire("./credentials-stores", {
+    const StoreMod = proxyquire("./credentials-store", {
       "secure-store-redis": MockSecureStore,
       "@sockethub/crypto": {
         objectHash: MockObjectHash,
@@ -38,7 +38,7 @@ describe("CredentialsStore", () => {
     sinon.assert.calledOnce(MockSecureStore);
     sinon.assert.calledWith(MockSecureStore, {
       namespace:
-        "sockethub:data-layer:credentials-stores:a parent id:a session id",
+        "sockethub:data-layer:credentials-store:a parent id:a session id",
       secret: "a secret",
       redis: "redis config",
     });
@@ -77,7 +77,7 @@ describe("CredentialsStore", () => {
         res = await credentialsStore.get("a problem actor");
         throw new Error("should not reach this spot");
       } catch (err) {
-        expect(err).to.equal("sumting bad happen");
+        expect(err).to.equal("credentials sumting bad happen");
       }
       sinon.assert.calledOnce(MockStoreGet);
       sinon.assert.calledWith(MockStoreGet, "a problem actor");
