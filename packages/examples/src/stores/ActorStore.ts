@@ -1,10 +1,13 @@
 import { writable } from "svelte/store";
 import type { BaseStore } from "./BaseStore";
 
-type ActorData = {
-  id: string;
-  type: string;
-  name: string;
+export type ActorData = {
+  isSet: boolean;
+  object: {
+    id: string;
+    type: string;
+    name: string;
+  }
 }
 
 export function getActorStore(actor: ActorData) {

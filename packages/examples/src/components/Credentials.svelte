@@ -1,31 +1,44 @@
-<div class="w-16 md:w-32 lg:w-48 grow w-full">
-  <label for="credentials" class="form-label inline-block text-gray-900 font-bold mb-2">Credentials</label>
-  <pre><textarea
-    bind:value={credentialsString}
-    class="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"
-    id="credentials" rows="5"></textarea></pre>
-</div>
-<div class="w-16 md:w-32 lg:w-48 w-full">
-  <div class="flex gap-4 mt-8">
-    <div id="sendCredentials">
-      <SockethubButton buttonAction={sendCredentials}>Set Credentials</SockethubButton>
-    </div>
-  </div>
-</div>
+<TextAreaSubmit
+  title="Credentials"
+  store={credentials}
+  buttonText="Set Credentials"
+  on:submit={sendCredentials}
+  disabled={disabled} />
 
 <script lang="ts">
-  import SockethubButton from "./SockethubButton.svelte";
+  import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
   import { sc } from "$lib/sockethub";
+  import { get } from "svelte/store";
+
   export let credentials;
+  export let actor;
 
-  $: credentialsString = JSON.stringify(credentials);
+  let disabled = true;
 
-  function sendCredentials() {
-    const creds = JSON.parse(credentialsString);
-    credentials.set(creds);
-    console.log('sending credentials:  ', creds);
-    sc.socket.emit('credentials', Object.create(creds), (resp) => {
-      console.log('credentials set: ', resp);
+  $: {
+    if ($actor.isSet) {
+      disabled = $credentials.isSet;
+    } else {
+      disabled = true;
+    }
+  }
+
+  function sendCredentials(data) {
+    const creds = {
+      context: "irc",
+      type: "credentials",
+      actor: get(actor).object.id,
+      object: JSON.parse(data.detail.jsonString)
+    };
+    console.log('sending credentials: ', creds);
+    sc.socket.emit('credentials', creds, (resp) => {
+      if (resp?.error) {
+        throw new Error(resp.error);
+      }
+      credentials.set({
+        isSet: true,
+        object: creds.object
+      });
     });
   }
 </script>

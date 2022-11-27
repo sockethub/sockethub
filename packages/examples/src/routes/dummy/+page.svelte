@@ -5,7 +5,7 @@
 </Intro>
 
 <Module>
-	<ActivityActor actorString={actorString} />
+	<ActivityActor actor={actor} />
 </Module>
 
 <Module>
@@ -17,8 +17,8 @@
 		<label for="sendEcho" class="form-label inline-block text-gray-900 font-bold mb-2">Object Type</label>
 		<div class="flex gap-4">
 			<div id="sendEcho">
-				<SockethubButton buttonAction={sendEcho}>Echo</SockethubButton>
-				<SockethubButton buttonAction={sendFail}>Fail</SockethubButton>
+				<SockethubButton disabled={!$actor.isSet} buttonAction={sendEcho}>Echo</SockethubButton>
+				<SockethubButton disabled={!$actor.isSet} buttonAction={sendFail}>Fail</SockethubButton>
 			</div>
 		</div>
 	</div>
@@ -35,14 +35,17 @@
 	import SockethubButton from "../../components/SockethubButton.svelte";
 	import Logger, { addObject, ObjectType } from "../../components/logs/Logger.svelte";
 	import { sc } from "$lib/sockethub";
+	import { getActorStore } from "$stores/ActorStore";
 
 	const defaultActorId = 'https://sockethub.org/examples/dummyUser';
-	const actor = {
-		id: defaultActorId,
-		type: "person",
-		name: "Sockethub Examples Dummy"
-	};
-	let actorString = JSON.stringify(actor, undefined, 3).trim();
+	const actor = getActorStore({
+		isSet: false,
+		object: {
+			id: defaultActorId,
+			type: "person",
+			name: "Sockethub Examples Dummy"
+		}
+	});
 
 	let content = "";
 

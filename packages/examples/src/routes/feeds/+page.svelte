@@ -4,7 +4,7 @@
 </Intro>
 
 <Module>
-  <ActivityActor actorString={actorString} />
+  <ActivityActor actor={actor} />
 </Module>
 
 <Module>
@@ -15,7 +15,7 @@
   <div class="w-16 md:w-32 lg:w-48 w-full">
     <div class="flex gap-4 mt-6">
       <div>
-        <SockethubButton buttonAction={sendFetch}>Fetch</SockethubButton>
+        <SockethubButton disabled={!$actor.isSet} buttonAction={sendFetch}>Fetch</SockethubButton>
       </div>
     </div>
   </div>
@@ -32,14 +32,17 @@
   import SockethubButton from "$components/SockethubButton.svelte";
   import Logger, { addObject, ObjectType } from "$components/logs/Logger.svelte";
   import { sc } from "$lib/sockethub";
+  import { getActorStore } from "$stores/ActorStore";
 
   const defaultActorId = 'https://sockethub.org/examples/feedsUser';
-  const actor = {
-    id: defaultActorId,
-    type: "person",
-    name: "Sockethub Examples Feeds"
-  };
-  let actorString = JSON.stringify(actor, undefined, 3).trim();
+  const actor = getActorStore({
+    isSet: false,
+    object: {
+      id: defaultActorId,
+      type: "person",
+      name: "Sockethub Examples Feeds"
+    }
+  });
 
   let url = "https://sockethub.org/feed.xml";
 

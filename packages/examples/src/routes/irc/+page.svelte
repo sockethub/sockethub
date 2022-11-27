@@ -8,7 +8,7 @@
 </Module>
 
 <Module>
-  <Credentials credentials={credentials} />
+  <Credentials credentials={credentials} actor={actor} />
 </Module>
 
 <Module>
@@ -27,7 +27,7 @@
   <div class="w-16 md:w-32 lg:w-48 w-full">
     <div class="flex gap-4 mt-6">
       <div>
-        <SockethubButton buttonAction={connectIrc}>Connect</SockethubButton>
+        <SockethubButton disabled={!$credentials.isSet} buttonAction={connectIrc}>Connect</SockethubButton>
       </div>
     </div>
   </div>
@@ -40,32 +40,39 @@
 <script>
   import Intro from "$components/Intro.svelte";
   import Module from "$components/Module.svelte";
-  import ActivityActor from "$components/ActivityActor.svelte";
   import SockethubButton from "$components/SockethubButton.svelte";
   import Logger, { addObject, ObjectType } from "$components/logs/Logger.svelte";
   import { sc } from "$lib/sockethub";
-  import Credentials from "$components/Credentials.svelte";
   import { getActorStore } from "$stores/ActorStore";
   import { getCredentialsStore } from "$stores/CredentialsStore";
+  import ActivityActor from "$components/ActivityActor.svelte";
+  import Credentials from "$components/Credentials.svelte";
 
   const nick = (Math.random() + 1).toString(36).substring(7);
   const actorId = `https://sockethub.org/examples/irc/sh-${nick}`;
-  const actor = getActorStore({
-    id: actorId,
-    type: "person",
-    name: `sh-${nick}`
-  });
 
   let server = "irc.libera.chat";
   let port = "6697";
   let room = "#sh-random";
 
+  const actor = getActorStore({
+    isSet: false,
+    object: {
+      id: actorId,
+      type: "person",
+      name: `sh-${nick}`
+    }
+  });
+
   const credentials = getCredentialsStore({
-    type: 'credentials',
-    nick: nick,
-    server: server,
-    port: parseInt(port, 10),
-    secure: true
+    isSet: false,
+    object: {
+      type: 'credentials',
+      nick: nick,
+      server: server,
+      port: parseInt(port, 10),
+      secure: true
+    }
   });
 
   function send(obj) {

@@ -1,30 +1,24 @@
-<div class="w-16 md:w-32 lg:w-48 grow w-full">
-  <label for="activityStreamActor" class="form-label inline-block text-gray-900 font-bold mb-2">Activity Stream Actor</label>
-  <pre><textarea
-    bind:value={actorString}
-    class="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"
-    id="activityStreamActor" rows="5"></textarea></pre>
-</div>
-<div class="w-16 md:w-32 lg:w-48 w-full">
-  <div class="flex gap-4">
-    <div id="sendASObject">
-      <label for="sendASObject" class="form-label inline-block text-gray-900 font-bold mb-2">Activity Object Create</label>
-      <SockethubButton buttonAction={sendActivityObjectCreate}>Send</SockethubButton>
-    </div>
-  </div>
-</div>
+<TextAreaSubmit
+  title="Activity Stream Actor"
+  store={actor}
+  buttonText="Activity Object Create"
+  on:submit={sendActivityObjectCreate}
+  disabled={$actor.isSet} />
 
 <script lang="ts">
-  import SockethubButton from "./SockethubButton.svelte";
+  import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
   import { sc } from "$lib/sockethub";
+  import { get } from "svelte/store";
+
   export let actor;
 
-  $: actorString = JSON.stringify(actor);
-
-  function sendActivityObjectCreate() {
-    const actorObj = JSON.parse(actorString);
-    actor.set(actorObj);
+  function sendActivityObjectCreate(data) {
+    const actorObj = JSON.parse(data.detail.jsonString);
     console.log('creating activity object:  ', actorObj);
     sc.ActivityStreams.Object.create(actorObj);
+    actor.set({
+      isSet: true,
+      object: actorObj
+    });
   }
 </script>
