@@ -1,14 +1,12 @@
-<div class="w-16 md:w-32 lg:w-48 grow w-full">
-  <label for="activityStreamActor" class="form-label inline-block text-gray-900 font-bold mb-2">{title}</label>
+<div class="w-full">
+  <label class="form-label inline-block text-gray-900 font-bold mb-2">{title}</label>
   <pre><textarea
     bind:value={storeString}
     class="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"
-    id="activityStreamActor" rows="6"></textarea></pre>
+    rows="5"></textarea></pre>
 </div>
-<div class="w-16 md:w-32 lg:w-48 w-full">
-  <div class="flex gap-4 pt-12">
-    <SockethubButton disabled={disabled} buttonAction={handleSubmit}>{buttonText}</SockethubButton>
-  </div>
+<div class="w-full text-right">
+  <SockethubButton disabled={disabled} buttonAction={handleSubmit}>{buttonText}</SockethubButton>
 </div>
 
 <script lang="ts">

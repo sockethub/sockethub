@@ -11,18 +11,18 @@
 </svelte:head>
 
 <main>
-	<div class="grid grid-cols-4 gap-4">
+	<div>
 		<div class="md:ml-2 md:mt-1">
 			<img class="md:float-right" src="{base}/sockethub-logo.svg" alt="Sockethub"/>
 		</div>
 		<div class="col-span-2 md:mt-3">
 			<Nav />
 		</div>
-		<div class="md:mt-2">
+		<div class="w-full text-center">
 			<ConnectStatus />
 		</div>
 	</div>
-	<div class="grid grid-cols-8 gap-4">
+	<div class="pt-5">
 		<slot/>
 	</div>
 </main>

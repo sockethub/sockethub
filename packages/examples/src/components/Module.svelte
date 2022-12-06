@@ -1,5 +1,5 @@
 <ContentArea>
-  <div class="md:flex gap-4 grow">
+  <div class="md:flex gap-4 w-full">
     <slot/>
   </div>
 </ContentArea>
