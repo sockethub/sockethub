@@ -1,16 +1,21 @@
 <TextAreaSubmit
   title="Activity Stream Actor"
-  store={actor}
+  obj={obj}
   buttonText="Activity Object Create"
   on:submit={sendActivityObjectCreate}
-  disabled={$actor.isSet} />
+  disabled={$actor.state.actored} />
 
 <script lang="ts">
   import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
   import { sc } from "$lib/sockethub";
-  import { get } from "svelte/store";
 
   export let actor;
+
+  $: obj = $actor.object;
+
+  $: {
+    console.log('actor obj: ', obj);
+  }
 
   function sendActivityObjectCreate(data) {
     const actorObj = JSON.parse(data.detail.jsonString);

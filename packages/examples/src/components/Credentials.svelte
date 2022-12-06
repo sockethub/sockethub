@@ -1,6 +1,6 @@
 <TextAreaSubmit
   title="Credentials"
-  store={credentials}
+  obj={credentials}
   buttonText="Set Credentials"
   on:submit={sendCredentials}
   disabled={disabled} />
@@ -13,15 +13,10 @@
   export let credentials;
   export let actor;
 
-  let disabled = true;
-
   $: {
-    if ($actor.isSet) {
-      disabled = $credentials.isSet;
-    } else {
-      disabled = true;
-    }
+    console.log('credentials: ', credentials);
   }
+  let disabled = true;
 
   function sendCredentials(data) {
     const creds = {
@@ -35,10 +30,7 @@
       if (resp?.error) {
         throw new Error(resp.error);
       }
-      credentials.set({
-        isSet: true,
-        object: creds.object
-      });
+      $actor.state.credentialed = true;
     });
   }
 </script>

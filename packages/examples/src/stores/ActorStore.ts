@@ -2,7 +2,12 @@ import { writable } from "svelte/store";
 import type { BaseStore } from "./BaseStore";
 
 export type ActorData = {
-  isSet: boolean;
+  state: {
+    actored: boolean;
+    credentialed: boolean,
+    connected: boolean,
+    joined: boolean,
+  }
   object: {
     id: string;
     type: string;
