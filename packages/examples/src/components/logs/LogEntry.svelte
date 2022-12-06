@@ -6,8 +6,10 @@
     <DummyEntry id={id} entry={entry} />
   {:else if entry.context === "feeds"}
     <FeedsEntry id={id} entry={entry} />
+  {:else if entry.context === "irc"}
+    <IrcEntry id={id} entry={entry} />
   {:else}
-    <span>Unknown Activity Object received : {entry.context}</span>
+    <span>Unknown LoggerEntry platform received : {entry.context}</span>
   {/if}
   {#if entry.error}
   <p>
@@ -19,6 +21,7 @@
 <script lang="ts">
   import DummyEntry from "./platforms/DummyEntry.svelte";
   import FeedsEntry from "./platforms/FeedsEntry.svelte";
+  import IrcEntry from "./platforms/IrcEntry.svelte";
   export let id;
   export let entry;
   // eslint-disable-next-line @typescript-eslint/no-empty-function
