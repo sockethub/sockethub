@@ -87,6 +87,4 @@
     });
     connecting = false;
   }
-
-
 </script>
