@@ -20,9 +20,6 @@
 
   const dispatcher = createEventDispatcher();
 
-  $: {
-    console.log('obj: ', obj);
-  }
   $: objString = JSON.stringify(obj, null, 3)
 
   function handleSubmit() {

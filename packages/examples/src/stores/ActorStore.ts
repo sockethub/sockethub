@@ -3,8 +3,8 @@ import type { BaseStore } from "./BaseStore";
 
 export type ActorData = {
   state: {
-    actored: boolean;
-    credentialed: boolean,
+    actorSet: boolean;
+    credentialsSet: boolean,
     connected: boolean,
     joined: boolean,
   }
@@ -12,7 +12,8 @@ export type ActorData = {
     id: string;
     type: string;
     name: string;
-  }
+  },
+  roomId: string;
 }
 
 export function getActorStore(actor: ActorData) {

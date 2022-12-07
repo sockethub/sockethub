@@ -3,7 +3,7 @@
   obj={credentials}
   buttonText="Set Credentials"
   on:submit={sendCredentials}
-  disabled={disabled} />
+  disabled={!$actor.state.actorSet || $actor.state.credentialsSet} />
 
 <script lang="ts">
   import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
@@ -12,11 +12,6 @@
 
   export let credentials;
   export let actor;
-
-  $: {
-    console.log('credentials: ', credentials);
-  }
-  let disabled = true;
 
   function sendCredentials(data) {
     const creds = {
@@ -30,7 +25,7 @@
       if (resp?.error) {
         throw new Error(resp.error);
       }
-      $actor.state.credentialed = true;
+      $actor.state.credentialsSet = true;
     });
   }
 </script>

@@ -3,7 +3,7 @@
   obj={obj}
   buttonText="Activity Object Create"
   on:submit={sendActivityObjectCreate}
-  disabled={$actor.state.actored} />
+  disabled={$actor.state.actorSet} />
 
 <script lang="ts">
   import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
@@ -13,17 +13,19 @@
 
   $: obj = $actor.object;
 
-  $: {
-    console.log('actor obj: ', obj);
-  }
-
   function sendActivityObjectCreate(data) {
     const actorObj = JSON.parse(data.detail.jsonString);
     console.log('creating activity object:  ', actorObj);
     sc.ActivityStreams.Object.create(actorObj);
     actor.set({
-      isSet: true,
-      object: actorObj
+      state: {
+        actorSet: true,
+        credentialsSet: false,
+        connected: false,
+        joined: false
+      },
+      object: actorObj,
+      roomId: ""
     });
   }
 </script>

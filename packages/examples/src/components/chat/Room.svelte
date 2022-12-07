@@ -1,16 +1,16 @@
 <script lang="ts">
   import SockethubButton from "$components/SockethubButton.svelte";
-  import { sc } from "$lib/sockethub";
-  import { addObject, ObjectType } from "$components/logs/Logger.svelte";
+  import { send } from "$lib/sockethub";
+  import type { AnyActivityStream } from "$lib/sockethub";
   export let room: string;
   export let actor;
   export let context: string;
-  let sending = false;
+  let joining = false;
 
-  function joinRoom() {
-    sending = true;
-    const obj = {
-      context: "context",
+  async function joinRoom() {
+    joining = true;
+    await send({
+      context: context,
       type: "join",
       actor: $actor.object.id,
       target: {
@@ -18,14 +18,13 @@
         name: room,
         type: "room"
       }
-    }
-    sc.socket.emit('message', addObject(ObjectType.send, obj), (resp) => {
-      addObject(ObjectType.resp, resp, resp.id);
-      if (!resp.error) {
-        $actor.state.joined = true;
-      }
-      sending = false;
+    } as AnyActivityStream).catch(() => {
+      $actor.state.joined = false;
+    }).then(() => {
+      $actor.roomId = room;
+      $actor.state.joined = true;
     });
+    joining = false;
   }
 </script>
 
@@ -35,6 +34,6 @@
     <input id="room" bind:value={room} class="border-4">
   </div>
   <div class="w-full text-right">
-    <SockethubButton disabled={!$actor.state.connected || $actor.state.joined || sending} buttonAction={joinRoom}>Join</SockethubButton>
+    <SockethubButton disabled={!$actor.state.connected || $actor.state.joined || joining} buttonAction={joinRoom}>{joining ? "Joining" : $actor.state.joined ? "Joined" : "Join"}</SockethubButton>
   </div>
 </div>
