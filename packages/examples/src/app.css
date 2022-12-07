@@ -28,6 +28,12 @@
         height: 20rem;
         display: block;
         border: 1px solid #ccc;
+        overflow: scroll;
+        overflow-anchor: none;
+    }
+    #incomingMessagesAnchor {
+        overflow-anchor: auto;
+        height: 1px;
     }
 }
 @tailwind components;

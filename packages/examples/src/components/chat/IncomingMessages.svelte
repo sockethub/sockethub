@@ -5,7 +5,6 @@
   export function displayMessage(m) {
     if ((m.type === "send") && (m.object?.type === "message")) {
       messages.set([...get(messages), [m.actor.name, m.object.content]]);
-      console.log('messages: ', get(messages));
     }
   }
 </script>
@@ -18,5 +17,6 @@
         <li>{l[0]}: {l[1]}</li>
       {/each}
     </ui>
+    <div id="incomingMessagesAnchor"></div>
   </div>
 </div>

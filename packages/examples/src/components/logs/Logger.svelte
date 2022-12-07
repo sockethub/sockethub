@@ -31,23 +31,33 @@
   </div>
 </div>
 
-<div class="{logModalState ? '' : 'hidden'} bg-slate-800 bg-opacity-50 flex justify-center items-center absolute top-0 right-0 bottom-0 left-0">
-  <div class="max-w-[90%] bg-offwhite px-2 py-2 rounded-md text-left">
-    <div class="flex flex-row">
-      <div class="max-w-[45%] text-xs mb-4 text-slate-500 font-mono py-1 basis-1/2">
-        <h2>Sent</h2>
+<div class="{logModalState ? '' : 'hidden'} bg-slate-800 bg-opacity-50 fixed top-0 left-0 m-0 w-full h-full overflow-scroll">
+  <div id="modalContent" class="max-w-[95%] bg-offwhite rounded-md m-auto p-2">
+    <div>
+      <div class="text-xs text-slate-500 font-mono">
+        <h2 class="ml-2">Sent</h2>
         <Highlight language={json} code={jsonSend} />
       </div>
-      <div class="max-w-[45%] text-xs mb-4 text-slate-500 font-mono py-1 basis-1/2">
-        <h2>Response</h2>
+      <div class="text-xs text-slate-500 font-mono">
+        <h2 class="ml-2">Response</h2>
         <Highlight language={json} code={jsonResp} />
       </div>
     </div>
-    <div class="flex flex-col text-center">
-      <button on:click="{() => logModalState = false }" class="bg-indigo-500 px-7 py-2 ml-2 rounded-md text-sm text-white font-semibold">Ok</button>
+    <div class="w-full text-center">
+      <button on:click="{() => logModalState = false }" class="bg-indigo-500 px-7 py-2 w-[95%] rounded-md text-sm text-white font-semibold">Ok</button>
     </div>
   </div>
 </div>
+
+<svelte:head>
+  {#if logModalState}
+    <style>
+        body {
+            overflow: hidden;
+        }
+    </style>
+  {/if}
+</svelte:head>
 
 <script lang="ts" context="module">
   import { writable } from "svelte/store";
