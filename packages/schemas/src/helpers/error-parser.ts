@@ -85,12 +85,16 @@ function composeFinalError(error) {
   // if we have yet to build an error message, assume this is an invalid type value (oneOf),
   // try to build a list of valid types
   let msg: string;
+  console.log('final error : ', error);
   if (error.keyword === 'oneOf') {
     msg = `${error.instancePath}: ${error.message}: ` +
       `${ObjectTypesList.join(', ')}`;
   } else {
     msg = `${error.instancePath ?
       error.instancePath : 'activity stream'}: ${error.message}`;
+  }
+  if ("additionalProperty" in error.params) {
+    msg += `: ${error.params.additionalProperty}`;
   }
   return msg;
 }
