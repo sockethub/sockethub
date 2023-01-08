@@ -1,7 +1,11 @@
 import { io } from 'socket.io-client';
 import SockethubClient from "@sockethub/client";
 import { writable } from "svelte/store";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import { addObject, ObjectType } from "$components/logs/Logger.svelte";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import { displayMessage } from "$components/chat/IncomingMessages.svelte";
 
 export let sc: SockethubClient;
@@ -43,6 +47,10 @@ function stateChange(state: string) {
   }
 }
 
+function handleIncomingMessage(msg:AnyActivityStream) {
+  displayMessage(msg);
+}
+
 // eslint-disable-next-line no-constant-condition
 if (typeof window === 'object') {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -52,4 +60,5 @@ if (typeof window === 'object') {
   sc.socket.on('connect', stateChange('connect'));
   sc.socket.on('error', stateChange('error'));
   sc.socket.on('disconnect', stateChange('disconnect'));
+  sc.socket.on('message', handleIncomingMessage);
 }

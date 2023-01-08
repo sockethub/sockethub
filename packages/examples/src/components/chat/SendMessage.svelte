@@ -4,6 +4,8 @@
   import type { AnyActivityStream } from "$lib/sockethub";
 
   export let actor;
+  export let context;
+
   let message = "";
   let sending = false;
 
@@ -11,7 +13,7 @@
     sending = true;
     console.log('send message: ', message);
     await send({
-      context: "irc",
+      context: context,
       type: "send",
       actor: $actor.object.id,
       object: {

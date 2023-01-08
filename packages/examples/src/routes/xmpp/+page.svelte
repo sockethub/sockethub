@@ -4,17 +4,9 @@
 </Intro>
 
 <ActivityActor actor={actor} />
-<Credentials credentials={credentials} actor={actor} />
+<Credentials context="xmpp" credentials={credentials} actor={actor} />
 
 <div>
-  <div class="w-full p-2">
-    <label for="server" class="inline-block text-gray-900 font-bold w-32">XMPP Server</label>
-    <input id="server" bind:value={server} class="border-4">
-  </div>
-  <div class="w-full p-2">
-    <label for="port" class="inline-block text-gray-900 font-bold w-32">Port</label>
-    <input id="port" bind:value={port} class="border-4">
-  </div>
   <div class="w-full text-right">
     <SockethubButton
       disabled={!$actor.state.credentialsSet || $actor.state.connected || connecting}
@@ -27,7 +19,7 @@
 
 <IncomingMessage />
 
-<SendMessage actor={actor} />
+<SendMessage context="xmpp" actor={actor} />
 
 <Logger />
 
@@ -41,17 +33,17 @@
   import ActivityActor from "$components/ActivityActor.svelte";
   import Credentials from "$components/Credentials.svelte";
   import IncomingMessage, { displayMessage } from "$components/chat/IncomingMessages.svelte";
-  import Room from "$components/chat/Room.svelte";
   import SendMessage from "$components/chat/SendMessage.svelte";
+  import Room from "$components/chat/Room.svelte";
 
-  const actorId = `sh-${(Math.random() + 1).toString(36).substring(7)}`;
-
-  let server = "irc.libera.chat";
-  let port = "6697";
-  let room = "#sh-random";
+  let userAddress = "user@jabber.org";
   let connecting = false;
 
-  const actor = getActorStore({
+  const actorId = `${userAddress}/SockethubExample`;
+
+  let room = "kosmos-random@kosmos.chat";
+
+  const actor = getActorStore('xmpp', {
     state: {
       actorSet: false,
       credentialsSet: false,
@@ -68,10 +60,9 @@
 
   const credentials = {
     type: 'credentials',
-    nick: actorId,
-    server: server,
-    port: parseInt(port, 10),
-    secure: true
+    userAddress: userAddress,
+    password: "123456",
+    resource: "SockethubExample"
   };
 
   async function connectXmpp() {

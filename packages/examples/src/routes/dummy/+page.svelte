@@ -34,7 +34,7 @@
 	import { getActorStore } from "$stores/ActorStore";
 
 	const actorId = 'https://sockethub.org/examples/dummyUser';
-	const actor = getActorStore({
+	const actor = getActorStore('dummy', {
 		state: {
 			actorSet: false
 		},

@@ -12,10 +12,11 @@
 
   export let credentials;
   export let actor;
+  export let context: string;
 
   function sendCredentials(data) {
     const creds = {
-      context: "irc",
+      context: context,
       type: "credentials",
       actor: get(actor).object.id,
       object: JSON.parse(data.detail.jsonString)

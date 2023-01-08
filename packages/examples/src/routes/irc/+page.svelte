@@ -4,7 +4,7 @@
 </Intro>
 
 <ActivityActor actor={actor} />
-<Credentials credentials={credentials} actor={actor} />
+<Credentials context="irc" credentials={credentials} actor={actor} />
 
 <div>
   <div class="w-full p-2">
@@ -27,7 +27,7 @@
 
 <IncomingMessage />
 
-<SendMessage actor={actor} />
+<SendMessage context="xmpp" actor={actor} />
 
 <Logger />
 
@@ -51,7 +51,7 @@
   let room = "#sh-random";
   let connecting = false;
 
-  const actor = getActorStore({
+  const actor = getActorStore('irc', {
     state: {
       actorSet: false,
       credentialsSet: false,

@@ -26,7 +26,7 @@
   import { getActorStore } from "$stores/ActorStore";
 
   const actorId = 'https://sockethub.org/examples/feedsUser';
-  const actor = getActorStore({
+  const actor = getActorStore('feeds', {
     state: {
       actorSet: false
     },
