@@ -70,6 +70,7 @@ section on environment variables.*
 * [@sockethub/client](packages/client)
 * [@sockethub/crypto](packages/crypto)
 * [@sockethub/data-layer](packages/data-layer)
+* [@sockethub/examples](packages/examples)
 * [@sockethub/irc2as](packages/irc2as)
 * [@sockethub/platform-dummy](packages/platform-dummy)
 * [@sockethub/platform-feeds](packages/platform-feeds)
