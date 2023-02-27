@@ -10,7 +10,7 @@
 	 ['XMPP', '/xmpp']
   ];
 </script>
-<nav class="flex sm:justify-center space-x-4 p-2">
+<nav class="flex justify-center space-x-4 p-2">
 	{#each navItems as [title, path]}
 		<a
 			class="rounded-lg px-2 pt-1 pb-1.5 font-medium {$page.url.pathname.replace(/\/$/,'').endsWith(path === '/' ? base : path) ? 'bg-sockethub text-blue-50' : 'text-slate-700 hover:bg-slate-300'}"

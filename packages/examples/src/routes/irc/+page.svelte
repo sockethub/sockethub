@@ -1,36 +1,3 @@
-<Intro heading="IRC Platform Example">
-  <title>IRC Example</title>
-  <p>Example for the IRC platform</p>
-</Intro>
-
-<ActivityActor actor={actor} />
-<Credentials context="irc" credentials={credentials} actor={actor} />
-
-<div>
-  <div class="w-full p-2">
-    <label for="server" class="inline-block text-gray-900 font-bold w-32">IRC Server</label>
-    <input id="server" bind:value={server} class="border-4">
-  </div>
-  <div class="w-full p-2">
-    <label for="port" class="inline-block text-gray-900 font-bold w-32">Port</label>
-    <input id="port" bind:value={port} class="border-4">
-  </div>
-  <div class="w-full text-right">
-    <SockethubButton
-      disabled={!$actor.state.credentialsSet || $actor.state.connected || connecting}
-      buttonAction={connectIrc}
-    >{$actor.state.connected ? "Connected" : connecting ? "Connecting" : "Connect"}</SockethubButton>
-  </div>
-</div>
-
-<Room actor={actor} room={room} context="irc" />
-
-<IncomingMessage />
-
-<SendMessage context="xmpp" actor={actor} />
-
-<Logger />
-
 <script lang="ts">
   import Intro from "$components/Intro.svelte";
   import SockethubButton from "$components/SockethubButton.svelte";
@@ -88,3 +55,36 @@
     connecting = false;
   }
 </script>
+
+<Intro heading="IRC Platform Example">
+  <title>IRC Example</title>
+  <p>Example for the IRC platform</p>
+</Intro>
+
+<ActivityActor actor={actor} />
+<Credentials context="irc" credentials={credentials} actor={actor} />
+
+<div>
+  <div class="w-full p-2">
+    <label for="server" class="inline-block text-gray-900 font-bold w-32">IRC Server</label>
+    <input id="server" bind:value={server} class="border-4">
+  </div>
+  <div class="w-full p-2">
+    <label for="port" class="inline-block text-gray-900 font-bold w-32">Port</label>
+    <input id="port" bind:value={port} class="border-4">
+  </div>
+  <div class="w-full text-right">
+    <SockethubButton
+      disabled={!$actor.state.credentialsSet || $actor.state.connected || connecting}
+      buttonAction={connectIrc}
+    >{$actor.state.connected ? "Connected" : connecting ? "Connecting" : "Connect"}</SockethubButton>
+  </div>
+</div>
+
+<Room actor={actor} room={room} context="irc" />
+
+<IncomingMessage />
+
+<SendMessage context="irc" actor={actor} />
+
+<Logger />

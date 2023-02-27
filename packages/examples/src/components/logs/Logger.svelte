@@ -1,4 +1,66 @@
-<div>
+<script lang="ts" context="module">
+  import { writable } from "svelte/store";
+
+  const Logs = writable({});
+  let counter = 0;
+
+  export enum ObjectType {
+    send = "SEND",
+    resp = "RESP"
+  }
+
+  export function addObject(type: ObjectType, obj, id) {
+    if (!id) {
+      obj.id = "" + ++counter;
+    } else {
+      obj.id = id;
+    }
+    Logs.update(currentLogs => {
+      if (!currentLogs[obj.id]) {
+        currentLogs[obj.id] = [obj];
+      } else {
+        currentLogs[obj.id].push(obj);
+        // = [...currentLogs[obj.id], obj]
+      }
+      return currentLogs;
+    });
+    return obj;
+  }
+</script>
+
+<script lang="ts">
+  import LogEntry from "./LogEntry.svelte";
+  import Highlight from "svelte-highlight";
+  import json from "svelte-highlight/languages/json";
+
+  let logs;
+  let logModalState = false;
+  let jsonSend = "";
+  let jsonResp = "";
+  let selectedLog = 0;
+
+  Logs.subscribe((data) => {
+    logs = data;
+  });
+
+  function showLog(uid) {
+    return () => {
+      let indexSend = uid;
+      let indexResp = uid;
+      if (uid.includes('-')) {
+        indexSend = uid.split('-')[0];
+      }
+      console.log(`indexSend:${indexSend} indexResp:${indexResp}`);
+      console.log('logs: ', logs);
+      selectedLog = uid;
+      logModalState = true;
+      jsonSend = JSON.stringify(logs[indexSend][0], null, 2);
+      jsonResp = JSON.stringify(logs[indexResp][logs[indexResp].length - 1], null, 2);
+    }
+  }
+</script>
+
+<div class="mb-28">
   <label for="messages" class="form-label inline-block text-gray-900 font-bold mb-2">Response from Sockethub</label>
   <div id="messages">
     <ul>
@@ -58,65 +120,3 @@
     </style>
   {/if}
 </svelte:head>
-
-<script lang="ts" context="module">
-  import { writable } from "svelte/store";
-
-  const Logs = writable({});
-  let counter = 0;
-
-  export enum ObjectType {
-    send = "SEND",
-    resp = "RESP"
-  }
-
-  export function addObject(type: ObjectType, obj, id) {
-    if (!id) {
-      obj.id = "" + ++counter;
-    } else {
-      obj.id = id;
-    }
-    Logs.update(currentLogs => {
-      if (!currentLogs[obj.id]) {
-        currentLogs[obj.id] = [obj];
-      } else {
-        currentLogs[obj.id].push(obj);
-        // = [...currentLogs[obj.id], obj]
-      }
-      return currentLogs;
-    });
-    return obj;
-  }
-</script>
-
-<script lang="ts">
-  import LogEntry from "./LogEntry.svelte";
-  import Highlight from "svelte-highlight";
-  import json from "svelte-highlight/languages/json";
-
-  let logs;
-  let logModalState = false;
-  let jsonSend = "";
-  let jsonResp = "";
-  let selectedLog = 0;
-
-  Logs.subscribe((data) => {
-    logs = data;
-  });
-
-  function showLog(uid) {
-    return () => {
-      let indexSend = uid;
-      let indexResp = uid;
-      if (uid.includes('-')) {
-        indexSend = uid.split('-')[0];
-      }
-      console.log(`indexSend:${indexSend} indexResp:${indexResp}`);
-      console.log('logs: ', logs);
-      selectedLog = uid;
-      logModalState = true;
-      jsonSend = JSON.stringify(logs[indexSend][0], undefined, 2);
-      jsonResp = JSON.stringify(logs[indexResp][logs[indexResp].length - 1], undefined, 2);
-    }
-  }
-</script>

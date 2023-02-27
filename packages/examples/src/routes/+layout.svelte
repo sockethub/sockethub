@@ -12,8 +12,8 @@
 
 <main>
 	<div>
-		<div class="md:ml-2 md:mt-1">
-			<img class="md:float-right" src="{base}/sockethub-logo.svg" alt="Sockethub"/>
+		<div>
+			<img class="m-auto" src="{base}/sockethub-logo.svg" alt="Sockethub"/>
 		</div>
 		<div class="col-span-2 md:mt-3">
 			<Nav />

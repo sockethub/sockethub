@@ -1,22 +1,3 @@
-<Intro title="Feeds Platform Example">
-  <title>Feeds Example</title>
-  <p>The feeds platform fetches takes an RSS/ATOM feed URL and parses it, returning an array of Activity Objects for each entry.</p>
-</Intro>
-
-<ActivityActor actor={actor} />
-
-<div>
-  <div class="w-full p-2">
-    <label for="URL" class="inline-block text-gray-900 font-bold w-32">Feed URL</label>
-    <input id="URL" bind:value={url} class="border-4">
-  </div>
-  <div class="w-full text-right">
-    <SockethubButton disabled={!$actor.state.actorSet} buttonAction={sendFetch}>Fetch</SockethubButton>
-  </div>
-</div>
-
-<Logger />
-
 <script lang="ts">
   import Intro from "$components/Intro.svelte";
   import ActivityActor from "$components/ActivityActor.svelte";
@@ -69,3 +50,23 @@
     send(getASObj("fetch"))
   }
 </script>
+
+
+<Intro title="Feeds Platform Example">
+  <title>Feeds Example</title>
+  <p>The feeds platform fetches takes an RSS/ATOM feed URL and parses it, returning an array of Activity Objects for each entry.</p>
+</Intro>
+
+<ActivityActor actor={actor} />
+
+<div>
+  <div class="w-full p-2">
+    <label for="URL" class="inline-block text-gray-900 font-bold w-32">Feed URL</label>
+    <input id="URL" bind:value={url} class="border-4">
+  </div>
+  <div class="w-full text-right">
+    <SockethubButton disabled={!$actor.state.actorSet} buttonAction={sendFetch}>Fetch</SockethubButton>
+  </div>
+</div>
+
+<Logger />

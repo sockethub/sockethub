@@ -1,28 +1,3 @@
-<Intro heading="XMPP Platform Example">
-  <title>XMPP Example</title>
-  <p>Example for the XMPP platform</p>
-</Intro>
-
-<ActivityActor actor={actor} />
-<Credentials context="xmpp" credentials={credentials} actor={actor} />
-
-<div>
-  <div class="w-full text-right">
-    <SockethubButton
-      disabled={!$actor.state.credentialsSet || $actor.state.connected || connecting}
-      buttonAction={connectXmpp}
-    >{$actor.state.connected ? "Connected" : connecting ? "Connecting" : "Connect"}</SockethubButton>
-  </div>
-</div>
-
-<Room actor={actor} room={room} context="xmpp" />
-
-<IncomingMessage />
-
-<SendMessage context="xmpp" actor={actor} />
-
-<Logger />
-
 <script lang="ts">
   import Intro from "$components/Intro.svelte";
   import SockethubButton from "$components/SockethubButton.svelte";
@@ -71,11 +46,36 @@
       context: "xmpp",
       type: "connect",
       actor: actorId
-    } as AnyActivityStream).catch(() => {
-      $actor.state.connected = false;
-    }).then(() => {
+    } as AnyActivityStream).then(() => {
       $actor.state.connected = true;
+    }).catch(() => {
+      $actor.state.connected = false;
     });
     connecting = false;
   }
 </script>
+
+<Intro heading="XMPP Platform Example">
+  <title>XMPP Example</title>
+  <p>Example for the XMPP platform</p>
+</Intro>
+
+<ActivityActor actor={actor} />
+<Credentials context="xmpp" credentials={credentials} actor={actor} />
+
+<div>
+  <div class="w-full text-right">
+    <SockethubButton
+      disabled={!$actor.state.credentialsSet || $actor.state.connected || connecting}
+      buttonAction={connectXmpp}
+    >{$actor.state.connected ? "Connected" : connecting ? "Connecting" : "Connect"}</SockethubButton>
+  </div>
+</div>
+
+<Room actor={actor} room={room} context="xmpp" />
+
+<IncomingMessage />
+
+<SendMessage context="xmpp" actor={actor} />
+
+<Logger />
