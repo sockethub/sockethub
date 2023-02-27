@@ -37,7 +37,11 @@ function handleValidation(schemaRef: string, msg: IActivityStream, isObject=fals
     result = validator(msg);
   }
   if (! result) {
-    return `[${msg.context}] ${getErrorMessage(msg, validator.errors)}`;
+    let errorMessage = getErrorMessage(msg, validator.errors);
+    if (msg.context) {
+      errorMessage = `[${msg.context}] ${errorMessage}`;
+    }
+    return errorMessage;
   }
   return "";
 }

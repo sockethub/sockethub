@@ -35,7 +35,7 @@ export default [
       }
     },
     false,
-    `/object: must NOT have additional properties`
+    `[test-platform] /object: must NOT have additional properties: pass`
   ],
 
   [
@@ -50,7 +50,7 @@ export default [
       }
     },
     false,
-    `/object: must have required property 'host'`
+    `[test-platform] /object: must have required property 'host'`
   ],
 
   [

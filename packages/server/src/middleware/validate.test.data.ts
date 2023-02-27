@@ -200,7 +200,7 @@ export default [
       "context":"fake",
       "target":"irc://irc.dooder.net/a-room"
     },
-    "error": "Error: /actor: must be object"
+    "error": "Error: [fake] /actor: must be object"
   },
   {
     "name":"missing type property",
@@ -211,7 +211,7 @@ export default [
       "context":"fake",
       "target": { "id": "irc://irc.dooder.net/a-room", "type": "room" }
     },
-    "error": "Error: activity stream: must have required property 'type'"
+    "error": "Error: [fake] activity stream: must have required property 'type'"
   },
   {
     "name":"invalid context property",
@@ -234,7 +234,7 @@ export default [
       "context":"fake",
       "target": { "id": "irc://irc.dooder.net/a-room", "type": "room" }
     },
-    "error": "Error: activity stream: must have required property 'actor'"
+    "error": "Error: [fake] activity stream: must have required property 'actor'"
   },
   {
     "name":"traditional message",

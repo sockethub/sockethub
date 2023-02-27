@@ -89,7 +89,7 @@ describe('Initialize IRC Platform', () => {
         object: {
           host: 'example.com',
           port: '6667'
-        }})).to.equal("/object: must have required property 'type'");
+        }})).to.equal("[irc] /object: must have required property 'type'");
     });
 
     it('invalid credentials port', () => {
@@ -100,7 +100,7 @@ describe('Initialize IRC Platform', () => {
           type: 'credentials',
           host: 'example.com',
           port: '6667'
-        }})).to.equal("/object/port: must be number");
+        }})).to.equal("[irc] /object/port: must be number");
     });
 
     it('invalid credentials additional prop', () => {
@@ -111,7 +111,7 @@ describe('Initialize IRC Platform', () => {
           type: 'credentials',
           host: 'example.com',
           port: 6667
-        }})).to.equal("/object: must NOT have additional properties");
+        }})).to.equal("[irc] /object: must NOT have additional properties: host");
     });
   });
 
