@@ -7,7 +7,7 @@
 <Context {entry} />
 <span>#{id} {entry.actor?.name || entry.actor?.id || entry.actor}:</span>
 <span>
-  <a href={entry.object?.url} target="_blank">
+  <a rel="noreferrer" href={entry.object?.url} target="_blank">
     {#if entry.object?.contentType === "html"}
       {@html entry.object?.title}
     {:else}
