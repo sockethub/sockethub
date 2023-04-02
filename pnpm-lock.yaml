@@ -102,6 +102,21 @@ importers:
       chai:
         specifier: 4.3.7
         version: 4.3.7
+      karma:
+        specifier: 6.4.1
+        version: 6.4.1
+      karma-chai:
+        specifier: 0.1.0
+        version: 0.1.0(chai@4.3.7)(karma@6.4.1)
+      karma-chrome-launcher:
+        specifier: 3.1.1
+        version: 3.1.1
+      karma-firefox-launcher:
+        specifier: 2.1.2
+        version: 2.1.2
+      karma-mocha:
+        specifier: ^2.0.1
+        version: 2.0.1
       mocha:
         specifier: 10.2.0
         version: 10.2.0

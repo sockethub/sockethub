@@ -27,8 +27,8 @@
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "postinstall": "pnpm build",
-    "publish:latest": "pnpm compliance && pnpm publish --tag latest --dry-run",
-    "publish:next": "pnpm compliance && pnpm publish --tag next --dry-run",
+    "publish:latest": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag latest --dry-run",
+    "publish:next": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag next --dry-run",
     "test": "nx run-many --target=test",
     "coverage": "nx run-many --target=coverage",
     "clean": "pnpm run --parallel -r clean",

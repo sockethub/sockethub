@@ -37,6 +37,11 @@
     "@types/node": "18.15.11",
     "c8": "7.13.0",
     "chai": "4.3.7",
+    "karma": "6.4.1",
+    "karma-chai": "0.1.0",
+    "karma-chrome-launcher": "3.1.1",
+    "karma-firefox-launcher": "2.1.2",
+    "karma-mocha": "^2.0.1",
     "mocha": "10.2.0",
     "rollup": "^3.20.2",
     "ts-node": "^10.9.1",
@@ -48,14 +53,15 @@
     "directory": "packages/activity-streams.js"
   },
   "scripts": {
+    "build": "pnpm compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs && rollup -c config/rollup.config.test.mjs",
     "clean": "rm -rf build dist coverage",
-    "compliance": "pnpm test && pnpm coverage",
-    "test:node": "c8 -x \"**/*.test.ts\" mocha -r ts-node/register ./src/**/*.test.ts",
-    "test:node:lcov": "c8 -r lcov mocha -r ts-node/register ./src/**/*.test.ts",
-    "coverage": "c8 check-coverage --statements 95 --functions 90 --branches 90 --lines 95",
-    "test": "pnpm test:node",
     "compile": "pnpm clean && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
-    "build": "pnpm compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs && rollup -c config/rollup.config.test.mjs"
+    "compliance": "pnpm test && pnpm coverage",
+    "coverage": "c8 check-coverage --statements 95 --functions 90 --branches 90 --lines 95",
+    "test": "pnpm test:node && pnpm test:browser",
+    "test:browser": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
+    "test:node": "c8 -x \"**/*.test.ts\" mocha -r ts-node/register ./src/**/*.test.ts",
+    "test:node:lcov": "c8 -r lcov mocha -r ts-node/register ./src/**/*.test.ts"
   },
   "keywords": [
     "activity",
