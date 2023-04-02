@@ -71,7 +71,7 @@
   "dependencies": {
     "@sockethub/activity-streams": "^4.4.0-alpha.4",
     "@sockethub/schemas": "^3.0.0-alpha.4",
-    "eventemitter3": "^4.0.7"
+    "eventemitter3": "^5.0.0"
   },
   "keywords": [
     "sockethub",

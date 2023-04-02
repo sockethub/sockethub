@@ -23,7 +23,7 @@
   ],
   "dependencies": {
     "@sockethub/schemas": "^3.0.0-alpha.3",
-    "eventemitter3": "^4.0.7"
+    "eventemitter3": "^5.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.19.3",
