@@ -52,16 +52,16 @@
     "directory": "packages/activity-streams.js"
   },
   "scripts": {
-    "clean": "npx rimraf build dist coverage",
-    "clean:deps": "npx rimraf node_modules",
-    "compliance": "yarn test && yarn coverage",
+    "clean": "pnpx rimraf build dist coverage",
+    "clean:deps": "pnpx rimraf node_modules",
+    "compliance": "pnpm test && pnpm coverage",
     "test:node": "c8 -x \"**/*.test.ts\" mocha -r ts-node/register ./src/**/*.test.ts",
     "test:node:lcov": "c8 -r lcov mocha -r ts-node/register ./src/**/*.test.ts",
     "test:browser": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
     "coverage": "c8 check-coverage --statements 95 --functions 90 --branches 90 --lines 95",
-    "test": "yarn test:node && yarn test:browser",
-    "compile": "rimraf build dist && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
-    "build": "yarn compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs && rollup -c config/rollup.config.test.mjs"
+    "test": "pnpm test:node && pnpm test:browser",
+    "compile": "pnpx rimraf build dist && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
+    "build": "pnpm compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs && rollup -c config/rollup.config.test.mjs"
   },
   "keywords": [
     "activity",

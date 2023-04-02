@@ -44,9 +44,9 @@
   },
   "scripts": {
     "build": "true",
-    "clean": "npx rimraf coverage",
-    "clean:deps": "npx rimraf coverage node_modules",
-    "compliance": "yarn run lint && yarn run test && yarn run coverage",
+    "clean": "pnpx rimraf coverage",
+    "clean:deps": "pnpx rimraf coverage node_modules",
+    "compliance": "pnpm run lint && pnpm run test && pnpm run coverage",
     "test": "c8 mocha *.test.js",
     "coverage": "c8 check-coverage --statements 80 --branches 55 --functions 85 --lines 80",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md",
