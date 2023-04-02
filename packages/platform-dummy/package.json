@@ -19,7 +19,7 @@
     }
   },
   "scripts": {
-    "clean:deps": "pnpx rimraf node_modules",
+    "clean:deps": "npx rimraf node_modules",
     "test": "exit 0"
   },
   "repository": {

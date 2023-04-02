@@ -42,7 +42,7 @@
   },
   "scripts": {
     "build": "pnpm run doc",
-    "clean:deps": "pnpx rimraf node_modules",
+    "clean:deps": "npx rimraf node_modules",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md",
     "test": "exit 0"
   }
