@@ -206,6 +206,7 @@ describe("Page", () => {
 
     describe("Incoming Message queue", () => {
       it("should be empty", () => {
+        expect(incomingMessages.length).to.eql(0);
         expect(incomingMessages).to.eql([]);
       });
     });
