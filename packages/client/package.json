@@ -28,8 +28,7 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/client",
   "scripts": {
-    "clean": "npx rimraf build dist coverage",
-    "clean:deps": "npx rimraf node_modules",
+    "clean": "rm -rf build dist coverage",
     "compliance": "pnpm lint && pnpm test && pnpm coverage",
     "test": "pnpm test:node",
     "test:node": "c8 -x \"**/*.test.ts\" mocha -r ts-node/register ./src/**/*.test.ts",
@@ -37,7 +36,7 @@
     "coverage": "c8 check-coverage --statements 85 --branches 84 --functions 85 --lines 85",
     "lint": "eslint \"**/*.ts\"",
     "lint:fix": "eslint --fix \"**/*.ts\"",
-    "compile": "npx rimraf build dist && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
+    "compile": "pnpm clean && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
     "build": "pnpm compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs"
   },
   "author": "Nick Jennings <nick@silverbucket.net>",

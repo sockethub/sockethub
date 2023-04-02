@@ -17,8 +17,7 @@
     "mocha": "10.2.0"
   },
   "scripts": {
-    "clean": "npx rimraf coverage",
-    "clean:deps": "npx rimraf node_modules",
+    "clean": "rm -rf coverage",
     "compliance": "pnpm test && pnpm coverage",
     "test": "c8 -x \"**/*.test.*\"  mocha src/**.test.js",
     "coverage": "c8 check-coverage --statements 90 --branches 90 --functions 95 --lines 90"

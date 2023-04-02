@@ -48,14 +48,13 @@
     "directory": "packages/activity-streams.js"
   },
   "scripts": {
-    "clean": "npx rimraf build dist coverage",
-    "clean:deps": "npx rimraf node_modules",
+    "clean": "npx rm -rf build dist coverage",
     "compliance": "pnpm test && pnpm coverage",
     "test:node": "c8 -x \"**/*.test.ts\" mocha -r ts-node/register ./src/**/*.test.ts",
     "test:node:lcov": "c8 -r lcov mocha -r ts-node/register ./src/**/*.test.ts",
     "coverage": "c8 check-coverage --statements 95 --functions 90 --branches 90 --lines 95",
     "test": "pnpm test:node",
-    "compile": "npx rimraf build dist && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
+    "compile": "pnpm clean && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
     "build": "pnpm compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs && rollup -c config/rollup.config.test.mjs"
   },
   "keywords": [

@@ -40,9 +40,8 @@
     "typescript": "5.0.3"
   },
   "scripts": {
-    "build": "npx rimraf dist && tsc && ./scripts/export-json-schema.js",
-    "clean": "npx rimraf coverage dist",
-    "clean:deps": "npx rimraf node_modules",
+    "build": "pnpm clean && tsc && ./scripts/export-json-schema.js",
+    "clean": "rm -rf coverage dist",
     "compliance": "pnpm test && pnpm coverage",
     "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 95 --lines 95",
     "lint": "eslint \"**/*.ts\"",

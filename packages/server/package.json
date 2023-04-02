@@ -49,16 +49,15 @@
     "socket.io": "^4.6.1"
   },
   "scripts": {
-    "clean": "npx rimraf dist coverage",
-    "clean:deps": "npx rimraf node_modules",
+    "clean": "rm -rf dist coverage",
     "compliance": "pnpm lint && pnpm test && pnpm coverage",
     "test": "c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts src/**/*.test.ts",
     "coverage": "c8 check-coverage --statements 90 --branches 80 --functions 82 --lines 90",
     "start": "DEBUG=sockethub* ./bin/sockethub",
-    "dev": "pnpm run build && DEBUG=sockethub* ./bin/sockethub --examples",
+    "dev": "pnpm build && DEBUG=sockethub* ./bin/sockethub --examples",
     "lint": "eslint \"**/*.ts\" ./bin/sockethub",
     "lint:fix": "eslint --fix \"**/*.ts\" ./bin/sockethub",
-    "build": "npx rimraf dist && tsc && cp ./src/defaults.json ./dist/defaults.json && cp src/bootstrap/platforms.js dist/bootstrap/"
+    "build": "pnpm clean && tsc && cp ./src/defaults.json ./dist/defaults.json && cp src/bootstrap/platforms.js dist/bootstrap/"
   },
   "engines": {
     "node": ">=16",
