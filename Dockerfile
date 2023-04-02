@@ -13,4 +13,4 @@ COPY . .
 RUN pnpm install
 
 EXPOSE 10550
-CMD DEBUG=sockethub*,*redis* /app/packages/sockethub/bin/sockethub --examples --host 0.0.0.0 -c /app/test/sockethub.config.docker.json
+CMD DEBUG=sockethub* /app/packages/sockethub/bin/sockethub --examples --host 0.0.0.0 -c /app/test/sockethub.config.docker.json
