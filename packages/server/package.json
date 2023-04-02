@@ -88,9 +88,10 @@
     "typescript": "5.0.3"
   },
   "optionalDependencies": {
-    "@sockethub/platform-dummy": "workspace:3.0.0-alpha.4",
-    "@sockethub/platform-feeds": "workspace:3.0.0-alpha.4",
-    "@sockethub/platform-irc": "workspace:4.0.0-alpha.4",
-    "@sockethub/platform-xmpp": "workspace:5.0.0-alpha.4"
+    "@sockethub/examples": "workspace:^",
+    "@sockethub/platform-dummy": "workspace:^",
+    "@sockethub/platform-feeds": "workspace:^",
+    "@sockethub/platform-irc": "workspace:^",
+    "@sockethub/platform-xmpp": "workspace:^"
   }
 }

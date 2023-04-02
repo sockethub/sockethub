@@ -633,17 +633,20 @@ importers:
         specifier: ^4.6.1
         version: 4.6.1
     optionalDependencies:
+      '@sockethub/examples':
+        specifier: workspace:^
+        version: link:../examples
       '@sockethub/platform-dummy':
-        specifier: workspace:3.0.0-alpha.4
+        specifier: workspace:^
         version: link:../platform-dummy
       '@sockethub/platform-feeds':
-        specifier: workspace:3.0.0-alpha.4
+        specifier: workspace:^
         version: link:../platform-feeds
       '@sockethub/platform-irc':
-        specifier: workspace:4.0.0-alpha.4
+        specifier: workspace:^
         version: link:../platform-irc
       '@sockethub/platform-xmpp':
-        specifier: workspace:5.0.0-alpha.4
+        specifier: workspace:^
         version: link:../platform-xmpp
     devDependencies:
       '@types/body-parser':
