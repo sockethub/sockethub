@@ -261,7 +261,7 @@ delayed-stream@~1.0.0:
   resolved "https://registry.yarnpkg.com/delayed-stream/-/delayed-stream-1.0.0.tgz#df3ae199acadfb7d440aaae0b29e2272b24ec619"
   integrity sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==
 
-dmd@^6.1.0:
+dmd@^6.2.0:
   version "6.2.0"
   resolved "https://registry.yarnpkg.com/dmd/-/dmd-6.2.0.tgz#d267a9fb1ce62b74edca8bf5bcbd3b8e08574fe7"
   integrity sha512-uXWxLF1H7TkUAuoHK59/h/ts5cKavm2LnhrIgJWisip4BVzPoXavlwyoprFFn2CzcahKYgvkfaebS6oxzgflkg==
@@ -479,10 +479,10 @@ jsbn@~0.1.0:
   resolved "https://registry.yarnpkg.com/jsbn/-/jsbn-0.1.1.tgz#a5e654c2e5a2deb5f201d96cefbca80c0ef2f513"
   integrity sha512-UVU9dibq2JcFWxQPA6KCqj5O42VOmAY3zQUfEKxU0KpTGXwNoCjkX1e13eHNvw/xPynt6pU0rZ1htjWTNTSXsg==
 
-jsdoc-api@^7.1.1:
-  version "7.2.0"
-  resolved "https://registry.yarnpkg.com/jsdoc-api/-/jsdoc-api-7.2.0.tgz#207478b16d6a5ae6ec12785ca89687e951c7d29d"
-  integrity sha512-93YDnlm/OYTlLOFeNs4qAv0RBCJ0kGj67xQaWy8wrbk97Rw1EySitoOTHsTHXPEs3uyx2IStPKGrbE7LTnZXbA==
+jsdoc-api@^8.0.0:
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/jsdoc-api/-/jsdoc-api-8.0.0.tgz#4b2c25ff60f91b80da51b6cd33943acc7b2cab74"
+  integrity sha512-Rnhor0suB1Ds1abjmFkFfKeD+kSMRN9oHMTMZoJVUrmtCGDwXty+sWMA9sa4xbe4UyxuPjhC7tavZ40mDKK6QQ==
   dependencies:
     array-back "^6.2.2"
     cache-point "^2.0.0"
@@ -494,7 +494,7 @@ jsdoc-api@^7.1.1:
     temp-path "^1.0.0"
     walk-back "^5.1.0"
 
-jsdoc-parse@^6.1.0:
+jsdoc-parse@^6.2.0:
   version "6.2.0"
   resolved "https://registry.yarnpkg.com/jsdoc-parse/-/jsdoc-parse-6.2.0.tgz#2b71d3925acfc4badc72526f2470766e0561f6b5"
   integrity sha512-Afu1fQBEb7QHt6QWX/6eUWvYHJofB90Fjx7FuJYF7mnG9z5BkAIpms1wsnvYLytfmqpEENHs/fax9p8gvMj7dw==
@@ -506,17 +506,17 @@ jsdoc-parse@^6.1.0:
     sort-array "^4.1.5"
     test-value "^3.0.0"
 
-jsdoc-to-markdown@7.1.1:
-  version "7.1.1"
-  resolved "https://registry.yarnpkg.com/jsdoc-to-markdown/-/jsdoc-to-markdown-7.1.1.tgz#dde4ef32fd0b28b2695c919a08fd65ae98317bcd"
-  integrity sha512-CI86d63xAVNO+ENumWwmJ034lYe5iGU5GwjtTA11EuphP9tpnoi4hrKgR/J8uME0D+o4KUpVfwX1fjZhc8dEtg==
+jsdoc-to-markdown@8.0.0:
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/jsdoc-to-markdown/-/jsdoc-to-markdown-8.0.0.tgz#27f32ed200d3b84dbf22a49beed485790f93b3ce"
+  integrity sha512-2FQvYkg491+FP6s15eFlgSSWs69CvQrpbABGYBtvAvGWy/lWo8IKKToarT283w59rQFrpcjHl3YdhHCa3l7gXg==
   dependencies:
     array-back "^6.2.2"
     command-line-tool "^0.8.0"
     config-master "^3.1.0"
-    dmd "^6.1.0"
-    jsdoc-api "^7.1.1"
-    jsdoc-parse "^6.1.0"
+    dmd "^6.2.0"
+    jsdoc-api "^8.0.0"
+    jsdoc-parse "^6.2.0"
     walk-back "^5.1.0"
 
 jsdoc@4.0.0, jsdoc@^4.0.0:

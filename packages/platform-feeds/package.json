@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "jsdoc": "4.0.0",
-    "jsdoc-to-markdown": "7.1.1"
+    "jsdoc-to-markdown": "8.0.0"
   },
   "peerDependencies": {
     "@sockethub/server": ">=5.0.0-alpha.2"
