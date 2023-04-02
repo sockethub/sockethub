@@ -27,17 +27,17 @@
   "devDependencies": {
     "@types/chai": "4.3.4",
     "@types/debug": "4.1.7",
-    "@types/eslint": "8.4.10",
+    "@types/eslint": "8.37.0",
     "@types/mocha": "10.0.1",
-    "@types/node": "18.11.18",
-    "@typescript-eslint/parser": "5.47.1",
-    "c8": "7.12.0",
+    "@types/node": "18.15.11",
+    "@typescript-eslint/parser": "5.57.0",
+    "c8": "7.13.0",
     "chai": "4.3.7",
-    "eslint": "8.30.0",
+    "eslint": "8.37.0",
     "eslint-cli": "1.1.1",
     "mocha": "10.2.0",
     "ts-node": "10.9.1",
-    "typescript": "4.9.4"
+    "typescript": "5.0.3"
   },
   "scripts": {
     "build": "pnpx rimraf dist && tsc && ./scripts/export-json-schema.js",
@@ -50,9 +50,9 @@
     "test": "c8 -x \"**/*.test.*\" mocha -r ts-node/register src/**/*.test.ts"
   },
   "dependencies": {
-    "ajv": "8.11.2",
-    "ajv-formats": "3.0.0-rc.0",
+    "ajv": "8.12.0",
+    "ajv-formats": "2.1.1",
     "ajv-formats-draft2019": "1.6.1",
-    "debug": "^4.3.1"
+    "debug": "^4.3.4"
   }
 }

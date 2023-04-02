@@ -8,10 +8,10 @@
   },
   "devDependencies": {
     "@types/mocha": "10.0.1",
-    "@typescript-eslint/eslint-plugin": "^5.44.0",
-    "@typescript-eslint/parser": "5.47.1",
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
+    "@typescript-eslint/parser": "5.57.0",
     "chai": "4.3.7",
-    "eslint": "8.30.0",
+    "eslint": "8.37.0",
     "eslint-plugin-security-node": "1.1.1",
     "find-up": "6.3.0",
     "karma": "6.4.1",
@@ -20,22 +20,21 @@
     "karma-firefox-launcher": "2.1.2",
     "karma-mocha": "^2.0.1",
     "karma-mocha-reporter": "^2.2.5",
-    "lerna": "6.3.0",
     "mocha": "10.2.0",
-    "typescript": "4.9.4"
+    "typescript": "5.0.3"
   },
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "postinstall": "pnpm run build",
-    "publish": "pnpm build && pnpm compliance && lerna publish --dist-tag latest --pre-dist-tag next",
+    "publish:latest": "pnpm compliance && pnpm publish --tag latest --dry-run",
+    "publish:next": "pnpm compliance && pnpm publish --tag next --dry-run",
     "test": "pnpm build && pnpm run --parallel -r test",
     "coverage": "pnpm run --parallel -r coverage",
     "clean": "pnpm run --parallel -r clean",
     "clean:deps": "pnpm run --parallel -r clean:deps && pnpx rimraf node_modules",
-    "compliance": "pnpm build && pnpm run --parallel -r compliance",
+    "compliance": "pnpm run --parallel -r compliance",
     "lint": "pnpm run --parallel -r lint",
     "lint:fix": "pnpm run --parallel -r lint:fix",
-    "build": "pnpm run --parallel -r build",
+    "build": "pnpm run -r build",
     "dev": "pnpm build && cd packages/sockethub && pnpm dev",
     "start": "cd packages/sockethub && pnpm start",
     "integration": "pnpm integration:setup && pnpm integration:run; RES=$?; if [[ \"$RES\" != \"0\" ]]; then pnpm integration:log; fi; pnpm integration:teardown; exit $RES",
@@ -48,6 +47,6 @@
     "integration:clean": "docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub"
   },
   "dependencies": {
-    "tslib": "2.4.1"
+    "tslib": "2.5.0"
   }
 }

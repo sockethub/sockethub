@@ -11,7 +11,7 @@
     "dummy"
   ],
   "peerDependencies": {
-    "@sockethub/server": ">=5.0.0-alpha.2"
+    "@sockethub/server": "workspace:^"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {
