@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [ 14, 16, 18 ]
+        node-version: [ 16, 18 ]
 
     steps:
       - uses: actions/checkout@v3
@@ -16,16 +16,16 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm install -g yarn
-      - run: yarn install
-      - run: yarn compliance
+      - run: npm install -g pnpm
+      - run: pnpm install
+      - run: pnpm compliance
 
   integration:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [ 14, 16, 18 ]
+        node-version: [ 16, 18 ]
 
     steps:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
@@ -37,20 +37,19 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm install -g yarn
+      - run: npm install -g pnpm
       - run: npm install -g karma
-      - run: yarn install
-      - run: yarn build
+      - run: pnpm install
       - run: docker compose build --build-arg node_version=${{ matrix.node-version }}
 
-      - run: yarn integration:setup
+      - run: pnpm integration:setup
       - run: sleep 5
 
       - name: Verify Sockethub is listening
         run: nc -zv localhost 10550
 
-      - run: yarn integration:run
+      - run: pnpm integration:run
 
       - name: Print Docker logs
         if: always()
-        run: yarn integration:log
+        run: pnpm integration:log
