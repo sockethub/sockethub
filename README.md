@@ -20,45 +20,45 @@ Sockethub is a translation layer for web applications to communicate with other 
 To get up and running quickly, you only need the following commands:
 
 ```bash
-$ yarn install
-$ yarn run dev
+$ pnpm install
+$ pnpm dev
 ```
 
 ### Dependencies
 
-```$ yarn install```
+```$ pnpm install```
 
 ### Build
 
-```$ yarn run build```
+```$ pnpm build```
 
 ### Tests
 
-```$ yarn test```
+```$ pnpm test```
 
 ### Linter
 
-```$ yarn lint:js```
+```$ pnpm lint:js```
 
 Or, to automatically fix linting errors:
 
-```$ yarn lint:fix```
+```$ pnpm lint:fix```
 
 ### Integration Tests
 
-```$ yarn run integration```
+```$ pnpm integration```
 
 ## Start
 
 For development purposes, with examples enabled, run:
 
-`$ DEBUG=sockethub* yarn run dev`
+`$ DEBUG=sockethub* pnpm dev`
 
 You should then be able to browse to `http://localhost:10550` and try out the examples.
 
 For production, with examples disabled.
 
-`$ DEBUG=sockethub* yarn run start`
+`$ DEBUG=sockethub* pnpm start`
 
 *For more info on configuration options, see the
 [Sockethub README](packages/server/README.md#environment-variables)*

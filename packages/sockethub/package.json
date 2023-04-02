@@ -34,19 +34,18 @@
   },
   "homepage": "https://sockethub.org",
   "dependencies": {
-    "@sockethub/platform-dummy": "^3.0.0-alpha.4",
-    "@sockethub/platform-feeds": "^3.0.0-alpha.4",
-    "@sockethub/platform-irc": "^4.0.0-alpha.4",
-    "@sockethub/platform-xmpp": "^5.0.0-alpha.4",
-    "@sockethub/server": "^5.0.0-alpha.4"
+    "@sockethub/platform-dummy": "workspace:^",
+    "@sockethub/platform-feeds": "workspace:^",
+    "@sockethub/platform-irc": "workspace:^",
+    "@sockethub/platform-xmpp": "workspace:^",
+    "@sockethub/server": "workspace:^"
   },
   "scripts": {
     "build": "node build.js && test -f sockethub.config.json",
-    "clean:deps": "npx rimraf node_modules",
     "dev": "DEBUG=sockethub* ./bin/sockethub --examples -c sockethub.config.json",
     "start": "DEBUG=sockethub* ./bin/sockethub -c sockethub.config.json"
   },
   "engines": {
-    "node": ">= 12.4.0"
+    "node": ">= 16"
   }
 }

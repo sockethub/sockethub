@@ -5,10 +5,14 @@ module.exports = function (config) {
       "dist/**/*.test.js"
     ],
     reporters: ['progress'],
+    plugins: [
+      'karma-chai', 'karma-mocha',
+      'karma-chrome-launcher', 'karma-firefox-launcher'
+    ],
     port: 9876,  // karma web server port
     colors: true,
     logLevel: config.LOG_INFO,
-    browsers: ['ChromeHeadless', 'Firefox', 'FirefoxDeveloper', 'FirefoxNightly', 'IE'],
+    browsers: ['ChromeHeadless', 'Firefox'],
     autoWatch: false,
     concurrency: Infinity,
     customLaunchers: {

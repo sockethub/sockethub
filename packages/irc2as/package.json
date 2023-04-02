@@ -7,19 +7,18 @@
     "test": "test"
   },
   "dependencies": {
-    "debug": "^4.3.1",
-    "fast-deep-equal": "^3.1.1"
+    "debug": "^4.3.4",
+    "fast-deep-equal": "^3.1.3"
   },
   "devDependencies": {
-    "@sockethub/schemas": "^3.0.0-alpha.4",
-    "c8": "7.12.0",
+    "@sockethub/schemas": "workspace:^",
+    "c8": "7.13.0",
     "chai": "4.3.7",
     "mocha": "10.2.0"
   },
   "scripts": {
-    "clean": "npx rimraf coverage",
-    "clean:deps": "npx rimraf node_modules",
-    "compliance": "yarn run test && yarn run coverage",
+    "clean": "rm -rf coverage",
+    "compliance": "pnpm test && pnpm coverage",
     "test": "c8 -x \"**/*.test.*\"  mocha src/**.test.js",
     "coverage": "c8 check-coverage --statements 90 --branches 90 --functions 95 --lines 90"
   },
