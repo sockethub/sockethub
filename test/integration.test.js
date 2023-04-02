@@ -37,6 +37,7 @@ describe("Page", () => {
   describe("SockethubClient()", () => {
     let sc,
       incomingMessages = [];
+
     before(() => {
       sc = new SockethubClient(
         io("http://localhost:10550/", { path: "/sockethub" })
@@ -53,6 +54,7 @@ describe("Page", () => {
         type: "person",
         name: "Jimmy",
       };
+
       it("creates activity-object", () => {
         sc.ActivityStreams.Object.create(actor);
         expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
