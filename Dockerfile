@@ -6,15 +6,12 @@ RUN echo "Building Sockethub docker image with Node version ${node_version}"
 
 WORKDIR /app
 
-# Remove unwanted preinstalled version of yarn
-RUN rm /usr/local/bin/yarn
-RUN rm /usr/local/bin/yarnpkg
-RUN npm install -g yarn@latest
+RUN curl -fsSL "https://github.com/pnpm/pnpm/releases/latest/download/pnpm-linuxstatic-x64" -o /bin/pnpm; chmod +x /bin/pnpm;
 
 COPY . .
 
-RUN yarn install
-RUN yarn build
+RUN pnpm install --frozen-lockfile
+RUN pnpm build
 
 EXPOSE 10550
 CMD DEBUG=sockethub*,*redis* /app/packages/sockethub/bin/sockethub --examples --host 0.0.0.0 -c /app/test/sockethub.config.docker.json
