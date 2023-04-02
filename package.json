@@ -1,17 +1,17 @@
 {
   "name": "root",
   "private": true,
+  "packageManager": "pnpm@8.0.0",
+  "engines": {
+    "node": ">=16",
+    "pnpm": ">=8"
+  },
   "devDependencies": {
-    "@nrwl/cli": "^15.2.1",
-    "@nrwl/node": "14.8.6",
-    "@nrwl/nx-cloud": "^15.0.2",
-    "@nrwl/tao": "^15.2.1",
-    "@nrwl/workspace": "^15.2.1",
     "@types/mocha": "10.0.1",
-    "@typescript-eslint/eslint-plugin": "^5.44.0",
-    "@typescript-eslint/parser": "5.47.1",
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
+    "@typescript-eslint/parser": "5.57.0",
     "chai": "4.3.7",
-    "eslint": "8.30.0",
+    "eslint": "8.37.0",
     "eslint-plugin-security-node": "1.1.1",
     "find-up": "6.3.0",
     "karma": "6.4.1",
@@ -20,26 +20,27 @@
     "karma-firefox-launcher": "2.1.2",
     "karma-mocha": "^2.0.1",
     "karma-mocha-reporter": "^2.2.5",
-    "lerna": "6.3.0",
     "mocha": "10.2.0",
-    "typescript": "4.9.4",
-    "yarn": "1.22.19"
+    "nx": "15.9.2",
+    "typescript": "5.0.3"
   },
   "scripts": {
-    "postinstall": "lerna bootstrap && nx run-many --target=build --skip-nx-cache",
-    "publish": "yarn build && yarn compliance && lerna publish --dist-tag latest --pre-dist-tag next",
-    "test": "yarn build && nx run-many --target=test --all --skip-nx-cache",
-    "coverage": "nx run-many --target=coverage --all",
-    "clean": "nx run-many --target=clean --all",
-    "clean:deps": "nx run-many --target=clean:deps --all && npx rimraf node_modules",
-    "compliance": "yarn build && nx run-many --target=compliance --all",
-    "lint": "nx run-many --target=lint --all",
-    "lint:fix": "nx run-many --target=lint:fix --all",
-    "build": "nx run-many --target=build --all",
-    "dev": "yarn build && cd packages/sockethub && yarn dev",
-    "start": "cd packages/sockethub && yarn start",
-    "integration": "yarn integration:setup && yarn integration:run; RES=$?; if [[ \"$RES\" != \"0\" ]]; then yarn integration:log; fi; yarn integration:teardown; exit $RES",
-    "integration:single": "yarn integration:setup && yarn integration:run:single; RES=$?; if [[ \"$RES\" != \"0\" ]]; then yarn integration:log; fi; yarn integration:teardown; exit $RES",
+    "preinstall": "npx only-allow pnpm",
+    "postinstall": "pnpm build",
+    "publish:latest": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag latest --dry-run",
+    "publish:next": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag next --dry-run",
+    "test": "nx run-many --target=test",
+    "coverage": "nx run-many --target=coverage",
+    "clean": "pnpm run --parallel -r clean",
+    "clean:deps": "pnpm run --parallel -r clean:deps && npx rimraf node_modules",
+    "compliance": "pnpm build && nx run-many --target=compliance --all",
+    "lint": "nx run-many --target=lint",
+    "lint:fix": "nx run-many --target=lint:fix",
+    "build": "nx run-many --target=build --all --parallel 1",
+    "dev": "pnpm build && pnpm --filter sockethub dev",
+    "start": "pnpm --filter sockethub start",
+    "integration": "pnpm integration:setup && pnpm integration:run; RES=$?; if [[ \"$RES\" != \"0\" ]]; then pnpm integration:log; fi; pnpm integration:teardown; exit $RES",
+    "integration:single": "pnpm integration:setup && pnpm integration:run:single; RES=$?; if [[ \"$RES\" != \"0\" ]]; then pnpm integration:log; fi; pnpm integration:teardown; exit $RES",
     "integration:run:single": "karma start --single-run --browsers FirefoxHeadless ./karma.config.js",
     "integration:run": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
     "integration:log": "docker logs sockethub-sockethub-1",
@@ -48,7 +49,11 @@
     "integration:clean": "docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub"
   },
   "dependencies": {
-    "@nrwl/js": "14.8.6",
-    "tslib": "2.4.1"
+    "tslib": "2.5.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "secure-store-redis": "1.4.7"
+    }
   }
 }

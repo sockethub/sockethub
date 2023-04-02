@@ -24,16 +24,16 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-feeds",
   "dependencies": {
-    "feedparser": "^2.2.9",
-    "html-tags": "^3.2.0",
-    "request": "^2.83.0"
+    "feedparser": "^2.2.10",
+    "html-tags": "^3.3.0",
+    "request": "^2.88.2"
   },
   "devDependencies": {
-    "jsdoc": "4.0.0",
-    "jsdoc-to-markdown": "7.1.1"
+    "jsdoc": "4.0.2",
+    "jsdoc-to-markdown": "8.0.0"
   },
   "peerDependencies": {
-    "@sockethub/server": ">=5.0.0-alpha.2"
+    "@sockethub/server": "workspace:^"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {
@@ -41,8 +41,7 @@
     }
   },
   "scripts": {
-    "build": "yarn run doc",
-    "clean:deps": "npx rimraf node_modules",
+    "build": "pnpm doc",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md",
     "test": "exit 0"
   }
