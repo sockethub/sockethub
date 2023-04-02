@@ -11,20 +11,20 @@
 
   async function sendMessage() {
     sending = true;
-    console.log('send message: ', message);
+    console.log("send message: ", message);
     await send({
       context: context,
       type: "send",
       actor: $actor.object.id,
       object: {
         type: "message",
-        content: message
+        content: message,
       },
       target: {
         id: $actor.roomId,
         name: $actor.roomId,
-        type: "room"
-      }
+        type: "room",
+      },
     } as AnyActivityStream);
     sending = false;
   }
@@ -32,10 +32,14 @@
 
 <div>
   <div class="w-full">
-    <label for="sendMessage" class="form-label inline-block text-gray-900 font-bold mb-2">Message</label>
-    <input id="sendMessage" bind:value={message} class="border-4 w-full">
+    <label for="sendMessage" class="form-label inline-block text-gray-900 font-bold mb-2"
+      >Message</label
+    >
+    <input id="sendMessage" bind:value={message} class="border-4 w-full" />
   </div>
   <div class="text-right">
-    <SockethubButton disabled={!$actor.state.connected || sending} buttonAction={sendMessage}>{sending ? "Sending" : "Send"}</SockethubButton>
+    <SockethubButton disabled={!$actor.state.connected || sending} buttonAction={sendMessage}
+      >{sending ? "Sending" : "Send"}</SockethubButton
+    >
   </div>
 </div>

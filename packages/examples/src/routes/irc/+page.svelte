@@ -18,40 +18,42 @@
   let room = "#sh-random";
   let connecting = false;
 
-  const actor = getActorStore('irc', {
+  const actor = getActorStore("irc", {
     state: {
       actorSet: false,
       credentialsSet: false,
       connected: false,
-      joined: false
+      joined: false,
     },
     object: {
       id: actorId,
       type: "person",
-      name: actorId
+      name: actorId,
     },
-    roomId: room
+    roomId: room,
   });
 
   const credentials = {
-      type: 'credentials',
-      nick: actorId,
-      server: server,
-      port: parseInt(port, 10),
-      secure: true
+    type: "credentials",
+    nick: actorId,
+    server: server,
+    port: parseInt(port, 10),
+    secure: true,
   };
 
   async function connectIrc() {
     connecting = true;
     await send({
-        context: "irc",
-        type: "connect",
-        actor: actorId
-    } as AnyActivityStream).catch(() => {
-      $actor.state.connected = false;
-    }).then(() => {
-      $actor.state.connected = true;
-    });
+      context: "irc",
+      type: "connect",
+      actor: actorId,
+    } as AnyActivityStream)
+      .catch(() => {
+        $actor.state.connected = false;
+      })
+      .then(() => {
+        $actor.state.connected = true;
+      });
     connecting = false;
   }
 </script>
@@ -61,30 +63,35 @@
   <p>Example for the IRC platform</p>
 </Intro>
 
-<ActivityActor actor={actor} />
-<Credentials context="irc" credentials={credentials} actor={actor} />
+<ActivityActor {actor} />
+<Credentials context="irc" {credentials} {actor} />
 
 <div>
   <div class="w-full p-2">
     <label for="server" class="inline-block text-gray-900 font-bold w-32">IRC Server</label>
-    <input id="server" bind:value={server} class="border-4">
+    <input id="server" bind:value={server} class="border-4" />
   </div>
   <div class="w-full p-2">
     <label for="port" class="inline-block text-gray-900 font-bold w-32">Port</label>
-    <input id="port" bind:value={port} class="border-4">
+    <input id="port" bind:value={port} class="border-4" />
   </div>
   <div class="w-full text-right">
     <SockethubButton
       disabled={!$actor.state.credentialsSet || $actor.state.connected || connecting}
       buttonAction={connectIrc}
-    >{$actor.state.connected ? "Connected" : connecting ? "Connecting" : "Connect"}</SockethubButton>
+      >{$actor.state.connected
+        ? "Connected"
+        : connecting
+        ? "Connecting"
+        : "Connect"}</SockethubButton
+    >
   </div>
 </div>
 
-<Room actor={actor} room={room} context="irc" />
+<Room {actor} {room} context="irc" />
 
 <IncomingMessage />
 
-<SendMessage context="irc" actor={actor} />
+<SendMessage context="irc" {actor} />
 
 <Logger />

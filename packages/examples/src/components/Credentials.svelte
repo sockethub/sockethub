@@ -1,10 +1,3 @@
-<TextAreaSubmit
-  title="Credentials"
-  obj={credentials}
-  buttonText="Set Credentials"
-  on:submit={sendCredentials}
-  disabled={!$actor.state.actorSet || $actor.state.credentialsSet} />
-
 <script lang="ts">
   import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
   import { sc } from "$lib/sockethub";
@@ -19,10 +12,10 @@
       context: context,
       type: "credentials",
       actor: get(actor).object.id,
-      object: JSON.parse(data.detail.jsonString)
+      object: JSON.parse(data.detail.jsonString),
     };
-    console.log('sending credentials: ', creds);
-    sc.socket.emit('credentials', creds, (resp) => {
+    console.log("sending credentials: ", creds);
+    sc.socket.emit("credentials", creds, (resp) => {
       if (resp?.error) {
         throw new Error(resp.error);
       }
@@ -30,3 +23,11 @@
     });
   }
 </script>
+
+<TextAreaSubmit
+  title="Credentials"
+  obj={credentials}
+  buttonText="Set Credentials"
+  on:submit={sendCredentials}
+  disabled={!$actor.state.actorSet || $actor.state.credentialsSet}
+/>

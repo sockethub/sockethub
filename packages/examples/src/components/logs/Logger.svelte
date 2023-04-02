@@ -6,7 +6,7 @@
 
   export enum ObjectType {
     send = "SEND",
-    resp = "RESP"
+    resp = "RESP",
   }
 
   export function addObject(type: ObjectType, obj, id) {
@@ -15,7 +15,7 @@
     } else {
       obj.id = id;
     }
-    Logs.update(currentLogs => {
+    Logs.update((currentLogs) => {
       if (!currentLogs[obj.id]) {
         currentLogs[obj.id] = [obj];
       } else {
@@ -47,31 +47,35 @@
     return () => {
       let indexSend = uid;
       let indexResp = uid;
-      if (uid.includes('-')) {
-        indexSend = uid.split('-')[0];
+      if (uid.includes("-")) {
+        indexSend = uid.split("-")[0];
       }
       console.log(`indexSend:${indexSend} indexResp:${indexResp}`);
-      console.log('logs: ', logs);
+      console.log("logs: ", logs);
       selectedLog = uid;
       logModalState = true;
       jsonSend = JSON.stringify(logs[indexSend][0], null, 2);
       jsonResp = JSON.stringify(logs[indexResp][logs[indexResp].length - 1], null, 2);
-    }
+    };
   }
 </script>
 
 <div class="mb-28">
-  <label for="messages" class="form-label inline-block text-gray-900 font-bold mb-2">Response from Sockethub</label>
+  <label for="messages" class="form-label inline-block text-gray-900 font-bold mb-2"
+    >Response from Sockethub</label
+  >
   <div id="messages">
     <ul>
       {#each Object.entries(logs).sort((a, b) => {
-        let i = a[0], j;
-        let k = b[0], l;
-        if (a[0].includes('-')) {
-          [i, j] = a[0].split('-');
+        let i = a[0],
+          j;
+        let k = b[0],
+          l;
+        if (a[0].includes("-")) {
+          [i, j] = a[0].split("-");
         }
-        if (b[0].includes('-')) {
-          [k, l] = b[0].split('-');
+        if (b[0].includes("-")) {
+          [k, l] = b[0].split("-");
         }
         if (j && l) {
           return parseInt(j) >= parseInt(l) ? -1 : 1;
@@ -82,18 +86,22 @@
         {#if Array.isArray(v[v.length - 1])}
           {#each Object.entries(v[v.length - 1]) as [i, r]}
             {#if r}
-              <LogEntry buttonAction={showLog(`${id}-${i}`)} id={`${id}-${i}`} entry={r} ({r.id})/>
+              <LogEntry buttonAction={showLog(`${id}-${i}`)} id={`${id}-${i}`} entry={r} ({r.id}) />
             {/if}
           {/each}
         {:else}
-          <LogEntry buttonAction={showLog(id)} id={id} entry={v[v.length - 1]} />
+          <LogEntry buttonAction={showLog(id)} {id} entry={v[v.length - 1]} />
         {/if}
       {/each}
     </ul>
   </div>
 </div>
 
-<div class="{logModalState ? '' : 'hidden'} bg-slate-800 bg-opacity-50 fixed top-0 left-0 m-0 w-full h-full overflow-scroll">
+<div
+  class="{logModalState
+    ? ''
+    : 'hidden'} bg-slate-800 bg-opacity-50 fixed top-0 left-0 m-0 w-full h-full overflow-scroll"
+>
   <div id="modalContent" class="max-w-[95%] bg-offwhite rounded-md m-auto p-2">
     <div>
       <div class="text-xs text-slate-500 font-mono">
@@ -106,7 +114,11 @@
       </div>
     </div>
     <div class="w-full text-center">
-      <button on:click="{() => logModalState = false }" class="bg-indigo-500 px-7 py-2 w-[95%] rounded-md text-sm text-white font-semibold">Ok</button>
+      <button
+        on:click={() => (logModalState = false)}
+        class="bg-indigo-500 px-7 py-2 w-[95%] rounded-md text-sm text-white font-semibold"
+        >Ok</button
+      >
     </div>
   </div>
 </div>
@@ -114,9 +126,9 @@
 <svelte:head>
   {#if logModalState}
     <style>
-        body {
-            overflow: hidden;
-        }
+      body {
+        overflow: hidden;
+      }
     </style>
   {/if}
 </svelte:head>

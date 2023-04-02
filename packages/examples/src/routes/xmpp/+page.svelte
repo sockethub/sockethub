@@ -18,26 +18,26 @@
 
   let room = "kosmos-random@kosmos.chat";
 
-  const actor = getActorStore('xmpp', {
+  const actor = getActorStore("xmpp", {
     state: {
       actorSet: false,
       credentialsSet: false,
       connected: false,
-      joined: false
+      joined: false,
     },
     object: {
       id: actorId,
       type: "person",
-      name: actorId
+      name: actorId,
     },
-    roomId: room
+    roomId: room,
   });
 
   const credentials = {
-    type: 'credentials',
+    type: "credentials",
     userAddress: userAddress,
     password: "123456",
-    resource: "SockethubExample"
+    resource: "SockethubExample",
   };
 
   async function connectXmpp() {
@@ -45,12 +45,14 @@
     await send({
       context: "xmpp",
       type: "connect",
-      actor: actorId
-    } as AnyActivityStream).then(() => {
-      $actor.state.connected = true;
-    }).catch(() => {
-      $actor.state.connected = false;
-    });
+      actor: actorId,
+    } as AnyActivityStream)
+      .then(() => {
+        $actor.state.connected = true;
+      })
+      .catch(() => {
+        $actor.state.connected = false;
+      });
     connecting = false;
   }
 </script>
@@ -60,22 +62,27 @@
   <p>Example for the XMPP platform</p>
 </Intro>
 
-<ActivityActor actor={actor} />
-<Credentials context="xmpp" credentials={credentials} actor={actor} />
+<ActivityActor {actor} />
+<Credentials context="xmpp" {credentials} {actor} />
 
 <div>
   <div class="w-full text-right">
     <SockethubButton
       disabled={!$actor.state.credentialsSet || $actor.state.connected || connecting}
       buttonAction={connectXmpp}
-    >{$actor.state.connected ? "Connected" : connecting ? "Connecting" : "Connect"}</SockethubButton>
+      >{$actor.state.connected
+        ? "Connected"
+        : connecting
+        ? "Connecting"
+        : "Connect"}</SockethubButton
+    >
   </div>
 </div>
 
-<Room actor={actor} room={room} context="xmpp" />
+<Room {actor} {room} context="xmpp" />
 
 <IncomingMessage />
 
-<SendMessage context="xmpp" actor={actor} />
+<SendMessage context="xmpp" {actor} />
 
 <Logger />
