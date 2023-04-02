@@ -48,7 +48,7 @@
     "directory": "packages/activity-streams.js"
   },
   "scripts": {
-    "clean": "npx rm -rf build dist coverage",
+    "clean": "rm -rf build dist coverage",
     "compliance": "pnpm test && pnpm coverage",
     "test:node": "c8 -x \"**/*.test.ts\" mocha -r ts-node/register ./src/**/*.test.ts",
     "test:node:lcov": "c8 -r lcov mocha -r ts-node/register ./src/**/*.test.ts",
