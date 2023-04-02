@@ -48,5 +48,10 @@
   },
   "dependencies": {
     "tslib": "2.5.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "secure-store-redis": "1.4.7"
+    }
   }
 }
