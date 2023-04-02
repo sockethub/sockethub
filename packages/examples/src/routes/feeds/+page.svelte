@@ -54,7 +54,7 @@
 <Intro title="Feeds Platform Example">
   <title>Feeds Example</title>
   <p>
-    The feeds platform fetches takes an RSS/ATOM feed URL and parses it, returning an array of
+    The feeds platform takes an RSS/ATOM feed URL, fetches and parses it, and returns an array of
     Activity Objects for each entry.
   </p>
 </Intro>

@@ -31,7 +31,9 @@
 </script>
 
 <div class="w-full">
-  <label for="json-object-{title}" class="form-label inline-block text-gray-900 font-bold mb-2">{title}</label>
+  <label for="json-object-{title}" class="form-label inline-block text-gray-900 font-bold mb-2"
+    >{title}</label
+  >
   <pre><textarea
       id="json-object-{title}"
       bind:value={objString}
