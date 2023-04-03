@@ -11,7 +11,7 @@ const config = {
   kit: {
     adapter: adapter(),
     paths: {
-      base: "/examples",
+      base: "",
     },
     alias: {
       $components: "src/components",
