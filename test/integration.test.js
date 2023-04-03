@@ -68,14 +68,14 @@ describe("Page", () => {
           object: { type: "message", content: `failure message` },
         };
         sc.socket.emit("message", dummyObj, (msg) => {
-          console.log("dummy fail callback: ", msg);
+          // console.log("dummy fail callback: ", msg);
           if (msg?.error) {
             dummyObj.error = "Error: failure message";
             dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
             expect(msg).to.eql(dummyObj);
             done();
           } else {
-            done("didn't receive expected failure from dummy platform");
+            done(new Error("didn't receive expected failure from dummy platform"));
           }
         });
       });
@@ -90,9 +90,9 @@ describe("Page", () => {
             object: { type: "message", content: `hello world ${i}` },
           };
           sc.socket.emit("message", dummyObj, (msg) => {
-            console.log(`dummy message ${i} callback! `, msg);
+            // console.log(`dummy message ${i} callback! `, msg);
             if (msg?.error) {
-              done(msg.error);
+              done(new Error(msg.error));
             } else {
               expect(msg.target).to.eql(
                 sc.ActivityStreams.Object.get(actor.id)
@@ -123,7 +123,6 @@ describe("Page", () => {
               },
             },
             (msg) => {
-              console.log("feeds callback ", msg);
               if (Array.isArray(msg)) {
                 expect(msg.length).to.eql(20);
                 for (const m of msg) {
@@ -134,7 +133,7 @@ describe("Page", () => {
                   expect(m.type).to.equal("post");
                 }
               }
-              done(msg.error);
+              done(msg.error ? new Error(msg.error) : undefined);
             }
           );
         });
@@ -181,7 +180,7 @@ describe("Page", () => {
       });
 
       describe("connect", () => {
-        it("sends successfully with callback fired", (done) => {
+        it("is successful", (done) => {
           const actorId = "jimmy@prosody/SockethubExample";
           sc.socket.emit(
             "message",
@@ -191,17 +190,21 @@ describe("Page", () => {
               context: "xmpp",
             },
             (msg) => {
-              console.log('MESSAG RECEIVED: ', msg);
-              expect(msg).to.eql({
-                type: "connect",
-                actor: {
-                  id: actorId,
-                  type: "person",
-                  name: "Jimmy Userson",
-                },
-                context: "xmpp",
-              });
-              done();
+              console.log('xmpp connect callback: ', msg);
+              if (msg?.error) {
+                done(new Error(msg.error));
+              } else {
+                expect(msg).to.eql({
+                  type: "connect",
+                  actor: {
+                    id: actorId,
+                    type: "person",
+                    name: "Jimmy Userson",
+                  },
+                  context: "xmpp",
+                });
+                done();
+              }
             }
           );
         });
