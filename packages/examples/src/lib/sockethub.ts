@@ -11,6 +11,20 @@ import { displayMessage } from "$components/chat/IncomingMessages.svelte";
 export let sc: SockethubClient;
 export const connected = writable(false);
 
+const defaultConfig = {
+  sockethub: {
+    port: 10550,
+    host: "localhost",
+    path: "/sockethub"
+  },
+  public: {
+    protocol: "http",
+    host: "localhost",
+    port: 10650,
+    path: "/"
+  }
+};
+
 export interface AnyActivityStream {
   id?: string;
   context: string;
@@ -51,14 +65,23 @@ function handleIncomingMessage(msg: AnyActivityStream) {
   displayMessage(msg);
 }
 
+function sockethubConnect(config: typeof defaultConfig = defaultConfig) {
+  sc = new SockethubClient(io(`${config.public.protocol}://${config.public.host}:${config.public.port}`, { path: config.sockethub.path }));
+  sc.socket.on("connect", stateChange("connect"));
+  sc.socket.on("error", stateChange("error"));
+  sc.socket.on("disconnect", stateChange("disconnect"));
+  sc.socket.on("message", handleIncomingMessage);
+}
+
 // eslint-disable-next-line no-constant-condition
 if (typeof window === "object") {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   console.log("connecting to sockethub");
-  sc = new SockethubClient(io("http://localhost:10550", { path: "/sockethub" }));
-  sc.socket.on("connect", stateChange("connect"));
-  sc.socket.on("error", stateChange("error"));
-  sc.socket.on("disconnect", stateChange("disconnect"));
-  sc.socket.on("message", handleIncomingMessage);
+  fetch("/config.json").then(async (res) => {
+    const config = await res.json();
+    sockethubConnect(config);
+  }).catch(() => {
+    sockethubConnect();
+  });
 }
