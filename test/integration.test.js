@@ -17,12 +17,12 @@ async function loadScript(url) {
 
 describe("Page", () => {
   it("loads socket.io.js", async () => {
-    let scriptUrl = "http://localhost:10550/socket.io.js";
+    let scriptUrl = "http://localhost:10650/socket.io.js";
     return loadScript(scriptUrl);
   });
 
   it("loads sockethub-client.js", async () => {
-    let scriptUrl = "http://localhost:10550/sockethub-client.js";
+    let scriptUrl = "http://localhost:10650/sockethub-client.js";
     return loadScript(scriptUrl);
   });
 
@@ -40,7 +40,7 @@ describe("Page", () => {
 
     before(() => {
       sc = new SockethubClient(
-        io("http://localhost:10550/", { path: "/sockethub" })
+        io("http://localhost:10650/", { path: "/sockethub" })
       );
       sc.socket.on("message", (msg) => {
         console.log("** incoming message: ", msg);
@@ -119,7 +119,7 @@ describe("Page", () => {
               },
               target: {
                 type: "feed",
-                id: "http://localhost:10550/examples/feed.xml",
+                id: "http://localhost:10650/examples/feed.xml",
               },
             },
             (msg) => {
