@@ -42,7 +42,7 @@ jobs:
       - run: pnpm install
       - run: docker compose build --build-arg node_version=${{ matrix.node-version }}
 
-      - run: pnpm integration:setup
+      - run: pnpm integration:docker:build
       - run: sleep 5
 
       - name: Verify Sockethub is listening
@@ -52,4 +52,4 @@ jobs:
 
       - name: Print Docker logs
         if: always()
-        run: pnpm integration:log
+        run: pnpm integration:docker:logs
