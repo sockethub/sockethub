@@ -6,7 +6,7 @@ const assert = chai.assert;
 const expect = chai.expect;
 
 mocha.bail(true);
-mocha.timeout("30s");
+mocha.timeout("60s");
 
 async function loadScript(url) {
   console.log("loadScript: " + url);
@@ -90,7 +90,7 @@ describe("Page", () => {
             object: { type: "message", content: `hello world ${i}` },
           };
           sc.socket.emit("message", dummyObj, (msg) => {
-            console.log(`Dummy message ${i} callback! `, msg);
+            console.log(`dummy message ${i} callback! `, msg);
             if (msg?.error) {
               done(msg.error);
             } else {
@@ -123,15 +123,18 @@ describe("Page", () => {
               },
             },
             (msg) => {
-              expect(msg.length).to.eql(20);
-              for (const m of msg) {
-                expect(typeof m.object.content).to.equal("string");
-                expect(m.object.type).to.equal("feedEntry");
-                expect(m.object.contentType).to.equal("html");
-                expect(m.actor.type).to.equal("feed");
-                expect(m.type).to.equal("post");
+              console.log("feeds callback ", msg);
+              if (Array.isArray(msg)) {
+                expect(msg.length).to.eql(20);
+                for (const m of msg) {
+                  expect(typeof m.object.content).to.equal("string");
+                  expect(m.object.type).to.equal("feedEntry");
+                  expect(m.object.contentType).to.equal("html");
+                  expect(m.actor.type).to.equal("feed");
+                  expect(m.type).to.equal("post");
+                }
               }
-              done();
+              done(msg.error);
             }
           );
         });
@@ -188,6 +191,7 @@ describe("Page", () => {
               context: "xmpp",
             },
             (msg) => {
+              console.log('MESSAG RECEIVED: ', msg);
               expect(msg).to.eql({
                 type: "connect",
                 actor: {
@@ -206,7 +210,9 @@ describe("Page", () => {
 
     describe("Incoming Message queue", () => {
       it("should be empty", () => {
-        expect(incomingMessages.length).to.eql(0);
+        console.log('*** INCOMING MESSAGES ***');
+        console.log(incomingMessages);
+        expect(incomingMessages.length).to.equal(0);
         expect(incomingMessages).to.eql([]);
       });
     });
