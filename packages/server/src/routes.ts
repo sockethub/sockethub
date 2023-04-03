@@ -9,16 +9,16 @@ export interface IRoutePaths {
 
 export const basePaths: IRoutePaths = {
   "/sockethub-client.js": path.resolve(
-    `${__dirname}/../node_modules/@sockethub/client/dist/sockethub-client.js`
+    __dirname, '..', 'node_modules', '@sockethub', 'client', 'dist', 'sockethub-client.js'
   ),
   "/sockethub-client.min.js": path.resolve(
-    `${__dirname}/../node_modules/@sockethub/client/dist/sockethub-client.min.js`
+    __dirname, '..', 'node_modules', '@sockethub', 'client', 'dist', 'sockethub-client.min.js'
   ),
   "/sockethub-client.js.map": path.resolve(
-    `${__dirname}/../node_modules/@sockethub/client/dist/sockethub-client.js.map`
+    __dirname, '..', 'node_modules', '@sockethub', 'client', 'dist', 'sockethub-client.js.map'
   ),
   "/socket.io.js": path.resolve(
-    `${__dirname}/../node_modules/socket.io/client-dist/socket.io.js`
+    __dirname, '..', 'node_modules', 'socket.io', 'client-dist', 'socket.io.js'
   ),
 };
 

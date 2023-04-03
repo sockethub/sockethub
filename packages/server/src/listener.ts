@@ -6,6 +6,7 @@ import { Server } from "socket.io";
 
 import config from "./config";
 import routes from "./routes";
+import path from "path";
 
 const log = debug("sockethub:server:listener");
 
@@ -32,21 +33,24 @@ class Listener {
       path: config.get("sockethub:path") as string,
       cors: {
         origin: "*",
-        methods: ["GET", "POST"],
-      },
+        methods: ["GET", "POST"]
+      }
     });
 
+    routes.setup(app);
+
     if (config.get("examples:enabled")) {
-      app.use(
-        "/examples",
-        express.static(`${__dirname}/../node_modules/@sockethub/examples/build`)
-      );
-      app.use(
-        "/examples/*",
-        express.static(`${__dirname}/../node_modules/@sockethub/examples/build`)
+      app.use(express.static(`${__dirname}/../node_modules/@sockethub/examples/build/`));
+      app.get("*", (req, res) => {
+        res.sendFile(
+          path.resolve(
+            __dirname, '..', 'node_modules', '@sockethub', 'examples', 'build', 'index.html')
+        );
+      });
+      log(
+        `examples served at http://${config.get("sockethub:host")}:${config.get("sockethub:port")}`
       );
     }
-    routes.setup(app);
 
     this.startHttp();
   }
@@ -58,7 +62,7 @@ class Listener {
       () => {
         log(
           `sockethub listening on ` +
-            `${config.get("sockethub:host")}:${config.get("sockethub:port")}`
+          `ws://${config.get("sockethub:host")}:${config.get("sockethub:port")}`
         );
       }
     );
