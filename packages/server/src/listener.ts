@@ -48,7 +48,8 @@ class Listener {
         );
       });
       log(
-        `examples served at http://${config.get("sockethub:host")}:${config.get("sockethub:port")}`
+        `examples served at ` +
+        `http://${config.get("sockethub:host")}:${config.get("sockethub:port")}`
       );
     }
 
