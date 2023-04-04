@@ -88,8 +88,8 @@ function getJobHandler() {
       if (err) {
         jobLog(`failed ${job.title} ${job.msg.type}`);
         let errMsg;
-        // some error objects (eg. TimeoutError) don't interpolate correctly to human-readable
-        // so we have to do this little dance
+        // some error objects (e.g. TimeoutError) don't interpolate correctly
+        // to being human-readable, so we have to do this little dance
         try {
           errMsg = err.toString();
         } catch (e) {

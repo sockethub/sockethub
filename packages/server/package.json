@@ -57,7 +57,7 @@
     "dev": "pnpm build && DEBUG=sockethub* ./bin/sockethub --examples",
     "lint": "eslint \"**/*.ts\" ./bin/sockethub",
     "lint:fix": "eslint --fix \"**/*.ts\" ./bin/sockethub",
-    "build": "pnpm clean && tsc && cp ./src/defaults.json ./dist/defaults.json && cp src/bootstrap/platforms.js dist/bootstrap/"
+    "build": "pnpm clean && tsc && cp ./src/defaults.json ./dist/defaults.json"
   },
   "engines": {
     "node": ">=16",

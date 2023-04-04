@@ -5,25 +5,48 @@
  * platforms, and whitelisting or blacklisting (or neither) based on the
  * config.
  */
-const debug   = require('debug'),
-      schemas = require('@sockethub/schemas').default;
+import debug from "debug";
+import schemas from "@sockethub/schemas";
 
 const log = debug('sockethub:server:bootstrap:platforms');
 
 log('loading platforms');
 
+export type PlatformMap = Map<string, {
+  id: string,
+  moduleName: string,
+  config: {
+    persist?: boolean
+  },
+  schemas: {
+    credentials?: object,
+    messages?: object
+  },
+  version: string,
+  types: Array<string>
+}>;
+
 // if the platform schema lists valid types it implements (essentially methods/verbs for
 // Sockethub to call) then add it to the supported types list.
-function platformListsSupportedTypes(p) {
+function platformListsSupportedTypes(p): boolean {
   return ((p.schema.messages.properties) && (p.schema.messages.properties.type) &&
     (p.schema.messages.properties.type.enum) &&
     (p.schema.messages.properties.type.enum.length > 0));
 }
 
-module.exports = function platformLoad(platformsList, requireModule) {
-  if (!requireModule) {
-    requireModule = require;
+async function loadPlatform(platformName: string, injectRequire) {
+  if (injectRequire) {
+    return injectRequire(platformName);
+  } else {
+    // eslint-disable-next-line security-node/detect-non-literal-require-calls
+    const P = await import(platformName);
+    return new P.default();
   }
+}
+
+export default async function loadPlatforms(
+  platformsList: Array<string>, injectRequire = undefined
+): Promise<PlatformMap> {
   // load platforms from config.platforms
   const platforms = new Map();
 
@@ -31,20 +54,18 @@ module.exports = function platformLoad(platformsList, requireModule) {
     throw new Error('No platforms defined. Please check your sockethub.config.json');
   }
 
-  for (let moduleName of platformsList) {
-    log(`loading ${moduleName}`);
-    // try to load platform
-    // eslint-disable-next-line security-node/detect-non-literal-require-calls
-    const P = requireModule(moduleName);
-    const p = new P();
+  for (const platformName of platformsList) {
+    log(`loading ${platformName}`);
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const p = await loadPlatform(platformName, injectRequire);
     let types = [];
-
     const err = schemas.validatePlatformSchema(p.schema);
+
     if (err) {
-      throw new Error(`${moduleName} ${err}`);
+      throw new Error(`${platformName} ${err}`);
     } else if (typeof p.config !== 'object') {
       throw new Error(
-        `${moduleName} platform must have a config property that is an object.`);
+        `${platformName} platform must have a config property that is an object.`);
     } else {
       if (p.schema.credentials) {
         // register the platforms credentials schema
@@ -58,10 +79,9 @@ module.exports = function platformLoad(platformsList, requireModule) {
       types = [...types, ...p.schema.messages.properties.type.enum];
     }
 
-    const platformName = p.schema.name;
-    platforms.set(platformName, {
-      id: platformName,
-      moduleName: moduleName,
+    platforms.set(p.schema.name, {
+      id: p.schema.name,
+      moduleName: p.schema.name,
       config: p.config,
       schemas: {
         credentials: p.schema.credentials || {},
@@ -71,5 +91,6 @@ module.exports = function platformLoad(platformsList, requireModule) {
       types: types
     });
   }
+
   return platforms;
-};
+}

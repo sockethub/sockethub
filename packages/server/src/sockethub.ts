@@ -3,7 +3,7 @@ import { Socket } from "socket.io";
 import crypto from "@sockethub/crypto";
 import { CredentialsStore } from "@sockethub/data-layer";
 
-import init from "./bootstrap/init";
+import getInitObject from "./bootstrap/init";
 import middleware, { MiddlewareChainInterface } from "./middleware";
 import createActivityObject from "./middleware/create-activity-object";
 import expandActivityStream from "./middleware/expand-activity-stream";
@@ -36,28 +36,33 @@ class Sockethub {
   processManager: ProcessManager;
 
   constructor() {
-    this.platforms = init.platforms;
     this.status = false;
     this.parentId = crypto.randToken(16);
     this.parentSecret1 = crypto.randToken(16);
     this.parentSecret2 = crypto.randToken(16);
-    this.processManager = new ProcessManager(
-      this.parentId,
-      this.parentSecret1,
-      this.parentSecret2
-    );
     log("session id: " + this.parentId);
   }
 
   /**
    * initialization of Sockethub starts here
    */
-  boot() {
+  async boot() {
     if (this.status) {
       return log("Sockethub.boot() called more than once");
     } else {
       this.status = true;
     }
+
+    const init = await getInitObject();
+
+    this.processManager = new ProcessManager(
+      this.parentId,
+      this.parentSecret1,
+      this.parentSecret2,
+      init
+    );
+
+    this.platforms = init.platforms;
 
     log("active platforms: ", [...init.platforms.keys()]);
     listener.start(); // start external services

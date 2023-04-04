@@ -4,14 +4,19 @@
 import debug from 'debug';
 import schemas, {IActivityStream, CallbackActivityStreamInterface} from '@sockethub/schemas';
 
-import init from "../bootstrap/init";
+import getInitObject from "../bootstrap/init";
 
-init.platforms.forEach((platform) => {
-  Object.keys(platform.schemas).forEach((key) => {
-    if (! platform.schemas[key]) { return; }
-    schemas.addPlatformSchema(platform.schemas[key], `${platform.id}/${key}`);
+let init;
+(async function () {
+  init = await getInitObject();
+  init.platforms.forEach((platform) => {
+    Object.keys(platform.schemas).forEach((key) => {
+      if (! platform.schemas[key]) { return; }
+      schemas.addPlatformSchema(platform.schemas[key], `${platform.id}/${key}`);
+    });
   });
-});
+})();
+
 
 // called when registered with the middleware function, define the type of validation
 // that will be called when the middleware eventually does.

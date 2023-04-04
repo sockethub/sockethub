@@ -25,5 +25,5 @@ module.exports = async () => {
     await sockethub.shutdown();
   });
 
-  sockethub.boot();
+  await sockethub.boot();
 };
