@@ -31,17 +31,16 @@
     "compliance": "pnpm build && nx run-many --target=compliance --all",
     "coverage": "nx run-many --target=coverage",
     "dev": "pnpm build && pnpm --filter sockethub dev",
-    "integration": "pnpm integration:docker:build && pnpm integration:run; RES=$?; pnpm integration:docker:stop; exit $RES",
-    "integration:docker:build": "docker compose -f docker-compose.yml up -d",
-    "integration:docker:clean:all": "pnpm integration:docker:stop && docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub",
-    "integration:docker:clean:sockethub": "pnpm integration:docker:stop && docker rm sockethub-sockethub-1; docker rmi sockethub-sockethub",
-    "integration:docker:logs": "docker logs sockethub-sockethub-1",
-    "integration:docker:stop": "docker compose stop",
-    "integration:docker:rebuild": "pnpm integration:docker:clean:sockethub && pnpm integration:docker:build",
+    "docker:start": "docker compose -f docker-compose.yml up -d",
+    "docker:clean:all": "pnpm docker:stop && docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub",
+    "docker:clean:sockethub": "pnpm docker:stop && docker rm sockethub-sockethub-1; docker rmi sockethub-sockethub",
+    "docker:logs": "docker logs sockethub-sockethub-1",
+    "docker:stop": "docker compose stop",
+    "docker:build": "pnpm docker:clean:sockethub; pnpm docker:start",
+    "integration": "pnpm docker:start && pnpm integration:run; RES=$?; pnpm docker:stop; exit $RES",
     "integration:run": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
     "lint": "nx run-many --target=lint",
     "lint:fix": "nx run-many --target=lint:fix",
-    "postinstall": "pnpm build",
     "preinstall": "npx only-allow pnpm",
     "publish:latest": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag latest --dry-run",
     "publish:next": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag next --dry-run",
@@ -53,7 +52,8 @@
   },
   "pnpm": {
     "overrides": {
-      "secure-store-redis": "1.4.7"
+      "secure-store-redis": "1.4.7",
+      "node-fetch": "2.6.9"
     }
   }
 }
