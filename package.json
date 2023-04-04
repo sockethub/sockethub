@@ -21,6 +21,7 @@
     "karma-mocha": "^2.0.1",
     "karma-mocha-reporter": "^2.2.5",
     "markdown-spellcheck": "1.3.1",
+    "markdownlint-cli": "0.33.0",
     "mocha": "10.2.0",
     "nx": "15.9.2",
     "typescript": "5.0.3"
@@ -41,8 +42,8 @@
     "integration": "pnpm docker:start && pnpm integration:run; RES=$?; pnpm docker:stop; exit $RES",
     "integration:run": "karma start --single-run --sh_port=10650 --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
     "lint": "nx run-many --target=lint && pnpm lint:doc",
-    "lint:doc": "markdownlint '**/*.md' && mdspell -n -a --en-us ./README.md ./packages/*/README.md",
-    "lint:doc:fix": "markdownlint --fix '**/*.md'",
+    "lint:doc": "markdownlint '**/*.md'",
+    "lint:doc:fix": "markdownlint --fix '**/*.md' && mdspell -n -a --en-us ./README.md ./packages/*/README.md",
     "lint:fix": "nx run-many --target=lint:fix && pnpm lint:doc:fix",
     "preinstall": "npx only-allow pnpm",
     "publish:latest": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag latest --dry-run",
