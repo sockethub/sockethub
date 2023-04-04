@@ -10,16 +10,19 @@
   }
 
   export function addObject(type: ObjectType, obj, id) {
+    let index;
     if (!id) {
-      obj.id = "" + ++counter;
+      index = "" + ++counter;
+      obj.id = index;
     } else {
-      obj.id = id;
+      index = id;
     }
+
     Logs.update((currentLogs) => {
-      if (!currentLogs[obj.id]) {
-        currentLogs[obj.id] = [obj];
+      if (!currentLogs[index]) {
+        currentLogs[index] = [obj];
       } else {
-        currentLogs[obj.id].push(obj);
+        currentLogs[index].push(obj);
         // = [...currentLogs[obj.id], obj]
       }
       return currentLogs;

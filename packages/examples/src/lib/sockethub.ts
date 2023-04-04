@@ -20,7 +20,7 @@ const defaultConfig = {
   public: {
     protocol: "http",
     host: "localhost",
-    port: 10650,
+    port: 10550,
     path: "/"
   }
 };

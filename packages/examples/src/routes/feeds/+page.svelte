@@ -24,9 +24,9 @@
     sc.socket.emit("message", addObject(ObjectType.send, obj), (resp) => {
       if (Array.isArray(resp)) {
         let i = 1;
-        for (const r of resp) {
-          addObject(ObjectType.resp, r, `${r.id}-${i}`);
-          ++i;
+        for (const r of resp.reverse()) {
+          addObject(ObjectType.resp, r, `${r.id}.${i}`);
+          i += 1;
         }
       } else {
         addObject(ObjectType.resp, resp, resp.id);
