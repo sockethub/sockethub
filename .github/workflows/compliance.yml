@@ -46,7 +46,7 @@ jobs:
       - run: sleep 5
 
       - name: Verify Sockethub is listening
-        run: nc -zv localhost 10550
+        run: nc -zv localhost 10650
 
       - run: pnpm integration:run
 
