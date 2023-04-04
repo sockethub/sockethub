@@ -6,21 +6,27 @@ import schemas, {IActivityStream, CallbackActivityStreamInterface} from '@socket
 
 import getInitObject from "../bootstrap/init";
 
-let init;
+
+let initObj;
 (async function () {
-  init = await getInitObject();
+  initObj = await getInitObject();
+  await registerPlatforms(initObj);
+})();
+
+export async function registerPlatforms(init) {
   init.platforms.forEach((platform) => {
     Object.keys(platform.schemas).forEach((key) => {
       if (! platform.schemas[key]) { return; }
       schemas.addPlatformSchema(platform.schemas[key], `${platform.id}/${key}`);
     });
   });
-})();
+}
+
 
 
 // called when registered with the middleware function, define the type of validation
 // that will be called when the middleware eventually does.
-export default function validate(type: string, sockethubId: string) {
+export default function validate(type: string, sockethubId: string, init = initObj) {
   const sessionLog = debug(`sockethub:server:validate:${sockethubId}`);
   return (msg: IActivityStream, done: CallbackActivityStreamInterface) => {
     sessionLog('applying schema validation for ' + type);

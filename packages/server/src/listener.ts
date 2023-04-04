@@ -29,9 +29,7 @@ class Listener {
   start() {
     // initialize express and socket.io objects
     const app = Listener.initExpress();
-
     this.http = new HTTP.Server(app);
-
     this.io = new Server(this.http, {
       path: config.get("sockethub:path") as string,
       cors: {
@@ -43,27 +41,31 @@ class Listener {
     routes.setup(app);
 
     if (config.get("examples:enabled")) {
-      writeFileSync(
-        `${__dirname}/../node_modules/@sockethub/examples/build/config.json`,
-        JSON.stringify({
-          sockethub: config.get("sockethub"),
-          public: config.get("public")
-        })
-      );
-      app.use(express.static(`${__dirname}/../node_modules/@sockethub/examples/build/`));
-      app.get("*", (req, res) => {
-        res.sendFile(
-          path.resolve(
-            __dirname, '..', 'node_modules', '@sockethub', 'examples', 'build', 'index.html')
-        );
-      });
-      log(
-        `examples served at ` +
-        `http://${config.get("sockethub:host")}:${config.get("sockethub:port")}`
-      );
+      this.addExamplesRoutes(app);
     }
 
     this.startHttp();
+  }
+
+  private addExamplesRoutes(app) {
+    writeFileSync(
+      `${__dirname}/../node_modules/@sockethub/examples/build/config.json`,
+      JSON.stringify({
+        sockethub: config.get("sockethub"),
+        public: config.get("public")
+      })
+    );
+    app.use(express.static(`${__dirname}/../node_modules/@sockethub/examples/build/`));
+    app.get("*", (req, res) => {
+      res.sendFile(
+        path.resolve(
+          __dirname, '..', 'node_modules', '@sockethub', 'examples', 'build', 'index.html')
+      );
+    });
+    log(
+      `examples served at ` +
+      `http://${config.get("sockethub:host")}:${config.get("sockethub:port")}`
+    );
   }
 
   private startHttp() {

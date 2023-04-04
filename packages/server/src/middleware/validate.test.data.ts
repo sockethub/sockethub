@@ -6,7 +6,7 @@ export default [
     "input":{
       "id":"blah",
       "type":"send",
-      "context":"fake",
+      "context":"fakeplatform",
       "actor":{
         "id":"dood@irc.freenode.net",
         "type":"person",
@@ -32,7 +32,7 @@ export default [
     "input":{
       "id":"blah",
       "type":"credentials",
-      "context":"fake",
+      "context":"fakeplatform",
       "actor":{
         "id":"dood@irc.freenode.net",
         "type":"person",
@@ -52,7 +52,7 @@ export default [
     "type":"credentials",
     "input":{
       "actor":"hyper_rau@localhost",
-      "context":"fake",
+      "context":"fakeplatform",
       "object":{
         "username":"hyper_rau",
         "password":"123",
@@ -197,10 +197,10 @@ export default [
     "input":{
       "actor":"irc://uuu@localhost",
       "type":"join",
-      "context":"fake",
+      "context":"fakeplatform",
       "target":"irc://irc.dooder.net/a-room"
     },
-    "error": "Error: [fake] /actor: must be object"
+    "error": "Error: [fakeplatform] /actor: must be object"
   },
   {
     "name":"missing type property",
@@ -208,10 +208,10 @@ export default [
     "type":"message",
     "input":{
       "actor": { "id": "irc://uuu@localhost", "type": "person" },
-      "context":"fake",
+      "context":"fakeplatform",
       "target": { "id": "irc://irc.dooder.net/a-room", "type": "room" }
     },
-    "error": "Error: [fake] activity stream: must have required property 'type'"
+    "error": "Error: [fakeplatform] activity stream: must have required property 'type'"
   },
   {
     "name":"invalid context property",
@@ -231,10 +231,10 @@ export default [
     "type":"message",
     "input":{
       "type": "foo",
-      "context":"fake",
+      "context":"fakeplatform",
       "target": { "id": "irc://irc.dooder.net/a-room", "type": "room" }
     },
-    "error": "Error: [fake] activity stream: must have required property 'actor'"
+    "error": "Error: [fakeplatform] activity stream: must have required property 'actor'"
   },
   {
     "name":"traditional message",
@@ -242,7 +242,7 @@ export default [
     "type":"message",
     "input":{
       "type": "echo",
-      "context": "fake",
+      "context": "fakeplatform",
       "actor": { "id": "irc://uuu@localhost", "type": "person" }
     }
   },
@@ -252,10 +252,10 @@ export default [
     "type":"message",
     "input":{
       "type": "foorg",
-      "context": "fake",
+      "context": "fakeplatform",
       "actor": { "id": "irc://uuu@localhost", "type": "person" }
     },
-    "error": "Error: platform type foorg not supported by fake platform. " +
+    "error": "Error: platform type foorg not supported by fakeplatform platform. " +
       "(types: credentials, echo, fail)"
   }
 ];

@@ -35,13 +35,24 @@ function platformListsSupportedTypes(p): boolean {
 }
 
 async function loadPlatform(platformName: string, injectRequire) {
+  let p;
   if (injectRequire) {
-    return injectRequire(platformName);
+    const P = await injectRequire(platformName);
+    p = new P();
   } else {
     // eslint-disable-next-line security-node/detect-non-literal-require-calls
     const P = await import(platformName);
-    return new P.default();
+    p = new P.default();
   }
+  const err = schemas.validatePlatformSchema(p.schema);
+
+  if (err) {
+    throw new Error(`${platformName} ${err}`);
+  } else if (typeof p.config !== 'object') {
+    throw new Error(
+      `${platformName} platform must have a config property that is an object.`);
+  }
+  return p;
 }
 
 export default async function loadPlatforms(
@@ -59,20 +70,12 @@ export default async function loadPlatforms(
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const p = await loadPlatform(platformName, injectRequire);
     let types = [];
-    const err = schemas.validatePlatformSchema(p.schema);
 
-    if (err) {
-      throw new Error(`${platformName} ${err}`);
-    } else if (typeof p.config !== 'object') {
-      throw new Error(
-        `${platformName} platform must have a config property that is an object.`);
+    if (p.schema.credentials) {
+      // register the platforms credentials schema
+      types.push('credentials');
     } else {
-      if (p.schema.credentials) {
-        // register the platforms credentials schema
-        types.push('credentials');
-      } else {
-        p.config.noCredentials = true;
-      }
+      p.config.noCredentials = true;
     }
 
     if (platformListsSupportedTypes(p)) {
