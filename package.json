@@ -46,8 +46,8 @@
     "lint:doc:fix": "markdownlint --fix '**/*.md' && mdspell -n -a --en-us ./README.md ./packages/*/README.md",
     "lint:fix": "nx run-many --target=lint:fix && pnpm lint:doc:fix",
     "preinstall": "npx only-allow pnpm",
-    "publish:latest": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag latest --dry-run",
-    "publish:next": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag next --dry-run",
+    "publish:latest": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag latest",
+    "publish:next": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag next",
     "start": "pnpm --filter sockethub start",
     "test": "nx run-many --target=test"
   },
