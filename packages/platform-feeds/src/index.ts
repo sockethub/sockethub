@@ -16,9 +16,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-const FeedParser = require("feedparser");
-const request = require("request");
-const htmlTags = require("html-tags");
+import PlatformSchema from "./schema";
+import type { Debugger } from "debug";
+import { ASFeedActor, ASFeedEntry, ASFeedStruct, ASFeedType, ASObjectType } from "./types";
+import htmlTags from "html-tags";
+import fetch from "node-fetch";
+import getPodcastFromFeed from "podparse";
+
+const MAX_NOTE_LENGTH = 256;
 
 const basic = /\s?<!doctype html>|(<html\b[^>]*>|<body\b[^>]*>|<x-[^>]+>)+/i;
 const full = new RegExp(
@@ -26,32 +31,12 @@ const full = new RegExp(
   "i"
 );
 
-function isHtml(string) {
+function isHtml(s: string): boolean {
   // limit it to a reasonable length to improve performance.
-  string = string.trim().slice(0, 1000);
-  return basic.test(string) || full.test(string);
+  s = s.trim().slice(0, 1000);
+  return basic.test(s) || full.test(s);
 }
 
-const PlatformSchema = {
-  name: "feeds",
-  version: require("./package.json").version,
-  messages: {
-    required: ["type"],
-    properties: {
-      type: {
-        type: "string",
-        enum: ["fetch"],
-      },
-      object: {
-        type: "object",
-        oneOf: [
-          { $ref: "#/definitions/objectTypes/feed-parameters-date" },
-          { $ref: "#/definitions/objectTypes/feed-parameters-url" },
-        ],
-      },
-    },
-  },
-};
 
 /**
  * Class: Feeds
@@ -71,7 +56,10 @@ const PlatformSchema = {
  * @constructor
  * @param {object} cfg a unique config object for this instance
  */
-class Feeds {
+module.exports = class Feeds {
+  id: string;
+  debug: Debugger;
+
   constructor(cfg) {
     cfg = typeof cfg === "object" ? cfg : {};
     this.id = cfg.id; // actor
@@ -132,23 +120,19 @@ class Feeds {
    *       image: {
    *         width: '144',
    *         height: '144',
-   *         url: 'http://example.com/images/bestfeed.jpg',
+   *         url: 'http://blog.example.com/images/bestfeed.jpg',
    *       }
-   *       favicon: 'http://example.com/favicon.ico',
+   *       favicon: 'http://blog.example.com/favicon.ico',
+   *       link: 'http://blog.example.com',
    *       categories: ['best', 'feed', 'aminals'],
    *       language: 'en',
    *       author: 'John Doe'
    *     },
-   *     target: {
-   *       id: 'https://dogfeed.com/user/nick@silverbucket',
-   *       type: "person",
-   *       name: "nick@silverbucket.net"
-   *     },
    *     object: {
-   *       id: "http://example.com/articles/about-stuff"
-   *       type: 'post',
+   *       id: "http://blog.example.com/articles/about-stuff"
+   *       type: 'article',
    *       title: 'About stuff...',
-   *       url: "http://example.com/articles/about-stuff"
+   *       url: "http://blog.example.com/articles/about-stuff"
    *       date: "2013-05-28T12:00:00.000Z",
    *       datenum: 1369742400000,
    *       brief: "Brief synopsis of stuff...",
@@ -158,7 +142,7 @@ class Feeds {
    *         {
    *           length: '13908973',
    *           type: 'audio/mpeg',
-   *           url: 'http://example.com/media/thing.mpg'
+   *           url: 'http://blog.example.com/media/thing.mpg'
    *         }
    *       ]
    *       tags: ['foo', 'bar']
@@ -179,86 +163,63 @@ class Feeds {
     done();
   }
 
-  //
   // fetches the articles from a feed, adding them to an array
   // for processing
-  fetchFeed(url, id) {
-    let articles = [],
-      actor; // queue of articles to buffer and filter before sending out.
-    return new Promise((resolve, reject) => {
-      request(url)
-        .on("error", reject)
-        .pipe(new FeedParser())
-        .on("error", reject)
-        .on("meta", (meta) => {
-          actor = buildFeedChannel(url, meta);
-        })
-        .on("readable", function () {
-          const stream = this;
-          let item;
-          while ((item = stream.read())) {
-            let article = buildFeedEntry(actor);
-            article.object = buildFeedObject(Date.parse(item.date) || 0, item);
-            article.id = id;
-            articles.push(article); // add to articles stack
-          }
-        })
-        .on("end", () => {
-          return resolve(articles);
-        });
-    });
+  private async fetchFeed(url, id): Promise<Array<ASFeedStruct>> {
+    const res = await fetch(url);
+    const feed = getPodcastFromFeed(await res.text());
+    const actor = buildFeedChannel(url, feed.meta);
+    let articles = [];
+
+    for (const item of feed.episodes) {
+      const article = buildFeedStruct(actor);
+      article.id = id;
+      article.object = buildFeedItem(item);
+      articles.push(article);
+    }
+    return articles;
   }
 }
 
-function buildFeedObject(dateNum, item) {
+function buildFeedItem(item): ASFeedEntry {
+  const dateNum = Date.parse(item.pubDate.toString()) || 0;
   return {
-    type: "feedEntry",
+    type: item.description.length > MAX_NOTE_LENGTH ? ASObjectType.ARTICLE : ASObjectType.NOTE,
     title: item.title,
-    id: item.origlink || item.link || item.meta.link + "#" + dateNum,
+    id: item.link || item.meta.link + "#" + dateNum,
     brief: item.description === item.summary ? undefined : item.summary,
     content: item.description,
     contentType: isHtml(item.description || "") ? "html" : "text",
-    url: item.origlink || item.link || item.meta.link,
-    published: item.pubdate || item.date,
-    updated: item.pubdate === item.date ? undefined : item.date,
+    url: item.link || item.meta.link,
+    published: item.pubDate,
+    updated: item.pubDate === item.date ? undefined : item.date,
     datenum: dateNum,
     tags: item.categories,
-    media: item.enclosures,
+    media: item.media,
     source: item.source,
   };
 }
 
-function buildFeedEntry(actor) {
+function buildFeedStruct(actor): ASFeedStruct {
   return {
-    context: "feeds",
-    actor: {
-      type: "feed",
-      name: actor.name,
-      id: actor.address,
-      description: actor.description,
-      image: actor.image,
-      favicon: actor.favicon,
-      categories: actor.categories,
-      language: actor.language,
-      author: actor.author,
-    },
+    context: ASFeedType.FEEDS,
+    actor: actor,
     type: "post",
     object: {},
   };
 }
 
-function buildFeedChannel(url, meta) {
+function buildFeedChannel(url: string, meta): ASFeedActor {
   return {
-    type: "feedChannel",
+    id: url,
+    type: ASFeedType.FEED_CHANNEL,
     name: meta.title ? meta.title : meta.link ? meta.link : url,
-    address: url,
-    description: meta.description ? meta.description : "",
-    image: meta.image ? meta.image : {},
-    favicon: meta.favicon ? meta.favicon : "",
+    link: meta.link || url,
+    description: meta.description ? meta.description : undefined,
+    image: meta.image ? meta.image : undefined,
+    favicon: meta.favicon ? meta.favicon : undefined,
     categories: meta.categories ? meta.categories : [],
-    language: meta.language ? meta.language : "",
-    author: meta.author ? meta.author : "",
+    language: meta.language ? meta.language : undefined,
+    author: meta.author ? meta.author : undefined,
   };
 }
-
-module.exports = Feeds;

@@ -5,7 +5,7 @@
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "keywords": [
     "sockethub",
     "messaging",
@@ -24,13 +24,17 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-feeds",
   "dependencies": {
-    "feedparser": "^2.2.10",
-    "html-tags": "^3.3.0",
-    "request": "^2.88.2"
+    "html-tags": "3.3.0",
+    "htmlparser2": "8.0.2",
+    "node-fetch": "2.6.9",
+    "podparse": "1.5.1"
   },
   "devDependencies": {
+    "@types/node": "18.15.11",
+    "debug": "4.3.4",
     "jsdoc": "4.0.2",
-    "jsdoc-to-markdown": "8.0.0"
+    "jsdoc-to-markdown": "8.0.0",
+    "typescript": "5.0.3"
   },
   "peerDependencies": {
     "@sockethub/server": "workspace:^"
@@ -41,7 +45,7 @@
     }
   },
   "scripts": {
-    "build": "pnpm doc",
+    "build": "tsc",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md",
     "test": "exit 0"
   }
