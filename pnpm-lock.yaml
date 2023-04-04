@@ -61,7 +61,7 @@ importers:
         specifier: 5.0.3
         version: 5.0.3
 
-  packages/activity-streams.js:
+  packages/activity-streams:
     dependencies:
       '@sockethub/schemas':
         specifier: workspace:3.0.0-alpha.4
@@ -135,7 +135,7 @@ importers:
     dependencies:
       '@sockethub/activity-streams':
         specifier: workspace:^
-        version: link:../activity-streams.js
+        version: link:../activity-streams
       '@sockethub/schemas':
         specifier: workspace:^
         version: link:../schemas
@@ -602,7 +602,7 @@ importers:
     dependencies:
       '@sockethub/activity-streams':
         specifier: workspace:^
-        version: link:../activity-streams.js
+        version: link:../activity-streams
       '@sockethub/client':
         specifier: workspace:^
         version: link:../client

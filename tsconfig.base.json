@@ -25,8 +25,8 @@
     "resolveJsonModule": true,
     "downlevelIteration": true,
     "paths": {
-      "@sockethub/activity-streams.js": [
-        "./packages/activity-streams.js/src/activity-streams.js"
+      "@sockethub/activity-streams": [
+        "./packages/activity-streams/src/activity-streams.js"
       ],
       "@sockethub/crypto": [
         "./packages/crypto/src/index.ts"
@@ -68,7 +68,7 @@
       "path": "packages/sockethub"
     },
     {
-      "path": "packages/activity-streams.js"
+      "path": "packages/activity-streams"
     },
     {
       "path": "packages/crypto"

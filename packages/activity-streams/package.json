@@ -50,7 +50,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sockethub/sockethub.git",
-    "directory": "packages/activity-streams.js"
+    "directory": "packages/activity-streams"
   },
   "scripts": {
     "build": "pnpm compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs && rollup -c config/rollup.config.test.mjs",
@@ -74,5 +74,5 @@
   "bugs": {
     "url": "https://github.com/sockethub/sockethub/issues"
   },
-  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/activity-streams.js"
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/activity-streams"
 }
