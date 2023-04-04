@@ -32,8 +32,6 @@
   "devDependencies": {
     "@types/node": "18.15.11",
     "debug": "4.3.4",
-    "jsdoc": "4.0.2",
-    "jsdoc-to-markdown": "8.0.0",
     "typescript": "5.0.3"
   },
   "peerDependencies": {
@@ -45,8 +43,7 @@
     }
   },
   "scripts": {
-    "build": "tsc && pnpm doc",
-    "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md",
+    "build": "tsc",
     "test": "exit 0"
   }
 }

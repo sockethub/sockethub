@@ -49,17 +49,19 @@ function isHtml(s: string): boolean {
  *
  * - Atom
  *
- * Uses the `node-feedparser` module as a base tool fetching feeds.
+ * Uses the `podparser` module as a base tool fetching feeds.
  *
- * https://github.com/danmactough/node-feedparser
+ * https://github.com/Tombarr/podcast-feed-parser
  *
- * @constructor
- * @param {object} cfg a unique config object for this instance
  */
-module.exports = class Feeds {
+class Feeds {
   id: string;
   debug: Debugger;
 
+  /**
+   * @constructor
+   * @param cfg - a unique config object for this instance
+   */
   constructor(cfg) {
     cfg = typeof cfg === "object" ? cfg : {};
     this.id = cfg.id; // actor
@@ -78,14 +80,12 @@ module.exports = class Feeds {
   }
 
   /**
-   * Function: fetch
-   *
    * Fetch feeds from specified source. Upon completion, it will send back a
    * response to the original request with a complete list of URLs in the feed
    * and total count.
    *
-   * @param {object} job Activity streams object containing job data.
-   * @param {object} done
+   * @param job - Activity streams object containing job data.
+   * @param done - Callback function
    *
    * @example
    *
@@ -223,3 +223,5 @@ function buildFeedChannel(url: string, meta): ASFeedActor {
     author: meta.author ? meta.author : undefined,
   };
 }
+
+module.exports = Feeds;
