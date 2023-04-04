@@ -5,6 +5,8 @@ if (typeof chai !== "object") {
 const assert = chai.assert;
 const expect = chai.expect;
 
+const SH_PORT = __karma__.config.sh_port || 10550;
+
 mocha.bail(true);
 mocha.timeout("60s");
 
@@ -15,14 +17,14 @@ async function loadScript(url) {
   eval(script);
 }
 
-describe("Page", () => {
+describe(`Sockethub tests at port ${SH_PORT}`, () => {
   it("loads socket.io.js", async () => {
-    let scriptUrl = "http://localhost:10650/socket.io.js";
+    let scriptUrl = `http://localhost:${SH_PORT}/socket.io.js`;
     return loadScript(scriptUrl);
   });
 
   it("loads sockethub-client.js", async () => {
-    let scriptUrl = "http://localhost:10650/sockethub-client.js";
+    let scriptUrl = `http://localhost:${SH_PORT}/sockethub-client.js`;
     return loadScript(scriptUrl);
   });
 
@@ -40,7 +42,7 @@ describe("Page", () => {
 
     before(() => {
       sc = new SockethubClient(
-        io("http://localhost:10650/", { path: "/sockethub" })
+        io(`http://localhost:${SH_PORT}/`, { path: "/sockethub" })
       );
       sc.socket.on("message", (msg) => {
         console.log("** incoming message: ", msg);
@@ -90,7 +92,6 @@ describe("Page", () => {
             object: { type: "message", content: `hello world ${i}` },
           };
           sc.socket.emit("message", dummyObj, (msg) => {
-            // console.log(`dummy message ${i} callback! `, msg);
             if (msg?.error) {
               done(new Error(msg.error));
             } else {
@@ -114,26 +115,23 @@ describe("Page", () => {
               context: "feeds",
               type: "fetch",
               actor: {
-                type: "website",
-                id: "https://sockethub.org/examples/feeds",
+                type: "person",
+                id: "example@feeds",
               },
               target: {
                 type: "feed",
-                id: "http://localhost:10650/examples/feed.xml",
+                id: `http://localhost:${SH_PORT}/feed.xml`,
               },
             },
             (msg) => {
-              if (Array.isArray(msg)) {
-                expect(msg.length).to.eql(20);
-                for (const m of msg) {
-                  expect(typeof m.object.content).to.equal("string");
-                  expect(m.object.type).to.equal("feedEntry");
-                  expect(m.object.contentType).to.equal("html");
-                  expect(m.actor.type).to.equal("feed");
-                  expect(m.type).to.equal("post");
-                }
+              expect(msg.length).to.eql(20);
+              for (const m of msg) {
+                expect(typeof m.object.content).to.equal("string");
+                expect(m.object.contentType).to.equal("html");
+                expect(m.actor.type).to.equal("feed");
+                expect(m.type).to.equal("post");
               }
-              done(msg.error ? new Error(msg.error) : undefined);
+              done(msg?.error ? new Error(`Failed to fetch ${msg.target.id}: ${msg.error}`) : undefined);
             }
           );
         });

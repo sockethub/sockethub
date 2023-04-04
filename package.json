@@ -38,7 +38,7 @@
     "docker:stop": "docker compose stop",
     "docker:build": "pnpm docker:clean:sockethub; pnpm docker:start",
     "integration": "pnpm docker:start && pnpm integration:run; RES=$?; pnpm docker:stop; exit $RES",
-    "integration:run": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
+    "integration:run": "karma start --single-run --sh_port=10650 --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
     "lint": "nx run-many --target=lint",
     "lint:fix": "nx run-many --target=lint:fix",
     "preinstall": "npx only-allow pnpm",

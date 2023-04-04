@@ -166,8 +166,9 @@ class Feeds {
   // fetches the articles from a feed, adding them to an array
   // for processing
   private async fetchFeed(url, id): Promise<Array<ASFeedStruct>> {
+    this.debug("fetching " + url);
     const res = await fetch(url);
-    const feed = getPodcastFromFeed(await res.text());
+    let feed = getPodcastFromFeed(await res.text());
     const actor = buildFeedChannel(url, feed.meta);
     let articles = [];
 

@@ -8,6 +8,10 @@ module.exports = function (config) {
       'karma-chai', 'karma-mocha', 'karma-mocha-reporter',
       'karma-chrome-launcher', 'karma-firefox-launcher'
     ],
+    client: {
+      // this works only with `karma start`, not `karma run`.
+      sh_port: config.sh_port,
+    },
     reporters: [ 'mocha' ],
     port: 9876,  // karma web server port
     colors: true,
