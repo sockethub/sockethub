@@ -1,16 +1,20 @@
 # @sockethub/platform-xmpp
+
 A Sockethub platform module implementing XMPP functionality.
 
 ## Overview
-Each Sockethub platform uses JSON Activity Streams 2.0 which are recevied from and sent to clients, through the Sockethub service.
+
+Each Sockethub platform uses JSON Activity Streams 2.0 which are received from and sent to clients,
+through the Sockethub service.
 
 ## Implemented Verbs (`@type`)
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> 
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) request-friend</kbd> 
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) remove-friend</kbd> 
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) make-friend</kbd> 
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd> 
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png)  join</kbd> 
+
+<kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd>
+<kbd>![completed](http://sockethub.org/res/img/checkmark.png) request-friend</kbd>
+<kbd>![completed](http://sockethub.org/res/img/checkmark.png) remove-friend</kbd>
+<kbd>![completed](http://sockethub.org/res/img/checkmark.png) make-friend</kbd>
+<kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd>
+<kbd>![completed](http://sockethub.org/res/img/checkmark.png)  join</kbd>
 <kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd>
 
 ## Example
@@ -29,4 +33,5 @@ Each Sockethub platform uses JSON Activity Streams 2.0 which are recevied from a
 ```
 
 ## API
+
 API docs can be found [here](API.md)

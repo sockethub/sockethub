@@ -1,13 +1,15 @@
-# @sockethub/activity-streams.js
+# @sockethub/activity-streams
 
 [![License](https://img.shields.io/npm/l/activity-streams.svg?style=flat)](https://npmjs.org/package/@sockethub/activity-streams)
 [![Downloads](http://img.shields.io/npm/dm/activity-streams.svg?style=flat)](https://npmjs.org/package/@sockethub/activity-streams)
 
-A simple tool to facilitate handling and referencing activity streams and it's objects, cutting down on verbosity.
+A simple tool to facilitate handling and referencing activity streams and it's objects, cutting
+down on verbosity.
 
 Designed to run in both `node.js` and the `browser`.
 
-I am learning about JSON-LD and ActivityStreams2 as I write this library, so suggestions for improvement are very welcome.
+I am learning about JSON-LD and ActivityStreams2 as I write this library, so suggestions for
+improvement are very welcome.
 
 ## Install
 
@@ -35,17 +37,20 @@ const ActivityStreams = ASFactory({
 
 ### Browser
 
-The browser bundle is availble in the dist folder:
-```
+The browser bundle is available in the dist folder:
+
+```javascript
 import '@sockethub/activity-streams/dist/sockethub-client.js';
 ```
+
 You can place it somewhere accessible from the web and include it via a `script` tag.
-```
+
+```javascript
 <script src="http://example.com/activity-streams.js"></script>
 ```
 
-Once included in a web-page, the `ActivityStreams` base object should be on the global scope, with the sub-properties `ActivityStreams.Object` and `ActivityStreams.Stream`.
-
+Once included in a web-page, the `ActivityStreams` base object should be on the global scope, with
+the sub-properties `ActivityStreams.Object` and `ActivityStreams.Stream`.
 
 ## Example
 

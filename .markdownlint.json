@@ -2,7 +2,6 @@
   "MD013": {
     "line_length": 99
   },
-  "MD033": {
-    "allowed_elements": [ "kbd" ]
-  }
+  "MD033": false,
+  "MD040": false
 }

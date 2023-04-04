@@ -1,3 +1,5 @@
+# Sockethub
+
 [![Sockethub](http://sockethub.org/res/img/sockethub-logo.svg)](http://sockethub.org)
 
 A protocol gateway for the web.
@@ -11,7 +13,8 @@ A protocol gateway for the web.
 
 *The monorepo for the Sockethub project.*
 
-Sockethub is a translation layer for web applications to communicate with other protocols and services that are traditionally either inaccessible or impractical to use from in-browser JavaScript.
+Sockethub is a translation layer for web applications to communicate with other protocols and
+services that are traditionally either inaccessible or impractical to use from in-browser JavaScript.
 
 **For more information on Sockethub see the [Sockethub README](packages/server/README.md)**
 
@@ -20,45 +23,45 @@ Sockethub is a translation layer for web applications to communicate with other 
 To get up and running quickly, you only need the following commands:
 
 ```bash
-$ pnpm install
-$ pnpm dev
+pnpm install
+pnpm dev
 ```
 
 ### Dependencies
 
-```$ pnpm install```
+```pnpm install```
 
 ### Build
 
-```$ pnpm build```
+```pnpm build```
 
 ### Tests
 
-```$ pnpm test```
+```pnpm test```
 
 ### Linter
 
-```$ pnpm lint:js```
+```pnpm lint:js```
 
 Or, to automatically fix linting errors:
 
-```$ pnpm lint:fix```
+```pnpm lint:fix```
 
 ### Integration Tests
 
-```$ pnpm integration```
+```pnpm integration```
 
 ## Start
 
 For development purposes, with examples enabled, run:
 
-`$ DEBUG=sockethub* pnpm dev`
+`DEBUG=sockethub* pnpm dev`
 
 You should then be able to browse to `http://localhost:10550` and try out the examples.
 
 For production, with examples disabled.
 
-`$ DEBUG=sockethub* pnpm start`
+`DEBUG=sockethub* pnpm start`
 
 *For more info on configuration options, see the
 [Sockethub README](packages/server/README.md#environment-variables)*

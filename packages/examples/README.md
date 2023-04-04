@@ -9,9 +9,9 @@ A collection of minimal examples for each of the Sockethub platforms
 * IRC
 * XMPP
 
-# Development
+## Development
 
-This demo app is compiled and built as part of the sockethub package, 
+This demo app is compiled and built as part of the sockethub package,
 however if you would like to run this app stand-alone, you can run:
 
 ```bash
@@ -23,7 +23,7 @@ pnpm run dev -- --open
 
 ## Building
 
-The build process is normally handled 
+The build process is normally handled
 
 ```bash
 pnpm build

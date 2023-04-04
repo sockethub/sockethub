@@ -1,4 +1,4 @@
-# sockethub-platform-irc
+# @sockethub/platform-irc
 
 A sockethub platform module implementing IRC functionality.
 
@@ -8,17 +8,20 @@ This module contains all of the implementation details of an IRC client and is
 used as a sockethub platform.
 
 ## Implemented (`@type`)
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd> 
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) join</kbd> 
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) leave</kbd> 
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd> 
+
+<kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd>
+<kbd>![completed](http://sockethub.org/res/img/checkmark.png) join</kbd>
+<kbd>![completed](http://sockethub.org/res/img/checkmark.png) leave</kbd>
+<kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd>
 <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd>
 
 ## Example
 
-Each sockethub platform uses JSON Activity Streams 2.0 which are received from and sent to clients, through the Sockethub service.
+Each sockethub platform uses JSON Activity Streams 2.0 which are received from and sent to clients,
+through the Sockethub service.
 
-### Incoming 
+### Incoming
+
 Connected to IRC
 
 ```json

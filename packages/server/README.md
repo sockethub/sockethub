@@ -1,6 +1,6 @@
-[![Sockethub](http://sockethub.org/res/img/sockethub-logo.svg)](http://sockethub.org)
-
 # Sockethub
+
+[![Sockethub](http://sockethub.org/res/img/sockethub-logo.svg)](http://sockethub.org)
 
 A protocol gateway for the web.
 
@@ -76,7 +76,7 @@ Default: `localhost`
 
 * DEBUG
 
-Specify the namespace to console log, ie. `sockethub*` will print all sockethub
+Specify the namespace to console log, e.g. `sockethub*` will print all sockethub
 related debug statements, whereas `*` will also print any other modules debug
 statements that use the `debug` module.
 
