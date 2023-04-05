@@ -43,14 +43,14 @@ describe('Initialize IRC Platform', () => {
   let platform;
   beforeEach(() => {
     platform = new IRCPlatform({
-      debug: function () {},
+      debug: function () { return null; },
       updateActor: function async() { return Promise.resolve(); }
     });
     platform.__connect = function (key, credentials, cb) {
       cb(null, {
-        end: () => {},
-        on: function () {},
-        raw: () => {}
+        end: () => { return null; },
+        on: function () { return null; },
+        raw: () => { return null; }
       });
     };
     if (!loadedSchema) {

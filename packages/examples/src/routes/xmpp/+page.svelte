@@ -1,13 +1,13 @@
 <script lang="ts">
   import Intro from "$components/Intro.svelte";
   import SockethubButton from "$components/SockethubButton.svelte";
-  import Logger, { addObject, ObjectType } from "$components/logs/Logger.svelte";
+  import Logger from "$components/logs/Logger.svelte";
   import { send } from "$lib/sockethub";
   import type { AnyActivityStream } from "$lib/sockethub";
   import { getActorStore } from "$stores/ActorStore";
   import ActivityActor from "$components/ActivityActor.svelte";
   import Credentials from "$components/Credentials.svelte";
-  import IncomingMessage, { displayMessage } from "$components/chat/IncomingMessages.svelte";
+  import IncomingMessage from "$components/chat/IncomingMessages.svelte";
   import SendMessage from "$components/chat/SendMessage.svelte";
   import Room from "$components/chat/Room.svelte";
 

@@ -17,7 +17,8 @@ export type ActorData = {
 };
 
 const stores: Record<string, BaseStore<ActorData>> = {};
-export function getActorStore(name: string, actor: ActorData) {
+
+export function getActorStore(name: string, actor: ActorData): BaseStore<ActorData> {
   if (!name) throw new Error("unique name must be provided");
   if (stores[name]) return stores[name];
   const { subscribe, set } = writable(actor as ActorData);

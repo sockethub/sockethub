@@ -1,0 +1,4 @@
+/build
+/nodes_modules
+/.svelte-kit
+/test-results

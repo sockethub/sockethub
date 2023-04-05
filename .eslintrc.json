@@ -40,6 +40,7 @@
     ],
     "extends": [
         "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
         "plugin:security-node/recommended"
     ],
     "ignorePatterns": ["*.d.ts", "*.test.ts", "*.data.js", "packages/platform-irc/index.js", "*.cjs"],
