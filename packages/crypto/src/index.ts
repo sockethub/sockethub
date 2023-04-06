@@ -9,7 +9,15 @@ export function getPlatformId(platform: string, actor?: string): string {
   return actor ? crypto.hash(platform + actor) : crypto.hash(platform);
 }
 
-class Crypto {
+export interface CryptoInterface {
+  encrypt(json: IActivityStream, secret: string): string;
+  decrypt(text: string, secret: string): IActivityStream;
+  hash(text: string): string;
+  objectHash(object: NotUndefined): string;
+  randToken(len: number): string;
+}
+
+class Crypto implements CryptoInterface {
 
   encrypt(json: IActivityStream, secret: string): string {
     const iv = randomBytes(IV_LENGTH);

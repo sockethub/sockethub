@@ -2,14 +2,14 @@ import { expect } from 'chai';
 import proxyquire from 'proxyquire';
 import * as sinon from "sinon";
 
-import crypto, {getPlatformId} from "./index";
+import crypto, { CryptoInterface, getPlatformId } from "./index";
 
 const secret = 'a test secret.. that is 16 x 2..';
 const data = {'foo': 'bar'};
 const encryptedData = "00000000000000000000000000000000:0543ec94d863fbf4b7a19b48e69d9317";
 
 describe('crypto', () => {
-  let crypto;
+  let crypto: CryptoInterface;
   beforeEach(() => {
     crypto = proxyquire('./index', {
       crypto: {
@@ -19,6 +19,7 @@ describe('crypto', () => {
   });
 
   it('encrypts', () => {
+    // @ts-ignore
     expect(crypto.encrypt(data, secret)).to.be.equal(encryptedData);
   });
 
