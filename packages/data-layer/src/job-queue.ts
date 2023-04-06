@@ -1,7 +1,6 @@
 import Queue, { QueueOptions } from "bull";
 import crypto from "@sockethub/crypto";
 import {
-  JobActivityStream,
   JobDataDecrypted,
   JobDataEncrypted,
   JobDecrypted,
@@ -10,7 +9,7 @@ import {
 } from "./types";
 import debug, { Debugger } from "debug";
 import EventEmitter from "events";
-import { IActivityStream } from "@sockethub/schemas";
+import { IActivityStream, JobActivityStream } from "@sockethub/schemas";
 
 interface JobHandler {
   (job: JobDataDecrypted, done: CallableFunction): void;

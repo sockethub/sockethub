@@ -1,4 +1,4 @@
-import {IActivityStream} from "@sockethub/schemas";
+import { IActivityStream } from "@sockethub/schemas";
 
 export type RedisConfigUrl = string;
 
@@ -10,7 +10,7 @@ export interface RedisConfigProps {
 export type RedisConfig = RedisConfigProps | RedisConfigUrl;
 
 export interface JobDataEncrypted {
-  title?: string;
+  title: string;
   msg: string;
   sessionId: string;
 }
@@ -33,8 +33,4 @@ export interface JobDecrypted {
   remove: {
     (): void;
   };
-}
-
-export interface JobActivityStream extends IActivityStream {
-  id: string;
 }
