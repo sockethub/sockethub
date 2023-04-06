@@ -9,6 +9,10 @@ export interface EventMapping {
   join: Map<string, IActivityStream>;
 }
 
+interface LocalEmitterInstance extends EventEmitter {
+  _emit: (event: string, payload: unknown, callback?: (err: string) => void) => void;
+}
+
 export default class SockethubClient {
   private events: EventMapping = {
     credentials: new Map(),
@@ -16,13 +20,13 @@ export default class SockethubClient {
     connect: new Map(),
     join: new Map(),
   };
-  private _socket;
+  private _socket: LocalEmitterInstance;
   public ActivityStreams = ASFactory({ specialObjs: ["credentials"] });
-  public socket;
+  public socket: LocalEmitterInstance;
   public online = false;
   public debug = true;
 
-  constructor(socket) {
+  constructor(socket: LocalEmitterInstance) {
     if (!socket) {
       throw new Error("SockethubClient requires a socket.io instance");
     }
@@ -31,8 +35,8 @@ export default class SockethubClient {
     this.socket = this.createPublicEmitter();
     this.registerSocketIOHandlers();
 
-    this.ActivityStreams.on("activity-object-create", (obj) => {
-      socket.emit("activity-object", obj, (err) => {
+    this.ActivityStreams.on("activity-object-create", (obj: IActivityObject) => {
+      socket.emit("activity-object", obj, (err: string) => {
         if (err) {
           console.error("failed to create activity-object ", err);
         } else {
@@ -41,25 +45,25 @@ export default class SockethubClient {
       });
     });
 
-    socket.on("activity-object", (obj) => {
+    socket.on("activity-object", (obj: IActivityObject) => {
       this.ActivityStreams.Object.create(obj);
     });
   }
 
-  private createPublicEmitter(): EventEmitter {
-    const socket = new EventEmitter();
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+  private createPublicEmitter(): LocalEmitterInstance {
+    const socket = new EventEmitter() as LocalEmitterInstance;
     socket._emit = socket.emit;
+    // Our emit function doesn't exactly match the signature of the EventEmitters emit function
+    // but it suits our use case.
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    socket.emit = (event, content, callback): void => {
+    socket.emit = (event: string, content: unknown, callback: () => void): void => {
       if (event === "credentials") {
-        this.eventCredentials(content);
+        this.eventCredentials(content as IActivityStream);
       } else if (event === "activity-object") {
-        this.eventActivityObject(content);
+        this.eventActivityObject(content as IActivityObject);
       } else if (event === "message") {
-        this.eventMessage(content);
+        this.eventMessage(content as IActivityStream);
       }
       this._socket.emit(event, content, callback);
     };
@@ -117,7 +121,7 @@ export default class SockethubClient {
   private registerSocketIOHandlers() {
     // middleware for events which don't deal in AS objects
     const callHandler = (event: string) => {
-      return (obj, cb) => {
+      return (obj: unknown, cb: (err: string) => void) => {
         if (event === "connect") {
           this.online = true;
           this.replay("activity-object", this.events["activity-object"]);

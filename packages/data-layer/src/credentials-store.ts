@@ -9,7 +9,7 @@ import { RedisConfigProps, RedisConfigUrl } from "./types";
  */
 export default class CredentialsStore {
   readonly uid: string;
-  private readonly store: SecureStore;
+  private readonly store: typeof SecureStore;
   private readonly log: Debugger;
 
   /**
@@ -38,18 +38,20 @@ export default class CredentialsStore {
    * @param actor
    * @param credentialHash
    */
-  async get(actor: string, credentialHash: string): Promise<IActivityStream> {
+  async get(actor: string, credentialHash: string): Promise<IActivityStream|undefined> {
     this.log(`get credentials for ${actor}`);
     return new Promise((resolve, reject) => {
-      this.store.get(actor, (err, credentials) => {
+      this.store.get(actor, (err: Error, credentials: IActivityStream) => {
         if (err) {
           return reject("credentials " + err.toString());
         }
-        if (!credentials) {
+        if (!credentials || !credentials?.object) {
           return resolve(undefined);
         }
 
         if (credentialHash) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
           if (credentialHash !== crypto.objectHash(credentials.object)) {
             return reject(
               `provided credentials do not match existing platform instance for actor ${actor}`
@@ -68,7 +70,7 @@ export default class CredentialsStore {
    * @param done
    */
   save(actor: string, creds: IActivityStream, done: CallbackInterface): void {
-    this.store.save(actor, creds, (err) => {
+    this.store.save(actor, creds, (err: Error) => {
       if (err) {
         this.log("error saving credentials to stores " + err);
         return done(err);

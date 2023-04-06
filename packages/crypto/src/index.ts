@@ -1,6 +1,6 @@
 import { randomBytes, createCipheriv, createDecipheriv, createHash } from 'crypto';
 import {IActivityStream} from "@sockethub/schemas";
-import hash from 'object-hash';
+import hash, { NotUndefined } from "object-hash";
 
 const ALGORITHM = 'aes-256-cbc',
       IV_LENGTH = 16; // For AES, this is always 16
@@ -36,8 +36,8 @@ class Crypto {
     return SHASum.digest('hex').substring(0, 7);
   }
 
-  objectHash(object: never): string {
-    return hash(object);
+  objectHash(object: NotUndefined): string {
+    return hash(object as NotUndefined);
   }
 
   randToken(len: number): string {
