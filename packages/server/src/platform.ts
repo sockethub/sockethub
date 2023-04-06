@@ -22,7 +22,10 @@ let parentSecret1: string, parentSecret2: string;
 
 logger(`platform handler initialized for ${platformName} ${identifier}`);
 
-export type JobDoneCallback = (err?: Error|null|undefined, result?: IActivityStream|Array<IActivityStream>) => void;
+export type JobDoneCallback = (
+  err?: Error|null|undefined,
+  result?: IActivityStream|Array<IActivityStream>
+) => void;
 
 export interface PlatformSessionConfig {
   debug: Debugger;
