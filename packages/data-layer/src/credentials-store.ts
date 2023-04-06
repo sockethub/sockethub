@@ -47,7 +47,7 @@ export default class CredentialsStore {
         if (err) {
           return reject("credentials " + err.toString());
         }
-        if (!credentials || !credentials?.object) {
+        if (!credentials) {
           return resolve(undefined);
         }
 

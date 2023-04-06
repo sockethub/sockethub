@@ -1,12 +1,17 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 import proxyquire from 'proxyquire';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import { Queue } from "bull";
+import { SinonSandbox } from "sinon";
+import JobQueue from "./job-queue";
 
 proxyquire.noPreserveCache();
 proxyquire.noCallThru();
 
 describe('JobQueue', () => {
-  let jobQueue, MockBull, bullMocks, cryptoMocks, sandbox;
+  let jobQueue: JobQueue, MockBull: Queue, bullMocks: Queue, cryptoMocks, sandbox: SinonSandbox;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
@@ -19,6 +24,7 @@ describe('JobQueue', () => {
     bullMocks = {
       add: sandbox.stub(),
       getJob: sandbox.stub(),
+      // @ts-ignore
       process: sandbox.stub(),
       removeAllListeners: sandbox.stub(),
       pause: sandbox.stub(),
@@ -28,6 +34,7 @@ describe('JobQueue', () => {
       emit: sandbox.stub(),
       on: sandbox.stub().callsArgWith(1, 'a job id', 'a result string')
     };
+    // @ts-ignore
     MockBull = sandbox.stub().returns(bullMocks);
     const JobQueueMod = proxyquire('./job-queue', {
       'bull': MockBull,

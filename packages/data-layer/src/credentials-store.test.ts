@@ -1,12 +1,15 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 import proxyquire from "proxyquire";
 import { expect } from "chai";
 import * as sinon from "sinon";
+import CredentialsStore from "./credentials-store";
 
 proxyquire.noPreserveCache();
 proxyquire.noCallThru();
 
 describe("CredentialsStore", () => {
-  let credentialsStore,
+  let credentialsStore: CredentialsStore,
     MockSecureStore,
     MockStoreGet,
     MockStoreSave,
