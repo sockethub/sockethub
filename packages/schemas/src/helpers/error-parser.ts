@@ -18,13 +18,15 @@ function parseMsg(error: ErrorObject): string {
   return err;
 }
 
+
 function getTypeList(msg: IActivityStream | IActivityObject): Array<string> {
   let types: Array<string> = [];
   types.push(msg?.type);
-  for (const prop of Object.entries(msg)) {
+  for (const prop in msg) {
     const branch = msg[prop as unknown as keyof typeof msg];
-    if ('type' in Object.entries(branch)) {
-      // FIXME How to properly type this function?
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    if (branch?.type) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       types = [...types, ...getTypeList(branch)];

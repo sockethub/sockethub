@@ -1,7 +1,7 @@
 import debug from 'debug';
 import Ajv, {Schema} from 'ajv';
 import addFormats from 'ajv-formats';
-import additionsFormats2019 from 'ajv-formats-draft2019';
+// import additionsFormats2019 from 'ajv-formats-draft2019';
 import getErrorMessage from "./helpers/error-parser";
 import {IActivityStream} from "./types";
 import PlatformSchema from './schemas/platform';
@@ -10,7 +10,7 @@ import ActivityObjectSchema from './schemas/activity-object';
 
 const ajv = new Ajv({strictTypes: false, allErrors: true});
 addFormats(ajv);
-additionsFormats2019(ajv);
+// additionsFormats2019(ajv);
 
 interface SchemasDict {
   [key: string]: Schema

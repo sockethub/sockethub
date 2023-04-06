@@ -117,7 +117,7 @@ export default [
   ],
 
   [
-    'bad iri in object id',
+    'bad uri in object id',
     {
       type: 'feed',
       context: 'dood',
@@ -131,11 +131,11 @@ export default [
       }
     },
     false,
-    '[dood] /object/id: must match format "iri"'
+    '[dood] /object/id: must match format "uri"'
   ],
 
   [
-    'valid iri in object id',
+    'valid uri in object id',
     {
       type: 'feed',
       context: 'dood',

@@ -1,19 +1,19 @@
-import {IActivityStream} from "./types";
-
-const chai = require('chai');
-const expect = chai.expect;
-
-import ActivityStreamSchema from './schemas/activity-stream';
 import ActivityObjectSchema from './schemas/activity-object';
+import ActivityStreamSchema from './schemas/activity-stream';
 import {
-  validatePlatformSchema, addPlatformSchema, validateActivityObject,
-  validateActivityStream, validateCredentials, getPlatformSchema
-} from './validator';
+  validatePlatformSchema, addPlatformSchema,
+  validateActivityStream,
+  validateActivityObject,
+  validateCredentials, getPlatformSchema,
+} from "./validator";
 import testCredentialsData from './index.test.data.credentials';
 import testActivityObjectsData from './index.test.data.objects';
 import testActivityStreamsData from './index.test.data.streams';
 import testPlatformSchemaData from './index.test.data.platform';
+import {IActivityStream} from "./types";
 
+const chai = require('chai');
+const expect = chai.expect;
 describe('Platform schema validation', () => {
   it('returns an empty error for a valid schema', () => {
     let err = validatePlatformSchema(testPlatformSchemaData);
@@ -31,6 +31,7 @@ describe("Adding a PlatformSchema", () => {
     const platform_type = 'test-platform/credentials';
     addPlatformSchema(testPlatformSchemaData.credentials, platform_type);
     const compiledSchema = getPlatformSchema(platform_type);
+    // @ts-ignore
     expect(compiledSchema.schema).to.eql(testPlatformSchemaData.credentials);
   });
 });

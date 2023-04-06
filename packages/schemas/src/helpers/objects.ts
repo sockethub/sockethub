@@ -24,7 +24,7 @@ export const ObjectTypesSchema = {
       },
       "id": {
         "type": "string",
-        "format": "iri"
+        "format": "uri"
       },
       "name": {
         "type": "string"
@@ -127,7 +127,7 @@ export const ObjectTypesSchema = {
     "properties": {
       "id": {
         "type": "string",
-        "format": "iri"
+        "format": "uri"
       },
       "type": {
         "enum": [ "website" ]

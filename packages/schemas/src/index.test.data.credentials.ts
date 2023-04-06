@@ -24,7 +24,7 @@ export default [
   ],
 
   [
-    'credentials with props',
+    'credentials with invalid prop names',
     {
       context: 'test-platform',
       type: 'credentials',
@@ -39,7 +39,7 @@ export default [
   ],
 
   [
-    'credentials with props',
+    'credentials with missing prop',
     {
       context: 'test-platform',
       type: 'credentials',

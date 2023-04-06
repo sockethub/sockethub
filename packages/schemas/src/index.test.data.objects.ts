@@ -43,17 +43,17 @@ export default [
   ],
 
   [
-    'bad iri in object id',
+    'bad uri in object id',
     {
       id: 'example.org/some/path.html',
       type: 'website'
     },
     false,
-    '/object/id: must match format "iri"'
+    '/object/id: must match format "uri"'
   ],
 
   [
-    'valid iri in object id',
+    'valid uri in object id',
     {
       id: 'https://example.org/some/path.html',
       type: 'website'

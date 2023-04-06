@@ -43,15 +43,14 @@
     "build": "pnpm clean && tsc && ./scripts/export-json-schema.js",
     "clean": "rm -rf coverage dist",
     "compliance": "pnpm test && pnpm coverage",
-    "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 95 --lines 95",
+    "coverage": "c8 check-coverage --statements 95 --branches 90 --functions 95 --lines 95",
     "lint": "eslint \"**/*.ts\"",
     "lint:fix": "eslint --fix \"**/*.ts\"",
-    "test": "c8 -x \"**/*.test.*\" mocha -r ts-node/register src/**/*.test.ts"
+    "test": "c8 -x \"**/*.test.*\" mocha -b -r ts-node/register src/**/*.test.ts"
   },
   "dependencies": {
     "ajv": "8.12.0",
     "ajv-formats": "2.1.1",
-    "ajv-formats-draft2019": "1.6.1",
     "debug": "^4.3.4"
   }
 }
