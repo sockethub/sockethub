@@ -17,11 +17,13 @@
  */
 
 import PlatformSchema from "./schema";
-import type { Debugger } from "debug";
-import { ASFeedActor, ASFeedEntry, ASFeedStruct, ASFeedType, ASObjectType } from "./types";
+import { ASFeedActor, ASFeedType, ASObjectType } from "./types";
 import htmlTags from "html-tags";
 import fetch from "node-fetch";
-import getPodcastFromFeed from "podparse";
+import getPodcastFromFeed, { Episode, Meta } from "podparse";
+import { JobDoneCallback, PlatformSessionConfig } from "@sockethub/server/src/platform";
+import { Debugger } from "debug";
+import { IActivityObjectObject, JobActivityStream } from "@sockethub/schemas";
 
 const MAX_NOTE_LENGTH = 256;
 
@@ -55,16 +57,13 @@ function isHtml(s: string): boolean {
  *
  */
 class Feeds {
-  id: string;
-  debug: Debugger;
+  private debug: Debugger;
 
   /**
    * @constructor
    * @param cfg - a unique config object for this instance
    */
-  constructor(cfg) {
-    cfg = typeof cfg === "object" ? cfg : {};
-    this.id = cfg.id; // actor
+  constructor(cfg: PlatformSessionConfig) {
     this.debug = cfg.debug;
   }
 
@@ -150,22 +149,25 @@ class Feeds {
    *   }
    *
    */
-  fetch(job, done) {
+  fetch(job: JobActivityStream, done: JobDoneCallback) {
+    if (!job.target?.id) {
+      return done(new Error("Unable to fetch feed, no target specified"));
+    }
     // ready to execute job
     this.fetchFeed(job.target.id, job.id)
-      .then((results) => {
+      .then((results: Array<JobActivityStream>) => {
         return done(null, results);
       })
       .catch(done);
   }
 
-  cleanup(done) {
+  cleanup(done: JobDoneCallback) {
     done();
   }
 
   // fetches the articles from a feed, adding them to an array
   // for processing
-  private async fetchFeed(url, id): Promise<Array<ASFeedStruct>> {
+  private async fetchFeed(url: string, id: string): Promise<Array<JobActivityStream>> {
     this.debug("fetching " + url);
     const res = await fetch(url);
     let feed = getPodcastFromFeed(await res.text());
@@ -173,8 +175,7 @@ class Feeds {
     let articles = [];
 
     for (const item of feed.episodes) {
-      const article = buildFeedStruct(actor);
-      article.id = id;
+      const article = buildFeedStruct(id, actor);
       article.object = buildFeedItem(item);
       articles.push(article);
     }
@@ -182,46 +183,47 @@ class Feeds {
   }
 }
 
-function buildFeedItem(item): ASFeedEntry {
+function buildFeedItem(item: Episode): IActivityObjectObject {
   const dateNum = Date.parse(item.pubDate.toString()) || 0;
   return {
     type: item.description.length > MAX_NOTE_LENGTH ? ASObjectType.ARTICLE : ASObjectType.NOTE,
     title: item.title,
-    id: item.link || item.meta.link + "#" + dateNum,
-    brief: item.description === item.summary ? undefined : item.summary,
+    id: item.link || item.guid,
+    brief: item.summary,
     content: item.description,
     contentType: isHtml(item.description || "") ? "html" : "text",
-    url: item.link || item.meta.link,
+    url: item.link || item.enclosure.url,
     published: item.pubDate,
-    updated: item.pubDate === item.date ? undefined : item.date,
+    updated: item.pubDate,
     datenum: dateNum,
-    tags: item.categories,
-    media: item.media,
-    source: item.source,
+    media: item.enclosure,
   };
 }
 
-function buildFeedStruct(actor): ASFeedStruct {
+function buildFeedStruct(id: string, actor: ASFeedActor): JobActivityStream {
   return {
+    id: id,
     context: ASFeedType.FEEDS,
     actor: actor,
     type: "post",
-    object: {},
+    object: {
+      type: "note"
+    },
   };
 }
 
-function buildFeedChannel(url: string, meta): ASFeedActor {
+function buildFeedChannel(url: string, meta: Meta): ASFeedActor {
   return {
     id: url,
     type: ASFeedType.FEED_CHANNEL,
     name: meta.title ? meta.title : meta.link ? meta.link : url,
     link: meta.link || url,
-    description: meta.description ? meta.description : undefined,
+    description: meta.description || "",
+    summary: meta.summary || "",
     image: meta.image ? meta.image : undefined,
-    favicon: meta.favicon ? meta.favicon : undefined,
-    categories: meta.categories ? meta.categories : [],
-    language: meta.language ? meta.language : undefined,
-    author: meta.author ? meta.author : undefined,
+    categories: [ ...[meta.type], ...meta?.category || [] ],
+    language: meta.language,
+    author: meta.author,
   };
 }
 

@@ -11,11 +11,15 @@ import nconf from "nconf";
 // collection of platform instances, stored by `id`
 export const platformInstances = new Map<string, PlatformInstance>();
 
+export type SessionCallback = ((e: object) => Promise<void>) |
+  (([first, second, third]: MessageFromPlatform) => Promise<void>);
+
 export interface PlatformInstanceParams {
   identifier: string;
   platform: string;
-  parentId?: string;
+  parentId: string;
   actor?: string;
+  config: PlatformConfig;
 }
 
 type EnvFormat = {
@@ -54,16 +58,18 @@ export default class PlatformInstance {
   readonly debug: Debugger;
   readonly parentId: string;
   readonly sessions: Set<string> = new Set();
-  readonly sessionCallbacks: object = {
-    close: (() => new Map())(),
-    message: (() => new Map())(),
-  };
+  readonly sessionCallbacks: Record<string, Map<string, SessionCallback>
+  > = {
+      close: (() => new Map())(),
+      message: (() => new Map())(),
+    };
   private readonly actor?: string;
 
   constructor(params: PlatformInstanceParams) {
     this.id = params.identifier;
     this.name = params.platform;
     this.parentId = params.parentId;
+    this.config = params.config;
     if (params.actor) {
       this.actor = params.actor;
     } else {
@@ -106,7 +112,9 @@ export default class PlatformInstance {
     }
 
     try {
-      await this.jobQueue.shutdown();
+      await this.jobQueue?.shutdown();
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       delete this.jobQueue;
     } catch (e) {
       // this needs to happen
@@ -204,7 +212,7 @@ export default class PlatformInstance {
   private async handleJobResult(
     type: string,
     job: JobDataDecrypted,
-    result: IActivityStream | undefined
+    result: IActivityStream | string | undefined
   ) {
     let payload = result; // some platforms return new AS objects as result
     if (type === "failed") {
@@ -220,10 +228,10 @@ export default class PlatformInstance {
     }
 
     // send result to client
-    const callback = this.completedJobHandlers.get(job.title);
+    const callback = this.completedJobHandlers.get(job.title as string);
     if (callback) {
       callback(payload);
-      this.completedJobHandlers.delete(job.title);
+      this.completedJobHandlers.delete(job.title as string);
     } else {
       await this.sendToClient(job.sessionId, payload);
     }
@@ -237,17 +245,17 @@ export default class PlatformInstance {
     // persistent
     if (
       this.config.persist &&
-      this.config.requireCredentials.includes(job.msg.type)
+      this.config.requireCredentials?.includes(job.msg.type)
     ) {
       if (type === "failed") {
         this.debug(
           `critical job type ${job.msg.type} failed, flagging for termination`
         );
-        await this.jobQueue.pause();
+        await this.jobQueue?.pause();
         this.initialized = false;
         this.flaggedForTermination = true;
       } else {
-        await this.jobQueue.resume();
+        await this.jobQueue?.resume();
         this.initialized = true;
         this.flaggedForTermination = false;
       }
@@ -263,7 +271,7 @@ export default class PlatformInstance {
     const errorObject: IActivityStream = {
       context: this.name,
       type: "error",
-      actor: { id: this.actor, type: "unknown" },
+      actor: { id: this.actor as string, type: "unknown" },
       error: errorMessage,
     };
     this.sendToClient(sessionId, errorObject);
@@ -308,6 +316,6 @@ export default class PlatformInstance {
         }
       },
     };
-    return funcs[listener];
+    return funcs[listener as keyof typeof funcs];
   }
 }

@@ -13,13 +13,13 @@ import janitor from "./janitor";
 import listener from "./listener";
 import ProcessManager from "./process-manager";
 import nconf from "nconf";
-import { IActivityStream } from "@sockethub/schemas";
+import { IActivityStream, JobActivityStream } from "@sockethub/schemas";
 
 const log = debug("sockethub:server:core");
 
-function attachError(err, msg) {
+function attachError(err: Error, msg: IActivityStream) {
   if (typeof msg !== "object") {
-    msg = { context: "error" };
+    msg = { context: "error" } as IActivityStream;
   }
   msg.error = err.toString();
   delete msg.sessionSecret;
@@ -100,11 +100,11 @@ class Sockethub {
         .use(expandActivityStream)
         .use(validate("credentials", socket.id))
         .use(storeCredentials(credentialsStore) as MiddlewareChainInterface)
-        .use((err, data, next) => {
+        .use((err: Error, data: IActivityStream, next: MiddlewareChainInterface) => {
           // error handler
           next(attachError(err, data));
         })
-        .use((data, next) => {
+        .use((data: IActivityStream, next: MiddlewareChainInterface) => {
           next();
         })
         .done()
@@ -117,10 +117,10 @@ class Sockethub {
       middleware("activity-object")
         .use(validate("activity-object", socket.id))
         .use(createActivityObject)
-        .use((err, data, next) => {
+        .use((err: Error, data: IActivityStream, next: MiddlewareChainInterface) => {
           next(attachError(err, data));
         })
-        .use((data, next) => {
+        .use((data: Error, next: MiddlewareChainInterface) => {
           next();
         })
         .done()
@@ -131,26 +131,26 @@ class Sockethub {
       middleware("message")
         .use(expandActivityStream)
         .use(validate("message", socket.id))
-        .use((msg, next) => {
+        .use((msg: IActivityStream, next: MiddlewareChainInterface) => {
           // The platform thread must find the credentials on their own using the given
           // sessionSecret, which indicates that this specific session (socket
           // connection) has provided credentials.
           msg.sessionSecret = sessionSecret;
           next(msg);
         })
-        .use((err, data, next) => {
+        .use((err: Error, data: IActivityStream, next: MiddlewareChainInterface) => {
           next(attachError(err, data));
         })
-        .use(async (msg: IActivityStream, next) => {
+        .use(async (msg: IActivityStream, next:MiddlewareChainInterface) => {
           const platformInstance = this.processManager.get(
             msg.context,
             msg.actor.id,
             socket.id
           );
           // job validated and queued, stores socket.io callback for when job is completed
-          const job = await platformInstance.jobQueue.add(socket.id, msg);
+          const job = await platformInstance.jobQueue.add(socket.id, msg as JobActivityStream);
           if (job) {
-            platformInstance.completedJobHandlers.set(job.title, next);
+            platformInstance.completedJobHandlers.set(job.title as string, next);
           } else {
             // failed to add job to queue, reject handler immediately
             msg.error = "failed to add job to queue";

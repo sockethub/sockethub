@@ -12,7 +12,7 @@ export interface IInitObject {
 
 let init: IInitObject;
 
-function printSettingsInfo(version, platforms) {
+function printSettingsInfo(version: string, platforms: PlatformMap) {
   // eslint-disable-next-line security-node/detect-crlf
   console.log('sockethub ' + version);
   console.log();

@@ -1,3 +1,5 @@
+import { Author, Enclosure } from "podparse";
+
 export enum ASFeedType {
   FEED_CHANNEL = "feed",
   FEEDS = "feeds"
@@ -14,11 +16,11 @@ export interface ASFeedActor {
   id: string;
   link: string;
   description: string;
+  summary: string;
   image: any;
-  favicon: string;
   categories: Array<string>
   language: string;
-  author: string;
+  author: Author;
 }
 
 
@@ -41,7 +43,5 @@ export type ASFeedEntry = {
   published: string;
   updated: string;
   datenum: number;
-  tags: Array<string>
-  media: Array<any>;
-  source: string;
+  media: Enclosure | Array<any>;
 }

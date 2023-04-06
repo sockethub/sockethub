@@ -23,7 +23,7 @@ interface SchemaStruct {
     };
   }
 }
-interface PlatformStruct {
+export interface PlatformStruct {
   id: string;
   moduleName: string;
   config: {

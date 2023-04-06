@@ -1,6 +1,6 @@
 import debug from 'debug';
 
-import PlatformInstance, { platformInstances } from './platform-instance';
+import PlatformInstance, { platformInstances, SessionCallback } from "./platform-instance";
 import listener, { SocketInstance } from "./listener";
 
 const rmLog = debug('sockethub:server:janitor');
@@ -40,8 +40,10 @@ class Janitor {
 
   private removeSessionCallbacks(platformInstance: PlatformInstance, sessionId: string): void {
     for (const key in platformInstance.sessionCallbacks) {
+      const callback = platformInstance.sessionCallbacks[key].get(sessionId) as SessionCallback;
       platformInstance.process.removeListener(
-        key, platformInstance.sessionCallbacks[key].get(sessionId));
+        key, callback
+      );
       platformInstance.sessionCallbacks[key].delete(sessionId);
     }
   }
@@ -85,7 +87,7 @@ class Janitor {
     return false;
   }
 
-  private async delay(ms): Promise<void> {
+  private async delay(ms: number): Promise<void> {
     return await new Promise(resolve => setTimeout(resolve, ms));
   }
 

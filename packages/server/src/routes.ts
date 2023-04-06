@@ -1,10 +1,26 @@
 import path from "path";
 import debug from "debug";
+import { Express, Request, Response } from "express";
 
 const logger = debug("sockethub:server:routes");
 
 export interface IRoutePaths {
   [key: string]: string;
+}
+
+enum Method {
+  GET = "GET",
+  POST = "POST",
+}
+
+type RouteMeta = {
+  method: Method;
+  path: string;
+}
+
+type RouteStruct = {
+  meta: RouteMeta;
+  route: (req: Request, res: Response) => void;
 }
 
 export const basePaths: IRoutePaths = {
@@ -22,12 +38,12 @@ export const basePaths: IRoutePaths = {
   ),
 };
 
-function prepFileRoutes(pathMap) {
-  const _routes = [];
+function prepFileRoutes(pathMap: IRoutePaths) {
+  const _routes: Array<RouteStruct> = [];
   Object.keys(pathMap).forEach((key) => {
     _routes.push({
       meta: {
-        method: "GET",
+        method: Method.GET,
         path: key,
       },
       route: (req, res) => {
@@ -41,9 +57,10 @@ function prepFileRoutes(pathMap) {
 }
 const baseRoutes = prepFileRoutes(basePaths);
 
-function addRoute(app) {
-  return (route) => {
-    app[route.meta.method.toLowerCase()](route.meta.path, route.route);
+function addRoute(app: Express) {
+  return (route: RouteStruct) => {
+    const method: string = route.meta.method.toLowerCase();
+    app[method as keyof typeof app](route.meta.path, route.route);
   };
 }
 
@@ -51,7 +68,7 @@ function addRoute(app) {
  * Setup
  */
 const routes = {
-  setup: function (app: unknown) {
+  setup: function (app: Express) {
     baseRoutes.forEach(addRoute(app));
   },
 };

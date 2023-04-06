@@ -1,8 +1,10 @@
-import SecureStore from "secure-store-redis";
 import debug, { Debugger } from "debug";
 import { IActivityStream, CallbackInterface } from "@sockethub/schemas";
 import crypto from "@sockethub/crypto";
 import { RedisConfigProps, RedisConfigUrl } from "./types";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import SecureStore from "secure-store-redis";
 
 /**
  * Encapsulates the storing and fetching of credential objects.

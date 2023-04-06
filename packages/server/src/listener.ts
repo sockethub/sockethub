@@ -1,6 +1,6 @@
 import debug from "debug";
 import bodyParser from "body-parser";
-import express from "express";
+import express, { Express } from "express";
 import * as HTTP from "http";
 import { Server } from "socket.io";
 import { writeFileSync } from "fs";
@@ -47,7 +47,7 @@ class Listener {
     this.startHttp();
   }
 
-  private addExamplesRoutes(app) {
+  private addExamplesRoutes(app: Express) {
     writeFileSync(
       `${__dirname}/../node_modules/@sockethub/examples/build/config.json`,
       JSON.stringify({
@@ -95,7 +95,7 @@ class Listener {
 const listener = new Listener();
 
 interface EmitFunction {
-  (type: string, data: unknown);
+  (type: string, data: unknown): void;
 }
 
 export interface SocketInstance {

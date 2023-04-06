@@ -7,7 +7,7 @@ export default function middleware(name: string): MiddlewareChain {
 
 export interface MiddlewareChainInterface {
   (
-    error: IActivityStream | Error,
+    error?: IActivityStream | Error,
     data?: IActivityStream | MiddlewareChainInterface,
     next?: MiddlewareChainInterface
   ): void;

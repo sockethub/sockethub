@@ -4,20 +4,21 @@
 import debug from 'debug';
 import schemas, {IActivityStream, CallbackActivityStreamInterface} from '@sockethub/schemas';
 
-import getInitObject from "../bootstrap/init";
+import getInitObject, { IInitObject } from "../bootstrap/init";
+import { PlatformStruct } from "../bootstrap/load-platforms";
 
 
-let initObj;
+let initObj: IInitObject;
 (async function () {
   initObj = await getInitObject();
   await registerPlatforms(initObj);
 })();
 
-export async function registerPlatforms(init) {
-  init.platforms.forEach((platform) => {
-    Object.keys(platform.schemas).forEach((key) => {
-      if (! platform.schemas[key]) { return; }
-      schemas.addPlatformSchema(platform.schemas[key], `${platform.id}/${key}`);
+export async function registerPlatforms(init: IInitObject) {
+  init.platforms.forEach((platform: PlatformStruct) => {
+    Object.keys(platform.schema).forEach((key: keyof typeof platform.schema) => {
+      if (! platform.schema[key]) { return; }
+      schemas.addPlatformSchema(platform.schema[key], `${platform.id}/${key}`);
     });
   });
 }
@@ -46,9 +47,9 @@ export default function validate(type: string, sockethubId: string, init = initO
         done(new Error(err));
       } else {
         const platformMeta = init.platforms.get(msg.context);
-        if (!platformMeta.types.includes(msg.type)) {
+        if (!platformMeta?.types.includes(msg.type)) {
           return done(new Error(`platform type ${msg.type} not supported by ${msg.context} ` +
-            `platform. (types: ${platformMeta.types.join(', ')})`));
+            `platform. (types: ${platformMeta?.types.join(', ')})`));
         } else {
           done(msg);
         }

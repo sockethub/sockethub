@@ -30,7 +30,10 @@
     "podparse": "1.5.1"
   },
   "devDependencies": {
+    "@sockethub/schemas": "workspace:^",
+    "@types/debug": "4.1.7",
     "@types/node": "18.15.11",
+    "@types/node-fetch": "2.6.3",
     "debug": "4.3.4",
     "typescript": "5.0.3"
   },

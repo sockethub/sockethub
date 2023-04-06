@@ -1,5 +1,6 @@
 import PlatformInstance, {
-  platformInstances, PlatformInstanceParams, MessageFromParent } from "./platform-instance";
+  platformInstances, PlatformInstanceParams, MessageFromParent, PlatformConfig
+} from "./platform-instance";
 import {getPlatformId} from "@sockethub/crypto";
 import { IInitObject } from "./bootstrap/init";
 
@@ -21,18 +22,18 @@ class ProcessManager {
     const platformDetails = this.init.platforms.get(platform);
     let pi;
 
-    if (platformDetails.config.persist) {
+    if (platformDetails?.config.persist) {
       // ensure process is started - one for each actor
-      pi = this.ensureProcess(platform, sessionId, actorId);
+      pi = this.ensureProcess(platform, platformDetails?.config || {}, sessionId, actorId);
     } else {
       // ensure process is started - one for all jobs
-      pi = this.ensureProcess(platform);
+      pi = this.ensureProcess(platform, platformDetails?.config || {});
     }
-    pi.config = platformDetails.config;
     return pi;
   }
 
   private createPlatformInstance(identifier: string, platform: string,
+                                 config: PlatformConfig,
                                  actor?: string): PlatformInstance {
     const secrets: MessageFromParent = [
       'secrets', {
@@ -44,6 +45,7 @@ class ProcessManager {
       identifier: identifier,
       platform: platform,
       parentId: this.parentId,
+      config: config,
       actor: actor
     };
     const platformInstance = new PlatformInstance(platformInstanceConfig);
@@ -52,10 +54,15 @@ class ProcessManager {
     return platformInstance;
   }
 
-  private ensureProcess(platform: string, sessionId?: string, actor?: string): PlatformInstance {
+  private ensureProcess(
+    platform: string,
+    config: PlatformConfig,
+    sessionId?: string,
+    actor?: string
+  ): PlatformInstance {
     const identifier = getPlatformId(platform, actor);
     const platformInstance = platformInstances.get(identifier) ||
-              this.createPlatformInstance(identifier, platform, actor);
+              this.createPlatformInstance(identifier, platform, config, actor);
     if (sessionId) {
       platformInstance.registerSession(sessionId);
     }

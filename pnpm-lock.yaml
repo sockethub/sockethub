@@ -477,9 +477,18 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
     devDependencies:
+      '@sockethub/schemas':
+        specifier: workspace:^
+        version: link:../schemas
+      '@types/debug':
+        specifier: 4.1.7
+        version: 4.1.7
       '@types/node':
         specifier: 18.15.11
         version: 18.15.11
+      '@types/node-fetch':
+        specifier: 2.6.3
+        version: 2.6.3
       debug:
         specifier: 4.3.4
         version: 4.3.4(supports-color@8.1.1)
@@ -3309,6 +3318,13 @@ packages:
     resolution: {integrity: sha512-leyIuBk/rMIp9114FlPRkc/cQG+/JzCz1Afx3BD+CwK2ep3ZRxoC843V1rqnE2pC/jRRjANWhuVBEn4clCwlug==}
     dev: true
 
+  /@types/node-fetch@2.6.3:
+    resolution: {integrity: sha512-ETTL1mOEdq/sxUtgtOhKjyB2Irra4cjxksvcMUR5Zr4n+PxVhsCD9WS46oPbHL3et9Zde7CNRr+WUNlcHvsX+w==}
+    dependencies:
+      '@types/node': 18.15.11
+      form-data: 3.0.1
+    dev: true
+
   /@types/node@18.15.11:
     resolution: {integrity: sha512-E5Kwq2n4SbMzQOn6wnmBjuK9ouqlURrcZDVfbo9ftDDTFt3nk7ZKK4GMOzoYgnpQJKcxwQw+lGaBvvlMo0qN/Q==}
 
@@ -5993,6 +6009,15 @@ packages:
     dependencies:
       cross-spawn: 7.0.3
       signal-exit: 3.0.7
+    dev: true
+
+  /form-data@3.0.1:
+    resolution: {integrity: sha512-RHkBKtLWUVwd7SqRIvCZMEvAMoGUp0XU+seQiZejj0COz3RI3hWP4sCv3gZWWLjJTd7rGwcsF5eKZGii0r/hbg==}
+    engines: {node: '>= 6'}
+    dependencies:
+      asynckit: 0.4.0
+      combined-stream: 1.0.8
+      mime-types: 2.1.35
     dev: true
 
   /form-data@4.0.0:

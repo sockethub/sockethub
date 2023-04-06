@@ -20,6 +20,7 @@ export interface IActivityObjectActor extends IActivityObject {
 
 export interface IActivityObjectObject extends IActivityObject {
   content?: string;
+  [key: string]: unknown;
 }
 
 type ErrorMsg = string | Error;

@@ -1,8 +1,8 @@
-import debug from 'debug';
-import {IActivityStream, CallbackInterface} from "@sockethub/schemas";
+import debug, { Debugger } from "debug";
+import { IActivityStream, CallbackInterface, IActivityObject } from "@sockethub/schemas";
 import crypto, {getPlatformId} from "@sockethub/crypto";
 import {CredentialsStore, JobQueue, RedisConfig} from "@sockethub/data-layer";
-import {JobDataDecrypted} from "@sockethub/data-layer/dist";
+import {JobDataDecrypted} from "@sockethub/data-layer/src";
 
 // command-line params
 const parentId = process.argv[2];
@@ -22,8 +22,10 @@ let parentSecret1: string, parentSecret2: string;
 
 logger(`platform handler initialized for ${platformName} ${identifier}`);
 
-export interface PlatformSession {
-  debug(msg: string): void;
+export type JobDoneCallback = (err?: Error|null|undefined, result?: IActivityStream|Array<IActivityStream>) => void;
+
+export interface PlatformSessionConfig {
+  debug: Debugger;
   sendToClient?(msg: IActivityStream, special?: string): void;
   updateActor(credentials: object): void;
 }
@@ -40,6 +42,8 @@ process.on('uncaughtException', (err) => {
   console.log('EXCEPTION IN PLATFORM');
   // eslint-disable-next-line security-node/detect-crlf
   console.log(err.stack);
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   process.send(['error', err.toString()]);
   process.exit(1);
 });
@@ -62,7 +66,7 @@ process.on('message', async (data: SecretFromParent) => {
 /**
  * Initialize platform module
  */
-const platformSession: PlatformSession = {
+export const platformSession: PlatformSessionConfig = {
   debug: debug(`sockethub:platform:${platformName}:${identifier}`),
   sendToClient: getSendFunction('message'),
   updateActor: updateActor
@@ -82,7 +86,7 @@ function getJobHandler() {
     delete job.msg.sessionSecret;
 
     let jobCallbackCalled = false;
-    const doneCallback = (err, result) => {
+    const doneCallback: JobDoneCallback = (err: Error, result: IActivityStream) => {
       if (jobCallbackCalled) { return; }
       jobCallbackCalled = true;
       if (err) {
@@ -95,10 +99,10 @@ function getJobHandler() {
         } catch (e) {
           errMsg = err;
         }
-        done(new Error(errMsg));
+        done(new Error(errMsg as string));
       } else {
         jobLog(`completed ${job.title} ${job.msg.type}`);
-        done(null, result);
+        done(undefined, result);
       }
     };
 
@@ -128,6 +132,8 @@ function getJobHandler() {
 function getSendFunction(command: string) {
   return function (msg: IActivityStream, special?: string) {
     if (platform.config.persist) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       process.send([command, msg, special]);
     } else {
       logger('sendToClient called on non-persistent platform, rejecting.');
@@ -140,12 +146,14 @@ function getSendFunction(command: string) {
  * both the queue thread (listening on the channel for jobs) and the logging object are updated.
  * @param credentials
  */
-async function updateActor(credentials) {
+async function updateActor(credentials: IActivityStream) {
   identifier = getPlatformId(platformName, credentials.actor.id);
   logger(`platform actor updated to ${credentials.actor.id} identifier ${identifier}`);
   logger = debug(`sockethub:platform:${identifier}`);
-  platform.credentialsHash = crypto.objectHash(credentials.object);
+  platform.credentialsHash = crypto.objectHash(credentials.object as IActivityObject);
   platform.debug = debug(`sockethub:platform:${platformName}:${identifier}`);
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   process.send(['updateActor', undefined, identifier]);
   await startQueueListener(true);
 }
