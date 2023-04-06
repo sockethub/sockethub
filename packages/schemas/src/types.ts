@@ -19,7 +19,7 @@ export interface IActivityObjectActor extends IActivityObject {
 }
 
 export interface IActivityObjectObject extends IActivityObject {
-  content?: never;
+  content?: string;
 }
 
 type ErrorMsg = string | Error;

@@ -21,3 +21,4 @@ export {
 };
 
 export * from "./types";
+export { JobActivityStream } from "./schemas/activity-stream";

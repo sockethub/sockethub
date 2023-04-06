@@ -1,6 +1,6 @@
 import activityObject from "./activity-object";
 import { ObjectTypesList, ObjectTypesSchema } from "../helpers/objects";
-import { ObjectRefs } from "../types";
+import { IActivityStream, ObjectRefs } from "../types";
 
 const validActorRefs  = activityObject.properties.object.oneOf;
 const validTargetRefs = activityObject.properties.object.oneOf;
@@ -54,3 +54,7 @@ export default {
     "type": ObjectTypesSchema
   }
 };
+
+export interface JobActivityStream extends IActivityStream {
+  id: string;
+}
