@@ -12,29 +12,40 @@ const log = debug('sockethub:server:bootstrap:platforms');
 
 log('loading platforms');
 
-export type PlatformMap = Map<string, {
-  id: string,
-  moduleName: string,
+class InjectedClass {}
+type InjectedRequire = (p: string) => typeof InjectedClass;
+
+interface SchemaStruct {
+  properties?: {
+    required: Array<string>;
+    type?: {
+      enum: Array<string>;
+    };
+  }
+}
+interface PlatformStruct {
+  id: string;
+  moduleName: string;
   config: {
-    persist?: boolean
-  },
-  schemas: {
-    credentials?: object,
-    messages?: object
-  },
-  version: string,
-  types: Array<string>
-}>;
+    persist?: boolean;
+  };
+  schema: {
+    credentials: SchemaStruct;
+    messages: SchemaStruct;
+  };
+  version: string;
+  types: Array<string>;
+}
+export type PlatformMap = Map<string, PlatformStruct>;
 
 // if the platform schema lists valid types it implements (essentially methods/verbs for
 // Sockethub to call) then add it to the supported types list.
-function platformListsSupportedTypes(p): boolean {
-  return ((p.schema.messages.properties) && (p.schema.messages.properties.type) &&
-    (p.schema.messages.properties.type.enum) &&
-    (p.schema.messages.properties.type.enum.length > 0));
+function getSupportedTypes(p: PlatformStruct): Array<string> {
+  const types = p.schema.messages.properties?.type?.enum;
+  return Array.isArray(types) ? types : [];
 }
 
-async function loadPlatform(platformName: string, injectRequire) {
+async function loadPlatform(platformName: string, injectRequire: InjectedRequire | undefined) {
   let p;
   if (injectRequire) {
     const P = await injectRequire(platformName);
@@ -78,9 +89,7 @@ export default async function loadPlatforms(
       p.config.noCredentials = true;
     }
 
-    if (platformListsSupportedTypes(p)) {
-      types = [...types, ...p.schema.messages.properties.type.enum];
-    }
+    types = [...types, ...getSupportedTypes(p)];
 
     platforms.set(p.schema.name, {
       id: p.schema.name,

@@ -1,18 +1,19 @@
 import Queue, { QueueOptions } from "bull";
 import crypto from "@sockethub/crypto";
 import {
+  JobActivityStream,
   JobDataDecrypted,
   JobDataEncrypted,
   JobDecrypted,
   JobEncrypted,
-  RedisConfig,
+  RedisConfig
 } from "./types";
 import debug, { Debugger } from "debug";
 import EventEmitter from "events";
 import { IActivityStream } from "@sockethub/schemas";
 
 interface JobHandler {
-  (job: JobDataDecrypted, done: CallableFunction);
+  (job: JobDataDecrypted, done: CallableFunction): void;
 }
 
 export default class JobQueue extends EventEmitter {
@@ -40,7 +41,7 @@ export default class JobQueue extends EventEmitter {
     this.debug("initialized");
   }
 
-  async add(socketId: string, msg: IActivityStream): Promise<JobDataEncrypted> {
+  async add(socketId: string, msg: JobActivityStream): Promise<JobDataEncrypted|undefined> {
     const job = this.createJob(socketId, msg);
     const isPaused = await this.bull.isPaused();
     if (isPaused) {
@@ -53,7 +54,7 @@ export default class JobQueue extends EventEmitter {
   }
 
   initResultEvents() {
-    this.bull.on("global:completed", async (jobId: string, result: any) => {
+    this.bull.on("global:completed", async (jobId: string, result: never) => {
       const r = result ? JSON.parse(result) : "";
       const job = await this.getJob(jobId);
       if (job) {
@@ -87,7 +88,7 @@ export default class JobQueue extends EventEmitter {
     });
   }
 
-  async getJob(jobId: string): Promise<JobDecrypted> {
+  async getJob(jobId: string): Promise<JobDecrypted|undefined> {
     const job = await this.bull.getJob(jobId);
     if (job) {
       job.data = this.decryptJobData(job);
@@ -96,8 +97,10 @@ export default class JobQueue extends EventEmitter {
       } catch (e) {
         // this property should never be exposed externally
       }
+      return job;
+    } else {
+      return undefined;
     }
-    return job;
   }
 
   onJob(handler: JobHandler): void {
@@ -124,7 +127,7 @@ export default class JobQueue extends EventEmitter {
     await this.bull.removeAllListeners();
   }
 
-  private createJob(socketId: string, msg): JobDataEncrypted {
+  private createJob(socketId: string, msg: JobActivityStream): JobDataEncrypted {
     const title = `${msg.context}-${msg.id ? msg.id : this.counter++}`;
     return {
       title: title,

@@ -22,7 +22,7 @@ class Crypto {
 
   decrypt(text: string, secret: string): IActivityStream {
     const parts = text.split(':');
-    const iv = Buffer.from(parts.shift(), 'hex');
+    const iv = Buffer.from(parts.shift() as string, 'hex');
     const encryptedText = Buffer.from(parts.join(':'), 'hex');
     const decipher = createDecipheriv(ALGORITHM, Buffer.from(secret), iv);
     let decrypted = decipher.update(encryptedText);
@@ -36,7 +36,7 @@ class Crypto {
     return SHASum.digest('hex').substring(0, 7);
   }
 
-  objectHash(object: any): string {
+  objectHash(object: never): string {
     return hash(object);
   }
 

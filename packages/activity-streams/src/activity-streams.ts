@@ -18,6 +18,19 @@
 import EventEmitter from 'eventemitter3';
 import { IActivityObject, IActivityStream } from '@sockethub/schemas';
 
+interface UnknownActivityObject extends Omit<IActivityObject, 'type'> {
+  type?: string;
+  "@id"?: string;
+  "@type"?: string;
+  verb?: string;
+  displayName?: string;
+  objectType?: string;
+  platform?: string;
+}
+
+export type StreamResult = IActivityStream;
+export type CustomProps = Record<string, Array<string>>;
+
 const ee = new EventEmitter(),
       baseProps = {
         stream: [
@@ -59,42 +72,52 @@ const ee = new EventEmitter(),
         }
       };
 
-const objs = new Map(),
-      customProps  = {};
+const activityObjects: Map<string, IActivityObject> = new Map(),
+      customProps: CustomProps = {};
 
 let failOnUnknownObjectProperties = false,
     warnOnUnknownObjectProperties = true,
-    specialObjs = []; // the objects don't get rejected for bad props
+    specialObjs: SpecialObjects = []; // the objects don't get rejected for bad props
 
-function matchesCustomProp(type, key) {
-  return !!((typeof customProps[type] === 'object') && (customProps[type].includes(key)));
+function matchesCustomProp(type: string, key: string) {
+  return ((typeof customProps[type] === 'object') && (customProps[type].includes(key)));
 }
 
-function renameProp(obj, key) {
+function renameProp(obj: UnknownActivityObject, key: string): IActivityObject {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   obj[rename[key]] = obj[key];
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   delete obj[key];
-  return obj;
+  return <IActivityObject>obj;
 }
 
-function validateObject(type, obj: IActivityObject = {type:""}) {
+function validateObject(type: string, obj: UnknownActivityObject = {type:""}) {
   const unknownKeys = Object.keys(obj).filter((key): void|string => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     if (! baseProps[type].includes(key)) {
       return key;
     }
   });
 
   for (const key of unknownKeys) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     if (rename[key]) {
       // rename property instead of fail
       obj = renameProp(obj, key);
       continue;
     }
-
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     if (matchesCustomProp(obj.type, key)) {
       // custom property matches, continue
       continue;
     }
-
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     if (! specialObjs.includes(obj.type)) {
       // not defined as a special prop
       // don't know what to do with it, so throw error
@@ -108,105 +131,122 @@ function validateObject(type, obj: IActivityObject = {type:""}) {
   }
 }
 
-
-function ensureProps(obj) {
-  // ensure the name property, which can generally be inferred from the id
-  // name = obj.match(/(?(?\w+):\/\/)(?:.+@)?(.+?)(?:\/|$)/)[1]
-  return obj;
-}
-
-function expandStream(meta) {
+function expandStream(meta: IActivityStream): StreamResult {
   const stream = {};
   for (const key of Object.keys(meta)) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     if (typeof meta[key] === 'string') {
-      stream[key] = objs.get(meta[key]) || meta[key];
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      stream[key] = activityObjects.get(meta[key]) as IActivityObject || meta[key] as string;
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
     } else if (Array.isArray(meta[key])) {
-      stream[key] = [];
-      for (const entry of meta[key]) {
+      const list = [];
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      for (const entry of meta[key] as Array<unknown>) {
         if (typeof entry === 'string') {
-          stream[key].push(objs.get(entry) || entry);
+          list.push(activityObjects.get(entry) || entry);
         }
       }
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      stream[key] = list;
     } else {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       stream[key] = meta[key];
     }
   }
 
   // only expand string into objects if they are in the expand list
   for (const key of Object.keys(expand)) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     if (typeof stream[key] === 'string') {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       const idx = expand[key].primary;
       const obj = {};
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       obj[idx] = stream[key];
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       stream[key] = obj;
     }
   }
-  return stream;
+  return stream as IActivityStream;
 }
 
-function Stream(meta): IActivityStream|IActivityObject|Record<string, never> {
+
+function Stream(meta: IActivityStream): StreamResult {
   validateObject('stream', meta);
   if (typeof meta.object === 'object') {
     validateObject('object', meta.object);
   }
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const stream = expandStream(meta);
   ee.emit('activity-stream', stream);
   return stream;
 }
 
 export interface ActivityObjectManager {
-  create(obj: unknown): unknown;
+  create(obj: UnknownActivityObject): IActivityObject;
   delete(id: string): boolean;
-  list(): IterableIterator<any>,
-  get(id: string, expand?: boolean): unknown;
+  list(): IterableIterator<string>,
+  get(id: string, expand?: boolean): IActivityObject|string ;
 }
 
 const _Object: ActivityObjectManager = {
-  create: function (obj: IActivityObject) {
+  create: function (obj: UnknownActivityObject): IActivityObject {
     validateObject('object', obj);
-    obj = ensureProps(obj);
-    objs.set(obj.id, obj);
+    activityObjects.set(obj.id as string, obj as IActivityObject);
     ee.emit('activity-object-create', obj);
-    return obj;
+    return obj as IActivityObject;
   },
 
-  delete: function (id) {
-    const result = objs.delete(id);
+  delete: function (id: string): boolean {
+    const result = activityObjects.delete(id);
     if (result) {
       ee.emit('activity-object-delete', id);
     }
     return result;
   },
 
-  get: function (id, expand) {
-    let obj = objs.get(id);
+  get: function (id: string, expand = false): IActivityObject|string {
+    let obj = activityObjects.get(id);
     if (! obj) {
       if (! expand) {
         return id;
       }
-      obj = {'id': id};
+      obj = {'id': id} as IActivityObject;
     }
-    return ensureProps(obj);
+    return obj;
   },
 
-  list: function (): IterableIterator<any> {
-    return objs.keys();
+  list: function (): IterableIterator<string> {
+    return activityObjects.keys();
   }
 };
 
+type SpecialObjects = Array<string>;
 export interface ASFactoryOptions {
-  specialObjs?: Array<string>;
+  specialObjs?: SpecialObjects;
   failOnUnknownObjectProperties?: boolean;
   warnOnUnknownObjectProperties?: boolean;
-  customProps?: any;
+  customProps?: CustomProps;
 }
 
 export interface ASManager {
-  Stream(meta: unknown): unknown,
+  Stream(meta: unknown): StreamResult,
   Object: ActivityObjectManager,
-  on(event, func): void;
-  once(event, func): void;
-  off(event, funcName): void;
+  on(event: string, func: (val: unknown) => void): void;
+  once(event: string, func: (val: unknown) => void): void;
+  off(event: string, func: (val: unknown) => void): void;
 }
 
 export default function ASFactory(opts: ASFactoryOptions = {}): ASManager {
@@ -216,22 +256,24 @@ export default function ASFactory(opts: ASFactoryOptions = {}): ASManager {
   warnOnUnknownObjectProperties = typeof opts.warnOnUnknownObjectProperties === 'boolean' ?
     opts.warnOnUnknownObjectProperties : warnOnUnknownObjectProperties;
   for (const propName of Object.keys(opts.customProps || {})) {
-    if (typeof opts.customProps[propName] === 'object') {
-      customProps[propName] = opts.customProps[propName];
+    if (opts?.customProps) {
+      if (typeof opts?.customProps[propName] === 'object') {
+        customProps[propName] = opts.customProps[propName];
+      }
     }
   }
 
   return {
     Stream: Stream,
     Object: _Object,
-    on: function (event, func) {
+    on: function (event, func: (val: unknown) => void) {
       return ee.on(event, func);
     },
-    once: function (event, func) {
+    once: function (event: string, func: (val: unknown) => void) {
       return ee.once(event, func);
     },
-    off: function (event, funcName) {
-      return ee.off(event, funcName);
+    off: function (event: string, func: (val: unknown) => void) {
+      return ee.off(event, func);
     }
   } as ASManager;
 }

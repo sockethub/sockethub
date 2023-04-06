@@ -1,6 +1,6 @@
 
-const fs = require('fs');
-const packageJSON = require('./package.json');
+const fs = await import('fs');
+const packageJSON = await import('./package.json');
 const moduleList = Object.keys(packageJSON.dependencies);
 
 const rx = new RegExp('^@sockethub/platform-', 'i');

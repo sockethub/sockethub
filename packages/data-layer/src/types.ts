@@ -30,8 +30,11 @@ export interface JobEncrypted {
 
 export interface JobDecrypted {
   data: JobDataDecrypted,
-  remove?: {
+  remove: {
     (): void;
   };
 }
 
+export interface JobActivityStream extends IActivityStream {
+  id: string;
+}

@@ -2,13 +2,12 @@ dist
 build
 coverage
 node_modules
+/test/integration.test.js
 **/*.d.ts
-**/*.test.*
-packages/server/views/examples/
+**/*-suite.js
 packages/irc2as/
 packages/platform-feeds/
 packages/platform-irc
-packages/schemas/schemas/
 .DS_Store
 /build
 /.svelte-kit

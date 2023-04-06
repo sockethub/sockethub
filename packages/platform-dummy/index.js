@@ -1,3 +1,5 @@
+import packageJson from "./package.json";
+
 class Dummy {
   constructor(cfg) {
     cfg = (typeof cfg === 'object') ? cfg : {};
@@ -8,7 +10,7 @@ class Dummy {
   get schema() {
     return {
       name: "dummy",
-      version: require('./package.json').version,
+      version: packageJson.version,
       messages: {
         "required": ["type"],
         "properties": {

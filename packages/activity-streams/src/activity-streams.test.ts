@@ -1,11 +1,11 @@
-import ASFactory from "./activity-streams"
+import ASFactory, { ASManager, StreamResult } from "./activity-streams";
 import chai from "chai";
 
 const assert = chai.assert;
 const expect = chai.expect;
 
 describe('warn test', () => {
-  let activity;
+  let activity: ASManager;
 
   before('initialize activity module', () => {
     assert.typeOf(ASFactory, 'function');
@@ -26,7 +26,7 @@ describe('warn test', () => {
 });
 
 describe('no special props', () => {
-  let activity;
+  let activity: ASManager;
 
   before('initialize activity module', () => {
     assert.typeOf(ASFactory, 'function');
@@ -58,7 +58,7 @@ describe('basic tests', () => {
     specialObjs: [ 'dude'],
     failOnUnknownObjectProperties: true
   };
-  let activity;
+  let activity: ASManager;
 
   before('initialize activity module', () => {
     assert.typeOf(ASFactory, 'function');
@@ -76,12 +76,17 @@ describe('basic tests', () => {
     });
 
     it('returns undefined when no params are passed', () => {
+      // @ts-ignore
       assert.equal(activity.Object.get(), undefined);
     });
 
     it('returns object when given a valid lookup id', () => {
-      expect(activity.Object.create({id: 'thingy1'})).to.deep.equal({'id': 'thingy1'});
-      expect(activity.Object.get('thingy1')).to.deep.equal({'id':'thingy1'});
+      expect(
+        activity.Object.create({id: 'thingy1'})
+      ).to.deep.equal({'id': 'thingy1'});
+      expect(
+        activity.Object.get('thingy1')
+      ).to.deep.equal({'id':'thingy1'});
     });
 
     it('throws an exception when called with no identifier', () => {
@@ -89,21 +94,33 @@ describe('basic tests', () => {
     });
 
     it('creates a second object and returns is as expected', () => {
-      expect(activity.Object.create({id: 'thingy2'})).to.deep.equal({'id':'thingy2'});
-      expect(activity.Object.get('thingy2')).to.deep.equal({'id':'thingy2'});
+      expect(
+        activity.Object.create({id: 'thingy2'})
+      ).to.deep.equal({'id':'thingy2'});
+      expect(
+        activity.Object.get('thingy2')
+      ).to.deep.equal({'id':'thingy2'});
     });
 
-    it('returns a basic ActivtyObject when receiving an unknown id with expand=true', () => {
-      expect(activity.Object.get('thingy3', true)).to.deep.equal({'id':'thingy3'});
+    it('returns a basic ActivtyObject when receiving ' +
+      'an unknown id with expand=true', () => {
+      expect(
+        activity.Object.get('thingy3', true)
+      ).to.deep.equal({'id':'thingy3'});
     });
 
     it('returns given id param when lookup fails and expand=false', () => {
-      expect(activity.Object.get({'id': 'thingy3', 'foo': 'bar'})).to.deep.equal({'id': 'thingy3', 'foo': 'bar'});
+      expect(
+        // @ts-ignore
+        activity.Object.get({'id': 'thingy3', 'foo': 'bar'})
+      ).to.deep.equal(
+        {'id': 'thingy3', 'foo': 'bar'}
+      );
     });
   });
 
   describe('stream tests', () => {
-    let stream;
+    let stream: StreamResult;
 
     beforeEach(() => {
       stream = activity.Stream({
@@ -118,8 +135,11 @@ describe('basic tests', () => {
 
     it('renames mapped props', () => {
       expect(stream.type).to.equal('lol');
+      // @ts-ignore
       expect(stream.verb).to.not.exist;
+      // @ts-ignore
       expect(stream.context).to.equal('irc');
+      // @ts-ignore
       expect(stream.platform).to.not.exist;
     });
 
@@ -135,6 +155,7 @@ describe('basic tests', () => {
       expect(stream.object).to.deep.equal(
         { 'type': 'credentials', content: 'har', secure: true }
       );
+      // @ts-ignore
       expect(stream.object.objectType).to.not.exist;
     });
 
@@ -170,6 +191,7 @@ describe('basic tests', () => {
 
   describe('emitters', () => {
     it('emits an event on object creation', () => {
+      // @ts-ignore
       function onHandler(obj) {
         expect(obj).to.deep.equal({ 'id': 'thingy3' });
         activity.off('activity-object-create', onHandler);
