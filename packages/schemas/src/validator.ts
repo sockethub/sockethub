@@ -13,7 +13,7 @@ addFormats(ajv);
 additionsFormats2019(ajv);
 
 interface SchemasDict {
-  string?: Schema
+  [key: string]: Schema
 }
 
 const log = debug('sockethub:schemas:validator');
@@ -30,6 +30,7 @@ for (const uri in schemas) {
 
 function handleValidation(schemaRef: string, msg: IActivityStream, isObject=false): string {
   const validator = ajv.getSchema(schemaRef);
+  if (!validator) { throw new Error(`No schema registered for ${schemaRef}`); }
   let result: boolean | Promise<unknown>;
   if (isObject) {
     result = validator({ object: msg });
@@ -68,13 +69,13 @@ export function validateCredentials(msg: IActivityStream): string {
 export function validatePlatformSchema(schema: Schema): string {
   const validate = ajv.compile(PlatformSchema);
   // validate schema property
-  const err = validate(schema);
-  if (! err) {
-    return `platform schema failed to validate: ` +
-      `${validate.errors[0].instancePath} ${validate.errors[0].message}`;
-  } else {
-    return "";
+  if (! validate(schema)) {
+    if (validate?.errors) {
+      return `platform schema failed to validate: ` +
+        `${validate.errors[0].instancePath} ${validate.errors[0].message}`;
+    }
   }
+  return "";
 }
 
 export function addPlatformSchema(schema: Schema, platform_type: string) {

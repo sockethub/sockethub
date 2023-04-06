@@ -1,12 +1,13 @@
 import activityObject from "./activity-object";
 import { ObjectTypesList, ObjectTypesSchema } from "../helpers/objects";
+import { ObjectRefs } from "../types";
 
 const validActorRefs  = activityObject.properties.object.oneOf;
 const validTargetRefs = activityObject.properties.object.oneOf;
 // eslint-disable-next-line security-node/detect-crlf
 console.log(validActorRefs);
 
-const validObjectRefs = [];
+const validObjectRefs: ObjectRefs = [];
 
 ObjectTypesList.forEach(function (type) {
   validObjectRefs.push({ "$ref": "#/definitions/type/" + type });

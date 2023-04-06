@@ -19,30 +19,34 @@ function parseMsg(error: ErrorObject): string {
 }
 
 function getTypeList(msg: IActivityStream | IActivityObject): Array<string> {
-  let types = [];
+  let types: Array<string> = [];
   types.push(msg?.type);
-  for (const prop in msg) {
-    if (msg[prop]?.type) {
-      types = [...types, ...getTypeList(msg[prop])];
+  for (const prop of Object.entries(msg)) {
+    const branch = msg[prop as unknown as keyof typeof msg];
+    if ('type' in Object.entries(branch)) {
+      // FIXME How to properly type this function?
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      types = [...types, ...getTypeList(branch)];
     }
   }
   return types;
 }
 
-function getSchemaType(error: ErrorObject): string {
+function getSchemaType(error: ErrorObject): string|undefined {
   const schemaTypeRes = error.schemaPath.match(/#\/\w+\/\w+\/([\w-]+)\//);
   return schemaTypeRes ? schemaTypeRes[1] : undefined;
 }
 
-function getErrType(error: ErrorObject): string {
+function getErrType(error: ErrorObject): keyof TypeBreakdown|undefined {
   const errTypeRes = error.instancePath.match(/\/(\w+)/);
-  return errTypeRes ? errTypeRes[1] : undefined;
+  return errTypeRes ? errTypeRes[1] as keyof TypeBreakdown : undefined;
 }
 
 function getPartsCount(error: ErrorObject, types: TypeBreakdown): number {
   const schemaType = getSchemaType(error);
   const errType = getErrType(error);
-  if (!errType) { return -1; }
+  if (!errType || !schemaType) { return -1; }
   if (!types[errType]) { return -1; }
   if (!types[errType].includes(schemaType)) { return -1; }
   const parts = error.instancePath.split('/');
@@ -51,9 +55,9 @@ function getPartsCount(error: ErrorObject, types: TypeBreakdown): number {
 
 function getTypes(msg: IActivityStream): TypeBreakdown {
   return {
-    actor: getTypeList(msg.actor),
-    target: getTypeList(msg.target),
-    object: getTypeList(msg.context ? msg.object : msg)
+    actor: getTypeList(msg.actor as IActivityObject),
+    target: getTypeList(msg.target as IActivityObject),
+    object: getTypeList(msg.context ? msg.object as IActivityObject : msg as IActivityStream)
   };
 }
 
@@ -64,9 +68,14 @@ function getTypes(msg: IActivityStream): TypeBreakdown {
  * @param errors
  * @returns {string}
  */
-export default function getErrorMessage(msg, errors: Array<ErrorObject>): string {
+export default function getErrorMessage(
+  msg: IActivityStream,
+  errors: ErrorObject[] | null | undefined
+): string {
   const types = getTypes(msg);
   let deepest_entry = 0, highest_depth = -1;
+
+  if (!errors) { return "validation failed with no error message"; }
 
   for (let i = 0; i < errors.length; i++) {
     const partsCount = getPartsCount(errors[i], types);
@@ -81,7 +90,7 @@ export default function getErrorMessage(msg, errors: Array<ErrorObject>): string
     composeFinalError(errors[errors.length - 1]);
 }
 
-function composeFinalError(error) {
+function composeFinalError(error: ErrorObject) {
   // if we have yet to build an error message, assume this is an invalid type value (oneOf),
   // try to build a list of valid types
   let msg: string;

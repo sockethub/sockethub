@@ -40,3 +40,4 @@ export interface LogInterface {
   (msg: string): void;
 }
 
+export type ObjectRefs = Array<Record<string, string>>;

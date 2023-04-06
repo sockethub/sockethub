@@ -1,5 +1,7 @@
-export const validObjectRefs = [];
-export const validObjectDefs = {};
+import { ObjectRefs } from "../types";
+
+export const validObjectRefs: ObjectRefs = [];
+export const validObjectDefs: Record<string, object> = {};
 
 export const ObjectTypesSchema = {
 
@@ -226,5 +228,8 @@ ObjectTypesList.forEach(function (type) {
     return;
   }
   validObjectRefs.push({ "$ref": "#/definitions/type/" + type });
+  // FIXME How to property type these assignments?
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   validObjectDefs[type] = ObjectTypesSchema[type];
 });
