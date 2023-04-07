@@ -19,7 +19,7 @@ export interface PlatformInstanceParams {
   platform: string;
   parentId: string;
   actor?: string;
-  config: PlatformConfig;
+  config: PlatformConfigParams;
 }
 
 type EnvFormat = {
@@ -40,9 +40,14 @@ export interface MessageFromParent extends Array<string | unknown> {
   1: unknown;
 }
 
-export interface PlatformConfig {
+export interface PlatformConfigParams {
   persist?: boolean;
   requireCredentials?: Array<string>;
+}
+
+export interface PlatformConfig {
+  persist: boolean;
+  requireCredentials: Array<string>;
 }
 
 export default class PlatformInstance {
@@ -52,7 +57,10 @@ export default class PlatformInstance {
   jobQueue: JobQueue;
   readonly global: boolean = false;
   readonly completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
-  readonly config: PlatformConfig = {};
+  readonly config: PlatformConfig = {
+    persist: false,
+    requireCredentials: []
+  };
   readonly name: string;
   readonly process: ChildProcess;
   readonly debug: Debugger;
@@ -69,7 +77,7 @@ export default class PlatformInstance {
     this.id = params.identifier;
     this.name = params.platform;
     this.parentId = params.parentId;
-    this.config = params.config;
+    this.config = Object.assign(this.config, params.config) as PlatformConfig;
     if (params.actor) {
       this.actor = params.actor;
     } else {

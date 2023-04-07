@@ -16,8 +16,8 @@ class InjectedClass {}
 type InjectedRequire = (p: string) => typeof InjectedClass;
 
 interface SchemaStruct {
+  required: Array<string>;
   properties?: {
-    required: Array<string>;
     type?: {
       enum: Array<string>;
     };

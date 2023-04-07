@@ -5,7 +5,16 @@ import listener, { SocketInstance } from "./listener";
 
 const rmLog = debug('sockethub:server:janitor');
 
-class Janitor {
+export interface JanitorInterface {
+  cycleInterval: number;
+  cycleCount: number;
+  reportCount: number;
+  start(): void;
+  stop(): Promise<void>;
+}
+
+
+class Janitor implements JanitorInterface {
   cycleInterval = 15000;
   cycleCount = 0;   // a counter for each cycleInterval
   reportCount = 0;  // number of times a report is printed
@@ -78,7 +87,7 @@ class Janitor {
     }
   }
 
-  private socketExists(sessionId: string) {
+  private socketExists(sessionId: string): boolean {
     for (const socket of this.sockets) {
       if (socket.id === sessionId) {
         return true;
@@ -95,7 +104,7 @@ class Janitor {
     return await listener.io.fetchSockets();
   }
 
-  private async performStaleCheck(platformInstance: PlatformInstance) {
+  private async performStaleCheck(platformInstance: PlatformInstance): Promise<void> {
     this.removeStaleSocketSessions(platformInstance);
     // Static platforms are for global use, not tied to a unique to session / eg. credentials)
     if (!platformInstance.global) {

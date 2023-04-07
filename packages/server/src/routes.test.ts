@@ -23,6 +23,7 @@ describe("routes/base", () => {
     const app = {
       get: sinon.spy(),
     };
+    // @ts-ignore
     routes.setup(app);
     sinon.assert.callCount(app.get, Object.keys(basePaths).length);
   });
@@ -34,6 +35,7 @@ describe("routes/base", () => {
         routeHandlers[path] = route;
       },
     };
+    // @ts-ignore
     routes.setup(app);
 
     function verifyPathRoutes(pathMap: IRoutePaths) {

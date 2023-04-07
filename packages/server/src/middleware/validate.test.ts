@@ -1,19 +1,20 @@
 import { expect } from 'chai';
-// @ts-ignore
 import proxyquire from 'proxyquire';
 import asObjects from "./validate.test.data";
-import loadPlatforms from "../bootstrap/load-platforms";
+import loadPlatforms, { PlatformMap, PlatformStruct } from "../bootstrap/load-platforms";
 import validate, { registerPlatforms } from "./validate";
 import { IActivityStream } from "@sockethub/schemas";
+import { IInitObject } from "../bootstrap/init";
 
 proxyquire.noPreserveCache();
 proxyquire.noCallThru();
 
-class FakeSockethubPlatform {
+class FakeSockethubPlatform implements PlatformStruct {
   constructor() {}
   get config() {
     return {};
   }
+  // @ts-ignore
   get schema() {
     return {
       name: 'fakeplatform',
@@ -59,14 +60,16 @@ const modules = {
   'fakeplatform': FakeSockethubPlatform
 };
 
-let platforms;
-let mockInit;
+let platforms: PlatformMap;
+let mockInit: IInitObject;
 (async function () {
   // @ts-ignore
   platforms = await loadPlatforms(['fakeplatform'], async (module) => {
+    // @ts-ignore
     return Promise.resolve(modules[module]);
   });
   mockInit = {
+    version: "blah",
     platforms: platforms
   }
   await registerPlatforms(mockInit);

@@ -67,6 +67,7 @@ describe('Middleware: Expand Activity Stream', () => {
           } else {
             expect(msg instanceof Error).to.be.true;
             if (obj.error) {
+              // @ts-ignore
               expect(obj.error).to.equal(msg.toString());
             }
           }
