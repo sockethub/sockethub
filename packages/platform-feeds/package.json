@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-feeds",
   "dependencies": {
-    "html-tags": "3.3.0",
+    "html-tags": "3.3.1",
     "htmlparser2": "8.0.2",
     "node-fetch": "2.6.9",
     "podparse": "1.5.1"
