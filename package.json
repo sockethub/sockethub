@@ -7,6 +7,7 @@
     "pnpm": ">=8"
   },
   "devDependencies": {
+    "@lerna-lite/cli": "1.17.0",
     "@types/mocha": "10.0.1",
     "@typescript-eslint/eslint-plugin": "^5.57.0",
     "@typescript-eslint/parser": "5.57.0",
@@ -46,8 +47,7 @@
     "lint:doc:fix": "markdownlint --fix '**/*.md' && mdspell -n -a --en-us ./README.md ./packages/*/README.md",
     "lint:fix": "nx run-many --target=lint:fix && pnpm lint:doc:fix",
     "preinstall": "npx only-allow pnpm",
-    "publish:latest": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag latest",
-    "publish:next": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag next",
+    "publish": "pnpm clean && pnpm build && pnpm compliance && lerna publish --dist-tag latest --pre-dist-tag next",
     "start": "pnpm --filter sockethub start",
     "test": "nx run-many --target=test"
   },
