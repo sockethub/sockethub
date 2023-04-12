@@ -1,18 +1,20 @@
 import debug from 'debug';
 
 import config from '../config';
-import platformLoad from './platforms';
+import loadPlatforms, { PlatformMap } from "./load-platforms";
 
 const log = debug('sockethub:server:bootstrap:init');
-log('running init routines');
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const packageJSON = require('./../../package.json');
-const platforms = platformLoad(config.get('platforms'));
+export interface IInitObject {
+  version: string,
+  platforms: PlatformMap
+}
 
-if (config.get('info')) {
+let init: IInitObject;
+
+function printSettingsInfo(version, platforms) {
   // eslint-disable-next-line security-node/detect-crlf
-  console.log('sockethub ' + packageJSON.version);
+  console.log('sockethub ' + version);
   console.log();
 
   // eslint-disable-next-line security-node/detect-crlf
@@ -50,35 +52,26 @@ if (config.get('info')) {
       // eslint-disable-next-line security-node/detect-crlf
       console.log(' AS types: ' + platform.types.join(', '));
     }
-    console.log();
-    process.exit();
-  } else {
-    console.log();
-    process.exit();
   }
+  console.log();
+  process.exit();
 }
-
-log('finished init routines');
-
-export interface IInitObject {
-  version: string,
-  platforms: Map<string, {
-    id: string,
-    moduleName: string,
-    config: {
-      persist?: boolean
-    },
-    schemas: {
-      credentials?: object,
-      messages?: object
-    },
-    version: string,
-    types: Array<string>
-  }>,
+export default async function getInitObject(): Promise<IInitObject> {
+  if (init) { return init; } else { return await loadInit(); }
 }
+async function loadInit(): Promise<IInitObject> {
+  log('running init routines');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const packageJSON = require('./../../package.json');
+  const version = packageJSON.version;
+  const platforms = await loadPlatforms(config.get('platforms') as Array<string>);
 
-const init: IInitObject = {
-  version: packageJSON.version,
-  platforms: platforms
-};
-export default init;
+  if (config.get('info')) {
+    printSettingsInfo(packageJSON.version, platforms);
+  }
+  log('finished init routines');
+  return {
+    version: version,
+    platforms: platforms
+  };
+}

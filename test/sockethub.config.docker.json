@@ -5,11 +5,11 @@
     }
   },
   "examples": {
-    "enabled": false,
+    "enabled": true,
     "secret": 1234567890
   },
   "sockethub": {
-    "port": 10550,
+    "port": 10650,
     "host": "localhost",
     "path": "/sockethub"
   },
@@ -23,7 +23,7 @@
   "public": {
     "protocol": "http",
     "host": "localhost",
-    "port": 10550,
+    "port": 10650,
     "path": "/"
   },
   "redis": {

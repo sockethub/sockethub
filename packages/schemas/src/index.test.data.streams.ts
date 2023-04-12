@@ -47,7 +47,7 @@ export default [
       }
     },
     false,
-    '/published: must match format "date-time"'
+    '[irc] /published: must match format "date-time"'
   ],
 
   [
@@ -113,7 +113,7 @@ export default [
       }
     },
     false,
-    '/target: must have required property \'id\''
+    '[dood] /target: must have required property \'id\''
   ],
 
   [
@@ -131,7 +131,7 @@ export default [
       }
     },
     false,
-    '/object/id: must match format "iri"'
+    '[dood] /object/id: must match format "iri"'
   ],
 
   [
@@ -168,7 +168,7 @@ export default [
       }
     },
     false,
-    `/actor: must match exactly one schema in oneOf: ${ObjectTypesList.join(', ')}`
+    `[dood] /actor: must match exactly one schema in oneOf: ${ObjectTypesList.join(', ')}`
   ],
 
   [
@@ -192,7 +192,7 @@ export default [
       }
     },
     false,
-    '/actor: must have required property \'id\''
+    '[dood] /actor: must have required property \'id\''
   ],
 
   [
@@ -257,7 +257,7 @@ export default [
       }
     },
     false,
-    '/object: must NOT have additional properties: status'
+    '[dood] /object: must NOT have additional properties: status'
   ],
 
   [
@@ -305,7 +305,7 @@ export default [
       }
     },
     false,
-    '/object/presence: must be equal to one of the allowed values: ' +
+    '[dood] /object/presence: must be equal to one of the allowed values: ' +
     'away, chat, dnd, xa, offline, online'
   ],
 
@@ -352,7 +352,7 @@ export default [
       }
     },
     false,
-    '/object: must NOT have additional properties: topic'
+    '[dood] /object: must NOT have additional properties: topic'
   ],
 
 
@@ -412,7 +412,7 @@ export default [
       }
     },
     false,
-    '/object: must NOT have additional properties: id'
+    '[dood] /object: must NOT have additional properties: id'
   ],
 
   [
@@ -423,7 +423,7 @@ export default [
       "target": { "id": "irc://irc.dooder.net/a-room", "type": "room" }
     },
     false,
-    'activity stream: must have required property \'type\''
+    '[irc] activity stream: must have required property \'type\''
   ],
 
   [
@@ -441,7 +441,7 @@ export default [
       }
     },
     false,
-    '/target: must have required property \'id\''
+    '[irc] /target: must have required property \'id\''
   ],
 
   [
@@ -489,7 +489,8 @@ export default [
         }
       }
     },
-    false, "/object/subject/role: must be equal to one of the allowed values: " +
+    false,
+    "[irc] /object/subject/role: must be equal to one of the allowed values: " +
     "owner, member, participant, admin"
   ]
 ];

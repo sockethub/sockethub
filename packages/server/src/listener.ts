@@ -1,13 +1,15 @@
-import debug from 'debug';
-import bodyParser from 'body-parser';
-import express from 'express';
-import * as HTTP from 'http';
-import { Server } from 'socket.io';
+import debug from "debug";
+import bodyParser from "body-parser";
+import express from "express";
+import * as HTTP from "http";
+import { Server } from "socket.io";
+import { writeFileSync } from "fs";
 
-import config from './config';
-import routes from './routes';
+import config from "./config";
+import routes from "./routes";
+import path from "path";
 
-const log = debug('sockethub:server:listener');
+const log = debug("sockethub:server:listener");
 
 /**
  * Handles the initialization and access of Sockethub resources.
@@ -29,29 +31,62 @@ class Listener {
     const app = Listener.initExpress();
     this.http = new HTTP.Server(app);
     this.io = new Server(this.http, {
-      path: config.get('sockethub:path') as string,
+      path: config.get("sockethub:path") as string,
       cors: {
         origin: "*",
-        methods: [ "GET", "POST" ]
+        methods: ["GET", "POST"]
       }
     });
+
     routes.setup(app);
+
+    if (config.get("examples:enabled")) {
+      this.addExamplesRoutes(app);
+    }
+
     this.startHttp();
   }
 
-  private startHttp() {
-    this.http.listen(config.get('sockethub:port'), config.get('sockethub:host') as number, () => {
-      log(`sockethub listening on ` +
-        `${config.get('sockethub:host')}:${config.get('sockethub:port')}`);
+  private addExamplesRoutes(app) {
+    writeFileSync(
+      `${__dirname}/../node_modules/@sockethub/examples/build/config.json`,
+      JSON.stringify({
+        sockethub: config.get("sockethub"),
+        public: config.get("public")
+      })
+    );
+    app.use(express.static(`${__dirname}/../node_modules/@sockethub/examples/build/`));
+    app.get("*", (req, res) => {
+      res.sendFile(
+        path.resolve(
+          __dirname, '..', 'node_modules', '@sockethub', 'examples', 'build', 'index.html')
+      );
     });
+    log(
+      `examples served at ` +
+      `http://${config.get("sockethub:host")}:${config.get("sockethub:port")}`
+    );
+  }
+
+  private startHttp() {
+    this.http.listen(
+      config.get("sockethub:port"),
+      config.get("sockethub:host") as number,
+      () => {
+        log(
+          `sockethub listening on ` +
+          `ws://${config.get("sockethub:host")}:${config.get("sockethub:port")}`
+        );
+      }
+    );
   }
 
   private static initExpress() {
     const app = express();
     // templating engines
-    app.set('view engine', 'ejs');
+    app.set("view engine", "ejs");
     // use bodyParser
-    app.use(bodyParser.urlencoded({extended: true}));
+    app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
     return app;
   }
@@ -60,7 +95,7 @@ class Listener {
 const listener = new Listener();
 
 interface EmitFunction {
-  (type: string, data: unknown)
+  (type: string, data: unknown);
 }
 
 export interface SocketInstance {

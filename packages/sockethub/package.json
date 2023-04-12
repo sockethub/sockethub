@@ -38,6 +38,7 @@
     "@sockethub/platform-feeds": "workspace:^",
     "@sockethub/platform-irc": "workspace:^",
     "@sockethub/platform-xmpp": "workspace:^",
+    "@sockethub/examples": "workspace:^",
     "@sockethub/server": "workspace:^"
   },
   "scripts": {

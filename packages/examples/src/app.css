@@ -1,0 +1,53 @@
+@tailwind base;
+@layer base {
+  h1 {
+    @apply text-2xl;
+  }
+  h2 {
+    @apply text-xl;
+  }
+  h3 {
+    @apply text-lg;
+  }
+  a {
+    @apply text-blue-600 underline;
+  }
+  button:disabled {
+    background-color: lightgrey;
+  }
+  button:disabled:hover {
+    background-color: lightgrey;
+  }
+  pre {
+    white-space: pre-wrap;
+  }
+}
+@tailwind components;
+@layer components {
+  .incoming-messages {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: scroll;
+    height: 20em;
+  }
+  .incoming-messages li {
+    padding: 0.1em 1%;
+  }
+  .incoming-messages li:nth-child(odd) {
+    background: #eee;
+  }
+  .incoming-messages-container {
+    height: 20rem;
+    display: block;
+    border: 1px solid #ccc;
+    overflow: scroll;
+    overflow-anchor: none;
+  }
+  .incoming-messages-anchor {
+    overflow-anchor: auto;
+    height: 1px;
+  }
+}
+
+@tailwind utilities;

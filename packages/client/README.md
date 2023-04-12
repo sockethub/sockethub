@@ -36,12 +36,12 @@ The browser bundle is available in the dist folder:
 import '@sockethub/client/dist/sockethub-client.js';
 ```
 
-You can place it somewhere accessible from the web and include 
+You can place it somewhere accessible from the web and include
 it via a `script` tag.
 
 ```
 <script src="http://example.com/sockethub-client.js"></script>
 ```
 
-Once included in a web-page, the `SockethubClient` base object 
+Once included in a web-page, the `SockethubClient` base object
 should be on the global scope.

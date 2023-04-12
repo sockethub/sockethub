@@ -7,7 +7,7 @@
     "baseUrl": "/",
     "sourceMap": true,
     "sourceRoot": "/",
-    "mapRoot": "/",
+    "mapRoot": "/"
   },
   "include": [
     "src"

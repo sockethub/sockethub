@@ -45,4 +45,3 @@ MIT
 ## Maintainer
 
 Nick Jennings <nick@silverbucket.net>
-

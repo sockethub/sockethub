@@ -1,21 +1,24 @@
-import init from './bootstrap/init';
 import PlatformInstance, {
   platformInstances, PlatformInstanceParams, MessageFromParent } from "./platform-instance";
 import {getPlatformId} from "@sockethub/crypto";
+import { IInitObject } from "./bootstrap/init";
+
 
 class ProcessManager {
   private readonly parentId: string;
   private readonly parentSecret1: string;
   private readonly parentSecret2: string;
+  private init: IInitObject;
 
-  constructor(parentId: string, parentSecret1: string, parentSecret2: string) {
+  constructor(parentId: string, parentSecret1: string, parentSecret2: string, init: IInitObject) {
     this.parentId = parentId;
     this.parentSecret1 = parentSecret1;
     this.parentSecret2 = parentSecret2;
+    this.init = init;
   }
 
   get(platform: string, actorId: string, sessionId?: string): PlatformInstance {
-    const platformDetails = init.platforms.get(platform);
+    const platformDetails = this.init.platforms.get(platform);
     let pi;
 
     if (platformDetails.config.persist) {

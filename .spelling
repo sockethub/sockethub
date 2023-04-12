@@ -1,0 +1,33 @@
+# markdown-spellcheck spelling configuration file
+# Format - lines beginning # are comments
+# global dictionary is at the start, file overrides afterwards
+# one word per line, to define a file override use ' - filename'
+# where filename is relative to this configuration file
+sockethub
+monorepo
+crypto
+irc2as
+platform-irc
+platform-xmpp
+schemas
+Jan-Christoph
+Borchardt
+json-ld
+ActivityStreams2
+node.js
+CommonJS
+ActivtyStreams
+as2.0
+ActivityStream
+RemoteStorage
+unhosted
+noBackend
+WebFinger
+ActivityStreams
+namespace
+redis_port
+redis_host
+redis_url
+redis
+params
+e.g.

@@ -20,40 +20,44 @@
     "karma-firefox-launcher": "2.1.2",
     "karma-mocha": "^2.0.1",
     "karma-mocha-reporter": "^2.2.5",
+    "markdown-spellcheck": "1.3.1",
+    "markdownlint-cli": "0.33.0",
     "mocha": "10.2.0",
     "nx": "15.9.2",
     "typescript": "5.0.3"
   },
   "scripts": {
-    "preinstall": "npx only-allow pnpm",
-    "postinstall": "pnpm build",
-    "publish:latest": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag latest --dry-run",
-    "publish:next": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag next --dry-run",
-    "test": "nx run-many --target=test",
-    "coverage": "nx run-many --target=coverage",
+    "build": "nx run-many --target=build --all --parallel 1",
     "clean": "pnpm run --parallel -r clean",
     "clean:deps": "pnpm run --parallel -r clean:deps && npx rimraf node_modules",
     "compliance": "pnpm build && nx run-many --target=compliance --all",
-    "lint": "nx run-many --target=lint",
-    "lint:fix": "nx run-many --target=lint:fix",
-    "build": "nx run-many --target=build --all --parallel 1",
+    "coverage": "nx run-many --target=coverage",
     "dev": "pnpm build && pnpm --filter sockethub dev",
+    "docker:start": "docker compose -f docker-compose.yml up -d",
+    "docker:clean:all": "pnpm docker:stop && docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub",
+    "docker:clean:sockethub": "pnpm docker:stop && docker rm sockethub-sockethub-1; docker rmi sockethub-sockethub",
+    "docker:logs": "docker logs sockethub-sockethub-1",
+    "docker:stop": "docker compose stop",
+    "docker:build": "pnpm docker:clean:sockethub; pnpm docker:start",
+    "integration": "pnpm docker:start && pnpm integration:run; RES=$?; pnpm docker:stop; exit $RES",
+    "integration:run": "karma start --single-run --sh_port=10650 --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
+    "lint": "nx run-many --target=lint && pnpm lint:doc",
+    "lint:doc": "markdownlint '**/*.md'",
+    "lint:doc:fix": "markdownlint --fix '**/*.md' && mdspell -n -a --en-us ./README.md ./packages/*/README.md",
+    "lint:fix": "nx run-many --target=lint:fix && pnpm lint:doc:fix",
+    "preinstall": "npx only-allow pnpm",
+    "publish:latest": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag latest",
+    "publish:next": "pnpm clean && pnpm build && pnpm compliance && pnpm publish --tag next",
     "start": "pnpm --filter sockethub start",
-    "integration": "pnpm integration:setup && pnpm integration:run; RES=$?; if [[ \"$RES\" != \"0\" ]]; then pnpm integration:log; fi; pnpm integration:teardown; exit $RES",
-    "integration:single": "pnpm integration:setup && pnpm integration:run:single; RES=$?; if [[ \"$RES\" != \"0\" ]]; then pnpm integration:log; fi; pnpm integration:teardown; exit $RES",
-    "integration:run:single": "karma start --single-run --browsers FirefoxHeadless ./karma.config.js",
-    "integration:run": "karma start --single-run --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
-    "integration:log": "docker logs sockethub-sockethub-1",
-    "integration:setup": "docker compose -f docker-compose.yml up -d",
-    "integration:teardown": "docker compose stop",
-    "integration:clean": "docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub"
+    "test": "nx run-many --target=test"
   },
   "dependencies": {
     "tslib": "2.5.0"
   },
   "pnpm": {
     "overrides": {
-      "secure-store-redis": "1.4.7"
+      "secure-store-redis": "1.4.7",
+      "node-fetch": "2.6.9"
     }
   }
 }

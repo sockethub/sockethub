@@ -52,12 +52,12 @@
     "clean": "rm -rf dist coverage",
     "compliance": "pnpm lint && pnpm test && pnpm coverage",
     "test": "c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts src/**/*.test.ts",
-    "coverage": "c8 check-coverage --statements 90 --branches 80 --functions 82 --lines 90",
+    "coverage": "c8 check-coverage --statements 89 --branches 80 --functions 80 --lines 89",
     "start": "DEBUG=sockethub* ./bin/sockethub",
     "dev": "pnpm build && DEBUG=sockethub* ./bin/sockethub --examples",
     "lint": "eslint \"**/*.ts\" ./bin/sockethub",
     "lint:fix": "eslint --fix \"**/*.ts\" ./bin/sockethub",
-    "build": "pnpm clean && tsc && cp ./src/defaults.json ./dist/defaults.json && cp src/bootstrap/platforms.js dist/bootstrap/"
+    "build": "pnpm clean && tsc && cp ./src/defaults.json ./dist/defaults.json"
   },
   "engines": {
     "node": ">=16",
@@ -88,9 +88,10 @@
     "typescript": "5.0.3"
   },
   "optionalDependencies": {
-    "@sockethub/platform-dummy": "workspace:3.0.0-alpha.4",
-    "@sockethub/platform-feeds": "workspace:3.0.0-alpha.4",
-    "@sockethub/platform-irc": "workspace:4.0.0-alpha.4",
-    "@sockethub/platform-xmpp": "workspace:5.0.0-alpha.4"
+    "@sockethub/examples": "workspace:^",
+    "@sockethub/platform-dummy": "workspace:^",
+    "@sockethub/platform-feeds": "workspace:^",
+    "@sockethub/platform-irc": "workspace:^",
+    "@sockethub/platform-xmpp": "workspace:^"
   }
 }

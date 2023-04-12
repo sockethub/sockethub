@@ -56,6 +56,6 @@ modules.exports = [
       }
     },
     "error":
-      "Error: /object: must NOT have additional properties"
+      "Error: [irc] /object: must NOT have additional properties: host"
   },
 ]

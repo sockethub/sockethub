@@ -3,7 +3,7 @@ services:
   sockethub:
     build: .
     ports:
-      - 10550:10550
+      - 10650:10650
     networks:
       - sockethub-net
     depends_on:

@@ -36,7 +36,7 @@ export interface MessageFromParent extends Array<string | unknown> {
   1: unknown;
 }
 
-interface PlatformConfig {
+export interface PlatformConfig {
   persist?: boolean;
   requireCredentials?: Array<string>;
 }

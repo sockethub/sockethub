@@ -92,5 +92,8 @@ function composeFinalError(error) {
     msg = `${error.instancePath ?
       error.instancePath : 'activity stream'}: ${error.message}`;
   }
+  if ("additionalProperty" in error.params) {
+    msg += `: ${error.params.additionalProperty}`;
+  }
   return msg;
 }

@@ -7,7 +7,7 @@ import {IActivityStream} from "./types";
 import PlatformSchema from './schemas/platform';
 import ActivityStreamsSchema from './schemas/activity-stream';
 import ActivityObjectSchema from './schemas/activity-object';
-const log = debug('sockethub:schemas');
+
 const ajv = new Ajv({strictTypes: false, allErrors: true});
 addFormats(ajv);
 additionsFormats2019(ajv);
@@ -16,6 +16,7 @@ interface SchemasDict {
   string?: Schema
 }
 
+const log = debug('sockethub:schemas:validator');
 const schemaURL = 'https://sockethub.org/schemas/v0';
 const schemas: SchemasDict = {};
 
@@ -36,7 +37,11 @@ function handleValidation(schemaRef: string, msg: IActivityStream, isObject=fals
     result = validator(msg);
   }
   if (! result) {
-    return getErrorMessage(msg, validator.errors);
+    let errorMessage = getErrorMessage(msg, validator.errors);
+    if (msg.context) {
+      errorMessage = `[${msg.context}] ${errorMessage}`;
+    }
+    return errorMessage;
   }
   return "";
 }
@@ -56,6 +61,7 @@ export function validateCredentials(msg: IActivityStream): string {
   if (msg.type !== 'credentials') {
     return 'credential activity streams must have credentials set as type';
   }
+  log(`validating credentials against ${schemaURL}/context/${msg.context}/credentials`);
   return handleValidation(`${schemaURL}/context/${msg.context}/credentials`, msg);
 }
 

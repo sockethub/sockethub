@@ -25,36 +25,42 @@
     "resolveJsonModule": true,
     "downlevelIteration": true,
     "paths": {
-      "@sockethub/activity-streams.js": [
-        "packages/activity-streams.js/src/activity-streams.js"
+      "@sockethub/activity-streams": [
+        "./packages/activity-streams/src/activity-streams.js"
       ],
       "@sockethub/crypto": [
-        "packages/crypto/src/index.ts"
+        "./packages/crypto/src/index.ts"
       ],
       "@sockethub/data-layer": [
-        "packages/data-layer/src/index.ts"
+        "./packages/data-layer/src/index.ts"
       ],
       "@sockethub/irc2as": [
-        "packages/irc2as/src/index.js"
+        "./packages/irc2as/src/index.js"
       ],
       "@sockethub/platform-feeds": [
-        "packages/platform-feeds/index.js"
+        "./packages/platform-feeds/index.js"
       ],
       "@sockethub/platform-irc": [
-        "packages/platform-irc/index.js"
+        "./packages/platform-irc/index.js"
       ],
       "@sockethub/platform-xmpp": [
-        "packages/platform-xmpp/src/index.js"
+        "./packages/platform-xmpp/src/index.js"
       ],
       "@sockethub/schemas": [
-        "packages/schemas/index.js"
+        "./packages/schemas/index.js"
       ],
       "@sockethub/server": [
-        "packages/server/src/index.ts"
+        "./packages/server/src/index.ts"
       ],
       "sockethub": [
-        "packages/sockethub/bin/sockethub"
-      ]
+        "./packages/sockethub/bin/sockethub"
+      ],
+      "$components": ["./packages/examples/src/components"],
+      "$components/*": ["./packages/examples/src/components/*"],
+      "$stores": ["./packages/examples/src/stores"],
+      "$stores/*": ["./packages/examples/src/stores/*"],
+      "$lib": ["./packages/examples/src/lib"],
+      "$lib/*": ["./packages/examples/src/lib/*"]
     }
   },
   "references": [
@@ -62,7 +68,7 @@
       "path": "packages/sockethub"
     },
     {
-      "path": "packages/activity-streams.js"
+      "path": "packages/activity-streams"
     },
     {
       "path": "packages/crypto"

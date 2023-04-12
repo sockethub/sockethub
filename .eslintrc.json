@@ -3,6 +3,7 @@
     "env": {
         "browser": true,
         "es6": true,
+        "es2017": true,
         "node": true,
         "mocha": true
     },
@@ -41,7 +42,10 @@
         "eslint:recommended",
         "plugin:security-node/recommended"
     ],
-    "ignorePatterns": ["*.d.ts", "*.test.ts", "*.data.js", "packages/platform-irc/index.js"],
+    "ignorePatterns": ["*.d.ts", "*.test.ts", "*.data.js", "packages/platform-irc/index.js", "*.cjs"],
+    "settings": {
+        "svelte3/typescript": "() => require('typescript')"
+    },
     "overrides": [
         {
             "files": [
