@@ -15,6 +15,9 @@ importers:
       '@lerna-lite/cli':
         specifier: 1.17.0
         version: 1.17.0
+      '@lerna-lite/publish':
+        specifier: 1.17.0
+        version: 1.17.0
       '@types/mocha':
         specifier: 10.0.1
         version: 10.0.1
