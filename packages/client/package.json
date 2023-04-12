@@ -55,7 +55,7 @@
     "@types/node": "18.15.11",
     "@types/proxyquire": "1.3.28",
     "@types/sinon": "10.0.13",
-    "@typescript-eslint/parser": "5.57.0",
+    "@typescript-eslint/parser": "5.57.1",
     "c8": "7.13.0",
     "chai": "4.3.7",
     "eslint": "8.37.0",
