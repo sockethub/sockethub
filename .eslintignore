@@ -10,7 +10,6 @@ packages/platform-feeds/
 packages/platform-irc
 packages/schemas/schemas/
 .DS_Store
-/build
 /.svelte-kit
 /package
 .env

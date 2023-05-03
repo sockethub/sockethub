@@ -32,7 +32,7 @@
     "build": "nx run-many --target=build --all --parallel 1",
     "clean": "pnpm run --parallel -r clean",
     "clean:deps": "pnpm run --parallel -r clean:deps && npx rimraf node_modules",
-    "compliance": "pnpm build && nx run-many --target=compliance --all",
+    "compliance": "pnpm lint && pnpm build && pnpm test && pnpm coverage",
     "coverage": "nx run-many --target=coverage",
     "dev": "pnpm build && pnpm --filter sockethub dev",
     "docker:start": "docker compose -f docker-compose.yml up -d",
