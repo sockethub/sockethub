@@ -2,7 +2,9 @@
   import { connected } from "$lib/sockethub";
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   export let disabled = false;
-  export let buttonAction = () => {};
+  export let buttonAction = () => {
+    return null;
+  };
   let disabledState = false;
   $: {
     if ($connected) {

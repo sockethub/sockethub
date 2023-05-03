@@ -15,14 +15,14 @@ const defaultConfig = {
   sockethub: {
     port: 10550,
     host: "localhost",
-    path: "/sockethub"
+    path: "/sockethub",
   },
   public: {
     protocol: "http",
     host: "localhost",
     port: 10550,
-    path: "/"
-  }
+    path: "/",
+  },
 };
 
 export interface AnyActivityStream {
@@ -66,7 +66,11 @@ function handleIncomingMessage(msg: AnyActivityStream) {
 }
 
 function sockethubConnect(config: typeof defaultConfig = defaultConfig) {
-  sc = new SockethubClient(io(`${config.public.protocol}://${config.public.host}:${config.public.port}`, { path: config.sockethub.path }));
+  sc = new SockethubClient(
+    io(`${config.public.protocol}://${config.public.host}:${config.public.port}`, {
+      path: config.sockethub.path,
+    }),
+  );
   sc.socket.on("connect", stateChange("connect"));
   sc.socket.on("error", stateChange("error"));
   sc.socket.on("disconnect", stateChange("disconnect"));
@@ -78,10 +82,12 @@ if (typeof window === "object") {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   console.log("connecting to sockethub");
-  fetch("/config.json").then(async (res) => {
-    const config = await res.json();
-    sockethubConnect(config);
-  }).catch(() => {
-    sockethubConnect();
-  });
+  fetch("/config.json")
+    .then(async (res) => {
+      const config = await res.json();
+      sockethubConnect(config);
+    })
+    .catch(() => {
+      sockethubConnect();
+    });
 }
