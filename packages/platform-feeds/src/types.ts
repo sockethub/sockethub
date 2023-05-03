@@ -14,7 +14,7 @@ export interface ASFeedActor {
   id: string;
   link: string;
   description: string;
-  image: any;
+  image: unknown;
   favicon: string;
   categories: Array<string>
   language: string;
@@ -27,7 +27,7 @@ export type ASFeedStruct = {
   context: ASFeedType.FEEDS;
   actor: ASFeedActor;
   type: string;
-  object: {};
+  object: object;
 }
 
 export type ASFeedEntry = {
@@ -42,6 +42,6 @@ export type ASFeedEntry = {
   updated: string;
   datenum: number;
   tags: Array<string>
-  media: Array<any>;
+  media: Array<unknown>;
   source: string;
 }

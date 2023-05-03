@@ -27,6 +27,7 @@ const MAX_NOTE_LENGTH = 256;
 
 const basic = /\s?<!doctype html>|(<html\b[^>]*>|<body\b[^>]*>|<x-[^>]+>)+/i;
 const full = new RegExp(
+  // eslint-disable-next-line security-node/non-literal-reg-expr
   htmlTags.map((tag) => `<${tag}\\b[^>]*>`).join("|"),
   "i"
 );
@@ -168,9 +169,9 @@ class Feeds {
   private async fetchFeed(url, id): Promise<Array<ASFeedStruct>> {
     this.debug("fetching " + url);
     const res = await fetch(url);
-    let feed = getPodcastFromFeed(await res.text());
+    const feed = getPodcastFromFeed(await res.text());
     const actor = buildFeedChannel(url, feed.meta);
-    let articles = [];
+    const articles = [];
 
     for (const item of feed.episodes) {
       const article = buildFeedStruct(actor);

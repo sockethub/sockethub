@@ -32,6 +32,7 @@
   "devDependencies": {
     "@types/node": "18.15.11",
     "debug": "4.3.4",
+    "eslint": "8.39.0",
     "typescript": "5.0.3"
   },
   "peerDependencies": {
@@ -44,6 +45,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "lint": "eslint .",
     "test": "exit 0"
   }
 }

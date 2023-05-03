@@ -45,7 +45,6 @@
   "scripts": {
     "build": "true",
     "clean": "rm -rf coverage",
-    "compliance": "pnpm lint && pnpm test && pnpm coverage",
     "test": "c8 mocha *.test.js",
     "coverage": "c8 check-coverage --statements 80 --branches 55 --functions 85 --lines 80",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md",
