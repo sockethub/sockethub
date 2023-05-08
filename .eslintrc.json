@@ -40,9 +40,10 @@
     ],
     "extends": [
         "eslint:recommended",
-        "plugin:security-node/recommended"
+        "plugin:security-node/recommended",
+        "plugin:@typescript-eslint/recommended"
     ],
-    "ignorePatterns": ["*.d.ts", "*.test.ts", "*.data.js", "packages/platform-irc/index.js", "*.cjs"],
+//    "ignorePatterns": ["*.d.ts", "*.data.*", "*.cjs"],
     "settings": {
         "svelte3/typescript": "() => require('typescript')"
     },

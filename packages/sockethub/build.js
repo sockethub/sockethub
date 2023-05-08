@@ -1,4 +1,4 @@
-
+/* eslint-disable  @typescript-eslint/no-var-requires */
 const fs = require('fs');
 const packageJSON = require('./package.json');
 const moduleList = Object.keys(packageJSON.dependencies);

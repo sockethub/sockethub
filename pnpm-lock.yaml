@@ -179,9 +179,6 @@ importers:
       '@types/chai':
         specifier: 4.3.4
         version: 4.3.4
-      '@types/eslint':
-        specifier: 8.37.0
-        version: 8.37.0
       '@types/mocha':
         specifier: 10.0.1
         version: 10.0.1
@@ -196,19 +193,13 @@ importers:
         version: 10.0.13
       '@typescript-eslint/parser':
         specifier: 5.57.1
-        version: 5.57.1(eslint@8.37.0)(typescript@5.0.3)
+        version: 5.57.1(eslint@8.39.0)(typescript@5.0.3)
       c8:
         specifier: 7.13.0
         version: 7.13.0
       chai:
         specifier: 4.3.7
         version: 4.3.7
-      eslint:
-        specifier: 8.37.0
-        version: 8.37.0
-      eslint-cli:
-        specifier: 1.1.1
-        version: 1.1.1
       mocha:
         specifier: 10.2.0
         version: 10.2.0
@@ -243,9 +234,6 @@ importers:
       '@types/debug':
         specifier: 4.1.7
         version: 4.1.7
-      '@types/eslint':
-        specifier: 8.37.0
-        version: 8.37.0
       '@types/mocha':
         specifier: 10.0.1
         version: 10.0.1
@@ -263,19 +251,13 @@ importers:
         version: 10.0.13
       '@typescript-eslint/parser':
         specifier: 5.57.1
-        version: 5.57.1(eslint@8.37.0)(typescript@5.0.3)
+        version: 5.57.1(eslint@8.39.0)(typescript@5.0.3)
       c8:
         specifier: 7.13.0
         version: 7.13.0
       chai:
         specifier: 4.3.7
         version: 4.3.7
-      eslint:
-        specifier: 8.37.0
-        version: 8.37.0
-      eslint-cli:
-        specifier: 1.1.1
-        version: 1.1.1
       mocha:
         specifier: 10.2.0
         version: 10.2.0
@@ -316,9 +298,6 @@ importers:
       '@types/debug':
         specifier: 4.1.7
         version: 4.1.7
-      '@types/eslint':
-        specifier: 8.37.0
-        version: 8.37.0
       '@types/mocha':
         specifier: 10.0.1
         version: 10.0.1
@@ -333,19 +312,13 @@ importers:
         version: 10.0.13
       '@typescript-eslint/parser':
         specifier: 5.57.1
-        version: 5.57.1(eslint@8.37.0)(typescript@5.0.3)
+        version: 5.57.1(eslint@8.39.0)(typescript@5.0.3)
       c8:
         specifier: 7.13.0
         version: 7.13.0
       chai:
         specifier: 4.3.7
         version: 4.3.7
-      eslint:
-        specifier: 8.37.0
-        version: 8.37.0
-      eslint-cli:
-        specifier: 1.1.1
-        version: 1.1.1
       mocha:
         specifier: 10.2.0
         version: 10.2.0
@@ -579,9 +552,6 @@ importers:
       '@types/debug':
         specifier: 4.1.7
         version: 4.1.7
-      '@types/eslint':
-        specifier: 8.37.0
-        version: 8.37.0
       '@types/mocha':
         specifier: 10.0.1
         version: 10.0.1
@@ -597,12 +567,6 @@ importers:
       chai:
         specifier: 4.3.7
         version: 4.3.7
-      eslint:
-        specifier: 8.37.0
-        version: 8.37.0
-      eslint-cli:
-        specifier: 1.1.1
-        version: 1.1.1
       mocha:
         specifier: 10.2.0
         version: 10.2.0
@@ -680,9 +644,6 @@ importers:
       '@types/debug':
         specifier: 4.1.7
         version: 4.1.7
-      '@types/eslint':
-        specifier: 8.37.0
-        version: 8.37.0
       '@types/express':
         specifier: 4.17.17
         version: 4.17.17
@@ -713,12 +674,6 @@ importers:
       chai:
         specifier: 4.3.7
         version: 4.3.7
-      eslint:
-        specifier: 8.37.0
-        version: 8.37.0
-      eslint-cli:
-        specifier: 1.1.1
-        version: 1.1.1
       jaribu:
         specifier: 2.2.3
         version: 2.2.3
@@ -3257,13 +3212,6 @@ packages:
       '@types/ms': 0.7.31
     dev: true
 
-  /@types/eslint@8.37.0:
-    resolution: {integrity: sha512-Piet7dG2JBuDIfohBngQ3rCt7MgO9xCO4xIMKxBThCq5PNRB91IjlJ10eJVwfoNtvTErmxLzwBZ7rHZtbOMmFQ==}
-    dependencies:
-      '@types/estree': 1.0.0
-      '@types/json-schema': 7.0.11
-    dev: true
-
   /@types/estree@1.0.0:
     resolution: {integrity: sha512-WulqXMDUTYAXCjZnk6JtIHPigp55cVtDgDrO2gHRwhyJto21+1zbVCtOYB2L1F9w4qCQ0rOGWBnBe0FNTiEJIQ==}
     dev: true
@@ -3433,6 +3381,26 @@ packages:
       '@typescript-eslint/typescript-estree': 5.57.1(typescript@5.0.3)
       debug: 4.3.4(supports-color@8.1.1)
       eslint: 8.37.0
+      typescript: 5.0.3
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /@typescript-eslint/parser@5.57.1(eslint@8.39.0)(typescript@5.0.3):
+    resolution: {integrity: sha512-hlA0BLeVSA/wBPKdPGxoVr9Pp6GutGoY380FEhbVi0Ph4WNe8kLvqIRx76RSQt1lynZKfrXKs0/XeEk4zZycuA==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    peerDependencies:
+      eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
+      typescript: '*'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+    dependencies:
+      '@typescript-eslint/scope-manager': 5.57.1
+      '@typescript-eslint/types': 5.57.1
+      '@typescript-eslint/typescript-estree': 5.57.1(typescript@5.0.3)
+      debug: 4.3.4(supports-color@8.1.1)
+      eslint: 8.39.0
       typescript: 5.0.3
     transitivePeerDependencies:
       - supports-color
@@ -5575,17 +5543,6 @@ packages:
   /escape-string-regexp@4.0.0:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
-    dev: true
-
-  /eslint-cli@1.1.1:
-    resolution: {integrity: sha512-Gu+fYzt7M+jIb5szUHLl5Ex0vFY7zErbi78D7ZaaLunvVTxHRvbOlfzmJlIUWsV5WDM4qyu9TD7WnGgDaDgaMA==}
-    hasBin: true
-    dependencies:
-      chalk: 2.4.2
-      debug: 2.6.9
-      resolve: 1.22.3
-    transitivePeerDependencies:
-      - supports-color
     dev: true
 
   /eslint-config-prettier@8.8.0(eslint@8.37.0):

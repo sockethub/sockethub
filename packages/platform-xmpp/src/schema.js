@@ -1,3 +1,5 @@
+/* eslint-disable  @typescript-eslint/no-var-requires */
+
 module.exports = {
   "name": "xmpp",
   "version": require('../package.json').version,

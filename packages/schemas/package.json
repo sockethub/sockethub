@@ -27,14 +27,11 @@
   "devDependencies": {
     "@types/chai": "4.3.4",
     "@types/debug": "4.1.7",
-    "@types/eslint": "8.37.0",
     "@types/mocha": "10.0.1",
     "@types/node": "18.15.11",
     "@typescript-eslint/parser": "5.57.1",
     "c8": "7.13.0",
     "chai": "4.3.7",
-    "eslint": "8.37.0",
-    "eslint-cli": "1.1.1",
     "mocha": "10.2.0",
     "ts-node": "10.9.1",
     "typescript": "5.0.3"
@@ -43,8 +40,6 @@
     "build": "pnpm clean && tsc && ./scripts/export-json-schema.js",
     "clean": "rm -rf coverage dist",
     "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 95 --lines 95",
-    "lint": "eslint \"**/*.ts\"",
-    "lint:fix": "eslint --fix \"**/*.ts\"",
     "test": "c8 -x \"**/*.test.*\" mocha -r ts-node/register src/**/*.test.ts"
   },
   "dependencies": {

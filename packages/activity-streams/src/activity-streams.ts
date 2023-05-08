@@ -15,6 +15,8 @@
  *
  */
 
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+
 import EventEmitter from 'eventemitter3';
 import { IActivityObject, IActivityStream } from '@sockethub/schemas';
 

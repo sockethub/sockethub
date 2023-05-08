@@ -54,8 +54,6 @@
     "coverage": "c8 check-coverage --statements 89 --branches 80 --functions 80 --lines 89",
     "start": "DEBUG=sockethub* ./bin/sockethub",
     "dev": "pnpm build && DEBUG=sockethub* ./bin/sockethub --examples",
-    "lint": "eslint \"**/*.ts\" ./bin/sockethub",
-    "lint:fix": "eslint --fix \"**/*.ts\" ./bin/sockethub",
     "build": "pnpm clean && tsc && cp ./src/defaults.json ./dist/defaults.json"
   },
   "engines": {
@@ -66,7 +64,6 @@
     "@types/body-parser": "1.19.2",
     "@types/chai": "4.3.4",
     "@types/debug": "4.1.7",
-    "@types/eslint": "8.37.0",
     "@types/express": "4.17.17",
     "@types/jquery": "3.5.16",
     "@types/mocha": "10.0.1",
@@ -77,8 +74,6 @@
     "@typescript-eslint/parser": "5.57.1",
     "c8": "7.13.0",
     "chai": "4.3.7",
-    "eslint": "8.37.0",
-    "eslint-cli": "1.1.1",
     "jaribu": "2.2.3",
     "mocha": "10.2.0",
     "proxyquire": "2.1.3",

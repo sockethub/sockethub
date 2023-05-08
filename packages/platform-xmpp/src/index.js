@@ -16,12 +16,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-const { client, xml } = require("@xmpp/client");
+import { client, xml } from "@xmpp/client";
 
-const IncomingHandlers = require('./incoming-handlers');
-const PlatformSchema = require('./schema.js');
-const utils = require('./utils.js');
-
+import IncomingHandlers from './incoming-handlers';
+import PlatformSchema from "./schema.js";
+import utils from "./utils.js";
 
 /**
  * Handles all actions related to communication via. the XMPP protocol.

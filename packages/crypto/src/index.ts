@@ -1,3 +1,4 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 import { randomBytes, createCipheriv, createDecipheriv, createHash } from 'crypto';
 import {IActivityStream} from "@sockethub/schemas";
 import hash from 'object-hash';
