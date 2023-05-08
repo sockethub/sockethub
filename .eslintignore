@@ -5,7 +5,6 @@ build
 **/*.d.ts
 **/*.data.*
 packages/irc2as/
-packages/platform-feeds/
 packages/platform-irc/
 .DS_Store
 /.svelte-kit
