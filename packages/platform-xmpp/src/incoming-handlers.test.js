@@ -1,11 +1,13 @@
-import sinon from "sinon";
-import {expect} from "chai";
-import parse from "@xmpp/xml/lib/parse.js";
+const sinon = require('sinon');
+const chai = require('chai');
+const expect = chai.expect;
 
-import schemas from "@sockethub/schemas";
+const parse = require('@xmpp/xml/lib/parse');
+const schemas = require('@sockethub/schemas').default;
 
-import IncomingHandler from "./incoming-handlers.js";
-import stanzas from "./incoming-handlers.test.data.js";
+const IncomingHandler = require('./incoming-handlers');
+const stanzas = require('./incoming-handlers.test.data');
+
 
 describe('Incoming handlers', () => {
   describe('XML stanzas result in the expected AS objects', () => {
@@ -27,7 +29,7 @@ describe('Incoming handlers', () => {
       });
 
       it(`${name} - passes @sockethub/schemas validator`, () => {
-        expect(schemas.default.validateActivityStream(asobject)).to.equal("");
+        expect(schemas.validateActivityStream(asobject)).to.equal("");
       });
     });
   });

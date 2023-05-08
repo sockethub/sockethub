@@ -197,4 +197,4 @@ const stanzas = [
   // ]
 ];
 
-export default stanzas;
+module.exports = stanzas;

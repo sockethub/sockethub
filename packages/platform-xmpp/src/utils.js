@@ -1,4 +1,3 @@
-
 const utils = {
   buildXmppCredentials: function (credentials) {
     const [ username, server ] = credentials.object.userAddress.split('@');
@@ -17,4 +16,4 @@ const utils = {
   }
 };
 
-export default utils;
+module.exports = utils;

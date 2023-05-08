@@ -1,7 +1,8 @@
-import {expect} from "chai";
-import sinon from "sinon";
+const sinon = require('sinon');
+const chai = require('chai');
+const expect = chai.expect;
 
-import XMPP from "./index.js";
+const XMPP  = require("./index.js");
 
 const actor = {
   type: 'person',
