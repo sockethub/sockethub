@@ -16,19 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-if (typeof (NetSocket) !== 'object') {
-  net = require('net');
-}
-if (typeof (TlsSocket) !== 'object') {
-  tls = require('tls');
-}
-if (typeof (IrcSocket) !== 'object') {
-  IrcSocket = require('irc-socket-sasl');
-}
-if (typeof (IRC2AS) !== 'object') {
-  IRC2AS = require('@sockethub/irc2as');
-}
-
+const net = require('net');
+const tls = require('tls');
+const IrcSocket = require('irc-socket-sasl');
+const IRC2AS = require('@sockethub/irc2as');
 
 /**
  * @class IRC
@@ -170,6 +161,7 @@ IRC.prototype.config = {
  */
 
 IRC.prototype.connect = function (job, credentials, done) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   this.__getClient(job.actor.id, credentials, (err, client) => {
     if (err) { return done(err); }
     return done();
