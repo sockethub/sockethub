@@ -1,16 +1,12 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import proxyquire from 'proxyquire';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+
+import { Janitor } from "./janitor";
 
 const sockets = [
   { id: 'socket foo', emit: () => {} },
   { id: 'socket bar', emit: () => {} }
 ];
-
-proxyquire.noPreserveCache();
-proxyquire.noCallThru();
 
 function getPlatformInstanceFake() {
   return {
@@ -44,14 +40,8 @@ describe('Janitor', () => {
     this.timeout(3000);
     sandbox = sinon.createSandbox();
     fetchSocketsFake = sandbox.stub().returns(sockets);
-    const janitorMod = proxyquire('./janitor', {
-      listener: {
-        io: {
-          fetchSockets: fetchSocketsFake
-        }
-      }
-    });
-    janitor = janitorMod.default;
+
+    janitor = new Janitor();
     janitor.getSockets = fetchSocketsFake;
     expect(janitor.cycleInterval).to.not.equal(cycleInterval);
     janitor.cycleInterval = cycleInterval;

@@ -1,14 +1,8 @@
 import { expect } from 'chai';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import proxyquire from 'proxyquire';
 import asObjects from "./validate.test.data";
 import loadPlatforms from "../bootstrap/load-platforms";
 import validate, { registerPlatforms } from "./validate";
 import { IActivityStream } from "@sockethub/schemas";
-
-proxyquire.noPreserveCache();
-proxyquire.noCallThru();
 
 class FakeSockethubPlatform {
   constructor() {}

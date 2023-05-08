@@ -1,56 +1,49 @@
-import proxyquire from "proxyquire";
 import { expect } from "chai";
 import * as sinon from "sinon";
 
-proxyquire.noPreserveCache();
-proxyquire.noCallThru();
-
 const FORK_PATH = __dirname + "/platform.js";
+
+import PlatformInstance, { platformInstances } from "./platform-instance";
+
+
 
 describe("PlatformInstance", () => {
   let pi,
       sandbox,
       forkFake,
       socketMock,
-      getSocketFake,
-      PlatformInstance,
-      platformInstances;
+      getSocketFake;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
-    forkFake = sandbox.fake();
     socketMock = {
       emit: sandbox.spy(),
     };
     getSocketFake = sinon.fake.resolves(socketMock);
+    forkFake = sandbox.fake();
+  });
 
-    const PlatformInstanceMod = proxyquire("./platform-instance", {
-      "@sockethub/data-layer": {
-        JobQueue: sandbox.stub().returns({
+  function getTestPlatformInstanceClass() {
+    class TestPlatformInstance extends PlatformInstance {
+      createBull() {
+        this.bull = sandbox.stub().returns({
           shutdown: sandbox.stub(),
           on: sandbox.stub(),
           getJob: sandbox.stub(),
           initResultEvents: sandbox.stub(),
-        }),
-      },
-      child_process: {
-        fork: forkFake,
-        ChildProcess: sandbox.stub(),
-      },
-      "./listener": {
-        io: {
-          in: sandbox.stub().returns({
-            fetchSockets: () => {
-              return [socketMock];
-            },
-          }),
-        },
-        getSocket: getSocketFake,
-      },
-    });
-    PlatformInstance = PlatformInstanceMod.default;
-    platformInstances = PlatformInstanceMod.platformInstances;
-  });
+        });
+      }
+
+      initProcess(parentId, name, id, env) {
+        this.process = forkFake(FORK_PATH, [parentId, name, id], env);
+      }
+
+      createGetSocket() {
+        this.getSocket = getSocketFake;
+      }
+    }
+    return TestPlatformInstance;
+  }
 
   afterEach(() => {
     sinon.restore();
@@ -58,7 +51,8 @@ describe("PlatformInstance", () => {
 
   describe("private instance per-actor", () => {
     it("is set as non-global when an actor is provided", async () => {
-      const pi = new PlatformInstance({
+      const TestPlatformInstance = getTestPlatformInstanceClass();
+      const pi = new TestPlatformInstance({
         identifier: "id",
         platform: "name",
         parentId: "parentId",
@@ -76,7 +70,8 @@ describe("PlatformInstance", () => {
 
   describe("PlatformInstance objects", () => {
     beforeEach(() => {
-      pi = new PlatformInstance({
+      const TestPlatformInstance = getTestPlatformInstanceClass();
+      pi = new TestPlatformInstance({
         identifier: "platform identifier",
         platform: "a platform name",
         parentId: "the parentId",
@@ -97,7 +92,8 @@ describe("PlatformInstance", () => {
     });
 
     it("has expected properties", () => {
-      expect(typeof PlatformInstance).to.be.equal("function");
+      const TestPlatformInstance = getTestPlatformInstanceClass();
+      expect(typeof TestPlatformInstance).to.be.equal("function");
     });
 
     it("should have a platformInstances Map", () => {

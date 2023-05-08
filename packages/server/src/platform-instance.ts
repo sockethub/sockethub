@@ -46,11 +46,13 @@ export default class PlatformInstance {
   flaggedForTermination = false;
   initialized = false;
   jobQueue: JobQueue;
+  bull;
+  getSocket;
   readonly global: boolean = false;
   readonly completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
   readonly config: PlatformConfig = {};
   readonly name: string;
-  readonly process: ChildProcess;
+  process: ChildProcess;
   readonly debug: Debugger;
   readonly parentId: string;
   readonly sessions: Set<string> = new Set();
@@ -82,12 +84,26 @@ export default class PlatformInstance {
       env.REDIS_PORT = config.get("redis:port") as string;
     }
 
+    this.createBull();
+    this.initProcess(this.parentId, this.name, this.id, env);
+    this.createGetSocket();
+  }
+
+  createBull() {
+    this.bull = JobQueue;
+  }
+
+  initProcess(parentId, name, id, env) {
     // spin off a process
     this.process = fork(
       join(__dirname, "platform.js"),
-      [this.parentId, this.name, this.id],
+      [parentId, name, id],
       { env: env }
     );
+  }
+
+  createGetSocket() {
+    this.getSocket = getSocket;
   }
 
   /**
@@ -123,7 +139,7 @@ export default class PlatformInstance {
    * When jobs are completed or failed, we prepare the results and send them to the client socket
    */
   public initQueue(secret: string) {
-    this.jobQueue = new JobQueue(
+    this.jobQueue = new this.bull(
       this.parentId,
       this.id,
       secret,
@@ -168,7 +184,7 @@ export default class PlatformInstance {
    * @param msg ActivityStream object to send to client
    */
   public sendToClient(sessionId: string, msg: IActivityStream) {
-    getSocket(sessionId).then(
+    this.getSocket(sessionId).then(
       (socket) => {
         try {
           // this property should never be exposed externally
