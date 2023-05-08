@@ -1,12 +1,11 @@
 import sinon from "sinon";
 import {expect} from "chai";
-import parse from "@xmpp/xml/lib/parse";
+import parse from "@xmpp/xml/lib/parse.js";
 
 import schemas from "@sockethub/schemas";
 
-import IncomingHandler from "./incoming-handlers";
-import stanzas from "./incoming-handlers.test.data";
-
+import IncomingHandler from "./incoming-handlers.js";
+import stanzas from "./incoming-handlers.test.data.js";
 
 describe('Incoming handlers', () => {
   describe('XML stanzas result in the expected AS objects', () => {
@@ -28,7 +27,7 @@ describe('Incoming handlers', () => {
       });
 
       it(`${name} - passes @sockethub/schemas validator`, () => {
-        expect(schemas.validateActivityStream(asobject)).to.equal("");
+        expect(schemas.default.validateActivityStream(asobject)).to.equal("");
       });
     });
   });

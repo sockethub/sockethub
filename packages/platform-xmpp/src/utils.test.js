@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import utils from "./utils";
+import utils from "./utils.js";
 
 describe('Utils', () => {
   describe('buildXmppCredentials', () => {

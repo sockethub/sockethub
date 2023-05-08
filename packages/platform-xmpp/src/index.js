@@ -18,7 +18,7 @@
 
 import { client, xml } from "@xmpp/client";
 
-import IncomingHandlers from './incoming-handlers';
+import IncomingHandlers from './incoming-handlers.js';
 import PlatformSchema from "./schema.js";
 import utils from "./utils.js";
 
@@ -29,7 +29,7 @@ import utils from "./utils.js";
  *
  * {@link https://github.com/xmppjs/xmpp.js}
  */
-class XMPP {
+export default class XMPP {
   /**
    * Constructor called from the Sockethub `Platform` instance, passing in a
    * session object.
@@ -43,6 +43,15 @@ class XMPP {
     this.sendToClient = session.sendToClient;
     this.__forceDisconnect = false;
     this.__channels = [];
+    this.createClient();
+    this.createXml();
+  }
+
+  createClient() {
+    this.__clientConstructor = client;
+  }
+  createXml() {
+    this.__xml = xml;
   }
 
   /**
@@ -127,7 +136,7 @@ class XMPP {
       return done();
     }
     this.debug('connect called for ' + job.actor.id);
-    this.__client = client(utils.buildXmppCredentials(credentials));
+    this.__client = this.__clientConstructor(utils.buildXmppCredentials(credentials));
     this.__client.on("offline", () => {
       this.debug('offline');
     });
@@ -174,7 +183,7 @@ class XMPP {
     // TODO investigate implementation reserved nickname discovery
     let id = job.target.id.split('/')[0];
 
-    this.__client.send(xml("presence", {
+    this.__client.send(this.__xml("presence", {
       from: job.actor.id,
       to: `${job.target.id}/${job.actor.name || id}`
     })).then(done);
@@ -208,7 +217,7 @@ class XMPP {
 
     let id = job.target.id.split('/')[0];
 
-    this.__client.send(xml("presence", {
+    this.__client.send(this.__xml("presence", {
       from: job.actor.id,
       to: `${job.target.id}/${job.actor.name}` || id,
       type: 'unavailable'
@@ -266,14 +275,14 @@ class XMPP {
   send(job, done) {
     this.debug('send() called for ' + job.actor.id);
     // send message
-    const message = xml(
+    const message = this.__xml(
       "message", {
         type: job.target.type === 'room' ? 'groupchat' : 'chat',
         to: job.target.id,
         id: job.object.id
       },
-      xml("body", {}, job.object.content),
-      job.object['xmpp:replace'] ? xml("replace", {
+      this.__xml("body", {}, job.object.content),
+      job.object['xmpp:replace'] ? this.__xml("replace", {
         id: job.object['xmpp:replace'].id,
         xmlns: 'urn:xmpp:message-correct:0'
       }) : undefined
@@ -320,7 +329,7 @@ class XMPP {
       }
       // setting presence
       this.debug(`setting presence: ${job.object.presence}`);
-      this.__client.send(xml("presence", props, show, status)).then(done);
+      this.__client.send(this.__xml("presence", props, show, status)).then(done);
     } else {
       done(`unknown update object type: ${job.object.type}`);
     }
@@ -348,7 +357,7 @@ class XMPP {
    */
   'request-friend'(job,  done) {
     this.debug('request-friend() called for ' + job.actor.id);
-    this.__client.send(xml("presence", { type: "subscribe", to:job.target.id })).then(done);
+    this.__client.send(this.__xml("presence", { type: "subscribe", to:job.target.id })).then(done);
   }
 
   /**
@@ -373,7 +382,9 @@ class XMPP {
    */
   'remove-friend'(job, done) {
     this.debug('remove-friend() called for ' + job.actor.id);
-    this.__client.send(xml("presence", { type: "unsubscribe", to:job.target.id })).then(done);
+    this.__client.send(this.__xml("presence", {
+      type: "unsubscribe", to:job.target.id
+    })).then(done);
   }
 
   /**
@@ -398,7 +409,7 @@ class XMPP {
    */
   'make-friend'(job, done) {
     this.debug('make-friend() called for ' + job.actor.id);
-    this.__client.send(xml("presence", { type: "subscribe", to:job.target.id })).then(done);
+    this.__client.send(this.__xml("presence", { type: "subscribe", to:job.target.id })).then(done);
   }
 
   /**
@@ -451,12 +462,12 @@ class XMPP {
    */
   query(job, done) {
     this.debug('sending query from ' + job.actor.id + ' for ' + job.target.id);
-    this.__client.send(xml("iq",  {
+    this.__client.send(this.__xml("iq",  {
       id: 'muc_id',
       type: 'get',
       from: job.actor.id,
       to: job.target.id
-    }, xml("query", {xmlns: 'http://jabber.org/protocol/disco#items'}))).then(done);
+    }, this.__xml("query", {xmlns: 'http://jabber.org/protocol/disco#items'}))).then(done);
   }
 
   /**
@@ -479,5 +490,3 @@ class XMPP {
     this.__client.on('stanza', ih.stanza.bind(ih));
   }
 }
-
-module.exports = XMPP;

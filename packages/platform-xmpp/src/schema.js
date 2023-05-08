@@ -1,8 +1,10 @@
 /* eslint-disable  @typescript-eslint/no-var-requires */
 
-module.exports = {
+import PackageJSON from "../package.json" assert {type: "json"};
+
+const PlatformSchema = {
   "name": "xmpp",
-  "version": require('../package.json').version,
+  "version": PackageJSON.version,
   "messages": {
     "required": ['type'],
     "properties": {
@@ -49,3 +51,5 @@ module.exports = {
     }
   }
 };
+
+export default PlatformSchema;

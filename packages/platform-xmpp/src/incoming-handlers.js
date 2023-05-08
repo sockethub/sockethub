@@ -53,7 +53,7 @@ function getPresence(stanza) {
   }
 }
 
-class IncomingHandlers {
+export default class IncomingHandlers {
   constructor(session) {
     this.session = session;
   }
@@ -309,5 +309,3 @@ class IncomingHandlers {
     }
   }
 }
-
-module.exports = IncomingHandlers;
