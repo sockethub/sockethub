@@ -1,50 +1,50 @@
 /* eslint-disable  @typescript-eslint/no-var-requires */
 class Dummy {
-  constructor(cfg) {
-    cfg = typeof cfg === "object" ? cfg : {};
-    this.id = cfg.id;
-    this.debug = cfg.debug;
-  }
+    constructor(cfg) {
+        cfg = typeof cfg === "object" ? cfg : {};
+        this.id = cfg.id;
+        this.debug = cfg.debug;
+    }
 
-  get schema() {
-    return {
-      name: "dummy",
-      version: require("./package.json").version,
-      messages: {
-        required: ["type"],
-        properties: {
-          type: {
-            enum: ["echo", "fail"],
-          },
-        },
-      },
-      credentials: {},
-    };
-  }
+    get schema() {
+        return {
+            name: "dummy",
+            version: require("./package.json").version,
+            messages: {
+                required: ["type"],
+                properties: {
+                    type: {
+                        enum: ["echo", "fail"],
+                    },
+                },
+            },
+            credentials: {},
+        };
+    }
 
-  get config() {
-    return {
-      persist: false,
-      requireCredentials: [],
-    };
-  }
+    get config() {
+        return {
+            persist: false,
+            requireCredentials: [],
+        };
+    }
 
-  echo(job, cb) {
-    job.target = job.actor;
-    job.actor = {
-      id: "dummy",
-      type: "platform",
-    };
-    cb(undefined, job);
-  }
+    echo(job, cb) {
+        job.target = job.actor;
+        job.actor = {
+            id: "dummy",
+            type: "platform",
+        };
+        cb(undefined, job);
+    }
 
-  fail(job, cb) {
-    cb(new Error(job.object.content));
-  }
+    fail(job, cb) {
+        cb(new Error(job.object.content));
+    }
 
-  cleanup(cb) {
-    cb();
-  }
+    cleanup(cb) {
+        cb();
+    }
 }
 
 module.exports = Dummy;

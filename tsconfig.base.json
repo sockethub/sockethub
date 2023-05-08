@@ -1,77 +1,77 @@
 {
-  "compileOnSave": false,
-  "compilerOptions": {
-    "incremental": false,
-    "baseUrl": ".",
-    "moduleResolution": "node",
-    "module": "commonjs",
-    "target": "ES2018",
-    "lib": ["esnext"],
-    "types": ["mocha", "node"],
-    "sourceMap": true,
-    "declaration": true,
-    "esModuleInterop": true,
-    "alwaysStrict": true,
-    "strictNullChecks": false,
-    "noImplicitAny": false,
-    "noImplicitReturns": true,
-    "noImplicitThis": false,
-    "noUnusedLocals": true,
-    "resolveJsonModule": true,
-    "downlevelIteration": true,
-    "paths": {
-      "@sockethub/activity-streams": ["./packages/activity-streams/src/activity-streams.ts"],
-      "@sockethub/crypto": ["./packages/crypto/src/index.ts"],
-      "@sockethub/data-layer": ["./packages/data-layer/src/index.ts"],
-      "@sockethub/irc2as": ["./packages/irc2as/src/index.js"],
-      "@sockethub/platform-feeds": ["./packages/platform-feeds/src/index.ts"],
-      "@sockethub/platform-irc": ["./packages/platform-irc/index.js"],
-      "@sockethub/platform-xmpp": ["./packages/platform-xmpp/src/index.js"],
-      "@sockethub/schemas": ["./packages/schemas/src/index.ts"],
-      "@sockethub/server": ["./packages/server/src/index.ts"],
-      "sockethub": ["./packages/sockethub/bin/sockethub"],
-      "$components": ["./packages/examples/src/components"],
-      "$components/*": ["./packages/examples/src/components/*"],
-      "$stores": ["./packages/examples/src/stores"],
-      "$stores/*": ["./packages/examples/src/stores/*"],
-      "$lib": ["./packages/examples/src/lib"],
-      "$lib/*": ["./packages/examples/src/lib/*"]
-    }
-  },
-  "references": [
-    {
-      "path": "packages/sockethub"
+    "compileOnSave": false,
+    "compilerOptions": {
+        "incremental": false,
+        "baseUrl": ".",
+        "moduleResolution": "node",
+        "module": "commonjs",
+        "target": "ES2018",
+        "lib": ["esnext"],
+        "types": ["mocha", "node"],
+        "sourceMap": true,
+        "declaration": true,
+        "esModuleInterop": true,
+        "alwaysStrict": true,
+        "strictNullChecks": false,
+        "noImplicitAny": false,
+        "noImplicitReturns": true,
+        "noImplicitThis": false,
+        "noUnusedLocals": true,
+        "resolveJsonModule": true,
+        "downlevelIteration": true,
+        "paths": {
+            "@sockethub/activity-streams": ["./packages/activity-streams/src/activity-streams.ts"],
+            "@sockethub/crypto": ["./packages/crypto/src/index.ts"],
+            "@sockethub/data-layer": ["./packages/data-layer/src/index.ts"],
+            "@sockethub/irc2as": ["./packages/irc2as/src/index.js"],
+            "@sockethub/platform-feeds": ["./packages/platform-feeds/src/index.ts"],
+            "@sockethub/platform-irc": ["./packages/platform-irc/index.js"],
+            "@sockethub/platform-xmpp": ["./packages/platform-xmpp/src/index.js"],
+            "@sockethub/schemas": ["./packages/schemas/src/index.ts"],
+            "@sockethub/server": ["./packages/server/src/index.ts"],
+            "sockethub": ["./packages/sockethub/bin/sockethub"],
+            "$components": ["./packages/examples/src/components"],
+            "$components/*": ["./packages/examples/src/components/*"],
+            "$stores": ["./packages/examples/src/stores"],
+            "$stores/*": ["./packages/examples/src/stores/*"],
+            "$lib": ["./packages/examples/src/lib"],
+            "$lib/*": ["./packages/examples/src/lib/*"]
+        }
     },
-    {
-      "path": "packages/activity-streams"
-    },
-    {
-      "path": "packages/crypto"
-    },
-    {
-      "path": "packages/data-layer"
-    },
-    {
-      "path": "packages/irc2as"
-    },
-    {
-      "path": "packages/platform-dummy"
-    },
-    {
-      "path": "packages/platform-feeds"
-    },
-    {
-      "path": "packages/platform-irc"
-    },
-    {
-      "path": "packages/platform-xmpp"
-    },
-    {
-      "path": "packages/schemas"
-    },
-    {
-      "path": "packages/server"
-    }
-  ],
-  "exclude": ["node_modules", "dist", "*.d.ts"]
+    "references": [
+        {
+            "path": "packages/sockethub"
+        },
+        {
+            "path": "packages/activity-streams"
+        },
+        {
+            "path": "packages/crypto"
+        },
+        {
+            "path": "packages/data-layer"
+        },
+        {
+            "path": "packages/irc2as"
+        },
+        {
+            "path": "packages/platform-dummy"
+        },
+        {
+            "path": "packages/platform-feeds"
+        },
+        {
+            "path": "packages/platform-irc"
+        },
+        {
+            "path": "packages/platform-xmpp"
+        },
+        {
+            "path": "packages/schemas"
+        },
+        {
+            "path": "packages/server"
+        }
+    ],
+    "exclude": ["node_modules", "dist", "*.d.ts"]
 }

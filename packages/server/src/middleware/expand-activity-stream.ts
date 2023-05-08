@@ -10,25 +10,22 @@ asConfig.failOnUnknownObjectProperties = false;
 const activity = ASFactory(asConfig);
 
 function ensureObject(msg: unknown) {
-  return !(typeof msg !== "object" || Array.isArray(msg));
+    return !(typeof msg !== "object" || Array.isArray(msg));
 }
 
-export default function expandActivityStream(
-  msg: IActivityStream,
-  done: MiddlewareChainInterface,
-) {
-  if (!ensureObject(msg)) {
-    done(new Error(`message received is not an object.`));
-  } else if (typeof msg.context !== "string") {
-    done(new Error("activity stream must contain a context property"));
-  } else if (typeof msg.type !== "string") {
-    done(new Error("activity stream must contain a type property."));
-  } else {
-    msg = activity.Stream(msg) as IActivityStream;
-    if (!msg.actor) {
-      done(new Error("activity stream must contain an actor property."));
+export default function expandActivityStream(msg: IActivityStream, done: MiddlewareChainInterface) {
+    if (!ensureObject(msg)) {
+        done(new Error(`message received is not an object.`));
+    } else if (typeof msg.context !== "string") {
+        done(new Error("activity stream must contain a context property"));
+    } else if (typeof msg.type !== "string") {
+        done(new Error("activity stream must contain a type property."));
     } else {
-      done(msg);
+        msg = activity.Stream(msg) as IActivityStream;
+        if (!msg.actor) {
+            done(new Error("activity stream must contain an actor property."));
+        } else {
+            done(msg);
+        }
     }
-  }
 }

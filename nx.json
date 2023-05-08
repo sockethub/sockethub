@@ -1,10 +1,10 @@
 {
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "nx/tasks-runners/default",
-      "options": {
-        "cacheableOperations": ["build", "test", "lint", "lint:fix", "coverage"]
-      }
+    "tasksRunnerOptions": {
+        "default": {
+            "runner": "nx/tasks-runners/default",
+            "options": {
+                "cacheableOperations": ["build", "test", "lint", "lint:fix", "coverage"]
+            }
+        }
     }
-  }
 }

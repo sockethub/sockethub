@@ -1,30 +1,30 @@
 {
-  "name": "@sockethub/platform-dummy",
-  "description": "A sockethub platform dummy module",
-  "version": "3.0.0-alpha.4",
-  "private": false,
-  "author": "Nick Jennings <nick@silverbucket.net>",
-  "license": "LGPL-3.0+",
-  "main": "index.js",
-  "keywords": [
-    "sockethub",
-    "dummy"
-  ],
-  "peerDependencies": {
-    "@sockethub/server": "workspace:^"
-  },
-  "peerDependenciesMeta": {
-    "@sockethub/server": {
-      "optional": true
-    }
-  },
-  "scripts": {
-    "test": "exit 0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/sockethub/sockethub.git",
-    "directory": "packages/platform-dummy"
-  },
-  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-dummy"
+    "name": "@sockethub/platform-dummy",
+    "description": "A sockethub platform dummy module",
+    "version": "3.0.0-alpha.4",
+    "private": false,
+    "author": "Nick Jennings <nick@silverbucket.net>",
+    "license": "LGPL-3.0+",
+    "main": "index.js",
+    "keywords": [
+        "sockethub",
+        "dummy"
+    ],
+    "peerDependencies": {
+        "@sockethub/server": "workspace:^"
+    },
+    "peerDependenciesMeta": {
+        "@sockethub/server": {
+            "optional": true
+        }
+    },
+    "scripts": {
+        "test": "exit 0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/sockethub/sockethub.git",
+        "directory": "packages/platform-dummy"
+    },
+    "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-dummy"
 }

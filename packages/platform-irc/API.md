@@ -6,15 +6,15 @@ IRC
 
 **Kind**: global class
 
-- [IRC](#IRC)
-  - [new IRC(cfg)](#new_IRC_new)
-  - [.schema](#IRC+schema)
-  - [.connect(job, credentials, done)](#IRC+connect)
-  - [.join(job, done)](#IRC+join)
-  - [.leave(job, done)](#IRC+leave)
-  - [.send(job, done)](#IRC+send)
-  - [.update(job, done)](#IRC+update)
-  - [.query(job, done)](#IRC+query)
+-   [IRC](#IRC)
+    -   [new IRC(cfg)](#new_IRC_new)
+    -   [.schema](#IRC+schema)
+    -   [.connect(job, credentials, done)](#IRC+connect)
+    -   [.join(job, done)](#IRC+join)
+    -   [.leave(job, done)](#IRC+leave)
+    -   [.send(job, done)](#IRC+send)
+    -   [.update(job, done)](#IRC+update)
+    -   [.query(job, done)](#IRC+query)
 
 <a name="new_IRC_new"></a>
 
@@ -52,8 +52,8 @@ object.
 It will also check if the incoming AS object uses a type which exists in the
 `types` portion of the schema object (should be an array of type names).
 
-- **NOTE**: For more information on using the credentials object from a client,
-  see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
+-   **NOTE**: For more information on using the credentials object from a client,
+    see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
 
 Valid AS object for setting IRC credentials:
 

@@ -22,7 +22,7 @@ improvement are very welcome.
 ```javascript
 const ASFactory = require("@sockethub/activity-streams");
 const ActivityStreams = ASFactory({
-  failOnUnkownObjectProperties: false, // default
+    failOnUnkownObjectProperties: false, // default
 });
 ```
 
@@ -31,7 +31,7 @@ const ActivityStreams = ASFactory({
 ```javascript
 import ASFactory from "@sockethub/activity-streams";
 const ActivityStreams = ASFactory({
-  failOnUnkownObjectProperties: false, // default
+    failOnUnkownObjectProperties: false, // default
 });
 ```
 
@@ -58,26 +58,26 @@ the sub-properties `ActivityStreams.Object` and `ActivityStreams.Stream`.
 const ActivityStreams = ASFactory();
 
 ActivityStreams.Object.create({
-  id: "irc://exampleUser@irc.freenode.net",
-  type: "person",
-  name: "Example User",
-  url: "http://activitystrea.ms",
-  image: {
-    url: "http://activitystrea.ms/avatar.jpg",
-    mediaType: "image/jpeg",
-    width: 250,
-    height: 250,
-  },
+    id: "irc://exampleUser@irc.freenode.net",
+    type: "person",
+    name: "Example User",
+    url: "http://activitystrea.ms",
+    image: {
+        url: "http://activitystrea.ms/avatar.jpg",
+        mediaType: "image/jpeg",
+        width: 250,
+        height: 250,
+    },
 });
 
 ActivityStreams.on("activity-object-create", function (obj) {
-  console.log("this object was just created: ", obj);
+    console.log("this object was just created: ", obj);
 });
 
 ActivityStreams.Object.create({
-  id: "irc://irc.freenode.net/activitystreams",
-  type: "chatroom",
-  name: "#activitystreams",
+    id: "irc://irc.freenode.net/activitystreams",
+    type: "chatroom",
+    name: "#activitystreams",
 });
 
 const exampleUser = ActivityStreams.Object.get("irc://exampleUser@irc.freenode.net");
@@ -96,13 +96,13 @@ const exampleUser = ActivityStreams.Object.get("irc://exampleUser@irc.freenode.n
 //  }
 
 ActivityStreams.Stream({
-  context: "send",
-  actor: "irc://exampleUser@irc.freenode.net",
-  object: {
-    type: "message",
-    content: "hello world!",
-  },
-  target: "irc://irc.freenode.net/activitystreams",
+    context: "send",
+    actor: "irc://exampleUser@irc.freenode.net",
+    object: {
+        type: "message",
+        content: "hello world!",
+    },
+    target: "irc://irc.freenode.net/activitystreams",
 });
 // ... returns:
 //  {

@@ -15,23 +15,23 @@ var IRC2AS = require("irc2as");
 var irc2as = new IRC2AS({ server: "irc.freenode.net" });
 
 irc2as.events.on("incoming", function (asObject) {
-  console.log("activity stream: ", asObject);
+    console.log("activity stream: ", asObject);
 });
 
 irc2as.events.on("error", function (asObject) {
-  console.log("error response to something we sent: ", asObject);
+    console.log("error response to something we sent: ", asObject);
 });
 
 irc2as.events.on("unprocessed", function (line) {
-  console.log(`irc line we don't know what to do with (yet), PRs welcome`, line);
+    console.log(`irc line we don't know what to do with (yet), PRs welcome`, line);
 });
 
 irc2as.events.on("pong", function (timestamp) {
-  console.log("confirmation of something we sent: ", timestamp);
+    console.log("confirmation of something we sent: ", timestamp);
 });
 
 irc2as.events.on("ping", function (timestamp) {
-  console.log("sending ping to server at ", timestamp);
+    console.log("sending ping to server at ", timestamp);
 });
 
 // ....  some code to get IRC socket messages

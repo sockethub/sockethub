@@ -1,23 +1,23 @@
 version: "2"
 
 plugins:
-  editorconfig:
-    enabled: true
-  eslint:
-    enabled: true
-    channel: "eslint-8"
-  fixme:
-    enabled: true
-  markdownlint:
-    enabled: true
-  nodesecurity:
-    enabled: true
+    editorconfig:
+        enabled: true
+    eslint:
+        enabled: true
+        channel: "eslint-8"
+    fixme:
+        enabled: true
+    markdownlint:
+        enabled: true
+    nodesecurity:
+        enabled: true
 
 exclude_patterns:
-  - "**/dist/"
-  - "**/browser/"
-  - "**/build/"
-  - "**/node_modules/"
-  - "**/test/"
-  - "**/*.d.ts"
-  - "**/*.test.*"
+    - "**/dist/"
+    - "**/browser/"
+    - "**/build/"
+    - "**/node_modules/"
+    - "**/test/"
+    - "**/*.d.ts"
+    - "**/*.test.*"

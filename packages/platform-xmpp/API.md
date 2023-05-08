@@ -10,19 +10,19 @@ Uses `xmpp.js` as a base tool for interacting with XMPP.
 
 **Kind**: global class
 
-- [XMPP](#XMPP)
-  - [new XMPP(session)](#new_XMPP_new)
-  - [.schema](#XMPP+schema)
-  - [.connect(job, credentials, done)](#XMPP+connect)
-  - [.join(job, done)](#XMPP+join)
-  - [.leave(job, done)](#XMPP+leave)
-  - [.send(job, done)](#XMPP+send)
-  - [.update(job, done)](#XMPP+update)
-  - [.request-friend(job, done)](#XMPP+request-friend)
-  - [.remove-friend(job, done)](#XMPP+remove-friend)
-  - [.make-friend(job, done)](#XMPP+make-friend)
-  - [.query(job, done)](#XMPP+query)
-  - [.cleanup(done)](#XMPP+cleanup)
+-   [XMPP](#XMPP)
+    -   [new XMPP(session)](#new_XMPP_new)
+    -   [.schema](#XMPP+schema)
+    -   [.connect(job, credentials, done)](#XMPP+connect)
+    -   [.join(job, done)](#XMPP+join)
+    -   [.leave(job, done)](#XMPP+leave)
+    -   [.send(job, done)](#XMPP+send)
+    -   [.update(job, done)](#XMPP+update)
+    -   [.request-friend(job, done)](#XMPP+request-friend)
+    -   [.remove-friend(job, done)](#XMPP+remove-friend)
+    -   [.make-friend(job, done)](#XMPP+make-friend)
+    -   [.query(job, done)](#XMPP+query)
+    -   [.cleanup(done)](#XMPP+cleanup)
 
 <a name="new_XMPP_new"></a>
 

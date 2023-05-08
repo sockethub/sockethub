@@ -9,10 +9,7 @@ const activity = ActivityStreams(config.get("activity-streams:opts"));
  * @param obj
  * @param done
  */
-export default function createActivityObject(
-  obj: IActivityStream,
-  done: MiddlewareChainInterface,
-) {
-  activity.Object.create(obj);
-  done(obj);
+export default function createActivityObject(obj: IActivityStream, done: MiddlewareChainInterface) {
+    activity.Object.create(obj);
+    done(obj);
 }
