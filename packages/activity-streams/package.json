@@ -53,7 +53,7 @@
     "directory": "packages/activity-streams"
   },
   "scripts": {
-    "build": "pnpm compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs && rollup -c config/rollup.config.tes`t.mjs",
+    "build": "pnpm compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs && rollup -c config/rollup.config.test.mjs",
     "clean": "rm -rf build dist coverage",
     "compile": "pnpm clean && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
     "coverage": "c8 check-coverage --statements 95 --functions 90 --branches 90 --lines 95",
