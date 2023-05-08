@@ -44,7 +44,6 @@
         "plugin:security-node/recommended",
         "plugin:@typescript-eslint/recommended"
     ],
-//    "ignorePatterns": ["*.d.ts", "*.data.*", "*.cjs"],
     "settings": {
         "svelte3/typescript": "() => require('typescript')"
     },
