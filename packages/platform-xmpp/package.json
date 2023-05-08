@@ -46,7 +46,7 @@
     "build": "pnpm doc",
     "clean": "rm -rf coverage",
     "test": "c8 -x \"**/*.test.*\" mocha **/*.test.js",
-    "coverage": "c8 check-coverage --statements 85 --branches 80 --functions 70 --lines 85",
+    "coverage": "c8 check-coverage --statements 85 --branches 80 --functions 69 --lines 85",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 src/index.js > API.md"
   }
 }

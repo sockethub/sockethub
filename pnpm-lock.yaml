@@ -506,6 +506,9 @@ importers:
       '@sockethub/schemas':
         specifier: workspace:^
         version: link:../schemas
+      '@xmpp/xml':
+        specifier: 0.13.1
+        version: 0.13.1
       c8:
         specifier: 7.13.0
         version: 7.13.0
@@ -3749,7 +3752,6 @@ packages:
     engines: {node: '>= 12.4.0'}
     dependencies:
       ltx: 3.0.0
-    dev: false
 
   /@yarnpkg/lockfile@1.1.0:
     resolution: {integrity: sha512-GpSwvyXOcOOlV70vbnzjj4fW5xW/FdUF6nQEt1ENy7m4ZCczi1+/buVUPAqmGfqznsORNFzUMjctTIp8a9tuCQ==}
@@ -7643,7 +7645,6 @@ packages:
   /ltx@3.0.0:
     resolution: {integrity: sha512-bu3/4/ApUmMqVNuIkHaRhqVtEi6didYcBDIF56xhPRCzVpdztCipZ62CUuaxMlMBUzaVL93+4LZRqe02fuAG6A==}
     engines: {node: '>= 12.4.0'}
-    dev: false
 
   /luxon@3.3.0:
     resolution: {integrity: sha512-An0UCfG/rSiqtAIiBPO0Y9/zAnHUZxAMiCpTd5h2smgsj7GGmcenvrvww2cqNA8/4A5ZrD1gJpHN2mIHZQF+Mg==}

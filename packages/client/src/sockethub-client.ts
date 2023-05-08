@@ -1,6 +1,6 @@
 import EventEmitter from "eventemitter3";
 import { IActivityObject, IActivityStream } from "@sockethub/schemas";
-import ASFactory from "@sockethub/activity-streams";
+import ASFactory, {type ASManager} from "@sockethub/activity-streams";
 
 export interface EventMapping {
   credentials: Map<string, IActivityStream>;
@@ -17,7 +17,7 @@ export default class SockethubClient {
     join: new Map(),
   };
   private _socket;
-  public ActivityStreams = ASFactory({ specialObjs: ["credentials"] });
+  public ActivityStreams: ASManager;
   public socket;
   public online = false;
   public debug = true;
@@ -30,6 +30,7 @@ export default class SockethubClient {
 
     this.socket = this.createPublicEmitter();
     this.registerSocketIOHandlers();
+    this.initActivityStreams();
 
     this.ActivityStreams.on("activity-object-create", (obj) => {
       socket.emit("activity-object", obj, (err) => {
@@ -44,6 +45,10 @@ export default class SockethubClient {
     socket.on("activity-object", (obj) => {
       this.ActivityStreams.Object.create(obj);
     });
+  }
+
+  initActivityStreams() {
+    this.ActivityStreams = ASFactory({ specialObjs: ["credentials"] });
   }
 
   private createPublicEmitter(): EventEmitter {

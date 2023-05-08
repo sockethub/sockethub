@@ -1,20 +1,21 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import proxyquire from "proxyquire";
 import { expect } from "chai";
 import { createSandbox, restore } from "sinon";
 import EventEmitter from "eventemitter3";
+import {type ASManager} from "@sockethub/activity-streams";
 
-proxyquire.noPreserveCache();
-proxyquire.noCallThru();
+import SockethubClient from "./sockethub-client";
 
 describe("SockethubClient bad initialization", () => {
   it("no socket.io instance", () => {
-    const SockethubClient = proxyquire("./sockethub-client", {
-      "@sockethub/activity-streams": (config: any) => {},
-    }).default;
+    class TestSockethubClient extends SockethubClient {
+      initActivityStreams() {
+        this.ActivityStreams = {} as ASManager;
+      }
+    }
     expect(() => {
-      const junk = new SockethubClient();
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      new TestSockethubClient();
     }).to.throw("SockethubClient requires a socket.io instance");
   });
 });
@@ -35,12 +36,12 @@ describe("SockethubClient", () => {
     asinstance.Object = {
       create: sandbox.stub(),
     };
-    const SockethubClient = proxyquire("./sockethub-client", {
-      "@sockethub/activity-streams": (config: any) => {
-        return asinstance;
-      },
-    }).default;
-    sc = new SockethubClient(socket);
+    class TestSockethubClient extends SockethubClient {
+      initActivityStreams() {
+        this.ActivityStreams = asinstance as ASManager;
+      }
+    }
+    sc = new TestSockethubClient(socket);
     sandbox.spy(sc.socket, "on");
     sandbox.spy(sc.socket, "emit");
     sandbox.spy(sc.socket, "_emit");

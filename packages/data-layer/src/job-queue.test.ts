@@ -182,6 +182,7 @@ describe('JobQueue', () => {
 
   describe('onJob', () => {
     it('queues the handler', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       jobQueue.onJob((job, done) => {
         throw new Error('This handler should never be called');
       });

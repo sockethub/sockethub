@@ -26,9 +26,11 @@ describe("Middleware", () => {
 
   it("only accepts functions that expect 2 or 3 params", () => {
     const mw = middleware('test');
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    expect(()=>{mw.use((one, two, three, four) => {});}).to.throw(
+    expect(()=>{
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      mw.use((one, two, three, four) => {});}).to.throw(
       'middleware function provided with incorrect number of params: 4');
   });
 
@@ -37,7 +39,7 @@ describe("Middleware", () => {
     const funcs = [ sinon.spy(callback), sinon.spy(callback), sinon.spy(callback) ];
     const mw = middleware('test');
     for (const func of funcs) {
-      const entry = mw.use(func);
+      mw.use(func);
     }
     mw.done()('some data', (data: any) => {
       expect(data).to.eql('some data');
@@ -112,6 +114,7 @@ describe("Middleware", () => {
     for (const func of funcs) {
       mw.use(func);
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     mw.use((err: any, data: any, next: (v: any) => void) => {
       expect(err instanceof Error).to.be.true;
       expect(err.toString()).to.equal('Error: some error');
@@ -139,6 +142,7 @@ describe("Middleware", () => {
     for (const func of funcs) {
       mw.use(func);
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     mw.use((err: any, data: any, next: (v: any) => void) => {
       expect(err.toString()).to.equal('Error: some error');
       errorHandlerCalled = true;
