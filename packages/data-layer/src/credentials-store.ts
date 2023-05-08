@@ -1,3 +1,4 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 import SecureStore from "secure-store-redis";
 import debug, { Debugger } from "debug";
 import { IActivityStream, CallbackInterface } from "@sockethub/schemas";
@@ -9,7 +10,8 @@ import { RedisConfigProps, RedisConfigUrl } from "./types";
  */
 export default class CredentialsStore {
   readonly uid: string;
-  private readonly store: SecureStore;
+  store: SecureStore;
+  objectHash: (o: any) => string;
   private readonly log: Debugger;
 
   /**
@@ -24,13 +26,21 @@ export default class CredentialsStore {
     secret: string,
     redisConfig: RedisConfigProps | RedisConfigUrl
   ) {
+    this.initCrypto();
+    this.initSecureStore(secret, redisConfig);
     this.uid = `sockethub:data-layer:credentials-store:${parentId}:${sessionId}`;
+    this.log = debug(this.uid);
+  }
+
+  initCrypto() {
+    this.objectHash = crypto.objectHash;
+  }
+  initSecureStore(secret, redisConfig) {
     this.store = new SecureStore({
       namespace: this.uid,
       secret: secret,
       redis: redisConfig,
     });
-    this.log = debug(this.uid);
   }
 
   /**
@@ -50,7 +60,7 @@ export default class CredentialsStore {
         }
 
         if (credentialHash) {
-          if (credentialHash !== crypto.objectHash(credentials.object)) {
+          if (credentialHash !== this.objectHash(credentials.object)) {
             return reject(
               `provided credentials do not match existing platform instance for actor ${actor}`
             );

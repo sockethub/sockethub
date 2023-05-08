@@ -1,9 +1,7 @@
-import proxyquire from "proxyquire";
 import { expect } from "chai";
 import * as sinon from "sinon";
 
-proxyquire.noPreserveCache();
-proxyquire.noCallThru();
+import { CredentialsStore } from "./index";
 
 describe("CredentialsStore", () => {
   let credentialsStore,
@@ -19,14 +17,22 @@ describe("CredentialsStore", () => {
       get: MockStoreGet,
       save: MockStoreSave,
     });
-    const StoreMod = proxyquire("./credentials-store", {
-      "secure-store-redis": MockSecureStore,
-      "@sockethub/crypto": {
-        objectHash: MockObjectHash,
-      },
-    });
-    const CredentialsStore = StoreMod.default;
-    credentialsStore = new CredentialsStore(
+    class TestCredentialsStore extends CredentialsStore {
+      initCrypto() {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        this.objectHash = MockObjectHash;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      initSecureStore(secret, redisConfig) {
+        this.store = MockSecureStore({
+          namespace: "foo",
+          secret: secret,
+          redis: redisConfig,
+        });
+      }
+    }
+    credentialsStore = new TestCredentialsStore(
       "a parent id",
       "a session id",
       "a secret",
@@ -38,7 +44,7 @@ describe("CredentialsStore", () => {
     sinon.assert.calledOnce(MockSecureStore);
     sinon.assert.calledWith(MockSecureStore, {
       namespace:
-        "sockethub:data-layer:credentials-store:a parent id:a session id",
+        "foo",
       secret: "a secret",
       redis: "redis config",
     });

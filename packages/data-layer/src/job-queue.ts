@@ -1,7 +1,7 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 
 import Queue, { QueueOptions } from "bull";
-import crypto from "@sockethub/crypto";
+import crypto, { Crypto } from "@sockethub/crypto";
 import {
   JobDataDecrypted,
   JobDataEncrypted,
@@ -19,7 +19,8 @@ interface JobHandler {
 
 export default class JobQueue extends EventEmitter {
   readonly uid: string;
-  private readonly bull;
+  bull;
+  crypto: Crypto;
   private readonly debug: Debugger;
   private readonly secret: string;
   private handler: JobHandler;
@@ -32,14 +33,23 @@ export default class JobQueue extends EventEmitter {
     redisConfig: RedisConfig
   ) {
     super();
-    this.bull = new Queue(instanceId + sessionId, {
-      redis: redisConfig,
-    } as QueueOptions);
+    this.initBull(instanceId + sessionId, redisConfig);
+    this.initCrypto();
     this.uid = `sockethub:data-layer:job-queue:${instanceId}:${sessionId}`;
     this.secret = secret;
     this.debug = debug(this.uid);
 
     this.debug("initialized");
+  }
+
+  initBull(id, redisConfig) {
+    this.bull = new Queue(id, {
+      redis: redisConfig,
+    } as QueueOptions);
+  }
+
+  initCrypto() {
+    this.crypto = crypto;
   }
 
   async add(socketId: string, msg: IActivityStream): Promise<JobDataEncrypted> {
@@ -131,7 +141,7 @@ export default class JobQueue extends EventEmitter {
     return {
       title: title,
       sessionId: socketId,
-      msg: crypto.encrypt(msg, this.secret),
+      msg: this.crypto.encrypt(msg, this.secret),
     };
   }
 
@@ -154,6 +164,6 @@ export default class JobQueue extends EventEmitter {
   }
 
   private decryptActivityStream(msg: string): IActivityStream {
-    return crypto.decrypt(msg, this.secret);
+    return this.crypto.decrypt(msg, this.secret);
   }
 }

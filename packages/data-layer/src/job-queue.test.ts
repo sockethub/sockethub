@@ -1,11 +1,7 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import proxyquire from 'proxyquire';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 
-proxyquire.noPreserveCache();
-proxyquire.noCallThru();
+import { JobQueue } from "./index";
 
 describe('JobQueue', () => {
   let jobQueue, MockBull, bullMocks, cryptoMocks, sandbox;
@@ -31,12 +27,24 @@ describe('JobQueue', () => {
       on: sandbox.stub().callsArgWith(1, 'a job id', 'a result string')
     };
     MockBull = sandbox.stub().returns(bullMocks);
-    const JobQueueMod = proxyquire('./job-queue', {
-      'bull': MockBull,
-      '@sockethub/crypto': cryptoMocks
-    });
-    const JobQueue = JobQueueMod.default;
-    jobQueue = new JobQueue('a parent id', 'a session id', 'a secret', 'redis config');
+
+    class TestJobQueue extends JobQueue {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      initBull(id, redisConfig) {
+        this.bull = MockBull(id, {
+          redis: redisConfig
+        });
+      }
+      initCrypto() {
+        this.crypto = cryptoMocks;
+      }
+    }
+    jobQueue = new TestJobQueue(
+      'a parent id',
+      'a session id',
+      'a secret',
+      'redis config'
+    );
     jobQueue.emit = sandbox.stub();
   });
 
