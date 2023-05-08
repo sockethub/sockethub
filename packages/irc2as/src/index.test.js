@@ -1,3 +1,5 @@
+/* eslint-disable  security-node/detect-crlf */
+
 const chai = require('chai');
 const schemas = require('@sockethub/schemas').default;
 const fs = require("fs");
@@ -45,10 +47,10 @@ describe('IRC2AS', () => {
     irc2as.events.on('unprocessed', (string) => {
       console.log('unprocessed> ' + string);
     });
-    irc2as.events.on('pong', (time) => {
+    irc2as.events.on('pong', () => {
       pongs++;
     });
-    irc2as.events.on('ping', (time) => {
+    irc2as.events.on('ping', () => {
       pings++;
     });
   });
@@ -83,11 +85,14 @@ describe('IRC2AS', () => {
       for (let i = 0; i < 5; i++) {
         let names = ':hitchcock.freenode.net 353 hyper_slvrbckt @ #kosmos-random :hyper_slvrbckt ';
         for (let n = 0; n < 100; n++) {
-          names += ` gregkare${i}${n} hal8000${i}${n} botka${i}${n} raucao${i}${n} galfert${i}${n}`;
+          names +=
+            ` gregkare${i}${n} hal8000${i}${n} botka${i}${n} raucao${i}${n} galfert${i}${n}`;
         }
         irc2as.input(names);
       }
-      irc2as.input(':hitchcock.freenode.net 366 hyper_slvrbckt #kosmos-random :End of /NAMES list.');
+      irc2as.input(
+        ':hitchcock.freenode.net 366 hyper_slvrbckt #kosmos-random :End of /NAMES list.'
+      );
     });
   });
 });

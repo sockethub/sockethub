@@ -128,7 +128,9 @@ class IrcToActivityStreams {
         ase.joinRoom(channel, getNickFromServer(server));
         break;
 
-      case MODE: // custom event indicating a channel mode has been updated, used to re-query user or channel
+      // custom event indicating a channel mode has been updated, used to re-query user or channel
+      case MODE:
+        // eslint-disable-next-line no-case-declarations
         let user_mode = pos2 || content;
         if (! channel) { break; } // don't handle cases with no channel defined
         if (! pos3) { break; } // we need target user
