@@ -7,7 +7,6 @@ node_modules
 packages/irc2as/
 packages/platform-feeds/
 packages/platform-irc/
-packages/schemas/schemas/
 .DS_Store
 /.svelte-kit
 !.env.example
