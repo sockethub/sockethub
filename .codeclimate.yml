@@ -21,4 +21,3 @@ exclude_patterns:
 - "**/test/"
 - "**/*.d.ts"
 - "**/*.test.*"
-- "packages/platform-irc/"
