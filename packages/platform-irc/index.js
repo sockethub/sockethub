@@ -152,7 +152,7 @@ IRC.prototype.config = {
 /**
  * Function: connect
  *
- * Conenct to an IRC server.
+ * Connect to an IRC server.
  *
  * @param {object} job activity streams object
  * @param {object} credentials credentials object
@@ -341,7 +341,7 @@ IRC.prototype.send = function (job, done) {
 /**
  * Function: update
  *
- * Indicate a change (ie. room topic update, or nickname change).
+ * Indicate a change (e.g. room topic update, or nickname change).
  *
  * @param {object} job activity streams object // TODO LINK
  * @param {object} done callback when job is done // TODO LINK

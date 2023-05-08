@@ -1,25 +1,48 @@
+# Classes
+
+<dl>
+<dt><a href="#IRC">IRC</a></dt>
+<dd><p>IRC</p>
+</dd>
+</dl>
+
+# Constants
+
+<dl>
+<dt><a href="#net">net</a></dt>
+<dd><p>This is a platform for Sockethub implementing IRC functionality.</p>
+<p>Developed by Nick Jennings (<a href="https://github.com/silverbucket">https://github.com/silverbucket</a>)</p>
+<p>Sockethub is licensed under the LGPLv3.
+See the LICENSE file for details.</p>
+<p>The latest version of this module can be found here:
+  git://github.com/sockethub/sockethub.git</p>
+<p>For more information about Sockethub visit <a href="http://sockethub.org/">http://sockethub.org/</a>.</p>
+<p>This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</p>
+</dd>
+</dl>
+
 <a name="IRC"></a>
 
 # IRC
-
 IRC
 
-**Kind**: global class
+**Kind**: global class  
 
--   [IRC](#IRC)
-    -   [new IRC(cfg)](#new_IRC_new)
-    -   [.schema](#IRC+schema)
-    -   [.connect(job, credentials, done)](#IRC+connect)
-    -   [.join(job, done)](#IRC+join)
-    -   [.leave(job, done)](#IRC+leave)
-    -   [.send(job, done)](#IRC+send)
-    -   [.update(job, done)](#IRC+update)
-    -   [.query(job, done)](#IRC+query)
+* [IRC](#IRC)
+    * [new IRC(cfg)](#new_IRC_new)
+    * [.schema](#IRC+schema)
+    * [.connect(job, credentials, done)](#IRC+connect)
+    * [.join(job, done)](#IRC+join)
+    * [.leave(job, done)](#IRC+leave)
+    * [.send(job, done)](#IRC+send)
+    * [.update(job, done)](#IRC+update)
+    * [.query(job, done)](#IRC+query)
 
 <a name="new_IRC_new"></a>
 
 ## new IRC(cfg)
-
 Handles all actions related to communication via. the IRC protocol.
 
 Uses the `irc-factory` node module as a base tool for interacting with IRC.
@@ -42,24 +65,24 @@ Uses the `irc-factory` node module as a base tool for interacting with IRC.
 <a name="IRC+schema"></a>
 
 ## irC.schema
-
 JSON schema defining the types this platform accepts.
+
 
 In the below example, Sockethub will validate the incoming credentials object
 against whatever is defined in the `credentials` portion of the schema
 object.
 
+
 It will also check if the incoming AS object uses a type which exists in the
 `types` portion of the schema object (should be an array of type names).
 
--   **NOTE**: For more information on using the credentials object from a client,
-    see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
+* **NOTE**: For more information on using the credentials object from a client,
+see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
 
 Valid AS object for setting IRC credentials:
 
 **Kind**: instance property of [<code>IRC</code>](#IRC)  
-**Example**
-
+**Example**  
 ```js
 {
    type: 'credentials',
@@ -81,17 +104,14 @@ Valid AS object for setting IRC credentials:
    }
  }
 ```
-
 <a name="IRC+connect"></a>
 
 ## irC.connect(job, credentials, done)
-
 Function: connect
 
-Conenct to an IRC server.
+Connect to an IRC server.
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)
-
+**Kind**: instance method of [<code>IRC</code>](#IRC)  
 <table>
   <thead>
     <tr>
@@ -114,13 +134,11 @@ Conenct to an IRC server.
 <a name="IRC+join"></a>
 
 ## irC.join(job, done)
-
 Function: join
 
 Join a room or private conversation.
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)
-
+**Kind**: instance method of [<code>IRC</code>](#IRC)  
 <table>
   <thead>
     <tr>
@@ -137,8 +155,7 @@ Join a room or private conversation.
     </tr>  </tbody>
 </table>
 
-**Example**
-
+**Example**  
 ```js
 {
   context: 'irc',
@@ -156,17 +173,14 @@ Join a room or private conversation.
   object: {}
 }
 ```
-
 <a name="IRC+leave"></a>
 
 ## irC.leave(job, done)
-
 Function leave
 
 Leave a room or private conversation.
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)
-
+**Kind**: instance method of [<code>IRC</code>](#IRC)  
 <table>
   <thead>
     <tr>
@@ -183,8 +197,7 @@ Leave a room or private conversation.
     </tr>  </tbody>
 </table>
 
-**Example**
-
+**Example**  
 ```js
 {
   context: 'irc',
@@ -202,17 +215,14 @@ Leave a room or private conversation.
   object: {}
 }
 ```
-
 <a name="IRC+send"></a>
 
 ## irC.send(job, done)
-
 Function: send
 
 Send a message to a room or private conversation.
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)
-
+**Kind**: instance method of [<code>IRC</code>](#IRC)  
 <table>
   <thead>
     <tr>
@@ -229,8 +239,7 @@ Send a message to a room or private conversation.
     </tr>  </tbody>
 </table>
 
-**Example**
-
+**Example**  
 ```js
 {
    context: 'irc',
@@ -252,17 +261,14 @@ Send a message to a room or private conversation.
    }
  }
 ```
-
 <a name="IRC+update"></a>
 
 ## irC.update(job, done)
-
 Function: update
 
-Indicate a change (ie. room topic update, or nickname change).
+Indicate a change (e.g. room topic update, or nickname change).
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)
-
+**Kind**: instance method of [<code>IRC</code>](#IRC)  
 <table>
   <thead>
     <tr>
@@ -279,8 +285,7 @@ Indicate a change (ie. room topic update, or nickname change).
     </tr>  </tbody>
 </table>
 
-**Example**
-
+**Example**  
 ```js
 change topic
 
@@ -304,9 +309,7 @@ change topic
   }
 }
 ```
-
-**Example**
-
+**Example**  
 ```js
 change nickname
  {
@@ -327,17 +330,14 @@ change nickname
    }
  }
 ```
-
 <a name="IRC+query"></a>
 
 ## irC.query(job, done)
-
 Function: query
 
 Indicate an intent to query something (e.g. get a list of users in a room).
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)
-
+**Kind**: instance method of [<code>IRC</code>](#IRC)  
 <table>
   <thead>
     <tr>
@@ -354,8 +354,7 @@ Indicate an intent to query something (e.g. get a list of users in a room).
     </tr>  </tbody>
 </table>
 
-**Example**
-
+**Example**  
 ```js
 {
    context: 'irc',
@@ -399,3 +398,23 @@ Indicate an intent to query something (e.g. get a list of users in a room).
    }
  }
 ```
+<a name="net"></a>
+
+# net
+This is a platform for Sockethub implementing IRC functionality.
+
+Developed by Nick Jennings (https://github.com/silverbucket)
+
+Sockethub is licensed under the LGPLv3.
+See the LICENSE file for details.
+
+The latest version of this module can be found here:
+  git://github.com/sockethub/sockethub.git
+
+For more information about Sockethub visit http://sockethub.org/.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+**Kind**: global constant  

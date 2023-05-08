@@ -409,7 +409,7 @@ Confirm a friend request
 <a name="XMPP+query"></a>
 
 ## xmpP.query(job, done)
-Indicate an intent to query something (ie. get a list of users in a room).
+Indicate an intent to query something (e.g. get a list of users in a room).
 
 **Kind**: instance method of [<code>XMPP</code>](#XMPP)  
 <table>
