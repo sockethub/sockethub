@@ -24,11 +24,11 @@ specifics at the application layer.
 
 Example uses of Sockethub are:
 
-- Writing and receiving messages (SMTP, IMAP, Facebook, Twitter, ...)
+-   Writing and receiving messages (SMTP, IMAP, Facebook, Twitter, ...)
 
-- Instant messaging (XMPP, IRC, MSN, FB Messenger, Hangouts, ...)
+-   Instant messaging (XMPP, IRC, MSN, FB Messenger, Hangouts, ...)
 
-- Discovery (WebFinger, RDF(a), ...)
+-   Discovery (WebFinger, RDF(a), ...)
 
 The architecture of Sockethub is extensible and supports easy implementation
 of additional 'platforms' to carry out tasks.
@@ -52,11 +52,11 @@ in the `config.json`.
 
 ## Platforms
 
-- [Feeds](../platform-feeds) _(RSS, Atom)_
+-   [Feeds](../platform-feeds) _(RSS, Atom)_
 
-- [IRC](../platform-irc)
+-   [IRC](../platform-irc)
 
-- [XMPP](../platform-xmpp)
+-   [XMPP](../platform-xmpp)
 
 ## Install
 
@@ -66,31 +66,31 @@ in the `config.json`.
 
 ### Environment Variables
 
-- PORT
+-   PORT
 
 Default: `10550`
 
-- HOST
+-   HOST
 
 Default: `localhost`
 
-- DEBUG
+-   DEBUG
 
 Specify the namespace to console log, e.g. `sockethub*` will print all sockethub
 related debug statements, whereas `*` will also print any other modules debug
 statements that use the `debug` module.
 
-- REDIS_PORT
+-   REDIS_PORT
 
 Default: `6379`
 
-- REDIS_HOST
+-   REDIS_HOST
 
 Default: `localhost`
 
 **_OR_**
 
-- REDIS_URL
+-   REDIS_URL
 
 Overrides `REDIS_HOST` and `REDIS_PORT`, can specify a full redis connect URL
 (eq. `redis://username:password@host:port`)
