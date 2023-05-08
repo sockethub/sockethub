@@ -1,19 +1,19 @@
 /* eslint-disable  security-node/detect-crlf */
 
-const chai = require('chai');
-const schemas = require('@sockethub/schemas').default;
+const chai = require("chai");
+const schemas = require("@sockethub/schemas").default;
 const fs = require("fs");
-const equal = require('fast-deep-equal');
+const equal = require("fast-deep-equal");
 const expect = chai.expect;
 
-const IRC2AS = require('./index');
-const outputs = require('./index.test.data');
-const ircdata = fs.readFileSync('./src/index.test.data.irc.txt', 'utf-8');
-const inputs = ircdata.split('\n');
+const IRC2AS = require("./index");
+const outputs = require("./index.test.data");
+const ircdata = fs.readFileSync("./src/index.test.data.irc.txt", "utf-8");
+const inputs = ircdata.split("\n");
 
 function matchStream(done) {
   return (stream) => {
-    expect(typeof stream.published).to.eql('string');
+    expect(typeof stream.published).to.eql("string");
     delete stream.published;
     let matched = false;
     for (let i = 0; i <= outputs.length; i++) {
@@ -24,41 +24,43 @@ function matchStream(done) {
         break;
       }
     }
-    if (! matched) {
+    if (!matched) {
       console.log();
-      console.log('available matches:' + JSON.stringify(outputs));
-      console.log('failed to find match for: ' + JSON.stringify(stream));
-      return done(new Error('failed matching ' + JSON.stringify(stream)));
+      console.log("available matches:" + JSON.stringify(outputs));
+      console.log("failed to find match for: " + JSON.stringify(stream));
+      return done(new Error("failed matching " + JSON.stringify(stream)));
     }
     const err = schemas.validateActivityStream(stream);
     if (err) {
-      return done(new Error(err + ' - ' + JSON.stringify(stream)));
+      return done(new Error(err + " - " + JSON.stringify(stream)));
     }
   };
 }
 
-describe('IRC2AS', () => {
-  let irc2as, pongs = 0, pings = 0;
+describe("IRC2AS", () => {
+  let irc2as,
+      pongs = 0,
+      pings = 0;
   // it("provides expected properties", () => {
   beforeEach(() => {
-    irc2as = new IRC2AS({server: 'localhost'});
-    expect(irc2as).to.have.property('events');
-    expect(typeof irc2as.events.on).to.equal('function');
-    irc2as.events.on('unprocessed', (string) => {
-      console.log('unprocessed> ' + string);
+    irc2as = new IRC2AS({ server: "localhost" });
+    expect(irc2as).to.have.property("events");
+    expect(typeof irc2as.events.on).to.equal("function");
+    irc2as.events.on("unprocessed", (string) => {
+      console.log("unprocessed> " + string);
     });
-    irc2as.events.on('pong', () => {
+    irc2as.events.on("pong", () => {
       pongs++;
     });
-    irc2as.events.on('ping', () => {
+    irc2as.events.on("ping", () => {
       pings++;
     });
   });
 
-  describe('inputs generate expected outputs', () => {
+  describe("inputs generate expected outputs", () => {
     it("inputs generate expected outputs", (done) => {
-      irc2as.events.on('incoming', matchStream(done));
-      irc2as.events.on('error', matchStream(done));
+      irc2as.events.on("incoming", matchStream(done));
+      irc2as.events.on("error", matchStream(done));
       for (let i = 0; inputs.length > i; i++) {
         irc2as.input(inputs[i]);
       }
@@ -73,25 +75,25 @@ describe('IRC2AS', () => {
     });
   });
 
-  describe('handle many room joins', () => {
+  describe("handle many room joins", () => {
     let totalCount = 0;
-    it('send join messages', (done) => {
-      irc2as.events.on('incoming', () => {
+    it("send join messages", (done) => {
+      irc2as.events.on("incoming", () => {
         totalCount += 1;
         if (totalCount === 5 * 100) {
           done();
         }
       });
       for (let i = 0; i < 5; i++) {
-        let names = ':hitchcock.freenode.net 353 hyper_slvrbckt @ #kosmos-random :hyper_slvrbckt ';
+        let names = ":hitchcock.freenode.net 353 hyper_slvrbckt @ #kosmos-random :hyper_slvrbckt ";
         for (let n = 0; n < 100; n++) {
           names +=
-            ` gregkare${i}${n} hal8000${i}${n} botka${i}${n} raucao${i}${n} galfert${i}${n}`;
+            ` gregkare${i}${n} hal8000${i}${n} botka${i}${n}` + ` raucao${i}${n} galfert${i}${n}`;
         }
         irc2as.input(names);
       }
       irc2as.input(
-        ':hitchcock.freenode.net 366 hyper_slvrbckt #kosmos-random :End of /NAMES list.'
+        ":hitchcock.freenode.net 366 hyper_slvrbckt #kosmos-random :End of /NAMES list.",
       );
     });
   });

@@ -1,8 +1,10 @@
 import PlatformInstance, {
-  platformInstances, PlatformInstanceParams, MessageFromParent } from "./platform-instance";
-import {getPlatformId} from "@sockethub/crypto";
+  platformInstances,
+  PlatformInstanceParams,
+  MessageFromParent,
+} from "./platform-instance";
+import { getPlatformId } from "@sockethub/crypto";
 import { IInitObject } from "./bootstrap/init";
-
 
 class ProcessManager {
   private readonly parentId: string;
@@ -32,19 +34,23 @@ class ProcessManager {
     return pi;
   }
 
-  private createPlatformInstance(identifier: string, platform: string,
-                                 actor?: string): PlatformInstance {
+  private createPlatformInstance(
+    identifier: string,
+    platform: string,
+    actor?: string,
+  ): PlatformInstance {
     const secrets: MessageFromParent = [
-      'secrets', {
+      "secrets",
+      {
         parentSecret1: this.parentSecret1,
-        parentSecret2: this.parentSecret2
-      }
+        parentSecret2: this.parentSecret2,
+      },
     ];
     const platformInstanceConfig: PlatformInstanceParams = {
       identifier: identifier,
       platform: platform,
       parentId: this.parentId,
-      actor: actor
+      actor: actor,
     };
     const platformInstance = new PlatformInstance(platformInstanceConfig);
     platformInstance.initQueue(this.parentSecret1 + this.parentSecret2);
@@ -54,8 +60,9 @@ class ProcessManager {
 
   private ensureProcess(platform: string, sessionId?: string, actor?: string): PlatformInstance {
     const identifier = getPlatformId(platform, actor);
-    const platformInstance = platformInstances.get(identifier) ||
-              this.createPlatformInstance(identifier, platform, actor);
+    const platformInstance =
+      platformInstances.get(identifier) ||
+      this.createPlatformInstance(identifier, platform, actor);
     if (sessionId) {
       platformInstance.registerSession(sessionId);
     }

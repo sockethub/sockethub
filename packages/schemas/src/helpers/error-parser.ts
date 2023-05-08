@@ -1,19 +1,19 @@
-import {ErrorObject} from "ajv";
-import {ObjectTypesList} from "./objects";
-import {IActivityStream, IActivityObject} from "../types";
+import { ErrorObject } from "ajv";
+import { ObjectTypesList } from "./objects";
+import { IActivityStream, IActivityObject } from "../types";
 
 interface TypeBreakdown {
-  actor: Array<string>,
-  object: Array<string>,
-  target: Array<string>
+  actor: Array<string>;
+  object: Array<string>;
+  target: Array<string>;
 }
 
 function parseMsg(error: ErrorObject): string {
-  let err = `${error.instancePath ? error.instancePath : 'activity stream'}: ${error.message}`;
-  if (error.keyword === 'additionalProperties') {
+  let err = `${error.instancePath ? error.instancePath : "activity stream"}: ${error.message}`;
+  if (error.keyword === "additionalProperties") {
     err += `: ${error.params.additionalProperty}`;
-  } else if (error.keyword === 'enum') {
-    err += `: ${error.params.allowedValues.join(', ')}`;
+  } else if (error.keyword === "enum") {
+    err += `: ${error.params.allowedValues.join(", ")}`;
   }
   return err;
 }
@@ -42,10 +42,16 @@ function getErrType(error: ErrorObject): string {
 function getPartsCount(error: ErrorObject, types: TypeBreakdown): number {
   const schemaType = getSchemaType(error);
   const errType = getErrType(error);
-  if (!errType) { return -1; }
-  if (!types[errType]) { return -1; }
-  if (!types[errType].includes(schemaType)) { return -1; }
-  const parts = error.instancePath.split('/');
+  if (!errType) {
+    return -1;
+  }
+  if (!types[errType]) {
+    return -1;
+  }
+  if (!types[errType].includes(schemaType)) {
+    return -1;
+  }
+  const parts = error.instancePath.split("/");
   return parts.length;
 }
 
@@ -53,7 +59,7 @@ function getTypes(msg: IActivityStream): TypeBreakdown {
   return {
     actor: getTypeList(msg.actor),
     target: getTypeList(msg.target),
-    object: getTypeList(msg.context ? msg.object : msg)
+    object: getTypeList(msg.context ? msg.object : msg),
   };
 }
 
@@ -66,7 +72,8 @@ function getTypes(msg: IActivityStream): TypeBreakdown {
  */
 export default function getErrorMessage(msg, errors: Array<ErrorObject>): string {
   const types = getTypes(msg);
-  let deepest_entry = 0, highest_depth = -1;
+  let deepest_entry = 0,
+      highest_depth = -1;
 
   for (let i = 0; i < errors.length; i++) {
     const partsCount = getPartsCount(errors[i], types);
@@ -76,21 +83,19 @@ export default function getErrorMessage(msg, errors: Array<ErrorObject>): string
     }
   }
 
-  return highest_depth >= 0 ?
-    parseMsg(errors[deepest_entry]) :
-    composeFinalError(errors[errors.length - 1]);
+  return highest_depth >= 0
+    ? parseMsg(errors[deepest_entry])
+    : composeFinalError(errors[errors.length - 1]);
 }
 
 function composeFinalError(error) {
   // if we have yet to build an error message, assume this is an invalid type value (oneOf),
   // try to build a list of valid types
   let msg: string;
-  if (error.keyword === 'oneOf') {
-    msg = `${error.instancePath}: ${error.message}: ` +
-      `${ObjectTypesList.join(', ')}`;
+  if (error.keyword === "oneOf") {
+    msg = `${error.instancePath}: ${error.message}: ` + `${ObjectTypesList.join(", ")}`;
   } else {
-    msg = `${error.instancePath ?
-      error.instancePath : 'activity stream'}: ${error.message}`;
+    msg = `${error.instancePath ? error.instancePath : "activity stream"}: ${error.message}`;
   }
   if ("additionalProperty" in error.params) {
     msg += `: ${error.params.additionalProperty}`;

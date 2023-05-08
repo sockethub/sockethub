@@ -1,23 +1,23 @@
-import debug from 'debug';
-import Ajv, {Schema} from 'ajv';
-import addFormats from 'ajv-formats';
-import additionsFormats2019 from 'ajv-formats-draft2019';
+import debug from "debug";
+import Ajv, { Schema } from "ajv";
+import addFormats from "ajv-formats";
+import additionsFormats2019 from "ajv-formats-draft2019";
 import getErrorMessage from "./helpers/error-parser";
-import {IActivityStream} from "./types";
-import PlatformSchema from './schemas/platform';
-import ActivityStreamsSchema from './schemas/activity-stream';
-import ActivityObjectSchema from './schemas/activity-object';
+import { IActivityStream } from "./types";
+import PlatformSchema from "./schemas/platform";
+import ActivityStreamsSchema from "./schemas/activity-stream";
+import ActivityObjectSchema from "./schemas/activity-object";
 
-const ajv = new Ajv({strictTypes: false, allErrors: true});
+const ajv = new Ajv({ strictTypes: false, allErrors: true });
 addFormats(ajv);
 additionsFormats2019(ajv);
 
 interface SchemasDict {
-  string?: Schema
+  string?: Schema;
 }
 
-const log = debug('sockethub:schemas:validator');
-const schemaURL = 'https://sockethub.org/schemas/v0';
+const log = debug("sockethub:schemas:validator");
+const schemaURL = "https://sockethub.org/schemas/v0";
 const schemas: SchemasDict = {};
 
 schemas[`${schemaURL}/activity-stream`] = ActivityStreamsSchema;
@@ -28,7 +28,7 @@ for (const uri in schemas) {
   ajv.addSchema(schemas[uri], uri);
 }
 
-function handleValidation(schemaRef: string, msg: IActivityStream, isObject=false): string {
+function handleValidation(schemaRef: string, msg: IActivityStream, isObject = false): string {
   const validator = ajv.getSchema(schemaRef);
   let result: boolean | Promise<unknown>;
   if (isObject) {
@@ -36,7 +36,7 @@ function handleValidation(schemaRef: string, msg: IActivityStream, isObject=fals
   } else {
     result = validator(msg);
   }
-  if (! result) {
+  if (!result) {
     let errorMessage = getErrorMessage(msg, validator.errors);
     if (msg.context) {
       errorMessage = `[${msg.context}] ${errorMessage}`;
@@ -56,10 +56,10 @@ export function validateActivityStream(msg: IActivityStream): string {
 
 export function validateCredentials(msg: IActivityStream): string {
   if (!msg.context) {
-    return 'credential activity streams must have a context set';
+    return "credential activity streams must have a context set";
   }
-  if (msg.type !== 'credentials') {
-    return 'credential activity streams must have credentials set as type';
+  if (msg.type !== "credentials") {
+    return "credential activity streams must have credentials set as type";
   }
   log(`validating credentials against ${schemaURL}/context/${msg.context}/credentials`);
   return handleValidation(`${schemaURL}/context/${msg.context}/credentials`, msg);
@@ -69,9 +69,11 @@ export function validatePlatformSchema(schema: Schema): string {
   const validate = ajv.compile(PlatformSchema);
   // validate schema property
   const err = validate(schema);
-  if (! err) {
-    return `platform schema failed to validate: ` +
-      `${validate.errors[0].instancePath} ${validate.errors[0].message}`;
+  if (!err) {
+    return (
+      `platform schema failed to validate: ` +
+      `${validate.errors[0].instancePath} ${validate.errors[0].message}`
+    );
   } else {
     return "";
   }

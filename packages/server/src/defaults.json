@@ -1,7 +1,7 @@
 {
   "activity-streams": {
     "opts": {
-      "specialObjs": [ "credentials" ]
+      "specialObjs": ["credentials"]
     }
   },
   "examples": {

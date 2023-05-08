@@ -24,7 +24,7 @@ export default class CredentialsStore {
     parentId: string,
     sessionId: string,
     secret: string,
-    redisConfig: RedisConfigProps | RedisConfigUrl
+    redisConfig: RedisConfigProps | RedisConfigUrl,
   ) {
     this.initCrypto();
     this.initSecureStore(secret, redisConfig);
@@ -62,7 +62,7 @@ export default class CredentialsStore {
         if (credentialHash) {
           if (credentialHash !== this.objectHash(credentials.object)) {
             return reject(
-              `provided credentials do not match existing platform instance for actor ${actor}`
+              `provided credentials do not match existing platform instance for actor ${actor}`,
             );
           }
         }

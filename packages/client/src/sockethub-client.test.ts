@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { createSandbox, restore } from "sinon";
 import EventEmitter from "eventemitter3";
-import {type ASManager} from "@sockethub/activity-streams";
+import { type ASManager } from "@sockethub/activity-streams";
 
 import SockethubClient from "./sockethub-client";
 
@@ -92,8 +92,7 @@ describe("SockethubClient", () => {
       asinstance.emit("activity-object-create", { foo: "bar" });
       setTimeout(() => {
         expect(socket.emit.callCount).to.equal(1);
-        expect(socket.emit.calledWithMatch("activity-object", { foo: "bar" }))
-          .to.be.true;
+        expect(socket.emit.calledWithMatch("activity-object", { foo: "bar" })).to.be.true;
         done();
       }, 0);
     });

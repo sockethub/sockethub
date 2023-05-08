@@ -59,7 +59,7 @@ class Sockethub {
       this.parentId,
       this.parentSecret1,
       this.parentSecret2,
-      init
+      init,
     );
 
     this.platforms = init.platforms;
@@ -85,7 +85,7 @@ class Sockethub {
             this.parentId,
             socket.id,
             this.parentSecret1 + sessionSecret,
-            nconf.get("redis")
+            nconf.get("redis"),
           );
 
     sessionLog(`socket.io connection`);
@@ -107,7 +107,7 @@ class Sockethub {
         .use((data, next) => {
           next();
         })
-        .done()
+        .done(),
     );
 
     // when new activity objects are created on the client side, an event is
@@ -123,7 +123,7 @@ class Sockethub {
         .use((data, next) => {
           next();
         })
-        .done()
+        .done(),
     );
 
     socket.on(
@@ -142,11 +142,7 @@ class Sockethub {
           next(attachError(err, data));
         })
         .use(async (msg: IActivityStream, next) => {
-          const platformInstance = this.processManager.get(
-            msg.context,
-            msg.actor.id,
-            socket.id
-          );
+          const platformInstance = this.processManager.get(msg.context, msg.actor.id, socket.id);
           // job validated and queued, stores socket.io callback for when job is completed
           const job = await platformInstance.jobQueue.add(socket.id, msg);
           if (job) {
@@ -157,7 +153,7 @@ class Sockethub {
             next(msg);
           }
         })
-        .done()
+        .done(),
     );
   }
 }

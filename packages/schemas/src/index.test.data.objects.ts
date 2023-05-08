@@ -1,235 +1,235 @@
-import { ObjectTypesList } from './helpers/objects';
+import { ObjectTypesList } from "./helpers/objects";
 
 export default [
   [
-    'room object',
+    "room object",
     {
-      id: 'irc.freenode.net/server',
-      type: 'room',
-      name: 'sockethub'
+      id: "irc.freenode.net/server",
+      type: "room",
+      name: "sockethub",
     },
     true,
-    ``
+    ``,
   ],
 
   [
-    'credentials with no props',
+    "credentials with no props",
     {
-      type: 'credentials'
+      type: "credentials",
     },
     false,
-    `/object: must match exactly one schema in oneOf: ${ObjectTypesList.join(', ')}`
+    `/object: must match exactly one schema in oneOf: ${ObjectTypesList.join(", ")}`,
   ],
 
   [
-    'credentials with props',
+    "credentials with props",
     {
-      type: 'credentials',
+      type: "credentials",
       user: "foo",
-      pass: "bar"
+      pass: "bar",
     },
     false,
-    `/object: must match exactly one schema in oneOf: ${ObjectTypesList.join(', ')}`
+    `/object: must match exactly one schema in oneOf: ${ObjectTypesList.join(", ")}`,
   ],
 
   [
-    'bad target',
+    "bad target",
     {
-      type: 'person',
-      name: 'bob'
+      type: "person",
+      name: "bob",
     },
     false,
-    '/object: must have required property \'id\''
+    "/object: must have required property 'id'",
   ],
 
   [
-    'bad iri in object id',
+    "bad iri in object id",
     {
-      id: 'example.org/some/path.html',
-      type: 'website'
+      id: "example.org/some/path.html",
+      type: "website",
     },
     false,
-    '/object/id: must match format "iri"'
+    '/object/id: must match format "iri"',
   ],
 
   [
-    'valid iri in object id',
+    "valid iri in object id",
     {
-      id: 'https://example.org/some/path.html',
-      type: 'website'
+      id: "https://example.org/some/path.html",
+      type: "website",
     },
     true,
-    ''
+    "",
   ],
 
   [
-    'wrong actor type',
+    "wrong actor type",
     {
-      id: 'doobar@freenode.net/channel',
-      type: 'foo',
-      content: 'hi there'
+      id: "doobar@freenode.net/channel",
+      type: "foo",
+      content: "hi there",
     },
     false,
-    `/object: must match exactly one schema in oneOf: ${ObjectTypesList.join(', ')}`
+    `/object: must match exactly one schema in oneOf: ${ObjectTypesList.join(", ")}`,
   ],
 
   [
-    'missing actor id',
+    "missing actor id",
     {
-      type: 'person',
-      name: 'dood'
+      type: "person",
+      name: "dood",
     },
     false,
-    '/object: must have required property \'id\''
+    "/object: must have required property 'id'",
   ],
 
   [
-    'attendance request',
+    "attendance request",
     {
-      type: 'attendance',
+      type: "attendance",
     },
     true,
-    ''
+    "",
   ],
 
   [
-    'attendance response',
+    "attendance response",
     {
-      type: 'attendance',
-      members: ['bill', 'bob', 'hank']
+      type: "attendance",
+      members: ["bill", "bob", "hank"],
     },
     true,
-    ''
+    "",
   ],
 
   [
-    'invalid attendance request',
+    "invalid attendance request",
     {
-      type: 'attendance',
-      status: 'foobar'
+      type: "attendance",
+      status: "foobar",
     },
     false,
-    '/object: must NOT have additional properties: status'
+    "/object: must NOT have additional properties: status",
   ],
 
   [
-    'setting presence',
+    "setting presence",
     {
-      type: 'presence',
-      presence: 'away',
-      content: 'forgot the milk'
+      type: "presence",
+      presence: "away",
+      content: "forgot the milk",
     },
     true,
-    ''
+    "",
   ],
 
   [
-    'setting invalid presence',
+    "setting invalid presence",
     {
-      type: 'presence',
-      presence: 'afk',
-      content: 'forgot the milk'
+      type: "presence",
+      presence: "afk",
+      content: "forgot the milk",
     },
     false,
-    '/object/presence: must be equal to one of the allowed values: ' +
-    'away, chat, dnd, xa, offline, online'
+    "/object/presence: must be equal to one of the allowed values: " +
+      "away, chat, dnd, xa, offline, online",
   ],
 
   [
-    'setting topic',
+    "setting topic",
     {
-      type: 'topic',
-      content: 'the topic is goats'
+      type: "topic",
+      content: "the topic is goats",
     },
     true,
-    ''
+    "",
   ],
 
   [
-    'setting topic incorrectly',
+    "setting topic incorrectly",
     {
-      type: 'topic',
-      topic: 'the topic is goats'
+      type: "topic",
+      topic: "the topic is goats",
     },
     false,
-    '/object: must NOT have additional properties: topic'
+    "/object: must NOT have additional properties: topic",
   ],
 
-
   [
-    'send message',
+    "send message",
     {
-      type: 'message',
-      content: 'the message is goats'
+      type: "message",
+      content: "the message is goats",
     },
     true,
-    ''
+    "",
   ],
 
   [
-    'change user address',
+    "change user address",
     {
-      type: 'address'
+      type: "address",
     },
     true,
-    ''
+    "",
   ],
 
   [
-    'change user address incorrectly',
+    "change user address incorrectly",
     {
-      type: 'address',
-      id: 'futurebar@example.com',
+      type: "address",
+      id: "futurebar@example.com",
     },
     false,
-    '/object: must NOT have additional properties: id'
+    "/object: must NOT have additional properties: id",
   ],
 
-
   [
-    'invalid room',
+    "invalid room",
     {
-      "type":"room",
-      "name":"sh-9K3Vk"
+      type: "room",
+      name: "sh-9K3Vk",
     },
     false,
-    '/object: must have required property \'id\''
+    "/object: must have required property 'id'",
   ],
 
   [
-    'relationship',
+    "relationship",
     {
-      "type":"relationship",
-      "relationship":"role",
-      "subject": {
-        "type":"presence",
-        "role":"owner"
+      type: "relationship",
+      relationship: "role",
+      subject: {
+        type: "presence",
+        role: "owner",
       },
-      "object":{
-        "type":"room",
-        "id":"localhost/#Finnish",
-        "name":"#Finnish"
-      }
+      object: {
+        type: "room",
+        id: "localhost/#Finnish",
+        name: "#Finnish",
+      },
     },
-    true, ""
+    true,
+    "",
   ],
 
   [
-    'invalid role in relationship',
+    "invalid role in relationship",
     {
-      "type":"relationship",
-      "relationship":"role",
-      "subject": {
-        "type":"presence",
-        "role":"manager"
+      type: "relationship",
+      relationship: "role",
+      subject: {
+        type: "presence",
+        role: "manager",
       },
-      "object":{
-        "type":"room",
-        "id":"localhost/#Finnish",
-        "name":"#Finnish"
-      }
+      object: {
+        type: "room",
+        id: "localhost/#Finnish",
+        name: "#Finnish",
+      },
     },
-    false, "/object/subject/role: must be equal to one of the allowed values: " +
-    "owner, member, participant, admin"
-  ]
+    false,
+    "/object/subject/role: must be equal to one of the allowed values: " +
+      "owner, member, participant, admin",
+  ],
 ];

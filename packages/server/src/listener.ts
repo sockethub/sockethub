@@ -34,8 +34,8 @@ class Listener {
       path: config.get("sockethub:path") as string,
       cors: {
         origin: "*",
-        methods: ["GET", "POST"]
-      }
+        methods: ["GET", "POST"],
+      },
     });
 
     routes.setup(app);
@@ -52,33 +52,36 @@ class Listener {
       `${__dirname}/../node_modules/@sockethub/examples/build/config.json`,
       JSON.stringify({
         sockethub: config.get("sockethub"),
-        public: config.get("public")
-      })
+        public: config.get("public"),
+      }),
     );
     app.use(express.static(`${__dirname}/../node_modules/@sockethub/examples/build/`));
     app.get("*", (req, res) => {
       res.sendFile(
         path.resolve(
-          __dirname, '..', 'node_modules', '@sockethub', 'examples', 'build', 'index.html')
+          __dirname,
+          "..",
+          "node_modules",
+          "@sockethub",
+          "examples",
+          "build",
+          "index.html",
+        ),
       );
     });
     log(
       `examples served at ` +
-      `http://${config.get("sockethub:host")}:${config.get("sockethub:port")}`
+        `http://${config.get("sockethub:host")}:${config.get("sockethub:port")}`,
     );
   }
 
   private startHttp() {
-    this.http.listen(
-      config.get("sockethub:port"),
-      config.get("sockethub:host") as number,
-      () => {
-        log(
-          `sockethub listening on ` +
-          `ws://${config.get("sockethub:host")}:${config.get("sockethub:port")}`
-        );
-      }
-    );
+    this.http.listen(config.get("sockethub:port"), config.get("sockethub:host") as number, () => {
+      log(
+        `sockethub listening on ` +
+          `ws://${config.get("sockethub:host")}:${config.get("sockethub:port")}`,
+      );
+    });
   }
 
   private static initExpress() {

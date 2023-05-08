@@ -29,7 +29,7 @@ const basic = /\s?<!doctype html>|(<html\b[^>]*>|<body\b[^>]*>|<x-[^>]+>)+/i;
 const full = new RegExp(
   // eslint-disable-next-line security-node/non-literal-reg-expr
   htmlTags.map((tag) => `<${tag}\\b[^>]*>`).join("|"),
-  "i"
+  "i",
 );
 
 function isHtml(s: string): boolean {
@@ -37,7 +37,6 @@ function isHtml(s: string): boolean {
   s = s.trim().slice(0, 1000);
   return basic.test(s) || full.test(s);
 }
-
 
 /**
  * Class: Feeds

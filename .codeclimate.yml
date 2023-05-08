@@ -14,10 +14,10 @@ plugins:
     enabled: true
 
 exclude_patterns:
-- "**/dist/"
-- "**/browser/"
-- "**/build/"
-- "**/node_modules/"
-- "**/test/"
-- "**/*.d.ts"
-- "**/*.test.*"
+  - "**/dist/"
+  - "**/browser/"
+  - "**/build/"
+  - "**/node_modules/"
+  - "**/test/"
+  - "**/*.d.ts"
+  - "**/*.test.*"

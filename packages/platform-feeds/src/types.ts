@@ -1,6 +1,6 @@
 export enum ASFeedType {
   FEED_CHANNEL = "feed",
-  FEEDS = "feeds"
+  FEEDS = "feeds",
 }
 
 export enum ASObjectType {
@@ -16,11 +16,10 @@ export interface ASFeedActor {
   description: string;
   image: unknown;
   favicon: string;
-  categories: Array<string>
+  categories: Array<string>;
   language: string;
   author: string;
 }
-
 
 export type ASFeedStruct = {
   id?: string;
@@ -28,7 +27,7 @@ export type ASFeedStruct = {
   actor: ASFeedActor;
   type: string;
   object: object;
-}
+};
 
 export type ASFeedEntry = {
   type: ASObjectType;
@@ -41,7 +40,7 @@ export type ASFeedEntry = {
   published: string;
   updated: string;
   datenum: number;
-  tags: Array<string>
+  tags: Array<string>;
   media: Array<unknown>;
   source: string;
-}
+};

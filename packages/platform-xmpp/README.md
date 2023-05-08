@@ -14,7 +14,7 @@ through the Sockethub service.
 <kbd>![completed](http://sockethub.org/res/img/checkmark.png) remove-friend</kbd>
 <kbd>![completed](http://sockethub.org/res/img/checkmark.png) make-friend</kbd>
 <kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd>
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png)  join</kbd>
+<kbd>![completed](http://sockethub.org/res/img/checkmark.png) join</kbd>
 <kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd>
 
 ## Example

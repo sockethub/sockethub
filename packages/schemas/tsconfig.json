@@ -8,13 +8,6 @@
     "rootDir": "src",
     "baseUrl": "/"
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "**/*.test.ts",
-    "node_modules/",
-    "dist/",
-    "*.d.ts"
-  ]
+  "include": ["src"],
+  "exclude": ["**/*.test.ts", "node_modules/", "dist/", "*.d.ts"]
 }

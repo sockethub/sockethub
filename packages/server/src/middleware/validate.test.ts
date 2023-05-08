@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+import { expect } from "chai";
 import asObjects from "./validate.test.data";
 import loadPlatforms from "../bootstrap/load-platforms";
 import validate, { registerPlatforms } from "./validate";
@@ -11,65 +11,65 @@ class FakeSockethubPlatform {
   }
   get schema() {
     return {
-      name: 'fakeplatform',
-      version: '0.0.1',
+      name: "fakeplatform",
+      version: "0.0.1",
       credentials: {
-        "required": [ 'object' ],
-        "properties": {
-          "actor": {
-            "type": "object",
-            "required": [ "id" ]
+        required: ["object"],
+        properties: {
+          actor: {
+            type: "object",
+            required: ["id"],
           },
-          "object": {
-            "type": "object",
-            "required": [ 'type', 'user', 'pass' ],
-            "additionalProperties": false,
-            "properties" : {
-              "type": {
-                "type": "string"
+          object: {
+            type: "object",
+            required: ["type", "user", "pass"],
+            additionalProperties: false,
+            properties: {
+              type: {
+                type: "string",
               },
-              "user" : {
-                "type": "string"
+              user: {
+                type: "string",
               },
-              "pass" : {
-                "type": "string"
-              }
-            }
-          }
-        }
+              pass: {
+                type: "string",
+              },
+            },
+          },
+        },
       },
       messages: {
-        "required": ["type"],
-        "properties": {
-          "type": {
-            "enum": ["echo", "fail"]
-          }
-        }
-      }
+        required: ["type"],
+        properties: {
+          type: {
+            enum: ["echo", "fail"],
+          },
+        },
+      },
     };
   }
 }
 
 const modules = {
-  'fakeplatform': FakeSockethubPlatform
+  fakeplatform: FakeSockethubPlatform,
 };
 
 let platforms;
 let mockInit;
 (async function () {
-  platforms = await loadPlatforms(['fakeplatform'], async (module) => {
+  platforms = await loadPlatforms(["fakeplatform"], async (module) => {
     return Promise.resolve(modules[module]);
   });
   mockInit = {
-    platforms: platforms
+    platforms: platforms,
   };
   await registerPlatforms(mockInit);
 })();
 
 describe("", () => {
-  describe('platformLoad', () => {
-    it('loads all platforms', () => {
-      const expectedPlatforms = ['fakeplatform'];
+  describe("platformLoad", () => {
+    it("loads all platforms", () => {
+      const expectedPlatforms = ["fakeplatform"];
       expect(platforms.size).to.equal(expectedPlatforms.length);
       for (const platform of expectedPlatforms) {
         expect(platforms.has(platform)).to.be.true;
@@ -77,13 +77,17 @@ describe("", () => {
     });
   });
 
-  describe('Middleware: Validate', () => {
-    describe('AS object validations', () => {
+  describe("Middleware: Validate", () => {
+    describe("AS object validations", () => {
       asObjects.forEach((obj) => {
-        it(`${obj.type}: ${obj.name}, should ${obj.valid ? 'pass' : 'fail'}`, (done) => {
-          validate(obj.type, 'tests', mockInit)(obj.input as IActivityStream, (msg) => {
+        it(`${obj.type}: ${obj.name}, should ${obj.valid ? "pass" : "fail"}`, (done) => {
+          validate(
+            obj.type,
+            "tests",
+            mockInit,
+          )(obj.input as IActivityStream, (msg) => {
             if (obj.output) {
-              if (obj.output === 'same') {
+              if (obj.output === "same") {
                 expect(msg).to.eql(obj.input);
               } else {
                 expect(msg).to.eql(obj.output);

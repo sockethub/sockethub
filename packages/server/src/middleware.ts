@@ -9,7 +9,7 @@ export interface MiddlewareChainInterface {
   (
     error: IActivityStream | Error,
     data?: IActivityStream | MiddlewareChainInterface,
-    next?: MiddlewareChainInterface
+    next?: MiddlewareChainInterface,
   ): void;
 }
 
@@ -36,9 +36,7 @@ export class MiddlewareChain {
 
   use(func: ErrorHandlerInterface | MiddlewareChainInterface): this {
     if (typeof func !== "function") {
-      throw new Error(
-        "middleware use() can only take a function as an argument"
-      );
+      throw new Error("middleware use() can only take a function as an argument");
     }
     if (func.length === 3) {
       this.errHandler = func as ErrorHandlerInterface;
@@ -46,8 +44,7 @@ export class MiddlewareChain {
       this.chain.push(func as MiddlewareChainInterface);
     } else {
       throw new Error(
-        "middleware function provided with incorrect number of params: " +
-          func.length
+        "middleware function provided with incorrect number of params: " + func.length,
       );
     }
     return this;

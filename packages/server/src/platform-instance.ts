@@ -95,11 +95,7 @@ export default class PlatformInstance {
 
   initProcess(parentId, name, id, env) {
     // spin off a process
-    this.process = fork(
-      join(__dirname, "platform.js"),
-      [parentId, name, id],
-      { env: env }
-    );
+    this.process = fork(join(__dirname, "platform.js"), [parentId, name, id], { env: env });
   }
 
   createGetSocket() {
@@ -139,26 +135,21 @@ export default class PlatformInstance {
    * When jobs are completed or failed, we prepare the results and send them to the client socket
    */
   public initQueue(secret: string) {
-    this.jobQueue = new this.bull(
-      this.parentId,
-      this.id,
-      secret,
-      nconf.get("redis")
-    );
+    this.jobQueue = new this.bull(this.parentId, this.id, secret, nconf.get("redis"));
     this.jobQueue.initResultEvents();
 
     this.jobQueue.on(
       "global:completed",
       async (job: JobDataDecrypted, result: IActivityStream | undefined) => {
         await this.handleJobResult("completed", job, result);
-      }
+      },
     );
 
     this.jobQueue.on(
       "global:failed",
       async (job: JobDataDecrypted, result: IActivityStream | undefined) => {
         await this.handleJobResult("failed", job, result);
-      }
+      },
     );
   }
 
@@ -191,18 +182,14 @@ export default class PlatformInstance {
           delete msg.sessionSecret;
         } finally {
           msg.context = this.name;
-          if (
-            msg.type === "error" &&
-            typeof msg.actor === "undefined" &&
-            this.actor
-          ) {
+          if (msg.type === "error" && typeof msg.actor === "undefined" && this.actor) {
             // ensure an actor is present if not otherwise defined
             msg.actor = { id: this.actor, type: "unknown" };
           }
           socket.emit("message", msg);
         }
       },
-      (err) => this.debug(`sendToClient ${err}`)
+      (err) => this.debug(`sendToClient ${err}`),
     );
   }
 
@@ -220,14 +207,12 @@ export default class PlatformInstance {
   private async handleJobResult(
     type: string,
     job: JobDataDecrypted,
-    result: IActivityStream | undefined
+    result: IActivityStream | undefined,
   ) {
     let payload = result; // some platforms return new AS objects as result
     if (type === "failed") {
       payload = job.msg; // failures always use original AS job object
-      payload.error = result
-        ? result.toString()
-        : "job failed for unknown reason";
+      payload.error = result ? result.toString() : "job failed for unknown reason";
       this.debug(`${job.title} ${type}: ${payload.error}`);
     }
 
@@ -251,14 +236,9 @@ export default class PlatformInstance {
     }
 
     // persistent
-    if (
-      this.config.persist &&
-      this.config.requireCredentials.includes(job.msg.type)
-    ) {
+    if (this.config.persist && this.config.requireCredentials.includes(job.msg.type)) {
       if (type === "failed") {
-        this.debug(
-          `critical job type ${job.msg.type} failed, flagging for termination`
-        );
+        this.debug(`critical job type ${job.msg.type} failed, flagging for termination`);
         await this.jobQueue.pause();
         this.initialized = false;
         this.flaggedForTermination = true;
@@ -307,10 +287,7 @@ export default class PlatformInstance {
     const funcs = {
       close: async (e: object) => {
         this.debug(`close even triggered ${this.id}: ${e}`);
-        await this.reportError(
-          sessionId,
-          `Error: session thread closed unexpectedly: ${e}`
-        );
+        await this.reportError(sessionId, `Error: session thread closed unexpectedly: ${e}`);
       },
       message: async ([first, second, third]: MessageFromPlatform) => {
         if (first === "updateActor") {

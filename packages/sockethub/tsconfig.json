@@ -6,12 +6,8 @@
     "rootDir": "src",
     "baseUrl": "/",
     "sourceRoot": "/",
-    "mapRoot": "/",
+    "mapRoot": "/"
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "**/*.test.ts"
-  ]
+  "include": ["src"],
+  "exclude": ["**/*.test.ts"]
 }

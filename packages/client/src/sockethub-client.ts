@@ -1,6 +1,6 @@
 import EventEmitter from "eventemitter3";
 import { IActivityObject, IActivityStream } from "@sockethub/schemas";
-import ASFactory, {type ASManager} from "@sockethub/activity-streams";
+import ASFactory, { type ASManager } from "@sockethub/activity-streams";
 
 export interface EventMapping {
   credentials: Map<string, IActivityStream>;
@@ -79,8 +79,7 @@ export default class SockethubClient {
 
   private eventCredentials(content: IActivityStream) {
     if (content.object && content.object.type === "credentials") {
-      const key: string =
-        content.actor.id || (content.actor as unknown as string);
+      const key: string = content.actor.id || (content.actor as unknown as string);
       this.events["credentials"].set(key, content);
     }
   }
@@ -104,9 +103,7 @@ export default class SockethubClient {
   private static getKey(content: IActivityStream) {
     const actor = content.actor?.id || content.actor;
     if (!actor) {
-      throw new Error(
-        "actor property not present for message type: " + content?.type
-      );
+      throw new Error("actor property not present for message type: " + content?.type);
     }
     const target = content.target ? content.target.id || content.target : "";
     return actor + "-" + target;

@@ -4,11 +4,7 @@ import * as sinon from "sinon";
 import { CredentialsStore } from "./index";
 
 describe("CredentialsStore", () => {
-  let credentialsStore,
-      MockSecureStore,
-      MockStoreGet,
-      MockStoreSave,
-      MockObjectHash;
+  let credentialsStore, MockSecureStore, MockStoreGet, MockStoreSave, MockObjectHash;
   beforeEach(() => {
     MockStoreGet = sinon.stub().callsArgWith(1, undefined, "credential foo");
     MockStoreSave = sinon.stub().callsArgWith(2, undefined);
@@ -36,21 +32,20 @@ describe("CredentialsStore", () => {
       "a parent id",
       "a session id",
       "a secret",
-      "redis config"
+      "redis config",
     );
   });
 
   it("returns a valid CredentialsStore object", () => {
     sinon.assert.calledOnce(MockSecureStore);
     sinon.assert.calledWith(MockSecureStore, {
-      namespace:
-        "foo",
+      namespace: "foo",
       secret: "a secret",
       redis: "redis config",
     });
     expect(typeof credentialsStore).to.equal("object");
     expect(credentialsStore.uid).to.equal(
-      `sockethub:data-layer:credentials-store:a parent id:a session id`
+      `sockethub:data-layer:credentials-store:a parent id:a session id`,
     );
     expect(typeof credentialsStore.get).to.equal("function");
     expect(typeof credentialsStore.save).to.equal("function");
@@ -97,10 +92,7 @@ describe("CredentialsStore", () => {
       MockStoreGet.callsArgWith(1, undefined, {
         object: "a credential",
       });
-      const res = await credentialsStore.get(
-        "an actor",
-        "a credentialHash string"
-      );
+      const res = await credentialsStore.get("an actor", "a credentialHash string");
       sinon.assert.calledOnce(MockStoreGet);
       sinon.assert.calledWith(MockStoreGet, "an actor");
       sinon.assert.calledOnce(MockObjectHash);
@@ -116,14 +108,11 @@ describe("CredentialsStore", () => {
       });
       let res;
       try {
-        res = await credentialsStore.get(
-          "an actor",
-          "a different credentialHash string"
-        );
+        res = await credentialsStore.get("an actor", "a different credentialHash string");
         throw new Error("should not reach this spot");
       } catch (err) {
         expect(err).to.equal(
-          "provided credentials do not match existing platform instance for actor an actor"
+          "provided credentials do not match existing platform instance for actor an actor",
         );
       }
       sinon.assert.calledOnce(MockStoreGet);

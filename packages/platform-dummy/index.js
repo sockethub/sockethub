@@ -1,7 +1,7 @@
 /* eslint-disable  @typescript-eslint/no-var-requires */
 class Dummy {
   constructor(cfg) {
-    cfg = (typeof cfg === 'object') ? cfg : {};
+    cfg = typeof cfg === "object" ? cfg : {};
     this.id = cfg.id;
     this.debug = cfg.debug;
   }
@@ -9,31 +9,31 @@ class Dummy {
   get schema() {
     return {
       name: "dummy",
-      version: require('./package.json').version,
+      version: require("./package.json").version,
       messages: {
-        "required": ["type"],
-        "properties": {
-          "type": {
-            "enum": ["echo", "fail"]
-          }
-        }
+        required: ["type"],
+        properties: {
+          type: {
+            enum: ["echo", "fail"],
+          },
+        },
       },
-      credentials: {}
+      credentials: {},
     };
   }
 
   get config() {
     return {
       persist: false,
-      requireCredentials: []
+      requireCredentials: [],
     };
   }
 
   echo(job, cb) {
     job.target = job.actor;
     job.actor = {
-      id: 'dummy',
-      type: 'platform'
+      id: "dummy",
+      type: "platform",
     };
     cb(undefined, job);
   }

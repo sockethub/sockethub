@@ -16,10 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-const net = require('net');
-const tls = require('tls');
-const IrcSocket = require('irc-socket-sasl');
-const IRC2AS = require('@sockethub/irc2as');
+const net = require("net");
+const tls = require("tls");
+const IrcSocket = require("irc-socket-sasl");
+const IRC2AS = require("@sockethub/irc2as");
 
 /**
  * @class IRC
@@ -35,7 +35,7 @@ const IRC2AS = require('@sockethub/irc2as');
  * @param {object} cfg a unique config object for this instance // TODO LINK
  */
 function IRC(cfg) {
-  cfg = (typeof cfg === 'object') ? cfg : {};
+  cfg = typeof cfg === "object" ? cfg : {};
   this.debug = cfg.debug;
   this.sendToClient = cfg.sendToClient;
   this.updateActor = cfg.updateActor;
@@ -89,65 +89,64 @@ function IRC(cfg) {
  *  }
  */
 IRC.prototype.schema = {
-  "name": "irc",
-  "version": require('./package.json').version,
-  "messages" : {
-    "required": [ 'type' ],
-    "properties": {
-      "type": {
-        "enum": [ 'connect', 'update', 'join', 'leave', 'send', 'query', 'announce' ]
-      }
-    }
+  name: "irc",
+  version: require("./package.json").version,
+  messages: {
+    required: ["type"],
+    properties: {
+      type: {
+        enum: ["connect", "update", "join", "leave", "send", "query", "announce"],
+      },
+    },
   },
-  "credentials" : {
-    "required": [ 'object' ],
-    "properties": {
+  credentials: {
+    required: ["object"],
+    properties: {
       // TODO platforms shouldn't have to define the actor property
       //  if they don't want to, just credential specifics
-      "actor": {
-        "type": "object",
-        "required": [ "id" ]
+      actor: {
+        type: "object",
+        required: ["id"],
       },
-      "object": {
-        "type": "object",
-        "required": [ 'type', 'nick', 'server' ],
-        "additionalProperties": false,
-        "properties" : {
-          "type": {
-            "type": "string"
+      object: {
+        type: "object",
+        required: ["type", "nick", "server"],
+        additionalProperties: false,
+        properties: {
+          type: {
+            type: "string",
           },
-          "nick" : {
-            "type": "string"
+          nick: {
+            type: "string",
           },
-          "username" : {
-            "type": "string"
+          username: {
+            type: "string",
           },
-          "password" : {
-            "type": "string"
+          password: {
+            type: "string",
           },
-          "server" : {
-            "type": "string"
+          server: {
+            type: "string",
           },
-          "port" : {
-            "type": "number"
+          port: {
+            type: "number",
           },
-          "secure": {
-            "type": "boolean"
+          secure: {
+            type: "boolean",
           },
-          "sasl": {
-            "type": "boolean"
-          }
-        }
-      }
-    }
-  }
+          sasl: {
+            type: "boolean",
+          },
+        },
+      },
+    },
+  },
 };
-
 
 IRC.prototype.config = {
   persist: true,
-  requireCredentials: [ 'connect', 'update' ],
-  initialized: false
+  requireCredentials: ["connect", "update"],
+  initialized: false,
 };
 
 /**
@@ -163,7 +162,9 @@ IRC.prototype.config = {
 IRC.prototype.connect = function (job, credentials, done) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   this.__getClient(job.actor.id, credentials, (err, client) => {
-    if (err) { return done(err); }
+    if (err) {
+      return done(err);
+    }
     return done();
   });
 };
@@ -196,9 +197,11 @@ IRC.prototype.connect = function (job, credentials, done) {
  *
  */
 IRC.prototype.join = function (job, done) {
-  this.debug('join() called for ' + job.actor.id);
+  this.debug("join() called for " + job.actor.id);
   this.__getClient(job.actor.id, false, (err, client) => {
-    if (err) { return done(err); }
+    if (err) {
+      return done(err);
+    }
     if (this.__channels.has(job.target.name)) {
       this.debug(`channel ${job.target.name} already joined`);
       return done();
@@ -208,9 +211,9 @@ IRC.prototype.join = function (job, done) {
       this.__hasJoined(job.target.name);
       done();
     });
-    this.debug('sending join ' + job.target.name);
-    client.raw(['JOIN', job.target.name]);
-    client.raw('PING ' + job.actor.name);
+    this.debug("sending join " + job.target.name);
+    client.raw(["JOIN", job.target.name]);
+    client.raw("PING " + job.actor.name);
   });
 };
 
@@ -241,12 +244,14 @@ IRC.prototype.join = function (job, done) {
  *
  */
 IRC.prototype.leave = function (job, done) {
-  this.debug('leave() called for ' + job.actor.name);
+  this.debug("leave() called for " + job.actor.name);
   this.__getClient(job.actor.id, false, (err, client) => {
-    if (err) { return done(err); }
+    if (err) {
+      return done(err);
+    }
     // leave channel
     this.__hasLeft(job.target.name);
-    client.raw(['PART', job.target.name]);
+    client.raw(["PART", job.target.name]);
     done();
   });
 };
@@ -283,51 +288,53 @@ IRC.prototype.leave = function (job, done) {
  *
  */
 IRC.prototype.send = function (job, done) {
-  this.debug('send() called for ' + job.actor.id + ' target: ' + job.target.id);
+  this.debug("send() called for " + job.actor.id + " target: " + job.target.id);
   this.__getClient(job.actor.id, false, (err, client) => {
-    if (err) { return done(err); }
+    if (err) {
+      return done(err);
+    }
 
-    if (typeof job.object.content !== 'string') {
-      return done('cannot send message with no object.content');
+    if (typeof job.object.content !== "string") {
+      return done("cannot send message with no object.content");
     }
 
     let msg = job.object.content.trim();
-    if (msg.indexOf('/') === 0) {
+    if (msg.indexOf("/") === 0) {
       // message intented as command
-      msg += ' ';
-      const cmd = msg.substr(0, msg.indexOf(' ')).substr(1).toUpperCase(); // get command
-      msg = msg.substr(msg.indexOf(' ') + 1).replace(/\s\s*$/, ''); // remove command from message
-      if (cmd === 'ME') {
+      msg += " ";
+      const cmd = msg.substr(0, msg.indexOf(" ")).substr(1).toUpperCase(); // get command
+      msg = msg.substr(msg.indexOf(" ") + 1).replace(/\s\s*$/, ""); // remove command from message
+      if (cmd === "ME") {
         // handle /me messages uniquely
-        job.object.type = 'me';
+        job.object.type = "me";
         job.object.content = msg;
-      } else if (cmd === 'NOTICE') {
+      } else if (cmd === "NOTICE") {
         // attempt to send as raw command
-        job.object.type = 'notice';
+        job.object.type = "notice";
         job.object.content = msg;
       }
     } else {
       job.object.content = msg;
     }
 
-    if (job.object.type === 'me') {
+    if (job.object.type === "me") {
       // message intended as command
       // jsdoc does not like this octal escape sequence but it's needed for proper behavior in IRC
       // so the following line needs to be commented out when the API doc is built.
       // investigate:
       // https://github.com/jsdoc2md/jsdoc-to-markdown/issues/197#issuecomment-976851915
-      const message = '\001ACTION ' + job.object.content + '\001';
-      client.raw('PRIVMSG ' + job.target.name + ' :' + message);
-    } else if (job.object.type === 'notice') {
+      const message = "\001ACTION " + job.object.content + "\001";
+      client.raw("PRIVMSG " + job.target.name + " :" + message);
+    } else if (job.object.type === "notice") {
       // attempt to send as raw command
-      client.raw('NOTICE ' + job.target.name + ' :' + job.object.content);
+      client.raw("NOTICE " + job.target.name + " :" + job.object.content);
     } else if (this.__isJoined(job.target.name)) {
-      client.raw('PRIVMSG ' + job.target.name + ' :' + job.object.content);
+      client.raw("PRIVMSG " + job.target.name + " :" + job.object.content);
     } else {
       return done("cannot send message to a channel of which you've not first joined.");
     }
     this.__jobQueue.push(done);
-    client.raw('PING ' + job.actor.name);
+    client.raw("PING " + job.actor.name);
   });
 };
 
@@ -381,11 +388,13 @@ IRC.prototype.send = function (job, done) {
  *  }
  */
 IRC.prototype.update = function (job, credentials, done) {
-  this.debug('update() called for ' + job.actor.id);
+  this.debug("update() called for " + job.actor.id);
   this.__getClient(job.actor.id, false, (err, client) => {
-    if (err) { return done(err); }
-    if (job.object.type === 'address')  {
-      this.debug('changing nick from ' + job.actor.name + ' to ' + job.target.name);
+    if (err) {
+      return done(err);
+    }
+    if (job.object.type === "address") {
+      this.debug("changing nick from " + job.actor.name + " to " + job.target.name);
       this.__handledActors.add(job.target.id);
       this.__jobQueue.push((err) => {
         if (err) {
@@ -398,16 +407,16 @@ IRC.prototype.update = function (job, credentials, done) {
         this.updateActor(credentials).then(done);
       });
       // send nick change command
-      client.raw(['NICK', job.target.name]);
-    } else if (job.object.type === 'topic') {
+      client.raw(["NICK", job.target.name]);
+    } else if (job.object.type === "topic") {
       // update topic
-      this.debug('changing topic in channel ' + job.target.name);
+      this.debug("changing topic in channel " + job.target.name);
       this.__jobQueue.push(done);
-      client.raw(['topic', job.target.name, job.object.content]);
+      client.raw(["topic", job.target.name, job.object.content]);
     } else {
       return done(`unknown update action.`);
     }
-    client.raw('PING ' + job.actor.name);
+    client.raw("PING " + job.actor.name);
   });
 };
 
@@ -465,13 +474,15 @@ IRC.prototype.update = function (job, credentials, done) {
  *
  */
 IRC.prototype.query = function (job, done) {
-  this.debug('query() called for ' + job.actor.id);
+  this.debug("query() called for " + job.actor.id);
   this.__getClient(job.actor.id, false, (err, client) => {
-    if (err) { return done(err); }
+    if (err) {
+      return done(err);
+    }
 
-    if (job.object.type === 'attendance') {
-      this.debug('query() - sending NAMES for ' + job.target.name);
-      client.raw(['NAMES', job.target.name]);
+    if (job.object.type === "attendance") {
+      this.debug("query() - sending NAMES for " + job.target.name);
+      client.raw(["NAMES", job.target.name]);
       done();
     } else {
       done("unknown 'type' '" + job.object.type + "'");
@@ -479,12 +490,11 @@ IRC.prototype.query = function (job, done) {
   });
 };
 
-
 IRC.prototype.cleanup = function (done) {
-  this.debug('cleanup() called');
+  this.debug("cleanup() called");
   this.__forceDisconnect = true;
-  if (typeof this.__client === 'object') {
-    if (typeof this.__client.end === 'function') {
+  if (typeof this.__client === "object") {
+    if (typeof this.__client.end === "function") {
       this.__client.end();
     }
   }
@@ -493,15 +503,12 @@ IRC.prototype.cleanup = function (done) {
   return done();
 };
 
-
-
 //
 // Private methods
 //
 
-
 IRC.prototype.__isJoined = function (channel) {
-  if (channel.indexOf('#') === 0) {
+  if (channel.indexOf("#") === 0) {
     // valid channel name
     return this.__channels.has(channel);
   } else {
@@ -510,46 +517,46 @@ IRC.prototype.__isJoined = function (channel) {
   }
 };
 
-
 IRC.prototype.__hasJoined = function (channel) {
-  this.debug('joined ' + channel);
+  this.debug("joined " + channel);
   // keep track of channels joined
-  if (! this.__channels.has(channel)) {
+  if (!this.__channels.has(channel)) {
     this.__channels.add(channel);
   }
 };
 
-
 IRC.prototype.__hasLeft = function (channel) {
-  this.debug('left ' + channel);
+  this.debug("left " + channel);
   // keep track of channels left
   if (this.__channels.has(channel)) {
     this.__channels.delete(channel);
   }
 };
 
-
 IRC.prototype.__getClient = function (key, credentials, cb) {
-  this.debug('getClient called, connecting: ' + this.__clientConnecting);
+  this.debug("getClient called, connecting: " + this.__clientConnecting);
   if (this.__client) {
     this.__handledActors.add(key);
     return cb(null, this.__client);
   } else if (this.__clientConnecting) {
     // client is in the process of connecting, wait
-    setTimeout(function (_cb) {
-      if (this.__client) {
-        this.debug(`resolving delayed getClient call for ${key}`);
-        this.__handledActors.add(key);
-        return _cb(null, this.__client);
-      } else {
-        return cb('failed to get irc client, please try again.');
-      }
-    }.bind(this, cb), 30000);
+    setTimeout(
+      function (_cb) {
+        if (this.__client) {
+          this.debug(`resolving delayed getClient call for ${key}`);
+          this.__handledActors.add(key);
+          return _cb(null, this.__client);
+        } else {
+          return cb("failed to get irc client, please try again.");
+        }
+      }.bind(this, cb),
+      30000,
+    );
     return;
   }
 
-  if (! credentials) {
-    return cb('no client found, and no credentials specified. you must connect first');
+  if (!credentials) {
+    return cb("no client found, and no credentials specified. you must connect first");
   } else {
     this.__connect(key, credentials, (err, client) => {
       if (err) {
@@ -565,59 +572,66 @@ IRC.prototype.__getClient = function (key, credentials, cb) {
   }
 };
 
-
 IRC.prototype.__connect = function (key, credentials, cb) {
   this.__clientConnecting = true;
-  const is_secure = (typeof credentials.object.secure === 'boolean') ?
-    credentials.object.secure : true;
+  const is_secure =
+    typeof credentials.object.secure === "boolean" ? credentials.object.secure : true;
 
   const module_options = {
     username: credentials.object.username || credentials.object.nick,
-    nicknames: [ credentials.object.nick ],
-    server: credentials.object.server || 'irc.libera.chat',
+    nicknames: [credentials.object.nick],
+    server: credentials.object.server || "irc.libera.chat",
     realname: credentials.actor.name || credentials.object.nick,
-    port: (credentials.object.port) ?
-      parseInt(credentials.object.port, 10) : (is_secure) ? 6697 : 6667,
-    debug: console.log
+    port: credentials.object.port
+      ? parseInt(credentials.object.port, 10)
+      : is_secure
+        ? 6697
+        : 6667,
+    debug: console.log,
   };
   if (is_secure) {
     module_options.connectOptions = { rejectUnauthorized: false };
   }
   if (credentials.object.sasl) {
     module_options.saslPassword = credentials.object.password;
-    module_options.capabilities = { requires: [ "sasl" ] };
+    module_options.capabilities = { requires: ["sasl"] };
   }
 
-  this.debug('attempting to connect to ' + module_options.server + ':' + module_options.port +
-    ` transport: ${is_secure?'secure':'clear'} sasl: ${credentials.object.sasl}`);
+  this.debug(
+    "attempting to connect to " +
+      module_options.server +
+      ":" +
+      module_options.port +
+      ` transport: ${is_secure ? "secure" : "clear"} sasl: ${credentials.object.sasl}`,
+  );
 
   const client = new IrcSocket(module_options, is_secure ? tls : net);
 
   const __forceDisconnect = (err) => {
     this.__forceDisconnect = true;
     this.__clientConnecting = false;
-    if ((client) && (typeof client.end === 'function')) {
+    if (client && typeof client.end === "function") {
       client.end();
     }
-    if ((this.__client) && (typeof this.__client.end === 'function')) {
+    if (this.__client && typeof this.__client.end === "function") {
       this.__client.end();
     }
     cb(err);
   };
 
-  client.once('error', (err) => {
+  client.once("error", (err) => {
     this.debug(`irc client 'error' occurred. `, err);
-    __forceDisconnect('error connecting to server.');
+    __forceDisconnect("error connecting to server.");
   });
 
-  client.once('close', () => {
+  client.once("close", () => {
     this.debug(`irc client 'close' event fired.`);
-    __forceDisconnect('connection to server closed.');
+    __forceDisconnect("connection to server closed.");
   });
 
-  client.once('timeout', () => {
-    this.debug('timeout occurred, force-disconnect');
-    __forceDisconnect('connection timeout to server.');
+  client.once("timeout", () => {
+    this.debug("timeout occurred, force-disconnect");
+    __forceDisconnect("connection timeout to server.");
   });
 
   client.connect().then((res) => {
@@ -628,7 +642,7 @@ IRC.prototype.__connect = function (key, credentials, cb) {
     this.__clientConnecting = false;
     if (this.__forceDisconnect) {
       client.end();
-      return cb('force disconnect active, aborting connect.');
+      return cb("force disconnect active, aborting connect.");
     } else {
       this.debug(`connected to ${module_options.server} capabilities: `, capabilities);
       return cb(null, client);
@@ -636,56 +650,57 @@ IRC.prototype.__connect = function (key, credentials, cb) {
   });
 };
 
-
 IRC.prototype.__completeJob = function (err) {
   this.debug(`completing job, queue count: ${this.__jobQueue.length}`);
   const done = this.__jobQueue.shift();
-  if (typeof done === 'function') {
+  if (typeof done === "function") {
     done(err);
   } else {
-    this.debug('WARNING: job completion event received with an empty job queue.');
+    this.debug("WARNING: job completion event received with an empty job queue.");
   }
 };
 
-
 IRC.prototype.__registerListeners = function (server) {
   this.irc2as = new IRC2AS({ server: server });
-  this.__client.on('data', (data) => {
+  this.__client.on("data", (data) => {
     this.irc2as.input(data);
   });
 
-  this.irc2as.events.on('incoming', (asObject) => {
-    if ((typeof asObject.actor === 'object') &&
-        (typeof asObject.actor.name === 'string') &&
-        (this.__handledActors.has(asObject.actor.id))) {
+  this.irc2as.events.on("incoming", (asObject) => {
+    if (
+      typeof asObject.actor === "object" &&
+      typeof asObject.actor.name === "string" &&
+      this.__handledActors.has(asObject.actor.id)
+    ) {
       this.__completeJob();
     } else {
-      this.debug(
-        'calling sendToClient for ' + asObject.actor.id, [...this.__handledActors.keys()]);
+      this.debug("calling sendToClient for " + asObject.actor.id, [
+        ...this.__handledActors.keys(),
+      ]);
       this.sendToClient(asObject);
     }
   });
 
-  this.irc2as.events.on('unprocessed', (string) => {
-    this.debug('unprocessed irc message:> ' + string);
+  this.irc2as.events.on("unprocessed", (string) => {
+    this.debug("unprocessed irc message:> " + string);
   });
 
   // The generated eslint error expects that the `error` event is propagating an Error object
   // however for irc2as this event delivers an AS object of type `error`.
   // eslint-disable-next-line security-node/detect-unhandled-event-errors
-  this.irc2as.events.on('error', (asObject) => {
-    this.debug('message error response ' + asObject.object.content);
+  this.irc2as.events.on("error", (asObject) => {
+    this.debug("message error response " + asObject.object.content);
     this.__completeJob(asObject.object.content);
   });
 
-  this.irc2as.events.on('pong', (timestamp) => {
-    this.debug('received PONG at ' + timestamp);
+  this.irc2as.events.on("pong", (timestamp) => {
+    this.debug("received PONG at " + timestamp);
     this.__completeJob();
   });
 
-  this.irc2as.events.on('ping', (timestamp) => {
-    this.debug('received PING at ' + timestamp);
-    this.__client.raw('PONG');
+  this.irc2as.events.on("ping", (timestamp) => {
+    this.debug("received PING at " + timestamp);
+    this.__client.raw("PONG");
   });
 };
 

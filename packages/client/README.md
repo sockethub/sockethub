@@ -13,18 +13,18 @@ Designed to run in both `node.js` and the `browser`.
 #### CommonJS
 
 ```javascript
-const SockethubClient = require('@sockethub/client');
-const io = require('@socket.io-client');
-const SOCKETHUB_SERVER = 'http://localhost:10550';
+const SockethubClient = require("@sockethub/client");
+const io = require("@socket.io-client");
+const SOCKETHUB_SERVER = "http://localhost:10550";
 const sc = SockethubClient(io(SOCKETHUB_SERVER));
 ```
 
 #### ESM
 
 ```javascript
-import SockethubClient from '@sockethub/client';
-import { io } from '@socket.io-client';
-const SOCKETHUB_SERVER = 'http://localhost:10550';
+import SockethubClient from "@sockethub/client";
+import { io } from "@socket.io-client";
+const SOCKETHUB_SERVER = "http://localhost:10550";
 const sc = SockethubClient(io(SOCKETHUB_SERVER));
 ```
 

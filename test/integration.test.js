@@ -46,9 +46,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
         incomingMessages = [];
 
     before(() => {
-      sc = new SockethubClient(
-        io(`http://localhost:${SH_PORT}/`, { path: "/sockethub" })
-      );
+      sc = new SockethubClient(io(`http://localhost:${SH_PORT}/`, { path: "/sockethub" }));
       sc.socket.on("message", (msg) => {
         console.log("** incoming message: ", msg);
         incomingMessages.push(msg);
@@ -100,9 +98,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
             if (msg?.error) {
               done(new Error(msg.error));
             } else {
-              expect(msg.target).to.eql(
-                sc.ActivityStreams.Object.get(actor.id)
-              );
+              expect(msg.target).to.eql(sc.ActivityStreams.Object.get(actor.id));
               expect(msg.actor.type).to.equal("platform");
               done();
             }
@@ -136,10 +132,12 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                 expect(m.actor.type).to.equal("feed");
                 expect(m.type).to.equal("post");
               }
-              done(msg?.error ? new Error(
-                `Failed to fetch ${msg.target.id}: ${msg.error}`
-              ) : undefined);
-            }
+              done(
+                msg?.error
+                  ? new Error(`Failed to fetch ${msg.target.id}: ${msg.error}`)
+                  : undefined,
+              );
+            },
           );
         });
       });
@@ -164,7 +162,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                 userAddress: "jimmy@prosody",
               },
             },
-            done
+            done,
           );
         });
       });
@@ -195,7 +193,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
               context: "xmpp",
             },
             (msg) => {
-              console.log('xmpp connect callback: ', msg);
+              console.log("xmpp connect callback: ", msg);
               if (msg?.error) {
                 done(new Error(msg.error));
               } else {
@@ -210,7 +208,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                 });
                 done();
               }
-            }
+            },
           );
         });
       });
@@ -218,7 +216,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
 
     describe("Incoming Message queue", () => {
       it("should be empty", () => {
-        console.log('*** INCOMING MESSAGES ***');
+        console.log("*** INCOMING MESSAGES ***");
         console.log(incomingMessages);
         expect(incomingMessages.length).to.equal(0);
         expect(incomingMessages).to.eql([]);

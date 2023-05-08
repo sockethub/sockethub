@@ -5,14 +5,8 @@ const FORK_PATH = __dirname + "/platform.js";
 
 import PlatformInstance, { platformInstances } from "./platform-instance";
 
-
-
 describe("PlatformInstance", () => {
-  let pi,
-      sandbox,
-      forkFake,
-      socketMock,
-      getSocketFake;
+  let pi, sandbox, forkFake, socketMock, getSocketFake;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
@@ -59,11 +53,7 @@ describe("PlatformInstance", () => {
         actor: "actor string",
       });
       expect(pi.global).to.be.equal(false);
-      sandbox.assert.calledWith(forkFake, FORK_PATH, [
-        "parentId",
-        "name",
-        "id",
-      ]);
+      sandbox.assert.calledWith(forkFake, FORK_PATH, ["parentId", "name", "id"]);
       await pi.shutdown();
     });
   });
@@ -107,11 +97,7 @@ describe("PlatformInstance", () => {
       expect(pi.flaggedForTermination).to.be.equal(false);
       expect(pi.global).to.be.equal(true);
       expect(
-        forkFake.calledWith(FORK_PATH, [
-          "the parentId",
-          "a platform name",
-          "platform identifier",
-        ])
+        forkFake.calledWith(FORK_PATH, ["the parentId", "a platform name", "platform identifier"]),
       ).to.be.ok;
     });
 
@@ -123,16 +109,8 @@ describe("PlatformInstance", () => {
       it("adds a close and message handler when a session is registered", () => {
         pi.registerSession("my session id");
         expect(pi.callbackFunction.callCount).to.equal(2);
-        sandbox.assert.calledWith(
-          pi.callbackFunction,
-          "close",
-          "my session id"
-        );
-        sandbox.assert.calledWith(
-          pi.callbackFunction,
-          "message",
-          "my session id"
-        );
+        sandbox.assert.calledWith(pi.callbackFunction, "close", "my session id");
+        sandbox.assert.calledWith(pi.callbackFunction, "message", "my session id");
         expect(pi.sessions.has("my session id")).to.be.equal(true);
       });
 
@@ -199,11 +177,7 @@ describe("PlatformInstance", () => {
 
       it("broadcasts to peers when handling a completed job", async () => {
         pi.sessions.add("other peer");
-        await pi.handleJobResult(
-          "completed",
-          { msg: { foo: "bar" } },
-          undefined
-        );
+        await pi.handleJobResult("completed", { msg: { foo: "bar" } }, undefined);
         expect(pi.sendToClient.callCount).to.equal(1);
         expect(pi.broadcastToSharedPeers.callCount).to.equal(1);
       });
@@ -212,7 +186,7 @@ describe("PlatformInstance", () => {
         await pi.handleJobResult(
           "completed",
           { sessionId: "a session id", msg: { foo: "bar" } },
-          "a good result message"
+          "a good result message",
         );
         expect(pi.broadcastToSharedPeers.callCount).to.equal(1);
         sandbox.assert.calledWith(pi.sendToClient, "a session id", {
@@ -224,7 +198,7 @@ describe("PlatformInstance", () => {
         await pi.handleJobResult(
           "failed",
           { sessionId: "a session id", msg: { foo: "bar" } },
-          "a bad result message"
+          "a bad result message",
         );
         expect(pi.broadcastToSharedPeers.callCount).to.equal(1);
         sandbox.assert.calledWith(pi.sendToClient, "a session id", {
@@ -247,18 +221,14 @@ describe("PlatformInstance", () => {
         sandbox.assert.calledWith(
           pi.reportError,
           "my session id",
-          "Error: session thread closed unexpectedly: error msg"
+          "Error: session thread closed unexpectedly: error msg",
         );
       });
 
       it("message events from platform thread are route based on command: error", () => {
         const message = pi.callbackFunction("message", "my session id");
         message(["error", "error message"]);
-        sandbox.assert.calledWith(
-          pi.reportError,
-          "my session id",
-          "error message"
-        );
+        sandbox.assert.calledWith(pi.reportError, "my session id", "error message");
       });
 
       it("message events from platform thread are route based on command: updateActor", () => {

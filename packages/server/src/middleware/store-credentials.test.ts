@@ -23,10 +23,7 @@ const creds = {
 };
 
 describe("Middleware: storeCredentials", () => {
-  let storeSuccess: any,
-      storeError: any,
-      saveErrorFake: any,
-      saveSuccessFake: any;
+  let storeSuccess: any, storeError: any, saveErrorFake: any, saveSuccessFake: any;
 
   beforeEach(() => {
     storeSuccess = {
@@ -35,20 +32,12 @@ describe("Middleware: storeCredentials", () => {
       },
     };
     storeError = {
-      save: (id: any, creds: any, cb: (v:string) => void) => {
+      save: (id: any, creds: any, cb: (v: string) => void) => {
         cb("some error");
       },
     };
-    saveSuccessFake = sinon.replace(
-      storeSuccess,
-      "save",
-      sinon.fake(storeSuccess.save)
-    );
-    saveErrorFake = sinon.replace(
-      storeError,
-      "save",
-      sinon.fake(storeError.save)
-    );
+    saveSuccessFake = sinon.replace(storeSuccess, "save", sinon.fake(storeSuccess.save));
+    saveErrorFake = sinon.replace(storeError, "save", sinon.fake(storeError.save));
   });
 
   afterEach(() => {

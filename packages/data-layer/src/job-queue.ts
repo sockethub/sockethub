@@ -26,12 +26,7 @@ export default class JobQueue extends EventEmitter {
   private handler: JobHandler;
   private counter = 0;
 
-  constructor(
-    instanceId: string,
-    sessionId: string,
-    secret: string,
-    redisConfig: RedisConfig
-  ) {
+  constructor(instanceId: string, sessionId: string, secret: string, redisConfig: RedisConfig) {
     super();
     this.initBull(instanceId + sessionId, redisConfig);
     this.initCrypto();
@@ -92,9 +87,7 @@ export default class JobQueue extends EventEmitter {
         msg: this.decryptActivityStream(job.msg),
         sessionId: job.sessionId,
       };
-      this.debug(
-        `failed ${unencryptedJobData.title} ${unencryptedJobData.msg.type}`
-      );
+      this.debug(`failed ${unencryptedJobData.title} ${unencryptedJobData.msg.type}`);
       this.emit("global:failed", unencryptedJobData, result);
     });
   }

@@ -7,12 +7,7 @@
     "baseUrl": "/",
     "sourceRoot": "/",
     "mapRoot": "/",
-    "lib": [
-      "dom",
-      "es2020"
-    ]
+    "lib": ["dom", "es2020"]
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

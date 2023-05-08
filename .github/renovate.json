@@ -1,9 +1,7 @@
 {
-  "labels": [ "kredits-1", "type:dependencies" ],
-  "reviewers": [ "silverbucket", "galfert" ],
-  "extends": [
-    "config:base"
-  ],
+  "labels": ["kredits-1", "type:dependencies"],
+  "reviewers": ["silverbucket", "galfert"],
+  "extends": ["config:base"],
   "packageRules": [
     {
       "matchDepTypes": ["devDependencies", "dependencies"],

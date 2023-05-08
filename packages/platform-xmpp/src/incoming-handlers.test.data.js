@@ -2,73 +2,105 @@ const stanzas = [
   [
     `presence error 1`,
     `<presence type="error" to="hermes@5apps.com/hyperchannel" from="xmpp.5apps.com/#watercooler" xmlns:stream="http://etherx.jabber.org/streams"><error type="cancel"> <remote-server-not-found xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error></presence>`,
-    {context: 'xmpp', type: 'join', actor: {id: 'xmpp.5apps.com/#watercooler', 'type': 'room'},
-      error: 'remote server not found xmpp.5apps.com/#watercooler',
-      target: {id: 'hermes@5apps.com/hyperchannel', type: 'person'}}
+    {
+      context: "xmpp",
+      type: "join",
+      actor: { id: "xmpp.5apps.com/#watercooler", type: "room" },
+      error: "remote server not found xmpp.5apps.com/#watercooler",
+      target: { id: "hermes@5apps.com/hyperchannel", type: "person" },
+    },
   ],
   [
     `presence error 2`,
     `<presence type="error" to="hermes@5apps.com/hyperchannel" from="xmpp.5apps.com/#watercooler" xmlns:stream="http://etherx.jabber.org/streams"><error type="cancel"><not-allowed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/><text xmlns="urn:ietf:params:xml:ns:xmpp-stanzas">Communication with remote domains is not enabled</text></error></presence>`,
-    {context: 'xmpp', type: 'update', actor: {id: 'xmpp.5apps.com/#watercooler', 'type': 'room'},
-      error: '<error type="cancel"><not-allowed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/>' +
+    {
+      context: "xmpp",
+      type: "update",
+      actor: { id: "xmpp.5apps.com/#watercooler", type: "room" },
+      error:
+        '<error type="cancel"><not-allowed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/>' +
         '<text xmlns="urn:ietf:params:xml:ns:xmpp-stanzas">Communication with remote domains is not enabled</text>' +
-        '</error>',
-      target: {id: 'hermes@5apps.com/hyperchannel', type: 'person'}}
+        "</error>",
+      target: { id: "hermes@5apps.com/hyperchannel", type: "person" },
+    },
   ],
   [
     `initial presence`,
     `<presence to="foo@bar.org" from="baz@bag.org"></presence>`,
-    {context: 'xmpp', type: 'update', actor: { id: "baz@bag.org", type: "person" },
-      target: { id: "foo@bar.org", type: 'person' }, object: {type: 'presence', presence: "online"}}
+    {
+      context: "xmpp",
+      type: "update",
+      actor: { id: "baz@bag.org", type: "person" },
+      target: { id: "foo@bar.org", type: "person" },
+      object: { type: "presence", presence: "online" },
+    },
   ],
   [
     `presence body`,
     `<presence to="foo@bar.org" from="baz@bag.org"><show>online</show> <status>away message!</status></presence>`,
-    {context: 'xmpp', type: 'update', actor: { id: "baz@bag.org", type: "person" },
-      target: { id: "foo@bar.org", type: 'person' }, object: {type: 'presence', content: "away message!",
-        presence: "online"}}
+    {
+      context: "xmpp",
+      type: "update",
+      actor: { id: "baz@bag.org", type: "person" },
+      target: { id: "foo@bar.org", type: "person" },
+      object: { type: "presence", content: "away message!", presence: "online" },
+    },
   ],
   [
     `presence unavailable`,
     `<presence to="foo@bar.org/hyperchannel" from="baz@bag.org/yarg" type="unavailable"><x xmlns="http://jabber.org/protocol/muc#user"><item affiliation="owner" role="none"></item></x></presence>`,
-    { context: 'xmpp', type: "update", actor: { type: "person", id: "baz@bag.org/yarg" },
-      target: { id: "foo@bar.org/hyperchannel", type: 'person' },
+    {
+      context: "xmpp",
+      type: "update",
+      actor: { type: "person", id: "baz@bag.org/yarg" },
+      target: { id: "foo@bar.org/hyperchannel", type: "person" },
       object: { type: "presence", presence: "offline" },
-    }
+    },
   ],
   [
     `presence away`,
     `<presence to="foo@bar.org/hyperchannel" from="baz@bag.org/yarg" type="available"><show>away</show><x xmlns="http://jabber.org/protocol/muc#user"><item affiliation="owner" role="none"></item></x></presence>`,
-    { context: 'xmpp', type: "update", actor: { type: "person", id: "baz@bag.org/yarg" },
-      target: { id: "foo@bar.org/hyperchannel", type: 'person' },
+    {
+      context: "xmpp",
+      type: "update",
+      actor: { type: "person", id: "baz@bag.org/yarg" },
+      target: { id: "foo@bar.org/hyperchannel", type: "person" },
       object: { type: "presence", presence: "away" },
-    }
+    },
   ],
   [
-    'attendance',
+    "attendance",
     `<iq id="muc_id" type="result" to="ernie@jabber.net/Home" from="PartyChatRoom@jabber.net" xmlns:stream="http://etherx.jabber.org/streams"> <query xmlns="http://jabber.org/protocol/disco#items"> <item jid="PartyChatRoom@jabber.net/ernie" name="ernie"/> <item jid="PartyChatRoom@jabber.net/bert" name="bert"/><item jid="PartyChatRoom@jabber.net/oscar" name="oscar"/> <item jid="PartyChatRoom@jabber.net/big_bird" name="big_bird"/> <item jid="PartyChatRoom@jabber.net/elmo" name="elmo"/></query></iq>`,
-    {context: 'xmpp', type: 'query', actor: {id: 'PartyChatRoom@jabber.net', 'type': 'room'},
-      target: {id: 'ernie@jabber.net/Home', type: 'person'}, object: {'type': 'attendance',
-        members: ['ernie', 'bert', 'oscar', 'big_bird', 'elmo']}}
+    {
+      context: "xmpp",
+      type: "query",
+      actor: { id: "PartyChatRoom@jabber.net", type: "room" },
+      target: { id: "ernie@jabber.net/Home", type: "person" },
+      object: { type: "attendance", members: ["ernie", "bert", "oscar", "big_bird", "elmo"] },
+    },
   ],
   [
-    'message',
+    "message",
     `<message from="radical@example.org/thinkpad" to="user@jabber.org" type="chat" id="purple9840c15f" xmlns:stream="http://etherx.jabber.org/streams">
        <active xmlns="http://jabber.org/protocol/chatstates" />
        <stanza-id xmlns="urn:xmpp:sid:0" id="123456789" />
        <body>ohai</body>
      </message>`,
     {
-      context: 'xmpp',
-      type: 'send',
-      actor: { type: 'person', id: 'radical@example.org/thinkpad' },
-      target: { type: 'person', id: 'user@jabber.org' },
-      object: { type: 'message', content: 'ohai',
-        id: 'purple9840c15f', 'xmpp:stanza-id': '123456789' }
-    }
+      context: "xmpp",
+      type: "send",
+      actor: { type: "person", id: "radical@example.org/thinkpad" },
+      target: { type: "person", id: "user@jabber.org" },
+      object: {
+        type: "message",
+        content: "ohai",
+        id: "purple9840c15f",
+        "xmpp:stanza-id": "123456789",
+      },
+    },
   ],
   [
-    'message with delay (e.g. offline message)',
+    "message with delay (e.g. offline message)",
     `<message from="radical@example.org/thinkpad" to="user@jabber.org" type="chat" id="purple9840c15f" xmlns:stream="http://etherx.jabber.org/streams">
        <active xmlns="http://jabber.org/protocol/chatstates" />
        <stanza-id xmlns="urn:xmpp:sid:0" id="123456789" />
@@ -76,21 +108,21 @@ const stanzas = [
        <body>ohai</body>
      </message>`,
     {
-      context: 'xmpp',
-      type: 'send',
-      published: '2021-04-17T18:50:25.000Z',
-      actor: { type: 'person', id: 'radical@example.org/thinkpad' },
-      target: { type: 'person', id: 'user@jabber.org' },
+      context: "xmpp",
+      type: "send",
+      published: "2021-04-17T18:50:25.000Z",
+      actor: { type: "person", id: "radical@example.org/thinkpad" },
+      target: { type: "person", id: "user@jabber.org" },
       object: {
-        type: 'message',
-        content: 'ohai',
-        id: 'purple9840c15f',
-        'xmpp:stanza-id': '123456789'
-      }
-    }
+        type: "message",
+        content: "ohai",
+        id: "purple9840c15f",
+        "xmpp:stanza-id": "123456789",
+      },
+    },
   ],
   [
-    'message correction (XEP-0308)',
+    "message correction (XEP-0308)",
     `<message from="radical@example.org/thinkpad" to="user@jabber.org" type="chat" id="purple9840c15f" xmlns:stream="http://etherx.jabber.org/streams">
        <active xmlns="http://jabber.org/protocol/chatstates" />
        <stanza-id xmlns="urn:xmpp:sid:0" id="123456789" />
@@ -98,36 +130,47 @@ const stanzas = [
        <body>oh hey</body>
      </message>`,
     {
-      context: 'xmpp',
-      type: 'send',
-      actor: { type: 'person', id: 'radical@example.org/thinkpad' },
-      target: { type: 'person', id: 'user@jabber.org' },
-      object: { type: 'message', content: 'oh hey',
-        id: 'purple9840c15f', 'xmpp:stanza-id': '123456789',
-        'xmpp:replace': { id: 'purple1234c15f' } }
-    }
+      context: "xmpp",
+      type: "send",
+      actor: { type: "person", id: "radical@example.org/thinkpad" },
+      target: { type: "person", id: "user@jabber.org" },
+      object: {
+        type: "message",
+        content: "oh hey",
+        id: "purple9840c15f",
+        "xmpp:stanza-id": "123456789",
+        "xmpp:replace": { id: "purple1234c15f" },
+      },
+    },
   ],
   [
-    'group presence',
+    "group presence",
     `<presence from='room@xmpp.example.org/speedboat'><show>chat</show> <status>brrroom!</status></presence>`,
-    {context: 'xmpp', type: 'update', actor: {id: 'room@xmpp.example.org/speedboat', 'type': 'person',
-      name: 'speedboat'}, object: {type: 'presence', content: 'brrroom!',
-      presence: 'chat' }}
+    {
+      context: "xmpp",
+      type: "update",
+      actor: { id: "room@xmpp.example.org/speedboat", type: "person", name: "speedboat" },
+      object: { type: "presence", content: "brrroom!", presence: "chat" },
+    },
   ],
   [
-    'group message',
+    "group message",
     `<message from='coven@chat.shakespeare.lit/thirdwitch' id='hysf1v37' to='crone1@shakespeare.lit/desktop' type='groupchat'>
        <stanza-id id="123456789" />
        <body>Thrice the brinded cat hath mew'd.</body>
      </message>`,
     {
-      context: 'xmpp',
-      type: 'send',
-      actor: { type: 'person', id: 'coven@chat.shakespeare.lit/thirdwitch', name: 'thirdwitch' },
-      target: { type: 'room', id: 'coven@chat.shakespeare.lit' },
-      object: { id: 'hysf1v37', type: 'message', content: 'Thrice the brinded cat hath mew\'d.',
-        'xmpp:stanza-id': '123456789'}
-    }
+      context: "xmpp",
+      type: "send",
+      actor: { type: "person", id: "coven@chat.shakespeare.lit/thirdwitch", name: "thirdwitch" },
+      target: { type: "room", id: "coven@chat.shakespeare.lit" },
+      object: {
+        id: "hysf1v37",
+        type: "message",
+        content: "Thrice the brinded cat hath mew'd.",
+        "xmpp:stanza-id": "123456789",
+      },
+    },
   ],
   // [
   //   'subscribe',
@@ -165,12 +208,16 @@ const stanzas = [
   //   {}
   // ],
   [
-    'JID malformed',
+    "JID malformed",
     `<presence from='coven@chat.shakespeare.lit' id='273hs51g' to='hag66@shakespeare.lit/pda' type='error'> <error by='coven@chat.shakespeare.lit' type='modify'> <jid-malformed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/> </error> </presence>`,
-    {context: 'xmpp', type: "update", actor: {id: "coven@chat.shakespeare.lit", type: "room"},
+    {
+      context: "xmpp",
+      type: "update",
+      actor: { id: "coven@chat.shakespeare.lit", type: "room" },
       error: `<error by="coven@chat.shakespeare.lit" type="modify"> <jid-malformed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/> </error>`,
-      target: {id: "hag66@shakespeare.lit/pda", type: "person"} },
-  ]
+      target: { id: "hag66@shakespeare.lit/pda", type: "person" },
+    },
+  ],
   // [
   //   'presence affiliation owner',
   //   `<presence from='coven@chat.shakespeare.lit/firstwitch'

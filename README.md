@@ -11,7 +11,7 @@ A protocol gateway for the web.
 
 ## About
 
-*The monorepo for the Sockethub project.*
+_The monorepo for the Sockethub project._
 
 Sockethub is a translation layer for web applications to communicate with other protocols and
 services that are traditionally either inaccessible or impractical to use from in-browser JavaScript.
@@ -29,27 +29,27 @@ pnpm dev
 
 ### Dependencies
 
-```pnpm install```
+`pnpm install`
 
 ### Build
 
-```pnpm build```
+`pnpm build`
 
 ### Tests
 
-```pnpm test```
+`pnpm test`
 
 ### Linter
 
-```pnpm lint:js```
+`pnpm lint:js`
 
 Or, to automatically fix linting errors:
 
-```pnpm lint:fix```
+`pnpm lint:fix`
 
 ### Integration Tests
 
-```pnpm integration```
+`pnpm integration`
 
 ## Start
 
@@ -63,24 +63,24 @@ For production, with examples disabled.
 
 `DEBUG=sockethub* pnpm start`
 
-*For more info on configuration options, see the
-[Sockethub README](packages/server/README.md#environment-variables)*
-section on environment variables.*
+_For more info on configuration options, see the
+[Sockethub README](packages/server/README.md#environment-variables)_
+section on environment variables.\*
 
 ## Packages
 
-* [@sockethub/activity-streams](packages/activity-streams)
-* [@sockethub/client](packages/client)
-* [@sockethub/crypto](packages/crypto)
-* [@sockethub/data-layer](packages/data-layer)
-* [@sockethub/examples](packages/examples)
-* [@sockethub/irc2as](packages/irc2as)
-* [@sockethub/platform-dummy](packages/platform-dummy)
-* [@sockethub/platform-feeds](packages/platform-feeds)
-* [@sockethub/platform-irc](packages/platform-irc)
-* [@sockethub/platform-xmpp](packages/platform-xmpp)
-* [@sockethub/schemas](packages/schemas)
-* [@sockethub/server](packages/server)
+- [@sockethub/activity-streams](packages/activity-streams)
+- [@sockethub/client](packages/client)
+- [@sockethub/crypto](packages/crypto)
+- [@sockethub/data-layer](packages/data-layer)
+- [@sockethub/examples](packages/examples)
+- [@sockethub/irc2as](packages/irc2as)
+- [@sockethub/platform-dummy](packages/platform-dummy)
+- [@sockethub/platform-feeds](packages/platform-feeds)
+- [@sockethub/platform-irc](packages/platform-irc)
+- [@sockethub/platform-xmpp](packages/platform-xmpp)
+- [@sockethub/schemas](packages/schemas)
+- [@sockethub/server](packages/server)
 
 ## Credits
 
