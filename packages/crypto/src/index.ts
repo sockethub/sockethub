@@ -6,14 +6,24 @@ import hash from 'object-hash';
 const ALGORITHM = 'aes-256-cbc',
       IV_LENGTH = 16; // For AES, this is always 16
 
-export function getPlatformId(platform: string, actor?: string): string {
-  return actor ? crypto.hash(platform + actor) : crypto.hash(platform);
+export function getPlatformId(platform: string, actor?: string, _crypto = crypto): string {
+  return actor ? _crypto.hash(platform + actor) : _crypto.hash(platform);
 }
 
-class Crypto {
+export class Crypto {
+
+  randomBytes: typeof randomBytes;
+
+  constructor() {
+    this.createRandomBytes();
+  }
+
+  createRandomBytes() {
+    this.randomBytes = randomBytes;
+  }
 
   encrypt(json: IActivityStream, secret: string): string {
-    const iv = randomBytes(IV_LENGTH);
+    const iv = this.randomBytes(IV_LENGTH);
     const cipher = createCipheriv(ALGORITHM, Buffer.from(secret), iv);
     let encrypted = cipher.update(JSON.stringify(json));
 
@@ -45,7 +55,7 @@ class Crypto {
     if (len > 32) {
       throw new Error(`crypto.randToken supports a length param of up to 32, ${len} given`);
     }
-    const buf = randomBytes(len);
+    const buf = this.randomBytes(len);
     return buf.toString('hex').substring(0, len);
   }
 }
