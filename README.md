@@ -69,18 +69,18 @@ section on environment variables.\*
 
 ## Packages
 
--   [@sockethub/activity-streams](packages/activity-streams)
--   [@sockethub/client](packages/client)
--   [@sockethub/crypto](packages/crypto)
--   [@sockethub/data-layer](packages/data-layer)
--   [@sockethub/examples](packages/examples)
--   [@sockethub/irc2as](packages/irc2as)
--   [@sockethub/platform-dummy](packages/platform-dummy)
--   [@sockethub/platform-feeds](packages/platform-feeds)
--   [@sockethub/platform-irc](packages/platform-irc)
--   [@sockethub/platform-xmpp](packages/platform-xmpp)
--   [@sockethub/schemas](packages/schemas)
--   [@sockethub/server](packages/server)
+- [@sockethub/activity-streams](packages/activity-streams)
+- [@sockethub/client](packages/client)
+- [@sockethub/crypto](packages/crypto)
+- [@sockethub/data-layer](packages/data-layer)
+- [@sockethub/examples](packages/examples)
+- [@sockethub/irc2as](packages/irc2as)
+- [@sockethub/platform-dummy](packages/platform-dummy)
+- [@sockethub/platform-feeds](packages/platform-feeds)
+- [@sockethub/platform-irc](packages/platform-irc)
+- [@sockethub/platform-xmpp](packages/platform-xmpp)
+- [@sockethub/schemas](packages/schemas)
+- [@sockethub/server](packages/server)
 
 ## Credits
 

@@ -8,3 +8,4 @@ coverage
 .env.*
 !.env.example
 pnpm-lock.yaml
+*.md
