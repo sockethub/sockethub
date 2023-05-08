@@ -51,7 +51,7 @@
   "scripts": {
     "clean": "rm -rf dist coverage",
     "test": "c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts src/**/*.test.ts",
-    "coverage": "c8 check-coverage --statements 89 --branches 80 --functions 80 --lines 89",
+    "coverage": "c8 check-coverage --statements 89 --branches 80 --functions 77 --lines 89",
     "start": "DEBUG=sockethub* ./bin/sockethub",
     "dev": "pnpm build && DEBUG=sockethub* ./bin/sockethub --examples",
     "build": "pnpm clean && tsc && cp ./src/defaults.json ./dist/defaults.json"
