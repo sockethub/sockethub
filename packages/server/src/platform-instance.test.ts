@@ -9,12 +9,12 @@ const FORK_PATH = __dirname + "/platform.js";
 
 describe("PlatformInstance", () => {
   let pi,
-    sandbox,
-    forkFake,
-    socketMock,
-    getSocketFake,
-    PlatformInstance,
-    platformInstances;
+      sandbox,
+      forkFake,
+      socketMock,
+      getSocketFake,
+      PlatformInstance,
+      platformInstances;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();

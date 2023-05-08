@@ -24,9 +24,9 @@ describe('warn test', () => {
         actor: 'thingy',
         object: {'type': 'hola', content: 'har', secure: true},
         target: ['thingy1', 'thingy2']
-      })
+      });
     }).not.to.throw(Error);
-  })
+  });
 });
 
 describe('no special props', () => {
@@ -51,7 +51,7 @@ describe('no special props', () => {
       object: { 'type': 'hola', content: 'har' },
       target: [ 'thingy1', 'thingy2' ]
     });
-  })
+  });
 });
 
 describe('basic tests', () => {
@@ -157,7 +157,7 @@ describe('basic tests', () => {
         target: [ { 'id': 'thingy1' }, { 'id': 'thingy2' }],
         object: { 'type': 'dude', foo: 'bar', content: 'har', secure: true }
       });
-    })
+    });
 
     it('rejects nondefined special types', () => {
       expect(() => {
@@ -167,9 +167,9 @@ describe('basic tests', () => {
           actor: 'thingy',
           object: { 'type': 'hola', foo: 'bar', content: 'har', secure: true },
           target: [ 'thingy1', 'thingy2' ]
-        })
+        });
       }).to.throw('invalid property: "foo"');
-    })
+    });
   });
 
   describe('emitters', () => {

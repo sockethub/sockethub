@@ -24,9 +24,9 @@ const creds = {
 
 describe("Middleware: storeCredentials", () => {
   let storeSuccess: any,
-    storeError: any,
-    saveErrorFake: any,
-    saveSuccessFake: any;
+      storeError: any,
+      saveErrorFake: any,
+      saveSuccessFake: any;
 
   beforeEach(() => {
     storeSuccess = {

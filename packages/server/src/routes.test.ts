@@ -28,8 +28,8 @@ describe("routes/base", () => {
   });
 
   it("handles calls to base routes as expected", () => {
-    let routeHandlers: any = {};
-    let app = {
+    const routeHandlers: any = {};
+    const app = {
       get: (path: string | number, route: any) => {
         routeHandlers[path] = route;
       },

@@ -33,7 +33,7 @@ describe("Middleware", () => {
     const callback = (data: any, cb: Function) => { cb(data); };
     const funcs = [ sinon.spy(callback), sinon.spy(callback), sinon.spy(callback) ];
     const mw = middleware('test');
-    for (let func of funcs) {
+    for (const func of funcs) {
       // @ts-ignore
       const entry = mw.use(func);
     }
@@ -55,7 +55,7 @@ describe("Middleware", () => {
       cb(new Error('some error')); };
     const funcs = [ sinon.spy(callbackError) ];
     const mw = middleware('test');
-    for (let func of funcs) {
+    for (const func of funcs) {
       mw.use(func);
     }
     mw.use((err: any, data: any, next: Function) => {
@@ -77,7 +77,7 @@ describe("Middleware", () => {
     };
     const funcs = [ sinon.spy(callback), sinon.spy(callbackError), sinon.spy(callback) ];
     const mw = middleware('test');
-    for (let func of funcs) {
+    for (const func of funcs) {
       mw.use(func);
     }
     mw.use((err: any, data: any, next: Function) => {
@@ -106,7 +106,7 @@ describe("Middleware", () => {
     };
     const funcs = [ sinon.spy(callback), sinon.spy(callback), sinon.spy(callbackError) ];
     const mw = middleware('test');
-    for (let func of funcs) {
+    for (const func of funcs) {
       mw.use(func);
     }
     mw.use((err: any, data: any, next: Function) => {
@@ -128,12 +128,12 @@ describe("Middleware", () => {
   it("calls each member of chain (50)", (done) => {
     let errorHandlerCalled = false;
     const callback = (data: any, cb: Function) => { cb(data); };
-    let funcs: Array<any> = [];
+    const funcs: Array<any> = [];
     for (let i = 0; i <= 50; i++) {
       funcs.push(sinon.spy(callback));
     }
     const mw = middleware('test');
-    for (let func of funcs) {
+    for (const func of funcs) {
       mw.use(func);
     }
     mw.use((err: any, data: any, next: Function) => {

@@ -38,7 +38,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
 
   describe("SockethubClient()", () => {
     let sc,
-      incomingMessages = [];
+        incomingMessages = [];
 
     before(() => {
       sc = new SockethubClient(

@@ -79,7 +79,7 @@ describe('JobQueue', () => {
         title: 'some context-an identifier',
         msg: 'an encrypted message',
         sessionId: 'a socket id'
-      })
+      });
     });
 
     it('uses counter when no id provided', () => {
@@ -100,14 +100,14 @@ describe('JobQueue', () => {
         msg: 'an encrypted message',
         sessionId: 'a socket id'
       });
-    })
+    });
   });
 
   describe('add', () => {
     it('stores encrypted job', async () => {
-      cryptoMocks.encrypt.returns('encrypted foo')
+      cryptoMocks.encrypt.returns('encrypted foo');
       bullMocks.isPaused.returns(false);
-      const resultJob = {title: 'a platform-an identifier', sessionId: 'a socket id', msg: 'encrypted foo'}
+      const resultJob = {title: 'a platform-an identifier', sessionId: 'a socket id', msg: 'encrypted foo'};
       const res = await jobQueue.add(
         'a socket id', {context: 'a platform', id: 'an identifier'}
       );
@@ -118,9 +118,9 @@ describe('JobQueue', () => {
       expect(res).to.eql(resultJob);
     });
     it('fails job if queue paused', async () => {
-      cryptoMocks.encrypt.returns('encrypted foo')
+      cryptoMocks.encrypt.returns('encrypted foo');
       bullMocks.isPaused.returns(true);
-      const resultJob = {title: 'a platform-an identifier', sessionId: 'a socket id', msg: 'encrypted foo'}
+      const resultJob = {title: 'a platform-an identifier', sessionId: 'a socket id', msg: 'encrypted foo'};
       const res = await jobQueue.add(
         'a socket id', {context: 'a platform', id: 'an identifier'}
       );
@@ -142,7 +142,7 @@ describe('JobQueue', () => {
 
     it('handles fetching a valid job', async () => {
       bullMocks.getJob.returns(encryptedJob);
-      cryptoMocks.decrypt.returns('an unencrypted message')
+      cryptoMocks.decrypt.returns('an unencrypted message');
       const job = await jobQueue.getJob('a valid job');
       sinon.assert.calledOnceWithExactly(bullMocks.getJob, 'a valid job');
       encryptedJob.data.msg = 'an unencrypted message';
@@ -154,7 +154,7 @@ describe('JobQueue', () => {
       const job = await jobQueue.getJob('an invalid job');
       expect(job).to.eql(undefined);
       sinon.assert.calledOnceWithExactly(bullMocks.getJob, 'an invalid job');
-      sinon.assert.notCalled(cryptoMocks.decrypt)
+      sinon.assert.notCalled(cryptoMocks.decrypt);
     });
 
     it('removes sessionSecret', async () => {
@@ -162,13 +162,13 @@ describe('JobQueue', () => {
       cryptoMocks.decrypt.returns({
         foo:'bar',
         sessionSecret: 'yarg'
-      })
+      });
       const job = await jobQueue.getJob('a valid job');
       sinon.assert.calledOnceWithExactly(bullMocks.getJob, 'a valid job');
       // @ts-ignore
       encryptedJob.data.msg = {
         foo:'bar'
-      }
+      };
       expect(job).to.eql(encryptedJob);
     });
   });
@@ -184,26 +184,26 @@ describe('JobQueue', () => {
 
   it('pause', async () => {
     await jobQueue.pause();
-    sinon.assert.calledOnce(bullMocks.pause)
+    sinon.assert.calledOnce(bullMocks.pause);
   });
 
   it('resume', async () => {
     await jobQueue.resume();
-    sinon.assert.calledOnce(bullMocks.resume)
+    sinon.assert.calledOnce(bullMocks.resume);
   });
 
   describe('shutdown', () => {
     it('is sure to pause when not already paused', async () => {
-      bullMocks.isPaused.returns(false)
-      await jobQueue.shutdown()
+      bullMocks.isPaused.returns(false);
+      await jobQueue.shutdown();
       sinon.assert.calledOnce(bullMocks.isPaused);
       sinon.assert.calledOnce(bullMocks.pause);
       sinon.assert.calledOnce(bullMocks.removeAllListeners);
       sinon.assert.calledOnce(bullMocks.obliterate);
     });
     it('skips pausing when already paused', async () => {
-      bullMocks.isPaused.returns(true)
-      await jobQueue.shutdown()
+      bullMocks.isPaused.returns(true);
+      await jobQueue.shutdown();
       sinon.assert.calledOnce(bullMocks.isPaused);
       sinon.assert.notCalled(bullMocks.pause);
       sinon.assert.calledOnce(bullMocks.removeAllListeners);
@@ -223,7 +223,7 @@ describe('JobQueue', () => {
       };
       jobQueue.onJob((job, cb) => {
         const decryptedData = encryptedJob.data;
-        decryptedData.msg = 'an unencrypted message'
+        decryptedData.msg = 'an unencrypted message';
         expect(job).to.eql(decryptedData);
         cb();
       });

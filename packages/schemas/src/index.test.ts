@@ -16,11 +16,11 @@ import testPlatformSchemaData from './index.test.data.platform';
 
 describe('Platform schema validation', () => {
   it('returns an empty error for a valid schema', () => {
-    let err = validatePlatformSchema(testPlatformSchemaData);
+    const err = validatePlatformSchema(testPlatformSchemaData);
     expect(err).to.equal("");
   });
   it('returns an error for an invalid schema', () => {
-    let err = validatePlatformSchema({foo: 'bar'});
+    const err = validatePlatformSchema({foo: 'bar'});
     expect(err).to.eql('platform schema failed to validate:  must have required property \'name\'');
   });
 });

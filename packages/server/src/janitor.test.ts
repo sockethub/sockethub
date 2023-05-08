@@ -2,10 +2,10 @@ import proxyquire from 'proxyquire';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 
-let sockets = [
+const sockets = [
   { id: 'socket foo', emit: () => {} },
   { id: 'socket bar', emit: () => {} }
-]
+];
 
 proxyquire.noPreserveCache();
 proxyquire.noCallThru();
@@ -30,7 +30,7 @@ function getPlatformInstanceFake() {
         ['session bar', function sessionBarMessage() {}]
       ]))()
     }
-  }
+  };
 }
 
 const cycleInterval = 10;
@@ -58,7 +58,7 @@ describe('Janitor', () => {
     setTimeout(() => {
       expect(janitor.cycleCount).to.equal(1);
       done();
-    }, cycleInterval)
+    }, cycleInterval);
   });
 
   afterEach((done) => {
@@ -66,7 +66,7 @@ describe('Janitor', () => {
     janitor.stop();
     setTimeout(() => {
       done();
-    }, janitor.cycleInterval * 2)
+    }, janitor.cycleInterval * 2);
   });
 
   it('runs cycle at every cycleInterval', (done) => {
@@ -182,8 +182,8 @@ describe('Janitor', () => {
         setTimeout(() => {
           expect(janitor.cycleCount).to.equal(prevCycle);
           done();
-        }, cycleInterval)
-      }, cycleInterval)
+        }, cycleInterval);
+      }, cycleInterval);
     }, cycleInterval);
   });
-})
+});
