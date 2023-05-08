@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import proxyquire from "proxyquire";
 import { expect } from "chai";
 import { createSandbox, restore } from "sinon";
@@ -12,7 +14,6 @@ describe("SockethubClient bad initialization", () => {
       "@sockethub/activity-streams": (config: any) => {},
     }).default;
     expect(() => {
-      // @ts-ignore
       const junk = new SockethubClient();
     }).to.throw("SockethubClient requires a socket.io instance");
   });

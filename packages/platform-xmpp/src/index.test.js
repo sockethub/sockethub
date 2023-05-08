@@ -1,7 +1,6 @@
-const proxyquire = require('proxyquire');
-const chai = require('chai');
-const sinon = require('sinon');
-const expect = chai.expect;
+import proxyquire from "proxyquire";
+import {expect} from "chai";
+import sinon from "sinon";
 
 proxyquire.noPreserveCache();
 proxyquire.noCallThru();

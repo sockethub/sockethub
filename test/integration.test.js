@@ -1,3 +1,8 @@
+/* eslint-disable  no-undef */
+/* eslint-disable  security-node/detect-crlf */
+/* eslint-disable  security-node/detect-eval-with-expr */
+/* eslint-disable  no-eval */
+
 if (typeof chai !== "object") {
   chai = require("chai");
 }
@@ -131,7 +136,9 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                 expect(m.actor.type).to.equal("feed");
                 expect(m.type).to.equal("post");
               }
-              done(msg?.error ? new Error(`Failed to fetch ${msg.target.id}: ${msg.error}`) : undefined);
+              done(msg?.error ? new Error(
+                `Failed to fetch ${msg.target.id}: ${msg.error}`
+              ) : undefined);
             }
           );
         });

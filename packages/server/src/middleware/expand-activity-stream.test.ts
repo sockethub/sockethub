@@ -53,6 +53,7 @@ describe('Middleware: Expand Activity Stream', () => {
   describe('AS object expansion', () => {
     asObjects.forEach((obj) => {
       it(`${obj.type}: ${obj.name}, should ${obj.valid ? 'pass' : 'fail'}`, (done) => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         expandActivityStream(obj.input, (msg) => {
           if (obj.output) {

@@ -1,6 +1,6 @@
-const chai = require('chai');
-const utils = require( "./utils");
-const expect = chai.expect;
+import { expect } from "chai";
+
+import utils from "./utils";
 
 describe('Utils', () => {
   describe('buildXmppCredentials', () => {

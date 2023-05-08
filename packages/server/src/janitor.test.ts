@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import proxyquire from 'proxyquire';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
@@ -121,7 +123,8 @@ describe('Janitor', () => {
     it('removes session if the socket is inactive', async () => {
       const pi = getPlatformInstanceFake();
       janitor.removeSessionCallbacks = sinon.stub();
-      janitor.socketExists = sinon.stub().onFirstCall().returns(false).onSecondCall().returns(true);
+      janitor.socketExists =
+        sinon.stub().onFirstCall().returns(false).onSecondCall().returns(true);
       expect(janitor.stopTriggered).to.be.false;
       await janitor.removeStaleSocketSessions(pi);
       sinon.assert.calledOnce(janitor.removeSessionCallbacks);

@@ -3,6 +3,7 @@ node_modules
 **/build
 **/*-suite.js
 **/*.d.ts
+**/*.data.*
 packages/irc2as/
 packages/platform-feeds/
 packages/platform-irc/

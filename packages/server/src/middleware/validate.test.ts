@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import proxyquire from 'proxyquire';
 import asObjects from "./validate.test.data";
@@ -62,7 +63,6 @@ const modules = {
 let platforms;
 let mockInit;
 (async function () {
-  // @ts-ignore
   platforms = await loadPlatforms(['fakeplatform'], async (module) => {
     return Promise.resolve(modules[module]);
   });

@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import proxyquire from 'proxyquire';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
@@ -107,7 +109,9 @@ describe('JobQueue', () => {
     it('stores encrypted job', async () => {
       cryptoMocks.encrypt.returns('encrypted foo');
       bullMocks.isPaused.returns(false);
-      const resultJob = {title: 'a platform-an identifier', sessionId: 'a socket id', msg: 'encrypted foo'};
+      const resultJob = {
+        title: 'a platform-an identifier', sessionId: 'a socket id', msg: 'encrypted foo'
+      };
       const res = await jobQueue.add(
         'a socket id', {context: 'a platform', id: 'an identifier'}
       );
@@ -120,7 +124,9 @@ describe('JobQueue', () => {
     it('fails job if queue paused', async () => {
       cryptoMocks.encrypt.returns('encrypted foo');
       bullMocks.isPaused.returns(true);
-      const resultJob = {title: 'a platform-an identifier', sessionId: 'a socket id', msg: 'encrypted foo'};
+      const resultJob = {
+        title: 'a platform-an identifier', sessionId: 'a socket id', msg: 'encrypted foo'
+      };
       const res = await jobQueue.add(
         'a socket id', {context: 'a platform', id: 'an identifier'}
       );
@@ -165,6 +171,7 @@ describe('JobQueue', () => {
       });
       const job = await jobQueue.getJob('a valid job');
       sinon.assert.calledOnceWithExactly(bullMocks.getJob, 'a valid job');
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       encryptedJob.data.msg = {
         foo:'bar'

@@ -30,12 +30,12 @@ describe("Middleware: storeCredentials", () => {
 
   beforeEach(() => {
     storeSuccess = {
-      save: (id: any, creds: any, cb: Function) => {
+      save: (id: any, creds: any, cb: () => void) => {
         cb();
       },
     };
     storeError = {
-      save: (id: any, creds: any, cb: Function) => {
+      save: (id: any, creds: any, cb: (v:string) => void) => {
         cb("some error");
       },
     };

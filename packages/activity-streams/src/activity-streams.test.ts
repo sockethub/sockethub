@@ -98,7 +98,11 @@ describe('basic tests', () => {
     });
 
     it('returns given id param when lookup fails and expand=false', () => {
-      expect(activity.Object.get({'id': 'thingy3', 'foo': 'bar'})).to.deep.equal({'id': 'thingy3', 'foo': 'bar'});
+      expect(activity.Object.get({
+        'id': 'thingy3', 'foo': 'bar'
+      })).to.deep.equal({
+        'id': 'thingy3', 'foo': 'bar'
+      });
     });
   });
 
