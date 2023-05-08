@@ -26,6 +26,7 @@
     "markdownlint-cli": "0.33.0",
     "mocha": "10.2.0",
     "nx": "15.9.2",
+    "prettier": "^2.8.7",
     "typescript": "5.0.3"
   },
   "scripts": {
@@ -43,10 +44,10 @@
     "docker:build": "pnpm docker:clean:sockethub; pnpm docker:start",
     "integration": "pnpm docker:start && pnpm integration:run; RES=$?; pnpm docker:stop; exit $RES",
     "integration:run": "karma start --single-run --sh_port=10650 --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
-    "lint": "eslint --max-warnings 0 . && nx run-many --target=lint && pnpm lint:doc",
+    "lint": "npx prettier --plugin-search-dir . --check . && eslint --max-warnings 0 . && nx run-many --target=lint && pnpm lint:doc",
     "lint:doc": "markdownlint '**/*.md'",
     "lint:doc:fix": "markdownlint --fix '**/*.md' && mdspell -n -a --en-us ./README.md ./packages/*/README.md",
-    "lint:fix": "nx run-many --target=lint:fix && pnpm lint:doc:fix",
+    "lint:fix": "prettier --plugin-search-dir . --write . && eslint --fix . && nx run-many --target=lint:fix && pnpm lint:doc:fix",
     "preinstall": "npx only-allow pnpm",
     "publish": "pnpm clean && pnpm build && pnpm compliance && lerna publish --dist-tag latest --pre-dist-tag next",
     "start": "pnpm --filter sockethub start",
