@@ -45,7 +45,6 @@
     "@types/node": "18.15.11",
     "@types/object-hash": "3.0.2",
     "@types/sinon": "10.0.13",
-    "@typescript-eslint/parser": "5.57.1",
     "c8": "7.13.0",
     "chai": "4.3.7",
     "mocha": "10.2.0",
