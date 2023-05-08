@@ -28,7 +28,6 @@
     "@sockethub/schemas": "workspace:^",
     "c8": "7.13.0",
     "chai": "4.3.7",
-    "eslint": "8.37.0",
     "jsdoc-to-markdown": "8.0.0",
     "mocha": "10.2.0",
     "proxyquire": "2.1.3",
@@ -46,8 +45,6 @@
     "build": "pnpm doc",
     "clean": "rm -rf coverage",
     "test": "c8 -x \"**/*.test.*\" mocha **/*.test.js",
-    "lint": "eslint \"**/*.js\"",
-    "lint:fix": "eslint --fix \"**/*.js\"",
     "coverage": "c8 check-coverage --statements 85 --branches 80 --functions 70 --lines 85",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 src/index.js > API.md"
   }

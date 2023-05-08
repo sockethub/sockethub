@@ -484,9 +484,6 @@ importers:
       chai:
         specifier: 4.3.7
         version: 4.3.7
-      eslint:
-        specifier: 8.37.0
-        version: 8.37.0
       jsdoc-to-markdown:
         specifier: 8.0.0
         version: 8.0.0
@@ -515,9 +512,6 @@ importers:
       chai:
         specifier: 4.3.7
         version: 4.3.7
-      eslint:
-        specifier: 8.37.0
-        version: 8.37.0
       jsdoc-to-markdown:
         specifier: 8.0.0
         version: 8.0.0
@@ -560,7 +554,7 @@ importers:
         version: 18.15.11
       '@typescript-eslint/parser':
         specifier: 5.57.1
-        version: 5.57.1(eslint@8.37.0)(typescript@5.0.3)
+        version: 5.57.1(eslint@8.39.0)(typescript@5.0.3)
       c8:
         specifier: 7.13.0
         version: 7.13.0
@@ -667,7 +661,7 @@ importers:
         version: 10.0.13
       '@typescript-eslint/parser':
         specifier: 5.57.1
-        version: 5.57.1(eslint@8.37.0)(typescript@5.0.3)
+        version: 5.57.1(eslint@8.39.0)(typescript@5.0.3)
       c8:
         specifier: 7.13.0
         version: 7.13.0
