@@ -1,33 +1,31 @@
 <a name="XMPP"></a>
 
 # XMPP
-
 Handles all actions related to communication via. the XMPP protocol.
 
 Uses `xmpp.js` as a base tool for interacting with XMPP.
 
 [https://github.com/xmppjs/xmpp.js](https://github.com/xmppjs/xmpp.js)
 
-**Kind**: global class
+**Kind**: global class  
 
--   [XMPP](#XMPP)
-    -   [new XMPP(session)](#new_XMPP_new)
-    -   [.schema](#XMPP+schema)
-    -   [.connect(job, credentials, done)](#XMPP+connect)
-    -   [.join(job, done)](#XMPP+join)
-    -   [.leave(job, done)](#XMPP+leave)
-    -   [.send(job, done)](#XMPP+send)
-    -   [.update(job, done)](#XMPP+update)
-    -   [.request-friend(job, done)](#XMPP+request-friend)
-    -   [.remove-friend(job, done)](#XMPP+remove-friend)
-    -   [.make-friend(job, done)](#XMPP+make-friend)
-    -   [.query(job, done)](#XMPP+query)
-    -   [.cleanup(done)](#XMPP+cleanup)
+* [XMPP](#XMPP)
+    * [new XMPP(session)](#new_XMPP_new)
+    * [.schema](#XMPP+schema)
+    * [.connect(job, credentials, done)](#XMPP+connect)
+    * [.join(job, done)](#XMPP+join)
+    * [.leave(job, done)](#XMPP+leave)
+    * [.send(job, done)](#XMPP+send)
+    * [.update(job, done)](#XMPP+update)
+    * [.request-friend(job, done)](#XMPP+request-friend)
+    * [.remove-friend(job, done)](#XMPP+remove-friend)
+    * [.make-friend(job, done)](#XMPP+make-friend)
+    * [.query(job, done)](#XMPP+query)
+    * [.cleanup(done)](#XMPP+cleanup)
 
 <a name="new_XMPP_new"></a>
 
 ## new XMPP(session)
-
 Constructor called from the Sockethub `Platform` instance, passing in a
 session object.
 
@@ -47,7 +45,6 @@ session object.
 <a name="XMPP+schema"></a>
 
 ## xmpP.schema
-
 JSON schema defining the types this platform accepts.
 
 Actual handling of incoming 'set' commands are handled by dispatcher,
@@ -56,9 +53,11 @@ received, so that when a @context type is called, it can fetch the
 credentials (`session.getConfig()`), knowing they will have already been
 validated against this schema.
 
+
 In the below example, Sockethub will validate the incoming credentials object
 against whatever is defined in the `credentials` portion of the schema
 object.
+
 
 It will also check if the incoming AS object uses a type which exists in the
 `types` portion of the schema object (should be an array of type names).
@@ -69,8 +68,7 @@ see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Cli
 Valid AS object for setting XMPP credentials:
 
 **Kind**: instance property of [<code>XMPP</code>](#XMPP)  
-**Example**
-
+**Example**  
 ```js
 {
   type: 'credentials',
@@ -88,15 +86,12 @@ Valid AS object for setting XMPP credentials:
   }
 }
 ```
-
 <a name="XMPP+connect"></a>
 
 ## xmpP.connect(job, credentials, done)
-
 Connect to the XMPP server.
 
-**Kind**: instance method of [<code>XMPP</code>](#XMPP)
-
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
 <table>
   <thead>
     <tr>
@@ -116,8 +111,7 @@ Connect to the XMPP server.
     </tr>  </tbody>
 </table>
 
-**Example**
-
+**Example**  
 ```js
 {
   context: 'xmpp',
@@ -130,15 +124,12 @@ Connect to the XMPP server.
   }
 }
 ```
-
 <a name="XMPP+join"></a>
 
 ## xmpP.join(job, done)
-
 Join a room, optionally defining a display name for that room.
 
-**Kind**: instance method of [<code>XMPP</code>](#XMPP)
-
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
 <table>
   <thead>
     <tr>
@@ -155,8 +146,7 @@ Join a room, optionally defining a display name for that room.
     </tr>  </tbody>
 </table>
 
-**Example**
-
+**Example**  
 ```js
 {
   context: 'xmpp',
@@ -172,15 +162,12 @@ Join a room, optionally defining a display name for that room.
   }
 }
 ```
-
 <a name="XMPP+leave"></a>
 
 ## xmpP.leave(job, done)
-
 Leave a room
 
-**Kind**: instance method of [<code>XMPP</code>](#XMPP)
-
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
 <table>
   <thead>
     <tr>
@@ -197,8 +184,7 @@ Leave a room
     </tr>  </tbody>
 </table>
 
-**Example**
-
+**Example**  
 ```js
 {
   context: 'xmpp',
@@ -214,15 +200,12 @@ Leave a room
   }
 }
 ```
-
 <a name="XMPP+send"></a>
 
 ## xmpP.send(job, done)
-
 Send a message to a room or private conversation.
 
-**Kind**: instance method of [<code>XMPP</code>](#XMPP)
-
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
 <table>
   <thead>
     <tr>
@@ -239,8 +222,7 @@ Send a message to a room or private conversation.
     </tr>  </tbody>
 </table>
 
-**Example**
-
+**Example**  
 ```js
 {
   context: 'xmpp',
@@ -281,16 +263,13 @@ Send a message to a room or private conversation.
   }
 }
 ```
-
 <a name="XMPP+update"></a>
 
 ## xmpP.update(job, done)
-
 Indicate presence and status message.
 Valid presence values are "away", "chat", "dnd", "xa", "offline", "online".
 
-**Kind**: instance method of [<code>XMPP</code>](#XMPP)
-
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
 <table>
   <thead>
     <tr>
@@ -307,8 +286,7 @@ Valid presence values are "away", "chat", "dnd", "xa", "offline", "online".
     </tr>  </tbody>
 </table>
 
-**Example**
-
+**Example**  
 ```js
 {
   context: 'xmpp',
@@ -323,15 +301,12 @@ Valid presence values are "away", "chat", "dnd", "xa", "offline", "online".
   }
 }
 ```
-
 <a name="XMPP+request-friend"></a>
 
 ## xmpP.request-friend(job, done)
-
 Send friend request
 
-**Kind**: instance method of [<code>XMPP</code>](#XMPP)
-
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
 <table>
   <thead>
     <tr>
@@ -348,8 +323,7 @@ Send friend request
     </tr>  </tbody>
 </table>
 
-**Example**
-
+**Example**  
 ```js
 {
   context: 'xmpp',
@@ -362,15 +336,12 @@ Send friend request
   }
 }
 ```
-
 <a name="XMPP+remove-friend"></a>
 
 ## xmpP.remove-friend(job, done)
-
 Send a remove friend request
 
-**Kind**: instance method of [<code>XMPP</code>](#XMPP)
-
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
 <table>
   <thead>
     <tr>
@@ -387,8 +358,7 @@ Send a remove friend request
     </tr>  </tbody>
 </table>
 
-**Example**
-
+**Example**  
 ```js
 {
   context: 'xmpp',
@@ -401,15 +371,12 @@ Send a remove friend request
   }
 }
 ```
-
 <a name="XMPP+make-friend"></a>
 
 ## xmpP.make-friend(job, done)
-
 Confirm a friend request
 
-**Kind**: instance method of [<code>XMPP</code>](#XMPP)
-
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
 <table>
   <thead>
     <tr>
@@ -426,8 +393,7 @@ Confirm a friend request
     </tr>  </tbody>
 </table>
 
-**Example**
-
+**Example**  
 ```js
 {
   context: 'xmpp',
@@ -440,15 +406,12 @@ Confirm a friend request
   }
 }
 ```
-
 <a name="XMPP+query"></a>
 
 ## xmpP.query(job, done)
-
 Indicate an intent to query something (ie. get a list of users in a room).
 
-**Kind**: instance method of [<code>XMPP</code>](#XMPP)
-
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
 <table>
   <thead>
     <tr>
@@ -465,8 +428,7 @@ Indicate an intent to query something (ie. get a list of users in a room).
     </tr>  </tbody>
 </table>
 
-**Example**
-
+**Example**  
 ```js
 {
    context: 'xmpp',
@@ -508,16 +470,13 @@ Indicate an intent to query something (ie. get a list of users in a room).
    }
  }
 ```
-
 <a name="XMPP+cleanup"></a>
 
 ## xmpP.cleanup(done)
-
 Called when it's time to close any connections or clean data before being wiped
 forcefully.
 
-**Kind**: instance method of [<code>XMPP</code>](#XMPP)
-
+**Kind**: instance method of [<code>XMPP</code>](#XMPP)  
 <table>
   <thead>
     <tr>
@@ -530,3 +489,4 @@ forcefully.
 </td>
     </tr>  </tbody>
 </table>
+
