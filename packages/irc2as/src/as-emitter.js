@@ -24,8 +24,8 @@ class ASTemplates {
         name: nick
       },
       target: {
-          type: 'service',
-          id: this.server
+        type: 'service',
+        id: this.server
       },
       error: content
     };
@@ -33,24 +33,24 @@ class ASTemplates {
 
   presence(nick, role, channel) {
     this.emitEvent(EVENT_INCOMING, {
-        context: 'irc',
-        type: 'update',
-        actor: {
-            type: 'person',
-            id: `${nick}@${this.server}`,
-            name: nick,
-        },
-        target: {
-            type: 'room',
-            id: this.server + '/' + channel,
-            name: channel
-        },
-        object: {
-            type: 'presence',
-            role: role
-        }
+      context: 'irc',
+      type: 'update',
+      actor: {
+        type: 'person',
+        id: `${nick}@${this.server}`,
+        name: nick,
+      },
+      target: {
+        type: 'room',
+        id: this.server + '/' + channel,
+        name: channel
+      },
+      object: {
+        type: 'presence',
+        role: role
+      }
     });
-  };
+  }
 
   channelError(channel, nick, content) {
     this.emitEvent(EVENT_ERROR, {
@@ -101,13 +101,13 @@ class ASTemplates {
       context: 'irc',
       type: 'join',
       actor: {
-          id: this.server,
-          type: 'service'
+        id: this.server,
+        type: 'service'
       },
       error: 'no such channel ' + nick,
       target: {
-          id: nick + '@' + this.server,
-          type: 'person'
+        id: nick + '@' + this.server,
+        type: 'person'
       }
     });
   }
@@ -117,18 +117,18 @@ class ASTemplates {
       context: 'irc',
       type: 'update',
       actor: {
-          type: 'person',
-          id: nick + '@' + this.server,
-          name: nick
+        type: 'person',
+        id: nick + '@' + this.server,
+        name: nick
       },
       target: {
-          type: 'room',
-          id: this.server + '/' + channel,
-          name: channel
+        type: 'room',
+        id: this.server + '/' + channel,
+        name: channel
       },
       object: {
-          type: 'topic',
-          content: content
+        type: 'topic',
+        content: content
       }
     });
   }
@@ -138,14 +138,14 @@ class ASTemplates {
       context: 'irc',
       type: 'join',
       actor: {
-          type: 'person',
-          id: nick + '@' + this.server,
-          name: nick
+        type: 'person',
+        id: nick + '@' + this.server,
+        name: nick
       },
       target: {
-          type: 'room',
-          id: this.server + '/' + channel,
-          name: channel
+        type: 'room',
+        id: this.server + '/' + channel,
+        name: channel
       }
     });
   }
@@ -155,17 +155,17 @@ class ASTemplates {
       context: 'irc',
       type: 'leave',
       actor: {
-          type: 'person',
-          id: nick + '@' + this.server,
-          name: nick
+        type: 'person',
+        id: nick + '@' + this.server,
+        name: nick
       },
       target: {
-          type: 'service',
-          id: this.server
+        type: 'service',
+        id: this.server
       },
       object: {
-          type: 'message',
-          content: 'user has quit'
+        type: 'message',
+        content: 'user has quit'
       }
     });
   }
@@ -175,18 +175,18 @@ class ASTemplates {
       context: 'irc',
       type: 'leave',
       actor: {
-          type: 'person',
-          id: nick + '@' + this.server,
-          name: nick
+        type: 'person',
+        id: nick + '@' + this.server,
+        name: nick
       },
       target: {
-          type: 'room',
-          id: this.server + '/' + channel,
-          name: channel
+        type: 'room',
+        id: this.server + '/' + channel,
+        name: channel
       },
       object: {
-          type: 'message',
-          content: 'user has left the channel'
+        type: 'message',
+        content: 'user has left the channel'
       }
     });
   }
@@ -225,27 +225,27 @@ class ASTemplates {
       context: 'irc',
       type: type,
       actor: {
-          type: 'person',
-          id: nick + '@' + this.server,
-          name: nick
+        type: 'person',
+        id: nick + '@' + this.server,
+        name: nick
       },
       target: {
-          type: 'person',
-          id: target + '@' + this.server,
-          name: target
+        type: 'person',
+        id: target + '@' + this.server,
+        name: target
       },
       object: {
-          type: "relationship",
-          "relationship": 'role',
-          "subject": {
-              type: 'presence',
-              role: role
-          },
-          "object": {
-              type: 'room',
-              id: this.server + '/' + channel,
-              name: channel
-          }
+        type: "relationship",
+        "relationship": 'role',
+        "subject": {
+          type: 'presence',
+          role: role
+        },
+        "object": {
+          type: 'room',
+          id: this.server + '/' + channel,
+          name: channel
+        }
       }
     });
   }
@@ -255,17 +255,17 @@ class ASTemplates {
       context: 'irc',
       type: 'update',
       actor: {
-          type: 'person',
-          id: nick + '@' + this.server,
-          name: nick
+        type: 'person',
+        id: nick + '@' + this.server,
+        name: nick
       },
       target: {
-          type: 'person',
-          id: content + '@' + this.server,
-          name: content
+        type: 'person',
+        id: content + '@' + this.server,
+        name: content
       },
       object: {
-          type: 'address'
+        type: 'address'
       }
     });
   }
