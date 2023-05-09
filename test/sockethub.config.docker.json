@@ -27,7 +27,6 @@
     "path": "/"
   },
   "redis": {
-    "host": "redis",
-    "port": 6379
+    "url": "redis://redis:6379"
   }
 }
