@@ -8,9 +8,7 @@
 import debug from "debug";
 import schemas from "@sockethub/schemas";
 
-const log = debug('sockethub:server:bootstrap:platforms');
-
-log('loading platforms');
+const log = debug('sockethub:server:bootstrap:load-platforms');
 
 export type PlatformMap = Map<string, {
   id: string,
