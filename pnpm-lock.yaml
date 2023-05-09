@@ -270,8 +270,8 @@ importers:
         specifier: ^4.3.4
         version: 4.3.4(supports-color@8.1.1)
       secure-store-redis:
-        specifier: 3.0.0-rc.2
-        version: 3.0.0-rc.2
+        specifier: 3.0.0-rc.3
+        version: 3.0.0-rc.3
     devDependencies:
       '@types/chai':
         specifier: 4.3.4
@@ -9590,8 +9590,8 @@ packages:
     resolution: {integrity: sha512-nZi59hW3Sl5P3+wOO89eHBAAGwmCPd2aE1+dLZV5MO+ItQctIvAqihzaAXIQhvtH4KJPxM080HsnqltR2y8cWg==}
     dev: false
 
-  /secure-store-redis@3.0.0-rc.2:
-    resolution: {integrity: sha512-jxgRi9e87dUWZxq0fcqgRePCKkCewHHXsbhj6MABzCMcMlCx6pUsx2caSmiT6jpEpt5hSsEb/dBPbCqGxD2gWA==}
+  /secure-store-redis@3.0.0-rc.3:
+    resolution: {integrity: sha512-AMaJ0wvRD4UYaYhJnY8wq2staAYt/9quddkQrqgW5m7OXkfjSn1L1jc3fMKBkI4zi2IaMWSftRrTYz0XsVudgA==}
     engines: {node: '>=16', pnpm: '>=8'}
     requiresBuild: true
     dependencies:
