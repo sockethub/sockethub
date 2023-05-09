@@ -11,7 +11,15 @@ plugins:
   markdownlint:
     enabled: true
     checks:
+      MD007:
+        enabled: false
+      MD009:
+        enabled: false
+      MD012:
+        enabled: false
       MD013:
+        enabled: false
+      MD022:
         enabled: false
       MD031:
         enabled: false

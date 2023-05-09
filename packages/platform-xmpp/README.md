@@ -9,6 +9,8 @@ through the Sockethub service.
 
 ## Implemented Verbs (`@type`)
 
+More details can be found in the API docs [here](API.md)
+
 * send
 * request-friend
 * remove-friend
