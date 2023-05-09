@@ -12,7 +12,9 @@ plugins:
     enabled: true
     checks:
       MD013:
-        line-length: 100
+        enabled: false
+      MD031:
+        enabled: false
       MD033:
         enabled: false
   nodesecurity:
