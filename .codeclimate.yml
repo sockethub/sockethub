@@ -10,8 +10,9 @@ plugins:
     enabled: true
   markdownlint:
     enabled: true
-    line-length: 100
     checks:
+      MD013:
+        line-length: 100
       MD033:
         enabled: false
   nodesecurity:
