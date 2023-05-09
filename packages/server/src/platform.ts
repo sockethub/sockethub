@@ -107,12 +107,13 @@ function getJobHandler() {
     if (platform.config.requireCredentials.includes(job.msg.type)) {
       // this method requires credentials and should be called even if the platform is not
       // yet initialized, because they need to authenticate before they are initialized.
-      credentialStore.get(job.msg.actor.id, platform.credentialsHash).then((credentials) => {
-        platform[job.msg.type](job.msg, credentials, doneCallback);
-      }).catch((err) => {
-        jobLog('error ' + err.toString());
-        return done(new Error(err.toString()));
-      });
+      credentialStore.get(job.msg.actor.id, platform.credentialsHash)
+        .then((credentials) => {
+          platform[job.msg.type](job.msg, credentials, doneCallback);
+        }).catch((err) => {
+          jobLog('error ' + err.toString());
+          return done(new Error(err.toString()));
+        });
     } else if ((platform.config.persist) && (!platform.initialized)) {
       done(new Error(`${job.msg.type} called on uninitialized platform`));
     } else {
