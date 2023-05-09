@@ -10,6 +10,7 @@ plugins:
     enabled: true
   markdownlint:
     enabled: true
+    max-line-length: 100
     checks:
       MD033:
         enabled: false
