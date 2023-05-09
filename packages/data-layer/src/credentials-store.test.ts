@@ -115,7 +115,8 @@ describe("CredentialsStore", () => {
         throw new Error("should not reach this spot");
       } catch (err) {
         expect(err.toString()).to.equal(
-          "Error: provided credentials do not match existing platform instance for actor: iamanactor"
+          "Error: provided credentials do not match existing platform " +
+          "instance for actor: iamanactor"
         );
       }
       sinon.assert.calledOnce(MockStoreGet);
