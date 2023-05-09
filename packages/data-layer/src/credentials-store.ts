@@ -26,15 +26,16 @@ export default class CredentialsStore {
     secret: string,
     redisConfig: RedisConfig
   ) {
-    this.initCrypto();
-    this.initSecureStore(secret, redisConfig);
     this.uid = `sockethub:data-layer:credentials-store:${parentId}:${sessionId}`;
     this.log = debug(this.uid);
+    this.initCrypto();
+    this.initSecureStore(secret, redisConfig);
   }
 
   initCrypto() {
     this.objectHash = crypto.objectHash;
   }
+  
   initSecureStore(secret, redisConfig) {
     this.store = new SecureStore(this.uid, secret, {
       redis: redisConfig
