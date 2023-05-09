@@ -10,6 +10,9 @@ plugins:
     enabled: true
   markdownlint:
     enabled: true
+    checks:
+      MD033:
+        enabled: false
   nodesecurity:
     enabled: true
 

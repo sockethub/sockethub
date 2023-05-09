@@ -9,13 +9,13 @@ through the Sockethub service.
 
 ## Implemented Verbs (`@type`)
 
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd>
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) request-friend</kbd>
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) remove-friend</kbd>
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) make-friend</kbd>
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd>
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png)  join</kbd>
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd>
+* send
+* request-friend
+* remove-friend
+* make-friend
+* update
+* join
+* observe
 
 ## Example
 
