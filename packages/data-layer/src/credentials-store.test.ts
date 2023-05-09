@@ -9,44 +9,36 @@ describe("CredentialsStore", () => {
       MockStoreGet,
       MockStoreSave,
       MockObjectHash;
+
   beforeEach(() => {
-    MockStoreGet = sinon.stub().callsArgWith(1, undefined, "credential foo");
-    MockStoreSave = sinon.stub().callsArgWith(2, undefined);
+    MockStoreGet = sinon.stub().returns("credential foo");
+    MockStoreSave = sinon.stub().returns(undefined);
     MockObjectHash = sinon.stub();
+
     MockSecureStore = sinon.stub().returns({
       get: MockStoreGet,
       save: MockStoreSave,
     });
     class TestCredentialsStore extends CredentialsStore {
       initCrypto() {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
         this.objectHash = MockObjectHash;
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       initSecureStore(secret, redisConfig) {
-        this.store = MockSecureStore({
-          namespace: "foo",
-          secret: secret,
-          redis: redisConfig,
-        });
+        this.store = MockSecureStore("foo", secret, redisConfig);
       }
     }
     credentialsStore = new TestCredentialsStore(
       "a parent id",
       "a session id",
       "a secret",
-      "redis config"
+      { redis: { url: "redis config" } }
     );
   });
 
   it("returns a valid CredentialsStore object", () => {
     sinon.assert.calledOnce(MockSecureStore);
-    sinon.assert.calledWith(MockSecureStore, {
-      namespace:
-        "foo",
-      secret: "a secret",
-      redis: "redis config",
+    sinon.assert.calledWith(MockSecureStore, "foo", "a secret", {
+      redis: { url: "redis config" },
     });
     expect(typeof credentialsStore).to.equal("object");
     expect(credentialsStore.uid).to.equal(
@@ -67,7 +59,7 @@ describe("CredentialsStore", () => {
     });
 
     it("handles no credentials found", async () => {
-      MockStoreGet.callsArgWith(1, undefined, undefined);
+      MockStoreGet.returns(undefined);
       const res = await credentialsStore.get("an non-existent actor");
       sinon.assert.calledOnce(MockStoreGet);
       sinon.assert.calledWith(MockStoreGet, "an non-existent actor");
@@ -77,13 +69,13 @@ describe("CredentialsStore", () => {
     });
 
     it("handles an unexpected error", async () => {
-      MockStoreGet.callsArgWith(1, "sumting bad happen", undefined);
+      MockStoreGet.throws("sumting bad happen");
       let res;
       try {
         res = await credentialsStore.get("a problem actor");
         throw new Error("should not reach this spot");
       } catch (err) {
-        expect(err).to.equal("credentials sumting bad happen");
+        expect(err.toString()).to.equal("sumting bad happen");
       }
       sinon.assert.calledOnce(MockStoreGet);
       sinon.assert.calledWith(MockStoreGet, "a problem actor");
@@ -94,15 +86,15 @@ describe("CredentialsStore", () => {
 
     it("validates credentialsHash when provided", async () => {
       MockObjectHash.returns("a credentialHash string");
-      MockStoreGet.callsArgWith(1, undefined, {
+      MockStoreGet.returns({
         object: "a credential",
       });
       const res = await credentialsStore.get(
-        "an actor",
+        "iamanactor",
         "a credentialHash string"
       );
       sinon.assert.calledOnce(MockStoreGet);
-      sinon.assert.calledWith(MockStoreGet, "an actor");
+      sinon.assert.calledWith(MockStoreGet, "iamanactor");
       sinon.assert.calledOnce(MockObjectHash);
       sinon.assert.calledWith(MockObjectHash, "a credential");
       sinon.assert.notCalled(MockStoreSave);
@@ -111,23 +103,23 @@ describe("CredentialsStore", () => {
 
     it("invalidates credentialsHash when provided", async () => {
       MockObjectHash.returns("the original credentialHash string");
-      MockStoreGet.callsArgWith(1, undefined, {
+      MockStoreGet.returns({
         object: "a credential",
       });
       let res;
       try {
         res = await credentialsStore.get(
-          "an actor",
+          "iamanactor",
           "a different credentialHash string"
         );
         throw new Error("should not reach this spot");
       } catch (err) {
-        expect(err).to.equal(
-          "provided credentials do not match existing platform instance for actor an actor"
+        expect(err.toString()).to.equal(
+          "Error: provided credentials do not match existing platform instance for actor: iamanactor"
         );
       }
       sinon.assert.calledOnce(MockStoreGet);
-      sinon.assert.calledWith(MockStoreGet, "an actor");
+      sinon.assert.calledWith(MockStoreGet, "iamanactor");
       sinon.assert.calledOnce(MockObjectHash);
       sinon.assert.calledWith(MockObjectHash, "a credential");
       sinon.assert.notCalled(MockStoreSave);
@@ -148,17 +140,19 @@ describe("CredentialsStore", () => {
       });
     });
 
-    it("handles failure", (done) => {
+    it("handles failure", async () => {
       const creds = { foo: "bar" };
-      MockStoreSave.callsArgWith(2, "an error");
-      credentialsStore.save("an actor", creds, (err) => {
-        sinon.assert.calledOnce(MockStoreSave);
-        sinon.assert.calledWith(MockStoreSave, "an actor", creds);
-        sinon.assert.notCalled(MockObjectHash);
-        sinon.assert.notCalled(MockStoreGet);
-        expect(err).to.equal("an error");
-        done();
-      });
+      MockStoreSave.throws("an error");
+      try {
+        await credentialsStore.save("an actor", creds);
+        throw new Error("should not reach this spot");
+      } catch (err) {
+        expect(err.toString()).to.equal("Error: an error");
+      }
+      sinon.assert.calledOnce(MockStoreSave);
+      sinon.assert.calledWith(MockStoreSave, "an actor", creds);
+      sinon.assert.notCalled(MockObjectHash);
+      sinon.assert.notCalled(MockStoreGet);
     });
   });
 });
