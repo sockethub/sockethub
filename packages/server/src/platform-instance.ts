@@ -20,9 +20,7 @@ export interface PlatformInstanceParams {
 
 type EnvFormat = {
   DEBUG?: string;
-  REDIS_URL?: string;
-  REDIS_HOST?: string;
-  REDIS_PORT?: string;
+  REDIS_URL: string;
 };
 
 interface MessageFromPlatform extends Array<string | IActivityStream> {
@@ -73,15 +71,11 @@ export default class PlatformInstance {
     }
 
     this.debug = debug(`sockethub:server:platform-instance:${this.id}`);
-    const env: EnvFormat = {};
+    const env: EnvFormat = {
+      REDIS_URL: config.get("redis:url") as string
+    };
     if (process.env.DEBUG) {
       env.DEBUG = process.env.DEBUG;
-    }
-    if (config.get("redis:url")) {
-      env.REDIS_URL = config.get("redis:url") as string;
-    } else {
-      env.REDIS_HOST = config.get("redis:host") as string;
-      env.REDIS_PORT = config.get("redis:port") as string;
     }
 
     this.createBull();

@@ -24,14 +24,16 @@ describe("CredentialsStore", () => {
         this.objectHash = MockObjectHash;
       }
       initSecureStore(secret, redisConfig) {
-        this.store = MockSecureStore("foo", secret, redisConfig);
+        this.store = MockSecureStore("foo", secret, {
+          redis: redisConfig
+        });
       }
     }
     credentialsStore = new TestCredentialsStore(
       "a parent id",
       "a session id",
       "a secret",
-      { redis: { url: "redis config" } }
+      { url: "redis config" }
     );
   });
 

@@ -28,12 +28,6 @@ export class Config {
       'host': {
         alias: 'sockethub.host'
       },
-      'redis_host': {
-        alias: 'redis.host'
-      },
-      'redis_port': {
-        alias: 'redis.port'
-      },
       'redis_url': {
         alias: 'redis.url'
       }
@@ -75,17 +69,9 @@ export class Config {
       'sockethub'
     );
 
-    defaultEnvParams(
-      process.env.REDIS_HOST || nconf.get('redis:host'),
-      process.env.REDIS_PORT || nconf.get('redis:port'),
-      'redis'
-    );
-
     // allow a redis://user:host:port url, takes precedence
     if (process.env.REDIS_URL) {
       nconf.set('redis:url', process.env.REDIS_URL);
-      nconf.clear('redis:host');
-      nconf.clear('redis:port');
     }
   }
   get = (key: string): unknown => nconf.get(key);

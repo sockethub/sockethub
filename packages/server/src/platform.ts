@@ -11,8 +11,7 @@ let identifier = process.argv[4];
 const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
 let logger = debug(loggerPrefix);
 
-const redisConfig = process.env.REDIS_URL ? process.env.REDIS_URL
-  : { host: process.env.REDIS_HOST, port: process.env.REDIS_PORT };
+const redisConfig: RedisConfig = { url: process.env.REDIS_URL };
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PlatformModule = require(`@sockethub/platform-${platformName}`);
 
@@ -77,7 +76,9 @@ function getJobHandler() {
     const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
     jobLog(`received ${job.title} ${job.msg.type}`);
     const credentialStore = new CredentialsStore(
-      parentId, job.sessionId, parentSecret1 + job.msg.sessionSecret, redisConfig as RedisConfig
+      parentId, job.sessionId,
+      parentSecret1 + job.msg.sessionSecret,
+      redisConfig
     );
     delete job.msg.sessionSecret;
 
@@ -121,7 +122,7 @@ function getJobHandler() {
 }
 
 /**
- * Get an function which sends a message to the parent thread (PlatformInstance). The platform
+ * Get a function which sends a message to the parent thread (PlatformInstance). The platform
  * can call that function to send messages back to the client.
  * @param command string containing the type of command to be sent. 'message' or 'close'
  */
@@ -136,7 +137,7 @@ function getSendFunction(command: string) {
 }
 
 /**
- * When a user changes it's actor name, the channel identifier changes, we need to ensure that
+ * When a user changes its actor name, the channel identifier changes, we need to ensure that
  * both the queue thread (listening on the channel for jobs) and the logging object are updated.
  * @param credentials
  */
@@ -152,7 +153,7 @@ async function updateActor(credentials) {
 
 /**
  * Starts listening on the queue for incoming jobs
- * @param refresh boolean if the param is true, we re-init the queue.process
+ * @param refresh boolean if the param is true, we re-init the `queue.process`
  * (used when identifier changes)
  */
 async function startQueueListener(refresh = false) {
@@ -165,7 +166,7 @@ async function startQueueListener(refresh = false) {
     }
   }
   jobQueue = new JobQueue(
-    parentId, identifier, parentSecret1 + parentSecret2, redisConfig as RedisConfig
+    parentId, identifier, parentSecret1 + parentSecret2, redisConfig
   );
   logger('listening on the queue for incoming jobs');
   jobQueue.onJob(getJobHandler());

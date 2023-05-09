@@ -23,6 +23,6 @@ describe('config', () => {
     const config = new Config();
     expect(config).to.have.property('get');
     expect(config.get('redis')).to.eql(
-      {"host": "127.0.0.1", "port": 6379});
+      {"url": "redis://127.0.0.1:6379"});
   });
 });

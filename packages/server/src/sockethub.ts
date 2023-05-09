@@ -85,7 +85,7 @@ class Sockethub {
             this.parentId,
             socket.id,
             this.parentSecret1 + sessionSecret,
-            nconf.get("redis")
+            { url: nconf.get("redis:url") }
           );
 
     sessionLog(`socket.io connection`);

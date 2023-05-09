@@ -24,9 +24,7 @@ export default class CredentialsStore {
     parentId: string,
     sessionId: string,
     secret: string,
-    redisConfig: {
-      redis: RedisConfig;
-    }
+    redisConfig: RedisConfig
   ) {
     this.initCrypto();
     this.initSecureStore(secret, redisConfig);
@@ -38,7 +36,9 @@ export default class CredentialsStore {
     this.objectHash = crypto.objectHash;
   }
   initSecureStore(secret, redisConfig) {
-    this.store = new SecureStore(this.uid, secret, redisConfig);
+    this.store = new SecureStore(this.uid, secret, {
+      redis: redisConfig
+    });
   }
 
   /**
