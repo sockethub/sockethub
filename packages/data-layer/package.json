@@ -1,57 +1,57 @@
 {
-  "name": "@sockethub/data-layer",
-  "description": "Storing and RPC of data for Sockethub",
-  "version": "1.0.0-alpha.4",
-  "private": false,
-  "author": "Nick Jennings <nick@silverbucket.net>",
-  "license": "MIT",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist/",
-    "src/"
-  ],
-  "keywords": [
-    "sockethub",
-    "messaging",
-    "redis",
-    "data lyer",
-    "rpc",
-    "data store"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/sockethub/sockethub.git",
-    "directory": "packages/data-layer"
-  },
-  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
-  "dependencies": {
-    "@sockethub/crypto": "workspace:1.0.0-alpha.4",
-    "@sockethub/schemas": "workspace:3.0.0-alpha.4",
-    "bull": "^4.10.4",
-    "debug": "^4.3.4",
-    "secure-store-redis": "2.0.5"
-  },
-  "scripts": {
-    "clean": "rm -rf dist coverage",
-    "test": "c8 -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts",
-    "coverage": "c8 check-coverage --statements 83 --branches 90 --functions 80 --lines 83",
-    "build": "tsc"
-  },
-  "engines": {
-    "node": ">= 16"
-  },
-  "devDependencies": {
-    "@types/chai": "4.3.4",
-    "@types/debug": "4.1.7",
-    "@types/mocha": "10.0.1",
-    "@types/node": "18.15.11",
-    "@types/sinon": "10.0.13",
-    "c8": "7.13.0",
-    "chai": "4.3.7",
-    "mocha": "10.2.0",
-    "sinon": "15.0.3",
-    "ts-node": "10.9.1",
-    "typescript": "5.0.3"
-  }
+    "name": "@sockethub/data-layer",
+    "description": "Storing and RPC of data for Sockethub",
+    "version": "1.0.0-alpha.4",
+    "private": false,
+    "author": "Nick Jennings <nick@silverbucket.net>",
+    "license": "MIT",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist/",
+        "src/"
+    ],
+    "keywords": [
+        "sockethub",
+        "messaging",
+        "redis",
+        "data lyer",
+        "rpc",
+        "data store"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/sockethub/sockethub.git",
+        "directory": "packages/data-layer"
+    },
+    "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
+    "dependencies": {
+        "@sockethub/crypto": "workspace:1.0.0-alpha.4",
+        "@sockethub/schemas": "workspace:3.0.0-alpha.4",
+        "bull": "^4.10.4",
+        "debug": "^4.3.4",
+        "secure-store-redis": "2.0.5"
+    },
+    "scripts": {
+        "clean": "rm -rf dist coverage",
+        "test": "c8 -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts",
+        "coverage": "c8 check-coverage --statements 83 --branches 90 --functions 80 --lines 83",
+        "build": "tsc"
+    },
+    "engines": {
+        "node": ">= 16"
+    },
+    "devDependencies": {
+        "@types/chai": "4.3.4",
+        "@types/debug": "4.1.7",
+        "@types/mocha": "10.0.1",
+        "@types/node": "18.15.11",
+        "@types/sinon": "10.0.13",
+        "c8": "7.13.0",
+        "chai": "4.3.7",
+        "mocha": "10.2.0",
+        "sinon": "15.0.3",
+        "ts-node": "10.9.1",
+        "typescript": "5.0.3"
+    }
 }

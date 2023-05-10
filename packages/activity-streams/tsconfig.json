@@ -1,18 +1,13 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "allowJs": false,
-    "outDir": "build",
-    "rootDir": "src",
-    "baseUrl": "/",
-    "sourceRoot": "/",
-    "mapRoot": "/",
-    "lib": [
-      "dom",
-      "es2020"
-    ]
-  },
-  "include": [
-    "src"
-  ]
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "allowJs": false,
+        "outDir": "build",
+        "rootDir": "src",
+        "baseUrl": "/",
+        "sourceRoot": "/",
+        "mapRoot": "/",
+        "lib": ["dom", "es2020"]
+    },
+    "include": ["src"]
 }
