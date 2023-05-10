@@ -308,12 +308,10 @@ IRC.prototype.send = function (job, done) {
             return done("cannot send message with no object.content");
         }
 
-        let msg = job.object.content.trim();
-        if (msg.indexOf("/") === 0) {
-            // message intented as command
-            msg += " ";
-            const cmd = msg.substr(0, msg.indexOf(" ")).substr(1).toUpperCase(); // get command
-            msg = msg.substr(msg.indexOf(" ") + 1).replace(/\s\s*$/, ""); // remove command from message
+        const match = /(\/\w+)\s*([\s\S]*)/.exec(job.object.content);
+        if (match) {
+            const cmd = match[1].substr(1).toUpperCase(); // get command
+            const msg = match[2].trim(); // remove leading/trailing whitespace from remaining text
             if (cmd === "ME") {
                 // handle /me messages uniquely
                 job.object.type = "me";
@@ -324,7 +322,7 @@ IRC.prototype.send = function (job, done) {
                 job.object.content = msg;
             }
         } else {
-            job.object.content = msg;
+            job.object.content = job.object.content.trim();
         }
 
         if (job.object.type === "me") {
