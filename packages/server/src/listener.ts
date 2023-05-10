@@ -60,18 +60,17 @@ class Listener {
                 `${__dirname}/../node_modules/@sockethub/examples/build/`,
             ),
         );
+        const examplesIndex = path.resolve(
+            __dirname,
+            "..",
+            "node_modules",
+            "@sockethub",
+            "examples",
+            "build",
+            "index.html",
+        );
         app.get("*", (req, res) => {
-            res.sendFile(
-                path.resolve(
-                    __dirname,
-                    "..",
-                    "node_modules",
-                    "@sockethub",
-                    "examples",
-                    "build",
-                    "index.html",
-                ),
-            );
+            res.sendFile(examplesIndex);
         });
         log(
             `examples served at ` +
