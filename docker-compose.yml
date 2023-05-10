@@ -1,28 +1,28 @@
 version: "3.6"
 services:
-  sockethub:
-    build: .
-    ports:
-      - 10650:10650
-    networks:
-      - sockethub-net
-    depends_on:
-      - redis
-      - prosody
-  redis:
-    image: redis
-    networks:
-      - sockethub-net
-  prosody:
-    image: prosody/prosody:latest
-    volumes:
-      - ./test/prosody:/etc/prosody
-    environment:
-      LOCAL: jimmy
-      DOMAIN: prosody
-      PASSWORD: passw0rd
-    networks:
-      - sockethub-net
+    sockethub:
+        build: .
+        ports:
+            - 10650:10650
+        networks:
+            - sockethub-net
+        depends_on:
+            - redis
+            - prosody
+    redis:
+        image: redis
+        networks:
+            - sockethub-net
+    prosody:
+        image: prosody/prosody:latest
+        volumes:
+            - ./test/prosody:/etc/prosody
+        environment:
+            LOCAL: jimmy
+            DOMAIN: prosody
+            PASSWORD: passw0rd
+        networks:
+            - sockethub-net
 
 networks:
-  sockethub-net:
+    sockethub-net:

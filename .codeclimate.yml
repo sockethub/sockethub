@@ -1,40 +1,39 @@
 version: "2"
 
 plugins:
-  editorconfig:
-    enabled: true
-  eslint:
-    enabled: true
-    channel: "eslint-8"
-  fixme:
-    enabled: true
-  markdownlint:
-    enabled: true
-    checks:
-      MD007:
-        enabled: false
-      MD009:
-        enabled: false
-      MD012:
-        enabled: false
-      MD013:
-        enabled: false
-      MD022:
-        enabled: false
-      MD031:
-        enabled: false
-      MD032:
-        enabled: false
-      MD033:
-        enabled: false
-  nodesecurity:
-    enabled: true
+    editorconfig:
+        enabled: true
+    eslint:
+        enabled: true
+        channel: "eslint-8"
+    fixme:
+        enabled: true
+    markdownlint:
+        enabled: true
+        checks:
+            MD007:
+                enabled: false
+            MD009:
+                enabled: false
+            MD012:
+                enabled: false
+            MD013:
+                enabled: false
+            MD022:
+                enabled: false
+            MD031:
+                enabled: false
+            MD032:
+                enabled: false
+            MD033:
+                enabled: false
+    nodesecurity:
+        enabled: true
 
 exclude_patterns:
-- "**/dist/"
-- "**/browser/"
-- "**/build/"
-- "**/node_modules/"
-- "**/test/"
-- "**/*.d.ts"
-- "**/*.test.*"
+    - "**/dist/"
+    - "**/build/"
+    - "**/node_modules/"
+    - "**/test/"
+    - "**/*.d.ts"
+    - "**/*.test.*"

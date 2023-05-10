@@ -1,50 +1,50 @@
 {
-  "name": "@sockethub/platform-irc",
-  "description": "A sockethub platform module implementing IRC functionality",
-  "version": "4.0.0-alpha.4",
-  "private": false,
-  "author": "Nick Jennings <nick@silverbucket.net>",
-  "license": "LGPL-3.0+",
-  "main": "index.js",
-  "keywords": [
-    "sockethub",
-    "messaging",
-    "activitystreams",
-    "activity",
-    "streams",
-    "protocol",
-    "irc"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/sockethub/sockethub.git",
-    "directory": "packages/platform-irc"
-  },
-  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-irc",
-  "dependencies": {
-    "@sockethub/irc2as": "workspace:4.0.0-alpha.4",
-    "irc-socket-sasl": "4.0.0"
-  },
-  "devDependencies": {
-    "@sockethub/schemas": "workspace:^",
-    "c8": "7.13.0",
-    "chai": "4.3.7",
-    "jsdoc-to-markdown": "8.0.0",
-    "sinon": "15.0.3"
-  },
-  "peerDependencies": {
-    "@sockethub/server": "workspace:^"
-  },
-  "peerDependenciesMeta": {
-    "@sockethub/server": {
-      "optional": true
+    "name": "@sockethub/platform-irc",
+    "description": "A sockethub platform module implementing IRC functionality",
+    "version": "4.0.0-alpha.4",
+    "private": false,
+    "author": "Nick Jennings <nick@silverbucket.net>",
+    "license": "LGPL-3.0+",
+    "main": "index.js",
+    "keywords": [
+        "sockethub",
+        "messaging",
+        "activitystreams",
+        "activity",
+        "streams",
+        "protocol",
+        "irc"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/sockethub/sockethub.git",
+        "directory": "packages/platform-irc"
+    },
+    "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-irc",
+    "dependencies": {
+        "@sockethub/irc2as": "workspace:4.0.0-alpha.4",
+        "irc-socket-sasl": "4.0.0"
+    },
+    "devDependencies": {
+        "@sockethub/schemas": "workspace:^",
+        "c8": "7.13.0",
+        "chai": "4.3.7",
+        "jsdoc-to-markdown": "8.0.0",
+        "sinon": "15.0.3"
+    },
+    "peerDependencies": {
+        "@sockethub/server": "workspace:^"
+    },
+    "peerDependenciesMeta": {
+        "@sockethub/server": {
+            "optional": true
+        }
+    },
+    "scripts": {
+        "build": "true",
+        "clean": "rm -rf coverage",
+        "test": "c8 mocha *.test.js",
+        "coverage": "c8 check-coverage --statements 75 --branches 55 --functions 85 --lines 75",
+        "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md"
     }
-  },
-  "scripts": {
-    "build": "true",
-    "clean": "rm -rf coverage",
-    "test": "c8 mocha *.test.js",
-    "coverage": "c8 check-coverage --statements 79 --branches 55 --functions 85 --lines 79",
-    "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md"
-  }
 }

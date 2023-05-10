@@ -19,26 +19,19 @@
         "comma-spacing": [2, { "before": false, "after": true }],
         "eqeqeq": 2,
         "handle-callback-err": 2,
-        "indent": ["error", 2, {
-            "SwitchCase": 1,
-            "VariableDeclarator": { "var": 2, "let": 2, "const": 3 },
-            "FunctionDeclaration": { "parameters":  "first" },
-            "FunctionExpression": { "parameters":  "first" },
-            "CallExpression": { "arguments":  1 }
-        }],
         "keyword-spacing": 2,
-        "max-len": [2, { "code": 99 }],
         "no-eq-null": 2,
         "no-eval": 2,
         "no-tabs": 2,
         "no-var": 2,
         "semi": 2,
         "space-before-blocks": 2,
-        "space-before-function-paren": [2, {"anonymous": "always", "named": "never"}]
+        "space-before-function-paren": [
+            2,
+            { "anonymous": "always", "named": "never" }
+        ]
     },
-    "plugins": [
-        "security-node"
-    ],
+    "plugins": ["security-node"],
     "extends": [
         "eslint:recommended",
         "plugin:security-node/recommended",
@@ -49,36 +42,23 @@
     },
     "overrides": [
         {
-            "files": [
-                "**/*.ts"
-            ],
+            "files": ["**/*.ts"],
             "parser": "@typescript-eslint/parser",
             "parserOptions": {
-                "project": [
-                    "./tsconfig.json"
-                ]
+                "project": ["./tsconfig.json"]
             },
-            "plugins": [
-                "@typescript-eslint",
-                "security-node"
-            ],
-            "extends": [
-                "plugin:@typescript-eslint/recommended"
-            ]
+            "plugins": ["@typescript-eslint", "security-node"],
+            "extends": ["plugin:@typescript-eslint/recommended"]
         },
         {
-            "files": [
-                "**/*.test.ts"
-            ],
+            "files": ["**/*.test.ts"],
             "rules": {
                 "@typescript-eslint/no-explicit-any": ["off"],
                 "@typescript-eslint/no-empty-function": ["off"]
             }
         },
         {
-            "files": [
-                "**/*.js"
-            ],
+            "files": ["**/*.js"],
             "rules": {
                 "@typescript-eslint/no-var-requires": ["off"]
             }
