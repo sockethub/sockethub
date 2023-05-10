@@ -100,13 +100,13 @@ Connect to the XMPP server.
   </thead>
   <tbody>
 <tr>
-    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
 </td>
     </tr><tr>
-    <td>credentials</td><td><code>object</code></td><td><p>credentials object // TODO LINK</p>
+    <td>credentials</td><td><code>object</code></td><td><p>credentials object</p>
 </td>
     </tr><tr>
-    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
 </td>
     </tr>  </tbody>
 </table>
@@ -138,10 +138,10 @@ Join a room, optionally defining a display name for that room.
   </thead>
   <tbody>
 <tr>
-    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
 </td>
     </tr><tr>
-    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
 </td>
     </tr>  </tbody>
 </table>
@@ -176,10 +176,10 @@ Leave a room
   </thead>
   <tbody>
 <tr>
-    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
 </td>
     </tr><tr>
-    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
 </td>
     </tr>  </tbody>
 </table>
@@ -214,10 +214,10 @@ Send a message to a room or private conversation.
   </thead>
   <tbody>
 <tr>
-    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
 </td>
     </tr><tr>
-    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
 </td>
     </tr>  </tbody>
 </table>
@@ -278,10 +278,10 @@ Valid presence values are "away", "chat", "dnd", "xa", "offline", "online".
   </thead>
   <tbody>
 <tr>
-    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
 </td>
     </tr><tr>
-    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
 </td>
     </tr>  </tbody>
 </table>
@@ -315,10 +315,10 @@ Send friend request
   </thead>
   <tbody>
 <tr>
-    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
 </td>
     </tr><tr>
-    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
 </td>
     </tr>  </tbody>
 </table>
@@ -350,10 +350,10 @@ Send a remove friend request
   </thead>
   <tbody>
 <tr>
-    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
 </td>
     </tr><tr>
-    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
 </td>
     </tr>  </tbody>
 </table>
@@ -385,10 +385,10 @@ Confirm a friend request
   </thead>
   <tbody>
 <tr>
-    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
 </td>
     </tr><tr>
-    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
 </td>
     </tr>  </tbody>
 </table>
@@ -420,10 +420,10 @@ Indicate an intent to query something (ie. get a list of users in a room).
   </thead>
   <tbody>
 <tr>
-    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
 </td>
     </tr><tr>
-    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
 </td>
     </tr>  </tbody>
 </table>
