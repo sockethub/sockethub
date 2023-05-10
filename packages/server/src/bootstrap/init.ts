@@ -17,26 +17,22 @@ function printSettingsInfo(version, platforms) {
     console.log("sockethub " + version);
     console.log();
 
-    // eslint-disable-next-line security-node/detect-crlf
     console.log(
-        "websocket: ws://" +
-            config.get("sockethub:host") +
-            ":" +
-            config.get("sockethub:port") +
-            config.get("sockethub:path"),
+        // eslint-disable-next-line security-node/detect-crlf
+        `websocket: ws://${config.get("sockethub:host")}:${config.get(
+            "sockethub:port",
+        )}${config.get("sockethub:path")}`,
     );
 
     console.log();
-    // eslint-disable-next-line security-node/detect-crlf
+    const examplesUrl = `http://${config.get("public:host")}:${config.get(
+        "public:port",
+    )}${config.get("public:path")}`;
     console.log(
-        "examples: " +
-            (config.get("examples:enabled")
-                ? "http://" +
-                  config.get("public:host") +
-                  ":" +
-                  config.get("public:port") +
-                  config.get("public:path")
-                : "disabled"),
+        // eslint-disable-next-line security-node/detect-crlf
+        `examples: ${
+            config.get("examples:enabled") ? examplesUrl : "disabled"
+        }`,
     );
 
     console.log();
@@ -44,12 +40,9 @@ function printSettingsInfo(version, platforms) {
         // eslint-disable-next-line security-node/detect-crlf
         console.log("redis URL: " + config.get("redis:url"));
     } else {
-        // eslint-disable-next-line security-node/detect-crlf
         console.log(
-            "redis: " +
-                config.get("redis:host") +
-                ":" +
-                config.get("redis:port"),
+            // eslint-disable-next-line security-node/detect-crlf
+            `redis: ${config.get("redis:host")}:${config.get("redis:port")}`,
         );
     }
 
@@ -62,9 +55,9 @@ function printSettingsInfo(version, platforms) {
             console.log();
             // eslint-disable-next-line security-node/detect-crlf
             console.log(platform.moduleName);
-            // eslint-disable-next-line security-node/detect-crlf
             console.log(
-                " name: " + platform.id + " version: " + platform.version,
+                // eslint-disable-next-line security-node/detect-crlf
+                ` name: ${platform.id} version: ${platform.version}`,
             );
             // eslint-disable-next-line security-node/detect-crlf
             console.log(" AS types: " + platform.types.join(", "));

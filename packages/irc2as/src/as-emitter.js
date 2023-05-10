@@ -195,9 +195,10 @@ class ASTemplates {
         let type, message;
         if (content.startsWith("+\u0001ACTION ")) {
             type = "me";
-            // eslint-disable-next-line no-control-regex
             message = content
+                // eslint-disable-next-line no-control-regex
                 .split(/^\+\u0001ACTION\s+/)[1]
+                // eslint-disable-next-line no-control-regex
                 .split(/\u0001$/)[0];
         } else {
             type = "message";
