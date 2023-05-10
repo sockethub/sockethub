@@ -4,10 +4,10 @@ A collection of minimal examples for each of the Sockethub platforms
 
 ## Platforms
 
-* Dummy
-* Feeds
-* IRC
-* XMPP
+- Dummy
+- Feeds
+- IRC
+- XMPP
 
 ## Development
 

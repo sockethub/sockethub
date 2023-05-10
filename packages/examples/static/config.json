@@ -1,1 +1,4 @@
-{"sockethub":{"port":10550,"host":"localhost","path":"/sockethub"},"public":{"protocol":"http","host":"localhost","port":10550,"path":"/"}}
+{
+  "sockethub": { "port": 10550, "host": "localhost", "path": "/sockethub" },
+  "public": { "protocol": "http", "host": "localhost", "port": 10550, "path": "/" }
+}

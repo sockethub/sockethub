@@ -34,7 +34,6 @@
   },
   "scripts": {
     "clean": "rm -rf dist coverage",
-    "compliance": "pnpm lint && pnpm test && pnpm coverage",
     "test": "c8 -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts",
     "coverage": "c8 check-coverage --statements 85 --branches 90 --functions 100 --lines 85",
     "lint": "eslint \"**/*.ts\"",

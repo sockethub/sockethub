@@ -45,7 +45,6 @@
   "scripts": {
     "build": "pnpm doc",
     "clean": "rm -rf coverage",
-    "compliance": "pnpm test && pnpm coverage",
     "test": "c8 -x \"**/*.test.*\" mocha **/*.test.js",
     "lint": "eslint \"**/*.js\"",
     "lint:fix": "eslint --fix \"**/*.js\"",

@@ -50,7 +50,6 @@
   },
   "scripts": {
     "clean": "rm -rf dist coverage",
-    "compliance": "pnpm lint && pnpm test && pnpm coverage",
     "test": "c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts src/**/*.test.ts",
     "coverage": "c8 check-coverage --statements 89 --branches 80 --functions 80 --lines 89",
     "start": "DEBUG=sockethub* ./bin/sockethub",
