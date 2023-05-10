@@ -32,7 +32,7 @@ Uses the `irc-factory` node module as a base tool for interacting with IRC.
   </thead>
   <tbody>
 <tr>
-    <td>cfg</td><td><code>object</code></td><td><p>a unique config object for this instance // TODO LINK</p>
+    <td>cfg</td><td><code>object</code></td><td><p>a unique config object for this instance</p>
 </td>
     </tr>  </tbody>
 </table>
@@ -122,10 +122,10 @@ Join a room or private conversation.
   </thead>
   <tbody>
 <tr>
-    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
 </td>
     </tr><tr>
-    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
 </td>
     </tr>  </tbody>
 </table>
@@ -164,10 +164,10 @@ Leave a room or private conversation.
   </thead>
   <tbody>
 <tr>
-    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
 </td>
     </tr><tr>
-    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
 </td>
     </tr>  </tbody>
 </table>
@@ -206,10 +206,10 @@ Send a message to a room or private conversation.
   </thead>
   <tbody>
 <tr>
-    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
 </td>
     </tr><tr>
-    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
 </td>
     </tr>  </tbody>
 </table>
@@ -252,10 +252,10 @@ Indicate a change (ie. room topic update, or nickname change).
   </thead>
   <tbody>
 <tr>
-    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
 </td>
     </tr><tr>
-    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
 </td>
     </tr>  </tbody>
 </table>
@@ -321,10 +321,10 @@ Indicate an intent to query something (e.g. get a list of users in a room).
   </thead>
   <tbody>
 <tr>
-    <td>job</td><td><code>object</code></td><td><p>activity streams object // TODO LINK</p>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
 </td>
     </tr><tr>
-    <td>done</td><td><code>object</code></td><td><p>callback when job is done // TODO LINK</p>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
 </td>
     </tr>  </tbody>
 </table>

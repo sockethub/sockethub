@@ -7,9 +7,11 @@ A Sockethub platform module implementing Atom/RSS feed functionality.
 This module contains all the implementation details of a `Feeds` client, Atom & RSS, and is
 used as a Sockethub platform.
 
-## Implemented (`@type`)
+## Implemented Verbs (`@type`)
 
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) fetch</kbd>
+More details can be found in the API docs [here](API.md)
+
+* fetch
 
 ## API
 

@@ -110,9 +110,9 @@ class XMPP {
   /**
    * Connect to the XMPP server.
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} credentials credentials object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -156,8 +156,8 @@ class XMPP {
   /**
    * Join a room, optionally defining a display name for that room.
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -191,8 +191,8 @@ class XMPP {
   /**
    * Leave a room
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -226,8 +226,8 @@ class XMPP {
   /**
    * Send a message to a room or private conversation.
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -294,8 +294,8 @@ class XMPP {
    * Indicate presence and status message.
    * Valid presence values are "away", "chat", "dnd", "xa", "offline", "online".
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -338,8 +338,8 @@ class XMPP {
    * @description
    * Send friend request
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -363,8 +363,8 @@ class XMPP {
    * @description
    * Send a remove friend request
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -390,8 +390,8 @@ class XMPP {
    * @description
    * Confirm a friend request
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -414,8 +414,8 @@ class XMPP {
   /**
    * Indicate an intent to query something (ie. get a list of users in a room).
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
