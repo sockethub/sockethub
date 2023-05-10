@@ -32,7 +32,6 @@ plugins:
 
 exclude_patterns:
 - "**/dist/"
-- "**/browser/"
 - "**/build/"
 - "**/node_modules/"
 - "**/test/"
