@@ -6,3 +6,4 @@ coverage
 .idea
 **/dist/
 sockethub.config.json
+.vscode
