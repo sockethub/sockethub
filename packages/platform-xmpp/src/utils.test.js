@@ -1,6 +1,7 @@
 const chai = require('chai');
-const utils = require( "./utils");
 const expect = chai.expect;
+
+const utils = require("./utils.js");
 
 describe('Utils', () => {
   describe('buildXmppCredentials', () => {

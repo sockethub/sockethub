@@ -1,21 +1,23 @@
 import { expect } from 'chai';
-import proxyquire from 'proxyquire';
 import * as sinon from "sinon";
 
-import crypto, {getPlatformId} from "./index";
+import {getPlatformId, Crypto} from "./index";
 
 const secret = 'a test secret.. that is 16 x 2..';
 const data = {'foo': 'bar'};
 const encryptedData = "00000000000000000000000000000000:0543ec94d863fbf4b7a19b48e69d9317";
 
+
+
 describe('crypto', () => {
   let crypto;
   beforeEach(() => {
-    crypto = proxyquire('./index', {
-      crypto: {
-        randomBytes: () => Buffer.alloc(16)
+    class TestCrypto extends Crypto {
+      createRandomBytes() {
+        this.randomBytes = () => Buffer.alloc(16);
       }
-    }).default;
+    }
+    crypto = new TestCrypto();
   });
 
   it('encrypts', () => {
@@ -54,11 +56,19 @@ describe('crypto', () => {
 
 describe("getPlatformId", () => {
   let cryptoHashStub: any;
+  let crypto;
 
   beforeEach(() => {
+    cryptoHashStub = sinon.mock();
+    class TestCrypto extends Crypto {
+      createRandomBytes() {
+        this.randomBytes = () => Buffer.alloc(16);
+      }
+
+    }
+    crypto = new TestCrypto();
     cryptoHashStub = sinon.stub(crypto, 'hash');
     cryptoHashStub.returnsArg(0);
-    proxyquire('./index', { crypto: { hash: cryptoHashStub }});
   });
 
   afterEach(() => {
@@ -66,12 +76,12 @@ describe("getPlatformId", () => {
   });
 
   it('generates platform hash', () => {
-    expect(getPlatformId('foo')).to.be.equal('foo');
+    expect(getPlatformId('foo', undefined, crypto)).to.be.equal('foo');
     sinon.assert.calledOnce(cryptoHashStub);
     sinon.assert.calledWith(cryptoHashStub, 'foo');
   });
   it('generates platform + actor hash', () => {
-    expect(getPlatformId('foo', 'bar')).to.be.equal('foobar');
+    expect(getPlatformId('foo', 'bar', crypto)).to.be.equal('foobar');
     sinon.assert.calledOnce(cryptoHashStub);
     sinon.assert.calledWith(cryptoHashStub, 'foobar');
   });

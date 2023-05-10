@@ -1,6 +1,8 @@
-module.exports = {
+const PackageJSON = require('../package.json');
+
+const PlatformSchema = {
   "name": "xmpp",
-  "version": require('../package.json').version,
+  "version": PackageJSON.version,
   "messages": {
     "required": ['type'],
     "properties": {
@@ -47,3 +49,5 @@ module.exports = {
     }
   }
 };
+
+module.exports = PlatformSchema;

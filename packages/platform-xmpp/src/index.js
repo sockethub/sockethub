@@ -17,11 +17,9 @@
  */
 
 const { client, xml } = require("@xmpp/client");
-
 const IncomingHandlers = require('./incoming-handlers');
 const PlatformSchema = require('./schema.js');
 const utils = require('./utils.js');
-
 
 /**
  * Handles all actions related to communication via. the XMPP protocol.
@@ -44,6 +42,15 @@ class XMPP {
     this.sendToClient = session.sendToClient;
     this.__forceDisconnect = false;
     this.__channels = [];
+    this.createClient();
+    this.createXml();
+  }
+
+  createClient() {
+    this.__clientConstructor = client;
+  }
+  createXml() {
+    this.__xml = xml;
   }
 
   /**
@@ -103,9 +110,9 @@ class XMPP {
   /**
    * Connect to the XMPP server.
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} credentials credentials object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} credentials credentials object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -128,7 +135,7 @@ class XMPP {
       return done();
     }
     this.debug('connect called for ' + job.actor.id);
-    this.__client = client(utils.buildXmppCredentials(credentials));
+    this.__client = this.__clientConstructor(utils.buildXmppCredentials(credentials));
     this.__client.on("offline", () => {
       this.debug('offline');
     });
@@ -149,8 +156,8 @@ class XMPP {
   /**
    * Join a room, optionally defining a display name for that room.
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -175,7 +182,7 @@ class XMPP {
     // TODO investigate implementation reserved nickname discovery
     let id = job.target.id.split('/')[0];
 
-    this.__client.send(xml("presence", {
+    this.__client.send(this.__xml("presence", {
       from: job.actor.id,
       to: `${job.target.id}/${job.actor.name || id}`
     })).then(done);
@@ -184,8 +191,8 @@ class XMPP {
   /**
    * Leave a room
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -209,7 +216,7 @@ class XMPP {
 
     let id = job.target.id.split('/')[0];
 
-    this.__client.send(xml("presence", {
+    this.__client.send(this.__xml("presence", {
       from: job.actor.id,
       to: `${job.target.id}/${job.actor.name}` || id,
       type: 'unavailable'
@@ -219,8 +226,8 @@ class XMPP {
   /**
    * Send a message to a room or private conversation.
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -267,14 +274,14 @@ class XMPP {
   send(job, done) {
     this.debug('send() called for ' + job.actor.id);
     // send message
-    const message = xml(
+    const message = this.__xml(
       "message", {
         type: job.target.type === 'room' ? 'groupchat' : 'chat',
         to: job.target.id,
         id: job.object.id
       },
-      xml("body", {}, job.object.content),
-      job.object['xmpp:replace'] ? xml("replace", {
+      this.__xml("body", {}, job.object.content),
+      job.object['xmpp:replace'] ? this.__xml("replace", {
         id: job.object['xmpp:replace'].id,
         xmlns: 'urn:xmpp:message-correct:0'
       }) : undefined
@@ -287,8 +294,8 @@ class XMPP {
    * Indicate presence and status message.
    * Valid presence values are "away", "chat", "dnd", "xa", "offline", "online".
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -321,7 +328,7 @@ class XMPP {
       }
       // setting presence
       this.debug(`setting presence: ${job.object.presence}`);
-      this.__client.send(xml("presence", props, show, status)).then(done);
+      this.__client.send(this.__xml("presence", props, show, status)).then(done);
     } else {
       done(`unknown update object type: ${job.object.type}`);
     }
@@ -331,8 +338,8 @@ class XMPP {
    * @description
    * Send friend request
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -349,15 +356,15 @@ class XMPP {
    */
   'request-friend'(job,  done) {
     this.debug('request-friend() called for ' + job.actor.id);
-    this.__client.send(xml("presence", { type: "subscribe", to:job.target.id })).then(done);
+    this.__client.send(this.__xml("presence", { type: "subscribe", to:job.target.id })).then(done);
   }
 
   /**
    * @description
    * Send a remove friend request
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -374,15 +381,17 @@ class XMPP {
    */
   'remove-friend'(job, done) {
     this.debug('remove-friend() called for ' + job.actor.id);
-    this.__client.send(xml("presence", { type: "unsubscribe", to:job.target.id })).then(done);
+    this.__client.send(this.__xml("presence", {
+      type: "unsubscribe", to:job.target.id
+    })).then(done);
   }
 
   /**
    * @description
    * Confirm a friend request
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -399,14 +408,14 @@ class XMPP {
    */
   'make-friend'(job, done) {
     this.debug('make-friend() called for ' + job.actor.id);
-    this.__client.send(xml("presence", { type: "subscribe", to:job.target.id })).then(done);
+    this.__client.send(this.__xml("presence", { type: "subscribe", to:job.target.id })).then(done);
   }
 
   /**
    * Indicate an intent to query something (ie. get a list of users in a room).
    *
-   * @param {object} job activity streams object // TODO LINK
-   * @param {object} done callback when job is done // TODO LINK
+   * @param {object} job activity streams object
+   * @param {object} done callback when job is done
    *
    * @example
    *
@@ -452,12 +461,12 @@ class XMPP {
    */
   query(job, done) {
     this.debug('sending query from ' + job.actor.id + ' for ' + job.target.id);
-    this.__client.send(xml("iq",  {
+    this.__client.send(this.__xml("iq",  {
       id: 'muc_id',
       type: 'get',
       from: job.actor.id,
       to: job.target.id
-    }, xml("query", {xmlns: 'http://jabber.org/protocol/disco#items'}))).then(done);
+    }, this.__xml("query", {xmlns: 'http://jabber.org/protocol/disco#items'}))).then(done);
   }
 
   /**
@@ -480,5 +489,4 @@ class XMPP {
     this.__client.on('stanza', ih.stanza.bind(ih));
   }
 }
-
 module.exports = XMPP;

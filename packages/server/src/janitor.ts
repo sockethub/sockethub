@@ -5,7 +5,7 @@ import listener, { SocketInstance } from "./listener";
 
 const rmLog = debug('sockethub:server:janitor');
 
-class Janitor {
+export class Janitor {
   cycleInterval = 15000;
   cycleCount = 0;   // a counter for each cycleInterval
   reportCount = 0;  // number of times a report is printed
@@ -15,7 +15,7 @@ class Janitor {
 
   /**
    * Every TICK the `Janitor` will compare existing platform instances with `socket.ids`
-   * (aka. `sessionId`). If all of the `sessionIds` associated with a `platformInstance` have
+   * (aka. `sessionId`). If all the `sessionIds` associated with a `platformInstance` have
    * no corresponding `socket.id` (from the `http.io` `socket.io` instance), then the
    * `platformInstance` will first be flagged, if after the next `cycleInterval` the same
    * state is determined, the platform will be destroyed (this allows for page
@@ -90,7 +90,7 @@ class Janitor {
   }
 
   private async getSockets(): Promise<Array<SocketInstance>> {
-    return await listener.io.fetchSockets();
+    return listener.io.fetchSockets();
   }
 
   private async performStaleCheck(platformInstance: PlatformInstance) {

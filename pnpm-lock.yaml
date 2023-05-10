@@ -179,42 +179,24 @@ importers:
       '@types/chai':
         specifier: 4.3.4
         version: 4.3.4
-      '@types/eslint':
-        specifier: 8.37.0
-        version: 8.37.0
       '@types/mocha':
         specifier: 10.0.1
         version: 10.0.1
       '@types/node':
         specifier: 18.15.11
         version: 18.15.11
-      '@types/proxyquire':
-        specifier: 1.3.28
-        version: 1.3.28
       '@types/sinon':
         specifier: 10.0.13
         version: 10.0.13
-      '@typescript-eslint/parser':
-        specifier: 5.57.1
-        version: 5.57.1(eslint@8.37.0)(typescript@5.0.3)
       c8:
         specifier: 7.13.0
         version: 7.13.0
       chai:
         specifier: 4.3.7
         version: 4.3.7
-      eslint:
-        specifier: 8.37.0
-        version: 8.37.0
-      eslint-cli:
-        specifier: 1.1.1
-        version: 1.1.1
       mocha:
         specifier: 10.2.0
         version: 10.2.0
-      proxyquire:
-        specifier: 2.1.3
-        version: 2.1.3
       rollup:
         specifier: ^3.20.2
         version: 3.20.2
@@ -243,9 +225,6 @@ importers:
       '@types/debug':
         specifier: 4.1.7
         version: 4.1.7
-      '@types/eslint':
-        specifier: 8.37.0
-        version: 8.37.0
       '@types/mocha':
         specifier: 10.0.1
         version: 10.0.1
@@ -255,33 +234,18 @@ importers:
       '@types/object-hash':
         specifier: 3.0.2
         version: 3.0.2
-      '@types/proxyquire':
-        specifier: 1.3.28
-        version: 1.3.28
       '@types/sinon':
         specifier: 10.0.13
         version: 10.0.13
-      '@typescript-eslint/parser':
-        specifier: 5.57.1
-        version: 5.57.1(eslint@8.37.0)(typescript@5.0.3)
       c8:
         specifier: 7.13.0
         version: 7.13.0
       chai:
         specifier: 4.3.7
         version: 4.3.7
-      eslint:
-        specifier: 8.37.0
-        version: 8.37.0
-      eslint-cli:
-        specifier: 1.1.1
-        version: 1.1.1
       mocha:
         specifier: 10.2.0
         version: 10.2.0
-      proxyquire:
-        specifier: 2.1.3
-        version: 2.1.3
       sinon:
         specifier: 15.0.3
         version: 15.0.3
@@ -316,42 +280,24 @@ importers:
       '@types/debug':
         specifier: 4.1.7
         version: 4.1.7
-      '@types/eslint':
-        specifier: 8.37.0
-        version: 8.37.0
       '@types/mocha':
         specifier: 10.0.1
         version: 10.0.1
       '@types/node':
         specifier: 18.15.11
         version: 18.15.11
-      '@types/proxyquire':
-        specifier: 1.3.28
-        version: 1.3.28
       '@types/sinon':
         specifier: 10.0.13
         version: 10.0.13
-      '@typescript-eslint/parser':
-        specifier: 5.57.1
-        version: 5.57.1(eslint@8.37.0)(typescript@5.0.3)
       c8:
         specifier: 7.13.0
         version: 7.13.0
       chai:
         specifier: 4.3.7
         version: 4.3.7
-      eslint:
-        specifier: 8.37.0
-        version: 8.37.0
-      eslint-cli:
-        specifier: 1.1.1
-        version: 1.1.1
       mocha:
         specifier: 10.2.0
         version: 10.2.0
-      proxyquire:
-        specifier: 2.1.3
-        version: 2.1.3
       sinon:
         specifier: 15.0.3
         version: 15.0.3
@@ -511,15 +457,9 @@ importers:
       chai:
         specifier: 4.3.7
         version: 4.3.7
-      eslint:
-        specifier: 8.37.0
-        version: 8.37.0
       jsdoc-to-markdown:
         specifier: 8.0.0
         version: 8.0.0
-      proxyquire:
-        specifier: 2.1.3
-        version: 2.1.3
       sinon:
         specifier: 15.0.3
         version: 15.0.3
@@ -536,24 +476,21 @@ importers:
       '@sockethub/schemas':
         specifier: workspace:^
         version: link:../schemas
+      '@xmpp/xml':
+        specifier: 0.13.1
+        version: 0.13.1
       c8:
         specifier: 7.13.0
         version: 7.13.0
       chai:
         specifier: 4.3.7
         version: 4.3.7
-      eslint:
-        specifier: 8.37.0
-        version: 8.37.0
       jsdoc-to-markdown:
         specifier: 8.0.0
         version: 8.0.0
       mocha:
         specifier: 10.2.0
         version: 10.2.0
-      proxyquire:
-        specifier: 2.1.3
-        version: 2.1.3
       sinon:
         specifier: 15.0.3
         version: 15.0.3
@@ -579,30 +516,18 @@ importers:
       '@types/debug':
         specifier: 4.1.7
         version: 4.1.7
-      '@types/eslint':
-        specifier: 8.37.0
-        version: 8.37.0
       '@types/mocha':
         specifier: 10.0.1
         version: 10.0.1
       '@types/node':
         specifier: 18.15.11
         version: 18.15.11
-      '@typescript-eslint/parser':
-        specifier: 5.57.1
-        version: 5.57.1(eslint@8.37.0)(typescript@5.0.3)
       c8:
         specifier: 7.13.0
         version: 7.13.0
       chai:
         specifier: 4.3.7
         version: 4.3.7
-      eslint:
-        specifier: 8.37.0
-        version: 8.37.0
-      eslint-cli:
-        specifier: 1.1.1
-        version: 1.1.1
       mocha:
         specifier: 10.2.0
         version: 10.2.0
@@ -680,9 +605,6 @@ importers:
       '@types/debug':
         specifier: 4.1.7
         version: 4.1.7
-      '@types/eslint':
-        specifier: 8.37.0
-        version: 8.37.0
       '@types/express':
         specifier: 4.17.17
         version: 4.17.17
@@ -698,36 +620,21 @@ importers:
       '@types/node':
         specifier: 18.15.11
         version: 18.15.11
-      '@types/proxyquire':
-        specifier: 1.3.28
-        version: 1.3.28
       '@types/sinon':
         specifier: 10.0.13
         version: 10.0.13
-      '@typescript-eslint/parser':
-        specifier: 5.57.1
-        version: 5.57.1(eslint@8.37.0)(typescript@5.0.3)
       c8:
         specifier: 7.13.0
         version: 7.13.0
       chai:
         specifier: 4.3.7
         version: 4.3.7
-      eslint:
-        specifier: 8.37.0
-        version: 8.37.0
-      eslint-cli:
-        specifier: 1.1.1
-        version: 1.1.1
       jaribu:
         specifier: 2.2.3
         version: 2.2.3
       mocha:
         specifier: 10.2.0
         version: 10.2.0
-      proxyquire:
-        specifier: 2.1.3
-        version: 2.1.3
       sinon:
         specifier: 15.0.3
         version: 15.0.3
@@ -3257,13 +3164,6 @@ packages:
       '@types/ms': 0.7.31
     dev: true
 
-  /@types/eslint@8.37.0:
-    resolution: {integrity: sha512-Piet7dG2JBuDIfohBngQ3rCt7MgO9xCO4xIMKxBThCq5PNRB91IjlJ10eJVwfoNtvTErmxLzwBZ7rHZtbOMmFQ==}
-    dependencies:
-      '@types/estree': 1.0.0
-      '@types/json-schema': 7.0.11
-    dev: true
-
   /@types/estree@1.0.0:
     resolution: {integrity: sha512-WulqXMDUTYAXCjZnk6JtIHPigp55cVtDgDrO2gHRwhyJto21+1zbVCtOYB2L1F9w4qCQ0rOGWBnBe0FNTiEJIQ==}
     dev: true
@@ -3343,10 +3243,6 @@ packages:
 
   /@types/object-hash@3.0.2:
     resolution: {integrity: sha512-tfyXl1JPCf2hzIDK29gO7qGqJjThKBzg/Cn3bA68R9NmWdOx+f7k5mm4to/n43BHspCwcoUC6FU4NpUoK/h9bQ==}
-    dev: true
-
-  /@types/proxyquire@1.3.28:
-    resolution: {integrity: sha512-SQaNzWQ2YZSr7FqAyPPiA3FYpux2Lqh3HWMZQk47x3xbMCqgC/w0dY3dw9rGqlweDDkrySQBcaScXWeR+Yb11Q==}
     dev: true
 
   /@types/pug@2.0.6:
@@ -3787,7 +3683,6 @@ packages:
     engines: {node: '>= 12.4.0'}
     dependencies:
       ltx: 3.0.0
-    dev: false
 
   /@yarnpkg/lockfile@1.1.0:
     resolution: {integrity: sha512-GpSwvyXOcOOlV70vbnzjj4fW5xW/FdUF6nQEt1ENy7m4ZCczi1+/buVUPAqmGfqznsORNFzUMjctTIp8a9tuCQ==}
@@ -5577,17 +5472,6 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /eslint-cli@1.1.1:
-    resolution: {integrity: sha512-Gu+fYzt7M+jIb5szUHLl5Ex0vFY7zErbi78D7ZaaLunvVTxHRvbOlfzmJlIUWsV5WDM4qyu9TD7WnGgDaDgaMA==}
-    hasBin: true
-    dependencies:
-      chalk: 2.4.2
-      debug: 2.6.9
-      resolve: 1.22.3
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
   /eslint-config-prettier@8.8.0(eslint@8.37.0):
     resolution: {integrity: sha512-wLbQiFre3tdGgpDv67NQKnJuTlcUVYHas3k+DZCc2U2BadthoEY4B7hLPvAxaqdyOGCzuLfii2fqGph10va7oA==}
     hasBin: true
@@ -5962,14 +5846,6 @@ packages:
     dependencies:
       minimatch: 5.1.6
     dev: false
-
-  /fill-keys@1.0.2:
-    resolution: {integrity: sha512-tcgI872xXjwFF4xgQmLxi76GnwJG3g/3isB1l4/G5Z4zrbddGpBjqZCO9oEAcB5wX0Hj/5iQB3toxfO7in1hHA==}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      is-object: 1.0.2
-      merge-descriptors: 1.0.1
-    dev: true
 
   /fill-range@7.0.1:
     resolution: {integrity: sha512-qOo9F+dMUmC2Lcb4BbVvnKJxTPjCm+RRpe4gDuGrzkL7mEVl/djYSu2OdQ2Pa302N4oqkSg9ir6jaLWJ2USVpQ==}
@@ -7004,10 +6880,6 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /is-object@1.0.2:
-    resolution: {integrity: sha512-2rRIahhZr2UWb45fIOuvZGpFtz0TyOZLf32KxBbSoUCeZR495zCKlWUKKUByk3geS2eAs7ZAABt0Y/Rx0GiQGA==}
-    dev: true
-
   /is-path-inside@3.0.3:
     resolution: {integrity: sha512-Fd4gABb+ycGAmKou8eMftCupSir5lRxqf4aD/vd0cD2qc4HL07OjCeuHMr8Ro4CoMaeCKDB0/ECBOVWjTwUvPQ==}
     engines: {node: '>=8'}
@@ -7692,7 +7564,6 @@ packages:
   /ltx@3.0.0:
     resolution: {integrity: sha512-bu3/4/ApUmMqVNuIkHaRhqVtEi6didYcBDIF56xhPRCzVpdztCipZ62CUuaxMlMBUzaVL93+4LZRqe02fuAG6A==}
     engines: {node: '>= 12.4.0'}
-    dev: false
 
   /luxon@3.3.0:
     resolution: {integrity: sha512-An0UCfG/rSiqtAIiBPO0Y9/zAnHUZxAMiCpTd5h2smgsj7GGmcenvrvww2cqNA8/4A5ZrD1gJpHN2mIHZQF+Mg==}
@@ -8158,10 +8029,6 @@ packages:
   /modify-values@1.0.1:
     resolution: {integrity: sha512-xV2bxeN6F7oYjZWTe/YPAy6MN2M+sL4u/Rlm2AHCIVGfo2p1yGmBHQ6vHehl4bRTZBdHu3TSkWdYgkwpYzAGSw==}
     engines: {node: '>=0.10.0'}
-    dev: true
-
-  /module-not-found-error@1.0.1:
-    resolution: {integrity: sha512-pEk4ECWQXV6z2zjhRZUongnLJNUeGQJ3w6OQ5ctGwD+i5o93qjRQUk2Rt6VdNeu3sEP0AB4LcfvdebpxBRVr4g==}
     dev: true
 
   /moo@0.5.2:
@@ -9240,14 +9107,6 @@ packages:
 
   /proxy-from-env@1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
-    dev: true
-
-  /proxyquire@2.1.3:
-    resolution: {integrity: sha512-BQWfCqYM+QINd+yawJz23tbBM40VIGXOdDw3X344KcclI/gtBbdWF6SlQ4nK/bYhF9d27KYug9WzljHC6B9Ysg==}
-    dependencies:
-      fill-keys: 1.0.2
-      module-not-found-error: 1.0.1
-      resolve: 1.22.3
     dev: true
 
   /punycode@2.3.0:

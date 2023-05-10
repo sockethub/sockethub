@@ -1,14 +1,12 @@
-import proxyquire from 'proxyquire';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 
-let sockets = [
+import { Janitor } from "./janitor";
+
+const sockets = [
   { id: 'socket foo', emit: () => {} },
   { id: 'socket bar', emit: () => {} }
-]
-
-proxyquire.noPreserveCache();
-proxyquire.noCallThru();
+];
 
 function getPlatformInstanceFake() {
   return {
@@ -30,7 +28,7 @@ function getPlatformInstanceFake() {
         ['session bar', function sessionBarMessage() {}]
       ]))()
     }
-  }
+  };
 }
 
 const cycleInterval = 10;
@@ -42,14 +40,8 @@ describe('Janitor', () => {
     this.timeout(3000);
     sandbox = sinon.createSandbox();
     fetchSocketsFake = sandbox.stub().returns(sockets);
-    const janitorMod = proxyquire('./janitor', {
-      listener: {
-        io: {
-          fetchSockets: fetchSocketsFake
-        }
-      }
-    });
-    janitor = janitorMod.default;
+
+    janitor = new Janitor();
     janitor.getSockets = fetchSocketsFake;
     expect(janitor.cycleInterval).to.not.equal(cycleInterval);
     janitor.cycleInterval = cycleInterval;
@@ -58,7 +50,7 @@ describe('Janitor', () => {
     setTimeout(() => {
       expect(janitor.cycleCount).to.equal(1);
       done();
-    }, cycleInterval)
+    }, cycleInterval);
   });
 
   afterEach((done) => {
@@ -66,7 +58,7 @@ describe('Janitor', () => {
     janitor.stop();
     setTimeout(() => {
       done();
-    }, janitor.cycleInterval * 2)
+    }, janitor.cycleInterval * 2);
   });
 
   it('runs cycle at every cycleInterval', (done) => {
@@ -121,7 +113,8 @@ describe('Janitor', () => {
     it('removes session if the socket is inactive', async () => {
       const pi = getPlatformInstanceFake();
       janitor.removeSessionCallbacks = sinon.stub();
-      janitor.socketExists = sinon.stub().onFirstCall().returns(false).onSecondCall().returns(true);
+      janitor.socketExists =
+        sinon.stub().onFirstCall().returns(false).onSecondCall().returns(true);
       expect(janitor.stopTriggered).to.be.false;
       await janitor.removeStaleSocketSessions(pi);
       sinon.assert.calledOnce(janitor.removeSessionCallbacks);
@@ -182,8 +175,8 @@ describe('Janitor', () => {
         setTimeout(() => {
           expect(janitor.cycleCount).to.equal(prevCycle);
           done();
-        }, cycleInterval)
-      }, cycleInterval)
+        }, cycleInterval);
+      }, cycleInterval);
     }, cycleInterval);
   });
-})
+});

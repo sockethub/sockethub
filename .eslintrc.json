@@ -11,7 +11,8 @@
         "ecmaVersion": 2021,
         "sourceType": "module",
         "ecmaFeatures": {
-            "jsx": false
+            "jsx": false,
+            "modules": true
         }
     },
     "rules": {
@@ -40,9 +41,9 @@
     ],
     "extends": [
         "eslint:recommended",
-        "plugin:security-node/recommended"
+        "plugin:security-node/recommended",
+        "plugin:@typescript-eslint/recommended"
     ],
-    "ignorePatterns": ["*.d.ts", "*.test.ts", "*.data.js", "packages/platform-irc/index.js", "*.cjs"],
     "settings": {
         "svelte3/typescript": "() => require('typescript')"
     },
@@ -64,6 +65,23 @@
             "extends": [
                 "plugin:@typescript-eslint/recommended"
             ]
+        },
+        {
+            "files": [
+                "**/*.test.ts"
+            ],
+            "rules": {
+                "@typescript-eslint/no-explicit-any": ["off"],
+                "@typescript-eslint/no-empty-function": ["off"]
+            }
+        },
+        {
+            "files": [
+                "**/*.js"
+            ],
+            "rules": {
+                "@typescript-eslint/no-var-requires": ["off"]
+            }
         }
     ]
 }

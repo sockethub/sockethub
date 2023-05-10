@@ -24,18 +24,18 @@ const creds = {
 
 describe("Middleware: storeCredentials", () => {
   let storeSuccess: any,
-    storeError: any,
-    saveErrorFake: any,
-    saveSuccessFake: any;
+      storeError: any,
+      saveErrorFake: any,
+      saveSuccessFake: any;
 
   beforeEach(() => {
     storeSuccess = {
-      save: (id: any, creds: any, cb: Function) => {
+      save: (id: any, creds: any, cb: () => void) => {
         cb();
       },
     };
     storeError = {
-      save: (id: any, creds: any, cb: Function) => {
+      save: (id: any, creds: any, cb: (v:string) => void) => {
         cb("some error");
       },
     };

@@ -7,13 +7,15 @@ A sockethub platform module implementing IRC functionality.
 This module contains all of the implementation details of an IRC client and is
 used as a sockethub platform.
 
-## Implemented (`@type`)
+## Implemented Verbs (`@type`)
 
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) send</kbd>
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) join</kbd>
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) leave</kbd>
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) observe</kbd>
-<kbd>![completed](http://sockethub.org/res/img/checkmark.png) update</kbd>
+More details can be found in the API docs [here](API.md)
+
+* send
+* join
+* leave
+* observe
+* update
 
 ## Example
 

@@ -26,7 +26,7 @@
     "downlevelIteration": true,
     "paths": {
       "@sockethub/activity-streams": [
-        "./packages/activity-streams/src/activity-streams.js"
+        "./packages/activity-streams/src/activity-streams.ts"
       ],
       "@sockethub/crypto": [
         "./packages/crypto/src/index.ts"
@@ -38,7 +38,7 @@
         "./packages/irc2as/src/index.js"
       ],
       "@sockethub/platform-feeds": [
-        "./packages/platform-feeds/index.js"
+        "./packages/platform-feeds/src/index.ts"
       ],
       "@sockethub/platform-irc": [
         "./packages/platform-irc/index.js"
@@ -47,7 +47,7 @@
         "./packages/platform-xmpp/src/index.js"
       ],
       "@sockethub/schemas": [
-        "./packages/schemas/index.js"
+        "./packages/schemas/src/index.ts"
       ],
       "@sockethub/server": [
         "./packages/server/src/index.ts"

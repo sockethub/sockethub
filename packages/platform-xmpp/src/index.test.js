@@ -1,10 +1,8 @@
-const proxyquire = require('proxyquire');
-const chai = require('chai');
 const sinon = require('sinon');
+const chai = require('chai');
 const expect = chai.expect;
 
-proxyquire.noPreserveCache();
-proxyquire.noCallThru();
+const XMPP  = require("./index.js");
 
 const actor = {
   type: 'person',
@@ -139,7 +137,7 @@ const job = {
 };
 
 describe('Platform', () => {
-  let shXmpp, clientFake, xmlFake, clientObjectFake, xp;
+  let clientFake, xmlFake, clientObjectFake, xp;
 
   beforeEach(() => {
     clientObjectFake = {
@@ -151,17 +149,16 @@ describe('Platform', () => {
     clientFake = sinon.fake.returns(clientObjectFake);
     xmlFake = sinon.fake();
 
-    shXmpp = proxyquire('./index', {
-      '@xmpp/client': {
-        client: clientFake,
-        xml: xmlFake
-      },
-      './utils': {
-        buildXmppCredentials: sinon.fake()
+    class TestXMPP extends XMPP {
+      createClient() {
+        this.__clientConstructor = clientFake;
       }
-    });
+      createXml() {
+        this.__xml = xmlFake;
+      }
+    }
 
-    xp = new shXmpp({
+    xp = new TestXMPP({
       id: actor,
       debug: sinon.fake(),
       sendToClient: sinon.fake()

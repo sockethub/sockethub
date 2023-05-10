@@ -10,20 +10,31 @@ plugins:
     enabled: true
   markdownlint:
     enabled: true
+    checks:
+      MD007:
+        enabled: false
+      MD009:
+        enabled: false
+      MD012:
+        enabled: false
+      MD013:
+        enabled: false
+      MD022:
+        enabled: false
+      MD031:
+        enabled: false
+      MD033:
+        enabled: false
   nodesecurity:
     enabled: true
 
 exclude_patterns:
 - "**/dist/"
 - "**/browser/"
+- "**/build/"
 - "**/node_modules/"
 - "**/test/"
 - "**/*.d.ts"
 - "**/*.test.*"
-- "packages/server/views/examples/"
-- "packages/schemas/schemas/"
 - "packages/irc2as/"
-- "packages/platform-feeds/"
-- "packages/activity-streams.js/"
 - "packages/platform-irc/"
-- "packages/platform-xmpp/"

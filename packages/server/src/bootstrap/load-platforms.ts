@@ -40,7 +40,6 @@ async function loadPlatform(platformName: string, injectRequire) {
     const P = await injectRequire(platformName);
     p = new P();
   } else {
-    // eslint-disable-next-line security-node/detect-non-literal-require-calls
     const P = await import(platformName);
     p = new P.default();
   }
