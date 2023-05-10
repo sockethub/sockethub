@@ -23,6 +23,8 @@ plugins:
         enabled: false
       MD031:
         enabled: false
+      MD032:
+        enabled: false
       MD033:
         enabled: false
   nodesecurity:
