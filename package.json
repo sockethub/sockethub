@@ -45,6 +45,7 @@
         "docker:build": "pnpm docker:clean:sockethub; pnpm docker:start",
         "integration": "pnpm docker:start && pnpm integration:run; RES=$?; pnpm docker:stop; exit $RES",
         "integration:run": "karma start --single-run --sh_port=10650 --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
+        "integration:redis": "docker compose up redis -d && mocha -r ts-node/register test/redis.test.ts; docker compose down redis",
         "lint": "prettier --check . && eslint --max-warnings 0 . && nx run-many --target=lint && pnpm lint:doc",
         "lint:doc": "markdownlint '**/*.md'",
         "lint:doc:fix": "markdownlint --fix '**/*.md' && mdspell -n -a --en-us ./README.md ./packages/*/README.md",

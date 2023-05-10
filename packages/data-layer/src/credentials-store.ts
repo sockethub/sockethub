@@ -5,6 +5,13 @@ import { IActivityStream, CallbackInterface } from "@sockethub/schemas";
 import crypto from "@sockethub/crypto";
 import { RedisConfigProps, RedisConfigUrl } from "./types";
 
+export interface CredentialsObject extends IActivityStream {
+    type: "credentials";
+    object: {
+        type: "credentials";
+    };
+}
+
 /**
  * Encapsulates the storing and fetching of credential objects.
  */
@@ -17,7 +24,7 @@ export default class CredentialsStore {
     /**
      * @param parentId - The ID of the parent instance (eg. sockethub itself)
      * @param sessionId - The ID of the session (socket.io connection)
-     * @param secret - The encryption secret (parent + session secrets)
+     * @param secret - The encryption secret (parent + session secrets) must be 32 chars
      * @param redisConfig - Connect info for redis
      */
     constructor(
@@ -26,6 +33,11 @@ export default class CredentialsStore {
         secret: string,
         redisConfig: RedisConfigProps | RedisConfigUrl,
     ) {
+        if (secret.length !== 32) {
+            throw new Error(
+                "CredentialsStore secret must be 32 chars in length",
+            );
+        }
         this.initCrypto();
         this.initSecureStore(secret, redisConfig);
         this.uid = `sockethub:data-layer:credentials-store:${parentId}:${sessionId}`;
@@ -83,15 +95,11 @@ export default class CredentialsStore {
      * @param creds
      * @param done
      */
-    save(actor: string, creds: IActivityStream, done: CallbackInterface): void {
-        this.store.save(actor, creds, (err) => {
-            if (err) {
-                this.log("error saving credentials to stores " + err);
-                return done(err);
-            } else {
-                this.log(`credentials encrypted and saved`);
-                return done();
-            }
-        });
+    save(
+        actor: string,
+        creds: CredentialsObject,
+        done: CallbackInterface,
+    ): void {
+        this.store.save(actor, creds, done);
     }
 }

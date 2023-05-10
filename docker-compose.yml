@@ -11,6 +11,8 @@ services:
             - prosody
     redis:
         image: redis
+        ports:
+            - 10651:6379
         networks:
             - sockethub-net
     prosody:
