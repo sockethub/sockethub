@@ -41,7 +41,7 @@ if (typeof (IRC2AS) !== 'object') {
  *
  * {@link https://github.com/ircanywhere/irc-factory}
  *
- * @param {object} cfg a unique config object for this instance // TODO LINK
+ * @param {object} cfg a unique config object for this instance
  */
 function IRC(cfg) {
   cfg = (typeof cfg === 'object') ? cfg : {};
@@ -181,8 +181,8 @@ IRC.prototype.connect = function (job, credentials, done) {
  *
  * Join a room or private conversation.
  *
- * @param {object} job activity streams object // TODO LINK
- * @param {object} done callback when job is done // TODO LINK
+ * @param {object} job activity streams object
+ * @param {object} done callback when job is done
  *
  * @example
  *
@@ -227,8 +227,8 @@ IRC.prototype.join = function (job, done) {
  *
  * Leave a room or private conversation.
  *
- * @param {object} job activity streams object // TODO LINK
- * @param {object} done callback when job is done // TODO LINK
+ * @param {object} job activity streams object
+ * @param {object} done callback when job is done
  *
  * @example
  * {
@@ -264,8 +264,8 @@ IRC.prototype.leave = function (job, done) {
  *
  * Send a message to a room or private conversation.
  *
- * @param {object} job activity streams object // TODO LINK
- * @param {object} done callback when job is done // TODO LINK
+ * @param {object} job activity streams object
+ * @param {object} done callback when job is done
  *
  * @example
  *
@@ -344,8 +344,8 @@ IRC.prototype.send = function (job, done) {
  *
  * Indicate a change (ie. room topic update, or nickname change).
  *
- * @param {object} job activity streams object // TODO LINK
- * @param {object} done callback when job is done // TODO LINK
+ * @param {object} job activity streams object
+ * @param {object} done callback when job is done
  *
  * @example change topic
  *
@@ -424,8 +424,8 @@ IRC.prototype.update = function (job, credentials, done) {
  *
  * Indicate an intent to query something (e.g. get a list of users in a room).
  *
- * @param {object} job activity streams object // TODO LINK
- * @param {object} done callback when job is done // TODO LINK
+ * @param {object} job activity streams object
+ * @param {object} done callback when job is done
  *
  * @example
  *
