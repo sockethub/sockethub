@@ -4,7 +4,6 @@ build
 **/*-suite.js
 **/*.d.ts
 **/*.data.*
-packages/irc2as/
 packages/platform-irc/
 .DS_Store
 /.svelte-kit
