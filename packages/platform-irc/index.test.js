@@ -39,13 +39,17 @@ describe('Initialize IRC Platform', () => {
   let platform;
   beforeEach(() => {
     platform = new IRCPlatform({
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       debug: function () {},
       updateActor: function async() { return Promise.resolve(); }
     });
     platform.__connect = function (key, credentials, cb) {
       cb(null, {
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         end: () => {},
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         on: function () {},
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         raw: () => {}
       });
     };

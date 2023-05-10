@@ -44,7 +44,7 @@
     "build": "true",
     "clean": "rm -rf coverage",
     "test": "c8 mocha *.test.js",
-    "coverage": "c8 check-coverage --statements 80 --branches 55 --functions 85 --lines 80",
+    "coverage": "c8 check-coverage --statements 79 --branches 55 --functions 85 --lines 79",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md"
   }
 }

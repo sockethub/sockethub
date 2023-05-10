@@ -23,6 +23,8 @@ plugins:
         enabled: false
       MD031:
         enabled: false
+      MD032:
+        enabled: false
       MD033:
         enabled: false
   nodesecurity:
@@ -36,4 +38,3 @@ exclude_patterns:
 - "**/test/"
 - "**/*.d.ts"
 - "**/*.test.*"
-- "packages/platform-irc/"
