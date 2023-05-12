@@ -1,9 +1,8 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
-import SecureStore from "secure-store-redis";
+import SecureStore, { SecureStoreConfig } from "secure-store-redis";
 import debug, { Debugger } from "debug";
-import { IActivityStream, CallbackInterface } from "@sockethub/schemas";
+import { IActivityStream } from "@sockethub/schemas";
 import crypto from "@sockethub/crypto";
-import { RedisConfigProps, RedisConfigUrl } from "./types";
 
 export interface CredentialsObject extends IActivityStream {
     type: "credentials";
@@ -31,7 +30,7 @@ export default class CredentialsStore {
         parentId: string,
         sessionId: string,
         secret: string,
-        redisConfig: RedisConfigProps | RedisConfigUrl,
+        redisConfig: SecureStoreConfig['redis'],
     ) {
         if (secret.length !== 32) {
             throw new Error(
@@ -50,10 +49,10 @@ export default class CredentialsStore {
 
     initSecureStore(
         secret: string,
-        redisConfig: RedisConfigProps | RedisConfigUrl,
+        redisConfig: SecureStoreConfig['redis'],
     ) {
         this.store = new SecureStore({
-            namespace: this.uid,
+            uid: this.uid,
             secret: secret,
             redis: redisConfig,
         });
@@ -64,42 +63,32 @@ export default class CredentialsStore {
      * @param actor
      * @param credentialHash
      */
-    async get(actor: string, credentialHash: string): Promise<IActivityStream> {
+    async get(actor: string, credentialHash: string): Promise<IActivityStream | undefined> {
         this.log(`get credentials for ${actor}`);
-        return new Promise((resolve, reject) => {
-            this.store.get(actor, (err, credentials) => {
-                if (err) {
-                    return reject("credentials " + err.toString());
-                }
-                if (!credentials) {
-                    return resolve(undefined);
-                }
+        const credentials = await this.store.get(actor);
+        if (!credentials) {
+            return undefined;
+        }
 
-                if (credentialHash) {
-                    if (
-                        credentialHash !== this.objectHash(credentials.object)
-                    ) {
-                        return reject(
-                            `provided credentials do not match existing platform instance for actor ${actor}`,
-                        );
-                    }
-                }
-                return resolve(credentials);
-            });
-        });
+        if (credentialHash) {
+            if (
+                credentialHash !== this.objectHash(credentials.object)
+            ) {
+                return undefined;
+            }
+        }
+        return credentials;
     }
 
     /**
      * Saves the credentials for a given actor ID
      * @param actor
      * @param creds
-     * @param done
      */
-    save(
+    async save(
         actor: string,
-        creds: CredentialsObject,
-        done: CallbackInterface,
-    ): void {
-        this.store.save(actor, creds, done);
+        creds: CredentialsObject
+    ): Promise<number> {
+        return this.store.save(actor, creds);
     }
 }
