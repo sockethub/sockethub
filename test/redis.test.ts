@@ -26,26 +26,23 @@ describe("CredentialsStore", () => {
             "foo",
             "bar",
             secret,
-            "redis://localhost:10651",
+            {url: "redis://localhost:10651"},
         );
     });
 
     it("get non-existant value", async () => {
-        try {
-            await store.get(actor, credsHash);
-            throw new Error("test should not reach this point");
-        } catch (err) {
-            expect(err).to.eql(
-                "credentials record not found for key: " + actor,
-            );
-        }
+        expect(await store.get(actor, credsHash)).to.eql(undefined);
     });
 
-    it("save", (done) => {
-        store.save(actor, creds, done);
+    it("save", async () => {
+        await store.save(actor, creds);
     });
 
     it("get", async () => {
         expect(await store.get(actor, credsHash)).to.eql(creds);
+    });
+
+    it("shutdown", async () => {
+        await store.store.disconnect();
     });
 });
