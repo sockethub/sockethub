@@ -23,6 +23,7 @@ describe("JobQueue", () => {
             resume: sandbox.stub(),
             isPaused: sandbox.stub(),
             obliterate: sandbox.stub(),
+            close: sandbox.stub(),
             emit: sandbox.stub(),
             on: sandbox.stub().callsArgWith(1, "a job id", "a result string"),
         };
@@ -39,7 +40,7 @@ describe("JobQueue", () => {
                 this.crypto = cryptoMocks;
             }
         }
-        jobQueue = new TestJobQueue("a parent id", "a session id", "a secret", {
+        jobQueue = new TestJobQueue("a parent id", "a session id", "secret is 32 char long like this", {
             url: "redis config",
         });
         jobQueue.emit = sandbox.stub();
