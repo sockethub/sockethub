@@ -17,6 +17,12 @@ importers:
       '@lerna-lite/publish':
         specifier: 1.17.0
         version: 1.17.0
+      '@sockethub/data-layer':
+        specifier: workspace:1.0.0-alpha.4
+        version: link:packages/data-layer
+      '@sockethub/schemas':
+        specifier: workspace:3.0.0-alpha.4
+        version: link:packages/schemas
       '@types/mocha':
         specifier: 10.0.1
         version: 10.0.1

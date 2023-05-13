@@ -9,6 +9,8 @@
     "devDependencies": {
         "@lerna-lite/cli": "1.17.0",
         "@lerna-lite/publish": "1.17.0",
+        "@sockethub/data-layer": "workspace:1.0.0-alpha.4",
+        "@sockethub/schemas": "workspace:3.0.0-alpha.4",
         "@types/mocha": "10.0.1",
         "@typescript-eslint/eslint-plugin": "^5.57.0",
         "@typescript-eslint/parser": "5.57.1",
@@ -44,7 +46,7 @@
         "docker:stop": "docker compose down",
         "docker:build": "pnpm docker:clean:sockethub; pnpm docker:start",
         "integration": "pnpm integration:redis && pnpm integration:browser",
-        "integration:browser": "pnpm docker:start && pnpm integration:run; RES=$?; pnpm docker:stop; exit $RES",
+        "integration:browser": "pnpm docker:start && pnpm integration:browser:run; RES=$?; pnpm docker:stop; exit $RES",
         "integration:browser:run": "karma start --single-run --sh_port=10650 --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
         "integration:redis": "docker compose up redis -d && pnpm integration:redis:run; docker compose down",
         "integration:redis:run": "mocha -r ts-node/register test/redis.test.ts",
