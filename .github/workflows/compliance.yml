@@ -41,6 +41,7 @@ jobs:
             - run: npm install -g pnpm
             - run: npm install -g karma
             - run: pnpm install
+            - run: pnpm build
             - run: docker compose build --build-arg node_version=${{ matrix.node-version }}
 
             - run: pnpm docker:build
