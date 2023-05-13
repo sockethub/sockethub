@@ -232,11 +232,16 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
         });
 
         describe("Incoming Message queue", () => {
-            it("should be empty", () => {
-                console.log("*** INCOMING MESSAGES ***");
+            it("should be empty", (done) => {
+                console.log(`*** INCOMING MESSAGES, length: ${incomingMessages.length} ***`);
                 console.log(incomingMessages);
-                expect(incomingMessages.length).to.equal(0);
-                expect(incomingMessages).to.eql([]);
+                setTimeout(() => {
+                    console.log(`*** INCOMING MESSAGES after 500ms delay, length: ${incomingMessages.length} ***`);
+                    console.log(incomingMessages);
+                    expect(incomingMessages.length).to.eql(0);
+                    expect(incomingMessages).to.eql([]);
+                    done();
+                }, 500);
             });
         });
     });
