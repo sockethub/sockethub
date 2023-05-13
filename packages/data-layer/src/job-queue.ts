@@ -31,6 +31,9 @@ export default class JobQueue extends EventEmitter {
         redisConfig: RedisConfig,
     ) {
         super();
+        if (secret.length !== 32) {
+            throw new Error("JobQueue secret must be a 32 char string, length: " + secret.length);
+        }
         this.initBull(instanceId + sessionId, redisConfig);
         this.initCrypto();
         this.uid = `sockethub:data-layer:job-queue:${instanceId}:${sessionId}`;
@@ -134,12 +137,12 @@ export default class JobQueue extends EventEmitter {
     }
 
     async shutdown() {
-        const isPaused = await this.bull.isPaused(true);
-        if (!isPaused) {
+        if (!await this.bull.isPaused(true)) {
             await this.bull.pause();
         }
         await this.bull.obliterate({ force: true });
         await this.bull.removeAllListeners();
+        await this.bull.close();
     }
 
     private createJob(

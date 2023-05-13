@@ -1,7 +1,7 @@
 import { describe, it } from "mocha";
 import { expect } from "chai";
-import { CredentialsStore } from "../packages/data-layer/src/index";
-import { CredentialsObject } from "packages/data-layer/src/credentials-store";
+import { CredentialsStore, CredentialsObject, JobQueue } from "../packages/data-layer/src/index";
+import { IActivityStream } from "@sockethub/schemas";
 
 // eslint-disable-next-line security-node/detect-insecure-randomness
 const actor = "" + (Math.random() + 1).toString(36).substring(2);
@@ -44,5 +44,47 @@ describe("CredentialsStore", () => {
 
     it("shutdown", async () => {
         await store.store.disconnect();
+    });
+});
+
+describe("JobQueue", () => {
+    const as: IActivityStream = {
+        type: "foo",
+        context: "bar",
+        actor: {
+            id: "bar",
+            type: "person"
+        }
+    };
+    let queue: JobQueue;
+
+    beforeEach('initialized', () => {
+        queue = new JobQueue("testid", "sessionid", secret, {
+            url: "localhost:6379"
+        });
+    });
+
+    it('add job and get job on queue', (done) => {
+        queue.initResultEvents();
+        queue.on("global:completed", (jobData) => {
+            expect(jobData).to.eql({
+                title: 'bar-0',
+                sessionId: 'socket id',
+                msg: as
+            });
+            done();
+        });
+        queue.onJob((job, cb) => {
+            cb(null, job);
+        });
+        queue.add("socket id", as).then((job) => {
+            expect(job.msg.length).to.eql(193);
+            expect(job.title).to.eql('bar-0');
+            expect(job.sessionId).to.eql('socket id');
+        });
+    });
+
+    afterEach("shutdown", async () => {
+        await queue.shutdown();
     });
 });

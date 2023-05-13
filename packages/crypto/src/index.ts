@@ -31,6 +31,7 @@ export class Crypto {
     }
 
     encrypt(json: IActivityStream, secret: string): string {
+        Crypto.ensureSecret(secret);
         const iv = this.randomBytes(IV_LENGTH);
         const cipher = createCipheriv(ALGORITHM, Buffer.from(secret), iv);
         let encrypted = cipher.update(JSON.stringify(json));
@@ -40,6 +41,7 @@ export class Crypto {
     }
 
     decrypt(text: string, secret: string): IActivityStream {
+        Crypto.ensureSecret(secret);
         const parts = text.split(":");
         const iv = Buffer.from(parts.shift(), "hex");
         const encryptedText = Buffer.from(parts.join(":"), "hex");
@@ -67,6 +69,12 @@ export class Crypto {
         }
         const buf = this.randomBytes(len);
         return buf.toString("hex").substring(0, len);
+    }
+
+    private static ensureSecret(secret: string) {
+        if (secret.length !== 32) {
+            throw new Error("secret must be a 32 char string, length: " + secret.length);
+        }
     }
 }
 
