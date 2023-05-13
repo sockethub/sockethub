@@ -31,11 +31,13 @@ describe("Middleware: storeCredentials", () => {
 
     beforeEach(() => {
         storeSuccess = {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             save: async (id: any, creds: any) => {
                 return Promise.resolve();
             },
         };
         storeError = {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             save: (id: any, creds: any): Promise<void> => {
                 throw new Error("some error");
             },
