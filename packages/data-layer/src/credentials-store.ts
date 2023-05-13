@@ -1,23 +1,42 @@
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-import SecureStore, { SecureStoreConfig } from "secure-store-redis";
+import SecureStore from "secure-store-redis";
 import debug, { Debugger } from "debug";
-import { IActivityStream } from "@sockethub/schemas";
 import crypto from "@sockethub/crypto";
+import { RedisConfig } from "./types";
 
-export interface CredentialsObject extends IActivityStream {
+export interface CredentialsObject {
+    context: string;
     type: "credentials";
+    actor: {
+        id: string;
+        type: string;
+        [x: string | number | symbol]: unknown;
+    };
     object: {
         type: "credentials";
+        [x: string | number | symbol]: unknown;
     };
+    target?: {
+        id: string;
+        type: string;
+        [x: string | number | symbol]: unknown;
+    };
+}
+
+export interface CredentialsStoreInstance {
+    get(
+        actor: string,
+        credentialsHash: string,
+    ): Promise<CredentialsObject | undefined>;
+    save(actor: string, creds: CredentialsObject): Promise<number>;
 }
 
 /**
  * Encapsulates the storing and fetching of credential objects.
  */
-export default class CredentialsStore {
+export default class CredentialsStore implements CredentialsStoreInstance {
     readonly uid: string;
     store: SecureStore;
-    objectHash: (o: any) => string;
+    objectHash: (o: unknown) => string;
     private readonly log: Debugger;
 
     /**
@@ -30,7 +49,7 @@ export default class CredentialsStore {
         parentId: string,
         sessionId: string,
         secret: string,
-        redisConfig: SecureStoreConfig['redis'],
+        redisConfig: RedisConfig,
     ) {
         if (secret.length !== 32) {
             throw new Error(
@@ -47,10 +66,7 @@ export default class CredentialsStore {
         this.objectHash = crypto.objectHash;
     }
 
-    initSecureStore(
-        secret: string,
-        redisConfig: SecureStoreConfig['redis'],
-    ) {
+    initSecureStore(secret: string, redisConfig: RedisConfig) {
         this.store = new SecureStore({
             uid: this.uid,
             secret: secret,
@@ -63,17 +79,18 @@ export default class CredentialsStore {
      * @param actor
      * @param credentialHash
      */
-    async get(actor: string, credentialHash: string): Promise<IActivityStream | undefined> {
+    async get(
+        actor: string,
+        credentialHash: string,
+    ): Promise<CredentialsObject | undefined> {
         this.log(`get credentials for ${actor}`);
-        const credentials = await this.store.get(actor);
+        const credentials: CredentialsObject = await this.store.get(actor);
         if (!credentials) {
             return undefined;
         }
 
         if (credentialHash) {
-            if (
-                credentialHash !== this.objectHash(credentials.object)
-            ) {
+            if (credentialHash !== this.objectHash(credentials.object)) {
                 return undefined;
             }
         }
@@ -85,10 +102,7 @@ export default class CredentialsStore {
      * @param actor
      * @param creds
      */
-    async save(
-        actor: string,
-        creds: CredentialsObject
-    ): Promise<number> {
+    async save(actor: string, creds: CredentialsObject): Promise<number> {
         return this.store.save(actor, creds);
     }
 }

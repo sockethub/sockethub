@@ -1,5 +1,3 @@
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-
 import Queue, { QueueOptions } from "bull";
 import crypto, { Crypto } from "@sockethub/crypto";
 import {
@@ -42,7 +40,7 @@ export default class JobQueue extends EventEmitter {
         this.debug("initialized");
     }
 
-    initBull(id, redisConfig) {
+    initBull(id: string, redisConfig: RedisConfig) {
         this.bull = new Queue(id, {
             redis: redisConfig,
         } as QueueOptions);
@@ -68,15 +66,20 @@ export default class JobQueue extends EventEmitter {
     }
 
     initResultEvents() {
-        this.bull.on("global:completed", async (jobId: string, result: any) => {
-            const r = result ? JSON.parse(result) : "";
-            const job = await this.getJob(jobId);
-            if (job) {
-                this.debug(`completed ${job.data.title} ${job.data.msg.type}`);
-                this.emit("global:completed", job.data, r);
-                await job.remove();
-            }
-        });
+        this.bull.on(
+            "global:completed",
+            async (jobId: string, result: string) => {
+                const r = result ? JSON.parse(result) : "";
+                const job = await this.getJob(jobId);
+                if (job) {
+                    this.debug(
+                        `completed ${job.data.title} ${job.data.msg.type}`,
+                    );
+                    this.emit("global:completed", job.data, r);
+                    job.remove();
+                }
+            },
+        );
         this.bull.on("global:error", async (jobId: string, result: string) => {
             this.debug("unknown queue error", jobId, result);
         });
@@ -85,14 +88,14 @@ export default class JobQueue extends EventEmitter {
             if (job) {
                 this.debug(`failed ${job.data.title} ${job.data.msg.type}`);
                 this.emit("global:failed", job.data, result);
-                await job.remove();
+                job.remove();
             }
         });
         this.bull.on("failed", (job: JobDataEncrypted, result: string) => {
             // locally failed jobs (eg. due to paused queue)
             const unencryptedJobData: JobDataDecrypted = {
                 title: job.title,
-                msg: this.decryptActivityStream(job.msg),
+                msg: this.decryptActivityStream(job.msg) as IActivityStream,
                 sessionId: job.sessionId,
             };
             this.debug(
@@ -139,7 +142,10 @@ export default class JobQueue extends EventEmitter {
         await this.bull.removeAllListeners();
     }
 
-    private createJob(socketId: string, msg): JobDataEncrypted {
+    private createJob(
+        socketId: string,
+        msg: IActivityStream,
+    ): JobDataEncrypted {
         const title = `${msg.context}-${msg.id ? msg.id : this.counter++}`;
         return {
             title: title,
@@ -164,7 +170,7 @@ export default class JobQueue extends EventEmitter {
     private decryptJobData(job: JobEncrypted): JobDataDecrypted {
         return {
             title: job.data.title,
-            msg: this.decryptActivityStream(job.data.msg),
+            msg: this.decryptActivityStream(job.data.msg) as IActivityStream,
             sessionId: job.data.sessionId,
         };
     }

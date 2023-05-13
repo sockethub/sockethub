@@ -1,7 +1,7 @@
 import debug from "debug";
 import { IActivityStream, CallbackInterface } from "@sockethub/schemas";
 import crypto, { getPlatformId } from "@sockethub/crypto";
-import { CredentialsStore, JobQueue, RedisConfig } from "@sockethub/data-layer";
+import { CredentialsStore, JobQueue } from "@sockethub/data-layer";
 import { JobDataDecrypted } from "@sockethub/data-layer/dist";
 
 // command-line params
@@ -11,9 +11,7 @@ let identifier = process.argv[4];
 const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
 let logger = debug(loggerPrefix);
 
-const redisConfig = process.env.REDIS_URL
-    ? process.env.REDIS_URL
-    : { host: process.env.REDIS_HOST, port: process.env.REDIS_PORT };
+const redisUrl = process.env.REDIS_URL;
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PlatformModule = require(`@sockethub/platform-${platformName}`);
 
@@ -85,7 +83,9 @@ function getJobHandler() {
             parentId,
             job.sessionId,
             parentSecret1 + job.msg.sessionSecret,
-            redisConfig as RedisConfig,
+            {
+                url: redisUrl,
+            },
         );
         delete job.msg.sessionSecret;
 
@@ -136,7 +136,7 @@ function getJobHandler() {
 }
 
 /**
- * Get an function which sends a message to the parent thread (PlatformInstance). The platform
+ * Get a function which sends a message to the parent thread (PlatformInstance). The platform
  * can call that function to send messages back to the client.
  * @param command string containing the type of command to be sent. 'message' or 'close'
  */
@@ -153,7 +153,7 @@ function getSendFunction(command: string) {
 }
 
 /**
- * When a user changes it's actor name, the channel identifier changes, we need to ensure that
+ * When a user changes its actor name, the channel identifier changes, we need to ensure that
  * both the queue thread (listening on the channel for jobs) and the logging object are updated.
  * @param credentials
  */
@@ -171,7 +171,7 @@ async function updateActor(credentials) {
 
 /**
  * Starts listening on the queue for incoming jobs
- * @param refresh boolean if the param is true, we re-init the queue.process
+ * @param refresh boolean if the param is true, we re-init the `queue.process`
  * (used when identifier changes)
  */
 async function startQueueListener(refresh = false) {
@@ -187,7 +187,7 @@ async function startQueueListener(refresh = false) {
         parentId,
         identifier,
         parentSecret1 + parentSecret2,
-        redisConfig as RedisConfig,
+        { url: redisUrl }
     );
     logger("listening on the queue for incoming jobs");
     jobQueue.onJob(getJobHandler());

@@ -39,12 +39,9 @@ describe("JobQueue", () => {
                 this.crypto = cryptoMocks;
             }
         }
-        jobQueue = new TestJobQueue(
-            "a parent id",
-            "a session id",
-            "a secret",
-            "redis config",
-        );
+        jobQueue = new TestJobQueue("a parent id", "a session id", "a secret", {
+            url: "redis config",
+        });
         jobQueue.emit = sandbox.stub();
     });
 
@@ -56,7 +53,7 @@ describe("JobQueue", () => {
     it("returns a valid JobQueue object", () => {
         sinon.assert.calledOnce(MockBull);
         sinon.assert.calledWith(MockBull, "a parent ida session id", {
-            redis: "redis config",
+            redis: { url: "redis config" },
         });
         expect(typeof jobQueue).to.equal("object");
         expect(jobQueue.uid).to.equal(
