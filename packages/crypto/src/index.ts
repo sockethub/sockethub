@@ -73,7 +73,9 @@ export class Crypto {
 
     private static ensureSecret(secret: string) {
         if (secret.length !== 32) {
-            throw new Error("secret must be a 32 char string, length: " + secret.length);
+            throw new Error(
+                "secret must be a 32 char string, length: " + secret.length,
+            );
         }
     }
 }

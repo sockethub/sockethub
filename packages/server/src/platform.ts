@@ -187,7 +187,7 @@ async function startQueueListener(refresh = false) {
         parentId,
         identifier,
         parentSecret1 + parentSecret2,
-        { url: redisUrl }
+        { url: redisUrl },
     );
     logger("listening on the queue for incoming jobs");
     jobQueue.onJob(getJobHandler());

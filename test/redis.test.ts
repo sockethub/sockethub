@@ -1,6 +1,10 @@
 import { describe, it } from "mocha";
 import { expect } from "chai";
-import { CredentialsStore, CredentialsObject, JobQueue } from "../packages/data-layer/src/index";
+import {
+    CredentialsStore,
+    CredentialsObject,
+    JobQueue,
+} from "../packages/data-layer/src/index";
 import { IActivityStream } from "@sockethub/schemas";
 
 // eslint-disable-next-line security-node/detect-insecure-randomness
@@ -22,12 +26,9 @@ const secret = "baz1234567890baz1234567890abcdef";
 describe("CredentialsStore", () => {
     let store: CredentialsStore;
     it("initializes", () => {
-        store = new CredentialsStore(
-            "foo",
-            "bar",
-            secret,
-            {url: "redis://localhost:10651"},
-        );
+        store = new CredentialsStore("foo", "bar", secret, {
+            url: "redis://localhost:10651",
+        });
     });
 
     it("get non-existant value", async () => {
@@ -53,24 +54,24 @@ describe("JobQueue", () => {
         context: "bar",
         actor: {
             id: "bar",
-            type: "person"
-        }
+            type: "person",
+        },
     };
     let queue: JobQueue;
 
-    beforeEach('initialized', () => {
+    beforeEach("initialized", () => {
         queue = new JobQueue("testid", "sessionid", secret, {
-            url: "localhost:6379"
+            url: "localhost:6379",
         });
     });
 
-    it('add job and get job on queue', (done) => {
+    it("add job and get job on queue", (done) => {
         queue.initResultEvents();
         queue.on("global:completed", (jobData) => {
             expect(jobData).to.eql({
-                title: 'bar-0',
-                sessionId: 'socket id',
-                msg: as
+                title: "bar-0",
+                sessionId: "socket id",
+                msg: as,
             });
             done();
         });
@@ -79,8 +80,8 @@ describe("JobQueue", () => {
         });
         queue.add("socket id", as).then((job) => {
             expect(job.msg.length).to.eql(193);
-            expect(job.title).to.eql('bar-0');
-            expect(job.sessionId).to.eql('socket id');
+            expect(job.title).to.eql("bar-0");
+            expect(job.sessionId).to.eql("socket id");
         });
     });
 

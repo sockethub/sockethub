@@ -32,7 +32,10 @@ export default class JobQueue extends EventEmitter {
     ) {
         super();
         if (secret.length !== 32) {
-            throw new Error("JobQueue secret must be a 32 char string, length: " + secret.length);
+            throw new Error(
+                "JobQueue secret must be a 32 char string, length: " +
+                    secret.length,
+            );
         }
         this.initBull(instanceId + sessionId, redisConfig);
         this.initCrypto();
@@ -137,7 +140,7 @@ export default class JobQueue extends EventEmitter {
     }
 
     async shutdown() {
-        if (!await this.bull.isPaused(true)) {
+        if (!(await this.bull.isPaused(true))) {
             await this.bull.pause();
         }
         await this.bull.obliterate({ force: true });

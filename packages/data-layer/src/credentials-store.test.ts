@@ -10,8 +10,7 @@ describe("CredentialsStore", () => {
         MockStoreSave,
         MockObjectHash;
     beforeEach(() => {
-        MockStoreGet = sinon
-            .stub().returns("credential foo");
+        MockStoreGet = sinon.stub().returns("credential foo");
         MockStoreSave = sinon.stub();
         MockObjectHash = sinon.stub();
         MockSecureStore = sinon.stub().returns({
@@ -75,7 +74,8 @@ describe("CredentialsStore", () => {
 
         it("handles an unexpected error", async () => {
             MockStoreGet.returns(undefined);
-            expect(await credentialsStore.get("a problem actor")).to.be.undefined;
+            expect(await credentialsStore.get("a problem actor")).to.be
+                .undefined;
             sinon.assert.calledOnce(MockStoreGet);
             sinon.assert.calledWith(MockStoreGet, "a problem actor");
             sinon.assert.notCalled(MockObjectHash);
@@ -104,10 +104,12 @@ describe("CredentialsStore", () => {
             MockStoreGet.returns({
                 object: "a credential",
             });
-            expect(await credentialsStore.get(
-                "an actor",
-                "a different credentialHash string",
-            )).to.be.undefined;
+            expect(
+                await credentialsStore.get(
+                    "an actor",
+                    "a different credentialHash string",
+                ),
+            ).to.be.undefined;
             sinon.assert.calledOnce(MockStoreGet);
             sinon.assert.calledWith(MockStoreGet, "an actor");
             sinon.assert.calledOnce(MockObjectHash);
