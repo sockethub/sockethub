@@ -50,10 +50,10 @@ jobs:
               run: nc -zv localhost 10650
 
             - name: Redis Integration Tests
-            - run: pnpm integration:redis:run
+              run: pnpm integration:redis:run
 
             - name: Browser Integration Tests
-            - run: pnpm integration:browser:run
+              run: pnpm integration:browser:run
 
             - name: Print Docker logs
               if: always()
