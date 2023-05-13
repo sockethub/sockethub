@@ -267,14 +267,14 @@ importers:
         specifier: workspace:3.0.0-alpha.4
         version: link:../schemas
       bull:
-        specifier: ^4.10.4
+        specifier: 4.10.4
         version: 4.10.4
       debug:
-        specifier: ^4.3.4
+        specifier: 4.3.4
         version: 4.3.4(supports-color@8.1.1)
       secure-store-redis:
-        specifier: 3.0.0-rc.5
-        version: 3.0.0-rc.5
+        specifier: 3.0.0
+        version: 3.0.0
     devDependencies:
       '@types/chai':
         specifier: 4.3.4
@@ -9660,8 +9660,8 @@ packages:
     resolution: {integrity: sha512-nZi59hW3Sl5P3+wOO89eHBAAGwmCPd2aE1+dLZV5MO+ItQctIvAqihzaAXIQhvtH4KJPxM080HsnqltR2y8cWg==}
     dev: false
 
-  /secure-store-redis@3.0.0-rc.5:
-    resolution: {integrity: sha512-kWTJSC+6xw/stvNrwo/lhnYd5Ar36pH9K2QmGKGak3Ri2OmzvdOZTIX7x6ec06sfOoav47qTkc3bXShrfHbd3A==}
+  /secure-store-redis@3.0.0:
+    resolution: {integrity: sha512-GnwXePnKWoxoShg6xUJTBTM0PhEeKbY4wZDALNa1K0KFCP7ty8Pe+B/vCOm/eE6bMOeXEFABtrXdMsxmNdyv2w==}
     engines: {node: '>=16', pnpm: '>=8'}
     requiresBuild: true
     dependencies:
