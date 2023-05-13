@@ -40,9 +40,14 @@ describe("JobQueue", () => {
                 this.crypto = cryptoMocks;
             }
         }
-        jobQueue = new TestJobQueue("a parent id", "a session id", "secret is 32 char long like this", {
-            url: "redis config",
-        });
+        jobQueue = new TestJobQueue(
+            "a parent id",
+            "a session id",
+            "secret is 32 char long like this",
+            {
+                url: "redis config",
+            },
+        );
         jobQueue.emit = sandbox.stub();
     });
 
