@@ -4,7 +4,7 @@ import {
     CredentialsStore,
     CredentialsObject,
     JobQueue,
-} from "../packages/data-layer/src/index";
+} from "@sockethub/data-layer";
 import { IActivityStream } from "@sockethub/schemas";
 
 // eslint-disable-next-line security-node/detect-insecure-randomness
