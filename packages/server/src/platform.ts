@@ -1,8 +1,7 @@
 import debug from "debug";
 import { IActivityStream, CallbackInterface } from "@sockethub/schemas";
 import crypto, { getPlatformId } from "@sockethub/crypto";
-import { CredentialsStore, JobQueue } from "@sockethub/data-layer";
-import { JobDataDecrypted } from "@sockethub/data-layer/dist";
+import { CredentialsStore, JobQueue, JobDataDecrypted } from "@sockethub/data-layer";
 
 // command-line params
 const parentId = process.argv[2];

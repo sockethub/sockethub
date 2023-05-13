@@ -15,7 +15,7 @@
         "sockethub",
         "messaging",
         "redis",
-        "data lyer",
+        "data layer",
         "rpc",
         "data store"
     ],
