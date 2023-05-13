@@ -21,6 +21,6 @@ describe("config", () => {
         process.env = { REDIS_URL: "" };
         const config = new Config();
         expect(config).to.have.property("get");
-        expect(config.get("redis")).to.eql({ host: "127.0.0.1", port: 6379 });
+        expect(config.get("redis")).to.eql({ url: "redis://127.0.0.1:6379" });
     });
 });

@@ -36,15 +36,8 @@ function printSettingsInfo(version, platforms) {
     );
 
     console.log();
-    if (config.get("redis:url")) {
-        // eslint-disable-next-line security-node/detect-crlf
-        console.log("redis URL: " + config.get("redis:url"));
-    } else {
-        console.log(
-            // eslint-disable-next-line security-node/detect-crlf
-            `redis: ${config.get("redis:host")}:${config.get("redis:port")}`,
-        );
-    }
+    // eslint-disable-next-line security-node/detect-crlf
+    console.log("redis URL: " + config.get("redis:url"));
 
     console.log();
     // eslint-disable-next-line security-node/detect-crlf
