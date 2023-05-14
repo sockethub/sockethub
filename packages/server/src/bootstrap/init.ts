@@ -66,13 +66,32 @@ function printSettingsInfo(version, platforms) {
     console.log();
     process.exit();
 }
+
+let initCalled = false;
 export default async function getInitObject(): Promise<IInitObject> {
-    if (init) {
-        return init;
-    } else {
-        return await loadInit();
-    }
+    return new Promise((resolve, reject) => {
+        if (initCalled) {
+            setTimeout(() => {
+                if (!init) {
+                    reject("failed to initialize");
+                } else {
+                    resolve(init);
+                }
+            }, 500);
+        } else {
+            initCalled = true;
+            if (init) {
+                resolve(init);
+            } else {
+                loadInit().then((_init) => {
+                    init = _init;
+                    resolve(init);
+                });
+            }
+        }
+    });
 }
+
 async function loadInit(): Promise<IInitObject> {
     log("running init routines");
     // eslint-disable-next-line @typescript-eslint/no-var-requires
