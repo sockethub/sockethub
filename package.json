@@ -48,7 +48,7 @@
         "integration": "pnpm integration:redis && pnpm integration:browser",
         "integration:browser": "pnpm docker:start && pnpm integration:browser:run; RES=$?; pnpm docker:stop; exit $RES",
         "integration:browser:run": "karma start --single-run --sh_port=10650 --browsers ChromeHeadless,FirefoxHeadless ./karma.config.js",
-        "integration:redis": "docker compose up redis -d && pnpm integration:redis:run; docker compose down",
+        "integration:redis": "docker compose up redis -d && pnpm integration:redis:run; RES=$?; docker compose down; exit $RES",
         "integration:redis:run": "mocha -r ts-node/register test/redis.test.ts",
         "lint": "prettier --check . && eslint --max-warnings 0 . && nx run-many --target=lint && pnpm lint:doc",
         "lint:doc": "markdownlint '**/*.md'",
