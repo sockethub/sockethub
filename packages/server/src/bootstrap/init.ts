@@ -68,7 +68,9 @@ function printSettingsInfo(version, platforms) {
 }
 
 let initCalled = false;
-export default async function getInitObject(): Promise<IInitObject> {
+export default async function getInitObject(
+    initFunc = __loadInit,
+): Promise<IInitObject> {
     return new Promise((resolve, reject) => {
         if (initCalled) {
             setTimeout(() => {
@@ -83,7 +85,7 @@ export default async function getInitObject(): Promise<IInitObject> {
             if (init) {
                 resolve(init);
             } else {
-                loadInit().then((_init) => {
+                initFunc().then((_init) => {
                     init = _init;
                     resolve(init);
                 });
@@ -92,7 +94,7 @@ export default async function getInitObject(): Promise<IInitObject> {
     });
 }
 
-async function loadInit(): Promise<IInitObject> {
+async function __loadInit(): Promise<IInitObject> {
     log("running init routines");
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const packageJSON = require("./../../package.json");
@@ -109,4 +111,9 @@ async function loadInit(): Promise<IInitObject> {
         version: version,
         platforms: platforms,
     };
+}
+
+export function __clearInit() {
+    init = undefined;
+    initCalled = false;
 }
