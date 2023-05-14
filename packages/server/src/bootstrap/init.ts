@@ -2,6 +2,7 @@ import debug from "debug";
 
 import config from "../config";
 import loadPlatforms, { PlatformMap } from "./load-platforms";
+import { redisCheck, RedisConfig } from "@sockethub/data-layer";
 
 const log = debug("sockethub:server:bootstrap:init");
 
@@ -95,6 +96,8 @@ async function __loadInit(): Promise<IInitObject> {
     const platforms = await loadPlatforms(
         config.get("platforms") as Array<string>,
     );
+
+    await redisCheck(config.get("redis") as RedisConfig);
 
     if (config.get("info")) {
         printSettingsInfo(packageJSON.version, platforms);

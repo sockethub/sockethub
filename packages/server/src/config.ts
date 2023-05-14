@@ -1,12 +1,12 @@
 import nconf from "nconf";
 import { debug } from "debug";
 import * as fs from "fs";
+import path from "path";
 
 const log = debug("sockethub:server:bootstrap:config");
 
 export class Config {
     constructor() {
-        log("initializing config");
         // assign config loading priorities (command-line, environment, cfg, defaults)
         nconf.argv({
             info: {
@@ -40,13 +40,14 @@ export class Config {
 
         // Load the main config
         let configFile = nconf.get("config");
-        if (configFile) {
-            if (!fs.existsSync(configFile)) {
-                throw new Error(`Config file not found: ${configFile}`);
-            }
-        } else {
+        if (!configFile) {
             configFile = __dirname + "/../sockethub.config.json";
         }
+        configFile = path.resolve(configFile);
+        if (!fs.existsSync(configFile)) {
+            throw new Error("Config file not found: " + configFile);
+        }
+        log("reading config file " + configFile);
         nconf.file(configFile);
 
         // only override config file if explicitly mentioned in command-line params
