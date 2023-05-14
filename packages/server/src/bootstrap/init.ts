@@ -59,14 +59,35 @@ function printSettingsInfo(version, platforms) {
     console.log();
     process.exit();
 }
-export default async function getInitObject(): Promise<IInitObject> {
-    if (init) {
-        return init;
-    } else {
-        return await loadInit();
-    }
+
+let initCalled = false;
+export default async function getInitObject(
+    initFunc = __loadInit,
+): Promise<IInitObject> {
+    return new Promise((resolve, reject) => {
+        if (initCalled) {
+            setTimeout(() => {
+                if (!init) {
+                    reject("failed to initialize");
+                } else {
+                    resolve(init);
+                }
+            }, 500);
+        } else {
+            initCalled = true;
+            if (init) {
+                resolve(init);
+            } else {
+                initFunc().then((_init) => {
+                    init = _init;
+                    resolve(init);
+                });
+            }
+        }
+    });
 }
-async function loadInit(): Promise<IInitObject> {
+
+async function __loadInit(): Promise<IInitObject> {
     log("running init routines");
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const packageJSON = require("./../../package.json");
@@ -83,4 +104,9 @@ async function loadInit(): Promise<IInitObject> {
         version: version,
         platforms: platforms,
     };
+}
+
+export function __clearInit() {
+    init = undefined;
+    initCalled = false;
 }
