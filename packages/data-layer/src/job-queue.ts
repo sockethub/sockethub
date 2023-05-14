@@ -42,7 +42,6 @@ export default class JobQueue extends EventEmitter {
         this.uid = `sockethub:data-layer:job-queue:${instanceId}:${sessionId}`;
         this.secret = secret;
         this.debug = debug(this.uid);
-
         this.debug("initialized");
     }
 
@@ -60,8 +59,11 @@ export default class JobQueue extends EventEmitter {
         socketId: string,
         msg: IActivityStream,
     ): Promise<JobDataEncrypted> {
+        this.debug('adding job to queue');
         const job = this.createJob(socketId, msg);
+        this.debug('done');
         const isPaused = await this.bull.isPaused();
+        this.debug('is paused? ' + isPaused);
         if (isPaused) {
             this.bull.emit("failed", job, "queue closed");
             return undefined;
