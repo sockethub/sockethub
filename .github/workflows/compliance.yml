@@ -47,11 +47,11 @@ jobs:
             - run: pnpm docker:build
             - run: sleep 5
 
-            - name: Verify Sockethub is listening
+            - name: Verify Sockethub is listening externally
               run: nc -zv localhost 10650
 
             - name: Verify Redis is listening
-              run: nc -zv redis 6379
+              run: nc -zv localhost 10651
 
             - name: Redis Integration Tests
               run: pnpm integration:redis:run

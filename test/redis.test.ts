@@ -31,7 +31,7 @@ describe("CredentialsStore", () => {
         });
     });
 
-    it("get non-existant value", async () => {
+    it("get non-existent value", async () => {
         expect(await store.get(actor, credsHash)).to.eql(undefined);
     });
 
@@ -61,7 +61,7 @@ describe("JobQueue", () => {
 
     beforeEach("initialized", () => {
         queue = new JobQueue("testid", "sessionid", secret, {
-            url: "localhost:6379",
+            url: "redis://localhost:10651",
         });
     });
 
