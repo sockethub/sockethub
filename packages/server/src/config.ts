@@ -40,15 +40,22 @@ export class Config {
 
         // Load the main config
         let configFile = nconf.get("config");
-        if (!configFile) {
+        let configFileSpecified = false;
+        if (configFile) {
+            configFileSpecified = true;
             configFile = __dirname + "/../sockethub.config.json";
         }
         configFile = path.resolve(configFile);
-        if (!fs.existsSync(configFile)) {
-            throw new Error("Config file not found: " + configFile);
+        if (fs.existsSync(configFile)) {
+            log("reading config file " + configFile);
+            nconf.file(configFile);
+        } else {
+            if (configFileSpecified) {
+                throw new Error("config file not found: " + configFile);
+            } else {
+                log("using default settings");
+            }
         }
-        log("reading config file " + configFile);
-        nconf.file(configFile);
 
         // only override config file if explicitly mentioned in command-line params
         nconf.set(
