@@ -1,12 +1,12 @@
 import nconf from "nconf";
 import { debug } from "debug";
 import * as fs from "fs";
-import path from "path";
 
 const log = debug("sockethub:server:bootstrap:config");
 
 export class Config {
     constructor() {
+        log("initializing config");
         // assign config loading priorities (command-line, environment, cfg, defaults)
         nconf.argv({
             info: {
@@ -40,22 +40,14 @@ export class Config {
 
         // Load the main config
         let configFile = nconf.get("config");
-        let configFileSpecified = false;
         if (configFile) {
-            configFileSpecified = true;
+            if (!fs.existsSync(configFile)) {
+                throw new Error(`Config file not found: ${configFile}`);
+            }
+        } else {
             configFile = __dirname + "/../sockethub.config.json";
         }
-        configFile = path.resolve(configFile);
-        if (fs.existsSync(configFile)) {
-            log("reading config file " + configFile);
-            nconf.file(configFile);
-        } else {
-            if (configFileSpecified) {
-                throw new Error("config file not found: " + configFile);
-            } else {
-                log("using default settings");
-            }
-        }
+        nconf.file(configFile);
 
         // only override config file if explicitly mentioned in command-line params
         nconf.set(
@@ -70,21 +62,16 @@ export class Config {
 
         nconf.required(["platforms"]);
 
-        function defaultEnvParams(
-            host: string,
-            port: string | number,
-            prop: string,
-        ) {
-            nconf.set(prop + ":host", host);
-            nconf.set(prop + ":port", port);
-        }
-
-        defaultEnvParams(
+        nconf.set(
+            "sockethub:host",
             process.env.HOST || nconf.get("sockethub:host"),
+        );
+        nconf.set(
+            "sockethub:port",
             process.env.PORT || nconf.get("sockethub:port"),
-            "sockethub",
         );
 
+        // allow a redis://user:host:port url, takes precedence
         if (process.env.REDIS_URL) {
             nconf.set("redis:url", process.env.REDIS_URL);
         }
