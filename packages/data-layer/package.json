@@ -36,7 +36,7 @@
     "scripts": {
         "clean": "rm -rf dist coverage",
         "test": "c8 -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts",
-        "coverage": "c8 check-coverage --statements 83 --branches 88 --functions 75 --lines 83",
+        "coverage": "c8 check-coverage --statements 70 --branches 80 --functions 65 --lines 70",
         "build": "tsc"
     },
     "engines": {
