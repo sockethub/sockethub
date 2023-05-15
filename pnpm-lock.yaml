@@ -272,12 +272,15 @@ importers:
       '@sockethub/schemas':
         specifier: workspace:3.0.0-alpha.4
         version: link:../schemas
-      bull:
-        specifier: 4.10.4
-        version: 4.10.4
+      bullmq:
+        specifier: 3.13.4
+        version: 3.13.4
       debug:
         specifier: 4.3.4
         version: 4.3.4(supports-color@8.1.1)
+      ioredis:
+        specifier: 5.3.2
+        version: 5.3.2
       secure-store-redis:
         specifier: 3.0.1
         version: 3.0.1
@@ -4330,18 +4333,17 @@ packages:
       semver: 7.4.0
     dev: true
 
-  /bull@4.10.4:
-    resolution: {integrity: sha512-o9m/7HjS/Or3vqRd59evBlWCXd9Lp+ALppKseoSKHaykK46SmRjAilX98PgmOz1yeVaurt8D5UtvEt4bUjM3eA==}
-    engines: {node: '>=12'}
+  /bullmq@3.13.4:
+    resolution: {integrity: sha512-3B16ZbOQSr9VoWpUXhoLB4khgxAbqwIiboJItA5rU2CEkLRe613w8yGxrivNdjJ6q8RcZtS+QvK0WHqCsuQYTQ==}
     dependencies:
       cron-parser: 4.8.1
-      debuglog: 1.0.1
-      get-port: 5.1.1
+      glob: 8.1.0
       ioredis: 5.3.2
       lodash: 4.17.21
       msgpackr: 1.8.5
       semver: 7.4.0
-      uuid: 8.3.2
+      tslib: 2.5.0
+      uuid: 9.0.0
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -5043,10 +5045,6 @@ packages:
     dependencies:
       ms: 2.1.2
       supports-color: 8.1.1
-
-  /debuglog@1.0.1:
-    resolution: {integrity: sha512-syBZ+rnAK3EgMsH2aYEOLUW7mZSY9Gb+0wUMCFsZvcmiz+HigA0LOcq/HoQqVuGG+EKykunc7QG2bzrponfaSw==}
-    dev: false
 
   /decamelize-keys@1.1.1:
     resolution: {integrity: sha512-WiPxgEirIV0/eIOMcnFBA3/IJZAZqKnwAwWyvvdi4lsr1WCN22nhdf/3db3DoZcUjTV2SqfzIwNyp6y2xs3nmg==}
@@ -6207,11 +6205,6 @@ packages:
       yargs: 16.2.0
     dev: true
 
-  /get-port@5.1.1:
-    resolution: {integrity: sha512-g/Q1aTSDOxFpchXC4i8ZWvxA1lnPqx/JHqcpIw0/LX9T8x/GBbi6YnlN5nhaKIFkT8oFsscUKgDJYxfwfS6QsQ==}
-    engines: {node: '>=8'}
-    dev: false
-
   /get-stdin@9.0.0:
     resolution: {integrity: sha512-dVKBjfWisLAicarI2Sf+JuBE/DghV4UzNAVe9yhEJuzeREd3JhOTE9cUaJTeSa77fsbQUK3pcOpJfM59+VKZaA==}
     engines: {node: '>=12'}
@@ -6354,7 +6347,6 @@ packages:
       inherits: 2.0.4
       minimatch: 5.1.6
       once: 1.4.0
-    dev: true
 
   /glob@9.3.5:
     resolution: {integrity: sha512-e1LleDykUz2Iu+MTYdkSsuWX8lvAjAcs0Xef0lNIu0S2wOAzuTxCJtcd9S3cijlwYF18EsU3rzb8jPVobxDh9Q==}
@@ -10929,15 +10921,9 @@ packages:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
 
-  /uuid@8.3.2:
-    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
-    hasBin: true
-    dev: false
-
   /uuid@9.0.0:
     resolution: {integrity: sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==}
     hasBin: true
-    dev: true
 
   /v8-compile-cache-lib@3.0.1:
     resolution: {integrity: sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==}

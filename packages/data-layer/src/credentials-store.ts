@@ -30,6 +30,16 @@ export interface CredentialsStoreInstance {
     save(actor: string, creds: CredentialsObject): Promise<number>;
 }
 
+export async function verifySecureStore(config: RedisConfig): Promise<void> {
+    const log = debug("sockethub:data-layer:credentials-store");
+    const ss = new SecureStore({
+        redis: config,
+    });
+    await ss.init();
+    await ss.disconnect();
+    log("verified");
+}
+
 /**
  * Encapsulates the storing and fetching of credential objects.
  */

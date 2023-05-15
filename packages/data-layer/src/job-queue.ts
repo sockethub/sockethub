@@ -1,4 +1,4 @@
-import Queue, { QueueOptions } from "bull";
+import { Job, Queue, Worker } from "bullmq";
 import crypto, { Crypto } from "@sockethub/crypto";
 import {
     JobDataDecrypted,
@@ -10,9 +10,55 @@ import {
 import debug, { Debugger } from "debug";
 import EventEmitter from "events";
 import { IActivityStream } from "@sockethub/schemas";
+import IORedis from "ioredis";
 
 interface JobHandler {
     (job: JobDataDecrypted, done: CallableFunction);
+}
+
+export function createIORedisConnection(config: RedisConfig) {
+    return new IORedis(config.url, {
+        maxRetriesPerRequest: null,
+    });
+}
+
+export async function verifyJobQueue(config: RedisConfig): Promise<void> {
+    const log = debug("sockethub:data-layer:job-queue");
+    return new Promise((resolve, reject) => {
+        const worker = new Worker(
+            "connectiontest",
+            async (job) => {
+                if (job.name !== "foo" || job.data?.foo !== "bar") {
+                    reject(
+                        "Worker received invalid job data during JobQueue connection test",
+                    );
+                }
+                job.data.test = "touched by worker";
+            },
+            {
+                connection: createIORedisConnection(config),
+            },
+        );
+        worker.on("completed", (job: Job) => {
+            if (job.name !== "foo" || job.data?.test !== "touched by worker") {
+                reject(
+                    "Worker job completed unsuccessfully during JobQueue connection test",
+                );
+            }
+            log("verified");
+            queue.disconnect();
+            worker.disconnect();
+            resolve();
+        });
+        const queue = new Queue("connectiontest", {
+            connection: createIORedisConnection(config),
+        });
+        queue.add(
+            "foo",
+            { foo: "bar" },
+            { removeOnComplete: true, removeOnFail: true },
+        );
+    });
 }
 
 export default class JobQueue extends EventEmitter {
@@ -47,8 +93,8 @@ export default class JobQueue extends EventEmitter {
 
     initBull(id: string, redisConfig: RedisConfig) {
         this.bull = new Queue(id, {
-            redis: redisConfig,
-        } as QueueOptions);
+            connection: createIORedisConnection(redisConfig),
+        });
     }
 
     initCrypto() {
@@ -59,11 +105,11 @@ export default class JobQueue extends EventEmitter {
         socketId: string,
         msg: IActivityStream,
     ): Promise<JobDataEncrypted> {
-        this.debug('adding job to queue');
+        this.debug("adding job to queue");
         const job = this.createJob(socketId, msg);
-        this.debug('done');
+        this.debug("done");
         const isPaused = await this.bull.isPaused();
-        this.debug('is paused? ' + isPaused);
+        this.debug("is paused? " + isPaused);
         if (isPaused) {
             this.bull.emit("failed", job, "queue closed");
             return undefined;
