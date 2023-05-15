@@ -27,6 +27,6 @@
         "path": "/"
     },
     "redis": {
-        "url": "redis://redis:6379"
+        "url": "redis://localhost:10651"
     }
 }
