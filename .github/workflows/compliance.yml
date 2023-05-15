@@ -56,8 +56,8 @@ jobs:
             - name: Verify Redis is listening 2
               run: nc -zv localhost 10651
 
-#            - name: Redis Integration Tests
-#              run: pnpm integration:redis:run
+            #            - name: Redis Integration Tests
+            #              run: pnpm integration:redis:run
 
             - name: Browser Integration Tests
               run: pnpm integration:browser:run
