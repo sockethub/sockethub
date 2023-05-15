@@ -27,6 +27,6 @@
         "path": "/"
     },
     "redis": {
-        "url": "redis://sockethub-net:6379"
+        "url": "redis://redis:6379"
     }
 }
