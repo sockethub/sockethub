@@ -4,6 +4,7 @@ import {
     CredentialsStore,
     CredentialsObject,
     JobQueue,
+    JobDataDecrypted,
 } from "@sockethub/data-layer";
 import { IActivityStream } from "@sockethub/schemas";
 
@@ -66,23 +67,29 @@ describe("JobQueue", () => {
     });
 
     it("add job and get job on queue", (done) => {
-        queue.initResultEvents();
-        queue.on("global:completed", (jobData) => {
+        // queue.initResultEvents();
+        queue.on("completed", (jobData: JobDataDecrypted) => {
+            console.log("-1 ", jobData);
             expect(jobData).to.eql({
                 title: "bar-0",
                 sessionId: "socket id",
                 msg: as,
             });
+            console.log("-1b");
+            console.log("job done");
             done();
         });
-        queue.onJob((job, cb) => {
-            cb(null, job);
+        queue.onJob(async (job) => {
+            console.log("-2 ", job);
+            return job;
         });
         queue.add("socket id", as).then((job) => {
+            console.log("-3");
             expect(job.msg.length).to.eql(193);
             expect(job.title).to.eql("bar-0");
             expect(job.sessionId).to.eql("socket id");
         });
+        console.log("-0");
     });
 
     afterEach("shutdown", async () => {
