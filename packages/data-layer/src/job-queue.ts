@@ -13,7 +13,7 @@ import { IActivityStream } from "@sockethub/schemas";
 import IORedis from "ioredis";
 
 interface JobHandler {
-    (job: JobDataDecrypted, done: CallableFunction);
+    (job: JobDataDecrypted): Promise<JobDataDecrypted>;
 }
 
 export function createIORedisConnection(config: RedisConfig) {
@@ -63,11 +63,13 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
 
 export default class JobQueue extends EventEmitter {
     readonly uid: string;
-    bull;
-    crypto: Crypto;
+    protected crypto: Crypto;
+    protected queue: Queue;
+    protected worker: Worker;
+    protected handler: JobHandler;
     private readonly debug: Debugger;
     private readonly secret: string;
-    private handler: JobHandler;
+    private readonly redisConfig: RedisConfig;
     private counter = 0;
 
     constructor(
@@ -83,17 +85,24 @@ export default class JobQueue extends EventEmitter {
                     secret.length,
             );
         }
-        this.initBull(instanceId + sessionId, redisConfig);
-        this.initCrypto();
         this.uid = `sockethub:data-layer:job-queue:${instanceId}:${sessionId}`;
         this.secret = secret;
         this.debug = debug(this.uid);
+        this.redisConfig = redisConfig;
+        this.initQueue();
+        this.initCrypto();
         this.debug("initialized");
     }
 
-    initBull(id: string, redisConfig: RedisConfig) {
-        this.bull = new Queue(id, {
-            connection: createIORedisConnection(redisConfig),
+    initQueue() {
+        this.queue = new Queue(this.uid, {
+            connection: createIORedisConnection(this.redisConfig),
+        });
+    }
+
+    initWorker() {
+        this.worker = new Worker(this.uid, this.jobHandler.bind(this), {
+            connection: createIORedisConnection(this.redisConfig),
         });
     }
 
@@ -105,62 +114,59 @@ export default class JobQueue extends EventEmitter {
         socketId: string,
         msg: IActivityStream,
     ): Promise<JobDataEncrypted> {
-        this.debug("adding job to queue");
         const job = this.createJob(socketId, msg);
-        this.debug("done");
-        const isPaused = await this.bull.isPaused();
-        this.debug("is paused? " + isPaused);
-        if (isPaused) {
-            this.bull.emit("failed", job, "queue closed");
-            return undefined;
+        if (await this.queue.isPaused()) {
+            // this.queue.emit("error", new Error("queue closed"));
+            this.debug(
+                `failed to add ${job.title} ${msg.type} to queue: queue closed`,
+            );
+            throw new Error("queue closed");
         }
-        this.debug(`adding ${job.title} ${msg.type}`);
-        this.bull.add(job);
+        await this.queue.add(job.title, job);
+        this.debug(`added ${job.title} ${msg.type} to queue`);
         return job;
     }
 
     initResultEvents() {
-        this.bull.on(
-            "global:completed",
-            async (jobId: string, result: string) => {
-                const r = result ? JSON.parse(result) : "";
-                const job = await this.getJob(jobId);
-                if (job) {
-                    this.debug(
-                        `completed ${job.data.title} ${job.data.msg.type}`,
-                    );
-                    this.emit("global:completed", job.data, r);
-                    job.remove();
-                }
-            },
-        );
-        this.bull.on("global:error", async (jobId: string, result: string) => {
-            this.debug("unknown queue error", jobId, result);
-        });
-        this.bull.on("global:failed", async (jobId, result: string) => {
-            const job = await this.getJob(jobId);
-            if (job) {
-                this.debug(`failed ${job.data.title} ${job.data.msg.type}`);
-                this.emit("global:failed", job.data, result);
-                job.remove();
-            }
-        });
-        this.bull.on("failed", (job: JobDataEncrypted, result: string) => {
-            // locally failed jobs (eg. due to paused queue)
-            const unencryptedJobData: JobDataDecrypted = {
-                title: job.title,
-                msg: this.decryptActivityStream(job.msg) as IActivityStream,
-                sessionId: job.sessionId,
-            };
-            this.debug(
-                `failed ${unencryptedJobData.title} ${unencryptedJobData.msg.type}`,
-            );
-            this.emit("global:failed", unencryptedJobData, result);
-        });
+        //     this.events = new QueueEvents(this.uid, {
+        //         connection: createIORedisConnection(this.redisConfig),
+        //     });
+        //     this.events.on("completed", async ({ jobId, returnvalue }) => {
+        //         let jobData = returnvalue as unknown as JobDataDecrypted;
+        //         if (!returnvalue) {
+        //             const job = await this.getJob(jobId);
+        //             jobData = job.data;
+        //         }
+        //         this.debug(`completed ${jobData.title} ${jobData.msg.type}`);
+        //         this.emit("completed", jobData);
+        //     });
+        //
+        //     this.events.on("failed", async (a) => {
+        //         console.log("global failed fired ", a);
+        //         // const job = await this.getJob(a);
+        //         // if (job) {
+        //         //     this.debug(`failed ${job.data.title} ${job.data.msg.type}`);
+        //         //     this.emit("global:failed", job.data, result);
+        //         //     job.remove();
+        //         // }
+        //     });
+        //     // this.events.on("failed", (job: JobDataEncrypted, result: string) => {
+        //     //     console.log("fail fired ", job);
+        //     //     // locally failed jobs (e.g. due to paused queue)
+        //     //     const unencryptedJobData: JobDataDecrypted = {
+        //     //         title: job.title,
+        //     //         msg: this.decryptActivityStream(job.msg) as IActivityStream,
+        //     //         sessionId: job.sessionId,
+        //     //     };
+        //     //     this.debug(
+        //     //         `failed ${unencryptedJobData.title} ${unencryptedJobData.msg.type}`,
+        //     //     );
+        //     //     this.emit("global:failed", unencryptedJobData, result);
+        //     // });
     }
 
     async getJob(jobId: string): Promise<JobDecrypted> {
-        const job = await this.bull.getJob(jobId);
+        const job = await this.queue.getJob(jobId);
         if (job) {
             job.data = this.decryptJobData(job);
             try {
@@ -172,28 +178,55 @@ export default class JobQueue extends EventEmitter {
         return job;
     }
 
-    onJob(handler: JobHandler): void {
+    onJob(handler): void {
         this.handler = handler;
-        this.bull.process(this.jobHandler.bind(this));
+        this.initWorker();
+
+        this.worker.on("completed", async (job) => {
+            const jobData: JobDataDecrypted = this.decryptJobData(job);
+            this.debug(`completed ${jobData.title} ${jobData.msg.type}`);
+            this.emit("completed", jobData);
+            await job.remove();
+        });
+        this.worker.on("error", async (err) => {
+            this.debug("worker error", err);
+            this.emit("error", err);
+        });
+        this.worker.on("failed", async (job) => {
+            const jobData: JobDataDecrypted = job.data;
+            this.debug(`failed ${jobData.title} ${jobData.msg.type}`);
+            this.emit("global:failed", jobData);
+            await job.remove();
+        });
     }
 
     async pause() {
-        await this.bull.pause();
+        await this.queue.pause();
         this.debug("paused");
     }
 
     async resume() {
-        await this.bull.resume();
+        await this.queue.resume();
         this.debug("resumed");
     }
 
     async shutdown() {
-        if (!(await this.bull.isPaused(true))) {
-            await this.bull.pause();
+        if (this.queue) {
+            if (!(await this.queue.isPaused())) {
+                await this.queue.pause();
+            }
+            await this.queue.obliterate({ force: true });
+            await this.queue.removeAllListeners();
+            await this.queue.close();
+            await this.queue.disconnect();
         }
-        await this.bull.obliterate({ force: true });
-        await this.bull.removeAllListeners();
-        await this.bull.close();
+
+        if (this.worker) {
+            await this.worker.pause();
+            await this.worker.removeAllListeners();
+            await this.worker.close();
+            await this.worker.disconnect();
+        }
     }
 
     private createJob(
@@ -208,13 +241,12 @@ export default class JobQueue extends EventEmitter {
         };
     }
 
-    private jobHandler(
+    protected async jobHandler(
         encryptedJob: JobEncrypted,
-        done: CallableFunction,
-    ): void {
+    ): Promise<JobDataDecrypted> {
         const job = this.decryptJobData(encryptedJob);
         this.debug(`handling ${job.title} ${job.msg.type}`);
-        this.handler(job, done);
+        return this.handler(job);
     }
 
     /**
