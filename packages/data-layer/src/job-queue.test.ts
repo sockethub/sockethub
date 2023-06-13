@@ -221,7 +221,7 @@ describe("JobQueue", () => {
             jobQueue.onJob(() => {
                 throw new Error("This handler should never be called");
             });
-            sinon.assert.calledThrice(jobQueue.worker.on);
+            sinon.assert.calledTwice(jobQueue.worker.on);
         });
     });
 
