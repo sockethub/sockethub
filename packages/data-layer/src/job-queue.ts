@@ -182,19 +182,34 @@ export default class JobQueue extends EventEmitter {
         this.handler = handler;
         this.initWorker();
 
+        this.on("completed", (jobData) => {
+            this.debug(`completed ${jobData.title} ${jobData.msg.type}`);
+        });
+
+        // eslint-disable-next-line security-node/detect-unhandled-event-errors
+        this.on("error", (err) => {
+            this.debug("worker error", err);
+        });
+
+        this.on("global:failed", (jobData) => {
+            this.debug(`failed ${jobData.title} ${jobData.msg.type}`);
+        });
+
         this.worker.on("completed", async (job) => {
             const jobData: JobDataDecrypted = this.decryptJobData(job);
-            this.debug(`completed ${jobData.title} ${jobData.msg.type}`);
             this.emit("completed", jobData);
             await job.remove();
         });
-        this.worker.on("error", async (err) => {
-            this.debug("worker error", err);
-            this.emit("error", err);
-        });
+
+        // Temporarily disabled due to strange eslint crash:
+        //   TypeError: Cannot read properties of undefined (reading 'name')
+        // this.worker.on("error", (err) => {
+        //     // eslint-disable-next-line security-node/detect-unhandled-event-errors
+        //     this.emit("error", err);
+        // });
+
         this.worker.on("failed", async (job) => {
             const jobData: JobDataDecrypted = job.data;
-            this.debug(`failed ${jobData.title} ${jobData.msg.type}`);
             this.emit("global:failed", jobData);
             await job.remove();
         });
