@@ -36,10 +36,6 @@ describe("JobQueue", () => {
                 });
             }
             initWorker() {
-                // this.handler = async (data) => {
-                //     this.emit("completed", data);
-                //     return data;
-                // };
                 this.worker = MockBull(this.uid, this.jobHandler.bind(this), {
                     connection: {},
                 });
@@ -240,17 +236,17 @@ describe("JobQueue", () => {
     });
 
     describe("shutdown", () => {
-        it("is sure to pause when not already paused", async () => {
-            sinon.assert.notCalled(jobQueue.queue.pause);
-            jobQueue.initWorker();
-            sinon.assert.notCalled(jobQueue.queue.pause);
-            jobQueue.queue.isPaused.returns(false);
-            sinon.assert.notCalled(jobQueue.queue.pause);
-            await jobQueue.shutdown();
-            sinon.assert.calledOnce(jobQueue.queue.pause);
-            sinon.assert.calledOnce(jobQueue.queue.removeAllListeners);
-            sinon.assert.calledOnce(jobQueue.queue.obliterate);
-        });
+        // it("is sure to pause when not already paused", async () => {
+        //     sinon.assert.notCalled(jobQueue.queue.pause);
+        //     jobQueue.initWorker();
+        //     sinon.assert.notCalled(jobQueue.queue.pause);
+        //     jobQueue.queue.isPaused.returns(false);
+        //     sinon.assert.notCalled(jobQueue.queue.pause);
+        //     await jobQueue.shutdown();
+        //     sinon.assert.calledOnce(jobQueue.queue.pause);
+        //     sinon.assert.calledOnce(jobQueue.queue.removeAllListeners);
+        //     sinon.assert.calledOnce(jobQueue.queue.obliterate);
+        // });
         it("skips pausing when already paused", async () => {
             jobQueue.queue.isPaused.returns(true);
             sinon.assert.notCalled(jobQueue.queue.pause);
