@@ -17,8 +17,8 @@ impractical to use from in-browser JavaScript.
 
 Using [ActivityStream](http://activitystrea.ms/) (AS) objects to pass messages
 to and from the web app, Sockethub acts as a smart proxy server/agent, which
-can maintain state, and connect to sockets, endpoints and networks that would
-otherwise be restricted from an application running in the browser.
+can maintain state, and connect to sockets, endpoints, and networks that would
+otherwise, be restricted from an application running in the browser.
 
 Originally inspired as a sister project to
 [RemoteStorage](https://remotestorage.io), and assisting in the development of
@@ -29,11 +29,11 @@ specifics at the application layer.
 
 Example uses of Sockethub are:
 
-* Writing and receiving messages (SMTP, IMAP, Facebook, Twitter, ...)
+* Writing and receiving messages (SMTP, IMAP, Nostr ...)
 
-* Instant messaging (XMPP, IRC, MSN, FB Messenger, Hangouts, ...)
+* Chat (XMPP, IRC, SimpleX, ...)
 
-* Discovery (WebFinger, RDF(a), ...)
+* Discovery (WebFinger, RDF(a), Link preview generation ...)
 
 The architecture of Sockethub is extensible and supports easy implementation
 of additional 'platforms' to carry out tasks.
@@ -64,13 +64,6 @@ Making a platform is as simple as creating a platform module that defines a sche
 * [IRC](../platform-irc)
 
 * [XMPP](../platform-xmpp)
-
-### Other possible future platforms
-
-* Nostr
-* Link preview generator
-* Email
-* Twitter, Facebook, etc.
 
 ## Run
 
