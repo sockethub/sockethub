@@ -11,12 +11,66 @@ A protocol gateway for the web.
 
 ## About
 
-*The monorepo for the Sockethub project.*
+Sockethub is a translation layer for web applications to communicate with
+other protocols and services that are traditionally either inaccessible or
+impractical to use from in-browser JavaScript.
 
-Sockethub is a translation layer for web applications to communicate with other protocols and
-services that are traditionally either inaccessible or impractical to use from in-browser JavaScript.
+Using [ActivityStream](http://activitystrea.ms/) (AS) objects to pass messages
+to and from the web app, Sockethub acts as a smart proxy server/agent, which
+can maintain state, and connect to sockets, endpoints and networks that would
+otherwise be restricted from an application running in the browser.
 
-**For more information on Sockethub see the [Sockethub README](packages/server/README.md)**
+Originally inspired as a sister project to
+[RemoteStorage](https://remotestorage.io), and assisting in the development of
+[unhosted](http://unhosted.org) and [noBackend](http://nobackend.org)
+applications, Sockethub's functionality can also fit into a more traditional
+development stack, removing the need for custom code to handle various protocol
+specifics at the application layer.
+
+Example uses of Sockethub are:
+
+* Writing and receiving messages (SMTP, IMAP, Facebook, Twitter, ...)
+
+* Instant messaging (XMPP, IRC, MSN, FB Messenger, Hangouts, ...)
+
+* Discovery (WebFinger, RDF(a), ...)
+
+The architecture of Sockethub is extensible and supports easy implementation
+of additional 'platforms' to carry out tasks.
+
+## Docs
+
+See the [Sockethub wiki](https://github.com/sockethub/sockethub/wiki) for
+documentation.
+
+## Features
+
+We use ActivityStreams to map the various actions of a platform to a set of AS
+'@type's which identify the underlying action. For example, using the XMPP
+platform, a friend request/accept cycle would use the activity stream types
+'request-friend', 'remove-friend', 'make-friend'.
+
+Below is a list of platform contexts we're currently working on and their types,
+both the completed and not yet implemented ones. They are all implemented in
+Sockethub platforms (each in their own repository) and can be enabled/disabled
+in the `config.json`.
+
+## Platforms
+
+Making a platform is as simple as creating a platform module that defines a schema and a series of functions that map to verbs. Take a look at some of our existing platforms for examples.
+
+* [Feeds](../platform-feeds) *(RSS, Atom)*
+
+* [IRC](../platform-irc)
+
+* [XMPP](../platform-xmpp)
+
+### Other possible future platforms
+
+* Nostr
+* Link preview generator
+* Email
+* Twitter, Facebook, etc.
 
 ## Run
 
