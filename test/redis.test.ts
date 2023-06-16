@@ -22,12 +22,12 @@ const creds: CredentialsObject = {
     },
 };
 const credsHash = "e591ec978a505aee278f372354c229d165d2c096";
-const secret = "baz1234567890baz1234567890abcdef";
+const testSecret = "baz1234567890baz1234567890abcdef";
 
 describe("CredentialsStore", () => {
     let store: CredentialsStore;
     it("initializes", () => {
-        store = new CredentialsStore("foo", "bar", secret, {
+        store = new CredentialsStore("foo", "bar", testSecret, {
             url: "redis://localhost:10651",
         });
     });
@@ -61,7 +61,7 @@ describe("JobQueue", () => {
     let queue: JobQueue;
 
     beforeEach("initialized", () => {
-        queue = new JobQueue("testid", "sessionid", secret, {
+        queue = new JobQueue("testid", "sessionid", testSecret, {
             url: "redis://localhost:10651",
         });
     });
