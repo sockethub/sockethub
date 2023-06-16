@@ -16,9 +16,12 @@ interface JobHandler {
     (job: JobDataDecrypted): Promise<JobDataDecrypted>;
 }
 
-export function createIORedisConnection(config: RedisConfig) {
+export function createIORedisConnection(
+    config: RedisConfig,
+    maxRetries = null,
+) {
     return new IORedis(config.url, {
-        maxRetriesPerRequest: null,
+        maxRetriesPerRequest: maxRetries,
     });
 }
 
@@ -39,19 +42,33 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
                 connection: createIORedisConnection(config),
             },
         );
-        worker.on("completed", (job: Job) => {
+        worker.on("completed", async (job: Job) => {
             if (job.name !== "foo" || job.data?.test !== "touched by worker") {
                 reject(
                     "Worker job completed unsuccessfully during JobQueue connection test",
                 );
             }
-            log("verified");
-            queue.disconnect();
-            worker.disconnect();
+            log("connection verified");
+            await queue.close();
+            await worker.close();
             resolve();
         });
+        worker.on("error", (err) => {
+            log(
+                "connection verification worker error received " +
+                    err.toString(),
+            );
+            reject(err);
+        });
         const queue = new Queue("connectiontest", {
-            connection: createIORedisConnection(config),
+            connection: createIORedisConnection(config, 1),
+        });
+        queue.on("error", (err) => {
+            log(
+                "connection verification queue error received " +
+                    err.toString(),
+            );
+            reject(err);
         });
         queue.add(
             "foo",
@@ -96,7 +113,7 @@ export default class JobQueue extends EventEmitter {
 
     initQueue() {
         this.queue = new Queue(this.uid, {
-            connection: createIORedisConnection(this.redisConfig),
+            connection: createIORedisConnection(this.redisConfig, 1),
         });
     }
 
