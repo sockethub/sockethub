@@ -4,38 +4,37 @@
   import Logger from "$components/logs/Logger.svelte";
   import { send } from "$lib/sockethub";
   import type { AnyActivityStream } from "$lib/sockethub";
-  import { getActorStore } from "$stores/ActorStore";
   import ActivityActor from "$components/ActivityActor.svelte";
   import Credentials from "$components/Credentials.svelte";
   import IncomingMessage from "$components/chat/IncomingMessages.svelte";
   import SendMessage from "$components/chat/SendMessage.svelte";
   import Room from "$components/chat/Room.svelte";
+  import { writable } from "svelte/store";
 
-  let userAddress = "user@jabber.org";
+
+  const actorIdStore = writable("user@jabber.org");
   let connecting = false;
 
-  const actorId = `${userAddress}/SockethubExample`;
+  $: actorId = `${$actorIdStore}/SockethubExample`;
 
   let room = "kosmos-random@kosmos.chat";
 
-  const actor = getActorStore("xmpp", {
-    state: {
+  const state = writable({
       actorSet: false,
       credentialsSet: false,
       connected: false,
       joined: false,
-    },
-    object: {
+  });
+
+  $: actor = {
       id: actorId,
       type: "person",
       name: actorId,
-    },
-    roomId: room,
-  });
+  };
 
-  const credentials = {
+  $: credentials = {
     type: "credentials",
-    userAddress: userAddress,
+    userAddress: $actorIdStore,
     password: "123456",
     resource: "SockethubExample",
   };
@@ -48,10 +47,10 @@
       actor: actorId,
     } as AnyActivityStream)
       .then(() => {
-        $actor.state.connected = true;
+        $state.connected = true;
       })
       .catch(() => {
-        $actor.state.connected = false;
+        $state.connected = false;
       });
     connecting = false;
   }
@@ -62,15 +61,20 @@
   <p>Example for the XMPP platform</p>
 </Intro>
 
-<ActivityActor {actor} />
-<Credentials context="xmpp" {credentials} {actor} />
+<div class="pb-4">
+  <label for="actor-id-input" class="pr-3">Actor ID</label>
+  <input id="actor-id-input" class=" bg-white border border-solid border-gray-300 rounded " type="text" bind:value={$actorIdStore} />
+</div>
+
+<ActivityActor {actor} {state} />
+<Credentials context="xmpp" {credentials} {actor} {state} />
 
 <div>
   <div class="w-full text-right">
     <SockethubButton
-      disabled={!$actor.state.credentialsSet || $actor.state.connected || connecting}
+      disabled={!$state.credentialsSet || $state.connected || connecting}
       buttonAction={connectXmpp}
-      >{$actor.state.connected
+      >{$state.connected
         ? "Connected"
         : connecting
         ? "Connecting"
@@ -79,10 +83,10 @@
   </div>
 </div>
 
-<Room {actor} {room} context="xmpp" />
+<Room {actor} {state} {room} context="xmpp" />
 
 <IncomingMessage />
 
-<SendMessage context="xmpp" {actor} />
+<SendMessage context="xmpp" {actor} {state} {room} />
 
 <Logger />

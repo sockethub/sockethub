@@ -3,30 +3,29 @@
   import { sc } from "$lib/sockethub";
 
   export let actor;
-
-  $: obj = $actor.object;
+  export let state;
 
   function sendActivityObjectCreate(data) {
     const actorObj = JSON.parse(data.detail.jsonString);
     console.log("creating activity object:  ", actorObj);
     sc.ActivityStreams.Object.create(actorObj);
-    actor.set({
-      state: {
+    state.set({
         actorSet: true,
         credentialsSet: false,
         connected: false,
         joined: false,
-      },
-      object: actorObj,
-      roomId: "",
-    });
+    })
+    // actor.set({
+    //   object: actorObj,
+    //   roomId: "",
+    // });
   }
 </script>
 
 <TextAreaSubmit
   title="Activity Stream Actor"
-  {obj}
+  obj={actor}
   buttonText="Activity Object Create"
   on:submit={sendActivityObjectCreate}
-  disabled={$actor.state.actorSet}
+  disabled={$state.actorSet}
 />
