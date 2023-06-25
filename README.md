@@ -57,8 +57,8 @@ in the `config.json`.
 
 ## Platforms
 
-Making a platform is as simple as creating a platform module that defines a 
-schema and a series of functions that map to verbs. Take a look at some of 
+Making a platform is as simple as creating a platform module that defines a
+schema and a series of functions that map to verbs. Take a look at some of
 our existing platforms for examples.
 
 * [Feeds](../platform-feeds) *(RSS, Atom)*
