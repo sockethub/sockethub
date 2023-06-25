@@ -8,12 +8,12 @@
 
   const actorId = "https://sockethub.org/examples/feedsUser";
   const state = writable({
-      actorSet: false,
-  })
+    actorSet: false,
+  });
   $: actor = {
-      id: actorId,
-      type: "person",
-      name: "Sockethub Examples Feeds",
+    id: actorId,
+    type: "person",
+    name: "Sockethub Examples Feeds",
   };
 
   let url = "https://sockethub.org/feed.xml";
@@ -65,9 +65,7 @@
     <input id="URL" bind:value={url} class="border-4" />
   </div>
   <div class="w-full text-right">
-    <SockethubButton disabled={!$state.actorSet} buttonAction={sendFetch}
-      >Fetch</SockethubButton
-    >
+    <SockethubButton disabled={!$state.actorSet} buttonAction={sendFetch}>Fetch</SockethubButton>
   </div>
 </div>
 

@@ -9,12 +9,12 @@
 
   const actorId = "https://sockethub.org/examples/dummyUser";
   const state = writable({
-      actorSet: false,
-  })
+    actorSet: false,
+  });
   $: actor = {
-      id: actorId,
-      type: "person",
-      name: "Sockethub Examples Dummy",
+    id: actorId,
+    type: "person",
+    name: "Sockethub Examples Dummy",
   };
 
   let content = "";
@@ -67,12 +67,8 @@
     <label for="sendEcho" class="inline-block text-gray-900 font-bold w-32">Object Type</label>
     <div class="flex gap-4">
       <div id="sendEcho">
-        <SockethubButton disabled={!$state.actorSet} buttonAction={sendEcho}
-          >Echo</SockethubButton
-        >
-        <SockethubButton disabled={!$state.actorSet} buttonAction={sendFail}
-          >Fail</SockethubButton
-        >
+        <SockethubButton disabled={!$state.actorSet} buttonAction={sendEcho}>Echo</SockethubButton>
+        <SockethubButton disabled={!$state.actorSet} buttonAction={sendFail}>Fail</SockethubButton>
       </div>
     </div>
   </div>

@@ -10,11 +10,11 @@
     console.log("creating activity object:  ", actorObj);
     sc.ActivityStreams.Object.create(actorObj);
     state.set({
-        actorSet: true,
-        credentialsSet: false,
-        connected: false,
-        joined: false,
-    })
+      actorSet: true,
+      credentialsSet: false,
+      connected: false,
+      joined: false,
+    });
     // actor.set({
     //   object: actorObj,
     //   roomId: "",

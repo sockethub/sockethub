@@ -11,7 +11,6 @@
   import Room from "$components/chat/Room.svelte";
   import { writable } from "svelte/store";
 
-
   const actorIdStore = writable("user@jabber.org");
   let connecting = false;
 
@@ -20,16 +19,16 @@
   let room = "kosmos-random@kosmos.chat";
 
   const state = writable({
-      actorSet: false,
-      credentialsSet: false,
-      connected: false,
-      joined: false,
+    actorSet: false,
+    credentialsSet: false,
+    connected: false,
+    joined: false,
   });
 
   $: actor = {
-      id: actorId,
-      type: "person",
-      name: actorId,
+    id: actorId,
+    type: "person",
+    name: actorId,
   };
 
   $: credentials = {
@@ -63,7 +62,12 @@
 
 <div class="pb-4">
   <label for="actor-id-input" class="pr-3">Actor ID</label>
-  <input id="actor-id-input" class=" bg-white border border-solid border-gray-300 rounded " type="text" bind:value={$actorIdStore} />
+  <input
+    id="actor-id-input"
+    class=" bg-white border border-solid border-gray-300 rounded"
+    type="text"
+    bind:value={$actorIdStore}
+  />
 </div>
 
 <ActivityActor {actor} {state} />
@@ -74,11 +78,7 @@
     <SockethubButton
       disabled={!$state.credentialsSet || $state.connected || connecting}
       buttonAction={connectXmpp}
-      >{$state.connected
-        ? "Connected"
-        : connecting
-        ? "Connecting"
-        : "Connect"}</SockethubButton
+      >{$state.connected ? "Connected" : connecting ? "Connecting" : "Connect"}</SockethubButton
     >
   </div>
 </div>
