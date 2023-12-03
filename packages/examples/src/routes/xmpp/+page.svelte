@@ -10,6 +10,7 @@
   import IncomingMessage from "$components/chat/IncomingMessages.svelte";
   import SendMessage from "$components/chat/SendMessage.svelte";
   import Room from "$components/chat/Room.svelte";
+  import type {CredentialsObjectData} from "$stores/CredentialsStore";
 
   let userAddress = "user@jabber.org";
   let connecting = false;
@@ -33,31 +34,36 @@
     roomId: room,
   });
 
-  const credentials = {
+  const credentials: CredentialsObjectData = {
     type: "credentials",
     userAddress: userAddress,
     password: "123456",
     resource: "SockethubExample",
   };
 
-  async function connectXmpp() {
+  async function connectXmpp(): Promise<void> {
     connecting = true;
-    await send({
+    return await send({
       context: "xmpp",
       type: "connect",
       actor: actorId,
     } as AnyActivityStream)
-      .then(() => {
-        $actor.state.connected = true;
-      })
       .catch(() => {
-        $actor.state.connected = false;
+        if (typeof $actor.state?.connected !== "undefined") {
+          $actor.state.connected = false;
+        }
+        connecting = false;
+      })
+      .then(() => {
+        if (typeof $actor.state?.connected !== "undefined") {
+          $actor.state.connected = true
+        }
+        connecting = false;
       });
-    connecting = false;
   }
 </script>
 
-<Intro heading="XMPP Platform Example">
+<Intro title="XMPP Platform Example">
   <title>XMPP Example</title>
   <p>Example for the XMPP platform</p>
 </Intro>
@@ -68,9 +74,9 @@
 <div>
   <div class="w-full text-right">
     <SockethubButton
-      disabled={!$actor.state.credentialsSet || $actor.state.connected || connecting}
+      disabled={!$actor.state?.credentialsSet || $actor.state?.connected || connecting}
       buttonAction={connectXmpp}
-      >{$actor.state.connected
+      >{$actor.state?.connected
         ? "Connected"
         : connecting
         ? "Connecting"

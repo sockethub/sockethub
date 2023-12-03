@@ -3,7 +3,8 @@
   import ActivityActor from "$components/ActivityActor.svelte";
   import SockethubButton from "$components/SockethubButton.svelte";
   import Logger, { addObject, ObjectType } from "$components/logs/Logger.svelte";
-  import { sc } from "$lib/sockethub";
+  import {sc} from "$lib/sockethub";
+  import type {AnyActivityStream} from "$lib/sockethub";
   import { getActorStore } from "$stores/ActorStore";
 
   const actorId = "https://sockethub.org/examples/feedsUser";
@@ -20,8 +21,8 @@
 
   let url = "https://sockethub.org/feed.xml";
 
-  function send(obj) {
-    sc.socket.emit("message", addObject(ObjectType.send, obj), (resp) => {
+  function send(obj: AnyActivityStream) {
+    sc.socket.emit("message", addObject(ObjectType.send, obj, obj.id || ""), (resp: AnyActivityStream) => {
       if (Array.isArray(resp)) {
         let i = 1;
         for (const r of resp.reverse()) {
@@ -29,12 +30,12 @@
           i += 1;
         }
       } else {
-        addObject(ObjectType.resp, resp, resp.id);
+        addObject(ObjectType.resp, resp, resp?.id || "");
       }
     });
   }
 
-  function getASObj(type) {
+  function getASObj(type: string) {
     return {
       context: "feeds",
       type: type,
@@ -46,7 +47,7 @@
     };
   }
 
-  function sendFetch() {
+  async function sendFetch(): Promise<void> {
     send(getASObj("fetch"));
   }
 </script>
@@ -67,7 +68,7 @@
     <input id="URL" bind:value={url} class="border-4" />
   </div>
   <div class="w-full text-right">
-    <SockethubButton disabled={!$actor.state.actorSet} buttonAction={sendFetch}
+    <SockethubButton disabled={!$actor.state?.actorSet} buttonAction={sendFetch}
       >Fetch</SockethubButton
     >
   </div>

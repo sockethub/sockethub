@@ -1,7 +1,9 @@
 <script lang="ts" context="module">
   import { writable } from "svelte/store";
+  import type {AnyActivityStream} from "$lib/sockethub";
 
-  const Logs = writable({});
+  type LogEntries = Record<string, [AnyActivityStream]>;
+  const Logs = writable({} as LogEntries);
   let counter = 0;
 
   export enum ObjectType {
@@ -9,8 +11,8 @@
     resp = "RESP",
   }
 
-  export function addObject(type: ObjectType, obj, id) {
-    let index;
+  export function addObject(type: ObjectType, obj: AnyActivityStream, id: string) {
+    let index: string;
     if (!id) {
       index = "" + ++counter;
       obj.id = index;
@@ -18,7 +20,7 @@
       index = id;
     }
 
-    Logs.update((currentLogs) => {
+    Logs.update((currentLogs: LogEntries) => {
       if (!currentLogs[index]) {
         currentLogs[index] = [obj];
       } else {
@@ -36,17 +38,16 @@
   import Highlight from "svelte-highlight";
   import json from "svelte-highlight/languages/json";
 
-  let logs;
+  let logs: LogEntries;
   let logModalState = false;
   let jsonSend = "";
   let jsonResp = "";
-  let selectedLog = 0;
 
-  Logs.subscribe((data) => {
+  Logs.subscribe((data: LogEntries) => {
     logs = data;
   });
 
-  function showLog(uid) {
+  function showLog(uid: string) {
     return () => {
       let indexSend = uid;
       let indexResp = uid;
@@ -55,7 +56,6 @@
       }
       console.log(`indexSend:${indexSend} indexResp:${indexResp}`);
       console.log("logs: ", logs);
-      selectedLog = uid;
       logModalState = true;
       jsonSend = JSON.stringify(logs[indexSend][0], null, 2);
       jsonResp = JSON.stringify(logs[indexResp][logs[indexResp].length - 1], null, 2);
@@ -89,7 +89,8 @@
         {#if Array.isArray(v[v.length - 1])}
           {#each Object.entries(v[v.length - 1]) as [i, r]}
             {#if r}
-              <LogEntry buttonAction={showLog(`${id}-${i}`)} id={`${id}-${i}`} entry={r} ({r.id}) />
+              <LogEntry buttonAction={showLog(`${id}-${i}`)}
+                        id={`${id}-${i}`} entry={r} />
             {/if}
           {/each}
         {:else}

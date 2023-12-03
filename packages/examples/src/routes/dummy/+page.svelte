@@ -21,7 +21,7 @@
 
   let content = "";
 
-  function getASObj(type) {
+  function getASObj(type: string): AnyActivityStream {
     return {
       context: "dummy",
       type: type,
@@ -33,12 +33,12 @@
     };
   }
 
-  function sendEcho() {
-    send(getASObj("echo") as AnyActivityStream);
+  async function sendEcho(): Promise<void> {
+    send(getASObj("echo"));
   }
 
-  function sendFail() {
-    send(getASObj("fail") as AnyActivityStream);
+  async function sendFail(): Promise<void> {
+    send(getASObj("fail"));
   }
 </script>
 
@@ -69,10 +69,10 @@
     <label for="sendEcho" class="inline-block text-gray-900 font-bold w-32">Object Type</label>
     <div class="flex gap-4">
       <div id="sendEcho">
-        <SockethubButton disabled={!$actor.state.actorSet} buttonAction={sendEcho}
+        <SockethubButton disabled={!$actor.state?.actorSet} buttonAction={sendEcho}
           >Echo</SockethubButton
         >
-        <SockethubButton disabled={!$actor.state.actorSet} buttonAction={sendFail}
+        <SockethubButton disabled={!$actor.state?.actorSet} buttonAction={sendFail}
           >Fail</SockethubButton
         >
       </div>

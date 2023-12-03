@@ -1,15 +1,18 @@
 import { writable } from "svelte/store";
 import type { BaseStore } from "./BaseStore";
 
+export type CredentialsObjectData = {
+  type: "credentials";
+  userAddress?: string;
+  nick: string;
+  server: string;
+  port?: number;
+  secure: boolean;
+  password?: string;
+}
 export type CredentialData = {
   isSet: boolean;
-  object: {
-    type: "credentials";
-    nick: string;
-    server: string;
-    port?: number;
-    secure: boolean;
-  };
+  object: CredentialsObjectData;
 };
 
 export function getCredentialsStore(creds: CredentialData) {

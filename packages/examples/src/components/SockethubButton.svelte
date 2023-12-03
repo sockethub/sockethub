@@ -2,8 +2,8 @@
   import { connected } from "$lib/sockethub";
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   export let disabled = false;
-  export let buttonAction = () => {
-    return null;
+  export let buttonAction = async (): Promise<void> => {
+      return Promise.resolve();
   };
   let disabledState = false;
   $: {

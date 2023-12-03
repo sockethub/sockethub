@@ -4,12 +4,12 @@
   import type { AnyActivityStream } from "$lib/sockethub";
 
   export let actor;
-  export let context;
+  export let context: string;
 
   let message = "";
   let sending = false;
 
-  async function sendMessage() {
+  async function sendMessage(): null {
     sending = true;
     console.log("send message: ", message);
     await send({
@@ -25,7 +25,7 @@
         name: $actor.roomId,
         type: "room",
       },
-    } as AnyActivityStream);
+    });
     sending = false;
   }
 </script>

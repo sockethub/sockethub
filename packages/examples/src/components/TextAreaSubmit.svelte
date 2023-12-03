@@ -3,9 +3,9 @@
   import { createEventDispatcher } from "svelte";
 
   export let buttonText = "Send";
-  export let disabled;
-  export let obj;
-  export let title;
+  export let disabled: boolean;
+  export let obj: any;
+  export let title: string;
 
   let password = "unset";
 
@@ -18,7 +18,7 @@
 
   $: objString = JSON.stringify(obj, null, 3);
 
-  function handleSubmit() {
+  async function handleSubmit(): Promise<void> {
     const objSend = JSON.parse(objString);
     if (password !== "unset") {
       objSend.password = password;
