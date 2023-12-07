@@ -31,5 +31,5 @@ export interface JobDecrypted {
 }
 
 export interface JobHandler {
-    (job: JobDataDecrypted): Promise<any>;
+    (job: JobDataDecrypted): Promise<string | void | IActivityStream>;
 }

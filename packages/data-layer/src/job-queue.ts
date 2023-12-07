@@ -13,7 +13,6 @@ import EventEmitter from "events";
 import { IActivityStream } from "@sockethub/schemas";
 import IORedis from "ioredis";
 
-
 export function createIORedisConnection(
     config: RedisConfig,
     maxRetries = null,
@@ -270,9 +269,7 @@ export default class JobQueue extends EventEmitter {
         };
     }
 
-    protected async jobHandler(
-        encryptedJob: JobEncrypted,
-    ): Promise<JobDataDecrypted> {
+    protected async jobHandler(encryptedJob: JobEncrypted) {
         const job = this.decryptJobData(encryptedJob);
         this.debug(`handling ${job.title} ${job.msg.type}`);
         return this.handler(job);
