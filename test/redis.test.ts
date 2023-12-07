@@ -8,7 +8,6 @@ import {
 } from "@sockethub/data-layer";
 import { IActivityStream } from "@sockethub/schemas";
 
-// eslint-disable-next-line security-node/detect-insecure-randomness
 const actor = "" + (Math.random() + 1).toString(36).substring(2);
 const creds: CredentialsObject = {
     type: "credentials",
@@ -69,7 +68,6 @@ describe("JobQueue", () => {
     it("add job and get job on queue", (done) => {
         // queue.initResultEvents();
         queue.on("completed", (jobData: JobDataDecrypted) => {
-            // eslint-disable-next-line security-node/detect-crlf
             console.log("-1 ", jobData);
             expect(jobData).to.eql({
                 title: "bar-0",
@@ -81,7 +79,6 @@ describe("JobQueue", () => {
             done();
         });
         queue.onJob(async (job) => {
-            // eslint-disable-next-line security-node/detect-crlf
             console.log("-2 ", job);
             return job;
         });

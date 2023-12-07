@@ -203,7 +203,6 @@ export default class JobQueue extends EventEmitter {
             this.debug(`completed ${jobData.title} ${jobData.msg.type}`);
         });
 
-        // eslint-disable-next-line security-node/detect-unhandled-event-errors
         this.on("error", (err) => {
             this.debug("worker error", err);
         });

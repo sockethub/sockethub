@@ -15,7 +15,7 @@ const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
 let logger = debug(loggerPrefix);
 
 const redisUrl = process.env.REDIS_URL;
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-var-requires, security/detect-non-literal-require
 const PlatformModule = require(`@sockethub/platform-${platformName}`);
 
 let jobQueue: JobQueue;
