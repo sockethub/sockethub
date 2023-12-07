@@ -82,10 +82,10 @@ class IrcToActivityStreams {
             typeof pos1 === "string" && pos1.startsWith("#")
                 ? pos1
                 : typeof pos2 === "string" && pos2.startsWith("#")
-                ? pos2
-                : typeof pos3 === "string" && pos3.startsWith("#")
-                ? pos3
-                : undefined;
+                  ? pos2
+                  : typeof pos3 === "string" && pos3.startsWith("#")
+                    ? pos3
+                    : undefined;
         if (metadata === PING) {
             this.events.emit(EVENT_PING, `${Date.now()}`);
             return true;

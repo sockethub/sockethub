@@ -10,6 +10,7 @@
   import SendMessage from "$components/chat/SendMessage.svelte";
   import Room from "$components/chat/Room.svelte";
   import { writable } from "svelte/store";
+  import type { CredentialName } from "$lib/sockethub";
 
   const actorIdStore = writable("user@jabber.org");
   let connecting = false;
@@ -32,15 +33,15 @@
   };
 
   $: credentials = {
-    type: "credentials",
+    type: "credentials" as CredentialName,
     userAddress: $actorIdStore,
     password: "123456",
     resource: "SockethubExample",
   };
 
-  async function connectXmpp() {
+  async function connectXmpp(): Promise<void> {
     connecting = true;
-    await send({
+    return await send({
       context: "xmpp",
       type: "connect",
       actor: actorId,
@@ -51,11 +52,10 @@
       .catch(() => {
         $state.connected = false;
       });
-    connecting = false;
   }
 </script>
 
-<Intro heading="XMPP Platform Example">
+<Intro title="XMPP Platform Example">
   <title>XMPP Example</title>
   <p>Example for the XMPP platform</p>
 </Intro>

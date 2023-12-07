@@ -12,8 +12,8 @@
     },
     "devDependencies": {
         "@sockethub/schemas": "workspace:^",
-        "c8": "7.13.0",
-        "chai": "4.3.7",
+        "c8": "8.0.1",
+        "chai": "4.3.10",
         "mocha": "10.2.0"
     },
     "scripts": {

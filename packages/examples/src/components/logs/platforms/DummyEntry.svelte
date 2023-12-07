@@ -1,12 +1,13 @@
 <script lang="ts">
   import Context from "./Context.svelte";
-  export let id;
-  export let entry;
+  import type { AnyActivityStream } from "$lib/sockethub";
+  export let id: string;
+  export let entry: AnyActivityStream;
 </script>
 
 <Context {entry} />
 <span>
   #{id}
-  {entry.actor?.name || entry.actor?.id || entry.actor}:
+  {typeof entry.actor === "string" ? entry.actor : entry.actor?.name || entry.actor?.id}:
 </span>
-<span>{entry.object.content}</span>
+<span>{entry.object?.content || ""}</span>

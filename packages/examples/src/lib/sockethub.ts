@@ -25,15 +25,61 @@ const defaultConfig = {
   },
 };
 
+type BaseProps = {
+  id?: string;
+  name?: string;
+  type: string;
+  content?: string;
+  url?: string;
+  contentType?: string;
+  title?: string;
+  published?: string;
+};
+
 export interface AnyActivityStream {
   id?: string;
   context: string;
   type: string;
-  actor?: never;
-  object?: never;
-  target?: never;
+  actor?: BaseProps | string;
+  object?: BaseProps;
+  target?: BaseProps | string;
   error?: string;
 }
+
+export type ActorData = {
+  id: string;
+  name: string;
+  type: string;
+}
+
+export type CredentialsObjectData = IrcCredentials | XmppCredentials;
+
+export type CredentialName = "credentials";
+
+export type IrcCredentials = {
+  type: CredentialName;
+  nick: string;
+  server: string;
+  port: number;
+  secure: boolean;
+  password?: string;
+};
+
+export type XmppCredentials = {
+  type: "credentials";
+  resource: string;
+  userAddress: string;
+  password: string;
+};
+
+export type CredentialData = {
+  isSet: boolean;
+  object: CredentialsObjectData;
+};
+
+export type SockethubResponse = {
+  error: string;
+};
 
 export async function send(obj: AnyActivityStream) {
   console.log("sending to sockethub: ", obj);

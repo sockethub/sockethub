@@ -6,11 +6,14 @@
   import { send } from "$lib/sockethub";
   import type { AnyActivityStream } from "$lib/sockethub";
   import { writable } from "svelte/store";
+  import type { StateStore } from "$lib/types";
 
   const actorId = "https://sockethub.org/examples/dummyUser";
-  const state = writable({
+
+  const state: StateStore = writable({
     actorSet: false,
   });
+
   $: actor = {
     id: actorId,
     type: "person",
@@ -19,7 +22,7 @@
 
   let content = "";
 
-  function getASObj(type) {
+  function getASObj(type: string): AnyActivityStream {
     return {
       context: "dummy",
       type: type,
@@ -31,12 +34,12 @@
     };
   }
 
-  function sendEcho() {
-    send(getASObj("echo") as AnyActivityStream);
+  async function sendEcho(): Promise<void> {
+    send(getASObj("echo"));
   }
 
-  function sendFail() {
-    send(getASObj("fail") as AnyActivityStream);
+  async function sendFail(): Promise<void> {
+    send(getASObj("fail"));
   }
 </script>
 

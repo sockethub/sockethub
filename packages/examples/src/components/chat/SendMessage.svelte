@@ -1,12 +1,13 @@
 <script lang="ts">
   import SockethubButton from "$components/SockethubButton.svelte";
   import { send } from "$lib/sockethub";
-  import type { AnyActivityStream } from "$lib/sockethub";
+  import type { ActorData } from "$lib/sockethub";
+  import type {StateStore} from "$lib/types";
 
-  export let actor;
-  export let context;
-  export let state;
-  export let room;
+  export let actor: ActorData;
+  export let context: string;
+  export let state: StateStore;
+  export let room: string;
 
   let message = "";
   let sending = false;
@@ -27,7 +28,7 @@
         name: room,
         type: "room",
       },
-    } as AnyActivityStream);
+    });
     sending = false;
   }
 </script>

@@ -2,7 +2,7 @@
   import Intro from "$components/Intro.svelte";
   import SockethubButton from "$components/SockethubButton.svelte";
   import Logger from "$components/logs/Logger.svelte";
-  import type { AnyActivityStream } from "$lib/sockethub";
+  import type {AnyActivityStream, CredentialName} from "$lib/sockethub";
   import { send } from "$lib/sockethub";
   import ActivityActor from "$components/ActivityActor.svelte";
   import Credentials from "$components/Credentials.svelte";
@@ -32,14 +32,14 @@
   };
 
   $: credentials = {
-    type: "credentials",
+    type: "credentials" as CredentialName,
     nick: $actorIdStore,
     server: server,
     port: port,
     secure: true,
   };
 
-  async function connectIrc() {
+  async function connectIrc(): Promise<void> {
     connecting = true;
     await send({
       context: "irc",
@@ -48,15 +48,16 @@
     } as AnyActivityStream)
       .catch(() => {
         $state.connected = false;
+        connecting = false;
       })
       .then(() => {
         $state.connected = true;
+        connecting = false;
       });
-    connecting = false;
   }
 </script>
 
-<Intro heading="IRC Platform Example">
+<Intro title="IRC Platform Example">
   <title>IRC Example</title>
   <p>Example for the IRC platform</p>
 </Intro>

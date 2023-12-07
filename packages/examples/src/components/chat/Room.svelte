@@ -1,18 +1,20 @@
 <script lang="ts">
   import SockethubButton from "$components/SockethubButton.svelte";
-  import { send } from "$lib/sockethub";
+  import {send} from "$lib/sockethub";
+  import type {ActorData} from "$lib/sockethub";
   import type { AnyActivityStream } from "$lib/sockethub";
+  import type {StateStore} from "$lib/types";
 
   export let room: string;
-  export let actor;
+  export let actor: ActorData;
   export let context: string;
-  export let state;
+  export let state: StateStore;
 
   let joining = false;
 
-  async function joinRoom() {
+  async function joinRoom(): Promise<void> {
     joining = true;
-    await send({
+    return await send({
       context: context,
       type: "join",
       actor: actor.id,
@@ -29,7 +31,6 @@
         // $actor.roomId = room;
         $state.joined = true;
       });
-    joining = false;
   }
 </script>
 
