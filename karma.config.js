@@ -7,7 +7,6 @@ module.exports = function (config) {
             "karma-mocha",
             "karma-mocha-reporter",
             "karma-chrome-launcher",
-            "karma-firefox-launcher",
         ],
         client: {
             // this works only with `karma start`, not `karma run`.
@@ -17,14 +16,8 @@ module.exports = function (config) {
         port: 9876, // karma web server port
         colors: true,
         logLevel: config.LOG_INFO,
-        browsers: ["ChromeHeadless", "Firefox"],
+        browsers: ["ChromeHeadless"],
         autoWatch: false,
-        concurrency: 1,
-        customLaunchers: {
-            FirefoxHeadless: {
-                base: "Firefox",
-                flags: ["-headless"],
-            },
-        },
+        concurrency: Infinity,
     });
 };

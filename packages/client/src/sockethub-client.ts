@@ -116,7 +116,6 @@ export default class SockethubClient {
 
     private log(msg: string, obj?: unknown) {
         if (this.debug) {
-            // eslint-disable-next-line security-node/detect-crlf
             console.log(msg, obj);
         }
     }

@@ -2,69 +2,78 @@
   import Intro from "$components/Intro.svelte";
   import SockethubButton from "$components/SockethubButton.svelte";
   import Logger from "$components/logs/Logger.svelte";
+  import type { AnyActivityStream, CredentialName } from "$lib/sockethub";
   import { send } from "$lib/sockethub";
-  import type { AnyActivityStream } from "$lib/sockethub";
-  import { getActorStore } from "$stores/ActorStore";
   import ActivityActor from "$components/ActivityActor.svelte";
   import Credentials from "$components/Credentials.svelte";
   import IncomingMessage from "$components/chat/IncomingMessages.svelte";
   import Room from "$components/chat/Room.svelte";
   import SendMessage from "$components/chat/SendMessage.svelte";
+  import { writable } from "svelte/store";
 
-  const actorId = `sh-${(Math.random() + 1).toString(36).substring(7)}`;
+  const actorIdStore = writable(`sh-${(Math.random() + 1).toString(36).substring(7)}`);
 
   let server = "irc.libera.chat";
-  let port = "6697";
+  let port = 6697;
   let room = "#sh-random";
   let connecting = false;
 
-  const actor = getActorStore("irc", {
-    state: {
-      actorSet: false,
-      credentialsSet: false,
-      connected: false,
-      joined: false,
-    },
-    object: {
-      id: actorId,
-      type: "person",
-      name: actorId,
-    },
-    roomId: room,
+  const state = writable({
+    actorSet: false,
+    credentialsSet: false,
+    connected: false,
+    joined: false,
   });
 
-  const credentials = {
-    type: "credentials",
-    nick: actorId,
+  $: actor = {
+    id: $actorIdStore,
+    type: "person",
+    name: $actorIdStore,
+  };
+
+  $: credentials = {
+    type: "credentials" as CredentialName,
+    nick: $actorIdStore,
     server: server,
-    port: parseInt(port, 10),
+    port: port,
     secure: true,
   };
 
-  async function connectIrc() {
+  async function connectIrc(): Promise<void> {
     connecting = true;
     await send({
       context: "irc",
       type: "connect",
-      actor: actorId,
+      actor: $actorIdStore,
     } as AnyActivityStream)
       .catch(() => {
-        $actor.state.connected = false;
+        $state.connected = false;
+        connecting = false;
       })
       .then(() => {
-        $actor.state.connected = true;
+        $state.connected = true;
+        connecting = false;
       });
-    connecting = false;
   }
 </script>
 
-<Intro heading="IRC Platform Example">
+<Intro title="IRC Platform Example">
   <title>IRC Example</title>
   <p>Example for the IRC platform</p>
 </Intro>
 
-<ActivityActor {actor} />
-<Credentials context="irc" {credentials} {actor} />
+<div class="pb-4">
+  <label for="actor-id-input" class="pr-3">Actor ID</label>
+  <input
+    id="actor-id-input"
+    class=" bg-white border border-solid border-gray-300 rounded"
+    type="text"
+    bind:value={$actorIdStore}
+  />
+</div>
+
+<ActivityActor {actor} {state} />
+<Credentials context="irc" {credentials} {actor} {state} />
 
 <div>
   <div class="w-full p-2">
@@ -77,21 +86,17 @@
   </div>
   <div class="w-full text-right">
     <SockethubButton
-      disabled={!$actor.state.credentialsSet || $actor.state.connected || connecting}
+      disabled={!$state.credentialsSet || $state.connected || connecting}
       buttonAction={connectIrc}
-      >{$actor.state.connected
-        ? "Connected"
-        : connecting
-        ? "Connecting"
-        : "Connect"}</SockethubButton
+      >{$state.connected ? "Connected" : connecting ? "Connecting" : "Connect"}</SockethubButton
     >
   </div>
 </div>
 
-<Room {actor} {room} context="irc" />
+<Room {actor} {state} {room} context="irc" />
 
 <IncomingMessage />
 
-<SendMessage context="irc" {actor} />
+<SendMessage context="irc" {actor} {state} {room} />
 
 <Logger />

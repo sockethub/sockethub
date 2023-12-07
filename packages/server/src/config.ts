@@ -41,6 +41,7 @@ export class Config {
         // Load the main config
         let configFile = nconf.get("config");
         if (configFile) {
+            // eslint-disable-next-line security/detect-non-literal-fs-filename
             if (!fs.existsSync(configFile)) {
                 throw new Error(`Config file not found: ${configFile}`);
             }

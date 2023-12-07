@@ -14,12 +14,10 @@ export interface IInitObject {
 let init: IInitObject;
 
 function printSettingsInfo(version, platforms) {
-    // eslint-disable-next-line security-node/detect-crlf
     console.log("sockethub " + version);
     console.log();
 
     console.log(
-        // eslint-disable-next-line security-node/detect-crlf
         `websocket: ws://${config.get("sockethub:host")}:${config.get(
             "sockethub:port",
         )}${config.get("sockethub:path")}`,
@@ -30,30 +28,22 @@ function printSettingsInfo(version, platforms) {
         "public:port",
     )}${config.get("public:path")}`;
     console.log(
-        // eslint-disable-next-line security-node/detect-crlf
         `examples: ${
             config.get("examples:enabled") ? examplesUrl : "disabled"
         }`,
     );
 
     console.log();
-    // eslint-disable-next-line security-node/detect-crlf
     console.log("redis URL: " + config.get("redis:url"));
 
     console.log();
-    // eslint-disable-next-line security-node/detect-crlf
     console.log("platforms: " + Array.from(platforms.keys()).join(", "));
 
     if (platforms.size > 0) {
         for (const platform of platforms.values()) {
             console.log();
-            // eslint-disable-next-line security-node/detect-crlf
             console.log(platform.moduleName);
-            console.log(
-                // eslint-disable-next-line security-node/detect-crlf
-                ` name: ${platform.id} version: ${platform.version}`,
-            );
-            // eslint-disable-next-line security-node/detect-crlf
+            console.log(` name: ${platform.id} version: ${platform.version}`);
             console.log(" AS types: " + platform.types.join(", "));
         }
     }

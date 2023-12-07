@@ -1,10 +1,13 @@
 <script lang="ts">
   import SockethubButton from "$components/SockethubButton.svelte";
   import { send } from "$lib/sockethub";
-  import type { AnyActivityStream } from "$lib/sockethub";
+  import type { ActorData } from "$lib/sockethub";
+  import type { StateStore } from "$lib/types";
 
-  export let actor;
-  export let context;
+  export let actor: ActorData;
+  export let context: string;
+  export let state: StateStore;
+  export let room: string;
 
   let message = "";
   let sending = false;
@@ -15,17 +18,17 @@
     await send({
       context: context,
       type: "send",
-      actor: $actor.object.id,
+      actor: actor.id,
       object: {
         type: "message",
         content: message,
       },
       target: {
-        id: $actor.roomId,
-        name: $actor.roomId,
+        id: room,
+        name: room,
         type: "room",
       },
-    } as AnyActivityStream);
+    });
     sending = false;
   }
 </script>
@@ -38,7 +41,7 @@
     <input id="sendMessage" bind:value={message} class="border-4 w-full" />
   </div>
   <div class="text-right">
-    <SockethubButton disabled={!$actor.state.connected || sending} buttonAction={sendMessage}
+    <SockethubButton disabled={!$state.connected || sending} buttonAction={sendMessage}
       >{sending ? "Sending" : "Send"}</SockethubButton
     >
   </div>

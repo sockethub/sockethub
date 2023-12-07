@@ -5,23 +5,24 @@
   import Logger from "../../components/logs/Logger.svelte";
   import { send } from "$lib/sockethub";
   import type { AnyActivityStream } from "$lib/sockethub";
-  import { getActorStore } from "$stores/ActorStore";
+  import { writable } from "svelte/store";
+  import type { StateStore } from "$lib/types";
 
   const actorId = "https://sockethub.org/examples/dummyUser";
-  const actor = getActorStore("dummy", {
-    state: {
-      actorSet: false,
-    },
-    object: {
-      id: actorId,
-      type: "person",
-      name: "Sockethub Examples Dummy",
-    },
+
+  const state: StateStore = writable({
+    actorSet: false,
   });
+
+  $: actor = {
+    id: actorId,
+    type: "person",
+    name: "Sockethub Examples Dummy",
+  };
 
   let content = "";
 
-  function getASObj(type) {
+  function getASObj(type: string): AnyActivityStream {
     return {
       context: "dummy",
       type: type,
@@ -33,12 +34,12 @@
     };
   }
 
-  function sendEcho() {
-    send(getASObj("echo") as AnyActivityStream);
+  async function sendEcho(): Promise<void> {
+    send(getASObj("echo"));
   }
 
-  function sendFail() {
-    send(getASObj("fail") as AnyActivityStream);
+  async function sendFail(): Promise<void> {
+    send(getASObj("fail"));
   }
 </script>
 
@@ -51,7 +52,7 @@
   <p>You can use either the echo or fail types on your Activity Stream object.</p>
 </Intro>
 
-<ActivityActor {actor} />
+<ActivityActor {actor} {state} />
 
 <div>
   <div class="w-full p-2">
@@ -69,12 +70,8 @@
     <label for="sendEcho" class="inline-block text-gray-900 font-bold w-32">Object Type</label>
     <div class="flex gap-4">
       <div id="sendEcho">
-        <SockethubButton disabled={!$actor.state.actorSet} buttonAction={sendEcho}
-          >Echo</SockethubButton
-        >
-        <SockethubButton disabled={!$actor.state.actorSet} buttonAction={sendFail}
-          >Fail</SockethubButton
-        >
+        <SockethubButton disabled={!$state.actorSet} buttonAction={sendEcho}>Echo</SockethubButton>
+        <SockethubButton disabled={!$state.actorSet} buttonAction={sendFail}>Fail</SockethubButton>
       </div>
     </div>
   </div>

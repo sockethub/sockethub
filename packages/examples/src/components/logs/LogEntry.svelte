@@ -2,8 +2,9 @@
   import DummyEntry from "./platforms/DummyEntry.svelte";
   import FeedsEntry from "./platforms/FeedsEntry.svelte";
   import GenericEntry from "./platforms/IrcEntry.svelte";
-  export let id;
-  export let entry;
+  import type { AnyActivityStream } from "$lib/sockethub";
+  export let id: string;
+  export let entry: AnyActivityStream;
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   export let buttonAction = () => {};
 </script>

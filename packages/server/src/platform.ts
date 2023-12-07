@@ -43,7 +43,6 @@ interface SecretFromParent extends Array<string | SecretInterface> {
  */
 process.on("uncaughtException", (err) => {
     console.log("EXCEPTION IN PLATFORM");
-    // eslint-disable-next-line security-node/detect-crlf
     console.log(err.stack);
     process.send(["error", err.toString()]);
     process.exit(1);
