@@ -28,9 +28,9 @@
     "dependencies": {
         "@sockethub/crypto": "workspace:1.0.0-alpha.4",
         "@sockethub/schemas": "workspace:3.0.0-alpha.4",
-        "bull": "^4.10.4",
+        "bull": "^4.11.5",
         "debug": "^4.3.4",
-        "secure-store-redis": "2.0.5"
+        "secure-store-redis": "1.4.7"
     },
     "scripts": {
         "clean": "rm -rf dist coverage",

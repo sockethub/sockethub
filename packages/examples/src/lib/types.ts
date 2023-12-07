@@ -6,4 +6,7 @@ export type Payload = {
 
 export type TextAreaObject = {
   password?: string;
+  id?: string;
+  type?: string;
+  name?: string;
 };

@@ -3,11 +3,7 @@ module.exports = function (config) {
         frameworks: ["mocha", "chai"],
         files: ["dist/**/*.test.js"],
         reporters: ["progress"],
-        plugins: [
-            "karma-chai",
-            "karma-mocha",
-            "karma-chrome-launcher",
-        ],
+        plugins: ["karma-chai", "karma-mocha", "karma-chrome-launcher"],
         port: 9876, // karma web server port
         colors: true,
         logLevel: config.LOG_INFO,
