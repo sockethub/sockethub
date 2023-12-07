@@ -1,5 +1,5 @@
 import debug from "debug";
-import { IActivityStream, CallbackInterface } from "@sockethub/schemas";
+import { IActivityStream } from "@sockethub/schemas";
 import crypto, { getPlatformId } from "@sockethub/crypto";
 import {
     CredentialsStore,
@@ -78,7 +78,7 @@ const platform = new PlatformModule(platformSession);
  * Returns a function used to handle completed jobs from the platform code (the `done` callback).
  */
 function getJobHandler() {
-    return (job: JobDataDecrypted, done: CallbackInterface) => {
+    return async (job: JobDataDecrypted) => {
         const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
         jobLog(`received ${job.title} ${job.msg.type}`);
         const credentialStore = new CredentialsStore(
@@ -107,10 +107,10 @@ function getJobHandler() {
                 } catch (e) {
                     errMsg = err;
                 }
-                done(new Error(errMsg));
+                throw new Error(errMsg);
             } else {
                 jobLog(`completed ${job.title} ${job.msg.type}`);
-                done(null, result);
+                return result;
             }
         };
 
@@ -127,10 +127,10 @@ function getJobHandler() {
                 })
                 .catch((err) => {
                     jobLog("error " + err.toString());
-                    return done(new Error(err.toString()));
+                    throw new Error(err.toString());
                 });
         } else if (platform.config.persist && !platform.initialized) {
-            done(new Error(`${job.msg.type} called on uninitialized platform`));
+            throw new Error(`${job.msg.type} called on uninitialized platform`);
         } else {
             platform[job.msg.type](job.msg, doneCallback);
         }

@@ -195,7 +195,7 @@ export default class JobQueue extends EventEmitter {
         return job;
     }
 
-    onJob(handler): void {
+    onJob(handler: JobHandler): void {
         this.handler = handler;
         this.initWorker();
 
@@ -247,14 +247,14 @@ export default class JobQueue extends EventEmitter {
                 await this.queue.pause();
             }
             await this.queue.obliterate({ force: true });
-            await this.queue.removeAllListeners();
+            this.queue.removeAllListeners();
             await this.queue.close();
             await this.queue.disconnect();
         }
 
         if (this.worker) {
             await this.worker.pause();
-            await this.worker.removeAllListeners();
+            this.worker.removeAllListeners();
             await this.worker.close();
             await this.worker.disconnect();
         }
