@@ -30,7 +30,7 @@
         "@sockethub/schemas": "workspace:3.0.0-alpha.4",
         "bull": "^4.11.5",
         "debug": "^4.3.4",
-        "secure-store-redis": "3.0.1"
+        "secure-store-redis": "1.4.7"
     },
     "scripts": {
         "clean": "rm -rf dist coverage",
