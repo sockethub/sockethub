@@ -100,7 +100,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                     object: { type: "message", content: `failure message` },
                 };
                 sc.socket.emit("message", dummyObj, (msg) => {
-                    // console.log("dummy fail callback: ", msg);
+                    console.log("dummy fail callback: ", msg);
                     if (msg?.error) {
                         dummyObj.error = "Error: failure message";
                         dummyObj.actor = sc.ActivityStreams.Object.get(
