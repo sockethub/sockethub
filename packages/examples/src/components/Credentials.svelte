@@ -1,22 +1,21 @@
 <script lang="ts">
   import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
   import { sc } from "$lib/sockethub";
-  import type { SockethubResponse } from "$lib/sockethub";
-  import { get } from "svelte/store";
-  import type { CredentialsObjectData } from "$stores/CredentialsStore";
-  import type { BaseStore } from "$stores/BaseStore";
-  import type { ActorData } from "$stores/ActorStore";
-  import type { Payload } from "$lib/types";
+  import type { ActorData } from "$lib/sockethub";
+  import type { SockethubResponse, CredentialsObjectData } from "$lib/sockethub";
+  import type { Payload, StateStore } from "$lib/types";
 
   export let credentials: CredentialsObjectData;
-  export let actor: BaseStore<ActorData>;
+  export let actor: ActorData;
+  export let state: StateStore;
+
   export let context: string;
 
   function sendCredentials(data: Payload) {
     const creds = {
       context: context,
       type: "credentials",
-      actor: get(actor).object.id,
+      actor: actor.id,
       object: JSON.parse(data.detail.jsonString),
     };
     console.log("sending credentials: ", creds);
@@ -24,9 +23,7 @@
       if (resp?.error) {
         throw new Error(resp.error);
       }
-      if ($actor.state) {
-        $actor.state.credentialsSet = true;
-      }
+      $state.credentialsSet = true;
     });
   }
 </script>
@@ -36,5 +33,5 @@
   obj={credentials}
   buttonText="Set Credentials"
   on:submit={sendCredentials}
-  disabled={!$actor.state?.actorSet || $actor.state?.credentialsSet || false}
+  disabled={!$state.actorSet || $state.credentialsSet || false}
 />

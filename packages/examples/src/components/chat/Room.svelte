@@ -1,13 +1,15 @@
 <script lang="ts">
   import SockethubButton from "$components/SockethubButton.svelte";
   import { send } from "$lib/sockethub";
+  import type { ActorData } from "$lib/sockethub";
   import type { AnyActivityStream } from "$lib/sockethub";
-  import type { ActorData } from "$stores/ActorStore";
-  import type { BaseStore } from "$stores/BaseStore";
+  import type { StateStore } from "$lib/types";
 
   export let room: string;
-  export let actor: BaseStore<ActorData>;
+  export let actor: ActorData;
   export let context: string;
+  export let state: StateStore;
+
   let joining = false;
 
   async function joinRoom(): Promise<void> {
@@ -15,7 +17,7 @@
     return await send({
       context: context,
       type: "join",
-      actor: $actor.object.id,
+      actor: actor.id,
       target: {
         id: room,
         name: room,
@@ -23,17 +25,11 @@
       },
     } as AnyActivityStream)
       .catch(() => {
-        if ($actor.state) {
-          $actor.state.joined = false;
-        }
-        joining = false;
+        $state.joined = false;
       })
       .then(() => {
-        $actor.roomId = room;
-        if ($actor.state) {
-          $actor.state.joined = true;
-        }
-        joining = false;
+        // $actor.roomId = room;
+        $state.joined = true;
       });
   }
 </script>
@@ -45,15 +41,9 @@
   </div>
   <div class="w-full text-right">
     <SockethubButton
-      disabled={$actor.state ? !$actor.state.connected || $actor.state.joined || joining : joining}
+      disabled={!$state.connected || $state.joined || joining}
       buttonAction={joinRoom}
-      >{joining
-        ? "Joining"
-        : $actor.state
-          ? $actor.state.joined
-            ? "Joined"
-            : "Join"
-          : "Join"}</SockethubButton
+      >{joining ? "Joining" : $state.joined ? "Joined" : "Join"}</SockethubButton
     >
   </div>
 </div>

@@ -1,6 +1,4 @@
 /* eslint-disable  no-undef */
-/* eslint-disable  security-node/detect-crlf */
-/* eslint-disable  security-node/detect-eval-with-expr */
 /* eslint-disable  no-eval */
 
 if (typeof chai !== "object") {
@@ -19,6 +17,7 @@ async function loadScript(url) {
     console.log("loadScript: " + url);
     let response = await fetch(url);
     let script = await response.text();
+    // eslint-disable-next-line security/detect-eval-with-expression
     eval(script);
 }
 

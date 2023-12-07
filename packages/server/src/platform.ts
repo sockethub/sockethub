@@ -14,7 +14,7 @@ let logger = debug(loggerPrefix);
 const redisConfig = process.env.REDIS_URL
     ? process.env.REDIS_URL
     : { host: process.env.REDIS_HOST, port: process.env.REDIS_PORT };
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-var-requires,security/detect-non-literal-require
 const PlatformModule = require(`@sockethub/platform-${platformName}`);
 
 let jobQueue: JobQueue;
@@ -42,7 +42,6 @@ interface SecretFromParent extends Array<string | SecretInterface> {
  */
 process.on("uncaughtException", (err) => {
     console.log("EXCEPTION IN PLATFORM");
-    // eslint-disable-next-line security-node/detect-crlf
     console.log(err.stack);
     process.send(["error", err.toString()]);
     process.exit(1);

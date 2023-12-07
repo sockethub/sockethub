@@ -4,20 +4,18 @@
   import SockethubButton from "$components/SockethubButton.svelte";
   import Logger, { addObject, ObjectType } from "$components/logs/Logger.svelte";
   import { sc } from "$lib/sockethub";
+  import { writable } from "svelte/store";
   import type { AnyActivityStream } from "$lib/sockethub";
-  import { getActorStore } from "$stores/ActorStore";
 
   const actorId = "https://sockethub.org/examples/feedsUser";
-  const actor = getActorStore("feeds", {
-    state: {
-      actorSet: false,
-    },
-    object: {
-      id: actorId,
-      type: "person",
-      name: "Sockethub Examples Feeds",
-    },
+  const state = writable({
+    actorSet: false,
   });
+  $: actor = {
+    id: actorId,
+    type: "person",
+    name: "Sockethub Examples Feeds",
+  };
 
   let url = "https://sockethub.org/feed.xml";
 
@@ -64,7 +62,7 @@
   </p>
 </Intro>
 
-<ActivityActor {actor} />
+<ActivityActor {actor} {state} />
 
 <div>
   <div class="w-full p-2">
@@ -72,9 +70,7 @@
     <input id="URL" bind:value={url} class="border-4" />
   </div>
   <div class="w-full text-right">
-    <SockethubButton disabled={!$actor.state?.actorSet} buttonAction={sendFetch}
-      >Fetch</SockethubButton
-    >
+    <SockethubButton disabled={!$state.actorSet} buttonAction={sendFetch}>Fetch</SockethubButton>
   </div>
 </div>
 

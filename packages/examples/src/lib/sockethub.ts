@@ -46,6 +46,37 @@ export interface AnyActivityStream {
   error?: string;
 }
 
+export type ActorData = {
+  id: string;
+  name: string;
+  type: string;
+};
+
+export type CredentialsObjectData = IrcCredentials | XmppCredentials;
+
+export type CredentialName = "credentials";
+
+export type IrcCredentials = {
+  type: CredentialName;
+  nick: string;
+  server: string;
+  port: number;
+  secure: boolean;
+  password?: string;
+};
+
+export type XmppCredentials = {
+  type: "credentials";
+  resource: string;
+  userAddress: string;
+  password: string;
+};
+
+export type CredentialData = {
+  isSet: boolean;
+  object: CredentialsObjectData;
+};
+
 export type SockethubResponse = {
   error: string;
 };

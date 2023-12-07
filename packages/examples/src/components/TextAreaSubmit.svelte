@@ -20,13 +20,12 @@
   $: objString = JSON.stringify(obj, null, 3);
 
   async function handleSubmit(): Promise<void> {
-    const objSend = JSON.parse(objString);
     if (password !== "unset") {
-      objSend.password = password;
+      obj.password = password;
     }
 
     dispatcher("submit", {
-      jsonString: JSON.stringify(objSend),
+      jsonString: JSON.stringify(obj),
     });
   }
 </script>
@@ -35,12 +34,12 @@
   <label for="json-object-{title}" class="form-label inline-block text-gray-900 font-bold mb-2"
     >{title}</label
   >
-  <pre><textarea
-      id="json-object-{title}"
-      bind:value={objString}
-      class="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"
-      rows="5"
-    /></pre>
+  <textarea
+    id="json-object-{title}"
+    bind:value={objString}
+    class="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"
+    rows="5"
+  />
 </div>
 {#if password !== "unset"}
   <div class="w-full p-2">

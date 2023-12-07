@@ -1,5 +1,3 @@
-/* eslint-disable  security-node/detect-crlf */
-
 const chai = require("chai");
 const schemas = require("@sockethub/schemas").default;
 const fs = require("fs");
@@ -41,7 +39,6 @@ describe("IRC2AS", () => {
     let irc2as,
         pongs = 0,
         pings = 0;
-    // it("provides expected properties", () => {
     beforeEach(() => {
         irc2as = new IRC2AS({ server: "localhost" });
         expect(irc2as).to.have.property("events");
