@@ -9,7 +9,7 @@ export type CredentialsObjectData = {
   port?: number;
   secure: boolean;
   password?: string;
-}
+};
 export type CredentialData = {
   isSet: boolean;
   object: CredentialsObjectData;

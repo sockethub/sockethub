@@ -3,7 +3,7 @@
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   export let disabled = false;
   export let buttonAction = async (): Promise<void> => {
-      return Promise.resolve();
+    return Promise.resolve();
   };
   let disabledState = false;
   $: {

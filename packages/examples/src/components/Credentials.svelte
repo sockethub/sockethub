@@ -2,9 +2,9 @@
   import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
   import { sc } from "$lib/sockethub";
   import { get } from "svelte/store";
-  import type {CredentialsObjectData} from "$stores/CredentialsStore";
+  import type { CredentialsObjectData } from "$stores/CredentialsStore";
   import type { BaseStore } from "$stores/BaseStore";
-  import type { ActorData} from "$stores/ActorStore";
+  import type { ActorData } from "$stores/ActorStore";
 
   export let credentials: CredentialsObjectData;
   export let actor: BaseStore<ActorData>;
@@ -23,7 +23,7 @@
         throw new Error(resp.error);
       }
       if ($actor.state) {
-          $actor.state.credentialsSet = true;
+        $actor.state.credentialsSet = true;
       }
     });
   }

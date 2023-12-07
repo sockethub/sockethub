@@ -10,7 +10,7 @@
   import IncomingMessage from "$components/chat/IncomingMessages.svelte";
   import Room from "$components/chat/Room.svelte";
   import SendMessage from "$components/chat/SendMessage.svelte";
-  import type {CredentialData} from "$stores/CredentialsStore";
+  import type { CredentialData } from "$stores/CredentialsStore";
 
   const actorId = `sh-${(Math.random() + 1).toString(36).substring(7)}`;
 
@@ -56,7 +56,7 @@
       })
       .then(() => {
         if (typeof $actor.state?.connected !== "undefined") {
-          $actor.state.connected = true
+          $actor.state.connected = true;
         }
       });
     connecting = false;

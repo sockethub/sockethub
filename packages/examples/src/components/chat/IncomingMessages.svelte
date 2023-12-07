@@ -6,7 +6,10 @@
 
   export function displayMessage(m: AnyActivityStream) {
     if (m.type === "send" && m.object?.type === "message") {
-      messages.set([...get(messages), [typeof m.actor === "string" ? m.actor : m.actor?.name || "", m.object.content]]);
+      messages.set([
+        ...get(messages),
+        [typeof m.actor === "string" ? m.actor : m.actor?.name || "", m.object.content],
+      ]);
     }
   }
 </script>

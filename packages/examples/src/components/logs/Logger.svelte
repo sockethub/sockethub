@@ -1,6 +1,6 @@
 <script lang="ts" context="module">
   import { writable } from "svelte/store";
-  import type {AnyActivityStream} from "$lib/sockethub";
+  import type { AnyActivityStream } from "$lib/sockethub";
 
   type LogEntries = Record<string, [AnyActivityStream]>;
   const Logs = writable({} as LogEntries);
@@ -89,8 +89,7 @@
         {#if Array.isArray(v[v.length - 1])}
           {#each Object.entries(v[v.length - 1]) as [i, r]}
             {#if r}
-              <LogEntry buttonAction={showLog(`${id}-${i}`)}
-                        id={`${id}-${i}`} entry={r} />
+              <LogEntry buttonAction={showLog(`${id}-${i}`)} id={`${id}-${i}`} entry={r} />
             {/if}
           {/each}
         {:else}

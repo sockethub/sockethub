@@ -26,15 +26,15 @@ const defaultConfig = {
 };
 
 type BaseProps = {
-  id?: string,
-  name?: string,
-  type: string,
-  content?: string,
+  id?: string;
+  name?: string;
+  type: string;
+  content?: string;
   url?: string;
-  contentType?: string,
-  title?: string,
-  published?: string,
-}
+  contentType?: string;
+  title?: string;
+  published?: string;
+};
 
 export interface AnyActivityStream {
   id?: string;

@@ -10,7 +10,7 @@
   import IncomingMessage from "$components/chat/IncomingMessages.svelte";
   import SendMessage from "$components/chat/SendMessage.svelte";
   import Room from "$components/chat/Room.svelte";
-  import type {CredentialsObjectData} from "$stores/CredentialsStore";
+  import type { CredentialsObjectData } from "$stores/CredentialsStore";
 
   let userAddress = "user@jabber.org";
   let connecting = false;
@@ -56,7 +56,7 @@
       })
       .then(() => {
         if (typeof $actor.state?.connected !== "undefined") {
-          $actor.state.connected = true
+          $actor.state.connected = true;
         }
         connecting = false;
       });

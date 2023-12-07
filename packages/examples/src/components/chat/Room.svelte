@@ -2,8 +2,8 @@
   import SockethubButton from "$components/SockethubButton.svelte";
   import { send } from "$lib/sockethub";
   import type { AnyActivityStream } from "$lib/sockethub";
-  import type {ActorData} from "$stores/ActorStore";
-  import type {BaseStore} from "$stores/BaseStore";
+  import type { ActorData } from "$stores/ActorStore";
+  import type { BaseStore } from "$stores/BaseStore";
 
   export let room: string;
   export let actor: BaseStore<ActorData>;
@@ -47,7 +47,13 @@
     <SockethubButton
       disabled={$actor.state ? !$actor.state.connected || $actor.state.joined || joining : joining}
       buttonAction={joinRoom}
-      >{joining ? "Joining" : $actor.state ? $actor.state.joined ? "Joined" : "Join" : "Join"}</SockethubButton
+      >{joining
+        ? "Joining"
+        : $actor.state
+        ? $actor.state.joined
+          ? "Joined"
+          : "Join"
+        : "Join"}</SockethubButton
     >
   </div>
 </div>

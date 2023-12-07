@@ -1,8 +1,8 @@
 <script lang="ts">
   import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
-  import {sc} from "$lib/sockethub";
+  import { sc } from "$lib/sockethub";
   import type { BaseStore } from "$stores/BaseStore";
-  import type { ActorData} from "$stores/ActorStore";
+  import type { ActorData } from "$stores/ActorStore";
 
   export let actor: BaseStore<ActorData>;
 
