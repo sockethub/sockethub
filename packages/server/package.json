@@ -39,14 +39,13 @@
         "@sockethub/crypto": "workspace:^",
         "@sockethub/data-layer": "workspace:^",
         "@sockethub/schemas": "workspace:^",
-        "body-parser": "^1.20.2",
-        "debug": "^4.3.4",
-        "ejs": "^3.1.9",
-        "express": "^4.18.2",
-        "jquery": "^3.6.4",
-        "nconf": "^0.12.0",
-        "npm": "9.6.3",
-        "socket.io": "^4.6.1"
+        "body-parser": "1.20.2",
+        "debug": "4.3.4",
+        "ejs": "3.1.9",
+        "express": "4.18.2",
+        "jquery": "3.7.1",
+        "nconf": "0.12.1",
+        "socket.io": "4.6.2"
     },
     "scripts": {
         "clean": "rm -rf dist coverage",
@@ -57,26 +56,27 @@
         "build": "pnpm clean && tsc && cp ./src/defaults.json ./dist/defaults.json"
     },
     "engines": {
-        "node": ">=16",
+        "node": ">=18",
         "pnpm": ">=8"
     },
     "devDependencies": {
-        "@types/body-parser": "1.19.2",
-        "@types/chai": "4.3.4",
-        "@types/debug": "4.1.7",
-        "@types/express": "4.17.17",
-        "@types/jquery": "3.5.16",
-        "@types/mocha": "10.0.1",
-        "@types/nconf": "0.10.3",
-        "@types/node": "18.15.11",
-        "@types/sinon": "10.0.13",
-        "c8": "7.13.0",
-        "chai": "4.3.7",
+        "@types/body-parser": "1.19.5",
+        "@types/chai": "4.3.11",
+        "@types/debug": "4.1.12",
+        "@types/express": "4.17.21",
+        "@types/jquery": "3.5.29",
+        "@types/mocha": "10.0.6",
+        "@types/nconf": "0.10.6",
+        "@types/node": "20.10.4",
+        "@types/sinon": "17.0.2",
+        "c8": "8.0.1",
+        "chai": "4.3.10",
         "jaribu": "2.2.3",
         "mocha": "10.2.0",
-        "sinon": "15.0.3",
+        "sinon": "17.0.1",
         "ts-node": "10.9.1",
-        "typescript": "5.0.3"
+        "typescript": "5.3.3",
+        "web-streams-polyfill": "^3.2.1"
     },
     "optionalDependencies": {
         "@sockethub/examples": "workspace:^",

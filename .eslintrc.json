@@ -29,7 +29,8 @@
         "space-before-function-paren": [
             2,
             { "anonymous": "always", "named": "never" }
-        ]
+        ],
+        "no-octal-escape": "off"
     },
     "plugins": ["security-node"],
     "extends": [

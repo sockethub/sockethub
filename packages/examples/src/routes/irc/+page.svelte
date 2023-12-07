@@ -10,6 +10,7 @@
   import IncomingMessage from "$components/chat/IncomingMessages.svelte";
   import Room from "$components/chat/Room.svelte";
   import SendMessage from "$components/chat/SendMessage.svelte";
+  import type { CredentialData } from "$stores/CredentialsStore";
 
   const actorId = `sh-${(Math.random() + 1).toString(36).substring(7)}`;
 
@@ -33,7 +34,7 @@
     roomId: room,
   });
 
-  const credentials = {
+  const credentials: CredentialData = {
     type: "credentials",
     nick: actorId,
     server: server,
@@ -41,7 +42,7 @@
     secure: true,
   };
 
-  async function connectIrc() {
+  async function connectIrc(): Promise<void> {
     connecting = true;
     await send({
       context: "irc",
@@ -49,16 +50,20 @@
       actor: actorId,
     } as AnyActivityStream)
       .catch(() => {
-        $actor.state.connected = false;
+        if (typeof $actor.state?.connected !== "undefined") {
+          $actor.state.connected = false;
+        }
       })
       .then(() => {
-        $actor.state.connected = true;
+        if (typeof $actor.state?.connected !== "undefined") {
+          $actor.state.connected = true;
+        }
       });
     connecting = false;
   }
 </script>
 
-<Intro heading="IRC Platform Example">
+<Intro title="IRC Platform Example">
   <title>IRC Example</title>
   <p>Example for the IRC platform</p>
 </Intro>
@@ -77,13 +82,13 @@
   </div>
   <div class="w-full text-right">
     <SockethubButton
-      disabled={!$actor.state.credentialsSet || $actor.state.connected || connecting}
+      disabled={!$actor.state?.credentialsSet || $actor.state?.connected || connecting}
       buttonAction={connectIrc}
-      >{$actor.state.connected
+      >{$actor.state?.connected
         ? "Connected"
         : connecting
-        ? "Connecting"
-        : "Connect"}</SockethubButton
+          ? "Connecting"
+          : "Connect"}</SockethubButton
     >
   </div>
 </div>

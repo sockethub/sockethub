@@ -1,11 +1,12 @@
 <script lang="ts">
   import SockethubButton from "./SockethubButton.svelte";
   import { createEventDispatcher } from "svelte";
+  import type { TextAreaObject } from "$lib/types";
 
   export let buttonText = "Send";
-  export let disabled;
-  export let obj;
-  export let title;
+  export let disabled: boolean;
+  export let obj: TextAreaObject;
+  export let title: string;
 
   let password = "unset";
 
@@ -18,7 +19,7 @@
 
   $: objString = JSON.stringify(obj, null, 3);
 
-  function handleSubmit() {
+  async function handleSubmit(): Promise<void> {
     const objSend = JSON.parse(objString);
     if (password !== "unset") {
       objSend.password = password;

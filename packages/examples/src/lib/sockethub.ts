@@ -25,15 +25,30 @@ const defaultConfig = {
   },
 };
 
+type BaseProps = {
+  id?: string;
+  name?: string;
+  type: string;
+  content?: string;
+  url?: string;
+  contentType?: string;
+  title?: string;
+  published?: string;
+};
+
 export interface AnyActivityStream {
   id?: string;
   context: string;
   type: string;
-  actor?: never;
-  object?: never;
-  target?: never;
+  actor?: BaseProps | string;
+  object?: BaseProps;
+  target?: BaseProps | string;
   error?: string;
 }
+
+export type SockethubResponse = {
+  error: string;
+};
 
 export async function send(obj: AnyActivityStream) {
   console.log("sending to sockethub: ", obj);

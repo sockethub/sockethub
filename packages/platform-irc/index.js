@@ -20,6 +20,7 @@ const net = require("net");
 const tls = require("tls");
 const IrcSocket = require("irc-socket-sasl");
 const IRC2AS = require("@sockethub/irc2as");
+const buildCommand = require("./octal-hack");
 
 /**
  * @class IRC
@@ -331,7 +332,7 @@ IRC.prototype.send = function (job, done) {
             // so the following line needs to be commented out when the API doc is built.
             // investigate:
             // https://github.com/jsdoc2md/jsdoc-to-markdown/issues/197#issuecomment-976851915
-            const message = "\001ACTION " + job.object.content + "\001";
+            const message = buildCommand(job.object.content);
             client.raw("PRIVMSG " + job.target.name + " :" + message);
         } else if (job.object.type === "notice") {
             // attempt to send as raw command
@@ -606,8 +607,8 @@ IRC.prototype.__connect = function (key, credentials, cb) {
         port: credentials.object.port
             ? parseInt(credentials.object.port, 10)
             : is_secure
-            ? 6697
-            : 6667,
+              ? 6697
+              : 6667,
         debug: console.log,
     };
     if (is_secure) {
