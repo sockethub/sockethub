@@ -5,8 +5,8 @@ const utils = {
             service: credentials.object.server
                 ? credentials.object.server
                 : server
-                ? server
-                : undefined,
+                  ? server
+                  : undefined,
             username: username,
             password: credentials.object.password,
         };

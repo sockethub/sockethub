@@ -1,11 +1,13 @@
 .DS_Store
-node_modules
-dist
-build
-coverage
+**/node_modules
+**/dist
+**/build
+**/coverage
 .svelte-kit
 .env
 .env.*
 !.env.example
 pnpm-lock.yaml
 *.md
+.nx
+.github

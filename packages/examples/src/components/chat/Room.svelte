@@ -50,10 +50,10 @@
       >{joining
         ? "Joining"
         : $actor.state
-        ? $actor.state.joined
-          ? "Joined"
-          : "Join"
-        : "Join"}</SockethubButton
+          ? $actor.state.joined
+            ? "Joined"
+            : "Join"
+          : "Join"}</SockethubButton
     >
   </div>
 </div>

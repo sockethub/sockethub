@@ -7,27 +7,27 @@
         "pnpm": ">=8"
     },
     "devDependencies": {
-        "@lerna-lite/cli": "1.17.0",
-        "@lerna-lite/publish": "1.17.0",
-        "@types/mocha": "10.0.1",
-        "@typescript-eslint/eslint-plugin": "^5.62.0",
-        "@typescript-eslint/parser": "5.57.1",
-        "chai": "4.3.7",
+        "@lerna-lite/cli": "3.0.0",
+        "@lerna-lite/publish": "3.0.0",
+        "@types/mocha": "10.0.6",
+        "@typescript-eslint/eslint-plugin": "^6.13.2",
+        "@typescript-eslint/parser": "6.13.2",
+        "chai": "4.3.10",
         "eslint": "8.55.0",
         "eslint-plugin-security-node": "1.1.1",
-        "find-up": "6.3.0",
-        "karma": "6.4.1",
+        "find-up": "7.0.0",
+        "karma": "6.4.2",
         "karma-chai": "0.1.0",
-        "karma-chrome-launcher": "3.1.1",
+        "karma-chrome-launcher": "3.2.0",
         "karma-firefox-launcher": "2.1.2",
         "karma-mocha": "^2.0.1",
         "karma-mocha-reporter": "^2.2.5",
         "markdown-spellcheck": "1.3.1",
-        "markdownlint-cli": "0.33.0",
+        "markdownlint-cli": "0.37.0",
         "mocha": "10.2.0",
-        "nx": "15.9.2",
-        "prettier": "2.8.7",
-        "typescript": "5.0.3"
+        "nx": "17.1.3",
+        "prettier": "3.1.0",
+        "typescript": "5.3.3"
     },
     "scripts": {
         "build": "nx run-many --target=build --all --parallel 1",
@@ -55,12 +55,16 @@
         "test": "nx run-many --target=test"
     },
     "dependencies": {
-        "tslib": "2.5.0"
+        "tslib": "2.6.2"
     },
     "pnpm": {
         "overrides": {
             "secure-store-redis": "1.4.7",
             "node-fetch": "2.6.9"
         }
+    },
+    "resolutions": {
+        "engine.io": "6.5.1",
+        "socket.io": "4.6.2"
     }
 }

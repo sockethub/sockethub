@@ -79,8 +79,8 @@
       >{$actor.state?.connected
         ? "Connected"
         : connecting
-        ? "Connecting"
-        : "Connect"}</SockethubButton
+          ? "Connecting"
+          : "Connect"}</SockethubButton
     >
   </div>
 </div>
