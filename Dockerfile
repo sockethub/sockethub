@@ -1,4 +1,4 @@
-ARG node_version=19
+ARG node_version=20
 FROM node:${node_version}
 ARG node_version
 LABEL authors="Ben Kero <ben.kero@gmail.com>, Nick Jennings <nick@silverbucket.net>"
