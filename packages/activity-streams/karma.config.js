@@ -7,19 +7,12 @@ module.exports = function (config) {
             "karma-chai",
             "karma-mocha",
             "karma-chrome-launcher",
-            "karma-firefox-launcher",
         ],
         port: 9876, // karma web server port
         colors: true,
         logLevel: config.LOG_INFO,
-        browsers: ["ChromeHeadless", "Firefox"],
+        browsers: ["ChromeHeadless"],
         autoWatch: false,
         concurrency: Infinity,
-        customLaunchers: {
-            FirefoxHeadless: {
-                base: "Firefox",
-                flags: ["-headless"],
-            },
-        },
     });
 };
