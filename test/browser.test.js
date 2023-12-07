@@ -66,32 +66,6 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                 expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
             });
 
-            it("sends fail and returns error", (done) => {
-                let dummyObj = {
-                    type: "fail",
-                    actor: actor.id,
-                    context: "dummy",
-                    object: { type: "message", content: `failure message` },
-                };
-                sc.socket.emit("message", dummyObj, (msg) => {
-                    // console.log("dummy fail callback: ", msg);
-                    if (msg?.error) {
-                        dummyObj.error = "Error: failure message";
-                        dummyObj.actor = sc.ActivityStreams.Object.get(
-                            actor.id,
-                        );
-                        expect(msg).to.eql(dummyObj);
-                        done();
-                    } else {
-                        done(
-                            new Error(
-                                "didn't receive expected failure from dummy platform",
-                            ),
-                        );
-                    }
-                });
-            });
-
             let dummyMessageCount = 5;
             for (let i = 0; i < dummyMessageCount; i++) {
                 it(`sends echo ${i} and gets response`, (done) => {
@@ -117,6 +91,32 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                     });
                 });
             }
+
+            it("sends fail and returns error", (done) => {
+                let dummyObj = {
+                    type: "fail",
+                    actor: actor.id,
+                    context: "dummy",
+                    object: { type: "message", content: `failure message` },
+                };
+                sc.socket.emit("message", dummyObj, (msg) => {
+                    // console.log("dummy fail callback: ", msg);
+                    if (msg?.error) {
+                        dummyObj.error = "Error: failure message";
+                        dummyObj.actor = sc.ActivityStreams.Object.get(
+                            actor.id,
+                        );
+                        expect(msg).to.eql(dummyObj);
+                        done();
+                    } else {
+                        done(
+                            new Error(
+                                "didn't receive expected failure from dummy platform",
+                            ),
+                        );
+                    }
+                });
+            });
         });
 
         describe("Feeds", () => {
