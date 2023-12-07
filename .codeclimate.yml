@@ -39,3 +39,4 @@ exclude_patterns:
     - "**/tests/"
     - "**/*.d.ts"
     - "**/*.test.*"
+    - "packages/examples/"
