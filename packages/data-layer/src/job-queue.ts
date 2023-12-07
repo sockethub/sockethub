@@ -1,6 +1,7 @@
 import { Job, Queue, Worker } from "bullmq";
 import crypto, { Crypto } from "@sockethub/crypto";
 import {
+    JobHandler,
     JobDataDecrypted,
     JobDataEncrypted,
     JobDecrypted,
@@ -12,9 +13,6 @@ import EventEmitter from "events";
 import { IActivityStream } from "@sockethub/schemas";
 import IORedis from "ioredis";
 
-interface JobHandler {
-    (job: JobDataDecrypted): Promise<JobDataDecrypted>;
-}
 
 export function createIORedisConnection(
     config: RedisConfig,

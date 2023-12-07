@@ -6,6 +6,7 @@ import {
     JobQueue,
     JobDataDecrypted,
 } from "@sockethub/data-layer";
+import { JobHandler } from "@sockethub/data-layer";
 
 // command-line params
 const parentId = process.argv[2];
@@ -77,7 +78,7 @@ const platform = new PlatformModule(platformSession);
 /**
  * Returns a function used to handle completed jobs from the platform code (the `done` callback).
  */
-function getJobHandler() {
+function getJobHandler(): JobHandler {
     return async (job: JobDataDecrypted) => {
         const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
         jobLog(`received ${job.title} ${job.msg.type}`);

@@ -29,3 +29,7 @@ export interface JobDecrypted {
         (): void;
     };
 }
+
+export interface JobHandler {
+    (job: JobDataDecrypted): Promise<any>;
+}
