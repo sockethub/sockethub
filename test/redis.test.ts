@@ -80,7 +80,6 @@ describe("JobQueue", () => {
         });
         queue.onJob(async (job) => {
             console.log("-2 ", job);
-            return job;
         });
         queue.add("socket id", as).then((job) => {
             console.log("-3");
