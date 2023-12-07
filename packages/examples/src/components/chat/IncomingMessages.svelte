@@ -2,7 +2,7 @@
   import { writable, get } from "svelte/store";
   import type { AnyActivityStream } from "$lib/sockethub";
 
-  const messages = writable([] as Record<string, any>[]);
+  const messages = writable([] as [string, string | undefined][]);
 
   export function displayMessage(m: AnyActivityStream) {
     if (m.type === "send" && m.object?.type === "message") {

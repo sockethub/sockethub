@@ -3,12 +3,13 @@
   import { sc } from "$lib/sockethub";
   import type { BaseStore } from "$stores/BaseStore";
   import type { ActorData } from "$stores/ActorStore";
+  import type { Payload } from "$lib/types";
 
   export let actor: BaseStore<ActorData>;
 
   $: obj = $actor.object;
 
-  function sendActivityObjectCreate(data: any) {
+  function sendActivityObjectCreate(data: Payload) {
     const actorObj = JSON.parse(data.detail.jsonString);
     console.log("creating activity object:  ", actorObj);
     sc.ActivityStreams.Object.create(actorObj);
@@ -30,5 +31,5 @@
   {obj}
   buttonText="Activity Object Create"
   on:submit={sendActivityObjectCreate}
-  disabled={$actor.state?.actorSet}
+  disabled={$actor.state?.actorSet || false}
 />

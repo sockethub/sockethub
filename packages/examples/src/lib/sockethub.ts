@@ -46,6 +46,10 @@ export interface AnyActivityStream {
   error?: string;
 }
 
+export type SockethubResponse = {
+  error: string;
+};
+
 export async function send(obj: AnyActivityStream) {
   console.log("sending to sockethub: ", obj);
   return new Promise((resolve, reject) => {

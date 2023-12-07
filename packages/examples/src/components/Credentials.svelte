@@ -1,16 +1,18 @@
 <script lang="ts">
   import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
   import { sc } from "$lib/sockethub";
+  import type { SockethubResponse } from "$lib/sockethub";
   import { get } from "svelte/store";
   import type { CredentialsObjectData } from "$stores/CredentialsStore";
   import type { BaseStore } from "$stores/BaseStore";
   import type { ActorData } from "$stores/ActorStore";
+  import type { Payload } from "$lib/types";
 
   export let credentials: CredentialsObjectData;
   export let actor: BaseStore<ActorData>;
   export let context: string;
 
-  function sendCredentials(data: any) {
+  function sendCredentials(data: Payload) {
     const creds = {
       context: context,
       type: "credentials",
@@ -18,7 +20,7 @@
       object: JSON.parse(data.detail.jsonString),
     };
     console.log("sending credentials: ", creds);
-    sc.socket.emit("credentials", creds, (resp: any) => {
+    sc.socket.emit("credentials", creds, (resp: SockethubResponse) => {
       if (resp?.error) {
         throw new Error(resp.error);
       }

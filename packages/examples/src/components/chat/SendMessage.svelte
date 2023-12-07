@@ -1,7 +1,6 @@
 <script lang="ts">
   import SockethubButton from "$components/SockethubButton.svelte";
   import { send } from "$lib/sockethub";
-  import type { AnyActivityStream } from "$lib/sockethub";
 
   export let actor;
   export let context: string;
