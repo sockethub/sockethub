@@ -57,13 +57,9 @@
     "dependencies": {
         "tslib": "2.6.2"
     },
-    "pnpm": {
-        "overrides": {
-            "secure-store-redis": "1.4.7",
-            "node-fetch": "2.6.9"
-        }
-    },
     "resolutions": {
+        "secure-store-redis": "1.4.7",
+        "node-fetch": "2.6.9",
         "engine.io": "6.5.1",
         "socket.io": "4.6.2"
     }
