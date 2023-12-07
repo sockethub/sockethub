@@ -1,9 +1,9 @@
 <script lang="ts">
   import SockethubButton from "$components/SockethubButton.svelte";
-  import {send} from "$lib/sockethub";
-  import type {ActorData} from "$lib/sockethub";
+  import { send } from "$lib/sockethub";
+  import type { ActorData } from "$lib/sockethub";
   import type { AnyActivityStream } from "$lib/sockethub";
-  import type {StateStore} from "$lib/types";
+  import type { StateStore } from "$lib/types";
 
   export let room: string;
   export let actor: ActorData;

@@ -2,7 +2,7 @@
   import Intro from "$components/Intro.svelte";
   import SockethubButton from "$components/SockethubButton.svelte";
   import Logger from "$components/logs/Logger.svelte";
-  import type {AnyActivityStream, CredentialName} from "$lib/sockethub";
+  import type { AnyActivityStream, CredentialName } from "$lib/sockethub";
   import { send } from "$lib/sockethub";
   import ActivityActor from "$components/ActivityActor.svelte";
   import Credentials from "$components/Credentials.svelte";

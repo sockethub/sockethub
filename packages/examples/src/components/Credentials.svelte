@@ -1,10 +1,9 @@
 <script lang="ts">
   import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
-  import {sc} from "$lib/sockethub";
-  import type {ActorData} from "$lib/sockethub";
+  import { sc } from "$lib/sockethub";
+  import type { ActorData } from "$lib/sockethub";
   import type { SockethubResponse, CredentialsObjectData } from "$lib/sockethub";
-  import type {Payload, StateStore} from "$lib/types";
-
+  import type { Payload, StateStore } from "$lib/types";
 
   export let credentials: CredentialsObjectData;
   export let actor: ActorData;

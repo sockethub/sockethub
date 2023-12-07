@@ -3,7 +3,6 @@
   import { sc } from "$lib/sockethub";
   import type { Payload, StateStore } from "$lib/types";
 
-
   export let actor;
   export let state: StateStore;
 

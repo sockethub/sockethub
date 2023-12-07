@@ -1,4 +1,4 @@
-import type {Writable} from "svelte/store";
+import type { Writable } from "svelte/store";
 
 export type Payload = {
   detail: {
@@ -18,8 +18,8 @@ type StateData = {
   credentialsSet?: boolean;
   connected?: boolean;
   joined?: boolean;
-}
+};
 
 export type StateStore = {
-  subscribe: Writable<StateData>["subscribe"]
-}
+  subscribe: Writable<StateData>["subscribe"];
+};

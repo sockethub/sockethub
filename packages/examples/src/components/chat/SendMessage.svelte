@@ -2,7 +2,7 @@
   import SockethubButton from "$components/SockethubButton.svelte";
   import { send } from "$lib/sockethub";
   import type { ActorData } from "$lib/sockethub";
-  import type {StateStore} from "$lib/types";
+  import type { StateStore } from "$lib/types";
 
   export let actor: ActorData;
   export let context: string;

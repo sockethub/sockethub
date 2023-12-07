@@ -50,7 +50,7 @@ export type ActorData = {
   id: string;
   name: string;
   type: string;
-}
+};
 
 export type CredentialsObjectData = IrcCredentials | XmppCredentials;
 
