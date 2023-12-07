@@ -3,7 +3,6 @@ import { ObjectTypesList, ObjectTypesSchema } from "../helpers/objects";
 
 const validActorRefs = activityObject.properties.object.oneOf;
 const validTargetRefs = activityObject.properties.object.oneOf;
-// eslint-disable-next-line security-node/detect-crlf
 console.log(validActorRefs);
 
 const validObjectRefs = [];

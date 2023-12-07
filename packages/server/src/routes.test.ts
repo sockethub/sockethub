@@ -12,6 +12,7 @@ describe("routes/base", () => {
     it("can find each of the base files it serves", () => {
         Object.values(basePaths).forEach((fwd: string) => {
             try {
+                // eslint-disable-next-line security/detect-non-literal-fs-filename
                 expect(existsSync(fwd)).to.be.true;
             } catch (e) {
                 throw new Error(`Unable to resolve path ${fwd}`);

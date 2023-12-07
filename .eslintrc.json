@@ -30,12 +30,13 @@
             2,
             { "anonymous": "always", "named": "never" }
         ],
-        "no-octal-escape": "off"
+        "no-octal-escape": "off",
+        "security/detect-object-injection": "off"
     },
-    "plugins": ["security-node"],
+    "plugins": ["security"],
     "extends": [
         "eslint:recommended",
-        "plugin:security-node/recommended",
+        "plugin:security/recommended",
         "plugin:@typescript-eslint/recommended"
     ],
     "settings": {
@@ -48,7 +49,7 @@
             "parserOptions": {
                 "project": ["./tsconfig.json"]
             },
-            "plugins": ["@typescript-eslint", "security-node"],
+            "plugins": ["@typescript-eslint", "security"],
             "extends": ["plugin:@typescript-eslint/recommended"]
         },
         {

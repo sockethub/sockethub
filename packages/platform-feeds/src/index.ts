@@ -31,9 +31,10 @@ import getPodcastFromFeed from "podparse";
 
 const MAX_NOTE_LENGTH = 256;
 
+// eslint-disable-next-line security/detect-unsafe-regex
 const basic = /\s?<!doctype html>|(<html\b[^>]*>|<body\b[^>]*>|<x-[^>]+>)+/i;
+// eslint-disable-next-line security/detect-non-literal-regexp
 const full = new RegExp(
-    // eslint-disable-next-line security-node/non-literal-reg-expr
     htmlTags.map((tag) => `<${tag}\\b[^>]*>`).join("|"),
     "i",
 );

@@ -15,8 +15,6 @@
  *
  */
 
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-
 import EventEmitter from "eventemitter3";
 import { IActivityObject, IActivityStream } from "@sockethub/schemas";
 
@@ -211,6 +209,7 @@ function Stream(
 export interface ActivityObjectManager {
     create(obj: unknown): unknown;
     delete(id: string): boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     list(): IterableIterator<any>;
     get(id: string, expand?: boolean): unknown;
 }
@@ -243,6 +242,7 @@ const _Object: ActivityObjectManager = {
         return ensureProps(obj);
     },
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     list: function (): IterableIterator<any> {
         return objs.keys();
     },
@@ -252,6 +252,7 @@ export interface ASFactoryOptions {
     specialObjs?: Array<string>;
     failOnUnknownObjectProperties?: boolean;
     warnOnUnknownObjectProperties?: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     customProps?: any;
 }
 

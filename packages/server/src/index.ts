@@ -5,7 +5,6 @@ const sockethub = new Sockethub();
 module.exports = async () => {
     process.once("uncaughtException", function (err) {
         console.log("UNCAUGHT EXCEPTION");
-        // eslint-disable-next-line security-node/detect-crlf
         console.log(err.stack);
         process.exit(1);
     });
