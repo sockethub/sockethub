@@ -1,11 +1,5 @@
 import { Job, Queue, Worker, QueueEvents } from "bullmq";
-import {
-    JobHandler,
-    JobDataEncrypted,
-    JobDecrypted,
-    JobEncrypted,
-    RedisConfig,
-} from "./types";
+import { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types";
 import debug, { Debugger } from "debug";
 import { IActivityStream } from "@sockethub/schemas";
 import JobBase, { createIORedisConnection } from "./job-base";
@@ -67,7 +61,6 @@ export default class JobQueue extends JobBase {
     readonly uid: string;
     protected queue: Queue;
     protected events: QueueEvents;
-    protected handler: JobHandler;
     private readonly debug: Debugger;
     private counter = 0;
     private initialized = false;
@@ -179,12 +172,5 @@ export default class JobQueue extends JobBase {
             sessionId: socketId,
             msg: this.encryptActivityStream(msg),
         };
-    }
-
-    protected async jobHandler(encryptedJob: JobEncrypted) {
-        const job = this.decryptJobData(encryptedJob);
-        this.debug(`handling ${job.title} ${job.msg.type}`);
-        const ret = await this.handler(job);
-        return ret;
     }
 }
