@@ -160,8 +160,8 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
         });
 
         describe("XMPP", () => {
-            describe("emit on credentials channel", () => {
-                it("fires and empty callback", (done) => {
+            describe("Credentials", () => {
+                it("fires an empty callback", (done) => {
                     sc.socket.emit(
                         "credentials",
                         {
@@ -184,7 +184,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
             });
 
             describe("ActivityStreams.create", () => {
-                it("successfully creates and stores an activity-object", (done) => {
+                it("successfully creates and stores an activity-object", () => {
                     const actor = {
                         id: "jimmy@prosody/SockethubExample",
                         type: "person",
@@ -194,7 +194,6 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                     const getObj = sc.ActivityStreams.Object.get(actor.id);
                     expect(obj).to.eql(actor);
                     expect(getObj).to.eql(actor);
-                    done();
                 });
             });
 
