@@ -2,7 +2,10 @@
   import { writable } from "svelte/store";
   import type { AnyActivityStream } from "$lib/sockethub";
 
-  type LogEntries = Record<string, [AnyActivityStream | {}, AnyActivityStream | {}]>;
+  type LogEntries = Record<
+    string,
+    [AnyActivityStream | Record<string, never>, AnyActivityStream | Record<string, never>]
+  >;
   const Logs = writable({} as LogEntries);
   let counter = 0;
 
@@ -96,7 +99,7 @@
               <LogEntry buttonAction={showLog(`${id}-${s}`)} id={`${id}-${s}`} entry={r} />
             {/if}
           {/each}
-        {:else if tuple[1].hasOwnProperty("context")}
+        {:else if Object.prototype.hasOwnProperty.call(tuple[1], "context")}
           <LogEntry buttonAction={showLog(id)} {id} entry={tuple[1]} />
         {:else}
           <LogEntry buttonAction={showLog(id)} {id} entry={tuple[0]} />

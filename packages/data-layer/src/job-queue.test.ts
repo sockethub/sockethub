@@ -59,14 +59,14 @@ describe("JobQueue", () => {
         sinon.assert.calledOnce(MockBull);
         sinon.assert.calledWith(
             MockBull,
-            "sockethub:data-layer:job-queue:a parent id:a session id",
+            "sockethub:data-layer:queue:a parent id:a session id",
             {
                 connection: {},
             },
         );
         expect(typeof jobQueue).to.equal("object");
         expect(jobQueue.uid).to.equal(
-            `sockethub:data-layer:job-queue:a parent id:a session id`,
+            `sockethub:data-layer:queue:a parent id:a session id`,
         );
         expect(typeof jobQueue.add).to.equal("function");
         expect(typeof jobQueue.getJob).to.equal("function");

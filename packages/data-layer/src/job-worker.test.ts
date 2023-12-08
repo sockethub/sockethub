@@ -30,7 +30,7 @@ describe("JobWorker", () => {
         });
 
         class TestJobWorker extends JobWorker {
-            initWorker() {
+            init() {
                 this.worker = MockBull(this.uid, this.jobHandler.bind(this), {
                     connection: {},
                 });
@@ -58,7 +58,7 @@ describe("JobWorker", () => {
     it("returns a valid JobWorker object", () => {
         expect(typeof jobWorker).to.equal("object");
         expect(jobWorker.uid).to.equal(
-            `sockethub:data-layer:job-worker:a parent id:a session id`,
+            `sockethub:data-layer:worker:a parent id:a session id`,
         );
         expect(typeof jobWorker.onJob).to.equal("function");
         expect(typeof jobWorker.shutdown).to.equal("function");
@@ -69,7 +69,7 @@ describe("JobWorker", () => {
             jobWorker.onJob(() => {
                 throw new Error("This handler should never be called");
             });
-            sinon.assert.calledTwice(jobWorker.worker.on);
+            sinon.assert.notCalled(jobWorker.worker.on);
         });
     });
 
