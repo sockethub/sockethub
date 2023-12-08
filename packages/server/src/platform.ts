@@ -137,6 +137,7 @@ function getJobHandler(): JobHandler {
                         );
                     })
                     .catch((err) => {
+                        console.log(err);
                         jobLog("error " + err.toString());
                         reject(err);
                     });
