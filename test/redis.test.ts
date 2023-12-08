@@ -38,7 +38,7 @@ describe("CredentialsStore", () => {
             expect(false).to.eql(true);
         } catch (err) {
             expect(err.toString()).to.eql(
-                "Error: credentials not found for 1z7uditpybl",
+                `Error: credentials not found for ${actor}`,
             );
         }
     });
