@@ -30,13 +30,8 @@ describe("JobQueue", () => {
         });
 
         class TestJobQueue extends JobQueue {
-            initQueue() {
+            init() {
                 this.queue = MockBull(this.uid, {
-                    connection: {},
-                });
-            }
-            initWorker() {
-                this.worker = MockBull(this.uid, this.jobHandler.bind(this), {
                     connection: {},
                 });
             }
@@ -75,7 +70,6 @@ describe("JobQueue", () => {
         );
         expect(typeof jobQueue.add).to.equal("function");
         expect(typeof jobQueue.getJob).to.equal("function");
-        expect(typeof jobQueue.onJob).to.equal("function");
         expect(typeof jobQueue.shutdown).to.equal("function");
     });
 
@@ -123,44 +117,6 @@ describe("JobQueue", () => {
                 msg: "an encrypted message",
                 sessionId: "a socket id",
             });
-        });
-    });
-
-    describe("add", () => {
-        it("stores encrypted job", async () => {
-            cryptoMocks.encrypt.returns("encrypted foo");
-            jobQueue.queue.isPaused.returns(false);
-            const resultJob = {
-                title: "a platform-an identifier",
-                sessionId: "a socket id",
-                msg: "encrypted foo",
-            };
-            const res = await jobQueue.add("a socket id", {
-                context: "a platform",
-                id: "an identifier",
-            });
-            sinon.assert.calledOnce(jobQueue.queue.isPaused);
-            sinon.assert.notCalled(jobQueue.queue.emit);
-            sinon.assert.calledOnceWithExactly(
-                jobQueue.queue.add,
-                "a platform-an identifier",
-                resultJob,
-            );
-            expect(res).to.eql(resultJob);
-        });
-        it("fails job if queue paused", async () => {
-            cryptoMocks.encrypt.returns("encrypted foo");
-            jobQueue.queue.isPaused.returns(true);
-            try {
-                await jobQueue.add("a socket id", {
-                    context: "a platform",
-                    id: "an identifier",
-                });
-            } catch (err) {
-                expect(err.toString()).to.eql("Error: queue closed");
-            }
-            sinon.assert.calledOnce(jobQueue.queue.isPaused);
-            sinon.assert.notCalled(jobQueue.queue.add);
         });
     });
 
@@ -216,12 +172,41 @@ describe("JobQueue", () => {
         });
     });
 
-    describe("onJob", () => {
-        it("queues the handler", () => {
-            jobQueue.onJob(() => {
-                throw new Error("This handler should never be called");
+    describe("add", () => {
+        it("stores encrypted job", async () => {
+            cryptoMocks.encrypt.returns("encrypted foo");
+            jobQueue.queue.isPaused.returns(false);
+            const resultJob = {
+                title: "a platform-an identifier",
+                sessionId: "a socket id",
+                msg: "encrypted foo",
+            };
+            const res = await jobQueue.add("a socket id", {
+                context: "a platform",
+                id: "an identifier",
             });
-            sinon.assert.calledTwice(jobQueue.worker.on);
+            sinon.assert.calledOnce(jobQueue.queue.isPaused);
+            sinon.assert.notCalled(jobQueue.queue.emit);
+            sinon.assert.calledOnceWithExactly(
+                jobQueue.queue.add,
+                "a platform-an identifier",
+                resultJob,
+            );
+            expect(res).to.eql(resultJob);
+        });
+        it("fails job if queue paused", async () => {
+            cryptoMocks.encrypt.returns("encrypted foo");
+            jobQueue.queue.isPaused.returns(true);
+            try {
+                await jobQueue.add("a socket id", {
+                    context: "a platform",
+                    id: "an identifier",
+                });
+            } catch (err) {
+                expect(err.toString()).to.eql("Error: queue closed");
+            }
+            sinon.assert.calledOnce(jobQueue.queue.isPaused);
+            sinon.assert.notCalled(jobQueue.queue.add);
         });
     });
 
@@ -254,28 +239,6 @@ describe("JobQueue", () => {
             sinon.assert.notCalled(jobQueue.queue.pause);
             sinon.assert.calledOnce(jobQueue.queue.removeAllListeners);
             sinon.assert.calledOnce(jobQueue.queue.obliterate);
-        });
-    });
-
-    describe("jobHandler", () => {
-        it("calls handler as expected", async () => {
-            cryptoMocks.decrypt.returns("an unencrypted message");
-            const encryptedJob = {
-                data: {
-                    title: "a title",
-                    msg: "an encrypted message",
-                    sessionId: "a socket id",
-                },
-            };
-            jobQueue.onJob((job) => {
-                const decryptedData = encryptedJob.data;
-                decryptedData.msg = "an unencrypted message";
-                expect(job).to.eql(decryptedData);
-                decryptedData.msg += " handled";
-                return decryptedData;
-            });
-            const result = await jobQueue.jobHandler(encryptedJob);
-            expect(result.msg).to.eql("an unencrypted message handled");
         });
     });
 
