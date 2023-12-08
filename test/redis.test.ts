@@ -49,6 +49,33 @@ describe("CredentialsStore", () => {
     });
 });
 
+describe("connect and disconnect", () => {
+    [
+        { name: "queue", class: JobQueue },
+        { name: "worker", class: JobWorker },
+    ].forEach((o) => {
+        describe(o.name, () => {
+            let i;
+            beforeEach("init", () => {
+                i = new o.class("testid", "sessionid", testSecret, {
+                    url: "redis://localhost:10651",
+                });
+                if (o.name === "worker") {
+                    i.init();
+                }
+            });
+
+            it("is active", () => {
+                expect(typeof i.shutdown).to.eql("function");
+            });
+
+            afterEach("shutdown", async () => {
+                await i.shutdown();
+            });
+        });
+    });
+});
+
 describe("JobQueue", () => {
     const as: IActivityStream = {
         type: "foo",
@@ -62,12 +89,15 @@ describe("JobQueue", () => {
     let worker: JobWorker;
 
     beforeEach("initialized", () => {
+        console.log("-i0");
         queue = new JobQueue("testid", "sessionid", testSecret, {
             url: "redis://localhost:10651",
         });
+        console.log("-i2 ");
         worker = new JobWorker("testid", "sessionid", testSecret, {
             url: "redis://localhost:10651",
         });
+        console.log("-i3");
     });
 
     it("add job and get job on queue", (done) => {
@@ -96,10 +126,10 @@ describe("JobQueue", () => {
     });
 
     afterEach("shutdown", async () => {
-        console.log("-shutdown worker");
-        await worker.shutdown();
         console.log("-shutdown queue");
         await queue.shutdown();
+        console.log("-shutdown worker");
+        await worker.shutdown();
         console.log("end");
     });
 });

@@ -31,9 +31,12 @@ describe("JobWorker", () => {
 
         class TestJobWorker extends JobWorker {
             init() {
-                this.worker = MockBull(this.uid, this.jobHandler.bind(this), {
-                    connection: {},
-                });
+                this.redisConnection = MockBull();
+                this.worker = MockBull(
+                    this.uid,
+                    this.jobHandler.bind(this),
+                    this.redisConnection,
+                );
             }
             initCrypto() {
                 this.crypto = cryptoMocks;

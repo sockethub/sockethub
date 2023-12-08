@@ -31,8 +31,12 @@ describe("JobQueue", () => {
 
         class TestJobQueue extends JobQueue {
             init() {
+                this.redisConnection = MockBull();
                 this.queue = MockBull(this.uid, {
-                    connection: {},
+                    connection: this.redisConnection,
+                });
+                this.events = MockBull(this.uid, {
+                    connection: this.redisConnection,
                 });
             }
             initCrypto() {
@@ -56,12 +60,12 @@ describe("JobQueue", () => {
     });
 
     it("returns a valid JobQueue object", () => {
-        sinon.assert.calledOnce(MockBull);
+        sinon.assert.calledThrice(MockBull);
         sinon.assert.calledWith(
             MockBull,
             "sockethub:data-layer:queue:a parent id:a session id",
             {
-                connection: {},
+                connection: MockBull(),
             },
         );
         expect(typeof jobQueue).to.equal("object");

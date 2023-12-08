@@ -7,6 +7,7 @@ export default class JobWorker extends JobBase {
     readonly uid: string;
     protected worker: Worker;
     protected handler: JobHandler;
+    protected redisConnection;
     private readonly debug: Debugger;
     private readonly redisConfig: RedisConfig;
     private readonly queueId: string;
@@ -23,17 +24,18 @@ export default class JobWorker extends JobBase {
         this.queueId = `sockethub:data-layer:queue:${instanceId}:${sessionId}`;
         this.debug = debug(this.uid);
         this.redisConfig = redisConfig;
-        this.debug("initialized");
     }
 
-    init() {
+    protected init() {
         if (this.initialized) {
             throw new Error(`JobWorker already initialized for ${this.uid}`);
         }
         this.initialized = true;
+        this.redisConnection = createIORedisConnection(this.redisConfig);
         this.worker = new Worker(this.queueId, this.jobHandler.bind(this), {
-            connection: createIORedisConnection(this.redisConfig),
+            connection: this.redisConnection,
         });
+        this.debug(`initialized`);
     }
 
     onJob(handler: JobHandler): void {
@@ -43,9 +45,11 @@ export default class JobWorker extends JobBase {
 
     async shutdown() {
         await this.worker.pause();
+        this.removeAllListeners();
         this.worker.removeAllListeners();
         await this.worker.close();
         await this.worker.disconnect();
+        await this.redisConnection.disconnect();
     }
 
     protected async jobHandler(encryptedJob: JobEncrypted) {

@@ -2,10 +2,11 @@ import crypto, { Crypto } from "@sockethub/crypto";
 import { JobDataDecrypted, JobEncrypted, RedisConfig } from "./types";
 import EventEmitter from "events";
 import { IActivityStream } from "@sockethub/schemas";
-import IORedis from "ioredis";
+import IORedis, { Redis } from "ioredis";
 
-export function createIORedisConnection(config: RedisConfig) {
+export function createIORedisConnection(config: RedisConfig): Redis {
     return new IORedis(config.url, {
+        enableOfflineQueue: false,
         maxRetriesPerRequest: null,
     });
 }
@@ -27,6 +28,10 @@ export default class JobBase extends EventEmitter {
 
     initCrypto() {
         this.crypto = crypto;
+    }
+
+    disconnectBase() {
+        this.removeAllListeners();
     }
 
     /**

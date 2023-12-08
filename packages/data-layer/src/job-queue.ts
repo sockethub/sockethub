@@ -66,12 +66,12 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
 export default class JobQueue extends JobBase {
     readonly uid: string;
     protected queue: Queue;
+    protected events: QueueEvents;
     protected handler: JobHandler;
     private readonly debug: Debugger;
-    private readonly redisConfig: RedisConfig;
-    private events: QueueEvents;
     private counter = 0;
     private initialized = false;
+    protected redisConnection;
 
     constructor(
         instanceId: string,
@@ -82,23 +82,21 @@ export default class JobQueue extends JobBase {
         super(secret);
         this.uid = `sockethub:data-layer:queue:${instanceId}:${sessionId}`;
         this.debug = debug(this.uid);
-        this.redisConfig = redisConfig;
-        this.init();
-        this.debug("initialized");
+        this.init(redisConfig);
     }
 
-    init() {
+    protected init(redisConfig: RedisConfig) {
         if (this.initialized) {
             throw new Error(`JobQueue already initialized for ${this.uid}`);
         }
         this.initialized = true;
 
+        this.redisConnection = createIORedisConnection(redisConfig);
         this.queue = new Queue(this.uid, {
-            connection: createIORedisConnection(this.redisConfig),
+            connection: this.redisConnection,
         });
-
         this.events = new QueueEvents(this.uid, {
-            connection: createIORedisConnection(this.redisConfig),
+            connection: this.redisConnection,
         });
 
         this.events.on("completed", async ({ jobId, returnvalue }) => {
@@ -114,6 +112,7 @@ export default class JobQueue extends JobBase {
             );
             this.emit("failed", job.data, failedReason);
         });
+        this.debug(`initialized`);
     }
 
     async add(
@@ -144,13 +143,17 @@ export default class JobQueue extends JobBase {
     }
 
     async shutdown() {
+        this.removeAllListeners();
+        this.queue.removeAllListeners();
         if (!(await this.queue.isPaused())) {
             await this.queue.pause();
         }
         await this.queue.obliterate({ force: true });
-        this.queue.removeAllListeners();
         await this.queue.close();
         await this.queue.disconnect();
+        await this.events.close();
+        await this.events.disconnect();
+        await this.redisConnection.disconnect();
     }
 
     private async getJob(jobId: string): Promise<JobDecrypted> {
