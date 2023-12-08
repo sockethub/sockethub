@@ -96,12 +96,12 @@ export default class CredentialsStore implements CredentialsStoreInstance {
         this.log(`get credentials for ${actor}`);
         const credentials: CredentialsObject = await this.store.get(actor);
         if (!credentials) {
-            throw new Error(`credentials not found for ${actor}`)
+            throw new Error(`credentials not found for ${actor}`);
         }
 
         if (credentialHash) {
             if (credentialHash !== this.objectHash(credentials.object)) {
-                throw new Error(`invalid credentials for ${actor}`
+                throw new Error(`invalid credentials for ${actor}`);
             }
         }
         return credentials;
