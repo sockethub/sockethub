@@ -47,7 +47,7 @@
         "docker:build": "pnpm docker:clean:sockethub; pnpm docker:start",
         "integration": "pnpm integration:redis && pnpm integration:browser",
         "integration:browser": "pnpm docker:start && pnpm integration:browser:run; RES=$?; exit $RES",
-        "integration:browser:run": "DEBUG=secure-store*,sockethub* karma start --single-run --sh_port=10650 --browsers ChromeHeadless ./karma.config.js",
+        "integration:browser:run": "karma start --single-run --sh_port=10650 --browsers ChromeHeadless ./karma.config.js",
         "integration:redis": "docker compose up redis -d && pnpm integration:redis:run; RES=$?; docker compose down; exit $RES",
         "integration:redis:run": "DEBUG=ioredis*,bullmq*,sockethub* mocha -r ts-node/register test/redis.test.ts",
         "lint": "prettier --check . && eslint --max-warnings 0 . && nx run-many --target=lint && pnpm lint:doc",

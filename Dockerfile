@@ -13,6 +13,6 @@ COPY . .
 RUN pnpm install
 RUN NX_REJECT_UNKNOWN_LOCAL_CACHE=0 pnpm build
 
-CMD DEBUG=sockethub* /app/packages/sockethub/bin/sockethub --examples --host 0.0.0.0 -c /app/test/sockethub.config.docker.json
+CMD DEBUG=secure-store*,sockethub* /app/packages/sockethub/bin/sockethub --examples --host 0.0.0.0 -c /app/test/sockethub.config.docker.json
 
 EXPOSE 10650
