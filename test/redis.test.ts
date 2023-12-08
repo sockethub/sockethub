@@ -96,10 +96,10 @@ describe("JobQueue", () => {
     });
 
     afterEach("shutdown", async () => {
-        console.log('-shutdown worker')
+        console.log("-shutdown worker");
         await worker.shutdown();
-        console.log('-shutdown queue')
+        console.log("-shutdown queue");
         await queue.shutdown();
-        console.log('end')
+        console.log("end");
     });
 });
