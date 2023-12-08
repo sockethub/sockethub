@@ -82,19 +82,14 @@ export type SockethubResponse = {
 };
 
 export async function send(obj: AnyActivityStream) {
-  console.log("sending to sockethub: ", obj);
-  return new Promise((resolve, reject) => {
-    sc.socket.emit("message", addObject(ObjectType.send, obj), (resp: AnyActivityStream) => {
-      console.log("response from sockethub: ", resp);
+  sc.socket.emit(
+    "message",
+    addObject(ObjectType.send, obj),
+    (resp: AnyActivityStream) => {
       addObject(ObjectType.resp, resp, resp.id);
       displayMessage(resp);
-      if (resp.error) {
-        reject(resp);
-      } else {
-        resolve(resp);
-      }
-    });
-  });
+    },
+  );
 }
 
 function stateChange(state: string) {
@@ -108,6 +103,7 @@ function stateChange(state: string) {
 }
 
 function handleIncomingMessage(msg: AnyActivityStream) {
+  console.log("handle incoming: ", msg);
   displayMessage(msg);
 }
 

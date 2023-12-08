@@ -2,7 +2,7 @@
   import { writable } from "svelte/store";
   import type { AnyActivityStream } from "$lib/sockethub";
 
-  type LogEntries = Record<string, [AnyActivityStream]>;
+  type LogEntries = Record<string, [AnyActivityStream | {}, AnyActivityStream | {}]>;
   const Logs = writable({} as LogEntries);
   let counter = 0;
 
@@ -11,7 +11,7 @@
     resp = "RESP",
   }
 
-  export function addObject(type: ObjectType, obj: AnyActivityStream, id: string) {
+  export function addObject(type: ObjectType, obj: AnyActivityStream, id?: string) {
     let index: string;
     if (!id) {
       index = "" + ++counter;
@@ -22,10 +22,14 @@
 
     Logs.update((currentLogs: LogEntries) => {
       if (!currentLogs[index]) {
-        currentLogs[index] = [obj];
+        if (type === ObjectType.send) {
+          currentLogs[index] = [obj, {}];
+        } else {
+          currentLogs[index] = [{}, obj];
+        }
       } else {
-        currentLogs[index].push(obj);
-        // = [...currentLogs[obj.id], obj]
+        const pos = type === ObjectType.send ? 0 : 1
+        currentLogs[index][pos] = obj;
       }
       return currentLogs;
     });
@@ -58,7 +62,7 @@
       console.log("logs: ", logs);
       logModalState = true;
       jsonSend = JSON.stringify(logs[indexSend][0], null, 2);
-      jsonResp = JSON.stringify(logs[indexResp][logs[indexResp].length - 1], null, 2);
+      jsonResp = JSON.stringify(logs[indexResp][1] || {}, null, 2);
     };
   }
 </script>
@@ -85,15 +89,17 @@
         } else {
           return parseInt(i) >= parseInt(k) ? -1 : 1;
         }
-      }) as [id, v]}
-        {#if Array.isArray(v[v.length - 1])}
-          {#each Object.entries(v[v.length - 1]) as [i, r]}
+      }) as [id, tuple]}
+        {#if Array.isArray(tuple[tuple.length - 1])}
+          {#each Object.entries(tuple[tuple.length - 1]) as [s, r]}
             {#if r}
-              <LogEntry buttonAction={showLog(`${id}-${i}`)} id={`${id}-${i}`} entry={r} />
+              <LogEntry buttonAction={showLog(`${id}-${s}`)} id={`${id}-${s}`} entry={r} />
             {/if}
           {/each}
+        {:else if tuple[1].hasOwnProperty('context')}
+          <LogEntry buttonAction={showLog(id)} {id} entry={tuple[1]} />
         {:else}
-          <LogEntry buttonAction={showLog(id)} {id} entry={v[v.length - 1]} />
+          <LogEntry buttonAction={showLog(id)} {id} entry={tuple[0]} />
         {/if}
       {/each}
     </ul>

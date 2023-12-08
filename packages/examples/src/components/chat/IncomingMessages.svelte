@@ -5,6 +5,7 @@
   const messages = writable([] as [string, string | undefined][]);
 
   export function displayMessage(m: AnyActivityStream) {
+    console.log("incoming message: ", m);
     if (m.type === "send" && m.object?.type === "message") {
       messages.set([
         ...get(messages),
