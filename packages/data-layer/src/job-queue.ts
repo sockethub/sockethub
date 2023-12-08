@@ -88,7 +88,9 @@ export default class JobQueue extends JobBase {
     }
 
     init() {
-        if (this.initialized) { throw new Error(`JobQueue already initialized for ${this.uid}`)}
+        if (this.initialized) {
+            throw new Error(`JobQueue already initialized for ${this.uid}`);
+        }
         this.initialized = true;
 
         this.queue = new Queue(this.uid, {
@@ -107,8 +109,10 @@ export default class JobQueue extends JobBase {
 
         this.events.on("failed", async ({ jobId, failedReason }) => {
             const job = await this.getJob(jobId);
-            this.debug(`failed ${job.data.title} ${job.data.msg.type}: ${failedReason}`);
-            this.emit('failed', job.data, failedReason);
+            this.debug(
+                `failed ${job.data.title} ${job.data.msg.type}: ${failedReason}`,
+            );
+            this.emit("failed", job.data, failedReason);
         });
     }
 

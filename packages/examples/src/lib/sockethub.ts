@@ -82,14 +82,10 @@ export type SockethubResponse = {
 };
 
 export async function send(obj: AnyActivityStream) {
-  sc.socket.emit(
-    "message",
-    addObject(ObjectType.send, obj),
-    (resp: AnyActivityStream) => {
-      addObject(ObjectType.resp, resp, resp.id);
-      displayMessage(resp);
-    },
-  );
+  sc.socket.emit("message", addObject(ObjectType.send, obj), (resp: AnyActivityStream) => {
+    addObject(ObjectType.resp, resp, resp.id);
+    displayMessage(resp);
+  });
 }
 
 function stateChange(state: string) {

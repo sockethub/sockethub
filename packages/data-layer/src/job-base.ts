@@ -4,9 +4,7 @@ import EventEmitter from "events";
 import { IActivityStream } from "@sockethub/schemas";
 import IORedis from "ioredis";
 
-export function createIORedisConnection(
-    config: RedisConfig,
-) {
+export function createIORedisConnection(config: RedisConfig) {
     return new IORedis(config.url, {
         maxRetriesPerRequest: null,
     });
@@ -20,8 +18,7 @@ export default class JobBase extends EventEmitter {
         super();
         if (secret.length !== 32) {
             throw new Error(
-                "secret must be a 32 char string, length: " +
-                    secret.length,
+                "secret must be a 32 char string, length: " + secret.length,
             );
         }
         this.secret = secret;

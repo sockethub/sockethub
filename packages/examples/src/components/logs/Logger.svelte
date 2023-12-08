@@ -28,7 +28,7 @@
           currentLogs[index] = [{}, obj];
         }
       } else {
-        const pos = type === ObjectType.send ? 0 : 1
+        const pos = type === ObjectType.send ? 0 : 1;
         currentLogs[index][pos] = obj;
       }
       return currentLogs;
@@ -96,7 +96,7 @@
               <LogEntry buttonAction={showLog(`${id}-${s}`)} id={`${id}-${s}`} entry={r} />
             {/if}
           {/each}
-        {:else if tuple[1].hasOwnProperty('context')}
+        {:else if tuple[1].hasOwnProperty("context")}
           <LogEntry buttonAction={showLog(id)} {id} entry={tuple[1]} />
         {:else}
           <LogEntry buttonAction={showLog(id)} {id} entry={tuple[0]} />

@@ -1,9 +1,5 @@
 import { Worker } from "bullmq";
-import {
-    JobHandler,
-    JobEncrypted,
-    RedisConfig,
-} from "./types";
+import { JobHandler, JobEncrypted, RedisConfig } from "./types";
 import debug, { Debugger } from "debug";
 import JobBase, { createIORedisConnection } from "./job-base";
 
@@ -31,7 +27,9 @@ export default class JobWorker extends JobBase {
     }
 
     init() {
-        if (this.initialized) { throw new Error(`JobWorker already initialized for ${this.uid}`)}
+        if (this.initialized) {
+            throw new Error(`JobWorker already initialized for ${this.uid}`);
+        }
         this.initialized = true;
         this.worker = new Worker(this.queueId, this.jobHandler.bind(this), {
             connection: createIORedisConnection(this.redisConfig),

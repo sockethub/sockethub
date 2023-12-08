@@ -3,7 +3,7 @@ import { join } from "path";
 import { debug, Debugger } from "debug";
 import { IActivityStream, CompletedJobHandler } from "@sockethub/schemas";
 import { JobQueue, JobDataDecrypted } from "@sockethub/data-layer";
-import type {Socket} from "socket.io";
+import type { Socket } from "socket.io";
 
 import config from "./config";
 import { getSocket } from "./listener";
@@ -229,7 +229,9 @@ export default class PlatformInstance {
                 ? result.toString()
                 : "job failed for unknown reason";
         }
-        this.debug(`${job.title} ${type}${payload?.error ? `: ${payload.error}` : ''}`);
+        this.debug(
+            `${job.title} ${type}${payload?.error ? `: ${payload.error}` : ""}`,
+        );
 
         if (!payload || typeof payload === "string") {
             payload = job.msg;

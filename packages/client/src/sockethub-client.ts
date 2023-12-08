@@ -11,7 +11,7 @@ export interface EventMapping {
 }
 
 interface CustomEmitter extends EventEmitter {
-    _emit(s: string, o: unknown, d?: string): void;
+    _emit(s: string, o: unknown, c?: unknown): void;
 }
 
 export default class SockethubClient {
