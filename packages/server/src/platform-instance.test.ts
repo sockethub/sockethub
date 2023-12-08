@@ -19,8 +19,8 @@ describe("PlatformInstance", () => {
 
     function getTestPlatformInstanceClass() {
         class TestPlatformInstance extends PlatformInstance {
-            createBull() {
-                this.bull = sandbox.stub().returns({
+            createQueue() {
+                this.JobQueue = sandbox.stub().returns({
                     shutdown: sandbox.stub(),
                     on: sandbox.stub(),
                     getJob: sandbox.stub(),
@@ -141,17 +141,17 @@ describe("PlatformInstance", () => {
         });
 
         it("initializes the job queue", () => {
-            expect(pi.jobQueue).to.be.undefined;
+            expect(pi.queue).to.be.undefined;
             pi.initQueue("a secret");
-            expect(pi.jobQueue).to.be.ok;
+            expect(pi.queue).to.be.ok;
         });
 
         it("cleans up its references when shutdown", async () => {
             pi.initQueue("a secret");
-            expect(pi.jobQueue).to.be.ok;
+            expect(pi.queue).to.be.ok;
             expect(platformInstances.has("platform identifier")).to.be.true;
             await pi.shutdown();
-            expect(pi.jobQueue).not.to.be.ok;
+            expect(pi.queue).not.to.be.ok;
             expect(platformInstances.has("platform identifier")).to.be.false;
         });
 

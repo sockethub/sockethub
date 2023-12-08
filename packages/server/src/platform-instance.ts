@@ -3,6 +3,7 @@ import { join } from "path";
 import { debug, Debugger } from "debug";
 import { IActivityStream, CompletedJobHandler } from "@sockethub/schemas";
 import { JobQueue, JobDataDecrypted } from "@sockethub/data-layer";
+import type {Socket} from "socket.io";
 
 import config from "./config";
 import { getSocket } from "./listener";
@@ -43,8 +44,8 @@ export default class PlatformInstance {
     id: string;
     flaggedForTermination = false;
     initialized = false;
-    jobQueue: JobQueue;
-    bull;
+    queue: JobQueue;
+    JobQueue;
     getSocket;
     readonly global: boolean = false;
     readonly completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
@@ -78,13 +79,13 @@ export default class PlatformInstance {
             env.DEBUG = process.env.DEBUG;
         }
 
-        this.createBull();
+        this.createQueue();
         this.initProcess(this.parentId, this.name, this.id, env);
         this.createGetSocket();
     }
 
-    createBull() {
-        this.bull = JobQueue;
+    createQueue() {
+        this.JobQueue = JobQueue;
     }
 
     initProcess(parentId, name, id, env) {
@@ -116,8 +117,8 @@ export default class PlatformInstance {
         }
 
         try {
-            await this.jobQueue.shutdown();
-            delete this.jobQueue;
+            await this.queue.shutdown();
+            delete this.queue;
         } catch (e) {
             // this needs to happen
         }
@@ -133,16 +134,15 @@ export default class PlatformInstance {
      * When jobs are completed or failed, we prepare the results and send them to the client socket
      */
     public initQueue(secret: string) {
-        this.jobQueue = new this.bull(
+        this.queue = new this.JobQueue(
             this.parentId,
             this.id,
             secret,
             nconf.get("redis"),
         );
-        this.jobQueue.initResultEvents();
 
-        this.jobQueue.on(
-            "global:completed",
+        this.queue.on(
+            "completed",
             async (
                 job: JobDataDecrypted,
                 result: IActivityStream | undefined,
@@ -151,8 +151,8 @@ export default class PlatformInstance {
             },
         );
 
-        this.jobQueue.on(
-            "global:failed",
+        this.queue.on(
+            "failed",
             async (
                 job: JobDataDecrypted,
                 result: IActivityStream | undefined,
@@ -183,9 +183,9 @@ export default class PlatformInstance {
      * @param sessionId ID of the socket connection to send the message to
      * @param msg ActivityStream object to send to client
      */
-    public sendToClient(sessionId: string, msg: IActivityStream) {
-        this.getSocket(sessionId).then(
-            (socket) => {
+    public async sendToClient(sessionId: string, msg: IActivityStream) {
+        return this.getSocket(sessionId).then(
+            (socket: Socket) => {
                 try {
                     // this property should never be exposed externally
                     delete msg.sessionSecret;
@@ -228,8 +228,8 @@ export default class PlatformInstance {
             payload.error = result
                 ? result.toString()
                 : "job failed for unknown reason";
-            this.debug(`${job.title} ${type}: ${payload.error}`);
         }
+        this.debug(`${job.title} ${type}${payload?.error ? `: ${payload.error}` : ''}`);
 
         if (!payload || typeof payload === "string") {
             payload = job.msg;
@@ -259,11 +259,11 @@ export default class PlatformInstance {
                 this.debug(
                     `critical job type ${job.msg.type} failed, flagging for termination`,
                 );
-                await this.jobQueue.pause();
+                await this.queue.pause();
                 this.initialized = false;
                 this.flaggedForTermination = true;
             } else {
-                await this.jobQueue.resume();
+                await this.queue.resume();
                 this.initialized = true;
                 this.flaggedForTermination = false;
             }

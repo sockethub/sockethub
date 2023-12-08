@@ -151,7 +151,7 @@ class Sockethub {
                         socket.id,
                     );
                     // job validated and queued, stores socket.io callback for when job is completed
-                    const job = await platformInstance.jobQueue.add(
+                    const job = await platformInstance.queue.add(
                         socket.id,
                         msg,
                     );

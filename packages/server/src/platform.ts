@@ -3,7 +3,7 @@ import { IActivityStream } from "@sockethub/schemas";
 import crypto, { getPlatformId } from "@sockethub/crypto";
 import {
     CredentialsStore,
-    JobQueue,
+    JobWorker,
     JobDataDecrypted,
 } from "@sockethub/data-layer";
 import { JobHandler } from "@sockethub/data-layer";
@@ -19,8 +19,8 @@ const redisUrl = process.env.REDIS_URL;
 // eslint-disable-next-line @typescript-eslint/no-var-requires, security/detect-non-literal-require
 const PlatformModule = require(`@sockethub/platform-${platformName}`);
 
-let jobQueue: JobQueue;
-let jobQueueStarted = false;
+let jobWorker: JobWorker;
+let jobWorkerStarted = false;
 let parentSecret1: string, parentSecret2: string;
 
 logger(`platform handler initialized for ${platformName} ${identifier}`);
@@ -79,62 +79,77 @@ const platform = new PlatformModule(platformSession);
  * Returns a function used to handle completed jobs from the platform code (the `done` callback).
  */
 function getJobHandler(): JobHandler {
-    return async (job: JobDataDecrypted) => {
-        const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
-        jobLog(`received ${job.title} ${job.msg.type}`);
-        const credentialStore = new CredentialsStore(
-            parentId,
-            job.sessionId,
-            parentSecret1 + job.msg.sessionSecret,
-            {
-                url: redisUrl,
-            },
-        );
-        delete job.msg.sessionSecret;
+    return async (
+        job: JobDataDecrypted,
+    ): Promise<string | void | IActivityStream> => {
+        return new Promise((resolve, reject) => {
+            const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
+            jobLog(`received ${job.title} ${job.msg.type}`);
+            const credentialStore = new CredentialsStore(
+                parentId,
+                job.sessionId,
+                parentSecret1 + job.msg.sessionSecret,
+                {
+                    url: redisUrl,
+                },
+            );
+            delete job.msg.sessionSecret;
 
-        let jobCallbackCalled = false;
-        const doneCallback = (err, result) => {
-            if (jobCallbackCalled) {
-                return;
-            }
-            jobCallbackCalled = true;
-            if (err) {
-                jobLog(`failed ${job.title} ${job.msg.type}`);
-                let errMsg;
-                // some error objects (e.g. TimeoutError) don't interpolate correctly
-                // to being human-readable, so we have to do this little dance
-                try {
-                    errMsg = err.toString();
-                } catch (e) {
-                    errMsg = err;
+            let jobCallbackCalled = false;
+            const doneCallback = (
+                err: Error | null,
+                result: null | IActivityStream,
+            ): void => {
+                if (jobCallbackCalled) {
+                    return resolve();
                 }
-                throw new Error(errMsg);
-            } else {
-                jobLog(`completed ${job.title} ${job.msg.type}`);
-                return result;
-            }
-        };
+                jobCallbackCalled = true;
+                if (err) {
+                    jobLog(`failed ${job.title} ${job.msg.type}`);
+                    let errMsg;
+                    // some error objects (e.g. TimeoutError) don't interpolate correctly
+                    // to being human-readable, so we have to do this little dance
+                    try {
+                        errMsg = err.toString();
+                    } catch (e) {
+                        errMsg = err;
+                    }
+                    reject(new Error(errMsg));
+                } else {
+                    jobLog(`completed ${job.title} ${job.msg.type}`);
+                    resolve(result);
+                }
+            };
 
-        platform.config.requireCredentials
-            ? platform.config.requireCredentials
-            : [];
-        if (platform.config.requireCredentials.includes(job.msg.type)) {
-            // this method requires credentials and should be called even if the platform is not
-            // yet initialized, because they need to authenticate before they are initialized.
-            credentialStore
-                .get(job.msg.actor.id, platform.credentialsHash)
-                .then((credentials) => {
-                    platform[job.msg.type](job.msg, credentials, doneCallback);
-                })
-                .catch((err) => {
-                    jobLog("error " + err.toString());
-                    throw new Error(err.toString());
-                });
-        } else if (platform.config.persist && !platform.initialized) {
-            throw new Error(`${job.msg.type} called on uninitialized platform`);
-        } else {
-            platform[job.msg.type](job.msg, doneCallback);
-        }
+            platform.config.requireCredentials
+                ? platform.config.requireCredentials
+                : [];
+            if (platform.config.requireCredentials.includes(job.msg.type)) {
+                // this method requires credentials and should be called even if the platform is not
+                // yet initialized, because they need to authenticate before they are initialized.
+                credentialStore
+                    .get(job.msg.actor.id, platform.credentialsHash)
+                    .then((credentials) => {
+                        platform[job.msg.type](
+                            job.msg,
+                            credentials,
+                            doneCallback,
+                        );
+                    })
+                    .catch((err) => {
+                        jobLog("error " + err.toString());
+                        reject(new Error(err.toString()));
+                    });
+            } else if (platform.config.persist && !platform.initialized) {
+                reject(
+                    new Error(
+                        `${job.msg.type} called on uninitialized platform`,
+                    ),
+                );
+            } else {
+                platform[job.msg.type](job.msg, doneCallback);
+            }
+        });
     };
 }
 
@@ -178,21 +193,21 @@ async function updateActor(credentials) {
  * (used when identifier changes)
  */
 async function startQueueListener(refresh = false) {
-    if (jobQueueStarted) {
+    if (jobWorkerStarted) {
         if (refresh) {
-            await jobQueue.shutdown();
+            await jobWorker.shutdown();
         } else {
             logger("start queue called multiple times, skipping");
             return;
         }
     }
-    jobQueue = new JobQueue(
+    jobWorker = new JobWorker(
         parentId,
         identifier,
         parentSecret1 + parentSecret2,
         { url: redisUrl },
     );
     logger("listening on the queue for incoming jobs");
-    jobQueue.onJob(getJobHandler());
-    jobQueueStarted = true;
+    jobWorker.onJob(getJobHandler());
+    jobWorkerStarted = true;
 }
