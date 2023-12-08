@@ -1,15 +1,16 @@
 import { sveltekit } from "@sveltejs/kit/vite";
-import type { UserConfig } from "vite";
+import { defineConfig } from "vitest/config";
 
-const config: UserConfig = {
-  plugins: [sveltekit()],
-  optimizeDeps: {
-    include: ["highlight.js", "highlight.js/lib/core", "@sockethub/client"],
-  },
-  server: {
-    strictPort: true,
-    port: 10551,
-  },
-};
-
-export default config;
+export default defineConfig({
+    plugins: [sveltekit()],
+    optimizeDeps: {
+        include: ["highlight.js", "highlight.js/lib/core", "@sockethub/client"],
+    },
+    test: {
+        include: ["src/**/*.{test,spec}.{js,ts}"],
+    },
+    server: {
+        strictPort: true,
+        port: 10551,
+    },
+});
