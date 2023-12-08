@@ -138,7 +138,7 @@ function getJobHandler(): JobHandler {
                     })
                     .catch((err) => {
                         jobLog("error " + err.toString());
-                        reject(new Error(err.toString()));
+                        reject(err);
                     });
             } else if (platform.config.persist && !platform.initialized) {
                 reject(
