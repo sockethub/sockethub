@@ -33,7 +33,14 @@ describe("CredentialsStore", () => {
     });
 
     it("get non-existent value", async () => {
-        expect(await store.get(actor, credsHash)).to.eql(undefined);
+        try {
+            await store.get(actor, credsHash);
+            expect(false).to.eql(true);
+        } catch (err) {
+            expect(err.toString()).to.eql(
+                "Error: credentials not found for 1z7uditpybl",
+            );
+        }
     });
 
     it("save", async () => {
