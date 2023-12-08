@@ -4,6 +4,7 @@ import {
     CredentialsStore,
     CredentialsObject,
     JobQueue,
+    JobWorker,
     JobDataDecrypted,
 } from "@sockethub/data-layer";
 import { IActivityStream } from "@sockethub/schemas";
@@ -58,11 +59,15 @@ describe("JobQueue", () => {
         },
     };
     let queue: JobQueue;
+    let worker: JobWorker;
 
     beforeEach("initialized", () => {
         queue = new JobQueue("testid", "sessionid", testSecret, {
             url: "redis://localhost:10651",
         });
+        worker = new JobWorker("testid", "sessionid", testSecret, {
+            url: "redis://localhost:10651",
+        })
     });
 
     it("add job and get job on queue", (done) => {
@@ -78,7 +83,7 @@ describe("JobQueue", () => {
             console.log("job done");
             done();
         });
-        queue.onJob(async (job) => {
+        worker.onJob(async (job) => {
             console.log("-2 ", job);
         });
         queue.add("socket id", as).then((job) => {
