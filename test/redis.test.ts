@@ -67,7 +67,7 @@ describe("JobQueue", () => {
         });
         worker = new JobWorker("testid", "sessionid", testSecret, {
             url: "redis://localhost:10651",
-        })
+        });
     });
 
     it("add job and get job on queue", (done) => {
