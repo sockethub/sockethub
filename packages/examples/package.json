@@ -24,7 +24,7 @@
         "build": "vite build",
         "test": "pnpm run test:unit && pnpm run test:integration",
         "test:integration": "playwright test",
-        "test:unit": "vitest",
+        "test:unit": "vitest run",
         "preview": "vite preview",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
