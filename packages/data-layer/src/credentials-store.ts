@@ -92,16 +92,16 @@ export default class CredentialsStore implements CredentialsStoreInstance {
     async get(
         actor: string,
         credentialHash: string,
-    ): Promise<CredentialsObject | undefined> {
+    ): Promise<CredentialsObject> {
         this.log(`get credentials for ${actor}`);
         const credentials: CredentialsObject = await this.store.get(actor);
         if (!credentials) {
-            return undefined;
+            throw new Error(`credentials not found for ${actor}`)
         }
 
         if (credentialHash) {
             if (credentialHash !== this.objectHash(credentials.object)) {
-                return undefined;
+                throw new Error(`invalid credentials for ${actor}`
             }
         }
         return credentials;
