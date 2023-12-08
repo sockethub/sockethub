@@ -66,10 +66,11 @@ export default class CredentialsStore implements CredentialsStoreInstance {
                 "CredentialsStore secret must be 32 chars in length",
             );
         }
-        this.initCrypto();
-        this.initSecureStore(secret, redisConfig);
         this.uid = `sockethub:data-layer:credentials-store:${parentId}:${sessionId}`;
         this.log = debug(this.uid);
+        this.initCrypto();
+        this.initSecureStore(secret, redisConfig);
+        this.log("initialized");
     }
 
     initCrypto() {
