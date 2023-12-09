@@ -600,7 +600,8 @@ IRC.prototype.__connect = function (key, credentials, cb) {
             : true;
     const is_sasl =
         typeof credentials.object.sasl === "boolean"
-            ? credentials.object.sasl : !!credentials.object.password;
+            ? credentials.object.sasl
+            : !!credentials.object.password;
 
     const module_options = {
         username: credentials.object.username || credentials.object.nick,
@@ -627,9 +628,7 @@ IRC.prototype.__connect = function (key, credentials, cb) {
             module_options.server +
             ":" +
             module_options.port +
-            ` transport: ${is_secure ? "secure" : "clear"} sasl: ${
-                is_sasl
-            }`,
+            ` transport: ${is_secure ? "secure" : "clear"} sasl: ${is_sasl}`,
     );
 
     const client = new IrcSocket(module_options, is_secure ? tls : net);
