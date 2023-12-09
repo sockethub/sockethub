@@ -13,7 +13,7 @@
 
     const actorIdStore = writable(`sh-${(Math.random() + 1).toString(36).substring(7)}`);
 
-    let server = "irc.libera.chat";
+    let server = "chat.freenode.net";
     let port = 6697;
     let room = "#sh-random";
     let connecting = false;
