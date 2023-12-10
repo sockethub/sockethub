@@ -135,7 +135,6 @@ class XMPP {
             return done();
         }
         this.debug("connect called for " + job.actor.id);
-        console.log("creds: ", credentials);
         this.__client = this.__clientConstructor(
             utils.buildXmppCredentials(credentials),
         );
