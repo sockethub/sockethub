@@ -649,7 +649,10 @@ class IRC implements PlatformInterface {
                 } sasl: ${is_sasl}`,
         );
 
-        const client: IrcSocket = new IrcSocket(module_options, is_secure ? tls : net);
+        const client: IrcSocket = new IrcSocket(
+            module_options,
+            is_secure ? tls : net,
+        );
 
         const forceDisconnect = (err: string) => {
             this.forceDisconnect = true;
