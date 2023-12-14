@@ -2,10 +2,9 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 
 import storeCredentials from "./store-credentials";
-import { CredentialsObject } from "@sockethub/data-layer";
+import { CredentialsObject } from "@sockethub/schemas";
 
-const creds = {
-    id: "blah",
+const creds: CredentialsObject = {
     type: "credentials",
     context: "dummy",
     actor: {
