@@ -1,4 +1,4 @@
-import {ActivityStream, InternalActivityStream} from "@sockethub/schemas";
+import { ActivityStream, InternalActivityStream } from "@sockethub/schemas";
 
 export type RedisConfig = {
     url: string;

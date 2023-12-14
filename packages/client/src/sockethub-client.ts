@@ -1,5 +1,9 @@
 import EventEmitter from "eventemitter3";
-import {ActivityObject, ActivityStream, BaseActivityObject} from "@sockethub/schemas";
+import {
+    ActivityObject,
+    ActivityStream,
+    BaseActivityObject,
+} from "@sockethub/schemas";
 import ASFactory, { type ASManager } from "@sockethub/activity-streams";
 import type { Socket } from "socket.io-client";
 

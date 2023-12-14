@@ -1,8 +1,6 @@
-import {
-    CredentialsStoreInterface,
-} from "@sockethub/data-layer";
+import { CredentialsStoreInterface } from "@sockethub/data-layer";
 import { MiddlewareChainInterface } from "../middleware";
-import {CredentialsObject} from "@sockethub/schemas";
+import { CredentialsObject } from "@sockethub/schemas";
 
 export default function storeCredentials(store: CredentialsStoreInterface) {
     return (creds: CredentialsObject, done: MiddlewareChainInterface) => {

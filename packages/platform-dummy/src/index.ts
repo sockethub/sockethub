@@ -1,11 +1,12 @@
 /* eslint-disable  @typescript-eslint/no-var-requires */
 import {
     ActivityStream,
-    Logger, PlatformCallback,
+    Logger,
+    PlatformCallback,
     PlatformConfig,
     PlatformInterface,
     PlatformSchemaStruct,
-    PlatformSession
+    PlatformSession,
 } from "@sockethub/schemas";
 
 class Dummy implements PlatformInterface {
@@ -33,7 +34,7 @@ class Dummy implements PlatformInterface {
 
     get config(): PlatformConfig {
         return {
-            persist: false
+            persist: false,
         };
     }
 

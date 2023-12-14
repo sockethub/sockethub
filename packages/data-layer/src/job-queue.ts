@@ -162,10 +162,7 @@ export default class JobQueue extends JobBase {
         return job;
     }
 
-    private createJob(
-        socketId: string,
-        msg: ActivityStream,
-    ): JobDataEncrypted {
+    private createJob(socketId: string, msg: ActivityStream): JobDataEncrypted {
         const title = `${msg.context}-${msg.id ? msg.id : this.counter++}`;
         return {
             title: title,

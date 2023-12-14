@@ -47,7 +47,7 @@ export interface CompletedJobHandler {
 }
 
 export interface PlatformSendToClient {
-    (msg: ActivityStream, special?: string): void
+    (msg: ActivityStream, special?: string): void;
 }
 
 export interface PlatformUpdateActor {
@@ -104,7 +104,7 @@ export interface PlatformSchemaStruct {
 }
 
 export interface PlatformConstructor {
-    new(session: PlatformSession): { debug: Logger }
+    new (session: PlatformSession): { debug: Logger };
 }
 
 export interface PlatformInterface {

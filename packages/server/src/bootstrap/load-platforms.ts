@@ -6,7 +6,11 @@
  * config.
  */
 import debug from "debug";
-import schemas, {PlatformConfig, PlatformSchemaStruct, PlatformSession} from "@sockethub/schemas";
+import schemas, {
+    PlatformConfig,
+    PlatformSchemaStruct,
+    PlatformSession,
+} from "@sockethub/schemas";
 
 const log = debug("sockethub:server:bootstrap:platforms");
 
@@ -27,7 +31,7 @@ export type PlatformMap = Map<
 const dummySession: PlatformSession = {
     debug: () => {},
     sendToClient: () => {},
-    updateActor: () => {}
+    updateActor: () => {},
 };
 
 // if the platform schema lists valid types it implements (essentially methods/verbs for

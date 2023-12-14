@@ -1,7 +1,13 @@
 import { ChildProcess, fork } from "child_process";
 import { join } from "path";
 import { debug } from "debug";
-import { ActivityStream, InternalActivityStream, CompletedJobHandler, PlatformConfig, Logger } from "@sockethub/schemas";
+import {
+    ActivityStream,
+    InternalActivityStream,
+    CompletedJobHandler,
+    PlatformConfig,
+    Logger,
+} from "@sockethub/schemas";
 import { JobQueue, JobDataDecrypted } from "@sockethub/data-layer";
 import type { Socket } from "socket.io";
 
