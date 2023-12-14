@@ -1,8 +1,17 @@
-import { IActivityStream, CallbackInterface } from "@sockethub/schemas";
-import { CredentialsStore } from "@sockethub/data-layer";
+import {
+    CredentialsObject,
+    CredentialsStoreInstance,
+} from "@sockethub/data-layer";
+import { MiddlewareChainInterface } from "../middleware";
 
-export default function storeCredentials(credentialsStore: CredentialsStore) {
-    return (creds: IActivityStream, done: CallbackInterface) => {
-        credentialsStore.save(creds.actor.id, creds, done);
+export default function storeCredentials(store: CredentialsStoreInstance) {
+    return (creds: CredentialsObject, done: MiddlewareChainInterface) => {
+        try {
+            store.save(creds.actor.id, creds).then(() => {
+                done(creds);
+            });
+        } catch (err) {
+            done(err);
+        }
     };
 }

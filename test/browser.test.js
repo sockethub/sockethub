@@ -49,7 +49,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                 io(`http://localhost:${SH_PORT}/`, { path: "/sockethub" }),
             );
             sc.socket.on("message", (msg) => {
-                console.log("** incoming message: ", msg);
+                console.log(">> incoming message: ", msg);
                 incomingMessages.push(msg);
             });
         });
@@ -64,32 +64,6 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
             it("creates activity-object", () => {
                 sc.ActivityStreams.Object.create(actor);
                 expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
-            });
-
-            it("sends fail and returns error", (done) => {
-                let dummyObj = {
-                    type: "fail",
-                    actor: actor.id,
-                    context: "dummy",
-                    object: { type: "message", content: `failure message` },
-                };
-                sc.socket.emit("message", dummyObj, (msg) => {
-                    // console.log("dummy fail callback: ", msg);
-                    if (msg?.error) {
-                        dummyObj.error = "Error: failure message";
-                        dummyObj.actor = sc.ActivityStreams.Object.get(
-                            actor.id,
-                        );
-                        expect(msg).to.eql(dummyObj);
-                        done();
-                    } else {
-                        done(
-                            new Error(
-                                "didn't receive expected failure from dummy platform",
-                            ),
-                        );
-                    }
-                });
             });
 
             let dummyMessageCount = 5;
@@ -117,6 +91,32 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                     });
                 });
             }
+
+            it("sends fail and returns error", (done) => {
+                let dummyObj = {
+                    type: "fail",
+                    actor: actor.id,
+                    context: "dummy",
+                    object: { type: "message", content: `failure message` },
+                };
+                sc.socket.emit("message", dummyObj, (msg) => {
+                    console.log("dummy fail callback: ", msg);
+                    if (msg?.error) {
+                        dummyObj.error = "Error: failure message";
+                        dummyObj.actor = sc.ActivityStreams.Object.get(
+                            actor.id,
+                        );
+                        expect(msg).to.eql(dummyObj);
+                        done();
+                    } else {
+                        done(
+                            new Error(
+                                "didn't receive expected failure from dummy platform",
+                            ),
+                        );
+                    }
+                });
+            });
         });
 
         describe("Feeds", () => {
@@ -160,8 +160,8 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
         });
 
         describe("XMPP", () => {
-            describe("emit on credentials channel", () => {
-                it("fires and empty callback", (done) => {
+            describe("Credentials", () => {
+                it("fires an empty callback", (done) => {
                     sc.socket.emit(
                         "credentials",
                         {
@@ -184,7 +184,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
             });
 
             describe("ActivityStreams.create", () => {
-                it("successfully creates and stores an activity-object", (done) => {
+                it("successfully creates and stores an activity-object", () => {
                     const actor = {
                         id: "jimmy@prosody/SockethubExample",
                         type: "person",
@@ -194,7 +194,6 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                     const getObj = sc.ActivityStreams.Object.get(actor.id);
                     expect(obj).to.eql(actor);
                     expect(getObj).to.eql(actor);
-                    done();
                 });
             });
 
@@ -232,9 +231,11 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
 
         describe("Incoming Message queue", () => {
             it("should be empty", () => {
-                console.log("*** INCOMING MESSAGES ***");
+                console.log(
+                    `*** MESSAGE QUEUE, length: ${incomingMessages.length} ***`,
+                );
                 console.log(incomingMessages);
-                expect(incomingMessages.length).to.equal(0);
+                expect(incomingMessages.length).to.eql(0);
                 expect(incomingMessages).to.eql([]);
             });
         });

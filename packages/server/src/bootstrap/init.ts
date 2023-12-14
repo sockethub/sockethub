@@ -2,6 +2,7 @@ import debug from "debug";
 
 import config from "../config";
 import loadPlatforms, { PlatformMap } from "./load-platforms";
+import { redisCheck, RedisConfig } from "@sockethub/data-layer";
 
 const log = debug("sockethub:server:bootstrap:init");
 
@@ -33,13 +34,7 @@ function printSettingsInfo(version, platforms) {
     );
 
     console.log();
-    if (config.get("redis:url")) {
-        console.log("redis URL: " + config.get("redis:url"));
-    } else {
-        console.log(
-            `redis: ${config.get("redis:host")}:${config.get("redis:port")}`,
-        );
-    }
+    console.log("redis URL: " + config.get("redis:url"));
 
     console.log();
     console.log("platforms: " + Array.from(platforms.keys()).join(", "));
@@ -91,6 +86,8 @@ async function __loadInit(): Promise<IInitObject> {
     const platforms = await loadPlatforms(
         config.get("platforms") as Array<string>,
     );
+
+    await redisCheck(config.get("redis") as RedisConfig);
 
     if (config.get("info")) {
         printSettingsInfo(packageJSON.version, platforms);

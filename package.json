@@ -7,6 +7,8 @@
         "pnpm": ">=8"
     },
     "devDependencies": {
+        "@sockethub/data-layer": "workspace:1.0.0-alpha.4",
+        "@sockethub/schemas": "workspace:3.0.0-alpha.4",
         "@lerna-lite/cli": "3.0.0",
         "@lerna-lite/publish": "3.0.0",
         "@types/mocha": "10.0.6",
@@ -41,10 +43,13 @@
         "docker:clean:all": "pnpm docker:stop && docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub",
         "docker:clean:sockethub": "pnpm docker:stop && docker rm sockethub-sockethub-1; docker rmi sockethub-sockethub",
         "docker:logs": "docker logs sockethub-sockethub-1",
-        "docker:stop": "docker compose stop",
+        "docker:stop": "docker compose down",
         "docker:build": "pnpm docker:clean:sockethub; pnpm docker:start",
-        "integration": "pnpm docker:start && pnpm integration:run; RES=$?; pnpm docker:stop; exit $RES",
-        "integration:run": "karma start --single-run --sh_port=10650 --browsers ChromeHeadless ./karma.config.js",
+        "integration": "pnpm integration:redis && pnpm integration:browser",
+        "integration:browser": "pnpm docker:start && pnpm integration:browser:run; RES=$?; exit $RES",
+        "integration:browser:run": "karma start --single-run --sh_port=10650 --browsers ChromeHeadless ./karma.config.js",
+        "integration:redis": "docker compose up redis -d && pnpm integration:redis:run; RES=$?; docker compose down; exit $RES",
+        "integration:redis:run": "DEBUG=ioredis*,bullmq*,sockethub* mocha -r ts-node/register test/redis.test.ts",
         "lint": "prettier --check . && eslint --max-warnings 0 . && nx run-many --target=lint && pnpm lint:doc",
         "lint:doc": "markdownlint '**/*.md'",
         "lint:doc:fix": "markdownlint --fix '**/*.md' && mdspell -n -a --en-us ./README.md ./packages/*/README.md",
@@ -58,7 +63,6 @@
         "tslib": "2.6.2"
     },
     "resolutions": {
-        "secure-store-redis": "1.4.7",
         "node-fetch": "2.6.9",
         "engine.io": "6.5.1",
         "socket.io": "4.6.2"

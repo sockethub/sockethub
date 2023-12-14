@@ -2,6 +2,7 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 
 import storeCredentials from "./store-credentials";
+import { CredentialsObject } from "@sockethub/data-layer";
 
 const creds = {
     id: "blah",
@@ -30,13 +31,15 @@ describe("Middleware: storeCredentials", () => {
 
     beforeEach(() => {
         storeSuccess = {
-            save: (id: any, creds: any, cb: () => void) => {
-                cb();
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            save: async (id: any, creds: any) => {
+                return Promise.resolve();
             },
         };
         storeError = {
-            save: (id: any, creds: any, cb: (v: string) => void) => {
-                cb("some error");
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            save: (id: any, creds: any): Promise<void> => {
+                throw new Error("some error");
             },
         };
         saveSuccessFake = sinon.replace(
@@ -61,21 +64,23 @@ describe("Middleware: storeCredentials", () => {
         expect(saveSuccessFake.callCount).to.equal(0);
     });
 
-    it("successfully stores credentials", () => {
+    it("successfully stores credentials", (done) => {
         const sc = storeCredentials(storeSuccess);
-        sc(creds, (err: any) => {
+        sc(creds as CredentialsObject, (err: any) => {
             expect(saveSuccessFake.callCount).to.equal(1);
             expect(saveSuccessFake.firstArg).to.equal(creds.actor.id);
-            expect(err).to.be.undefined;
+            expect(err).to.eql(creds);
+            done();
         });
     });
 
-    it("handle error while storing credentials", () => {
+    it("handle error while storing credentials", (done) => {
         const sc = storeCredentials(storeError);
-        sc(creds, (err: any) => {
+        sc(creds as CredentialsObject, (err: any) => {
             expect(saveErrorFake.callCount).to.equal(1);
             expect(saveErrorFake.firstArg).to.equal(creds.actor.id);
-            expect(err).to.eql("some error");
+            expect(err.toString()).to.eql("Error: some error");
+            done();
         });
     });
 });

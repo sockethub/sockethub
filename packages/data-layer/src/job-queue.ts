@@ -1,30 +1,70 @@
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-
-import Queue, { QueueOptions } from "bull";
-import crypto, { Crypto } from "@sockethub/crypto";
-import {
-    JobDataDecrypted,
-    JobDataEncrypted,
-    JobDecrypted,
-    JobEncrypted,
-    RedisConfig,
-} from "./types";
+import { Job, Queue, Worker, QueueEvents } from "bullmq";
+import { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types";
 import debug, { Debugger } from "debug";
-import EventEmitter from "events";
 import { IActivityStream } from "@sockethub/schemas";
+import JobBase, { createIORedisConnection } from "./job-base";
 
-interface JobHandler {
-    (job: JobDataDecrypted, done: CallableFunction);
+export async function verifyJobQueue(config: RedisConfig): Promise<void> {
+    const log = debug("sockethub:data-layer:queue");
+    return new Promise((resolve, reject) => {
+        const worker = new Worker(
+            "connectiontest",
+            async (job) => {
+                if (job.name !== "foo" || job.data?.foo !== "bar") {
+                    reject(
+                        "Worker received invalid job data during JobQueue connection test",
+                    );
+                }
+                job.data.test = "touched by worker";
+            },
+            {
+                connection: createIORedisConnection(config),
+            },
+        );
+        worker.on("completed", async (job: Job) => {
+            if (job.name !== "foo" || job.data?.test !== "touched by worker") {
+                reject(
+                    "Worker job completed unsuccessfully during JobQueue connection test",
+                );
+            }
+            log("connection verified");
+            await queue.close();
+            await worker.close();
+            resolve();
+        });
+        worker.on("error", (err) => {
+            log(
+                "connection verification worker error received " +
+                    err.toString(),
+            );
+            reject(err);
+        });
+        const queue = new Queue("connectiontest", {
+            connection: createIORedisConnection(config),
+        });
+        queue.on("error", (err) => {
+            log(
+                "connection verification queue error received " +
+                    err.toString(),
+            );
+            reject(err);
+        });
+        queue.add(
+            "foo",
+            { foo: "bar" },
+            { removeOnComplete: true, removeOnFail: true },
+        );
+    });
 }
 
-export default class JobQueue extends EventEmitter {
+export default class JobQueue extends JobBase {
     readonly uid: string;
-    bull;
-    crypto: Crypto;
+    protected queue: Queue;
+    protected events: QueueEvents;
     private readonly debug: Debugger;
-    private readonly secret: string;
-    private handler: JobHandler;
     private counter = 0;
+    private initialized = false;
+    protected redisConnection;
 
     constructor(
         instanceId: string,
@@ -32,24 +72,40 @@ export default class JobQueue extends EventEmitter {
         secret: string,
         redisConfig: RedisConfig,
     ) {
-        super();
-        this.initBull(instanceId + sessionId, redisConfig);
-        this.initCrypto();
-        this.uid = `sockethub:data-layer:job-queue:${instanceId}:${sessionId}`;
-        this.secret = secret;
+        super(secret);
+        this.uid = `sockethub:data-layer:queue:${instanceId}:${sessionId}`;
         this.debug = debug(this.uid);
-
-        this.debug("initialized");
+        this.init(redisConfig);
     }
 
-    initBull(id, redisConfig) {
-        this.bull = new Queue(id, {
-            redis: redisConfig,
-        } as QueueOptions);
-    }
+    protected init(redisConfig: RedisConfig) {
+        if (this.initialized) {
+            throw new Error(`JobQueue already initialized for ${this.uid}`);
+        }
+        this.initialized = true;
 
-    initCrypto() {
-        this.crypto = crypto;
+        this.redisConnection = createIORedisConnection(redisConfig);
+        this.queue = new Queue(this.uid, {
+            connection: this.redisConnection,
+        });
+        this.events = new QueueEvents(this.uid, {
+            connection: this.redisConnection,
+        });
+
+        this.events.on("completed", async ({ jobId, returnvalue }) => {
+            const job = await this.getJob(jobId);
+            this.debug(`completed ${job.data.title} ${job.data.msg.type}`);
+            this.emit("completed", job.data, returnvalue);
+        });
+
+        this.events.on("failed", async ({ jobId, failedReason }) => {
+            const job = await this.getJob(jobId);
+            this.debug(
+                `failed ${job.data.title} ${job.data.msg.type}: ${failedReason}`,
+            );
+            this.emit("failed", job.data, failedReason);
+        });
+        this.debug(`initialized`);
     }
 
     async add(
@@ -57,53 +113,44 @@ export default class JobQueue extends EventEmitter {
         msg: IActivityStream,
     ): Promise<JobDataEncrypted> {
         const job = this.createJob(socketId, msg);
-        const isPaused = await this.bull.isPaused();
-        if (isPaused) {
-            this.bull.emit("failed", job, "queue closed");
-            return undefined;
+        if (await this.queue.isPaused()) {
+            // this.queue.emit("error", new Error("queue closed"));
+            this.debug(
+                `failed to add ${job.title} ${msg.type} to queue: queue closed`,
+            );
+            throw new Error("queue closed");
         }
-        this.debug(`adding ${job.title} ${msg.type}`);
-        this.bull.add(job);
+        await this.queue.add(job.title, job);
+        this.debug(`added ${job.title} ${msg.type} to queue`);
         return job;
     }
 
-    initResultEvents() {
-        this.bull.on("global:completed", async (jobId: string, result: any) => {
-            const r = result ? JSON.parse(result) : "";
-            const job = await this.getJob(jobId);
-            if (job) {
-                this.debug(`completed ${job.data.title} ${job.data.msg.type}`);
-                this.emit("global:completed", job.data, r);
-                await job.remove();
-            }
-        });
-        this.bull.on("global:error", async (jobId: string, result: string) => {
-            this.debug("unknown queue error", jobId, result);
-        });
-        this.bull.on("global:failed", async (jobId, result: string) => {
-            const job = await this.getJob(jobId);
-            if (job) {
-                this.debug(`failed ${job.data.title} ${job.data.msg.type}`);
-                this.emit("global:failed", job.data, result);
-                await job.remove();
-            }
-        });
-        this.bull.on("failed", (job: JobDataEncrypted, result: string) => {
-            // locally failed jobs (eg. due to paused queue)
-            const unencryptedJobData: JobDataDecrypted = {
-                title: job.title,
-                msg: this.decryptActivityStream(job.msg),
-                sessionId: job.sessionId,
-            };
-            this.debug(
-                `failed ${unencryptedJobData.title} ${unencryptedJobData.msg.type}`,
-            );
-            this.emit("global:failed", unencryptedJobData, result);
-        });
+    async pause() {
+        await this.queue.pause();
+        this.debug("paused");
     }
 
-    async getJob(jobId: string): Promise<JobDecrypted> {
-        const job = await this.bull.getJob(jobId);
+    async resume() {
+        await this.queue.resume();
+        this.debug("resumed");
+    }
+
+    async shutdown() {
+        this.removeAllListeners();
+        this.queue.removeAllListeners();
+        if (!(await this.queue.isPaused())) {
+            await this.queue.pause();
+        }
+        await this.queue.obliterate({ force: true });
+        await this.queue.close();
+        await this.queue.disconnect();
+        await this.events.close();
+        await this.events.disconnect();
+        await this.redisConnection.disconnect();
+    }
+
+    private async getJob(jobId: string): Promise<JobDecrypted> {
+        const job = await this.queue.getJob(jobId);
         if (job) {
             job.data = this.decryptJobData(job);
             try {
@@ -115,61 +162,15 @@ export default class JobQueue extends EventEmitter {
         return job;
     }
 
-    onJob(handler: JobHandler): void {
-        this.handler = handler;
-        this.bull.process(this.jobHandler.bind(this));
-    }
-
-    async pause() {
-        await this.bull.pause();
-        this.debug("paused");
-    }
-
-    async resume() {
-        await this.bull.resume();
-        this.debug("resumed");
-    }
-
-    async shutdown() {
-        const isPaused = await this.bull.isPaused(true);
-        if (!isPaused) {
-            await this.bull.pause();
-        }
-        await this.bull.obliterate({ force: true });
-        await this.bull.removeAllListeners();
-    }
-
-    private createJob(socketId: string, msg): JobDataEncrypted {
+    private createJob(
+        socketId: string,
+        msg: IActivityStream,
+    ): JobDataEncrypted {
         const title = `${msg.context}-${msg.id ? msg.id : this.counter++}`;
         return {
             title: title,
             sessionId: socketId,
-            msg: this.crypto.encrypt(msg, this.secret),
+            msg: this.encryptActivityStream(msg),
         };
-    }
-
-    private jobHandler(
-        encryptedJob: JobEncrypted,
-        done: CallableFunction,
-    ): void {
-        const job = this.decryptJobData(encryptedJob);
-        this.debug(`handling ${job.title} ${job.msg.type}`);
-        this.handler(job, done);
-    }
-
-    /**
-     * @param job
-     * @private
-     */
-    private decryptJobData(job: JobEncrypted): JobDataDecrypted {
-        return {
-            title: job.data.title,
-            msg: this.decryptActivityStream(job.data.msg),
-            sessionId: job.data.sessionId,
-        };
-    }
-
-    private decryptActivityStream(msg: string): IActivityStream {
-        return this.crypto.decrypt(msg, this.secret);
     }
 }

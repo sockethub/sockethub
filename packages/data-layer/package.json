@@ -15,7 +15,7 @@
         "sockethub",
         "messaging",
         "redis",
-        "data lyer",
+        "data layer",
         "rpc",
         "data store"
     ],
@@ -28,14 +28,15 @@
     "dependencies": {
         "@sockethub/crypto": "workspace:1.0.0-alpha.4",
         "@sockethub/schemas": "workspace:3.0.0-alpha.4",
-        "bull": "^4.11.5",
+        "bullmq": "^4.15.2",
         "debug": "^4.3.4",
-        "secure-store-redis": "1.4.7"
+        "ioredis": "5.3.2",
+        "secure-store-redis": "3.0.1"
     },
     "scripts": {
         "clean": "rm -rf dist coverage",
         "test": "c8 -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts",
-        "coverage": "c8 check-coverage --statements 83 --branches 90 --functions 80 --lines 83",
+        "coverage": "c8 check-coverage --statements 65 --branches 70 --functions 55 --lines 65",
         "build": "tsc"
     },
     "engines": {

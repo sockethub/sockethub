@@ -1,10 +1,12 @@
 import debug from "debug";
 import { Socket } from "socket.io";
 import crypto from "@sockethub/crypto";
-import { CredentialsStore } from "@sockethub/data-layer";
+import {
+    CredentialsStore,
+    type CredentialsStoreInstance,
+} from "@sockethub/data-layer";
 
 import getInitObject from "./bootstrap/init";
-import middleware, { MiddlewareChainInterface } from "./middleware";
 import createActivityObject from "./middleware/create-activity-object";
 import expandActivityStream from "./middleware/expand-activity-stream";
 import storeCredentials from "./middleware/store-credentials";
@@ -14,6 +16,7 @@ import listener from "./listener";
 import ProcessManager from "./process-manager";
 import nconf from "nconf";
 import { IActivityStream } from "@sockethub/schemas";
+import middleware from "./middleware";
 
 const log = debug("sockethub:server:core");
 
@@ -81,7 +84,7 @@ class Sockethub {
             sessionSecret = crypto.randToken(16),
             // stores instance is session-specific
             // stores = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret);
-            credentialsStore = new CredentialsStore(
+            credentialsStore: CredentialsStoreInstance = new CredentialsStore(
                 this.parentId,
                 socket.id,
                 this.parentSecret1 + sessionSecret,
@@ -99,11 +102,7 @@ class Sockethub {
             middleware("credentials")
                 .use(expandActivityStream)
                 .use(validate("credentials", socket.id))
-                .use(
-                    storeCredentials(
-                        credentialsStore,
-                    ) as MiddlewareChainInterface,
-                )
+                .use(storeCredentials(credentialsStore))
                 .use((err, data, next) => {
                     // error handler
                     next(attachError(err, data));
@@ -152,7 +151,7 @@ class Sockethub {
                         socket.id,
                     );
                     // job validated and queued, stores socket.io callback for when job is completed
-                    const job = await platformInstance.jobQueue.add(
+                    const job = await platformInstance.queue.add(
                         socket.id,
                         msg,
                     );

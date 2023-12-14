@@ -1,47 +1,85 @@
-/* eslint-disable  @typescript-eslint/no-explicit-any */
 import SecureStore from "secure-store-redis";
 import debug, { Debugger } from "debug";
-import { IActivityStream, CallbackInterface } from "@sockethub/schemas";
 import crypto from "@sockethub/crypto";
-import { RedisConfigProps, RedisConfigUrl } from "./types";
+import { RedisConfig } from "./types";
+
+export interface CredentialsObject {
+    context: string;
+    type: "credentials";
+    actor: {
+        id: string;
+        type: string;
+        [x: string | number | symbol]: unknown;
+    };
+    object: {
+        type: "credentials";
+        [x: string | number | symbol]: unknown;
+    };
+    target?: {
+        id: string;
+        type: string;
+        [x: string | number | symbol]: unknown;
+    };
+}
+
+export interface CredentialsStoreInstance {
+    get(
+        actor: string,
+        credentialsHash: string,
+    ): Promise<CredentialsObject | undefined>;
+    save(actor: string, creds: CredentialsObject): Promise<number>;
+}
+
+export async function verifySecureStore(config: RedisConfig): Promise<void> {
+    const log = debug("sockethub:data-layer:credentials-store");
+    const ss = new SecureStore({
+        redis: config,
+    });
+    await ss.init();
+    await ss.disconnect();
+    log("connection verified");
+}
 
 /**
  * Encapsulates the storing and fetching of credential objects.
  */
-export default class CredentialsStore {
+export default class CredentialsStore implements CredentialsStoreInstance {
     readonly uid: string;
     store: SecureStore;
-    objectHash: (o: any) => string;
+    objectHash: (o: unknown) => string;
     private readonly log: Debugger;
 
     /**
      * @param parentId - The ID of the parent instance (eg. sockethub itself)
      * @param sessionId - The ID of the session (socket.io connection)
-     * @param secret - The encryption secret (parent + session secrets)
+     * @param secret - The encryption secret (parent + session secrets) must be 32 chars
      * @param redisConfig - Connect info for redis
      */
     constructor(
         parentId: string,
         sessionId: string,
         secret: string,
-        redisConfig: RedisConfigProps | RedisConfigUrl,
+        redisConfig: RedisConfig,
     ) {
-        this.initCrypto();
-        this.initSecureStore(secret, redisConfig);
+        if (secret.length !== 32) {
+            throw new Error(
+                "CredentialsStore secret must be 32 chars in length",
+            );
+        }
         this.uid = `sockethub:data-layer:credentials-store:${parentId}:${sessionId}`;
         this.log = debug(this.uid);
+        this.initCrypto();
+        this.initSecureStore(secret, redisConfig);
+        this.log("initialized");
     }
 
     initCrypto() {
         this.objectHash = crypto.objectHash;
     }
 
-    initSecureStore(
-        secret: string,
-        redisConfig: RedisConfigProps | RedisConfigUrl,
-    ) {
+    initSecureStore(secret: string, redisConfig: RedisConfig) {
         this.store = new SecureStore({
-            namespace: this.uid,
+            uid: this.uid,
             secret: secret,
             redis: redisConfig,
         });
@@ -52,46 +90,30 @@ export default class CredentialsStore {
      * @param actor
      * @param credentialHash
      */
-    async get(actor: string, credentialHash: string): Promise<IActivityStream> {
+    async get(
+        actor: string,
+        credentialHash: string,
+    ): Promise<CredentialsObject> {
         this.log(`get credentials for ${actor}`);
-        return new Promise((resolve, reject) => {
-            this.store.get(actor, (err, credentials) => {
-                if (err) {
-                    return reject("credentials " + err.toString());
-                }
-                if (!credentials) {
-                    return resolve(undefined);
-                }
+        const credentials: CredentialsObject = await this.store.get(actor);
+        if (!credentials) {
+            throw new Error(`credentials not found for ${actor}`);
+        }
 
-                if (credentialHash) {
-                    if (
-                        credentialHash !== this.objectHash(credentials.object)
-                    ) {
-                        return reject(
-                            `provided credentials do not match existing platform instance for actor ${actor}`,
-                        );
-                    }
-                }
-                return resolve(credentials);
-            });
-        });
+        if (credentialHash) {
+            if (credentialHash !== this.objectHash(credentials.object)) {
+                throw new Error(`invalid credentials for ${actor}`);
+            }
+        }
+        return credentials;
     }
 
     /**
      * Saves the credentials for a given actor ID
      * @param actor
      * @param creds
-     * @param done
      */
-    save(actor: string, creds: IActivityStream, done: CallbackInterface): void {
-        this.store.save(actor, creds, (err) => {
-            if (err) {
-                this.log("error saving credentials to stores " + err);
-                return done(err);
-            } else {
-                this.log(`credentials encrypted and saved`);
-                return done();
-            }
-        });
+    async save(actor: string, creds: CredentialsObject): Promise<number> {
+        return this.store.save(actor, creds);
     }
 }

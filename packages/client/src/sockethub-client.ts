@@ -1,12 +1,17 @@
 import EventEmitter from "eventemitter3";
 import { IActivityObject, IActivityStream } from "@sockethub/schemas";
 import ASFactory, { type ASManager } from "@sockethub/activity-streams";
+import type { Socket } from "socket.io-client";
 
 export interface EventMapping {
     credentials: Map<string, IActivityStream>;
     "activity-object": Map<string, IActivityObject>;
     connect: Map<string, IActivityStream>;
     join: Map<string, IActivityStream>;
+}
+
+interface CustomEmitter extends EventEmitter {
+    _emit(s: string, o: unknown, c?: unknown): void;
 }
 
 export default class SockethubClient {
@@ -16,13 +21,13 @@ export default class SockethubClient {
         connect: new Map(),
         join: new Map(),
     };
-    private _socket;
+    private _socket: Socket;
     public ActivityStreams: ASManager;
-    public socket;
+    public socket: CustomEmitter;
     public online = false;
     public debug = true;
 
-    constructor(socket) {
+    constructor(socket: Socket) {
         if (!socket) {
             throw new Error("SockethubClient requires a socket.io instance");
         }
@@ -32,15 +37,18 @@ export default class SockethubClient {
         this.registerSocketIOHandlers();
         this.initActivityStreams();
 
-        this.ActivityStreams.on("activity-object-create", (obj) => {
-            socket.emit("activity-object", obj, (err) => {
-                if (err) {
-                    console.error("failed to create activity-object ", err);
-                } else {
-                    this.eventActivityObject(obj);
-                }
-            });
-        });
+        this.ActivityStreams.on(
+            "activity-object-create",
+            (obj: IActivityObject) => {
+                socket.emit("activity-object", obj, (err: never) => {
+                    if (err) {
+                        console.error("failed to create activity-object ", err);
+                    } else {
+                        this.eventActivityObject(obj);
+                    }
+                });
+            },
+        );
 
         socket.on("activity-object", (obj) => {
             this.ActivityStreams.Object.create(obj);
@@ -51,8 +59,8 @@ export default class SockethubClient {
         this.ActivityStreams = ASFactory({ specialObjs: ["credentials"] });
     }
 
-    private createPublicEmitter(): EventEmitter {
-        const socket = new EventEmitter();
+    private createPublicEmitter(): CustomEmitter {
+        const socket = new EventEmitter() as CustomEmitter;
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         socket._emit = socket.emit;
@@ -66,7 +74,7 @@ export default class SockethubClient {
             } else if (event === "message") {
                 this.eventMessage(content);
             }
-            this._socket.emit(event, content, callback);
+            this._socket.emit(event as string, content, callback);
         };
         return socket;
     }
@@ -123,7 +131,7 @@ export default class SockethubClient {
     private registerSocketIOHandlers() {
         // middleware for events which don't deal in AS objects
         const callHandler = (event: string) => {
-            return (obj, cb) => {
+            return async (obj?: unknown) => {
                 if (event === "connect") {
                     this.online = true;
                     this.replay(
@@ -136,7 +144,7 @@ export default class SockethubClient {
                 } else if (event === "disconnect") {
                     this.online = false;
                 }
-                this.socket._emit(event, obj, cb);
+                this.socket._emit(event, obj);
             };
         };
 
@@ -147,8 +155,8 @@ export default class SockethubClient {
 
         // use as a middleware to receive incoming Sockethub messages and unpack them
         // using the ActivityStreams library before passing them along to the app.
-        this._socket.on("message", (obj, cb) => {
-            this.socket._emit("message", this.ActivityStreams.Stream(obj), cb);
+        this._socket.on("message", (obj) => {
+            this.socket._emit("message", this.ActivityStreams.Stream(obj));
         });
     }
 

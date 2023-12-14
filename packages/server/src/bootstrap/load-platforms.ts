@@ -1,5 +1,5 @@
 /**
- * bootstrap/platforms.js
+ * bootstrap/platforms.ts
  *
  * A Singleton responsible for finding and loading all valid Sockethub
  * platforms, and whitelisting or blacklisting (or neither) based on the
@@ -76,7 +76,6 @@ export default async function loadPlatforms(
 
     for (const platformName of platformsList) {
         log(`loading ${platformName}`);
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const p = await loadPlatform(platformName, injectRequire);
         let types = [];
 
