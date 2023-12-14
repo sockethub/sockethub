@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import schemas, { CredentialsObject } from "@sockethub/schemas";
+import schemas, { ActivityStream, CredentialsObject } from "@sockethub/schemas";
 import { GetClientCallback } from "./index";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -170,11 +170,11 @@ describe("Initialize IRC Platform", () => {
                     },
                     done,
                 );
-                platform.__completeJob();
+                platform.completeJob();
             });
 
             it("has join channel registered", () => {
-                expect(platform.__channels.has("#a-room")).to.equal(true);
+                expect(platform.channels.has("#a-room")).to.equal(true);
             });
 
             it("leave()", (done) => {
@@ -187,7 +187,7 @@ describe("Initialize IRC Platform", () => {
                     },
                     done,
                 );
-                platform.__completeJob();
+                platform.completeJob();
             });
 
             it("send()", (done) => {
@@ -198,10 +198,10 @@ describe("Initialize IRC Platform", () => {
                         actor: actor,
                         object: { content: "har dee dar" },
                         target: targetRoom,
-                    },
+                    } as ActivityStream,
                     done,
                 );
-                platform.__completeJob();
+                platform.completeJob();
             });
 
             it("update() topic", (done) => {
@@ -216,7 +216,7 @@ describe("Initialize IRC Platform", () => {
                     validCredentials,
                     done,
                 );
-                platform.__completeJob();
+                platform.completeJob();
             });
 
             it("update() nick change", (done) => {
@@ -231,7 +231,7 @@ describe("Initialize IRC Platform", () => {
                     validCredentials,
                     done,
                 );
-                platform.__completeJob();
+                platform.completeJob();
             });
 
             it("query()", (done) => {
@@ -245,12 +245,13 @@ describe("Initialize IRC Platform", () => {
                     },
                     done,
                 );
-                platform.__completeJob();
+                platform.completeJob();
             });
 
             it("cleanup()", (done) => {
+                expect(platform.config.initialized).to.eql(true);
                 platform.cleanup(() => {
-                    expect(platform.initialized).to.eql(false);
+                    expect(platform.config.initialized).to.eql(false);
                     done();
                 });
             });
