@@ -1,6 +1,6 @@
 # Sockethub
 
-[![Sockethub](http://sockethub.org/res/img/sockethub-logo.svg)](http://sockethub.org)
+[![Sockethub](https://sockethub.org/res/img/sockethub-logo.svg)](https://sockethub.org)
 
 A protocol gateway for the web.
 
