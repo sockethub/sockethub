@@ -178,7 +178,6 @@ class Feeds {
         this.debug("fetching " + url);
         const res = await fetch(url);
         const feed = getPodcastFromFeed(await res.text());
-        console.log('feed: ', feed.meta);
         const actor = buildFeedChannel(url, feed.meta);
         const articles = [];
 
