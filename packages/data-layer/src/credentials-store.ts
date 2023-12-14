@@ -2,7 +2,7 @@ import SecureStore from "secure-store-redis";
 import debug, { Debugger } from "debug";
 import crypto from "@sockethub/crypto";
 import { RedisConfig } from "./types";
-import {CredentialsObject} from "@sockethub/schemas";
+import { CredentialsObject } from "@sockethub/schemas";
 
 export interface CredentialsStoreInterface {
     get(

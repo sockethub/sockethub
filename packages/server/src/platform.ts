@@ -1,5 +1,10 @@
 import debug from "debug";
-import {ActivityStream, PlatformCallback, PlatformSession, CredentialsObject} from "@sockethub/schemas";
+import {
+    ActivityStream,
+    PlatformCallback,
+    PlatformSession,
+    CredentialsObject,
+} from "@sockethub/schemas";
 import crypto, { getPlatformId } from "@sockethub/crypto";
 import {
     CredentialsStore,

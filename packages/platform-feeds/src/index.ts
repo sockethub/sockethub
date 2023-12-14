@@ -26,12 +26,14 @@ import {
 } from "./types";
 import htmlTags from "html-tags";
 import fetch from "node-fetch";
-import getPodcastFromFeed, {Meta} from "podparse";
+import getPodcastFromFeed, { Meta } from "podparse";
 import type {
-    ActivityStream, Logger,
+    ActivityStream,
+    Logger,
     PlatformCallback,
-    PlatformConfig, PlatformSchemaStruct,
-    PlatformSession
+    PlatformConfig,
+    PlatformSchemaStruct,
+    PlatformSession,
 } from "@sockethub/schemas";
 
 const MAX_NOTE_LENGTH = 256;
@@ -174,7 +176,10 @@ class Feeds {
 
     // fetches the articles from a feed, adding them to an array
     // for processing
-    private async fetchFeed(url: string, id: string): Promise<Array<PlatformFeedsActivityStream>> {
+    private async fetchFeed(
+        url: string,
+        id: string,
+    ): Promise<Array<PlatformFeedsActivityStream>> {
         this.debug("fetching " + url);
         const res = await fetch(url);
         const feed = getPodcastFromFeed(await res.text());
@@ -213,7 +218,9 @@ function buildFeedItem(item): PlatformFeedsActivityObject {
     };
 }
 
-function buildFeedStruct(actor: PlatformFeedsActivityActor): PlatformFeedsActivityStream {
+function buildFeedStruct(
+    actor: PlatformFeedsActivityActor,
+): PlatformFeedsActivityStream {
     return {
         context: ASFeedType.FEEDS,
         actor: actor,
