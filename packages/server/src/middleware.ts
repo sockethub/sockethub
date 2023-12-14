@@ -1,5 +1,5 @@
-import { debug } from "debug";
-import { IActivityStream, LogInterface } from "@sockethub/schemas";
+import { debug, Debugger } from "debug";
+import { ActivityStream } from "@sockethub/schemas";
 
 export default function middleware(name: string): MiddlewareChain {
     return new MiddlewareChain(name);
@@ -7,8 +7,8 @@ export default function middleware(name: string): MiddlewareChain {
 
 export interface MiddlewareChainInterface {
     (
-        error: IActivityStream | Error,
-        data?: IActivityStream | MiddlewareChainInterface,
+        error: ActivityStream | Error,
+        data?: ActivityStream | MiddlewareChainInterface,
         next?: MiddlewareChainInterface,
     ): void;
 }
@@ -27,7 +27,7 @@ export class MiddlewareChain {
     private errHandler: ErrorHandlerInterface = (err: Error) => {
         throw err;
     };
-    private readonly logger: LogInterface;
+    private readonly logger: Debugger;
 
     constructor(name: string) {
         this.name = name;
@@ -66,9 +66,9 @@ export class MiddlewareChain {
                     this.logger(_data.toString());
                     this.errHandler(_data, data, callback);
                 } else if (typeof this.chain[position] === "function") {
-                    this.chain[position++](_data as IActivityStream, next);
+                    this.chain[position++](_data as ActivityStream, next);
                 } else {
-                    callback(_data as IActivityStream);
+                    callback(_data as ActivityStream);
                 }
             };
             next(data);

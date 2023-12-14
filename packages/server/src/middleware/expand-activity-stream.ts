@@ -1,5 +1,5 @@
 import ASFactory, { ASFactoryOptions } from "@sockethub/activity-streams";
-import { IActivityStream } from "@sockethub/schemas";
+import { ActivityStream } from "@sockethub/schemas";
 
 import config from "../config";
 import { MiddlewareChainInterface } from "../middleware";
@@ -14,7 +14,7 @@ function ensureObject(msg: unknown) {
 }
 
 export default function expandActivityStream(
-    msg: IActivityStream,
+    msg: ActivityStream,
     done: MiddlewareChainInterface,
 ) {
     if (!ensureObject(msg)) {
@@ -24,7 +24,7 @@ export default function expandActivityStream(
     } else if (typeof msg.type !== "string") {
         done(new Error("activity stream must contain a type property."));
     } else {
-        msg = activity.Stream(msg) as IActivityStream;
+        msg = activity.Stream(msg) as ActivityStream;
         if (!msg.actor) {
             done(new Error("activity stream must contain an actor property."));
         } else {

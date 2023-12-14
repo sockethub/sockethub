@@ -5,7 +5,7 @@ import {
     createDecipheriv,
     createHash,
 } from "crypto";
-import { IActivityStream } from "@sockethub/schemas";
+import { ActivityStream } from "@sockethub/schemas";
 import hash from "object-hash";
 
 const ALGORITHM = "aes-256-cbc",
@@ -30,7 +30,7 @@ export class Crypto {
         this.randomBytes = randomBytes;
     }
 
-    encrypt(json: IActivityStream, secret: string): string {
+    encrypt(json: ActivityStream, secret: string): string {
         Crypto.ensureSecret(secret);
         const iv = this.randomBytes(IV_LENGTH);
         const cipher = createCipheriv(ALGORITHM, Buffer.from(secret), iv);
@@ -40,7 +40,7 @@ export class Crypto {
         return iv.toString("hex") + ":" + encrypted.toString("hex");
     }
 
-    decrypt(text: string, secret: string): IActivityStream {
+    decrypt(text: string, secret: string): ActivityStream {
         Crypto.ensureSecret(secret);
         const parts = text.split(":");
         const iv = Buffer.from(parts.shift(), "hex");

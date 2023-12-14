@@ -1,7 +1,7 @@
 import { ChildProcess, fork } from "child_process";
 import { join } from "path";
-import { debug, Debugger } from "debug";
-import { IActivityStream, CompletedJobHandler } from "@sockethub/schemas";
+import { debug } from "debug";
+import { ActivityStream, InternalActivityStream, CompletedJobHandler, PlatformConfig, Logger } from "@sockethub/schemas";
 import { JobQueue, JobDataDecrypted } from "@sockethub/data-layer";
 import type { Socket } from "socket.io";
 
@@ -24,9 +24,9 @@ type EnvFormat = {
     REDIS_URL: string;
 };
 
-interface MessageFromPlatform extends Array<string | IActivityStream> {
+interface MessageFromPlatform extends Array<string | ActivityStream> {
     0: string;
-    1: IActivityStream;
+    1: ActivityStream;
     2: string;
 }
 
@@ -35,24 +35,19 @@ export interface MessageFromParent extends Array<string | unknown> {
     1: unknown;
 }
 
-export interface PlatformConfig {
-    persist?: boolean;
-    requireCredentials?: Array<string>;
-}
-
 export default class PlatformInstance {
     id: string;
     flaggedForTermination = false;
     initialized = false;
     queue: JobQueue;
-    JobQueue;
-    getSocket;
+    JobQueue: typeof JobQueue;
+    getSocket: typeof getSocket;
     readonly global: boolean = false;
     readonly completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
-    readonly config: PlatformConfig = {};
+    readonly config: PlatformConfig;
     readonly name: string;
     process: ChildProcess;
-    readonly debug: Debugger;
+    readonly debug: Logger;
     readonly parentId: string;
     readonly sessions: Set<string> = new Set();
     readonly sessionCallbacks: object = {
@@ -88,7 +83,7 @@ export default class PlatformInstance {
         this.JobQueue = JobQueue;
     }
 
-    initProcess(parentId, name, id, env) {
+    initProcess(parentId: string, name: string, id: string, env: EnvFormat) {
         // spin off a process
         this.process = fork(
             join(__dirname, "platform.js"),
@@ -145,7 +140,7 @@ export default class PlatformInstance {
             "completed",
             async (
                 job: JobDataDecrypted,
-                result: IActivityStream | undefined,
+                result: ActivityStream | undefined,
             ) => {
                 await this.handleJobResult("completed", job, result);
             },
@@ -155,7 +150,7 @@ export default class PlatformInstance {
             "failed",
             async (
                 job: JobDataDecrypted,
-                result: IActivityStream | undefined,
+                result: ActivityStream | undefined,
             ) => {
                 await this.handleJobResult("failed", job, result);
             },
@@ -183,7 +178,7 @@ export default class PlatformInstance {
      * @param sessionId ID of the socket connection to send the message to
      * @param msg ActivityStream object to send to client
      */
-    public async sendToClient(sessionId: string, msg: IActivityStream) {
+    public async sendToClient(sessionId: string, msg: InternalActivityStream) {
         return this.getSocket(sessionId).then(
             (socket: Socket) => {
                 try {
@@ -199,7 +194,7 @@ export default class PlatformInstance {
                         // ensure an actor is present if not otherwise defined
                         msg.actor = { id: this.actor, type: "unknown" };
                     }
-                    socket.emit("message", msg);
+                    socket.emit("message", msg as ActivityStream);
                 }
             },
             (err) => this.debug(`sendToClient ${err}`),
@@ -207,7 +202,7 @@ export default class PlatformInstance {
     }
 
     // send message to every connected socket associated with this platform instance.
-    private broadcastToSharedPeers(sessionId: string, msg: IActivityStream) {
+    private broadcastToSharedPeers(sessionId: string, msg: ActivityStream) {
         for (const sid of this.sessions.values()) {
             if (sid !== sessionId) {
                 this.debug(`broadcasting message to ${sid}`);
@@ -220,7 +215,7 @@ export default class PlatformInstance {
     private async handleJobResult(
         type: string,
         job: JobDataDecrypted,
-        result: IActivityStream | undefined,
+        result: ActivityStream | undefined,
     ) {
         let payload = result; // some platforms return new AS objects as result
         if (type === "failed") {
@@ -255,7 +250,7 @@ export default class PlatformInstance {
         // persistent
         if (
             this.config.persist &&
-            this.config.requireCredentials.includes(job.msg.type)
+            this.config.requireCredentials?.includes(job.msg.type)
         ) {
             if (type === "failed") {
                 this.debug(
@@ -278,7 +273,7 @@ export default class PlatformInstance {
      * @param errorMessage
      */
     private async reportError(sessionId: string, errorMessage: string) {
-        const errorObject: IActivityStream = {
+        const errorObject: ActivityStream = {
             context: this.name,
             type: "error",
             actor: { id: this.actor, type: "unknown" },

@@ -2,7 +2,7 @@ import { expect } from "chai";
 import asObjects from "./validate.test.data";
 import loadPlatforms from "../bootstrap/load-platforms";
 import validate, { registerPlatforms } from "./validate";
-import { IActivityStream } from "@sockethub/schemas";
+import { ActivityStream } from "@sockethub/schemas";
 
 class FakeSockethubPlatform {
     constructor() {}
@@ -87,7 +87,7 @@ describe("", () => {
                         obj.type,
                         "tests",
                         mockInit,
-                    )(obj.input as IActivityStream, (msg) => {
+                    )(obj.input as ActivityStream, (msg) => {
                         if (obj.output) {
                             if (obj.output === "same") {
                                 expect(msg).to.eql(obj.input);

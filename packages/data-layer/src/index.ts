@@ -1,6 +1,5 @@
 import CredentialsStore, {
-    CredentialsObject,
-    CredentialsStoreInstance,
+    CredentialsStoreInterface,
     verifySecureStore,
 } from "./credentials-store";
 import JobQueue, { verifyJobQueue } from "./job-queue";
@@ -22,6 +21,5 @@ export {
     JobQueue,
     JobWorker,
     CredentialsStore,
-    CredentialsObject,
-    CredentialsStoreInstance,
+    CredentialsStoreInterface,
 };

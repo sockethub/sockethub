@@ -6,7 +6,7 @@
  * config.
  */
 import debug from "debug";
-import schemas from "@sockethub/schemas";
+import schemas, {PlatformConfig, PlatformSchemaStruct, PlatformSession} from "@sockethub/schemas";
 
 const log = debug("sockethub:server:bootstrap:platforms");
 
@@ -17,17 +17,18 @@ export type PlatformMap = Map<
     {
         id: string;
         moduleName: string;
-        config: {
-            persist?: boolean;
-        };
-        schemas: {
-            credentials?: object;
-            messages?: object;
-        };
+        config: PlatformConfig;
+        schemas: PlatformSchemaStruct;
         version: string;
         types: Array<string>;
     }
 >;
+
+const dummySession: PlatformSession = {
+    debug: () => {},
+    sendToClient: () => {},
+    updateActor: () => {}
+};
 
 // if the platform schema lists valid types it implements (essentially methods/verbs for
 // Sockethub to call) then add it to the supported types list.
@@ -47,7 +48,7 @@ async function loadPlatform(platformName: string, injectRequire) {
         p = new P();
     } else {
         const P = await import(platformName);
-        p = new P.default();
+        p = new P.default(dummySession);
     }
     const err = schemas.validatePlatformSchema(p.schema);
 

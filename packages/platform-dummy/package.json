@@ -5,11 +5,16 @@
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
-    "main": "index.js",
+    "main": "./dist/index.js",
     "keywords": [
         "sockethub",
         "dummy"
     ],
+    "devDependencies": {
+        "@types/node": "20.10.4",
+        "@sockethub/schemas": "workspace:^",
+        "typescript": "5.3.3"
+    },
     "peerDependencies": {
         "@sockethub/server": "workspace:^"
     },
@@ -19,6 +24,8 @@
         }
     },
     "scripts": {
+        "build": "tsc",
+        "lint": "eslint .",
         "test": "exit 0"
     },
     "repository": {
