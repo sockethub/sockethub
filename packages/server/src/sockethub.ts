@@ -3,7 +3,7 @@ import { Socket } from "socket.io";
 import crypto from "@sockethub/crypto";
 import {
     CredentialsStore,
-    type CredentialsStoreInstance,
+    type CredentialsStoreInterface,
 } from "@sockethub/data-layer";
 
 import getInitObject from "./bootstrap/init";
@@ -15,7 +15,7 @@ import janitor from "./janitor";
 import listener from "./listener";
 import ProcessManager from "./process-manager";
 import nconf from "nconf";
-import { IActivityStream } from "@sockethub/schemas";
+import { ActivityStream } from "@sockethub/schemas";
 import middleware from "./middleware";
 
 const log = debug("sockethub:server:core");
@@ -84,7 +84,7 @@ class Sockethub {
             sessionSecret = crypto.randToken(16),
             // stores instance is session-specific
             // stores = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret);
-            credentialsStore: CredentialsStoreInstance = new CredentialsStore(
+            credentialsStore: CredentialsStoreInterface = new CredentialsStore(
                 this.parentId,
                 socket.id,
                 this.parentSecret1 + sessionSecret,
@@ -144,7 +144,7 @@ class Sockethub {
                 .use((err, data, next) => {
                     next(attachError(err, data));
                 })
-                .use(async (msg: IActivityStream, next) => {
+                .use(async (msg: ActivityStream, next) => {
                     const platformInstance = this.processManager.get(
                         msg.context,
                         msg.actor.id,

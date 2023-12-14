@@ -1,7 +1,7 @@
 import crypto, { Crypto } from "@sockethub/crypto";
 import { JobDataDecrypted, JobEncrypted, RedisConfig } from "./types";
 import EventEmitter from "events";
-import { IActivityStream } from "@sockethub/schemas";
+import { ActivityStream } from "@sockethub/schemas";
 import IORedis, { Redis } from "ioredis";
 
 export function createIORedisConnection(config: RedisConfig): Redis {
@@ -41,16 +41,16 @@ export default class JobBase extends EventEmitter {
     protected decryptJobData(job: JobEncrypted): JobDataDecrypted {
         return {
             title: job.data.title,
-            msg: this.decryptActivityStream(job.data.msg) as IActivityStream,
+            msg: this.decryptActivityStream(job.data.msg) as ActivityStream,
             sessionId: job.data.sessionId,
         };
     }
 
-    protected decryptActivityStream(msg: string): IActivityStream {
+    protected decryptActivityStream(msg: string): ActivityStream {
         return this.crypto.decrypt(msg, this.secret);
     }
 
-    protected encryptActivityStream(msg: IActivityStream): string {
+    protected encryptActivityStream(msg: ActivityStream): string {
         return this.crypto.encrypt(msg, this.secret);
     }
 }

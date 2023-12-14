@@ -1,5 +1,5 @@
 import debug from "debug";
-import { IActivityStream } from "@sockethub/schemas";
+import {ActivityStream, PlatformCallback, PlatformSession, CredentialsObject} from "@sockethub/schemas";
 import crypto, { getPlatformId } from "@sockethub/crypto";
 import {
     CredentialsStore,
@@ -25,11 +25,6 @@ let parentSecret1: string, parentSecret2: string;
 
 logger(`platform handler initialized for ${platformName} ${identifier}`);
 
-export interface PlatformSession {
-    debug(msg: string): void;
-    sendToClient?(msg: IActivityStream, special?: string): void;
-    updateActor(credentials: object): void;
-}
 interface SecretInterface {
     parentSecret1: string;
     parentSecret2: string;
@@ -81,7 +76,7 @@ const platform = new PlatformModule(platformSession);
 function getJobHandler(): JobHandler {
     return async (
         job: JobDataDecrypted,
-    ): Promise<string | void | IActivityStream> => {
+    ): Promise<string | void | ActivityStream> => {
         return new Promise((resolve, reject) => {
             const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
             jobLog(`received ${job.title} ${job.msg.type}`);
@@ -96,12 +91,12 @@ function getJobHandler(): JobHandler {
             delete job.msg.sessionSecret;
 
             let jobCallbackCalled = false;
-            const doneCallback = (
+            const doneCallback: PlatformCallback = (
                 err: Error | null,
-                result: null | IActivityStream,
+                result: null | ActivityStream,
             ): void => {
                 if (jobCallbackCalled) {
-                    return resolve();
+                    return resolve(null);
                 }
                 jobCallbackCalled = true;
                 if (err) {
@@ -121,10 +116,7 @@ function getJobHandler(): JobHandler {
                 }
             };
 
-            platform.config.requireCredentials
-                ? platform.config.requireCredentials
-                : [];
-            if (platform.config.requireCredentials.includes(job.msg.type)) {
+            if (platform.config.requireCredentials?.includes(job.msg.type)) {
                 // this method requires credentials and should be called even if the platform is not
                 // yet initialized, because they need to authenticate before they are initialized.
                 credentialStore
@@ -160,7 +152,7 @@ function getJobHandler(): JobHandler {
  * @param command string containing the type of command to be sent. 'message' or 'close'
  */
 function getSendFunction(command: string) {
-    return function (msg: IActivityStream, special?: string) {
+    return function (msg: ActivityStream, special?: string) {
         if (platform.config.persist) {
             process.send([command, msg, special]);
         } else {
@@ -176,7 +168,7 @@ function getSendFunction(command: string) {
  * both the queue thread (listening on the channel for jobs) and the logging object are updated.
  * @param credentials
  */
-async function updateActor(credentials) {
+async function updateActor(credentials: CredentialsObject) {
     identifier = getPlatformId(platformName, credentials.actor.id);
     logger(
         `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,

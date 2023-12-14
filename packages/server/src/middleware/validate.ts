@@ -3,8 +3,8 @@
  */
 import debug from "debug";
 import schemas, {
-    IActivityStream,
-    CallbackActivityStreamInterface,
+    ActivityStream,
+    MiddlewareCallback,
 } from "@sockethub/schemas";
 
 import getInitObject from "../bootstrap/init";
@@ -37,7 +37,7 @@ export default function validate(
     init = initObj,
 ) {
     const sessionLog = debug(`sockethub:server:validate:${sockethubId}`);
-    return (msg: IActivityStream, done: CallbackActivityStreamInterface) => {
+    return (msg: ActivityStream, done: MiddlewareCallback) => {
         sessionLog("applying schema validation for " + type);
         if (type === "activity-object") {
             const err = schemas.validateActivityObject(msg);

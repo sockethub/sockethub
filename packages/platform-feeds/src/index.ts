@@ -17,17 +17,22 @@
  */
 
 import PlatformSchema from "./schema";
-import type { Debugger } from "debug";
 import {
-    ASFeedActor,
-    ASFeedEntry,
-    ASFeedStruct,
+    PlatformFeedsActivityActor,
+    PlatformFeedsActivityObject,
+    PlatformFeedsActivityStream,
     ASFeedType,
     ASObjectType,
 } from "./types";
 import htmlTags from "html-tags";
 import fetch from "node-fetch";
-import getPodcastFromFeed from "podparse";
+import getPodcastFromFeed, {Meta} from "podparse";
+import type {
+    ActivityStream, Logger,
+    PlatformCallback,
+    PlatformConfig, PlatformSchemaStruct,
+    PlatformSession
+} from "@sockethub/schemas";
 
 const MAX_NOTE_LENGTH = 256;
 
@@ -63,26 +68,23 @@ function isHtml(s: string): boolean {
  */
 class Feeds {
     id: string;
-    debug: Debugger;
+    debug: Logger;
 
     /**
      * @constructor
-     * @param cfg - a unique config object for this instance
+     * @param session - a unique session object for this platform instance
      */
-    constructor(cfg) {
-        cfg = typeof cfg === "object" ? cfg : {};
-        this.id = cfg.id; // actor
-        this.debug = cfg.debug;
+    constructor(session: PlatformSession) {
+        this.debug = session.debug;
     }
 
-    get schema() {
+    get schema(): PlatformSchemaStruct {
         return PlatformSchema;
     }
 
-    get config() {
+    get config(): PlatformConfig {
         return {
             persist: false,
-            requireCredentials: [],
         };
     }
 
@@ -157,7 +159,7 @@ class Feeds {
      *   }
      *
      */
-    fetch(job, done) {
+    fetch(job: ActivityStream, done: PlatformCallback) {
         // ready to execute job
         this.fetchFeed(job.target.id, job.id)
             .then((results) => {
@@ -166,16 +168,17 @@ class Feeds {
             .catch(done);
     }
 
-    cleanup(done) {
+    cleanup(done: PlatformCallback) {
         done();
     }
 
     // fetches the articles from a feed, adding them to an array
     // for processing
-    private async fetchFeed(url, id): Promise<Array<ASFeedStruct>> {
+    private async fetchFeed(url: string, id: string): Promise<Array<PlatformFeedsActivityStream>> {
         this.debug("fetching " + url);
         const res = await fetch(url);
         const feed = getPodcastFromFeed(await res.text());
+        console.log('feed: ', feed.meta);
         const actor = buildFeedChannel(url, feed.meta);
         const articles = [];
 
@@ -189,7 +192,7 @@ class Feeds {
     }
 }
 
-function buildFeedItem(item): ASFeedEntry {
+function buildFeedItem(item): PlatformFeedsActivityObject {
     const dateNum = Date.parse(item.pubDate.toString()) || 0;
     return {
         type:
@@ -211,16 +214,15 @@ function buildFeedItem(item): ASFeedEntry {
     };
 }
 
-function buildFeedStruct(actor): ASFeedStruct {
+function buildFeedStruct(actor: PlatformFeedsActivityActor): PlatformFeedsActivityStream {
     return {
         context: ASFeedType.FEEDS,
         actor: actor,
         type: "post",
-        object: {},
     };
 }
 
-function buildFeedChannel(url: string, meta): ASFeedActor {
+function buildFeedChannel(url: string, meta: Meta): PlatformFeedsActivityActor {
     return {
         id: url,
         type: ASFeedType.FEED_CHANNEL,
@@ -228,8 +230,7 @@ function buildFeedChannel(url: string, meta): ASFeedActor {
         link: meta.link || url,
         description: meta.description ? meta.description : undefined,
         image: meta.image ? meta.image : undefined,
-        favicon: meta.favicon ? meta.favicon : undefined,
-        categories: meta.categories ? meta.categories : [],
+        categories: meta.category ? meta.category : [],
         language: meta.language ? meta.language : undefined,
         author: meta.author ? meta.author : undefined,
     };

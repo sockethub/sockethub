@@ -1,6 +1,6 @@
 import { ErrorObject } from "ajv";
 import { ObjectTypesList } from "./objects";
-import { IActivityStream, IActivityObject } from "../types";
+import { ActivityStream, ActivityObject } from "../types";
 
 interface TypeBreakdown {
     actor: Array<string>;
@@ -20,7 +20,7 @@ function parseMsg(error: ErrorObject): string {
     return err;
 }
 
-function getTypeList(msg: IActivityStream | IActivityObject): Array<string> {
+function getTypeList(msg: ActivityStream | ActivityObject): Array<string> {
     let types = [];
     types.push(msg?.type);
     for (const prop in msg) {
@@ -57,7 +57,7 @@ function getPartsCount(error: ErrorObject, types: TypeBreakdown): number {
     return parts.length;
 }
 
-function getTypes(msg: IActivityStream): TypeBreakdown {
+function getTypes(msg: ActivityStream): TypeBreakdown {
     return {
         actor: getTypeList(msg.actor),
         target: getTypeList(msg.target),

@@ -1,3 +1,6 @@
+import {ActivityActor, ActivityObject, ActivityStream} from "@sockethub/schemas";
+import {Author} from "podparse";
+
 export enum ASFeedType {
     FEED_CHANNEL = "feed",
     FEEDS = "feeds",
@@ -8,28 +11,27 @@ export enum ASObjectType {
     NOTE = "note",
 }
 
-export interface ASFeedActor {
+export interface PlatformFeedsActivityActor extends ActivityActor {
     type: ASFeedType.FEED_CHANNEL;
     name: string;
     id: string;
     link: string;
     description: string;
     image: unknown;
-    favicon: string;
     categories: Array<string>;
     language: string;
-    author: string;
+    author: Author;
 }
 
-export type ASFeedStruct = {
+export interface PlatformFeedsActivityStream extends ActivityStream {
     id?: string;
     context: ASFeedType.FEEDS;
-    actor: ASFeedActor;
+    actor: PlatformFeedsActivityActor;
     type: string;
-    object: object;
-};
+    object?: PlatformFeedsActivityObject;
+}
 
-export type ASFeedEntry = {
+export interface PlatformFeedsActivityObject extends ActivityObject {
     type: ASObjectType;
     title: string;
     id: string;
@@ -43,4 +45,4 @@ export type ASFeedEntry = {
     tags: Array<string>;
     media: Array<unknown>;
     source: string;
-};
+}

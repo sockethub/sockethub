@@ -7,7 +7,7 @@ import {
     JobWorker,
     JobDataDecrypted,
 } from "@sockethub/data-layer";
-import { IActivityStream } from "@sockethub/schemas";
+import { ActivityStream } from "@sockethub/schemas";
 
 const actor = "" + (Math.random() + 1).toString(36).substring(2);
 const creds: CredentialsObject = {
@@ -84,7 +84,7 @@ describe("connect and disconnect", () => {
 });
 
 describe("JobQueue", () => {
-    const as: IActivityStream = {
+    const as: ActivityStream = {
         type: "foo",
         context: "bar",
         actor: {

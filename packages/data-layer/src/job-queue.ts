@@ -1,7 +1,7 @@
 import { Job, Queue, Worker, QueueEvents } from "bullmq";
 import { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types";
 import debug, { Debugger } from "debug";
-import { IActivityStream } from "@sockethub/schemas";
+import { ActivityStream } from "@sockethub/schemas";
 import JobBase, { createIORedisConnection } from "./job-base";
 
 export async function verifyJobQueue(config: RedisConfig): Promise<void> {
@@ -110,7 +110,7 @@ export default class JobQueue extends JobBase {
 
     async add(
         socketId: string,
-        msg: IActivityStream,
+        msg: ActivityStream,
     ): Promise<JobDataEncrypted> {
         const job = this.createJob(socketId, msg);
         if (await this.queue.isPaused()) {
@@ -164,7 +164,7 @@ export default class JobQueue extends JobBase {
 
     private createJob(
         socketId: string,
-        msg: IActivityStream,
+        msg: ActivityStream,
     ): JobDataEncrypted {
         const title = `${msg.context}-${msg.id ? msg.id : this.counter++}`;
         return {
