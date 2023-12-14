@@ -487,6 +487,9 @@ importers:
       '@sockethub/schemas':
         specifier: workspace:^
         version: link:../schemas
+      '@types/node':
+        specifier: 20.10.4
+        version: 20.10.4
       c8:
         specifier: 8.0.1
         version: 8.0.1
@@ -499,6 +502,9 @@ importers:
       sinon:
         specifier: 17.0.1
         version: 17.0.1
+      typescript:
+        specifier: 5.3.3
+        version: 5.3.3
 
   packages/platform-xmpp:
     dependencies:

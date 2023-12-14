@@ -31,7 +31,7 @@ export type PlatformMap = Map<
 const dummySession: PlatformSession = {
     debug: () => {},
     sendToClient: () => {},
-    updateActor: () => {},
+    updateActor: async () => {},
 };
 
 // if the platform schema lists valid types it implements (essentially methods/verbs for

@@ -51,11 +51,11 @@ export interface PlatformSendToClient {
 }
 
 export interface PlatformUpdateActor {
-    (credentials: object): void;
+    (credentials: object): Promise<void>;
 }
 
 export interface Logger {
-    (msg: string): void;
+    (msg: string, data?: object): void;
 }
 
 export interface PlatformSession {
@@ -67,20 +67,12 @@ export interface PlatformSession {
 export interface CredentialsObject {
     context: string;
     type: "credentials";
-    actor: {
-        id: string;
-        type: string;
-        [x: string | number | symbol]: unknown;
-    };
+    actor: ActivityActor;
     object: {
         type: "credentials";
         [x: string | number | symbol]: unknown;
     };
-    target?: {
-        id: string;
-        type: string;
-        [x: string | number | symbol]: unknown;
-    };
+    target?: ActivityActor;
 }
 
 export type PlatformConfig = PersistentPlatformConfig | StatelessPlatformConfig;

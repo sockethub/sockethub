@@ -8,4 +8,4 @@ build
 /.svelte-kit
 !.env.example
 pnpm-lock.yaml
-packages/platform-irc/octal-hack.js
+packages/platform-irc/src/octal-hack.js

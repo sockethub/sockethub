@@ -5,7 +5,7 @@
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
-    "main": "index.js",
+    "main": "dist/index.js",
     "keywords": [
         "sockethub",
         "messaging",
@@ -27,6 +27,8 @@
     },
     "devDependencies": {
         "@sockethub/schemas": "workspace:^",
+        "@types/node": "20.10.4",
+        "typescript": "5.3.3",
         "c8": "8.0.1",
         "chai": "4.3.10",
         "jsdoc-to-markdown": "8.0.0",
@@ -41,10 +43,11 @@
         }
     },
     "scripts": {
-        "build": "true",
+        "build": "tsc",
+        "lint": "eslint .",
         "clean": "rm -rf coverage",
-        "test": "c8 mocha *.test.js",
+        "test": "c8 mocha *.test.ts",
         "coverage": "c8 check-coverage --statements 75 --branches 55 --functions 85 --lines 75",
-        "doc": "jsdoc2md --no-gfm --heading-depth 1 index.js  > API.md"
+        "doc": "jsdoc2md --no-gfm --heading-depth 1 dist/index.ts  > API.md"
     }
 }

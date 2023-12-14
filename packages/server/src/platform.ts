@@ -173,7 +173,7 @@ function getSendFunction(command: string) {
  * both the queue thread (listening on the channel for jobs) and the logging object are updated.
  * @param credentials
  */
-async function updateActor(credentials: CredentialsObject) {
+async function updateActor(credentials: CredentialsObject): Promise<void> {
     identifier = getPlatformId(platformName, credentials.actor.id);
     logger(
         `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,

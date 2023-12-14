@@ -1,8 +1,11 @@
-const chai = require("chai");
-const schemas = require("@sockethub/schemas").default;
-const expect = chai.expect;
+import { expect } from "chai";
 
-const IRCPlatform = require("./index");
+import schemas, {
+    CredentialsObject,
+    PlatformCallback,
+} from "@sockethub/schemas";
+
+import IRCPlatform from "./index";
 
 const actor = {
     type: "person",
@@ -45,7 +48,11 @@ describe("Initialize IRC Platform", () => {
                 return Promise.resolve();
             },
         });
-        platform.__connect = function (key, credentials, cb) {
+        platform.connect = function (
+            key: string,
+            credentials: CredentialsObject,
+            cb: PlatformCallback,
+        ) {
             cb(null, {
                 // eslint-disable-next-line @typescript-eslint/no-empty-function
                 end: () => {},
@@ -98,6 +105,7 @@ describe("Initialize IRC Platform", () => {
                 schemas.validateCredentials({
                     context: "irc",
                     type: "credentials",
+                    // @ts-expect-error test invalid params
                     object: {
                         host: "example.com",
                         port: "6667",
@@ -108,6 +116,7 @@ describe("Initialize IRC Platform", () => {
 
         it("invalid credentials port", () => {
             expect(
+                // @ts-expect-error test invalid params
                 schemas.validateCredentials({
                     context: "irc",
                     type: "credentials",
@@ -122,6 +131,7 @@ describe("Initialize IRC Platform", () => {
 
         it("invalid credentials additional prop", () => {
             expect(
+                // @ts-expect-error test invalid params
                 schemas.validateCredentials({
                     context: "irc",
                     type: "credentials",
