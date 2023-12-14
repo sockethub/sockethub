@@ -2,12 +2,11 @@ import { describe, it } from "mocha";
 import { expect } from "chai";
 import {
     CredentialsStore,
-    CredentialsObject,
     JobQueue,
     JobWorker,
     JobDataDecrypted,
 } from "@sockethub/data-layer";
-import { ActivityStream } from "@sockethub/schemas";
+import {ActivityStream, CredentialsObject} from "@sockethub/schemas";
 
 const actor = "" + (Math.random() + 1).toString(36).substring(2);
 const creds: CredentialsObject = {
