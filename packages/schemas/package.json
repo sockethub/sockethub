@@ -39,7 +39,7 @@
         "build": "pnpm clean && tsc && ./scripts/export-json-schema.js",
         "clean": "rm -rf coverage dist",
         "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 95 --lines 95",
-        "test": "c8 -x \"**/*.test.*\" mocha -r ts-node/register src/**/*.test.ts"
+        "test": "c8 -x \"**/*.test.*\" mocha -r ts-node/register src/**/*.test.ts && pnpm coverage"
     },
     "dependencies": {
         "ajv": "8.12.0",

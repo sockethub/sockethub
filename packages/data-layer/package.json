@@ -35,7 +35,7 @@
     },
     "scripts": {
         "clean": "rm -rf dist coverage",
-        "test": "c8 -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts",
+        "test": "c8 -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts && pnpm coverage",
         "coverage": "c8 check-coverage --statements 65 --branches 70 --functions 55 --lines 65",
         "build": "tsc"
     },

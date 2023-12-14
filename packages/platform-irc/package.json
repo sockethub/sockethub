@@ -48,7 +48,7 @@
         "octalhack": "cp src/octal-hack.js dist/octal-hack.js",
         "lint": "eslint .",
         "clean": "rm -rf coverage",
-        "test": "c8 mocha -r ts-node/register src/**/*.test.ts",
+        "test": "c8 mocha -r ts-node/register src/**/*.test.ts && pnpm coverage",
         "coverage": "c8 check-coverage --statements 75 --branches 55 --functions 85 --lines 75",
         "doc": "jsdoc2md --no-gfm --heading-depth 1 dist/index.ts  > API.md"
     }

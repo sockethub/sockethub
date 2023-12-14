@@ -18,7 +18,7 @@
     },
     "scripts": {
         "clean": "rm -rf coverage",
-        "test": "c8 -x \"**/*.test.*\"  mocha src/**.test.js",
+        "test": "c8 -x \"**/*.test.*\"  mocha src/**.test.js && pnpm coverage",
         "coverage": "c8 check-coverage --statements 90 --branches 90 --functions 95 --lines 90"
     },
     "repository": {
