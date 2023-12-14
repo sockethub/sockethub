@@ -4,6 +4,7 @@ import schemas, {
     CredentialsObject,
     PlatformCallback,
 } from "@sockethub/schemas";
+import { GetClientCallback } from "./index";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const IRC = require("./index");
@@ -52,7 +53,7 @@ describe("Initialize IRC Platform", () => {
         platform.ircConnect = function (
             key: string,
             credentials: CredentialsObject,
-            cb: PlatformCallback,
+            cb: GetClientCallback,
         ) {
             cb(null, {
                 // eslint-disable-next-line @typescript-eslint/no-empty-function

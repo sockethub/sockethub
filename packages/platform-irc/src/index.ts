@@ -37,7 +37,7 @@ import { PlatformIrcCredentialsObject } from "./types";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const buildCommand = require("./octal-hack.js");
 
-interface GetClientCallback {
+export interface GetClientCallback {
     (err: string | null, client?: typeof IrcSocket): void;
 }
 
