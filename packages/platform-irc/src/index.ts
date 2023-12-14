@@ -45,6 +45,14 @@ interface IrcSocketOptionsCapabilities {
     requires: string[];
 }
 
+interface IrcSocketConnectResponse {
+    isFail(): boolean;
+    fail(): string;
+    // eslint-disable-next-line
+    ok(): any;
+    end(): void;
+}
+
 interface IrcSocketOptionsConnect {
     rejectUnauthorized: boolean;
 }
@@ -346,6 +354,7 @@ class IRC implements PlatformInterface {
      * Indicate a change (i.e. room topic update, or nickname change).
      *
      * @param {object} job activity streams object
+     * @param {object} credentials credentials to verify this user is the right one
      * @param {object} done callback when job is done
      *
      * @example change topic
@@ -640,9 +649,9 @@ class IRC implements PlatformInterface {
                 } sasl: ${is_sasl}`,
         );
 
-        const client = new IrcSocket(module_options, is_secure ? tls : net);
+        const client: IrcSocket = new IrcSocket(module_options, is_secure ? tls : net);
 
-        const forceDisconnect = (err) => {
+        const forceDisconnect = (err: string) => {
             this.forceDisconnect = true;
             this.clientConnecting = false;
             if (client && typeof client.end === "function") {
@@ -654,7 +663,7 @@ class IRC implements PlatformInterface {
             cb(err);
         };
 
-        client.once("error", (err) => {
+        client.once("error", (err: string) => {
             this.debug(`irc client 'error' occurred. `, err);
             forceDisconnect("error connecting to server.");
         });
@@ -669,7 +678,7 @@ class IRC implements PlatformInterface {
             forceDisconnect("connection timeout to server.");
         });
 
-        client.connect().then((res) => {
+        client.connect().then((res: IrcSocketConnectResponse) => {
             if (res.isFail()) {
                 return cb(`unable to connect to server: ${res.fail()}`);
             }
@@ -702,11 +711,11 @@ class IRC implements PlatformInterface {
 
     private registerListeners(server: string) {
         this.irc2as = new IRC2AS({ server: server });
-        this.client.on("data", (data) => {
+        this.client.on("data", (data: never) => {
             this.irc2as.input(data);
         });
 
-        this.irc2as.events.on("incoming", (asObject) => {
+        this.irc2as.events.on("incoming", (asObject: ActivityStream) => {
             if (
                 typeof asObject.actor === "object" &&
                 typeof asObject.actor.name === "string" &&

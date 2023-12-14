@@ -55,7 +55,8 @@ export interface PlatformUpdateActor {
 }
 
 export interface Logger {
-    (msg: string, data?: object): void;
+    // eslint-disable-next-line
+    (msg: string, data?: any): void;
 }
 
 export interface PlatformSession {
