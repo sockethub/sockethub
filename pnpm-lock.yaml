@@ -89,9 +89,6 @@ importers:
 
   packages/activity-streams:
     dependencies:
-      '@sockethub/schemas':
-        specifier: workspace:3.0.0-alpha.4
-        version: link:../schemas
       eventemitter3:
         specifier: ^5.0.1
         version: 5.0.1
@@ -120,6 +117,9 @@ importers:
       '@rollup/plugin-terser':
         specifier: ^0.4.4
         version: 0.4.4(rollup@4.6.1)
+      '@sockethub/schemas':
+        specifier: workspace:^
+        version: link:../schemas
       '@types/node':
         specifier: 20.10.4
         version: 20.10.4
@@ -159,12 +159,6 @@ importers:
 
   packages/client:
     dependencies:
-      '@sockethub/activity-streams':
-        specifier: workspace:^
-        version: link:../activity-streams
-      '@sockethub/schemas':
-        specifier: workspace:^
-        version: link:../schemas
       eventemitter3:
         specifier: ^5.0.1
         version: 5.0.1
@@ -190,6 +184,12 @@ importers:
       '@rollup/plugin-terser':
         specifier: ^0.4.4
         version: 0.4.4(rollup@4.6.1)
+      '@sockethub/activity-streams':
+        specifier: workspace:^
+        version: link:../activity-streams
+      '@sockethub/schemas':
+        specifier: workspace:^
+        version: link:../schemas
       '@types/chai':
         specifier: 4.3.11
         version: 4.3.11
@@ -546,18 +546,6 @@ importers:
         specifier: ^4.3.4
         version: 4.3.4(supports-color@8.1.1)
     devDependencies:
-      '@sockethub/platform-dummy':
-        specifier: workspace:^
-        version: link:../platform-dummy
-      '@sockethub/platform-feeds':
-        specifier: workspace:^
-        version: link:../platform-feeds
-      '@sockethub/platform-irc':
-        specifier: workspace:^
-        version: link:../platform-irc
-      '@sockethub/platform-xmpp':
-        specifier: workspace:^
-        version: link:../platform-xmpp
       '@types/chai':
         specifier: 4.3.11
         version: 4.3.11

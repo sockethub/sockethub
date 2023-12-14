@@ -46,6 +46,8 @@
         "@rollup/plugin-commonjs": "^25.0.7",
         "@rollup/plugin-node-resolve": "^15.2.3",
         "@rollup/plugin-terser": "^0.4.4",
+        "@sockethub/activity-streams": "workspace:^",
+        "@sockethub/schemas": "workspace:^",
         "@types/chai": "4.3.11",
         "@types/mocha": "10.0.6",
         "@types/node": "20.10.4",
@@ -60,8 +62,6 @@
         "typescript": "5.3.3"
     },
     "dependencies": {
-        "@sockethub/activity-streams": "workspace:^",
-        "@sockethub/schemas": "workspace:^",
         "eventemitter3": "^5.0.1"
     },
     "keywords": [
