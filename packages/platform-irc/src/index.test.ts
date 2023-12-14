@@ -5,7 +5,8 @@ import schemas, {
     PlatformCallback,
 } from "@sockethub/schemas";
 
-import IRCPlatform from "./index";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const IRC = require("./index");
 
 const actor = {
     type: "person",
@@ -41,14 +42,14 @@ let loadedSchema = false;
 describe("Initialize IRC Platform", () => {
     let platform;
     beforeEach(() => {
-        platform = new IRCPlatform({
+        platform = new IRC({
             // eslint-disable-next-line @typescript-eslint/no-empty-function
             debug: function () {},
             updateActor: function async() {
                 return Promise.resolve();
             },
         });
-        platform.connect = function (
+        platform.ircConnect = function (
             key: string,
             credentials: CredentialsObject,
             cb: PlatformCallback,
