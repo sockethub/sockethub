@@ -1,9 +1,6 @@
 import { expect } from "chai";
 
-import schemas, {
-    CredentialsObject,
-    PlatformCallback,
-} from "@sockethub/schemas";
+import schemas, { CredentialsObject } from "@sockethub/schemas";
 import { GetClientCallback } from "./index";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
