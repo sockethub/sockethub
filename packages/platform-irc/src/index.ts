@@ -82,7 +82,13 @@ interface IrcSocketOptions {
  * @param {object} cfg a unique config object for this instance
  */
 class IRC implements PlatformInterface {
-    private readonly debug: Logger;
+    debug: Logger;
+    credentialsHash: string;
+    config: PersistentPlatformConfig = {
+        persist: true,
+        requireCredentials: ["connect", "update"],
+        initialized: false,
+    };
     private readonly updateActor: PlatformUpdateActor;
     private readonly sendToClient: PlatformSendToClient;
     private irc2as: typeof IRC2AS;
@@ -143,12 +149,6 @@ class IRC implements PlatformInterface {
     get schema(): PlatformSchemaStruct {
         return IrcSchema;
     }
-
-    config: PersistentPlatformConfig = {
-        persist: true,
-        requireCredentials: ["connect", "update"],
-        initialized: false,
-    };
 
     /**
      * Function: connect

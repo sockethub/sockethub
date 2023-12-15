@@ -101,6 +101,8 @@ export interface PlatformConstructor {
 }
 
 export interface PlatformInterface {
+    debug: Logger;
+    credentialsHash?: string;
     get config(): PlatformConfig;
     get schema(): PlatformSchemaStruct;
     cleanup(cb: PlatformCallback): void;
