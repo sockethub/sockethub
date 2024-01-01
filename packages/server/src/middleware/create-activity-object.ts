@@ -1,6 +1,6 @@
 import ActivityStreams from "@sockethub/activity-streams";
 import config from "../config";
-import { IActivityStream } from "@sockethub/schemas";
+import { ActivityStream } from "@sockethub/schemas";
 import { MiddlewareChainInterface } from "../middleware";
 const activity = ActivityStreams(config.get("activity-streams:opts"));
 
@@ -10,7 +10,7 @@ const activity = ActivityStreams(config.get("activity-streams:opts"));
  * @param done
  */
 export default function createActivityObject(
-    obj: IActivityStream,
+    obj: ActivityStream,
     done: MiddlewareChainInterface,
 ) {
     activity.Object.create(obj);

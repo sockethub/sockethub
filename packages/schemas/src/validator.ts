@@ -3,7 +3,7 @@ import Ajv, { Schema } from "ajv";
 import addFormats from "ajv-formats";
 import additionsFormats2019 from "ajv-formats-draft2019";
 import getErrorMessage from "./helpers/error-parser";
-import { IActivityStream } from "./types";
+import { ActivityStream } from "./types";
 import PlatformSchema from "./schemas/platform";
 import ActivityStreamsSchema from "./schemas/activity-stream";
 import ActivityObjectSchema from "./schemas/activity-object";
@@ -30,7 +30,7 @@ for (const uri in schemas) {
 
 function handleValidation(
     schemaRef: string,
-    msg: IActivityStream,
+    msg: ActivityStream,
     isObject = false,
 ): string {
     const validator = ajv.getSchema(schemaRef);
@@ -50,15 +50,15 @@ function handleValidation(
     return "";
 }
 
-export function validateActivityObject(msg: IActivityStream): string {
+export function validateActivityObject(msg: ActivityStream): string {
     return handleValidation(`${schemaURL}/activity-object`, msg, true);
 }
 
-export function validateActivityStream(msg: IActivityStream): string {
+export function validateActivityStream(msg: ActivityStream): string {
     return handleValidation(`${schemaURL}/activity-stream`, msg);
 }
 
-export function validateCredentials(msg: IActivityStream): string {
+export function validateCredentials(msg: ActivityStream): string {
     if (!msg.context) {
         return "credential activity streams must have a context set";
     }

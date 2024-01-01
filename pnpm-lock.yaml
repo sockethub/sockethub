@@ -85,9 +85,6 @@ importers:
 
   packages/activity-streams:
     dependencies:
-      '@sockethub/schemas':
-        specifier: workspace:3.0.0-alpha.4
-        version: link:../schemas
       eventemitter3:
         specifier: ^5.0.1
         version: 5.0.1
@@ -116,6 +113,9 @@ importers:
       '@rollup/plugin-terser':
         specifier: ^0.4.4
         version: 0.4.4(rollup@4.6.1)
+      '@sockethub/schemas':
+        specifier: workspace:^
+        version: link:../schemas
       '@types/node':
         specifier: 20.10.5
         version: 20.10.5
@@ -155,12 +155,6 @@ importers:
 
   packages/client:
     dependencies:
-      '@sockethub/activity-streams':
-        specifier: workspace:^
-        version: link:../activity-streams
-      '@sockethub/schemas':
-        specifier: workspace:^
-        version: link:../schemas
       eventemitter3:
         specifier: ^5.0.1
         version: 5.0.1
@@ -186,6 +180,12 @@ importers:
       '@rollup/plugin-terser':
         specifier: ^0.4.4
         version: 0.4.4(rollup@4.6.1)
+      '@sockethub/activity-streams':
+        specifier: workspace:^
+        version: link:../activity-streams
+      '@sockethub/schemas':
+        specifier: workspace:^
+        version: link:../schemas
       '@types/chai':
         specifier: 4.3.11
         version: 4.3.11
@@ -423,6 +423,16 @@ importers:
       '@sockethub/server':
         specifier: workspace:^
         version: link:../server
+    devDependencies:
+      '@sockethub/schemas':
+        specifier: workspace:^
+        version: link:../schemas
+      '@types/node':
+        specifier: 20.10.4
+        version: 20.10.4
+      typescript:
+        specifier: 5.3.3
+        version: 5.3.3
 
   packages/platform-feeds:
     dependencies:
@@ -442,15 +452,18 @@ importers:
         specifier: 1.6.0
         version: 1.6.0
     devDependencies:
+      '@sockethub/schemas':
+        specifier: workspace:^
+        version: link:../schemas
       '@types/node':
         specifier: 20.10.5
         version: 20.10.5
-      debug:
-        specifier: 4.3.4
-        version: 4.3.4(supports-color@8.1.1)
+      '@types/node-fetch':
+        specifier: ^2.6.9
+        version: 2.6.9
       eslint:
-        specifier: 8.56.0
-        version: 8.56.0
+        specifier: 8.55.0
+        version: 8.55.0
       typescript:
         specifier: 5.3.3
         version: 5.3.3
@@ -3516,6 +3529,19 @@ packages:
 
   /@types/nconf@0.10.6:
     resolution: {integrity: sha512-nzmiF6CdR2MNa73WRSerRsJ0KLUWonZD0Iti0Tq3CIn09HLAVnSXqwoITLw8TsLQ3JvmRJ/T0t/HDlYiM4pFjA==}
+    dev: true
+
+  /@types/node-fetch@2.6.9:
+    resolution: {integrity: sha512-bQVlnMLFJ2d35DkPNjEPmd9ueO/rh5EiaZt2bhqiSarPjZIuIV6bPQVqcrEyvNo+AfTrRGVazle1tl597w3gfA==}
+    dependencies:
+      '@types/node': 20.10.4
+      form-data: 4.0.0
+    dev: true
+
+  /@types/node@20.10.4:
+    resolution: {integrity: sha512-D08YG6rr8X90YB56tSIuBaddy/UXAA9RKJoFvrsnogAum/0pmjkgi4+2nx96A330FmioegBWmEYQ+syqCFaveg==}
+    dependencies:
+      undici-types: 5.26.5
     dev: true
 
   /@types/node@20.10.5:
@@ -7015,6 +7041,7 @@ packages:
   /iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
+    requiresBuild: true
     dependencies:
       safer-buffer: 2.1.2
     dev: true
@@ -8583,6 +8610,7 @@ packages:
   /node-gyp-build-optional-packages@5.0.7:
     resolution: {integrity: sha512-YlCCc6Wffkx0kHkmam79GKvDQ6x+QZkMjFGrIMxgFNILFvGSbCp2fCBC55pGTT9gVaz8Na5CLmxt/urtzRv36w==}
     hasBin: true
+    requiresBuild: true
     dev: false
     optional: true
 

@@ -1,4 +1,4 @@
-import { IActivityStream } from "./types";
+import { ActivityStream } from "./types";
 import { expect } from "chai";
 
 import ActivityStreamSchema from "./schemas/activity-stream";
@@ -45,7 +45,7 @@ describe("Credentials", () => {
         ([name, creds, expectedResult, expectedFailureMessage]) => {
             describe("validateCredential " + name, () => {
                 it(`returns expected result`, () => {
-                    const err = validateCredentials(creds as IActivityStream);
+                    const err = validateCredentials(creds as ActivityStream);
                     expect(err).to.equal(expectedFailureMessage);
                     expect(!err).to.equal(expectedResult);
                 });
@@ -66,7 +66,7 @@ describe("ActivityObject", () => {
         ([name, ao, expectedResult, expectedFailureMessage]) => {
             describe("validateActivityObject " + name, () => {
                 it(`returns expected result`, () => {
-                    const err = validateActivityObject(ao as IActivityStream);
+                    const err = validateActivityObject(ao as ActivityStream);
                     expect(err).to.equal(expectedFailureMessage);
                     expect(!err).to.equal(expectedResult);
                 });
@@ -87,7 +87,7 @@ describe("ActivityStream", () => {
         ([name, as, expectedResult, expectedFailureMessage]) => {
             describe("validateActivityStream " + name, () => {
                 it(`returns expected result`, () => {
-                    const err = validateActivityStream(as as IActivityStream);
+                    const err = validateActivityStream(as as ActivityStream);
                     expect(err).to.equal(expectedFailureMessage);
                     expect(!err).to.equal(expectedResult);
                 });

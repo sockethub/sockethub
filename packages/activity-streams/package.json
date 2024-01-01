@@ -22,7 +22,6 @@
         "build/"
     ],
     "dependencies": {
-        "@sockethub/schemas": "workspace:3.0.0-alpha.4",
         "eventemitter3": "^5.0.1"
     },
     "devDependencies": {
@@ -34,6 +33,7 @@
         "@rollup/plugin-multi-entry": "^6.0.1",
         "@rollup/plugin-node-resolve": "^15.2.3",
         "@rollup/plugin-terser": "^0.4.4",
+        "@sockethub/schemas": "workspace:^",
         "@types/node": "20.10.5",
         "c8": "8.0.1",
         "chai": "4.3.10",

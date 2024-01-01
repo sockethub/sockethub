@@ -2,27 +2,9 @@ import SecureStore from "secure-store-redis";
 import debug, { Debugger } from "debug";
 import crypto from "@sockethub/crypto";
 import { RedisConfig } from "./types";
+import { CredentialsObject } from "@sockethub/schemas";
 
-export interface CredentialsObject {
-    context: string;
-    type: "credentials";
-    actor: {
-        id: string;
-        type: string;
-        [x: string | number | symbol]: unknown;
-    };
-    object: {
-        type: "credentials";
-        [x: string | number | symbol]: unknown;
-    };
-    target?: {
-        id: string;
-        type: string;
-        [x: string | number | symbol]: unknown;
-    };
-}
-
-export interface CredentialsStoreInstance {
+export interface CredentialsStoreInterface {
     get(
         actor: string,
         credentialsHash: string,
@@ -43,7 +25,7 @@ export async function verifySecureStore(config: RedisConfig): Promise<void> {
 /**
  * Encapsulates the storing and fetching of credential objects.
  */
-export default class CredentialsStore implements CredentialsStoreInstance {
+export default class CredentialsStore implements CredentialsStoreInterface {
     readonly uid: string;
     store: SecureStore;
     objectHash: (o: unknown) => string;

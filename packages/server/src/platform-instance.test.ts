@@ -189,6 +189,7 @@ describe("PlatformInstance", () => {
             beforeEach(() => {
                 pi.sendToClient = sandbox.fake();
                 pi.broadcastToSharedPeers = sandbox.fake();
+                pi.config = { persist: false };
             });
 
             it("broadcasts to peers when handling a completed job", async () => {

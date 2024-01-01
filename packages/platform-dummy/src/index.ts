@@ -1,15 +1,25 @@
 /* eslint-disable  @typescript-eslint/no-var-requires */
-class Dummy {
-    constructor(cfg) {
-        cfg = typeof cfg === "object" ? cfg : {};
-        this.id = cfg.id;
-        this.debug = cfg.debug;
+import {
+    ActivityStream,
+    Logger,
+    PlatformCallback,
+    PlatformConfig,
+    PlatformInterface,
+    PlatformSchemaStruct,
+    PlatformSession,
+} from "@sockethub/schemas";
+
+class Dummy implements PlatformInterface {
+    debug: Logger;
+
+    constructor(session: PlatformSession) {
+        this.debug = session.debug;
     }
 
-    get schema() {
+    get schema(): PlatformSchemaStruct {
         return {
             name: "dummy",
-            version: require("./package.json").version,
+            version: require("../package.json").version,
             messages: {
                 required: ["type"],
                 properties: {
@@ -22,14 +32,13 @@ class Dummy {
         };
     }
 
-    get config() {
+    get config(): PlatformConfig {
         return {
             persist: false,
-            requireCredentials: [],
         };
     }
 
-    echo(job, cb) {
+    echo(job: ActivityStream, cb: PlatformCallback) {
         job.target = job.actor;
         job.actor = {
             id: "dummy",
@@ -38,11 +47,11 @@ class Dummy {
         cb(undefined, job);
     }
 
-    fail(job, cb) {
+    fail(job: ActivityStream, cb: PlatformCallback) {
         cb(new Error(job.object.content));
     }
 
-    cleanup(cb) {
+    cleanup(cb: PlatformCallback) {
         cb();
     }
 }

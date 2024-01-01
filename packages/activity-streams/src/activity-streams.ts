@@ -16,7 +16,7 @@
  */
 
 import EventEmitter from "eventemitter3";
-import { IActivityObject, IActivityStream } from "@sockethub/schemas";
+import { ActivityObject, ActivityStream } from "@sockethub/schemas";
 
 const ee = new EventEmitter(),
     baseProps = {
@@ -127,7 +127,7 @@ function renameProp(obj, key) {
     return obj;
 }
 
-function validateObject(type, obj: IActivityObject = { type: "" }) {
+function validateObject(type, obj: ActivityObject = { type: "" }) {
     const unknownKeys = Object.keys(obj).filter((key): void | string => {
         if (!baseProps[type].includes(key)) {
             return key;
@@ -194,9 +194,7 @@ function expandStream(meta) {
     return stream;
 }
 
-function Stream(
-    meta,
-): IActivityStream | IActivityObject | Record<string, never> {
+function Stream(meta): ActivityStream | ActivityObject | Record<string, never> {
     validateObject("stream", meta);
     if (typeof meta.object === "object") {
         validateObject("object", meta.object);
@@ -215,7 +213,7 @@ export interface ActivityObjectManager {
 }
 
 const _Object: ActivityObjectManager = {
-    create: function (obj: IActivityObject) {
+    create: function (obj: ActivityObject) {
         validateObject("object", obj);
         obj = ensureProps(obj);
         objs.set(obj.id, obj);

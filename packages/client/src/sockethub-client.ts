@@ -1,13 +1,17 @@
 import EventEmitter from "eventemitter3";
-import { IActivityObject, IActivityStream } from "@sockethub/schemas";
+import {
+    ActivityObject,
+    ActivityStream,
+    BaseActivityObject,
+} from "@sockethub/schemas";
 import ASFactory, { type ASManager } from "@sockethub/activity-streams";
 import type { Socket } from "socket.io-client";
 
 export interface EventMapping {
-    credentials: Map<string, IActivityStream>;
-    "activity-object": Map<string, IActivityObject>;
-    connect: Map<string, IActivityStream>;
-    join: Map<string, IActivityStream>;
+    credentials: Map<string, ActivityStream>;
+    "activity-object": Map<string, BaseActivityObject>;
+    connect: Map<string, ActivityStream>;
+    join: Map<string, ActivityStream>;
 }
 
 interface CustomEmitter extends EventEmitter {
@@ -39,7 +43,7 @@ export default class SockethubClient {
 
         this.ActivityStreams.on(
             "activity-object-create",
-            (obj: IActivityObject) => {
+            (obj: ActivityObject) => {
                 socket.emit("activity-object", obj, (err: never) => {
                     if (err) {
                         console.error("failed to create activity-object ", err);
@@ -79,13 +83,13 @@ export default class SockethubClient {
         return socket;
     }
 
-    private eventActivityObject(content: IActivityObject) {
+    private eventActivityObject(content: ActivityObject) {
         if (content.id) {
             this.events["activity-object"].set(content.id, content);
         }
     }
 
-    private eventCredentials(content: IActivityStream) {
+    private eventCredentials(content: ActivityStream) {
         if (content.object && content.object.type === "credentials") {
             const key: string =
                 content.actor.id || (content.actor as unknown as string);
@@ -93,15 +97,15 @@ export default class SockethubClient {
         }
     }
 
-    private eventMessage(content: IActivityObject) {
+    private eventMessage(content: BaseActivityObject) {
         if (!this.online) {
             return;
         }
         // either stores or delete the specified content onto the storedJoins map,
         // for reply once we're back online.
-        const key = SockethubClient.getKey(content as IActivityStream);
+        const key = SockethubClient.getKey(content as ActivityStream);
         if (content.type === "join" || content.type === "connect") {
-            this.events[content.type].set(key, content as IActivityStream);
+            this.events[content.type].set(key, content as ActivityStream);
         } else if (content.type === "leave") {
             this.events["join"].delete(key);
         } else if (content.type === "disconnect") {
@@ -109,7 +113,7 @@ export default class SockethubClient {
         }
     }
 
-    private static getKey(content: IActivityStream) {
+    private static getKey(content: ActivityStream) {
         const actor = content.actor?.id || content.actor;
         if (!actor) {
             throw new Error(
