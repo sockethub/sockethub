@@ -106,7 +106,7 @@ function getJobHandler(): JobHandler {
                 jobCallbackCalled = true;
                 if (err) {
                     jobLog(`failed ${job.title} ${job.msg.type}`);
-                    let errMsg;
+                    let errMsg: string | Error;
                     // some error objects (e.g. TimeoutError) don't interpolate correctly
                     // to being human-readable, so we have to do this little dance
                     try {
@@ -114,7 +114,7 @@ function getJobHandler(): JobHandler {
                     } catch (e) {
                         errMsg = err;
                     }
-                    reject(new Error(errMsg));
+                    reject(new Error(errMsg as string));
                 } else {
                     jobLog(`completed ${job.title} ${job.msg.type}`);
                     resolve(result);
