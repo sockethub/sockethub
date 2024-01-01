@@ -19,7 +19,7 @@ export interface BaseActivityObject {
 
 export interface ActivityActor extends BaseActivityObject {
     id: string;
-    type:string;
+    type: string;
     name?: string;
     [key: string]: unknown;
 }
@@ -114,5 +114,3 @@ export interface PlatformSession {
     sendToClient: PlatformSendToClient;
     updateActor: PlatformUpdateActor;
 }
-
-
