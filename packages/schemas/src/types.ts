@@ -19,6 +19,7 @@ export interface BaseActivityObject {
 
 export interface ActivityActor extends BaseActivityObject {
     id: string;
+    type:string;
     name?: string;
     [key: string]: unknown;
 }
@@ -107,3 +108,11 @@ export interface PlatformInterface {
     get schema(): PlatformSchemaStruct;
     cleanup(cb: PlatformCallback): void;
 }
+
+export interface PlatformSession {
+    debug: Logger;
+    sendToClient: PlatformSendToClient;
+    updateActor: PlatformUpdateActor;
+}
+
+

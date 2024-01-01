@@ -34,7 +34,7 @@
         "@rollup/plugin-node-resolve": "^15.2.3",
         "@rollup/plugin-terser": "^0.4.4",
         "@sockethub/schemas": "workspace:^",
-        "@types/node": "20.10.4",
+        "@types/node": "20.10.5",
         "c8": "8.0.1",
         "chai": "4.3.10",
         "karma": "6.4.2",
