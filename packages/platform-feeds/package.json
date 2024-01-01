@@ -26,13 +26,13 @@
     "dependencies": {
         "html-tags": "3.3.1",
         "htmlparser2": "9.0.0",
-        "node-fetch": "2.7.9",
+        "node-fetch": "2.7.0",
         "podparse": "1.6.0"
     },
     "devDependencies": {
-        "@types/node": "20.10.4",
+        "@types/node": "20.10.5",
         "debug": "4.3.4",
-        "eslint": "8.55.0",
+        "eslint": "8.56.0",
         "typescript": "5.3.3"
     },
     "peerDependencies": {
