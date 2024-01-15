@@ -11,6 +11,9 @@ import {
 
 class Dummy implements PlatformInterface {
     debug: Logger;
+    config: PlatformConfig = {
+        persist: false,
+    };
 
     constructor(session: PlatformSession) {
         this.debug = session.debug;
@@ -29,12 +32,6 @@ class Dummy implements PlatformInterface {
                 },
             },
             credentials: {},
-        };
-    }
-
-    get config(): PlatformConfig {
-        return {
-            persist: false,
         };
     }
 

@@ -4,6 +4,7 @@ import {
     PlatformCallback,
     PlatformSession,
     CredentialsObject,
+    PlatformInterface,
 } from "@sockethub/schemas";
 import crypto, { getPlatformId } from "@sockethub/crypto";
 import {
@@ -73,7 +74,7 @@ const platformSession: PlatformSession = {
     sendToClient: getSendFunction("message"),
     updateActor: updateActor,
 };
-const platform = new PlatformModule(platformSession);
+const platform: PlatformInterface = new PlatformModule(platformSession);
 
 /**
  * Returns a function used to handle completed jobs from the platform code (the `done` callback).
@@ -138,7 +139,10 @@ function getJobHandler(): JobHandler {
                         jobLog("error " + err.toString());
                         reject(err);
                     });
-            } else if (platform.config.persist && !platform.initialized) {
+            } else if (
+                platform.config.persist &&
+                !platform.config.initialized
+            ) {
                 reject(
                     new Error(
                         `${job.msg.type} called on uninitialized platform`,
@@ -173,7 +177,7 @@ function getSendFunction(command: string) {
  * both the queue thread (listening on the channel for jobs) and the logging object are updated.
  * @param credentials
  */
-async function updateActor(credentials: CredentialsObject) {
+async function updateActor(credentials: CredentialsObject): Promise<void> {
     identifier = getPlatformId(platformName, credentials.actor.id);
     logger(
         `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,

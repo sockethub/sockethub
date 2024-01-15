@@ -1,8 +1,10 @@
-const chai = require("chai");
-const schemas = require("@sockethub/schemas").default;
-const expect = chai.expect;
+import { expect } from "chai";
 
-const IRCPlatform = require("./index");
+import schemas, { ActivityStream, CredentialsObject } from "@sockethub/schemas";
+import { GetClientCallback } from "./index";
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const IRC = require("./index");
 
 const actor = {
     type: "person",
@@ -38,14 +40,18 @@ let loadedSchema = false;
 describe("Initialize IRC Platform", () => {
     let platform;
     beforeEach(() => {
-        platform = new IRCPlatform({
+        platform = new IRC({
             // eslint-disable-next-line @typescript-eslint/no-empty-function
             debug: function () {},
             updateActor: function async() {
                 return Promise.resolve();
             },
         });
-        platform.__connect = function (key, credentials, cb) {
+        platform.ircConnect = function (
+            key: string,
+            credentials: CredentialsObject,
+            cb: GetClientCallback,
+        ) {
             cb(null, {
                 // eslint-disable-next-line @typescript-eslint/no-empty-function
                 end: () => {},
@@ -98,6 +104,7 @@ describe("Initialize IRC Platform", () => {
                 schemas.validateCredentials({
                     context: "irc",
                     type: "credentials",
+                    // @ts-expect-error test invalid params
                     object: {
                         host: "example.com",
                         port: "6667",
@@ -108,6 +115,7 @@ describe("Initialize IRC Platform", () => {
 
         it("invalid credentials port", () => {
             expect(
+                // @ts-expect-error test invalid params
                 schemas.validateCredentials({
                     context: "irc",
                     type: "credentials",
@@ -122,6 +130,7 @@ describe("Initialize IRC Platform", () => {
 
         it("invalid credentials additional prop", () => {
             expect(
+                // @ts-expect-error test invalid params
                 schemas.validateCredentials({
                     context: "irc",
                     type: "credentials",
@@ -161,11 +170,11 @@ describe("Initialize IRC Platform", () => {
                     },
                     done,
                 );
-                platform.__completeJob();
+                platform.completeJob();
             });
 
             it("has join channel registered", () => {
-                expect(platform.__channels.has("#a-room")).to.equal(true);
+                expect(platform.channels.has("#a-room")).to.equal(true);
             });
 
             it("leave()", (done) => {
@@ -178,7 +187,7 @@ describe("Initialize IRC Platform", () => {
                     },
                     done,
                 );
-                platform.__completeJob();
+                platform.completeJob();
             });
 
             it("send()", (done) => {
@@ -189,10 +198,10 @@ describe("Initialize IRC Platform", () => {
                         actor: actor,
                         object: { content: "har dee dar" },
                         target: targetRoom,
-                    },
+                    } as ActivityStream,
                     done,
                 );
-                platform.__completeJob();
+                platform.completeJob();
             });
 
             it("update() topic", (done) => {
@@ -207,7 +216,7 @@ describe("Initialize IRC Platform", () => {
                     validCredentials,
                     done,
                 );
-                platform.__completeJob();
+                platform.completeJob();
             });
 
             it("update() nick change", (done) => {
@@ -222,7 +231,7 @@ describe("Initialize IRC Platform", () => {
                     validCredentials,
                     done,
                 );
-                platform.__completeJob();
+                platform.completeJob();
             });
 
             it("query()", (done) => {
@@ -236,12 +245,13 @@ describe("Initialize IRC Platform", () => {
                     },
                     done,
                 );
-                platform.__completeJob();
+                platform.completeJob();
             });
 
             it("cleanup()", (done) => {
+                expect(platform.config.initialized).to.eql(true);
                 platform.cleanup(() => {
-                    expect(platform.initialized).to.eql(false);
+                    expect(platform.config.initialized).to.eql(false);
                     done();
                 });
             });

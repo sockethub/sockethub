@@ -29,7 +29,7 @@
     "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/client",
     "scripts": {
         "clean": "rm -rf build dist coverage",
-        "test": "pnpm test:node",
+        "test": "pnpm test:node && pnpm coverage",
         "test:node": "c8 -x \"**/*.test.ts\" mocha -r ts-node/register ./src/**/*.test.ts",
         "test:node:lcov": "c8 -r lcov mocha -r ts-node/register ./src/**/*.test.ts",
         "coverage": "c8 check-coverage --statements 82 --branches 84 --functions 83 --lines 82",

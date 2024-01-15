@@ -19,6 +19,7 @@ export interface BaseActivityObject {
 
 export interface ActivityActor extends BaseActivityObject {
     id: string;
+    type: string;
     name?: string;
     [key: string]: unknown;
 }
@@ -51,11 +52,12 @@ export interface PlatformSendToClient {
 }
 
 export interface PlatformUpdateActor {
-    (credentials: object): void;
+    (credentials: object): Promise<void>;
 }
 
 export interface Logger {
-    (msg: string): void;
+    // eslint-disable-next-line
+    (msg: string, data?: any): void;
 }
 
 export interface PlatformSession {
@@ -67,20 +69,12 @@ export interface PlatformSession {
 export interface CredentialsObject {
     context: string;
     type: "credentials";
-    actor: {
-        id: string;
-        type: string;
-        [x: string | number | symbol]: unknown;
-    };
+    actor: ActivityActor;
     object: {
         type: "credentials";
         [x: string | number | symbol]: unknown;
     };
-    target?: {
-        id: string;
-        type: string;
-        [x: string | number | symbol]: unknown;
-    };
+    target?: ActivityActor;
 }
 
 export type PlatformConfig = PersistentPlatformConfig | StatelessPlatformConfig;
@@ -108,7 +102,15 @@ export interface PlatformConstructor {
 }
 
 export interface PlatformInterface {
+    debug: Logger;
+    credentialsHash?: string;
     get config(): PlatformConfig;
     get schema(): PlatformSchemaStruct;
     cleanup(cb: PlatformCallback): void;
+}
+
+export interface PlatformSession {
+    debug: Logger;
+    sendToClient: PlatformSendToClient;
+    updateActor: PlatformUpdateActor;
 }

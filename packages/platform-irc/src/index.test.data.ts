@@ -1,4 +1,4 @@
-modules.exports = [
+export default [
     {
         name: "irc credentials",
         valid: true,

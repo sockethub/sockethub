@@ -32,6 +32,7 @@ import type {
     Logger,
     PlatformCallback,
     PlatformConfig,
+    PlatformInterface,
     PlatformSchemaStruct,
     PlatformSession,
 } from "@sockethub/schemas";
@@ -68,9 +69,12 @@ function isHtml(s: string): boolean {
  * https://github.com/Tombarr/podcast-feed-parser
  *
  */
-class Feeds {
+class Feeds implements PlatformInterface {
     id: string;
     debug: Logger;
+    config: PlatformConfig = {
+        persist: false,
+    };
 
     /**
      * @constructor
@@ -82,12 +86,6 @@ class Feeds {
 
     get schema(): PlatformSchemaStruct {
         return PlatformSchema;
-    }
-
-    get config(): PlatformConfig {
-        return {
-            persist: false,
-        };
     }
 
     /**
