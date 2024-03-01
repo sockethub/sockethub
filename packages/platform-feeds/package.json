@@ -26,15 +26,15 @@
     "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-feeds",
     "dependencies": {
         "html-tags": "3.3.1",
-        "htmlparser2": "9.0.0",
+        "htmlparser2": "9.1.0",
         "node-fetch": "2.7.0",
         "podparse": "1.6.0"
     },
     "devDependencies": {
-        "@types/node": "20.10.5",
+        "@types/node": "20.11.20",
         "@types/node-fetch": "^2.6.9",
         "@sockethub/schemas": "workspace:^",
-        "eslint": "8.55.0",
+        "eslint": "8.56.0",
         "typescript": "5.3.3"
     },
     "peerDependencies": {

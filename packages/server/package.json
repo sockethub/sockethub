@@ -45,7 +45,7 @@
         "express": "4.18.2",
         "jquery": "3.7.1",
         "nconf": "0.12.1",
-        "socket.io": "4.7.2"
+        "socket.io": "4.7.4"
     },
     "scripts": {
         "clean": "rm -rf dist coverage",
@@ -67,12 +67,12 @@
         "@types/jquery": "3.5.29",
         "@types/mocha": "10.0.6",
         "@types/nconf": "0.10.6",
-        "@types/node": "20.10.5",
-        "@types/sinon": "17.0.2",
+        "@types/node": "20.11.20",
+        "@types/sinon": "17.0.3",
         "c8": "8.0.1",
-        "chai": "4.3.10",
+        "chai": "4.4.1",
         "jaribu": "2.2.3",
-        "mocha": "10.2.0",
+        "mocha": "10.3.0",
         "sinon": "17.0.1",
         "ts-node": "10.9.2",
         "typescript": "5.3.3",

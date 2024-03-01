@@ -28,9 +28,9 @@
         "@sockethub/schemas": "workspace:^",
         "@xmpp/xml": "0.13.1",
         "c8": "8.0.1",
-        "chai": "4.3.10",
-        "jsdoc-to-markdown": "8.0.0",
-        "mocha": "10.2.0",
+        "chai": "4.4.1",
+        "jsdoc-to-markdown": "8.0.1",
+        "mocha": "10.3.0",
         "sinon": "17.0.1"
     },
     "peerDependencies": {
