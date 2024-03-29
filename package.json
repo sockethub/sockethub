@@ -7,12 +7,12 @@
         "pnpm": ">=8"
     },
     "devDependencies": {
-        "@sockethub/data-layer": "workspace:1.0.0-alpha.4",
-        "@sockethub/schemas": "workspace:3.0.0-alpha.4",
         "@lerna-lite/cli": "3.1.0",
         "@lerna-lite/publish": "3.1.0",
+        "@sockethub/data-layer": "workspace:1.0.0-alpha.4",
+        "@sockethub/schemas": "workspace:3.0.0-alpha.4",
         "@types/mocha": "10.0.6",
-        "@typescript-eslint/eslint-plugin": "^6.13.2",
+        "@typescript-eslint/eslint-plugin": "^6.21.0",
         "@typescript-eslint/parser": "6.15.0",
         "chai": "4.3.10",
         "eslint": "8.56.0",
