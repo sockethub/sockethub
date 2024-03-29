@@ -64,6 +64,8 @@
     },
     "resolutions": {
         "eslint-plugin-security": "1.7.1",
-        "node-fetch": "2.6.9"
+        "node-fetch": "2.6.9",
+        "engine.io": "6.5.1",
+        "socket.io": "4.6.2"
     }
 }
