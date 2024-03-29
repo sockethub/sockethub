@@ -16,7 +16,7 @@
         "@typescript-eslint/parser": "7.4.0",
         "chai": "5.1.0",
         "eslint": "8.57.0",
-        "eslint-plugin-security": "^1.7.1",
+        "eslint-plugin-security": "1.7.1",
         "find-up": "7.0.0",
         "karma": "6.4.3",
         "karma-chai": "0.1.0",
@@ -64,8 +64,6 @@
     },
     "resolutions": {
         "eslint-plugin-security": "1.7.1",
-        "node-fetch": "2.6.9",
-        "engine.io": "6.5.1",
-        "socket.io": "4.6.2"
+        "node-fetch": "2.6.9"
     }
 }

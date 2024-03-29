@@ -11,8 +11,8 @@
         "dummy"
     ],
     "devDependencies": {
-        "@types/node": "20.10.4",
         "@sockethub/schemas": "workspace:^",
+        "@types/node": "20.10.4",
         "typescript": "5.3.3"
     },
     "peerDependencies": {
@@ -33,5 +33,8 @@
         "url": "git+https://github.com/sockethub/sockethub.git",
         "directory": "packages/platform-dummy"
     },
-    "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-dummy"
+    "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-dummy",
+    "dependencies": {
+        "@sockethub/server": "workspace:^"
+    }
 }

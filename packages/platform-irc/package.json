@@ -23,6 +23,7 @@
     "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-irc",
     "dependencies": {
         "@sockethub/irc2as": "workspace:4.0.0-alpha.4",
+        "@sockethub/server": "workspace:^",
         "irc-socket-sasl": "4.0.0"
     },
     "devDependencies": {
