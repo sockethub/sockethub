@@ -65,6 +65,6 @@
     "resolutions": {
         "node-fetch": "2.6.9",
         "engine.io": "6.5.1",
-        "socket.io": "4.6.2"
+        "socket.io": "4.7.5"
     }
 }
