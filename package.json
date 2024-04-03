@@ -63,7 +63,7 @@
         "tslib": "2.6.2"
     },
     "resolutions": {
-        "node-fetch": "2.6.9",
+        "node-fetch": "2.7.0",
         "engine.io": "6.5.4",
         "socket.io": "4.7.5"
     }
