@@ -74,7 +74,7 @@ const platformSession: PlatformSession = {
     sendToClient: getSendFunction("message"),
     updateActor: updateActor,
 };
-const platform: PlatformInterface = new PlatformModule(platformSession);
+const platform = new PlatformModule(platformSession) as PlatformInterface;
 
 /**
  * Returns a function used to handle completed jobs from the platform code (the `done` callback).
@@ -126,7 +126,10 @@ function getJobHandler(): JobHandler {
                 // this method requires credentials and should be called even if the platform is not
                 // yet initialized, because they need to authenticate before they are initialized.
                 credentialStore
-                    .get(job.msg.actor.id, platform.credentialsHash)
+                    .get(job.msg.actor.id,
+                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                        // @ts-ignore
+                        platform.credentialsHash)
                     .then((credentials) => {
                         platform[job.msg.type](
                             job.msg,
@@ -183,7 +186,11 @@ async function updateActor(credentials: CredentialsObject): Promise<void> {
         `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
     );
     logger = debug(`sockethub:platform:${identifier}`);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     platform.credentialsHash = crypto.objectHash(credentials.object);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     platform.debug = debug(`sockethub:platform:${platformName}:${identifier}`);
     process.send(["updateActor", undefined, identifier]);
     await startQueueListener(true);
