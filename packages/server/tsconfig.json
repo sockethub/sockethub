@@ -1,6 +1,8 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
+        "esModuleInterop": true,
+        "target": "esnext",
         "allowJs": false,
         "outDir": "dist",
         "rootDir": "src",
