@@ -7,6 +7,9 @@ import { MiddlewareChainInterface } from "../middleware";
 const asConfig = config.get("activity-streams:opts") as ASFactoryOptions;
 asConfig.warnOnUnknownObjectProperties = false;
 asConfig.failOnUnknownObjectProperties = false;
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 const activity = ASFactory.default(asConfig);
 
 function ensureObject(msg: unknown) {

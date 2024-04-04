@@ -60,6 +60,8 @@ export class Config {
         );
 
         // load defaults
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         nconf.defaults(data.default);
 
         nconf.required(["platforms"]);
