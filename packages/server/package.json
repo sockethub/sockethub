@@ -75,7 +75,6 @@
         "jaribu": "2.2.3",
         "mocha": "10.4.0",
         "sinon": "17.0.1",
-        "ts-node": "10.9.2",
         "tsx": "^4.7.2",
         "typescript": "5.3.3",
         "web-streams-polyfill": "^3.2.1"
