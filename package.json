@@ -26,7 +26,7 @@
         "karma-mocha-reporter": "^2.2.5",
         "markdown-spellcheck": "1.3.1",
         "markdownlint-cli": "0.38.0",
-        "mocha": "10.2.0",
+        "mocha": "10.4.0",
         "nx": "17.2.7",
         "prettier": "3.1.1",
         "typescript": "5.3.3"
@@ -49,7 +49,7 @@
         "integration:browser": "pnpm docker:start && pnpm integration:browser:run; RES=$?; exit $RES",
         "integration:browser:run": "karma start --single-run --sh_port=10650 --browsers ChromeHeadless ./karma.config.js",
         "integration:redis": "docker compose up redis -d && pnpm integration:redis:run; RES=$?; docker compose down; exit $RES",
-        "integration:redis:run": "DEBUG=ioredis*,bullmq*,sockethub* mocha -r ts-node/register test/redis.test.ts",
+        "integration:redis:run": "DEBUG=ioredis*,bullmq*,sockethub* NODE_OPTIONS='--import=tsx' mocha test/redis.test.ts",
         "lint": "prettier --check . && eslint --max-warnings 0 . && nx run-many --target=lint && pnpm lint:doc",
         "lint:doc": "markdownlint '**/*.md'",
         "lint:doc:fix": "markdownlint --fix '**/*.md' && mdspell -n -a --en-us ./README.md ./packages/*/README.md",
