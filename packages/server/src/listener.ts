@@ -49,6 +49,7 @@ class Listener {
     }
 
     private addExamplesRoutes(app) {
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         writeFileSync(
             `${__dirname}/../node_modules/@sockethub/examples/build/config.json`,
             JSON.stringify({
