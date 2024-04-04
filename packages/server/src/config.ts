@@ -1,8 +1,11 @@
 import nconf from "nconf";
-import { debug } from "debug";
+import debug from "debug";
 import * as fs from "fs";
 
 const log = debug("sockethub:server:bootstrap:config");
+
+import { __dirname } from "./util";
+const data: object = await import(__dirname + "/defaults.json");
 
 export class Config {
     constructor() {
@@ -57,9 +60,7 @@ export class Config {
         );
 
         // load defaults
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const defaults: object = require(__dirname + "/defaults.json");
-        nconf.defaults(defaults);
+        nconf.defaults(data.default);
 
         nconf.required(["platforms"]);
 

@@ -8,6 +8,7 @@ import { writeFileSync } from "fs";
 import config from "./config";
 import routes from "./routes";
 import path from "path";
+import { __dirname } from "./util";
 
 const log = debug("sockethub:server:listener");
 

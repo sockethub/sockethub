@@ -1,5 +1,6 @@
 import path from "path";
 import debug from "debug";
+import { __dirname } from "./util";
 
 const logger = debug("sockethub:server:routes");
 

@@ -2,6 +2,7 @@
     "name": "@sockethub/server",
     "description": "A polyglot messaging service, server libraries",
     "version": "5.0.0-alpha.4",
+    "type": "module",
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
@@ -49,7 +50,7 @@
     },
     "scripts": {
         "clean": "rm -rf dist coverage",
-        "test": "c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts src/**/*.test.ts && pnpm coverage",
+        "test": "NODE_OPTIONS='--import=tsx' c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha src/*.test.ts src/**/*.test.ts && pnpm coverage",
         "coverage": "c8 check-coverage --statements 85 --branches 80 --functions 70 --lines 85",
         "start": "DEBUG=sockethub* ./bin/sockethub",
         "dev": "pnpm build && DEBUG=sockethub* ./bin/sockethub --examples",
@@ -72,9 +73,10 @@
         "c8": "8.0.1",
         "chai": "4.3.10",
         "jaribu": "2.2.3",
-        "mocha": "10.2.0",
+        "mocha": "10.4.0",
         "sinon": "17.0.1",
         "ts-node": "10.9.2",
+        "tsx": "^4.7.2",
         "typescript": "5.3.3",
         "web-streams-polyfill": "^3.2.1"
     },

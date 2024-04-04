@@ -7,7 +7,7 @@ import { MiddlewareChainInterface } from "../middleware";
 const asConfig = config.get("activity-streams:opts") as ASFactoryOptions;
 asConfig.warnOnUnknownObjectProperties = false;
 asConfig.failOnUnknownObjectProperties = false;
-const activity = ASFactory(asConfig);
+const activity = ASFactory.default(asConfig);
 
 function ensureObject(msg: unknown) {
     return !(typeof msg !== "object" || Array.isArray(msg));

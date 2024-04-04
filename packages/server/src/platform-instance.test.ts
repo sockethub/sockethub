@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
-
+import { __dirname } from "./util";
 const FORK_PATH = __dirname + "/platform.js";
 
 import PlatformInstance, { platformInstances } from "./platform-instance";

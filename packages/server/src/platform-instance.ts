@@ -1,6 +1,6 @@
 import { ChildProcess, fork } from "child_process";
 import { join } from "path";
-import { debug } from "debug";
+import debug from "debug";
 import {
     ActivityStream,
     InternalActivityStream,
@@ -14,6 +14,7 @@ import type { Socket } from "socket.io";
 import config from "./config";
 import { getSocket } from "./listener";
 import nconf from "nconf";
+import { __dirname } from "./util";
 
 // collection of platform instances, stored by `id`
 export const platformInstances = new Map<string, PlatformInstance>();
