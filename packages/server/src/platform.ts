@@ -126,10 +126,12 @@ function getJobHandler(): JobHandler {
                 // this method requires credentials and should be called even if the platform is not
                 // yet initialized, because they need to authenticate before they are initialized.
                 credentialStore
-                    .get(job.msg.actor.id,
+                    .get(
+                        job.msg.actor.id,
                         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                         // @ts-ignore
-                        platform.credentialsHash)
+                        platform.credentialsHash,
+                    )
                     .then((credentials) => {
                         platform[job.msg.type](
                             job.msg,
