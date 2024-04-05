@@ -1,3 +1,4 @@
 #!/usr/bin/env node
-const sockethubServer = await import("@sockethub/server");
-sockethubServer();
+import("@sockethub/server").then((sockethubServer) => {
+    sockethubServer();
+});
