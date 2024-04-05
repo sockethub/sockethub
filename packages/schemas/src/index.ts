@@ -10,15 +10,12 @@ import ActivityObjectSchema from "./schemas/activity-object";
 import ActivityStreamSchema from "./schemas/activity-stream";
 import PlatformSchema from "./schemas/platform";
 
-export default {
+export {
     addPlatformSchema,
     validatePlatformSchema,
     validateCredentials,
     validateActivityStream,
     validateActivityObject,
-};
-
-export {
     PlatformSchema,
     ActivityObjectSchema,
     ActivityStreamSchema,

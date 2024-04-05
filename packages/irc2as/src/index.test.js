@@ -1,5 +1,5 @@
 const chai = require("chai");
-const schemas = require("@sockethub/schemas").default;
+const schemas = require("@sockethub/schemas");
 const fs = require("fs");
 const equal = require("fast-deep-equal");
 const expect = chai.expect;

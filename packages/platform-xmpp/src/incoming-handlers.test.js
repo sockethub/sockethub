@@ -3,7 +3,7 @@ const chai = require("chai");
 const expect = chai.expect;
 
 const parse = require("@xmpp/xml/lib/parse");
-const schemas = require("@sockethub/schemas").default;
+const schemas = require("@sockethub/schemas");
 
 const IncomingHandler = require("./incoming-handlers");
 const stanzas = require("./incoming-handlers.test.data");
