@@ -1,6 +1,6 @@
 import { Job, Queue, Worker, QueueEvents } from "bullmq";
 import { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types";
-import { debug, Debugger } from "debug";
+import debug, { Debugger } from "debug";
 import { ActivityStream } from "@sockethub/schemas";
 import { JobBase, createIORedisConnection } from "./job-base";
 

@@ -2,7 +2,11 @@
  * responsible for handling the validation and expansion (when applicable) of all incoming objects
  */
 import debug from "debug";
-import schemas, {
+import {
+    addPlatformSchema,
+    validateActivityObject,
+    validateCredentials,
+    validateActivityStream,
     ActivityStream,
     MiddlewareCallback,
 } from "@sockethub/schemas";
@@ -21,10 +25,7 @@ export async function registerPlatforms(init) {
             if (!platform.schemas[key]) {
                 return;
             }
-            schemas.addPlatformSchema(
-                platform.schemas[key],
-                `${platform.id}/${key}`,
-            );
+            addPlatformSchema(platform.schemas[key], `${platform.id}/${key}`);
         });
     });
 }
@@ -40,7 +41,7 @@ export default function validate(
     return (msg: ActivityStream, done: MiddlewareCallback) => {
         sessionLog("applying schema validation for " + type);
         if (type === "activity-object") {
-            const err = schemas.validateActivityObject(msg);
+            const err = validateActivityObject(msg);
             err ? done(new Error(err)) : done(msg);
         } else if (!init.platforms.has(msg.context)) {
             return done(
@@ -49,10 +50,10 @@ export default function validate(
                 ),
             );
         } else if (type === "credentials") {
-            const err = schemas.validateCredentials(msg);
+            const err = validateCredentials(msg);
             err ? done(new Error(err)) : done(msg);
         } else {
-            const err = schemas.validateActivityStream(msg);
+            const err = validateActivityStream(msg);
             if (err) {
                 done(new Error(err));
             } else {

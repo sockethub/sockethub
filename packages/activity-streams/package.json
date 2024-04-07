@@ -2,6 +2,7 @@
     "name": "@sockethub/activity-streams",
     "version": "4.4.0-alpha.4",
     "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
+    "type": "module",
     "main": "./build/cjs/activity-streams.js",
     "module": "./build/esm/activity-streams.js",
     "types": "./build/esm/activity-streams.d.ts",
@@ -58,7 +59,7 @@
         "compile": "pnpm clean && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
         "coverage": "c8 check-coverage --statements 95 --functions 90 --branches 90 --lines 95",
         "test": "pnpm test:node && pnpm test:browser && pnpm coverage",
-        "test:browser": "karma start --single-run --browsers ChromeHeadless ./karma.config.js",
+        "test:browser": "karma start --single-run --browsers ChromeHeadless karma.config.cjs",
         "test:node": "NODE_OPTIONS='--import=tsx' c8 -x \"**/*.test.ts\" mocha ./src/**/*.test.ts",
         "test:node:lcov": "NODE_OPTIONS='--import=tsx' c8 -r lcov mocha ./src/**/*.test.ts"
     },

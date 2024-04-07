@@ -2,6 +2,7 @@
     "name": "@sockethub/data-layer",
     "description": "Storing and RPC of data for Sockethub",
     "version": "1.0.0-alpha.4",
+    "type": "module",
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "MIT",
@@ -31,7 +32,7 @@
         "bullmq": "^4.15.2",
         "debug": "^4.3.4",
         "ioredis": "5.3.2",
-        "secure-store-redis": "3.0.2"
+        "secure-store-redis": "3.0.6"
     },
     "scripts": {
         "clean": "rm -rf dist coverage",

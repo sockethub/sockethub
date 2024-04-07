@@ -2,6 +2,7 @@
     "name": "@sockethub/crypto",
     "description": "Crypto functions and helpers for Sockethub",
     "version": "1.0.0-alpha.4",
+    "type": "module",
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "MIT",

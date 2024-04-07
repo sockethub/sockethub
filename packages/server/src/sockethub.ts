@@ -1,10 +1,8 @@
 import debug from "debug";
 import { Socket } from "socket.io";
 import { crypto } from "@sockethub/crypto";
-import {
-    CredentialsStore,
-    type CredentialsStoreInterface,
-} from "@sockethub/data-layer";
+import { CredentialsStore } from "@sockethub/data-layer";
+import { type CredentialsStoreInterface } from "@sockethub/data-layer/dist/credentials-store";
 
 import getInitObject from "./bootstrap/init";
 import createActivityObject from "./middleware/create-activity-object";
