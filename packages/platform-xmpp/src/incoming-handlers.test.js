@@ -1,12 +1,12 @@
-const sinon = require("sinon");
-const chai = require("chai");
+import sinon from "sinon";
+import * as chai from "chai";
 const expect = chai.expect;
 
-const parse = require("@xmpp/xml/lib/parse");
-const schemas = require("@sockethub/schemas");
+import parse from "@xmpp/xml/lib/parse.js";
+import * as schemas from "@sockethub/schemas";
 
-const IncomingHandler = require("./incoming-handlers");
-const stanzas = require("./incoming-handlers.test.data");
+import { IncomingHandlers } from "./incoming-handlers.js";
+import { stanzas } from "./incoming-handlers.test.data.js";
 
 describe("Incoming handlers", () => {
     describe("XML stanzas result in the expected AS objects", () => {
@@ -14,7 +14,7 @@ describe("Incoming handlers", () => {
 
         beforeEach(() => {
             sendToClient = sinon.fake();
-            ih = new IncomingHandler({
+            ih = new IncomingHandlers({
                 sendToClient: sendToClient,
                 debug: sinon.fake(),
             });

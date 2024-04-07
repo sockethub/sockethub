@@ -16,10 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-const { client, xml } = require("@xmpp/client");
-const IncomingHandlers = require("./incoming-handlers");
-const PlatformSchema = require("./schema.js");
-const utils = require("./utils.js");
+import { client, xml } from "@xmpp/client";
+import { IncomingHandlers } from "./incoming-handlers.js";
+import { PlatformSchema } from "./schema.js";
+import { utils } from "./utils.js";
 
 /**
  * Handles all actions related to communication via. the XMPP protocol.
@@ -28,7 +28,7 @@ const utils = require("./utils.js");
  *
  * {@link https://github.com/xmppjs/xmpp.js}
  */
-class XMPP {
+export class XMPP {
     /**
      * Constructor called from the Sockethub `Platform` instance, passing in a
      * session object.
@@ -542,4 +542,3 @@ class XMPP {
         this.__client.on("stanza", ih.stanza.bind(ih));
     }
 }
-module.exports = XMPP;
