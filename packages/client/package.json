@@ -30,8 +30,8 @@
     "scripts": {
         "clean": "rm -rf build dist coverage",
         "test": "pnpm test:node && pnpm coverage",
-        "test:node": "c8 -x \"**/*.test.ts\" mocha -r ts-node/register ./src/**/*.test.ts",
-        "test:node:lcov": "c8 -r lcov mocha -r ts-node/register ./src/**/*.test.ts",
+        "test:node": "NODE_OPTIONS='--import=tsx' c8 -x \"**/*.test.ts\" mocha ./src/**/*.test.ts",
+        "test:node:lcov": "NODE_OPTIONS='--import=tsx' c8 -r lcov mocha ./src/**/*.test.ts",
         "coverage": "c8 check-coverage --statements 82 --branches 84 --functions 83 --lines 82",
         "compile": "pnpm clean && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
         "build": "pnpm compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs"
@@ -58,7 +58,7 @@
         "rollup": "^4.6.1",
         "sinon": "17.0.1",
         "socket.io-client": "4.7.2",
-        "ts-node": "10.9.2",
+        "tsx": "^4.7.2",
         "typescript": "5.3.3"
     },
     "dependencies": {
