@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
 
-import CredentialsStore from "./credentials-store";
+import { CredentialsStore } from "./credentials-store";
 
 describe("CredentialsStore", () => {
     let credentialsStore,

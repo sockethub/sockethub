@@ -19,7 +19,7 @@
 import net from "net";
 import tls from "tls";
 import IrcSocket from "irc-socket-sasl";
-import IRC2AS from "@sockethub/irc2as";
+import { IrcToActivityStreams } from "@sockethub/irc2as";
 import {
     ActivityStream,
     Logger,
@@ -89,7 +89,7 @@ export class IRC implements PlatformInterface {
     };
     private readonly updateActor: PlatformUpdateActor;
     private readonly sendToClient: PlatformSendToClient;
-    private irc2as: typeof IRC2AS;
+    private irc2as: typeof IrcToActivityStreams;
     private forceDisconnect = false;
     private clientConnecting = false;
     private client: typeof IrcSocket;
@@ -713,7 +713,7 @@ export class IRC implements PlatformInterface {
     }
 
     private registerListeners(server: string) {
-        this.irc2as = new IRC2AS({ server: server });
+        this.irc2as = new IrcToActivityStreams({ server: server });
         this.client.on("data", (data: never) => {
             this.irc2as.input(data);
         });

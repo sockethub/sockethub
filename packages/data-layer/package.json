@@ -35,7 +35,7 @@
     },
     "scripts": {
         "clean": "rm -rf dist coverage",
-        "test": "c8 -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts && pnpm coverage",
+        "test": "NODE_OPTIONS='--import=tsx' c8 -x \"src/**/*.test.*\" mocha src/*.test.ts && pnpm coverage",
         "coverage": "c8 check-coverage --statements 65 --branches 70 --functions 55 --lines 65",
         "build": "tsc"
     },
@@ -52,7 +52,7 @@
         "chai": "4.3.10",
         "mocha": "10.2.0",
         "sinon": "17.0.1",
-        "ts-node": "10.9.2",
+        "tsx": "^4.7.2",
         "typescript": "5.3.3"
     }
 }
