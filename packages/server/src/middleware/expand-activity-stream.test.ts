@@ -3,11 +3,9 @@ import { expect } from "chai";
 import expandActivityStream from "./expand-activity-stream";
 
 import asObjects from "./expand-activity-stream.test.data";
-import ASFactory from "@sockethub/activity-streams";
+import { ASFactory } from "@sockethub/activity-streams";
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-const activity = ASFactory.default();
+const activity = ASFactory();
 
 // register known activity objects
 [

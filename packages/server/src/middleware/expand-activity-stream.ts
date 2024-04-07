@@ -1,4 +1,4 @@
-import ASFactory, { ASFactoryOptions } from "@sockethub/activity-streams";
+import { ASFactory, ASFactoryOptions } from "@sockethub/activity-streams";
 import { ActivityStream } from "@sockethub/schemas";
 
 import config from "../config";
@@ -8,9 +8,7 @@ const asConfig = config.get("activity-streams:opts") as ASFactoryOptions;
 asConfig.warnOnUnknownObjectProperties = false;
 asConfig.failOnUnknownObjectProperties = false;
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-const activity = ASFactory.default(asConfig);
+const activity = ASFactory(asConfig);
 
 function ensureObject(msg: unknown) {
     return !(typeof msg !== "object" || Array.isArray(msg));

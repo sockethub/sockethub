@@ -1,11 +1,12 @@
-import CredentialsStore, {
+import {
+    CredentialsStore,
     CredentialsStoreInterface,
     verifySecureStore,
 } from "./credentials-store";
-import JobQueue, { verifyJobQueue } from "./job-queue";
-import JobWorker from "./job-worker";
+import { JobQueue, verifyJobQueue } from "./job-queue";
+import { JobWorker } from "./job-worker";
 export * from "./types";
-import debug from "debug";
+import { debug } from "debug";
 import { RedisConfig } from "./types";
 
 const log = debug("sockethub:data-layer");

@@ -1,9 +1,9 @@
 import { Worker } from "bullmq";
 import { JobHandler, JobEncrypted, RedisConfig } from "./types";
-import debug, { Debugger } from "debug";
-import JobBase, { createIORedisConnection } from "./job-base";
+import { debug, Debugger } from "debug";
+import { JobBase, createIORedisConnection } from "./job-base";
 
-export default class JobWorker extends JobBase {
+export class JobWorker extends JobBase {
     readonly uid: string;
     protected worker: Worker;
     protected handler: JobHandler;

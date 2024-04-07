@@ -1,4 +1,4 @@
-import crypto, { Crypto } from "@sockethub/crypto";
+import { crypto, Crypto } from "@sockethub/crypto";
 import { JobDataDecrypted, JobEncrypted, RedisConfig } from "./types";
 import EventEmitter from "events";
 import { ActivityStream } from "@sockethub/schemas";
@@ -11,7 +11,7 @@ export function createIORedisConnection(config: RedisConfig): Redis {
     });
 }
 
-export default class JobBase extends EventEmitter {
+export class JobBase extends EventEmitter {
     protected crypto: Crypto;
     private readonly secret: string;
 

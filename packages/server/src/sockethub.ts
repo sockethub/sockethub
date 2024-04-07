@@ -1,6 +1,6 @@
 import debug from "debug";
 import { Socket } from "socket.io";
-import crypto from "@sockethub/crypto";
+import { crypto } from "@sockethub/crypto";
 import {
     CredentialsStore,
     type CredentialsStoreInterface,
