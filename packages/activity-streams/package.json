@@ -44,7 +44,7 @@
         "karma-mocha": "^2.0.1",
         "mocha": "10.2.0",
         "rollup": "^4.6.1",
-        "ts-node": "^10.9.1",
+        "tsx": "^4.7.2",
         "typescript": "^5.3.3"
     },
     "repository": {
@@ -59,8 +59,8 @@
         "coverage": "c8 check-coverage --statements 95 --functions 90 --branches 90 --lines 95",
         "test": "pnpm test:node && pnpm test:browser && pnpm coverage",
         "test:browser": "karma start --single-run --browsers ChromeHeadless ./karma.config.js",
-        "test:node": "c8 -x \"**/*.test.ts\" mocha -r ts-node/register ./src/**/*.test.ts",
-        "test:node:lcov": "c8 -r lcov mocha -r ts-node/register ./src/**/*.test.ts"
+        "test:node": "NODE_OPTIONS='--import=tsx' c8 -x \"**/*.test.ts\" mocha ./src/**/*.test.ts",
+        "test:node:lcov": "NODE_OPTIONS='--import=tsx' c8 -r lcov mocha ./src/**/*.test.ts"
     },
     "keywords": [
         "activity",
