@@ -9,8 +9,7 @@ import {
 } from "@sockethub/schemas";
 import { GetClientCallback } from "./index";
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const IRC = require("./index");
+import { IRC } from "./index";
 
 const actor = {
     type: "person",
@@ -52,6 +51,7 @@ describe("Initialize IRC Platform", () => {
             updateActor: function async() {
                 return Promise.resolve();
             },
+            sendToClient: function () {},
         });
         platform.ircConnect = function (
             key: string,

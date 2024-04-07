@@ -1,7 +1,9 @@
-export default {
+import packageJson from "../package.json" assert { type: "json" };
+const version = packageJson.version;
+
+export const PlatformIrcSchema = {
     name: "irc",
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    version: require("../package.json").version,
+    version: version,
     messages: {
         required: ["type"],
         properties: {
