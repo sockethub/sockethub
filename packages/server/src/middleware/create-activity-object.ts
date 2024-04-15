@@ -1,7 +1,8 @@
 import { ASFactory } from "@sockethub/activity-streams";
-import config from "../config";
 import { ActivityStream } from "@sockethub/schemas";
-import { MiddlewareChainInterface } from "../middleware";
+
+import config from "../config.js";
+import { MiddlewareChainInterface } from "../middleware.js";
 
 const activity = ASFactory(config.get("activity-streams:opts"));
 

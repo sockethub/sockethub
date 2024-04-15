@@ -1,6 +1,8 @@
 import { ChildProcess, fork } from "child_process";
 import { join } from "path";
 import debug from "debug";
+import nconf from "nconf";
+
 import {
     ActivityStream,
     InternalActivityStream,
@@ -11,10 +13,9 @@ import {
 import { JobQueue, JobDataDecrypted } from "@sockethub/data-layer";
 import type { Socket } from "socket.io";
 
-import config from "./config";
-import { getSocket } from "./listener";
-import nconf from "nconf";
-import { __dirname } from "./util";
+import config from "./config.js";
+import { getSocket } from "./listener.js";
+import { __dirname } from "./util.js";
 
 // collection of platform instances, stored by `id`
 export const platformInstances = new Map<string, PlatformInstance>();

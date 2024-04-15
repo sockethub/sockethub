@@ -2,9 +2,9 @@ import nconf from "nconf";
 import debug from "debug";
 import * as fs from "fs";
 
-const log = debug("sockethub:server:bootstrap:config");
+import { __dirname } from "./util.js";
 
-import { __dirname } from "./util";
+const log = debug("sockethub:server:bootstrap:config");
 const data: object = await import(__dirname + "/defaults.json");
 
 export class Config {

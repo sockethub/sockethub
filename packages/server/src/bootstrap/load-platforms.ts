@@ -6,6 +6,7 @@
  * config.
  */
 import debug from "debug";
+
 import {
     validatePlatformSchema,
     PlatformConfig,

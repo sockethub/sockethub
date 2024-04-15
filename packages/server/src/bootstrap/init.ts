@@ -1,8 +1,9 @@
 import debug from "debug";
 
-import config from "../config";
-import loadPlatforms, { PlatformMap } from "./load-platforms";
 import { redisCheck, RedisConfig } from "@sockethub/data-layer";
+
+import config from "../config.js";
+import loadPlatforms, { PlatformMap } from "./load-platforms.js";
 
 const log = debug("sockethub:server:bootstrap:init");
 
