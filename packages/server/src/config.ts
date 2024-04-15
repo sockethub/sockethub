@@ -6,7 +6,7 @@ import { __dirname } from "./util.js";
 
 const log = debug("sockethub:server:bootstrap:config");
 const data: object = await import(__dirname + "/defaults.json", {
-    assert: { type: 'json' }
+    assert: { type: "json" },
 });
 
 export class Config {
