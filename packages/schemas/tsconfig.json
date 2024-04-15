@@ -1,9 +1,12 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "lib": ["ES2018", "DOM"],
+        "esModuleInterop": true,
+        "target": "esnext",
+        "module": "esnext",
+        "lib": ["esnext", "DOM"],
         "allowJs": false,
-        "sourceMap": false,
+        "sourceMap": true,
         "outDir": "dist",
         "rootDir": "src",
         "baseUrl": "/"

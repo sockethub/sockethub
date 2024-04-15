@@ -1,8 +1,8 @@
-import Sockethub from "./sockethub";
+import Sockethub from "./sockethub.js";
 
 const sockethub = new Sockethub();
 
-module.exports = async () => {
+export async function server() {
     process.once("uncaughtException", function (err) {
         console.log("UNCAUGHT EXCEPTION");
         console.log(err.stack);
@@ -24,4 +24,4 @@ module.exports = async () => {
     });
 
     await sockethub.boot();
-};
+}

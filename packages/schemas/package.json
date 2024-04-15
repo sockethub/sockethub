@@ -2,21 +2,22 @@
     "name": "@sockethub/schemas",
     "description": "JSON schema files for validating Sockethub Activity Streams",
     "version": "3.0.0-alpha.4",
+    "type": "module",
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "MIT",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist/",
+        "src/"
+    ],
     "keywords": [
         "sockethub",
         "sockethub schema",
         "activity streams",
         "activity objects",
         "sockethub platforms"
-    ],
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "files": [
-        "dist/",
-        "src/"
     ],
     "repository": {
         "type": "git",
@@ -32,19 +33,19 @@
         "c8": "8.0.1",
         "chai": "4.3.10",
         "mocha": "10.2.0",
-        "ts-node": "10.9.2",
+        "tsx": "4.7.2",
         "typescript": "5.3.3"
     },
     "scripts": {
-        "build": "pnpm clean && tsc && ./scripts/export-json-schema.js",
+        "build": "pnpm clean; tsc && ./scripts/export-json-schema.js; echo 'foo'",
         "clean": "rm -rf coverage dist",
         "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 95 --lines 95",
-        "test": "c8 -x \"**/*.test.*\" mocha -r ts-node/register src/**/*.test.ts && pnpm coverage"
+        "test": "NODE_OPTIONS='--import=tsx' c8 -x \"**/*.test.*\" mocha src/**/*.test.ts && pnpm coverage"
     },
     "dependencies": {
         "ajv": "8.12.0",
         "ajv-formats": "2.1.1",
         "ajv-formats-draft2019": "1.6.1",
-        "debug": "^4.3.4"
+        "debug": "4.3.4"
     }
 }

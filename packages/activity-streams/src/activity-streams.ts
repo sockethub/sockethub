@@ -262,7 +262,7 @@ export interface ASManager {
     off(event, funcName): void;
 }
 
-export default function ASFactory(opts: ASFactoryOptions = {}): ASManager {
+export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
     specialObjs = opts?.specialObjs || [];
     failOnUnknownObjectProperties =
         typeof opts.failOnUnknownObjectProperties === "boolean"

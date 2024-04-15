@@ -18,7 +18,7 @@
 
 // this schema defines the general structure of the schema object which should
 // be returned from platforms.
-export default {
+export const PlatformSchema = {
     type: "object",
     required: ["name", "version", "messages"],
     additionalProperties: false,

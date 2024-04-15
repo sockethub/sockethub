@@ -2,11 +2,11 @@ import debug from "debug";
 import Ajv, { Schema } from "ajv";
 import addFormats from "ajv-formats";
 import additionsFormats2019 from "ajv-formats-draft2019";
-import getErrorMessage from "./helpers/error-parser";
-import { ActivityStream } from "./types";
-import PlatformSchema from "./schemas/platform";
-import ActivityStreamsSchema from "./schemas/activity-stream";
-import ActivityObjectSchema from "./schemas/activity-object";
+import getErrorMessage from "./helpers/error-parser.js";
+import { ActivityStream } from "./types.js";
+import { PlatformSchema } from "./schemas/platform.js";
+import { ActivityStreamSchema } from "./schemas/activity-stream.js";
+import { ActivityObjectSchema } from "./schemas/activity-object.js";
 
 const ajv = new Ajv({ strictTypes: false, allErrors: true });
 addFormats(ajv);
@@ -20,7 +20,7 @@ const log = debug("sockethub:schemas:validator");
 const schemaURL = "https://sockethub.org/schemas/v0";
 const schemas: SchemasDict = {};
 
-schemas[`${schemaURL}/activity-stream`] = ActivityStreamsSchema;
+schemas[`${schemaURL}/activity-stream`] = ActivityStreamSchema;
 schemas[`${schemaURL}/activity-object`] = ActivityObjectSchema;
 
 for (const uri in schemas) {

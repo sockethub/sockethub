@@ -5,6 +5,7 @@
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
+    "type": "module",
     "main": "dist/index.js",
     "keywords": [
         "sockethub",
@@ -32,7 +33,7 @@
         "chai": "4.3.10",
         "jsdoc-to-markdown": "8.0.0",
         "sinon": "17.0.1",
-        "ts-node": "10.9.1",
+        "tsx": "^4.7.2",
         "typescript": "5.3.3"
     },
     "peerDependencies": {
@@ -48,7 +49,7 @@
         "octalhack": "cp src/octal-hack.js dist/octal-hack.js",
         "lint": "eslint .",
         "clean": "rm -rf coverage",
-        "test": "c8 mocha -r ts-node/register src/**/*.test.ts && pnpm coverage",
+        "test": "NODE_OPTIONS='--import=tsx' c8 mocha src/**/*.test.ts && pnpm coverage",
         "coverage": "c8 check-coverage --statements 75 --branches 55 --functions 85 --lines 75",
         "doc": "jsdoc2md --no-gfm --heading-depth 1 dist/index.ts  > API.md"
     }

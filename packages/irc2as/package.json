@@ -2,6 +2,7 @@
     "name": "@sockethub/irc2as",
     "version": "4.0.0-alpha.4",
     "description": "IRC to ActivityStreams objects",
+    "type": "module",
     "main": "src/index.js",
     "directories": {
         "test": "test"

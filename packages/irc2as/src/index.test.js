@@ -1,11 +1,11 @@
-const chai = require("chai");
-const schemas = require("@sockethub/schemas").default;
-const fs = require("fs");
-const equal = require("fast-deep-equal");
+import chai from "chai";
+import { validateActivityStream } from "@sockethub/schemas";
+import fs from "fs";
+import equal from "fast-deep-equal";
 const expect = chai.expect;
 
-const IRC2AS = require("./index");
-const outputs = require("./index.test.data");
+import { IrcToActivityStreams } from "./index.js";
+import { TestData } from "./index.test.data.js";
 const ircdata = fs.readFileSync("./src/index.test.data.irc.txt", "utf-8");
 const inputs = ircdata.split("\n");
 
@@ -14,33 +14,33 @@ function matchStream(done) {
         expect(typeof stream.published).to.eql("string");
         delete stream.published;
         let matched = false;
-        for (let i = 0; i <= outputs.length; i++) {
-            matched = equal(stream, outputs[i]);
+        for (let i = 0; i <= TestData.length; i++) {
+            matched = equal(stream, TestData[i]);
             if (matched) {
                 // when matched, remove output entry from list
-                outputs.splice(i, 1);
+                TestData.splice(i, 1);
                 break;
             }
         }
         if (!matched) {
             console.log();
-            console.log("available matches:" + JSON.stringify(outputs));
+            console.log("available matches:" + JSON.stringify(TestData));
             console.log("failed to find match for: " + JSON.stringify(stream));
             return done(new Error("failed matching " + JSON.stringify(stream)));
         }
-        const err = schemas.validateActivityStream(stream);
+        const err = validateActivityStream(stream);
         if (err) {
             return done(new Error(err + " - " + JSON.stringify(stream)));
         }
     };
 }
 
-describe("IRC2AS", () => {
+describe("IrcToActivityStreams", () => {
     let irc2as,
         pongs = 0,
         pings = 0;
     beforeEach(() => {
-        irc2as = new IRC2AS({ server: "localhost" });
+        irc2as = new IrcToActivityStreams({ server: "localhost" });
         expect(irc2as).to.have.property("events");
         expect(typeof irc2as.events.on).to.equal("function");
         irc2as.events.on("unprocessed", (string) => {
@@ -62,7 +62,7 @@ describe("IRC2AS", () => {
                 irc2as.input(inputs[i]);
             }
             setTimeout(() => {
-                expect(outputs.length).to.equal(0);
+                expect(TestData.length).to.equal(0);
                 done();
             }, 0);
         });

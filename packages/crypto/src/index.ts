@@ -80,5 +80,4 @@ export class Crypto {
     }
 }
 
-const crypto = new Crypto();
-export default crypto;
+export const crypto = new Crypto();
