@@ -9,7 +9,7 @@ import {
 } from "@sockethub/schemas";
 import { GetClientCallback } from "./index";
 
-import { IRC } from "./index";
+import IRC from "./index";
 
 const actor = {
     type: "person",
