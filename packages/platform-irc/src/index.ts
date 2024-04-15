@@ -19,6 +19,7 @@
 import net from "net";
 import tls from "tls";
 import IrcSocket from "irc-socket-sasl";
+
 import { IrcToActivityStreams } from "@sockethub/irc2as";
 import {
     ActivityStream,
@@ -32,8 +33,8 @@ import {
     PlatformUpdateActor,
 } from "@sockethub/schemas";
 
-import { PlatformIrcSchema } from "./schema";
-import { PlatformIrcCredentialsObject } from "./types";
+import { PlatformIrcSchema } from "./schema.js";
+import { PlatformIrcCredentialsObject } from "./types.js";
 
 export interface GetClientCallback {
     (err: string | null, client?: typeof IrcSocket): void;
