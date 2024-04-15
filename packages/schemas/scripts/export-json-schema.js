@@ -1,4 +1,5 @@
-#!/usr/bin/env node --experimental-specifier-resolution=node
+#!/usr/bin/env node
+// --experimental-specifier-resolution=node
 import Ajv from "ajv";
 import fs from "fs";
 
