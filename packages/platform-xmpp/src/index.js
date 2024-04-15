@@ -17,6 +17,7 @@
  */
 
 import { client, xml } from "@xmpp/client";
+
 import { IncomingHandlers } from "./incoming-handlers.js";
 import { PlatformSchema } from "./schema.js";
 import { utils } from "./utils.js";

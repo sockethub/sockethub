@@ -10,7 +10,7 @@ import {
 
 import packageJSON from "../package.json" assert { type: "json" };
 
-class Dummy implements PlatformInterface {
+export class Dummy implements PlatformInterface {
     debug: Logger;
     config: PlatformConfig = {
         persist: false,
@@ -53,5 +53,3 @@ class Dummy implements PlatformInterface {
         cb();
     }
 }
-
-module.exports = Dummy;
