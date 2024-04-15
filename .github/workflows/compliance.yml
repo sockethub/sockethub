@@ -8,7 +8,7 @@ jobs:
 
         strategy:
             matrix:
-                node-version: [20, 21]
+                node-version: [18, 20, 21]
 
         steps:
             - run: sudo chown -R $USER:$USER ${{ github.workspace }}
@@ -18,7 +18,7 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: ${{ matrix.node-version }}
-            - run: npm install -g pnpm@8.5.17
+            - run: npm install -g pnpm@8.15.7
             - run: pnpm -v
             - run: pnpm install
             - run: pnpm --filter examples exec npx playwright install
@@ -29,7 +29,7 @@ jobs:
 
         strategy:
             matrix:
-                node-version: [20, 21]
+                node-version: [18, 20, 21]
 
         steps:
             - run: sudo chown -R $USER:$USER ${{ github.workspace }}
@@ -41,7 +41,7 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: ${{ matrix.node-version }}
-            - run: npm install -g pnpm@8.5.17
+            - run: npm install -g pnpm@8.15.7
             - run: npm install -g karma
             - run: pnpm install
             - run: pnpm build
