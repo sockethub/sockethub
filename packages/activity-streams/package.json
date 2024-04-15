@@ -23,17 +23,17 @@
         "build/"
     ],
     "dependencies": {
-        "eventemitter3": "^5.0.1"
+        "eventemitter3": "5.0.1"
     },
     "devDependencies": {
-        "@babel/core": "^7.23.5",
-        "@babel/plugin-transform-object-assign": "^7.23.3",
-        "@babel/preset-env": "^7.23.5",
-        "@rollup/plugin-babel": "^6.0.4",
-        "@rollup/plugin-commonjs": "^25.0.7",
-        "@rollup/plugin-multi-entry": "^6.0.1",
-        "@rollup/plugin-node-resolve": "^15.2.3",
-        "@rollup/plugin-terser": "^0.4.4",
+        "@babel/core": "7.23.5",
+        "@babel/plugin-transform-object-assign": "7.23.3",
+        "@babel/preset-env": "7.23.5",
+        "@rollup/plugin-babel": "6.0.4",
+        "@rollup/plugin-commonjs": "25.0.7",
+        "@rollup/plugin-multi-entry": "6.0.1",
+        "@rollup/plugin-node-resolve": "15.2.3",
+        "@rollup/plugin-terser": "0.4.4",
         "@sockethub/schemas": "workspace:^",
         "@types/node": "20.10.5",
         "c8": "8.0.1",
@@ -44,9 +44,9 @@
         "karma-firefox-launcher": "2.1.2",
         "karma-mocha": "^2.0.1",
         "mocha": "10.2.0",
-        "rollup": "^4.6.1",
-        "tsx": "^4.7.2",
-        "typescript": "^5.3.3"
+        "rollup": "4.6.1",
+        "tsx": "4.7.2",
+        "typescript": "5.3.3"
     },
     "repository": {
         "type": "git",

@@ -28,7 +28,7 @@
     "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
     "dependencies": {
         "@sockethub/schemas": "workspace:3.0.0-alpha.4",
-        "object-hash": "^3.0.0"
+        "object-hash": "3.0.0"
     },
     "scripts": {
         "clean": "rm -rf dist coverage",
@@ -50,7 +50,7 @@
         "chai": "4.3.10",
         "mocha": "10.2.0",
         "sinon": "17.0.1",
-        "tsx": "^4.7.2",
+        "tsx": "4.7.2",
         "typescript": "5.3.3"
     }
 }
