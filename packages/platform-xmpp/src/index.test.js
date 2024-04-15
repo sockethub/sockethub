@@ -2,7 +2,7 @@ import sinon from "sinon";
 import * as chai from "chai";
 const expect = chai.expect;
 
-import { XMPP } from "./index.js";
+import XMPP from "./index.js";
 
 const actor = {
     type: "person",
