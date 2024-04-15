@@ -8,9 +8,7 @@ import {
     PlatformSession,
 } from "@sockethub/schemas";
 
-const packageJSON = await import("../package.json", {
-    assert: { type: "json" },
-});
+import packageJSON from "../package.json" assert { type: "json" };
 
 class Dummy implements PlatformInterface {
     debug: Logger;
