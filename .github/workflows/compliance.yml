@@ -11,12 +11,14 @@ jobs:
                 node-version: [20, 21]
 
         steps:
-            - uses: actions/checkout@v3
+            - run: sudo chown -R $USER:$USER ${{ github.workspace }}
+            - name: Checkout repository
+              uses: actions/checkout@v3
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v3
               with:
                   node-version: ${{ matrix.node-version }}
-            - run: npm install -g pnpm@8.5.1
+            - run: npm install -g pnpm@8.5.17
             - run: pnpm -v
             - run: pnpm install
             - run: pnpm --filter examples exec npx playwright install
@@ -39,7 +41,7 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: ${{ matrix.node-version }}
-            - run: npm install -g pnpm
+            - run: npm install -g pnpm@8.5.17
             - run: npm install -g karma
             - run: pnpm install
             - run: pnpm build
