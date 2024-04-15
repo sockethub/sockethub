@@ -7,10 +7,10 @@
         "pnpm": ">=8"
     },
     "devDependencies": {
-        "@sockethub/data-layer": "workspace:1.0.0-alpha.4",
-        "@sockethub/schemas": "workspace:3.0.0-alpha.4",
         "@lerna-lite/cli": "3.1.0",
         "@lerna-lite/publish": "3.1.0",
+        "@sockethub/data-layer": "workspace:1.0.0-alpha.4",
+        "@sockethub/schemas": "workspace:3.0.0-alpha.4",
         "@types/mocha": "10.0.6",
         "@typescript-eslint/eslint-plugin": "6.13.2",
         "@typescript-eslint/parser": "6.15.0",
@@ -29,16 +29,17 @@
         "mocha": "10.4.0",
         "nx": "17.2.7",
         "prettier": "3.1.1",
+        "tsx": "^4.7.2",
         "typescript": "5.3.3"
     },
     "scripts": {
-        "build": "NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=build --parallel 1 --output-style=stream",
+        "build": "nx run-many --target=build --parallel 1",
         "clean": "pnpm run --parallel -r clean",
         "clean:deps": "pnpm run --parallel -r clean:deps && npx rimraf node_modules",
         "compliance": "pnpm lint && pnpm build && pnpm test",
-        "coverage": "NX_NATIVE_COMMAND_RUNNER=false nx run-many -git co-target=coverage",
+        "coverage": "nx run-many -git co-target=coverage",
         "dev": "pnpm build && pnpm --filter sockethub dev",
-        "doc": "NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=doc",
+        "doc": "nx run-many --target=doc",
         "docker:start": "docker compose -f docker-compose.yml up -d",
         "docker:clean:all": "pnpm docker:stop && docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub",
         "docker:clean:sockethub": "pnpm docker:stop && docker rm sockethub-sockethub-1; docker rmi sockethub-sockethub",
@@ -53,11 +54,11 @@
         "lint": "prettier --check . && eslint --max-warnings 0 . && NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=lint && pnpm lint:doc",
         "lint:doc": "markdownlint '**/*.md'",
         "lint:doc:fix": "markdownlint --fix '**/*.md' && mdspell -n -a --en-us ./README.md ./packages/*/README.md",
-        "lint:fix": "prettier --write . && NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=lint:fix && pnpm lint:doc:fix",
+        "lint:fix": "prettier --write . && nx run-many --target=lint:fix && pnpm lint:doc:fix",
         "preinstall": "npx only-allow pnpm",
         "publish": "pnpm clean && pnpm build && pnpm compliance && lerna publish --dist-tag latest --pre-dist-tag next",
         "start": "pnpm --filter sockethub start",
-        "test": "NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=test"
+        "test": "nx run-many --target=test"
     },
     "dependencies": {
         "tslib": "2.6.2"

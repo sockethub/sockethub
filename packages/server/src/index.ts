@@ -1,4 +1,4 @@
-import Sockethub from "./sockethub";
+import Sockethub from "./sockethub.js";
 
 const sockethub = new Sockethub();
 
