@@ -80,7 +80,7 @@ interface IrcSocketOptions {
  *
  * @param {object} cfg a unique config object for this instance
  */
-export class IRC implements PlatformInterface {
+export default class IRC implements PlatformInterface {
     debug: Logger;
     credentialsHash: string;
     config: PersistentPlatformConfig = {

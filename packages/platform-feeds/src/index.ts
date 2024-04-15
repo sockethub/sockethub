@@ -71,7 +71,7 @@ function isHtml(s: string): boolean {
  * https://github.com/Tombarr/podcast-feed-parser
  *
  */
-export class Feeds implements PlatformInterface {
+export default class Feeds implements PlatformInterface {
     id: string;
     debug: Logger;
     config: PlatformConfig = {

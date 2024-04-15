@@ -29,7 +29,7 @@ import { utils } from "./utils.js";
  *
  * {@link https://github.com/xmppjs/xmpp.js}
  */
-export class XMPP {
+export default class XMPP {
     /**
      * Constructor called from the Sockethub `Platform` instance, passing in a
      * session object.
