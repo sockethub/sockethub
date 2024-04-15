@@ -32,13 +32,13 @@
         "typescript": "5.3.3"
     },
     "scripts": {
-        "build": "nx run-many --target=build --all --parallel 1",
+        "build": "NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=build --all --parallel 1",
         "clean": "pnpm run --parallel -r clean",
         "clean:deps": "pnpm run --parallel -r clean:deps && npx rimraf node_modules",
         "compliance": "pnpm lint && pnpm build && pnpm test",
-        "coverage": "nx run-many --target=coverage",
+        "coverage": "NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=coverage",
         "dev": "pnpm build && pnpm --filter sockethub dev",
-        "doc": "nx run-many --target=doc --all",
+        "doc": "NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=doc --all",
         "docker:start": "docker compose -f docker-compose.yml up -d",
         "docker:clean:all": "pnpm docker:stop && docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub",
         "docker:clean:sockethub": "pnpm docker:stop && docker rm sockethub-sockethub-1; docker rmi sockethub-sockethub",
@@ -50,14 +50,14 @@
         "integration:browser:run": "karma start --single-run --sh_port=10650 --browsers ChromeHeadless ./karma.config.js",
         "integration:redis": "docker compose up redis -d && pnpm integration:redis:run; RES=$?; docker compose down; exit $RES",
         "integration:redis:run": "DEBUG=ioredis*,bullmq*,sockethub* NODE_OPTIONS='--import=tsx' mocha test/redis.test.ts",
-        "lint": "prettier --check . && eslint --max-warnings 0 . && nx run-many --target=lint && pnpm lint:doc",
+        "lint": "prettier --check . && eslint --max-warnings 0 . && NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=lint && pnpm lint:doc",
         "lint:doc": "markdownlint '**/*.md'",
         "lint:doc:fix": "markdownlint --fix '**/*.md' && mdspell -n -a --en-us ./README.md ./packages/*/README.md",
-        "lint:fix": "prettier --write . && nx run-many --target=lint:fix && pnpm lint:doc:fix",
+        "lint:fix": "prettier --write . && NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=lint:fix && pnpm lint:doc:fix",
         "preinstall": "npx only-allow pnpm",
         "publish": "pnpm clean && pnpm build && pnpm compliance && lerna publish --dist-tag latest --pre-dist-tag next",
         "start": "pnpm --filter sockethub start",
-        "test": "nx run-many --target=test"
+        "test": "NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=test"
     },
     "dependencies": {
         "tslib": "2.6.2"
