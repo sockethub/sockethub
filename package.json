@@ -32,13 +32,13 @@
         "typescript": "5.3.3"
     },
     "scripts": {
-        "build": "NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=build --all --parallel 1",
+        "build": "NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=build --parallel 1",
         "clean": "pnpm run --parallel -r clean",
         "clean:deps": "pnpm run --parallel -r clean:deps && npx rimraf node_modules",
         "compliance": "pnpm lint && pnpm build && pnpm test",
-        "coverage": "NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=coverage",
+        "coverage": "NX_NATIVE_COMMAND_RUNNER=false nx run-many -git co-target=coverage",
         "dev": "pnpm build && pnpm --filter sockethub dev",
-        "doc": "NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=doc --all",
+        "doc": "NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=doc",
         "docker:start": "docker compose -f docker-compose.yml up -d",
         "docker:clean:all": "pnpm docker:stop && docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub",
         "docker:clean:sockethub": "pnpm docker:stop && docker rm sockethub-sockethub-1; docker rmi sockethub-sockethub",
