@@ -6,7 +6,7 @@
         "module": "esnext",
         "lib": ["esnext", "DOM"],
         "allowJs": false,
-        "sourceMap": false,
+        "sourceMap": true,
         "outDir": "dist",
         "rootDir": "src",
         "baseUrl": "/"

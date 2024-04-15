@@ -1,5 +1,4 @@
 #!/usr/bin/env node
 import("@sockethub/server").then((sockethub) => {
-    console.log("sockethubServer: ", sockethub);
     sockethub.server();
 });

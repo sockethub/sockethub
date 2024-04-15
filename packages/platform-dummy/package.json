@@ -6,7 +6,12 @@
     "type": "module",
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
-    "main": "./dist/index.js",
+    "main": "./dist/index.ts",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        "import": "./src/index.ts",
+        "require": "./dist/index.js"
+    },
     "keywords": [
         "sockethub",
         "dummy"
