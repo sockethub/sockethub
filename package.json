@@ -32,7 +32,7 @@
         "typescript": "5.3.3"
     },
     "scripts": {
-        "build": "NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=build --parallel 1",
+        "build": "NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=build --parallel 1 --output-style=stream",
         "clean": "pnpm run --parallel -r clean",
         "clean:deps": "pnpm run --parallel -r clean:deps && npx rimraf node_modules",
         "compliance": "pnpm lint && pnpm build && pnpm test",
