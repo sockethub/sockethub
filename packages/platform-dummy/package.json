@@ -10,7 +10,6 @@
     "types": "dist/index.d.ts",
     "files": [
         "dist/",
-        "src/"
     ],
     "keywords": [
         "sockethub",
