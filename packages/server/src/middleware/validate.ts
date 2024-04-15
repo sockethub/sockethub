@@ -2,6 +2,7 @@
  * responsible for handling the validation and expansion (when applicable) of all incoming objects
  */
 import debug from "debug";
+
 import {
     addPlatformSchema,
     validateActivityObject,
@@ -11,7 +12,7 @@ import {
     MiddlewareCallback,
 } from "@sockethub/schemas";
 
-import getInitObject from "../bootstrap/init";
+import getInitObject from "../bootstrap/init.js";
 
 let initObj;
 (async function () {
