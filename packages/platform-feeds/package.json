@@ -9,7 +9,7 @@
     "main": "./dist/index.js",
     "types": "./dist/types.d.ts",
     "files": [
-        "dist/",
+        "dist/"
     ],
     "keywords": [
         "sockethub",
