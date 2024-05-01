@@ -11,7 +11,7 @@ jobs:
                 node-version: [20, 21]
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v3
               with:
@@ -32,7 +32,7 @@ jobs:
         steps:
             - run: sudo chown -R $USER:$USER ${{ github.workspace }}
             - name: Checkout repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
               with:
                   clean: false
             - name: Use Node.js ${{ matrix.node-version }}
