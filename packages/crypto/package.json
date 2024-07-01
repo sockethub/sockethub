@@ -39,17 +39,17 @@
         "node": ">= 16"
     },
     "devDependencies": {
-        "@types/chai": "4.3.11",
+        "@types/chai": "4.3.16",
         "@types/debug": "4.1.12",
-        "@types/mocha": "10.0.6",
-        "@types/node": "20.10.5",
+        "@types/mocha": "10.0.7",
+        "@types/node": "20.14.8",
         "@types/object-hash": "3.0.6",
-        "@types/sinon": "17.0.2",
+        "@types/sinon": "17.0.3",
         "c8": "8.0.1",
-        "chai": "4.3.10",
-        "mocha": "10.2.0",
+        "chai": "4.4.1",
+        "mocha": "10.4.0",
         "sinon": "17.0.1",
         "ts-node": "10.9.2",
-        "typescript": "5.3.3"
+        "typescript": "5.5.2"
     }
 }

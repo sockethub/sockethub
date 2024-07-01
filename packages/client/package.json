@@ -48,18 +48,18 @@
         "@rollup/plugin-terser": "^0.4.4",
         "@sockethub/activity-streams": "workspace:^",
         "@sockethub/schemas": "workspace:^",
-        "@types/chai": "4.3.11",
-        "@types/mocha": "10.0.6",
-        "@types/node": "20.10.5",
-        "@types/sinon": "17.0.2",
+        "@types/chai": "4.3.16",
+        "@types/mocha": "10.0.7",
+        "@types/node": "20.14.8",
+        "@types/sinon": "17.0.3",
         "c8": "8.0.1",
-        "chai": "4.3.10",
-        "mocha": "10.2.0",
+        "chai": "4.4.1",
+        "mocha": "10.4.0",
         "rollup": "^4.6.1",
         "sinon": "17.0.1",
-        "socket.io-client": "4.7.2",
+        "socket.io-client": "4.7.5",
         "ts-node": "10.9.2",
-        "typescript": "5.3.3"
+        "typescript": "5.5.2"
     },
     "dependencies": {
         "eventemitter3": "^5.0.1"
