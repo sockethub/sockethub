@@ -13,4 +13,5 @@ used as a Sockethub platform.
 
 ## API Docs
 
-There's an issue generating markdown for the API docs, so currently you must read the comments in the code: [dist/index.ts](dist/index.ts)
+There's an issue generating markdown for the API docs, so currently you must read the
+comments in the code: [dist/index.ts](dist/index.ts)
