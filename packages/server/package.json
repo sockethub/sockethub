@@ -41,7 +41,7 @@
         "@sockethub/schemas": "workspace:^",
         "body-parser": "1.20.2",
         "debug": "4.3.4",
-        "ejs": "3.1.9",
+        "ejs": "3.1.10",
         "express": "4.19.2",
         "jquery": "3.7.1",
         "nconf": "0.12.1",
