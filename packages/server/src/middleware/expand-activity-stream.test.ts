@@ -3,9 +3,10 @@ import { expect } from "chai";
 import expandActivityStream from "./expand-activity-stream";
 
 import asObjects from "./expand-activity-stream.test.data";
-import ActivityStreams from "@sockethub/activity-streams";
+import { ASFactory } from "@sockethub/activity-streams";
 
-const activity = ActivityStreams();
+const activity = ASFactory();
+
 // register known activity objects
 [
     {

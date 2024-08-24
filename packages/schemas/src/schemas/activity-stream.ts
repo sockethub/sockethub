@@ -1,8 +1,8 @@
-import activityObject from "./activity-object";
-import { ObjectTypesList, ObjectTypesSchema } from "../helpers/objects";
+import { ActivityObjectSchema } from "./activity-object.js";
+import { ObjectTypesList, ObjectTypesSchema } from "../helpers/objects.js";
 
-const validActorRefs = activityObject.properties.object.oneOf;
-const validTargetRefs = activityObject.properties.object.oneOf;
+const validActorRefs = ActivityObjectSchema.properties.object.oneOf;
+const validTargetRefs = ActivityObjectSchema.properties.object.oneOf;
 console.log(validActorRefs);
 
 const validObjectRefs = [];
@@ -18,7 +18,7 @@ const typeSchema = {
     type: "string",
 };
 
-export default {
+export const ActivityStreamSchema = {
     $id: "https://sockethub.org/schemas/v0/activity-stream#",
     description: "Schema for Sockethub Activity Streams",
 

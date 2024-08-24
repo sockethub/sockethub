@@ -54,19 +54,31 @@ const modules = {
     fakeplatform: FakeSockethubPlatform,
 };
 
-let platforms;
-let mockInit;
-(async function () {
-    platforms = await loadPlatforms(["fakeplatform"], async (module) => {
-        return Promise.resolve(modules[module]);
-    });
-    mockInit = {
-        platforms: platforms,
-    };
-    await registerPlatforms(mockInit);
-})();
+// (async function () {
+//     console.log('loadPlatforms called');
+//     platforms = await loadPlatforms(["fakeplatform"], async (module) => {
+//         return Promise.resolve(modules[module]);
+//     });
+//     console.log('loadPlatforms completed');
+//     mockInit = {
+//         platforms: platforms,
+//     };
+//     await registerPlatforms(mockInit);
+// })();
 
 describe("", () => {
+    let platforms;
+    let mockInit;
+    before(async () => {
+        platforms = await loadPlatforms(["fakeplatform"], async (module) => {
+            return Promise.resolve(modules[module]);
+        });
+        mockInit = {
+            platforms: platforms,
+        };
+        await registerPlatforms(mockInit);
+    });
+
     describe("platformLoad", () => {
         it("loads all platforms", () => {
             const expectedPlatforms = ["fakeplatform"];

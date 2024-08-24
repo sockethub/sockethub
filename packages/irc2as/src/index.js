@@ -1,6 +1,8 @@
-const events = require("events");
-const debug = require("debug")("irc2as");
-const ASEmitter = require("./as-emitter");
+import events from "events";
+import debug from "debug";
+import { ASEmitter } from "./as-emitter.js";
+
+const log = debug("irc2as");
 
 const EVENT_INCOMING = "incoming",
     // EVENT_ERROR = 'error',
@@ -57,7 +59,7 @@ function getNickFromServer(server) {
     return server.split(/^:/)[1].split("!")[0];
 }
 
-class IrcToActivityStreams {
+export class IrcToActivityStreams {
     constructor(cfg) {
         const config = cfg || {};
         this.server = config.server;
@@ -67,12 +69,12 @@ class IrcToActivityStreams {
     }
 
     input(incoming) {
-        debug(incoming);
+        log(incoming);
         if (typeof incoming !== "string") {
-            debug("unable to process incoming message as it was not a string.");
+            log("unable to process incoming message as it was not a string.");
             return false;
         } else if (incoming.length < 3) {
-            debug("unable to process incoming string, length smaller than 3.");
+            log("unable to process incoming string, length smaller than 3.");
             return false;
         }
         incoming = incoming.trim();
@@ -90,7 +92,7 @@ class IrcToActivityStreams {
             this.events.emit(EVENT_PING, `${Date.now()}`);
             return true;
         }
-        debug(
+        log(
             `[${code}] server: ${server} channel: ${channel} 1: ${pos1}, 2: ${pos2}, 3: ${pos3}.` +
                 ` content: `,
             content,
@@ -217,7 +219,7 @@ class IrcToActivityStreams {
 
             /** */
             case NICK: // nick change
-                // debug(`- 2 nick: ${nick} from content: ${content}`);
+                // log(`- 2 nick: ${nick} from content: ${content}`);
                 ase.nickChange(getNickFromServer(server), content);
                 break;
 
@@ -301,5 +303,3 @@ class IrcToActivityStreams {
         }
     }
 }
-
-module.exports = IrcToActivityStreams;

@@ -1,8 +1,9 @@
 import debug from "debug";
 
-import config from "../config";
-import loadPlatforms, { PlatformMap } from "./load-platforms";
 import { redisCheck, RedisConfig } from "@sockethub/data-layer";
+
+import config from "../config.js";
+import loadPlatforms, { PlatformMap } from "./load-platforms.js";
 
 const log = debug("sockethub:server:bootstrap:init");
 
@@ -80,8 +81,9 @@ export default async function getInitObject(
 
 async function __loadInit(): Promise<IInitObject> {
     log("running init routines");
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const packageJSON = require("./../../package.json");
+    const packageJSON = await import("./../../package.json", {
+        assert: { type: "json" },
+    });
     const version = packageJSON.version;
     const platforms = await loadPlatforms(
         config.get("platforms") as Array<string>,

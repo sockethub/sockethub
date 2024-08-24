@@ -1,3 +1,4 @@
 #!/usr/bin/env node
-const sockethubServer = require(`./../dist/index`);
-sockethubServer();
+import("@sockethub/server").then((sockethub) => {
+    sockethub.server();
+});

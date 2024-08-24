@@ -1,6 +1,8 @@
 import path from "path";
 import debug from "debug";
 
+import { __dirname } from "./util.js";
+
 const logger = debug("sockethub:server:routes");
 
 export interface IRoutePaths {

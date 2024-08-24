@@ -1,4 +1,4 @@
-module.exports = [
+export const TestData = [
     {
         context: "irc",
         type: "update",
