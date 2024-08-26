@@ -5,7 +5,7 @@ const validActorRefs = activityObject.properties.object.oneOf;
 const validTargetRefs = activityObject.properties.object.oneOf;
 console.log(validActorRefs);
 
-const validObjectRefs = [];
+const validObjectRefs: { $ref: string; }[] = [];
 
 ObjectTypesList.forEach(function (type) {
     validObjectRefs.push({ $ref: "#/definitions/type/" + type });

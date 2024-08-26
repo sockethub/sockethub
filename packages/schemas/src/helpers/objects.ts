@@ -1,5 +1,13 @@
-export const validObjectRefs = [];
-export const validObjectDefs = {};
+type ObjectRefs = {$ref: string}
+type ObjectType = {
+    required: string[],
+    additionalProperties: boolean
+}
+interface ObjectDefs {
+    [key: string]: ObjectType
+}
+export const validObjectRefs: ObjectRefs[] = [];
+export const validObjectDefs: ObjectDefs = {};
 
 export const ObjectTypesSchema = {
     credentials: {
@@ -216,6 +224,7 @@ export const ObjectTypesSchema = {
     },
 };
 
+
 export const ObjectTypesList = Object.keys(ObjectTypesSchema);
 
 ObjectTypesList.forEach(function (type) {
@@ -223,5 +232,5 @@ ObjectTypesList.forEach(function (type) {
         return;
     }
     validObjectRefs.push({ $ref: "#/definitions/type/" + type });
-    validObjectDefs[type] = ObjectTypesSchema[type];
+    validObjectDefs[type as keyof ObjectDefs] = ObjectTypesSchema[type as keyof typeof ObjectTypesSchema];
 });

@@ -1,5 +1,5 @@
 import debug from "debug";
-import Ajv, { Schema } from "ajv";
+import Ajv, { ErrorObject, Schema } from "ajv";
 import addFormats from "ajv-formats";
 import additionsFormats2019 from "ajv-formats-draft2019";
 import getErrorMessage from "./helpers/error-parser.ts";
@@ -7,9 +7,10 @@ import { ActivityStream } from "./types.ts";
 import PlatformSchema from "./schemas/platform.ts";
 import ActivityStreamsSchema from "./schemas/activity-stream.ts";
 import ActivityObjectSchema from "./schemas/activity-object.ts";
+import { ValidateFunction } from "npm:ajv@8.12.0";
 
-const ajv = new Ajv({ strictTypes: false, allErrors: true });
-addFormats(ajv);
+const ajv = new Ajv.default({ strictTypes: false, allErrors: true });
+addFormats.default(ajv);
 additionsFormats2019(ajv);
 
 interface SchemasDict {
@@ -20,12 +21,12 @@ const log = debug("sockethub:schemas:validator");
 const schemaURL = "https://sockethub.org/schemas/v0";
 const schemas: SchemasDict = {};
 
-schemas[`${schemaURL}/activity-stream`] = ActivityStreamsSchema;
-schemas[`${schemaURL}/activity-object`] = ActivityObjectSchema;
+schemas[`${schemaURL}/activity-stream` as keyof SchemasDict] = ActivityStreamsSchema;
+schemas[`${schemaURL}/activity-object` as keyof SchemasDict] = ActivityObjectSchema;
 
 for (const uri in schemas) {
     log(`registering schema ${uri}`);
-    ajv.addSchema(schemas[uri], uri);
+    ajv.addSchema(schemas[uri as keyof SchemasDict] as Schema, uri);
 }
 
 function handleValidation(
@@ -33,7 +34,7 @@ function handleValidation(
     msg: ActivityStream,
     isObject = false,
 ): string {
-    const validator = ajv.getSchema(schemaRef);
+    const validator = ajv.getSchema(schemaRef) as ValidateFunction;
     let result: boolean | Promise<unknown>;
     if (isObject) {
         result = validator({ object: msg });
@@ -41,7 +42,7 @@ function handleValidation(
         result = validator(msg);
     }
     if (!result) {
-        let errorMessage = getErrorMessage(msg, validator.errors);
+        let errorMessage = getErrorMessage(msg, validator.errors as ErrorObject[]);
         if (msg.context) {
             errorMessage = `[${msg.context}] ${errorMessage}`;
         }
@@ -79,9 +80,10 @@ export function validatePlatformSchema(schema: Schema): string {
     // validate schema property
     const err = validate(schema);
     if (!err) {
+        const errObj: ErrorObject = validate.errors![0];
         return (
             `platform schema failed to validate: ` +
-            `${validate.errors[0].instancePath} ${validate.errors[0].message}`
+            `${errObj.instancePath} ${errObj.message}`
         );
     } else {
         return "";

@@ -32,11 +32,6 @@
         "mocha": "10.2.0",
         "typescript": "5.3.3"
     },
-    "scripts": {
-        "clean": "rm -rf coverage",
-        "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 95 --lines 95",
-        "test": "c8 -x \"**/*.test.*\" mocha src/**/*.test.ts && deno task coverage"
-    },
     "dependencies": {
         "ajv": "8.12.0",
         "ajv-formats": "2.1.1",

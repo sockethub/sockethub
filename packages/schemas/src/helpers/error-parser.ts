@@ -1,6 +1,6 @@
 import { ErrorObject } from "ajv";
 import { ObjectTypesList } from "./objects.ts";
-import { ActivityStream, ActivityObject } from "../types.ts";
+import { ActivityStream, ActivityObject, ActivityActor } from "../types.ts";
 
 interface TypeBreakdown {
     actor: Array<string>;
@@ -24,8 +24,9 @@ function getTypeList(msg: ActivityStream | ActivityObject): Array<string> {
     let types = [];
     types.push(msg?.type);
     for (const prop in msg) {
-        if (msg[prop]?.type) {
-            types = [...types, ...getTypeList(msg[prop])];
+        const as = msg[prop as keyof ActivityStream] as ActivityStream;
+        if (as?.type) {
+            types = [...types, ...getTypeList(msg[prop as keyof ActivityStream] as ActivityStream)];
         }
     }
     return types;
@@ -33,12 +34,12 @@ function getTypeList(msg: ActivityStream | ActivityObject): Array<string> {
 
 function getSchemaType(error: ErrorObject): string {
     const schemaTypeRes = error.schemaPath.match(/#\/\w+\/\w+\/([\w-]+)\//);
-    return schemaTypeRes ? schemaTypeRes[1] : undefined;
+    return schemaTypeRes ? schemaTypeRes[1] : "undefined";
 }
 
 function getErrType(error: ErrorObject): string {
     const errTypeRes = error.instancePath.match(/\/(\w+)/);
-    return errTypeRes ? errTypeRes[1] : undefined;
+    return errTypeRes ? errTypeRes[1] : "undefined";
 }
 
 function getPartsCount(error: ErrorObject, types: TypeBreakdown): number {
@@ -47,10 +48,10 @@ function getPartsCount(error: ErrorObject, types: TypeBreakdown): number {
     if (!errType) {
         return -1;
     }
-    if (!types[errType]) {
+    if (!types[errType as keyof TypeBreakdown]) {
         return -1;
     }
-    if (!types[errType].includes(schemaType)) {
+    if (!types[errType as keyof TypeBreakdown].includes(schemaType)) {
         return -1;
     }
     const parts = error.instancePath.split("/");
@@ -60,8 +61,8 @@ function getPartsCount(error: ErrorObject, types: TypeBreakdown): number {
 function getTypes(msg: ActivityStream): TypeBreakdown {
     return {
         actor: getTypeList(msg.actor),
-        target: getTypeList(msg.target),
-        object: getTypeList(msg.context ? msg.object : msg),
+        target: getTypeList(msg.target as ActivityActor),
+        object: getTypeList(msg.context ? msg.object as ActivityObject : msg),
     };
 }
 
@@ -73,7 +74,7 @@ function getTypes(msg: ActivityStream): TypeBreakdown {
  * @returns {string}
  */
 export default function getErrorMessage(
-    msg,
+    msg: ActivityStream,
     errors: Array<ErrorObject>,
 ): string {
     const types = getTypes(msg);
@@ -93,7 +94,7 @@ export default function getErrorMessage(
         : composeFinalError(errors[errors.length - 1]);
 }
 
-function composeFinalError(error) {
+function composeFinalError(error: ErrorObject): string {
     // if we have yet to build an error message, assume this is an invalid type value (oneOf),
     // try to build a list of valid types
     let msg: string;

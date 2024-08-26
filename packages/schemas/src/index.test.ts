@@ -1,5 +1,5 @@
 import { ActivityStream } from "./types.ts";
-import { expect } from "chai";
+import { assertEquals } from "jsr:@std/assert@1";
 
 import ActivityStreamSchema from "./schemas/activity-stream.ts";
 import ActivityObjectSchema from "./schemas/activity-object.ts";
@@ -16,80 +16,80 @@ import testActivityObjectsData from "./index.test.data.objects.ts";
 import testActivityStreamsData from "./index.test.data.streams.ts";
 import testPlatformSchemaData from "./index.test.data.platform.ts";
 
-describe("Platform schema validation", () => {
-    it("returns an empty error for a valid schema", () => {
+Deno.test("Platform schema validation", () => {
+    Deno.test("returns an empty error for a valid schema", () => {
         const err = validatePlatformSchema(testPlatformSchemaData);
-        expect(err).to.equal("");
+        assertEquals(err, "");
     });
-    it("returns an error for an invalid schema", () => {
+    Deno.test("returns an error for an invalid schema", () => {
         const err = validatePlatformSchema({ foo: "bar" });
-        expect(err).to.eql(
+        assertEquals(err,
             "platform schema failed to validate:  must have required property 'name'",
         );
     });
 });
 
-describe("Adding a PlatformSchema", () => {
-    it("returns the same schema when fetched", () => {
+Deno.test("Adding a PlatformSchema", () => {
+    Deno.test("returns the same schema when fetched", () => {
         const platform_type = "test-platform/credentials";
         addPlatformSchema(testPlatformSchemaData.credentials, platform_type);
         const compiledSchema = getPlatformSchema(platform_type);
-        expect(compiledSchema.schema).to.eql(
+        assertEquals(compiledSchema!.schema,
             testPlatformSchemaData.credentials,
         );
     });
 });
 
-describe("Credentials", () => {
+Deno.test("Credentials", () => {
     testCredentialsData.forEach(
         ([name, creds, expectedResult, expectedFailureMessage]) => {
-            describe("validateCredential " + name, () => {
-                it(`returns expected result`, () => {
+            Deno.test("validateCredential " + name, () => {
+                Deno.test(`returns expected result`, () => {
                     const err = validateCredentials(creds as ActivityStream);
-                    expect(err).to.equal(expectedFailureMessage);
-                    expect(!err).to.equal(expectedResult);
+                    assertEquals(err, expectedFailureMessage);
+                    assertEquals(!err, expectedResult);
                 });
             });
         },
     );
 });
 
-describe("ActivityObject", () => {
-    it("has expected properties", () => {
-        expect(typeof ActivityObjectSchema).to.equal("object");
-        expect(ActivityObjectSchema["$id"]).to.equal(
+Deno.test("ActivityObject", () => {
+    Deno.test("has expected properties", () => {
+        assertEquals(typeof ActivityObjectSchema, "object");
+        assertEquals(ActivityObjectSchema["$id"],
             "https://sockethub.org/schemas/v0/activity-object#",
         );
     });
 
     testActivityObjectsData.forEach(
         ([name, ao, expectedResult, expectedFailureMessage]) => {
-            describe("validateActivityObject " + name, () => {
-                it(`returns expected result`, () => {
+            Deno.test("validateActivityObject " + name, () => {
+                Deno.test(`returns expected result`, () => {
                     const err = validateActivityObject(ao as ActivityStream);
-                    expect(err).to.equal(expectedFailureMessage);
-                    expect(!err).to.equal(expectedResult);
+                    assertEquals(err, expectedFailureMessage);
+                    assertEquals(!err, expectedResult);
                 });
             });
         },
     );
 });
 
-describe("ActivityStream", () => {
-    it("has expected properties", () => {
-        expect(typeof ActivityStreamSchema).to.equal("object");
-        expect(ActivityStreamSchema["$id"]).to.equal(
+Deno.test("ActivityStream", () => {
+    Deno.test("has expected properties", () => {
+        assertEquals(typeof ActivityStreamSchema, "object");
+        assertEquals(ActivityStreamSchema["$id"],
             "https://sockethub.org/schemas/v0/activity-stream#",
         );
     });
 
     testActivityStreamsData.forEach(
         ([name, as, expectedResult, expectedFailureMessage]) => {
-            describe("validateActivityStream " + name, () => {
-                it(`returns expected result`, () => {
+            Deno.test("validateActivityStream " + name, () => {
+                Deno.test(`returns expected result`, () => {
                     const err = validateActivityStream(as as ActivityStream);
-                    expect(err).to.equal(expectedFailureMessage);
-                    expect(!err).to.equal(expectedResult);
+                    assertEquals(err, expectedFailureMessage);
+                    assertEquals(!err, expectedResult);
                 });
             });
         },
