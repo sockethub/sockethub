@@ -1,6 +1,6 @@
 import { ErrorObject } from "ajv";
-import { ObjectTypesList } from "./objects";
-import { ActivityStream, ActivityObject } from "../types";
+import { ObjectTypesList } from "./objects.ts";
+import { ActivityStream, ActivityObject } from "../types.ts";
 
 interface TypeBreakdown {
     actor: Array<string>;

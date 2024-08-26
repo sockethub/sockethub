@@ -1,4 +1,4 @@
-import { validObjectRefs, validObjectDefs } from "../helpers/objects";
+import { validObjectRefs, validObjectDefs } from "../helpers/objects.ts";
 
 export default {
     $id: "https://sockethub.org/schemas/v0/activity-object#",

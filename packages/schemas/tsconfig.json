@@ -6,7 +6,8 @@
         "sourceMap": false,
         "outDir": "dist",
         "rootDir": "src",
-        "baseUrl": "/"
+        "baseUrl": "/",
+        "allowImportingTsExtensions": true
     },
     "include": ["src"],
     "exclude": ["**/*.test.ts", "node_modules/", "dist/", "*.d.ts"]

@@ -1,10 +1,8 @@
 {
     "name": "root",
     "private": true,
-    "packageManager": "pnpm@8.5.1",
     "engines": {
-        "node": ">=16",
-        "pnpm": ">=8"
+        "deno": ">=1.45"
     },
     "devDependencies": {
         "@sockethub/data-layer": "workspace:1.0.0-alpha.4",
@@ -32,7 +30,6 @@
         "typescript": "5.3.3"
     },
     "scripts": {
-        "build": "nx run-many --target=build --all --parallel 1",
         "clean": "pnpm run --parallel -r clean",
         "clean:deps": "pnpm run --parallel -r clean:deps && npx rimraf node_modules",
         "compliance": "pnpm lint && pnpm build && pnpm test",
@@ -58,9 +55,6 @@
         "publish": "pnpm clean && pnpm build && pnpm compliance && lerna publish --dist-tag latest --pre-dist-tag next",
         "start": "pnpm --filter sockethub start",
         "test": "nx run-many --target=test"
-    },
-    "dependencies": {
-        "tslib": "2.6.2"
     },
     "resolutions": {
         "node-fetch": "2.7.0",

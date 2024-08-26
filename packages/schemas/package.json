@@ -12,10 +12,8 @@
         "activity objects",
         "sockethub platforms"
     ],
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "main": "src/index.ts",
     "files": [
-        "dist/",
         "src/"
     ],
     "repository": {
@@ -32,14 +30,12 @@
         "c8": "8.0.1",
         "chai": "4.3.10",
         "mocha": "10.2.0",
-        "ts-node": "10.9.2",
         "typescript": "5.3.3"
     },
     "scripts": {
-        "build": "pnpm clean && tsc && ./scripts/export-json-schema.js",
-        "clean": "rm -rf coverage dist",
+        "clean": "rm -rf coverage",
         "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 95 --lines 95",
-        "test": "c8 -x \"**/*.test.*\" mocha -r ts-node/register src/**/*.test.ts && pnpm coverage"
+        "test": "c8 -x \"**/*.test.*\" mocha src/**/*.test.ts && deno task coverage"
     },
     "dependencies": {
         "ajv": "8.12.0",

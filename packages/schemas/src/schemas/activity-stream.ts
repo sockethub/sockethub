@@ -1,5 +1,5 @@
-import activityObject from "./activity-object";
-import { ObjectTypesList, ObjectTypesSchema } from "../helpers/objects";
+import activityObject from "./activity-object.ts";
+import { ObjectTypesList, ObjectTypesSchema } from "../helpers/objects.ts";
 
 const validActorRefs = activityObject.properties.object.oneOf;
 const validTargetRefs = activityObject.properties.object.oneOf;

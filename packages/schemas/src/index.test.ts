@@ -1,8 +1,8 @@
-import { ActivityStream } from "./types";
+import { ActivityStream } from "./types.ts";
 import { expect } from "chai";
 
-import ActivityStreamSchema from "./schemas/activity-stream";
-import ActivityObjectSchema from "./schemas/activity-object";
+import ActivityStreamSchema from "./schemas/activity-stream.ts";
+import ActivityObjectSchema from "./schemas/activity-object.ts";
 import {
     validatePlatformSchema,
     addPlatformSchema,
@@ -10,11 +10,11 @@ import {
     validateActivityStream,
     validateCredentials,
     getPlatformSchema,
-} from "./validator";
-import testCredentialsData from "./index.test.data.credentials";
-import testActivityObjectsData from "./index.test.data.objects";
-import testActivityStreamsData from "./index.test.data.streams";
-import testPlatformSchemaData from "./index.test.data.platform";
+} from "./validator.ts";
+import testCredentialsData from "./index.test.data.credentials.ts";
+import testActivityObjectsData from "./index.test.data.objects.ts";
+import testActivityStreamsData from "./index.test.data.streams.ts";
+import testPlatformSchemaData from "./index.test.data.platform.ts";
 
 describe("Platform schema validation", () => {
     it("returns an empty error for a valid schema", () => {

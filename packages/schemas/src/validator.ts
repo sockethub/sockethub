@@ -2,11 +2,11 @@ import debug from "debug";
 import Ajv, { Schema } from "ajv";
 import addFormats from "ajv-formats";
 import additionsFormats2019 from "ajv-formats-draft2019";
-import getErrorMessage from "./helpers/error-parser";
-import { ActivityStream } from "./types";
-import PlatformSchema from "./schemas/platform";
-import ActivityStreamsSchema from "./schemas/activity-stream";
-import ActivityObjectSchema from "./schemas/activity-object";
+import getErrorMessage from "./helpers/error-parser.ts";
+import { ActivityStream } from "./types.ts";
+import PlatformSchema from "./schemas/platform.ts";
+import ActivityStreamsSchema from "./schemas/activity-stream.ts";
+import ActivityObjectSchema from "./schemas/activity-object.ts";
 
 const ajv = new Ajv({ strictTypes: false, allErrors: true });
 addFormats(ajv);

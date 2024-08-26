@@ -1,4 +1,4 @@
-import { ObjectTypesList } from "./helpers/objects";
+import { ObjectTypesList } from "./helpers/objects.ts";
 
 export default [
     [

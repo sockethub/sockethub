@@ -4,11 +4,11 @@ import {
     validateActivityStream,
     validateCredentials,
     validatePlatformSchema,
-} from "./validator";
-import { ObjectTypesList } from "./helpers/objects";
-import ActivityObjectSchema from "./schemas/activity-object";
-import ActivityStreamSchema from "./schemas/activity-stream";
-import PlatformSchema from "./schemas/platform";
+} from "./validator.ts";
+import { ObjectTypesList } from "./helpers/objects.ts";
+import ActivityObjectSchema from "./schemas/activity-object.ts";
+import ActivityStreamSchema from "./schemas/activity-stream.ts";
+import PlatformSchema from "./schemas/platform.ts";
 
 export default {
     addPlatformSchema,
@@ -25,4 +25,4 @@ export {
     ObjectTypesList,
 };
 
-export * from "./types";
+export * from "./types.ts";
