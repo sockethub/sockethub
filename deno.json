@@ -1,6 +1,6 @@
 {
   "workspace": [
-   "./packages/activity-streams",
+    "./packages/activity-streams",
     "./packages/client",
     "./packages/crypto",
     "./packages/data-layer",
@@ -12,6 +12,6 @@
     "./packages/platform-xmpp",
     "./packages/schemas",
     "./packages/server",
-    "./packages/sockethub",
+    "./packages/sockethub"
   ]
 }

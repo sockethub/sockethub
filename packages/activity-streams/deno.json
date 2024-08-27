@@ -4,6 +4,9 @@
   "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
   "license": "MIT",
   "exports": "./src/activity-streams.ts",
+  "tasks": {
+    "test": "deno test --coverage --allow-env --clean src/**/*.test.ts" 
+  },
   "imports": {
     "@sockethub/schemas": "@sockethub/schemas",
     "@types/chai": "npm:@types/chai@^4.3.18",
