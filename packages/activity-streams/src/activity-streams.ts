@@ -15,8 +15,10 @@
  *
  */
 
-import EventEmitter from "npm:eventemitter3";
-import { ActivityObject, ActivityStream } from "@sockethub/schemas";
+import eventEmitter from "npm:eventemitter3";
+import type { ActivityObject, ActivityStream, ActivityActor } from "@sockethub/schemas";
+
+const EventEmitter = eventEmitter as unknown as typeof eventEmitter.default;
 
 const ee = new EventEmitter(),
     baseProps = {
@@ -108,7 +110,7 @@ const ee = new EventEmitter(),
         },
     };
 
-const objs = new Map<string, never>(),
+const objs = new Map<string, ActivityObject>(),
     customProps: Record<string, string[]> = {};
 
 let failOnUnknownObjectProperties = false,
@@ -121,13 +123,13 @@ function matchesCustomProp(type: string, key: string) {
     );
 }
 
-function renameProp(obj: Record<string, never>, key: string) {
+function renameProp(obj: ActivityObject, key: string): ActivityObject {
     obj[rename[key]] = obj[key];
     delete obj[key];
     return obj;
 }
 
-function validateObject(type: string, obj: ActivityObject = { type: "" }) {
+function validateObject(type: string, obj: ActivityObject | ActivityStream = { type: "" }) {
     const unknownKeys = Object.keys(obj).filter((key): void | string => {
         if (!baseProps[type as keyof typeof baseProps].includes(key)) {
             return key;
@@ -137,7 +139,7 @@ function validateObject(type: string, obj: ActivityObject = { type: "" }) {
     for (const key of unknownKeys) {
         if (rename[key]) {
             // rename property instead of fail
-            obj = renameProp(obj, key);
+            obj = renameProp(obj as ActivityObject, key);
             continue;
         }
 
@@ -159,42 +161,52 @@ function validateObject(type: string, obj: ActivityObject = { type: "" }) {
     }
 }
 
-function ensureProps(obj: Record<string, string>) {
+function ensureProps(obj: ActivityObject) {
     // ensure the name property, which can generally be inferred from the id
     // name = obj.match(/(?(?\w+):\/\/)(?:.+@)?(.+?)(?:\/|$)/)[1]
     return obj;
 }
 
-function expandStream(meta: Record<string, string>) {
-    const stream: Record<string, ActivityStream[]> = {};
-    for (const key of Object.keys(meta)) {
-        if (typeof meta[key] === "string") {
-            stream[key] = [ objs.get(meta[key]) || meta[key] ];
-        } else if (Array.isArray(meta[key])) {
-            stream[key] = [];
-            for (const entry of [...meta[key]]) {
+function expandStream(meta: ActivityStream): ActivityStream {
+    interface NewStream {
+        [key: string]: ActivityObject | ActivityActor | string | Array<string|ActivityObject>
+    };
+    const newStream: NewStream = {}
+
+    // for key property in the meta object, we try to expand it if it's a string.
+    // if it's an array, we try to expand each string in the array
+    for (const k of Object.keys(meta)) {
+        const asKey = k as keyof ActivityStream;
+
+        if (typeof meta[asKey] === "string") {
+            newStream[asKey] = objs.get(meta[asKey]) as ActivityObject || meta[asKey];
+        } else if (Array.isArray(meta[asKey])) {
+            newStream[asKey] = [];
+            for (const entry of [...meta[asKey]]) {
                 if (typeof entry === "string") {
-                    stream[key].push(objs.get(entry) || entry);
+                    newStream[asKey].push(objs.get(entry) || entry);
                 }
             }
         } else {
-            stream[key] = [...meta[key]];
+            newStream[asKey] = meta[asKey] as ActivityObject;
         }
     }
 
     // only expand string into objects if they are in the expand list
-    for (const key of Object.keys(expand)) {
-        if (typeof stream[key] === "string") {
-            const idx = expand[key as keyof typeof expand].primary;
-            const obj: Record<string, ActivityStream> = {};
-            obj[idx] = stream[key];
-            stream[key] = [obj];
+    for (const k of Object.keys(expand)) {
+        const asKey = k as keyof typeof expand;
+        if (typeof newStream[asKey] === "string") {
+            const idx = expand[asKey].primary;
+            const obj: ActivityObject = {} as ActivityObject;
+            obj[idx] = newStream[asKey];
+            newStream[asKey] = obj;
         }
     }
-    return stream;
+
+    return newStream as unknown as ActivityStream;
 }
 
-function Stream(meta: ActivityStream): ActivityStream | ActivityObject | Record<string, never> {
+function Stream(meta: ActivityStream): ActivityStream {
     validateObject("stream", meta);
     if (typeof meta.object === "object") {
         validateObject("object", meta.object);
@@ -215,7 +227,7 @@ const _Object: ActivityObjectManager = {
     create: function (obj: ActivityObject) {
         validateObject("object", obj);
         obj = ensureProps(obj as never);
-        objs.set(obj.id, obj as never);
+        objs.set(obj.id as string, obj as never);
         ee.emit("activity-object-create", obj);
         return obj;
     },
@@ -229,14 +241,14 @@ const _Object: ActivityObjectManager = {
     },
 
     get: function (id: string, expand: boolean | undefined) {
-        let obj: Record<string, string> | undefined = objs.get(id);
+        let obj: ActivityObject | undefined = objs.get(id);
         if (!obj) {
             if (!expand) {
                 return id;
             }
-            obj = { id: id };
+            obj = { id: id } as ActivityObject;
         }
-        return ensureProps(obj);
+        return ensureProps(obj as ActivityObject);
     },
 
     list: function (): IterableIterator<string> {

@@ -5,11 +5,10 @@
   "license": "MIT",
   "exports": "./src/activity-streams.ts",
   "tasks": {
-    "test": "deno test --coverage --allow-env --clean src/**/*.test.ts" 
+    "test": "deno test --coverage --allow-env --clean --allow-read src/**/*.test.ts"
   },
   "imports": {
-    "@sockethub/schemas": "@sockethub/schemas",
-    "@types/chai": "npm:@types/chai@^4.3.18",
+    "@types/chai": "npm:@types/chai@^4.3.19",
     "chai": "npm:chai@^4.3.10",
     "eventemitter3": "npm:eventemitter3@^5.0.1",
     "mocha": "npm:mocha@^10.7.3"
