@@ -1,0 +1,14 @@
+{
+  "name": "@sockethub/activity-streams",
+  "version": "4.4.0-alpha.5",
+  "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
+  "license": "MIT",
+  "exports": "./src/activity-streams.ts",
+  "imports": {
+    "@sockethub/schemas": "@sockethub/schemas",
+    "@types/chai": "npm:@types/chai@^4.3.18",
+    "chai": "npm:chai@^4.3.10",
+    "eventemitter3": "npm:eventemitter3@^5.0.1",
+    "mocha": "npm:mocha@^10.7.3"
+  }
+}

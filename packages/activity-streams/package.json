@@ -1,7 +1,4 @@
 {
-    "name": "@sockethub/activity-streams",
-    "version": "4.4.0-alpha.4",
-    "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
     "main": "./build/cjs/activity-streams.js",
     "module": "./build/esm/activity-streams.js",
     "types": "./build/esm/activity-streams.d.ts",
@@ -33,7 +30,6 @@
         "@rollup/plugin-multi-entry": "^6.0.1",
         "@rollup/plugin-node-resolve": "^15.2.3",
         "@rollup/plugin-terser": "^0.4.4",
-        "@sockethub/schemas": "workspace:^",
         "@types/node": "20.10.5",
         "c8": "8.0.1",
         "chai": "4.3.10",
@@ -46,11 +42,6 @@
         "rollup": "^4.6.1",
         "ts-node": "^10.9.1",
         "typescript": "^5.3.3"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/sockethub/sockethub.git",
-        "directory": "packages/activity-streams"
     },
     "scripts": {
         "build": "pnpm compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs && rollup -c config/rollup.config.test.mjs",
@@ -67,11 +58,5 @@
         "streams",
         "json-ld",
         "activity-streams"
-    ],
-    "author": "Nick Jennings <nick@silverbucket.net>",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/sockethub/sockethub/issues"
-    },
-    "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/activity-streams"
+    ]
 }

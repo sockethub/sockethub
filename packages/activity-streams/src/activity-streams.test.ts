@@ -1,18 +1,22 @@
-import ASFactory from "./activity-streams";
-import chai from "chai";
+import ASFactory, { ASFactoryOptions, ASManager } from "./activity-streams.ts";
+import chai from "npm:chai";
+import { ActivityStream } from "@sockethub/schemas";
+import "npm:@types/chai";
+import "npm:@types/mocha";
+import { describe, before, it, beforeEach } from "npm:mocha";
 
 const assert = chai.assert;
 const expect = chai.expect;
 
 describe("warn test", () => {
-    let activity;
+    let activity: ASManager;
 
     before("initialize activity module", () => {
         assert.typeOf(ASFactory, "function");
         activity = ASFactory();
     });
 
-    it("rejects nondefined special types", () => {
+    it("rejects non-defined special types", () => {
         expect(() => {
             activity.Stream({
                 type: "lol",
@@ -26,7 +30,7 @@ describe("warn test", () => {
 });
 
 describe("no special props", () => {
-    let activity;
+    let activity: ASManager;
 
     before("initialize activity module", () => {
         assert.typeOf(ASFactory, "function");
@@ -53,14 +57,14 @@ describe("no special props", () => {
 });
 
 describe("basic tests", () => {
-    const config = {
+    const config: ASFactoryOptions = {
         customProps: {
             credentials: ["secure"],
         },
         specialObjs: ["dude"],
         failOnUnknownObjectProperties: true,
     };
-    let activity;
+    let activity: ASManager;
 
     before("initialize activity module", () => {
         assert.typeOf(ASFactory, "function");
@@ -78,7 +82,7 @@ describe("basic tests", () => {
         });
 
         it("returns undefined when no params are passed", () => {
-            assert.equal(activity.Object.get(), undefined);
+            assert.equal(activity.Object.get(""), undefined);
         });
 
         it("returns object when given a valid lookup id", () => {
@@ -123,7 +127,7 @@ describe("basic tests", () => {
     });
 
     describe("stream tests", () => {
-        let stream;
+        let stream: ActivityStream;
 
         beforeEach(() => {
             stream = activity.Stream({
@@ -161,7 +165,7 @@ describe("basic tests", () => {
                 content: "har",
                 secure: true,
             });
-            expect(stream.object.objectType).to.not.exist;
+            expect(stream.object?.objectType).to.not.exist;
         });
 
         it("respects specialObj properties", () => {
@@ -211,7 +215,7 @@ describe("basic tests", () => {
 
     describe("emitters", () => {
         it("emits an event on object creation", () => {
-            function onHandler(obj) {
+            function onHandler(obj: ActivityStream) {
                 expect(obj).to.deep.equal({ id: "thingy3" });
                 activity.off("activity-object-create", onHandler);
             }
@@ -220,7 +224,7 @@ describe("basic tests", () => {
         });
 
         it("emits an event on object deletion", () => {
-            activity.once("activity-object-delete", (id) => {
+            activity.once("activity-object-delete", (id: string) => {
                 expect(id).to.equal("thingy2");
             });
             activity.Object.delete("thingy2");

@@ -1,9 +1,9 @@
-import { expect } from "chai";
-import { createSandbox, restore } from "sinon";
-import EventEmitter from "eventemitter3";
+import { expect } from "npm:chai";
+import { createSandbox, restore } from "npm:sinon";
+import EventEmitter from "npm:eventemitter3";
 import { type ASManager } from "@sockethub/activity-streams";
 
-import SockethubClient from "./sockethub-client";
+import SockethubClient from "./sockethub-client.ts";
 
 describe("SockethubClient bad initialization", () => {
     it("no socket.io instance", () => {
