@@ -1,7 +1,7 @@
-import debug from "npm:debug";
-import Ajv, { ErrorObject, Schema, ValidateFunction } from "npm:ajv";
-import addFormats from "npm:ajv-formats";
-import additionsFormats2019 from "npm:ajv-formats-draft2019";
+import debug from "debug";
+import Ajv, { ErrorObject, Schema, ValidateFunction } from "ajv";
+import addFormats from "ajv-formats";
+import additionsFormats2019 from "ajv-formats-draft2019";
 import getErrorMessage from "./helpers/error-parser.ts";
 import { ActivityStream } from "./types.ts";
 import PlatformSchema from "./schemas/platform.ts";

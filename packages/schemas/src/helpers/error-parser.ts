@@ -1,4 +1,4 @@
-import { ErrorObject } from "npm:ajv";
+import { ErrorObject } from "ajv";
 import { ObjectTypesList } from "./objects.ts";
 import { ActivityStream, ActivityObject, ActivityActor } from "../types.ts";
 

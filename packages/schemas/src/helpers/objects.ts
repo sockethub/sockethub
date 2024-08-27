@@ -225,7 +225,7 @@ export const ObjectTypesSchema = {
 };
 
 
-export const ObjectTypesList = Object.keys(ObjectTypesSchema);
+export const ObjectTypesList: string[] = Object.keys(ObjectTypesSchema);
 
 ObjectTypesList.forEach(function (type) {
     if (type === "credentials") {
