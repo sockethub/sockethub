@@ -1,9 +1,8 @@
 {
   "tasks": {
     "build": "deno scripts/export-json-schema.ts",
-    "clean": "rm -rf coverage/",
-    "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 95 --lines 95",
-    "test": "c8 -x \"**/*.test.*\" deno test --allow-env src/**/*.test.ts && deno task coverage"
+    "threshold": "deno coverage && bash ./scripts/threshold.sh",
+    "test": "deno test --coverage --allow-env --clean src/**/*.test.ts && deno task threshold"
   },
   "imports": {
     "@types/mocha": "npm:@types/mocha@^10.0.7"
