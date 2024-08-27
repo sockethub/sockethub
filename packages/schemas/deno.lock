@@ -139,11 +139,11 @@
   "remote": {},
   "workspace": {
     "dependencies": [
-      "npm:1.6.1",
-      "npm:2.1.1",
-      "npm:20.10.5",
-      "npm:8.12.0",
-      "npm:^4.3.4"
+      "npm:@types/node@^22.5.0",
+      "npm:ajv-formats-draft2019@^1.6.1",
+      "npm:ajv-formats@^2.1.1",
+      "npm:ajv@^8.12.0",
+      "npm:debug@^4.3.4"
     ]
   }
 }
