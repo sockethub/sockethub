@@ -10,6 +10,9 @@ import ActivityObjectSchema from "./schemas/activity-object.ts";
 import ActivityStreamSchema from "./schemas/activity-stream.ts";
 import PlatformSchema from "./schemas/platform.ts";
 
+/**
+ * Schema Tools
+ */
 export default {
     addPlatformSchema,
     validatePlatformSchema,

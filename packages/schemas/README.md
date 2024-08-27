@@ -1,6 +1,6 @@
 # @sockethub/schemas
 
-Sockethub AS2.0 and other JSON schemas
+Sockethub ActivityStreams 2.0 schemas and other JSON schemas for Sockethub use and development.
 
 ## Usage
 

@@ -1,10 +1,19 @@
 {
+  "name": "@sockethub/schemas",
+  "description": "JSON schema files for validating Sockethub Activity Streams",
+  "version": "3.0.0-alpha.4",
+  "exports": "./src/index.ts",
+  "license": "MIT",
   "tasks": {
-    "build": "deno scripts/export-json-schema.ts",
+    "build": "deno run --allow-read --allow-write scripts/export-json-schema.ts",
     "threshold": "deno coverage && bash ./scripts/threshold.sh",
     "test": "deno test --coverage --allow-env --clean src/**/*.test.ts && deno task threshold"
   },
   "imports": {
-    "@types/mocha": "npm:@types/mocha@^10.0.7"
+    "ajv": "npm:8.12.0",
+    "ajv-formats": "npm:2.1.1",
+    "ajv-formats-draft2019": "npm:1.6.1",
+    "debug": "npm:^4.3.4",
+    "@types/node": "npm:20.10.5"
   }
 }

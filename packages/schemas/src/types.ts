@@ -1,3 +1,6 @@
+/**
+ * A general interface for the structure of any ActivityStream
+ */
 export interface ActivityStream {
     id?: string;
     type: string;
@@ -17,6 +20,10 @@ export interface BaseActivityObject {
     type: string;
 }
 
+/**
+ * A general interface for any actor property of an ActivityStream.
+ * An actor can be used on the `actor` or `target` properties.
+ */
 export interface ActivityActor extends BaseActivityObject {
     id: string;
     type: string;
@@ -24,6 +31,9 @@ export interface ActivityActor extends BaseActivityObject {
     [key: string]: unknown;
 }
 
+/**
+ * A general interface for any object property of an ActivityStream
+ */
 export interface ActivityObject extends BaseActivityObject {
     content?: string;
     [key: string]: unknown;
@@ -66,6 +76,10 @@ export interface PlatformSession {
     updateActor: PlatformUpdateActor;
 }
 
+/**
+ * Structure of a credential object which should be passed to any platform
+ * that requires credentials to operate.
+ */
 export interface CredentialsObject {
     context: string;
     type: "credentials";
@@ -101,6 +115,10 @@ export interface PlatformConstructor {
     new (session: PlatformSession): { debug: Logger };
 }
 
+/**
+ * Basic required elements of a Sockethub platform class. A platform can
+ * have more properties and functions, but should at least implement these.
+ */
 export interface PlatformInterface {
     debug: Logger;
     credentialsHash?: string;
@@ -109,6 +127,10 @@ export interface PlatformInterface {
     cleanup(cb: PlatformCallback): void;
 }
 
+/**
+ * A session object which is passed from Sockethub to an initialized platform,
+ * allowing the platform to conduct certain types of communication and logging.
+ */
 export interface PlatformSession {
     debug: Logger;
     sendToClient: PlatformSendToClient;

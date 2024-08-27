@@ -1,13 +1,12 @@
-import debug from "debug";
-import Ajv, { ErrorObject, Schema } from "ajv";
-import addFormats from "ajv-formats";
-import additionsFormats2019 from "ajv-formats-draft2019";
+import debug from "npm:debug";
+import Ajv, { ErrorObject, Schema, ValidateFunction } from "npm:ajv";
+import addFormats from "npm:ajv-formats";
+import additionsFormats2019 from "npm:ajv-formats-draft2019";
 import getErrorMessage from "./helpers/error-parser.ts";
 import { ActivityStream } from "./types.ts";
 import PlatformSchema from "./schemas/platform.ts";
 import ActivityStreamsSchema from "./schemas/activity-stream.ts";
 import ActivityObjectSchema from "./schemas/activity-object.ts";
-import { ValidateFunction } from "npm:ajv@8.12.0";
 
 const ajv = new Ajv.default({ strictTypes: false, allErrors: true });
 addFormats.default(ajv);
@@ -51,14 +50,26 @@ function handleValidation(
     return "";
 }
 
+/**
+ * Validate the given activity object against its schema
+ * @param msg ActivityStream
+ */
 export function validateActivityObject(msg: ActivityStream): string {
     return handleValidation(`${schemaURL}/activity-object`, msg, true);
 }
 
+/**
+ * Validate the given activity stream against its schema
+ * @param msg ActivityStream
+ */
 export function validateActivityStream(msg: ActivityStream): string {
     return handleValidation(`${schemaURL}/activity-stream`, msg);
 }
 
+/**
+ * Validate the given credentials object against its schema
+ * @param msg ActivityStream
+ */
 export function validateCredentials(msg: ActivityStream): string {
     if (!msg.context) {
         return "credential activity streams must have a context set";
@@ -75,6 +86,10 @@ export function validateCredentials(msg: ActivityStream): string {
     );
 }
 
+/**
+ * Validate a platform against it's schema
+ * @param schema
+ */
 export function validatePlatformSchema(schema: Schema): string {
     const validate = ajv.compile(PlatformSchema);
     // validate schema property
@@ -90,11 +105,20 @@ export function validatePlatformSchema(schema: Schema): string {
     }
 }
 
+/**
+ * Add/register a schema
+ * @param schema Schema
+ * @param platform_type string
+ */
 export function addPlatformSchema(schema: Schema, platform_type: string) {
     log(`registering schema ${schemaURL}/context/${platform_type}`);
     ajv.addSchema(schema, `${schemaURL}/context/${platform_type}`);
 }
 
+/**
+ * Get a schema
+ * @param platform_type string
+ */
 export function getPlatformSchema(platform_type: string) {
     return ajv.getSchema(`${schemaURL}/context/${platform_type}`);
 }
