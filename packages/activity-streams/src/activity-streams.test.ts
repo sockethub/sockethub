@@ -1,13 +1,11 @@
 import ASFactory, { type ASFactoryOptions, type ASManager } from "./activity-streams.ts";
 import "https://deno.land/x/deno_mocha/global.ts";
-// import "https://unpkg.com/mocha@7.2.0/mocha.js";
-// import { expect } from "https://deno.land/x/expect@v0.2.1/mod.ts";
 
 import * as chai from "npm:chai";
 import type { ActivityActor, ActivityObject, ActivityStream } from "@sockethub/schemas"
 
 const assert = chai.assert;
-const chaiExpect = chai.expect;
+const expect = chai.expect;
 
 interface MockActivityStream extends ActivityStream {
     [key: string]: ActivityObject | ActivityActor | string | undefined
@@ -18,7 +16,7 @@ describe("warn test", () => {
     const activity: ASManager = ASFactory();
 
     it("rejects non-defined special types", () => {
-        chaiExpect(() => {
+        expect(() => {
             activity.Stream({
                 type: "lol",
                 platform: "irc",
@@ -42,7 +40,7 @@ describe("no special props", () => {
             object: { type: "hola", content: "har" },
             target: ["thingy1", "thingy2"],
         });
-        chaiExpect(resp).to.eql({
+        expect(resp).to.eql({
             type: "send",
             context: "irc",
             actor: { id: "thingy" },
@@ -79,35 +77,35 @@ describe("basic tests", () => {
         });
 
         it("returns object when given a valid lookup id", () => {
-            chaiExpect(activity.Object.create({ id: "thingy1" })).to.deep.equal({
+            expect(activity.Object.create({ id: "thingy1" })).to.deep.equal({
                 id: "thingy1",
             });
-            chaiExpect(activity.Object.get("thingy1")).to.deep.equal({
+            expect(activity.Object.get("thingy1")).to.deep.equal({
                 id: "thingy1",
             });
         });
 
         it("throws an exception when called with no identifier", () => {
-            chaiExpect(activity.Object.create).to.throw(Error);
+            expect(activity.Object.create).to.throw(Error);
         });
 
         it("creates a second object and returns is as expected", () => {
-            chaiExpect(activity.Object.create({ id: "thingy2" })).to.deep.equal({
+            expect(activity.Object.create({ id: "thingy2" })).to.deep.equal({
                 id: "thingy2",
             });
-            chaiExpect(activity.Object.get("thingy2")).to.deep.equal({
+            expect(activity.Object.get("thingy2")).to.deep.equal({
                 id: "thingy2",
             });
         });
 
         it("returns a basic ActivtyObject when receiving an unknown id with expand=true", () => {
-            chaiExpect(activity.Object.get("thingy3", true)).to.deep.equal({
+            expect(activity.Object.get("thingy3", true)).to.deep.equal({
                 id: "thingy3",
             });
         });
 
         it("returns given id param when lookup fails and expand=false", () => {
-            chaiExpect(
+            expect(
                 activity.Object.get({
                     id: "thingy3",
                     type: "bar",
@@ -138,27 +136,27 @@ describe("basic tests", () => {
         });
 
         it("renames mapped props", () => {
-            chaiExpect(stream.type).to.equal("lol");
-            chaiExpect(stream.verb).to.not.exist;
-            chaiExpect(stream.context).to.equal("irc");
-            chaiExpect(stream.platform).to.not.exist;
+            expect(stream.type).to.equal("lol");
+            expect(stream.verb).to.not.exist;
+            expect(stream.context).to.equal("irc");
+            expect(stream.platform).to.not.exist;
         });
 
         it("expands existing objects", () => {
-            chaiExpect(stream.target).to.deep.equal([
+            expect(stream.target).to.deep.equal([
                 { id: "thingy1" },
                 { id: "thingy2" },
             ]);
-            chaiExpect(stream.actor).to.deep.equal({ id: "thingy1" });
+            expect(stream.actor).to.deep.equal({ id: "thingy1" });
         });
 
         it("handles customProps as expected", () => {
-            chaiExpect(stream.object).to.deep.equal({
+            expect(stream.object).to.deep.equal({
                 type: "credentials",
                 content: "har",
                 secure: true,
             });
-            chaiExpect(stream.object?.objectType).to.not.exist;
+            expect(stream.object?.objectType).to.not.exist;
         });
 
         it("respects specialObj properties", () => {
@@ -174,7 +172,7 @@ describe("basic tests", () => {
                 },
                 target: ["thingy1", "thingy2"],
             });
-            chaiExpect(stream2).to.deep.equal({
+            expect(stream2).to.deep.equal({
                 type: "lol",
                 context: "irc",
                 actor: { id: "thingy" },
@@ -189,7 +187,7 @@ describe("basic tests", () => {
         });
 
         it("rejects non-defined special types", () => {
-            chaiExpect(() => {
+            expect(() => {
                 activity.Stream({
                     type: "lol",
                     platform: "irc",
@@ -209,7 +207,7 @@ describe("basic tests", () => {
     describe("emitters", () => {
         it("emits an event on object creation", () => {
             function onHandler(obj: ActivityStream) {
-                chaiExpect(obj).to.deep.equal({ id: "thingy3" });
+                expect(obj).to.deep.equal({ id: "thingy3" });
                 activity.off("activity-object-create", onHandler);
             }
             activity.on("activity-object-create", onHandler);
@@ -218,7 +216,7 @@ describe("basic tests", () => {
 
         it("emits an event on object deletion", () => {
             activity.once("activity-object-delete", (id: string) => {
-                chaiExpect(id).to.equal("thingy2");
+                expect(id).to.equal("thingy2");
             });
             activity.Object.delete("thingy2");
         });
