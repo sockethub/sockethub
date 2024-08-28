@@ -1,11 +1,12 @@
 import SockethubClient from "./sockethub-client.ts";
 import type { ASManager } from "@sockethub/activity-streams";
-import eventEmitter, { type EventEmitter } from "npm:eventemitter3";
+import type { ActivityStream } from "@sockethub/schemas";
+import eventEmitter from "npm:eventemitter3";
 import type { Socket } from "socket.io-client";
 
 import "https://deno.land/x/deno_mocha/global.ts";
 import {
-    assertSpyCall,
+    assertSpyCallArg,
     assertSpyCalls,
     type MethodSpy,
     spy,
@@ -20,12 +21,16 @@ interface TestEmitter extends Socket {
     __instance: string;
 }
 
-interface TestASManager extends EventEmitter {
-    Stream: unknown;
+interface TestASManager extends ASManager {
+    on(): unknown;
+    once(): unknown;
+    off(): unknown;
+    emit(): unknown;
+    Stream: (meta: unknown) => ActivityStream;
     Object: {
         create(): unknown;
-        delete(): unknown;
-        list(): unknown;
+        delete(): boolean;
+        list(): IterableIterator<string>;
         get(): unknown;
     };
 }
@@ -37,10 +42,18 @@ function timeout(ms: number) {
 function createMockASInstance(): TestASManager {
     const a = new EventEmitterConstructor() as unknown as TestASManager;
     stub(a, "Stream");
+    a.on = () => {};
+    a.emit = () => {};
+    // stub(a, "on");
+    // stub(a, "emit");
     a.Object = {
         create: () => {},
-        delete: () => {},
-        list: () => {},
+        delete: () => {
+            return true;
+        },
+        list: () => {
+            return new Map().keys();
+        },
         get: () => {},
     };
     stub(a.Object, "create");
@@ -87,6 +100,7 @@ describe("SockethubClient", () => {
 
         class TestSockethubClient extends SockethubClient {
             initActivityStreams() {
+                console.log("init activity streams");
                 this.ActivityStreams = asInstance as ASManager;
             }
         }
@@ -108,14 +122,16 @@ describe("SockethubClient", () => {
 
     it("contains the ActivityStreams property", () => {
         console.log("-- typeof asInstance: " + typeof asInstance);
+        console.log(asInstance);
         // assertEquals(asInstance, sc.ActivityStreams);
+        assertEquals(typeof asInstance.on, "function");
         assertEquals(typeof asInstance.Stream, "function");
         assertEquals(typeof sc.ActivityStreams.Object.create, "function");
     });
 
     it("contains the socket property", () => {
         assertEquals(sc.socket instanceof EventEmitterConstructor, true);
-        // the object we passed in should not be the publically available one
+        // the object we passed in should not be the publicly available one
         assertNotEquals(sc.socket.__instance, "socketio");
         assertEquals(sc.debug, true);
         assertEquals(sc.online, false);
@@ -123,33 +139,40 @@ describe("SockethubClient", () => {
 
     it("registers listeners for ActivityStream events", () => {
         assertSpyCalls(asInstanceOnSpy, 1);
-        assertSpyCall(asInstanceOnSpy, 0, {
-            args: ["activity-object-create", () => {}],
+        assertSpyCallArg(asInstanceOnSpy, 0, 0, "activity-object-create");
+    });
+
+    describe("registers listeners for socket events", () => {
+        it("called 5 times", () => {
+            assertSpyCalls(socketOnSpy, 5);
+        });
+        it("called connect", () => {
+            assertSpyCallArg(socketOnSpy, 0, 0, "connect");
+        });
+        it("called connect_error", () => {
+            assertSpyCallArg(socketOnSpy, 1, 0, "connect_error");
+        });
+        it("called disconnect", () => {
+            assertSpyCallArg(socketOnSpy, 2, 0, "disconnect");
+        });
+        it("called message", () => {
+            assertSpyCallArg(socketOnSpy, 3, 0, "message");
+        });
+        it("called activity-object", () => {
+            assertSpyCallArg(socketOnSpy, 4, 0, "activity-object");
         });
     });
 
-    // it("registers listeners for socket events", () => {
-    //     assertSpyCalls(socketOnSpy, 5);
-    //     assertSpyCall(socketOnSpy, 0, {args:["connect", async ()=>{}]});
-    //     assertSpyCall(socketOnSpy, 1, {args:["connect_error"]});
-    //     assertSpyCall(socketOnSpy, 2, {args:["activity-object"]});
-    //     assertSpyCall(socketOnSpy, 3, {args:["disconnect"]});
-    //     assertSpyCall(socketOnSpy, 4, {args:["message"]});
-    // });
-
     describe("event handling", function () {
-        //     it("activity-object", async () => {
-        //         // emit an acitivy-object via socketIO
-        //         socket.emit("activity-object", { foo: "bar" });
-        //         await timeout(500);
-        //         assertSpyCalls(asInstanceOnSpy, 1);
-        //         assertSpyCall(asInstanceOnSpy, 0, {
-        //                 args: [
-        //                 "activity-object-create",
-        //                 { foo: "bar" }
-        //             ]
-        //         });
-        //     });
+        it("activity-object", async () => {
+            // emit an activity-object via socketIO
+            socket.emit("activity-object", { foo: "bar" });
+            await timeout(0);
+            assertSpyCalls(asInstanceOnSpy, 1);
+            assertSpyCallArg(asInstanceOnSpy, 0, 0, "activity-object-create");
+            assertSpyCallArg(asInstanceOnSpy, 0, 1, { foo: "bar" });
+        });
+
         //     it("activity-object-create", async () => {
         //         asInstance.emit("activity-object-create", { foo: "bar" });
         //         await timeout(0);
