@@ -11,7 +11,7 @@ class ASTemplates {
         if (typeof asObject === "object" && !asObject.published) {
             asObject.published = `${Date.now()}`;
         }
-        this.events.emit(code, asObject);
+        this.events.emit("activity-object-create", { foo: "bar" });
     }
 
     __generalError(nick, content) {

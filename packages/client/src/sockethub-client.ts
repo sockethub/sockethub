@@ -45,7 +45,6 @@ export default class SockethubClient {
         this.initActivityStreams();
 
         this.ActivityStreams.on("activity-object-create", (obj) => {
-            console.log("**--** ACTIVITY OBJECT CREATE CALLED ", obj);
             socket.emit("activity-object", obj, (err: never) => {
                 if (err) {
                     console.error("failed to create activity-object ", err);
@@ -56,7 +55,6 @@ export default class SockethubClient {
         });
 
         socket.on("activity-object", (obj) => {
-            console.log("--test2 ", obj);
             this.ActivityStreams.Object.create(obj);
         });
     }
@@ -115,6 +113,7 @@ export default class SockethubClient {
     private static getKey(content: ActivityStream) {
         const actor = content.actor?.id || content.actor;
         if (!actor) {
+            console.log("THROW HERE");
             throw new Error(
                 "actor property not present for message type: " + content?.type,
             );

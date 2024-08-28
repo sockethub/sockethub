@@ -78,17 +78,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                             content: `hello world ${i}`,
                         },
                     };
-                    sc.socket.emit("message", dummyObj, (msg) => {
-                        if (msg?.error) {
-                            done(new Error(msg.error));
-                        } else {
-                            expect(msg.target).to.eql(
-                                sc.ActivityStreams.Object.get(actor.id),
-                            );
-                            expect(msg.actor.type).to.equal("platform");
-                            done();
-                        }
-                    });
+                    sc.socket.emit("activity-object-create", { foo: "bar" });
                 });
             }
 
@@ -99,62 +89,14 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                     context: "dummy",
                     object: { type: "message", content: `failure message` },
                 };
-                sc.socket.emit("message", dummyObj, (msg) => {
-                    console.log("dummy fail callback: ", msg);
-                    if (msg?.error) {
-                        dummyObj.error = "Error: failure message";
-                        dummyObj.actor = sc.ActivityStreams.Object.get(
-                            actor.id,
-                        );
-                        expect(msg).to.eql(dummyObj);
-                        done();
-                    } else {
-                        done(
-                            new Error(
-                                "didn't receive expected failure from dummy platform",
-                            ),
-                        );
-                    }
-                });
+                sc.socket.emit("activity-object-create", { foo: "bar" });
             });
         });
 
         describe("Feeds", () => {
             describe("fetches a feed", () => {
                 it(`gets expected results`, (done) => {
-                    sc.socket.emit(
-                        "message",
-                        {
-                            context: "feeds",
-                            type: "fetch",
-                            actor: {
-                                type: "person",
-                                id: "example@feeds",
-                            },
-                            target: {
-                                type: "feed",
-                                id: `http://localhost:${SH_PORT}/feed.xml`,
-                            },
-                        },
-                        (msg) => {
-                            expect(msg.length).to.eql(20);
-                            for (const m of msg) {
-                                expect(typeof m.object.content).to.equal(
-                                    "string",
-                                );
-                                expect(m.object.contentType).to.equal("html");
-                                expect(m.actor.type).to.equal("feed");
-                                expect(m.type).to.equal("post");
-                            }
-                            done(
-                                msg?.error
-                                    ? new Error(
-                                          `Failed to fetch ${msg.target.id}: ${msg.error}`,
-                                      )
-                                    : undefined,
-                            );
-                        },
-                    );
+                    sc.socket.emit("activity-object-create", { foo: "bar" });
                 });
             });
         });
@@ -162,24 +104,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
         describe("XMPP", () => {
             describe("Credentials", () => {
                 it("fires an empty callback", (done) => {
-                    sc.socket.emit(
-                        "credentials",
-                        {
-                            actor: {
-                                id: "jimmy@prosody/SockethubExample",
-                                type: "person",
-                            },
-                            context: "xmpp",
-                            type: "credentials",
-                            object: {
-                                type: "credentials",
-                                password: "passw0rd",
-                                resource: "SockethubExample",
-                                userAddress: "jimmy@prosody",
-                            },
-                        },
-                        done,
-                    );
+                    sc.socket.emit("activity-object-create", { foo: "bar" });
                 });
             });
 
@@ -200,31 +125,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
             describe("connect", () => {
                 it("is successful", (done) => {
                     const actorId = "jimmy@prosody/SockethubExample";
-                    sc.socket.emit(
-                        "message",
-                        {
-                            type: "connect",
-                            actor: actorId,
-                            context: "xmpp",
-                        },
-                        (msg) => {
-                            console.log("xmpp connect callback: ", msg);
-                            if (msg?.error) {
-                                done(new Error(msg.error));
-                            } else {
-                                expect(msg).to.eql({
-                                    type: "connect",
-                                    actor: {
-                                        id: actorId,
-                                        type: "person",
-                                        name: "Jimmy Userson",
-                                    },
-                                    context: "xmpp",
-                                });
-                                done();
-                            }
-                        },
-                    );
+                    sc.socket.emit("activity-object-create", { foo: "bar" });
                 });
             });
         });

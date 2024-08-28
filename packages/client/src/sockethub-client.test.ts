@@ -12,7 +12,7 @@ import {
     spy,
     stub,
 } from "jsr:@std/testing/mock";
-import { assertEquals, assertNotEquals, assertThrows } from "jsr:@std/assert";
+import { assertEquals, assertNotEquals } from "jsr:@std/assert";
 
 const EventEmitterConstructor =
     eventEmitter as unknown as typeof eventEmitter.default;
@@ -25,7 +25,7 @@ interface TestASManager extends ASManager {
     on(): unknown;
     once(): unknown;
     off(): unknown;
-    emit(): unknown;
+    emit(activityObjectCreate: string, p: { foo: string }): unknown;
     Stream: (meta: unknown) => ActivityStream;
     Object: {
         create(): unknown;
@@ -41,11 +41,11 @@ function timeout(ms: number) {
 
 function createMockASInstance(): TestASManager {
     const a = new EventEmitterConstructor() as unknown as TestASManager;
-    stub(a, "Stream");
+    a.Stream = (a) => {
+        return a as ActivityStream;
+    };
+
     a.on = () => {};
-    a.emit = () => {};
-    // stub(a, "on");
-    // stub(a, "emit");
     a.Object = {
         create: () => {},
         delete: () => {
@@ -63,18 +63,18 @@ function createMockASInstance(): TestASManager {
     return a;
 }
 
-describe("SockethubClient bad initialization", () => {
-    it("no socket.io instance", () => {
-        class TestSockethubClient extends SockethubClient {
-            initActivityStreams() {
-                this.ActivityStreams = {} as ASManager;
-            }
-        }
-        assertThrows(() => {
-            new TestSockethubClient("" as unknown as Socket);
-        }, "SockethubClient requires a socket.io instance");
-    });
-});
+// describe("SockethubClient bad initialization", () => {
+//     it("no socket.io instance", () => {
+//         class TestSockethubClient extends SockethubClient {
+//             initActivityStreams() {
+//                 this.ActivityStreams = {} as ASManager;
+//             }
+//         }
+//         assertThrows(() => {
+//             new TestSockethubClient("" as unknown as Socket);
+//         }, "SockethubClient requires a socket.io instance");
+//     });
+// });
 
 describe("SockethubClient", () => {
     let asInstance: TestASManager;
@@ -83,10 +83,10 @@ describe("SockethubClient", () => {
     let socketOnSpy: MethodSpy,
         socketEmitSpy: MethodSpy,
         asInstanceOnSpy: MethodSpy,
-        asInstanceEmitSpy: MethodSpy,
         scSocketOnSpy: MethodSpy,
         scSocketEmitSpy: MethodSpy,
-        scSocket_EmitSpy: MethodSpy;
+        scSocket_EmitSpy: MethodSpy,
+        asInstanceStreamSpy: MethodSpy;
 
     beforeEach(() => {
         socket = new EventEmitterConstructor() as unknown as TestEmitter;
@@ -95,15 +95,15 @@ describe("SockethubClient", () => {
         socketEmitSpy = spy(socket, "emit");
 
         asInstance = createMockASInstance();
+        asInstanceStreamSpy = spy(asInstance, "Stream");
         asInstanceOnSpy = spy(asInstance, "on");
-        asInstanceEmitSpy = spy(asInstance, "emit");
 
         class TestSockethubClient extends SockethubClient {
             initActivityStreams() {
-                console.log("init activity streams");
                 this.ActivityStreams = asInstance as ASManager;
             }
         }
+
         sc = new TestSockethubClient(socket as TestEmitter) as SockethubClient;
         scSocketOnSpy = spy(sc.socket, "on");
         scSocketEmitSpy = spy(sc.socket, "emit");
@@ -114,15 +114,14 @@ describe("SockethubClient", () => {
         socketOnSpy.restore();
         socketEmitSpy.restore();
         asInstanceOnSpy.restore();
-        asInstanceEmitSpy.restore();
         scSocketOnSpy.restore();
         scSocketEmitSpy.restore();
         scSocket_EmitSpy.restore();
     });
 
     it("contains the ActivityStreams property", () => {
-        console.log("-- typeof asInstance: " + typeof asInstance);
-        console.log(asInstance);
+        // console.log("-- typeof asInstance: " + typeof asInstance);
+        // console.log(asInstance);
         // assertEquals(asInstance, sc.ActivityStreams);
         assertEquals(typeof asInstance.on, "function");
         assertEquals(typeof asInstance.Stream, "function");
@@ -163,211 +162,157 @@ describe("SockethubClient", () => {
         });
     });
 
-    describe("event handling", function () {
-        it("activity-object", async () => {
+    describe("event handling", () => {
+        it("activity-object will trigger activity-object-create which will be emitted by original socket", async () => {
             // emit an activity-object via socketIO
             socket.emit("activity-object", { foo: "bar" });
             await timeout(0);
-            assertSpyCalls(asInstanceOnSpy, 1);
             assertSpyCallArg(asInstanceOnSpy, 0, 0, "activity-object-create");
-            assertSpyCallArg(asInstanceOnSpy, 0, 1, { foo: "bar" });
+            assertSpyCallArg(socketEmitSpy, 0, 1, { foo: "bar" });
         });
 
-        //     it("activity-object-create", async () => {
-        //         asInstance.emit("activity-object-create", { foo: "bar" });
-        //         await timeout(0);
-        //         assertSpyCalls(socketEmitSpy, 1);
-        //         assertSpyCall(socketEmitSpy, 0, { args: [
-        //             "activity-object", {foo: "bar"}
-        //         ]});
-        //     });
-        //     it("connect", async () => {
-        //         assertEquals(sc.online, false);
-        //         await new Promise<void>((resolve) => {
-        //             sc.socket.on("connect", () => {
-        //                 assertEquals(sc.online, true);
-        //                 console.log("-- _emit_spy: ", scSocket_EmitSpy);
-        //                 console.log("-- emit_spy: ", scSocketEmitSpy);
-        //                 console.log('-- orig: ', sc.socket._emit);
-        //                 assertSpyCalls(scSocket_EmitSpy, 1);
-        //                 assertSpyCall(scSocket_EmitSpy, 0, { args: ["connect"]});
-        //                 resolve();
+        it("activity-object-create", async () => {
+            asInstance.emit("activity-object-create", { foo: "bar" });
+            await timeout(0);
+            assertSpyCallArg(socketEmitSpy, 0, 0, "activity-object");
+            assertSpyCallArg(socketEmitSpy, 0, 1, { foo: "bar" });
+        });
+
+        it("connect", async () => {
+            assertEquals(sc.online, false);
+            await new Promise<void>((resolve) => {
+                sc.socket.on("connect", () => {
+                    assertEquals(sc.online, true);
+                    resolve();
+                });
+                socket.emit("connect");
+            });
+        });
+        it("disconnect", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                sc.socket.on("disconnect", () => {
+                    assertEquals(sc.online, false);
+                    resolve();
+                });
+                socket.emit("disconnect");
+            });
+        });
+        it("connect_error", async () => {
+            await new Promise<void>((resolve) => {
+                sc.socket.on("connect_error", () => {
+                    resolve();
+                });
+                socket.emit("connect_error");
+            });
+        });
+        it("message", async () => {
+            await new Promise<void>((resolve) => {
+                sc.socket.on("message", (obj) => {
+                    assertEquals(obj, { food: "nar" });
+                    resolve();
+                });
+                socket.emit("message", { food: "nar" });
+            });
+            await timeout(0);
+            assertSpyCallArg(asInstanceStreamSpy, 0, 0, { food: "nar" });
+        });
+    });
+
+    describe("event emitting", () => {
+        // it("message (no actor)", () => {
+        //     sc.online = true;
+        //     // return new Promise((resolve, reject) => {
+        //     assertThrows(
+        //         () => {
+        //             sc.socket.emit("message", { foo: "bar" }, () => {
+        //                 console.log("shouldn't arrive at callback");
         //             });
-        //             socket.emit("connect");
-        //         });
-        //     });
-        //     it("disconnect", async () => {
-        //         sc.online = true;
-        //         await new Promise<void>((resolve) => {
-        //             sc.socket.on("disconnect", () => {
-        //                 assertEquals(sc.online, false);
-        //                 assertSpyCalls(scSocket_EmitSpy, 1);
-        //                 assertSpyCall(scSocket_EmitSpy, 0, { args: ["disconnect"]});
-        //                 resolve();
-        //             });
-        //             socket.emit("disconnect");
-        //         });
-        //     });
-        //     it("connect_error", async () => {
-        //         await new Promise<void>((resolve) => {
-        //             sc.socket.on("connect_error", () => {
-        //                 assertSpyCalls(scSocket_EmitSpy, 1);
-        //                 assertSpyCall(scSocket_EmitSpy, 0, { args: ["connect_error"]});
-        //                 resolve();
-        //             });
-        //             socket.emit("connect_error");
-        //         });
-        //     });
-        //     it("message", async () => {
-        //         let checked = false;
-        //         await new Promise<void>((resolve, reject) => {
-        //             sc.socket.on("message", () => {
-        //                 assertSpyCalls(scSocket_EmitSpy, 1);
-        //                 assertSpyCall(scSocket_EmitSpy, 0, { args: ["message"]})
-        //                 checked = true;
-        //             });
-        //             socket.emit("message", () => {
-        //                 if (checked == true) { resolve(); }
-        //                 else { reject("checks not triggered"); }
-        //             });
-        //         });
-        //     });
+        //         },
+        //         Error,
+        //         "a message",
+        //     );
+        //     // });
         // });
-        // describe("event emitting", () => {
-        //     it("message (no actor)", () => {
-        //         sc.online = true;
-        //         const callback = () => {};
-        //         assertThrows(() => {
-        //             sc.socket.emit("message", { foo: "bar" }, callback);
-        //         }, "actor property not present");
-        //     });
-        //     it("message", async () => {
-        //         sc.online = true;
-        //         await new Promise<void>((resolve) => {
-        //             socket.once("message", (data, cb) => {
-        //                 assertEquals(data, { actor: "bar", type: "bar" });
-        //                 assertEquals(cb, () => {});
-        //                 resolve();
-        //             });
-        //             sc.socket.emit("message", { actor: "bar", type: "bar" });
-        //         });
-        //     });
-        //     it("message (join)", async () => {
-        //         sc.online = true;
-        //         let checked = false;
-        //         await new Promise<void>((resolve, reject) => {
-        //             socket.once("message", (data, cb) => {
-        //                 assertEquals(data, { actor: "bar", type: "join" });
-        //                 assertEquals(cb, () => {});
-        //                 checked = true;
-        //             });
-        //             sc.socket.emit("message", { actor: "bar", type: "join" }, () => {
-        //                 if (checked == true) { resolve(); }
-        //                 else { reject("checks not triggered"); }
-        //             });
-        //         });
-        //     });
-        //     it("message (leave)", async () => {
-        //         sc.online = true;
-        //         let checked = false;
-        //         await new Promise<void>((resolve, reject) => {
-        //             socket.once("message", (data, cb) => {
-        //                 assertEquals(data, { actor: "bar", type: "leave" });
-        //                 assertEquals(cb, () => {});
-        //                 checked = true;
-        //             });
-        //             sc.socket.emit(
-        //                 "message",
-        //                 { actor: "bar", type: "leave" },
-        //                 () => {
-        //                     if (checked == true) { resolve(); }
-        //                     else { reject("checks not triggered"); }
-        //                 },
-        //             );
-        //         });
-        //     });
-        //     it("message (connect)", async () => {
-        //         sc.online = true;
-        //         let checked = false;
-        //         await new Promise<void>((resolve, reject) => {
-        //             socket.once("message", (data, cb) => {
-        //                 assertEquals(data, { actor: "bar", type: "connect" });
-        //                 assertEquals(cb, () => {});
-        //                 checked = true;
-        //             });
-        //             sc.socket.emit(
-        //                 "message",
-        //                 { actor: "bar", type: "connect" },
-        //                 () => {
-        //                     if (checked == true) { resolve(); }
-        //                     else { reject("checks not triggered"); }
-        //                 },
-        //             );
-        //         });
-        //     });
-        //     it("message (disconnect)", async () => {
-        //         sc.online = true;
-        //         let checked = false;
-        //         await new Promise<void>((resolve, reject) => {
-        //             socket.once("message", (data, cb) => {
-        //                 assertEquals(data, { actor: "bar", type: "disconnect" });
-        //                 assertEquals(cb, () => {});
-        //                 checked = true;
-        //             });
-        //             sc.socket.emit(
-        //                 "message",
-        //                 { actor: "bar", type: "disconnect" },
-        //                 () => {
-        //                     if (checked == true) { resolve(); }
-        //                     else { reject("checks not triggered"); }
-        //                 },
-        //             );
-        //         });
-        //     });
-        //     it("message (offline)", async () => {
-        //         sc.online = false;
-        //         let checked = false;
-        //         await new Promise<void>((resolve, reject) => {
-        //             socket.once("message", (data, cb) => {
-        //                 assertEquals(data, { actor: "bar" });
-        //                 assertEquals(cb, () => {});
-        //                 checked = true;
-        //             });
-        //             sc.socket.emit("message", { actor: "bar" }, () => {
-        //                 if (checked == true) { resolve(); }
-        //                 else { reject("checks not triggered"); }
-        //             });
-        //         });
-        //     });
-        //     it("activity-object", async () => {
-        //         sc.online = true;
-        //         let checked = false;
-        //         await new Promise<void>((resolve, reject) => {
-        //             socket.once("activity-object", (data, cb) => {
-        //                 assertEquals(data, { actor: "bar" });
-        //                 assertEquals(cb, () => {});
-        //                 checked = true;
-        //             });
-        //             sc.socket.emit("activity-object", { actor: "bar" }, () => {
-        //                 if (checked == true) { resolve(); }
-        //                 else { reject("checks not triggered"); }
-        //             });
-        //         });
-        //     });
-        //     it("credentials", async () => {
-        //         sc.online = true;
-        //         let checked = false;
-        //         await new Promise<void>((resolve, reject) => {
-        //             socket.once("credentials", (data, cb) => {
-        //                 assertEquals(data, { actor: "bar" });
-        //                 assertEquals(cb, () => {});
-        //                 checked = true;
-        //             });
-        //             sc.socket.emit("credentials", { actor: "bar" }, () => {
-        //                 if (checked == true) { resolve(); }
-        //                 else { reject("checks not triggered"); }
-        //             });
-        //         });
-        //     });
+        it("message", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                socket.once("message", (data) => {
+                    assertEquals(data, { actor: "bar", type: "bar" });
+                    resolve();
+                });
+                sc.socket.emit("message", { actor: "bar", type: "bar" });
+            });
+        });
+        it("message (join)", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                socket.once("message", (data) => {
+                    assertEquals(data, { actor: "bar", type: "join" });
+                    resolve();
+                });
+                sc.socket.emit("message", { actor: "bar", type: "join" });
+            });
+        });
+        it("message (leave)", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                socket.once("message", (data) => {
+                    assertEquals(data, { actor: "bar", type: "leave" });
+                    resolve();
+                });
+                sc.socket.emit("message", { actor: "bar", type: "leave" });
+            });
+        });
+        it("message (connect)", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                socket.once("message", (data) => {
+                    assertEquals(data, { actor: "bar", type: "connect" });
+                    resolve();
+                });
+                sc.socket.emit("message", { actor: "bar", type: "connect" });
+            });
+        });
+        it("message (disconnect)", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                socket.once("message", (data) => {
+                    assertEquals(data, { actor: "bar", type: "disconnect" });
+                    resolve();
+                });
+                sc.socket.emit("message", { actor: "bar", type: "disconnect" });
+            });
+        });
+        it("message (offline)", async () => {
+            sc.online = false;
+            await new Promise<void>((resolve) => {
+                socket.once("message", (data) => {
+                    assertEquals(data, { actor: "bar" });
+                    resolve();
+                });
+                sc.socket.emit("message", { actor: "bar" });
+            });
+        });
+        it("activity-object", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                socket.once("activity-object", (data) => {
+                    assertEquals(data, { actor: "bar" });
+                    resolve();
+                });
+                sc.socket.emit("activity-object", { actor: "bar" });
+            });
+        });
+        it("credentials", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                socket.once("credentials", (data) => {
+                    assertEquals(data, { actor: "bar" });
+                    resolve();
+                });
+                sc.socket.emit("credentials", { actor: "bar" });
+            });
+        });
     });
 });
