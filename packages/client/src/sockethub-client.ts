@@ -1,11 +1,13 @@
-import EventEmitter from "eventemitter3";
-import {
+import eventEmitter from "npm:eventemitter3";
+import type {
     ActivityObject,
     ActivityStream,
     BaseActivityObject,
 } from "@sockethub/schemas";
 import ASFactory, { type ASManager } from "@sockethub/activity-streams";
-import type { Socket } from "socket.io-client";
+import type { Socket } from "npm:socket.io-client";
+
+const EventEmitter = eventEmitter as unknown as typeof eventEmitter.default;
 
 export interface EventMapping {
     credentials: Map<string, ActivityStream>;
@@ -14,7 +16,8 @@ export interface EventMapping {
     join: Map<string, ActivityStream>;
 }
 
-interface CustomEmitter extends EventEmitter {
+interface CustomEmitter extends eventEmitter.default {
+    [x: string]: unknown;
     _emit(s: string, o: unknown, c?: unknown): void;
 }
 
@@ -26,7 +29,7 @@ export default class SockethubClient {
         join: new Map(),
     };
     private _socket: Socket;
-    public ActivityStreams: ASManager;
+    public ActivityStreams!: ASManager;
     public socket: CustomEmitter;
     public online = false;
     public debug = true;
@@ -43,12 +46,12 @@ export default class SockethubClient {
 
         this.ActivityStreams.on(
             "activity-object-create",
-            (obj: ActivityObject) => {
+            (obj) => {
                 socket.emit("activity-object", obj, (err: never) => {
                     if (err) {
                         console.error("failed to create activity-object ", err);
                     } else {
-                        this.eventActivityObject(obj);
+                        this.eventActivityObject(obj as ActivityObject);
                     }
                 });
             },
@@ -65,12 +68,8 @@ export default class SockethubClient {
 
     private createPublicEmitter(): CustomEmitter {
         const socket = new EventEmitter() as CustomEmitter;
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
         socket._emit = socket.emit;
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        socket.emit = (event, content, callback): void => {
+        socket.emit = (event, content, callback): boolean => {
             if (event === "credentials") {
                 this.eventCredentials(content);
             } else if (event === "activity-object") {
@@ -79,6 +78,7 @@ export default class SockethubClient {
                 this.eventMessage(content);
             }
             this._socket.emit(event as string, content, callback);
+            return true;
         };
         return socket;
     }
