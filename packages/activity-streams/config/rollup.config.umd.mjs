@@ -1,7 +1,7 @@
-import resolve from "@rollup/plugin-node-resolve";
-import commonjs from "@rollup/plugin-commonjs";
-import terser from "@rollup/plugin-terser";
-import babel from "@rollup/plugin-babel";
+import resolve from "npm:@rollup/plugin-node-resolve";
+import commonjs from "npm:@rollup/plugin-commonjs";
+import terser from "npm:@rollup/plugin-terser";
+import babel from "npm:@rollup/plugin-babel";
 
 export default {
     input: "./build/esm/activity-streams.js",
