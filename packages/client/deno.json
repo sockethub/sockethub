@@ -1,0 +1,24 @@
+{
+  "name": "@sockethub/client",
+  "version": "5.0.0-alpha.5",
+  "description": "A JavaScript client for the Sockethub protocol gateway",
+  "license": "LGPL-3.0+",
+  "exports": "./src/client.ts",
+  "tasks": {
+    "clean": "rm -rf npm coverage",
+    "build": "deno run -A ./build.ts .",
+    "coverage": "deno coverage --exclude=activity-streams | deno run jsr:@silverbucket/threshold 70 70",
+    "test": "deno test --fail-fast --coverage --clean --allow-env --allow-read src/**/*.test.ts"
+  },
+  "imports": {
+    "@types/chai": "npm:@types/chai@^4.3.18",
+    "@types/mocha": "npm:@types/mocha@^10.0.7",
+    "@types/node": "npm:@types/node@^22.5.0",
+    "@types/sinon": "npm:@types/sinon@^17.0.3",
+    "chai": "npm:chai@^4.3.10",
+    "eventemitter3": "npm:eventemitter3@^5.0.1",
+    "mocha": "npm:mocha@^10.7.3",
+    "sinon": "npm:sinon@^17.0.1",
+    "socket.io-client": "npm:socket.io-client@^4.7.2"
+  }
+}
