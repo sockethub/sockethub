@@ -1,8 +1,8 @@
 import ASFactory, { type ASFactoryOptions, type ASManager } from "./activity-streams.ts";
-import "https://deno.land/x/deno_mocha/global.ts";
-
-import * as chai from "npm:chai";
 import type { ActivityActor, ActivityObject, ActivityStream } from "@sockethub/schemas"
+
+import "https://deno.land/x/deno_mocha/global.ts";
+import * as chai from "npm:chai";
 
 const assert = chai.assert;
 const expect = chai.expect;
@@ -206,7 +206,7 @@ describe("basic tests", () => {
 
     describe("emitters", () => {
         it("emits an event on object creation", () => {
-            function onHandler(obj: ActivityStream) {
+            function onHandler(obj: ActivityStream | ActivityObject) {
                 expect(obj).to.deep.equal({ id: "thingy3" });
                 activity.off("activity-object-create", onHandler);
             }

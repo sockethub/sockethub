@@ -266,7 +266,7 @@ export interface ASFactoryOptions {
 export interface ASManager {
     Stream(meta: unknown): ActivityStream;
     Object: ActivityObjectManager;
-    on(event: string, func: (obj: ActivityStream) => void): void;
+    on(event: string, func: (obj: ActivityStream | ActivityObject) => void): void;
     once(event: string, func: (id: string) => void): void;
     off(event: string, funcName: (obj: ActivityStream) => void | string): void;
 }

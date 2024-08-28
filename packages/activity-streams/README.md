@@ -8,7 +8,7 @@ down on verbosity.
 
 Designed to run in both `node.js` and the `browser`.
 
-I am learning about JSON-LD and ActivityStreams2 as I write this library, so suggestions for
+This is very much a work in progress, as experiment in handling JSON-LD and ActivityStreams2, so suggestions for
 improvement are very welcome.
 
 ## Install
