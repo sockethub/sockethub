@@ -6,10 +6,11 @@
   "license": "MIT",
   "tasks": {
     "build": "deno run --allow-read --allow-write scripts/export-json-schema.ts",
-    "threshold": "deno coverage && bash ./scripts/threshold.sh",
-    "test": "deno test --coverage --allow-env --clean src/**/*.test.ts && deno task threshold"
+    "coverage": "deno coverage | deno run jsr:@silverbucket/threshold 100 88",
+    "test": "deno test --coverage --clean --allow-env src/**/*.test.ts"
   },
   "imports": {
+    "@silverbucket/threshold": "jsr:@silverbucket/threshold@^1.0.2",
     "@types/node": "npm:@types/node@^22.5.0",
     "ajv": "npm:ajv@^8.12.0",
     "ajv-formats": "npm:ajv-formats@^2.1.1",
