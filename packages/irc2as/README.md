@@ -1,10 +1,10 @@
-# IRC2AS
+# @sockethub/irc2as
 
-Parses the IRC protocol into ActivityStreams objects.
+Middleware which parses incoming messages from the IRC protocol and converts then to ActivityStreams objects.
 
 ## Overview
 
-Currently a very simple library to parse incoming IRC protocol messages and generate activity
+Currently, a very simple library to parse incoming IRC protocol messages and generate activity
 streams. The activity streams are not fully AS2.0 compliant, but aim to be shaped in the spirit
 of them, and as time goes on hopefully become more compliant (PRs & feedback welcome).
 

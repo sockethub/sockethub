@@ -1,15 +1,15 @@
 import { ActivityStream } from "./types.ts";
-import { assertEquals } from "jsr:@std/assert@1";
+import { assertEquals } from "jsr:@std/assert";
 
 import ActivityStreamSchema from "./schemas/activity-stream.ts";
 import ActivityObjectSchema from "./schemas/activity-object.ts";
 import {
-    validatePlatformSchema,
     addPlatformSchema,
+    getPlatformSchema,
     validateActivityObject,
     validateActivityStream,
     validateCredentials,
-    getPlatformSchema,
+    validatePlatformSchema,
 } from "./validator.ts";
 import testCredentialsData from "./index.test.data.credentials.ts";
 import testActivityObjectsData from "./index.test.data.objects.ts";
@@ -23,7 +23,8 @@ Deno.test("Platform schema validation", () => {
     });
     Deno.test("returns an error for an invalid schema", () => {
         const err = validatePlatformSchema({ foo: "bar" });
-        assertEquals(err,
+        assertEquals(
+            err,
             "platform schema failed to validate:  must have required property 'name'",
         );
     });
@@ -34,7 +35,8 @@ Deno.test("Adding a PlatformSchema", () => {
         const platform_type = "test-platform/credentials";
         addPlatformSchema(testPlatformSchemaData.credentials, platform_type);
         const compiledSchema = getPlatformSchema(platform_type);
-        assertEquals(compiledSchema!.schema,
+        assertEquals(
+            compiledSchema!.schema,
             testPlatformSchemaData.credentials,
         );
     });
@@ -57,7 +59,8 @@ Deno.test("Credentials", () => {
 Deno.test("ActivityObject", () => {
     Deno.test("has expected properties", () => {
         assertEquals(typeof ActivityObjectSchema, "object");
-        assertEquals(ActivityObjectSchema["$id"],
+        assertEquals(
+            ActivityObjectSchema["$id"],
             "https://sockethub.org/schemas/v0/activity-object#",
         );
     });
@@ -78,7 +81,8 @@ Deno.test("ActivityObject", () => {
 Deno.test("ActivityStream", () => {
     Deno.test("has expected properties", () => {
         assertEquals(typeof ActivityStreamSchema, "object");
-        assertEquals(ActivityStreamSchema["$id"],
+        assertEquals(
+            ActivityStreamSchema["$id"],
             "https://sockethub.org/schemas/v0/activity-stream#",
         );
     });
