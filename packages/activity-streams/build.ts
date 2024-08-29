@@ -16,7 +16,7 @@ await build({
     name: packageJson.name,
     version: packageJson.version,
     description: packageJson.description,
-    license: packageJson.license
+    license: packageJson.license,
   },
   postBuild() {
     Deno.copyFileSync("LICENSE", "npm/LICENSE");
