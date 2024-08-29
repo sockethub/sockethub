@@ -19,6 +19,7 @@ Deno.test("PlatformDummy", () => {
   assertEquals(typeof p.fail, "function", "p.fail");
   assertEquals(typeof p.cleanup, "function", "p.cleanup");
 });
+
 Deno.test("schema", () => {
   const p = new Dummy(mockPlatformSession);
   assertEquals(p.schema, {
