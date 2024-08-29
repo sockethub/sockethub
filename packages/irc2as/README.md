@@ -1,6 +1,6 @@
 # IRC2AS
 
-Parses the IRC protocol into ActivtyStreams objects.
+Parses the IRC protocol into ActivityStreams objects.
 
 ## Overview
 

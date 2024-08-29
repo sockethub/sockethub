@@ -1,7 +1,7 @@
 const EVENT_INCOMING = "incoming",
     EVENT_ERROR = "error";
 
-class ASTemplates {
+export default class ASTemplates {
     constructor(events, server) {
         this.server = server;
         this.events = events;
@@ -11,7 +11,7 @@ class ASTemplates {
         if (typeof asObject === "object" && !asObject.published) {
             asObject.published = `${Date.now()}`;
         }
-        this.events.emit("activity-object-create", { foo: "bar" });
+        this.events.emit(code, asObject);
     }
 
     __generalError(nick, content) {
@@ -274,5 +274,3 @@ class ASTemplates {
         });
     }
 }
-
-module.exports = ASTemplates;
