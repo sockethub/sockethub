@@ -1,4 +1,7 @@
 {
+  "fmt": {
+    "exclude": ["**/npm/**", "packages/examples/"]
+  },
   "workspace": [
     "./packages/activity-streams",
     "./packages/client",

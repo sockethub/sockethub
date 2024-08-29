@@ -1716,18 +1716,14 @@
         ]
       },
       "packages/platform-feeds": {
-        "packageJson": {
-          "dependencies": [
-            "npm:@types/node-fetch@^2.6.9",
-            "npm:@types/node@20.10.5",
-            "npm:eslint@8.55.0",
-            "npm:html-tags@3.3.1",
-            "npm:htmlparser2@9.0.0",
-            "npm:node-fetch@2.7.0",
-            "npm:podparse@1.6.0",
-            "npm:typescript@5.3.3"
-          ]
-        }
+        "dependencies": [
+          "npm:@types/node-fetch@^2.6.9",
+          "npm:@types/node@^20.10.5",
+          "npm:html-tags@^3.3.1",
+          "npm:htmlparser2@^9.0.0",
+          "npm:node-fetch@^2.7.0",
+          "npm:podparse@^1.6.0"
+        ]
       },
       "packages/platform-irc": {
         "packageJson": {
