@@ -1,6 +1,9 @@
 {
   "fmt": {
-    "exclude": ["**/npm/", "packages/examples/"]
+    "exclude": ["**/npm/", "**/packages/examples/"]
+  },
+  "lint": {
+    "exclude": ["**/npm/", "**/packages/examples/"]
   },
   "workspace": [
     "./packages/activity-streams",
