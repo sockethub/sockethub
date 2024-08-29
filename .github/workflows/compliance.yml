@@ -16,11 +16,10 @@ jobs:
               uses: denoland/setup-deno@v1
               with:
                   deno-version: ${{ matrix.deno-version }}
-            - run: npm install -g pnpm@8.5.1
-            - run: pnpm -v
-            - run: pnpm install
-            - run: pnpm --filter examples exec npx playwright install
-            - run: pnpm compliance
+            - run: deno fmt --check
+            - run: deno task test
+            - run: deno task compliance
+            - run: deno task build
 
     integration:
         runs-on: ubuntu-latest
@@ -39,13 +38,14 @@ jobs:
               uses: denoland/setup-deno@v1
               with:
                   deno-version: ${{ matrix.deno-version }}
-            - run: npm install -g pnpm
-            - run: npm install -g karma
-            - run: pnpm install
-            - run: pnpm build
+            - run: deno fmt --check
+            - run: deno task test
+            - run: deno task compliance
+            - run: deno task build
+
             - run: docker compose build --build-arg deno_version=${{ matrix.deno-version }}
 
-            - run: pnpm docker:build
+            - run: deno task docker:build
             - run: sleep 5
 
             - name: Verify Sockethub is listening externally
@@ -55,11 +55,11 @@ jobs:
               run: nc -zv localhost 10651
 
             - name: Redis Integration Tests
-              run: pnpm integration:redis:run
+              run: deno task integration:redis:run
 
             - name: Browser Integration Tests
-              run: pnpm integration:browser:run
+              run: deno task integration:browser:run
 
             - name: Print Docker logs
               if: always()
-              run: pnpm docker:logs
+              run: deno task docker:logs
