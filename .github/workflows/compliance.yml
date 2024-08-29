@@ -17,6 +17,7 @@ jobs:
               uses: denoland/setup-deno@v1
               with:
                   deno-version: ${{ matrix.deno }}
+            - run: deno lint
             - run: deno fmt --check
             - run: deno task test
             - run: deno task compliance
@@ -40,6 +41,7 @@ jobs:
               uses: denoland/setup-deno@v1
               with:
                   deno-version: ${{ matrix.deno }}
+            - run: deno lint
             - run: deno fmt --check
             - run: deno task test
             - run: deno task compliance
