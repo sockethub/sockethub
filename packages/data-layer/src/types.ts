@@ -1,36 +1,36 @@
 import { ActivityStream, InternalActivityStream } from "@sockethub/schemas";
 
 export type RedisConfig = {
-    url: string;
+  url: string;
 };
 
 export interface JobDataEncrypted {
-    title?: string;
-    msg: string;
-    sessionId: string;
+  title?: string;
+  msg: string;
+  sessionId: string;
 }
 
 export interface JobDataDecrypted {
-    title?: string;
-    msg: InternalActivityStream;
-    sessionId: string;
+  title?: string;
+  msg: InternalActivityStream;
+  sessionId: string;
 }
 
 export interface JobEncrypted {
-    data: JobDataEncrypted;
-    remove?: {
-        (): void;
-    };
+  data: JobDataEncrypted;
+  remove?: {
+    (): void;
+  };
 }
 
 export interface JobDecrypted {
-    data: JobDataDecrypted;
-    returnvalue: unknown;
-    remove?: {
-        (): void;
-    };
+  data: JobDataDecrypted;
+  returnvalue: unknown;
+  remove?: {
+    (): void;
+  };
 }
 
 export interface JobHandler {
-    (job: JobDataDecrypted): Promise<string | void | ActivityStream>;
+  (job: JobDataDecrypted): Promise<string | void | ActivityStream>;
 }

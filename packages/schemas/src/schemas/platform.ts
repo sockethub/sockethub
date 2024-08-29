@@ -19,28 +19,28 @@
 // this schema defines the general structure of the schema object which should
 // be returned from platforms.
 export default {
-    type: "object",
-    required: ["name", "version", "messages"],
-    additionalProperties: false,
-    properties: {
-        credentials: {
-            title: "credentials",
-            type: "object",
-        },
-
-        messages: {
-            title: "messages",
-            type: "object",
-        },
-
-        name: {
-            title: "name",
-            type: "string",
-        },
-
-        version: {
-            title: "version",
-            type: "string",
-        },
+  type: "object",
+  required: ["name", "version", "messages"],
+  additionalProperties: false,
+  properties: {
+    credentials: {
+      title: "credentials",
+      type: "object",
     },
+
+    messages: {
+      title: "messages",
+      type: "object",
+    },
+
+    name: {
+      title: "name",
+      type: "string",
+    },
+
+    version: {
+      title: "version",
+      type: "string",
+    },
+  },
 };

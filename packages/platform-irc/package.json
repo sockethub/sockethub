@@ -1,55 +1,55 @@
 {
-    "name": "@sockethub/platform-irc",
-    "description": "A sockethub platform module implementing IRC functionality",
-    "version": "4.0.0-alpha.4",
-    "private": false,
-    "author": "Nick Jennings <nick@silverbucket.net>",
-    "license": "LGPL-3.0+",
-    "main": "dist/index.js",
-    "keywords": [
-        "sockethub",
-        "messaging",
-        "activitystreams",
-        "activity",
-        "streams",
-        "protocol",
-        "irc"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/sockethub/sockethub.git",
-        "directory": "packages/platform-irc"
-    },
-    "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-irc",
-    "dependencies": {
-        "@sockethub/irc2as": "workspace:4.0.0-alpha.4",
-        "irc-socket-sasl": "4.0.0"
-    },
-    "devDependencies": {
-        "@sockethub/schemas": "workspace:^",
-        "@types/node": "20.10.4",
-        "c8": "8.0.1",
-        "chai": "4.3.10",
-        "jsdoc-to-markdown": "8.0.0",
-        "sinon": "17.0.1",
-        "ts-node": "10.9.1",
-        "typescript": "5.3.3"
-    },
-    "peerDependencies": {
-        "@sockethub/server": "workspace:^"
-    },
-    "peerDependenciesMeta": {
-        "@sockethub/server": {
-            "optional": true
-        }
-    },
-    "scripts": {
-        "build": "tsc && pnpm octalhack",
-        "octalhack": "cp src/octal-hack.js dist/octal-hack.js",
-        "lint": "eslint .",
-        "clean": "rm -rf coverage",
-        "test": "c8 mocha -r ts-node/register src/**/*.test.ts && pnpm coverage",
-        "coverage": "c8 check-coverage --statements 75 --branches 55 --functions 85 --lines 75",
-        "doc": "jsdoc2md --no-gfm --heading-depth 1 dist/index.ts  > API.md"
+  "name": "@sockethub/platform-irc",
+  "description": "A sockethub platform module implementing IRC functionality",
+  "version": "4.0.0-alpha.4",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "LGPL-3.0+",
+  "main": "dist/index.js",
+  "keywords": [
+    "sockethub",
+    "messaging",
+    "activitystreams",
+    "activity",
+    "streams",
+    "protocol",
+    "irc"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/platform-irc"
+  },
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-irc",
+  "dependencies": {
+    "@sockethub/irc2as": "workspace:4.0.0-alpha.4",
+    "irc-socket-sasl": "4.0.0"
+  },
+  "devDependencies": {
+    "@sockethub/schemas": "workspace:^",
+    "@types/node": "20.10.4",
+    "c8": "8.0.1",
+    "chai": "4.3.10",
+    "jsdoc-to-markdown": "8.0.0",
+    "sinon": "17.0.1",
+    "ts-node": "10.9.1",
+    "typescript": "5.3.3"
+  },
+  "peerDependencies": {
+    "@sockethub/server": "workspace:^"
+  },
+  "peerDependenciesMeta": {
+    "@sockethub/server": {
+      "optional": true
     }
+  },
+  "scripts": {
+    "build": "tsc && pnpm octalhack",
+    "octalhack": "cp src/octal-hack.js dist/octal-hack.js",
+    "lint": "eslint .",
+    "clean": "rm -rf coverage",
+    "test": "c8 mocha -r ts-node/register src/**/*.test.ts && pnpm coverage",
+    "coverage": "c8 check-coverage --statements 75 --branches 55 --functions 85 --lines 75",
+    "doc": "jsdoc2md --no-gfm --heading-depth 1 dist/index.ts  > API.md"
+  }
 }

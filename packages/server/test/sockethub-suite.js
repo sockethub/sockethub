@@ -1,31 +1,31 @@
 if (typeof define !== "function") {
-    let define = require("amdefine")(module);
+  let define = require("amdefine")(module);
 }
 define(["require", "./."], function (require, Sockethub) {
-    return [
+  return [
+    {
+      desc: "src/sockethub",
+      abortOnFail: true,
+      beforeEach: function () {
+        this.env.sockethub = new Sockethub.default();
+        this.done();
+      },
+      tests: [
         {
-            desc: "src/sockethub",
-            abortOnFail: true,
-            beforeEach: function () {
-                this.env.sockethub = new Sockethub.default();
-                this.done();
-            },
-            tests: [
-                {
-                    desc: "boot",
-                    run: function () {
-                        this.env.sockethub.boot();
-                        this.assertTypeAnd(
-                            this.env.sockethub.platforms,
-                            "object",
-                        );
-                        this.assertType(
-                            this.env.sockethub.platforms.size,
-                            "number",
-                        );
-                    },
-                },
-            ],
+          desc: "boot",
+          run: function () {
+            this.env.sockethub.boot();
+            this.assertTypeAnd(
+              this.env.sockethub.platforms,
+              "object",
+            );
+            this.assertType(
+              this.env.sockethub.platforms.size,
+              "number",
+            );
+          },
         },
-    ];
+      ],
+    },
+  ];
 });

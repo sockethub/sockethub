@@ -1,9 +1,9 @@
 import {
-    addPlatformSchema,
-    validateActivityObject,
-    validateActivityStream,
-    validateCredentials,
-    validatePlatformSchema,
+  addPlatformSchema,
+  validateActivityObject,
+  validateActivityStream,
+  validateCredentials,
+  validatePlatformSchema,
 } from "./validator.ts";
 import { ObjectTypesList } from "./helpers/objects.ts";
 import ActivityObjectSchema from "./schemas/activity-object.ts";
@@ -14,18 +14,18 @@ import PlatformSchema from "./schemas/platform.ts";
  * Schema Tools
  */
 export default {
-    addPlatformSchema,
-    validatePlatformSchema,
-    validateCredentials,
-    validateActivityStream,
-    validateActivityObject,
+  addPlatformSchema,
+  validatePlatformSchema,
+  validateCredentials,
+  validateActivityStream,
+  validateActivityObject,
 };
 
 export {
-    PlatformSchema,
-    ActivityObjectSchema,
-    ActivityStreamSchema,
-    ObjectTypesList,
+  ActivityObjectSchema,
+  ActivityStreamSchema,
+  ObjectTypesList,
+  PlatformSchema,
 };
 
 export * from "./types.ts";

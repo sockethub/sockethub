@@ -1,18 +1,18 @@
 import { ActivityActor, CredentialsObject } from "@sockethub/schemas";
 
 export interface PlatformIrcCredentialsObject extends CredentialsObject {
-    context: "irc";
+  context: "irc";
+  type: "credentials";
+  actor: ActivityActor;
+  target?: ActivityActor;
+  object: {
     type: "credentials";
-    actor: ActivityActor;
-    target?: ActivityActor;
-    object: {
-        type: "credentials";
-        nick: string;
-        server: string;
-        username?: string;
-        password?: string;
-        port?: number;
-        secure?: boolean;
-        sasl?: boolean;
-    };
+    nick: string;
+    server: string;
+    username?: string;
+    password?: string;
+    port?: number;
+    secure?: boolean;
+    sasl?: boolean;
+  };
 }

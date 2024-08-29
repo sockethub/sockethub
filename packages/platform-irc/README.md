@@ -11,16 +11,16 @@ used as a sockethub platform.
 
 More details can be found in the API docs [here](API.md)
 
-* send
-* join
-* leave
-* observe
-* update
+- send
+- join
+- leave
+- observe
+- update
 
 ## Example
 
-Each sockethub platform uses JSON Activity Streams 2.0 which are received from and sent to clients,
-through the Sockethub service.
+Each sockethub platform uses JSON Activity Streams 2.0 which are received from
+and sent to clients, through the Sockethub service.
 
 ### Incoming
 
@@ -43,53 +43,52 @@ Connected to IRC
   "object": {
     "@type": "content",
     "content": {
-      "network":{
-         "name":"freenode",
-         "hostname":"orwell.freenode.net",
-         "ircd":"ircd-seven-1.1.3",
-         "nicklength":16,
-         "maxtargets":{
-            "NAMES":1,
-            "LIST":1,
-            "KICK":1,
-            "WHOIS":1,
-            "PRIVMSG":4,
-            "NOTICE":4,
-            "ACCEPT":0,
-            "MONITOR":0
-         }
+      "network": {
+        "name": "freenode",
+        "hostname": "orwell.freenode.net",
+        "ircd": "ircd-seven-1.1.3",
+        "nicklength": 16,
+        "maxtargets": {
+          "NAMES": 1,
+          "LIST": 1,
+          "KICK": 1,
+          "WHOIS": 1,
+          "PRIVMSG": 4,
+          "NOTICE": 4,
+          "ACCEPT": 0,
+          "MONITOR": 0
+        }
       },
-      "channel":{
-         "idlength":{
-
-         },
-         "limit":{
-            "#":120
-         },
-         "length":50,
-         "modes":4,
-         "types":"#",
-         "kicklength":0,
-         "topiclength":390
+      "channel": {
+        "idlength": {
+        },
+        "limit": {
+          "#": 120
+        },
+        "length": 50,
+        "modes": 4,
+        "types": "#",
+        "kicklength": 0,
+        "topiclength": 390
       },
-      "modes":{
-         "user":"DOQRSZaghilopswz",
-         "channel":"CFILMPQSbcefgijklmnopqrstvz",
-         "param":"bkloveqjfI",
-         "types":{
-            "a":"eIbq",
-            "b":"kov",
-            "c":"flj",
-            "d":"CFLMPQScgimnprstz"
-         },
-         "prefixes":"@+",
-         "prefixmodes":{
-            "o":"@",
-            "v":"+"
-         },
-         "maxlist":{
-            "bqeI":100
-         }
+      "modes": {
+        "user": "DOQRSZaghilopswz",
+        "channel": "CFILMPQSbcefgijklmnopqrstvz",
+        "param": "bkloveqjfI",
+        "types": {
+          "a": "eIbq",
+          "b": "kov",
+          "c": "flj",
+          "d": "CFLMPQScgimnprstz"
+        },
+        "prefixes": "@+",
+        "prefixmodes": {
+          "o": "@",
+          "v": "+"
+        },
+        "maxlist": {
+          "bqeI": 100
+        }
       }
     }
   }

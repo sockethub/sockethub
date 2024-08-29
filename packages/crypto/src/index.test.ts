@@ -7,52 +7,52 @@ import { assertEquals } from "https://deno.land/std/testing/asserts.ts";
 const secret = "a test secret.. that is 16 x 2..";
 const data: ActivityStream = { foo: "bar" } as unknown as ActivityStream;
 const encryptedData =
-    "00000000000000000000000000000000:88af14af85acf2795eb062a56a88edb2";
+  "00000000000000000000000000000000:88af14af85acf2795eb062a56a88edb2";
 
 class TestCrypto extends Crypto {
-    createRandomBytes() {
-        this.randomBytes = () => Buffer.alloc(16);
-    }
+  createRandomBytes() {
+    this.randomBytes = () => Buffer.alloc(16);
+  }
 }
 
 describe("crypto", () => {
-    let crypto: TestCrypto;
-    beforeEach(() => {
-        crypto = new TestCrypto();
-    });
+  let crypto: TestCrypto;
+  beforeEach(() => {
+    crypto = new TestCrypto();
+  });
 
-    it("encrypts", () => {
-        assertEquals(crypto.encrypt(data, secret), encryptedData);
-    });
+  it("encrypts", () => {
+    assertEquals(crypto.encrypt(data, secret), encryptedData);
+  });
 
-    it("decrypts", () => {
-        assertEquals(crypto.decrypt(encryptedData, secret), data);
-    });
+  it("decrypts", () => {
+    assertEquals(crypto.decrypt(encryptedData, secret), data);
+  });
 
-    it("hashes", () => {
-        assertEquals(crypto.hash("foobar"), "8843d7f");
-    });
+  it("hashes", () => {
+    assertEquals(crypto.hash("foobar"), "8843d7f");
+  });
 
-    //     // it("randTokens 8", () => {
-    //     //     const token = crypto.randToken(8);
-    //     //     assertEquals(token.length, 8);
-    //     // });
-    //     //
-    //     // it("randTokens 16", () => {
-    //     //     const token = crypto.randToken(16);
-    //     //     assertEquals(token.length, 16);
-    //     // });
-    //     //
-    //     // it("randTokens 32", () => {
-    //     //     const token = crypto.randToken(32);
-    //     //     assertEquals(token.length, 32);
-    //     // });
-    //     //
-    //     // it("randTokens 33+ will fail", () => {
-    //     //     assertThrows(() => {
-    //     //         crypto.randToken(33);
-    //     //     });
-    //     // });
+  //     // it("randTokens 8", () => {
+  //     //     const token = crypto.randToken(8);
+  //     //     assertEquals(token.length, 8);
+  //     // });
+  //     //
+  //     // it("randTokens 16", () => {
+  //     //     const token = crypto.randToken(16);
+  //     //     assertEquals(token.length, 16);
+  //     // });
+  //     //
+  //     // it("randTokens 32", () => {
+  //     //     const token = crypto.randToken(32);
+  //     //     assertEquals(token.length, 32);
+  //     // });
+  //     //
+  //     // it("randTokens 33+ will fail", () => {
+  //     //     assertThrows(() => {
+  //     //         crypto.randToken(33);
+  //     //     });
+  //     // });
 });
 
 // describe("getPlatformId", () => {

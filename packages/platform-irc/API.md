@@ -1,23 +1,25 @@
 <a name="IRC"></a>
 
 # IRC
+
 IRC
 
-**Kind**: global class  
+**Kind**: global class
 
-* [IRC](#IRC)
-    * [new IRC(cfg)](#new_IRC_new)
-    * [.schema](#IRC+schema)
-    * [.connect(job, credentials, done)](#IRC+connect)
-    * [.join(job, done)](#IRC+join)
-    * [.leave(job, done)](#IRC+leave)
-    * [.send(job, done)](#IRC+send)
-    * [.update(job, done)](#IRC+update)
-    * [.query(job, done)](#IRC+query)
+- [IRC](#IRC)
+  - [new IRC(cfg)](#new_IRC_new)
+  - [.schema](#IRC+schema)
+  - [.connect(job, credentials, done)](#IRC+connect)
+  - [.join(job, done)](#IRC+join)
+  - [.leave(job, done)](#IRC+leave)
+  - [.send(job, done)](#IRC+send)
+  - [.update(job, done)](#IRC+update)
+  - [.query(job, done)](#IRC+query)
 
 <a name="new_IRC_new"></a>
 
 ## new IRC(cfg)
+
 Handles all actions related to communication via. the IRC protocol.
 
 Uses the `irc-factory` node module as a base tool for interacting with IRC.
@@ -40,24 +42,24 @@ Uses the `irc-factory` node module as a base tool for interacting with IRC.
 <a name="IRC+schema"></a>
 
 ## irC.schema
+
 JSON schema defining the types this platform accepts.
 
-
 In the below example, Sockethub will validate the incoming credentials object
-against whatever is defined in the `credentials` portion of the schema
-object.
-
+against whatever is defined in the `credentials` portion of the schema object.
 
 It will also check if the incoming AS object uses a type which exists in the
 `types` portion of the schema object (should be an array of type names).
 
-* **NOTE**: For more information on using the credentials object from a client,
-see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
+- **NOTE**: For more information on using the credentials object from a client,
+  see
+  [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
 
 Valid AS object for setting IRC credentials:
 
-**Kind**: instance property of [<code>IRC</code>](#IRC)  
-**Example**  
+**Kind**: instance property of [<code>IRC</code>](#IRC)\
+**Example**
+
 ```js
 {
    type: 'credentials',
@@ -79,14 +81,17 @@ Valid AS object for setting IRC credentials:
    }
  }
 ```
+
 <a name="IRC+connect"></a>
 
 ## irC.connect(job, credentials, done)
+
 Function: connect
 
 Conenct to an IRC server.
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)  
+**Kind**: instance method of [<code>IRC</code>](#IRC)
+
 <table>
   <thead>
     <tr>
@@ -109,11 +114,13 @@ Conenct to an IRC server.
 <a name="IRC+join"></a>
 
 ## irC.join(job, done)
+
 Function: join
 
 Join a room or private conversation.
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)  
+**Kind**: instance method of [<code>IRC</code>](#IRC)
+
 <table>
   <thead>
     <tr>
@@ -130,7 +137,8 @@ Join a room or private conversation.
     </tr>  </tbody>
 </table>
 
-**Example**  
+**Example**
+
 ```js
 {
   context: 'irc',
@@ -148,14 +156,17 @@ Join a room or private conversation.
   object: {}
 }
 ```
+
 <a name="IRC+leave"></a>
 
 ## irC.leave(job, done)
+
 Function leave
 
 Leave a room or private conversation.
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)  
+**Kind**: instance method of [<code>IRC</code>](#IRC)
+
 <table>
   <thead>
     <tr>
@@ -172,7 +183,8 @@ Leave a room or private conversation.
     </tr>  </tbody>
 </table>
 
-**Example**  
+**Example**
+
 ```js
 {
   context: 'irc',
@@ -190,14 +202,17 @@ Leave a room or private conversation.
   object: {}
 }
 ```
+
 <a name="IRC+send"></a>
 
 ## irC.send(job, done)
+
 Function: send
 
 Send a message to a room or private conversation.
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)  
+**Kind**: instance method of [<code>IRC</code>](#IRC)
+
 <table>
   <thead>
     <tr>
@@ -214,7 +229,8 @@ Send a message to a room or private conversation.
     </tr>  </tbody>
 </table>
 
-**Example**  
+**Example**
+
 ```js
 {
    context: 'irc',
@@ -236,14 +252,17 @@ Send a message to a room or private conversation.
    }
  }
 ```
+
 <a name="IRC+update"></a>
 
 ## irC.update(job, done)
+
 Function: update
 
 Indicate a change (ie. room topic update, or nickname change).
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)  
+**Kind**: instance method of [<code>IRC</code>](#IRC)
+
 <table>
   <thead>
     <tr>
@@ -260,7 +279,8 @@ Indicate a change (ie. room topic update, or nickname change).
     </tr>  </tbody>
 </table>
 
-**Example**  
+**Example**
+
 ```js
 change topic
 
@@ -284,7 +304,9 @@ change topic
   }
 }
 ```
-**Example**  
+
+**Example**
+
 ```js
 change nickname
  {
@@ -305,14 +327,17 @@ change nickname
    }
  }
 ```
+
 <a name="IRC+query"></a>
 
 ## irC.query(job, done)
+
 Function: query
 
 Indicate an intent to query something (e.g. get a list of users in a room).
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)  
+**Kind**: instance method of [<code>IRC</code>](#IRC)
+
 <table>
   <thead>
     <tr>
@@ -329,7 +354,8 @@ Indicate an intent to query something (e.g. get a list of users in a room).
     </tr>  </tbody>
 </table>
 
-**Example**  
+**Example**
+
 ```js
 {
    context: 'irc',
