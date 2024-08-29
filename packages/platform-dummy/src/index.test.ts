@@ -6,9 +6,9 @@ import { ActivityStream } from "../../schemas/src/index.ts";
 import denoJson from "./../deno.json" with { type: "json" };
 
 const mockPlatformSession: PlatformSession = {
-  debug: (m: string) => {},
-  sendToClient: (msg: ActivityStream, special?: string): void => {},
-  updateActor: async (credentials: object): Promise<void> => {},
+  debug: (_m: string) => {},
+  sendToClient: (_msg: ActivityStream, _special?: string): void => {},
+  updateActor: async (_credentials: object): Promise<void> => {},
 };
 
 Deno.test("PlatformDummy", () => {

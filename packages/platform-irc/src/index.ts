@@ -16,11 +16,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import net from "net";
-import tls from "tls";
+import * as net from "node:net";
+import * as tls from "node:tls";
 import IrcSocket from "irc-socket-sasl";
 import IRC2AS from "@sockethub/irc2as";
-import {
+import type {
   ActivityStream,
   Logger,
   PersistentPlatformConfig,
@@ -32,10 +32,13 @@ import {
   PlatformUpdateActor,
 } from "@sockethub/schemas";
 
-import IrcSchema from "./schema";
-import { PlatformIrcCredentialsObject } from "./types";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const buildCommand = require("./octal-hack.js");
+import IrcSchema from "./schema.ts";
+import type { PlatformIrcCredentialsObject } from "./types.ts";
+import IrcToActivityStreams from "@sockethub/irc2as";
+
+const buildCommand = (content: string) => {
+  return parseInt("001", 8) + "ACTION " + content + parseInt("001", 8);
+};
 
 export interface GetClientCallback {
   (err: string | null, client?: typeof IrcSocket): void;
@@ -48,14 +51,14 @@ interface IrcSocketOptionsCapabilities {
 interface IrcSocketConnectResponse {
   isFail(): boolean;
   fail(): string;
-  // eslint-disable-next-line
-  ok(): any;
+  ok(): unknown;
   end(): void;
 }
 
 interface IrcSocketOptionsConnect {
   rejectUnauthorized: boolean;
 }
+
 interface IrcSocketOptions {
   username: string;
   nicknames: string[];
@@ -68,6 +71,15 @@ interface IrcSocketOptions {
   connectOptions?: IrcSocketOptionsConnect;
 }
 
+interface IrcActionActivityStream extends ActivityStream {
+  target: NonNullable<ActivityStream['target']>
+  object: NonNullable<ActivityStream['object']>
+}
+
+interface IrcJoinActivityStream extends ActivityStream {
+  target: NonNullable<ActivityStream['target']>
+}
+
 /**
  * @class IRC
  * @constructor
@@ -75,15 +87,10 @@ interface IrcSocketOptions {
  * @description
  * Handles all actions related to communication via. the IRC protocol.
  *
- * Uses the `irc-factory` node module as a base tool for interacting with IRC.
- *
- * {@link https://github.com/ircanywhere/irc-factory}
- *
  * @param {object} cfg a unique config object for this instance
  */
-class IRC implements PlatformInterface {
+export default class IRC implements PlatformInterface {
   debug: Logger;
-  credentialsHash: string;
   config: PersistentPlatformConfig = {
     persist: true,
     requireCredentials: ["connect", "update"],
@@ -91,11 +98,11 @@ class IRC implements PlatformInterface {
   };
   private readonly updateActor: PlatformUpdateActor;
   private readonly sendToClient: PlatformSendToClient;
-  private irc2as: typeof IRC2AS;
+  private irc2as: IrcToActivityStreams | undefined;
   private forceDisconnect = false;
   private clientConnecting = false;
   private client: typeof IrcSocket;
-  private jobQueue = []; // list of handlers to confirm when message delivery confirmed
+  private jobQueue: Array<(err?: Error) => void> = []; // list of handlers to confirm when message delivery confirmed
   private channels = new Set();
   private handledActors = new Set();
 
@@ -137,7 +144,7 @@ class IRC implements PlatformInterface {
    *      type: 'credentials',
    *      server: 'irc.host.net',
    *      nick: 'testuser',
-   *      password: 'asdasdasdasd',
+   *      password: 'a secret password',
    *      port: 6697,
    *      secure: true,
    *      sasl: true
@@ -163,7 +170,7 @@ class IRC implements PlatformInterface {
     done: PlatformCallback,
   ) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    this.getClient(job.actor.id, credentials, (err, client) => {
+    this.getClient(job.actor.id, credentials, (err, _client) => {
       if (err) {
         return done(err);
       }
@@ -197,7 +204,7 @@ class IRC implements PlatformInterface {
    *   object: {}
    * }
    */
-  join(job: ActivityStream, done: PlatformCallback) {
+  join(job: IrcJoinActivityStream, done: PlatformCallback) {
     this.debug("join() called for " + job.actor.id);
     this.getClient(job.actor.id, false, (err, client) => {
       if (err) {
@@ -209,7 +216,7 @@ class IRC implements PlatformInterface {
       }
       // join channel
       this.jobQueue.push(() => {
-        this.hasJoined(job.target.name);
+        this.hasJoined(job.target.name as string);
         done();
       });
       this.debug("sending join " + job.target.name);
@@ -243,14 +250,14 @@ class IRC implements PlatformInterface {
    *   object: {}
    * }
    */
-  leave(job: ActivityStream, done: PlatformCallback) {
+  leave(job: IrcJoinActivityStream, done: PlatformCallback) {
     this.debug("leave() called for " + job.actor.name);
     this.getClient(job.actor.id, false, (err, client) => {
       if (err) {
         return done(err);
       }
       // leave channel
-      this.hasLeft(job.target.name);
+      this.hasLeft(job.target.name as string);
       client.raw(["PART", job.target.name]);
       done();
     });
@@ -282,14 +289,15 @@ class IRC implements PlatformInterface {
    *    },
    *    object: {
    *      type: 'message',
-   *      content: 'Hello from Sockethub!'
+   *      content: 'Hello from Sockethub'
    *    }
    *  }
    */
-  send(job: ActivityStream, done: PlatformCallback) {
+  send(job: IrcActionActivityStream, done: PlatformCallback) {
     this.debug(
       "send() called for " + job.actor.id + " target: " + job.target.id,
     );
+
     this.getClient(job.actor.id, false, (err, client) => {
       if (err) {
         return done(err);
@@ -316,22 +324,23 @@ class IRC implements PlatformInterface {
         job.object.content = job.object.content.trim();
       }
 
+      const name = job.target.name + " :" + job.object.content;
       if (job.object.type === "me") {
         // message intended as command
-        // jsdoc does not like this octal escape sequence but it's needed for proper behavior in IRC
+        // jsdoc does not like this octal escape sequence, but it's needed for proper behavior in IRC
         // so the following line needs to be commented out when the API doc is built.
         // investigate:
         // https://github.com/jsdoc2md/jsdoc-to-markdown/issues/197#issuecomment-976851915
         const message = buildCommand(job.object.content);
-        client.raw("PRIVMSG " + job.target.name + " :" + message);
+        client.raw("PRIVMSG " + name + " :" + message);
       } else if (job.object.type === "notice") {
         // attempt to send as raw command
         client.raw(
-          "NOTICE " + job.target.name + " :" + job.object.content,
+          "NOTICE " + name,
         );
-      } else if (this.isJoined(job.target.name)) {
+      } else if (this.isJoined(name)) {
         client.raw(
-          "PRIVMSG " + job.target.name + " :" + job.object.content,
+          "PRIVMSG " + name + " :" + job.object.content,
         );
       } else {
         return done(
@@ -339,7 +348,7 @@ class IRC implements PlatformInterface {
         );
       }
       this.jobQueue.push(done);
-      client.raw("PING " + job.actor.name);
+      client.raw("PING " + name);
     });
   }
 
@@ -370,14 +379,14 @@ class IRC implements PlatformInterface {
    *   },
    *   object: {
    *     type: 'topic',
-   *     content: 'New version of Socekthub released!'
+   *     content: 'New version of Sockethub released'
    *   }
    * }
    *
    * @example change nickname
    *  {
    *    context: 'irc'
-   *    type: 'udpate',
+   *    type: 'update',
    *    actor: {
    *      id: 'slvrbckt@irc.freenode.net',
    *      type: 'person',
@@ -387,14 +396,14 @@ class IRC implements PlatformInterface {
    *      type: "address",
    *    },
    *    target: {
-   *      id: 'cooldude@irc.freenode.net',
+   *      id: 'dude@irc.freenode.net',
    *      type: 'person',
-   *      name: cooldude
+   *      name: 'dude'
    *    }
    *  }
    */
   update(
-    job: ActivityStream,
+    job: IrcActionActivityStream,
     credentials: PlatformIrcCredentialsObject,
     done: PlatformCallback,
   ) {
@@ -411,12 +420,12 @@ class IRC implements PlatformInterface {
             job.target.name,
         );
         this.handledActors.add(job.target.id);
-        this.jobQueue.push(async (err: Error) => {
+        this.jobQueue.push(async (err: Error | undefined) => {
           if (err) {
             this.handledActors.delete(job.target.id);
             return done(err);
           }
-          credentials.object.nick = job.target.name;
+          credentials.object.nick = job.target.name as string;
           credentials.actor.id =
             `${job.target.name}@${credentials.object.server}`;
           credentials.actor.name = job.target.name;
@@ -488,7 +497,7 @@ class IRC implements PlatformInterface {
    *    }
    *  }
    */
-  query(job: ActivityStream, done: PlatformCallback) {
+  query(job: IrcActionActivityStream, done: PlatformCallback) {
     this.debug("query() called for " + job.actor.id);
     this.getClient(job.actor.id, false, (err, client) => {
       if (err) {
@@ -694,7 +703,7 @@ class IRC implements PlatformInterface {
     this.debug(`completing job, queue count: ${this.jobQueue.length}`);
     const done = this.jobQueue.shift();
     if (typeof done === "function") {
-      done(err);
+      done(Error(err));
     } else {
       this.debug(
         "WARNING: job completion event received with an empty job queue.",
@@ -703,9 +712,9 @@ class IRC implements PlatformInterface {
   }
 
   private registerListeners(server: string) {
-    this.irc2as = new IRC2AS({ server: server });
+    this.irc2as = new IRC2AS({ server: server }) as IrcToActivityStreams;
     this.client.on("data", (data: never) => {
-      this.irc2as.input(data);
+      this.irc2as!.input(data);
     });
 
     this.irc2as.events.on("incoming", (asObject: ActivityStream) => {
@@ -730,7 +739,7 @@ class IRC implements PlatformInterface {
     // The generated eslint error expects that the `error` event is propagating an Error object
     // however for irc2as this event delivers an AS object of type `error`.
 
-    this.irc2as.events.on("error", (asObject: ActivityStream) => {
+    this.irc2as.events.on("error", (asObject: IrcActionActivityStream) => {
       this.debug("message error response " + asObject.object.content);
       this.completeJob(asObject.object.content);
     });
@@ -746,5 +755,3 @@ class IRC implements PlatformInterface {
     });
   }
 }
-
-module.exports = IRC;

@@ -1,7 +1,8 @@
+import denoJson from "../deno.json" with { type: "json" };
 export default {
   name: "irc",
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  version: require("../package.json").version,
+  version: denoJson.version,
   messages: {
     required: ["type"],
     properties: {

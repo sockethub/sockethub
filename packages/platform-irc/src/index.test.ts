@@ -1,10 +1,8 @@
-import { expect } from "chai";
-
-import schemas, { ActivityStream, CredentialsObject } from "@sockethub/schemas";
-import { GetClientCallback } from "./index";
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const IRC = require("./index");
+import schemas from "@sockethub/schemas";
+import type { ActivityStream, CredentialsObject, PlatformSession } from "@sockethub/schemas";
+import IRC, { type GetClientCallback } from "./index.ts";
+import "https://deno.land/x/deno_mocha/global.ts";
+import { assertEquals, assertNotEquals } from "jsr:@std/assert";
 
 const actor = {
   type: "person",
@@ -37,16 +35,19 @@ const validCredentials = {
 
 let loadedSchema = false;
 
+const mockSessionObject: PlatformSession = {
+    debug: function () {},
+    updateActor: function async() {
+        return Promise.resolve();
+    },
+    sendToClient: (_msg: ActivityStream, _special?: string): void => {},
+};
+
 describe("Initialize IRC Platform", () => {
   let platform;
+
   beforeEach(() => {
-    platform = new IRC({
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      debug: function () {},
-      updateActor: function async() {
-        return Promise.resolve();
-      },
-    });
+    platform = new IRC(mockSessionObject);
     platform.ircConnect = function (
       key: string,
       credentials: CredentialsObject,
@@ -71,7 +72,7 @@ describe("Initialize IRC Platform", () => {
   });
 
   it("lists required types enum", () => {
-    expect(platform.schema.messages.properties.type.enum).to.eql([
+    assertEquals(platform.schema.messages.properties.type.enum, [
       "connect",
       "update",
       "join",
@@ -83,7 +84,7 @@ describe("Initialize IRC Platform", () => {
   });
 
   it("returns a config object", () => {
-    expect(platform.config).to.eql({
+    assertEquals(platform.config, {
       persist: true,
       requireCredentials: ["connect", "update"],
       initialized: false,
@@ -91,16 +92,16 @@ describe("Initialize IRC Platform", () => {
   });
 
   it("schema format validation", () => {
-    expect(schemas.validatePlatformSchema(platform.schema)).to.equal("");
+    assertEquals(schemas.validatePlatformSchema(platform.schema), "");
   });
 
   describe("credential schema", () => {
     it("valid credentials", () => {
-      expect(schemas.validateCredentials(validCredentials)).to.equal("");
+      assertEquals(schemas.validateCredentials(validCredentials), "");
     });
 
     it("invalid credentials type", () => {
-      expect(
+      assertEquals(
         schemas.validateCredentials({
           context: "irc",
           type: "credentials",
@@ -110,11 +111,12 @@ describe("Initialize IRC Platform", () => {
             port: "6667",
           },
         }),
-      ).to.equal("[irc] /object: must have required property 'type'");
+        "[irc] /object: must have required property 'type'",
+      );
     });
 
     it("invalid credentials port", () => {
-      expect(
+      assertEquals(
         // @ts-expect-error test invalid params
         schemas.validateCredentials({
           context: "irc",
@@ -125,11 +127,12 @@ describe("Initialize IRC Platform", () => {
             port: "6667",
           },
         }),
-      ).to.equal("[irc] /object/port: must be number");
+        "[irc] /object/port: must be number",
+      );
     });
 
     it("invalid credentials additional prop", () => {
-      expect(
+      assertEquals(
         // @ts-expect-error test invalid params
         schemas.validateCredentials({
           context: "irc",
@@ -140,7 +143,6 @@ describe("Initialize IRC Platform", () => {
             port: 6667,
           },
         }),
-      ).to.equal(
         "[irc] /object: must NOT have additional properties: host",
       );
     });
@@ -174,7 +176,7 @@ describe("Initialize IRC Platform", () => {
       });
 
       it("has join channel registered", () => {
-        expect(platform.channels.has("#a-room")).to.equal(true);
+        assertEquals(platform.channels.has("#a-room"), true);
       });
 
       it("leave()", (done) => {
@@ -249,9 +251,9 @@ describe("Initialize IRC Platform", () => {
       });
 
       it("cleanup()", (done) => {
-        expect(platform.config.initialized).to.eql(true);
+        assertEquals(platform.config.initialized, true);
         platform.cleanup(() => {
-          expect(platform.config.initialized).to.eql(false);
+          assertEquals(platform.config.initialized, false);
           done();
         });
       });
