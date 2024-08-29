@@ -3,7 +3,7 @@
   "version": "4.0.0-alpha.5",
   "description": "Middleware to convert incoming IRC messages to ActivityStreams objects",
   "license": "MIT",
-  "exports": "./src/index.ts",
+  "exports": "./src/index.js",
   "tasks": {
     "coverage": "deno coverage --include=irc2as | deno run jsr:@silverbucket/threshold 89 97",
     "test": "deno test --fail-fast --coverage --clean --allow-env --allow-read src/**/*.test.js"
@@ -11,5 +11,10 @@
   "imports": {
     "debug": "npm:debug@^4.3.4",
     "fast-deep-equal": "npm:fast-deep-equal@^3.1.3"
+  },
+  "lint": {
+    "rules": {
+      "exclude": ["no-control-regex", "no-case-declarations"]
+    }
   }
 }
