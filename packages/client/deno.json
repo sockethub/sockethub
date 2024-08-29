@@ -3,7 +3,7 @@
   "version": "5.0.0-alpha.5",
   "description": "A JavaScript client for the Sockethub protocol gateway",
   "license": "LGPL-3.0+",
-  "exports": "./src/client.ts",
+  "exports": "./src/sockethub-client.ts",
   "tasks": {
     "clean": "rm -rf npm coverage",
     "build": "deno run -A ./build.ts .",
