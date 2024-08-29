@@ -34,6 +34,7 @@
       "npm:debug@^4.3.4": "npm:debug@4.3.6",
       "npm:eventemitter3": "npm:eventemitter3@5.0.1",
       "npm:eventemitter3@^5.0.1": "npm:eventemitter3@5.0.1",
+      "npm:fast-deep-equal": "npm:fast-deep-equal@3.1.3",
       "npm:mocha": "npm:mocha@10.7.3",
       "npm:sinon": "npm:sinon@18.0.0",
       "npm:socket.io-client": "npm:socket.io-client@4.7.5",
@@ -1709,15 +1710,10 @@
         }
       },
       "packages/irc2as": {
-        "packageJson": {
-          "dependencies": [
-            "npm:c8@8.0.1",
-            "npm:chai@4.3.10",
-            "npm:debug@^4.3.4",
-            "npm:fast-deep-equal@^3.1.3",
-            "npm:mocha@10.2.0"
-          ]
-        }
+        "dependencies": [
+          "npm:debug@^4.3.4",
+          "npm:fast-deep-equal@^3.1.3"
+        ]
       },
       "packages/platform-dummy": {
         "packageJson": {
