@@ -7,15 +7,16 @@ jobs:
         runs-on: ubuntu-latest
 
         strategy:
-            matrix:
-                deno-version: [1.45.5, 1.x]
+              matrix:
+                  os: [ubuntu-latest, macos-latest]
+                  deno: [1.45.5, 1.x]
 
         steps:
             - uses: actions/checkout@v3
-            - name: Use Deno ${{ matrix.deno-version }}
+            - name: Use Deno ${{ matrix.deno }}
               uses: denoland/setup-deno@v1
               with:
-                  deno-version: ${{ matrix.deno-version }}
+                  deno-version: ${{ matrix.deno }}
             - run: deno fmt --check
             - run: deno task test
             - run: deno task compliance
@@ -25,8 +26,9 @@ jobs:
         runs-on: ubuntu-latest
 
         strategy:
-            matrix:
-                deno-version: [1.45, 1.46]
+              matrix:
+                  os: [ ubuntu-latest, macos-latest ]
+                  deno: [ 1.45.5, 1.x ]
 
         steps:
             - run: sudo chown -R $USER:$USER ${{ github.workspace }}
@@ -34,16 +36,16 @@ jobs:
               uses: actions/checkout@v3
               with:
                   clean: false
-            - name: Use Deno ${{ matrix.deno-version }}
+            - name: Use Deno ${{ matrix.deno }}
               uses: denoland/setup-deno@v1
               with:
-                  deno-version: ${{ matrix.deno-version }}
+                  deno-version: ${{ matrix.deno }}
             - run: deno fmt --check
             - run: deno task test
             - run: deno task compliance
             - run: deno task build
 
-            - run: docker compose build --build-arg deno_version=${{ matrix.deno-version }}
+            - run: docker compose build --build-arg deno_version=${{ matrix.deno }}
 
             - run: deno task docker:build
             - run: sleep 5
