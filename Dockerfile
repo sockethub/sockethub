@@ -1,6 +1,6 @@
 ARG deno_version=1.46.1
-FROM denoland/deno:${node_version}
-ARG node_version
+FROM denoland/deno:${deno_version}
+ARG deno_version
 LABEL authors="Ben Kero <ben.kero@gmail.com>, Nick Jennings <nick@silverbucket.net>"
 RUN echo "Building Sockethub docker image with Deno version ${deno_version}"
 
