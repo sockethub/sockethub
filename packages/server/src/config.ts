@@ -1,8 +1,10 @@
 import nconf from "nconf";
-import { debug } from "debug";
-import * as fs from "fs";
+import debug from "debug";
+import * as fs from "node:fs";
+import defaults from "./defaults.json" with { type: "json" };
 
 const log = debug("sockethub:server:bootstrap:config");
+
 
 export class Config {
   constructor() {
@@ -40,12 +42,11 @@ export class Config {
     // Load the main config
     let configFile = nconf.get("config");
     if (configFile) {
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
       if (!fs.existsSync(configFile)) {
         throw new Error(`Config file not found: ${configFile}`);
       }
     } else {
-      configFile = __dirname + "/../sockethub.config.json";
+      configFile = "./../sockethub.config.json";
     }
     nconf.file(configFile);
 
@@ -55,25 +56,23 @@ export class Config {
       examples ? true : nconf.get("examples:enabled"),
     );
 
-    // load defaults
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const defaults: object = require(__dirname + "/defaults.json");
+    // load defaults;
     nconf.defaults(defaults);
 
     nconf.required(["platforms"]);
 
     nconf.set(
       "sockethub:host",
-      process.env.HOST || nconf.get("sockethub:host"),
+      Deno.env.get("HOST") || nconf.get("sockethub:host"),
     );
     nconf.set(
       "sockethub:port",
-      process.env.PORT || nconf.get("sockethub:port"),
+      Deno.env.get("PORT") || nconf.get("sockethub:port"),
     );
 
     // allow a redis://user:host:port url, takes precedence
-    if (process.env.REDIS_URL) {
-      nconf.set("redis:url", process.env.REDIS_URL);
+    if (Deno.env.get("REDIS_URL")) {
+      nconf.set("redis:url", Deno.env.get("REDIS_URL"));
     }
   }
   get = (key: string): unknown => nconf.get(key);

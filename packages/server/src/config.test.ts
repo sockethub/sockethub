@@ -1,33 +1,27 @@
-import { expect } from "chai";
+import { Config } from "./config.ts";
+import { assertEquals } from "jsr:@std/assert";
 
-import { Config } from "./config";
+Deno.test("loads default values", () => {
+  const config = new Config();
+  assertEquals(typeof config.get, "function");
+  assertEquals(config.get("sockethub:host"), "localhost");
+});
 
-describe("config", () => {
-  it("loads default values", () => {
-    const config = new Config();
-    expect(config).to.have.property("get");
-    expect(config.get("sockethub:host")).to.eql("localhost");
-  });
+Deno.test("overrides from env", () => {
+  const hostname = "a host string";
+  Deno.env.set("HOST", hostname);
+  const config = new Config();
+  assertEquals(config.get("sockethub:host"), hostname);
+});
 
-  it("overrides from env", () => {
-    const hostname = "a host string";
-    process.env = { HOST: hostname };
-    const config = new Config();
-    expect(config).to.have.property("get");
-    expect(config.get("sockethub:host")).to.eql(hostname);
-  });
+Deno.test("defaults to redis config", () => {
+  Deno.env.set("REDIS_URL", "");
+  const config = new Config();
+  assertEquals(config.get("redis"), { url: "redis://127.0.0.1:6379" });
+});
 
-  it("defaults to redis config", () => {
-    process.env = { REDIS_URL: "" };
-    const config = new Config();
-    expect(config).to.have.property("get");
-    expect(config.get("redis")).to.eql({ url: "redis://127.0.0.1:6379" });
-  });
-
-  it("redis config overridden by env var", () => {
-    process.env = { REDIS_URL: "foobar" };
-    const config = new Config();
-    expect(config).to.have.property("get");
-    expect(config.get("redis")).to.eql({ url: "foobar" });
-  });
+Deno.test("redis config overridden by env var", () => {
+  Deno.env.set("REDIS_URL", "foobar");
+  const config = new Config();
+  assertEquals(config.get("redis"), { url: "foobar" });
 });
