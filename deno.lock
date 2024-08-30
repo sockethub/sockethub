@@ -35,6 +35,7 @@
       "npm:eventemitter3": "npm:eventemitter3@5.0.1",
       "npm:eventemitter3@^5.0.1": "npm:eventemitter3@5.0.1",
       "npm:fast-deep-equal": "npm:fast-deep-equal@3.1.3",
+      "npm:irc-socket-sasl@4.0.0": "npm:irc-socket-sasl@4.0.0",
       "npm:mocha": "npm:mocha@10.7.3",
       "npm:sinon": "npm:sinon@18.0.0",
       "npm:socket.io-client": "npm:socket.io-client@4.7.5",
@@ -809,6 +810,12 @@
         "integrity": "sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==",
         "dependencies": {}
       },
+      "irc-socket-sasl@4.0.0": {
+        "integrity": "sha512-wyJrOoBCdfqAj103JaWy0N5eTmXCyAMQnwTcM6UKWVMPWuDyl5YAPPGltgd/P/APp08UY//4KeZMlcfei3YFQg==",
+        "dependencies": {
+          "r-result": "r-result@1.5.1"
+        }
+      },
       "is-binary-path@2.1.0": {
         "integrity": "sha512-ZMERYes6pDydyuGidse7OsHxtbI7WVeUEozgR/g7rd0xUimYNlvZRE/K2MgZTjWy725IfelLeVcEM97mmtRGXw==",
         "dependencies": {
@@ -1078,6 +1085,10 @@
       },
       "punycode@2.3.1": {
         "integrity": "sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==",
+        "dependencies": {}
+      },
+      "r-result@1.5.1": {
+        "integrity": "sha512-L5dlAU3rNZCcdEXC1xQzzSGgcTma0x/v4KiihuQ1s0E800pdX5mzLyfRJmSRS61Z4ITan4No/dNsDkxjYJDkPA==",
         "dependencies": {}
       },
       "railroad-diagrams@1.0.0": {
@@ -1609,11 +1620,6 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
-        "npm:@lerna-lite/cli@3.1.0",
-        "npm:@lerna-lite/publish@3.1.0",
-        "npm:@types/mocha@10.0.6",
-        "npm:@typescript-eslint/eslint-plugin@^6.13.2",
-        "npm:@typescript-eslint/parser@6.15.0",
         "npm:chai@4.3.10",
         "npm:eslint-plugin-security@^1.7.1",
         "npm:eslint@8.56.0",
@@ -1624,12 +1630,7 @@
         "npm:karma-mocha-reporter@^2.2.5",
         "npm:karma-mocha@^2.0.1",
         "npm:karma@6.4.2",
-        "npm:markdown-spellcheck@1.3.1",
-        "npm:markdownlint-cli@0.38.0",
-        "npm:mocha@10.2.0",
-        "npm:nx@17.2.7",
-        "npm:prettier@3.1.1",
-        "npm:typescript@5.3.3"
+        "npm:markdown-spellcheck@1.3.1"
       ]
     },
     "members": {
@@ -1726,18 +1727,9 @@
         ]
       },
       "packages/platform-irc": {
-        "packageJson": {
-          "dependencies": [
-            "npm:@types/node@20.10.4",
-            "npm:c8@8.0.1",
-            "npm:chai@4.3.10",
-            "npm:irc-socket-sasl@4.0.0",
-            "npm:jsdoc-to-markdown@8.0.0",
-            "npm:sinon@17.0.1",
-            "npm:ts-node@10.9.1",
-            "npm:typescript@5.3.3"
-          ]
-        }
+        "dependencies": [
+          "npm:irc-socket-sasl@4.0.0"
+        ]
       },
       "packages/platform-xmpp": {
         "packageJson": {
