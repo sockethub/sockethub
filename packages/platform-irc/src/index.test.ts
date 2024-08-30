@@ -1,10 +1,20 @@
 import schemas from "@sockethub/schemas";
-import type { ActivityObject, ActivityStream, CredentialsObject, PersistentPlatformConfig, PlatformCallback, PlatformSession } from "@sockethub/schemas";
-import IRC, { IrcActionActivityStream, type GetClientCallback } from "./index.ts";
+import type {
+  ActivityObject,
+  ActivityStream,
+  CredentialsObject,
+  PersistentPlatformConfig,
+  PlatformCallback,
+  PlatformSession,
+} from "@sockethub/schemas";
+import IRC, {
+  type GetClientCallback,
+  IrcActionActivityStream,
+} from "./index.ts";
 import "https://deno.land/x/deno_mocha/global.ts";
 import { assertEquals } from "jsr:@std/assert";
 import type { PlatformIrcCredentialsObject } from "./types.ts";
-import type IrcSchema from "./schema.ts"
+import type IrcSchema from "./schema.ts";
 
 const actor = {
   type: "person",
@@ -38,26 +48,26 @@ const validCredentials: PlatformIrcCredentialsObject = {
 let loadedSchema = false;
 
 const mockSessionObject: PlatformSession = {
-    debug: function (_msg) {
-      // console.log("logging: ", _msg);
-    },
-    updateActor: function async() {
-        return Promise.resolve();
-    },
-    sendToClient: (_msg: ActivityStream, _special?: string): void => {},
+  debug: function (_msg) {
+    // console.log("logging: ", _msg);
+  },
+  updateActor: function async() {
+    return Promise.resolve();
+  },
+  sendToClient: (_msg: ActivityStream, _special?: string): void => {},
 };
 
 interface MockIRC {
-  schema: typeof IrcSchema,
-  config: PersistentPlatformConfig,
-  connect: IRC["connect"],
-  join: IRC["join"],
-  channels: IRC["channels"],
-  leave: IRC["leave"],
-  send: IRC["send"],
-  query: IRC["query"],
-  update: IRC["update"],
-  cleanup: IRC["cleanup"],
+  schema: typeof IrcSchema;
+  config: PersistentPlatformConfig;
+  connect: IRC["connect"];
+  join: IRC["join"];
+  channels: IRC["channels"];
+  leave: IRC["leave"];
+  send: IRC["send"];
+  query: IRC["query"];
+  update: IRC["update"];
+  cleanup: IRC["cleanup"];
   ircConnect: (
     credentials: PlatformIrcCredentialsObject,
     cb: GetClientCallback,
@@ -70,14 +80,14 @@ describe("Initialize IRC Platform", () => {
 
   beforeEach(() => {
     platform = new IRC(mockSessionObject) as unknown as MockIRC;
-    platform.ircConnect = function(
+    platform.ircConnect = function (
       _credentials: CredentialsObject,
       cb: GetClientCallback,
     ) {
       cb(null, {
         end: () => {
         },
-        on: function() {
+        on: function () {
         },
         raw: () => {
         },
@@ -208,10 +218,12 @@ describe("Initialize IRC Platform", () => {
             type: "connect",
             actor: actor,
           },
-          { object: { server: "a server address" } } as PlatformIrcCredentialsObject,
+          {
+            object: { server: "a server address" },
+          } as PlatformIrcCredentialsObject,
           resolve as PlatformCallback,
         );
-      })
+      });
     });
 
     describe("join()", () => {
@@ -252,7 +264,7 @@ describe("Initialize IRC Platform", () => {
             resolve as PlatformCallback,
           );
           platform.completeJob();
-        })
+        });
       });
 
       it("send()", () => {
@@ -268,7 +280,7 @@ describe("Initialize IRC Platform", () => {
             resolve as PlatformCallback,
           );
           platform.completeJob();
-        })
+        });
       });
 
       it("update() topic", () => {
@@ -285,7 +297,7 @@ describe("Initialize IRC Platform", () => {
             resolve as PlatformCallback,
           );
           platform.completeJob();
-        })
+        });
       });
 
       it("update() nick change", () => {
@@ -302,8 +314,7 @@ describe("Initialize IRC Platform", () => {
             resolve as PlatformCallback,
           );
           platform.completeJob();
-        })
-
+        });
       });
 
       it("query()", () => {
@@ -319,7 +330,7 @@ describe("Initialize IRC Platform", () => {
             resolve as PlatformCallback,
           );
           platform.completeJob();
-        })
+        });
       });
 
       it("cleanup()", () => {

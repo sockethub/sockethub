@@ -72,12 +72,12 @@ interface IrcSocketOptions {
 }
 
 export interface IrcActionActivityStream extends ActivityStream {
-  target: NonNullable<ActivityStream['target']>
-  object: NonNullable<ActivityStream['object']>
+  target: NonNullable<ActivityStream["target"]>;
+  object: NonNullable<ActivityStream["object"]>;
 }
 
 export interface IrcJoinActivityStream extends ActivityStream {
-  target: NonNullable<ActivityStream['target']>
+  target: NonNullable<ActivityStream["target"]>;
 }
 
 /**
@@ -568,7 +568,7 @@ export default class IRC implements PlatformInterface {
     } else if (this.clientConnecting) {
       // client is in the process of connecting, wait
       setTimeout(
-          () => {
+        () => {
           if (this.client) {
             this.debug(
               `resolving delayed getClient call for ${key}`,
