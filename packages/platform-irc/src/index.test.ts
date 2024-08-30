@@ -1,8 +1,10 @@
 import schemas from "@sockethub/schemas";
-import type { ActivityStream, CredentialsObject, PlatformSession } from "@sockethub/schemas";
-import IRC, { type GetClientCallback } from "./index.ts";
+import type { ActivityObject, ActivityStream, CredentialsObject, PersistentPlatformConfig, PlatformCallback, PlatformSession } from "@sockethub/schemas";
+import IRC, { IrcActionActivityStream, type GetClientCallback } from "./index.ts";
 import "https://deno.land/x/deno_mocha/global.ts";
-import { assertEquals, assertNotEquals } from "jsr:@std/assert";
+import { assertEquals } from "jsr:@std/assert";
+import type { PlatformIrcCredentialsObject } from "./types.ts";
+import type IrcSchema from "./schema.ts"
 
 const actor = {
   type: "person",
@@ -13,7 +15,7 @@ const actor = {
 const newActor = {
   type: "person",
   id: "testler@irc.example.com",
-  name: "testler",
+  name: "tester",
 };
 
 const targetRoom = {
@@ -22,7 +24,7 @@ const targetRoom = {
   name: "#a-room",
 };
 
-const validCredentials = {
+const validCredentials: PlatformIrcCredentialsObject = {
   context: "irc",
   type: "credentials",
   actor: actor,
@@ -36,30 +38,49 @@ const validCredentials = {
 let loadedSchema = false;
 
 const mockSessionObject: PlatformSession = {
-    debug: function () {},
+    debug: function (_msg) {
+      // console.log("logging: ", _msg);
+    },
     updateActor: function async() {
         return Promise.resolve();
     },
     sendToClient: (_msg: ActivityStream, _special?: string): void => {},
 };
 
+interface MockIRC {
+  schema: typeof IrcSchema,
+  config: PersistentPlatformConfig,
+  connect: IRC["connect"],
+  join: IRC["join"],
+  channels: IRC["channels"],
+  leave: IRC["leave"],
+  send: IRC["send"],
+  query: IRC["query"],
+  update: IRC["update"],
+  cleanup: IRC["cleanup"],
+  ircConnect: (
+    credentials: PlatformIrcCredentialsObject,
+    cb: GetClientCallback,
+  ) => void;
+  completeJob: (err?: string) => void;
+}
+
 describe("Initialize IRC Platform", () => {
-  let platform;
+  let platform: MockIRC;
 
   beforeEach(() => {
-    platform = new IRC(mockSessionObject);
-    platform.ircConnect = function (
-      key: string,
-      credentials: CredentialsObject,
+    platform = new IRC(mockSessionObject) as unknown as MockIRC;
+    platform.ircConnect = function(
+      _credentials: CredentialsObject,
       cb: GetClientCallback,
     ) {
       cb(null, {
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        end: () => {},
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        on: function () {},
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        raw: () => {},
+        end: () => {
+        },
+        on: function() {
+        },
+        raw: () => {
+        },
       });
     };
     if (!loadedSchema) {
@@ -100,18 +121,48 @@ describe("Initialize IRC Platform", () => {
       assertEquals(schemas.validateCredentials(validCredentials), "");
     });
 
-    it("invalid credentials type", () => {
+    it("invalid credentials number", () => {
       assertEquals(
         schemas.validateCredentials({
           context: "irc",
           type: "credentials",
-          // @ts-expect-error test invalid params
+          // @ts-expect-error passing invalid params
           object: {
             host: "example.com",
             port: "6667",
           },
         }),
-        "[irc] /object: must have required property 'type'",
+        "[irc] /object/port: must be number",
+      );
+    });
+
+    it("invalid credentials additional properties", () => {
+      assertEquals(
+        schemas.validateCredentials({
+          context: "irc",
+          type: "credentials",
+          // @ts-expect-error passing invalid params
+          object: {
+            host: "example.com",
+            port: 6667,
+          },
+        }),
+        "[irc] /object: must NOT have additional properties: host",
+      );
+    });
+
+    it("invalid credentials type", () => {
+      assertEquals(
+        schemas.validateCredentials({
+          context: "irc",
+          type: "credentials",
+          // @ts-expect-error passing invalid params
+          object: {
+            server: "example.com",
+            port: 6667,
+          },
+        }),
+        "[irc] /object: must have required property 'nick'",
       );
     });
 
@@ -148,113 +199,136 @@ describe("Initialize IRC Platform", () => {
     });
   });
 
-  describe("platform type methods", () => {
-    beforeEach((done) => {
-      platform.connect(
-        {
-          context: "irc",
-          type: "connect",
-          actor: actor,
-        },
-        { object: { server: "a server address" } },
-        done,
-      );
-    });
-
-    describe("after join", () => {
-      beforeEach((done) => {
-        platform.join(
+  describe("platform methods (type) behave as expected", () => {
+    beforeEach(() => {
+      return new Promise((resolve) => {
+        platform.connect(
           {
             context: "irc",
-            type: "join",
+            type: "connect",
             actor: actor,
-            target: targetRoom,
           },
-          done,
+          { object: { server: "a server address" } } as PlatformIrcCredentialsObject,
+          resolve as PlatformCallback,
         );
-        platform.completeJob();
+      })
+    });
+
+    describe("join()", () => {
+      beforeEach(() => {
+        return new Promise((resolve, reject) => {
+          platform.join(
+            {
+              context: "irc",
+              type: "join",
+              actor: actor,
+              target: targetRoom,
+            },
+            (err?) => {
+              if (err) {
+                reject("platform.join failed: " + err);
+              } else {
+                resolve();
+              }
+            },
+          );
+          platform.completeJob();
+        });
       });
 
       it("has join channel registered", () => {
-        assertEquals(platform.channels.has("#a-room"), true);
+        assertEquals(platform.channels.has(targetRoom.name), true);
       });
 
-      it("leave()", (done) => {
-        platform.leave(
-          {
-            context: "irc",
-            type: "leave",
-            actor: actor,
-            target: targetRoom,
-          },
-          done,
-        );
-        platform.completeJob();
+      it("leave()", () => {
+        return new Promise((resolve) => {
+          platform.leave(
+            {
+              context: "irc",
+              type: "leave",
+              actor: actor,
+              target: targetRoom,
+            },
+            resolve as PlatformCallback,
+          );
+          platform.completeJob();
+        })
       });
 
-      it("send()", (done) => {
-        platform.send(
-          {
-            context: "irc",
-            type: "send",
-            actor: actor,
-            object: { content: "har dee dar" },
-            target: targetRoom,
-          } as ActivityStream,
-          done,
-        );
-        platform.completeJob();
+      it("send()", () => {
+        return new Promise((resolve) => {
+          platform.send(
+            {
+              context: "irc",
+              type: "send",
+              actor: actor,
+              object: { content: "har dee dar" },
+              target: targetRoom,
+            } as IrcActionActivityStream,
+            resolve as PlatformCallback,
+          );
+          platform.completeJob();
+        })
       });
 
-      it("update() topic", (done) => {
-        platform.update(
-          {
-            context: "irc",
-            type: "update",
-            actor: actor,
-            object: { type: "topic", content: "important details" },
-            target: targetRoom,
-          },
-          validCredentials,
-          done,
-        );
-        platform.completeJob();
+      it("update() topic", () => {
+        return new Promise((resolve) => {
+          platform.update(
+            {
+              context: "irc",
+              type: "update",
+              actor: actor,
+              object: { type: "topic", content: "important details" },
+              target: targetRoom,
+            },
+            validCredentials,
+            resolve as PlatformCallback,
+          );
+          platform.completeJob();
+        })
       });
 
-      it("update() nick change", (done) => {
-        platform.update(
-          {
-            context: "irc",
-            type: "update",
-            actor: actor,
-            object: { type: "address" },
-            target: newActor,
-          },
-          validCredentials,
-          done,
-        );
-        platform.completeJob();
+      it("update() nick change", () => {
+        return new Promise((resolve) => {
+          platform.update(
+            {
+              context: "irc",
+              type: "update",
+              actor: actor,
+              object: { type: "address" },
+              target: newActor,
+            },
+            validCredentials,
+            resolve as PlatformCallback,
+          );
+          platform.completeJob();
+        })
+
       });
 
-      it("query()", (done) => {
-        platform.query(
-          {
-            context: "irc",
-            type: "query",
-            actor: actor,
-            target: targetRoom,
-            object: { type: "attendance" },
-          },
-          done,
-        );
-        platform.completeJob();
+      it("query()", () => {
+        return new Promise((resolve) => {
+          platform.query(
+            {
+              context: "irc",
+              type: "query",
+              actor: actor,
+              target: targetRoom,
+              object: { type: "attendance" },
+            },
+            resolve as PlatformCallback,
+          );
+          platform.completeJob();
+        })
       });
 
-      it("cleanup()", (done) => {
-        assertEquals(platform.config.initialized, true);
-        platform.cleanup(() => {
-          assertEquals(platform.config.initialized, false);
-          done();
+      it("cleanup()", () => {
+        return new Promise((resolve) => {
+          assertEquals(platform.config.initialized, true);
+          platform.cleanup(() => {
+            assertEquals(platform.config.initialized, false);
+            resolve();
+          });
         });
       });
     });

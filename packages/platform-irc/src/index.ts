@@ -71,12 +71,12 @@ interface IrcSocketOptions {
   connectOptions?: IrcSocketOptionsConnect;
 }
 
-interface IrcActionActivityStream extends ActivityStream {
+export interface IrcActionActivityStream extends ActivityStream {
   target: NonNullable<ActivityStream['target']>
   object: NonNullable<ActivityStream['object']>
 }
 
-interface IrcJoinActivityStream extends ActivityStream {
+export interface IrcJoinActivityStream extends ActivityStream {
   target: NonNullable<ActivityStream['target']>
 }
 
@@ -568,19 +568,19 @@ export default class IRC implements PlatformInterface {
     } else if (this.clientConnecting) {
       // client is in the process of connecting, wait
       setTimeout(
-        function (_cb: GetClientCallback) {
+          () => {
           if (this.client) {
             this.debug(
               `resolving delayed getClient call for ${key}`,
             );
             this.handledActors.add(key);
-            return _cb(null, this.client);
+            return cb(null, this.client);
           } else {
             return cb(
               "failed to get irc client, please try again.",
             );
           }
-        }.bind(this, cb),
+        },
         30000,
       );
       return;
@@ -591,7 +591,7 @@ export default class IRC implements PlatformInterface {
         "no client found, and no credentials specified. you must connect first",
       );
     } else {
-      this.ircConnect(key, credentials, (err, client) => {
+      this.ircConnect(credentials, (err, client) => {
         if (err) {
           this.config.initialized = false;
           return cb(err);
@@ -606,7 +606,6 @@ export default class IRC implements PlatformInterface {
   }
 
   private ircConnect(
-    key: string,
     credentials: PlatformIrcCredentialsObject,
     cb: GetClientCallback,
   ) {
