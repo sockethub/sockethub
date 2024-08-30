@@ -1,7 +1,7 @@
 import debug from "debug";
 
-import PlatformInstance, { platformInstances } from "./platform-instance";
-import listener, { SocketInstance } from "./listener";
+import PlatformInstance, { platformInstances } from "./platform-instance.ts";
+import listener, { SocketInstance } from "./listener.ts";
 
 const rmLog = debug("sockethub:server:janitor");
 

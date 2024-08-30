@@ -11,8 +11,8 @@ import {
 import { JobDataDecrypted, JobQueue } from "@sockethub/data-layer";
 import type { Socket } from "socket.io";
 
-import config from "./config";
-import { getSocket } from "./listener";
+import config from "./config.ts";
+import { getSocket } from "./listener.ts";
 import nconf from "nconf";
 
 // collection of platform instances, stored by `id`

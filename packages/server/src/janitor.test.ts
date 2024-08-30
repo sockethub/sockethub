@@ -1,7 +1,8 @@
-import { expect } from "chai";
-import * as sinon from "sinon";
-
-import { Janitor } from "./janitor";
+import "https://deno.land/x/deno_mocha/global.ts";
+import { assertEquals, assertNotEquals } from "jsr:@std/assert";
+import { assertSpyCallArg, assertSpyCalls, spy } from "jsr:@std/testing/mock";
+import sinon from "npm:sinon";
+import { Janitor } from "./janitor.ts";
 
 const sockets = [
   { id: "socket foo", emit: () => {} },
@@ -13,9 +14,9 @@ function getPlatformInstanceFake() {
     flaggedForTermination: false,
     initialized: false,
     global: false,
-    shutdown: sinon.stub(),
+    shutdown: sinon.spy(),
     process: {
-      removeListener: sinon.stub(),
+      removeListener: sinon.spy(),
     },
     sessions: new Set(["session foo", "session bar"]),
     sessionCallbacks: {
@@ -35,44 +36,44 @@ function getPlatformInstanceFake() {
 
 const cycleInterval = 10;
 
-describe("Janitor", () => {
-  let sandbox, fetchSocketsFake, janitor;
+function timeout(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-  beforeEach(function (done) {
-    this.timeout(3000);
+describe("Janitor", () => {
+  let sandbox: sinon.Sandbox, fetchSocketsFake, janitor: Janitor;
+
+  beforeEach(async () => {
+    await timeout(3000);
+
     sandbox = sinon.createSandbox();
     fetchSocketsFake = sandbox.stub().returns(sockets);
 
     janitor = new Janitor();
     janitor.getSockets = fetchSocketsFake;
-    expect(janitor.cycleInterval).to.not.equal(cycleInterval);
+
+    assertNotEquals(janitor.cycleInterval, cycleInterval);
     janitor.cycleInterval = cycleInterval;
-    expect(janitor.cycleInterval).to.equal(cycleInterval);
+    assertEquals(janitor.cycleInterval, cycleInterval);
     janitor.start();
-    setTimeout(() => {
-      expect(janitor.cycleCount).to.equal(1);
-      done();
-    }, cycleInterval);
+
+    await timeout(cycleInterval);
+    assertEquals(janitor.cycleCount, 1);
   });
 
-  afterEach((done) => {
+  afterEach(async () => {
     sandbox.reset();
+    await timeout(janitor.cycleInterval * 2);
     janitor.stop();
-    setTimeout(() => {
-      done();
-    }, janitor.cycleInterval * 2);
   });
 
-  it("runs cycle at every cycleInterval", (done) => {
+  it("runs cycle at every cycleInterval", async () => {
     const currCycleCount = janitor.cycleCount;
-    expect(currCycleCount).to.not.equal(0);
-    setTimeout(() => {
-      expect(janitor.cycleCount).to.equal(currCycleCount + 1);
-      setTimeout(() => {
-        expect(janitor.cycleCount).to.equal(currCycleCount + 2);
-        done();
-      }, cycleInterval);
-    }, cycleInterval);
+    assertNotEquals(currCycleCount, 0);
+    await timeout(cycleInterval);
+    assertEquals(janitor.cycleCount, currCycleCount + 1);
+    await timeout(cycleInterval);
+    assertEquals(janitor.cycleCount, currCycleCount + 2);
   });
 
   describe("removeSessionCallbacks", () => {
@@ -83,16 +84,10 @@ describe("Janitor", () => {
       pi.flaggedForTermination = true;
       janitor.removeSessionCallbacks(pi, "session foo");
       sinon.assert.calledTwice(pi.process.removeListener);
-      expect(pi.sessionCallbacks.message.get("session foo")).to.be
-        .undefined;
-      expect(pi.sessionCallbacks.message.get("session bar")).to.equal(
-        barMessage,
-      );
-      expect(pi.sessionCallbacks.close.get("session foo")).to.be
-        .undefined;
-      expect(pi.sessionCallbacks.close.get("session bar")).to.equal(
-        barClose,
-      );
+      assertEquals(pi.sessionCallbacks.message.get("session foo"), undefined);
+      assertEquals(pi.sessionCallbacks.message.get("session bar"), barMessage);
+      assertEquals(pi.sessionCallbacks.close.get("session foo"), undefined);
+      assertEquals(pi.sessionCallbacks.close.get("session bar"), barClose);
     });
   });
 
@@ -101,7 +96,7 @@ describe("Janitor", () => {
       const pi = getPlatformInstanceFake();
       janitor.removeSessionCallbacks = sinon.stub();
       janitor.socketExists = sinon.stub().returns(true);
-      expect(janitor.stopTriggered).to.be.false;
+      assertEquals(janitor.stopTriggered, false);
       await janitor.removeStaleSocketSessions(pi);
       sinon.assert.notCalled(janitor.removeSessionCallbacks);
     });
@@ -111,7 +106,7 @@ describe("Janitor", () => {
       janitor.removeSessionCallbacks = sinon.stub();
       janitor.socketExists = sinon.stub().returns(true);
       janitor.stop();
-      expect(janitor.stopTriggered).to.be.true;
+      assertEquals(janitor.stopTriggered, true);
       await janitor.removeStaleSocketSessions(pi);
       sinon.assert.calledTwice(janitor.removeSessionCallbacks);
       sinon.assert.calledWith(
@@ -135,7 +130,7 @@ describe("Janitor", () => {
         .returns(false)
         .onSecondCall()
         .returns(true);
-      expect(janitor.stopTriggered).to.be.false;
+      assertEquals(janitor.stopTriggered, false);
       await janitor.removeStaleSocketSessions(pi);
       sinon.assert.calledOnce(janitor.removeSessionCallbacks);
       sinon.assert.calledWith(
@@ -156,7 +151,7 @@ describe("Janitor", () => {
       await janitor.performStaleCheck(pi);
       sinon.assert.calledOnce(janitor.removeStaleSocketSessions);
       sinon.assert.calledOnce(janitor.removeStalePlatformInstance);
-      expect(pi.flaggedForTermination).to.be.true;
+      assertEquals(pi.flaggedForTermination, true);
     });
 
     it("flags for termination when there are not sockets", async () => {
@@ -175,10 +170,10 @@ describe("Janitor", () => {
   describe("removeStalePlatformInstance", () => {
     it("flags stale platform", async () => {
       const pi = getPlatformInstanceFake();
-      expect(pi.flaggedForTermination).to.be.false;
+      assertEquals(pi.flaggedForTermination, false);
       await janitor.removeStalePlatformInstance(pi);
       sinon.assert.notCalled(pi.shutdown);
-      expect(pi.flaggedForTermination).to.be.true;
+      assertEquals(pi.flaggedForTermination, true);
     });
 
     it("removes flagged stale platform", async () => {
@@ -189,18 +184,14 @@ describe("Janitor", () => {
     });
   });
 
-  it("closes all connections when stop() is called", (done) => {
+  it("closes all connections when stop() is called", async () => {
     const prevCycle = janitor.cycleCount;
     janitor.stop();
-    setTimeout(() => {
-      expect(janitor.cycleCount).to.equal(prevCycle);
-      setTimeout(() => {
-        expect(janitor.cycleCount).to.equal(prevCycle);
-        setTimeout(() => {
-          expect(janitor.cycleCount).to.equal(prevCycle);
-          done();
-        }, cycleInterval);
-      }, cycleInterval);
-    }, cycleInterval);
+    await timeout(cycleInterval);
+    assertEquals(janitor.cycleCount, prevCycle);
+    await timeout(cycleInterval);
+    assertEquals(janitor.cycleCount, prevCycle);
+    await timeout(cycleInterval);
+    assertEquals(janitor.cycleCount, prevCycle);
   });
 });

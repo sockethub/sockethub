@@ -1,5 +1,5 @@
-import { Config } from "./config.ts";
 import { assertEquals } from "jsr:@std/assert";
+import { Config } from "./config.ts";
 
 Deno.test("loads default values", () => {
   const config = new Config();
