@@ -1,0 +1,53 @@
+name: Integration
+on:
+  pull_request:
+
+jobs:
+  integration:
+
+    # FIXME TODO - fix and enable integration tests
+    if: false
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+        deno: [ 1.45.5, 1.x ]
+
+    steps:
+      - run: sudo chown -R $USER:$USER ${{ github.workspace }}
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          clean: false
+      - name: Use Deno ${{ matrix.deno }}
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: ${{ matrix.deno }}
+      - run: deno lint
+      - run: deno fmt --check
+      - run: deno task test
+      - run: deno task compliance
+      - run: deno task build
+
+      - run: docker compose build --build-arg deno_version=${{ matrix.deno }}
+
+      - run: deno task docker:build
+      - run: sleep 5
+
+      - name: Verify Sockethub is listening externally
+        run: nc -zv localhost 10650
+
+      - name: Verify Redis is listening
+        run: nc -zv localhost 10651
+
+      - name: Redis Integration Tests
+        run: deno task integration:redis:run
+
+      - name: Browser Integration Tests
+        run: deno task integration:browser:run
+
+      - name: Print Docker logs
+        if: always()
+        run: deno task docker:logs
