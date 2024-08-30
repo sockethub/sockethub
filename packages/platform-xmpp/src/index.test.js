@@ -10,7 +10,7 @@ async function resolveConnection() {
   if (startResolution) {
     return Promise.resolve();
   } else {
-    return Promise.reject('mocked rejection');
+    return Promise.reject("mocked rejection");
   }
 }
 
@@ -26,8 +26,8 @@ describe("Platform", () => {
       on: () => {},
       start: resolveConnection,
       send: async (_msg) => {
-        console.log('send called: ', _msg)
-        return Promise.resolve()
+        console.log("send called: ", _msg);
+        return Promise.resolve();
       },
       join: async () => Promise.resolve(),
     };
@@ -54,7 +54,7 @@ describe("Platform", () => {
       sendToClient: (_msg) => {
         console.log("*** sendToClient called: ", _msg);
       },
-    }
+    };
     sendToClientSpy = spy(sessionMock, "sendToClient");
     xp = new TestXMPP(sessionMock);
   });
@@ -193,8 +193,7 @@ describe("Platform", () => {
             assertSpyCallArg(xmlSpy, xmlCount, 3, undefined);
             resolve();
           });
-        })
-
+        });
       });
 
       it("calls xmpp.js correctly for a group chat", () => {
@@ -205,7 +204,12 @@ describe("Platform", () => {
             xmlCount++;
             assertSpyCallArg(xmlSpy, xmlCount, 0, "body");
             assertSpyCallArg(xmlSpy, xmlCount, 1, {});
-            assertSpyCallArg(xmlSpy, xmlCount, 2, job.send.groupchat.object.content);
+            assertSpyCallArg(
+              xmlSpy,
+              xmlCount,
+              2,
+              job.send.groupchat.object.content,
+            );
 
             xmlCount++;
             assertSpyCallArg(xmlSpy, xmlCount, 0, "message");
@@ -218,7 +222,7 @@ describe("Platform", () => {
             assertSpyCallArg(xmlSpy, xmlCount, 3, undefined);
             resolve();
           });
-        })
+        });
       });
 
       it("calls xmpp.js correctly for a message correction", () => {
@@ -229,14 +233,19 @@ describe("Platform", () => {
             xmlCount++;
             assertSpyCallArg(xmlSpy, xmlCount, 0, "body");
             assertSpyCallArg(xmlSpy, xmlCount, 1, {});
-            assertSpyCallArg(xmlSpy, xmlCount, 2, job.send.correction.object.content);
+            assertSpyCallArg(
+              xmlSpy,
+              xmlCount,
+              2,
+              job.send.correction.object.content,
+            );
 
             xmlCount++;
             assertSpyCallArg(xmlSpy, xmlCount, 0, "replace");
             assertSpyCallArg(xmlSpy, xmlCount, 1, {
-                id: job.send.correction.object["xmpp:replace"].id,
-                xmlns: "urn:xmpp:message-correct:0",
-              });
+              id: job.send.correction.object["xmpp:replace"].id,
+              xmlns: "urn:xmpp:message-correct:0",
+            });
 
             xmlCount++;
             assertSpyCallArg(xmlSpy, xmlCount, 0, "message");
@@ -249,7 +258,7 @@ describe("Platform", () => {
             assertSpyCallArg(xmlSpy, xmlCount, 3, undefined);
             resolve();
           });
-        })
+        });
       });
     });
 
@@ -265,7 +274,7 @@ describe("Platform", () => {
             assertSpyCallArg(xmlSpy, xmlCount, 3, { status: "ready to chat" });
             resolve();
           });
-        })
+        });
       });
 
       it("calls xml() correctly for unavailable", () => {
@@ -279,8 +288,7 @@ describe("Platform", () => {
             assertSpyCallArg(xmlSpy, xmlCount, 3, { status: "eating popcorn" });
             resolve();
           });
-        })
-
+        });
       });
 
       it("calls xml() correctly for offline", () => {
@@ -306,9 +314,9 @@ describe("Platform", () => {
             xmlCount++;
             assertSpyCallArg(xmlSpy, xmlCount, 0, "presence");
             assertSpyCallArg(xmlSpy, xmlCount, 1, {
-                type: "subscribe",
-                to: job["request-friend"].target["id"],
-              });
+              type: "subscribe",
+              to: job["request-friend"].target["id"],
+            });
             resolve();
           });
         });
@@ -323,9 +331,9 @@ describe("Platform", () => {
             xmlCount++;
             assertSpyCallArg(xmlSpy, xmlCount, 0, "presence");
             assertSpyCallArg(xmlSpy, xmlCount, 1, {
-                type: "unsubscribe",
-                to: job["remove-friend"].target["id"],
-              });
+              type: "unsubscribe",
+              to: job["remove-friend"].target["id"],
+            });
             resolve();
           });
         });
@@ -340,13 +348,12 @@ describe("Platform", () => {
             xmlCount++;
             assertSpyCallArg(xmlSpy, xmlCount, 0, "presence");
             assertSpyCallArg(xmlSpy, xmlCount, 1, {
-                type: "unsubscribe",
-                to: job["make-friend"].target["id"],
-              });
+              type: "unsubscribe",
+              to: job["make-friend"].target["id"],
+            });
             resolve();
           });
-        })
-
+        });
       });
     });
 
@@ -357,16 +364,18 @@ describe("Platform", () => {
             assertSpyCalls(sendSpy, ++sendCount);
             xmlCount++;
             assertSpyCallArg(xmlSpy, xmlCount, 0, "query");
-            assertSpyCallArg(xmlSpy, xmlCount, 1, { xmlns: "http://jabber.org/protocol/disco#items" });
+            assertSpyCallArg(xmlSpy, xmlCount, 1, {
+              xmlns: "http://jabber.org/protocol/disco#items",
+            });
             xmlCount++;
             assertSpyCallArg(xmlSpy, xmlCount, 0, "iq");
             assertSpyCallArg(xmlSpy, xmlCount, 1, {
-                id: "muc_id",
-                type: "get",
-                from: "testingham@jabber.net",
-                to: "partyroom@jabber.net",
-              });
-            assertSpyCallArg(xmlSpy, xmlCount, 2,  undefined);
+              id: "muc_id",
+              type: "get",
+              from: "testingham@jabber.net",
+              to: "partyroom@jabber.net",
+            });
+            assertSpyCallArg(xmlSpy, xmlCount, 2, undefined);
             resolve();
           });
         });
