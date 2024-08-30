@@ -1,12 +1,11 @@
-const chai = require("chai");
-const expect = chai.expect;
-
-const utils = require("./utils.js");
+import "https://deno.land/x/deno_mocha/global.ts";
+import { assertEquals } from "jsr:@std/assert";
+import utils from "./utils.js";
 
 describe("Utils", () => {
   describe("buildXmppCredentials", () => {
     it("returns correct credential object used for xmpp.js connect", () => {
-      expect(
+      assertEquals(
         utils.buildXmppCredentials({
           object: {
             userAddress: "barney@dinosaur.com.au",
@@ -14,16 +13,17 @@ describe("Utils", () => {
             resource: "Home",
           },
         }),
-      ).to.eql({
-        password: "bar",
-        service: "dinosaur.com.au",
-        username: "barney",
-        resource: "Home",
-      });
+        {
+          password: "bar",
+          service: "dinosaur.com.au",
+          username: "barney",
+          resource: "Home",
+        },
+      );
     });
   });
   it("allows overriding server value", () => {
-    expect(
+    assertEquals(
       utils.buildXmppCredentials({
         object: {
           userAddress: "barney@dinosaur.com.au",
@@ -32,15 +32,16 @@ describe("Utils", () => {
           resource: "Home",
         },
       }),
-    ).to.eql({
-      password: "bar",
-      service: "foo",
-      username: "barney",
-      resource: "Home",
-    });
+      {
+        password: "bar",
+        service: "foo",
+        username: "barney",
+        resource: "Home",
+      },
+    );
   });
   it("allows a custom port", () => {
-    expect(
+    assertEquals(
       utils.buildXmppCredentials({
         object: {
           userAddress: "barney@dinosaur.com.au",
@@ -49,11 +50,12 @@ describe("Utils", () => {
           resource: "Home",
         },
       }),
-    ).to.eql({
-      password: "bar",
-      service: "dinosaur.com.au:123",
-      username: "barney",
-      resource: "Home",
-    });
+      {
+        password: "bar",
+        service: "dinosaur.com.au:123",
+        username: "barney",
+        resource: "Home",
+      },
+    );
   });
 });

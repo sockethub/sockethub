@@ -1,8 +1,8 @@
-const PackageJSON = require("../package.json");
+import denoJson from "../deno.json" with { type: "json" };
 
 const PlatformSchema = {
   name: "xmpp",
-  version: PackageJSON.version,
+  version: denoJson.version,
   messages: {
     required: ["type"],
     properties: {
@@ -58,5 +58,4 @@ const PlatformSchema = {
     },
   },
 };
-
-module.exports = PlatformSchema;
+export default PlatformSchema;
