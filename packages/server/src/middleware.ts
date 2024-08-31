@@ -1,5 +1,5 @@
-import { debug, Debugger } from "debug";
-import { ActivityStream } from "@sockethub/schemas";
+import { debug, type Debugger } from "debug";
+import type { ActivityStream } from "@sockethub/schemas";
 
 export default function middleware(name: string): MiddlewareChain {
   return new MiddlewareChain(name);

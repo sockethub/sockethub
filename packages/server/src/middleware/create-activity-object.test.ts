@@ -1,11 +1,10 @@
-import createActivityObject from "./create-activity-object";
+import createActivityObject from "./create-activity-object.ts";
+import type { ActivityStream } from "@sockethub/schemas";
 
-describe("Middleware: createActivityObject", () => {
-  it("Calls activity.Object.create with incoming data", (done) => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    createActivityObject({ foo: "bar" }, () => {
-      done();
+Deno.test("Middleware: createActivityObject - calls activity.Object.create with incoming data", () => {
+  return new Promise((resolve) => {
+    createActivityObject({ foo: "bar" } as unknown as ActivityStream, () => {
+      resolve();
     });
   });
 });

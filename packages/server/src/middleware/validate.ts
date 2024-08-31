@@ -7,7 +7,7 @@ import schemas, {
   MiddlewareCallback,
 } from "@sockethub/schemas";
 
-import getInitObject from "../bootstrap/init";
+import getInitObject from "../bootstrap/init.ts";
 
 let initObj;
 (async function () {

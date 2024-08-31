@@ -1,7 +1,7 @@
-import { expect } from "chai";
-import asObjects from "./validate.test.data";
-import loadPlatforms from "../bootstrap/load-platforms";
-import validate, { registerPlatforms } from "./validate";
+import { assertEquals } from "jsr:@std/assert";
+import asObjects from "./validate.data.test.ts";
+import loadPlatforms from "../bootstrap/load-platforms.ts";
+import validate, { registerPlatforms } from "./validate.ts";
 import { ActivityStream } from "@sockethub/schemas";
 
 class FakeSockethubPlatform {
@@ -11,7 +11,7 @@ class FakeSockethubPlatform {
   }
   get schema() {
     return {
-      name: "fakeplatform",
+      name: "fake platform",
       version: "0.0.1",
       credentials: {
         required: ["object"],
@@ -54,8 +54,8 @@ const modules = {
   fakeplatform: FakeSockethubPlatform,
 };
 
-let platforms;
-let mockInit;
+let platforms: Map<string, FakeSockethubPlatform>;
+let mockInit: Record<string, unknown>;
 (async function () {
   platforms = await loadPlatforms(["fakeplatform"], async (module) => {
     return Promise.resolve(modules[module]);
@@ -70,9 +70,9 @@ describe("", () => {
   describe("platformLoad", () => {
     it("loads all platforms", () => {
       const expectedPlatforms = ["fakeplatform"];
-      expect(platforms.size).to.equal(expectedPlatforms.length);
+      assertEquals(platforms.size, expectedPlatforms.length);
       for (const platform of expectedPlatforms) {
-        expect(platforms.has(platform)).to.be.true;
+        assertEquals(platforms.has(platform), true);
       }
     });
   });
@@ -90,17 +90,17 @@ describe("", () => {
             )(obj.input as ActivityStream, (msg) => {
               if (obj.output) {
                 if (obj.output === "same") {
-                  expect(msg).to.eql(obj.input);
+                  assertEquals(msg, obj.input);
                 } else {
-                  expect(msg).to.eql(obj.output);
+                  assertEquals(msg, obj.output);
                 }
               }
               if (obj.valid) {
-                expect(msg).to.not.be.instanceof(Error);
+                assertEquals(msg instanceof Error, false);
               } else {
-                expect(msg).to.be.instanceof(Error);
+                assertEquals(msg instanceof Error, true);
                 if (obj.error) {
-                  expect(msg.toString()).to.equal(obj.error);
+                  assertEquals(msg.toString(), obj.error);
                 }
               }
               done();

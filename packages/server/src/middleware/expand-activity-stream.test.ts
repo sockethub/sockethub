@@ -1,9 +1,8 @@
-import { expect } from "chai";
-
-import expandActivityStream from "./expand-activity-stream";
-
-import asObjects from "./expand-activity-stream.test.data";
+import { assertEquals } from "jsr:@std/assert";
+import expandActivityStream from "./expand-activity-stream.ts";
+import asObjects from "./expand-activity-stream.data.test.ts";
 import ActivityStreams from "@sockethub/activity-streams";
+import type { ActivityStream } from "@sockethub/schemas";
 
 const activity = ActivityStreams();
 // register known activity objects
@@ -43,34 +42,33 @@ const activity = ActivityStreams();
   activity.Object.create(obj);
 });
 
-describe("Middleware: Expand Activity Stream", () => {
-  describe("AS object expansion", () => {
-    asObjects.forEach((obj) => {
-      it(
-        `${obj.type}: ${obj.name}, should ${obj.valid ? "pass" : "fail"}`,
-        (done) => {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          expandActivityStream(obj.input, (msg) => {
-            if (obj.output) {
-              if (obj.output === "same") {
-                expect(obj.input).to.eql(msg);
-              } else {
-                expect(obj.output).to.eql(msg);
-              }
-            }
-            if (obj.valid) {
-              expect(msg instanceof Error).to.be.false;
+// describe("Middleware: Expand Activity Stream", () => {
+//   describe("AS object expansion", () => {
+asObjects.forEach((obj) => {
+  Deno.test(
+    `${obj.type}: ${obj.name}, should ${obj.valid ? "pass" : "fail"}`,
+    () => {
+      return new Promise((resolve) => {
+        expandActivityStream(obj.input as ActivityStream, (msg: unknown) => {
+          if (obj.output) {
+            if (obj.output === "same") {
+              assertEquals(obj.input, msg);
             } else {
-              expect(msg instanceof Error).to.be.true;
-              if (obj.error) {
-                expect(obj.error).to.equal(msg.toString());
-              }
+              assertEquals(obj.output, msg);
             }
-            done();
-          });
-        },
-      );
-    });
-  });
+          }
+          if (obj.valid) {
+            assertEquals(msg instanceof Error, false);
+          } else {
+            assertEquals(msg instanceof Error, true);
+            if (obj.error) {
+              assertEquals(obj.error, msg!.toString());
+            }
+          }
+          resolve();
+        });
+      })
+
+    },
+  );
 });

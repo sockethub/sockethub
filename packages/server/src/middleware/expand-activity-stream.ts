@@ -1,8 +1,8 @@
-import ASFactory, { ASFactoryOptions } from "@sockethub/activity-streams";
-import { ActivityStream } from "@sockethub/schemas";
+import ASFactory, { type ASFactoryOptions } from "@sockethub/activity-streams";
+import type { ActivityStream } from "@sockethub/schemas";
 
-import config from "../config";
-import { MiddlewareChainInterface } from "../middleware";
+import config from "../config.ts";
+import type { MiddlewareChainInterface } from "../middleware.ts";
 
 const asConfig = config.get("activity-streams:opts") as ASFactoryOptions;
 asConfig.warnOnUnknownObjectProperties = false;
