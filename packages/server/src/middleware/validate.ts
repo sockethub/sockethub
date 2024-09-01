@@ -3,8 +3,8 @@
  */
 import debug from "debug";
 import schemas, {
-  ActivityStream,
-  MiddlewareCallback,
+  type ActivityStream,
+  type MiddlewareCallback,
 } from "@sockethub/schemas";
 
 import getInitObject from "../bootstrap/init.ts";

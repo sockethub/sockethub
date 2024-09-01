@@ -1,4 +1,15 @@
-export default [
+import type { ActivityStream } from "@sockethub/schemas";
+
+interface validateTestData {
+  name: string;
+  valid: boolean;
+  type: string;
+  input: ActivityStream;
+  output?: string;
+  error?: string;
+}
+
+const validateTestData: validateTestData[] = [
   {
     name: "mismatched types",
     valid: false,
@@ -61,7 +72,7 @@ export default [
         port: 5222,
         resource: "laptop",
       },
-    },
+    } as unknown as ActivityStream,
     error:
       "Error: credential activity streams must have credentials set as type",
   },
@@ -73,7 +84,7 @@ export default [
       id: "blah",
       type: "person",
       name: "dood",
-    },
+    } as unknown as ActivityStream,
     output: "same",
   },
   {
@@ -86,7 +97,7 @@ export default [
       name: "bob",
       hello: "there",
       i: ["am", "extras"],
-    },
+    } as unknown as ActivityStream,
     output: "same",
   },
   {
@@ -99,7 +110,7 @@ export default [
       port: 6667,
       secure: false,
       server: "irc.freenode.net",
-    },
+    } as unknown as ActivityStream,
     error: "Error: /object: must match exactly one schema in oneOf: " +
       "credentials, feed, message, me, person, room, service, website, " +
       "attendance, presence, relationship, topic, address",
@@ -114,7 +125,7 @@ export default [
       port: 6667,
       secure: false,
       server: "irc.freenode.net",
-    },
+    } as unknown as ActivityStream,
     error:
       "Error: platform context undefined not registered with this Sockethub instance.",
   },
@@ -133,7 +144,7 @@ export default [
         width: 250,
       },
       url: "https://sockethub.org",
-    },
+    } as unknown as ActivityStream,
     output: "same",
   },
   {
@@ -145,7 +156,7 @@ export default [
       type: "person",
       name: "sh-9K3Vk",
       url: "https://sockethub.org",
-    },
+    } as unknown as ActivityStream,
     output: "same",
   },
   {
@@ -186,7 +197,7 @@ export default [
       noDisplayName: {
         id: "larg",
       },
-    },
+    } as unknown as ActivityStream,
     error:
       "Error: platform context undefined not registered with this Sockethub instance.",
   },
@@ -199,7 +210,7 @@ export default [
       type: "join",
       context: "fakeplatform",
       target: "irc://irc.dooder.net/a-room",
-    },
+    } as unknown as ActivityStream,
     error: "Error: [fakeplatform] /actor: must be object",
   },
   {
@@ -210,7 +221,7 @@ export default [
       actor: { id: "irc://uuu@localhost", type: "person" },
       context: "fakeplatform",
       target: { id: "irc://irc.dooder.net/a-room", type: "room" },
-    },
+    } as unknown as ActivityStream,
     error:
       "Error: [fakeplatform] activity stream: must have required property 'type'",
   },
@@ -235,7 +246,7 @@ export default [
       type: "foo",
       context: "fakeplatform",
       target: { id: "irc://irc.dooder.net/a-room", type: "room" },
-    },
+    } as ActivityStream,
     error:
       "Error: [fakeplatform] activity stream: must have required property 'actor'",
   },
@@ -263,3 +274,5 @@ export default [
       "(types: credentials, echo, fail)",
   },
 ];
+
+export default validateTestData;

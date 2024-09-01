@@ -6,8 +6,11 @@
  * config.
  */
 import debug from "debug";
-import schemas, {
+import schemas from "@sockethub/schemas";
+import type {
   PlatformConfig,
+  PlatformConstructor,
+  PlatformInterface,
   PlatformSchemaStruct,
   PlatformSession,
 } from "@sockethub/schemas";
@@ -16,17 +19,21 @@ const log = debug("sockethub:server:bootstrap:platforms");
 
 log("loading platforms");
 
+export interface PlatformImport {
+  id: string;
+  moduleName: string;
+  config: PlatformConfig;
+  schema: PlatformSchemaStruct;
+  version: string;
+  types: Array<string>;
+}
+
 export type PlatformMap = Map<
   string,
-  {
-    id: string;
-    moduleName: string;
-    config: PlatformConfig;
-    schemas: PlatformSchemaStruct;
-    version: string;
-    types: Array<string>;
-  }
+  PlatformImport
 >;
+
+export type RequireFunction = (moduleName: string) => PlatformConstructor<PlatformImport>;
 
 const dummySession: PlatformSession = {
   debug: () => {},
@@ -36,7 +43,7 @@ const dummySession: PlatformSession = {
 
 // if the platform schema lists valid types it implements (essentially methods/verbs for
 // Sockethub to call) then add it to the supported types list.
-function platformListsSupportedTypes(p): boolean {
+function platformListsSupportedTypes(p: PlatformInterface): boolean {
   return (
     p.schema.messages.properties &&
     p.schema.messages.properties.type &&
@@ -45,11 +52,11 @@ function platformListsSupportedTypes(p): boolean {
   );
 }
 
-async function loadPlatform(platformName: string, injectRequire) {
+async function loadPlatform(platformName: string, injectRequire: RequireFunction): Promise<PlatformInterface> {
   let p;
   if (injectRequire) {
     const P = await injectRequire(platformName);
-    p = new P();
+    p = new P({} as PlatformSession);
   } else {
     const P = await import(platformName);
     p = new P.default(dummySession);
@@ -68,7 +75,7 @@ async function loadPlatform(platformName: string, injectRequire) {
 
 export default async function loadPlatforms(
   platformsList: Array<string>,
-  injectRequire = undefined,
+  injectRequire?: RequireFunction,
 ): Promise<PlatformMap> {
   // load platforms from config.platforms
   const platforms = new Map();
@@ -81,14 +88,14 @@ export default async function loadPlatforms(
 
   for (const platformName of platformsList) {
     log(`loading ${platformName}`);
-    const p = await loadPlatform(platformName, injectRequire);
+    const p = await loadPlatform(platformName, injectRequire as RequireFunction);
     let types = [];
 
     if (p.schema.credentials) {
       // register the platforms credentials schema
       types.push("credentials");
     } else {
-      p.config.noCredentials = true;
+      p.config.requireCredentials = false;
     }
 
     if (platformListsSupportedTypes(p)) {

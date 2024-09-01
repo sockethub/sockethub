@@ -1,13 +1,17 @@
 import { assertEquals } from "jsr:@std/assert";
-import asObjects from "./validate.data.test.ts";
-import loadPlatforms from "../bootstrap/load-platforms.ts";
+import validateTestData from "./validate.data.test.ts";
+import loadPlatforms, { type PlatformMap, type RequireFunction, type PlatformImport } from "../bootstrap/load-platforms.ts";
 import validate, { registerPlatforms } from "./validate.ts";
-import { ActivityStream } from "@sockethub/schemas";
+import type { ActivityStream, PlatformConfig, PlatformConstructor } from "@sockethub/schemas";
 
-class FakeSockethubPlatform {
+class FakePlatformClass implements PlatformImport {
+  id = "fakeplatform";
+  moduleName = "fakeplatform";
+  version = "0.1";
+  types = ["echo", "fail"];
   constructor() {}
   get config() {
-    return {};
+    return {} as PlatformConfig;
   }
   get schema() {
     return {
@@ -50,64 +54,57 @@ class FakeSockethubPlatform {
   }
 }
 
-const modules = {
-  fakeplatform: FakeSockethubPlatform,
-};
-
-let platforms: Map<string, FakeSockethubPlatform>;
+let platforms: PlatformMap;
 let mockInit: Record<string, unknown>;
+
+const mockRequireFunc: RequireFunction = (_moduleName: string) => {
+  return FakePlatformClass as PlatformConstructor<FakePlatformClass>;
+}
+
 (async function () {
-  platforms = await loadPlatforms(["fakeplatform"], async (module) => {
-    return Promise.resolve(modules[module]);
-  });
+  platforms = await loadPlatforms(["fakeplatform"], mockRequireFunc);
   mockInit = {
     platforms: platforms,
   };
   await registerPlatforms(mockInit);
 })();
 
-describe("", () => {
-  describe("platformLoad", () => {
-    it("loads all platforms", () => {
-      const expectedPlatforms = ["fakeplatform"];
-      assertEquals(platforms.size, expectedPlatforms.length);
-      for (const platform of expectedPlatforms) {
-        assertEquals(platforms.has(platform), true);
-      }
-    });
-  });
+Deno.test("platformLoad: loads all platforms", () => {
+  const expectedPlatforms = ["fakeplatform"];
+  assertEquals(platforms.size, expectedPlatforms.length);
+  for (const platform of expectedPlatforms) {
+    assertEquals(platforms.has(platform), true);
+  }
+});
 
-  describe("Middleware: Validate", () => {
-    describe("AS object validations", () => {
-      asObjects.forEach((obj) => {
-        it(
-          `${obj.type}: ${obj.name}, should ${obj.valid ? "pass" : "fail"}`,
-          (done) => {
-            validate(
-              obj.type,
-              "tests",
-              mockInit,
-            )(obj.input as ActivityStream, (msg) => {
-              if (obj.output) {
-                if (obj.output === "same") {
-                  assertEquals(msg, obj.input);
-                } else {
-                  assertEquals(msg, obj.output);
-                }
-              }
-              if (obj.valid) {
-                assertEquals(msg instanceof Error, false);
-              } else {
-                assertEquals(msg instanceof Error, true);
-                if (obj.error) {
-                  assertEquals(msg.toString(), obj.error);
-                }
-              }
-              done();
-            });
-          },
-        );
+validateTestData.forEach((obj) => {
+  Deno.test(
+    `Middleware - validate: ${obj.type}: ${obj.name}, should ${obj.valid ? "pass" : "fail"}`,
+    () => {
+      return new Promise((resolve) => {
+        validate(
+          obj.type,
+          "tests",
+          mockInit,
+        )(obj.input as ActivityStream, (msg) => {
+          if (obj.output) {
+            if (obj.output === "same") {
+              assertEquals(msg, obj.input);
+            } else {
+              assertEquals(msg, obj.output as unknown as ActivityStream);
+            }
+          }
+          if (obj.valid) {
+            assertEquals(msg instanceof Error, false);
+          } else {
+            assertEquals(msg instanceof Error, true);
+            if (obj.error) {
+              assertEquals(msg.toString(), obj.error);
+            }
+          }
+          resolve();
+        });
       });
-    });
-  });
+    },
+  );
 });
