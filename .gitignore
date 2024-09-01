@@ -8,3 +8,4 @@ coverage
 sockethub.config.json
 .vscode
 .nx
+npm

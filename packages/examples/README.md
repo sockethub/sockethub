@@ -11,8 +11,8 @@ A collection of minimal examples for each of the Sockethub platforms
 
 ## Development
 
-This demo app is compiled and built as part of the sockethub package,
-however if you would like to run this app stand-alone, you can run:
+This demo app is compiled and built as part of the sockethub package, however if
+you would like to run this app stand-alone, you can run:
 
 ```bash
 pnpm run dev
