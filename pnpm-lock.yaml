@@ -278,8 +278,8 @@ importers:
         specifier: workspace:3.0.0-alpha.4
         version: link:../schemas
       bullmq:
-        specifier: ^4.15.2
-        version: 4.15.2
+        specifier: ^5.0.0
+        version: 5.0.0
       debug:
         specifier: ^4.3.4
         version: 4.3.4(supports-color@8.1.1)
@@ -4812,8 +4812,8 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
-  /bullmq@4.15.2:
-    resolution: {integrity: sha512-VzmeiTP2ze7R3d/prOkwkoPyVxWm0N+Aj2lYQqljbWX7QqZgCaZCMiDVj97YpxFExdHDGKnmRPIS/ANY86GX2g==}
+  /bullmq@5.0.0:
+    resolution: {integrity: sha512-/GhvAB/nUKJMy2NzPCBKvq6yic6wlgaWW1gRCcFpjxP2LWB5TiCOSpsAx2i/9fUuMMa53/ZIKNK+vLO2DT+ZVQ==}
     dependencies:
       cron-parser: 4.9.0
       glob: 8.1.0
