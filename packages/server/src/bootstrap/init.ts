@@ -1,10 +1,11 @@
 import debug from "debug";
 
-import config from "../config";
-import loadPlatforms, { PlatformMap } from "./load-platforms";
-import { redisCheck, RedisConfig } from "@sockethub/data-layer";
+import config from "../config.ts";
+import loadPlatforms, { type PlatformMap } from "./load-platforms.ts";
+import { redisCheck, type RedisConfig } from "@sockethub/data-layer";
 
 const log = debug("sockethub:server:bootstrap:init");
+import denoJson from "./../../deno.json" with { type: "json" };
 
 export interface IInitObject {
   version: string;
@@ -13,7 +14,7 @@ export interface IInitObject {
 
 let init: IInitObject;
 
-function printSettingsInfo(version, platforms) {
+function printSettingsInfo(version: string, platforms: PlatformMap) {
   console.log("sockethub " + version);
   console.log();
 
@@ -50,7 +51,7 @@ function printSettingsInfo(version, platforms) {
     }
   }
   console.log();
-  process.exit();
+  Deno.exit();
 }
 
 let initCalled = false;
@@ -83,8 +84,7 @@ export default async function getInitObject(
 async function __loadInit(): Promise<IInitObject> {
   log("running init routines");
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const packageJSON = require("./../../package.json");
-  const version = packageJSON.version;
+  const version = denoJson.version;
   const platforms = await loadPlatforms(
     config.get("platforms") as Array<string>,
   );
@@ -92,7 +92,7 @@ async function __loadInit(): Promise<IInitObject> {
   await redisCheck(config.get("redis") as RedisConfig);
 
   if (config.get("info")) {
-    printSettingsInfo(packageJSON.version, platforms);
+    printSettingsInfo(denoJson.version, platforms);
   }
   log("finished init routines");
   return {
@@ -102,6 +102,6 @@ async function __loadInit(): Promise<IInitObject> {
 }
 
 export function __clearInit() {
-  init = undefined;
+  init = undefined as unknown as IInitObject;
   initCalled = false;
 }
