@@ -13,8 +13,8 @@
     "devDependencies": {
         "@sockethub/schemas": "workspace:^",
         "c8": "8.0.1",
-        "chai": "4.3.10",
-        "mocha": "10.2.0"
+        "chai": "4.5.0",
+        "mocha": "10.7.3"
     },
     "scripts": {
         "clean": "rm -rf coverage",
