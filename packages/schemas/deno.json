@@ -10,11 +10,12 @@
     "test": "deno test --coverage --clean --allow-env src/**/*.test.ts"
   },
   "imports": {
-    "@silverbucket/threshold": "jsr:@silverbucket/threshold@^1.0.2",
-    "@types/node": "npm:@types/node@^22.5.0",
-    "ajv": "npm:ajv@^8.12.0",
-    "ajv-formats": "npm:ajv-formats@^2.1.1",
-    "ajv-formats-draft2019": "npm:ajv-formats-draft2019@^1.6.1",
-    "debug": "npm:debug@^4.3.4"
+    "@silverbucket/threshold": "jsr:@silverbucket/threshold@1.0.2",
+    "@types/node": "npm:@types/node@22.5.0",
+    "@types/debug": "npm:@types/debug@4.1.12",
+    "ajv": "npm:ajv@8.12.0",
+    "ajv-formats": "npm:ajv-formats@2.1.1",
+    "@silverbucket/ajv-formats-draft2019": "jsr:@silverbucket/ajv-formats-draft2019@1.6.1",
+    "debug": "npm:debug@4.3.7"
   }
 }

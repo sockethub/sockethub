@@ -4,11 +4,11 @@ import {
   createHash,
   randomBytes,
 } from "node:crypto";
-import { ActivityStream } from "@sockethub/schemas";
+import type { ActivityStream } from "@sockethub/schemas";
 import { hash } from "jsr:@denorg/scrypt@4.4.4";
 import { Buffer } from "node:buffer";
-import { string } from "https://deno.land/x/fun@v2.0.0/mod.ts";
-import { NonEmptyArray } from "https://deno.land/x/fun@v2.0.0/array.ts";
+import type { NonEmptyArray } from "https://deno.land/x/fun@v2.0.0/array.ts";
+import { split } from "https://deno.land/x/fun@v2.0.0/string.ts";
 
 const ALGORITHM = "aes-256-cbc",
   IV_LENGTH = 16; // For AES, this is always 16
@@ -44,16 +44,16 @@ export class Crypto {
 
   decrypt(text: string, secret: string): ActivityStream {
     Crypto.ensureSecret(secret);
-    const split = string.split(":");
-    const pieces: NonEmptyArray<string> = split(text);
+    const pieces: NonEmptyArray<string> = split(':')(text);
     const firstElement = pieces[0];
-    const restElements = pieces.slice(1, pieces.length - 1);
+    const restElements = pieces.slice(1);
     const iv = Buffer.from(firstElement, "hex");
     const encryptedText = Buffer.from(restElements.join(":"), "hex");
     const decipher = createDecipheriv(ALGORITHM, Buffer.from(secret), iv);
     let decrypted = decipher.update(encryptedText);
     decrypted = Buffer.concat([decrypted, decipher.final()]);
-    return JSON.parse(decrypted.toString());
+    console.log(decrypted.toString("hex"));
+    return JSON.parse(decrypted.toString("hex"));
   }
 
   hash(text: string): string {

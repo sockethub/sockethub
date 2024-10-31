@@ -95,24 +95,32 @@ export type PlatformConfig = PersistentPlatformConfig | StatelessPlatformConfig;
 
 export interface StatelessPlatformConfig {
   persist: false;
-  requireCredentials?: string[];
+  requireCredentials: false;
 }
 
 export interface PersistentPlatformConfig {
   persist: true;
-  requireCredentials: string[];
+  requireCredentials: true;
   initialized: boolean;
 }
 
+export interface PlatformMessages {
+  required: string[],
+  properties: {
+    type: {
+      enum: string[],
+    },
+  },
+}
 export interface PlatformSchemaStruct {
   name: string;
   version: string;
   credentials?: object;
-  messages?: object;
+  messages: PlatformMessages;
 }
 
-export interface PlatformConstructor {
-  new (session: PlatformSession): { debug: Logger };
+export interface PlatformConstructor<T> {
+  new (session: PlatformSession): T;
 }
 
 /**

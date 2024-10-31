@@ -1,9 +1,11 @@
+import '@types/debug';
 import debug from "debug";
-import Ajv, { ErrorObject, Schema, ValidateFunction } from "ajv";
+import Ajv from "ajv";
+import type { ErrorObject, Schema, ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
-import additionsFormats2019 from "ajv-formats-draft2019";
+import additionsFormats2019 from "@silverbucket/ajv-formats-draft2019";
 import getErrorMessage from "./helpers/error-parser.ts";
-import { ActivityStream } from "./types.ts";
+import type { ActivityStream } from "./types.ts";
 import PlatformSchema from "./schemas/platform.ts";
 import ActivityStreamsSchema from "./schemas/activity-stream.ts";
 import ActivityObjectSchema from "./schemas/activity-object.ts";
