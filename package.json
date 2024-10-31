@@ -4,10 +4,6 @@
   "engines": {
     "deno": ">=1.45"
   },
-  "dependencies": {
-    "@types/debug": "^4.1.12",
-    "debug": "^4.3.7"
-  },
   "devDependencies": {
     "@sockethub/data-layer": "workspace:1.0.0-alpha.4",
     "@sockethub/schemas": "workspace:3.0.0-alpha.4",
