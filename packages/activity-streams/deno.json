@@ -11,8 +11,8 @@
     "test": "deno test --coverage --clean --allow-env --allow-read src/**/*.test.ts"
   },
   "imports": {
-    "@types/chai": "npm:@types/chai@^4.3.19",
-    "chai": "npm:chai@^4.3.10",
+    "@std/assert": "jsr:@std/assert@^1.0.10",
+    "@std/expect": "jsr:@std/expect@^1.0.10",
     "eventemitter3": "npm:eventemitter3@^5.0.1",
     "mocha": "npm:mocha@^10.7.3"
   }
