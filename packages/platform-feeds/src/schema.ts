@@ -1,7 +1,9 @@
+import packageJSON from "../package.json" with { type: "json" };
+
 export default {
     name: "feeds",
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    version: require("./../package.json").version,
+    version: packageJSON.version,
     messages: {
         required: ["type"],
         properties: {

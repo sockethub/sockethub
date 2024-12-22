@@ -82,7 +82,7 @@ export default async function getInitObject(
 async function __loadInit(): Promise<IInitObject> {
     log("running init routines");
     const packageJSON = await import("./../../package.json", {
-        assert: { type: "json" },
+        with: { type: "json" },
     });
     const version = packageJSON.version;
     const platforms = await loadPlatforms(

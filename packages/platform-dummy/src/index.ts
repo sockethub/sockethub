@@ -8,7 +8,7 @@ import {
     PlatformSession,
 } from "@sockethub/schemas";
 
-import packageJSON from "../package.json" assert { type: "json" };
+import packageJSON from "../package.json" with { type: "json" };
 
 export default class Dummy implements PlatformInterface {
     debug: Logger;
