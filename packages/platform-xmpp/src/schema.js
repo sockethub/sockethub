@@ -1,4 +1,4 @@
-import PackageJSON from "../package.json" assert { type: "json" };
+import PackageJSON from "../package.json" with { type: "json" };
 
 export const PlatformSchema = {
     name: "xmpp",
