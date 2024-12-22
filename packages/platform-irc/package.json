@@ -28,12 +28,12 @@
     },
     "devDependencies": {
         "@sockethub/schemas": "workspace:^",
-        "@types/node": "20.10.4",
+        "@types/node": "22.10.2",
         "c8": "8.0.1",
         "chai": "4.3.10",
         "jsdoc-to-markdown": "8.0.0",
         "sinon": "17.0.1",
-        "tsx": "^4.7.2",
+        "tsx": "^4.19.2",
         "typescript": "5.3.3"
     },
     "peerDependencies": {
