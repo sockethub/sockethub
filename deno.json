@@ -1,0 +1,23 @@
+{
+  "fmt": {
+    "exclude": ["**/npm/", "**/packages/examples/"]
+  },
+  "lint": {
+    "exclude": ["**/npm/", "**/packages/examples/"]
+  },
+  "workspace": [
+    "./packages/activity-streams",
+    "./packages/client",
+    "./packages/crypto",
+    "./packages/data-layer",
+    "./packages/examples",
+    "./packages/irc2as",
+    "./packages/platform-dummy",
+    "./packages/platform-feeds",
+    "./packages/platform-irc",
+    "./packages/platform-xmpp",
+    "./packages/schemas",
+    "./packages/server",
+    "./packages/sockethub"
+  ]
+}
