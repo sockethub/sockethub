@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
 
-import storeCredentials from "./store-credentials";
+import storeCredentials from "./store-credentials.js";
 import { CredentialsObject } from "@sockethub/schemas";
 
 const creds: CredentialsObject = {

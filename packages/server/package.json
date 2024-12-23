@@ -50,7 +50,9 @@
     },
     "scripts": {
         "clean": "rm -rf dist coverage",
-        "test": "NODE_OPTIONS='--import=tsx' c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha src/*.test.ts src/**/*.test.ts && pnpm coverage",
+        "test": "pnpm test:ts && pnpm test:js && pnpm coverage",
+        "test:ts": "NODE_OPTIONS='--import=tsx' c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha src/*.test.ts src/**/*.test.ts",
+        "test:js": "mocha dist/*.test.js dist/**/*.test.js",
         "coverage": "c8 check-coverage --statements 85 --branches 80 --functions 70 --lines 85",
         "start": "DEBUG=sockethub* ./bin/sockethub",
         "dev": "pnpm build && DEBUG=sockethub* ./bin/sockethub --examples",

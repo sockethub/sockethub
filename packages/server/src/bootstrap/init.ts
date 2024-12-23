@@ -84,7 +84,7 @@ async function __loadInit(): Promise<IInitObject> {
     const packageJSON = await import("./../../package.json", {
         with: { type: "json" },
     });
-    const version = packageJSON.version;
+    const version = packageJSON.default.version;
     const platforms = await loadPlatforms(
         config.get("platforms") as Array<string>,
     );
@@ -92,7 +92,7 @@ async function __loadInit(): Promise<IInitObject> {
     await redisCheck(config.get("redis") as RedisConfig);
 
     if (config.get("info")) {
-        printSettingsInfo(packageJSON.version, platforms);
+        printSettingsInfo(packageJSON.default.version, platforms);
     }
     log("finished init routines");
     return {

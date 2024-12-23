@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
-import getInitObject, { __clearInit, IInitObject } from "./init";
+import getInitObject, { __clearInit, IInitObject } from "./init.js";
 import { SinonStub } from "sinon";
 
 describe("Init", () => {

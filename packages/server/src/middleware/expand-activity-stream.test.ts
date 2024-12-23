@@ -1,8 +1,8 @@
 import { expect } from "chai";
 
-import expandActivityStream from "./expand-activity-stream";
+import expandActivityStream from "./expand-activity-stream.js";
 
-import asObjects from "./expand-activity-stream.test.data";
+import asObjects from "./expand-activity-stream.test.data.js";
 import { ASFactory } from "@sockethub/activity-streams";
 
 const activity = ASFactory();

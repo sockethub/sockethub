@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
 
-import { Janitor } from "./janitor";
+import { Janitor } from "./janitor.js";
 
 const sockets = [
     { id: "socket foo", emit: () => {} },

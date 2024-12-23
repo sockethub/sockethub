@@ -22,8 +22,7 @@ const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
 let logger = debug(loggerPrefix);
 
 const redisUrl = process.env.REDIS_URL;
-// eslint-disable-next-line @typescript-eslint/no-var-requires, security/detect-non-literal-require
-const PlatformModule = require(`@sockethub/platform-${platformName}`);
+
 
 let jobWorker: JobWorker;
 let jobWorkerStarted = false;
@@ -74,7 +73,11 @@ const platformSession: PlatformSession = {
     sendToClient: getSendFunction("message"),
     updateActor: updateActor,
 };
-const platform = new PlatformModule(platformSession) as PlatformInterface;
+const platform: PlatformInterface = (() => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, security/detect-non-literal-require
+    const PlatformModule = require(`@sockethub/platform-${platformName}`);
+    return new PlatformModule(platformSession) as PlatformInterface;
+})();
 
 /**
  * Returns a function used to handle completed jobs from the platform code (the `done` callback).

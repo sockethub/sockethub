@@ -1,7 +1,7 @@
 import { expect } from "chai";
-import asObjects from "./validate.test.data";
-import loadPlatforms from "../bootstrap/load-platforms";
-import validate, { registerPlatforms } from "./validate";
+import asObjects from "./validate.test.data.js";
+import loadPlatforms from "../bootstrap/load-platforms.js";
+import validate, { registerPlatforms } from "./validate.js";
 import { ActivityStream } from "@sockethub/schemas";
 
 class FakeSockethubPlatform {

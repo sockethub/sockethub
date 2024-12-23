@@ -1,9 +1,9 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
-import { __dirname } from "./util";
+import { __dirname } from "./util.js";
 const FORK_PATH = __dirname + "/platform.js";
 
-import PlatformInstance, { platformInstances } from "./platform-instance";
+import PlatformInstance, { platformInstances } from "./platform-instance.js";
 
 describe("PlatformInstance", () => {
     let pi, sandbox, forkFake, socketMock, getSocketFake;

@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import { Config } from "./config";
+import { Config } from "./config.js";
 
 describe("config", () => {
     it("loads default values", () => {

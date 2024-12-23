@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
 
-import middleware, { MiddlewareChain } from "./middleware";
+import middleware, { MiddlewareChain } from "./middleware.js";
 
 describe("Middleware", () => {
     it("middleware() is a function", () => {

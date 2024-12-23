@@ -4,7 +4,7 @@ import nconf from "nconf";
 
 import { crypto } from "@sockethub/crypto";
 import { CredentialsStore } from "@sockethub/data-layer";
-import { type CredentialsStoreInterface } from "@sockethub/data-layer/dist/credentials-store";
+import { type CredentialsStoreInterface } from "@sockethub/data-layer/dist/credentials-store.js";
 import { ActivityStream } from "@sockethub/schemas";
 
 import getInitObject from "./bootstrap/init.js";
