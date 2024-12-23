@@ -18,25 +18,41 @@ import { JobHandler } from "@sockethub/data-layer";
 const parentId = process.argv[2];
 const platformName = process.argv[3];
 let identifier = process.argv[4];
+const redisUrl = process.env.REDIS_URL;
+
 const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
 let logger = debug(loggerPrefix);
-
-const redisUrl = process.env.REDIS_URL;
 
 let jobWorker: JobWorker;
 let jobWorkerStarted = false;
 let parentSecret1: string, parentSecret2: string;
 
-logger(`platform handler initialized for ${platformName} ${identifier}`);
+logger(`platform handler initializing for ${platformName} ${identifier}`);
 
 interface SecretInterface {
     parentSecret1: string;
     parentSecret2: string;
 }
+
 interface SecretFromParent extends Array<string | SecretInterface> {
     0: string;
     1: SecretInterface;
 }
+
+/**
+ * Initialize platform module
+ */
+const platformSession: PlatformSession = {
+    debug: debug(`sockethub:platform:${platformName}:${identifier}`),
+    sendToClient: getSendFunction("message"),
+    updateActor: updateActor,
+};
+const platform: PlatformInterface = await ( async () => {
+    const PlatformModule = await import(`@sockethub/platform-${platformName}`);
+    const p = new PlatformModule(platformSession) as PlatformInterface;
+    logger(`platform handler initialized for ${platformName} ${identifier}`);
+    return p as PlatformInterface;
+})();
 
 /**
  * Handle any uncaught errors from the platform by alerting the worker and shutting down.
@@ -63,20 +79,6 @@ process.on("message", async (data: SecretFromParent) => {
         throw new Error("received unknown command from parent thread");
     }
 });
-
-/**
- * Initialize platform module
- */
-const platformSession: PlatformSession = {
-    debug: debug(`sockethub:platform:${platformName}:${identifier}`),
-    sendToClient: getSendFunction("message"),
-    updateActor: updateActor,
-};
-const platform: PlatformInterface = (() => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, security/detect-non-literal-require
-    const PlatformModule = require(`@sockethub/platform-${platformName}`);
-    return new PlatformModule(platformSession) as PlatformInterface;
-})();
 
 /**
  * Returns a function used to handle completed jobs from the platform code (the `done` callback).

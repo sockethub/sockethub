@@ -95,47 +95,36 @@ describe("JobQueue", () => {
     let worker: JobWorker;
 
     beforeEach("initialized", () => {
-        console.log("-i0");
         queue = new JobQueue("testid", "sessionid", testSecret, {
             url: "redis://localhost:10651",
         });
-        console.log("-i2 ");
         worker = new JobWorker("testid", "sessionid", testSecret, {
             url: "redis://localhost:10651",
         });
-        console.log("-i3");
     });
 
     it("add job and get job on queue", (done) => {
         // queue.initResultEvents();
         queue.on("completed", (jobData: JobDataDecrypted) => {
-            console.log("-1 ", jobData);
             expect(jobData).to.eql({
                 title: "bar-0",
                 sessionId: "socket id",
                 msg: as,
             });
-            console.log("-1b");
-            console.log("job done");
             done();
         });
         worker.onJob(async (job) => {
-            console.log("-2 ", job);
+            console.log("worker got job: ", job);
         });
         queue.add("socket id", as).then((job) => {
-            console.log("-3");
             expect(job.msg.length).to.eql(193);
             expect(job.title).to.eql("bar-0");
             expect(job.sessionId).to.eql("socket id");
         });
-        console.log("-0");
     });
 
     afterEach("shutdown", async () => {
-        console.log("-shutdown queue");
         await queue.shutdown();
-        console.log("-shutdown worker");
         await worker.shutdown();
-        console.log("end");
     });
 });
