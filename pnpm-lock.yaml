@@ -525,8 +525,8 @@ importers:
         specifier: workspace:^
         version: link:../schemas
       '@xmpp/xml':
-        specifier: 0.13.1
-        version: 0.13.1
+        specifier: 0.13.3
+        version: 0.13.3
       c8:
         specifier: 8.0.1
         version: 8.0.1
@@ -2821,9 +2821,9 @@ packages:
     resolution: {integrity: sha512-UyMYyy/0Cm2UtVoAlhfV31u6LzGrBUU0h7I0qGCq1yYPQpscehNl8lXE4vmB8OfpeDvSZmvGk2vJAvGxzunoDQ==}
     engines: {node: '>= 12.4.0'}
 
-  '@xmpp/xml@0.13.1':
-    resolution: {integrity: sha512-GMfYB3PKY9QzsMnl3dPohgPBGd1JQTBanKOaZexJCSYJN2cdYLU2HGhjMtDlGSno6h9U+t0oO7r0igsJwyigwg==}
-    engines: {node: '>= 12.4.0'}
+  '@xmpp/xml@0.13.3':
+    resolution: {integrity: sha512-lYXBg/VlpUeavGgQE8LADfZUzMFUnWFVYgvKUcx97AqjiEJUuo40ijdRcGmkAVtTg0RBkml5WB+Mo+JqynMk7Q==}
+    engines: {node: '>= 14'}
 
   '@yarnpkg/lockfile@1.1.0':
     resolution: {integrity: sha512-GpSwvyXOcOOlV70vbnzjj4fW5xW/FdUF6nQEt1ENy7m4ZCczi1+/buVUPAqmGfqznsORNFzUMjctTIp8a9tuCQ==}
@@ -9488,7 +9488,7 @@ snapshots:
     dependencies:
       '@xmpp/connection': 0.13.1
       '@xmpp/jid': 0.13.1
-      '@xmpp/xml': 0.13.1
+      '@xmpp/xml': 0.13.3
 
   '@xmpp/client@0.13.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
     dependencies:
@@ -9522,14 +9522,14 @@ snapshots:
   '@xmpp/connection-tcp@0.13.1':
     dependencies:
       '@xmpp/connection': 0.13.1
-      '@xmpp/xml': 0.13.1
+      '@xmpp/xml': 0.13.3
 
   '@xmpp/connection@0.13.1':
     dependencies:
       '@xmpp/error': 0.13.1
       '@xmpp/events': 0.13.1
       '@xmpp/jid': 0.13.1
-      '@xmpp/xml': 0.13.1
+      '@xmpp/xml': 0.13.3
 
   '@xmpp/error@0.13.1': {}
 
@@ -9544,7 +9544,7 @@ snapshots:
       '@xmpp/events': 0.13.1
       '@xmpp/id': 0.13.1
       '@xmpp/middleware': 0.13.1
-      '@xmpp/xml': 0.13.1
+      '@xmpp/xml': 0.13.3
 
   '@xmpp/jid@0.13.1': {}
 
@@ -9552,7 +9552,7 @@ snapshots:
     dependencies:
       '@xmpp/error': 0.13.1
       '@xmpp/jid': 0.13.1
-      '@xmpp/xml': 0.13.1
+      '@xmpp/xml': 0.13.3
       koa-compose: 4.1.0
 
   '@xmpp/reconnect@0.13.1':
@@ -9562,12 +9562,12 @@ snapshots:
   '@xmpp/resolve@0.13.1':
     dependencies:
       '@xmpp/events': 0.13.1
-      '@xmpp/xml': 0.13.1
+      '@xmpp/xml': 0.13.3
       node-fetch: 3.3.2
 
   '@xmpp/resource-binding@0.13.1':
     dependencies:
-      '@xmpp/xml': 0.13.1
+      '@xmpp/xml': 0.13.3
 
   '@xmpp/sasl-anonymous@0.13.1':
     dependencies:
@@ -9585,24 +9585,24 @@ snapshots:
     dependencies:
       '@xmpp/base64': 0.13.1
       '@xmpp/error': 0.13.1
-      '@xmpp/xml': 0.13.1
+      '@xmpp/xml': 0.13.3
       saslmechanisms: 0.1.1
 
   '@xmpp/session-establishment@0.13.1':
     dependencies:
-      '@xmpp/xml': 0.13.1
+      '@xmpp/xml': 0.13.3
 
   '@xmpp/starttls@0.13.1':
     dependencies:
       '@xmpp/events': 0.13.1
       '@xmpp/tls': 0.13.1
-      '@xmpp/xml': 0.13.1
+      '@xmpp/xml': 0.13.3
 
   '@xmpp/stream-features@0.13.1': {}
 
   '@xmpp/stream-management@0.13.1':
     dependencies:
-      '@xmpp/xml': 0.13.1
+      '@xmpp/xml': 0.13.3
 
   '@xmpp/tcp@0.13.1':
     dependencies:
@@ -9616,13 +9616,13 @@ snapshots:
   '@xmpp/websocket@0.13.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
     dependencies:
       '@xmpp/connection': 0.13.1
-      '@xmpp/xml': 0.13.1
+      '@xmpp/xml': 0.13.3
       ws: 8.18.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@xmpp/xml@0.13.1':
+  '@xmpp/xml@0.13.3':
     dependencies:
       ltx: 3.1.1
 
