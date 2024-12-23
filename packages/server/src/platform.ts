@@ -6,7 +6,7 @@ import {
     CredentialsObject,
     PlatformInterface,
 } from "@sockethub/schemas";
-import crypto, { getPlatformId } from "@sockethub/crypto";
+import { crypto, getPlatformId } from "@sockethub/crypto";
 import {
     CredentialsStore,
     JobWorker,
