@@ -23,7 +23,6 @@ let logger = debug(loggerPrefix);
 
 const redisUrl = process.env.REDIS_URL;
 
-
 let jobWorker: JobWorker;
 let jobWorkerStarted = false;
 let parentSecret1: string, parentSecret2: string;

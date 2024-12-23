@@ -58,3 +58,5 @@ github.com
 sockethub.git
 xa
 nostr
+src
+index.ts

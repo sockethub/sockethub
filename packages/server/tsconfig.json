@@ -13,5 +13,5 @@
         "sourceRoot": "/",
         "mapRoot": "/"
     },
-    "include": ["src"],
+    "include": ["src"]
 }
