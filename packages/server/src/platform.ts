@@ -47,9 +47,11 @@ const platformSession: PlatformSession = {
     sendToClient: getSendFunction("message"),
     updateActor: updateActor,
 };
+
 const platform: PlatformInterface = await ( async () => {
     const PlatformModule = await import(`@sockethub/platform-${platformName}`);
-    const p = new PlatformModule(platformSession) as PlatformInterface;
+    console.log(PlatformModule.default);
+    const p = new PlatformModule.default(platformSession) as PlatformInterface;
     logger(`platform handler initialized for ${platformName} ${identifier}`);
     return p as PlatformInterface;
 })();
