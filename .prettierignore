@@ -11,3 +11,4 @@ pnpm-lock.yaml
 *.md
 .nx
 .github
+test-results
