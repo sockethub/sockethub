@@ -154,6 +154,7 @@ function getJobHandler(): JobHandler {
                 platform.config.persist &&
                 !platform.config.initialized
             ) {
+                console.log(platform.config);
                 reject(
                     new Error(
                         `${job.msg.type} called on uninitialized platform`,
