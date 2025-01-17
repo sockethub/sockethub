@@ -71,7 +71,6 @@
     />
 </div>
 
-
 <Credentials context="xmpp" {credentials} {actor} {state} />
 
 <div>

@@ -236,17 +236,18 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                             type: "join",
                             actor: actorId,
                             context: "xmpp",
-                            target: "test@prosody"
-                        }, (msg) => {
+                            target: "test@prosody",
+                        },
+                        (msg) => {
                             console.log("callback from join: ", msg);
                             expect(msg).to.eql({
                                 type: "join",
                                 actor: "jimmy@prosody/SockethubExample",
                                 context: "xmpp",
-                                target: "test@prosody"
+                                target: "test@prosody",
                             });
                             done();
-                        }
+                        },
                     );
                 });
             });

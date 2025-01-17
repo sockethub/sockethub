@@ -20,7 +20,7 @@
     $: objString = JSON.stringify(obj, null, 3);
 
     async function handleSubmit(): Promise<void> {
-        console.log('PASSWORD: ', password)
+        console.log("PASSWORD: ", password);
         if (password !== "unset") {
             obj.password = password;
         }

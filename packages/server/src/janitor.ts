@@ -113,7 +113,7 @@ export class Janitor {
         if (!platformInstance.global) {
             if (
                 (platformInstance.config.persist &&
-                !platformInstance.config.initialized) ||
+                    !platformInstance.config.initialized) ||
                 platformInstance.sessions.size === 0
             ) {
                 // either the platform failed to initialize, or there are no more sessions linked to it
