@@ -167,7 +167,7 @@ describe("Janitor", () => {
             const pi = getPlatformInstanceFake();
             pi.sessions = new Set();
             pi.flaggedForTermination = false;
-            pi.initialized = true;
+            pi.config.initialized = true;
             janitor.removeStaleSocketSessions = sandbox.stub();
             janitor.removeStalePlatformInstance = sandbox.stub();
             await janitor.performStaleCheck(pi);
