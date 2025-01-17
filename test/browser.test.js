@@ -160,13 +160,15 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
         });
 
         describe("XMPP", () => {
+            const actorId = "jimmy@prosody/SockethubExample";
+
             describe("Credentials", () => {
                 it("fires an empty callback", (done) => {
                     sc.socket.emit(
                         "credentials",
                         {
                             actor: {
-                                id: "jimmy@prosody/SockethubExample",
+                                id: actorId,
                                 type: "person",
                             },
                             context: "xmpp",
@@ -186,7 +188,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
             describe("ActivityStreams.create", () => {
                 it("successfully creates and stores an activity-object", () => {
                     const actor = {
-                        id: "jimmy@prosody/SockethubExample",
+                        id: actorId,
                         type: "person",
                         name: "Jimmy Userson",
                     };
@@ -199,7 +201,6 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
 
             describe("connect", () => {
                 it("is successful", (done) => {
-                    const actorId = "jimmy@prosody/SockethubExample";
                     sc.socket.emit(
                         "message",
                         {
@@ -224,6 +225,28 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                                 done();
                             }
                         },
+                    );
+                });
+            });
+            describe("Join", () => {
+                it("should be successful", (done) => {
+                    sc.socket.emit(
+                        "message",
+                        {
+                            type: "join",
+                            actor: actorId,
+                            context: "xmpp",
+                            target: "test@prosody"
+                        }, (msg) => {
+                            console.log("callback from join: ", msg);
+                            expect(msg).to.eql({
+                                type: "join",
+                                actor: "jimmy@prosody/SockethubExample",
+                                context: "xmpp",
+                                target: "test@prosody"
+                            });
+                            done();
+                        }
                     );
                 });
             });

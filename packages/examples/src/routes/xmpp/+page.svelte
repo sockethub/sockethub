@@ -60,7 +60,8 @@
     <p>Example for the XMPP platform</p>
 </Intro>
 
-<div class="pb-4">
+<ActivityActor {actor} {state} />
+<div class="w-full pb-4">
     <label for="actor-id-input" class="pr-3">Actor ID</label>
     <input
         id="actor-id-input"
@@ -70,7 +71,7 @@
     />
 </div>
 
-<ActivityActor {actor} {state} />
+
 <Credentials context="xmpp" {credentials} {actor} {state} />
 
 <div>
