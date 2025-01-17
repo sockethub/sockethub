@@ -46,7 +46,6 @@ export interface MessageFromParent extends Array<string | unknown> {
 export default class PlatformInstance {
     id: string;
     flaggedForTermination = false;
-    initialized = false;
     queue: JobQueue;
     JobQueue: typeof JobQueue;
     getSocket: typeof getSocket;
@@ -265,11 +264,12 @@ export default class PlatformInstance {
                     `critical job type ${job.msg.type} failed, flagging for termination`,
                 );
                 await this.queue.pause();
-                this.initialized = false;
+                this.config.initialized = false;
                 this.flaggedForTermination = true;
             } else {
+                this.debug(`persistent platform initialized`);
                 await this.queue.resume();
-                this.initialized = true;
+                this.config.initialized = true;
                 this.flaggedForTermination = false;
             }
         }

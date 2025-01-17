@@ -38,7 +38,11 @@ export default class XMPP {
     constructor(session) {
         session = typeof session === "object" ? session : {};
         this.id = session.id; // actor
-        this.initialized = false;
+        this.config = {
+            persist: true,
+            initialized: false,
+            requireCredentials: ["connect"],
+        };
         this.debug = session.debug;
         this.sendToClient = session.sendToClient;
         this.__forceDisconnect = false;
@@ -100,14 +104,6 @@ export default class XMPP {
         return PlatformSchema;
     }
 
-    get config() {
-        return {
-            persist: true,
-            requireCredentials: ["connect"],
-            initialized: false,
-        };
-    }
-
     /**
      * Connect to the XMPP server.
      *
@@ -132,7 +128,7 @@ export default class XMPP {
         if (this.__client) {
             // TODO verify client is actually connected
             this.debug("client connection already exists for " + job.actor.id);
-            this.initialized = true;
+            this.config.initialized = true;
             return done();
         }
         this.debug("connect called for " + job.actor.id);
@@ -148,7 +144,7 @@ export default class XMPP {
             .then(() => {
                 // connected
                 this.debug("connection successful");
-                this.initialized = true;
+                this.config.initialized = true;
                 this.__registerHandlers();
                 return done();
             })

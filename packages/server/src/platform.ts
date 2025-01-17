@@ -52,7 +52,7 @@ const platform: PlatformInterface = await (async () => {
     const PlatformModule = await import(`@sockethub/platform-${platformName}`);
     console.log(PlatformModule.default);
     const p = new PlatformModule.default(platformSession) as PlatformInterface;
-    logger(`platform handler initialized for ${platformName} ${identifier}`);
+    logger(`platform handler loaded for ${platformName} ${identifier}`);
     return p as PlatformInterface;
 })();
 
@@ -154,7 +154,6 @@ function getJobHandler(): JobHandler {
                 platform.config.persist &&
                 !platform.config.initialized
             ) {
-                console.log(platform.config);
                 reject(
                     new Error(
                         `${job.msg.type} called on uninitialized platform`,
