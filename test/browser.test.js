@@ -238,7 +238,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                             context: "xmpp",
                             target: {
                                 type: "room",
-                                id: "test@prosody"
+                                id: "test@prosody",
                             },
                         },
                         (msg) => {
