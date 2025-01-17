@@ -236,7 +236,10 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                             type: "join",
                             actor: actorId,
                             context: "xmpp",
-                            target: "test@prosody",
+                            target: {
+                                type: "room",
+                                id: "test@prosody"
+                            },
                         },
                         (msg) => {
                             console.log("callback from join: ", msg);
