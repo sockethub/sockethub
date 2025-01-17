@@ -50,7 +50,6 @@ const platformSession: PlatformSession = {
 
 const platform: PlatformInterface = await (async () => {
     const PlatformModule = await import(`@sockethub/platform-${platformName}`);
-    console.log(PlatformModule.default);
     const p = new PlatformModule.default(platformSession) as PlatformInterface;
     logger(`platform handler loaded for ${platformName} ${identifier}`);
     return p as PlatformInterface;

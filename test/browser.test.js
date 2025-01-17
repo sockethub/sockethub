@@ -244,10 +244,62 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                         (msg) => {
                             console.log("callback from join: ", msg);
                             expect(msg).to.eql({
+                                id: "2",
                                 type: "join",
-                                actor: "jimmy@prosody/SockethubExample",
+                                actor: {
+                                    id: actorId,
+                                    name: actorId,
+                                    type: "person",
+                                },
                                 context: "xmpp",
-                                target: "test@prosody",
+                                target: {
+                                    id: "test@prosody",
+                                    name: "test@prosody",
+                                    type: "room",
+                                },
+                            });
+                            done();
+                        },
+                    );
+                });
+            });
+            describe("Send", () => {
+                it("should be successful", (done) => {
+                    sc.socket.emit(
+                        "message",
+                        {
+                            type: "send",
+                            actor: actorId,
+                            context: "xmpp",
+                            object: {
+                                type: "message",
+                                content: "Hello, world!",
+                            },
+                            target: {
+                                type: "room",
+                                id: "test@prosody",
+                            },
+                        },
+                        (msg) => {
+                            console.log("callback from send: ", msg);
+                            expect(msg).to.eql({
+                                id: "3",
+                                type: "send",
+                                actor: {
+                                    id: actorId,
+                                    name: actorId,
+                                    type: "person",
+                                },
+                                context: "xmpp",
+                                object: {
+                                    type: "message",
+                                    content: "Hello, world!",
+                                },
+                                target: {
+                                    id: "test@prosody",
+                                    name: "test@prosody",
+                                    type: "room",
+                                },
                             });
                             done();
                         },
