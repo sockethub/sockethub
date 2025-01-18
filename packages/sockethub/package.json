@@ -42,11 +42,11 @@
         "@sockethub/server": "workspace:^"
     },
     "scripts": {
-        "build": "node build.js && test -f sockethub.config.json",
-        "dev": "DEBUG=sockethub* ./bin/sockethub --examples -c sockethub.config.json",
-        "start": "DEBUG=sockethub* ./bin/sockethub -c sockethub.config.json"
+        "build": "node build.js",
+        "dev": "DEBUG=sockethub* ./bin/sockethub --examples",
+        "start": "DEBUG=sockethub* ./bin/sockethub"
     },
     "engines": {
-        "node": ">= 16"
+        "node": ">= 18"
     }
 }

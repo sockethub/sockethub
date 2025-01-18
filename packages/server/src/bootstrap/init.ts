@@ -53,18 +53,27 @@ function printSettingsInfo(version, platforms) {
 }
 
 let initCalled = false;
+let initWaitCount = 0;
+let cancelWait: NodeJS.Timeout;
 export default async function getInitObject(
     initFunc = __loadInit,
 ): Promise<IInitObject> {
     return new Promise((resolve, reject) => {
         if (initCalled) {
-            setTimeout(() => {
-                if (!init) {
-                    reject("failed to initialize");
-                } else {
-                    resolve(init);
-                }
-            }, 500);
+            if (init) { resolve(init); }
+            else if (!cancelWait) {
+                cancelWait = setInterval(() => {
+                    if (!init) {
+                        if (initWaitCount > 10) {
+                            reject("failed to initialize");
+                        }
+                        initWaitCount++;
+                    } else {
+                        clearInterval(cancelWait);
+                        resolve(init);
+                    }
+                }, 500);
+            }
         } else {
             initCalled = true;
             if (init) {

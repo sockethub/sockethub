@@ -55,7 +55,10 @@ class Sockethub {
             this.status = true;
         }
 
-        const init = await getInitObject();
+        const init = await getInitObject().catch((err) => {
+            log(err);
+            process.exit(1);
+        });
 
         this.processManager = new ProcessManager(
             this.parentId,
