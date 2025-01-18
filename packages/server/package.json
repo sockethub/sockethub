@@ -40,7 +40,7 @@
         "@sockethub/crypto": "workspace:^",
         "@sockethub/data-layer": "workspace:^",
         "@sockethub/schemas": "workspace:^",
-        "body-parser": "1.20.2",
+        "body-parser": "1.20.3",
         "debug": "4.3.4",
         "ejs": "3.1.10",
         "express": "4.19.2",

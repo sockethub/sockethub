@@ -39,7 +39,6 @@ export class Config {
                 alias: "redis.url",
             },
         });
-        nconf.env();
 
         // get value of flags defined by any command-line params
         const examples = nconf.get("examples");
@@ -47,16 +46,18 @@ export class Config {
         // Load the main config
         let configFile = nconf.get("config");
         if (configFile) {
+            configFile = path.resolve(configFile);
             // eslint-disable-next-line security/detect-non-literal-fs-filename
             if (!fs.existsSync(configFile)) {
                 throw new Error(`Config file not found: ${configFile}`);
             }
+            log(`reading config file at ${configFile}`);
+            nconf.file(configFile);
         } else {
-            throw new Error(`No config file specified`);
+            log('No config file specified, using defaults');
+            console.log('No config file specified, using defaults');
+            nconf.use('memory');
         }
-        configFile = path.resolve(configFile);
-        log(`reading config file at ${configFile}`);
-        nconf.file(configFile);
 
         // only override config file if explicitly mentioned in command-line params
         nconf.set(
