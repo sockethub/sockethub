@@ -41,7 +41,7 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: ${{ matrix.node-version }}
-            - run: npm install -g pnpm@8.15.7
+            - run: npm install -g pnpm@9.15.4
             - run: npm install -g karma
             - run: pnpm install
             - run: pnpm build
@@ -51,7 +51,7 @@ jobs:
             - run: sleep 5
 
             - name: Verify Sockethub is listening externally
-              run: nc -zv localhost 10650
+              run: nc -zv localhost 10550
 
             - name: Verify Redis is listening
               run: nc -zv localhost 10651
