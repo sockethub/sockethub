@@ -54,9 +54,9 @@ export class Config {
             log(`reading config file at ${configFile}`);
             nconf.file(configFile);
         } else {
-            log('No config file specified, using defaults');
-            console.log('No config file specified, using defaults');
-            nconf.use('memory');
+            log("No config file specified, using defaults");
+            console.log("No config file specified, using defaults");
+            nconf.use("memory");
         }
 
         // only override config file if explicitly mentioned in command-line params
