@@ -4,7 +4,7 @@ services:
         environment:
             - REDIS_URL=redis://redis:6379
         ports:
-            - 10550:10550
+            - "10550:10550"
         networks:
             - sockethub-net
         depends_on:
@@ -12,7 +12,7 @@ services:
     redis:
         image: redis
         ports:
-            - 10651:6379
+            - "16379:6379"
         networks:
             - sockethub-net
     prosody:

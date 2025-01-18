@@ -54,7 +54,7 @@ jobs:
               run: nc -zv localhost 10550
 
             - name: Verify Redis is listening
-              run: nc -zv localhost 10651
+              run: nc -zv localhost 16379
 
             - name: Redis Integration Tests
               run: pnpm integration:redis:run

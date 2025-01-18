@@ -25,8 +25,5 @@
         "host": "localhost",
         "port": 10550,
         "path": "/"
-    },
-    "redis": {
-        "url": "redis://redis:6379"
     }
 }

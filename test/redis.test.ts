@@ -27,7 +27,7 @@ describe("CredentialsStore", () => {
     let store: CredentialsStore;
     it("initializes", () => {
         store = new CredentialsStore("foo", "bar", testSecret, {
-            url: "redis://localhost:10651",
+            url: "redis://localhost:16379",
         });
     });
 
@@ -64,7 +64,7 @@ describe("connect and disconnect", () => {
             let i;
             beforeEach("init", () => {
                 i = new o.class("testid", "sessionid", testSecret, {
-                    url: "redis://localhost:10651",
+                    url: "redis://localhost:16379",
                 });
                 if (o.name === "worker") {
                     i.init();
@@ -96,10 +96,10 @@ describe("JobQueue", () => {
 
     beforeEach("initialized", () => {
         queue = new JobQueue("testid", "sessionid", testSecret, {
-            url: "redis://localhost:10651",
+            url: "redis://localhost:16379",
         });
         worker = new JobWorker("testid", "sessionid", testSecret, {
-            url: "redis://localhost:10651",
+            url: "redis://localhost:16379",
         });
     });
 
