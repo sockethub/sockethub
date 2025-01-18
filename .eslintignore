@@ -9,3 +9,4 @@ build
 !.env.example
 pnpm-lock.yaml
 packages/platform-irc/src/octal-hack.js
+packages/server/res
