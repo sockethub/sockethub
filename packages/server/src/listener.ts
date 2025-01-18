@@ -58,7 +58,13 @@ class Listener {
             }),
         );
         app.use(express.static(`${__dirname}/../res/examples/`));
-        const examplesIndex = path.resolve(__dirname, "..", "res", "examples", "index.html");
+        const examplesIndex = path.resolve(
+            __dirname,
+            "..",
+            "res",
+            "examples",
+            "index.html",
+        );
         app.get("*", (req, res) => {
             res.sendFile(examplesIndex);
         });
