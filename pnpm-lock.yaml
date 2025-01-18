@@ -600,6 +600,9 @@ importers:
       '@sockethub/data-layer':
         specifier: workspace:^
         version: link:../data-layer
+      '@sockethub/examples':
+        specifier: workspace:^
+        version: link:../examples
       '@sockethub/schemas':
         specifier: workspace:^
         version: link:../schemas
@@ -625,9 +628,6 @@ importers:
         specifier: 4.7.5
         version: 4.7.5(bufferutil@4.0.8)(utf-8-validate@5.0.10)
     optionalDependencies:
-      '@sockethub/examples':
-        specifier: workspace:^
-        version: link:../examples
       '@sockethub/platform-dummy':
         specifier: workspace:^
         version: link:../platform-dummy
@@ -695,9 +695,6 @@ importers:
 
   packages/sockethub:
     dependencies:
-      '@sockethub/examples':
-        specifier: workspace:^
-        version: link:../examples
       '@sockethub/platform-dummy':
         specifier: workspace:^
         version: link:../platform-dummy
