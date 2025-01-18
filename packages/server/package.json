@@ -57,7 +57,7 @@
         "coverage": "c8 check-coverage --statements 85 --branches 80 --functions 70 --lines 85",
         "start": "DEBUG=sockethub* ./bin/sockethub",
         "dev": "pnpm build && DEBUG=sockethub* ./bin/sockethub --examples",
-        "build": "pnpm clean && tsc && cp ./src/defaults.json ./dist/defaults.json && cp -r node_modules/@sockethub/examples/build dist/examples && mkdir dist/http && cp node_modules/@sockethub/client/dist/* dist/http/ && cp node_modules/socket.io/client-dist/socket.io.js dist/http/socket.io.js && cp -r dist/http src/http"
+        "build": "pnpm clean && tsc && cp ./src/defaults.json ./dist/defaults.json && rm -rf res/ && mkdir -p res && cp -r node_modules/@sockethub/examples/build res/examples && cp node_modules/@sockethub/client/dist/* res/ && cp node_modules/socket.io/client-dist/socket.io.js res/socket.io.js"
     },
     "engines": {
         "node": ">=18",

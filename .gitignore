@@ -1,3 +1,4 @@
+packages/server/res
 **/package-lock.json
 node_modules
 build

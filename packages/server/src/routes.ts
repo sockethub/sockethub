@@ -12,20 +12,29 @@ export interface IRoutePaths {
 export const basePaths: IRoutePaths = {
     "/sockethub-client.js": path.resolve(
         __dirname,
-        "http",
+        "..",
+        "res",
         "sockethub-client.js",
     ),
     "/sockethub-client.min.js": path.resolve(
         __dirname,
-        "http",
-        "sockethub-client.esm.min.js",
+        "..",
+        "res",
+        "sockethub-client.min.js",
     ),
     "/sockethub-client.js.map": path.resolve(
         __dirname,
-        "http",
+        "..",
+        "res",
         "sockethub-client.js.map",
     ),
-    "/socket.io.js": path.resolve(__dirname, "http", "socket.io.js"),
+    "/sockethub-client.min.js.map": path.resolve(
+        __dirname,
+        "..",
+        "res",
+        "sockethub-client.min.js.map",
+    ),
+    "/socket.io.js": path.resolve(__dirname, "..", "res", "socket.io.js"),
 };
 
 function prepFileRoutes(pathMap) {
