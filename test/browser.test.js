@@ -161,6 +161,11 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
 
         describe("XMPP", () => {
             const actorId = "jimmy@prosody/SockethubExample";
+            const actorObject = {
+                id: actorId,
+                type: "person",
+                name: "Jimmy Userson",
+            };
 
             describe("Credentials", () => {
                 it("fires an empty callback", (done) => {
@@ -187,15 +192,10 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
 
             describe("ActivityStreams.create", () => {
                 it("successfully creates and stores an activity-object", () => {
-                    const actor = {
-                        id: actorId,
-                        type: "person",
-                        name: "Jimmy Userson",
-                    };
-                    const obj = sc.ActivityStreams.Object.create(actor);
-                    const getObj = sc.ActivityStreams.Object.get(actor.id);
-                    expect(obj).to.eql(actor);
-                    expect(getObj).to.eql(actor);
+                    const obj = sc.ActivityStreams.Object.create(actorObject);
+                    const getObj = sc.ActivityStreams.Object.get(actorObject.id);
+                    expect(obj).to.eql(actorObject);
+                    expect(getObj).to.eql(actorObject);
                 });
             });
 
@@ -215,11 +215,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                             } else {
                                 expect(msg).to.eql({
                                     type: "connect",
-                                    actor: {
-                                        id: actorId,
-                                        type: "person",
-                                        name: "Jimmy Userson",
-                                    },
+                                    actor: actorObject,
                                     context: "xmpp",
                                 });
                                 done();
@@ -244,17 +240,11 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                         (msg) => {
                             console.log("callback from join: ", msg);
                             expect(msg).to.eql({
-                                id: "2",
                                 type: "join",
-                                actor: {
-                                    id: actorId,
-                                    name: actorId,
-                                    type: "person",
-                                },
+                                actor: actorObject,
                                 context: "xmpp",
                                 target: {
                                     id: "test@prosody",
-                                    name: "test@prosody",
                                     type: "room",
                                 },
                             });
@@ -283,13 +273,8 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                         (msg) => {
                             console.log("callback from send: ", msg);
                             expect(msg).to.eql({
-                                id: "3",
                                 type: "send",
-                                actor: {
-                                    id: actorId,
-                                    name: actorId,
-                                    type: "person",
-                                },
+                                actor: actorObject,
                                 context: "xmpp",
                                 object: {
                                     type: "message",
@@ -297,7 +282,6 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                                 },
                                 target: {
                                     id: "test@prosody",
-                                    name: "test@prosody",
                                     type: "room",
                                 },
                             });

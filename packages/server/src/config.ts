@@ -3,6 +3,7 @@ import debug from "debug";
 import * as fs from "fs";
 
 import { __dirname } from "./util.js";
+import path from "path";
 
 const log = debug("sockethub:server:bootstrap:config");
 const data: object = await import(__dirname + "/defaults.json", {
@@ -51,8 +52,10 @@ export class Config {
                 throw new Error(`Config file not found: ${configFile}`);
             }
         } else {
-            configFile = __dirname + "/../sockethub.config.json";
+            throw new Error(`No config file specified`);
         }
+        configFile = path.resolve(configFile);
+        log(`reading config file at ${configFile}`);
         nconf.file(configFile);
 
         // only override config file if explicitly mentioned in command-line params

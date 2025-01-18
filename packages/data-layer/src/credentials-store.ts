@@ -19,8 +19,12 @@ export async function verifySecureStore(config: RedisConfig): Promise<void> {
         redis: config,
     });
     await ss.init();
-    await ss.disconnect();
-    log("connection verified");
+    try {
+        await ss.disconnect();
+    } catch (_) {
+        log("ignoring disconnect results");
+    }
+    log("redis connection verified");
 }
 
 /**

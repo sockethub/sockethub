@@ -1,7 +1,12 @@
-version: "3.6"
 services:
     sockethub:
         build: .
+        ports:
+            - 10550:10550
+    sockethub-test:
+        build:
+            context: .
+            target: test
         ports:
             - 10650:10650
         networks:
