@@ -28,12 +28,7 @@ export const basePaths: IRoutePaths = {
         "http",
         "sockethub-client.js.map",
     ),
-    "/socket.io.js": path.resolve(
-        __dirname,
-        "dist",
-        "http",
-        "socket.io.js",
-    ),
+    "/socket.io.js": path.resolve(__dirname, "dist", "http", "socket.io.js"),
 };
 
 function prepFileRoutes(pathMap) {
