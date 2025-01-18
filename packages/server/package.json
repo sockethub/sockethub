@@ -39,6 +39,7 @@
         "@sockethub/client": "workspace:^",
         "@sockethub/crypto": "workspace:^",
         "@sockethub/data-layer": "workspace:^",
+        "@sockethub/examples": "workspace:^",
         "@sockethub/schemas": "workspace:^",
         "body-parser": "1.20.3",
         "debug": "4.3.4",
@@ -56,7 +57,7 @@
         "coverage": "c8 check-coverage --statements 85 --branches 80 --functions 70 --lines 85",
         "start": "DEBUG=sockethub* ./bin/sockethub",
         "dev": "pnpm build && DEBUG=sockethub* ./bin/sockethub --examples",
-        "build": "pnpm clean && tsc && cp ./src/defaults.json ./dist/defaults.json"
+        "build": "pnpm clean && tsc && cp ./src/defaults.json ./dist/defaults.json && cp -r node_modules/@sockethub/examples/build dist/examples"
     },
     "engines": {
         "node": ">=18",
@@ -82,7 +83,6 @@
         "web-streams-polyfill": "^3.3.3"
     },
     "optionalDependencies": {
-        "@sockethub/examples": "workspace:^",
         "@sockethub/platform-dummy": "workspace:^",
         "@sockethub/platform-feeds": "workspace:^",
         "@sockethub/platform-irc": "workspace:^",

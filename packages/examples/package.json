@@ -2,6 +2,9 @@
     "name": "@sockethub/examples",
     "version": "1.0.0-alpha.4",
     "packageManager": "pnpm@8.0.0",
+    "files": [
+        "build"
+    ],
     "keywords": [
         "sockethub",
         "example",

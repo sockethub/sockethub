@@ -51,26 +51,14 @@ class Listener {
     private addExamplesRoutes(app) {
         // eslint-disable-next-line security/detect-non-literal-fs-filename
         writeFileSync(
-            `${__dirname}/../node_modules/@sockethub/examples/build/config.json`,
+            `${__dirname}/examples/config.json`,
             JSON.stringify({
                 sockethub: config.get("sockethub"),
                 public: config.get("public"),
             }),
         );
-        app.use(
-            express.static(
-                `${__dirname}/../node_modules/@sockethub/examples/build/`,
-            ),
-        );
-        const examplesIndex = path.resolve(
-            __dirname,
-            "..",
-            "node_modules",
-            "@sockethub",
-            "examples",
-            "build",
-            "index.html",
-        );
+        app.use(express.static(`${__dirname}/examples/`));
+        const examplesIndex = path.resolve(__dirname, "examples", "index.html");
         app.get("*", (req, res) => {
             res.sendFile(examplesIndex);
         });

@@ -55,13 +55,16 @@ function printSettingsInfo(version, platforms) {
 let initCalled = false;
 let initWaitCount = 0;
 let cancelWait: NodeJS.Timeout;
+const resolveQueue = [];
+
 export default async function getInitObject(
     initFunc = __loadInit,
 ): Promise<IInitObject> {
     return new Promise((resolve, reject) => {
         if (initCalled) {
-            if (init) { resolve(init); }
-            else if (!cancelWait) {
+            if (init) {
+                resolve(init);
+            } else if (!cancelWait) {
                 cancelWait = setInterval(() => {
                     if (!init) {
                         if (initWaitCount > 10) {
@@ -71,8 +74,13 @@ export default async function getInitObject(
                     } else {
                         clearInterval(cancelWait);
                         resolve(init);
+                        for (const resolve of resolveQueue) {
+                            resolve(init);
+                        }
                     }
-                }, 500);
+                }, 1000);
+            } else {
+                resolveQueue.push(resolve);
             }
         } else {
             initCalled = true;
