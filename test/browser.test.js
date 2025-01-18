@@ -193,7 +193,9 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
             describe("ActivityStreams.create", () => {
                 it("successfully creates and stores an activity-object", () => {
                     const obj = sc.ActivityStreams.Object.create(actorObject);
-                    const getObj = sc.ActivityStreams.Object.get(actorObject.id);
+                    const getObj = sc.ActivityStreams.Object.get(
+                        actorObject.id,
+                    );
                     expect(obj).to.eql(actorObject);
                     expect(getObj).to.eql(actorObject);
                 });
