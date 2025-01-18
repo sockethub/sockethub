@@ -17,4 +17,4 @@ RUN pnpm deploy --filter=sockethub --prod /deploy
 FROM node:${node_version}-slim AS prod
 COPY --from=build /deploy /app
 WORKDIR /app
-CMD DEBUG=secure-store*,sockethub* /app/bin/sockethub -c sockethub.config.json --host 0.0.0.0
+CMD DEBUG=secure-store*,sockethub* /app/bin/sockethub --host 0.0.0.0
