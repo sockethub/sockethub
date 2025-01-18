@@ -604,8 +604,8 @@ importers:
         specifier: workspace:^
         version: link:../schemas
       body-parser:
-        specifier: 1.20.2
-        version: 1.20.2
+        specifier: 1.20.3
+        version: 1.20.3
       debug:
         specifier: 4.3.4
         version: 4.3.4(supports-color@8.1.1)
@@ -10620,7 +10620,7 @@ snapshots:
   engine.io-client@6.4.0(bufferutil@4.0.8)(utf-8-validate@5.0.10):
     dependencies:
       '@socket.io/component-emitter': 3.1.2
-      debug: 4.3.7
+      debug: 4.3.4(supports-color@8.1.1)
       engine.io-parser: 5.0.7
       ws: 8.11.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       xmlhttprequest-ssl: 2.0.0
@@ -11951,7 +11951,7 @@ snapshots:
     dependencies:
       amdefine: 1.0.1
       bluebird: 3.7.2
-      body-parser: 1.20.2
+      body-parser: 1.20.3
       express: 4.19.2
       node-fetch: 3.3.2
       requirejs: 2.3.7
