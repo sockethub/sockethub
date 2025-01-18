@@ -1,5 +1,4 @@
 ARG node_version=22
-ARG config=/app/sockethub.config.json
 FROM node:${node_version} AS base
 ARG node_version
 ENV PNPM_HOME="/pnpm"
@@ -15,14 +14,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm run build
 RUN pnpm deploy --filter=sockethub --prod /deploy
 
-FROM base AS test
-COPY --from=build /src /app
-WORKDIR /app
-EXPOSE 10650
-CMD DEBUG=secure-store*,sockethub* /app/packages/sockethub/bin/sockethub --examples --host 0.0.0.0 -c /app/test/sockethub.config.docker.json
-
-FROM base AS prod
+FROM node:${node_version}-slim AS prod
 COPY --from=build /deploy /app
 WORKDIR /app
-EXPOSE 10550
-CMD DEBUG=secure-store*,sockethub* /app/packages/sockethub/bin/sockethub -c ${config} --host 0.0.0.0
+CMD DEBUG=secure-store*,sockethub* /app/bin/sockethub -c sockethub.config.json --host 0.0.0.0

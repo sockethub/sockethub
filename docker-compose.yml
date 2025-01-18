@@ -1,19 +1,14 @@
 services:
     sockethub:
         build: .
+        environment:
+            - REDIS_URL=redis://redis:6379
         ports:
             - 10550:10550
-    sockethub-test:
-        build:
-            context: .
-            target: test
-        ports:
-            - 10650:10650
         networks:
             - sockethub-net
         depends_on:
             - redis
-            - prosody
     redis:
         image: redis
         ports:

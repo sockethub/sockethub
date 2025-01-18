@@ -9,7 +9,7 @@
         "secret": 1234567890
     },
     "sockethub": {
-        "port": 10650,
+        "port": 10550,
         "host": "localhost",
         "path": "/sockethub"
     },
