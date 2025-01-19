@@ -95,7 +95,7 @@ export class IncomingHandlers {
             context: "xmpp",
             type: "update",
             actor: {
-                type: "person",
+                type: stanza.attrs.from.includes("/") ? "person" : "room",
                 id: stanza.attrs.from,
             },
             object: {

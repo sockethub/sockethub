@@ -12,11 +12,11 @@ export const stanzas = [
     ],
     [
         `presence error 2`,
-        `<presence type="error" to="hermes@5apps.com/hyperchannel" from="xmpp.5apps.com/#watercooler" xmlns:stream="http://etherx.jabber.org/streams"><error type="cancel"><not-allowed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/><text xmlns="urn:ietf:params:xml:ns:xmpp-stanzas">Communication with remote domains is not enabled</text></error></presence>`,
+        `<presence type="error" to="hermes@5apps.com/hyperchannel" from="watercooler@xmpp.5apps.com" xmlns:stream="http://etherx.jabber.org/streams"><error type="cancel"><not-allowed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/><text xmlns="urn:ietf:params:xml:ns:xmpp-stanzas">Communication with remote domains is not enabled</text></error></presence>`,
         {
             context: "xmpp",
             type: "update",
-            actor: { id: "xmpp.5apps.com/#watercooler", type: "room" },
+            actor: { id: "watercooler@xmpp.5apps.com", type: "room" },
             error:
                 '<error type="cancel"><not-allowed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/>' +
                 '<text xmlns="urn:ietf:params:xml:ns:xmpp-stanzas">Communication with remote domains is not enabled</text>' +
@@ -30,18 +30,18 @@ export const stanzas = [
         {
             context: "xmpp",
             type: "update",
-            actor: { id: "baz@bag.org", type: "person" },
+            actor: { id: "baz@bag.org", type: "room" },
             target: { id: "foo@bar.org", type: "person" },
             object: { type: "presence", presence: "online" },
         },
     ],
     [
         `presence body`,
-        `<presence to="foo@bar.org" from="baz@bag.org"><show>online</show> <status>away message!</status></presence>`,
+        `<presence to="foo@bar.org" from="baz@bag.org/dude"><show>online</show> <status>away message!</status></presence>`,
         {
             context: "xmpp",
             type: "update",
-            actor: { id: "baz@bag.org", type: "person" },
+            actor: { id: "baz@bag.org/dude", type: "person" },
             target: { id: "foo@bar.org", type: "person" },
             object: {
                 type: "presence",
