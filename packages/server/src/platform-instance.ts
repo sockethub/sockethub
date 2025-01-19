@@ -1,6 +1,8 @@
 import { ChildProcess, fork } from "child_process";
 import { join } from "path";
-import { debug } from "debug";
+import debug from "debug";
+import nconf from "nconf";
+
 import {
     ActivityStream,
     InternalActivityStream,
@@ -11,9 +13,9 @@ import {
 import { JobQueue, JobDataDecrypted } from "@sockethub/data-layer";
 import type { Socket } from "socket.io";
 
-import config from "./config";
-import { getSocket } from "./listener";
-import nconf from "nconf";
+import config from "./config.js";
+import { getSocket } from "./listener.js";
+import { __dirname } from "./util.js";
 
 // collection of platform instances, stored by `id`
 export const platformInstances = new Map<string, PlatformInstance>();
@@ -44,7 +46,6 @@ export interface MessageFromParent extends Array<string | unknown> {
 export default class PlatformInstance {
     id: string;
     flaggedForTermination = false;
-    initialized = false;
     queue: JobQueue;
     JobQueue: typeof JobQueue;
     getSocket: typeof getSocket;
@@ -263,11 +264,12 @@ export default class PlatformInstance {
                     `critical job type ${job.msg.type} failed, flagging for termination`,
                 );
                 await this.queue.pause();
-                this.initialized = false;
+                this.config.initialized = false;
                 this.flaggedForTermination = true;
             } else {
+                this.debug(`persistent platform initialized`);
                 await this.queue.resume();
-                this.initialized = true;
+                this.config.initialized = true;
                 this.flaggedForTermination = false;
             }
         }

@@ -1,18 +1,18 @@
-version: "3.6"
 services:
     sockethub:
         build: .
+        environment:
+            - REDIS_URL=redis://redis:6379
         ports:
-            - 10650:10650
+            - "10550:10550"
         networks:
             - sockethub-net
         depends_on:
             - redis
-            - prosody
     redis:
         image: redis
         ports:
-            - 10651:6379
+            - "16379:6379"
         networks:
             - sockethub-net
     prosody:

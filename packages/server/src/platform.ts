@@ -6,7 +6,7 @@ import {
     CredentialsObject,
     PlatformInterface,
 } from "@sockethub/schemas";
-import crypto, { getPlatformId } from "@sockethub/crypto";
+import { crypto, getPlatformId } from "@sockethub/crypto";
 import {
     CredentialsStore,
     JobWorker,
@@ -18,27 +18,42 @@ import { JobHandler } from "@sockethub/data-layer";
 const parentId = process.argv[2];
 const platformName = process.argv[3];
 let identifier = process.argv[4];
+const redisUrl = process.env.REDIS_URL;
+
 const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
 let logger = debug(loggerPrefix);
-
-const redisUrl = process.env.REDIS_URL;
-// eslint-disable-next-line @typescript-eslint/no-var-requires, security/detect-non-literal-require
-const PlatformModule = require(`@sockethub/platform-${platformName}`);
 
 let jobWorker: JobWorker;
 let jobWorkerStarted = false;
 let parentSecret1: string, parentSecret2: string;
 
-logger(`platform handler initialized for ${platformName} ${identifier}`);
+logger(`platform handler initializing for ${platformName} ${identifier}`);
 
 interface SecretInterface {
     parentSecret1: string;
     parentSecret2: string;
 }
+
 interface SecretFromParent extends Array<string | SecretInterface> {
     0: string;
     1: SecretInterface;
 }
+
+/**
+ * Initialize platform module
+ */
+const platformSession: PlatformSession = {
+    debug: debug(`sockethub:platform:${platformName}:${identifier}`),
+    sendToClient: getSendFunction("message"),
+    updateActor: updateActor,
+};
+
+const platform: PlatformInterface = await (async () => {
+    const PlatformModule = await import(`@sockethub/platform-${platformName}`);
+    const p = new PlatformModule.default(platformSession) as PlatformInterface;
+    logger(`platform handler loaded for ${platformName} ${identifier}`);
+    return p as PlatformInterface;
+})();
 
 /**
  * Handle any uncaught errors from the platform by alerting the worker and shutting down.
@@ -65,16 +80,6 @@ process.on("message", async (data: SecretFromParent) => {
         throw new Error("received unknown command from parent thread");
     }
 });
-
-/**
- * Initialize platform module
- */
-const platformSession: PlatformSession = {
-    debug: debug(`sockethub:platform:${platformName}:${identifier}`),
-    sendToClient: getSendFunction("message"),
-    updateActor: updateActor,
-};
-const platform: PlatformInterface = new PlatformModule(platformSession);
 
 /**
  * Returns a function used to handle completed jobs from the platform code (the `done` callback).
@@ -126,7 +131,12 @@ function getJobHandler(): JobHandler {
                 // this method requires credentials and should be called even if the platform is not
                 // yet initialized, because they need to authenticate before they are initialized.
                 credentialStore
-                    .get(job.msg.actor.id, platform.credentialsHash)
+                    .get(
+                        job.msg.actor.id,
+                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                        // @ts-ignore
+                        platform.credentialsHash,
+                    )
                     .then((credentials) => {
                         platform[job.msg.type](
                             job.msg,
@@ -183,7 +193,11 @@ async function updateActor(credentials: CredentialsObject): Promise<void> {
         `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
     );
     logger = debug(`sockethub:platform:${identifier}`);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     platform.credentialsHash = crypto.objectHash(credentials.object);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     platform.debug = debug(`sockethub:platform:${platformName}:${identifier}`);
     process.send(["updateActor", undefined, identifier]);
     await startQueueListener(true);

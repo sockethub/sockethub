@@ -1,4 +1,3 @@
-/* eslint-disable  @typescript-eslint/no-var-requires */
 import {
     ActivityStream,
     Logger,
@@ -9,7 +8,9 @@ import {
     PlatformSession,
 } from "@sockethub/schemas";
 
-class Dummy implements PlatformInterface {
+import packageJSON from "../package.json" with { type: "json" };
+
+export default class Dummy implements PlatformInterface {
     debug: Logger;
     config: PlatformConfig = {
         persist: false,
@@ -22,7 +23,7 @@ class Dummy implements PlatformInterface {
     get schema(): PlatformSchemaStruct {
         return {
             name: "dummy",
-            version: require("../package.json").version,
+            version: packageJSON.version,
             messages: {
                 required: ["type"],
                 properties: {
@@ -52,5 +53,3 @@ class Dummy implements PlatformInterface {
         cb();
     }
 }
-
-module.exports = Dummy;

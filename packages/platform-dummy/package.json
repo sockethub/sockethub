@@ -2,17 +2,22 @@
     "name": "@sockethub/platform-dummy",
     "description": "A sockethub platform dummy module",
     "version": "3.0.0-alpha.4",
+    "type": "module",
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
-    "main": "./dist/index.js",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist/"
+    ],
     "keywords": [
         "sockethub",
         "dummy"
     ],
     "devDependencies": {
-        "@types/node": "20.10.4",
         "@sockethub/schemas": "workspace:^",
+        "@types/node": "22.10.2",
         "typescript": "5.3.3"
     },
     "peerDependencies": {

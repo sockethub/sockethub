@@ -1,4 +1,4 @@
-import createActivityObject from "./create-activity-object";
+import createActivityObject from "./create-activity-object.js";
 
 describe("Middleware: createActivityObject", () => {
     it("Calls activity.Object.create with incoming data", (done) => {

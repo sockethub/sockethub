@@ -2,15 +2,12 @@
     "name": "@sockethub/crypto",
     "description": "Crypto functions and helpers for Sockethub",
     "version": "1.0.0-alpha.4",
+    "type": "module",
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "MIT",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
-    "files": [
-        "dist/",
-        "src/"
-    ],
     "keywords": [
         "sockethub",
         "messaging",
@@ -27,11 +24,11 @@
     "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
     "dependencies": {
         "@sockethub/schemas": "workspace:3.0.0-alpha.4",
-        "object-hash": "^3.0.0"
+        "object-hash": "3.0.0"
     },
     "scripts": {
         "clean": "rm -rf dist coverage",
-        "test": "c8 -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts && pnpm coverage",
+        "test": "NODE_OPTIONS='--import=tsx' c8 -x \"src/**/*.test.*\" mocha src/*.test.ts && pnpm coverage",
         "coverage": "c8 check-coverage --statements 90 --branches 85 --functions 80 --lines 90",
         "build": "tsc"
     },
@@ -42,14 +39,14 @@
         "@types/chai": "4.3.11",
         "@types/debug": "4.1.12",
         "@types/mocha": "10.0.6",
-        "@types/node": "20.10.5",
+        "@types/node": "22.10.2",
         "@types/object-hash": "3.0.6",
         "@types/sinon": "17.0.2",
         "c8": "8.0.1",
         "chai": "4.3.10",
         "mocha": "10.2.0",
         "sinon": "17.0.1",
-        "ts-node": "10.9.2",
+        "tsx": "4.7.2",
         "typescript": "5.3.3"
     }
 }

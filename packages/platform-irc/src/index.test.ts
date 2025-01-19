@@ -1,10 +1,15 @@
 import { expect } from "chai";
 
-import schemas, { ActivityStream, CredentialsObject } from "@sockethub/schemas";
+import {
+    ActivityStream,
+    CredentialsObject,
+    addPlatformSchema,
+    validatePlatformSchema,
+    validateCredentials,
+} from "@sockethub/schemas";
 import { GetClientCallback } from "./index";
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const IRC = require("./index");
+import IRC from "./index";
 
 const actor = {
     type: "person",
@@ -46,6 +51,7 @@ describe("Initialize IRC Platform", () => {
             updateActor: function async() {
                 return Promise.resolve();
             },
+            sendToClient: function () {},
         });
         platform.ircConnect = function (
             key: string,
@@ -62,10 +68,7 @@ describe("Initialize IRC Platform", () => {
             });
         };
         if (!loadedSchema) {
-            schemas.addPlatformSchema(
-                platform.schema.credentials,
-                `irc/credentials`,
-            );
+            addPlatformSchema(platform.schema.credentials, `irc/credentials`);
             loadedSchema = true;
         }
     });
@@ -91,17 +94,17 @@ describe("Initialize IRC Platform", () => {
     });
 
     it("schema format validation", () => {
-        expect(schemas.validatePlatformSchema(platform.schema)).to.equal("");
+        expect(validatePlatformSchema(platform.schema)).to.equal("");
     });
 
     describe("credential schema", () => {
         it("valid credentials", () => {
-            expect(schemas.validateCredentials(validCredentials)).to.equal("");
+            expect(validateCredentials(validCredentials)).to.equal("");
         });
 
         it("invalid credentials type", () => {
             expect(
-                schemas.validateCredentials({
+                validateCredentials({
                     context: "irc",
                     type: "credentials",
                     // @ts-expect-error test invalid params
@@ -116,7 +119,7 @@ describe("Initialize IRC Platform", () => {
         it("invalid credentials port", () => {
             expect(
                 // @ts-expect-error test invalid params
-                schemas.validateCredentials({
+                validateCredentials({
                     context: "irc",
                     type: "credentials",
                     object: {
@@ -131,7 +134,7 @@ describe("Initialize IRC Platform", () => {
         it("invalid credentials additional prop", () => {
             expect(
                 // @ts-expect-error test invalid params
-                schemas.validateCredentials({
+                validateCredentials({
                     context: "irc",
                     type: "credentials",
                     object: {

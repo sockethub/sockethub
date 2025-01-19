@@ -1,8 +1,9 @@
-import SecureStore from "secure-store-redis";
 import debug, { Debugger } from "debug";
-import crypto from "@sockethub/crypto";
-import { RedisConfig } from "./types";
+import SecureStore from "secure-store-redis";
+import { crypto } from "@sockethub/crypto";
 import { CredentialsObject } from "@sockethub/schemas";
+
+import { RedisConfig } from "./types.js";
 
 export interface CredentialsStoreInterface {
     get(
@@ -19,13 +20,13 @@ export async function verifySecureStore(config: RedisConfig): Promise<void> {
     });
     await ss.init();
     await ss.disconnect();
-    log("connection verified");
+    log("redis connection verified");
 }
 
 /**
  * Encapsulates the storing and fetching of credential objects.
  */
-export default class CredentialsStore implements CredentialsStoreInterface {
+export class CredentialsStore implements CredentialsStoreInterface {
     readonly uid: string;
     store: SecureStore;
     objectHash: (o: unknown) => string;

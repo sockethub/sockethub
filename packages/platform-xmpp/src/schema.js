@@ -1,6 +1,6 @@
-const PackageJSON = require("../package.json");
+import PackageJSON from "../package.json" with { type: "json" };
 
-const PlatformSchema = {
+export const PlatformSchema = {
     name: "xmpp",
     version: PackageJSON.version,
     messages: {
@@ -58,5 +58,3 @@ const PlatformSchema = {
         },
     },
 };
-
-module.exports = PlatformSchema;

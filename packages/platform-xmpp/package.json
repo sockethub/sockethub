@@ -3,6 +3,7 @@
     "description": "A sockethub platform module implementing XMPP functionality",
     "version": "5.0.0-alpha.4",
     "private": false,
+    "type": "module",
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
     "main": "src/index.js",
@@ -26,7 +27,7 @@
     },
     "devDependencies": {
         "@sockethub/schemas": "workspace:^",
-        "@xmpp/xml": "0.13.1",
+        "@xmpp/xml": "0.13.3",
         "c8": "8.0.1",
         "chai": "4.3.10",
         "jsdoc-to-markdown": "8.0.0",

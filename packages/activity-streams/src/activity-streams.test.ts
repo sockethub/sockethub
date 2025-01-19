@@ -1,4 +1,4 @@
-import ASFactory from "./activity-streams";
+import { ASFactory } from "./activity-streams";
 import chai from "chai";
 
 const assert = chai.assert;

@@ -1,7 +1,7 @@
 const EVENT_INCOMING = "incoming",
     EVENT_ERROR = "error";
 
-class ASTemplates {
+export class ASEmitter {
     constructor(events, server) {
         this.server = server;
         this.events = events;
@@ -274,5 +274,3 @@ class ASTemplates {
         });
     }
 }
-
-module.exports = ASTemplates;

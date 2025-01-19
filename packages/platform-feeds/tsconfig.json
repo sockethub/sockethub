@@ -1,13 +1,15 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
+        "esModuleInterop": true,
+        "target": "esnext",
+        "module": "esnext",
+        "lib": ["esnext", "DOM"],
         "allowJs": false,
+        "sourceMap": true,
         "outDir": "dist",
         "rootDir": "src",
-        "baseUrl": "/",
-        "sourceMap": true,
-        "sourceRoot": "/",
-        "mapRoot": "/"
+        "baseUrl": "/"
     },
     "include": ["src"],
     "exclude": ["**/*.test.ts"]

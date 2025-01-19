@@ -2,6 +2,7 @@
     "name": "@sockethub/server",
     "description": "A polyglot messaging service, server libraries",
     "version": "5.0.0-alpha.4",
+    "type": "module",
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
@@ -38,22 +39,25 @@
         "@sockethub/client": "workspace:^",
         "@sockethub/crypto": "workspace:^",
         "@sockethub/data-layer": "workspace:^",
+        "@sockethub/examples": "workspace:^",
         "@sockethub/schemas": "workspace:^",
-        "body-parser": "1.20.2",
+        "body-parser": "1.20.3",
         "debug": "4.3.4",
         "ejs": "3.1.10",
         "express": "4.19.2",
         "jquery": "3.7.1",
         "nconf": "0.12.1",
-        "socket.io": "4.7.2"
+        "socket.io": "4.7.5"
     },
     "scripts": {
         "clean": "rm -rf dist coverage",
-        "test": "c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts src/**/*.test.ts && pnpm coverage",
+        "test": "pnpm test:ts && pnpm test:js && pnpm coverage",
+        "test:ts": "NODE_OPTIONS='--import=tsx' c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha src/*.test.ts src/**/*.test.ts",
+        "test:js": "mocha dist/*.test.js dist/**/*.test.js",
         "coverage": "c8 check-coverage --statements 85 --branches 80 --functions 70 --lines 85",
         "start": "DEBUG=sockethub* ./bin/sockethub",
         "dev": "pnpm build && DEBUG=sockethub* ./bin/sockethub --examples",
-        "build": "pnpm clean && tsc && cp ./src/defaults.json ./dist/defaults.json"
+        "build": "pnpm clean && tsc && cp ./src/defaults.json ./dist/defaults.json && rm -rf res/ && mkdir -p res && cp -r node_modules/@sockethub/examples/build res/examples && cp node_modules/@sockethub/client/dist/* res/ && cp node_modules/socket.io/client-dist/socket.io.js res/socket.io.js"
     },
     "engines": {
         "node": ">=18",
@@ -67,19 +71,18 @@
         "@types/jquery": "3.5.29",
         "@types/mocha": "10.0.6",
         "@types/nconf": "0.10.6",
-        "@types/node": "20.10.5",
+        "@types/node": "22.10.2",
         "@types/sinon": "17.0.2",
         "c8": "8.0.1",
         "chai": "4.3.10",
         "jaribu": "2.2.3",
-        "mocha": "10.2.0",
+        "mocha": "10.4.0",
         "sinon": "17.0.1",
-        "ts-node": "10.9.2",
+        "tsx": "^4.19.2",
         "typescript": "5.3.3",
-        "web-streams-polyfill": "^3.2.1"
+        "web-streams-polyfill": "^3.3.3"
     },
     "optionalDependencies": {
-        "@sockethub/examples": "workspace:^",
         "@sockethub/platform-dummy": "workspace:^",
         "@sockethub/platform-feeds": "workspace:^",
         "@sockethub/platform-irc": "workspace:^",

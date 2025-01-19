@@ -160,13 +160,20 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
         });
 
         describe("XMPP", () => {
+            const actorId = "jimmy@prosody/SockethubExample";
+            const actorObject = {
+                id: actorId,
+                type: "person",
+                name: "Jimmy Userson",
+            };
+
             describe("Credentials", () => {
                 it("fires an empty callback", (done) => {
                     sc.socket.emit(
                         "credentials",
                         {
                             actor: {
-                                id: "jimmy@prosody/SockethubExample",
+                                id: actorId,
                                 type: "person",
                             },
                             context: "xmpp",
@@ -185,21 +192,17 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
 
             describe("ActivityStreams.create", () => {
                 it("successfully creates and stores an activity-object", () => {
-                    const actor = {
-                        id: "jimmy@prosody/SockethubExample",
-                        type: "person",
-                        name: "Jimmy Userson",
-                    };
-                    const obj = sc.ActivityStreams.Object.create(actor);
-                    const getObj = sc.ActivityStreams.Object.get(actor.id);
-                    expect(obj).to.eql(actor);
-                    expect(getObj).to.eql(actor);
+                    const obj = sc.ActivityStreams.Object.create(actorObject);
+                    const getObj = sc.ActivityStreams.Object.get(
+                        actorObject.id,
+                    );
+                    expect(obj).to.eql(actorObject);
+                    expect(getObj).to.eql(actorObject);
                 });
             });
 
             describe("connect", () => {
                 it("is successful", (done) => {
-                    const actorId = "jimmy@prosody/SockethubExample";
                     sc.socket.emit(
                         "message",
                         {
@@ -214,15 +217,77 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                             } else {
                                 expect(msg).to.eql({
                                     type: "connect",
-                                    actor: {
-                                        id: actorId,
-                                        type: "person",
-                                        name: "Jimmy Userson",
-                                    },
+                                    actor: actorObject,
                                     context: "xmpp",
                                 });
                                 done();
                             }
+                        },
+                    );
+                });
+            });
+            describe("Join", () => {
+                it("should be successful", (done) => {
+                    sc.socket.emit(
+                        "message",
+                        {
+                            type: "join",
+                            actor: actorId,
+                            context: "xmpp",
+                            target: {
+                                type: "room",
+                                id: "test@prosody",
+                            },
+                        },
+                        (msg) => {
+                            console.log("callback from join: ", msg);
+                            expect(msg).to.eql({
+                                type: "join",
+                                actor: actorObject,
+                                context: "xmpp",
+                                target: {
+                                    id: "test@prosody",
+                                    type: "room",
+                                },
+                            });
+                            done();
+                        },
+                    );
+                });
+            });
+            describe("Send", () => {
+                it("should be successful", (done) => {
+                    sc.socket.emit(
+                        "message",
+                        {
+                            type: "send",
+                            actor: actorId,
+                            context: "xmpp",
+                            object: {
+                                type: "message",
+                                content: "Hello, world!",
+                            },
+                            target: {
+                                type: "room",
+                                id: "test@prosody",
+                            },
+                        },
+                        (msg) => {
+                            console.log("callback from send: ", msg);
+                            expect(msg).to.eql({
+                                type: "send",
+                                actor: actorObject,
+                                context: "xmpp",
+                                object: {
+                                    type: "message",
+                                    content: "Hello, world!",
+                                },
+                                target: {
+                                    id: "test@prosody",
+                                    type: "room",
+                                },
+                            });
+                            done();
                         },
                     );
                 });

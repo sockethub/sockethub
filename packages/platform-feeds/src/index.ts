@@ -16,17 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import PlatformSchema from "./schema";
-import {
-    PlatformFeedsActivityActor,
-    PlatformFeedsActivityObject,
-    PlatformFeedsActivityStream,
-    ASFeedType,
-    ASObjectType,
-} from "./types";
 import htmlTags from "html-tags";
 import fetch from "node-fetch";
 import getPodcastFromFeed, { Meta } from "podparse";
+
 import type {
     ActivityStream,
     Logger,
@@ -36,6 +29,15 @@ import type {
     PlatformSchemaStruct,
     PlatformSession,
 } from "@sockethub/schemas";
+
+import PlatformSchema from "./schema.js";
+import {
+    PlatformFeedsActivityActor,
+    PlatformFeedsActivityObject,
+    PlatformFeedsActivityStream,
+    ASFeedType,
+    ASObjectType,
+} from "./types.js";
 
 const MAX_NOTE_LENGTH = 256;
 
@@ -69,7 +71,7 @@ function isHtml(s: string): boolean {
  * https://github.com/Tombarr/podcast-feed-parser
  *
  */
-class Feeds implements PlatformInterface {
+export default class Feeds implements PlatformInterface {
     id: string;
     debug: Logger;
     config: PlatformConfig = {
@@ -239,5 +241,3 @@ function buildFeedChannel(url: string, meta: Meta): PlatformFeedsActivityActor {
         author: meta.author ? meta.author : undefined,
     };
 }
-
-module.exports = Feeds;

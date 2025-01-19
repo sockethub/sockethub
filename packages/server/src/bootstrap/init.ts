@@ -1,8 +1,9 @@
 import debug from "debug";
 
-import config from "../config";
-import loadPlatforms, { PlatformMap } from "./load-platforms";
 import { redisCheck, RedisConfig } from "@sockethub/data-layer";
+
+import config from "../config.js";
+import loadPlatforms, { PlatformMap } from "./load-platforms.js";
 
 const log = debug("sockethub:server:bootstrap:init");
 
@@ -52,18 +53,35 @@ function printSettingsInfo(version, platforms) {
 }
 
 let initCalled = false;
+let initWaitCount = 0;
+let cancelWait: NodeJS.Timeout;
+const resolveQueue = [];
+
 export default async function getInitObject(
     initFunc = __loadInit,
 ): Promise<IInitObject> {
     return new Promise((resolve, reject) => {
         if (initCalled) {
-            setTimeout(() => {
-                if (!init) {
-                    reject("failed to initialize");
-                } else {
-                    resolve(init);
-                }
-            }, 500);
+            if (init) {
+                resolve(init);
+            } else if (!cancelWait) {
+                cancelWait = setInterval(() => {
+                    if (!init) {
+                        if (initWaitCount > 10) {
+                            reject("failed to initialize");
+                        }
+                        initWaitCount++;
+                    } else {
+                        clearInterval(cancelWait);
+                        resolve(init);
+                        for (const resolve of resolveQueue) {
+                            resolve(init);
+                        }
+                    }
+                }, 1000);
+            } else {
+                resolveQueue.push(resolve);
+            }
         } else {
             initCalled = true;
             if (init) {
@@ -80,9 +98,10 @@ export default async function getInitObject(
 
 async function __loadInit(): Promise<IInitObject> {
     log("running init routines");
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const packageJSON = require("./../../package.json");
-    const version = packageJSON.version;
+    const packageJSON = await import("./../../package.json", {
+        with: { type: "json" },
+    });
+    const version = packageJSON.default.version;
     const platforms = await loadPlatforms(
         config.get("platforms") as Array<string>,
     );
@@ -90,7 +109,7 @@ async function __loadInit(): Promise<IInitObject> {
     await redisCheck(config.get("redis") as RedisConfig);
 
     if (config.get("info")) {
-        printSettingsInfo(packageJSON.version, platforms);
+        printSettingsInfo(packageJSON.default.version, platforms);
     }
     log("finished init routines");
     return {

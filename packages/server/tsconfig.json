@@ -1,6 +1,10 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
+        "esModuleInterop": true,
+        "target": "esnext",
+        "moduleResolution": "NodeNext",
+        "module": "NodeNext",
         "allowJs": false,
         "outDir": "dist",
         "rootDir": "src",
@@ -9,6 +13,5 @@
         "sourceRoot": "/",
         "mapRoot": "/"
     },
-    "include": ["src"],
-    "exclude": ["**/*.test.ts"]
+    "include": ["src"]
 }

@@ -1,11 +1,12 @@
 import { expect } from "chai";
 
-import expandActivityStream from "./expand-activity-stream";
+import expandActivityStream from "./expand-activity-stream.js";
 
-import asObjects from "./expand-activity-stream.test.data";
-import ActivityStreams from "@sockethub/activity-streams";
+import asObjects from "./expand-activity-stream.test.data.js";
+import { ASFactory } from "@sockethub/activity-streams";
 
-const activity = ActivityStreams();
+const activity = ASFactory();
+
 // register known activity objects
 [
     {

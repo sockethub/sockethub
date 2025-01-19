@@ -2,7 +2,7 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import { existsSync } from "fs";
 
-import routes, { basePaths, IRoutePaths } from "./routes";
+import routes, { basePaths, IRoutePaths } from "./routes.js";
 
 describe("routes/base", () => {
     afterEach(() => {

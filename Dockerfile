@@ -1,18 +1,20 @@
-ARG node_version=20
-FROM node:${node_version}
+ARG node_version=22
+FROM node:${node_version} AS base
 ARG node_version
-LABEL authors="Ben Kero <ben.kero@gmail.com>, Nick Jennings <nick@silverbucket.net>"
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+RUN corepack prepare pnpm@9.x --activate
 RUN echo "Building Sockethub docker image with Node version ${node_version}"
 
+FROM base AS build
+COPY . /src
+WORKDIR /src
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN pnpm run build
+RUN pnpm deploy --filter=sockethub --prod /deploy
+
+FROM node:${node_version}-slim AS prod
+COPY --from=build /deploy /app
 WORKDIR /app
-
-RUN curl -fsSL "https://github.com/pnpm/pnpm/releases/latest/download/pnpm-linuxstatic-x64" -o /bin/pnpm; chmod +x /bin/pnpm;
-
-COPY . .
-
-RUN pnpm install
-RUN NX_REJECT_UNKNOWN_LOCAL_CACHE=0 pnpm build
-
-CMD DEBUG=secure-store*,sockethub* /app/packages/sockethub/bin/sockethub --examples --host 0.0.0.0 -c /app/test/sockethub.config.docker.json
-
-EXPOSE 10650
+CMD DEBUG=secure-store*,sockethub* /app/bin/sockethub --host 0.0.0.0

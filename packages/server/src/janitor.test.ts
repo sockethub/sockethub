@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
 
-import { Janitor } from "./janitor";
+import { Janitor } from "./janitor.js";
 
 const sockets = [
     { id: "socket foo", emit: () => {} },
@@ -11,7 +11,11 @@ const sockets = [
 function getPlatformInstanceFake() {
     return {
         flaggedForTermination: false,
-        initialized: false,
+        config: {
+            initialized: false,
+            persist: true,
+            requireCredentials: ["foo", "bar"],
+        },
         global: false,
         shutdown: sinon.stub(),
         process: {
@@ -150,7 +154,7 @@ describe("Janitor", () => {
         it("removes flagged and uninitialized platform instances", async () => {
             const pi = getPlatformInstanceFake();
             pi.flaggedForTermination = true;
-            pi.initialized = false;
+            pi.config.initialized = false;
             janitor.removeStaleSocketSessions = sandbox.stub();
             janitor.removeStalePlatformInstance = sandbox.stub();
             await janitor.performStaleCheck(pi);
@@ -163,7 +167,7 @@ describe("Janitor", () => {
             const pi = getPlatformInstanceFake();
             pi.sessions = new Set();
             pi.flaggedForTermination = false;
-            pi.initialized = true;
+            pi.config.initialized = true;
             janitor.removeStaleSocketSessions = sandbox.stub();
             janitor.removeStalePlatformInstance = sandbox.stub();
             await janitor.performStaleCheck(pi);

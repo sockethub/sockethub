@@ -16,10 +16,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-const { client, xml } = require("@xmpp/client");
-const IncomingHandlers = require("./incoming-handlers");
-const PlatformSchema = require("./schema.js");
-const utils = require("./utils.js");
+import { client, xml } from "@xmpp/client";
+
+import { IncomingHandlers } from "./incoming-handlers.js";
+import { PlatformSchema } from "./schema.js";
+import { utils } from "./utils.js";
 
 /**
  * Handles all actions related to communication via. the XMPP protocol.
@@ -28,7 +29,7 @@ const utils = require("./utils.js");
  *
  * {@link https://github.com/xmppjs/xmpp.js}
  */
-class XMPP {
+export default class XMPP {
     /**
      * Constructor called from the Sockethub `Platform` instance, passing in a
      * session object.
@@ -37,7 +38,11 @@ class XMPP {
     constructor(session) {
         session = typeof session === "object" ? session : {};
         this.id = session.id; // actor
-        this.initialized = false;
+        this.config = {
+            persist: true,
+            initialized: false,
+            requireCredentials: ["connect"],
+        };
         this.debug = session.debug;
         this.sendToClient = session.sendToClient;
         this.__forceDisconnect = false;
@@ -99,14 +104,6 @@ class XMPP {
         return PlatformSchema;
     }
 
-    get config() {
-        return {
-            persist: true,
-            requireCredentials: ["connect"],
-            initialized: false,
-        };
-    }
-
     /**
      * Connect to the XMPP server.
      *
@@ -131,7 +128,7 @@ class XMPP {
         if (this.__client) {
             // TODO verify client is actually connected
             this.debug("client connection already exists for " + job.actor.id);
-            this.initialized = true;
+            this.config.initialized = true;
             return done();
         }
         this.debug("connect called for " + job.actor.id);
@@ -147,7 +144,7 @@ class XMPP {
             .then(() => {
                 // connected
                 this.debug("connection successful");
-                this.initialized = true;
+                this.config.initialized = true;
                 this.__registerHandlers();
                 return done();
             })
@@ -542,4 +539,3 @@ class XMPP {
         this.__client.on("stanza", ih.stanza.bind(ih));
     }
 }
-module.exports = XMPP;

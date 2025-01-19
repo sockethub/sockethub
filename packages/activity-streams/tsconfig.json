@@ -2,6 +2,7 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "allowJs": false,
+        "module": "esnext",
         "outDir": "build",
         "rootDir": "src",
         "baseUrl": "/",

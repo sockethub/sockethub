@@ -1,8 +1,14 @@
 import nconf from "nconf";
-import { debug } from "debug";
+import debug from "debug";
 import * as fs from "fs";
 
+import { __dirname } from "./util.js";
+import path from "path";
+
 const log = debug("sockethub:server:bootstrap:config");
+const data: object = await import(__dirname + "/defaults.json", {
+    with: { type: "json" },
+});
 
 export class Config {
     constructor() {
@@ -33,7 +39,6 @@ export class Config {
                 alias: "redis.url",
             },
         });
-        nconf.env();
 
         // get value of flags defined by any command-line params
         const examples = nconf.get("examples");
@@ -41,14 +46,18 @@ export class Config {
         // Load the main config
         let configFile = nconf.get("config");
         if (configFile) {
+            configFile = path.resolve(configFile);
             // eslint-disable-next-line security/detect-non-literal-fs-filename
             if (!fs.existsSync(configFile)) {
                 throw new Error(`Config file not found: ${configFile}`);
             }
+            log(`reading config file at ${configFile}`);
+            nconf.file(configFile);
         } else {
-            configFile = __dirname + "/../sockethub.config.json";
+            log("No config file specified, using defaults");
+            console.log("No config file specified, using defaults");
+            nconf.use("memory");
         }
-        nconf.file(configFile);
 
         // only override config file if explicitly mentioned in command-line params
         nconf.set(
@@ -57,9 +66,9 @@ export class Config {
         );
 
         // load defaults
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const defaults: object = require(__dirname + "/defaults.json");
-        nconf.defaults(defaults);
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        nconf.defaults(data.default);
 
         nconf.required(["platforms"]);
 

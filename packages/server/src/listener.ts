@@ -4,10 +4,11 @@ import express from "express";
 import * as HTTP from "http";
 import { Server } from "socket.io";
 import { writeFileSync } from "fs";
-
-import config from "./config";
-import routes from "./routes";
 import path from "path";
+
+import config from "./config.js";
+import routes from "./routes.js";
+import { __dirname } from "./util.js";
 
 const log = debug("sockethub:server:listener");
 
@@ -48,25 +49,20 @@ class Listener {
     }
 
     private addExamplesRoutes(app) {
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         writeFileSync(
-            `${__dirname}/../node_modules/@sockethub/examples/build/config.json`,
+            `${__dirname}/../res/examples/config.json`,
             JSON.stringify({
                 sockethub: config.get("sockethub"),
                 public: config.get("public"),
             }),
         );
-        app.use(
-            express.static(
-                `${__dirname}/../node_modules/@sockethub/examples/build/`,
-            ),
-        );
+        app.use(express.static(`${__dirname}/../res/examples/`));
         const examplesIndex = path.resolve(
             __dirname,
             "..",
-            "node_modules",
-            "@sockethub",
+            "res",
             "examples",
-            "build",
             "index.html",
         );
         app.get("*", (req, res) => {

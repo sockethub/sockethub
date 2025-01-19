@@ -4,25 +4,22 @@ import {
     validateActivityStream,
     validateCredentials,
     validatePlatformSchema,
-} from "./validator";
-import { ObjectTypesList } from "./helpers/objects";
-import ActivityObjectSchema from "./schemas/activity-object";
-import ActivityStreamSchema from "./schemas/activity-stream";
-import PlatformSchema from "./schemas/platform";
+} from "./validator.js";
+import { ObjectTypesList } from "./helpers/objects.js";
+import { ActivityObjectSchema } from "./schemas/activity-object.js";
+import { ActivityStreamSchema } from "./schemas/activity-stream.js";
+import { PlatformSchema } from "./schemas/platform.js";
 
-export default {
+export {
     addPlatformSchema,
     validatePlatformSchema,
     validateCredentials,
     validateActivityStream,
     validateActivityObject,
-};
-
-export {
     PlatformSchema,
     ActivityObjectSchema,
     ActivityStreamSchema,
     ObjectTypesList,
 };
 
-export * from "./types";
+export * from "./types.js";

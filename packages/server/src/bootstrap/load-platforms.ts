@@ -6,7 +6,9 @@
  * config.
  */
 import debug from "debug";
-import schemas, {
+
+import {
+    validatePlatformSchema,
     PlatformConfig,
     PlatformSchemaStruct,
     PlatformSession,
@@ -54,7 +56,7 @@ async function loadPlatform(platformName: string, injectRequire) {
         const P = await import(platformName);
         p = new P.default(dummySession);
     }
-    const err = schemas.validatePlatformSchema(p.schema);
+    const err = validatePlatformSchema(p.schema);
 
     if (err) {
         throw new Error(`${platformName} ${err}`);

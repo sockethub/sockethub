@@ -1,22 +1,21 @@
 import debug from "debug";
 import { Socket } from "socket.io";
-import crypto from "@sockethub/crypto";
-import {
-    CredentialsStore,
-    type CredentialsStoreInterface,
-} from "@sockethub/data-layer";
-
-import getInitObject from "./bootstrap/init";
-import createActivityObject from "./middleware/create-activity-object";
-import expandActivityStream from "./middleware/expand-activity-stream";
-import storeCredentials from "./middleware/store-credentials";
-import validate from "./middleware/validate";
-import janitor from "./janitor";
-import listener from "./listener";
-import ProcessManager from "./process-manager";
 import nconf from "nconf";
+
+import { crypto } from "@sockethub/crypto";
+import { CredentialsStore } from "@sockethub/data-layer";
+import { type CredentialsStoreInterface } from "@sockethub/data-layer/dist/credentials-store.js";
 import { ActivityStream } from "@sockethub/schemas";
-import middleware from "./middleware";
+
+import getInitObject from "./bootstrap/init.js";
+import createActivityObject from "./middleware/create-activity-object.js";
+import expandActivityStream from "./middleware/expand-activity-stream.js";
+import storeCredentials from "./middleware/store-credentials.js";
+import validate from "./middleware/validate.js";
+import janitor from "./janitor.js";
+import listener from "./listener.js";
+import ProcessManager from "./process-manager.js";
+import middleware from "./middleware.js";
 
 const log = debug("sockethub:server:core");
 
@@ -56,7 +55,10 @@ class Sockethub {
             this.status = true;
         }
 
-        const init = await getInitObject();
+        const init = await getInitObject().catch((err) => {
+            log(err);
+            process.exit(1);
+        });
 
         this.processManager = new ProcessManager(
             this.parentId,

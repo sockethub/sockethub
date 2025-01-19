@@ -1,7 +1,7 @@
 module.exports = function (config) {
     config.set({
         frameworks: ["mocha", "chai"],
-        files: ["test/browser.test.js"],
+        files: ["browser.test.js"],
         plugins: [
             "karma-chai",
             "karma-mocha",

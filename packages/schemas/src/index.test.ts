@@ -1,8 +1,8 @@
 import { ActivityStream } from "./types";
 import { expect } from "chai";
 
-import ActivityStreamSchema from "./schemas/activity-stream";
-import ActivityObjectSchema from "./schemas/activity-object";
+import { ActivityStreamSchema } from "./schemas/activity-stream";
+import { ActivityObjectSchema } from "./schemas/activity-object";
 import {
     validatePlatformSchema,
     addPlatformSchema,

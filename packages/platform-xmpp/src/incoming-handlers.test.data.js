@@ -1,4 +1,4 @@
-const stanzas = [
+export const stanzas = [
     [
         `presence error 1`,
         `<presence type="error" to="hermes@5apps.com/hyperchannel" from="xmpp.5apps.com/#watercooler" xmlns:stream="http://etherx.jabber.org/streams"><error type="cancel"> <remote-server-not-found xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error></presence>`,
@@ -258,5 +258,3 @@ const stanzas = [
     //   {}
     // ]
 ];
-
-module.exports = stanzas;

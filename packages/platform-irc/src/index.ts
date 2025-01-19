@@ -19,7 +19,8 @@
 import net from "net";
 import tls from "tls";
 import IrcSocket from "irc-socket-sasl";
-import IRC2AS from "@sockethub/irc2as";
+
+import { IrcToActivityStreams } from "@sockethub/irc2as";
 import {
     ActivityStream,
     Logger,
@@ -32,10 +33,8 @@ import {
     PlatformUpdateActor,
 } from "@sockethub/schemas";
 
-import IrcSchema from "./schema";
-import { PlatformIrcCredentialsObject } from "./types";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const buildCommand = require("./octal-hack.js");
+import { PlatformIrcSchema } from "./schema.js";
+import { PlatformIrcCredentialsObject } from "./types.js";
 
 export interface GetClientCallback {
     (err: string | null, client?: typeof IrcSocket): void;
@@ -81,7 +80,7 @@ interface IrcSocketOptions {
  *
  * @param {object} cfg a unique config object for this instance
  */
-class IRC implements PlatformInterface {
+export default class IRC implements PlatformInterface {
     debug: Logger;
     credentialsHash: string;
     config: PersistentPlatformConfig = {
@@ -91,7 +90,7 @@ class IRC implements PlatformInterface {
     };
     private readonly updateActor: PlatformUpdateActor;
     private readonly sendToClient: PlatformSendToClient;
-    private irc2as: typeof IRC2AS;
+    private irc2as: typeof IrcToActivityStreams;
     private forceDisconnect = false;
     private clientConnecting = false;
     private client: typeof IrcSocket;
@@ -147,7 +146,7 @@ class IRC implements PlatformInterface {
      *  }
      */
     get schema(): PlatformSchemaStruct {
-        return IrcSchema;
+        return PlatformIrcSchema;
     }
 
     /**
@@ -323,12 +322,14 @@ class IRC implements PlatformInterface {
 
             if (job.object.type === "me") {
                 // message intended as command
-                // jsdoc does not like this octal escape sequence but it's needed for proper behavior in IRC
+                // jsdoc does not like this octal escape sequence, but it's needed for proper behavior in IRC
                 // so the following line needs to be commented out when the API doc is built.
                 // investigate:
                 // https://github.com/jsdoc2md/jsdoc-to-markdown/issues/197#issuecomment-976851915
-                const message = buildCommand(job.object.content);
-                client.raw("PRIVMSG " + job.target.name + " :" + message);
+                // const buildCommand = await import("./octal-hack.js");
+                // const message = buildCommand(job.object.content);
+                // client.raw("PRIVMSG " + job.target.name + " :" + message);
+                return done("IRC commands temporarily disabled");
             } else if (job.object.type === "notice") {
                 // attempt to send as raw command
                 client.raw(
@@ -713,7 +714,7 @@ class IRC implements PlatformInterface {
     }
 
     private registerListeners(server: string) {
-        this.irc2as = new IRC2AS({ server: server });
+        this.irc2as = new IrcToActivityStreams({ server: server });
         this.client.on("data", (data: never) => {
             this.irc2as.input(data);
         });
@@ -756,5 +757,3 @@ class IRC implements PlatformInterface {
         });
     }
 }
-
-module.exports = IRC;

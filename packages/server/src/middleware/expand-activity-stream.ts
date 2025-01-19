@@ -1,12 +1,13 @@
-import ASFactory, { ASFactoryOptions } from "@sockethub/activity-streams";
+import { ASFactory, ASFactoryOptions } from "@sockethub/activity-streams";
 import { ActivityStream } from "@sockethub/schemas";
 
-import config from "../config";
-import { MiddlewareChainInterface } from "../middleware";
+import config from "../config.js";
+import { MiddlewareChainInterface } from "../middleware.js";
 
 const asConfig = config.get("activity-streams:opts") as ASFactoryOptions;
 asConfig.warnOnUnknownObjectProperties = false;
 asConfig.failOnUnknownObjectProperties = false;
+
 const activity = ASFactory(asConfig);
 
 function ensureObject(msg: unknown) {

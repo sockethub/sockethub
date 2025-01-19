@@ -1,7 +1,7 @@
 import debug from "debug";
 
-import PlatformInstance, { platformInstances } from "./platform-instance";
-import listener, { SocketInstance } from "./listener";
+import PlatformInstance, { platformInstances } from "./platform-instance.js";
+import listener, { SocketInstance } from "./listener.js";
 
 const rmLog = debug("sockethub:server:janitor");
 
@@ -112,7 +112,8 @@ export class Janitor {
         // Static platforms are for global use, not tied to a unique to session / eg. credentials)
         if (!platformInstance.global) {
             if (
-                !platformInstance.initialized ||
+                (platformInstance.config.persist &&
+                    !platformInstance.config.initialized) ||
                 platformInstance.sessions.size === 0
             ) {
                 // either the platform failed to initialize, or there are no more sessions linked to it

@@ -29,7 +29,7 @@ const ActivityStreams = ASFactory({
 #### ESM
 
 ```javascript
-import ASFactory from '@sockethub/activity-streams';
+import { ASFactory } from '@sockethub/activity-streams';
 const ActivityStreams = ASFactory({
   failOnUnkownObjectProperties: false // default
 });

@@ -1,5 +1,4 @@
 /* eslint-disable  @typescript-eslint/no-var-requires */
-const fs = require("fs");
 const packageJSON = require("./package.json");
 const moduleList = Object.keys(packageJSON.dependencies);
 
@@ -11,12 +10,3 @@ for (let moduleName of moduleList) {
         platforms.push(moduleName);
     }
 }
-
-const data = fs.readFileSync(
-    "node_modules/@sockethub/server/sockethub.config.example.json",
-    "utf8",
-);
-const config = JSON.parse(data);
-config.platforms = platforms;
-
-fs.writeFileSync("./sockethub.config.json", data);

@@ -1,7 +1,7 @@
 import { expect } from "chai";
-import asObjects from "./validate.test.data";
-import loadPlatforms from "../bootstrap/load-platforms";
-import validate, { registerPlatforms } from "./validate";
+import asObjects from "./validate.test.data.js";
+import loadPlatforms from "../bootstrap/load-platforms.js";
+import validate, { registerPlatforms } from "./validate.js";
 import { ActivityStream } from "@sockethub/schemas";
 
 class FakeSockethubPlatform {
@@ -54,19 +54,19 @@ const modules = {
     fakeplatform: FakeSockethubPlatform,
 };
 
-let platforms;
-let mockInit;
-(async function () {
-    platforms = await loadPlatforms(["fakeplatform"], async (module) => {
-        return Promise.resolve(modules[module]);
-    });
-    mockInit = {
-        platforms: platforms,
-    };
-    await registerPlatforms(mockInit);
-})();
-
 describe("", () => {
+    let platforms;
+    let mockInit;
+    before(async () => {
+        platforms = await loadPlatforms(["fakeplatform"], async (module) => {
+            return Promise.resolve(modules[module]);
+        });
+        mockInit = {
+            platforms: platforms,
+        };
+        await registerPlatforms(mockInit);
+    });
+
     describe("platformLoad", () => {
         it("loads all platforms", () => {
             const expectedPlatforms = ["fakeplatform"];

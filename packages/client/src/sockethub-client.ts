@@ -4,7 +4,7 @@ import {
     ActivityStream,
     BaseActivityObject,
 } from "@sockethub/schemas";
-import ASFactory, { type ASManager } from "@sockethub/activity-streams";
+import { ASFactory, type ASManager } from "@sockethub/activity-streams";
 import type { Socket } from "socket.io-client";
 
 export interface EventMapping {
