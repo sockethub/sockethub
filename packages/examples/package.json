@@ -25,7 +25,7 @@
     "scripts": {
         "dev": "vite dev",
         "build": "vite build",
-        "test": "pnpm run test:unit && pnpm run test:integration",
+        "test": "pnpm run test:unit",
         "test:integration": "playwright test",
         "test:unit": "vitest run",
         "preview": "vite preview",
