@@ -99,7 +99,7 @@ describe("SockethubClient", () => {
     asInstanceOnSpy = spy(asInstance, "on");
 
     class TestSockethubClient extends SockethubClient {
-      initActivityStreams() {
+      override initActivityStreams() {
         this.ActivityStreams = asInstance as ASManager;
       }
     }
