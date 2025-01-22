@@ -1,6 +1,5 @@
-import '@types/debug';
-import debug from "debug";
 import Ajv from "ajv";
+import { pino } from "pino";
 import type { ErrorObject, Schema, ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
 import additionsFormats2019 from "@silverbucket/ajv-formats-draft2019";
@@ -10,6 +9,8 @@ import PlatformSchema from "./schemas/platform.ts";
 import ActivityStreamsSchema from "./schemas/activity-stream.ts";
 import ActivityObjectSchema from "./schemas/activity-object.ts";
 
+const logger = pino().child({ module: "schemas:validator" });
+
 const ajv = new Ajv.default({ strictTypes: false, allErrors: true });
 addFormats.default(ajv);
 additionsFormats2019(ajv);
@@ -18,7 +19,6 @@ interface SchemasDict {
   string?: Schema;
 }
 
-const log = debug("sockethub:schemas:validator");
 const schemaURL = "https://sockethub.org/schemas/v0";
 const schemas: SchemasDict = {};
 
@@ -28,7 +28,7 @@ schemas[`${schemaURL}/activity-object` as keyof SchemasDict] =
   ActivityObjectSchema;
 
 for (const uri in schemas) {
-  log(`registering schema ${uri}`);
+  logger.info(`registering schema ${uri}`);
   ajv.addSchema(schemas[uri as keyof SchemasDict] as Schema, uri);
 }
 
@@ -81,7 +81,7 @@ export function validateCredentials(msg: ActivityStream): string {
   if (msg.type !== "credentials") {
     return "credential activity streams must have credentials set as type";
   }
-  log(
+  logger.debug(
     `validating credentials against ${schemaURL}/context/${msg.context}/credentials`,
   );
   return handleValidation(
@@ -115,7 +115,7 @@ export function validatePlatformSchema(schema: Schema): string {
  * @param platform_type string
  */
 export function addPlatformSchema(schema: Schema, platform_type: string) {
-  log(`registering schema ${schemaURL}/context/${platform_type}`);
+  logger.debug(`registering schema ${schemaURL}/context/${platform_type}`);
   ajv.addSchema(schema, `${schemaURL}/context/${platform_type}`);
 }
 

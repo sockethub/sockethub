@@ -1,3 +1,5 @@
+import pino from "npm:pino@9.6.0";
+
 /**
  * A general interface for the structure of any ActivityStream
  */
@@ -65,13 +67,8 @@ export interface PlatformUpdateActor {
   (credentials: object): Promise<void>;
 }
 
-export interface Logger {
-  // eslint-disable-next-line
-  (msg: string, data?: any): void;
-}
-
 export interface PlatformSession {
-  debug: Logger;
+  logger: pino.Logger<never, boolean>;
   sendToClient: PlatformSendToClient;
   updateActor: PlatformUpdateActor;
 }
@@ -105,12 +102,12 @@ export interface PersistentPlatformConfig {
 }
 
 export interface PlatformMessages {
-  required: string[],
+  required: string[];
   properties: {
     type: {
-      enum: string[],
-    },
-  },
+      enum: string[];
+    };
+  };
 }
 export interface PlatformSchemaStruct {
   name: string;
@@ -128,7 +125,7 @@ export interface PlatformConstructor<T> {
  * have more properties and functions, but should at least implement these.
  */
 export interface PlatformInterface {
-  debug: Logger;
+  logger: pino.Logger<never, boolean>;
   credentialsHash?: string;
   get config(): PlatformConfig;
   get schema(): PlatformSchemaStruct;
@@ -140,7 +137,7 @@ export interface PlatformInterface {
  * allowing the platform to conduct certain types of communication and logging.
  */
 export interface PlatformSession {
-  debug: Logger;
+  logger: pino.Logger<never, boolean>;
   sendToClient: PlatformSendToClient;
   updateActor: PlatformUpdateActor;
 }
