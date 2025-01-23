@@ -1,5 +1,4 @@
 import "https://deno.land/x/deno_mocha/global.ts";
-import { Buffer } from "node:buffer";
 import { ActivityStream } from "@sockethub/schemas";
 import { Crypto } from "./index.ts";
 import { assertEquals } from "https://deno.land/std/testing/asserts.ts";
@@ -9,16 +8,11 @@ const data: ActivityStream = { foo: "bar" } as unknown as ActivityStream;
 const encryptedData =
   "00000000000000000000000000000000:88af14af85acf2795eb062a56a88edb2";
 
-class TestCrypto extends Crypto {
-  createRandomBytes() {
-    this.randomBytes = () => Buffer.alloc(16);
-  }
-}
 
 describe("crypto", () => {
-  let crypto: TestCrypto;
+  let crypto: Crypto;
   beforeEach(() => {
-    crypto = new TestCrypto();
+    crypto = new Crypto();
   });
 
   it("encrypts", () => {

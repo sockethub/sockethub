@@ -34,7 +34,7 @@ export class Crypto {
 
   encrypt(json: ActivityStream, secret: string): string {
     Crypto.ensureSecret(secret);
-    const iv = this.randomBytes(IV_LENGTH);
+    const iv = randomBytes(IV_LENGTH);
     const cipher = createCipheriv(ALGORITHM, Buffer.from(secret), iv);
     let encrypted = cipher.update(JSON.stringify(json));
 
@@ -52,8 +52,7 @@ export class Crypto {
     const decipher = createDecipheriv(ALGORITHM, Buffer.from(secret), iv);
     let decrypted = decipher.update(encryptedText);
     decrypted = Buffer.concat([decrypted, decipher.final()]);
-    console.log(decrypted.toString("hex"));
-    return JSON.parse(decrypted.toString("hex"));
+    return decrypted.toString();
   }
 
   hash(text: string): string {
