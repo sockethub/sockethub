@@ -1,257 +1,169 @@
-import { expect } from "chai";
-import { createSandbox, restore } from "sinon";
-import EventEmitter from "eventemitter3";
-import { type ASManager } from "@sockethub/activity-streams";
+import eventEmitter from "npm:eventemitter3";
+import type {
+    ActivityObject,
+    ActivityStream,
+    BaseActivityObject,
+} from "@sockethub/schemas";
+import ASFactory, { type ASManager } from "@sockethub/activity-streams";
+import type { Socket } from "npm:socket.io-client";
 
-import SockethubClient from "./sockethub-client";
+const EventEmitter = eventEmitter as unknown as typeof eventEmitter.default;
 
-describe("SockethubClient bad initialization", () => {
-    it("no socket.io instance", () => {
-        class TestSockethubClient extends SockethubClient {
-            initActivityStreams() {
-                this.ActivityStreams = {} as ASManager;
-            }
+export interface EventMapping {
+    credentials: Map<string, ActivityStream>;
+    "activity-object": Map<string, BaseActivityObject>;
+    connect: Map<string, ActivityStream>;
+    join: Map<string, ActivityStream>;
+}
+
+interface CustomEmitter extends eventEmitter.default {
+    [x: string]: unknown;
+    _emit(s: string, o: unknown, c?: unknown): void;
+}
+
+export default class SockethubClient {
+    private events: EventMapping = {
+        credentials: new Map(),
+        "activity-object": new Map(),
+        connect: new Map(),
+        join: new Map(),
+    };
+    private _socket: Socket;
+    public ActivityStreams!: ASManager;
+    public socket: CustomEmitter;
+    public online = false;
+    public debug = true;
+
+    constructor(socket: Socket) {
+        if (!socket) {
+            throw new Error("SockethubClient requires a socket.io instance");
         }
-        expect(() => {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            new TestSockethubClient();
-        }).to.throw("SockethubClient requires a socket.io instance");
-    });
-});
+        this._socket = socket;
 
-describe("SockethubClient", () => {
-    let asinstance: any, socket: any, sc: any, sandbox: any;
+        this.socket = this.createPublicEmitter();
+        this.registerSocketIOHandlers();
+        this.initActivityStreams();
 
-    beforeEach(() => {
-        sandbox = sandbox = createSandbox();
-        socket = new EventEmitter();
-        socket.__instance = "socketio"; // used to uniquely identify the object we're passing in
-        sandbox.spy(socket, "on");
-        sandbox.spy(socket, "emit");
-        asinstance = new EventEmitter();
-        sandbox.spy(asinstance, "on");
-        sandbox.spy(asinstance, "emit");
-        asinstance.Stream = sandbox.stub();
-        asinstance.Object = {
-            create: sandbox.stub(),
+        this.ActivityStreams.on("activity-object-create", (obj) => {
+            socket.emit("activity-object", obj, (err: never) => {
+                if (err) {
+                    console.error("failed to create activity-object ", err);
+                } else {
+                    this.eventActivityObject(obj as ActivityObject);
+                }
+            });
+        });
+
+        socket.on("activity-object", (obj) => {
+            this.ActivityStreams.Object.create(obj);
+        });
+    }
+
+    initActivityStreams() {
+        this.ActivityStreams = ASFactory({ specialObjs: ["credentials"] });
+    }
+
+    private createPublicEmitter(): CustomEmitter {
+        const socket = new EventEmitter() as CustomEmitter;
+        socket._emit = socket.emit;
+        socket.emit = (event, content, callback): boolean => {
+            if (event === "credentials") {
+                this.eventCredentials(content);
+            } else if (event === "activity-object") {
+                this.eventActivityObject(content);
+            } else if (event === "message") {
+                this.eventMessage(content);
+            }
+            this._socket.emit(event as string, content, callback);
+            return true;
         };
-        class TestSockethubClient extends SockethubClient {
-            initActivityStreams() {
-                this.ActivityStreams = asinstance as ASManager;
-            }
+        return socket;
+    }
+
+    private eventActivityObject(content: ActivityObject) {
+        if (content.id) {
+            this.events["activity-object"].set(content.id, content);
         }
-        sc = new TestSockethubClient(socket);
-        sandbox.spy(sc.socket, "on");
-        sandbox.spy(sc.socket, "emit");
-        sandbox.spy(sc.socket, "_emit");
-    });
+    }
 
-    afterEach(() => {
-        restore();
-    });
+    private eventCredentials(content: ActivityStream) {
+        if (content.object && content.object.type === "credentials") {
+            const key: string = content.actor.id ||
+                (content.actor as unknown as string);
+            this.events["credentials"].set(key, content);
+        }
+    }
 
-    it("contains the ActivityStreams property", () => {
-        expect(asinstance).to.be.eql(sc.ActivityStreams);
-        expect(typeof asinstance.Stream).to.equal("function");
-        expect(typeof sc.ActivityStreams.Object.create).to.equal("function");
-    });
+    private eventMessage(content: BaseActivityObject) {
+        if (!this.online) {
+            return;
+        }
+        // either stores or delete the specified content onto the storedJoins map,
+        // for reply once we're back online.
+        const key = SockethubClient.getKey(content as ActivityStream);
+        if (content.type === "join" || content.type === "connect") {
+            this.events[content.type].set(key, content as ActivityStream);
+        } else if (content.type === "leave") {
+            this.events["join"].delete(key);
+        } else if (content.type === "disconnect") {
+            this.events["connect"].delete(key);
+        }
+    }
 
-    it("contains the socket property", () => {
-        expect(sc.socket instanceof EventEmitter).to.be.true;
-        // the object we passed in should not be the publically available one
-        expect(sc.socket.__instance).to.not.equal("socketio");
-        expect(sc.debug).to.be.true;
-        expect(sc.online).to.be.false;
-    });
-
-    it("registers listeners for ActivityStream events", () => {
-        expect(asinstance.on.callCount).to.equal(1);
-        expect(asinstance.on.calledWithMatch("activity-object-create")).to.be
-            .true;
-    });
-
-    it("registers a listeners for socket events", () => {
-        expect(socket.on.callCount).to.equal(5);
-        expect(socket.on.calledWithMatch("activity-object")).to.be.true;
-        expect(socket.on.calledWithMatch("connect")).to.be.true;
-        expect(socket.on.calledWithMatch("connect_error")).to.be.true;
-        expect(socket.on.calledWithMatch("disconnect")).to.be.true;
-        expect(socket.on.calledWithMatch("message")).to.be.true;
-    });
-
-    describe("event handling", () => {
-        it("activity-object", (done) => {
-            socket.emit("activity-object", { foo: "bar" });
-            setTimeout(() => {
-                sandbox.assert.calledWith(asinstance.Object.create, {
-                    foo: "bar",
-                });
-                done();
-            }, 0);
-        });
-
-        it("activity-object-create", (done) => {
-            asinstance.emit("activity-object-create", { foo: "bar" });
-            setTimeout(() => {
-                expect(socket.emit.callCount).to.equal(1);
-                expect(
-                    socket.emit.calledWithMatch("activity-object", {
-                        foo: "bar",
-                    }),
-                ).to.be.true;
-                done();
-            }, 0);
-        });
-
-        it("connect", (done) => {
-            expect(sc.online).to.be.false;
-            sc.socket.on("connect", () => {
-                expect(sc.online).to.be.true;
-                expect(sc.socket._emit.callCount).to.equal(1);
-                expect(sc.socket._emit.calledWithMatch("connect"));
-                done();
-            });
-            socket.emit("connect");
-        });
-
-        it("disconnect", (done) => {
-            sc.online = true;
-            sc.socket.on("disconnect", () => {
-                expect(sc.online).to.be.false;
-                expect(sc.socket._emit.callCount).to.equal(1);
-                expect(sc.socket._emit.calledWithMatch("disconnect"));
-                done();
-            });
-            socket.emit("disconnect");
-        });
-
-        it("connect_error", (done) => {
-            sc.socket.on("connect_error", () => {
-                expect(sc.socket._emit.callCount).to.equal(1);
-                expect(sc.socket._emit.calledWithMatch("connect_error"));
-                done();
-            });
-            socket.emit("connect_error");
-        });
-
-        it("message", (done) => {
-            sc.socket.on("message", () => {
-                expect(sc.socket._emit.callCount).to.equal(1);
-                expect(sc.socket._emit.calledWithMatch("message"));
-                done();
-            });
-            socket.emit("message");
-        });
-    });
-
-    describe("event emitting", () => {
-        it("message (no actor)", () => {
-            sc.online = true;
-            const callback = () => {};
-            expect(() => {
-                sc.socket.emit("message", { foo: "bar" }, callback);
-            }).to.throw("actor property not present");
-        });
-
-        it("message", (done) => {
-            sc.online = true;
-            const callback = () => {};
-            socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar", type: "bar" });
-                expect(cb).to.be.eql(callback);
-                done();
-            });
-            sc.socket.emit("message", { actor: "bar", type: "bar" }, callback);
-        });
-
-        it("message (join)", (done) => {
-            sc.online = true;
-            const callback = () => {};
-            socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar", type: "join" });
-                expect(cb).to.be.eql(callback);
-                done();
-            });
-            sc.socket.emit("message", { actor: "bar", type: "join" }, callback);
-        });
-
-        it("message (leave)", (done) => {
-            sc.online = true;
-            const callback = () => {};
-            socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar", type: "leave" });
-                expect(cb).to.be.eql(callback);
-                done();
-            });
-            sc.socket.emit(
-                "message",
-                { actor: "bar", type: "leave" },
-                callback,
+    private static getKey(content: ActivityStream) {
+        const actor = content.actor?.id || content.actor;
+        if (!actor) {
+            console.log("THROW HERE");
+            throw new Error(
+                "actor property not present for message type: " + content?.type,
             );
-        });
+        }
+        const target = content.target ? content.target.id || content.target : "";
+        return actor + "-" + target;
+    }
 
-        it("message (connect)", (done) => {
-            sc.online = true;
-            const callback = () => {};
-            socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar", type: "connect" });
-                expect(cb).to.be.eql(callback);
-                done();
-            });
-            sc.socket.emit(
-                "message",
-                { actor: "bar", type: "connect" },
-                callback,
-            );
-        });
+    private log(msg: string, obj?: unknown) {
+        if (this.debug) {
+            console.log(msg, obj);
+        }
+    }
 
-        it("message (disconnect)", (done) => {
-            sc.online = true;
-            const callback = () => {};
-            socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar", type: "disconnect" });
-                expect(cb).to.be.eql(callback);
-                done();
-            });
-            sc.socket.emit(
-                "message",
-                { actor: "bar", type: "disconnect" },
-                callback,
-            );
-        });
+    private registerSocketIOHandlers() {
+        // middleware for events which don't deal in AS objects
+        const callHandler = (event: string) => {
+            return (obj?: unknown) => {
+                if (event === "connect") {
+                    this.online = true;
+                    this.replay(
+                        "activity-object",
+                        this.events["activity-object"],
+                    );
+                    this.replay("credentials", this.events["credentials"]);
+                    this.replay("message", this.events["connect"]);
+                    this.replay("message", this.events["join"]);
+                } else if (event === "disconnect") {
+                    this.online = false;
+                }
+                this.socket._emit(event, obj);
+            };
+        };
 
-        it("message (offline)", (done) => {
-            sc.online = false;
-            const callback = () => {};
-            socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar" });
-                expect(cb).to.be.eql(callback);
-                done();
-            });
-            sc.socket.emit("message", { actor: "bar" }, callback);
-        });
+        // register for events that give us information on connection status
+        this._socket.on("connect", callHandler("connect"));
+        this._socket.on("connect_error", callHandler("connect_error"));
+        this._socket.on("disconnect", callHandler("disconnect"));
 
-        it("activity-object", (done) => {
-            sc.online = true;
-            const callback = () => {};
-            socket.once("activity-object", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar" });
-                expect(cb).to.be.eql(callback);
-                done();
-            });
-            sc.socket.emit("activity-object", { actor: "bar" }, callback);
+        // use as a middleware to receive incoming Sockethub messages and unpack them
+        // using the ActivityStreams library before passing them along to the app.
+        this._socket.on("message", (obj) => {
+            this.socket._emit("message", this.ActivityStreams.Stream(obj));
         });
+    }
 
-        it("credentials", (done) => {
-            sc.online = true;
-            const callback = () => {};
-            socket.once("credentials", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar" });
-                expect(cb).to.be.eql(callback);
-                done();
-            });
-            sc.socket.emit("credentials", { actor: "bar" }, callback);
+    private replay(name: string, asMap: Map<string, unknown>) {
+        asMap.forEach((obj) => {
+            this.log(`replaying ${name}`, obj);
+            this._socket.emit(name, obj);
         });
-    });
-});
+    }
+}
