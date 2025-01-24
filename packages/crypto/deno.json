@@ -1,0 +1,20 @@
+{
+  "name": "@sockethub/crypto",
+  "description": "Crypto functions and helpers for Sockethub",
+  "version": "1.0.0-alpha.5",
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "MIT",
+  "exports": "./src/index.ts",
+  "tasks": {
+    "coverage": "deno coverage --exclude=activity-streams | deno run jsr:@silverbucket/threshold 70 70",
+    "test": "deno test --fail-fast --coverage --clean --allow-env --allow-read src/**/*.test.ts"
+  },
+  "imports": {
+    "@types/debug": "npm:@types/debug@^4.1.12",
+    "@types/mocha": "npm:@types/mocha@^10.0.7",
+    "@types/node": "npm:@types/node@^22.5.0",
+    "@types/object-hash": "npm:@types/object-hash@^3.0.6",
+    "mocha": "npm:mocha@^10.7.3",
+    "object-hash": "npm:object-hash@^3.0.0"
+  }
+}
