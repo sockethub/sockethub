@@ -16,10 +16,17 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import PlatformSchema from "./schema.ts";
+import {
+    ASFeedType,
+    ASObjectType,
+    PlatformFeedsActivityActor,
+    PlatformFeedsActivityObject,
+    PlatformFeedsActivityStream,
+} from "./types.ts";
 import htmlTags from "html-tags";
 import fetch from "node-fetch";
 import getPodcastFromFeed, { Meta } from "podparse";
-
 import type {
     ActivityStream,
     Logger,
@@ -29,15 +36,6 @@ import type {
     PlatformSchemaStruct,
     PlatformSession,
 } from "@sockethub/schemas";
-
-import PlatformSchema from "./schema.js";
-import {
-    PlatformFeedsActivityActor,
-    PlatformFeedsActivityObject,
-    PlatformFeedsActivityStream,
-    ASFeedType,
-    ASObjectType,
-} from "./types.js";
 
 const MAX_NOTE_LENGTH = 256;
 
@@ -69,9 +67,8 @@ function isHtml(s: string): boolean {
  * Uses the `podparser` module as a base tool fetching feeds.
  *
  * https://github.com/Tombarr/podcast-feed-parser
- *
  */
-export default class Feeds implements PlatformInterface {
+class Feeds implements PlatformInterface {
     id: string;
     debug: Logger;
     config: PlatformConfig = {
@@ -113,7 +110,6 @@ export default class Feeds implements PlatformInterface {
      *      type: "feed"
      *    }
      *  }
-     *
      *
      *  // Without any parameters specified, the platform will return most
      *  // recent 10 articles fetched from the feed.
@@ -159,7 +155,6 @@ export default class Feeds implements PlatformInterface {
      *       tags: ['foo', 'bar']
      *     }
      *   }
-     *
      */
     fetch(job: ActivityStream, done: PlatformCallback) {
         // ready to execute job
@@ -199,10 +194,9 @@ export default class Feeds implements PlatformInterface {
 function buildFeedItem(item): PlatformFeedsActivityObject {
     const dateNum = Date.parse(item.pubDate.toString()) || 0;
     return {
-        type:
-            item.description.length > MAX_NOTE_LENGTH
-                ? ASObjectType.ARTICLE
-                : ASObjectType.NOTE,
+        type: item.description.length > MAX_NOTE_LENGTH
+            ? ASObjectType.ARTICLE
+            : ASObjectType.NOTE,
         title: item.title,
         id: item.link || item.meta.link + "#" + dateNum,
         brief: item.description === item.summary ? undefined : item.summary,
@@ -241,3 +235,5 @@ function buildFeedChannel(url: string, meta: Meta): PlatformFeedsActivityActor {
         author: meta.author ? meta.author : undefined,
     };
 }
+
+module.exports = Feeds;
