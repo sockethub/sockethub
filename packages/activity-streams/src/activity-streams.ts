@@ -15,8 +15,14 @@
  *
  */
 
-import EventEmitter from "eventemitter3";
-import { ActivityObject, ActivityStream } from "@sockethub/schemas";
+import eventEmitter from "npm:eventemitter3";
+import type {
+    ActivityActor,
+    ActivityObject,
+    ActivityStream,
+} from "@sockethub/schemas";
+
+const EventEmitter = eventEmitter as unknown as typeof eventEmitter.default;
 
 const ee = new EventEmitter(),
     baseProps = {
@@ -85,7 +91,7 @@ const ee = new EventEmitter(),
             "url",
         ],
     },
-    rename = {
+    rename: Record<string, string> = {
         "@id": "id",
         "@type": "type",
         verb: "type",
@@ -108,28 +114,31 @@ const ee = new EventEmitter(),
         },
     };
 
-const objs = new Map(),
-    customProps = {};
+const objs = new Map<string, ActivityObject>(),
+    customProps: Record<string, string[]> = {};
 
 let failOnUnknownObjectProperties = false,
     warnOnUnknownObjectProperties = true,
-    specialObjs = []; // the objects don't get rejected for bad props
+    specialObjs: string[] = []; // the objects don't get rejected for bad props
 
-function matchesCustomProp(type, key) {
+function matchesCustomProp(type: string, key: string) {
     return !!(
         typeof customProps[type] === "object" && customProps[type].includes(key)
     );
 }
 
-function renameProp(obj, key) {
+function renameProp(obj: ActivityObject, key: string): ActivityObject {
     obj[rename[key]] = obj[key];
     delete obj[key];
     return obj;
 }
 
-function validateObject(type, obj: ActivityObject = { type: "" }) {
+function validateObject(
+    type: string,
+    obj: ActivityObject | ActivityStream = { type: "" },
+) {
     const unknownKeys = Object.keys(obj).filter((key): void | string => {
-        if (!baseProps[type].includes(key)) {
+        if (!baseProps[type as keyof typeof baseProps].includes(key)) {
             return key;
         }
     });
@@ -137,7 +146,7 @@ function validateObject(type, obj: ActivityObject = { type: "" }) {
     for (const key of unknownKeys) {
         if (rename[key]) {
             // rename property instead of fail
-            obj = renameProp(obj, key);
+            obj = renameProp(obj as ActivityObject, key);
             continue;
         }
 
@@ -159,42 +168,56 @@ function validateObject(type, obj: ActivityObject = { type: "" }) {
     }
 }
 
-function ensureProps(obj) {
+function ensureProps(obj: ActivityObject) {
     // ensure the name property, which can generally be inferred from the id
     // name = obj.match(/(?(?\w+):\/\/)(?:.+@)?(.+?)(?:\/|$)/)[1]
     return obj;
 }
 
-function expandStream(meta) {
-    const stream = {};
-    for (const key of Object.keys(meta)) {
-        if (typeof meta[key] === "string") {
-            stream[key] = objs.get(meta[key]) || meta[key];
-        } else if (Array.isArray(meta[key])) {
-            stream[key] = [];
-            for (const entry of meta[key]) {
+function expandStream(meta: ActivityStream): ActivityStream {
+    interface NewStream {
+        [key: string]:
+            | ActivityObject
+            | ActivityActor
+            | string
+            | Array<string | ActivityObject>;
+    }
+    const newStream: NewStream = {};
+
+    // for key property in the meta object, we try to expand it if it's a string.
+    // if it's an array, we try to expand each string in the array
+    for (const k of Object.keys(meta)) {
+        const asKey = k as keyof ActivityStream;
+
+        if (typeof meta[asKey] === "string") {
+            newStream[asKey] = objs.get(meta[asKey]) as ActivityObject || meta[asKey];
+        } else if (Array.isArray(meta[asKey])) {
+            newStream[asKey] = [];
+            for (const entry of [...meta[asKey]]) {
                 if (typeof entry === "string") {
-                    stream[key].push(objs.get(entry) || entry);
+                    newStream[asKey].push(objs.get(entry) || entry);
                 }
             }
         } else {
-            stream[key] = meta[key];
+            newStream[asKey] = meta[asKey] as ActivityObject;
         }
     }
 
     // only expand string into objects if they are in the expand list
-    for (const key of Object.keys(expand)) {
-        if (typeof stream[key] === "string") {
-            const idx = expand[key].primary;
-            const obj = {};
-            obj[idx] = stream[key];
-            stream[key] = obj;
+    for (const k of Object.keys(expand)) {
+        const asKey = k as keyof typeof expand;
+        if (typeof newStream[asKey] === "string") {
+            const idx = expand[asKey].primary;
+            const obj: ActivityObject = {} as ActivityObject;
+            obj[idx] = newStream[asKey];
+            newStream[asKey] = obj;
         }
     }
-    return stream;
+
+    return newStream as unknown as ActivityStream;
 }
 
-function Stream(meta): ActivityStream | ActivityObject | Record<string, never> {
+function Stream(meta: ActivityStream): ActivityStream {
     validateObject("stream", meta);
     if (typeof meta.object === "object") {
         validateObject("object", meta.object);
@@ -207,16 +230,15 @@ function Stream(meta): ActivityStream | ActivityObject | Record<string, never> {
 export interface ActivityObjectManager {
     create(obj: unknown): unknown;
     delete(id: string): boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    list(): IterableIterator<any>;
-    get(id: string, expand?: boolean): unknown;
+    list(): IterableIterator<string>;
+    get(id: string | ActivityStream, expand?: boolean): unknown;
 }
 
 const _Object: ActivityObjectManager = {
     create: function (obj: ActivityObject) {
         validateObject("object", obj);
-        obj = ensureProps(obj);
-        objs.set(obj.id, obj);
+        obj = ensureProps(obj as never);
+        objs.set(obj.id as string, obj as never);
         ee.emit("activity-object-create", obj);
         return obj;
     },
@@ -229,19 +251,18 @@ const _Object: ActivityObjectManager = {
         return result;
     },
 
-    get: function (id, expand) {
-        let obj = objs.get(id);
+    get: function (id: string, expand: boolean | undefined) {
+        let obj: ActivityObject | undefined = objs.get(id);
         if (!obj) {
             if (!expand) {
                 return id;
             }
-            obj = { id: id };
+            obj = { id: id } as ActivityObject;
         }
-        return ensureProps(obj);
+        return ensureProps(obj as ActivityObject);
     },
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    list: function (): IterableIterator<any> {
+    list: function (): IterableIterator<string> {
         return objs.keys();
     },
 };
@@ -250,19 +271,18 @@ export interface ASFactoryOptions {
     specialObjs?: Array<string>;
     failOnUnknownObjectProperties?: boolean;
     warnOnUnknownObjectProperties?: boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    customProps?: any;
+    customProps?: Record<string, string[]>;
 }
 
 export interface ASManager {
-    Stream(meta: unknown): unknown;
+    Stream(meta: unknown): ActivityStream;
     Object: ActivityObjectManager;
-    on(event, func): void;
-    once(event, func): void;
-    off(event, funcName): void;
+    on(event: string, func: (obj: ActivityStream | ActivityObject) => void): void;
+    once(event: string, func: (id: string) => void): void;
+    off(event: string, funcName: (obj: ActivityStream) => void | string): void;
 }
 
-export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
+export default function ASFactory(opts: ASFactoryOptions = {}): ASManager {
     specialObjs = opts?.specialObjs || [];
     failOnUnknownObjectProperties =
         typeof opts.failOnUnknownObjectProperties === "boolean"
@@ -273,8 +293,9 @@ export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
             ? opts.warnOnUnknownObjectProperties
             : warnOnUnknownObjectProperties;
     for (const propName of Object.keys(opts.customProps || {})) {
-        if (typeof opts.customProps[propName] === "object") {
-            customProps[propName] = opts.customProps[propName];
+        const addProps = opts.customProps ? [propName] : undefined;
+        if (typeof addProps === "object") {
+            customProps[propName] = opts.customProps![propName];
         }
     }
 
