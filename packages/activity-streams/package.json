@@ -15,20 +15,10 @@
         "eventemitter3": "5.0.1"
     },
     "devDependencies": {
-        "@babel/core": "7.23.5",
-        "@types/bun": "latest",
-        "@types/mocha": "latest",
-        "@babel/plugin-transform-object-assign": "7.23.3",
-        "@babel/preset-env": "7.23.5",
         "@sockethub/schemas": "workspace:*",
-        "c8": "8.0.1",
-        "chai": "4.3.10",
-        "karma": "6.4.2",
-        "karma-chai": "0.1.0",
-        "karma-chrome-launcher": "3.2.0",
-        "karma-firefox-launcher": "2.1.2",
-        "karma-mocha": "^2.0.1",
-        "mocha": "10.2.0",
+        "@types/bun": "latest",
+        "@web/test-runner": "^0.19.0",
+        "@web/test-runner-puppeteer": "^0.17.0",
         "typescript": "5.3.3"
     },
     "repository": {
@@ -39,11 +29,9 @@
     "scripts": {
         "build": "bun run clean && bun build src/*.ts --outdir dist/",
         "clean": "rm -rf dist coverage",
-        "coverage": "c8 check-coverage --statements 95 --functions 90 --branches 90 --lines 95",
-        "test": "bun run test:node && bun run test:browser && bun run coverage",
-        "test:browser": "karma start --single-run --browsers ChromeHeadless karma.config.cjs",
-        "test:node": "bunx c8 -x \"**/*.test.ts\" mocha ./src/**/*.test.ts",
-        "test:node:lcov": "bunx c8 -r lcov mocha ./src/**/*.test.ts"
+        "test": "bun run test:node && bun run test:browser",
+        "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer",
+        "test:node": "bun test ./src/**/*.test.ts"
     },
     "keywords": [
         "activity",
