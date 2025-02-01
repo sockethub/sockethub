@@ -1,169 +1,318 @@
+import SockethubClient from "./sockethub-client.ts";
+import type { ASManager } from "@sockethub/activity-streams";
+import type { ActivityStream } from "@sockethub/schemas";
 import eventEmitter from "npm:eventemitter3";
-import type {
-    ActivityObject,
-    ActivityStream,
-    BaseActivityObject,
-} from "@sockethub/schemas";
-import ASFactory, { type ASManager } from "@sockethub/activity-streams";
-import type { Socket } from "npm:socket.io-client";
+import type { Socket } from "socket.io-client";
 
-const EventEmitter = eventEmitter as unknown as typeof eventEmitter.default;
+import "https://deno.land/x/deno_mocha/global.ts";
+import {
+    assertSpyCallArg,
+    assertSpyCalls,
+    type MethodSpy,
+    spy,
+    stub,
+} from "jsr:@std/testing/mock";
+import { assertEquals, assertNotEquals } from "jsr:@std/assert";
 
-export interface EventMapping {
-    credentials: Map<string, ActivityStream>;
-    "activity-object": Map<string, BaseActivityObject>;
-    connect: Map<string, ActivityStream>;
-    join: Map<string, ActivityStream>;
+const EventEmitterConstructor =
+    eventEmitter as unknown as typeof eventEmitter.default;
+
+interface TestEmitter extends Socket {
+    __instance: string;
 }
 
-interface CustomEmitter extends eventEmitter.default {
-    [x: string]: unknown;
-    _emit(s: string, o: unknown, c?: unknown): void;
-}
-
-export default class SockethubClient {
-    private events: EventMapping = {
-        credentials: new Map(),
-        "activity-object": new Map(),
-        connect: new Map(),
-        join: new Map(),
+interface TestASManager extends ASManager {
+    on(): unknown;
+    once(): unknown;
+    off(): unknown;
+    emit(activityObjectCreate: string, p: { foo: string }): unknown;
+    Stream: (meta: unknown) => ActivityStream;
+    Object: {
+        create(): unknown;
+        delete(): boolean;
+        list(): IterableIterator<string>;
+        get(): unknown;
     };
-    private _socket: Socket;
-    public ActivityStreams!: ASManager;
-    public socket: CustomEmitter;
-    public online = false;
-    public debug = true;
+}
 
-    constructor(socket: Socket) {
-        if (!socket) {
-            throw new Error("SockethubClient requires a socket.io instance");
+function timeout(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function createMockASInstance(): TestASManager {
+    const a = new EventEmitterConstructor() as unknown as TestASManager;
+    a.Stream = (a) => {
+        return a as ActivityStream;
+    };
+
+    a.on = () => {};
+    a.Object = {
+        create: () => {},
+        delete: () => {
+            return true;
+        },
+        list: () => {
+            return new Map().keys();
+        },
+        get: () => {},
+    };
+    stub(a.Object, "create");
+    stub(a.Object, "delete");
+    stub(a.Object, "list");
+    stub(a.Object, "get");
+    return a;
+}
+
+// describe("SockethubClient bad initialization", () => {
+//     it("no socket.io instance", () => {
+//         class TestSockethubClient extends SockethubClient {
+//             initActivityStreams() {
+//                 this.ActivityStreams = {} as ASManager;
+//             }
+//         }
+//         assertThrows(() => {
+//             new TestSockethubClient("" as unknown as Socket);
+//         }, "SockethubClient requires a socket.io instance");
+//     });
+// });
+
+describe("SockethubClient", () => {
+    let asInstance: TestASManager;
+    let socket: TestEmitter;
+    let sc: SockethubClient;
+    let socketOnSpy: MethodSpy,
+        socketEmitSpy: MethodSpy,
+        asInstanceOnSpy: MethodSpy,
+        scSocketOnSpy: MethodSpy,
+        scSocketEmitSpy: MethodSpy,
+        scSocket_EmitSpy: MethodSpy,
+        asInstanceStreamSpy: MethodSpy;
+
+    beforeEach(() => {
+        socket = new EventEmitterConstructor() as unknown as TestEmitter;
+        socket.__instance = "socketio"; // used to uniquely identify the object we're passing in
+        socketOnSpy = spy(socket, "on");
+        socketEmitSpy = spy(socket, "emit");
+
+        asInstance = createMockASInstance();
+        asInstanceStreamSpy = spy(asInstance, "Stream");
+        asInstanceOnSpy = spy(asInstance, "on");
+
+        class TestSockethubClient extends SockethubClient {
+            override initActivityStreams() {
+                this.ActivityStreams = asInstance as ASManager;
+            }
         }
-        this._socket = socket;
 
-        this.socket = this.createPublicEmitter();
-        this.registerSocketIOHandlers();
-        this.initActivityStreams();
+        sc = new TestSockethubClient(socket as TestEmitter) as SockethubClient;
+        scSocketOnSpy = spy(sc.socket, "on");
+        scSocketEmitSpy = spy(sc.socket, "emit");
+        scSocket_EmitSpy = spy(sc.socket, "_emit");
+    });
 
-        this.ActivityStreams.on("activity-object-create", (obj) => {
-            socket.emit("activity-object", obj, (err: never) => {
-                if (err) {
-                    console.error("failed to create activity-object ", err);
-                } else {
-                    this.eventActivityObject(obj as ActivityObject);
-                }
+    afterEach(() => {
+        socketOnSpy.restore();
+        socketEmitSpy.restore();
+        asInstanceOnSpy.restore();
+        scSocketOnSpy.restore();
+        scSocketEmitSpy.restore();
+        scSocket_EmitSpy.restore();
+    });
+
+    it("contains the ActivityStreams property", () => {
+        // console.log("-- typeof asInstance: " + typeof asInstance);
+        // console.log(asInstance);
+        // assertEquals(asInstance, sc.ActivityStreams);
+        assertEquals(typeof asInstance.on, "function");
+        assertEquals(typeof asInstance.Stream, "function");
+        assertEquals(typeof sc.ActivityStreams.Object.create, "function");
+    });
+
+    it("contains the socket property", () => {
+        assertEquals(sc.socket instanceof EventEmitterConstructor, true);
+        // the object we passed in should not be the publicly available one
+        assertNotEquals(sc.socket.__instance, "socketio");
+        assertEquals(sc.debug, true);
+        assertEquals(sc.online, false);
+    });
+
+    it("registers listeners for ActivityStream events", () => {
+        assertSpyCalls(asInstanceOnSpy, 1);
+        assertSpyCallArg(asInstanceOnSpy, 0, 0, "activity-object-create");
+    });
+
+    describe("registers listeners for socket events", () => {
+        it("called 5 times", () => {
+            assertSpyCalls(socketOnSpy, 5);
+        });
+        it("called connect", () => {
+            assertSpyCallArg(socketOnSpy, 0, 0, "connect");
+        });
+        it("called connect_error", () => {
+            assertSpyCallArg(socketOnSpy, 1, 0, "connect_error");
+        });
+        it("called disconnect", () => {
+            assertSpyCallArg(socketOnSpy, 2, 0, "disconnect");
+        });
+        it("called message", () => {
+            assertSpyCallArg(socketOnSpy, 3, 0, "message");
+        });
+        it("called activity-object", () => {
+            assertSpyCallArg(socketOnSpy, 4, 0, "activity-object");
+        });
+    });
+
+    describe("event handling", () => {
+        it("activity-object will trigger activity-object-create which will be emitted by original socket", async () => {
+            // emit an activity-object via socketIO
+            socket.emit("activity-object", { foo: "bar" });
+            await timeout(0);
+            assertSpyCallArg(asInstanceOnSpy, 0, 0, "activity-object-create");
+            assertSpyCallArg(socketEmitSpy, 0, 1, { foo: "bar" });
+        });
+
+        it("activity-object-create", async () => {
+            asInstance.emit("activity-object-create", { foo: "bar" });
+            await timeout(0);
+            assertSpyCallArg(socketEmitSpy, 0, 0, "activity-object");
+            assertSpyCallArg(socketEmitSpy, 0, 1, { foo: "bar" });
+        });
+
+        it("connect", async () => {
+            assertEquals(sc.online, false);
+            await new Promise<void>((resolve) => {
+                sc.socket.on("connect", () => {
+                    assertEquals(sc.online, true);
+                    resolve();
+                });
+                socket.emit("connect");
             });
         });
-
-        socket.on("activity-object", (obj) => {
-            this.ActivityStreams.Object.create(obj);
+        it("disconnect", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                sc.socket.on("disconnect", () => {
+                    assertEquals(sc.online, false);
+                    resolve();
+                });
+                socket.emit("disconnect");
+            });
         });
-    }
-
-    initActivityStreams() {
-        this.ActivityStreams = ASFactory({ specialObjs: ["credentials"] });
-    }
-
-    private createPublicEmitter(): CustomEmitter {
-        const socket = new EventEmitter() as CustomEmitter;
-        socket._emit = socket.emit;
-        socket.emit = (event, content, callback): boolean => {
-            if (event === "credentials") {
-                this.eventCredentials(content);
-            } else if (event === "activity-object") {
-                this.eventActivityObject(content);
-            } else if (event === "message") {
-                this.eventMessage(content);
-            }
-            this._socket.emit(event as string, content, callback);
-            return true;
-        };
-        return socket;
-    }
-
-    private eventActivityObject(content: ActivityObject) {
-        if (content.id) {
-            this.events["activity-object"].set(content.id, content);
-        }
-    }
-
-    private eventCredentials(content: ActivityStream) {
-        if (content.object && content.object.type === "credentials") {
-            const key: string = content.actor.id ||
-                (content.actor as unknown as string);
-            this.events["credentials"].set(key, content);
-        }
-    }
-
-    private eventMessage(content: BaseActivityObject) {
-        if (!this.online) {
-            return;
-        }
-        // either stores or delete the specified content onto the storedJoins map,
-        // for reply once we're back online.
-        const key = SockethubClient.getKey(content as ActivityStream);
-        if (content.type === "join" || content.type === "connect") {
-            this.events[content.type].set(key, content as ActivityStream);
-        } else if (content.type === "leave") {
-            this.events["join"].delete(key);
-        } else if (content.type === "disconnect") {
-            this.events["connect"].delete(key);
-        }
-    }
-
-    private static getKey(content: ActivityStream) {
-        const actor = content.actor?.id || content.actor;
-        if (!actor) {
-            console.log("THROW HERE");
-            throw new Error(
-                "actor property not present for message type: " + content?.type,
-            );
-        }
-        const target = content.target ? content.target.id || content.target : "";
-        return actor + "-" + target;
-    }
-
-    private log(msg: string, obj?: unknown) {
-        if (this.debug) {
-            console.log(msg, obj);
-        }
-    }
-
-    private registerSocketIOHandlers() {
-        // middleware for events which don't deal in AS objects
-        const callHandler = (event: string) => {
-            return (obj?: unknown) => {
-                if (event === "connect") {
-                    this.online = true;
-                    this.replay(
-                        "activity-object",
-                        this.events["activity-object"],
-                    );
-                    this.replay("credentials", this.events["credentials"]);
-                    this.replay("message", this.events["connect"]);
-                    this.replay("message", this.events["join"]);
-                } else if (event === "disconnect") {
-                    this.online = false;
-                }
-                this.socket._emit(event, obj);
-            };
-        };
-
-        // register for events that give us information on connection status
-        this._socket.on("connect", callHandler("connect"));
-        this._socket.on("connect_error", callHandler("connect_error"));
-        this._socket.on("disconnect", callHandler("disconnect"));
-
-        // use as a middleware to receive incoming Sockethub messages and unpack them
-        // using the ActivityStreams library before passing them along to the app.
-        this._socket.on("message", (obj) => {
-            this.socket._emit("message", this.ActivityStreams.Stream(obj));
+        it("connect_error", async () => {
+            await new Promise<void>((resolve) => {
+                sc.socket.on("connect_error", () => {
+                    resolve();
+                });
+                socket.emit("connect_error");
+            });
         });
-    }
-
-    private replay(name: string, asMap: Map<string, unknown>) {
-        asMap.forEach((obj) => {
-            this.log(`replaying ${name}`, obj);
-            this._socket.emit(name, obj);
+        it("message", async () => {
+            await new Promise<void>((resolve) => {
+                sc.socket.on("message", (obj) => {
+                    assertEquals(obj, { food: "nar" });
+                    resolve();
+                });
+                socket.emit("message", { food: "nar" });
+            });
+            await timeout(0);
+            assertSpyCallArg(asInstanceStreamSpy, 0, 0, { food: "nar" });
         });
-    }
-}
+    });
+
+    describe("event emitting", () => {
+        // it("message (no actor)", () => {
+        //     sc.online = true;
+        //     // return new Promise((resolve, reject) => {
+        //     assertThrows(
+        //         () => {
+        //             sc.socket.emit("message", { foo: "bar" }, () => {
+        //                 console.log("shouldn't arrive at callback");
+        //             });
+        //         },
+        //         Error,
+        //         "a message",
+        //     );
+        //     // });
+        // });
+        it("message", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                socket.once("message", (data) => {
+                    assertEquals(data, { actor: "bar", type: "bar" });
+                    resolve();
+                });
+                sc.socket.emit("message", { actor: "bar", type: "bar" });
+            });
+        });
+        it("message (join)", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                socket.once("message", (data) => {
+                    assertEquals(data, { actor: "bar", type: "join" });
+                    resolve();
+                });
+                sc.socket.emit("message", { actor: "bar", type: "join" });
+            });
+        });
+        it("message (leave)", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                socket.once("message", (data) => {
+                    assertEquals(data, { actor: "bar", type: "leave" });
+                    resolve();
+                });
+                sc.socket.emit("message", { actor: "bar", type: "leave" });
+            });
+        });
+        it("message (connect)", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                socket.once("message", (data) => {
+                    assertEquals(data, { actor: "bar", type: "connect" });
+                    resolve();
+                });
+                sc.socket.emit("message", { actor: "bar", type: "connect" });
+            });
+        });
+        it("message (disconnect)", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                socket.once("message", (data) => {
+                    assertEquals(data, { actor: "bar", type: "disconnect" });
+                    resolve();
+                });
+                sc.socket.emit("message", { actor: "bar", type: "disconnect" });
+            });
+        });
+        it("message (offline)", async () => {
+            sc.online = false;
+            await new Promise<void>((resolve) => {
+                socket.once("message", (data) => {
+                    assertEquals(data, { actor: "bar" });
+                    resolve();
+                });
+                sc.socket.emit("message", { actor: "bar" });
+            });
+        });
+        it("activity-object", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                socket.once("activity-object", (data) => {
+                    assertEquals(data, { actor: "bar" });
+                    resolve();
+                });
+                sc.socket.emit("activity-object", { actor: "bar" });
+            });
+        });
+        it("credentials", async () => {
+            sc.online = true;
+            await new Promise<void>((resolve) => {
+                socket.once("credentials", (data) => {
+                    assertEquals(data, { actor: "bar" });
+                    resolve();
+                });
+                sc.socket.emit("credentials", { actor: "bar" });
+            });
+        });
+    });
+});

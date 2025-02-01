@@ -1,4 +1,4 @@
-import events from "events";
+import events from "node:events";
 import debug from "debug";
 import { ASEmitter } from "./as-emitter.js";
 
@@ -55,20 +55,27 @@ const MODES = {
     v: "participant",
 };
 
+interface irc2asConfig {
+    server: string;
+}
+
 function getNickFromServer(server) {
     return server.split(/^:/)[1].split("!")[0];
 }
 
 export class IrcToActivityStreams {
-    constructor(cfg) {
-        const config = cfg || {};
-        this.server = config.server;
+    server: string;
+    events: events.EventEmitter;
+    private buffer: any;
+
+    constructor(cfg: irc2asConfig) {
+        this.server = cfg.server;
         this.events = new events.EventEmitter();
-        this.__buffer = {};
-        this.__buffer[NAMES] = {};
+        this.buffer = {};
+        this.buffer[NAMES] = {};
     }
 
-    input(incoming) {
+    input(incoming: string) {
         log(incoming);
         if (typeof incoming !== "string") {
             log("unable to process incoming message as it was not a string.");
@@ -97,7 +104,7 @@ export class IrcToActivityStreams {
                 ` content: `,
             content,
         );
-        this.__processIRCCodes(
+        this.processIRCCodes(
             code,
             server,
             channel,
@@ -110,7 +117,7 @@ export class IrcToActivityStreams {
         );
     }
 
-    __processIRCCodes(
+    private processIRCCodes(
         code,
         server,
         channel,
@@ -178,8 +185,8 @@ export class IrcToActivityStreams {
 
             /** */
             case MOTD: // MOTD
-                if (!this.__buffer[MOTD]) {
-                    this.__buffer[MOTD] = {
+                if (!this.buffer[MOTD]) {
+                    this.buffer[MOTD] = {
                         context: "irc",
                         type: "update",
                         actor: {
@@ -193,15 +200,15 @@ export class IrcToActivityStreams {
                         },
                     };
                 } else {
-                    this.__buffer[MOTD].object.content += " " + content;
+                    this.buffer[MOTD].object.content += " " + content;
                 }
                 break;
             case MOTD_END: // end of MOTD
-                if (!this.__buffer[MOTD]) {
+                if (!this.buffer[MOTD]) {
                     break;
                 }
-                ase.emitEvent(EVENT_INCOMING, this.__buffer[MOTD]);
-                delete this.__buffer[MOTD];
+                ase.emitEvent(EVENT_INCOMING, this.buffer[MOTD]);
+                delete this.buffer[MOTD];
                 break;
 
             /** */
@@ -255,7 +262,7 @@ export class IrcToActivityStreams {
 
             /** */
             case TOPIC_IS: // topic currently set to
-                this.__buffer[TOPIC_IS] = {
+                this.buffer[TOPIC_IS] = {
                     context: "irc",
                     type: "update",
                     actor: undefined,
@@ -271,18 +278,18 @@ export class IrcToActivityStreams {
                 };
                 break;
             case TOPIC_SET_BY: // current topic set by
-                if (!this.__buffer[TOPIC_IS]) {
+                if (!this.buffer[TOPIC_IS]) {
                     break;
                 }
                 nick = pos3.split("!")[0];
-                this.__buffer[TOPIC_IS].actor = {
+                this.buffer[TOPIC_IS].actor = {
                     type: "person",
                     id: nick + "@" + this.server,
                     name: nick,
                 };
-                this.__buffer[TOPIC_IS].published = msg[0];
-                ase.emitEvent(EVENT_INCOMING, this.__buffer[TOPIC_IS]);
-                delete this.__buffer[TOPIC_IS];
+                this.buffer[TOPIC_IS].published = msg[0];
+                ase.emitEvent(EVENT_INCOMING, this.buffer[TOPIC_IS]);
+                delete this.buffer[TOPIC_IS];
                 break;
 
             /** */

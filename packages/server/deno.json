@@ -1,0 +1,30 @@
+{
+  "name": "@sockethub/server",
+  "description": "A polyglot messaging service, server libraries",
+  "version": "5.0.0-alpha.5",
+  "license": "LGPL-3.0+",
+  "exports": "src/index.ts",
+  "tasks": {
+    "test-old": "c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha -r ts-node/register src/*.test.ts src/**/*.test.ts && pnpm coverage",
+    "test": "deno test --coverage --clean --allow-env --allow-read src/**/*.test.ts",
+    "coverage": "deno coverage --include=platform-xmpp | deno run jsr:@silverbucket/threshold",
+    "start": "DEBUG=sockethub* deno run ./bin/sockethub",
+    "dev": "DEBUG=sockethub* deno run ./bin/sockethub --examples"
+  },
+  "imports": {
+    "body-parser": "npm:body-parser@^1.20.2",
+    "debug": "npm:debug@^4.3.4",
+    "ejs": "npm:ejs@^3.1.10",
+    "express": "npm:express@^4.19.2",
+    "jquery": "npm:jquery@^3.7.1",
+    "nconf": "npm:nconf@^0.12.1",
+    "socket.io": "npm:socket.io@^4.7.2",
+    "@types/body-parser": "npm:@types/body-parser@^1.19.5",
+    "@types/express": "npm:@types/express@^4.17.21",
+    "@types/jquery": "npm:@types/jquery@^3.5.29",
+    "@types/nconf": "npm:@types/nconf@^0.10.6",
+    "@types/node": "npm:@types/node@^20.10.5",
+    "jaribu": "npm:jaribu@^2.2.3",
+    "web-streams-polyfill": "npm:web-streams-polyfill@^3.2.1"
+  }
+}

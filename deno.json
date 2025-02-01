@@ -5,7 +5,7 @@
   "lint": {
     "exclude": ["**/npm/", "**/packages/examples/"]
   },
-  "workspace": [
+  "workspace": {"members":[
     "./packages/activity-streams",
     "./packages/client",
     "./packages/crypto",
@@ -19,5 +19,5 @@
     "./packages/schemas",
     "./packages/server",
     "./packages/sockethub"
-  ]
+  ]}
 }
