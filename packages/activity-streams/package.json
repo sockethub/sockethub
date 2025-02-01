@@ -3,20 +3,9 @@
     "version": "4.4.0-alpha.4",
     "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
     "type": "module",
-    "main": "./build/cjs/activity-streams.js",
-    "module": "./build/esm/activity-streams.js",
-    "types": "./build/esm/activity-streams.d.ts",
+    "main": "./src/activity-streams.ts",
     "exports": {
-        "./dist/sockethub-client.js": "./dist/activity-streams.js",
-        "./dist/sockethub-client.js.map": "./dist/activity-streams.map",
-        ".": {
-            "import": {
-                "node": "./build/esm/activity-streams.js",
-                "default": "./build/esm/activity-streams.js"
-            },
-            "require": "./build/cjs/activity-streams.js",
-            "types": "./build/esm/activity-streams.d.ts"
-        }
+        "./dist/activity-streams.js": "./dist/activity-streams.js"
     },
     "files": [
         "dist/",
@@ -28,6 +17,7 @@
     "devDependencies": {
         "@babel/core": "7.23.5",
         "@types/bun": "latest",
+        "@types/mocha": "latest",
         "@babel/plugin-transform-object-assign": "7.23.3",
         "@babel/preset-env": "7.23.5",
         "@rollup/plugin-babel": "6.0.4",
@@ -54,9 +44,8 @@
         "directory": "packages/activity-streams"
     },
     "scripts": {
-        "build": "bun run compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs && rollup -c config/rollup.config.test.mjs",
-        "clean": "rm -rf build dist coverage",
-        "compile": "bun run clean && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
+        "build": "bun build src/*.ts --outdir dist/",
+        "clean": "rm -rf dist coverage",
         "coverage": "c8 check-coverage --statements 95 --functions 90 --branches 90 --lines 95",
         "test": "bun run test:node && bun run test:browser && bun run coverage",
         "test:browser": "karma start --single-run --browsers ChromeHeadless karma.config.cjs",
