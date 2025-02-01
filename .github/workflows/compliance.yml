@@ -15,7 +15,7 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v3
             - name: Use Bun ${{ matrix.bun-version }}
-              uses: oven-sh/setup-bun@v2
+              uses: oven-sh/setup-bun@v2.0.1
               with:
                   bun-version: ${{ matrix.node-version }}
             - run: bun install
@@ -36,7 +36,7 @@ jobs:
               with:
                   clean: false
             - name: Use Bun ${{ matrix.bun-version }}
-              uses: oven-sh/setup-bun@v2
+              uses: oven-sh/setup-bun@v2.0.1
               with:
                   bun-version: ${{ matrix.node-version }}
             - run: bun install
