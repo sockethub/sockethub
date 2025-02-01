@@ -1,6 +1,7 @@
 {
     "name": "root",
     "private": true,
+    "packageManager": "bun@1.2.2",
     "engines": {
         "bun": ">=1.2"
     },
