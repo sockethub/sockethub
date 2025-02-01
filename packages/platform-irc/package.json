@@ -45,8 +45,6 @@
         }
     },
     "scripts": {
-        "build": "tsc && bun run octalhack",
-        "octalhack": "cp src/octal-hack.js dist/octal-hack.js",
         "lint": "eslint .",
         "clean": "rm -rf coverage",
         "test": "NODE_OPTIONS='--import=tsx' c8 mocha src/**/*.test.ts && bun run coverage",

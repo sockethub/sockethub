@@ -18,7 +18,6 @@ mkdirSync("./src/schemas/json");
 for (const [fileName, objName] of schemas) {
     import(`../src/schemas/${fileName}.ts`).then((module) => {
         ajv.addSchema(module[objName]);
-        // eslint-disable-next-line security/detect-non-literal-fs-filename
         const fd = openSync(`./src/schemas/json/${fileName}.json`, "w+");
         writeSync(fd, JSON.stringify(module[objName], null, "\t"));
     });
