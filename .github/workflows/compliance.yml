@@ -19,7 +19,7 @@ jobs:
               with:
                   bun-version: ${{ matrix.node-version }}
             - run: bun install
-            - run: bun --filter examples exec bunx playwright install
+            - run: bunx playwright install
             - run: bun run compliance
 
     integration:
