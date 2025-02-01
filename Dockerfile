@@ -1,5 +1,5 @@
 ARG bun_version=22
-FROM bun:${bun_version} AS base
+FROM oven/bun:${bun_version} AS base
 ARG bun_version
 RUN echo "Building Sockethub docker image with Bun version ${bun_version}"
 
@@ -10,7 +10,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store bun install --frozen-lockfile
 RUN bun run build
 RUN bun run deploy --filter=sockethub --prod /deploy
 
-FROM bun:${bun_version}-slim AS prod
+FROM oven/bun:${bun_version}-slim AS prod
 COPY --from=build /deploy /app
 WORKDIR /app
 CMD DEBUG=secure-store*,sockethub* /app/bin/sockethub --host 0.0.0.0
