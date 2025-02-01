@@ -50,6 +50,7 @@
         "@rollup/plugin-terser": "0.4.4",
         "@sockethub/schemas": "workspace:*",
         "@types/bun": "latest",
+        "@types/mocha": "latest",
         "c8": "8.0.1",
         "chai": "4.3.10",
         "karma": "6.4.2",
@@ -2881,6 +2882,8 @@
     "@rollup/pluginutils/@types/estree": ["@types/estree@1.0.6", "", {}, "sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw=="],
 
     "@sinonjs/commons/type-detect": ["type-detect@4.0.8", "", {}, "sha512-0fr/mIH1dlO+x7TlcMy+bIDqKPsw/70tVyeHW787goQjhmqaZe10uwLujubK9q9Lg6Fiho1KUKDYz0Z7k7g5/g=="],
+
+    "@sockethub/activity-streams/@types/mocha": ["@types/mocha@10.0.10", "", {}, "sha512-xPyYSz1cMPnJQhl0CLMH68j3gprKZaTjG3s5Vi+fDgx+uhG9NOXwbVt52eFS8ECyXhyKcjDLCBEqBExKuiZb7Q=="],
 
     "@sockethub/activity-streams/mocha": ["mocha@10.2.0", "", { "dependencies": { "ansi-colors": "4.1.1", "browser-stdout": "1.3.1", "chokidar": "3.5.3", "debug": "4.3.4", "diff": "5.0.0", "escape-string-regexp": "4.0.0", "find-up": "5.0.0", "glob": "7.2.0", "he": "1.2.0", "js-yaml": "4.1.0", "log-symbols": "4.1.0", "minimatch": "5.0.1", "ms": "2.1.3", "nanoid": "3.3.3", "serialize-javascript": "6.0.0", "strip-json-comments": "3.1.1", "supports-color": "8.1.1", "workerpool": "6.2.1", "yargs": "16.2.0", "yargs-parser": "20.2.4", "yargs-unparser": "2.0.0" }, "bin": { "mocha": "bin/mocha.js", "_mocha": "bin/_mocha" } }, "sha512-IDY7fl/BecMwFHzoqF2sg/SHHANeBoMMXFlS9r0OXKDssYE1M5O43wUY/9BVPeIvfH2zmEbBfseqN9gBQZzXkg=="],
 
