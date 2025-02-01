@@ -1,7 +1,7 @@
 {
     "name": "@sockethub/examples",
     "version": "1.0.0-alpha.4",
-    "packageManager": "pnpm@8.0.0",
+    "packageManager": "bun@8.0.0",
     "files": [
         "build"
     ],
@@ -25,7 +25,7 @@
     "scripts": {
         "dev": "vite dev",
         "build": "vite build",
-        "test": "pnpm run test:unit",
+        "test": "bun run test:unit",
         "test:integration": "playwright test",
         "test:unit": "vitest run",
         "preview": "vite preview",
@@ -36,7 +36,7 @@
     },
     "devDependencies": {
         "@playwright/test": "^1.49.1",
-        "@sockethub/client": "workspace:^",
+        "@sockethub/client": "workspace:*",
         "@sveltejs/adapter-static": "^2.0.3",
         "@sveltejs/kit": "^1.30.4",
         "@typescript-eslint/eslint-plugin": "^6.21.0",

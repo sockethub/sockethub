@@ -8,28 +8,26 @@ jobs:
 
         strategy:
             matrix:
-                node-version: [20, 22]
+                bun-version: [1.2]
 
         steps:
             - run: sudo chown -R $USER:$USER ${{ github.workspace }}
             - name: Checkout repository
               uses: actions/checkout@v3
-            - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v3
+            - name: Use Bun ${{ matrix.bun-version }}
+              uses: oven-sh/setup-bun@v2
               with:
-                  node-version: ${{ matrix.node-version }}
-            - run: npm install -g pnpm@9.15.4
-            - run: pnpm -v
-            - run: pnpm install
-            - run: pnpm --filter examples exec npx playwright install
-            - run: pnpm compliance
+                  bun-version: ${{ matrix.node-version }}
+            - run: bun install
+            - run: bun --filter examples exec bunx playwright install
+            - run: bun run compliance
 
     integration:
         runs-on: ubuntu-latest
 
         strategy:
             matrix:
-                node-version: [20, 22]
+                bun-version: [1.2]
 
         steps:
             - run: sudo chown -R $USER:$USER ${{ github.workspace }}
@@ -37,17 +35,15 @@ jobs:
               uses: actions/checkout@v3
               with:
                   clean: false
-            - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v3
+            - name: Use Bun ${{ matrix.bun-version }}
+              uses: oven-sh/setup-bun@v2
               with:
-                  node-version: ${{ matrix.node-version }}
-            - run: npm install -g pnpm@9.15.4
-            - run: npm install -g karma
-            - run: pnpm install
-            - run: pnpm build
-            - run: docker compose build --build-arg node_version=${{ matrix.node-version }}
+                  bun-version: ${{ matrix.node-version }}
+            - run: bun install
+            - run: bun run build
+            - run: docker compose build --build-arg bun_version=${{ matrix.bun-version }}
 
-            - run: pnpm docker:build
+            - run: bun run docker:build
             - run: sleep 5
 
             - name: Verify Sockethub is listening externally
@@ -57,11 +53,11 @@ jobs:
               run: nc -zv localhost 16379
 
             - name: Redis Integration Tests
-              run: pnpm integration:redis:run
+              run: bun run integration:redis:run
 
             - name: Browser Integration Tests
-              run: pnpm integration:browser:run
+              run: bun run integration:browser:run
 
             - name: Print Docker logs
               if: always()
-              run: pnpm docker:logs
+              run: bun run docker:logs

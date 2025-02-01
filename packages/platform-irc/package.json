@@ -27,7 +27,7 @@
         "irc-socket-sasl": "4.0.0"
     },
     "devDependencies": {
-        "@sockethub/schemas": "workspace:^",
+        "@sockethub/schemas": "workspace:*",
         "@types/node": "22.10.2",
         "c8": "8.0.1",
         "chai": "4.3.10",
@@ -37,7 +37,7 @@
         "typescript": "5.3.3"
     },
     "peerDependencies": {
-        "@sockethub/server": "workspace:^"
+        "@sockethub/server": "workspace:*"
     },
     "peerDependenciesMeta": {
         "@sockethub/server": {
@@ -45,11 +45,11 @@
         }
     },
     "scripts": {
-        "build": "tsc && pnpm octalhack",
+        "build": "tsc && bun octalhack",
         "octalhack": "cp src/octal-hack.js dist/octal-hack.js",
         "lint": "eslint .",
         "clean": "rm -rf coverage",
-        "test": "NODE_OPTIONS='--import=tsx' c8 mocha src/**/*.test.ts && pnpm coverage",
+        "test": "NODE_OPTIONS='--import=tsx' c8 mocha src/**/*.test.ts && bun coverage",
         "coverage": "c8 check-coverage --statements 75 --branches 55 --functions 85 --lines 75",
         "doc": "jsdoc2md --no-gfm --heading-depth 1 dist/index.ts  > API.md"
     }

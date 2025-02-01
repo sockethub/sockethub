@@ -1,10 +1,8 @@
 {
     "name": "root",
     "private": true,
-    "packageManager": "bun@9.15.1",
     "engines": {
-        "node": ">=20",
-        "bun": ">=9"
+        "bun": ">=1.2"
     },
     "devDependencies": {
         "@lerna-lite/cli": "3.1.0",
@@ -52,8 +50,8 @@
         "integration:redis": "docker compose up redis -d && bun integration:redis:run; RES=$?; docker compose down; exit $RES",
         "integration:redis:run": "DEBUG=ioredis*,bullmq*,sockethub* NODE_OPTIONS='--import=tsx' mocha test/redis.test.ts",
         "lint": "prettier --check . && eslint --max-warnings 0 . && NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=lint && bun lint:doc",
-        "lint:doc": "markdownlint '**/*.md'",
-        "lint:doc:fix": "markdownlint --fix '**/*.md' && mdspell -n -a --en-us ./README.md ./packages/*/README.md",
+        "lint:doc": "bunx markdownlint '**/*.md'",
+        "lint:doc:fix": "bunx markdownlint --fix '**/*.md' && bunx mdspell -n -a --en-us ./README.md ./packages/*/README.md",
         "lint:fix": "prettier --write . && nx run-many --target=lint:fix && bun lint:doc:fix",
         "preinstall": "npx only-allow bun",
         "publish": "bun clean && bun build && bun compliance && lerna publish --dist-tag latest --pre-dist-tag next",

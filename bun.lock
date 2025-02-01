@@ -119,8 +119,8 @@
       "name": "@sockethub/data-layer",
       "version": "1.0.0-alpha.4",
       "dependencies": {
-        "@sockethub/crypto": "workspace:1.0.0-alpha.4",
-        "@sockethub/schemas": "workspace:3.0.0-alpha.4",
+        "@sockethub/crypto": "workspace:*",
+        "@sockethub/schemas": "workspace:*",
         "bullmq": "4.15.2",
         "debug": "4.3.4",
         "ioredis": "5.3.2",

@@ -23,12 +23,12 @@
     },
     "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
     "dependencies": {
-        "@sockethub/schemas": "workspace:3.0.0-alpha.4",
+        "@sockethub/schemas": "workspace:*",
         "object-hash": "3.0.0"
     },
     "scripts": {
         "clean": "rm -rf dist coverage",
-        "test": "NODE_OPTIONS='--import=tsx' c8 -x \"src/**/*.test.*\" mocha src/*.test.ts && pnpm coverage",
+        "test": "NODE_OPTIONS='--import=tsx' c8 -x \"src/**/*.test.*\" mocha src/*.test.ts && bun coverage",
         "coverage": "c8 check-coverage --statements 90 --branches 85 --functions 80 --lines 90",
         "build": "tsc"
     },

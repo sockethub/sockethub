@@ -27,8 +27,8 @@
     },
     "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
     "dependencies": {
-        "@sockethub/crypto": "workspace:1.0.0-alpha.4",
-        "@sockethub/schemas": "workspace:3.0.0-alpha.4",
+        "@sockethub/crypto": "workspace:*",
+        "@sockethub/schemas": "workspace:*",
         "bullmq": "4.15.2",
         "debug": "4.3.4",
         "ioredis": "5.3.2",
@@ -36,7 +36,7 @@
     },
     "scripts": {
         "clean": "rm -rf dist coverage",
-        "test": "NODE_OPTIONS='--import=tsx' c8 -x \"src/**/*.test.*\" mocha src/*.test.ts && pnpm coverage",
+        "test": "NODE_OPTIONS='--import=tsx' c8 -x \"src/**/*.test.*\" mocha src/*.test.ts && bun coverage",
         "coverage": "c8 check-coverage --statements 65 --branches 70 --functions 55 --lines 65",
         "build": "tsc"
     },

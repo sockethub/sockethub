@@ -16,12 +16,12 @@
         "dummy"
     ],
     "devDependencies": {
-        "@sockethub/schemas": "workspace:^",
+        "@sockethub/schemas": "workspace:*",
         "@types/node": "22.10.2",
         "typescript": "5.3.3"
     },
     "peerDependencies": {
-        "@sockethub/server": "workspace:^"
+        "@sockethub/server": "workspace:*"
     },
     "peerDependenciesMeta": {
         "@sockethub/server": {

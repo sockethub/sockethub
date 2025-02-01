@@ -51,17 +51,17 @@
     },
     "scripts": {
         "clean": "rm -rf dist coverage",
-        "test": "pnpm test:ts && pnpm test:js && pnpm coverage",
+        "test": "bun test:ts && bun test:js && bun coverage",
         "test:ts": "NODE_OPTIONS='--import=tsx' c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha src/*.test.ts src/**/*.test.ts",
         "test:js": "mocha dist/*.test.js dist/**/*.test.js",
         "coverage": "c8 check-coverage --statements 85 --branches 80 --functions 70 --lines 85",
         "start": "DEBUG=sockethub* ./bin/sockethub",
-        "dev": "pnpm build && DEBUG=sockethub* ./bin/sockethub --examples",
-        "build": "pnpm clean && tsc && cp ./src/defaults.json ./dist/defaults.json && rm -rf res/ && mkdir -p res && cp -r node_modules/@sockethub/examples/build res/examples && cp node_modules/@sockethub/client/dist/* res/ && cp node_modules/socket.io/client-dist/socket.io.js res/socket.io.js"
+        "dev": "bun build && DEBUG=sockethub* ./bin/sockethub --examples",
+        "build": "bun clean && tsc && cp ./src/defaults.json ./dist/defaults.json && rm -rf res/ && mkdir -p res && cp -r node_modules/@sockethub/examples/build res/examples && cp node_modules/@sockethub/client/dist/* res/ && cp node_modules/socket.io/client-dist/socket.io.js res/socket.io.js"
     },
     "engines": {
         "node": ">=18",
-        "pnpm": ">=8"
+        "bun": ">=8"
     },
     "devDependencies": {
         "@types/body-parser": "1.19.5",
@@ -83,9 +83,9 @@
         "web-streams-polyfill": "^3.3.3"
     },
     "optionalDependencies": {
-        "@sockethub/platform-dummy": "workspace:^",
-        "@sockethub/platform-feeds": "workspace:^",
-        "@sockethub/platform-irc": "workspace:^",
-        "@sockethub/platform-xmpp": "workspace:^"
+        "@sockethub/platform-dummy": "workspace:*",
+        "@sockethub/platform-feeds": "workspace:*",
+        "@sockethub/platform-irc": "workspace:*",
+        "@sockethub/platform-xmpp": "workspace:*"
     }
 }

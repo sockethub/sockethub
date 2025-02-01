@@ -26,7 +26,7 @@
         "@xmpp/client": "^0.13.1"
     },
     "devDependencies": {
-        "@sockethub/schemas": "workspace:^",
+        "@sockethub/schemas": "workspace:*",
         "@xmpp/xml": "0.13.3",
         "c8": "8.0.1",
         "chai": "4.3.10",
@@ -35,7 +35,7 @@
         "sinon": "17.0.1"
     },
     "peerDependencies": {
-        "@sockethub/server": "workspace:^"
+        "@sockethub/server": "workspace:*"
     },
     "peerDependenciesMeta": {
         "@sockethub/server": {
@@ -43,9 +43,9 @@
         }
     },
     "scripts": {
-        "build": "pnpm doc",
+        "build": "bun doc",
         "clean": "rm -rf coverage",
-        "test": "c8 -x \"**/*.test.*\" mocha **/*.test.js && pnpm coverage",
+        "test": "c8 -x \"**/*.test.*\" mocha **/*.test.js && bun coverage",
         "coverage": "c8 check-coverage --statements 85 --branches 80 --functions 69 --lines 85",
         "doc": "jsdoc2md --no-gfm --heading-depth 1 src/index.js > API.md"
     }
