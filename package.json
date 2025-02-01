@@ -49,7 +49,7 @@
         "integration:browser:run": "karma start --single-run --sh_port=10550 --browsers ChromeHeadless test/karma.config.js",
         "integration:redis": "docker compose up redis -d && bun run integration:redis:run; RES=$?; docker compose down; exit $RES",
         "integration:redis:run": "DEBUG=ioredis*,bullmq*,sockethub* NODE_OPTIONS='--import=tsx' mocha test/redis.test.ts",
-        "lint": "prettier --check . && eslint --max-warnings 0 . && NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=lint && bun lint:doc",
+        "lint": "prettier --check . && eslint --max-warnings 0 . && NX_NATIVE_COMMAND_RUNNER=false bun run --filter='*' lint && bun lint:doc",
         "lint:doc": "bunx markdownlint '**/*.md'",
         "lint:doc:fix": "bunx markdownlint --fix '**/*.md' && bunx mdspell -n -a --en-us ./README.md ./packages/*/README.md",
         "lint:fix": "prettier --write . && bun run --filter='*' lint:fix && bun run lint:doc:fix",
