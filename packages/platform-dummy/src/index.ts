@@ -12,7 +12,7 @@ import denoJson from "./../deno.json" with { type: "json" };
 
 /**
  * A simple Dummy sockethub platform, used as an example platform, and for
- * simple comms testing from client to server and back.
+ * simple communication testing from client to server and back.
  */
 export default class Dummy implements PlatformInterface {
     debug: Logger;
