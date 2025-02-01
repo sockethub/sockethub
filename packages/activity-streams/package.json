@@ -5,7 +5,7 @@
     "type": "module",
     "main": "./src/activity-streams.ts",
     "files": [
-        "dist/",
+        "dist/"
     ],
     "dependencies": {
         "eventemitter3": "5.0.1"
