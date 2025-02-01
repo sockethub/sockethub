@@ -30,16 +30,16 @@
     "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-feeds",
     "dependencies": {
         "html-tags": "3.3.1",
-        "htmlparser2": "9.0.0",
+        "htmlparser2": "9.1.0",
         "node-fetch": "3.3.2",
         "podparse": "1.6.0"
     },
     "devDependencies": {
         "@sockethub/schemas": "workspace:^",
-        "@types/node": "22.10.2",
+        "@types/node": "22.10.10",
         "@types/node-fetch": "^2.6.12",
-        "eslint": "8.55.0",
-        "typescript": "5.3.3"
+        "eslint": "8.57.1",
+        "typescript": "5.7.3"
     },
     "peerDependencies": {
         "@sockethub/server": "workspace:^"

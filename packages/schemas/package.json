@@ -26,15 +26,15 @@
     },
     "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/schemas",
     "devDependencies": {
-        "@types/chai": "4.3.11",
+        "@types/chai": "4.3.20",
         "@types/debug": "4.1.12",
-        "@types/mocha": "10.0.6",
-        "@types/node": "22.10.2",
+        "@types/mocha": "10.0.10",
+        "@types/node": "22.10.10",
         "c8": "8.0.1",
-        "chai": "4.3.10",
-        "mocha": "10.2.0",
-        "tsx": "4.7.2",
-        "typescript": "5.3.3"
+        "chai": "4.5.0",
+        "mocha": "10.8.2",
+        "tsx": "4.19.2",
+        "typescript": "5.7.3"
     },
     "scripts": {
         "build": "pnpm clean; tsc && ./scripts/export-json-schema.js",
@@ -43,9 +43,9 @@
         "test": "NODE_OPTIONS='--import=tsx' c8 -x \"**/*.test.*\" mocha src/**/*.test.ts && pnpm coverage"
     },
     "dependencies": {
-        "ajv": "8.12.0",
+        "ajv": "8.17.1",
         "ajv-formats": "2.1.1",
         "ajv-formats-draft2019": "1.6.1",
-        "debug": "4.3.4"
+        "debug": "4.4.0"
     }
 }

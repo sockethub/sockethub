@@ -17,8 +17,8 @@
     ],
     "devDependencies": {
         "@sockethub/schemas": "workspace:^",
-        "@types/node": "22.10.2",
-        "typescript": "5.3.3"
+        "@types/node": "22.10.10",
+        "typescript": "5.7.3"
     },
     "peerDependencies": {
         "@sockethub/server": "workspace:^"
