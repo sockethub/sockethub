@@ -7,7 +7,7 @@
         "module": "esnext",
         "target": "ES2018",
         "lib": ["esnext"],
-        "types": ["mocha", "node"],
+        "types": ["mocha", "bun"],
         "sourceMap": true,
         "declaration": true,
         "esModuleInterop": true,

@@ -27,6 +27,7 @@
     },
     "devDependencies": {
         "@babel/core": "7.23.5",
+        "@types/bun": "latest",
         "@babel/plugin-transform-object-assign": "7.23.3",
         "@babel/preset-env": "7.23.5",
         "@rollup/plugin-babel": "6.0.4",
@@ -35,7 +36,6 @@
         "@rollup/plugin-node-resolve": "15.2.3",
         "@rollup/plugin-terser": "0.4.4",
         "@sockethub/schemas": "workspace:*",
-        "@types/node": "22.10.2",
         "c8": "8.0.1",
         "chai": "4.3.10",
         "karma": "6.4.2",

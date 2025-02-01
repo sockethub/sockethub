@@ -6,7 +6,7 @@
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
-    "main": "dist/index.js",
+    "main": "src/index.ts",
     "bin": "bin/sockethub",
     "preferGlobal": true,
     "keywords": [
@@ -56,21 +56,20 @@
         "test:js": "mocha dist/*.test.js dist/**/*.test.js",
         "coverage": "c8 check-coverage --statements 85 --branches 80 --functions 70 --lines 85",
         "start": "DEBUG=sockethub* ./bin/sockethub",
-        "dev": "bunrun  build && DEBUG=sockethub* ./bin/sockethub --examples",
-        "build": "bun run clean && tsc && cp ./src/defaults.json ./dist/defaults.json"
+        "dev": "DEBUG=sockethub* ./bin/sockethub --examples"
     },
     "engines": {
         "bun": ">=1.2"
     },
     "devDependencies": {
         "@types/body-parser": "1.19.5",
+        "@types/bun": "latest",
         "@types/chai": "4.3.11",
         "@types/debug": "4.1.12",
         "@types/express": "4.17.21",
         "@types/jquery": "3.5.29",
         "@types/mocha": "10.0.6",
         "@types/nconf": "0.10.6",
-        "@types/node": "22.10.2",
         "@types/sinon": "17.0.2",
         "c8": "8.0.1",
         "chai": "4.3.10",

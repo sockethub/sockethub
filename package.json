@@ -6,6 +6,7 @@
     },
     "devDependencies": {
         "@lerna-lite/cli": "3.1.0",
+        "@types/bun": "latest",
         "@lerna-lite/publish": "3.1.0",
         "@sockethub/data-layer": "workspace:1.0.0-alpha.4",
         "@sockethub/schemas": "workspace:3.0.0-alpha.4",

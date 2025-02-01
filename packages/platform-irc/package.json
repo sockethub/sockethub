@@ -6,7 +6,7 @@
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
     "type": "module",
-    "main": "dist/index.js",
+    "main": "src/index.ts",
     "keywords": [
         "sockethub",
         "messaging",
@@ -28,7 +28,7 @@
     },
     "devDependencies": {
         "@sockethub/schemas": "workspace:*",
-        "@types/node": "22.10.2",
+        "@types/bun": "latest",
         "c8": "8.0.1",
         "chai": "4.3.10",
         "jsdoc-to-markdown": "8.0.0",
@@ -45,8 +45,6 @@
         }
     },
     "scripts": {
-        "build": "tsc && bun run octalhack",
-        "octalhack": "cp src/octal-hack.js dist/octal-hack.js",
         "lint": "eslint .",
         "clean": "rm -rf coverage",
         "test": "NODE_OPTIONS='--import=tsx' c8 mocha src/**/*.test.ts && bun run coverage",

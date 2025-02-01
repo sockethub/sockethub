@@ -17,7 +17,7 @@
     ],
     "devDependencies": {
         "@sockethub/schemas": "workspace:*",
-        "@types/node": "22.10.2",
+        "@types/bun": "latest",
         "typescript": "5.3.3"
     },
     "peerDependencies": {
@@ -29,7 +29,6 @@
         }
     },
     "scripts": {
-        "build": "tsc",
         "lint": "eslint .",
         "test": "exit 0"
     },
