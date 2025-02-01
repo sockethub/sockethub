@@ -31,7 +31,8 @@
         "typescript": "5.3.3"
     },
     "scripts": {
-        "build": "nx run-many --target=build --parallel 1",
+        "build": "nx run-many --target=build --parallel 1 && bun run build:server:post",
+        "build:server:post": "rm -rf packages/server/res && mkdir -p  packages/server/res && cp -r node_modules/@sockethub/examples/build packages/server/res/examples && cp node_modules/@sockethub/client/dist/* packages/server/res/ && cp node_modules/socket.io/client-dist/socket.io.js packages/server/res/socket.io.js",
         "clean": "bun run --parallel -r clean",
         "clean:deps": "bun run --parallel -r clean:deps && npx rimraf node_modules",
         "compliance": "bun lint && bun build && bun test",

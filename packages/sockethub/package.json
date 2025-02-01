@@ -46,6 +46,6 @@
         "start": "DEBUG=sockethub* ./bin/sockethub"
     },
     "engines": {
-        "node": ">= 18"
+        "bun": ">=1.2"
     }
 }
