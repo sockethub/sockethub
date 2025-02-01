@@ -6,7 +6,7 @@ RUN echo "Building Sockethub docker image with Bun version ${bun_version}"
 FROM base AS build
 COPY . /src
 WORKDIR /src
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store bun install --frozen-lockfile
+RUN bun install --frozen-lockfile
 RUN bun run build
 RUN bun run deploy --filter=sockethub --prod /deploy
 

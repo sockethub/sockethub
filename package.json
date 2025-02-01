@@ -25,20 +25,19 @@
         "markdown-spellcheck": "1.3.1",
         "markdownlint-cli": "0.38.0",
         "mocha": "10.4.0",
-        "nx": "17.2.7",
         "prettier": "3.1.1",
         "tsx": "^4.19.2",
         "typescript": "5.3.3"
     },
     "scripts": {
-        "build": "nx run-many --target=build --parallel 1 && bun run build:server:post",
+        "build": "bun run --filter='*' build && bun run build:server:post",
         "build:server:post": "rm -rf packages/server/res && mkdir -p  packages/server/res && cp -r node_modules/@sockethub/examples/build packages/server/res/examples && cp node_modules/@sockethub/client/dist/* packages/server/res/ && cp node_modules/socket.io/client-dist/socket.io.js packages/server/res/socket.io.js",
-        "clean": "bun run --parallel -r clean",
-        "clean:deps": "bun run --parallel -r clean:deps && npx rimraf node_modules",
+        "clean": "bun run --filter='*' clean",
+        "clean:deps": "bun run --filter='*' clean:deps && bunx rimraf node_modules",
         "compliance": "bun run lint && bun run build && bun run test",
-        "coverage": "nx run-many -git co-target=coverage",
+        "coverage": "bun run --filter='*' coverage",
         "dev": "bun run build && bun run --filter 'sockethub' dev",
-        "doc": "nx run-many --target=doc",
+        "doc": "bun run --filter='*' doc",
         "docker:start": "docker compose -f docker-compose.yml up prosody sockethub -d",
         "docker:clean:all": "bun run docker:stop && docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub",
         "docker:clean:sockethub": "bun run docker:stop && docker rm sockethub-sockethub-1; docker rmi sockethub-sockethub",
@@ -53,11 +52,11 @@
         "lint": "prettier --check . && eslint --max-warnings 0 . && NX_NATIVE_COMMAND_RUNNER=false nx run-many --target=lint && bun lint:doc",
         "lint:doc": "bunx markdownlint '**/*.md'",
         "lint:doc:fix": "bunx markdownlint --fix '**/*.md' && bunx mdspell -n -a --en-us ./README.md ./packages/*/README.md",
-        "lint:fix": "prettier --write . && nx run-many --target=lint:fix && bun run lint:doc:fix",
-        "preinstall": "npx only-allow bun",
+        "lint:fix": "prettier --write . && bun run --filter='*' lint:fix && bun run lint:doc:fix",
+        "preinstall": "bunx only-allow bun",
         "publish": "bun run clean && bun run build && bun run compliance && lerna publish --dist-tag latest --pre-dist-tag next",
         "start": "bun run --filter 'sockethub' start",
-        "test": "nx run-many --target=test"
+        "test": "bun run --filter='*' test"
     },
     "dependencies": {
         "tslib": "2.6.2"
