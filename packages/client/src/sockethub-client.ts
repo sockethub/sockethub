@@ -1,11 +1,13 @@
-import EventEmitter from "eventemitter3";
-import {
+import eventEmitter from "npm:eventemitter3";
+import type {
     ActivityObject,
     ActivityStream,
     BaseActivityObject,
 } from "@sockethub/schemas";
-import { ASFactory, type ASManager } from "@sockethub/activity-streams";
-import type { Socket } from "socket.io-client";
+import ASFactory, { type ASManager } from "@sockethub/activity-streams";
+import type { Socket } from "npm:socket.io-client";
+
+const EventEmitter = eventEmitter as unknown as typeof eventEmitter.default;
 
 export interface EventMapping {
     credentials: Map<string, ActivityStream>;
@@ -14,7 +16,8 @@ export interface EventMapping {
     join: Map<string, ActivityStream>;
 }
 
-interface CustomEmitter extends EventEmitter {
+interface CustomEmitter extends eventEmitter.default {
+    [x: string]: unknown;
     _emit(s: string, o: unknown, c?: unknown): void;
 }
 
@@ -26,7 +29,7 @@ export default class SockethubClient {
         join: new Map(),
     };
     private _socket: Socket;
-    public ActivityStreams: ASManager;
+    public ActivityStreams!: ASManager;
     public socket: CustomEmitter;
     public online = false;
     public debug = true;
@@ -41,18 +44,15 @@ export default class SockethubClient {
         this.registerSocketIOHandlers();
         this.initActivityStreams();
 
-        this.ActivityStreams.on(
-            "activity-object-create",
-            (obj: ActivityObject) => {
-                socket.emit("activity-object", obj, (err: never) => {
-                    if (err) {
-                        console.error("failed to create activity-object ", err);
-                    } else {
-                        this.eventActivityObject(obj);
-                    }
-                });
-            },
-        );
+        this.ActivityStreams.on("activity-object-create", (obj) => {
+            socket.emit("activity-object", obj, (err: never) => {
+                if (err) {
+                    console.error("failed to create activity-object ", err);
+                } else {
+                    this.eventActivityObject(obj as ActivityObject);
+                }
+            });
+        });
 
         socket.on("activity-object", (obj) => {
             this.ActivityStreams.Object.create(obj);
@@ -65,12 +65,8 @@ export default class SockethubClient {
 
     private createPublicEmitter(): CustomEmitter {
         const socket = new EventEmitter() as CustomEmitter;
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
         socket._emit = socket.emit;
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        socket.emit = (event, content, callback): void => {
+        socket.emit = (event, content, callback): boolean => {
             if (event === "credentials") {
                 this.eventCredentials(content);
             } else if (event === "activity-object") {
@@ -79,6 +75,7 @@ export default class SockethubClient {
                 this.eventMessage(content);
             }
             this._socket.emit(event as string, content, callback);
+            return true;
         };
         return socket;
     }
@@ -91,8 +88,8 @@ export default class SockethubClient {
 
     private eventCredentials(content: ActivityStream) {
         if (content.object && content.object.type === "credentials") {
-            const key: string =
-                content.actor.id || (content.actor as unknown as string);
+            const key: string = content.actor.id ||
+                (content.actor as unknown as string);
             this.events["credentials"].set(key, content);
         }
     }
@@ -116,13 +113,12 @@ export default class SockethubClient {
     private static getKey(content: ActivityStream) {
         const actor = content.actor?.id || content.actor;
         if (!actor) {
+            console.log("THROW HERE");
             throw new Error(
                 "actor property not present for message type: " + content?.type,
             );
         }
-        const target = content.target
-            ? content.target.id || content.target
-            : "";
+        const target = content.target ? content.target.id || content.target : "";
         return actor + "-" + target;
     }
 
@@ -135,7 +131,7 @@ export default class SockethubClient {
     private registerSocketIOHandlers() {
         // middleware for events which don't deal in AS objects
         const callHandler = (event: string) => {
-            return async (obj?: unknown) => {
+            return (obj?: unknown) => {
                 if (event === "connect") {
                     this.online = true;
                     this.replay(

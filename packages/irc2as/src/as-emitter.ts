@@ -1,20 +1,27 @@
 const EVENT_INCOMING = "incoming",
     EVENT_ERROR = "error";
 
+interface EventEmitter {
+    emit(code: string, asObject: any): void;
+}
+
 export class ASEmitter {
-    constructor(events, server) {
+    server: string;
+    events: EventEmitter
+
+    constructor(events: EventEmitter, server: string) {
         this.server = server;
         this.events = events;
     }
 
-    emitEvent(code, asObject) {
+    emitEvent(code: string, asObject) {
         if (typeof asObject === "object" && !asObject.published) {
             asObject.published = `${Date.now()}`;
         }
         this.events.emit(code, asObject);
     }
 
-    __generalError(nick, content) {
+    private generalError(nick: string, content: string) {
         return {
             context: "irc",
             type: "update",
@@ -31,7 +38,7 @@ export class ASEmitter {
         };
     }
 
-    presence(nick, role, channel) {
+    presence(nick: string, role: string, channel: string) {
         this.emitEvent(EVENT_INCOMING, {
             context: "irc",
             type: "update",
@@ -52,7 +59,7 @@ export class ASEmitter {
         });
     }
 
-    channelError(channel, nick, content) {
+    channelError(channel: string, nick: string, content) {
         this.emitEvent(EVENT_ERROR, {
             context: "irc",
             type: "update",
@@ -68,11 +75,11 @@ export class ASEmitter {
         });
     }
 
-    nickError(nick, content) {
-        this.emitEvent(EVENT_ERROR, this.__generalError(nick, content));
+    nickError(nick: string, content) {
+        this.emitEvent(EVENT_ERROR, this.generalError(nick, content));
     }
 
-    notice(nick, content) {
+    notice(nick: string, content) {
         this.emitEvent(EVENT_INCOMING, {
             context: "irc",
             type: "send",
@@ -92,8 +99,8 @@ export class ASEmitter {
         });
     }
 
-    serviceError(nick, content) {
-        this.emitEvent(EVENT_ERROR, this.__generalError(nick, content));
+    serviceError(nick: string, content) {
+        this.emitEvent(EVENT_ERROR, this.generalError(nick, content));
     }
 
     joinError(nick) {
@@ -112,7 +119,7 @@ export class ASEmitter {
         });
     }
 
-    topicChange(channel, nick, content) {
+    topicChange(channel: string, nick: string, content) {
         this.emitEvent(EVENT_INCOMING, {
             context: "irc",
             type: "update",
@@ -133,7 +140,7 @@ export class ASEmitter {
         });
     }
 
-    joinRoom(channel, nick) {
+    joinRoom(channel: string, nick: string) {
         this.emitEvent(EVENT_INCOMING, {
             context: "irc",
             type: "join",
@@ -150,7 +157,7 @@ export class ASEmitter {
         });
     }
 
-    userQuit(nick) {
+    userQuit(nick: string) {
         this.emitEvent(EVENT_INCOMING, {
             context: "irc",
             type: "leave",
@@ -170,7 +177,7 @@ export class ASEmitter {
         });
     }
 
-    userPart(channel, nick) {
+    userPart(channel: string, nick: string) {
         this.emitEvent(EVENT_INCOMING, {
             context: "irc",
             type: "leave",
@@ -191,7 +198,7 @@ export class ASEmitter {
         });
     }
 
-    privMsg(nick, target, content) {
+    privMsg(nick: string, target: string, content) {
         let type, message;
         if (content.startsWith("+\u0001ACTION ")) {
             type = "me";
@@ -224,7 +231,7 @@ export class ASEmitter {
         });
     }
 
-    role(type, nick, target, role, channel) {
+    role(type: string, nick: string, target: string, role: string, channel: string) {
         this.emitEvent(EVENT_INCOMING, {
             context: "irc",
             type: type,
@@ -254,7 +261,7 @@ export class ASEmitter {
         });
     }
 
-    nickChange(nick, content) {
+    nickChange(nick: string, content) {
         this.emitEvent(EVENT_INCOMING, {
             context: "irc",
             type: "update",

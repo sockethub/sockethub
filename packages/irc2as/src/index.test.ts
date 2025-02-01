@@ -1,13 +1,12 @@
-import chai from "chai";
 import { validateActivityStream } from "@sockethub/schemas";
-import fs from "fs";
+import fs from "node:fs";
 import equal from "fast-deep-equal";
 const expect = chai.expect;
 
-import { IrcToActivityStreams } from "./index.js";
-import { TestData } from "./index.test.data.js";
-const ircdata = fs.readFileSync("./src/index.test.data.irc.txt", "utf-8");
-const inputs = ircdata.split("\n");
+import { IrcToActivityStreams } from "./index.ts";
+import TestData from "./index.test.data.ts";
+const ircData = fs.readFileSync("./src/index.test.data.irc.txt", "utf-8");
+const inputs = ircData.split("\n");
 
 function matchStream(done) {
     return (stream) => {

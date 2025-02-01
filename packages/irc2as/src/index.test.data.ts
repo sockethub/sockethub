@@ -1,4 +1,4 @@
-export const TestData = [
+export default [
     {
         context: "irc",
         type: "update",

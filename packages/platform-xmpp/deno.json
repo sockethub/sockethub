@@ -1,0 +1,15 @@
+{
+  "name": "@sockethub/platform-xmpp",
+  "description": "A sockethub platform module implementing XMPP functionality",
+  "version": "5.0.0-alpha.5",
+  "license": "LGPL-3.0+",
+  "exports": "src/index.js",
+  "tasks": {
+    "coverage": "deno coverage --include=platform-xmpp | deno run jsr:@silverbucket/threshold 74 83",
+    "test": "deno test --coverage --clean --allow-env src/**/*.test.js"
+  },
+  "imports": {
+    "@xmpp/client": "npm:@xmpp/client@^0.13.1",
+    "@xmpp/xml": "npm:@xmpp/xml@^0.13.1"
+  }
+}

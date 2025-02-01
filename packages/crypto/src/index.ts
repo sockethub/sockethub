@@ -1,12 +1,14 @@
-/* eslint-disable  @typescript-eslint/no-explicit-any */
 import {
-    randomBytes,
     createCipheriv,
     createDecipheriv,
     createHash,
-} from "crypto";
-import { ActivityStream } from "@sockethub/schemas";
-import hash from "object-hash";
+    randomBytes,
+} from "node:crypto";
+import type { ActivityStream } from "@sockethub/schemas";
+import { hash } from "jsr:@denorg/scrypt@4.4.4";
+import { Buffer } from "node:buffer";
+import type { NonEmptyArray } from "https://deno.land/x/fun@v2.0.0/array.ts";
+import { split } from "https://deno.land/x/fun@v2.0.0/string.ts";
 
 const ALGORITHM = "aes-256-cbc",
     IV_LENGTH = 16; // For AES, this is always 16
@@ -20,7 +22,7 @@ export function getPlatformId(
 }
 
 export class Crypto {
-    randomBytes: typeof randomBytes;
+    randomBytes!: typeof randomBytes;
 
     constructor() {
         this.createRandomBytes();
@@ -32,7 +34,7 @@ export class Crypto {
 
     encrypt(json: ActivityStream, secret: string): string {
         Crypto.ensureSecret(secret);
-        const iv = this.randomBytes(IV_LENGTH);
+        const iv = randomBytes(IV_LENGTH);
         const cipher = createCipheriv(ALGORITHM, Buffer.from(secret), iv);
         let encrypted = cipher.update(JSON.stringify(json));
 
@@ -42,13 +44,15 @@ export class Crypto {
 
     decrypt(text: string, secret: string): ActivityStream {
         Crypto.ensureSecret(secret);
-        const parts = text.split(":");
-        const iv = Buffer.from(parts.shift(), "hex");
-        const encryptedText = Buffer.from(parts.join(":"), "hex");
+        const pieces: NonEmptyArray<string> = split(':')(text);
+        const firstElement = pieces[0];
+        const restElements = pieces.slice(1);
+        const iv = Buffer.from(firstElement, "hex");
+        const encryptedText = Buffer.from(restElements.join(":"), "hex");
         const decipher = createDecipheriv(ALGORITHM, Buffer.from(secret), iv);
         let decrypted = decipher.update(encryptedText);
         decrypted = Buffer.concat([decrypted, decipher.final()]);
-        return JSON.parse(decrypted.toString());
+        return decrypted.toString();
     }
 
     hash(text: string): string {
@@ -80,4 +84,5 @@ export class Crypto {
     }
 }
 
-export const crypto = new Crypto();
+const crypto = new Crypto();
+export default crypto;

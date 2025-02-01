@@ -1,0 +1,12 @@
+{
+  "name": "@sockethub/platform-dummy",
+  "description": "A sockethub platform dummy module",
+  "version": "3.0.0-alpha.5",
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "LGPL-3.0+",
+  "exports": "./src/index.ts",
+  "tasks": {
+    "coverage": "deno coverage --include=platform-dummy | deno run jsr:@silverbucket/threshold 100 100",
+    "test": "deno test --fail-fast --coverage --clean --allow-env --allow-read src/**/*.test.ts"
+  }
+}

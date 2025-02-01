@@ -1,0 +1,20 @@
+{
+  "name": "@sockethub/schemas",
+  "description": "JSON schema files for validating Sockethub Activity Streams",
+  "version": "3.0.0-alpha.5",
+  "exports": "./src/index.ts",
+  "license": "MIT",
+  "tasks": {
+    "build": "deno run --allow-read --allow-write scripts/export-json-schema.ts",
+    "coverage": "deno coverage | deno run jsr:@silverbucket/threshold 100 88",
+    "test": "deno test --coverage --clean --allow-env --allow-sys src/**/*.test.ts"
+  },
+  "imports": {
+    "@silverbucket/threshold": "jsr:@silverbucket/threshold@1.0.2",
+    "@types/node": "npm:@types/node@22.10.7",
+    "ajv": "npm:ajv@8.17.1",
+    "ajv-formats": "npm:ajv-formats@2.1.1",
+    "@silverbucket/ajv-formats-draft2019": "jsr:@silverbucket/ajv-formats-draft2019@1.6.4",
+    "pino": "npm:pino@^9.6.0"
+  }
+}
