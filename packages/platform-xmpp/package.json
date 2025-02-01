@@ -43,9 +43,9 @@
         }
     },
     "scripts": {
-        "build": "bun doc",
+        "build": "bun run doc",
         "clean": "rm -rf coverage",
-        "test": "c8 -x \"**/*.test.*\" mocha **/*.test.js && bun coverage",
+        "test": "c8 -x \"**/*.test.*\" mocha **/*.test.js && bun run coverage",
         "coverage": "c8 check-coverage --statements 85 --branches 80 --functions 69 --lines 85",
         "doc": "jsdoc2md --no-gfm --heading-depth 1 src/index.js > API.md"
     }

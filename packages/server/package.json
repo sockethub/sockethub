@@ -51,13 +51,13 @@
     },
     "scripts": {
         "clean": "rm -rf dist coverage",
-        "test": "bun test:ts && bun test:js && bun coverage",
+        "test": "bun run test:ts && bun run test:js && bun run coverage",
         "test:ts": "NODE_OPTIONS='--import=tsx' c8 -x src/bootstrap -x \"src/**/*.test.*\" mocha src/*.test.ts src/**/*.test.ts",
         "test:js": "mocha dist/*.test.js dist/**/*.test.js",
         "coverage": "c8 check-coverage --statements 85 --branches 80 --functions 70 --lines 85",
         "start": "DEBUG=sockethub* ./bin/sockethub",
-        "dev": "bun build && DEBUG=sockethub* ./bin/sockethub --examples",
-        "build": "bun clean && tsc && cp ./src/defaults.json ./dist/defaults.json"
+        "dev": "bunrun  build && DEBUG=sockethub* ./bin/sockethub --examples",
+        "build": "bun run clean && tsc && cp ./src/defaults.json ./dist/defaults.json"
     },
     "engines": {
         "bun": ">=1.2"

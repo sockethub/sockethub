@@ -41,7 +41,7 @@
         "@sockethub/server": "workspace:*"
     },
     "scripts": {
-        "build": "node build.js",
+        "build": "bun build.js",
         "dev": "DEBUG=sockethub* ./bin/sockethub --examples",
         "start": "DEBUG=sockethub* ./bin/sockethub"
     },

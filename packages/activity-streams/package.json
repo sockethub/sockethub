@@ -54,11 +54,11 @@
         "directory": "packages/activity-streams"
     },
     "scripts": {
-        "build": "bun compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs && rollup -c config/rollup.config.test.mjs",
+        "build": "bun run compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs && rollup -c config/rollup.config.test.mjs",
         "clean": "rm -rf build dist coverage",
-        "compile": "bun clean && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
+        "compile": "bun run clean && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
         "coverage": "c8 check-coverage --statements 95 --functions 90 --branches 90 --lines 95",
-        "test": "bun test:node && bun test:browser && bun coverage",
+        "test": "bun run test:node && bun run test:browser && bun run coverage",
         "test:browser": "karma start --single-run --browsers ChromeHeadless karma.config.cjs",
         "test:node": "NODE_OPTIONS='--import=tsx' c8 -x \"**/*.test.ts\" mocha ./src/**/*.test.ts",
         "test:node:lcov": "NODE_OPTIONS='--import=tsx' c8 -r lcov mocha ./src/**/*.test.ts"
