@@ -29,7 +29,6 @@
         "karma-firefox-launcher": "2.1.2",
         "karma-mocha": "^2.0.1",
         "mocha": "10.2.0",
-        "tsx": "4.7.2",
         "typescript": "5.3.3"
     },
     "repository": {
@@ -38,13 +37,13 @@
         "directory": "packages/activity-streams"
     },
     "scripts": {
-        "build": "bun build src/*.ts --outdir dist/",
+        "build": "bun run clean && bun build src/*.ts --outdir dist/",
         "clean": "rm -rf dist coverage",
         "coverage": "c8 check-coverage --statements 95 --functions 90 --branches 90 --lines 95",
         "test": "bun run test:node && bun run test:browser && bun run coverage",
         "test:browser": "karma start --single-run --browsers ChromeHeadless karma.config.cjs",
-        "test:node": "NODE_OPTIONS='--import=tsx' c8 -x \"**/*.test.ts\" mocha ./src/**/*.test.ts",
-        "test:node:lcov": "NODE_OPTIONS='--import=tsx' c8 -r lcov mocha ./src/**/*.test.ts"
+        "test:node": "bunx c8 -x \"**/*.test.ts\" mocha ./src/**/*.test.ts",
+        "test:node:lcov": "bunx c8 -r lcov mocha ./src/**/*.test.ts"
     },
     "keywords": [
         "activity",
