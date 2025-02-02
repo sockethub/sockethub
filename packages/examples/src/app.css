@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 @tailwind base;
 @layer base {
     h1 {
