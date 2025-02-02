@@ -38,7 +38,6 @@
     "devDependencies": {
         "@eslint/eslintrc": "^3.2.0",
         "@eslint/js": "^9.19.0",
-
         "@playwright/test": "^1.50.1",
         "@sockethub/client": "workspace:^",
         "@sveltejs/adapter-static": "^3.0.8",
