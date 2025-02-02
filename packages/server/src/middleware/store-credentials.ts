@@ -1,4 +1,4 @@
-import { type CredentialsStoreInterface } from "@sockethub/data-layer/dist/credentials-store.js";
+import { type CredentialsStoreInterface } from "@sockethub/data-layer";
 import { CredentialsObject } from "@sockethub/schemas";
 
 import { MiddlewareChainInterface } from "../middleware.js";

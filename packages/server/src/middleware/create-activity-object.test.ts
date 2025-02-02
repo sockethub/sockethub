@@ -1,3 +1,4 @@
+import {describe, it} from "bun:test";
 import createActivityObject from "./create-activity-object.js";
 
 describe("Middleware: createActivityObject", () => {

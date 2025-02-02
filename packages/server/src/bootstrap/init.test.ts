@@ -1,6 +1,6 @@
-import { expect } from "chai";
+import {expect, describe, it, beforeEach} from "bun:test";
 import * as sinon from "sinon";
-import getInitObject, { __clearInit, IInitObject } from "./init.js";
+import getInitObject, { __clearInit, IInitObject } from "./init.ts";
 import { SinonStub } from "sinon";
 
 describe("Init", () => {
@@ -19,17 +19,17 @@ describe("Init", () => {
 
     it("getInitObject calls __loadInit", async () => {
         const i = await getInitObject(loadInitMock);
-        expect(i).to.eql(initObject);
+        expect(i).toEqual(initObject);
         sinon.assert.calledOnce(loadInitMock);
     });
 
     it("__loadInit is only called once", async () => {
-        getInitObject(loadInitMock);
-        getInitObject(loadInitMock);
-        getInitObject(loadInitMock);
-        getInitObject(loadInitMock);
+        await getInitObject(loadInitMock);
+        await getInitObject(loadInitMock);
+        await getInitObject(loadInitMock);
+        await getInitObject(loadInitMock);
         const i = await getInitObject(loadInitMock);
-        expect(i).to.eql(initObject);
+        expect(i).toEqual(initObject);
         sinon.assert.calledOnce(loadInitMock);
     });
 });

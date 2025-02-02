@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import {expect, describe, it, beforeEach, afterEach} from "bun:test";
 import * as sinon from "sinon";
 import { __dirname } from "./util.js";
 const FORK_PATH = __dirname + "/platform.js";
@@ -52,7 +52,7 @@ describe("PlatformInstance", () => {
                 parentId: "parentId",
                 actor: "actor string",
             });
-            expect(pi.global).to.be.equal(false);
+            expect(pi.global).toEqual(false);
             sandbox.assert.calledWith(forkFake, FORK_PATH, [
                 "parentId",
                 "name",
@@ -87,26 +87,26 @@ describe("PlatformInstance", () => {
 
         it("has expected properties", () => {
             const TestPlatformInstance = getTestPlatformInstanceClass();
-            expect(typeof TestPlatformInstance).to.be.equal("function");
+            expect(typeof TestPlatformInstance).toEqual("function");
         });
 
         it("should have a platformInstances Map", () => {
-            expect(platformInstances instanceof Map).to.be.equal(true);
+            expect(platformInstances instanceof Map).toEqual(true);
         });
 
         it("has certain accessible properties", () => {
-            expect(pi.id).to.be.equal("platform identifier");
-            expect(pi.name).to.be.equal("a platform name");
-            expect(pi.parentId).to.be.equal("the parentId");
-            expect(pi.flaggedForTermination).to.be.equal(false);
-            expect(pi.global).to.be.equal(true);
+            expect(pi.id).toEqual("platform identifier");
+            expect(pi.name).toEqual("a platform name");
+            expect(pi.parentId).toEqual("the parentId");
+            expect(pi.flaggedForTermination).toEqual(false);
+            expect(pi.global).toEqual(true);
             expect(
                 forkFake.calledWith(FORK_PATH, [
                     "the parentId",
                     "a platform name",
                     "platform identifier",
                 ]),
-            ).to.be.ok;
+            ).toEqual(true);
         });
 
         describe("registerSession", () => {
@@ -116,7 +116,7 @@ describe("PlatformInstance", () => {
 
             it("adds a close and message handler when a session is registered", () => {
                 pi.registerSession("my session id");
-                expect(pi.callbackFunction.callCount).to.equal(2);
+                expect(pi.callbackFunction.callCount).toEqual(2);
                 sandbox.assert.calledWith(
                     pi.callbackFunction,
                     "close",
@@ -127,39 +127,39 @@ describe("PlatformInstance", () => {
                     "message",
                     "my session id",
                 );
-                expect(pi.sessions.has("my session id")).to.be.equal(true);
+                expect(pi.sessions.has("my session id")).toEqual(true);
             });
 
             it("is able to generate failure reports", () => {
                 pi.registerSession("my session id");
-                expect(pi.sessions.has("my session id")).to.be.equal(true);
+                expect(pi.sessions.has("my session id")).toEqual(true);
                 pi.reportError("my session id", "an error message");
                 pi.sendToClient = sandbox.stub();
                 pi.shutdown = sandbox.stub();
-                expect(pi.sessions.size).to.be.equal(0);
+                expect(pi.sessions.size).toEqual(0);
             });
         });
 
         it("initializes the job queue", () => {
-            expect(pi.queue).to.be.undefined;
+            expect(pi.queue).toBeUndefined();
             pi.initQueue("a secret");
-            expect(pi.queue).to.be.ok;
+            expect(pi.queue).toBeDefined()
         });
 
         it("cleans up its references when shutdown", async () => {
             pi.initQueue("a secret");
-            expect(pi.queue).to.be.ok;
-            expect(platformInstances.has("platform identifier")).to.be.true;
+            expect(pi.queue).toBeDefined()
+            expect(platformInstances.has("platform identifier")).toBeTrue();
             await pi.shutdown();
-            expect(pi.queue).not.to.be.ok;
-            expect(platformInstances.has("platform identifier")).to.be.false;
+            expect(pi.queue).toBeUndefined()
+            expect(platformInstances.has("platform identifier")).toBeFalse();
         });
 
         it("updates its identifier when changed", () => {
             pi.updateIdentifier("foo bar");
-            expect(pi.id).to.be.equal("foo bar");
-            expect(platformInstances.has("platform identifier")).to.be.false;
-            expect(platformInstances.has("foo bar")).to.be.true;
+            expect(pi.id).toEqual("foo bar");
+            expect(platformInstances.has("platform identifier")).toBeFalse();
+            expect(platformInstances.has("foo bar")).toBeTrue();
         });
 
         it("sends messages to client using socket session id", async () => {
@@ -167,7 +167,7 @@ describe("PlatformInstance", () => {
                 foo: "this is a message object",
                 sessionSecret: "private data",
             });
-            expect(getSocketFake.callCount).to.equal(1);
+            expect(getSocketFake.callCount).toEqual(1);
             sandbox.assert.calledOnce(getSocketFake);
             sandbox.assert.calledWith(getSocketFake, "my session id");
             sandbox.assert.calledOnce(socketMock.emit);
@@ -181,7 +181,7 @@ describe("PlatformInstance", () => {
             pi.sessions.add("other peer");
             pi.sessions.add("another peer");
             await pi.broadcastToSharedPeers("myself", { foo: "bar" });
-            expect(getSocketFake.callCount).to.equal(2);
+            expect(getSocketFake.callCount).toEqual(2);
             sandbox.assert.calledWith(getSocketFake, "other peer");
         });
 
@@ -199,8 +199,8 @@ describe("PlatformInstance", () => {
                     { msg: { foo: "bar" } },
                     undefined,
                 );
-                expect(pi.sendToClient.callCount).to.equal(1);
-                expect(pi.broadcastToSharedPeers.callCount).to.equal(1);
+                expect(pi.sendToClient.callCount).toEqual(1);
+                expect(pi.broadcastToSharedPeers.callCount).toEqual(1);
             });
 
             it("appends completed result message when present", async () => {
@@ -209,7 +209,7 @@ describe("PlatformInstance", () => {
                     { sessionId: "a session id", msg: { foo: "bar" } },
                     "a good result message",
                 );
-                expect(pi.broadcastToSharedPeers.callCount).to.equal(1);
+                expect(pi.broadcastToSharedPeers.callCount).toEqual(1);
                 sandbox.assert.calledWith(pi.sendToClient, "a session id", {
                     foo: "bar",
                 });
@@ -221,7 +221,7 @@ describe("PlatformInstance", () => {
                     { sessionId: "a session id", msg: { foo: "bar" } },
                     "a bad result message",
                 );
-                expect(pi.broadcastToSharedPeers.callCount).to.equal(1);
+                expect(pi.broadcastToSharedPeers.callCount).toEqual(1);
                 sandbox.assert.calledWith(pi.sendToClient, "a session id", {
                     foo: "bar",
                     error: "a bad result message",

@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { expect, describe, it, beforeEach, afterEach} from "bun:test";
 import * as sinon from "sinon";
 
 import { Janitor } from "./janitor.js";
@@ -49,12 +49,12 @@ describe("Janitor", () => {
 
         janitor = new Janitor();
         janitor.getSockets = fetchSocketsFake;
-        expect(janitor.cycleInterval).to.not.equal(cycleInterval);
+        expect(janitor.cycleInterval).not.toEqual(cycleInterval);
         janitor.cycleInterval = cycleInterval;
-        expect(janitor.cycleInterval).to.equal(cycleInterval);
+        expect(janitor.cycleInterval).toEqual(cycleInterval);
         janitor.start();
         setTimeout(() => {
-            expect(janitor.cycleCount).to.equal(1);
+            expect(janitor.cycleCount).toEqual(1);
             done();
         }, cycleInterval);
     });
@@ -69,11 +69,11 @@ describe("Janitor", () => {
 
     it("runs cycle at every cycleInterval", (done) => {
         const currCycleCount = janitor.cycleCount;
-        expect(currCycleCount).to.not.equal(0);
+        expect(currCycleCount).not.toEqual(0);
         setTimeout(() => {
-            expect(janitor.cycleCount).to.equal(currCycleCount + 1);
+            expect(janitor.cycleCount).toEqual(currCycleCount + 1);
             setTimeout(() => {
-                expect(janitor.cycleCount).to.equal(currCycleCount + 2);
+                expect(janitor.cycleCount).toEqual(currCycleCount + 2);
                 done();
             }, cycleInterval);
         }, cycleInterval);
@@ -87,14 +87,12 @@ describe("Janitor", () => {
             pi.flaggedForTermination = true;
             janitor.removeSessionCallbacks(pi, "session foo");
             sinon.assert.calledTwice(pi.process.removeListener);
-            expect(pi.sessionCallbacks.message.get("session foo")).to.be
-                .undefined;
-            expect(pi.sessionCallbacks.message.get("session bar")).to.equal(
+            expect(pi.sessionCallbacks.message.get("session foo")).toBeUndefined();
+            expect(pi.sessionCallbacks.message.get("session bar")).toEqual(
                 barMessage,
             );
-            expect(pi.sessionCallbacks.close.get("session foo")).to.be
-                .undefined;
-            expect(pi.sessionCallbacks.close.get("session bar")).to.equal(
+            expect(pi.sessionCallbacks.close.get("session foo")).toBeUndefined();
+            expect(pi.sessionCallbacks.close.get("session bar")).toEqual(
                 barClose,
             );
         });
@@ -105,7 +103,7 @@ describe("Janitor", () => {
             const pi = getPlatformInstanceFake();
             janitor.removeSessionCallbacks = sinon.stub();
             janitor.socketExists = sinon.stub().returns(true);
-            expect(janitor.stopTriggered).to.be.false;
+            expect(janitor.stopTriggered).toBeFalse();
             await janitor.removeStaleSocketSessions(pi);
             sinon.assert.notCalled(janitor.removeSessionCallbacks);
         });
@@ -115,7 +113,7 @@ describe("Janitor", () => {
             janitor.removeSessionCallbacks = sinon.stub();
             janitor.socketExists = sinon.stub().returns(true);
             janitor.stop();
-            expect(janitor.stopTriggered).to.be.true;
+            expect(janitor.stopTriggered).toBeTrue();
             await janitor.removeStaleSocketSessions(pi);
             sinon.assert.calledTwice(janitor.removeSessionCallbacks);
             sinon.assert.calledWith(
@@ -139,7 +137,7 @@ describe("Janitor", () => {
                 .returns(false)
                 .onSecondCall()
                 .returns(true);
-            expect(janitor.stopTriggered).to.be.false;
+            expect(janitor.stopTriggered).toBeFalse();
             await janitor.removeStaleSocketSessions(pi);
             sinon.assert.calledOnce(janitor.removeSessionCallbacks);
             sinon.assert.calledWith(
@@ -160,7 +158,7 @@ describe("Janitor", () => {
             await janitor.performStaleCheck(pi);
             sinon.assert.calledOnce(janitor.removeStaleSocketSessions);
             sinon.assert.calledOnce(janitor.removeStalePlatformInstance);
-            expect(pi.flaggedForTermination).to.be.true;
+            expect(pi.flaggedForTermination).toBeTrue();
         });
 
         it("flags for termination when there are not sockets", async () => {
@@ -179,10 +177,10 @@ describe("Janitor", () => {
     describe("removeStalePlatformInstance", () => {
         it("flags stale platform", async () => {
             const pi = getPlatformInstanceFake();
-            expect(pi.flaggedForTermination).to.be.false;
+            expect(pi.flaggedForTermination).toBeFalse();
             await janitor.removeStalePlatformInstance(pi);
             sinon.assert.notCalled(pi.shutdown);
-            expect(pi.flaggedForTermination).to.be.true;
+            expect(pi.flaggedForTermination).toBeTrue();
         });
 
         it("removes flagged stale platform", async () => {
@@ -197,11 +195,11 @@ describe("Janitor", () => {
         const prevCycle = janitor.cycleCount;
         janitor.stop();
         setTimeout(() => {
-            expect(janitor.cycleCount).to.equal(prevCycle);
+            expect(janitor.cycleCount).toEqual(prevCycle);
             setTimeout(() => {
-                expect(janitor.cycleCount).to.equal(prevCycle);
+                expect(janitor.cycleCount).toEqual(prevCycle);
                 setTimeout(() => {
-                    expect(janitor.cycleCount).to.equal(prevCycle);
+                    expect(janitor.cycleCount).toEqual(prevCycle);
                     done();
                 }, cycleInterval);
             }, cycleInterval);

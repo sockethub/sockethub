@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { expect, describe, it, beforeEach, afterEach } from "bun:test";
 import * as sinon from "sinon";
 
 import storeCredentials from "./store-credentials.js";
@@ -59,16 +59,16 @@ describe("Middleware: storeCredentials", () => {
 
     it("returns a middleware handler", () => {
         const sc = storeCredentials(storeSuccess);
-        expect(typeof sc).to.equal("function");
-        expect(saveSuccessFake.callCount).to.equal(0);
+        expect(typeof sc).toEqual("function");
+        expect(saveSuccessFake.callCount).toEqual(0);
     });
 
     it("successfully stores credentials", (done) => {
         const sc = storeCredentials(storeSuccess);
         sc(creds as CredentialsObject, (err: any) => {
-            expect(saveSuccessFake.callCount).to.equal(1);
-            expect(saveSuccessFake.firstArg).to.equal(creds.actor.id);
-            expect(err).to.eql(creds);
+            expect(saveSuccessFake.callCount).toEqual(1);
+            expect(saveSuccessFake.firstArg).toEqual(creds.actor.id);
+            expect(err).toEqual(creds);
             done();
         });
     });
@@ -76,9 +76,9 @@ describe("Middleware: storeCredentials", () => {
     it("handle error while storing credentials", (done) => {
         const sc = storeCredentials(storeError);
         sc(creds as CredentialsObject, (err: any) => {
-            expect(saveErrorFake.callCount).to.equal(1);
-            expect(saveErrorFake.firstArg).to.equal(creds.actor.id);
-            expect(err.toString()).to.eql("Error: some error");
+            expect(saveErrorFake.callCount).toEqual(1);
+            expect(saveErrorFake.firstArg).toEqual(creds.actor.id);
+            expect(err.toString()).toEqual("Error: some error");
             done();
         });
     });

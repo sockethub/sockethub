@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { expect, describe, it } from "bun:test";
 
 import expandActivityStream from "./expand-activity-stream.js";
 
@@ -55,17 +55,17 @@ describe("Middleware: Expand Activity Stream", () => {
                 expandActivityStream(obj.input, (msg) => {
                     if (obj.output) {
                         if (obj.output === "same") {
-                            expect(obj.input).to.eql(msg);
+                            expect(obj.input).toEqual(msg);
                         } else {
-                            expect(obj.output).to.eql(msg);
+                            expect(obj.output).toEqual(msg);
                         }
                     }
                     if (obj.valid) {
-                        expect(msg instanceof Error).to.be.false;
+                        expect(msg instanceof Error).toBeFalse();
                     } else {
-                        expect(msg instanceof Error).to.be.true;
+                        expect(msg instanceof Error).toBeTrue();
                         if (obj.error) {
-                            expect(obj.error).to.equal(msg.toString());
+                            expect(obj.error).toEqual(msg.toString());
                         }
                     }
                     done();

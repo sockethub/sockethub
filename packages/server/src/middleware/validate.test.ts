@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { expect, describe, it } from "bun:test";
 import asObjects from "./validate.test.data.js";
 import loadPlatforms from "../bootstrap/load-platforms.js";
 import validate, { registerPlatforms } from "./validate.js";
@@ -54,25 +54,21 @@ const modules = {
     fakeplatform: FakeSockethubPlatform,
 };
 
-describe("", () => {
-    let platforms;
-    let mockInit;
-    before(async () => {
-        platforms = await loadPlatforms(["fakeplatform"], async (module) => {
-            return Promise.resolve(modules[module]);
-        });
-        mockInit = {
-            platforms: platforms,
-        };
-        await registerPlatforms(mockInit);
+describe("", async () => {
+    let platforms = await loadPlatforms(["fakeplatform"], async (module) => {
+        return Promise.resolve(modules[module]);
     });
+    let mockInit = {
+        platforms: platforms,
+    };
+    await registerPlatforms(mockInit);
 
     describe("platformLoad", () => {
         it("loads all platforms", () => {
             const expectedPlatforms = ["fakeplatform"];
-            expect(platforms.size).to.equal(expectedPlatforms.length);
+            expect(platforms.size).toEqual(expectedPlatforms.length);
             for (const platform of expectedPlatforms) {
-                expect(platforms.has(platform)).to.be.true;
+                expect(platforms.has(platform)).toBeTrue();
             }
         });
     });
@@ -90,17 +86,17 @@ describe("", () => {
                     )(obj.input as ActivityStream, (msg) => {
                         if (obj.output) {
                             if (obj.output === "same") {
-                                expect(msg).to.eql(obj.input);
+                                expect(msg).toEqual(obj.input);
                             } else {
-                                expect(msg).to.eql(obj.output);
+                                expect(msg).toEqual(obj.output);
                             }
                         }
                         if (obj.valid) {
-                            expect(msg).to.not.be.instanceof(Error);
+                            expect(msg).not.toBeInstanceOf(Error);
                         } else {
-                            expect(msg).to.be.instanceof(Error);
+                            expect(msg).toBeInstanceOf(Error);
                             if (obj.error) {
-                                expect(msg.toString()).to.equal(obj.error);
+                                expect(msg.toString()).toEqual(obj.error);
                             }
                         }
                         done();

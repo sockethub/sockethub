@@ -22,18 +22,6 @@ export const basePaths: IRoutePaths = {
         "res",
         "sockethub-client.min.js",
     ),
-    "/sockethub-client.js.map": path.resolve(
-        __dirname,
-        "..",
-        "res",
-        "sockethub-client.js.map",
-    ),
-    "/sockethub-client.min.js.map": path.resolve(
-        __dirname,
-        "..",
-        "res",
-        "sockethub-client.min.js.map",
-    ),
     "/socket.io.js": path.resolve(__dirname, "..", "res", "socket.io.js"),
 };
 
