@@ -18,7 +18,9 @@
         "typescript": "5.3.3"
     },
     "scripts": {
-        "build": "bun run clean && bun build src/activity-streams.ts --outdir=dist/ --target=browser --sourcemap=inline",
+        "build": "bun run clean && bun run build:js && bun run build:minify",
+        "build:js": "bun build ./src/activity-streams.ts --outdir=dist/ --target=browser --sourcemap=inline",
+        "build:minify": "bun build ./src/activity-streams.ts --target=browser --sourcemap=inline --minify --outfile=dist/activity-streams.min.js",
         "clean": "rm -rf dist",
         "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer",
         "test": "bun test --coverage src/activity-streams.test.ts"
