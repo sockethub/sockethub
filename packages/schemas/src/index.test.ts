@@ -1,5 +1,5 @@
 import { ActivityStream } from "./types";
-import { expect, describe, it} from "bun:test";
+import { expect, describe, it } from "bun:test";
 
 import { ActivityStreamSchema } from "./schemas/activity-stream";
 import { ActivityObjectSchema } from "./schemas/activity-object";

@@ -1,7 +1,6 @@
 import { ASFactory } from "./activity-streams";
 import { test, describe, beforeEach, expect } from "bun:test";
 
-
 describe("warn test", () => {
     expect(typeof ASFactory).toEqual("function");
     const activity = ASFactory();

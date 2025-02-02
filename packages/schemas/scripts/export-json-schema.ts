@@ -1,5 +1,5 @@
 import Ajv from "ajv";
-import {writeSync, openSync, mkdirSync, existsSync, rmdirSync} from "fs";
+import { writeSync, openSync, mkdirSync, existsSync, rmdirSync } from "fs";
 
 const ajv = new Ajv();
 
@@ -10,7 +10,7 @@ const schemas = [
 ];
 
 if (existsSync("./src/schemas/json")) {
-    rmdirSync("./src/schemas/json", {recursive: true});
+    rmdirSync("./src/schemas/json", { recursive: true });
 }
 
 mkdirSync("./src/schemas/json");
