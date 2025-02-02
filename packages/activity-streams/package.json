@@ -4,12 +4,8 @@
     "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
     "type": "module",
     "main": "./src/activity-streams.ts",
-    "exports": {
-        "./dist/activity-streams.js": "./dist/activity-streams.js"
-    },
     "files": [
         "dist/",
-        "build/"
     ],
     "dependencies": {
         "eventemitter3": "5.0.1"
@@ -21,17 +17,16 @@
         "@web/test-runner-puppeteer": "^0.17.0",
         "typescript": "5.3.3"
     },
+    "scripts": {
+        "build": "bun run clean && bun build src/activity-streams.ts --outdir=dist/ --target=browser --sourcemap=inline",
+        "clean": "rm -rf dist coverage",
+        "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer",
+        "test": "bun test src/**/*.test.ts"
+    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/sockethub/sockethub.git",
         "directory": "packages/activity-streams"
-    },
-    "scripts": {
-        "build": "bun run clean && bun build src/*.ts --outdir dist/",
-        "clean": "rm -rf dist coverage",
-        "test": "bun run test:node && bun run test:browser",
-        "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer",
-        "test:node": "bun test ./src/**/*.test.ts"
     },
     "keywords": [
         "activity",

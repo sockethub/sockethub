@@ -3,12 +3,8 @@
     "version": "5.0.0-alpha.4",
     "description": "A JavaScript client for the Sockethub protocol gateway",
     "main": "./src/sockethub-client.ts",
-    "exports": {
-        "./dist/sockethub-client.js": "./dist/sockethub-client.js",
-    },
     "files": [
-        "dist/",
-        "build/"
+        "dist/"
     ],
     "repository": {
         "type": "git",
@@ -16,37 +12,28 @@
         "directory": "packages/client"
     },
     "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/client",
-    "scripts": {
-        "clean": "rm -rf dist coverage",
-        "test": "bun run test:node && bun run coverage",
-        "test:node": "bunx c8 -x \"**/*.test.ts\" mocha ./src/**/*.test.ts",
-        "test:node:lcov": "bunx c8 -r lcov mocha ./src/**/*.test.ts",
-        "coverage": "c8 check-coverage --statements 82 --branches 84 --functions 83 --lines 82",
-        "build": "bun run clean && bun build src/*.ts --outdir dist/"
-    },
-    "author": "Nick Jennings <nick@silverbucket.net>",
-    "license": "LGPL-3.0+",
-    "devDependencies": {
-        "@babel/core": "7.23.5",
-        "@types/bun": "latest",
-        "@babel/plugin-transform-object-assign": "7.23.3",
-        "@babel/preset-env": "7.23.5",
-        "@sockethub/activity-streams": "workspace:*",
-        "@sockethub/schemas": "workspace:*",
-        "@types/chai": "4.3.11",
-        "@types/mocha": "10.0.6",
-        "@types/sinon": "17.0.2",
-        "c8": "8.0.1",
-        "chai": "4.3.10",
-        "mocha": "10.2.0",
-        "sinon": "17.0.1",
-        "socket.io-client": "4.7.2",
-        "tsx": "4.7.2",
-        "typescript": "5.3.3"
-    },
     "dependencies": {
         "eventemitter3": "5.0.1"
     },
+    "devDependencies": {
+        "@sockethub/activity-streams": "workspace:*",
+        "@sockethub/schemas": "workspace:*",
+        "@types/bun": "latest",
+        "@types/sinon": "17.0.2",
+        "@web/test-runner": "^0.19.0",
+        "sinon": "17.0.1",
+        "@web/test-runner-puppeteer": "^0.17.0",
+        "typescript": "5.3.3",
+        "socket.io-client": "4.7.2"
+    },
+    "scripts": {
+        "build": "bun run clean && bun build ./src/sockethub-client.ts --outdir=dist/ --target=browser --sourcemap=inline",
+        "clean": "rm -rf dist coverage",
+        "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer",
+        "test": "bun test src/**/*.test.ts"
+    },
+    "author": "Nick Jennings <nick@silverbucket.net>",
+    "license": "LGPL-3.0+",
     "keywords": [
         "sockethub",
         "messaging",
