@@ -57,7 +57,7 @@
         "mocha": "10.2.0",
         "rollup": "^4.29.1",
         "sinon": "17.0.1",
-        "socket.io-client": "4.7.2",
+        "socket.io-client": "4.8.1",
         "tsx": "4.7.2",
         "typescript": "5.3.3"
     },
