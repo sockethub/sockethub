@@ -1,4 +1,4 @@
-import {expect, describe, it, beforeEach} from "bun:test";
+import { expect, describe, it, beforeEach } from "bun:test";
 import sinon from "sinon";
 
 import parse from "@xmpp/xml/lib/parse.js";

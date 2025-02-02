@@ -1,4 +1,4 @@
-import {expect, describe, it, beforeEach, afterEach} from "bun:test";
+import { expect, describe, it, beforeEach, afterEach } from "bun:test";
 import sinon from "sinon";
 
 import XMPP from "./index.js";

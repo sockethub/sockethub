@@ -1,4 +1,4 @@
-import {expect, describe, it} from "bun:test";
+import { expect, describe, it } from "bun:test";
 
 import { utils } from "./utils.js";
 
