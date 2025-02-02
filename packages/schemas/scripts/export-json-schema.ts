@@ -1,7 +1,5 @@
-#!/usr/bin/env node
-// --experimental-specifier-resolution=node
 import Ajv from "ajv";
-import {writeSync, openSync, mkdirSync} from "fs";
+import {writeSync, openSync, mkdirSync, existsSync, rmdirSync} from "fs";
 
 const ajv = new Ajv();
 
@@ -11,10 +9,14 @@ const schemas = [
     ["platform", "PlatformSchema"],
 ];
 
+if (existsSync("./src/schemas/json")) {
+    rmdirSync("./src/schemas/json", {recursive: true});
+}
+
 mkdirSync("./src/schemas/json");
 
 for (const [fileName, objName] of schemas) {
-    import(`../rc/schemas/${fileName}.ts`).then((module) => {
+    import(`../src/schemas/${fileName}.ts`).then((module) => {
         ajv.addSchema(module[objName]);
         // eslint-disable-next-line security/detect-non-literal-fs-filename
         const fd = openSync(`./src/schemas/json/${fileName}.json`, "w+");
