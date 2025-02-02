@@ -49,7 +49,6 @@ class Listener {
     }
 
     private addExamplesRoutes(app) {
-        // eslint-disable-next-line security/detect-non-literal-fs-filename
         writeFileSync(
             `${__dirname}/../res/examples/config.json`,
             JSON.stringify({

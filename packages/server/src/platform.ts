@@ -117,7 +117,7 @@ function getJobHandler(): JobHandler {
                     // to being human-readable, so we have to do this little dance
                     try {
                         errMsg = err.toString();
-                    } catch (e) {
+                    } catch (err) {
                         errMsg = err;
                     }
                     reject(new Error(errMsg as string));

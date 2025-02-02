@@ -43,7 +43,11 @@ export default function validate(
         sessionLog("applying schema validation for " + type);
         if (type === "activity-object") {
             const err = validateActivityObject(msg);
-            err ? done(new Error(err)) : done(msg);
+            if (err) {
+                done(new Error(err));
+            } else {
+                done(msg);
+            }
         } else if (!init.platforms.has(msg.context)) {
             return done(
                 new Error(
@@ -52,7 +56,11 @@ export default function validate(
             );
         } else if (type === "credentials") {
             const err = validateCredentials(msg);
-            err ? done(new Error(err)) : done(msg);
+            if (err) {
+                done(new Error(err));
+            } else {
+                done(msg);
+            }
         } else {
             const err = validateActivityStream(msg);
             if (err) {

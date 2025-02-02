@@ -40,9 +40,7 @@ import {
 
 const MAX_NOTE_LENGTH = 256;
 
-// eslint-disable-next-line security/detect-unsafe-regex
 const basic = /\s?<!doctype html>|(<html\b[^>]*>|<body\b[^>]*>|<x-[^>]+>)+/i;
-// eslint-disable-next-line security/detect-non-literal-regexp
 const full = new RegExp(
     htmlTags.map((tag) => `<${tag}\\b[^>]*>`).join("|"),
     "i",

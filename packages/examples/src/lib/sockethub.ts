@@ -3,7 +3,7 @@ import SockethubClient from "@sockethub/client";
 import { writable } from "svelte/store";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import { addObject, ObjectType } from "$components/logs/Logger.svelte";
+import { addObject } from "$components/logs/Logger.svelte";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { displayMessage } from "$components/chat/IncomingMessages.svelte";
@@ -82,8 +82,8 @@ export type SockethubResponse = {
 };
 
 export async function send(obj: AnyActivityStream) {
-    sc.socket.emit("message", addObject(ObjectType.send, obj), (resp: AnyActivityStream) => {
-        addObject(ObjectType.resp, resp, resp.id);
+    sc.socket.emit("message", addObject("SEND", obj), (resp: AnyActivityStream) => {
+        addObject("RESP", resp, resp.id);
         displayMessage(resp);
     });
 }
@@ -115,7 +115,6 @@ function sockethubConnect(config: typeof defaultConfig = defaultConfig) {
     sc.socket.on("message", handleIncomingMessage);
 }
 
-// eslint-disable-next-line no-constant-condition
 if (typeof window === "object") {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore

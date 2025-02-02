@@ -9,10 +9,7 @@
     const Logs = writable({} as LogEntries);
     let counter = 0;
 
-    export enum ObjectType {
-        send = "SEND",
-        resp = "RESP",
-    }
+    type ObjectType = "SEND" | "RESP";
 
     export function addObject(type: ObjectType, obj: AnyActivityStream, id?: string) {
         let index: string;
@@ -25,13 +22,13 @@
 
         Logs.update((currentLogs: LogEntries) => {
             if (!currentLogs[index]) {
-                if (type === ObjectType.send) {
+                if (type === "SEND") {
                     currentLogs[index] = [obj, {}];
                 } else {
                     currentLogs[index] = [{}, obj];
                 }
             } else {
-                const pos = type === ObjectType.send ? 0 : 1;
+                const pos = type === "SEND" ? 0 : 1;
                 currentLogs[index][pos] = obj;
             }
             return currentLogs;

@@ -24,6 +24,6 @@
                 <li>{l[0]}: {l[1]}</li>
             {/each}
         </ui>
-        <div class="incoming-messages-anchor" />
+        <div class="incoming-messages-anchor"></div>
     </div>
 </div>

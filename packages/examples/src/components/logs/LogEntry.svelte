@@ -5,7 +5,6 @@
     import type { AnyActivityStream } from "$lib/sockethub";
     export let id: string;
     export let entry: AnyActivityStream;
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     export let buttonAction = () => {};
 </script>
 

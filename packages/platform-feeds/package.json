@@ -45,9 +45,5 @@
         "@sockethub/server": {
             "optional": true
         }
-    },
-    "scripts": {
-        "lint": "eslint .",
-        "test": "exit 0"
     }
 }
