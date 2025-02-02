@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-// --experimental-specifier-resolution=node
 import Ajv from "ajv";
 import fs from "fs";
 
@@ -16,7 +14,6 @@ fs.mkdirSync("./dist/schemas/json");
 for (let [fileName, objName] of schemas) {
     import(`../dist/schemas/${fileName}.js`).then((module) => {
         ajv.addSchema(module[objName]);
-        // eslint-disable-next-line security/detect-non-literal-fs-filename
         const fd = fs.openSync(`./dist/schemas/json/${fileName}.json`, "w+");
         fs.writeSync(fd, JSON.stringify(module[objName], null, "\t"));
     });
