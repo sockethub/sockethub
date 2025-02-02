@@ -30,7 +30,7 @@
         "build": "bun run clean && bun build ./src/sockethub-client.ts --outdir=dist/ --target=browser --sourcemap=inline",
         "clean": "rm -rf dist coverage",
         "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer",
-        "test": "bun test src/**/*.test.ts"
+        "test": "bun test --coverage src/sockethub-client.test.ts"
     },
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
