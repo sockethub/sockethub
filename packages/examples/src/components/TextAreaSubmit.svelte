@@ -43,7 +43,7 @@
         border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700
         focus:bg-white focus:border-blue-600 focus:outline-none"
         rows="5"
-    />
+    ></textarea>
 </div>
 {#if password !== "unset"}
     <div class="w-full p-2">

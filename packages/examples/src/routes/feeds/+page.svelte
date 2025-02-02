@@ -2,7 +2,7 @@
     import Intro from "$components/Intro.svelte";
     import ActivityActor from "$components/ActivityActor.svelte";
     import SockethubButton from "$components/SockethubButton.svelte";
-    import Logger, { addObject, ObjectType } from "$components/logs/Logger.svelte";
+    import Logger, { addObject } from "$components/logs/Logger.svelte";
     import { sc } from "$lib/sockethub";
     import { writable } from "svelte/store";
     import type { AnyActivityStream } from "$lib/sockethub";
@@ -22,16 +22,16 @@
     function send(obj: AnyActivityStream) {
         sc.socket.emit(
             "message",
-            addObject(ObjectType.send, obj, obj.id || ""),
+            addObject("SEND", obj, obj.id || ""),
             (resp: AnyActivityStream) => {
                 if (Array.isArray(resp)) {
                     let i = 1;
                     for (const r of resp.reverse()) {
-                        addObject(ObjectType.resp, r, `${r.id}.${i}`);
+                        addObject("RESP", r, `${r.id}.${i}`);
                         i += 1;
                     }
                 } else {
-                    addObject(ObjectType.resp, resp, resp?.id || "");
+                    addObject("RESP", resp, resp?.id || "");
                 }
             },
         );

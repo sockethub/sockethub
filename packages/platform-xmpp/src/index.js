@@ -230,7 +230,10 @@ export default class XMPP {
             .send(
                 this.__xml("presence", {
                     from: job.actor.id,
-                    to: `${job.target.id}/${job.actor.name}` || id,
+                    to:
+                        job.target?.id && job.actor?.name
+                            ? `${job.target.id}/${job.actor.name}`
+                            : id,
                     type: "unavailable",
                 }),
             )
