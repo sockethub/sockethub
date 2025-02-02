@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import {expect, describe, it, beforeEach, afterEach} from "bun:test";
 import * as sinon from "sinon";
 
 import { getPlatformId, Crypto } from "./index";
@@ -20,36 +20,36 @@ describe("crypto", () => {
     });
 
     it("encrypts", () => {
-        expect(crypto.encrypt(data, secret)).to.be.equal(encryptedData);
+        expect(crypto.encrypt(data, secret)).toEqual(encryptedData);
     });
 
     it("decrypts", () => {
-        expect(crypto.decrypt(encryptedData, secret)).to.eql(data);
+        expect(crypto.decrypt(encryptedData, secret)).toEqual(data);
     });
 
     it("hashes", () => {
-        expect(crypto.hash("foobar")).to.be.equal("8843d7f");
+        expect(crypto.hash("foobar")).toEqual("8843d7f");
     });
 
     it("randTokens 8", () => {
         const token = crypto.randToken(8);
-        expect(token.length).to.be.equal(8);
+        expect(token.length).toEqual(8);
     });
 
     it("randTokens 16", () => {
         const token = crypto.randToken(16);
-        expect(token.length).to.be.equal(16);
+        expect(token.length).toEqual(16);
     });
 
     it("randTokens 32", () => {
         const token = crypto.randToken(32);
-        expect(token.length).to.be.equal(32);
+        expect(token.length).toEqual(32);
     });
 
     it("randTokens 33+ will fail", () => {
         expect(() => {
             crypto.randToken(33);
-        }).to.throw();
+        }).toThrow();
     });
 });
 
@@ -74,12 +74,12 @@ describe("getPlatformId", () => {
     });
 
     it("generates platform hash", () => {
-        expect(getPlatformId("foo", undefined, crypto)).to.be.equal("foo");
+        expect(getPlatformId("foo", undefined, crypto)).toEqual("foo");
         sinon.assert.calledOnce(cryptoHashStub);
         sinon.assert.calledWith(cryptoHashStub, "foo");
     });
     it("generates platform + actor hash", () => {
-        expect(getPlatformId("foo", "bar", crypto)).to.be.equal("foobar");
+        expect(getPlatformId("foo", "bar", crypto)).toEqual("foobar");
         sinon.assert.calledOnce(cryptoHashStub);
         sinon.assert.calledWith(cryptoHashStub, "foobar");
     });
