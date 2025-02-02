@@ -1,7 +1,8 @@
 {
     "name": "@sockethub/examples",
     "version": "1.0.0-alpha.4",
-    "packageManager": "bun@8.0.0",
+    "packageManager": "bun@1.2.2",
+    "type": "module",
     "files": [
         "build"
     ],
@@ -58,6 +59,5 @@
         "typescript": "^5.7.2",
         "vite": "^4.5.5",
         "vitest": "^0.32.4"
-    },
-    "type": "module"
+    }
 }
