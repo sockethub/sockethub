@@ -35,6 +35,8 @@
         "lint:fix": "prettier --write ."
     },
     "devDependencies": {
+        "@eslint/eslintrc": "^3.2.0",
+        "@eslint/js": "^9.19.0",
         "@playwright/test": "^1.50.1",
         "@sockethub/client": "workspace:^",
         "@sveltejs/adapter-static": "^3.0.8",
@@ -47,6 +49,7 @@
         "eslint": "^9.19.0",
         "eslint-config-prettier": "^10.0.1",
         "eslint-plugin-svelte": "2.46.1",
+        "globals": "^15.14.0",
         "highlight.js": "^11.11.1",
         "postcss": "^8.5.1",
         "prettier": "^3.4.2",

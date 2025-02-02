@@ -115,7 +115,6 @@ function sockethubConnect(config: typeof defaultConfig = defaultConfig) {
     sc.socket.on("message", handleIncomingMessage);
 }
 
-// eslint-disable-next-line no-constant-condition
 if (typeof window === "object") {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
