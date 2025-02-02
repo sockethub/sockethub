@@ -19,7 +19,7 @@
     },
     "scripts": {
         "build": "bun run clean && bun build src/activity-streams.ts --outdir=dist/ --target=browser --sourcemap=inline",
-        "clean": "rm -rf dist coverage",
+        "clean": "rm -rf dist",
         "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer",
         "test": "bun test --coverage src/activity-streams.test.ts"
     },

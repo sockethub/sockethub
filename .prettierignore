@@ -13,3 +13,4 @@ pnpm-lock.yaml
 .github
 test-results
 packages/server/res
+packages/schemas/src/schemas/json

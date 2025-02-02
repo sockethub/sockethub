@@ -6,11 +6,7 @@
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "files": [
-        "dist/"
-    ],
+    "main": "src/index.ts",
     "keywords": [
         "sockethub",
         "dummy"
@@ -27,10 +23,6 @@
         "@sockethub/server": {
             "optional": true
         }
-    },
-    "scripts": {
-        "lint": "eslint .",
-        "test": "exit 0"
     },
     "repository": {
         "type": "git",

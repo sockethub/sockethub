@@ -6,12 +6,7 @@
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "MIT",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "files": [
-        "dist/",
-        "src/"
-    ],
+    "main": "src/index.ts",
     "keywords": [
         "sockethub",
         "messaging",

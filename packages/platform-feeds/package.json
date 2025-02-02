@@ -35,7 +35,6 @@
     "devDependencies": {
         "@sockethub/schemas": "workspace:*",
         "@types/bun": "latest",
-        "eslint": "8.55.0",
         "typescript": "5.3.3"
     },
     "peerDependencies": {

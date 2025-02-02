@@ -1,5 +1,4 @@
-import * as chai from "chai";
-const expect = chai.expect;
+import {expect, describe, it} from "bun:test";
 
 import { utils } from "./utils.js";
 
@@ -14,7 +13,7 @@ describe("Utils", () => {
                         resource: "Home",
                     },
                 }),
-            ).to.eql({
+            ).toEqual({
                 password: "bar",
                 service: "dinosaur.com.au",
                 username: "barney",
@@ -32,7 +31,7 @@ describe("Utils", () => {
                     resource: "Home",
                 },
             }),
-        ).to.eql({
+        ).toEqual({
             password: "bar",
             service: "foo",
             username: "barney",
@@ -49,7 +48,7 @@ describe("Utils", () => {
                     resource: "Home",
                 },
             }),
-        ).to.eql({
+        ).toEqual({
             password: "bar",
             service: "dinosaur.com.au:123",
             username: "barney",
