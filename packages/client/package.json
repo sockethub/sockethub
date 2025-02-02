@@ -14,24 +14,33 @@
     "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/client",
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
-    "dependencies": {
-        "eventemitter3": "5.0.1"
-    },
-    "devDependencies": {
-        "@sockethub/activity-streams": "workspace:*",
-        "@sockethub/schemas": "workspace:*",
-        "@types/bun": "latest",
-        "@types/sinon": "17.0.2",
-        "@web/test-runner": "^0.19.0",
-        "sinon": "17.0.1",
-        "@web/test-runner-puppeteer": "^0.17.0",
-        "typescript": "5.3.3",
-        "socket.io-client": "4.8.1"
-    },
+    "keywords": [
+        "sockethub",
+        "messaging",
+        "activitystreams",
+        "activity",
+        "streams",
+        "protocol",
+        "client"
+    ],
     "scripts": {
         "build": "bun run clean && bun build ./src/sockethub-client.ts --outdir=dist/ --target=browser --sourcemap=inline",
         "clean": "rm -rf dist coverage",
         "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer",
         "test": "bun test --coverage src/sockethub-client.test.ts"
+    },
+    "dependencies": {
+        "eventemitter3": "5.0.1"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@sockethub/activity-streams": "workspace:*",
+        "@sockethub/schemas": "workspace:*",
+        "@types/sinon": "17.0.2",
+        "@web/test-runner": "^0.19.0",
+        "@web/test-runner-puppeteer": "^0.17.0",
+        "sinon": "17.0.1",
+        "socket.io-client": "4.8.1",
+        "typescript": "5.3.3"
     }
 }
