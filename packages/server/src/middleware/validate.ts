@@ -4,7 +4,6 @@
 import debug from "debug";
 
 import {
-    addPlatformSchema,
     validateActivityObject,
     validateCredentials,
     validateActivityStream,
@@ -12,32 +11,20 @@ import {
     MiddlewareCallback,
 } from "@sockethub/schemas";
 
-import getInitObject from "../bootstrap/init.js";
-
-let initObj;
-(async function () {
-    initObj = await getInitObject();
-    await registerPlatforms(initObj);
-})();
-
-export async function registerPlatforms(init) {
-    init.platforms.forEach((platform) => {
-        Object.keys(platform.schemas).forEach((key) => {
-            if (!platform.schemas[key]) {
-                return;
-            }
-            addPlatformSchema(platform.schemas[key], `${platform.id}/${key}`);
-        });
-    });
-}
+import getInitObject, { IInitObject } from "../bootstrap/init.js";
 
 // called when registered with the middleware function, define the type of validation
 // that will be called when the middleware eventually does.
 export default function validate(
     type: string,
     sockethubId: string,
-    init = initObj,
+    initObj: IInitObject
 ) {
+    if (!initObj) {
+         getInitObject().then((init) => {
+             initObj = init;
+         });
+    }
     const sessionLog = debug(`sockethub:server:validate:${sockethubId}`);
     return (msg: ActivityStream, done: MiddlewareCallback) => {
         sessionLog("applying schema validation for " + type);
@@ -48,7 +35,7 @@ export default function validate(
             } else {
                 done(msg);
             }
-        } else if (!init.platforms.has(msg.context)) {
+        } else if (!initObj.platforms.has(msg.context)) {
             return done(
                 new Error(
                     `platform context ${msg.context} not registered with this Sockethub instance.`,
@@ -66,7 +53,7 @@ export default function validate(
             if (err) {
                 done(new Error(err));
             } else {
-                const platformMeta = init.platforms.get(msg.context);
+                const platformMeta = initObj.platforms.get(msg.context);
                 if (!platformMeta.types.includes(msg.type)) {
                     return done(
                         new Error(

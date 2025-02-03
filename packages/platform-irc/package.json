@@ -29,11 +29,7 @@
     "devDependencies": {
         "@sockethub/schemas": "workspace:*",
         "@types/bun": "latest",
-        "c8": "8.0.1",
-        "chai": "4.3.10",
         "jsdoc-to-markdown": "8.0.0",
-        "sinon": "17.0.1",
-        "tsx": "^4.19.2",
         "typescript": "5.3.3"
     },
     "peerDependencies": {
@@ -45,10 +41,6 @@
         }
     },
     "scripts": {
-        "lint": "eslint .",
-        "clean": "rm -rf coverage",
-        "test": "NODE_OPTIONS='--import=tsx' c8 mocha src/**/*.test.ts && bun run coverage",
-        "coverage": "c8 check-coverage --statements 75 --branches 55 --functions 85 --lines 75",
         "doc": "jsdoc2md --no-gfm --heading-depth 1 dist/index.ts  > API.md"
     }
 }

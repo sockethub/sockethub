@@ -217,10 +217,10 @@ export default [
         input: {
             actor: { id: "irc://uuu@localhost", type: "person" },
             type: "foo",
-            context: "foobar",
+            context: "foobar111",
             target: { id: "irc://irc.dooder.net/a-room", type: "room" },
         },
-        error: "Error: platform context foobar not registered with this Sockethub instance.",
+        error: "Error: platform context foobar111 not registered with this Sockethub instance.",
     },
     {
         name: "missing actor property",

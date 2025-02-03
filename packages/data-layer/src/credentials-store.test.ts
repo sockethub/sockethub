@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import {expect, describe, it, beforeEach} from "bun:test";
 import * as sinon from "sinon";
 
 import { CredentialsStore } from "./credentials-store";
@@ -44,12 +44,12 @@ describe("CredentialsStore", () => {
             secret: "a secret must be 32 chars and th",
             redis: { url: "redis config" },
         });
-        expect(typeof credentialsStore).to.equal("object");
-        expect(credentialsStore.uid).to.equal(
+        expect(typeof credentialsStore).toEqual("object");
+        expect(credentialsStore.uid).toEqual(
             `sockethub:data-layer:credentials-store:a parent id:a session id`,
         );
-        expect(typeof credentialsStore.get).to.equal("function");
-        expect(typeof credentialsStore.save).to.equal("function");
+        expect(typeof credentialsStore.get).toEqual("function");
+        expect(typeof credentialsStore.save).toEqual("function");
     });
 
     describe("get", () => {
@@ -59,22 +59,16 @@ describe("CredentialsStore", () => {
             sinon.assert.calledWith(MockStoreGet, "an actor");
             sinon.assert.notCalled(MockObjectHash);
             sinon.assert.notCalled(MockStoreSave);
-            expect(res).to.equal("credential foo");
+            expect(res).toEqual("credential foo");
         });
 
         it("handles no credentials found", async () => {
             MockStoreGet.returns(undefined);
-            try {
-                await credentialsStore.get("an non-existent actor");
-                expect(false).to.eql(true);
-            } catch (err) {
-                console.log(err);
-                expect(err.toString()).to.eql(
-                    "Error: credentials not found for an non-existent actor",
-                );
-            }
+            expect(async () => {
+                await credentialsStore.get("a non-existent actor");
+            }).toThrow("credentials not found for a non-existent actor");
             sinon.assert.calledOnce(MockStoreGet);
-            sinon.assert.calledWith(MockStoreGet, "an non-existent actor");
+            sinon.assert.calledWith(MockStoreGet, "a non-existent actor");
             sinon.assert.notCalled(MockObjectHash);
             sinon.assert.notCalled(MockStoreSave);
         });
@@ -83,9 +77,9 @@ describe("CredentialsStore", () => {
             MockStoreGet.returns(undefined);
             try {
                 await credentialsStore.get("a problem actor");
-                expect(false).to.eql(true);
+                expect(false).toEqual(true);
             } catch (err) {
-                expect(err.toString()).to.eql(
+                expect(err.toString()).toEqual(
                     "Error: credentials not found for a problem actor",
                 );
             }
@@ -109,7 +103,7 @@ describe("CredentialsStore", () => {
             sinon.assert.calledOnce(MockObjectHash);
             sinon.assert.calledWith(MockObjectHash, "a credential");
             sinon.assert.notCalled(MockStoreSave);
-            expect(res).to.eql({ object: "a credential" });
+            expect(res).toEqual({ object: "a credential" });
         });
 
         it("invalidates credentialsHash when provided", async () => {
@@ -123,10 +117,10 @@ describe("CredentialsStore", () => {
                         "an actor",
                         "a different credentialHash string",
                     ),
-                ).to.be.undefined;
-                expect(false).to.eql(true);
+                ).toBeUndefined();
+                expect(false).toEqual(true);
             } catch (err) {
-                expect(err.toString()).to.eql(
+                expect(err.toString()).toEqual(
                     "Error: invalid credentials for an actor",
                 );
             }

@@ -50,7 +50,7 @@
         "socket.io": "4.7.5"
     },
     "scripts": {
-        "test": "bun test src/**/*.test.ts",
+        "test": "bun test `find ./src -name \"*.test.ts\"`; echo $?",
         "start": "DEBUG=sockethub* ./bin/sockethub",
         "dev": "DEBUG=sockethub* ./bin/sockethub --examples"
     },

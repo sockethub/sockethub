@@ -43,7 +43,6 @@ describe("Janitor", () => {
     let sandbox, fetchSocketsFake, janitor;
 
     beforeEach(function (done) {
-        this.timeout(3000);
         sandbox = sinon.createSandbox();
         fetchSocketsFake = sandbox.stub().returns(sockets);
 

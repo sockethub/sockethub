@@ -1,5 +1,6 @@
 import {
     addPlatformSchema,
+    getPlatformSchema,
     validateActivityObject,
     validateActivityStream,
     validateCredentials,
@@ -12,6 +13,7 @@ import { PlatformSchema } from "./schemas/platform.js";
 
 export {
     addPlatformSchema,
+    getPlatformSchema,
     validatePlatformSchema,
     validateCredentials,
     validateActivityStream,

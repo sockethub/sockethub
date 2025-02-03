@@ -1,17 +1,16 @@
-import chai from "chai";
+import {expect, describe, it, beforeEach} from "bun:test";
 import { validateActivityStream } from "@sockethub/schemas";
-import fs from "fs";
+import {readFileSync} from "fs";
 import equal from "fast-deep-equal";
-const expect = chai.expect;
 
 import { IrcToActivityStreams } from "./index.js";
 import { TestData } from "./index.test.data.js";
-const ircdata = fs.readFileSync("./src/index.test.data.irc.txt", "utf-8");
+const ircdata = readFileSync(__dirname + "/index.test.data.irc.txt", "utf-8");
 const inputs = ircdata.split("\n");
 
 function matchStream(done) {
     return (stream) => {
-        expect(typeof stream.published).to.eql("string");
+        expect(typeof stream.published).toEqual("string");
         delete stream.published;
         let matched = false;
         for (let i = 0; i <= TestData.length; i++) {
@@ -41,8 +40,8 @@ describe("IrcToActivityStreams", () => {
         pings = 0;
     beforeEach(() => {
         irc2as = new IrcToActivityStreams({ server: "localhost" });
-        expect(irc2as).to.have.property("events");
-        expect(typeof irc2as.events.on).to.equal("function");
+        expect(irc2as).toHaveProperty("events");
+        expect(typeof irc2as.events.on).toEqual("function");
         irc2as.events.on("unprocessed", (string) => {
             console.log("unprocessed> " + string);
         });
@@ -62,13 +61,13 @@ describe("IrcToActivityStreams", () => {
                 irc2as.input(inputs[i]);
             }
             setTimeout(() => {
-                expect(TestData.length).to.equal(0);
+                expect(TestData.length).toEqual(0);
                 done();
             }, 0);
         });
         it("ping and pong count", () => {
-            expect(pings).to.eql(2);
-            expect(pongs).to.eql(3);
+            expect(pings).toEqual(2);
+            expect(pongs).toEqual(3);
         });
     });
 
