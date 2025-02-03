@@ -24,18 +24,47 @@ jobs:
     build:
         runs-on: ubuntu-latest
         needs: [lint]
+
+        strategy:
+            matrix:
+                bun-version: [1.2]
+
         steps:
+            - run: sudo chown -R $USER:$USER ${{ github.workspace }}
+            - name: Checkout repository
+              uses: actions/checkout@v3
+            - name: Use Bun ${{ matrix.bun-version }}
+              uses: oven-sh/setup-bun@v2.0.1
+              with:
+                  bun-version: ${{ matrix.node-version }}
             - run: bun run build
 
     test:
         runs-on: ubuntu-latest
         needs: [build]
+
+        strategy:
+            matrix:
+                bun-version: [1.2]
+
         steps:
+            - run: sudo chown -R $USER:$USER ${{ github.workspace }}
+            - name: Checkout repository
+              uses: actions/checkout@v3
+            - name: Use Bun ${{ matrix.bun-version }}
+              uses: oven-sh/setup-bun@v2.0.1
+              with:
+                  bun-version: ${{ matrix.node-version }}
             - run: bun test
 
     integration:
         runs-on: ubuntu-latest
         needs: [test]
+
+        strategy:
+            matrix:
+                bun-version: [1.2]
+
         steps:
             - run: bunx playwright install
 
