@@ -9,11 +9,18 @@ describe("Middleware: createActivityObject", () => {
             createActivityObject({ foo: "bar" }, () => {
                 done();
             });
-        }).toThrow("invalid property: \"foo\"");
+        }).toThrow('invalid property: "foo"');
     });
     it("Calls activity.Object.create with incoming data", (done) => {
-        createActivityObject({ context: "foo", type: "bar", actor: {type: "person", id: "some actor"} }, () => {
-            done();
-        });
+        createActivityObject(
+            {
+                context: "foo",
+                type: "bar",
+                actor: { type: "person", id: "some actor" },
+            },
+            () => {
+                done();
+            },
+        );
     });
 });
