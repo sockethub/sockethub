@@ -18,7 +18,7 @@ services:
     prosody:
         image: prosody/prosody:latest
         volumes:
-            - ./test/prosody:/etc/prosody
+            - ./integration/prosody:/etc/prosody
         environment:
             LOCAL: jimmy
             DOMAIN: prosody

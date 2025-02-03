@@ -1,4 +1,4 @@
-import { expect, describe, it } from "bun:test";
+import { expect, describe, it, beforeEach, afterEach } from "bun:test";
 import {
     CredentialsStore,
     JobQueue,
@@ -6,6 +6,10 @@ import {
     JobDataDecrypted,
 } from "@sockethub/data-layer";
 import { ActivityStream, CredentialsObject } from "@sockethub/schemas";
+
+const REDIS_HOST = "localhost";
+const REDIS_PORT = "16379";
+const REDIS_URL = `redis://${REDIS_HOST}:${REDIS_PORT}`;
 
 const actor = "" + (Math.random() + 1).toString(36).substring(2);
 const creds: CredentialsObject = {
@@ -26,19 +30,15 @@ describe("CredentialsStore", () => {
     let store: CredentialsStore;
     it("initializes", () => {
         store = new CredentialsStore("foo", "bar", testSecret, {
-            url: "redis://localhost:16379",
+            url: REDIS_URL
         });
     });
 
     it("get non-existent value", async () => {
-        try {
+        expect(async () => {
             await store.get(actor, credsHash);
             expect(false).toEqual(true);
-        } catch (err) {
-            expect(err.toString()).toEqual(
-                `Error: credentials not found for ${actor}`,
-            );
-        }
+        }).toThrow(`credentials not found for ${actor}`);
     });
 
     it("save", async () => {
@@ -61,9 +61,9 @@ describe("connect and disconnect", () => {
     ].forEach((o) => {
         describe(o.name, () => {
             let i;
-            beforeEach("init", () => {
+            beforeEach(() => {
                 i = new o.class("testid", "sessionid", testSecret, {
-                    url: "redis://localhost:16379",
+                    url: REDIS_URL,
                 });
                 if (o.name === "worker") {
                     i.init();
@@ -74,7 +74,7 @@ describe("connect and disconnect", () => {
                 expect(typeof i.shutdown).toEqual("function");
             });
 
-            afterEach("shutdown", async () => {
+            afterEach( async () => {
                 await i.shutdown();
             });
         });
@@ -93,12 +93,12 @@ describe("JobQueue", () => {
     let queue: JobQueue;
     let worker: JobWorker;
 
-    beforeEach("initialized", () => {
+    beforeEach(() => {
         queue = new JobQueue("testid", "sessionid", testSecret, {
-            url: "redis://localhost:16379",
+            url: REDIS_URL,
         });
         worker = new JobWorker("testid", "sessionid", testSecret, {
-            url: "redis://localhost:16379",
+            url: REDIS_URL,
         });
     });
 
@@ -113,7 +113,11 @@ describe("JobQueue", () => {
             done();
         });
         worker.onJob(async (job) => {
-            console.log("worker got job: ", job);
+            expect(job).toEqual({
+                title: "bar-0",
+                sessionId: "socket id",
+                msg: as,
+            });
         });
         queue.add("socket id", as).then((job) => {
             expect(job.msg.length).toEqual(193);
@@ -122,7 +126,7 @@ describe("JobQueue", () => {
         });
     });
 
-    afterEach("shutdown", async () => {
+    afterEach(async () => {
         await queue.shutdown();
         await worker.shutdown();
     });
