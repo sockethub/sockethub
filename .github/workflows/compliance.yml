@@ -37,6 +37,7 @@ jobs:
               uses: oven-sh/setup-bun@v2.0.1
               with:
                   bun-version: ${{ matrix.node-version }}
+            - run: bun install
             - run: bun run build
 
     test:
@@ -55,6 +56,8 @@ jobs:
               uses: oven-sh/setup-bun@v2.0.1
               with:
                   bun-version: ${{ matrix.node-version }}
+            - run: bun install
+            - run: bun run build
             - run: bun test
 
     integration:
@@ -66,6 +69,16 @@ jobs:
                 bun-version: [1.2]
 
         steps:
+            - run: sudo chown -R $USER:$USER ${{ github.workspace }}
+            - name: Checkout repository
+              uses: actions/checkout@v3
+            - name: Use Bun ${{ matrix.bun-version }}
+              uses: oven-sh/setup-bun@v2.0.1
+              with:
+                bun-version: ${{ matrix.node-version }}
+            - run: bun install
+            - run: bun run build
+
             - run: bunx playwright install
 
             - run: docker compose build --build-arg bun_version=${{ matrix.bun-version }}
