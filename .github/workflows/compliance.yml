@@ -21,6 +21,7 @@ jobs:
             - run: bun install
             - run: bunx playwright install
             - run: bun run compliance
+            - run: bun test
 
     integration:
         runs-on: ubuntu-latest
