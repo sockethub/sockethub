@@ -1,12 +1,10 @@
-import {expect, describe, it, beforeEach, mock} from "bun:test";
+import { expect, describe, it, beforeEach, mock } from "bun:test";
 import getInitObject, { __clearInit, IInitObject } from "./init.js";
 import loadPlatforms from "./load-platforms.js";
 
-
 function getFakePlatform(name: string) {
     return class FakeSockethubPlatform {
-        constructor() {
-        }
+        constructor() {}
 
         get config() {
             return {};
@@ -51,7 +49,7 @@ function getFakePlatform(name: string) {
                 },
             };
         }
-    }
+    };
 }
 
 export async function initMockFakePlatform(platformName: string) {
@@ -61,11 +59,14 @@ export async function initMockFakePlatform(platformName: string) {
     } as IInitObject;
     __clearInit();
     const initFunc = async () => {
-        const modules = {}
+        const modules = {};
         modules[platformName] = getFakePlatform(platformName);
-        initObject.platforms = await loadPlatforms([platformName], async (module) => {
-            return Promise.resolve(modules[module]);
-        });
+        initObject.platforms = await loadPlatforms(
+            [platformName],
+            async (module) => {
+                return Promise.resolve(modules[module]);
+            },
+        );
         return Promise.resolve(initObject);
     };
     return mock(initFunc);
@@ -103,7 +104,6 @@ describe("Init", () => {
             return Promise.resolve(initObject);
         });
     });
-
 
     it("getInitObject calls __loadInit", async () => {
         const i = await getInitObject(loadInitMock);

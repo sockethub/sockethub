@@ -1,4 +1,4 @@
-import { expect, describe, it, beforeEach, afterEach} from "bun:test";
+import { expect, describe, it, beforeEach, afterEach } from "bun:test";
 import * as sinon from "sinon";
 
 import { Janitor } from "./janitor.js";
@@ -86,11 +86,15 @@ describe("Janitor", () => {
             pi.flaggedForTermination = true;
             janitor.removeSessionCallbacks(pi, "session foo");
             sinon.assert.calledTwice(pi.process.removeListener);
-            expect(pi.sessionCallbacks.message.get("session foo")).toBeUndefined();
+            expect(
+                pi.sessionCallbacks.message.get("session foo"),
+            ).toBeUndefined();
             expect(pi.sessionCallbacks.message.get("session bar")).toEqual(
                 barMessage,
             );
-            expect(pi.sessionCallbacks.close.get("session foo")).toBeUndefined();
+            expect(
+                pi.sessionCallbacks.close.get("session foo"),
+            ).toBeUndefined();
             expect(pi.sessionCallbacks.close.get("session bar")).toEqual(
                 barClose,
             );

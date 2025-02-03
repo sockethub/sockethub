@@ -1,4 +1,4 @@
-import {expect, describe, it, afterEach} from "bun:test";
+import { expect, describe, it, afterEach } from "bun:test";
 import * as sinon from "sinon";
 import { existsSync } from "fs";
 

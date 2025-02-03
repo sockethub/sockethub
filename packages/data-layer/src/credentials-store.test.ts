@@ -1,4 +1,4 @@
-import {expect, describe, it, beforeEach} from "bun:test";
+import { expect, describe, it, beforeEach } from "bun:test";
 import * as sinon from "sinon";
 
 import { CredentialsStore } from "./credentials-store";

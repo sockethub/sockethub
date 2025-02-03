@@ -1,6 +1,6 @@
-import {expect, describe, it, beforeEach} from "bun:test";
+import { expect, describe, it, beforeEach } from "bun:test";
 import { validateActivityStream } from "@sockethub/schemas";
-import {readFileSync} from "fs";
+import { readFileSync } from "fs";
 import equal from "fast-deep-equal";
 
 import { IrcToActivityStreams } from "./index.js";

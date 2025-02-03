@@ -1,4 +1,4 @@
-import {expect, describe, it, beforeEach, afterEach} from "bun:test";
+import { expect, describe, it, beforeEach, afterEach } from "bun:test";
 import * as sinon from "sinon";
 import { __dirname } from "./util.js";
 const FORK_PATH = __dirname + "/platform.js";
@@ -143,15 +143,15 @@ describe("PlatformInstance", () => {
         it("initializes the job queue", () => {
             expect(pi.queue).toBeUndefined();
             pi.initQueue("a secret");
-            expect(pi.queue).toBeDefined()
+            expect(pi.queue).toBeDefined();
         });
 
         it("cleans up its references when shutdown", async () => {
             pi.initQueue("a secret");
-            expect(pi.queue).toBeDefined()
+            expect(pi.queue).toBeDefined();
             expect(platformInstances.has("platform identifier")).toBeTrue();
             await pi.shutdown();
-            expect(pi.queue).toBeUndefined()
+            expect(pi.queue).toBeUndefined();
             expect(platformInstances.has("platform identifier")).toBeFalse();
         });
 

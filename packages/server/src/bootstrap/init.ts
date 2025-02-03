@@ -88,12 +88,14 @@ export default async function getInitObject(
             if (init) {
                 resolve(init);
             } else {
-                initFunc().then((_init) => {
-                    init = _init;
-                    return registerPlatforms(_init);
-                }).then(() => {
-                    resolve(init);
-                });
+                initFunc()
+                    .then((_init) => {
+                        init = _init;
+                        return registerPlatforms(_init);
+                    })
+                    .then(() => {
+                        resolve(init);
+                    });
             }
         }
     });
@@ -107,7 +109,7 @@ export async function registerPlatforms(initObj: IInitObject): Promise<void> {
             }
             addPlatformSchema(platform.schemas[key], `${platform.id}/${key}`);
         });
-   });
+    });
 }
 
 async function __loadInit(): Promise<IInitObject> {
