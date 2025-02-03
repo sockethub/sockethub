@@ -3,7 +3,7 @@ on:
     pull_request:
 
 jobs:
-    compliance:
+    lint:
         runs-on: ubuntu-latest
 
         strategy:
@@ -19,29 +19,41 @@ jobs:
               with:
                   bun-version: ${{ matrix.node-version }}
             - run: bun install
-            - run: bun run compliance
+            - run: bun run lint
+
+    build:
+        runs-on: ubuntu-latest
+        needs: [lint]
+
+        strategy:
+            matrix:
+                bun-version: [1.2]
+
+        steps:
+            - run: bun run build
+
+    test:
+        runs-on: ubuntu-latest
+        needs: [build]
+
+        strategy:
+            matrix:
+                bun-version: [1.2]
+
+        steps:
             - run: bun test
 
     integration:
         runs-on: ubuntu-latest
+        needs: [test]
 
         strategy:
             matrix:
                 bun-version: [1.2]
 
         steps:
-            - run: sudo chown -R $USER:$USER ${{ github.workspace }}
-            - name: Checkout repository
-              uses: actions/checkout@v3
-              with:
-                  clean: false
-            - name: Use Bun ${{ matrix.bun-version }}
-              uses: oven-sh/setup-bun@v2.0.1
-              with:
-                  bun-version: ${{ matrix.node-version }}
-            - run: bun install
             - run: bunx playwright install
-            - run: bun run build
+
             - run: docker compose build --build-arg bun_version=${{ matrix.bun-version }}
 
             - run: bun run docker:build
