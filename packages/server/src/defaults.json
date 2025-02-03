@@ -1,7 +1,8 @@
 {
     "activity-streams": {
         "opts": {
-            "specialObjs": ["credentials"]
+            "specialObjs": ["credentials"],
+            "failOnUnknownObjectProperties": true
         }
     },
     "examples": {

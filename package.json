@@ -59,7 +59,8 @@
         "lint:fix": "prettier --write . && bun run --filter='*' lint:fix && bun run lint:doc:fix",
         "preinstall": "bunx only-allow bun",
         "publish": "bun run clean && bun run build && bun run compliance && lerna publish --dist-tag latest --pre-dist-tag next",
-        "start": "bun run --filter 'sockethub' start"
+        "start": "bun run --filter 'sockethub' start",
+        "test": "bun test"
     },
     "dependencies": {
         "tslib": "2.6.2"

@@ -1,5 +1,5 @@
 import debug, { Debugger } from "debug";
-import { ActivityStream } from "@sockethub/schemas";
+import { ActivityObject, ActivityStream } from "@sockethub/schemas";
 
 export default function middleware(name: string): MiddlewareChain {
     return new MiddlewareChain(name);
@@ -7,8 +7,8 @@ export default function middleware(name: string): MiddlewareChain {
 
 export interface MiddlewareChainInterface {
     (
-        error: ActivityStream | Error,
-        data?: ActivityStream | MiddlewareChainInterface,
+        error: ActivityStream | ActivityObject | Error,
+        data?: ActivityStream | ActivityObject | MiddlewareChainInterface,
         next?: MiddlewareChainInterface,
     ): void;
 }

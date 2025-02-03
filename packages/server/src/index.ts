@@ -4,8 +4,7 @@ const sockethub = new Sockethub();
 
 export async function server() {
     process.once("uncaughtException", function (err) {
-        console.log("UNCAUGHT EXCEPTION");
-        console.log(err.stack);
+        console.log("UNCAUGHT EXCEPTION\n", err.stack);
         process.exit(1);
     });
 

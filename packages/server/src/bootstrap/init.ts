@@ -44,7 +44,7 @@ function printSettingsInfo(version, platforms) {
     if (platforms.size > 0) {
         for (const platform of platforms.values()) {
             console.log();
-            console.log(platform.moduleName);
+            console.log(`- ${platform.moduleName}`);
             console.log(` name: ${platform.id} version: ${platform.version}`);
             console.log(" AS types: " + platform.types.join(", "));
         }

@@ -19,7 +19,6 @@ jobs:
               with:
                   bun-version: ${{ matrix.node-version }}
             - run: bun install
-            - run: bunx playwright install
             - run: bun run compliance
             - run: bun test
 
@@ -41,6 +40,7 @@ jobs:
               with:
                   bun-version: ${{ matrix.node-version }}
             - run: bun install
+            - run: bunx playwright install
             - run: bun run build
             - run: docker compose build --build-arg bun_version=${{ matrix.bun-version }}
 

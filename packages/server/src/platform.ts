@@ -60,7 +60,7 @@ const platform: PlatformInterface = await (async () => {
  */
 process.on("uncaughtException", (err) => {
     console.log("EXCEPTION IN PLATFORM");
-    console.log(err.stack);
+    console.log("error:\n", err.stack);
     process.send(["error", err.toString()]);
     process.exit(1);
 });
@@ -145,7 +145,7 @@ function getJobHandler(): JobHandler {
                         );
                     })
                     .catch((err) => {
-                        console.log(err);
+                        console.log("error:\n", err);
                         jobLog("error " + err.toString());
                         reject(err);
                     });

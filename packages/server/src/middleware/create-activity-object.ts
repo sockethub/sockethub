@@ -1,5 +1,5 @@
 import { ASFactory } from "@sockethub/activity-streams";
-import { ActivityStream } from "@sockethub/schemas";
+import { ActivityObject } from "@sockethub/schemas";
 
 import config from "../config.js";
 import { MiddlewareChainInterface } from "../middleware.js";
@@ -12,7 +12,7 @@ const activity = ASFactory(config.get("activity-streams:opts"));
  * @param done
  */
 export default function createActivityObject(
-    obj: ActivityStream,
+    obj: ActivityObject,
     done: MiddlewareChainInterface,
 ) {
     activity.Object.create(obj);

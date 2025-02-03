@@ -18,7 +18,7 @@ import getInitObject, { IInitObject } from "../bootstrap/init.js";
 export default function validate(
     type: string,
     sockethubId: string,
-    initObj: IInitObject,
+    initObj?: IInitObject,
 ) {
     if (!initObj) {
         getInitObject().then((init) => {
