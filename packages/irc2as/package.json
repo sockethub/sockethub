@@ -27,8 +27,5 @@
     },
     "devDependencies": {
         "@sockethub/schemas": "workspace:*"
-    },
-    "scripts": {
-        "test": "bun test src/index.test.js"
     }
 }

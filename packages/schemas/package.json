@@ -29,8 +29,7 @@
         "typescript": "5.3.3"
     },
     "scripts": {
-        "build": "bun ./scripts/export-json-schema.ts",
-        "test": "bun test --coverage src/index.test.ts"
+        "build": "bun ./scripts/export-json-schema.ts"
     },
     "dependencies": {
         "ajv": "8.12.0",

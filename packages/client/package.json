@@ -28,8 +28,7 @@
         "build:js": "bun build ./src/sockethub-client.ts --outdir=dist/ --target=browser --sourcemap=inline",
         "build:minify": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --minify --outfile=dist/sockethub-client.min.js",
         "clean": "rm -rf dist",
-        "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer",
-        "test": "bun test --coverage src/sockethub-client.test.ts"
+        "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer"
     },
     "dependencies": {
         "eventemitter3": "5.0.1"

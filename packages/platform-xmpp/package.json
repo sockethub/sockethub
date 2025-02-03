@@ -41,8 +41,6 @@
     },
     "scripts": {
         "build": "bun run doc",
-        "clean": "rm -rf coverage",
-        "test": "bun test src/index.test.js src/utils.test.js src/incoming-handlers.test.js",
         "doc": "jsdoc2md --no-gfm --heading-depth 1 src/index.js > API.md"
     }
 }

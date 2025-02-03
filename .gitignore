@@ -1,3 +1,4 @@
+packages/schemas/src/schemas/json
 packages/server/res
 **/package-lock.json
 node_modules

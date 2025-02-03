@@ -25,9 +25,6 @@
         "@sockethub/schemas": "workspace:*",
         "object-hash": "3.0.0"
     },
-    "scripts": {
-        "test": "bun test --coverage src/index.test.ts"
-    },
     "engines": {
         "bun": ">= 1.2"
     },
@@ -36,7 +33,6 @@
         "@types/debug": "4.1.12",
         "@types/object-hash": "3.0.6",
         "@types/sinon": "17.0.2",
-        "c8": "8.0.1",
         "sinon": "17.0.1",
         "typescript": "5.3.3"
     }
