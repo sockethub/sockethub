@@ -30,7 +30,7 @@ describe("CredentialsStore", () => {
     let store: CredentialsStore;
     it("initializes", () => {
         store = new CredentialsStore("foo", "bar", testSecret, {
-            url: REDIS_URL
+            url: REDIS_URL,
         });
     });
 
@@ -74,7 +74,7 @@ describe("connect and disconnect", () => {
                 expect(typeof i.shutdown).toEqual("function");
             });
 
-            afterEach( async () => {
+            afterEach(async () => {
                 await i.shutdown();
             });
         });
