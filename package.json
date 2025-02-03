@@ -59,9 +59,6 @@
         "publish": "bun run clean && bun run lint && bun run build && bun run build:doc && bun test && lerna publish --dist-tag latest --pre-dist-tag next",
         "start": "bun run --filter 'sockethub' start"
     },
-    "dependencies": {
-        "tslib": "2.6.2"
-    },
     "resolutions": {
         "node-fetch": "3.3.2",
         "engine.io": "6.5.4",
