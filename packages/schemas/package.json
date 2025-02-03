@@ -25,8 +25,7 @@
     "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/schemas",
     "devDependencies": {
         "@types/bun": "latest",
-        "@types/debug": "4.1.12",
-        "typescript": "5.3.3"
+        "@types/debug": "4.1.12"
     },
     "scripts": {
         "build": "bun ./scripts/export-json-schema.ts"

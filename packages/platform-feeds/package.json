@@ -34,8 +34,7 @@
     },
     "devDependencies": {
         "@sockethub/schemas": "workspace:*",
-        "@types/bun": "latest",
-        "typescript": "5.3.3"
+        "@types/bun": "latest"
     },
     "peerDependencies": {
         "@sockethub/server": "workspace:*"
