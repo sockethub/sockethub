@@ -40,7 +40,7 @@
         "docker:start:redis": "docker compose up redis -d",
         "docker:clean:all": "bun run docker:stop && docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub",
         "docker:clean:sockethub": "bun run docker:stop && docker rm sockethub-sockethub-1; docker rmi sockethub-sockethub",
-        "docker:logs": "docker logs sockethub-sockethub-1",
+        "docker:logs:sockethub": "docker logs sockethub-sockethub-1",
         "docker:stop": "docker compose down",
         "docker:build": "bun run docker:clean:sockethub; bun run docker:start",
         "integration": "bun run integration:redis && bun run integration:browser",

@@ -31,11 +31,6 @@ jobs:
       - name: Redis Integration Tests
         run: bun run integration:redis:run
 
-      - name: Print Docker logs
-        if: always()
-        run: bun run docker:logs
-
-
   browser:
     runs-on: ubuntu-latest
 
@@ -68,6 +63,6 @@ jobs:
       - name: Browser Integration Tests
         run: bun run integration:browser:run
 
-      - name: Print Docker logs
+      - name: Print Sockethub logs
         if: always()
-        run: bun run docker:logs
+        run: bun run docker:logs:sockethub
