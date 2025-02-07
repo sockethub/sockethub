@@ -8,4 +8,4 @@ COPY . /app
 WORKDIR /app
 RUN bun install --frozen-lockfile
 RUN bun run build
-CMD DEBUG=secure-store*,sockethub* /app/bin/sockethub --host 0.0.0.0
+CMD DEBUG=secure-store*,sockethub* /app/packages/sockethub/bin/sockethub --host 0.0.0.0
