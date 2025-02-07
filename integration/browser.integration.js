@@ -1,6 +1,6 @@
 import { expect } from "@esm-bundle/chai";
 import { SockethubClient } from "@sockethub/client/dist/sockethub-client";
-import { io } from "socket.io-client";
+import { io } from "socket.io-client/dist/socket.io.esm.min";
 
 const SH_PORT = 10550;
 
