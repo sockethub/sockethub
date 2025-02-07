@@ -31,11 +31,11 @@
     },
     "scripts": {
         "build": "bun run --filter='*' build && bun run build:server:post",
-        "build:doc": "bun run --filter='*' doc",
         "build:server:post": "rm -rf packages/server/res && mkdir -p  packages/server/res && cp -r node_modules/@sockethub/examples/build packages/server/res/examples && cp node_modules/@sockethub/client/dist/* packages/server/res/ && cp node_modules/socket.io/client-dist/socket.io.js packages/server/res/socket.io.js",
         "clean": "bun run --filter='*' clean",
         "clean:deps": "bun run --filter='*' clean:deps && bunx rimraf node_modules",
         "dev": "bun run --filter 'sockethub' dev",
+        "doc": "bun run --filter='*' doc",
         "docker:start": "docker compose -f docker-compose.yml up prosody sockethub -d",
         "docker:clean:all": "bun run docker:stop && docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub",
         "docker:clean:sockethub": "bun run docker:stop && docker rm sockethub-sockethub-1; docker rmi sockethub-sockethub",
@@ -52,7 +52,7 @@
         "lint:doc:fix": "bunx markdownlint --fix '**/*.md' && bunx mdspell -n -a --en-us ./README.md ./packages/*/README.md",
         "lint:fix": "prettier --write . && bun run --filter='*' lint:fix && bun run lint:doc:fix",
         "preinstall": "bunx only-allow bun",
-        "publish": "bun run clean && bun run lint && bun run build && bun run build:doc && bun test && lerna publish --dist-tag latest --pre-dist-tag next",
+        "publish": "bun run clean && bun run lint && bun run build && bun run doc && bun test && lerna publish --dist-tag latest --pre-dist-tag next",
         "start": "bun run --filter 'sockethub' start"
     },
     "resolutions": {

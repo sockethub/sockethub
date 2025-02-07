@@ -40,7 +40,6 @@
         }
     },
     "scripts": {
-        "build": "bun run doc",
         "doc": "jsdoc2md --no-gfm --heading-depth 1 src/index.js > API.md"
     }
 }
