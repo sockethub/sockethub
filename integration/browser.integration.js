@@ -1,28 +1,13 @@
 import { expect } from "@esm-bundle/chai";
+import { SockethubClient } from "@sockethub/client/dist/sockethub-client";
+import { io } from "socket.io-client";
 
 const SH_PORT = 10550;
 
 mocha.bail(true);
 mocha.timeout("60s");
 
-async function loadScript(url) {
-    console.log("loadScript: " + url);
-    let response = await fetch(url);
-    let script = await response.text();
-    const p = eval(script);
-}
-
 describe(`Sockethub tests at port ${SH_PORT}`, () => {
-    it("loads socket.io.js", async () => {
-        let scriptUrl = `http://localhost:${SH_PORT}/socket.io.js`;
-        return loadScript(scriptUrl);
-    });
-
-    it("loads sockethub-client.js", async () => {
-        let scriptUrl = `http://localhost:${SH_PORT}/sockethub-client.js`;
-        return loadScript(scriptUrl);
-    });
-
     it("has global `io`", () => {
         typeof expect(typeof io).to.equal("function");
     });
