@@ -83,7 +83,7 @@ jobs:
 
             - run: docker compose build --build-arg bun_version=${{ matrix.bun-version }}
 
-            - run: bun run docker:build
+            - run: bun run docker:start
             - run: sleep 5
 
             - name: Verify Sockethub is listening externally
