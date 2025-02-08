@@ -6,16 +6,19 @@
 A simple tool to facilitate handling and referencing activity streams and it's objects, cutting
 down on verbosity.
 
-Designed to run in both `node.js` and the `browser`.
+Designed to run in both `node.js`, `bun` and the `browser`.
 
-I am learning about JSON-LD and ActivityStreams2 as I write this library, so suggestions for
-improvement are very welcome.
+This is a WIP and not fully JSON-LD or ActivityStreams2 compliance, suggestions for improvement are very welcome.
 
 ## Install
 
 ### Node.js
 
 `$ npm install @sockethub/activity-streams`
+
+### Bun
+
+`$ bun install @sockethub/activity-streams`
 
 #### CommonJS
 
@@ -40,7 +43,7 @@ const ActivityStreams = ASFactory({
 The browser bundle is available in the dist folder:
 
 ```javascript
-import '@sockethub/activity-streams/dist/sockethub-client.js';
+import '@sockethub/activity-streams/dist/activity-streams.js';
 ```
 
 You can place it somewhere accessible from the web and include it via a `script` tag.

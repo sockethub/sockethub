@@ -1,8 +1,4 @@
-# Sockethub
-
-[![Sockethub](http://sockethub.org/res/img/sockethub-logo.svg)](http://sockethub.org)
-
-A protocol gateway for the web.
+# @sockethub/server 
 
 ## About
 
@@ -60,9 +56,11 @@ in the `config.json`.
 
 ## Install
 
-`$ npm install -g @sockethub/server`
+`$ bun install -g @sockethub/server`
 
 ## Running
+
+`$ DEBUG=sockethub* bunx @sockethub/server` 
 
 ### Environment Variables
 
@@ -111,14 +109,14 @@ Overrides `REDIS_HOST` and `REDIS_PORT`, can specify a full redis connect URL
 
 Run with debug output and examples enabled:
 
-`$ DEBUG=sockethub* sockethub --examples`
+`$ DEBUG=sockethub* bin/sockethub --examples`
 
 You should then be able to browse to `http://localhost:10550/examples` and try
 out the examples.
 
 For production, with examples disabled.
 
-`$ DEBUG=sockethub* sockethub`
+`$ DEBUG=sockethub* bin/sockethub`
 
 ## License
 

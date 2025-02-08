@@ -72,52 +72,53 @@ our existing platforms for examples.
 To get up and running quickly, you only need the following commands:
 
 ```bash
-pnpm install
-pnpm dev
+bun install
+bun run dev
 ```
 
 ### Dependencies
 
-```pnpm install```
+```bun install```
 
 ### Build
 
-```pnpm build```
+```bun run build```
 
 ### Tests
 
-```pnpm test```
+```bun test```
 
 ### Linter
 
-```pnpm lint:js```
+```bun run lint```
 
 Or, to automatically fix linting errors:
 
-```pnpm lint:fix```
+```bun run lint:fix```
 
 ### Integration Tests
 
-```pnpm integration```
+```bun run  integration```
 
 ## Start
 
 For development purposes, with examples enabled, run:
 
-`DEBUG=sockethub* pnpm dev`
+`DEBUG=sockethub* bun run dev`
 
 You should then be able to browse to `http://localhost:10550` and try out the examples.
 
 For production, with examples disabled.
 
-`DEBUG=sockethub* pnpm start`
+`DEBUG=sockethub* bun run start`
 
 *For more info on configuration options, see the
-[Sockethub README](packages/server/README.md#environment-variables)*
+[Sockethub README](packages/sockethub/README.md#environment-variables)*
 section on environment variables.*
 
 ## Packages
 
+* [sockethub](packages/sockethub)
 * [@sockethub/activity-streams](packages/activity-streams)
 * [@sockethub/client](packages/client)
 * [@sockethub/crypto](packages/crypto)

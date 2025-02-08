@@ -2,4 +2,4 @@
 
 This folder contains integration tests for the entire Sockethub stack
 
-    pnpm integration
+    bun run integration
