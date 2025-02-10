@@ -1,4 +1,4 @@
-# @sockethub/server 
+# @sockethub/server
 
 ## About
 
@@ -60,7 +60,7 @@ in the `config.json`.
 
 ## Running
 
-`$ DEBUG=sockethub* bunx @sockethub/server` 
+`$ DEBUG=sockethub* bunx @sockethub/server`
 
 ### Environment Variables
 

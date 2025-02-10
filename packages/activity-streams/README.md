@@ -8,7 +8,8 @@ down on verbosity.
 
 Designed to run in both `node.js`, `bun` and the `browser`.
 
-This is a WIP and not fully JSON-LD or ActivityStreams2 compliance, suggestions for improvement are very welcome.
+This is a WIP and not fully JSON-LD or ActivityStreams2 compliance, suggestions for improvement
+are very welcome.
 
 ## Install
 
