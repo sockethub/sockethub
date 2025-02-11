@@ -18,7 +18,7 @@
         "@typescript-eslint/eslint-plugin": "8.22.0",
         "@typescript-eslint/parser": "8.22.0",
         "@web/test-runner": "^0.19.0",
-        "chai": "4.3.10",
+        "chai": "5.1.2",
         "eslint": "9.19.0",
         "eslint-plugin-security": "3.0.1",
         "find-up": "7.0.0",
