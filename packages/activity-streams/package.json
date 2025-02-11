@@ -7,21 +7,9 @@
     "files": [
         "dist/"
     ],
-    "dependencies": {
-        "eventemitter3": "5.0.1"
-    },
-    "devDependencies": {
-        "@sockethub/schemas": "workspace:*",
-        "@types/bun": "latest",
-        "@web/test-runner": "^0.19.0",
-        "@web/test-runner-puppeteer": "^0.17.0"
-    },
-    "scripts": {
-        "build": "bun run clean && bun run build:js && bun run build:minify",
-        "build:js": "bun build ./src/activity-streams.ts --outdir=dist/ --target=browser --sourcemap=inline --format=esm",
-        "build:minify": "bun build ./src/activity-streams.ts --target=browser --sourcemap=inline --minify --outfile=dist/activity-streams.min.js",
-        "clean": "rm -rf dist",
-        "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer"
+    "packageManager": "bun@1.2.2",
+    "engines": {
+        "bun": ">=1.2"
     },
     "repository": {
         "type": "git",
@@ -39,5 +27,21 @@
     "bugs": {
         "url": "https://github.com/sockethub/sockethub/issues"
     },
-    "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/activity-streams"
+    "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/activity-streams",
+    "scripts": {
+        "build": "bun run clean && bun run build:js && bun run build:minify",
+        "build:js": "bun build ./src/activity-streams.ts --outdir=dist/ --target=browser --sourcemap=inline --format=esm",
+        "build:minify": "bun build ./src/activity-streams.ts --target=browser --sourcemap=inline --minify --outfile=dist/activity-streams.min.js",
+        "clean": "rm -rf dist",
+        "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer"
+    },
+    "dependencies": {
+        "eventemitter3": "5.0.1"
+    },
+    "devDependencies": {
+        "@sockethub/schemas": "workspace:*",
+        "@types/bun": "latest",
+        "@web/test-runner": "^0.19.0",
+        "@web/test-runner-puppeteer": "^0.17.0"
+    }
 }

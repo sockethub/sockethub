@@ -9,6 +9,10 @@
     "main": "src/index.ts",
     "bin": "bin/sockethub",
     "preferGlobal": true,
+    "packageManager": "bun@1.2.2",
+    "engines": {
+        "bun": ">=1.2"
+    },
     "keywords": [
         "sockethub",
         "messaging",
@@ -52,9 +56,6 @@
     "scripts": {
         "start": "DEBUG=sockethub* ./bin/sockethub",
         "dev": "DEBUG=sockethub* ./bin/sockethub --examples"
-    },
-    "engines": {
-        "bun": ">=1.2"
     },
     "devDependencies": {
         "@types/body-parser": "1.19.5",

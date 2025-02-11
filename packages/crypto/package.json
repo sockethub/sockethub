@@ -7,6 +7,10 @@
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "MIT",
     "main": "src/index.ts",
+    "packageManager": "bun@1.2.2",
+    "engines": {
+        "bun": ">=1.2"
+    },
     "keywords": [
         "sockethub",
         "messaging",
@@ -24,9 +28,6 @@
     "dependencies": {
         "@sockethub/schemas": "workspace:*",
         "object-hash": "3.0.0"
-    },
-    "engines": {
-        "bun": ">= 1.2"
     },
     "devDependencies": {
         "@types/bun": "latest",

@@ -10,6 +10,10 @@
     "files": [
         "src/schemas"
     ],
+    "packageManager": "bun@1.2.2",
+    "engines": {
+        "bun": ">=1.2"
+    },
     "keywords": [
         "sockethub",
         "sockethub schema",
