@@ -8,6 +8,10 @@
     "main": "",
     "bin": "bin/sockethub",
     "preferGlobal": true,
+    "packageManager": "bun@1.2.2",
+    "engines": {
+        "bun": ">=1.2"
+    },
     "keywords": [
         "sockethub",
         "messaging",
@@ -44,8 +48,5 @@
         "build": "bun build.js",
         "dev": "DEBUG=sockethub* ./bin/sockethub --examples",
         "start": "DEBUG=sockethub* ./bin/sockethub"
-    },
-    "engines": {
-        "bun": ">=1.2"
     }
 }
