@@ -34,7 +34,7 @@
         "build:server:post": "rm -rf packages/server/res && mkdir -p  packages/server/res && cp -r node_modules/@sockethub/examples/build packages/server/res/examples && cp node_modules/@sockethub/client/dist/* packages/server/res/ && cp node_modules/socket.io/client-dist/socket.io.js packages/server/res/socket.io.js",
         "clean": "bun run --filter='*' clean",
         "clean:deps": "bun run --filter='*' clean:deps && bunx rimraf node_modules",
-        "dev": "bun run build && cd packages/sockethub && bun run dev",
+        "dev": "cd packages/sockethub && bun run dev",
         "doc": "bun run --filter='*' doc",
         "docker:start": "docker compose -f docker-compose.yml up prosody sockethub -d",
         "docker:start:redis": "docker compose up redis -d",
@@ -53,6 +53,7 @@
         "lint:doc:fix": "bunx markdownlint --fix '**/*.md' && bunx mdspell -n -a --en-us ./README.md ./packages/*/README.md",
         "lint:fix": "bunx prettier --write . && bun run --filter='*' lint:fix && bun run lint:doc:fix",
         "preinstall": "bunx only-allow bun",
+        "postinstall": "bun run build",
         "publish": "bun run clean && bun run lint && bun run build && bun run doc && bun test && lerna publish --dist-tag latest --pre-dist-tag next",
         "start": "bun run --filter 'sockethub' start"
     },
