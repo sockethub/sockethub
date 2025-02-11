@@ -15,10 +15,10 @@ This demo app is compiled and built as part of the sockethub package,
 however if you would like to run this app stand-alone, you can run:
 
 ```bash
-pnpm run dev
+bun run dev
 
 # or start the server and open the app in a new browser tab
-pnpm run dev -- --open
+bun run dev -- --open
 ```
 
 ## Building
@@ -26,5 +26,5 @@ pnpm run dev -- --open
 The build process is normally handled
 
 ```bash
-pnpm build
+bun build
 ```

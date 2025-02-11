@@ -10,6 +10,10 @@ Designed to run in both `node.js` and the `browser`.
 
 `$ npm install @sockethub/client`
 
+### Bun
+
+`$ bun install @sockethub/client`
+
 #### CommonJS
 
 ```javascript

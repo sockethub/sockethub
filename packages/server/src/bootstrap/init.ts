@@ -4,6 +4,7 @@ import { redisCheck, RedisConfig } from "@sockethub/data-layer";
 
 import config from "../config.js";
 import loadPlatforms, { PlatformMap } from "./load-platforms.js";
+import { addPlatformSchema } from "@sockethub/schemas";
 
 const log = debug("sockethub:server:bootstrap:init");
 
@@ -43,7 +44,7 @@ function printSettingsInfo(version, platforms) {
     if (platforms.size > 0) {
         for (const platform of platforms.values()) {
             console.log();
-            console.log(platform.moduleName);
+            console.log(`- ${platform.moduleName}`);
             console.log(` name: ${platform.id} version: ${platform.version}`);
             console.log(" AS types: " + platform.types.join(", "));
         }
@@ -58,7 +59,7 @@ let cancelWait: NodeJS.Timeout;
 const resolveQueue = [];
 
 export default async function getInitObject(
-    initFunc = __loadInit,
+    initFunc: () => Promise<IInitObject> = __loadInit,
 ): Promise<IInitObject> {
     return new Promise((resolve, reject) => {
         if (initCalled) {
@@ -87,12 +88,27 @@ export default async function getInitObject(
             if (init) {
                 resolve(init);
             } else {
-                initFunc().then((_init) => {
-                    init = _init;
-                    resolve(init);
-                });
+                initFunc()
+                    .then((_init) => {
+                        init = _init;
+                        return registerPlatforms(_init);
+                    })
+                    .then(() => {
+                        resolve(init);
+                    });
             }
         }
+    });
+}
+
+export async function registerPlatforms(initObj: IInitObject): Promise<void> {
+    initObj.platforms.forEach((platform) => {
+        Object.keys(platform.schemas).forEach((key) => {
+            if (!platform.schemas[key]) {
+                return;
+            }
+            addPlatformSchema(platform.schemas[key], `${platform.id}/${key}`);
+        });
     });
 }
 

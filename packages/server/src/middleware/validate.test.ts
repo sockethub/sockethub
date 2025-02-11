@@ -1,110 +1,40 @@
-import { expect } from "chai";
+import { expect, describe, it, beforeEach } from "bun:test";
 import asObjects from "./validate.test.data.js";
-import loadPlatforms from "../bootstrap/load-platforms.js";
-import validate, { registerPlatforms } from "./validate.js";
+import validate from "./validate.js";
 import { ActivityStream } from "@sockethub/schemas";
+import getInitObject from "../bootstrap/init.js";
+import { initMockFakePlatform } from "../bootstrap/init.test.js";
 
-class FakeSockethubPlatform {
-    constructor() {}
-    get config() {
-        return {};
-    }
-    get schema() {
-        return {
-            name: "fakeplatform",
-            version: "0.0.1",
-            credentials: {
-                required: ["object"],
-                properties: {
-                    actor: {
-                        type: "object",
-                        required: ["id"],
-                    },
-                    object: {
-                        type: "object",
-                        required: ["type", "user", "pass"],
-                        additionalProperties: false,
-                        properties: {
-                            type: {
-                                type: "string",
-                            },
-                            user: {
-                                type: "string",
-                            },
-                            pass: {
-                                type: "string",
-                            },
-                        },
-                    },
-                },
-            },
-            messages: {
-                required: ["type"],
-                properties: {
-                    type: {
-                        enum: ["echo", "fail"],
-                    },
-                },
-            },
-        };
-    }
-}
+describe("Middleware: Validate", async () => {
+    const loadInitMock = await initMockFakePlatform("fakeplatform");
+    const initObj = await getInitObject(loadInitMock);
 
-const modules = {
-    fakeplatform: FakeSockethubPlatform,
-};
-
-describe("", () => {
-    let platforms;
-    let mockInit;
-    before(async () => {
-        platforms = await loadPlatforms(["fakeplatform"], async (module) => {
-            return Promise.resolve(modules[module]);
-        });
-        mockInit = {
-            platforms: platforms,
-        };
-        await registerPlatforms(mockInit);
-    });
-
-    describe("platformLoad", () => {
-        it("loads all platforms", () => {
-            const expectedPlatforms = ["fakeplatform"];
-            expect(platforms.size).to.equal(expectedPlatforms.length);
-            for (const platform of expectedPlatforms) {
-                expect(platforms.has(platform)).to.be.true;
-            }
-        });
-    });
-
-    describe("Middleware: Validate", () => {
-        describe("AS object validations", () => {
-            asObjects.forEach((obj) => {
-                it(`${obj.type}: ${obj.name}, should ${
-                    obj.valid ? "pass" : "fail"
-                }`, (done) => {
-                    validate(
-                        obj.type,
-                        "tests",
-                        mockInit,
-                    )(obj.input as ActivityStream, (msg) => {
-                        if (obj.output) {
-                            if (obj.output === "same") {
-                                expect(msg).to.eql(obj.input);
-                            } else {
-                                expect(msg).to.eql(obj.output);
-                            }
-                        }
-                        if (obj.valid) {
-                            expect(msg).to.not.be.instanceof(Error);
+    describe("AS object validations", () => {
+        asObjects.forEach((obj) => {
+            it(`${obj.type}: ${obj.name}, should ${
+                obj.valid ? "pass" : "fail"
+            }`, (done) => {
+                validate(
+                    obj.type,
+                    "tests",
+                    initObj,
+                )(obj.input as ActivityStream, (msg) => {
+                    if (obj.output) {
+                        if (obj.output === "same") {
+                            expect(msg).toEqual(obj.input);
                         } else {
-                            expect(msg).to.be.instanceof(Error);
-                            if (obj.error) {
-                                expect(msg.toString()).to.equal(obj.error);
-                            }
+                            expect(msg).toEqual(obj.output);
                         }
-                        done();
-                    });
+                    }
+                    if (obj.valid) {
+                        expect(msg).not.toBeInstanceOf(Error);
+                    } else {
+                        expect(msg).toBeInstanceOf(Error);
+                        if (obj.error) {
+                            expect(msg.toString()).toEqual(obj.error);
+                        }
+                    }
+                    done();
                 });
             });
         });

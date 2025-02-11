@@ -6,11 +6,9 @@
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "MIT",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "main": "src/index.ts",
     "files": [
-        "dist/",
-        "src/"
+        "src/schemas"
     ],
     "keywords": [
         "sockethub",
@@ -26,21 +24,11 @@
     },
     "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/schemas",
     "devDependencies": {
-        "@types/chai": "4.3.11",
-        "@types/debug": "4.1.12",
-        "@types/mocha": "10.0.6",
-        "@types/node": "22.10.2",
-        "c8": "8.0.1",
-        "chai": "4.3.10",
-        "mocha": "10.2.0",
-        "tsx": "4.7.2",
-        "typescript": "5.3.3"
+        "@types/bun": "latest",
+        "@types/debug": "4.1.12"
     },
     "scripts": {
-        "build": "pnpm clean; tsc && node ./scripts/export-json-schema.js",
-        "clean": "rm -rf coverage dist",
-        "coverage": "c8 check-coverage --statements 95 --branches 95 --functions 95 --lines 95",
-        "test": "NODE_OPTIONS='--import=tsx' c8 -x \"**/*.test.*\" mocha src/**/*.test.ts && pnpm coverage"
+        "build": "bun ./scripts/export-json-schema.ts"
     },
     "dependencies": {
         "ajv": "8.12.0",

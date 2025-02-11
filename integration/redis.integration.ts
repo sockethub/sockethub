@@ -1,5 +1,4 @@
-import { describe, it } from "mocha";
-import { expect } from "chai";
+import { expect, describe, it, beforeEach, afterEach } from "bun:test";
 import {
     CredentialsStore,
     JobQueue,
@@ -7,6 +6,10 @@ import {
     JobDataDecrypted,
 } from "@sockethub/data-layer";
 import { ActivityStream, CredentialsObject } from "@sockethub/schemas";
+
+const REDIS_HOST = "localhost";
+const REDIS_PORT = "16379";
+const REDIS_URL = `redis://${REDIS_HOST}:${REDIS_PORT}`;
 
 const actor = "" + (Math.random() + 1).toString(36).substring(2);
 const creds: CredentialsObject = {
@@ -27,19 +30,15 @@ describe("CredentialsStore", () => {
     let store: CredentialsStore;
     it("initializes", () => {
         store = new CredentialsStore("foo", "bar", testSecret, {
-            url: "redis://localhost:16379",
+            url: REDIS_URL,
         });
     });
 
     it("get non-existent value", async () => {
-        try {
+        expect(async () => {
             await store.get(actor, credsHash);
-            expect(false).to.eql(true);
-        } catch (err) {
-            expect(err.toString()).to.eql(
-                `Error: credentials not found for ${actor}`,
-            );
-        }
+            expect(false).toEqual(true);
+        }).toThrow(`credentials not found for ${actor}`);
     });
 
     it("save", async () => {
@@ -47,7 +46,7 @@ describe("CredentialsStore", () => {
     });
 
     it("get", async () => {
-        expect(await store.get(actor, credsHash)).to.eql(creds);
+        expect(await store.get(actor, credsHash)).toEqual(creds);
     });
 
     it("shutdown", async () => {
@@ -62,9 +61,9 @@ describe("connect and disconnect", () => {
     ].forEach((o) => {
         describe(o.name, () => {
             let i;
-            beforeEach("init", () => {
+            beforeEach(() => {
                 i = new o.class("testid", "sessionid", testSecret, {
-                    url: "redis://localhost:16379",
+                    url: REDIS_URL,
                 });
                 if (o.name === "worker") {
                     i.init();
@@ -72,10 +71,10 @@ describe("connect and disconnect", () => {
             });
 
             it("is active", () => {
-                expect(typeof i.shutdown).to.eql("function");
+                expect(typeof i.shutdown).toEqual("function");
             });
 
-            afterEach("shutdown", async () => {
+            afterEach(async () => {
                 await i.shutdown();
             });
         });
@@ -94,19 +93,19 @@ describe("JobQueue", () => {
     let queue: JobQueue;
     let worker: JobWorker;
 
-    beforeEach("initialized", () => {
+    beforeEach(() => {
         queue = new JobQueue("testid", "sessionid", testSecret, {
-            url: "redis://localhost:16379",
+            url: REDIS_URL,
         });
         worker = new JobWorker("testid", "sessionid", testSecret, {
-            url: "redis://localhost:16379",
+            url: REDIS_URL,
         });
     });
 
     it("add job and get job on queue", (done) => {
         // queue.initResultEvents();
         queue.on("completed", (jobData: JobDataDecrypted) => {
-            expect(jobData).to.eql({
+            expect(jobData).toEqual({
                 title: "bar-0",
                 sessionId: "socket id",
                 msg: as,
@@ -114,16 +113,20 @@ describe("JobQueue", () => {
             done();
         });
         worker.onJob(async (job) => {
-            console.log("worker got job: ", job);
+            expect(job).toEqual({
+                title: "bar-0",
+                sessionId: "socket id",
+                msg: as,
+            });
         });
         queue.add("socket id", as).then((job) => {
-            expect(job.msg.length).to.eql(193);
-            expect(job.title).to.eql("bar-0");
-            expect(job.sessionId).to.eql("socket id");
+            expect(job.msg.length).toEqual(193);
+            expect(job.title).toEqual("bar-0");
+            expect(job.sessionId).toEqual("socket id");
         });
     });
 
-    afterEach("shutdown", async () => {
+    afterEach(async () => {
         await queue.shutdown();
         await worker.shutdown();
     });

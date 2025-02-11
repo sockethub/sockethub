@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { expect, describe, it, afterEach } from "bun:test";
 import * as sinon from "sinon";
 import { existsSync } from "fs";
 
@@ -13,7 +13,7 @@ describe("routes/base", () => {
         Object.values(basePaths).forEach((fwd: string) => {
             try {
                 // eslint-disable-next-line security/detect-non-literal-fs-filename
-                expect(existsSync(fwd)).to.be.true;
+                expect(existsSync(fwd)).toBeTrue();
             } catch (e) {
                 throw new Error(`Unable to resolve path ${fwd}`);
             }
@@ -43,7 +43,7 @@ describe("routes/base", () => {
                     setHeader: sinon.spy(),
                     sendFile: sinon.spy(),
                 };
-                expect(pathMap[path].endsWith(".ejs")).to.be.false;
+                expect(pathMap[path].endsWith(".ejs")).toBeFalse();
                 routeHandlers[path]({ url: path }, res);
                 sinon.assert.called(res.setHeader);
                 sinon.assert.calledWith(res.sendFile, pathMap[path]);

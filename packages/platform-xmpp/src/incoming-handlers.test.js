@@ -1,6 +1,5 @@
+import { expect, describe, it, beforeEach } from "bun:test";
 import sinon from "sinon";
-import * as chai from "chai";
-const expect = chai.expect;
 
 import parse from "@xmpp/xml/lib/parse.js";
 import * as schemas from "@sockethub/schemas";
@@ -28,7 +27,7 @@ describe("Incoming handlers", () => {
             });
 
             it(`${name} - passes @sockethub/schemas validator`, () => {
-                expect(schemas.validateActivityStream(asobject)).to.equal("");
+                expect(schemas.validateActivityStream(asobject)).toEqual("");
             });
         });
     });

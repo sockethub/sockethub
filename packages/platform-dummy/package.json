@@ -6,32 +6,22 @@
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "files": [
-        "dist/"
-    ],
+    "main": "src/index.ts",
     "keywords": [
         "sockethub",
         "dummy"
     ],
     "devDependencies": {
-        "@sockethub/schemas": "workspace:^",
-        "@types/node": "22.10.2",
-        "typescript": "5.3.3"
+        "@sockethub/schemas": "workspace:*",
+        "@types/bun": "latest"
     },
     "peerDependencies": {
-        "@sockethub/server": "workspace:^"
+        "@sockethub/server": "workspace:*"
     },
     "peerDependenciesMeta": {
         "@sockethub/server": {
             "optional": true
         }
-    },
-    "scripts": {
-        "build": "tsc",
-        "lint": "eslint .",
-        "test": "exit 0"
     },
     "repository": {
         "type": "git",

@@ -1,6 +1,10 @@
 import debug from "debug";
 
-import { CredentialsStore, verifySecureStore } from "./credentials-store.js";
+import {
+    CredentialsStore,
+    verifySecureStore,
+    type CredentialsStoreInterface,
+} from "./credentials-store.js";
 import { JobQueue, verifyJobQueue } from "./job-queue.js";
 import { JobWorker } from "./job-worker.js";
 export * from "./types.js";
@@ -14,4 +18,10 @@ async function redisCheck(config: RedisConfig): Promise<void> {
     await verifyJobQueue(config);
 }
 
-export { redisCheck, JobQueue, JobWorker, CredentialsStore };
+export {
+    redisCheck,
+    JobQueue,
+    JobWorker,
+    CredentialsStore,
+    CredentialsStoreInterface,
+};

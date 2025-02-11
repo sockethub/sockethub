@@ -1,43 +1,19 @@
-/* eslint-disable  no-undef */
-/* eslint-disable  no-eval */
+import { expect } from "@esm-bundle/chai";
+import SockethubClient from "./../packages/server/res/sockethub-client.js";
+import "./../packages/server/res/socket.io.js";
 
-if (typeof chai !== "object") {
-    chai = require("chai");
-}
-
-const assert = chai.assert;
-const expect = chai.expect;
-
-const SH_PORT = __karma__.config.sh_port || 10550;
+const SH_PORT = 10550;
 
 mocha.bail(true);
 mocha.timeout("60s");
 
-async function loadScript(url) {
-    console.log("loadScript: " + url);
-    let response = await fetch(url);
-    let script = await response.text();
-    // eslint-disable-next-line security/detect-eval-with-expression
-    eval(script);
-}
-
 describe(`Sockethub tests at port ${SH_PORT}`, () => {
-    it("loads socket.io.js", async () => {
-        let scriptUrl = `http://localhost:${SH_PORT}/socket.io.js`;
-        return loadScript(scriptUrl);
-    });
-
-    it("loads sockethub-client.js", async () => {
-        let scriptUrl = `http://localhost:${SH_PORT}/sockethub-client.js`;
-        return loadScript(scriptUrl);
-    });
-
     it("has global `io`", () => {
-        assert.typeOf(io, "function");
+        typeof expect(typeof io).to.equal("function");
     });
 
     it("has global `SockethubClient`", () => {
-        assert.typeOf(SockethubClient, "function");
+        typeof expect(typeof SockethubClient).to.equal("function");
     });
 
     describe("SockethubClient()", () => {

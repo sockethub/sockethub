@@ -16,8 +16,6 @@ import {
 
 const log = debug("sockethub:server:bootstrap:platforms");
 
-log("loading platforms");
-
 export type PlatformMap = Map<
     string,
     {
@@ -48,6 +46,7 @@ function platformListsSupportedTypes(p): boolean {
 }
 
 async function loadPlatform(platformName: string, injectRequire) {
+    log(`loading ${platformName}`);
     let p;
     if (injectRequire) {
         const P = await injectRequire(platformName);
@@ -72,6 +71,7 @@ export default async function loadPlatforms(
     platformsList: Array<string>,
     injectRequire = undefined,
 ): Promise<PlatformMap> {
+    log(`platforms to load: ${platformsList}`);
     // load platforms from config.platforms
     const platforms = new Map();
 
@@ -82,7 +82,6 @@ export default async function loadPlatforms(
     }
 
     for (const platformName of platformsList) {
-        log(`loading ${platformName}`);
         const p = await loadPlatform(platformName, injectRequire);
         let types = [];
 

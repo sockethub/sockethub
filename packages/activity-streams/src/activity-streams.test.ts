@@ -1,18 +1,10 @@
 import { ASFactory } from "./activity-streams";
-import chai from "chai";
-
-const assert = chai.assert;
-const expect = chai.expect;
+import { test, describe, beforeEach, expect } from "bun:test";
 
 describe("warn test", () => {
-    let activity;
-
-    before("initialize activity module", () => {
-        assert.typeOf(ASFactory, "function");
-        activity = ASFactory();
-    });
-
-    it("rejects nondefined special types", () => {
+    expect(typeof ASFactory).toEqual("function");
+    const activity = ASFactory();
+    test("rejects nondefined special types", () => {
         expect(() => {
             activity.Stream({
                 type: "lol",
@@ -21,19 +13,17 @@ describe("warn test", () => {
                 object: { type: "hola", content: "har", secure: true },
                 target: ["thingy1", "thingy2"],
             });
-        }).not.to.throw(Error);
+        }).toThrow(Error);
     });
 });
 
 describe("no special props", () => {
-    let activity;
-
-    before("initialize activity module", () => {
-        assert.typeOf(ASFactory, "function");
-        activity = ASFactory({ specialObjs: ["send"] });
+    const activity = ASFactory();
+    test("init", () => {
+        expect(typeof ASFactory).toEqual("function");
     });
 
-    it("returns expected object with no special types", () => {
+    test("returns expected object with no special types", () => {
         expect(
             activity.Stream({
                 type: "send",
@@ -42,7 +32,7 @@ describe("no special props", () => {
                 object: { type: "hola", content: "har" },
                 target: ["thingy1", "thingy2"],
             }),
-        ).to.eql({
+        ).toEqual({
             type: "send",
             context: "irc",
             actor: { id: "thingy" },
@@ -60,62 +50,61 @@ describe("basic tests", () => {
         specialObjs: ["dude"],
         failOnUnknownObjectProperties: true,
     };
-    let activity;
 
-    before("initialize activity module", () => {
-        assert.typeOf(ASFactory, "function");
-        activity = ASFactory(config);
+    const activity = ASFactory(config);
+    test("init", () => {
+        expect(typeof ASFactory).toEqual("function");
     });
 
     describe("object tests", () => {
-        it("has expected structure", () => {
-            assert.typeOf(activity, "object");
-            assert.typeOf(activity.Object, "object");
-            assert.typeOf(activity.Stream, "function");
-            assert.typeOf(activity.on, "function");
-            assert.typeOf(activity.once, "function");
-            assert.typeOf(activity.off, "function");
+        test("has expected structure", () => {
+            expect(typeof activity).toEqual("object");
+            expect(typeof activity.Object).toEqual("object");
+            expect(typeof activity.Stream).toEqual("function");
+            expect(typeof activity.on).toEqual("function");
+            expect(typeof activity.once).toEqual("function");
+            expect(typeof activity.off).toEqual("function");
         });
 
-        it("returns undefined when no params are passed", () => {
-            assert.equal(activity.Object.get(), undefined);
+        test("returns undefined when no params are passed", () => {
+            expect(activity.Object.get()).toBeUndefined();
         });
 
-        it("returns object when given a valid lookup id", () => {
-            expect(activity.Object.create({ id: "thingy1" })).to.deep.equal({
+        test("returns object when given a valid lookup id", () => {
+            expect(activity.Object.create({ id: "thingy1" })).toEqual({
                 id: "thingy1",
             });
-            expect(activity.Object.get("thingy1")).to.deep.equal({
+            expect(activity.Object.get("thingy1")).toEqual({
                 id: "thingy1",
             });
         });
 
-        it("throws an exception when called with no identifier", () => {
-            expect(activity.Object.create).to.throw(Error);
+        test("throws an exception when called with no identifier", () => {
+            expect(activity.Object.create).toThrow(Error);
         });
 
-        it("creates a second object and returns is as expected", () => {
-            expect(activity.Object.create({ id: "thingy2" })).to.deep.equal({
+        test("creates a second object and returns is as expected", () => {
+            expect(activity.Object.create({ id: "thingy2" })).toEqual({
                 id: "thingy2",
             });
-            expect(activity.Object.get("thingy2")).to.deep.equal({
+            expect(activity.Object.get("thingy2")).toEqual({
                 id: "thingy2",
             });
         });
 
-        it("returns a basic ActivtyObject when receiving an unknown id with expand=true", () => {
-            expect(activity.Object.get("thingy3", true)).to.deep.equal({
+        test("returns a basic ActivtyObject when receiving an unknown id with expand=true", () => {
+            expect(activity.Object.get("thingy3", true)).toEqual({
                 id: "thingy3",
             });
         });
 
-        it("returns given id param when lookup fails and expand=false", () => {
+        test("returns given id param when lookup fails and expand=false", () => {
             expect(
                 activity.Object.get({
                     id: "thingy3",
                     foo: "bar",
                 }),
-            ).to.deep.equal({
+            ).toEqual({
                 id: "thingy3",
                 foo: "bar",
             });
@@ -140,31 +129,31 @@ describe("basic tests", () => {
             });
         });
 
-        it("renames mapped props", () => {
-            expect(stream.type).to.equal("lol");
-            expect(stream.verb).to.not.exist;
-            expect(stream.context).to.equal("irc");
-            expect(stream.platform).to.not.exist;
+        test("renames mapped props", () => {
+            expect(stream.type).toEqual("lol");
+            expect(stream.verb).toBeUndefined();
+            expect(stream.context).toEqual("irc");
+            expect(stream.platform).toBeUndefined();
         });
 
-        it("expands existing objects", () => {
-            expect(stream.target).to.deep.equal([
+        test("expands existing objects", () => {
+            expect(stream.target).toEqual([
                 { id: "thingy1" },
                 { id: "thingy2" },
             ]);
-            expect(stream.actor).to.deep.equal({ id: "thingy1" });
+            expect(stream.actor).toEqual({ id: "thingy1" });
         });
 
-        it("handles customProps as expected", () => {
-            expect(stream.object).to.deep.equal({
+        test("handles customProps as expected", () => {
+            expect(stream.object).toEqual({
                 type: "credentials",
                 content: "har",
                 secure: true,
             });
-            expect(stream.object.objectType).to.not.exist;
+            expect(stream.object.objectType).toBeUndefined();
         });
 
-        it("respects specialObj properties", () => {
+        test("respects specialObj properties", () => {
             const stream2 = activity.Stream({
                 type: "lol",
                 platform: "irc",
@@ -177,7 +166,7 @@ describe("basic tests", () => {
                 },
                 target: ["thingy1", "thingy2"],
             });
-            expect(stream2).to.deep.equal({
+            expect(stream2).toEqual({
                 type: "lol",
                 context: "irc",
                 actor: { id: "thingy" },
@@ -191,7 +180,7 @@ describe("basic tests", () => {
             });
         });
 
-        it("rejects nondefined special types", () => {
+        test("rejects nondefined special types", () => {
             expect(() => {
                 activity.Stream({
                     type: "lol",
@@ -205,23 +194,23 @@ describe("basic tests", () => {
                     },
                     target: ["thingy1", "thingy2"],
                 });
-            }).to.throw('invalid property: "foo"');
+            }).toThrow('invalid property: "foo"');
         });
     });
 
     describe("emitters", () => {
-        it("emits an event on object creation", () => {
+        test("emits an event on object creation", () => {
             function onHandler(obj) {
-                expect(obj).to.deep.equal({ id: "thingy3" });
+                expect(obj).toEqual({ id: "thingy3" });
                 activity.off("activity-object-create", onHandler);
             }
             activity.on("activity-object-create", onHandler);
             activity.Object.create({ id: "thingy3" });
         });
 
-        it("emits an event on object deletion", () => {
+        test("emits an event on object deletion", () => {
             activity.once("activity-object-delete", (id) => {
-                expect(id).to.equal("thingy2");
+                expect(id).toEqual("thingy2");
             });
             activity.Object.delete("thingy2");
         });

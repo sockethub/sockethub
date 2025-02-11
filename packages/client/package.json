@@ -2,24 +2,9 @@
     "name": "@sockethub/client",
     "version": "5.0.0-alpha.4",
     "description": "A JavaScript client for the Sockethub protocol gateway",
-    "main": "./build/cjs/sockethub-client.js",
-    "module": "./build/esm/sockethub-client.js",
-    "types": "./build/esm/sockethub-client.d.ts",
-    "exports": {
-        "./dist/sockethub-client.js": "./dist/sockethub-client.js",
-        "./dist/sockethub-client.js.map": "./dist/sockethub-client.js.map",
-        ".": {
-            "import": {
-                "node": "./build/esm/sockethub-client.js",
-                "default": "./build/esm/sockethub-client.js"
-            },
-            "require": "./build/cjs/sockethub-client.js",
-            "types": "./build/esm/sockethub-client.d.ts"
-        }
-    },
+    "main": "./src/sockethub-client.ts",
     "files": [
-        "dist/",
-        "build/"
+        "dist/"
     ],
     "repository": {
         "type": "git",
@@ -27,43 +12,8 @@
         "directory": "packages/client"
     },
     "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/client",
-    "scripts": {
-        "clean": "rm -rf build dist coverage",
-        "test": "pnpm test:node && pnpm coverage",
-        "test:node": "NODE_OPTIONS='--import=tsx' c8 -x \"**/*.test.ts\" mocha ./src/**/*.test.ts",
-        "test:node:lcov": "NODE_OPTIONS='--import=tsx' c8 -r lcov mocha ./src/**/*.test.ts",
-        "coverage": "c8 check-coverage --statements 82 --branches 84 --functions 83 --lines 82",
-        "compile": "pnpm clean && tsc -p config/tsconfig.cjs.json && tsc -p config/tsconfig.esm.json",
-        "build": "pnpm compile && rollup -c config/rollup.config.esm.mjs && rollup -c config/rollup.config.umd.mjs"
-    },
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
-    "devDependencies": {
-        "@babel/core": "7.23.5",
-        "@babel/plugin-transform-object-assign": "7.23.3",
-        "@babel/preset-env": "7.23.5",
-        "@rollup/plugin-babel": "6.0.4",
-        "@rollup/plugin-commonjs": "25.0.7",
-        "@rollup/plugin-node-resolve": "15.2.3",
-        "@rollup/plugin-terser": "0.4.4",
-        "@sockethub/activity-streams": "workspace:^",
-        "@sockethub/schemas": "workspace:^",
-        "@types/chai": "4.3.11",
-        "@types/mocha": "10.0.6",
-        "@types/node": "22.10.2",
-        "@types/sinon": "17.0.2",
-        "c8": "8.0.1",
-        "chai": "4.3.10",
-        "mocha": "10.2.0",
-        "rollup": "^4.29.1",
-        "sinon": "17.0.1",
-        "socket.io-client": "4.8.1",
-        "tsx": "4.7.2",
-        "typescript": "5.3.3"
-    },
-    "dependencies": {
-        "eventemitter3": "5.0.1"
-    },
     "keywords": [
         "sockethub",
         "messaging",
@@ -72,5 +22,25 @@
         "streams",
         "protocol",
         "client"
-    ]
+    ],
+    "scripts": {
+        "build": "bun run clean && bun run build:js && bun run build:minify",
+        "build:js": "bun build ./src/sockethub-client.ts --outdir=dist/ --target=browser --sourcemap=inline --format=esm",
+        "build:minify": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --minify --outfile=dist/sockethub-client.min.js",
+        "clean": "rm -rf dist",
+        "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer"
+    },
+    "dependencies": {
+        "eventemitter3": "5.0.1"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@sockethub/activity-streams": "workspace:*",
+        "@sockethub/schemas": "workspace:*",
+        "@types/sinon": "17.0.2",
+        "@web/test-runner": "^0.19.0",
+        "@web/test-runner-puppeteer": "^0.17.0",
+        "sinon": "17.0.1",
+        "socket.io-client": "4.8.1"
+    }
 }

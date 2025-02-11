@@ -1,6 +1,5 @@
+import { expect, describe, it, beforeEach, afterEach } from "bun:test";
 import sinon from "sinon";
-import * as chai from "chai";
-const expect = chai.expect;
 
 import XMPP from "./index.js";
 
@@ -173,10 +172,10 @@ describe("Platform", () => {
         it("works as intended", (done) => {
             xp.connect(job.connect, credentials, () => {
                 sinon.assert.calledOnce(clientFake);
-                expect(xp.__client.on).to.exist;
-                expect(xp.__client.start).to.exist;
-                expect(xp.__client.send).to.exist;
-                expect(xp.__client.send.callCount).to.eql(0);
+                expect(xp.__client.on).toBeDefined();
+                expect(xp.__client.start).toBeDefined();
+                expect(xp.__client.send).toBeDefined();
+                expect(xp.__client.send.callCount).toEqual(0);
                 sinon.assert.calledOnce(clientObjectFake.start);
                 sinon.assert.notCalled(xp.sendToClient);
                 done();
@@ -188,7 +187,7 @@ describe("Platform", () => {
         it("returns the existing __client object", (done) => {
             xp.__client = "foo";
             xp.connect(job.connect, credentials, () => {
-                expect(xp.__client).to.equal("foo");
+                expect(xp.__client).toEqual("foo");
                 sinon.assert.notCalled(clientFake);
                 sinon.assert.notCalled(xp.sendToClient);
                 // sinon.assert.calledOnce(clientFake);
@@ -200,7 +199,7 @@ describe("Platform", () => {
         it("deletes the __client property on failed connect", (done) => {
             clientObjectFake.start = sinon.fake.rejects("foo");
             xp.connect(job.connect, credentials, () => {
-                expect(xp.__client).to.be.undefined;
+                expect(xp.__client).toBeUndefined();
                 sinon.assert.notCalled(xp.sendToClient);
                 done();
             });
@@ -214,7 +213,7 @@ describe("Platform", () => {
 
         describe("#join", () => {
             it("calls xmpp.js correctly", (done) => {
-                expect(xp.__client.send).to.be.instanceof(Function);
+                expect(xp.__client.send).toBeInstanceOf(Function);
                 xp.join(job.join, () => {
                     sinon.assert.calledOnce(xp.__client.send);
                     sinon.assert.calledWith(xmlFake, "presence", {
@@ -228,8 +227,8 @@ describe("Platform", () => {
 
         describe("#leave", () => {
             it("calls xmpp.js correctly", (done) => {
-                expect(xp.__client).to.not.be.undefined;
-                expect(xp.__client.send).to.be.instanceof(Function);
+                expect(xp.__client).toBeDefined();
+                expect(xp.__client.send).toBeInstanceOf(Function);
                 xp.leave(job.leave, () => {
                     sinon.assert.calledOnce(xp.__client.send);
                     sinon.assert.calledWith(xmlFake, "presence", {
@@ -244,16 +243,16 @@ describe("Platform", () => {
 
         describe("#send", () => {
             it("calls xmpp.js correctly", (done) => {
-                expect(xp.__client).to.not.be.undefined;
-                expect(xp.__client.send).to.be.instanceof(Function);
+                expect(xp.__client).toBeDefined();
+                expect(xp.__client.send).toBeInstanceOf(Function);
                 xp.send(job.send.chat, () => {
                     sinon.assert.calledOnce(xp.__client.send);
-                    expect(xmlFake.getCall(0).args).to.eql([
+                    expect(xmlFake.getCall(0).args).toEqual([
                         "body",
                         {},
                         job.send.chat.object.content,
                     ]);
-                    expect(xmlFake.getCall(1).args).to.eql([
+                    expect(xmlFake.getCall(1).args).toEqual([
                         "message",
                         {
                             type: "chat",
@@ -270,12 +269,12 @@ describe("Platform", () => {
             it("calls xmpp.js correctly for a groupchat", (done) => {
                 xp.send(job.send.groupchat, () => {
                     sinon.assert.calledOnce(xp.__client.send);
-                    expect(xmlFake.getCall(0).args).to.eql([
+                    expect(xmlFake.getCall(0).args).toEqual([
                         "body",
                         {},
                         job.send.groupchat.object.content,
                     ]);
-                    expect(xmlFake.getCall(1).args).to.eql([
+                    expect(xmlFake.getCall(1).args).toEqual([
                         "message",
                         {
                             type: "groupchat",
@@ -292,19 +291,19 @@ describe("Platform", () => {
             it("calls xmpp.js correctly for a message correction", (done) => {
                 xp.send(job.send.correction, () => {
                     sinon.assert.calledOnce(xp.__client.send);
-                    expect(xmlFake.getCall(0).args).to.eql([
+                    expect(xmlFake.getCall(0).args).toEqual([
                         "body",
                         {},
                         job.send.correction.object.content,
                     ]);
-                    expect(xmlFake.getCall(1).args).to.eql([
+                    expect(xmlFake.getCall(1).args).toEqual([
                         "replace",
                         {
                             id: job.send.correction.object["xmpp:replace"].id,
                             xmlns: "urn:xmpp:message-correct:0",
                         },
                     ]);
-                    expect(xmlFake.getCall(2).args).to.eql([
+                    expect(xmlFake.getCall(2).args).toEqual([
                         "message",
                         {
                             type: "groupchat",
@@ -323,7 +322,7 @@ describe("Platform", () => {
             it("calls xml() correctly for available", (done) => {
                 xp.update(job.update.presenceOnline, () => {
                     sinon.assert.calledOnce(xp.__client.send);
-                    expect(xmlFake.getCall(0).args).to.eql([
+                    expect(xmlFake.getCall(0).args).toEqual([
                         "presence",
                         {},
                         {},
@@ -335,7 +334,7 @@ describe("Platform", () => {
             it("calls xml() correctly for unavailable", (done) => {
                 xp.update(job.update.presenceUnavailable, () => {
                     sinon.assert.calledOnce(xp.__client.send);
-                    expect(xmlFake.getCall(0).args).to.eql([
+                    expect(xmlFake.getCall(0).args).toEqual([
                         "presence",
                         {},
                         { show: "away" },
@@ -347,7 +346,7 @@ describe("Platform", () => {
             it("calls xml() correctly for offline", (done) => {
                 xp.update(job.update.presenceOffline, () => {
                     sinon.assert.calledOnce(xp.__client.send);
-                    expect(xmlFake.getCall(0).args).to.eql([
+                    expect(xmlFake.getCall(0).args).toEqual([
                         "presence",
                         { type: "unavailable" },
                         {},
@@ -362,7 +361,7 @@ describe("Platform", () => {
             it("calls xmpp.js correctly", (done) => {
                 xp["request-friend"](job["request-friend"], () => {
                     sinon.assert.calledOnce(xp.__client.send);
-                    expect(xmlFake.getCall(0).args).to.eql([
+                    expect(xmlFake.getCall(0).args).toEqual([
                         "presence",
                         {
                             type: "subscribe",
@@ -378,7 +377,7 @@ describe("Platform", () => {
             it("calls xmpp.js correctly", (done) => {
                 xp["remove-friend"](job["remove-friend"], () => {
                     sinon.assert.calledOnce(xp.__client.send);
-                    expect(xmlFake.getCall(0).args).to.eql([
+                    expect(xmlFake.getCall(0).args).toEqual([
                         "presence",
                         {
                             type: "unsubscribe",
@@ -394,7 +393,7 @@ describe("Platform", () => {
             it("calls xmpp.js correctly", (done) => {
                 xp["remove-friend"](job["remove-friend"], () => {
                     sinon.assert.calledOnce(xp.__client.send);
-                    expect(xmlFake.getCall(0).args).to.eql([
+                    expect(xmlFake.getCall(0).args).toEqual([
                         "presence",
                         {
                             type: "unsubscribe",
@@ -410,11 +409,11 @@ describe("Platform", () => {
             it("calls xmpp.js correctly", (done) => {
                 xp.query(job.query, () => {
                     sinon.assert.calledOnce(xp.__client.send);
-                    expect(xmlFake.getCall(0).args).to.eql([
+                    expect(xmlFake.getCall(0).args).toEqual([
                         "query",
                         { xmlns: "http://jabber.org/protocol/disco#items" },
                     ]);
-                    expect(xmlFake.getCall(1).args).to.eql([
+                    expect(xmlFake.getCall(1).args).toEqual([
                         "iq",
                         {
                             id: "muc_id",

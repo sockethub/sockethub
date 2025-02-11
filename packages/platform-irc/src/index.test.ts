@@ -1,9 +1,10 @@
-import { expect } from "chai";
+import { expect, describe, it, beforeEach } from "bun:test";
 
 import {
     ActivityStream,
     CredentialsObject,
     addPlatformSchema,
+    getPlatformSchema,
     validatePlatformSchema,
     validateCredentials,
 } from "@sockethub/schemas";
@@ -40,8 +41,6 @@ const validCredentials = {
     },
 };
 
-let loadedSchema = false;
-
 describe("Initialize IRC Platform", () => {
     let platform;
     beforeEach(() => {
@@ -63,14 +62,13 @@ describe("Initialize IRC Platform", () => {
                 raw: () => {},
             });
         };
-        if (!loadedSchema) {
+        if (!getPlatformSchema("irc/credentials")) {
             addPlatformSchema(platform.schema.credentials, `irc/credentials`);
-            loadedSchema = true;
         }
     });
 
     it("lists required types enum", () => {
-        expect(platform.schema.messages.properties.type.enum).to.eql([
+        expect(platform.schema.messages.properties.type.enum).toEqual([
             "connect",
             "update",
             "join",
@@ -82,7 +80,7 @@ describe("Initialize IRC Platform", () => {
     });
 
     it("returns a config object", () => {
-        expect(platform.config).to.eql({
+        expect(platform.config).toEqual({
             persist: true,
             requireCredentials: ["connect", "update"],
             initialized: false,
@@ -90,12 +88,12 @@ describe("Initialize IRC Platform", () => {
     });
 
     it("schema format validation", () => {
-        expect(validatePlatformSchema(platform.schema)).to.equal("");
+        expect(validatePlatformSchema(platform.schema)).toEqual("");
     });
 
     describe("credential schema", () => {
         it("valid credentials", () => {
-            expect(validateCredentials(validCredentials)).to.equal("");
+            expect(validateCredentials(validCredentials)).toEqual("");
         });
 
         it("invalid credentials type", () => {
@@ -109,7 +107,7 @@ describe("Initialize IRC Platform", () => {
                         port: "6667",
                     },
                 }),
-            ).to.equal("[irc] /object: must have required property 'type'");
+            ).toEqual("[irc] /object: must have required property 'type'");
         });
 
         it("invalid credentials port", () => {
@@ -124,7 +122,7 @@ describe("Initialize IRC Platform", () => {
                         port: "6667",
                     },
                 }),
-            ).to.equal("[irc] /object/port: must be number");
+            ).toEqual("[irc] /object/port: must be number");
         });
 
         it("invalid credentials additional prop", () => {
@@ -139,7 +137,7 @@ describe("Initialize IRC Platform", () => {
                         port: 6667,
                     },
                 }),
-            ).to.equal(
+            ).toEqual(
                 "[irc] /object: must NOT have additional properties: host",
             );
         });
@@ -173,7 +171,7 @@ describe("Initialize IRC Platform", () => {
             });
 
             it("has join channel registered", () => {
-                expect(platform.channels.has("#a-room")).to.equal(true);
+                expect(platform.channels.has("#a-room")).toEqual(true);
             });
 
             it("leave()", (done) => {
@@ -248,9 +246,9 @@ describe("Initialize IRC Platform", () => {
             });
 
             it("cleanup()", (done) => {
-                expect(platform.config.initialized).to.eql(true);
+                expect(platform.config.initialized).toEqual(true);
                 platform.cleanup(() => {
-                    expect(platform.config.initialized).to.eql(false);
+                    expect(platform.config.initialized).toEqual(false);
                     done();
                 });
             });

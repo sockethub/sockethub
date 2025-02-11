@@ -1,7 +1,8 @@
 {
     "name": "@sockethub/examples",
     "version": "1.0.0-alpha.4",
-    "packageManager": "pnpm@8.0.0",
+    "packageManager": "bun@1.2.2",
+    "type": "module",
     "files": [
         "build"
     ],
@@ -25,7 +26,7 @@
     "scripts": {
         "dev": "vite dev",
         "build": "vite build",
-        "test": "pnpm run test:unit",
+        "test": "bun run test:unit",
         "test:integration": "playwright test",
         "test:unit": "vitest run",
         "preview": "vite preview",
@@ -63,6 +64,5 @@
         "typescript": "^5.7.3",
         "vite": "^6.0.11",
         "vitest": "^3.0.4"
-    },
-    "type": "module"
+    }
 }

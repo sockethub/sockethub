@@ -6,10 +6,9 @@
     "private": false,
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
-    "main": "./dist/index.js",
-    "types": "./dist/types.d.ts",
+    "main": "./src/index.ts",
     "files": [
-        "dist/"
+        "src/"
     ],
     "keywords": [
         "sockethub",
@@ -31,26 +30,18 @@
     "dependencies": {
         "html-tags": "3.3.1",
         "htmlparser2": "9.0.0",
-        "node-fetch": "3.3.2",
         "podparse": "1.6.0"
     },
     "devDependencies": {
-        "@sockethub/schemas": "workspace:^",
-        "@types/node": "22.10.2",
-        "@types/node-fetch": "^2.6.12",
-        "eslint": "8.55.0",
-        "typescript": "5.3.3"
+        "@sockethub/schemas": "workspace:*",
+        "@types/bun": "latest"
     },
     "peerDependencies": {
-        "@sockethub/server": "workspace:^"
+        "@sockethub/server": "workspace:*"
     },
     "peerDependenciesMeta": {
         "@sockethub/server": {
             "optional": true
         }
-    },
-    "scripts": {
-        "build": "tsc",
-        "test": "exit 0"
     }
 }

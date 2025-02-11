@@ -1,12 +1,9 @@
+packages/schemas/src/schemas/json
 packages/server/res
-**/package-lock.json
 node_modules
 build
 *~
-coverage
 .idea
 **/dist/
-sockethub.config.json
 .vscode
-.nx
 .DS_Store

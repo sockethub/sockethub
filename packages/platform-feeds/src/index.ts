@@ -17,7 +17,6 @@
  */
 
 import htmlTags from "html-tags";
-import fetch from "node-fetch";
 import getPodcastFromFeed, { Meta } from "podparse";
 
 import type {

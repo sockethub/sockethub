@@ -115,19 +115,19 @@ let failOnUnknownObjectProperties = false,
     warnOnUnknownObjectProperties = true,
     specialObjs = []; // the objects don't get rejected for bad props
 
-function matchesCustomProp(type, key) {
+function matchesCustomProp(type: string, key: string) {
     return !!(
         typeof customProps[type] === "object" && customProps[type].includes(key)
     );
 }
 
-function renameProp(obj, key) {
+function renameProp(obj, key: string) {
     obj[rename[key]] = obj[key];
     delete obj[key];
     return obj;
 }
 
-function validateObject(type, obj: ActivityObject = { type: "" }) {
+function validateObject(type: string, obj: ActivityObject = { type: "" }) {
     const unknownKeys = Object.keys(obj).filter((key): void | string => {
         if (!baseProps[type].includes(key)) {
             return key;

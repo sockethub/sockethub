@@ -6,7 +6,7 @@
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
     "type": "module",
-    "main": "dist/index.js",
+    "main": "src/index.ts",
     "keywords": [
         "sockethub",
         "messaging",
@@ -27,17 +27,12 @@
         "irc-socket-sasl": "4.0.0"
     },
     "devDependencies": {
-        "@sockethub/schemas": "workspace:^",
-        "@types/node": "22.10.2",
-        "c8": "8.0.1",
-        "chai": "4.3.10",
-        "jsdoc-to-markdown": "8.0.0",
-        "sinon": "17.0.1",
-        "tsx": "^4.19.2",
-        "typescript": "5.3.3"
+        "@sockethub/schemas": "workspace:*",
+        "@types/bun": "latest",
+        "jsdoc-to-markdown": "8.0.0"
     },
     "peerDependencies": {
-        "@sockethub/server": "workspace:^"
+        "@sockethub/server": "workspace:*"
     },
     "peerDependenciesMeta": {
         "@sockethub/server": {
@@ -45,12 +40,6 @@
         }
     },
     "scripts": {
-        "build": "tsc && pnpm octalhack",
-        "octalhack": "cp src/octal-hack.js dist/octal-hack.js",
-        "lint": "eslint .",
-        "clean": "rm -rf coverage",
-        "test": "NODE_OPTIONS='--import=tsx' c8 mocha src/**/*.test.ts && pnpm coverage",
-        "coverage": "c8 check-coverage --statements 75 --branches 55 --functions 85 --lines 75",
         "doc": "jsdoc2md --no-gfm --heading-depth 1 dist/index.ts  > API.md"
     }
 }
