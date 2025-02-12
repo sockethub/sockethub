@@ -33,7 +33,7 @@
         "@sockethub/schemas": "workspace:*",
         "@xmpp/xml": "0.13.3",
         "jsdoc-to-markdown": "8.0.0",
-        "sinon": "17.0.1"
+        "sinon": "19.0.2"
     },
     "peerDependencies": {
         "@sockethub/server": "workspace:*"

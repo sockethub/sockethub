@@ -66,7 +66,7 @@
         "@types/nconf": "0.10.6",
         "@types/sinon": "17.0.2",
         "jaribu": "2.2.3",
-        "sinon": "17.0.1",
+        "sinon": "19.0.2",
         "web-streams-polyfill": "^3.3.3"
     },
     "optionalDependencies": {
