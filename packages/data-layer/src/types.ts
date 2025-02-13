@@ -26,8 +26,8 @@ export interface JobEncrypted {
 
 export interface JobDecrypted {
     data: JobDataDecrypted;
-    returnvalue: unknown;
     remove?: () => void;
+    returnvalue: unknown;
 }
 
 export type JobHandler = (

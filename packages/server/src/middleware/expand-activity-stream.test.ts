@@ -4,6 +4,7 @@ import expandActivityStream from "./expand-activity-stream.js";
 
 import { ASFactory } from "@sockethub/activity-streams";
 import asObjects from "./expand-activity-stream.test.data.js";
+import { ActivityStream } from "@sockethub/schemas";
 
 const activity = ASFactory();
 
@@ -50,13 +51,13 @@ describe("Middleware: Expand Activity Stream", () => {
             it(`${obj.type}: ${obj.name}, should ${
                 obj.valid ? "pass" : "fail"
             }`, (done) => {
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                expandActivityStream(obj.input, (msg) => {
+                expandActivityStream(obj.input as ActivityStream, (msg) => {
                     if (obj.output) {
                         if (obj.output === "same") {
+                            // @ts-ignore
                             expect(obj.input).toEqual(msg);
                         } else {
+                            // @ts-ignore
                             expect(obj.output).toEqual(msg);
                         }
                     }
