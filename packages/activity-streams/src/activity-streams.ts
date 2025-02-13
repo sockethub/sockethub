@@ -109,7 +109,7 @@ const expand = {
 };
 
 type CustomProps = {
-    [key: string]: string | number | boolean | object;
+    [key: string]: string | number | boolean | object | string[];
 };
 
 const objs = new Map();
@@ -121,33 +121,32 @@ let specialObjs = []; // the objects don't get rejected for bad props
 
 function matchesCustomProp(type: string, key: string) {
     if (customProps[type] instanceof Object) {
-        const obj = customProps[type] as object;
-        if (key in obj) {
+        const obj = customProps[type] as string[];
+        if (obj.includes(key)) {
             return true;
         }
     }
     return false;
 }
 
-function renameProp(obj, key: string) {
+function renameProp<T>(obj: T, key: string): T {
     obj[rename[key]] = obj[key];
     delete obj[key];
     return obj;
 }
 
-function validateObject(type: string, obj: ActivityObject = { type: "" }) {
-    // biome-ignore lint/suspicious/noConfusingVoidType: <explanation>
-    const unknownKeys = Object.keys(obj).filter((key): void | string => {
-        if (!baseProps[type].includes(key)) {
-            return key;
-        }
-    });
+function validateObject<T>(type: string, incomingObj: T) {
+    const unknownKeys = Object.keys(incomingObj).filter(
+        (key: string): boolean => {
+            return !baseProps[type].includes(key);
+        },
+    );
 
     for (const key of unknownKeys) {
-        let ao: ActivityObject = obj;
+        let ao: ActivityObject = incomingObj as ActivityObject;
         if (rename[key]) {
             // rename property instead of fail
-            ao = renameProp(obj, key);
+            ao = renameProp(ao, key);
             continue;
         }
 
@@ -156,10 +155,11 @@ function validateObject(type: string, obj: ActivityObject = { type: "" }) {
             continue;
         }
 
-        if (!specialObjs.includes(obj.type)) {
+        if (!specialObjs.includes(ao.type)) {
             // not defined as a special prop
             // don't know what to do with it, so throw error
-            const err = `invalid property: "${key}"`;
+            console.log(ao);
+            const err = `invalid property: "${key}" (${ao.type}, ${ao.content})`;
             if (failOnUnknownObjectProperties) {
                 throw new Error(err);
             }
@@ -170,13 +170,13 @@ function validateObject(type: string, obj: ActivityObject = { type: "" }) {
     }
 }
 
-function ensureProps(obj) {
+function ensureProps(obj: ActivityObject): ActivityObject {
     // ensure the name property, which can generally be inferred from the id
     // name = obj.match(/(?(?\w+):\/\/)(?:.+@)?(.+?)(?:\/|$)/)[1]
     return obj;
 }
 
-function expandStream(meta) {
+function expandStream(meta: ActivityStream) {
     const stream = {};
     for (const key of Object.keys(meta)) {
         if (typeof meta[key] === "string") {
@@ -205,7 +205,9 @@ function expandStream(meta) {
     return stream;
 }
 
-function Stream(meta): ActivityStream | ActivityObject | Record<string, never> {
+function Stream(
+    meta: ActivityStream,
+): ActivityStream | ActivityObject | Record<string, never> {
     validateObject("stream", meta);
     if (typeof meta.object === "object") {
         validateObject("object", meta.object);
@@ -260,12 +262,14 @@ export interface ASFactoryOptions {
     customProps?: CustomProps;
 }
 
+type EventCallback = (...args: unknown[]) => void;
+
 export interface ASManager {
     Stream(meta: unknown): unknown;
     Object: ActivityObjectManager;
-    on(event, func): void;
-    once(event, func): void;
-    off(event, funcName): void;
+    on(event: string, func: EventCallback): void;
+    once(event: string, func: EventCallback): void;
+    off(event: string, func: EventCallback): void;
 }
 
 export function ASFactory(opts: ASFactoryOptions = {}): ASManager {

@@ -114,8 +114,15 @@ describe("basic tests", () => {
         });
     });
 
+    interface TestActivityStream extends ActivityStream {
+        type: string;
+        verb?: string;
+        context: string;
+        platform?: string;
+    }
+
     describe("stream tests", () => {
-        let stream: ActivityStream;
+        let stream: TestActivityStream;
 
         beforeEach(() => {
             stream = activity.Stream({
@@ -129,7 +136,7 @@ describe("basic tests", () => {
                     secure: true,
                 },
                 target: ["thingy1", "thingy2"],
-            });
+            }) as ActivityStream;
         });
 
         test("renames mapped props", () => {
@@ -140,10 +147,12 @@ describe("basic tests", () => {
         });
 
         test("expands existing objects", () => {
+            // @ts-ignore
             expect(stream.target).toEqual([
                 { id: "thingy1" },
                 { id: "thingy2" },
             ]);
+            // @ts-ignore
             expect(stream.actor).toEqual({ id: "thingy1" });
         });
 
