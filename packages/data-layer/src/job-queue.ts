@@ -36,8 +36,7 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
         });
         worker.on("error", (err) => {
             log(
-                "connection verification worker error received " +
-                    err.toString(),
+                `connection verification worker error received ${err.toString()}`,
             );
             reject(err);
         });
@@ -46,8 +45,7 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
         });
         queue.on("error", (err) => {
             log(
-                "connection verification queue error received " +
-                    err.toString(),
+                `connection verification queue error received ${err.toString()}`,
             );
             reject(err);
         });
@@ -107,7 +105,7 @@ export class JobQueue extends JobBase {
             );
             this.emit("failed", job.data, failedReason);
         });
-        this.debug(`initialized`);
+        this.debug("initialized");
     }
 
     async add(
@@ -156,6 +154,7 @@ export class JobQueue extends JobBase {
         if (job) {
             job.data = this.decryptJobData(job);
             try {
+                // biome-ignore lint/performance/noDelete: <explanation>
                 delete job.data.msg.sessionSecret;
             } catch (e) {
                 // this property should never be exposed externally

@@ -33,7 +33,7 @@ export class CredentialsStore implements CredentialsStoreInterface {
     private readonly log: Debugger;
 
     /**
-     * @param parentId - The ID of the parent instance (eg. sockethub itself)
+     * @param parentId - The ID of the parent instance (e.g. sockethub itself)
      * @param sessionId - The ID of the session (socket.io connection)
      * @param secret - The encryption secret (parent + session secrets) must be 32 chars
      * @param redisConfig - Connect info for redis

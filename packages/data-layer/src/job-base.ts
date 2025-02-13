@@ -1,4 +1,4 @@
-import EventEmitter from "events";
+import EventEmitter from "node:events";
 import IORedis, { type Redis } from "ioredis";
 
 import { crypto, type Crypto } from "@sockethub/crypto";
@@ -21,7 +21,7 @@ export class JobBase extends EventEmitter {
         super();
         if (secret.length !== 32) {
             throw new Error(
-                "secret must be a 32 char string, length: " + secret.length,
+                `secret must be a 32 char string, length: ${secret.length}`,
             );
         }
         this.secret = secret;

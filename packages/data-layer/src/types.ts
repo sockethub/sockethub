@@ -32,4 +32,4 @@ export interface JobDecrypted {
 
 export type JobHandler = (
     job: JobDataDecrypted,
-) => Promise<string | void | ActivityStream>;
+) => Promise<string | undefined | ActivityStream>;

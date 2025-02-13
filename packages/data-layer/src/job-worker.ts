@@ -36,7 +36,7 @@ export class JobWorker extends JobBase {
         this.worker = new Worker(this.queueId, this.jobHandler.bind(this), {
             connection: this.redisConnection,
         });
-        this.debug(`initialized`);
+        this.debug("initialized");
     }
 
     onJob(handler: JobHandler): void {
@@ -56,7 +56,6 @@ export class JobWorker extends JobBase {
     protected async jobHandler(encryptedJob: JobEncrypted) {
         const job = this.decryptJobData(encryptedJob);
         this.debug(`handling ${job.title} ${job.msg.type}`);
-        const ret = await this.handler(job);
-        return ret;
+        return await this.handler(job);
     }
 }
