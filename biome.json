@@ -8,6 +8,7 @@
             "**/dist",
             "**/.svelte-kit",
             "**/.github",
+            "**/*.test.ts",
             "packages/examples/build",
             "packages/server/res",
             "packages/schemas/src/schemas/json"

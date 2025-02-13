@@ -7,9 +7,7 @@
     "author": "Nick Jennings <nick@silverbucket.net>",
     "license": "LGPL-3.0+",
     "main": "./src/index.ts",
-    "files": [
-        "src/"
-    ],
+    "files": ["src/"],
     "packageManager": "bun@1.2.2",
     "engines": {
         "bun": ">=1.2"

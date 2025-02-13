@@ -1,11 +1,11 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 import {
-    randomBytes,
     createCipheriv,
     createDecipheriv,
     createHash,
+    randomBytes,
 } from "crypto";
-import { ActivityStream } from "@sockethub/schemas";
+import type { ActivityStream } from "@sockethub/schemas";
 import hash from "object-hash";
 
 const ALGORITHM = "aes-256-cbc",

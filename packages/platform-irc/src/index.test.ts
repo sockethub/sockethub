@@ -1,14 +1,14 @@
-import { expect, describe, it, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 
 import {
-    ActivityStream,
-    CredentialsObject,
+    type ActivityStream,
+    type CredentialsObject,
     addPlatformSchema,
     getPlatformSchema,
-    validatePlatformSchema,
     validateCredentials,
+    validatePlatformSchema,
 } from "@sockethub/schemas";
-import { GetClientCallback } from "./index";
+import type { GetClientCallback } from "./index";
 
 import IRC from "./index";
 
@@ -45,20 +45,20 @@ describe("Initialize IRC Platform", () => {
     let platform;
     beforeEach(() => {
         platform = new IRC({
-            debug: function () {},
+            debug: () => {},
             updateActor: function async() {
                 return Promise.resolve();
             },
-            sendToClient: function () {},
+            sendToClient: () => {},
         });
-        platform.ircConnect = function (
+        platform.ircConnect = (
             key: string,
             credentials: CredentialsObject,
             cb: GetClientCallback,
-        ) {
+        ) => {
             cb(null, {
                 end: () => {},
-                on: function () {},
+                on: () => {},
                 raw: () => {},
             });
         };

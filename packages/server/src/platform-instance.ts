@@ -1,16 +1,16 @@
-import { ChildProcess, fork } from "child_process";
+import { type ChildProcess, fork } from "child_process";
 import { join } from "path";
 import debug from "debug";
 import nconf from "nconf";
 
-import {
+import { type JobDataDecrypted, JobQueue } from "@sockethub/data-layer";
+import type {
     ActivityStream,
-    InternalActivityStream,
     CompletedJobHandler,
-    PlatformConfig,
+    InternalActivityStream,
     Logger,
+    PlatformConfig,
 } from "@sockethub/schemas";
-import { JobQueue, JobDataDecrypted } from "@sockethub/data-layer";
 import type { Socket } from "socket.io";
 
 import config from "./config.js";

@@ -1,25 +1,19 @@
-import debug, { Debugger } from "debug";
-import { ActivityObject, ActivityStream } from "@sockethub/schemas";
+import type { ActivityObject, ActivityStream } from "@sockethub/schemas";
+import debug, { type Debugger } from "debug";
 
 export default function middleware(name: string): MiddlewareChain {
     return new MiddlewareChain(name);
 }
 
-export interface MiddlewareChainInterface {
-    (
-        error: ActivityStream | ActivityObject | Error,
-        data?: ActivityStream | ActivityObject | MiddlewareChainInterface,
-        next?: MiddlewareChainInterface,
-    ): void;
-}
+export type MiddlewareChainInterface = (
+    error: ActivityStream | ActivityObject | Error,
+    data?: ActivityStream | ActivityObject | MiddlewareChainInterface,
+    next?: MiddlewareChainInterface,
+) => void;
 
-interface ErrorHandlerInterface {
-    (err: Error, data?: unknown, cb?: unknown): void;
-}
+type ErrorHandlerInterface = (err: Error, data?: unknown, cb?: unknown) => void;
 
-export interface LogErrorInterface {
-    (msg: Error): void;
-}
+export type LogErrorInterface = (msg: Error) => void;
 
 export class MiddlewareChain {
     public name: string;

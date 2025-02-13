@@ -1,9 +1,9 @@
-import debug, { Debugger } from "debug";
-import SecureStore from "secure-store-redis";
 import { crypto } from "@sockethub/crypto";
-import { CredentialsObject } from "@sockethub/schemas";
+import type { CredentialsObject } from "@sockethub/schemas";
+import debug, { type Debugger } from "debug";
+import SecureStore from "secure-store-redis";
 
-import { RedisConfig } from "./types.js";
+import type { RedisConfig } from "./types.js";
 
 export interface CredentialsStoreInterface {
     get(

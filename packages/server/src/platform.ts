@@ -1,18 +1,18 @@
-import debug from "debug";
-import {
-    ActivityStream,
-    PlatformCallback,
-    PlatformSession,
-    CredentialsObject,
-    PlatformInterface,
-} from "@sockethub/schemas";
 import { crypto, getPlatformId } from "@sockethub/crypto";
 import {
     CredentialsStore,
+    type JobDataDecrypted,
     JobWorker,
-    JobDataDecrypted,
 } from "@sockethub/data-layer";
-import { JobHandler } from "@sockethub/data-layer";
+import type { JobHandler } from "@sockethub/data-layer";
+import type {
+    ActivityStream,
+    CredentialsObject,
+    PlatformCallback,
+    PlatformInterface,
+    PlatformSession,
+} from "@sockethub/schemas";
+import debug from "debug";
 
 // command-line params
 const parentId = process.argv[2];
@@ -171,7 +171,7 @@ function getJobHandler(): JobHandler {
  * @param command string containing the type of command to be sent. 'message' or 'close'
  */
 function getSendFunction(command: string) {
-    return function (msg: ActivityStream, special?: string) {
+    return (msg: ActivityStream, special?: string) => {
         if (platform.config.persist) {
             process.send([command, msg, special]);
         } else {

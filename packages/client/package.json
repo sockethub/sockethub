@@ -3,9 +3,7 @@
     "version": "5.0.0-alpha.4",
     "description": "A JavaScript client for the Sockethub protocol gateway",
     "main": "./src/sockethub-client.ts",
-    "files": [
-        "dist/"
-    ],
+    "files": ["dist/"],
     "packageManager": "bun@1.2.2",
     "engines": {
         "bun": ">=1.2"

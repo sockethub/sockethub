@@ -4,14 +4,14 @@
 import debug from "debug";
 
 import {
+    type ActivityStream,
+    type MiddlewareCallback,
     validateActivityObject,
-    validateCredentials,
     validateActivityStream,
-    ActivityStream,
-    MiddlewareCallback,
+    validateCredentials,
 } from "@sockethub/schemas";
 
-import getInitObject, { IInitObject } from "../bootstrap/init.js";
+import getInitObject, { type IInitObject } from "../bootstrap/init.js";
 
 // called when registered with the middleware function, define the type of validation
 // that will be called when the middleware eventually does.

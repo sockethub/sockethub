@@ -2,13 +2,13 @@ import debug from "debug";
 
 import {
     CredentialsStore,
-    verifySecureStore,
     type CredentialsStoreInterface,
+    verifySecureStore,
 } from "./credentials-store.js";
 import { JobQueue, verifyJobQueue } from "./job-queue.js";
 import { JobWorker } from "./job-worker.js";
 export * from "./types.js";
-import { RedisConfig } from "./types.js";
+import type { RedisConfig } from "./types.js";
 
 const log = debug("sockethub:data-layer");
 
@@ -23,5 +23,5 @@ export {
     JobQueue,
     JobWorker,
     CredentialsStore,
-    CredentialsStoreInterface,
+    type CredentialsStoreInterface,
 };

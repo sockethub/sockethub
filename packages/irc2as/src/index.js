@@ -161,7 +161,7 @@ export class IrcToActivityStreams {
             // custom event indicating a channel mode has been updated, used to re-query user or channel
             case MODE:
                 // eslint-disable-next-line no-case-declarations
-                let user_mode = pos2 || content;
+                const user_mode = pos2 || content;
                 if (!channel) {
                     break;
                 } // don't handle cases with no channel defined
@@ -206,7 +206,7 @@ export class IrcToActivityStreams {
 
             /** */
             case NAMES: // user list
-                for (let entry of content.split(" ")) {
+                for (const entry of content.split(" ")) {
                     role = "member";
                     let username = entry;
                     if (ROLE[entry[0]]) {

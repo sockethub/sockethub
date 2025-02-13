@@ -184,7 +184,7 @@ export default class XMPP {
         );
         // TODO optional passwords not handled for now
         // TODO investigate implementation reserved nickname discovery
-        let id = job.target.id.split("/")[0];
+        const id = job.target.id.split("/")[0];
 
         this.__client
             .send(
@@ -224,7 +224,7 @@ export default class XMPP {
                 `${job.target.id}/${job.actor.name}`,
         );
 
-        let id = job.target.id.split("/")[0];
+        const id = job.target.id.split("/")[0];
 
         this.__client
             .send(

@@ -1,5 +1,5 @@
 function getMessageBody(stanza) {
-    for (let elem of stanza.children) {
+    for (const elem of stanza.children) {
         if (elem.name === "body") {
             return elem.children.join(" ");
         }
@@ -224,9 +224,9 @@ export class IncomingHandlers {
     notifyRoomAttendance(stanza) {
         const query = stanza.getChild("query");
         if (query) {
-            let members = [];
+            const members = [];
             const entries = query.getChildren("item");
-            for (let e in entries) {
+            for (const e in entries) {
                 if (!Object.hasOwnProperty.call(entries, e)) {
                     continue;
                 }
@@ -280,7 +280,7 @@ export class IncomingHandlers {
             const query = stanza.getChild("query");
             if (query) {
                 const entries = query.getChildren("item");
-                for (let e in entries) {
+                for (const e in entries) {
                     if (!entries.hasOwn(e)) {
                         continue;
                     }

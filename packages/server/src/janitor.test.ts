@@ -1,4 +1,4 @@
-import { expect, describe, it, beforeEach, afterEach } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as sinon from "sinon";
 
 import { Janitor } from "./janitor.js";
@@ -42,7 +42,7 @@ const cycleInterval = 10;
 describe("Janitor", () => {
     let sandbox, fetchSocketsFake, janitor;
 
-    beforeEach(function (done) {
+    beforeEach((done) => {
         sandbox = sinon.createSandbox();
         fetchSocketsFake = sandbox.stub().returns(sockets);
 

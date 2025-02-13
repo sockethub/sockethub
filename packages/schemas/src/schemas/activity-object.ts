@@ -1,4 +1,4 @@
-import { validObjectRefs, validObjectDefs } from "../helpers/objects.js";
+import { validObjectDefs, validObjectRefs } from "../helpers/objects.js";
 
 export const ActivityObjectSchema = {
     $id: "https://sockethub.org/schemas/v0/activity-object#",

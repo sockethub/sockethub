@@ -1,8 +1,8 @@
 import { Worker } from "bullmq";
-import debug, { Debugger } from "debug";
+import debug, { type Debugger } from "debug";
 
-import { JobHandler, JobEncrypted, RedisConfig } from "./types.js";
 import { JobBase, createIORedisConnection } from "./job-base.js";
+import type { JobEncrypted, JobHandler, RedisConfig } from "./types.js";
 
 export class JobWorker extends JobBase {
     readonly uid: string;

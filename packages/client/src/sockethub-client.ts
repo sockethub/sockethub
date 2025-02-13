@@ -1,10 +1,10 @@
-import EventEmitter from "eventemitter3";
-import {
+import { ASFactory, type ASManager } from "@sockethub/activity-streams";
+import type {
     ActivityObject,
     ActivityStream,
     BaseActivityObject,
 } from "@sockethub/schemas";
-import { ASFactory, type ASManager } from "@sockethub/activity-streams";
+import EventEmitter from "eventemitter3";
 import type { Socket } from "socket.io-client";
 
 export interface EventMapping {

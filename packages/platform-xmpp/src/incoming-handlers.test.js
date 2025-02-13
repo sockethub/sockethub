@@ -1,8 +1,8 @@
-import { expect, describe, it, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import sinon from "sinon";
 
-import parse from "@xmpp/xml/lib/parse.js";
 import * as schemas from "@sockethub/schemas";
+import parse from "@xmpp/xml/lib/parse.js";
 
 import { IncomingHandlers } from "./incoming-handlers.js";
 import { stanzas } from "./incoming-handlers.test.data.js";

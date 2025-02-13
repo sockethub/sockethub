@@ -54,7 +54,7 @@ function addRoute(app) {
  * Setup
  */
 const routes = {
-    setup: function (app: unknown) {
+    setup: (app: unknown) => {
         baseRoutes.forEach(addRoute(app));
     },
 };

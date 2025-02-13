@@ -1,10 +1,10 @@
 import EventEmitter from "events";
-import IORedis, { Redis } from "ioredis";
+import IORedis, { type Redis } from "ioredis";
 
-import { crypto, Crypto } from "@sockethub/crypto";
-import { ActivityStream } from "@sockethub/schemas";
+import { crypto, type Crypto } from "@sockethub/crypto";
+import type { ActivityStream } from "@sockethub/schemas";
 
-import { JobDataDecrypted, JobEncrypted, RedisConfig } from "./types.js";
+import type { JobDataDecrypted, JobEncrypted, RedisConfig } from "./types.js";
 
 export function createIORedisConnection(config: RedisConfig): Redis {
     return new IORedis(config.url, {

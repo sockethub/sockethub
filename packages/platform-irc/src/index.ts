@@ -21,7 +21,7 @@ import tls from "tls";
 import IrcSocket from "irc-socket-sasl";
 
 import { IrcToActivityStreams } from "@sockethub/irc2as";
-import {
+import type {
     ActivityStream,
     Logger,
     PersistentPlatformConfig,
@@ -34,11 +34,12 @@ import {
 } from "@sockethub/schemas";
 
 import { PlatformIrcSchema } from "./schema.js";
-import { PlatformIrcCredentialsObject } from "./types.js";
+import type { PlatformIrcCredentialsObject } from "./types.js";
 
-export interface GetClientCallback {
-    (err: string | null, client?: typeof IrcSocket): void;
-}
+export type GetClientCallback = (
+    err: string | null,
+    client?: typeof IrcSocket,
+) => void;
 
 interface IrcSocketOptionsCapabilities {
     requires: string[];
@@ -625,7 +626,7 @@ export default class IRC implements PlatformInterface {
             realname: credentials.actor.name || credentials.object.nick,
             port: credentials.object.port
                 ? typeof credentials.object.port === "string"
-                    ? parseInt(credentials.object.port, 10)
+                    ? Number.parseInt(credentials.object.port, 10)
                     : credentials.object.port
                 : is_secure
                   ? 6697

@@ -1,9 +1,9 @@
-import { expect, describe, it } from "bun:test";
+import { describe, expect, it } from "bun:test";
 
 import expandActivityStream from "./expand-activity-stream.js";
 
-import asObjects from "./expand-activity-stream.test.data.js";
 import { ASFactory } from "@sockethub/activity-streams";
+import asObjects from "./expand-activity-stream.test.data.js";
 
 const activity = ASFactory();
 

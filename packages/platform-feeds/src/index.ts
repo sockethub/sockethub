@@ -17,7 +17,7 @@
  */
 
 import htmlTags from "html-tags";
-import getPodcastFromFeed, { Meta } from "podparse";
+import getPodcastFromFeed, { type Meta } from "podparse";
 
 import type {
     ActivityStream,
@@ -31,11 +31,11 @@ import type {
 
 import PlatformSchema from "./schema.js";
 import {
-    PlatformFeedsActivityActor,
-    PlatformFeedsActivityObject,
-    PlatformFeedsActivityStream,
     ASFeedType,
     ASObjectType,
+    type PlatformFeedsActivityActor,
+    type PlatformFeedsActivityObject,
+    type PlatformFeedsActivityStream,
 } from "./types.js";
 
 const MAX_NOTE_LENGTH = 256;

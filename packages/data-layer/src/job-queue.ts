@@ -1,10 +1,10 @@
-import { Job, Queue, Worker, QueueEvents } from "bullmq";
-import debug, { Debugger } from "debug";
+import { type Job, Queue, QueueEvents, Worker } from "bullmq";
+import debug, { type Debugger } from "debug";
 
-import { ActivityStream } from "@sockethub/schemas";
+import type { ActivityStream } from "@sockethub/schemas";
 
-import { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types.js";
 import { JobBase, createIORedisConnection } from "./job-base.js";
+import type { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types.js";
 
 export async function verifyJobQueue(config: RedisConfig): Promise<void> {
     const log = debug("sockethub:data-layer:queue");
