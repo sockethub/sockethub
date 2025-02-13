@@ -1,46 +1,46 @@
-import events from "events";
+import events from "node:events";
 import debug from "debug";
 import { ASEmitter } from "./as-emitter.js";
 
 const log = debug("irc2as");
 
-const EVENT_INCOMING = "incoming",
-    // EVENT_ERROR = 'error',
-    EVENT_PONG = "pong",
-    EVENT_PING = "ping",
-    EVENT_UNPROCESSED = "unprocessed";
+const EVENT_INCOMING = "incoming";
+// EVENT_ERROR = 'error',
+const EVENT_PONG = "pong";
+const EVENT_PING = "ping";
+const EVENT_UNPROCESSED = "unprocessed";
 
-const ERR_BAD_NICK = "432",
-    ERR_CHAN_PRIVS = "482",
-    ERR_NICK_IN_USE = "433",
-    ERR_TEMP_UNAVAIL = "437",
-    ERR_NO_CHANNEL = "403",
-    ERR_NOT_INVITED = "471",
-    ERR_BADMODE = "472",
-    ERR_INVITE_ONLY = "473",
-    ERR_BANNED = "474",
-    ERR_BADKEY = "475",
-    ERR_BADMASK = "476",
-    ERR_NOCHANMODES = "477",
-    ERR_BANLISTFULL = "478",
-    JOIN = "JOIN",
-    MODE = "MODE",
-    MOTD = "372",
-    MOTD_END = "376",
-    NAMES = "353",
-    // NAMES_END = "366",
-    NICK = "NICK",
-    NOTICE = "NOTICE",
-    PART = "PART",
-    PING = "PING",
-    PONG = "PONG",
-    PRIVMSG = "PRIVMSG",
-    QUIT = "QUIT",
-    TOPIC_CHANGE = "TOPIC",
-    TOPIC_IS = "332",
-    TOPIC_SET_BY = "333",
-    WHO = "352",
-    WHO_OLD = "354";
+const ERR_BAD_NICK = "432";
+const ERR_CHAN_PRIVS = "482";
+const ERR_NICK_IN_USE = "433";
+const ERR_TEMP_UNAVAIL = "437";
+const ERR_NO_CHANNEL = "403";
+const ERR_NOT_INVITED = "471";
+const ERR_BADMODE = "472";
+const ERR_INVITE_ONLY = "473";
+const ERR_BANNED = "474";
+const ERR_BADKEY = "475";
+const ERR_BADMASK = "476";
+const ERR_NOCHANMODES = "477";
+const ERR_BANLISTFULL = "478";
+const JOIN = "JOIN";
+const MODE = "MODE";
+const MOTD = "372";
+const MOTD_END = "376";
+const NAMES = "353";
+// NAMES_END = "366",
+const NICK = "NICK";
+const NOTICE = "NOTICE";
+const PART = "PART";
+const PING = "PING";
+const PONG = "PONG";
+const PRIVMSG = "PRIVMSG";
+const QUIT = "QUIT";
+const TOPIC_CHANGE = "TOPIC";
+const TOPIC_IS = "332";
+const TOPIC_SET_BY = "333";
+const WHO = "352";
+const WHO_OLD = "354";
 // WHO_END = "315";
 
 const ROLE = {
@@ -68,16 +68,17 @@ export class IrcToActivityStreams {
         this.__buffer[NAMES] = {};
     }
 
-    input(incoming) {
-        log(incoming);
-        if (typeof incoming !== "string") {
+    input(payload) {
+        log(payload);
+        if (typeof payload !== "string") {
             log("unable to process incoming message as it was not a string.");
             return false;
-        } else if (incoming.length < 3) {
+        }
+        if (payload.length < 3) {
             log("unable to process incoming string, length smaller than 3.");
             return false;
         }
-        incoming = incoming.trim();
+        const incoming = payload.trim();
         const [metadata, content] = incoming.split(" :");
         const [server, code, pos1, pos2, pos3, ...msg] = metadata.split(" ");
         const channel =
@@ -93,8 +94,7 @@ export class IrcToActivityStreams {
             return true;
         }
         log(
-            `[${code}] server: ${server} channel: ${channel} 1: ${pos1}, 2: ${pos2}, 3: ${pos3}.` +
-                ` content: `,
+            `[${code}] server: ${server} channel: ${channel} 1: ${pos1}, 2: ${pos2}, 3: ${pos3}. content: `,
             content,
         );
         this.__processIRCCodes(
@@ -122,7 +122,10 @@ export class IrcToActivityStreams {
         incoming,
     ) {
         const ase = new ASEmitter(this.events, this.server);
-        let nick, type, role;
+        let nick;
+        let type;
+        let role;
+
         switch (code) {
             /** */
             case ERR_CHAN_PRIVS:
@@ -159,8 +162,7 @@ export class IrcToActivityStreams {
                 break;
 
             // custom event indicating a channel mode has been updated, used to re-query user or channel
-            case MODE:
-                // eslint-disable-next-line no-case-declarations
+            case MODE: {
                 const user_mode = pos2 || content;
                 if (!channel) {
                     break;
@@ -175,6 +177,7 @@ export class IrcToActivityStreams {
                 }
                 ase.role(type, getNickFromServer(server), pos3, role, channel);
                 break;
+            }
 
             /** */
             case MOTD: // MOTD
@@ -193,7 +196,7 @@ export class IrcToActivityStreams {
                         },
                     };
                 } else {
-                    this.__buffer[MOTD].object.content += " " + content;
+                    this.__buffer[MOTD].object.content += ` ${content}`;
                 }
                 break;
             case MOTD_END: // end of MOTD
@@ -261,7 +264,7 @@ export class IrcToActivityStreams {
                     actor: undefined,
                     target: {
                         type: "room",
-                        id: this.server + "/" + channel,
+                        id: `${this.server}/${channel}`,
                         name: channel,
                     },
                     object: {
@@ -277,7 +280,7 @@ export class IrcToActivityStreams {
                 nick = pos3.split("!")[0];
                 this.__buffer[TOPIC_IS].actor = {
                     type: "person",
-                    id: nick + "@" + this.server,
+                    id: `${nick}@${this.server}`,
                     name: nick,
                 };
                 this.__buffer[TOPIC_IS].published = msg[0];

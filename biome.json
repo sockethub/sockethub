@@ -9,6 +9,7 @@
             "**/.svelte-kit",
             "**/.github",
             "**/*.test.ts",
+            "**/*.test.js",
             "packages/examples/build",
             "packages/server/res",
             "packages/schemas/src/schemas/json"
