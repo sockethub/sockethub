@@ -21,7 +21,7 @@ export type PlatformStruct = {
     id: string;
     moduleName: string;
     config: PlatformConfig;
-    schema: PlatformSchemaStruct;
+    schemas: PlatformSchemaStruct;
     version: string;
     types: Array<string>;
 };

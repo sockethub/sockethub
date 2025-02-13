@@ -21,8 +21,10 @@ describe("Middleware: Validate", async () => {
                 )(obj.input as ActivityStream, (msg) => {
                     if (obj.output) {
                         if (obj.output === "same") {
+                            // @ts-ignore
                             expect(msg).toEqual(obj.input);
                         } else {
+                            // @ts-ignore
                             expect(msg).toEqual(obj.output);
                         }
                     }

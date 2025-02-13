@@ -4,7 +4,10 @@ import { type RedisConfig, redisCheck } from "@sockethub/data-layer";
 
 import { addPlatformSchema } from "@sockethub/schemas";
 import config from "../config.js";
-import loadPlatforms, { type PlatformMap } from "./load-platforms.js";
+import loadPlatforms, {
+    type PlatformMap,
+    type PlatformStruct,
+} from "./load-platforms.js";
 
 const log = debug("sockethub:server:bootstrap:init");
 
@@ -15,7 +18,10 @@ export interface IInitObject {
 
 let init: IInitObject;
 
-function printSettingsInfo(version, platforms) {
+function printSettingsInfo(
+    version: string,
+    platforms: Map<string, PlatformStruct>,
+) {
     console.log(`sockethub ${version}`);
     console.log();
 
@@ -103,11 +109,11 @@ export default async function getInitObject(
 
 export async function registerPlatforms(initObj: IInitObject): Promise<void> {
     for (const [_, platform] of initObj.platforms) {
-        for (const key of Object.keys(platform.schema)) {
-            if (!platform.schema[key]) {
+        for (const key of Object.keys(platform.schemas)) {
+            if (!platform.schemas[key]) {
                 return;
             }
-            addPlatformSchema(platform.schema[key], `${platform.id}/${key}`);
+            addPlatformSchema(platform.schemas[key], `${platform.id}/${key}`);
         }
     }
 }
