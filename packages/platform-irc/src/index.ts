@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import net from "net";
-import tls from "tls";
+import net from "node:net";
+import tls from "node:tls";
 import IrcSocket from "irc-socket-sasl";
 
 import { IrcToActivityStreams } from "@sockethub/irc2as";
@@ -48,8 +48,7 @@ interface IrcSocketOptionsCapabilities {
 interface IrcSocketConnectResponse {
     isFail(): boolean;
     fail(): string;
-    // eslint-disable-next-line
-    ok(): any;
+    ok(): boolean;
     end(): void;
 }
 
@@ -201,7 +200,7 @@ export default class IRC implements PlatformInterface {
      *
      */
     join(job: ActivityStream, done: PlatformCallback) {
-        this.debug("join() called for " + job.actor.id);
+        this.debug(`join() called for ${job.actor.id}`);
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
                 return done(err);
@@ -215,9 +214,9 @@ export default class IRC implements PlatformInterface {
                 this.hasJoined(job.target.name);
                 done();
             });
-            this.debug("sending join " + job.target.name);
+            this.debug(`sending join ${job.target.name}`);
             client.raw(["JOIN", job.target.name]);
-            client.raw("PING " + job.actor.name);
+            client.raw(`PING ${job.actor.name}`);
         });
     }
 
@@ -248,7 +247,7 @@ export default class IRC implements PlatformInterface {
      *
      */
     leave(job: ActivityStream, done: PlatformCallback) {
-        this.debug("leave() called for " + job.actor.name);
+        this.debug(`leave() called for ${job.actor.name}`);
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
                 return done(err);
@@ -293,7 +292,7 @@ export default class IRC implements PlatformInterface {
      */
     send(job: ActivityStream, done: PlatformCallback) {
         this.debug(
-            "send() called for " + job.actor.id + " target: " + job.target.id,
+            `send() called for ${job.actor.id} target: ${job.target.id}`,
         );
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
@@ -331,22 +330,19 @@ export default class IRC implements PlatformInterface {
                 // const message = buildCommand(job.object.content);
                 // client.raw("PRIVMSG " + job.target.name + " :" + message);
                 return done("IRC commands temporarily disabled");
-            } else if (job.object.type === "notice") {
+            }
+            if (job.object.type === "notice") {
                 // attempt to send as raw command
-                client.raw(
-                    "NOTICE " + job.target.name + " :" + job.object.content,
-                );
+                client.raw(`NOTICE ${job.target.name} :${job.object.content}`);
             } else if (this.isJoined(job.target.name)) {
-                client.raw(
-                    "PRIVMSG " + job.target.name + " :" + job.object.content,
-                );
+                client.raw(`PRIVMSG ${job.target.name} :${job.object.content}`);
             } else {
                 return done(
                     "cannot send message to a channel of which you've not first joined.",
                 );
             }
             this.jobQueue.push(done);
-            client.raw("PING " + job.actor.name);
+            client.raw(`PING ${job.actor.name}`);
         });
     }
 
@@ -405,17 +401,14 @@ export default class IRC implements PlatformInterface {
         credentials: PlatformIrcCredentialsObject,
         done: PlatformCallback,
     ) {
-        this.debug("update() called for " + job.actor.id);
+        this.debug(`update() called for ${job.actor.id}`);
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
                 return done(err);
             }
             if (job.object.type === "address") {
                 this.debug(
-                    "changing nick from " +
-                        job.actor.name +
-                        " to " +
-                        job.target.name,
+                    `changing nick from ${job.actor.name} to ${job.target.name}`,
                 );
                 this.handledActors.add(job.target.id);
                 this.jobQueue.push(async (err: Error) => {
@@ -433,13 +426,13 @@ export default class IRC implements PlatformInterface {
                 client.raw(["NICK", job.target.name]);
             } else if (job.object.type === "topic") {
                 // update topic
-                this.debug("changing topic in channel " + job.target.name);
+                this.debug(`changing topic in channel ${job.target.name}`);
                 this.jobQueue.push(done);
                 client.raw(["topic", job.target.name, job.object.content]);
             } else {
-                return done(`unknown update action.`);
+                return done(`unknown update action: ${job.object.type}`);
             }
-            client.raw("PING " + job.actor.name);
+            client.raw(`PING ${job.actor.name}`);
         });
     }
 
@@ -497,18 +490,18 @@ export default class IRC implements PlatformInterface {
      *
      */
     query(job: ActivityStream, done: PlatformCallback) {
-        this.debug("query() called for " + job.actor.id);
+        this.debug(`query() called for ${job.actor.id}`);
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
                 return done(err);
             }
 
             if (job.object.type === "attendance") {
-                this.debug("query() - sending NAMES for " + job.target.name);
+                this.debug(`query() - sending NAMES for ${job.target.name}`);
                 client.raw(["NAMES", job.target.name]);
                 done();
             } else {
-                done("unknown 'type' '" + job.object.type + "'");
+                done(`unknown 'type' '${job.object.type}'`);
             }
         });
     }
@@ -522,7 +515,7 @@ export default class IRC implements PlatformInterface {
             }
         }
         this.config.initialized = false;
-        delete this.client;
+        this.client = undefined;
         return done();
     }
 
@@ -533,14 +526,14 @@ export default class IRC implements PlatformInterface {
         if (channel.indexOf("#") === 0) {
             // valid channel name
             return this.channels.has(channel);
-        } else {
-            // usernames are always OK to send to
-            return true;
         }
+
+        // usernames are always OK to send to
+        return true;
     }
 
     private hasJoined(channel: string) {
-        this.debug("joined " + channel);
+        this.debug(`joined ${channel}`);
         // keep track of channels joined
         if (!this.channels.has(channel)) {
             this.channels.add(channel);
@@ -548,7 +541,7 @@ export default class IRC implements PlatformInterface {
     }
 
     private hasLeft(channel: string) {
-        this.debug("left " + channel);
+        this.debug(`left ${channel}`);
         // keep track of channels left
         if (this.channels.has(channel)) {
             this.channels.delete(channel);
@@ -560,28 +553,22 @@ export default class IRC implements PlatformInterface {
         credentials: PlatformIrcCredentialsObject | false,
         cb: GetClientCallback,
     ) {
-        this.debug("getClient called, connecting: " + this.clientConnecting);
+        this.debug(`getClient called, connecting: ${this.clientConnecting}`);
         if (this.client) {
             this.handledActors.add(key);
             return cb(null, this.client);
-        } else if (this.clientConnecting) {
+        }
+
+        if (this.clientConnecting) {
             // client is in the process of connecting, wait
-            setTimeout(
-                function (_cb: GetClientCallback) {
-                    if (this.client) {
-                        this.debug(
-                            `resolving delayed getClient call for ${key}`,
-                        );
-                        this.handledActors.add(key);
-                        return _cb(null, this.client);
-                    } else {
-                        return cb(
-                            "failed to get irc client, please try again.",
-                        );
-                    }
-                }.bind(this, cb),
-                30000,
-            );
+            setTimeout(() => {
+                if (this.client) {
+                    this.debug(`resolving delayed getClient call for ${key}`);
+                    this.handledActors.add(key);
+                    return cb(null, this.client);
+                }
+                return cb("failed to get irc client, please try again.");
+            }, 30000);
             return;
         }
 
@@ -589,19 +576,19 @@ export default class IRC implements PlatformInterface {
             return cb(
                 "no client found, and no credentials specified. you must connect first",
             );
-        } else {
-            this.ircConnect(key, credentials, (err, client) => {
-                if (err) {
-                    this.config.initialized = false;
-                    return cb(err);
-                }
-                this.handledActors.add(key);
-                this.client = client;
-                this.registerListeners(credentials.object.server);
-                this.config.initialized = true;
-                return cb(null, client);
-            });
         }
+
+        this.ircConnect(key, credentials, (err, client) => {
+            if (err) {
+                this.config.initialized = false;
+                return cb(err);
+            }
+            this.handledActors.add(key);
+            this.client = client;
+            this.registerListeners(credentials.object.server);
+            this.config.initialized = true;
+            return cb(null, client);
+        });
     }
 
     private ircConnect(
@@ -642,13 +629,9 @@ export default class IRC implements PlatformInterface {
         }
 
         this.debug(
-            "attempting to connect to " +
-                module_options.server +
-                ":" +
-                module_options.port +
-                ` transport: ${
-                    is_secure ? "secure" : "clear"
-                } sasl: ${is_sasl}`,
+            `attempting to connect to ${module_options.server}:${module_options.port} transport: ${
+                is_secure ? "secure" : "clear"
+            } sasl: ${is_sasl}`,
         );
 
         const client: IrcSocket = new IrcSocket(
@@ -692,13 +675,13 @@ export default class IRC implements PlatformInterface {
             if (this.forceDisconnect) {
                 client.end();
                 return cb("force disconnect active, aborting connect.");
-            } else {
-                this.debug(
-                    `connected to ${module_options.server} capabilities: `,
-                    capabilities,
-                );
-                return cb(null, client);
             }
+
+            this.debug(
+                `connected to ${module_options.server} capabilities: `,
+                capabilities,
+            );
+            return cb(null, client);
         });
     }
 
@@ -728,7 +711,7 @@ export default class IRC implements PlatformInterface {
             ) {
                 this.completeJob();
             } else {
-                this.debug("calling sendToClient for " + asObject.actor.id, [
+                this.debug(`calling sendToClient for ${asObject.actor.id}`, [
                     ...this.handledActors.keys(),
                 ]);
                 this.sendToClient(asObject);
@@ -736,24 +719,24 @@ export default class IRC implements PlatformInterface {
         });
 
         this.irc2as.events.on("unprocessed", (s: string) => {
-            this.debug("unprocessed irc message:> " + s);
+            this.debug(`unprocessed irc message:> ${s}`);
         });
 
         // The generated eslint error expects that the `error` event is propagating an Error object
         // however for irc2as this event delivers an AS object of type `error`.
 
         this.irc2as.events.on("error", (asObject: ActivityStream) => {
-            this.debug("message error response " + asObject.object.content);
+            this.debug(`message error response ${asObject.object.content}`);
             this.completeJob(asObject.object.content);
         });
 
         this.irc2as.events.on("pong", (timestamp: string) => {
-            this.debug("received PONG at " + timestamp);
+            this.debug(`received PONG at ${timestamp}`);
             this.completeJob();
         });
 
         this.irc2as.events.on("ping", (timestamp: string) => {
-            this.debug("received PING at " + timestamp);
+            this.debug(`received PING at ${timestamp}`);
             this.client.raw("PONG");
         });
     }
