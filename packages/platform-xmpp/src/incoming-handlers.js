@@ -48,9 +48,8 @@ function getMessageReplaceId(stanza) {
 function getPresence(stanza) {
     if (stanza.getChild("show")) {
         return stanza.getChild("show").getText();
-    } else {
-        return stanza.attrs.type === "unavailable" ? "offline" : "online";
     }
+    return stanza.attrs.type === "unavailable" ? "offline" : "online";
 }
 
 export class IncomingHandlers {
@@ -67,9 +66,7 @@ export class IncomingHandlers {
             target: this.session.actor,
         });
         this.session.debug(
-            "**** xmpp this.session.for " +
-                this.session.actor["id"] +
-                " closed",
+            `**** xmpp this.session.for ${this.session.actor.id} closed`,
         );
         this.session.connection.disconnect();
     }
@@ -112,13 +109,13 @@ export class IncomingHandlers {
             obj.actor.name = stanza.attrs.from.split("/")[1];
         }
         this.session.debug(
-            "received contact presence update from " + stanza.attrs.from,
+            `received contact presence update from ${stanza.attrs.from}`,
         );
         this.session.sendToClient(obj);
     }
 
     subscribe(to, from, name) {
-        this.session.debug("received subscribe request from " + from);
+        this.session.debug(`received subscribe request from ${from}`);
         const actor = { id: from, type: "person" };
         if (name) {
             actor.name = name;
@@ -179,7 +176,7 @@ export class IncomingHandlers {
         }
 
         if (type === "room") {
-            [activity.target["id"], activity.actor.name] = from.split("/");
+            [activity.target.id, activity.actor.name] = from.split("/");
         }
 
         if (timestamp) {
@@ -202,7 +199,7 @@ export class IncomingHandlers {
             if (error.getChild("remote-server-not-found")) {
                 // when we get this.session.type of return message, we know it was a response from a join
                 type = "join";
-                message = "remote server not found " + stanza.attrs.from;
+                message = `remote server not found ${stanza.attrs.from}`;
             }
         }
 
@@ -333,7 +330,7 @@ export class IncomingHandlers {
                 }
             }
         } else {
-            this.session.debug("got XMPP unknown stanza... " + stanza);
+            this.session.debug(`got XMPP unknown stanza... ${stanza}`);
         }
     }
 }

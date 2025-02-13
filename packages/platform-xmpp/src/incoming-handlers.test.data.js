@@ -1,6 +1,6 @@
 export const stanzas = [
     [
-        `presence error 1`,
+        "presence error 1",
         `<presence type="error" to="hermes@5apps.com/hyperchannel" from="xmpp.5apps.com/#watercooler" xmlns:stream="http://etherx.jabber.org/streams"><error type="cancel"> <remote-server-not-found xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error></presence>`,
         {
             context: "xmpp",
@@ -11,7 +11,7 @@ export const stanzas = [
         },
     ],
     [
-        `presence error 2`,
+        "presence error 2",
         `<presence type="error" to="hermes@5apps.com/hyperchannel" from="xmpp.5apps.com/#watercooler" xmlns:stream="http://etherx.jabber.org/streams"><error type="cancel"><not-allowed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/><text xmlns="urn:ietf:params:xml:ns:xmpp-stanzas">Communication with remote domains is not enabled</text></error></presence>`,
         {
             context: "xmpp",
@@ -25,7 +25,7 @@ export const stanzas = [
         },
     ],
     [
-        `initial presence`,
+        "initial presence",
         `<presence to="foo@bar.org" from="baz@bag.org"></presence>`,
         {
             context: "xmpp",
@@ -36,7 +36,7 @@ export const stanzas = [
         },
     ],
     [
-        `presence body`,
+        "presence body",
         `<presence to="foo@bar.org" from="baz@bag.org"><show>online</show> <status>away message!</status></presence>`,
         {
             context: "xmpp",
@@ -51,7 +51,7 @@ export const stanzas = [
         },
     ],
     [
-        `presence unavailable`,
+        "presence unavailable",
         `<presence to="foo@bar.org/hyperchannel" from="baz@bag.org/yarg" type="unavailable"><x xmlns="http://jabber.org/protocol/muc#user"><item affiliation="owner" role="none"></item></x></presence>`,
         {
             context: "xmpp",
@@ -62,7 +62,7 @@ export const stanzas = [
         },
     ],
     [
-        `presence away`,
+        "presence away",
         `<presence to="foo@bar.org/hyperchannel" from="baz@bag.org/yarg" type="available"><show>away</show><x xmlns="http://jabber.org/protocol/muc#user"><item affiliation="owner" role="none"></item></x></presence>`,
         {
             context: "xmpp",
