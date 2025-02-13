@@ -1,10 +1,10 @@
 import debug from "debug";
 
-import { redisCheck, RedisConfig } from "@sockethub/data-layer";
+import { type RedisConfig, redisCheck } from "@sockethub/data-layer";
 
-import config from "../config.js";
-import loadPlatforms, { PlatformMap } from "./load-platforms.js";
 import { addPlatformSchema } from "@sockethub/schemas";
+import config from "../config.js";
+import loadPlatforms, { type PlatformMap } from "./load-platforms.js";
 
 const log = debug("sockethub:server:bootstrap:init");
 
@@ -16,7 +16,7 @@ export interface IInitObject {
 let init: IInitObject;
 
 function printSettingsInfo(version, platforms) {
-    console.log("sockethub " + version);
+    console.log(`sockethub ${version}`);
     console.log();
 
     console.log(
@@ -36,17 +36,17 @@ function printSettingsInfo(version, platforms) {
     );
 
     console.log();
-    console.log("redis URL: " + config.get("redis:url"));
+    console.log(`redis URL: ${config.get("redis:url")}`);
 
     console.log();
-    console.log("platforms: " + Array.from(platforms.keys()).join(", "));
+    console.log(`platforms: ${Array.from(platforms.keys()).join(", ")}`);
 
     if (platforms.size > 0) {
         for (const platform of platforms.values()) {
             console.log();
             console.log(`- ${platform.moduleName}`);
             console.log(` name: ${platform.id} version: ${platform.version}`);
-            console.log(" AS types: " + platform.types.join(", "));
+            console.log(` AS types: ${platform.types.join(", ")}`);
         }
     }
     console.log();
@@ -55,7 +55,7 @@ function printSettingsInfo(version, platforms) {
 
 let initCalled = false;
 let initWaitCount = 0;
-let cancelWait: NodeJS.Timeout;
+let cancelWait: Timer;
 const resolveQueue = [];
 
 export default async function getInitObject(
@@ -102,14 +102,14 @@ export default async function getInitObject(
 }
 
 export async function registerPlatforms(initObj: IInitObject): Promise<void> {
-    initObj.platforms.forEach((platform) => {
-        Object.keys(platform.schemas).forEach((key) => {
-            if (!platform.schemas[key]) {
+    for (const [_, platform] of initObj.platforms) {
+        for (const key of Object.keys(platform.schema)) {
+            if (!platform.schema[key]) {
                 return;
             }
-            addPlatformSchema(platform.schemas[key], `${platform.id}/${key}`);
-        });
-    });
+            addPlatformSchema(platform.schema[key], `${platform.id}/${key}`);
+        }
+    }
 }
 
 async function __loadInit(): Promise<IInitObject> {
