@@ -1,5 +1,5 @@
 <script>
-    import { connected } from "$lib/sockethub";
+import { connected } from "$lib/sockethub";
 </script>
 
 <div>

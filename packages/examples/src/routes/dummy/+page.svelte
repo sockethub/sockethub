@@ -1,46 +1,46 @@
 <script lang="ts">
-    import Intro from "../../components/Intro.svelte";
-    import ActivityActor from "../../components/ActivityActor.svelte";
-    import SockethubButton from "../../components/SockethubButton.svelte";
-    import Logger from "../../components/logs/Logger.svelte";
-    import { send } from "$lib/sockethub";
-    import type { AnyActivityStream } from "$lib/sockethub";
-    import { writable } from "svelte/store";
-    import type { StateStore } from "$lib/types";
+import type { AnyActivityStream } from "$lib/sockethub";
+import { send } from "$lib/sockethub";
+import type { StateStore } from "$lib/types";
+import { writable } from "svelte/store";
+import ActivityActor from "../../components/ActivityActor.svelte";
+import Intro from "../../components/Intro.svelte";
+import SockethubButton from "../../components/SockethubButton.svelte";
+import Logger from "../../components/logs/Logger.svelte";
 
-    const actorId = "https://sockethub.org/examples/dummyUser";
+const actorId = "https://sockethub.org/examples/dummyUser";
 
-    const state: StateStore = writable({
-        actorSet: false,
-    });
+const state: StateStore = writable({
+    actorSet: false,
+});
 
-    $: actor = {
-        id: actorId,
-        type: "person",
-        name: "Sockethub Examples Dummy",
+$: actor = {
+    id: actorId,
+    type: "person",
+    name: "Sockethub Examples Dummy",
+};
+
+let content = "";
+
+function getASObj(type: string): AnyActivityStream {
+    return {
+        context: "dummy",
+        type: type,
+        actor: actorId,
+        object: {
+            type: "message",
+            content: content,
+        },
     };
+}
 
-    let content = "";
+async function sendEcho(): Promise<void> {
+    send(getASObj("echo"));
+}
 
-    function getASObj(type: string): AnyActivityStream {
-        return {
-            context: "dummy",
-            type: type,
-            actor: actorId,
-            object: {
-                type: "message",
-                content: content,
-            },
-        };
-    }
-
-    async function sendEcho(): Promise<void> {
-        send(getASObj("echo"));
-    }
-
-    async function sendFail(): Promise<void> {
-        send(getASObj("fail"));
-    }
+async function sendFail(): Promise<void> {
+    send(getASObj("fail"));
+}
 </script>
 
 <Intro title="Dummy Platform Example">

@@ -1,5 +1,5 @@
 <script>
-    import Intro from "../components/Intro.svelte";
+import Intro from "../components/Intro.svelte";
 </script>
 
 <Intro title="Sockethub Examples">
