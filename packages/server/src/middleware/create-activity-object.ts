@@ -7,7 +7,7 @@ import type { MiddlewareChainInterface } from "../middleware.js";
 const activity = ASFactory(config.get("activity-streams:opts"));
 
 /**
- * A simple middleware wrapper for the activity-streams Object.create method.
+ * A simple middleware wrapper for the activity-streams `Object.create` method.
  * @param obj
  * @param done
  */

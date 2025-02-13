@@ -1,12 +1,12 @@
-import * as fs from "fs";
+import * as fs from "node:fs";
+import path from "node:path";
 import debug from "debug";
 import nconf from "nconf";
 
-import path from "path";
 import { __dirname } from "./util.js";
 
 const log = debug("sockethub:server:bootstrap:config");
-const data: object = await import(__dirname + "/defaults.json", {
+const data: object = await import(`${__dirname}/defaults.json`, {
     with: { type: "json" },
 });
 

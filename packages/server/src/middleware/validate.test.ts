@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { ActivityStream } from "@sockethub/schemas";
 import getInitObject from "../bootstrap/init.js";
 import { initMockFakePlatform } from "../bootstrap/init.test.js";

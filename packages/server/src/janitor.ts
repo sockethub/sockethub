@@ -84,8 +84,7 @@ export class Janitor {
             await platformInstance.shutdown(); // terminate
         } else {
             rmLog(
-                `flagging for termination platform instance ${platformInstance.id} ` +
-                    `(no registered sessions found)`,
+                `flagging for termination platform instance ${platformInstance.id} (no registered sessions found)`,
             );
             platformInstance.flaggedForTermination = true;
         }
@@ -100,7 +99,7 @@ export class Janitor {
         return false;
     }
 
-    private async delay(ms): Promise<void> {
+    private async delay(ms: number): Promise<void> {
         return await new Promise((resolve) => setTimeout(resolve, ms));
     }
 
@@ -110,7 +109,7 @@ export class Janitor {
 
     private async performStaleCheck(platformInstance: PlatformInstance) {
         this.removeStaleSocketSessions(platformInstance);
-        // Static platforms are for global use, not tied to a unique to session / eg. credentials)
+        // Static platforms are for global use, not tied to a unique to session (e.g. credentials)
         if (!platformInstance.global) {
             if (
                 (platformInstance.config.persist &&
@@ -127,7 +126,8 @@ export class Janitor {
         if (this.stopTriggered) {
             this.cycleRunning = false;
             return;
-        } else if (this.cycleRunning) {
+        }
+        if (this.cycleRunning) {
             throw new Error(
                 "janitor cleanup cycle called while already running",
             );

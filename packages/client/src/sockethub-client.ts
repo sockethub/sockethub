@@ -93,7 +93,7 @@ export default class SockethubClient {
         if (content.object && content.object.type === "credentials") {
             const key: string =
                 content.actor.id || (content.actor as unknown as string);
-            this.events["credentials"].set(key, content);
+            this.events.credentials.set(key, content);
         }
     }
 
@@ -107,9 +107,9 @@ export default class SockethubClient {
         if (content.type === "join" || content.type === "connect") {
             this.events[content.type].set(key, content as ActivityStream);
         } else if (content.type === "leave") {
-            this.events["join"].delete(key);
+            this.events.join.delete(key);
         } else if (content.type === "disconnect") {
-            this.events["connect"].delete(key);
+            this.events.connect.delete(key);
         }
     }
 
@@ -117,13 +117,13 @@ export default class SockethubClient {
         const actor = content.actor?.id || content.actor;
         if (!actor) {
             throw new Error(
-                "actor property not present for message type: " + content?.type,
+                `actor property not present for message type: ${content?.type}`,
             );
         }
         const target = content.target
             ? content.target.id || content.target
             : "";
-        return actor + "-" + target;
+        return `${actor}-${target}`;
     }
 
     private log(msg: string, obj?: unknown) {
@@ -142,9 +142,9 @@ export default class SockethubClient {
                         "activity-object",
                         this.events["activity-object"],
                     );
-                    this.replay("credentials", this.events["credentials"]);
-                    this.replay("message", this.events["connect"]);
-                    this.replay("message", this.events["join"]);
+                    this.replay("credentials", this.events.credentials);
+                    this.replay("message", this.events.connect);
+                    this.replay("message", this.events.join);
                 } else if (event === "disconnect") {
                     this.online = false;
                 }
@@ -165,9 +165,9 @@ export default class SockethubClient {
     }
 
     private replay(name: string, asMap: Map<string, unknown>) {
-        asMap.forEach((obj) => {
+        for (const obj of asMap) {
             this.log(`replaying ${name}`, obj);
             this._socket.emit(name, obj);
-        });
+        }
     }
 }

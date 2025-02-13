@@ -18,16 +18,18 @@ import getInitObject, { type IInitObject } from "../bootstrap/init.js";
 export default function validate(
     type: string,
     sockethubId: string,
-    initObj?: IInitObject,
+    passedInitObj?: IInitObject,
 ) {
-    if (!initObj) {
+    let initObj = passedInitObj;
+    if (!passedInitObj) {
         getInitObject().then((init) => {
             initObj = init;
         });
     }
+
     const sessionLog = debug(`sockethub:server:validate:${sockethubId}`);
     return (msg: ActivityStream, done: MiddlewareCallback) => {
-        sessionLog("applying schema validation for " + type);
+        sessionLog(`applying schema validation for ${type}`);
         if (type === "activity-object") {
             const err = validateActivityObject(msg);
             if (err) {
@@ -63,9 +65,8 @@ export default function validate(
                                 )})`,
                         ),
                     );
-                } else {
-                    done(msg);
                 }
+                done(msg);
             }
         }
     };

@@ -8,23 +8,25 @@
 import debug from "debug";
 
 import {
+    type PlatformConfig,
     type PlatformInterface,
+    type PlatformSchemaStruct,
     type PlatformSession,
     validatePlatformSchema,
 } from "@sockethub/schemas";
 
 const log = debug("sockethub:server:bootstrap:platforms");
 
-// export type PlatformStruct = {
-//     id: string;
-//     moduleName: string;
-//     config: PlatformConfig;
-//     schema: PlatformSchemaStruct;
-//     version: string;
-//     types: Array<string>;
-// };
+export type PlatformStruct = {
+    id: string;
+    moduleName: string;
+    config: PlatformConfig;
+    schema: PlatformSchemaStruct;
+    version: string;
+    types: Array<string>;
+};
 
-export type PlatformMap = Map<string, PlatformInterface>;
+export type PlatformMap = Map<string, PlatformStruct>;
 
 const dummySession: PlatformSession = {
     debug: () => {},

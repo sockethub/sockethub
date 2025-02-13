@@ -31,7 +31,7 @@ class ProcessManager {
         sessionId?: string,
     ): PlatformInstance {
         const platformDetails = this.init.platforms.get(platform);
-        let pi;
+        let pi: PlatformInstance;
 
         if (platformDetails.config.persist) {
             // ensure process is started - one for each actor

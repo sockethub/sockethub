@@ -25,7 +25,8 @@ let logger = debug(loggerPrefix);
 
 let jobWorker: JobWorker;
 let jobWorkerStarted = false;
-let parentSecret1: string, parentSecret2: string;
+let parentSecret1: string;
+let parentSecret2: string;
 
 logger(`platform handler initializing for ${platformName} ${identifier}`);
 
@@ -87,7 +88,7 @@ process.on("message", async (data: SecretFromParent) => {
 function getJobHandler(): JobHandler {
     return async (
         job: JobDataDecrypted,
-    ): Promise<string | void | ActivityStream> => {
+    ): Promise<string | undefined | ActivityStream> => {
         return new Promise((resolve, reject) => {
             const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
             jobLog(`received ${job.title} ${job.msg.type}`);
@@ -99,6 +100,7 @@ function getJobHandler(): JobHandler {
                     url: redisUrl,
                 },
             );
+            // biome-ignore lint/performance/noDelete: <explanation>
             delete job.msg.sessionSecret;
 
             let jobCallbackCalled = false;
@@ -107,7 +109,8 @@ function getJobHandler(): JobHandler {
                 result: null | ActivityStream,
             ): void => {
                 if (jobCallbackCalled) {
-                    return resolve(null);
+                    resolve(null);
+                    return;
                 }
                 jobCallbackCalled = true;
                 if (err) {
@@ -146,7 +149,7 @@ function getJobHandler(): JobHandler {
                     })
                     .catch((err) => {
                         console.log("error:\n", err);
-                        jobLog("error " + err.toString());
+                        jobLog(`error ${err.toString()}`);
                         reject(err);
                     });
             } else if (
