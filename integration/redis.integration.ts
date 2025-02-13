@@ -117,13 +117,18 @@ describe("JobQueue", () => {
             });
             done();
         });
-        worker.onJob(async (job) => {
-            expect(job).toEqual({
-                title: "bar-0",
-                sessionId: "socket id",
-                msg: as,
-            });
-        });
+        worker.onJob(
+            async (
+                job: JobDataDecrypted,
+            ): Promise<string | undefined | ActivityStream> => {
+                expect(job).toEqual({
+                    title: "bar-0",
+                    sessionId: "socket id",
+                    msg: as,
+                });
+                return undefined;
+            },
+        );
         queue.add("socket id", as).then((job) => {
             expect(job.msg.length).toEqual(193);
             expect(job.title).toEqual("bar-0");
