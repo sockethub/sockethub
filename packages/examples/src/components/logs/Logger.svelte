@@ -21,7 +21,7 @@ export function addObject(
 ) {
     let index: string;
     if (!id) {
-        index = "" + ++counter;
+        index = `${++counter}`;
         obj.id = index;
     } else {
         index = id;

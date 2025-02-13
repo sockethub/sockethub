@@ -2,8 +2,9 @@
 import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
 import { sc } from "$lib/sockethub";
 import type { Payload, StateStore } from "$lib/types";
+import type { ActivityActor } from "@sockethub/schemas";
 
-export let actor;
+export let actor: ActivityActor;
 export let state: StateStore;
 
 function sendActivityObjectCreate(data: Payload) {

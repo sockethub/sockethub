@@ -3,7 +3,7 @@ import type { TextAreaObject } from "$lib/types";
 import { createEventDispatcher } from "svelte";
 import SockethubButton from "./SockethubButton.svelte";
 
-export const buttonText = "Send";
+export let buttonText = "Send";
 export let disabled: boolean;
 export let obj: TextAreaObject;
 export let title: string;
@@ -14,7 +14,7 @@ const dispatcher = createEventDispatcher();
 
 if (obj.password) {
     password = obj.password;
-    delete obj.password;
+    obj.password = undefined;
 }
 
 $: objString = JSON.stringify(obj, null, 3);
