@@ -1,17 +1,17 @@
-import { expect, describe, it, beforeEach, afterEach } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import {
     CredentialsStore,
+    type JobDataDecrypted,
     JobQueue,
     JobWorker,
-    JobDataDecrypted,
 } from "@sockethub/data-layer";
-import { ActivityStream, CredentialsObject } from "@sockethub/schemas";
+import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
 
 const REDIS_HOST = "localhost";
 const REDIS_PORT = "16379";
 const REDIS_URL = `redis://${REDIS_HOST}:${REDIS_PORT}`;
 
-const actor = "" + (Math.random() + 1).toString(36).substring(2);
+const actor = `${(Math.random() + 1).toString(36).substring(2)}`;
 const creds: CredentialsObject = {
     type: "credentials",
     context: "bar",
@@ -55,16 +55,21 @@ describe("CredentialsStore", () => {
 });
 
 describe("connect and disconnect", () => {
-    [
+    interface JobInstance {
+        init(): void;
+        shutdown(): Promise<void>;
+    }
+
+    for (const o of [
         { name: "queue", class: JobQueue },
         { name: "worker", class: JobWorker },
-    ].forEach((o) => {
+    ]) {
         describe(o.name, () => {
-            let i;
+            let i: JobInstance;
             beforeEach(() => {
                 i = new o.class("testid", "sessionid", testSecret, {
                     url: REDIS_URL,
-                });
+                }) as unknown as JobInstance;
                 if (o.name === "worker") {
                     i.init();
                 }
@@ -78,7 +83,7 @@ describe("connect and disconnect", () => {
                 await i.shutdown();
             });
         });
-    });
+    }
 });
 
 describe("JobQueue", () => {

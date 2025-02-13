@@ -17,8 +17,8 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
     });
 
     describe("SockethubClient()", () => {
-        let sc,
-            incomingMessages = [];
+        let sc;
+        const incomingMessages = [];
 
         before(() => {
             sc = new SockethubClient(
@@ -42,10 +42,10 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                 expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
             });
 
-            let dummyMessageCount = 5;
+            const dummyMessageCount = 5;
             for (let i = 0; i < dummyMessageCount; i++) {
                 it(`sends echo ${i} and gets response`, (done) => {
-                    let dummyObj = {
+                    const dummyObj = {
                         type: "echo",
                         actor: actor.id,
                         context: "dummy",
@@ -69,11 +69,11 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
             }
 
             it("sends fail and returns error", (done) => {
-                let dummyObj = {
+                const dummyObj = {
                     type: "fail",
                     actor: actor.id,
                     context: "dummy",
-                    object: { type: "message", content: `failure message` },
+                    object: { type: "message", content: "failure message" },
                 };
                 sc.socket.emit("message", dummyObj, (msg) => {
                     console.log("dummy fail callback: ", msg);
@@ -97,7 +97,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
 
         describe("Feeds", () => {
             describe("fetches a feed", () => {
-                it(`gets expected results`, (done) => {
+                it("gets expected results", (done) => {
                     sc.socket.emit(
                         "message",
                         {
