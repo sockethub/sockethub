@@ -1,7 +1,6 @@
 packages/schemas/src/schemas/json
 packages/server/res
 node_modules
-build
 *~
 .idea
 **/dist/
