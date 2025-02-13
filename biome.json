@@ -1,7 +1,17 @@
 {
     "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
     "vcs": { "enabled": false, "clientKind": "git", "useIgnoreFile": false },
-    "files": { "ignoreUnknown": false, "ignore": [] },
+    "files": {
+        "ignoreUnknown": false,
+        "ignore": [
+            "**/node_modules",
+            "**/dist",
+            "**/.svelte-kit",
+            "**/.github",
+            "packages/server/res",
+            "packages/schemas/src/schemas/json"
+        ]
+    },
     "formatter": {
         "enabled": true,
         "useEditorconfig": true,
@@ -12,20 +22,13 @@
         "lineWidth": 80,
         "attributePosition": "auto",
         "bracketSpacing": true,
-        "ignore": [
-            "**/node_modules",
-            "**/dist",
-            "**/coverage",
-            "**/.svelte-kit",
-            "**/.env",
-            "**/*.md",
-            "**/.github",
-            "packages/server/res",
-            "packages/schemas/src/schemas/json"
-        ]
+        "ignore": []
     },
     "organizeImports": { "enabled": true },
-    "linter": { "enabled": true, "rules": { "recommended": true } },
+    "linter": {
+        "enabled": true,
+        "rules": { "recommended": true }
+    },
     "javascript": {
         "formatter": {
             "jsxQuoteStyle": "double",

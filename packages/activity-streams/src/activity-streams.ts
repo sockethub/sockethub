@@ -15,110 +15,118 @@
  *
  */
 
+import type { ActivityObject, ActivityStream } from "@sockethub/schemas";
 import EventEmitter from "eventemitter3";
-import { ActivityObject, ActivityStream } from "@sockethub/schemas";
 
-const ee = new EventEmitter(),
-    baseProps = {
-        stream: [
-            "id",
-            "type",
-            "actor",
-            "target",
-            "object",
-            "context",
-            "context",
-            "published",
-            "error",
-        ],
-        object: [
-            "id",
-            "type",
-            "context",
-            "alias",
-            "attachedTo",
-            "attachment",
-            "attributedTo",
-            "attributedWith",
-            "content",
-            "contentMap",
-            "context",
-            "contextOf",
-            "name",
-            "endTime",
-            "generator",
-            "generatorOf",
-            "group",
-            "icon",
-            "image",
-            "inReplyTo",
-            "members",
-            "memberOf",
-            "message",
-            "location",
-            "locationOf",
-            "objectOf",
-            "originOf",
-            "presence",
-            "preview",
-            "previewOf",
-            "provider",
-            "providerOf",
-            "published",
-            "rating",
-            "relationship",
-            "resultOf",
-            "replies",
-            "role",
-            "scope",
-            "scopeOf",
-            "startTime",
-            "status",
-            "summary",
-            "topic",
-            "tag",
-            "tagOf",
-            "targetOf",
-            "title",
-            "titleMap",
-            "updated",
-            "url",
-        ],
+const ee = new EventEmitter();
+const baseProps = {
+    stream: [
+        "id",
+        "type",
+        "actor",
+        "target",
+        "object",
+        "context",
+        "context",
+        "published",
+        "error",
+    ],
+    object: [
+        "id",
+        "type",
+        "context",
+        "alias",
+        "attachedTo",
+        "attachment",
+        "attributedTo",
+        "attributedWith",
+        "content",
+        "contentMap",
+        "context",
+        "contextOf",
+        "name",
+        "endTime",
+        "generator",
+        "generatorOf",
+        "group",
+        "icon",
+        "image",
+        "inReplyTo",
+        "members",
+        "memberOf",
+        "message",
+        "location",
+        "locationOf",
+        "objectOf",
+        "originOf",
+        "presence",
+        "preview",
+        "previewOf",
+        "provider",
+        "providerOf",
+        "published",
+        "rating",
+        "relationship",
+        "resultOf",
+        "replies",
+        "role",
+        "scope",
+        "scopeOf",
+        "startTime",
+        "status",
+        "summary",
+        "topic",
+        "tag",
+        "tagOf",
+        "targetOf",
+        "title",
+        "titleMap",
+        "updated",
+        "url",
+    ],
+};
+const rename = {
+    "@id": "id",
+    "@type": "type",
+    verb: "type",
+    displayName: "name",
+    objectType: "type",
+    platform: "context",
+};
+const expand = {
+    actor: {
+        primary: "id",
+        props: baseProps,
     },
-    rename = {
-        "@id": "id",
-        "@type": "type",
-        verb: "type",
-        displayName: "name",
-        objectType: "type",
-        platform: "context",
+    target: {
+        primary: "id",
+        props: baseProps,
     },
-    expand = {
-        actor: {
-            primary: "id",
-            props: baseProps,
-        },
-        target: {
-            primary: "id",
-            props: baseProps,
-        },
-        object: {
-            primary: "content",
-            props: baseProps,
-        },
-    };
+    object: {
+        primary: "content",
+        props: baseProps,
+    },
+};
 
-const objs = new Map(),
-    customProps = {};
+type CustomProps = {
+    [key: string]: string | number | boolean | object;
+};
 
-let failOnUnknownObjectProperties = false,
-    warnOnUnknownObjectProperties = true,
-    specialObjs = []; // the objects don't get rejected for bad props
+const objs = new Map();
+const customProps: CustomProps = {};
+
+let failOnUnknownObjectProperties = false;
+let warnOnUnknownObjectProperties = true;
+let specialObjs = []; // the objects don't get rejected for bad props
 
 function matchesCustomProp(type: string, key: string) {
-    return !!(
-        typeof customProps[type] === "object" && customProps[type].includes(key)
-    );
+    if (customProps[type] instanceof Object) {
+        const obj = customProps[type] as object;
+        if (key in obj) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function renameProp(obj, key: string) {
@@ -128,6 +136,7 @@ function renameProp(obj, key: string) {
 }
 
 function validateObject(type: string, obj: ActivityObject = { type: "" }) {
+    // biome-ignore lint/suspicious/noConfusingVoidType: <explanation>
     const unknownKeys = Object.keys(obj).filter((key): void | string => {
         if (!baseProps[type].includes(key)) {
             return key;
@@ -135,13 +144,14 @@ function validateObject(type: string, obj: ActivityObject = { type: "" }) {
     });
 
     for (const key of unknownKeys) {
+        let ao: ActivityObject = obj;
         if (rename[key]) {
             // rename property instead of fail
-            obj = renameProp(obj, key);
+            ao = renameProp(obj, key);
             continue;
         }
 
-        if (matchesCustomProp(obj.type, key)) {
+        if (matchesCustomProp(ao.type, key)) {
             // custom property matches, continue
             continue;
         }
@@ -152,7 +162,8 @@ function validateObject(type: string, obj: ActivityObject = { type: "" }) {
             const err = `invalid property: "${key}"`;
             if (failOnUnknownObjectProperties) {
                 throw new Error(err);
-            } else if (warnOnUnknownObjectProperties) {
+            }
+            if (warnOnUnknownObjectProperties) {
                 console.warn(err);
             }
         }
@@ -207,21 +218,20 @@ function Stream(meta): ActivityStream | ActivityObject | Record<string, never> {
 export interface ActivityObjectManager {
     create(obj: unknown): unknown;
     delete(id: string): boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    list(): IterableIterator<any>;
+    list(): IterableIterator<unknown>;
     get(id: string, expand?: boolean): unknown;
 }
 
 const _Object: ActivityObjectManager = {
-    create: function (obj: ActivityObject) {
+    create: (obj: ActivityObject) => {
         validateObject("object", obj);
-        obj = ensureProps(obj);
-        objs.set(obj.id, obj);
-        ee.emit("activity-object-create", obj);
-        return obj;
+        const ao = ensureProps(obj);
+        objs.set(ao.id, ao);
+        ee.emit("activity-object-create", ao);
+        return ao;
     },
 
-    delete: function (id) {
+    delete: (id) => {
         const result = objs.delete(id);
         if (result) {
             ee.emit("activity-object-delete", id);
@@ -229,7 +239,7 @@ const _Object: ActivityObjectManager = {
         return result;
     },
 
-    get: function (id, expand) {
+    get: (id, expand) => {
         let obj = objs.get(id);
         if (!obj) {
             if (!expand) {
@@ -240,18 +250,14 @@ const _Object: ActivityObjectManager = {
         return ensureProps(obj);
     },
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    list: function (): IterableIterator<any> {
-        return objs.keys();
-    },
+    list: (): IterableIterator<unknown> => objs.keys(),
 };
 
 export interface ASFactoryOptions {
     specialObjs?: Array<string>;
     failOnUnknownObjectProperties?: boolean;
     warnOnUnknownObjectProperties?: boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    customProps?: any;
+    customProps?: CustomProps;
 }
 
 export interface ASManager {
@@ -281,14 +287,8 @@ export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
     return {
         Stream: Stream,
         Object: _Object,
-        on: function (event, func) {
-            return ee.on(event, func);
-        },
-        once: function (event, func) {
-            return ee.once(event, func);
-        },
-        off: function (event, funcName) {
-            return ee.off(event, funcName);
-        },
+        on: (event, func) => ee.on(event, func),
+        once: (event, func) => ee.once(event, func),
+        off: (event, funcName) => ee.off(event, funcName),
     } as ASManager;
 }
