@@ -77,8 +77,8 @@ export default function getErrorMessage(
     errors: Array<ErrorObject>,
 ): string {
     const types = getTypes(msg);
-    let deepest_entry = 0,
-        highest_depth = -1;
+    let deepest_entry = 0;
+    let highest_depth = -1;
 
     for (let i = 0; i < errors.length; i++) {
         const partsCount = getPartsCount(errors[i], types);

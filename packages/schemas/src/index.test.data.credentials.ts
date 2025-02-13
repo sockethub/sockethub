@@ -8,7 +8,7 @@ export default [
             },
         },
         false,
-        `credential activity streams must have a context set`,
+        "credential activity streams must have a context set",
     ],
 
     [
@@ -20,7 +20,7 @@ export default [
             },
         },
         false,
-        `credential activity streams must have credentials set as type`,
+        "credential activity streams must have credentials set as type",
     ],
 
     [
@@ -35,7 +35,7 @@ export default [
             },
         },
         false,
-        `[test-platform] /object: must NOT have additional properties: pass`,
+        "[test-platform] /object: must NOT have additional properties: pass",
     ],
 
     [

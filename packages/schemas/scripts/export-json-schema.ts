@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, openSync, rmdirSync, writeSync } from "fs";
+import { existsSync, mkdirSync, openSync, rmdirSync, writeSync } from "node:fs";
 import Ajv from "ajv";
 
 const ajv = new Ajv();

@@ -7,9 +7,9 @@ console.log(validActorRefs);
 
 const validObjectRefs = [];
 
-ObjectTypesList.forEach((type) => {
-    validObjectRefs.push({ $ref: "#/definitions/type/" + type });
-});
+for (const type of ObjectTypesList) {
+    validObjectRefs.push({ $ref: `#/definitions/type/${type}` });
+}
 
 const contextSchema = {
     type: "string",
