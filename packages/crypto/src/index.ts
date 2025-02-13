@@ -1,15 +1,14 @@
-/* eslint-disable  @typescript-eslint/no-explicit-any */
 import {
     createCipheriv,
     createDecipheriv,
     createHash,
     randomBytes,
-} from "crypto";
+} from "node:crypto";
 import type { ActivityStream } from "@sockethub/schemas";
 import hash from "object-hash";
 
-const ALGORITHM = "aes-256-cbc",
-    IV_LENGTH = 16; // For AES, this is always 16
+const ALGORITHM = "aes-256-cbc";
+const IV_LENGTH = 16; // For AES, this is always 16
 
 export function getPlatformId(
     platform: string,
@@ -37,7 +36,7 @@ export class Crypto {
         let encrypted = cipher.update(JSON.stringify(json));
 
         encrypted = Buffer.concat([encrypted, cipher.final()]);
-        return iv.toString("hex") + ":" + encrypted.toString("hex");
+        return `${iv.toString("hex")}:${encrypted.toString("hex")}`;
     }
 
     decrypt(text: string, secret: string): ActivityStream {
@@ -57,7 +56,7 @@ export class Crypto {
         return SHASum.digest("hex").substring(0, 7);
     }
 
-    objectHash(object: any): string {
+    objectHash(object: never): string {
         return hash(object);
     }
 
@@ -74,7 +73,7 @@ export class Crypto {
     private static ensureSecret(secret: string) {
         if (secret.length !== 32) {
             throw new Error(
-                "secret must be a 32 char string, length: " + secret.length,
+                `secret must be a 32 char string, length: ${secret.length}`,
             );
         }
     }
