@@ -1,41 +1,41 @@
 {
-    "name": "@sockethub/schemas",
-    "description": "JSON schema files for validating Sockethub Activity Streams",
-    "version": "3.0.0-alpha.4",
-    "type": "module",
-    "private": false,
-    "author": "Nick Jennings <nick@silverbucket.net>",
-    "license": "MIT",
-    "main": "src/index.ts",
-    "files": ["src/schemas"],
-    "packageManager": "bun@1.2.2",
-    "engines": {
-        "bun": ">=1.2"
-    },
-    "keywords": [
-        "sockethub",
-        "sockethub schema",
-        "activity streams",
-        "activity objects",
-        "sockethub platforms"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/sockethub/sockethub.git",
-        "directory": "packages/schemas"
-    },
-    "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/schemas",
-    "devDependencies": {
-        "@types/bun": "latest",
-        "@types/debug": "4.1.12"
-    },
-    "scripts": {
-        "build": "bun ./scripts/export-json-schema.ts"
-    },
-    "dependencies": {
-        "ajv": "8.12.0",
-        "ajv-formats": "2.1.1",
-        "ajv-formats-draft2019": "1.6.1",
-        "debug": "4.3.4"
-    }
+  "name": "@sockethub/schemas",
+  "description": "JSON schema files for validating Sockethub Activity Streams",
+  "version": "3.0.0-alpha.4",
+  "type": "module",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "files": ["src/schemas"],
+  "packageManager": "bun@1.2.2",
+  "engines": {
+    "bun": ">=1.2"
+  },
+  "keywords": [
+    "sockethub",
+    "sockethub schema",
+    "activity streams",
+    "activity objects",
+    "sockethub platforms"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/schemas"
+  },
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/schemas",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/debug": "4.1.12"
+  },
+  "scripts": {
+    "build": "bun ./scripts/export-json-schema.ts"
+  },
+  "dependencies": {
+    "ajv": "8.12.0",
+    "ajv-formats": "2.1.1",
+    "ajv-formats-draft2019": "1.6.1",
+    "debug": "4.3.4"
+  }
 }

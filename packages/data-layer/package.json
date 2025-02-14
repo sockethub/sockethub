@@ -1,42 +1,42 @@
 {
-    "name": "@sockethub/data-layer",
-    "description": "Storing and RPC of data for Sockethub",
-    "version": "1.0.0-alpha.4",
-    "type": "module",
-    "private": false,
-    "author": "Nick Jennings <nick@silverbucket.net>",
-    "license": "MIT",
-    "main": "src/index.ts",
-    "packageManager": "bun@1.2.2",
-    "engines": {
-        "bun": ">=1.2"
-    },
-    "keywords": [
-        "sockethub",
-        "messaging",
-        "redis",
-        "data layer",
-        "rpc",
-        "data store"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/sockethub/sockethub.git",
-        "directory": "packages/data-layer"
-    },
-    "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
-    "dependencies": {
-        "@sockethub/crypto": "workspace:*",
-        "@sockethub/schemas": "workspace:*",
-        "bullmq": "4.15.2",
-        "debug": "4.3.4",
-        "ioredis": "5.3.2",
-        "secure-store-redis": "3.0.7"
-    },
-    "devDependencies": {
-        "@types/bun": "latest",
-        "@types/debug": "4.1.12",
-        "@types/sinon": "17.0.2",
-        "sinon": "17.0.1"
-    }
+  "name": "@sockethub/data-layer",
+  "description": "Storing and RPC of data for Sockethub",
+  "version": "1.0.0-alpha.4",
+  "type": "module",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "packageManager": "bun@1.2.2",
+  "engines": {
+    "bun": ">=1.2"
+  },
+  "keywords": [
+    "sockethub",
+    "messaging",
+    "redis",
+    "data layer",
+    "rpc",
+    "data store"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/data-layer"
+  },
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
+  "dependencies": {
+    "@sockethub/crypto": "workspace:*",
+    "@sockethub/schemas": "workspace:*",
+    "bullmq": "4.15.2",
+    "debug": "4.3.4",
+    "ioredis": "5.3.2",
+    "secure-store-redis": "3.0.7"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/debug": "4.1.12",
+    "@types/sinon": "17.0.2",
+    "sinon": "17.0.1"
+  }
 }

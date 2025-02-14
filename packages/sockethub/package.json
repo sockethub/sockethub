@@ -1,52 +1,52 @@
 {
-    "name": "sockethub",
-    "description": "A polyglot messaging service",
-    "version": "5.0.0-alpha.4",
-    "private": false,
-    "author": "Nick Jennings <nick@silverbucket.net>",
-    "license": "LGPL-3.0+",
-    "main": "",
-    "bin": "bin/sockethub",
-    "preferGlobal": true,
-    "packageManager": "bun@1.2.2",
-    "engines": {
-        "bun": ">=1.2"
-    },
-    "keywords": [
-        "sockethub",
-        "messaging",
-        "polyglot",
-        "unhosted",
-        "apis",
-        "api",
-        "protocols",
-        "protocol",
-        "irc",
-        "xmpp",
-        "facebook",
-        "rss",
-        "atom",
-        "twitter",
-        "smtp",
-        "imap",
-        "email"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/sockethub/sockethub.git",
-        "directory": "apps/sockethub"
-    },
-    "homepage": "https://sockethub.org",
-    "dependencies": {
-        "@sockethub/platform-dummy": "workspace:*",
-        "@sockethub/platform-feeds": "workspace:*",
-        "@sockethub/platform-irc": "workspace:*",
-        "@sockethub/platform-xmpp": "workspace:*",
-        "@sockethub/server": "workspace:*"
-    },
-    "scripts": {
-        "build": "bun build.js",
-        "dev": "DEBUG=sockethub* ./bin/sockethub --examples",
-        "start": "DEBUG=sockethub* ./bin/sockethub"
-    }
+  "name": "sockethub",
+  "description": "A polyglot messaging service",
+  "version": "5.0.0-alpha.4",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "LGPL-3.0+",
+  "main": "",
+  "bin": "bin/sockethub",
+  "preferGlobal": true,
+  "packageManager": "bun@1.2.2",
+  "engines": {
+    "bun": ">=1.2"
+  },
+  "keywords": [
+    "sockethub",
+    "messaging",
+    "polyglot",
+    "unhosted",
+    "apis",
+    "api",
+    "protocols",
+    "protocol",
+    "irc",
+    "xmpp",
+    "facebook",
+    "rss",
+    "atom",
+    "twitter",
+    "smtp",
+    "imap",
+    "email"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "apps/sockethub"
+  },
+  "homepage": "https://sockethub.org",
+  "dependencies": {
+    "@sockethub/platform-dummy": "workspace:*",
+    "@sockethub/platform-feeds": "workspace:*",
+    "@sockethub/platform-irc": "workspace:*",
+    "@sockethub/platform-xmpp": "workspace:*",
+    "@sockethub/server": "workspace:*"
+  },
+  "scripts": {
+    "build": "bun build.js",
+    "dev": "DEBUG=sockethub* ./bin/sockethub --examples",
+    "start": "DEBUG=sockethub* ./bin/sockethub"
+  }
 }
