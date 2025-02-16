@@ -79,12 +79,15 @@ export interface CredentialsObject {
 
 export type PlatformConfig = PersistentPlatformConfig | StatelessPlatformConfig;
 
-export interface StatelessPlatformConfig {
+interface BasePlatformConfig {
+    connectTimeoutMs?: number;
+}
+export interface StatelessPlatformConfig extends BasePlatformConfig {
     persist: false;
     requireCredentials?: string[];
 }
 
-export interface PersistentPlatformConfig {
+export interface PersistentPlatformConfig extends BasePlatformConfig {
     persist: true;
     requireCredentials: string[];
     initialized: boolean;

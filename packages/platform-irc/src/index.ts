@@ -21,7 +21,7 @@ import tls from "tls";
 import IrcSocket from "irc-socket-sasl";
 
 import { IrcToActivityStreams } from "@sockethub/irc2as";
-import {
+import type {
     ActivityStream,
     Logger,
     PersistentPlatformConfig,
@@ -34,11 +34,12 @@ import {
 } from "@sockethub/schemas";
 
 import { PlatformIrcSchema } from "./schema.js";
-import { PlatformIrcCredentialsObject } from "./types.js";
+import type { PlatformIrcCredentialsObject } from "./types.js";
 
-export interface GetClientCallback {
-    (err: string | null, client?: typeof IrcSocket): void;
-}
+export type GetClientCallback = (
+    err: string | null,
+    client?: typeof IrcSocket,
+) => void;
 
 interface IrcSocketOptionsCapabilities {
     requires: string[];
@@ -74,10 +75,6 @@ interface IrcSocketOptions {
  * @description
  * Handles all actions related to communication via. the IRC protocol.
  *
- * Uses the `irc-factory` node module as a base tool for interacting with IRC.
- *
- * {@link https://github.com/ircanywhere/irc-factory}
- *
  * @param {object} cfg a unique config object for this instance
  */
 export default class IRC implements PlatformInterface {
@@ -87,6 +84,7 @@ export default class IRC implements PlatformInterface {
         persist: true,
         requireCredentials: ["connect", "update"],
         initialized: false,
+        connectTimeoutMs: 30000,
     };
     private readonly updateActor: PlatformUpdateActor;
     private readonly sendToClient: PlatformSendToClient;
@@ -138,7 +136,7 @@ export default class IRC implements PlatformInterface {
      *      type: 'credentials',
      *      server: 'irc.host.net',
      *      nick: 'testuser',
-     *      password: 'asdasdasdasd',
+     *      password: 'secret',
      *      port: 6697,
      *      secure: true,
      *      sasl: true
@@ -163,8 +161,7 @@ export default class IRC implements PlatformInterface {
         credentials: PlatformIrcCredentialsObject,
         done: PlatformCallback,
     ) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        this.getClient(job.actor.id, credentials, (err, client) => {
+        this.getClient(job.actor.id, credentials, (err, _) => {
             if (err) {
                 return done(err);
             }
@@ -305,7 +302,7 @@ export default class IRC implements PlatformInterface {
 
             const match = /(\/\w+)\s*([\s\S]*)/.exec(job.object.content);
             if (match) {
-                const cmd = match[1].substr(1).toUpperCase(); // get command
+                const cmd = match[1].substring(1).toUpperCase(); // get command
                 const msg = match[2].trim(); // remove leading/trailing whitespace from remaining text
                 if (cmd === "ME") {
                     // handle /me messages uniquely
@@ -376,14 +373,14 @@ export default class IRC implements PlatformInterface {
      *   },
      *   object: {
      *     type: 'topic',
-     *     content: 'New version of Socekthub released!'
+     *     content: 'New version of Sockethub released!'
      *   }
      * }
      *
      * @example change nickname
      *  {
      *    context: 'irc'
-     *    type: 'udpate',
+     *    type: 'update',
      *    actor: {
      *      id: 'slvrbckt@irc.freenode.net',
      *      type: 'person',
@@ -395,7 +392,7 @@ export default class IRC implements PlatformInterface {
      *    target: {
      *      id: 'cooldude@irc.freenode.net',
      *      type: 'person',
-     *      name: cooldude
+     *      name: 'cooldude'
      *    }
      *  }
      */
@@ -579,7 +576,7 @@ export default class IRC implements PlatformInterface {
                         );
                     }
                 }.bind(this, cb),
-                30000,
+                this.config.connectTimeoutMs,
             );
             return;
         }
@@ -589,7 +586,7 @@ export default class IRC implements PlatformInterface {
                 "no client found, and no credentials specified. you must connect first",
             );
         } else {
-            this.ircConnect(key, credentials, (err, client) => {
+            this.ircConnect(credentials, (err, client) => {
                 if (err) {
                     this.config.initialized = false;
                     return cb(err);
@@ -604,7 +601,6 @@ export default class IRC implements PlatformInterface {
     }
 
     private ircConnect(
-        key: string,
         credentials: PlatformIrcCredentialsObject,
         cb: GetClientCallback,
     ) {
@@ -625,7 +621,7 @@ export default class IRC implements PlatformInterface {
             realname: credentials.actor.name || credentials.object.nick,
             port: credentials.object.port
                 ? typeof credentials.object.port === "string"
-                    ? parseInt(credentials.object.port, 10)
+                    ? Number.parseInt(credentials.object.port, 10)
                     : credentials.object.port
                 : is_secure
                   ? 6697
