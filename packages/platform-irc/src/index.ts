@@ -161,7 +161,7 @@ export default class IRC implements PlatformInterface {
         credentials: PlatformIrcCredentialsObject,
         done: PlatformCallback,
     ) {
-        this.getClient(job.actor.id, credentials, (err, _) => {
+        this.getClient(job.actor.id, credentials, (err) => {
             if (err) {
                 return done(err);
             }
