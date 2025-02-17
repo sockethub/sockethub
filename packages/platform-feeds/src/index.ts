@@ -30,12 +30,12 @@ import type {
 } from "@sockethub/schemas";
 
 import PlatformSchema from "./schema.js";
-import type {
+import {
     ASFeedType,
     ASObjectType,
-    PlatformFeedsActivityActor,
-    PlatformFeedsActivityObject,
-    PlatformFeedsActivityStream,
+    type PlatformFeedsActivityActor,
+    type PlatformFeedsActivityObject,
+    type PlatformFeedsActivityStream,
 } from "./types.js";
 
 const MAX_NOTE_LENGTH = 256;
