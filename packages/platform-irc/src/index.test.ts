@@ -52,7 +52,6 @@ describe("Initialize IRC Platform", () => {
             sendToClient: () => {},
         });
         platform.ircConnect = (
-            key: string,
             credentials: CredentialsObject,
             cb: GetClientCallback,
         ) => {
@@ -81,6 +80,7 @@ describe("Initialize IRC Platform", () => {
 
     it("returns a config object", () => {
         expect(platform.config).toEqual({
+            connectTimeoutMs: 30000,
             persist: true,
             requireCredentials: ["connect", "update"],
             initialized: false,
