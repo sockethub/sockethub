@@ -1,5 +1,5 @@
-const EVENT_INCOMING = "incoming",
-    EVENT_ERROR = "error";
+const EVENT_INCOMING = "incoming";
+const EVENT_ERROR = "error";
 
 export class ASEmitter {
     constructor(events, server) {
@@ -20,7 +20,7 @@ export class ASEmitter {
             type: "update",
             actor: {
                 type: "person",
-                id: nick + "@" + this.server,
+                id: `${nick}@${this.server}`,
                 name: nick,
             },
             target: {
@@ -42,7 +42,7 @@ export class ASEmitter {
             },
             target: {
                 type: "room",
-                id: this.server + "/" + channel,
+                id: `${this.server}/${channel}`,
                 name: channel,
             },
             object: {
@@ -58,11 +58,11 @@ export class ASEmitter {
             type: "update",
             actor: {
                 type: "person",
-                id: nick + "@" + this.server,
+                id: `${nick}@${this.server}`,
             },
             target: {
                 type: "room",
-                id: this.server + "/" + channel,
+                id: `${this.server}/${channel}`,
             },
             error: content,
         });
@@ -86,7 +86,7 @@ export class ASEmitter {
             },
             target: {
                 type: "person",
-                id: nick + "@" + this.server,
+                id: `${nick}@${this.server}`,
                 name: nick,
             },
         });
@@ -104,9 +104,9 @@ export class ASEmitter {
                 id: this.server,
                 type: "service",
             },
-            error: "no such channel " + nick,
+            error: `no such channel ${nick}`,
             target: {
-                id: nick + "@" + this.server,
+                id: `${nick}@${this.server}`,
                 type: "person",
             },
         });
@@ -118,12 +118,12 @@ export class ASEmitter {
             type: "update",
             actor: {
                 type: "person",
-                id: nick + "@" + this.server,
+                id: `${nick}@${this.server}`,
                 name: nick,
             },
             target: {
                 type: "room",
-                id: this.server + "/" + channel,
+                id: `${this.server}/${channel}`,
                 name: channel,
             },
             object: {
@@ -139,12 +139,12 @@ export class ASEmitter {
             type: "join",
             actor: {
                 type: "person",
-                id: nick + "@" + this.server,
+                id: `${nick}@${this.server}`,
                 name: nick,
             },
             target: {
                 type: "room",
-                id: this.server + "/" + channel,
+                id: `${this.server}/${channel}`,
                 name: channel,
             },
         });
@@ -156,7 +156,7 @@ export class ASEmitter {
             type: "leave",
             actor: {
                 type: "person",
-                id: nick + "@" + this.server,
+                id: `${nick}@${this.server}`,
                 name: nick,
             },
             target: {
@@ -176,12 +176,12 @@ export class ASEmitter {
             type: "leave",
             actor: {
                 type: "person",
-                id: nick + "@" + this.server,
+                id: `${nick}@${this.server}`,
                 name: nick,
             },
             target: {
                 type: "room",
-                id: this.server + "/" + channel,
+                id: `${this.server}/${channel}`,
                 name: channel,
             },
             object: {
@@ -192,13 +192,14 @@ export class ASEmitter {
     }
 
     privMsg(nick, target, content) {
-        let type, message;
+        let type;
+        let message;
         if (content.startsWith("+\u0001ACTION ")) {
             type = "me";
             message = content
-                // eslint-disable-next-line no-control-regex
+                // biome-ignore lint/suspicious/noControlCharactersInRegex: <explanation>
                 .split(/^\+\u0001ACTION\s+/)[1]
-                // eslint-disable-next-line no-control-regex
+                // biome-ignore lint/suspicious/noControlCharactersInRegex: <explanation>
                 .split(/\u0001$/)[0];
         } else {
             type = "message";
@@ -209,12 +210,12 @@ export class ASEmitter {
             type: "send",
             actor: {
                 type: "person",
-                id: nick + "@" + this.server,
+                id: `${nick}@${this.server}`,
                 name: nick,
             },
             target: {
                 type: target.startsWith("#") ? "room" : "person",
-                id: this.server + "/" + target,
+                id: `${this.server}/${target}`,
                 name: target,
             },
             object: {
@@ -230,12 +231,12 @@ export class ASEmitter {
             type: type,
             actor: {
                 type: "person",
-                id: nick + "@" + this.server,
+                id: `${nick}@${this.server}`,
                 name: nick,
             },
             target: {
                 type: "person",
-                id: target + "@" + this.server,
+                id: `${target}@${this.server}`,
                 name: target,
             },
             object: {
@@ -247,7 +248,7 @@ export class ASEmitter {
                 },
                 object: {
                     type: "room",
-                    id: this.server + "/" + channel,
+                    id: `${this.server}/${channel}`,
                     name: channel,
                 },
             },
@@ -260,12 +261,12 @@ export class ASEmitter {
             type: "update",
             actor: {
                 type: "person",
-                id: nick + "@" + this.server,
+                id: `${nick}@${this.server}`,
                 name: nick,
             },
             target: {
                 type: "person",
-                id: content + "@" + this.server,
+                id: `${content}@${this.server}`,
                 name: content,
             },
             object: {

@@ -1,8 +1,8 @@
-import { expect, describe, it, afterEach } from "bun:test";
-import * as sinon from "sinon";
+import { afterEach, describe, expect, it } from "bun:test";
 import { existsSync } from "fs";
+import * as sinon from "sinon";
 
-import routes, { basePaths, IRoutePaths } from "./routes.js";
+import routes, { basePaths, type IRoutePaths } from "./routes.js";
 
 describe("routes/base", () => {
     afterEach(() => {

@@ -1,57 +1,57 @@
 <script lang="ts">
-    import Intro from "$components/Intro.svelte";
-    import ActivityActor from "$components/ActivityActor.svelte";
-    import SockethubButton from "$components/SockethubButton.svelte";
-    import Logger, { addObject } from "$components/logs/Logger.svelte";
-    import { sc } from "$lib/sockethub";
-    import { writable } from "svelte/store";
-    import type { AnyActivityStream } from "$lib/sockethub";
+import ActivityActor from "$components/ActivityActor.svelte";
+import Intro from "$components/Intro.svelte";
+import SockethubButton from "$components/SockethubButton.svelte";
+import Logger, { addObject } from "$components/logs/Logger.svelte";
+import { sc } from "$lib/sockethub";
+import type { AnyActivityStream } from "$lib/sockethub";
+import { writable } from "svelte/store";
 
-    const actorId = "https://sockethub.org/examples/feedsUser";
-    const state = writable({
-        actorSet: false,
-    });
-    $: actor = {
-        id: actorId,
-        type: "person",
-        name: "Sockethub Examples Feeds",
-    };
+const actorId = "https://sockethub.org/examples/feedsUser";
+const state = writable({
+    actorSet: false,
+});
+$: actor = {
+    id: actorId,
+    type: "person",
+    name: "Sockethub Examples Feeds",
+};
 
-    let url = "https://sockethub.org/feed.xml";
+let url = "https://sockethub.org/feed.xml";
 
-    function send(obj: AnyActivityStream) {
-        sc.socket.emit(
-            "message",
-            addObject("SEND", obj, obj.id || ""),
-            (resp: AnyActivityStream) => {
-                if (Array.isArray(resp)) {
-                    let i = 1;
-                    for (const r of resp.reverse()) {
-                        addObject("RESP", r, `${r.id}.${i}`);
-                        i += 1;
-                    }
-                } else {
-                    addObject("RESP", resp, resp?.id || "");
+function send(obj: AnyActivityStream) {
+    sc.socket.emit(
+        "message",
+        addObject("SEND", obj, obj.id || ""),
+        (resp: AnyActivityStream) => {
+            if (Array.isArray(resp)) {
+                let i = 1;
+                for (const r of resp.reverse()) {
+                    addObject("RESP", r, `${r.id}.${i}`);
+                    i += 1;
                 }
-            },
-        );
-    }
+            } else {
+                addObject("RESP", resp, resp?.id || "");
+            }
+        },
+    );
+}
 
-    function getASObj(type: string) {
-        return {
-            context: "feeds",
-            type: type,
-            actor: actorId,
-            target: {
-                type: "feed",
-                id: url,
-            },
-        };
-    }
+function getASObj(type: string) {
+    return {
+        context: "feeds",
+        type: type,
+        actor: actorId,
+        target: {
+            type: "feed",
+            id: url,
+        },
+    };
+}
 
-    async function sendFetch(): Promise<void> {
-        send(getASObj("fetch"));
-    }
+async function sendFetch(): Promise<void> {
+    send(getASObj("fetch"));
+}
 </script>
 
 <Intro title="Feeds Platform Example">

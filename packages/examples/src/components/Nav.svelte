@@ -1,14 +1,14 @@
 <script>
-    import { page } from "$app/stores";
-    import { base } from "$app/paths";
+import { base } from "$app/paths";
+import { page } from "$app/stores";
 
-    const navItems = [
-        ["Home", "/"],
-        ["Dummy", "/dummy"],
-        ["Feeds", "/feeds"],
-        ["IRC", "/irc"],
-        ["XMPP", "/xmpp"],
-    ];
+const navItems = [
+    ["Home", "/"],
+    ["Dummy", "/dummy"],
+    ["Feeds", "/feeds"],
+    ["IRC", "/irc"],
+    ["XMPP", "/xmpp"],
+];
 </script>
 
 <nav class="flex justify-center space-x-4 p-2">

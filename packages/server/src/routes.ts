@@ -1,4 +1,4 @@
-import path from "path";
+import path from "node:path";
 import debug from "debug";
 
 import { __dirname } from "./util.js";
@@ -27,7 +27,7 @@ export const basePaths: IRoutePaths = {
 
 function prepFileRoutes(pathMap) {
     const _routes = [];
-    Object.keys(pathMap).forEach((key) => {
+    for (const key of Object.keys(pathMap)) {
         _routes.push({
             meta: {
                 method: "GET",
@@ -39,7 +39,7 @@ function prepFileRoutes(pathMap) {
                 res.sendFile(pathMap[req.url]);
             },
         });
-    });
+    }
     return _routes;
 }
 const baseRoutes = prepFileRoutes(basePaths);
@@ -54,7 +54,7 @@ function addRoute(app) {
  * Setup
  */
 const routes = {
-    setup: function (app: unknown) {
+    setup: (app: unknown) => {
         baseRoutes.forEach(addRoute(app));
     },
 };

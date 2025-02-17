@@ -1,49 +1,49 @@
 {
-    "name": "@sockethub/platform-irc",
-    "description": "A sockethub platform module implementing IRC functionality",
-    "version": "4.0.0-alpha.4",
-    "private": false,
-    "author": "Nick Jennings <nick@silverbucket.net>",
-    "license": "LGPL-3.0+",
-    "type": "module",
-    "main": "src/index.ts",
-    "packageManager": "bun@1.2.2",
-    "engines": {
-        "bun": ">=1.2"
-    },
-    "keywords": [
-        "sockethub",
-        "messaging",
-        "activitystreams",
-        "activity",
-        "streams",
-        "protocol",
-        "irc"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/sockethub/sockethub.git",
-        "directory": "packages/platform-irc"
-    },
-    "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-irc",
-    "dependencies": {
-        "@sockethub/irc2as": "workspace:4.0.0-alpha.4",
-        "irc-socket-sasl": "4.0.0"
-    },
-    "devDependencies": {
-        "@sockethub/schemas": "workspace:*",
-        "@types/bun": "latest",
-        "jsdoc-to-markdown": "8.0.0"
-    },
-    "peerDependencies": {
-        "@sockethub/server": "workspace:*"
-    },
-    "peerDependenciesMeta": {
-        "@sockethub/server": {
-            "optional": true
-        }
-    },
-    "scripts": {
-        "doc": "jsdoc2md --no-gfm --heading-depth 1 dist/index.ts  > API.md"
+  "name": "@sockethub/platform-irc",
+  "description": "A sockethub platform module implementing IRC functionality",
+  "version": "4.0.0-alpha.4",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "LGPL-3.0+",
+  "type": "module",
+  "main": "src/index.ts",
+  "packageManager": "bun@1.2.2",
+  "engines": {
+    "bun": ">=1.2"
+  },
+  "keywords": [
+    "sockethub",
+    "messaging",
+    "activitystreams",
+    "activity",
+    "streams",
+    "protocol",
+    "irc"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/platform-irc"
+  },
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-irc",
+  "dependencies": {
+    "@sockethub/irc2as": "workspace:4.0.0-alpha.4",
+    "irc-socket-sasl": "4.0.0"
+  },
+  "devDependencies": {
+    "@sockethub/schemas": "workspace:*",
+    "@types/bun": "latest",
+    "jsdoc-to-markdown": "8.0.0"
+  },
+  "peerDependencies": {
+    "@sockethub/server": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@sockethub/server": {
+      "optional": true
     }
+  },
+  "scripts": {
+    "doc": "jsdoc2md --no-gfm --heading-depth 1 dist/index.ts  > API.md"
+  }
 }

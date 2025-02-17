@@ -1,25 +1,19 @@
-import debug, { Debugger } from "debug";
-import { ActivityObject, ActivityStream } from "@sockethub/schemas";
+import type { ActivityObject, ActivityStream } from "@sockethub/schemas";
+import debug, { type Debugger } from "debug";
 
 export default function middleware(name: string): MiddlewareChain {
     return new MiddlewareChain(name);
 }
 
-export interface MiddlewareChainInterface {
-    (
-        error: ActivityStream | ActivityObject | Error,
-        data?: ActivityStream | ActivityObject | MiddlewareChainInterface,
-        next?: MiddlewareChainInterface,
-    ): void;
-}
+export type MiddlewareChainInterface = (
+    error: ActivityStream | ActivityObject | Error,
+    data?: ActivityStream | ActivityObject | MiddlewareChainInterface,
+    next?: MiddlewareChainInterface,
+) => void;
 
-interface ErrorHandlerInterface {
-    (err: Error, data?: unknown, cb?: unknown): void;
-}
+type ErrorHandlerInterface = (err: Error, data?: unknown, cb?: unknown) => void;
 
-export interface LogErrorInterface {
-    (msg: Error): void;
-}
+export type LogErrorInterface = (msg: Error) => void;
 
 export class MiddlewareChain {
     public name: string;
@@ -46,29 +40,29 @@ export class MiddlewareChain {
             this.chain.push(func as MiddlewareChainInterface);
         } else {
             throw new Error(
-                "middleware function provided with incorrect number of params: " +
-                    func.length,
+                `middleware function provided with incorrect number of params: ${func.length}`,
             );
         }
         return this;
     }
 
     done() {
-        return (data: unknown, callback: MiddlewareChainInterface) => {
+        return (data: unknown, callbackFunc: MiddlewareChainInterface) => {
+            let cb = callbackFunc;
             let position = 0;
-            if (typeof callback !== "function") {
-                callback = () => {
+            if (typeof callbackFunc !== "function") {
+                cb = () => {
                     // ensure we have a callback function
                 };
             }
             const next = (_data: unknown) => {
                 if (_data instanceof Error) {
                     this.logger(_data.toString());
-                    this.errHandler(_data, data, callback);
+                    this.errHandler(_data, data, cb);
                 } else if (typeof this.chain[position] === "function") {
                     this.chain[position++](_data as ActivityStream, next);
                 } else {
-                    callback(_data as ActivityStream);
+                    cb(_data as ActivityStream);
                 }
             };
             next(data);

@@ -1,16 +1,16 @@
-import { ChildProcess, fork } from "child_process";
-import { join } from "path";
+import { type ChildProcess, fork } from "node:child_process";
+import { join } from "node:path";
 import debug from "debug";
 import nconf from "nconf";
 
-import {
+import { type JobDataDecrypted, JobQueue } from "@sockethub/data-layer";
+import type {
     ActivityStream,
-    InternalActivityStream,
     CompletedJobHandler,
-    PlatformConfig,
+    InternalActivityStream,
     Logger,
+    PlatformConfig,
 } from "@sockethub/schemas";
-import { JobQueue, JobDataDecrypted } from "@sockethub/data-layer";
 import type { Socket } from "socket.io";
 
 import config from "./config.js";
@@ -51,7 +51,7 @@ export default class PlatformInstance {
     getSocket: typeof getSocket;
     readonly global: boolean = false;
     readonly completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
-    readonly config: PlatformConfig;
+    config: PlatformConfig;
     readonly name: string;
     process: ChildProcess;
     readonly debug: Logger;
@@ -120,7 +120,7 @@ export default class PlatformInstance {
 
         try {
             await this.queue.shutdown();
-            delete this.queue;
+            this.queue = undefined;
         } catch (e) {
             // this needs to happen
         }
@@ -190,6 +190,7 @@ export default class PlatformInstance {
             (socket: Socket) => {
                 try {
                     // this property should never be exposed externally
+                    // biome-ignore lint/performance/noDelete: <explanation>
                     delete msg.sessionSecret;
                 } finally {
                     msg.context = this.name;
@@ -267,7 +268,7 @@ export default class PlatformInstance {
                 this.config.initialized = false;
                 this.flaggedForTermination = true;
             } else {
-                this.debug(`persistent platform initialized`);
+                this.debug("persistent platform initialized");
                 await this.queue.resume();
                 this.config.initialized = true;
                 this.flaggedForTermination = false;

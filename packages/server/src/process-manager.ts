@@ -1,11 +1,11 @@
 import { getPlatformId } from "@sockethub/crypto";
 
+import type { IInitObject } from "./bootstrap/init.js";
 import PlatformInstance, {
     platformInstances,
-    PlatformInstanceParams,
-    MessageFromParent,
+    type PlatformInstanceParams,
+    type MessageFromParent,
 } from "./platform-instance.js";
-import { IInitObject } from "./bootstrap/init.js";
 
 class ProcessManager {
     private readonly parentId: string;
@@ -31,7 +31,7 @@ class ProcessManager {
         sessionId?: string,
     ): PlatformInstance {
         const platformDetails = this.init.platforms.get(platform);
-        let pi;
+        let pi: PlatformInstance;
 
         if (platformDetails.config.persist) {
             // ensure process is started - one for each actor

@@ -1,5 +1,5 @@
 {
-    "packages": ["packages/*"],
-    "npmClient": "bun",
-    "version": "independent"
+  "packages": ["packages/*"],
+  "npmClient": "bun",
+  "version": "independent"
 }

@@ -1,18 +1,21 @@
 <script context="module" lang="ts">
-    import { writable, get } from "svelte/store";
-    import type { AnyActivityStream } from "$lib/sockethub";
+import type { AnyActivityStream } from "$lib/sockethub";
+import { get, writable } from "svelte/store";
 
-    const messages = writable([] as [string, string | undefined][]);
+const messages = writable([] as [string, string | undefined][]);
 
-    export function displayMessage(m: AnyActivityStream) {
-        console.log("incoming message: ", m);
-        if (m.type === "send" && m.object?.type === "message") {
-            messages.set([
-                ...get(messages),
-                [typeof m.actor === "string" ? m.actor : m.actor?.name || "", m.object.content],
-            ]);
-        }
+export function displayMessage(m: AnyActivityStream) {
+    console.log("incoming message: ", m);
+    if (m.type === "send" && m.object?.type === "message") {
+        messages.set([
+            ...get(messages),
+            [
+                typeof m.actor === "string" ? m.actor : m.actor?.name || "",
+                m.object.content,
+            ],
+        ]);
     }
+}
 </script>
 
 <div>

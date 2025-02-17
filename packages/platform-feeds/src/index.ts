@@ -48,8 +48,8 @@ const full = new RegExp(
 
 function isHtml(s: string): boolean {
     // limit it to a reasonable length to improve performance.
-    s = s.trim().slice(0, 1000);
-    return basic.test(s) || full.test(s);
+    const limitedString = s.trim().slice(0, 1000);
+    return basic.test(limitedString) || full.test(s);
 }
 
 /**
@@ -216,7 +216,7 @@ function buildFeedItem(item: FeedItem): PlatformFeedsActivityObject {
                 ? ASObjectType.ARTICLE
                 : ASObjectType.NOTE,
         title: item.title,
-        id: item.link || item.meta.link + "#" + dateNum,
+        id: item.link || `${item.meta.link}#${dateNum}`,
         brief: item.description === item.summary ? undefined : item.summary,
         content: item.description,
         contentType: isHtml(item.description || "") ? "html" : "text",

@@ -1,9 +1,9 @@
-import debug, { Debugger } from "debug";
-import SecureStore from "secure-store-redis";
 import { crypto } from "@sockethub/crypto";
-import { CredentialsObject } from "@sockethub/schemas";
+import type { CredentialsObject } from "@sockethub/schemas";
+import debug, { type Debugger } from "debug";
+import SecureStore from "secure-store-redis";
 
-import { RedisConfig } from "./types.js";
+import type { RedisConfig } from "./types.js";
 
 export interface CredentialsStoreInterface {
     get(
@@ -33,7 +33,7 @@ export class CredentialsStore implements CredentialsStoreInterface {
     private readonly log: Debugger;
 
     /**
-     * @param parentId - The ID of the parent instance (eg. sockethub itself)
+     * @param parentId - The ID of the parent instance (e.g. sockethub itself)
      * @param sessionId - The ID of the session (socket.io connection)
      * @param secret - The encryption secret (parent + session secrets) must be 32 chars
      * @param redisConfig - Connect info for redis

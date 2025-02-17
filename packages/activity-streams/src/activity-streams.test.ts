@@ -1,5 +1,6 @@
+import { beforeEach, describe, expect, test } from "bun:test";
+import type { ActivityStream } from "@sockethub/schemas";
 import { ASFactory } from "./activity-streams";
-import { test, describe, beforeEach, expect } from "bun:test";
 
 describe("warn test", () => {
     expect(typeof ASFactory).toEqual("function");
@@ -67,6 +68,7 @@ describe("basic tests", () => {
         });
 
         test("returns undefined when no params are passed", () => {
+            // @ts-ignore
             expect(activity.Object.get()).toBeUndefined();
         });
 
@@ -100,6 +102,7 @@ describe("basic tests", () => {
 
         test("returns given id param when lookup fails and expand=false", () => {
             expect(
+                // @ts-ignore
                 activity.Object.get({
                     id: "thingy3",
                     foo: "bar",
@@ -111,8 +114,15 @@ describe("basic tests", () => {
         });
     });
 
+    interface TestActivityStream extends ActivityStream {
+        type: string;
+        verb?: string;
+        context: string;
+        platform?: string;
+    }
+
     describe("stream tests", () => {
-        let stream;
+        let stream: TestActivityStream;
 
         beforeEach(() => {
             stream = activity.Stream({
@@ -126,7 +136,7 @@ describe("basic tests", () => {
                     secure: true,
                 },
                 target: ["thingy1", "thingy2"],
-            });
+            }) as ActivityStream;
         });
 
         test("renames mapped props", () => {
@@ -137,10 +147,12 @@ describe("basic tests", () => {
         });
 
         test("expands existing objects", () => {
+            // @ts-ignore
             expect(stream.target).toEqual([
                 { id: "thingy1" },
                 { id: "thingy2" },
             ]);
+            // @ts-ignore
             expect(stream.actor).toEqual({ id: "thingy1" });
         });
 

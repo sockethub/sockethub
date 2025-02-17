@@ -1,5 +1,5 @@
-import { ActivityObjectSchema } from "./activity-object.js";
 import { ObjectTypesList, ObjectTypesSchema } from "../helpers/objects.js";
+import { ActivityObjectSchema } from "./activity-object.js";
 
 const validActorRefs = ActivityObjectSchema.properties.object.oneOf;
 const validTargetRefs = ActivityObjectSchema.properties.object.oneOf;
@@ -7,9 +7,9 @@ console.log(validActorRefs);
 
 const validObjectRefs = [];
 
-ObjectTypesList.forEach(function (type) {
-    validObjectRefs.push({ $ref: "#/definitions/type/" + type });
-});
+for (const type of ObjectTypesList) {
+    validObjectRefs.push({ $ref: `#/definitions/type/${type}` });
+}
 
 const contextSchema = {
     type: "string",

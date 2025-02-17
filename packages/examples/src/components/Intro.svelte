@@ -1,6 +1,6 @@
 <script>
-    import ContentArea from "./ContentArea.svelte";
-    export let title = "";
+import ContentArea from "./ContentArea.svelte";
+export const title = "";
 </script>
 
 <ContentArea>

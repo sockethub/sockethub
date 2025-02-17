@@ -1,4 +1,4 @@
-import { expect, describe, it, beforeEach, afterEach } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as sinon from "sinon";
 import { __dirname } from "./util.js";
 const FORK_PATH = __dirname + "/platform.js";

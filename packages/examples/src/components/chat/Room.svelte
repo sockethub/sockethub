@@ -1,37 +1,37 @@
 <script lang="ts">
-    import SockethubButton from "$components/SockethubButton.svelte";
-    import { send } from "$lib/sockethub";
-    import type { ActorData } from "$lib/sockethub";
-    import type { AnyActivityStream } from "$lib/sockethub";
-    import type { StateStore } from "$lib/types";
+import SockethubButton from "$components/SockethubButton.svelte";
+import { send } from "$lib/sockethub";
+import type { ActorData } from "$lib/sockethub";
+import type { AnyActivityStream } from "$lib/sockethub";
+import type { StateStore } from "$lib/types";
 
-    export let room: string;
-    export let actor: ActorData;
-    export let context: string;
-    export let state: StateStore;
+export let room: string;
+export let actor: ActorData;
+export let context: string;
+export let state: StateStore;
 
-    let joining = false;
+let joining = false;
 
-    async function joinRoom(): Promise<void> {
-        joining = true;
-        return await send({
-            context: context,
-            type: "join",
-            actor: actor.id,
-            target: {
-                id: room,
-                name: room,
-                type: "room",
-            },
-        } as AnyActivityStream)
-            .catch(() => {
-                $state.joined = false;
-            })
-            .then(() => {
-                // $actor.roomId = room;
-                $state.joined = true;
-            });
-    }
+async function joinRoom(): Promise<void> {
+    joining = true;
+    return await send({
+        context: context,
+        type: "join",
+        actor: actor.id,
+        target: {
+            id: room,
+            name: room,
+            type: "room",
+        },
+    } as AnyActivityStream)
+        .catch(() => {
+            $state.joined = false;
+        })
+        .then(() => {
+            // $actor.roomId = room;
+            $state.joined = true;
+        });
+}
 </script>
 
 <div>

@@ -31,32 +31,27 @@ export interface ActivityObject extends BaseActivityObject {
 
 type ErrorMsg = string | Error;
 
-export interface PlatformCallback {
-    (err?: ErrorMsg, data?: ActivityStream | ActivityStream[]): void;
-}
+export type PlatformCallback = (
+    err?: ErrorMsg,
+    data?: ActivityStream | ActivityStream[],
+) => void;
 
-export interface CallbackInterface {
-    (err?: ErrorMsg, data?: unknown): void;
-}
+export type CallbackInterface = (err?: ErrorMsg, data?: unknown) => void;
 
-export interface MiddlewareCallback {
-    (data: ActivityStream | Error): void;
-}
+export type MiddlewareCallback = (data: ActivityStream | Error) => void;
 
-export interface CompletedJobHandler {
-    (data: ActivityStream | undefined): void;
-}
+export type CompletedJobHandler = (data: ActivityStream | undefined) => void;
 
-export interface PlatformSendToClient {
-    (msg: ActivityStream, special?: string): void;
-}
+export type PlatformSendToClient = (
+    msg: ActivityStream,
+    special?: string,
+) => void;
 
-export interface PlatformUpdateActor {
-    (credentials: object): Promise<void>;
-}
+export type PlatformUpdateActor = (credentials: object) => Promise<void>;
 
 export interface Logger {
-    // eslint-disable-next-line
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    // biome-ignore lint/style/useShorthandFunctionType: <explanation>
     (msg: string, data?: any): void;
 }
 
@@ -97,7 +92,13 @@ export interface PlatformSchemaStruct {
     name: string;
     version: string;
     credentials?: object;
-    messages?: object;
+    messages?: {
+        properties?: {
+            type?: {
+                enum?: string[];
+            };
+        };
+    };
 }
 
 export interface PlatformConstructor {

@@ -8,25 +8,25 @@
 import debug from "debug";
 
 import {
+    type PlatformConfig,
+    type PlatformInterface,
+    type PlatformSchemaStruct,
+    type PlatformSession,
     validatePlatformSchema,
-    PlatformConfig,
-    PlatformSchemaStruct,
-    PlatformSession,
 } from "@sockethub/schemas";
 
 const log = debug("sockethub:server:bootstrap:platforms");
 
-export type PlatformMap = Map<
-    string,
-    {
-        id: string;
-        moduleName: string;
-        config: PlatformConfig;
-        schemas: PlatformSchemaStruct;
-        version: string;
-        types: Array<string>;
-    }
->;
+export type PlatformStruct = {
+    id: string;
+    moduleName: string;
+    config: PlatformConfig;
+    schemas: PlatformSchemaStruct;
+    version: string;
+    types: Array<string>;
+};
+
+export type PlatformMap = Map<string, PlatformStruct>;
 
 const dummySession: PlatformSession = {
     debug: () => {},
@@ -38,16 +38,14 @@ const dummySession: PlatformSession = {
 // Sockethub to call) then add it to the supported types list.
 function platformListsSupportedTypes(p): boolean {
     return (
-        p.schema.messages.properties &&
-        p.schema.messages.properties.type &&
-        p.schema.messages.properties.type.enum &&
+        p.schema.messages.properties?.type?.enum &&
         p.schema.messages.properties.type.enum.length > 0
     );
 }
 
 async function loadPlatform(platformName: string, injectRequire) {
     log(`loading ${platformName}`);
-    let p;
+    let p: PlatformInterface;
     if (injectRequire) {
         const P = await injectRequire(platformName);
         p = new P();
@@ -59,7 +57,8 @@ async function loadPlatform(platformName: string, injectRequire) {
 
     if (err) {
         throw new Error(`${platformName} ${err}`);
-    } else if (typeof p.config !== "object") {
+    }
+    if (typeof p.config !== "object") {
         throw new Error(
             `${platformName} platform must have a config property that is an object.`,
         );
@@ -89,7 +88,7 @@ export default async function loadPlatforms(
             // register the platforms credentials schema
             types.push("credentials");
         } else {
-            p.config.noCredentials = true;
+            p.config.requireCredentials = [];
         }
 
         if (platformListsSupportedTypes(p)) {

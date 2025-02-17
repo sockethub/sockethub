@@ -21,5 +21,6 @@ type StateData = {
 };
 
 export type StateStore = {
+    set: Writable<StateData>["set"];
     subscribe: Writable<StateData>["subscribe"];
 };

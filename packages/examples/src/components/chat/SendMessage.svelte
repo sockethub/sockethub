@@ -1,36 +1,36 @@
 <script lang="ts">
-    import SockethubButton from "$components/SockethubButton.svelte";
-    import { send } from "$lib/sockethub";
-    import type { ActorData } from "$lib/sockethub";
-    import type { StateStore } from "$lib/types";
+import SockethubButton from "$components/SockethubButton.svelte";
+import { send } from "$lib/sockethub";
+import type { ActorData } from "$lib/sockethub";
+import type { StateStore } from "$lib/types";
 
-    export let actor: ActorData;
-    export let context: string;
-    export let state: StateStore;
-    export let room: string;
+export let actor: ActorData;
+export let context: string;
+export let state: StateStore;
+export let room: string;
 
-    let message = "";
-    let sending = false;
+let message = "";
+let sending = false;
 
-    async function sendMessage() {
-        sending = true;
-        console.log("send message: ", message);
-        await send({
-            context: context,
-            type: "send",
-            actor: actor.id,
-            object: {
-                type: "message",
-                content: message,
-            },
-            target: {
-                id: room,
-                name: room,
-                type: "room",
-            },
-        });
-        sending = false;
-    }
+async function sendMessage() {
+    sending = true;
+    console.log("send message: ", message);
+    await send({
+        context: context,
+        type: "send",
+        actor: actor.id,
+        object: {
+            type: "message",
+            content: message,
+        },
+        target: {
+            id: room,
+            name: room,
+            type: "room",
+        },
+    });
+    sending = false;
+}
 </script>
 
 <div>

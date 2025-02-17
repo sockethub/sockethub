@@ -1,7 +1,7 @@
+import type { ASManager } from "@sockethub/activity-streams";
 import { expect } from "chai";
-import { createSandbox, restore } from "sinon";
 import EventEmitter from "eventemitter3";
-import { type ASManager } from "@sockethub/activity-streams";
+import { createSandbox, restore } from "sinon";
 
 import SockethubClient from "./sockethub-client";
 

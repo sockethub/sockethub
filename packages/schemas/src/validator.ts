@@ -1,12 +1,12 @@
-import debug from "debug";
-import Ajv, { Schema } from "ajv";
+import Ajv, { type Schema } from "ajv";
 import addFormats from "ajv-formats";
 import additionsFormats2019 from "ajv-formats-draft2019";
+import debug from "debug";
 import getErrorMessage from "./helpers/error-parser.js";
-import { ActivityStream } from "./types.js";
-import { PlatformSchema } from "./schemas/platform.js";
-import { ActivityStreamSchema } from "./schemas/activity-stream.js";
 import { ActivityObjectSchema } from "./schemas/activity-object.js";
+import { ActivityStreamSchema } from "./schemas/activity-stream.js";
+import { PlatformSchema } from "./schemas/platform.js";
+import type { ActivityStream } from "./types.js";
 
 const ajv = new Ajv({ strictTypes: false, allErrors: true });
 addFormats(ajv);
@@ -79,13 +79,9 @@ export function validatePlatformSchema(schema: Schema): string {
     // validate schema property
     const err = validate(schema);
     if (!err) {
-        return (
-            `platform schema failed to validate: ` +
-            `${validate.errors[0].instancePath} ${validate.errors[0].message}`
-        );
-    } else {
-        return "";
+        return `platform schema failed to validate: ${validate.errors[0].instancePath} ${validate.errors[0].message}`;
     }
+    return "";
 }
 
 export function addPlatformSchema(schema: Schema, platform_type: string) {

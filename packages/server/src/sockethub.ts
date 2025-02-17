@@ -1,31 +1,47 @@
 import debug from "debug";
-import { Socket } from "socket.io";
 import nconf from "nconf";
+import type { Socket } from "socket.io";
 
 import { crypto } from "@sockethub/crypto";
 import { CredentialsStore } from "@sockethub/data-layer";
-import { type CredentialsStoreInterface } from "@sockethub/data-layer";
-import { ActivityStream } from "@sockethub/schemas";
+import type { CredentialsStoreInterface } from "@sockethub/data-layer";
+import type {
+    ActivityStream,
+    InternalActivityStream,
+} from "@sockethub/schemas";
 
 import getInitObject from "./bootstrap/init.js";
+import janitor from "./janitor.js";
+import listener from "./listener.js";
+import middleware from "./middleware.js";
 import createActivityObject from "./middleware/create-activity-object.js";
 import expandActivityStream from "./middleware/expand-activity-stream.js";
 import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
-import janitor from "./janitor.js";
-import listener from "./listener.js";
 import ProcessManager from "./process-manager.js";
-import middleware from "./middleware.js";
 
 const log = debug("sockethub:server:core");
 
-function attachError(err, msg) {
-    if (typeof msg !== "object") {
-        msg = { context: "error" };
-    }
-    msg.error = err.toString();
+type ErrMsg = {
+    context: string;
+    error: string;
+    content: object;
+};
+
+function attachError(err: unknown, msg: InternalActivityStream | undefined) {
+    const finalError: ErrMsg = {
+        context: "error",
+        error: err.toString(),
+        content: {},
+    };
+
+    // biome-ignore lint/performance/noDelete: <explanation>
     delete msg.sessionSecret;
-    return msg;
+
+    if (msg) {
+        finalError.content = msg;
+    }
+    return finalError;
 }
 
 class Sockethub {
@@ -42,7 +58,7 @@ class Sockethub {
         this.parentId = crypto.randToken(16);
         this.parentSecret1 = crypto.randToken(16);
         this.parentSecret2 = crypto.randToken(16);
-        log("session id: " + this.parentId);
+        log(`session id: ${this.parentId}`);
     }
 
     /**
@@ -51,9 +67,8 @@ class Sockethub {
     async boot() {
         if (this.status) {
             return log("Sockethub.boot() called more than once");
-        } else {
-            this.status = true;
         }
+        this.status = true;
 
         const init = await getInitObject().catch((err) => {
             log(err);
@@ -82,18 +97,19 @@ class Sockethub {
 
     private handleIncomingConnection(socket: Socket) {
         // session-specific debug messages
-        const sessionLog = debug("sockethub:server:core:" + socket.id),
-            sessionSecret = crypto.randToken(16),
-            // stores instance is session-specific
-            // stores = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret);
-            credentialsStore: CredentialsStoreInterface = new CredentialsStore(
+        const sessionLog = debug(`sockethub:server:core:${socket.id}`);
+        const sessionSecret = crypto.randToken(16);
+        // stores instance is session-specific
+        // stores = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret);
+        const credentialsStore: CredentialsStoreInterface =
+            new CredentialsStore(
                 this.parentId,
                 socket.id,
                 this.parentSecret1 + sessionSecret,
                 nconf.get("redis"),
             );
 
-        sessionLog(`socket.io connection`);
+        sessionLog("socket.io connection");
 
         socket.on("disconnect", () => {
             sessionLog("disconnect received from client");

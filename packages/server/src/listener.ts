@@ -1,10 +1,10 @@
-import debug from "debug";
+import { writeFileSync } from "node:fs";
+import * as HTTP from "node:http";
+import path from "node:path";
 import bodyParser from "body-parser";
+import debug from "debug";
 import express from "express";
-import * as HTTP from "http";
 import { Server } from "socket.io";
-import { writeFileSync } from "fs";
-import path from "path";
 
 import config from "./config.js";
 import routes from "./routes.js";
@@ -68,10 +68,9 @@ class Listener {
             res.sendFile(examplesIndex);
         });
         log(
-            `examples served at ` +
-                `http://${config.get("sockethub:host")}:${config.get(
-                    "sockethub:port",
-                )}`,
+            `examples served at http://${config.get("sockethub:host")}:${config.get(
+                "sockethub:port",
+            )}`,
         );
     }
 
@@ -81,10 +80,9 @@ class Listener {
             config.get("sockethub:host") as number,
             () => {
                 log(
-                    `sockethub listening on ` +
-                        `ws://${config.get("sockethub:host")}:${config.get(
-                            "sockethub:port",
-                        )}`,
+                    `sockethub listening on ws://${config.get("sockethub:host")}:${config.get(
+                        "sockethub:port",
+                    )}`,
                 );
             },
         );
