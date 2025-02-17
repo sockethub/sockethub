@@ -1,18 +1,18 @@
-import debug from "debug";
-import {
-    ActivityStream,
-    PlatformCallback,
-    PlatformSession,
-    CredentialsObject,
-    PlatformInterface,
-} from "@sockethub/schemas";
 import { crypto, getPlatformId } from "@sockethub/crypto";
 import {
     CredentialsStore,
+    type JobDataDecrypted,
     JobWorker,
-    JobDataDecrypted,
 } from "@sockethub/data-layer";
-import { JobHandler } from "@sockethub/data-layer";
+import type { JobHandler } from "@sockethub/data-layer";
+import type {
+    ActivityStream,
+    CredentialsObject,
+    PlatformCallback,
+    PlatformInterface,
+    PlatformSession,
+} from "@sockethub/schemas";
+import debug from "debug";
 
 // command-line params
 const parentId = process.argv[2];
@@ -25,7 +25,8 @@ let logger = debug(loggerPrefix);
 
 let jobWorker: JobWorker;
 let jobWorkerStarted = false;
-let parentSecret1: string, parentSecret2: string;
+let parentSecret1: string;
+let parentSecret2: string;
 
 logger(`platform handler initializing for ${platformName} ${identifier}`);
 
@@ -87,7 +88,7 @@ process.on("message", async (data: SecretFromParent) => {
 function getJobHandler(): JobHandler {
     return async (
         job: JobDataDecrypted,
-    ): Promise<string | void | ActivityStream> => {
+    ): Promise<string | undefined | ActivityStream> => {
         return new Promise((resolve, reject) => {
             const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
             jobLog(`received ${job.title} ${job.msg.type}`);
@@ -99,6 +100,7 @@ function getJobHandler(): JobHandler {
                     url: redisUrl,
                 },
             );
+            // biome-ignore lint/performance/noDelete: <explanation>
             delete job.msg.sessionSecret;
 
             let jobCallbackCalled = false;
@@ -107,7 +109,8 @@ function getJobHandler(): JobHandler {
                 result: null | ActivityStream,
             ): void => {
                 if (jobCallbackCalled) {
-                    return resolve(null);
+                    resolve(null);
+                    return;
                 }
                 jobCallbackCalled = true;
                 if (err) {
@@ -146,7 +149,7 @@ function getJobHandler(): JobHandler {
                     })
                     .catch((err) => {
                         console.log("error:\n", err);
-                        jobLog("error " + err.toString());
+                        jobLog(`error ${err.toString()}`);
                         reject(err);
                     });
             } else if (
@@ -171,7 +174,7 @@ function getJobHandler(): JobHandler {
  * @param command string containing the type of command to be sent. 'message' or 'close'
  */
 function getSendFunction(command: string) {
-    return function (msg: ActivityStream, special?: string) {
+    return (msg: ActivityStream, special?: string) => {
         if (platform.config.persist) {
             process.send([command, msg, special]);
         } else {

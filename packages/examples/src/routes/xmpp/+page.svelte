@@ -1,58 +1,58 @@
 <script lang="ts">
-    import Intro from "$components/Intro.svelte";
-    import SockethubButton from "$components/SockethubButton.svelte";
-    import Logger from "$components/logs/Logger.svelte";
-    import { send } from "$lib/sockethub";
-    import type { AnyActivityStream } from "$lib/sockethub";
-    import ActivityActor from "$components/ActivityActor.svelte";
-    import Credentials from "$components/Credentials.svelte";
-    import IncomingMessage from "$components/chat/IncomingMessages.svelte";
-    import SendMessage from "$components/chat/SendMessage.svelte";
-    import Room from "$components/chat/Room.svelte";
-    import { writable } from "svelte/store";
-    import type { CredentialName } from "$lib/sockethub";
+import ActivityActor from "$components/ActivityActor.svelte";
+import Credentials from "$components/Credentials.svelte";
+import Intro from "$components/Intro.svelte";
+import SockethubButton from "$components/SockethubButton.svelte";
+import IncomingMessage from "$components/chat/IncomingMessages.svelte";
+import Room from "$components/chat/Room.svelte";
+import SendMessage from "$components/chat/SendMessage.svelte";
+import Logger from "$components/logs/Logger.svelte";
+import { send } from "$lib/sockethub";
+import type { AnyActivityStream } from "$lib/sockethub";
+import type { CredentialName } from "$lib/sockethub";
+import { writable } from "svelte/store";
 
-    const actorIdStore = writable("user@jabber.org");
-    let connecting = false;
+const actorIdStore = writable("user@jabber.org");
+let connecting = false;
 
-    $: actorId = `${$actorIdStore}/SockethubExample`;
+$: actorId = `${$actorIdStore}/SockethubExample`;
 
-    let room = "kosmos-random@kosmos.chat";
+const room = "kosmos-random@kosmos.chat";
 
-    const state = writable({
-        actorSet: false,
-        credentialsSet: false,
-        connected: false,
-        joined: false,
-    });
+const state = writable({
+    actorSet: false,
+    credentialsSet: false,
+    connected: false,
+    joined: false,
+});
 
-    $: actor = {
-        id: actorId,
-        type: "person",
-        name: actorId,
-    };
+$: actor = {
+    id: actorId,
+    type: "person",
+    name: actorId,
+};
 
-    $: credentials = {
-        type: "credentials" as CredentialName,
-        userAddress: $actorIdStore,
-        password: "123456",
-        resource: "SockethubExample",
-    };
+$: credentials = {
+    type: "credentials" as CredentialName,
+    userAddress: $actorIdStore,
+    password: "123456",
+    resource: "SockethubExample",
+};
 
-    async function connectXmpp(): Promise<void> {
-        connecting = true;
-        return await send({
-            context: "xmpp",
-            type: "connect",
-            actor: actorId,
-        } as AnyActivityStream)
-            .then(() => {
-                $state.connected = true;
-            })
-            .catch(() => {
-                $state.connected = false;
-            });
-    }
+async function connectXmpp(): Promise<void> {
+    connecting = true;
+    return await send({
+        context: "xmpp",
+        type: "connect",
+        actor: actorId,
+    } as AnyActivityStream)
+        .then(() => {
+            $state.connected = true;
+        })
+        .catch(() => {
+            $state.connected = false;
+        });
+}
 </script>
 
 <Intro title="XMPP Platform Example">

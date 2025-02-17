@@ -1,78 +1,78 @@
 {
-    "name": "@sockethub/server",
-    "description": "A polyglot messaging service, server libraries",
-    "version": "5.0.0-alpha.4",
-    "type": "module",
-    "private": false,
-    "author": "Nick Jennings <nick@silverbucket.net>",
-    "license": "LGPL-3.0+",
-    "main": "src/index.ts",
-    "bin": "bin/sockethub",
-    "preferGlobal": true,
-    "packageManager": "bun@1.2.2",
-    "engines": {
-        "bun": ">=1.2"
-    },
-    "keywords": [
-        "sockethub",
-        "messaging",
-        "polyglot",
-        "unhosted",
-        "apis",
-        "api",
-        "protocols",
-        "protocol",
-        "irc",
-        "xmpp",
-        "facebook",
-        "rss",
-        "atom",
-        "twitter",
-        "smtp",
-        "imap",
-        "email"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/sockethub/sockethub.git",
-        "directory": "packages/server"
-    },
-    "homepage": "https://sockethub.org",
-    "dependencies": {
-        "@sockethub/activity-streams": "workspace:^",
-        "@sockethub/client": "workspace:^",
-        "@sockethub/crypto": "workspace:^",
-        "@sockethub/data-layer": "workspace:^",
-        "@sockethub/examples": "workspace:^",
-        "@sockethub/schemas": "workspace:^",
-        "body-parser": "1.20.3",
-        "debug": "4.3.4",
-        "ejs": "3.1.10",
-        "express": "4.20.0",
-        "jquery": "3.7.1",
-        "nconf": "0.12.1",
-        "socket.io": "4.7.5"
-    },
-    "scripts": {
-        "start": "DEBUG=sockethub* ./bin/sockethub",
-        "dev": "DEBUG=sockethub* ./bin/sockethub --examples"
-    },
-    "devDependencies": {
-        "@types/body-parser": "1.19.5",
-        "@types/bun": "latest",
-        "@types/debug": "4.1.12",
-        "@types/express": "4.17.21",
-        "@types/jquery": "3.5.29",
-        "@types/nconf": "0.10.6",
-        "@types/sinon": "17.0.2",
-        "jaribu": "2.2.3",
-        "sinon": "17.0.1",
-        "web-streams-polyfill": "^3.3.3"
-    },
-    "optionalDependencies": {
-        "@sockethub/platform-dummy": "workspace:*",
-        "@sockethub/platform-feeds": "workspace:*",
-        "@sockethub/platform-irc": "workspace:*",
-        "@sockethub/platform-xmpp": "workspace:*"
-    }
+  "name": "@sockethub/server",
+  "description": "A polyglot messaging service, server libraries",
+  "version": "5.0.0-alpha.4",
+  "type": "module",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "LGPL-3.0+",
+  "main": "src/index.ts",
+  "bin": "bin/sockethub",
+  "preferGlobal": true,
+  "packageManager": "bun@1.2.2",
+  "engines": {
+    "bun": ">=1.2"
+  },
+  "keywords": [
+    "sockethub",
+    "messaging",
+    "polyglot",
+    "unhosted",
+    "apis",
+    "api",
+    "protocols",
+    "protocol",
+    "irc",
+    "xmpp",
+    "facebook",
+    "rss",
+    "atom",
+    "twitter",
+    "smtp",
+    "imap",
+    "email"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/server"
+  },
+  "homepage": "https://sockethub.org",
+  "dependencies": {
+    "@sockethub/activity-streams": "workspace:^",
+    "@sockethub/client": "workspace:^",
+    "@sockethub/crypto": "workspace:^",
+    "@sockethub/data-layer": "workspace:^",
+    "@sockethub/examples": "workspace:^",
+    "@sockethub/schemas": "workspace:^",
+    "body-parser": "1.20.3",
+    "debug": "4.3.4",
+    "ejs": "3.1.10",
+    "express": "4.20.0",
+    "jquery": "3.7.1",
+    "nconf": "0.12.1",
+    "socket.io": "4.7.5"
+  },
+  "scripts": {
+    "start": "DEBUG=sockethub* ./bin/sockethub",
+    "dev": "DEBUG=sockethub* ./bin/sockethub --examples"
+  },
+  "devDependencies": {
+    "@types/body-parser": "1.19.5",
+    "@types/bun": "latest",
+    "@types/debug": "4.1.12",
+    "@types/express": "4.17.21",
+    "@types/jquery": "3.5.29",
+    "@types/nconf": "0.10.6",
+    "@types/sinon": "17.0.2",
+    "jaribu": "2.2.3",
+    "sinon": "17.0.1",
+    "web-streams-polyfill": "^3.3.3"
+  },
+  "optionalDependencies": {
+    "@sockethub/platform-dummy": "workspace:*",
+    "@sockethub/platform-feeds": "workspace:*",
+    "@sockethub/platform-irc": "workspace:*",
+    "@sockethub/platform-xmpp": "workspace:*"
+  }
 }

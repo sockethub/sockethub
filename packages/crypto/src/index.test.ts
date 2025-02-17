@@ -1,7 +1,7 @@
-import { expect, describe, it, beforeEach, afterEach } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as sinon from "sinon";
 
-import { getPlatformId, Crypto } from "./index";
+import { Crypto, getPlatformId } from "./index";
 
 const secret = "a test secret.. that is 16 x 2..";
 const data = { foo: "bar" };

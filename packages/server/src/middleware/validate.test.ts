@@ -1,9 +1,9 @@
-import { expect, describe, it, beforeEach } from "bun:test";
-import asObjects from "./validate.test.data.js";
-import validate from "./validate.js";
-import { ActivityStream } from "@sockethub/schemas";
+import { describe, expect, it } from "bun:test";
+import type { ActivityStream } from "@sockethub/schemas";
 import getInitObject from "../bootstrap/init.js";
 import { initMockFakePlatform } from "../bootstrap/init.test.js";
+import validate from "./validate.js";
+import asObjects from "./validate.test.data.js";
 
 describe("Middleware: Validate", async () => {
     const loadInitMock = await initMockFakePlatform("fakeplatform");
@@ -21,8 +21,10 @@ describe("Middleware: Validate", async () => {
                 )(obj.input as ActivityStream, (msg) => {
                     if (obj.output) {
                         if (obj.output === "same") {
+                            // @ts-ignore
                             expect(msg).toEqual(obj.input);
                         } else {
+                            // @ts-ignore
                             expect(msg).toEqual(obj.output);
                         }
                     }

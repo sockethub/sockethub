@@ -1,6 +1,6 @@
-import { Author } from "podparse";
+import type { Author } from "podparse";
 
-import {
+import type {
     ActivityActor,
     ActivityObject,
     ActivityStream,

@@ -1,10 +1,10 @@
-import EventEmitter from "events";
-import IORedis, { Redis } from "ioredis";
+import EventEmitter from "node:events";
+import IORedis, { type Redis } from "ioredis";
 
-import { crypto, Crypto } from "@sockethub/crypto";
-import { ActivityStream } from "@sockethub/schemas";
+import { crypto, type Crypto } from "@sockethub/crypto";
+import type { ActivityStream } from "@sockethub/schemas";
 
-import { JobDataDecrypted, JobEncrypted, RedisConfig } from "./types.js";
+import type { JobDataDecrypted, JobEncrypted, RedisConfig } from "./types.js";
 
 export function createIORedisConnection(config: RedisConfig): Redis {
     return new IORedis(config.url, {
@@ -21,7 +21,7 @@ export class JobBase extends EventEmitter {
         super();
         if (secret.length !== 32) {
             throw new Error(
-                "secret must be a 32 char string, length: " + secret.length,
+                `secret must be a 32 char string, length: ${secret.length}`,
             );
         }
         this.secret = secret;

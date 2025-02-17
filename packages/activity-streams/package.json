@@ -1,47 +1,40 @@
 {
-    "name": "@sockethub/activity-streams",
-    "version": "4.4.0-alpha.4",
-    "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
-    "type": "module",
-    "main": "./src/activity-streams.ts",
-    "files": [
-        "dist/"
-    ],
-    "packageManager": "bun@1.2.2",
-    "engines": {
-        "bun": ">=1.2"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/sockethub/sockethub.git",
-        "directory": "packages/activity-streams"
-    },
-    "keywords": [
-        "activity",
-        "streams",
-        "json-ld",
-        "activity-streams"
-    ],
-    "author": "Nick Jennings <nick@silverbucket.net>",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/sockethub/sockethub/issues"
-    },
-    "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/activity-streams",
-    "scripts": {
-        "build": "bun run clean && bun run build:js && bun run build:minify",
-        "build:js": "bun build ./src/activity-streams.ts --outdir=dist/ --target=browser --sourcemap=inline --format=esm",
-        "build:minify": "bun build ./src/activity-streams.ts --target=browser --sourcemap=inline --minify --outfile=dist/activity-streams.min.js",
-        "clean": "rm -rf dist",
-        "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer"
-    },
-    "dependencies": {
-        "eventemitter3": "5.0.1"
-    },
-    "devDependencies": {
-        "@sockethub/schemas": "workspace:*",
-        "@types/bun": "latest",
-        "@web/test-runner": "^0.19.0",
-        "@web/test-runner-puppeteer": "^0.17.0"
-    }
+  "name": "@sockethub/activity-streams",
+  "version": "4.4.0-alpha.4",
+  "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
+  "type": "module",
+  "main": "./src/activity-streams.ts",
+  "files": ["dist/"],
+  "packageManager": "bun@1.2.2",
+  "engines": {
+    "bun": ">=1.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/activity-streams"
+  },
+  "keywords": ["activity", "streams", "json-ld", "activity-streams"],
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sockethub/sockethub/issues"
+  },
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/activity-streams",
+  "scripts": {
+    "build": "bun run clean && bun run build:js && bun run build:minify",
+    "build:js": "bun build ./src/activity-streams.ts --outdir=dist/ --target=browser --sourcemap=inline --format=esm",
+    "build:minify": "bun build ./src/activity-streams.ts --target=browser --sourcemap=inline --minify --outfile=dist/activity-streams.min.js",
+    "clean": "rm -rf dist",
+    "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer"
+  },
+  "dependencies": {
+    "eventemitter3": "5.0.1"
+  },
+  "devDependencies": {
+    "@sockethub/schemas": "workspace:*",
+    "@types/bun": "latest",
+    "@web/test-runner": "^0.19.0",
+    "@web/test-runner-puppeteer": "^0.17.0"
+  }
 }

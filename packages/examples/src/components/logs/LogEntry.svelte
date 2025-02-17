@@ -1,11 +1,11 @@
 <script lang="ts">
-    import DummyEntry from "./platforms/DummyEntry.svelte";
-    import FeedsEntry from "./platforms/FeedsEntry.svelte";
-    import GenericEntry from "./platforms/IrcEntry.svelte";
-    import type { AnyActivityStream } from "$lib/sockethub";
-    export let id: string;
-    export let entry: AnyActivityStream;
-    export let buttonAction = () => {};
+import type { AnyActivityStream } from "$lib/sockethub";
+import DummyEntry from "./platforms/DummyEntry.svelte";
+import FeedsEntry from "./platforms/FeedsEntry.svelte";
+import GenericEntry from "./platforms/IrcEntry.svelte";
+export let id: string;
+export let entry: AnyActivityStream;
+export const buttonAction = () => {};
 </script>
 
 <li>

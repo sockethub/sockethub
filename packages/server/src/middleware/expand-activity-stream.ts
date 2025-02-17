@@ -1,8 +1,8 @@
-import { ASFactory, ASFactoryOptions } from "@sockethub/activity-streams";
-import { ActivityStream } from "@sockethub/schemas";
+import { ASFactory, type ASFactoryOptions } from "@sockethub/activity-streams";
+import type { ActivityStream } from "@sockethub/schemas";
 
 import config from "../config.js";
-import { MiddlewareChainInterface } from "../middleware.js";
+import type { MiddlewareChainInterface } from "../middleware.js";
 
 const asConfig = config.get("activity-streams:opts") as ASFactoryOptions;
 asConfig.warnOnUnknownObjectProperties = false;
@@ -19,17 +19,17 @@ export default function expandActivityStream(
     done: MiddlewareChainInterface,
 ) {
     if (!ensureObject(msg)) {
-        done(new Error(`message received is not an object.`));
+        done(new Error("message received is not an object."));
     } else if (typeof msg.context !== "string") {
         done(new Error("activity stream must contain a context property"));
     } else if (typeof msg.type !== "string") {
         done(new Error("activity stream must contain a type property."));
     } else {
-        msg = activity.Stream(msg) as ActivityStream;
-        if (!msg.actor) {
+        const msgStream = activity.Stream(msg) as ActivityStream;
+        if (!msgStream.actor) {
             done(new Error("activity stream must contain an actor property."));
         } else {
-            done(msg);
+            done(msgStream);
         }
     }
 }

@@ -1,4 +1,4 @@
-import { expect, it, describe } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import * as sinon from "sinon";
 
 import middleware, { MiddlewareChain } from "./middleware.js";

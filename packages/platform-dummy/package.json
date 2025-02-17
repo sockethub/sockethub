@@ -1,36 +1,33 @@
 {
-    "name": "@sockethub/platform-dummy",
-    "description": "A sockethub platform dummy module",
-    "version": "3.0.0-alpha.4",
-    "type": "module",
-    "private": false,
-    "author": "Nick Jennings <nick@silverbucket.net>",
-    "license": "LGPL-3.0+",
-    "main": "src/index.ts",
-    "packageManager": "bun@1.2.2",
-    "engines": {
-        "bun": ">=1.2"
-    },
-    "keywords": [
-        "sockethub",
-        "dummy"
-    ],
-    "devDependencies": {
-        "@sockethub/schemas": "workspace:*",
-        "@types/bun": "latest"
-    },
-    "peerDependencies": {
-        "@sockethub/server": "workspace:*"
-    },
-    "peerDependenciesMeta": {
-        "@sockethub/server": {
-            "optional": true
-        }
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/sockethub/sockethub.git",
-        "directory": "packages/platform-dummy"
-    },
-    "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-dummy"
+  "name": "@sockethub/platform-dummy",
+  "description": "A sockethub platform dummy module",
+  "version": "3.0.0-alpha.4",
+  "type": "module",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "LGPL-3.0+",
+  "main": "src/index.ts",
+  "packageManager": "bun@1.2.2",
+  "engines": {
+    "bun": ">=1.2"
+  },
+  "keywords": ["sockethub", "dummy"],
+  "devDependencies": {
+    "@sockethub/schemas": "workspace:*",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "@sockethub/server": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@sockethub/server": {
+      "optional": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/platform-dummy"
+  },
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-dummy"
 }

@@ -1,10 +1,10 @@
-import { Job, Queue, Worker, QueueEvents } from "bullmq";
-import debug, { Debugger } from "debug";
+import { type Job, Queue, QueueEvents, Worker } from "bullmq";
+import debug, { type Debugger } from "debug";
 
-import { ActivityStream } from "@sockethub/schemas";
+import type { ActivityStream } from "@sockethub/schemas";
 
-import { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types.js";
 import { JobBase, createIORedisConnection } from "./job-base.js";
+import type { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types.js";
 
 export async function verifyJobQueue(config: RedisConfig): Promise<void> {
     const log = debug("sockethub:data-layer:queue");
@@ -36,8 +36,7 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
         });
         worker.on("error", (err) => {
             log(
-                "connection verification worker error received " +
-                    err.toString(),
+                `connection verification worker error received ${err.toString()}`,
             );
             reject(err);
         });
@@ -46,8 +45,7 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
         });
         queue.on("error", (err) => {
             log(
-                "connection verification queue error received " +
-                    err.toString(),
+                `connection verification queue error received ${err.toString()}`,
             );
             reject(err);
         });
@@ -107,7 +105,7 @@ export class JobQueue extends JobBase {
             );
             this.emit("failed", job.data, failedReason);
         });
-        this.debug(`initialized`);
+        this.debug("initialized");
     }
 
     async add(
@@ -156,6 +154,7 @@ export class JobQueue extends JobBase {
         if (job) {
             job.data = this.decryptJobData(job);
             try {
+                // biome-ignore lint/performance/noDelete: <explanation>
                 delete job.data.msg.sessionSecret;
             } catch (e) {
                 // this property should never be exposed externally

@@ -1,7 +1,7 @@
 export const utils = {
-    buildXmppCredentials: function (credentials) {
+    buildXmppCredentials: (credentials) => {
         const [username, server] = credentials.object.userAddress.split("@");
-        let xmpp_creds = {
+        const xmpp_creds = {
             service: credentials.object.server
                 ? credentials.object.server
                 : server

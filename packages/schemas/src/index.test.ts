@@ -1,20 +1,20 @@
-import { ActivityStream } from "./types";
-import { expect, describe, it } from "bun:test";
+import { describe, expect, it } from "bun:test";
+import type { ActivityStream } from "./types";
 
-import { ActivityStreamSchema } from "./schemas/activity-stream";
+import testCredentialsData from "./index.test.data.credentials";
+import testActivityObjectsData from "./index.test.data.objects";
+import testPlatformSchemaData from "./index.test.data.platform";
+import testActivityStreamsData from "./index.test.data.streams";
 import { ActivityObjectSchema } from "./schemas/activity-object";
+import { ActivityStreamSchema } from "./schemas/activity-stream";
 import {
-    validatePlatformSchema,
     addPlatformSchema,
+    getPlatformSchema,
     validateActivityObject,
     validateActivityStream,
     validateCredentials,
-    getPlatformSchema,
+    validatePlatformSchema,
 } from "./validator";
-import testCredentialsData from "./index.test.data.credentials";
-import testActivityObjectsData from "./index.test.data.objects";
-import testActivityStreamsData from "./index.test.data.streams";
-import testPlatformSchemaData from "./index.test.data.platform";
 
 describe("Platform schema validation", () => {
     it("returns an empty error for a valid schema", () => {

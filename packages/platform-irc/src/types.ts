@@ -1,4 +1,4 @@
-import { ActivityActor, CredentialsObject } from "@sockethub/schemas";
+import type { ActivityActor, CredentialsObject } from "@sockethub/schemas";
 
 export interface PlatformIrcCredentialsObject extends CredentialsObject {
     context: "irc";

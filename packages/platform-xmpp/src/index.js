@@ -36,7 +36,6 @@ export default class XMPP {
      * @param {object} session - {@link Sockethub.Platform.PlatformSession#object}
      */
     constructor(session) {
-        session = typeof session === "object" ? session : {};
         this.id = session.id; // actor
         this.config = {
             persist: true,
@@ -45,8 +44,6 @@ export default class XMPP {
         };
         this.debug = session.debug;
         this.sendToClient = session.sendToClient;
-        this.__forceDisconnect = false;
-        this.__channels = [];
         this.createClient();
         this.createXml();
     }
@@ -127,11 +124,11 @@ export default class XMPP {
     connect(job, credentials, done) {
         if (this.__client) {
             // TODO verify client is actually connected
-            this.debug("client connection already exists for " + job.actor.id);
+            this.debug(`client connection already exists for ${job.actor.id}`);
             this.config.initialized = true;
             return done();
         }
-        this.debug("connect called for " + job.actor.id);
+        this.debug(`connect called for ${job.actor.id}`);
         this.__client = this.__clientConstructor(
             utils.buildXmppCredentials(credentials),
         );
@@ -150,7 +147,7 @@ export default class XMPP {
             })
             .catch((err) => {
                 this.debug(`connect error: ${err}`);
-                delete this.__client;
+                this.__client = undefined;
                 return done(err);
             });
     }
@@ -184,7 +181,7 @@ export default class XMPP {
         );
         // TODO optional passwords not handled for now
         // TODO investigate implementation reserved nickname discovery
-        let id = job.target.id.split("/")[0];
+        const id = job.target.id.split("/")[0];
 
         this.__client
             .send(
@@ -224,7 +221,7 @@ export default class XMPP {
                 `${job.target.id}/${job.actor.name}`,
         );
 
-        let id = job.target.id.split("/")[0];
+        const id = job.target.id.split("/")[0];
 
         this.__client
             .send(
@@ -289,7 +286,7 @@ export default class XMPP {
      *
      */
     send(job, done) {
-        this.debug("send() called for " + job.actor.id);
+        this.debug(`send() called for ${job.actor.id}`);
         // send message
         const message = this.__xml(
             "message",
@@ -377,7 +374,7 @@ export default class XMPP {
      * }
      */
     "request-friend"(job, done) {
-        this.debug("request-friend() called for " + job.actor.id);
+        this.debug(`request-friend() called for ${job.actor.id}`);
         this.__client
             .send(
                 this.__xml("presence", {
@@ -409,7 +406,7 @@ export default class XMPP {
      * }
      */
     "remove-friend"(job, done) {
-        this.debug("remove-friend() called for " + job.actor.id);
+        this.debug(`remove-friend() called for ${job.actor.id}`);
         this.__client
             .send(
                 this.__xml("presence", {
@@ -441,7 +438,7 @@ export default class XMPP {
      * }
      */
     "make-friend"(job, done) {
-        this.debug("make-friend() called for " + job.actor.id);
+        this.debug(`make-friend() called for ${job.actor.id}`);
         this.__client
             .send(
                 this.__xml("presence", {
@@ -501,9 +498,7 @@ export default class XMPP {
      *  }
      */
     query(job, done) {
-        this.debug(
-            "sending query from " + job.actor.id + " for " + job.target.id,
-        );
+        this.debug(`sending query from ${job.actor.id} for ${job.target.id}`);
         this.__client
             .send(
                 this.__xml(

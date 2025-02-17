@@ -1,40 +1,47 @@
 <script lang="ts" context="module">
-    import { writable } from "svelte/store";
-    import type { AnyActivityStream } from "$lib/sockethub";
+import type { AnyActivityStream } from "$lib/sockethub";
+import { writable } from "svelte/store";
 
-    type LogEntries = Record<
-        string,
-        [AnyActivityStream | Record<string, never>, AnyActivityStream | Record<string, never>]
-    >;
-    const Logs = writable({} as LogEntries);
-    let counter = 0;
+type LogEntries = Record<
+    string,
+    [
+        AnyActivityStream | Record<string, never>,
+        AnyActivityStream | Record<string, never>,
+    ]
+>;
+const Logs = writable({} as LogEntries);
+let counter = 0;
 
-    type ObjectType = "SEND" | "RESP";
+type ObjectType = "SEND" | "RESP";
 
-    export function addObject(type: ObjectType, obj: AnyActivityStream, id?: string) {
-        let index: string;
-        if (!id) {
-            index = "" + ++counter;
-            obj.id = index;
-        } else {
-            index = id;
-        }
-
-        Logs.update((currentLogs: LogEntries) => {
-            if (!currentLogs[index]) {
-                if (type === "SEND") {
-                    currentLogs[index] = [obj, {}];
-                } else {
-                    currentLogs[index] = [{}, obj];
-                }
-            } else {
-                const pos = type === "SEND" ? 0 : 1;
-                currentLogs[index][pos] = obj;
-            }
-            return currentLogs;
-        });
-        return obj;
+export function addObject(
+    type: ObjectType,
+    obj: AnyActivityStream,
+    id?: string,
+) {
+    let index: string;
+    if (!id) {
+        index = `${++counter}`;
+        obj.id = index;
+    } else {
+        index = id;
     }
+
+    Logs.update((currentLogs: LogEntries) => {
+        if (!currentLogs[index]) {
+            if (type === "SEND") {
+                currentLogs[index] = [obj, {}];
+            } else {
+                currentLogs[index] = [{}, obj];
+            }
+        } else {
+            const pos = type === "SEND" ? 0 : 1;
+            currentLogs[index][pos] = obj;
+        }
+        return currentLogs;
+    });
+    return obj;
+}
 </script>
 
 <script lang="ts">

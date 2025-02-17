@@ -17,7 +17,7 @@
  */
 
 import htmlTags from "html-tags";
-import getPodcastFromFeed, { Meta } from "podparse";
+import getPodcastFromFeed, { type Meta } from "podparse";
 
 import type {
     ActivityStream,
@@ -31,11 +31,11 @@ import type {
 
 import PlatformSchema from "./schema.js";
 import {
-    PlatformFeedsActivityActor,
-    PlatformFeedsActivityObject,
-    PlatformFeedsActivityStream,
     ASFeedType,
     ASObjectType,
+    type PlatformFeedsActivityActor,
+    type PlatformFeedsActivityObject,
+    type PlatformFeedsActivityStream,
 } from "./types.js";
 
 const MAX_NOTE_LENGTH = 256;
@@ -48,8 +48,8 @@ const full = new RegExp(
 
 function isHtml(s: string): boolean {
     // limit it to a reasonable length to improve performance.
-    s = s.trim().slice(0, 1000);
-    return basic.test(s) || full.test(s);
+    const limitedString = s.trim().slice(0, 1000);
+    return basic.test(limitedString) || full.test(s);
 }
 
 /**
@@ -177,7 +177,7 @@ export default class Feeds implements PlatformInterface {
         url: string,
         id: string,
     ): Promise<Array<PlatformFeedsActivityStream>> {
-        this.debug("fetching " + url);
+        this.debug(`fetching ${url}`);
         const res = await fetch(url);
         const feed = getPodcastFromFeed(await res.text());
         const actor = buildFeedChannel(url, feed.meta);
@@ -201,7 +201,7 @@ function buildFeedItem(item): PlatformFeedsActivityObject {
                 ? ASObjectType.ARTICLE
                 : ASObjectType.NOTE,
         title: item.title,
-        id: item.link || item.meta.link + "#" + dateNum,
+        id: item.link || `${item.meta.link}#${dateNum}`,
         brief: item.description === item.summary ? undefined : item.summary,
         content: item.description,
         contentType: isHtml(item.description || "") ? "html" : "text",

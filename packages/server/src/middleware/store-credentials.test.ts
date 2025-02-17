@@ -1,8 +1,8 @@
-import { expect, describe, it, beforeEach, afterEach } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as sinon from "sinon";
 
+import type { CredentialsObject } from "@sockethub/schemas";
 import storeCredentials from "./store-credentials.js";
-import { CredentialsObject } from "@sockethub/schemas";
 
 const creds: CredentialsObject = {
     type: "credentials",

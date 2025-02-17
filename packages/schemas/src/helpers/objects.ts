@@ -218,10 +218,10 @@ export const ObjectTypesSchema = {
 
 export const ObjectTypesList = Object.keys(ObjectTypesSchema);
 
-ObjectTypesList.forEach(function (type) {
+for (const type of ObjectTypesList) {
     if (type === "credentials") {
-        return;
+        continue;
     }
-    validObjectRefs.push({ $ref: "#/definitions/type/" + type });
+    validObjectRefs.push({ $ref: `#/definitions/type/${type}` });
     validObjectDefs[type] = ObjectTypesSchema[type];
-});
+}

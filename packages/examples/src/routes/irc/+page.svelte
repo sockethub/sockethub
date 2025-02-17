@@ -1,60 +1,62 @@
 <script lang="ts">
-    import Intro from "$components/Intro.svelte";
-    import SockethubButton from "$components/SockethubButton.svelte";
-    import Logger from "$components/logs/Logger.svelte";
-    import type { AnyActivityStream, CredentialName } from "$lib/sockethub";
-    import { send } from "$lib/sockethub";
-    import ActivityActor from "$components/ActivityActor.svelte";
-    import Credentials from "$components/Credentials.svelte";
-    import IncomingMessage from "$components/chat/IncomingMessages.svelte";
-    import Room from "$components/chat/Room.svelte";
-    import SendMessage from "$components/chat/SendMessage.svelte";
-    import { writable } from "svelte/store";
+import ActivityActor from "$components/ActivityActor.svelte";
+import Credentials from "$components/Credentials.svelte";
+import Intro from "$components/Intro.svelte";
+import SockethubButton from "$components/SockethubButton.svelte";
+import IncomingMessage from "$components/chat/IncomingMessages.svelte";
+import Room from "$components/chat/Room.svelte";
+import SendMessage from "$components/chat/SendMessage.svelte";
+import Logger from "$components/logs/Logger.svelte";
+import type { AnyActivityStream, CredentialName } from "$lib/sockethub";
+import { send } from "$lib/sockethub";
+import { writable } from "svelte/store";
 
-    const actorIdStore = writable(`sh-${(Math.random() + 1).toString(36).substring(7)}`);
+const actorIdStore = writable(
+    `sh-${(Math.random() + 1).toString(36).substring(7)}`,
+);
 
-    let server = "chat.freenode.net";
-    let port = 6697;
-    let room = "#sh-random";
-    let connecting = false;
+let server = "chat.freenode.net";
+let port = 6697;
+let room = "#sh-random";
+let connecting = false;
 
-    const state = writable({
-        actorSet: false,
-        credentialsSet: false,
-        connected: false,
-        joined: false,
-    });
+const state = writable({
+    actorSet: false,
+    credentialsSet: false,
+    connected: false,
+    joined: false,
+});
 
-    $: actor = {
-        id: $actorIdStore,
-        type: "person",
-        name: $actorIdStore,
-    };
+$: actor = {
+    id: $actorIdStore,
+    type: "person",
+    name: $actorIdStore,
+};
 
-    $: credentials = {
-        type: "credentials" as CredentialName,
-        nick: $actorIdStore,
-        server: server,
-        port: port,
-        secure: true,
-    };
+$: credentials = {
+    type: "credentials" as CredentialName,
+    nick: $actorIdStore,
+    server: server,
+    port: port,
+    secure: true,
+};
 
-    async function connectIrc(): Promise<void> {
-        connecting = true;
-        await send({
-            context: "irc",
-            type: "connect",
-            actor: $actorIdStore,
-        } as AnyActivityStream)
-            .catch(() => {
-                $state.connected = false;
-                connecting = false;
-            })
-            .then(() => {
-                $state.connected = true;
-                connecting = false;
-            });
-    }
+async function connectIrc(): Promise<void> {
+    connecting = true;
+    await send({
+        context: "irc",
+        type: "connect",
+        actor: $actorIdStore,
+    } as AnyActivityStream)
+        .catch(() => {
+            $state.connected = false;
+            connecting = false;
+        })
+        .then(() => {
+            $state.connected = true;
+            connecting = false;
+        });
+}
 </script>
 
 <Intro title="IRC Platform Example">

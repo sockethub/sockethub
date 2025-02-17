@@ -1,17 +1,17 @@
 <script lang="ts">
-    import { connected } from "$lib/sockethub";
-    export let disabled = false;
-    export let buttonAction = async (): Promise<void> => {
-        return Promise.resolve();
-    };
-    let disabledState = false;
-    $: {
-        if ($connected) {
-            disabledState = disabled;
-        } else {
-            disabledState = true;
-        }
+import { connected } from "$lib/sockethub";
+export const disabled = false;
+export const buttonAction = async (): Promise<void> => {
+    return Promise.resolve();
+};
+let disabledState = false;
+$: {
+    if ($connected) {
+        disabledState = disabled;
+    } else {
+        disabledState = true;
     }
+}
 </script>
 
 <button

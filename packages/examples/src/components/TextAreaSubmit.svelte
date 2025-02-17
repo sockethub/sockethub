@@ -1,34 +1,34 @@
 <script lang="ts">
-    import SockethubButton from "./SockethubButton.svelte";
-    import { createEventDispatcher } from "svelte";
-    import type { TextAreaObject } from "$lib/types";
+import type { TextAreaObject } from "$lib/types";
+import { createEventDispatcher } from "svelte";
+import SockethubButton from "./SockethubButton.svelte";
 
-    export let buttonText = "Send";
-    export let disabled: boolean;
-    export let obj: TextAreaObject;
-    export let title: string;
+export let buttonText = "Send";
+export let disabled: boolean;
+export let obj: TextAreaObject;
+export let title: string;
 
-    let password = "unset";
+let password = "unset";
 
-    const dispatcher = createEventDispatcher();
+const dispatcher = createEventDispatcher();
 
-    if (obj.password) {
-        password = obj.password;
-        delete obj.password;
+if (obj.password) {
+    password = obj.password;
+    obj.password = undefined;
+}
+
+$: objString = JSON.stringify(obj, null, 3);
+
+async function handleSubmit(): Promise<void> {
+    console.log("PASSWORD: ", password);
+    if (password !== "unset") {
+        obj.password = password;
     }
 
-    $: objString = JSON.stringify(obj, null, 3);
-
-    async function handleSubmit(): Promise<void> {
-        console.log("PASSWORD: ", password);
-        if (password !== "unset") {
-            obj.password = password;
-        }
-
-        dispatcher("submit", {
-            jsonString: JSON.stringify(obj),
-        });
-    }
+    dispatcher("submit", {
+        jsonString: JSON.stringify(obj),
+    });
+}
 </script>
 
 <div class="w-full">

@@ -1,11 +1,9 @@
-import { expect, describe, it, beforeEach, mock } from "bun:test";
-import getInitObject, { __clearInit, IInitObject } from "./init.js";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
+import getInitObject, { __clearInit, type IInitObject } from "./init.js";
 import loadPlatforms from "./load-platforms.js";
 
 function getFakePlatform(name: string) {
     return class FakeSockethubPlatform {
-        constructor() {}
-
         get config() {
             return {};
         }

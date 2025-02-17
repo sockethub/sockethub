@@ -1,13 +1,13 @@
 import { ASFactory } from "@sockethub/activity-streams";
-import { ActivityObject } from "@sockethub/schemas";
+import type { ActivityObject } from "@sockethub/schemas";
 
 import config from "../config.js";
-import { MiddlewareChainInterface } from "../middleware.js";
+import type { MiddlewareChainInterface } from "../middleware.js";
 
 const activity = ASFactory(config.get("activity-streams:opts"));
 
 /**
- * A simple middleware wrapper for the activity-streams Object.create method.
+ * A simple middleware wrapper for the activity-streams `Object.create` method.
  * @param obj
  * @param done
  */
