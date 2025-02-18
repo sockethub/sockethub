@@ -93,6 +93,7 @@ export interface PlatformSchemaStruct {
     version: string;
     credentials?: object;
     messages?: {
+        required?: string[];
         properties?: {
             type?: {
                 enum?: string[];

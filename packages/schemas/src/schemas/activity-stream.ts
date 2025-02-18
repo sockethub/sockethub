@@ -19,7 +19,7 @@ const typeSchema = {
 };
 
 export const ActivityStreamSchema = {
-    $id: "https://sockethub.org/schemas/v0/activity-stream#",
+    $id: "https://sockethub.org/schemas/v/activity-stream.json",
     description: "Schema for Sockethub Activity Streams",
 
     type: "object",
