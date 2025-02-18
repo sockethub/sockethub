@@ -4,7 +4,9 @@ import type { ActivityObject } from "@sockethub/schemas";
 import config from "../config.js";
 import type { MiddlewareChainInterface } from "../middleware.js";
 
-const activity = ASFactory(config.get("activity-streams:opts"));
+const activity = ASFactory(
+    config.get("packageConfig:@sockethub/activity-streams"),
+);
 
 /**
  * A simple middleware wrapper for the activity-streams `Object.create` method.

@@ -4,7 +4,9 @@ import type { ActivityStream } from "@sockethub/schemas";
 import config from "../config.js";
 import type { MiddlewareChainInterface } from "../middleware.js";
 
-const asConfig = config.get("activity-streams:opts") as ASFactoryOptions;
+const asConfig = config.get(
+    "packageConfig:@sockethub/activity-streams",
+) as ASFactoryOptions;
 asConfig.warnOnUnknownObjectProperties = false;
 asConfig.failOnUnknownObjectProperties = false;
 
