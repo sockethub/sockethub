@@ -1,7 +1,6 @@
 const connectConfigPlatforms = {
     connectTimeoutMs: {
         type: "number",
-        default: 30000,
     },
 };
 

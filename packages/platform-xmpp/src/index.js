@@ -38,7 +38,7 @@ export default class XMPP {
     constructor(session) {
         this.id = session.id; // actor
         this.config = {
-            connectTimeoutMs: 30000,
+            connectTimeoutMs: 3000,
             persist: true,
             initialized: false,
             requireCredentials: ["connect"],
