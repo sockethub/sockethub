@@ -1,3 +1,12 @@
+export interface ASCollection {
+    context: string;
+    id?: string;
+    summary: string;
+    type: "collection";
+    totalItems: number;
+    items: Array<ActivityStream>;
+}
+
 export interface ActivityStream {
     id?: string;
     type: string;
@@ -33,7 +42,7 @@ type ErrorMsg = string | Error;
 
 export type PlatformCallback = (
     err?: ErrorMsg,
-    data?: ActivityStream | ActivityStream[],
+    data?: ActivityStream | ASCollection,
 ) => void;
 
 export type CallbackInterface = (err?: ErrorMsg, data?: unknown) => void;
