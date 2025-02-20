@@ -1,6 +1,5 @@
 <script lang="ts">
-import { run } from "svelte/legacy";
-
+import TextBox from "$components/TextBox.svelte";
 import type { TextAreaObject } from "$lib/types";
 import { createEventDispatcher } from "svelte";
 import SockethubButton from "./SockethubButton.svelte";
@@ -28,10 +27,7 @@ if (obj.password) {
     obj.password = undefined;
 }
 
-let objString;
-run(() => {
-    objString = JSON.stringify(obj, null, 3);
-});
+const objString = $derived(JSON.stringify(obj, null, 3));
 
 async function handleSubmit(): Promise<void> {
     console.log("PASSWORD: ", password);
@@ -46,18 +42,8 @@ async function handleSubmit(): Promise<void> {
 </script>
 
 <div class="w-full">
-    <label for="json-object-{title}" class="form-label inline-block text-gray-900 font-bold mb-2"
-        >{title}</label
-    >
-    <textarea
-        id="json-object-{title}"
-        bind:value={objString}
-        class="form-control block w-full px-3 py-1.5 text-base font-normal
-        text-gray-700 bg-white bg-clip-padding border border-solid
-        border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700
-        focus:bg-white focus:border-blue-600 focus:outline-none"
-        rows="5"
-    ></textarea>
+    <label for="json-object-{title}" class="form-label inline-block text-gray-900 font-bold mb-2">{title}</label>
+    <TextBox title={title} data={objString}></TextBox>
 </div>
 {#if password !== "unset"}
     <div class="w-full p-2">
