@@ -7,19 +7,14 @@ import type { ActorData } from "$lib/sockethub";
 import type { AnyActivityStream } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
 
-    interface Props {
-        room: string;
-        actor: ActorData;
-        context: string;
-        sockethubState: SockethubStateStore;
-    }
+interface Props {
+    room: string;
+    actor: ActorData;
+    context: string;
+    sockethubState: SockethubStateStore;
+}
 
-    let {
-        room = $bindable(),
-        actor,
-        context,
-        sockethubState
-    }: Props = $props();
+let { room = $bindable(), actor, context, sockethubState }: Props = $props();
 
 let joining = $state(false);
 

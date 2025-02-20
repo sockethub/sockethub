@@ -6,19 +6,14 @@ import { send } from "$lib/sockethub";
 import type { ActorData } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
 
-    interface Props {
-        actor: ActorData;
-        context: string;
-        sockethubState: SockethubStateStore;
-        room: string;
-    }
+interface Props {
+    actor: ActorData;
+    context: string;
+    sockethubState: SockethubStateStore;
+    room: string;
+}
 
-    let {
-        actor,
-        context,
-        sockethubState,
-        room
-    }: Props = $props();
+let { actor, context, sockethubState, room }: Props = $props();
 
 let message = $state("");
 let sending = $state(false);
