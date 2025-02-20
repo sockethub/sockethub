@@ -186,6 +186,11 @@ export default class Feeds implements PlatformInterface {
         done();
     }
 
+    private async makeRequest(url: string): Promise<string> {
+        const res = await fetch(url);
+        return await res.text();
+    }
+
     // fetches the articles from a feed, adding them to an array
     // for processing
     private async fetchFeed(
@@ -193,8 +198,9 @@ export default class Feeds implements PlatformInterface {
         id: string,
     ): Promise<Array<PlatformFeedsActivityStream>> {
         this.debug(`fetching ${url}`);
-        const res = await fetch(url);
-        const feed = getPodcastFromFeed(await res.text());
+        const res = await this.makeRequest(url);
+        this.debug(`got result: ${res}`);
+        const feed = getPodcastFromFeed(res);
         const actor = buildFeedChannel(url, feed.meta);
         const articles = [];
 
