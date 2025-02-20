@@ -3,13 +3,13 @@ import type { AnyActivityStream } from "$lib/sockethub";
 import DummyEntry from "./platforms/DummyEntry.svelte";
 import FeedsEntry from "./platforms/FeedsEntry.svelte";
 import GenericEntry from "./platforms/IrcEntry.svelte";
-    interface Props {
-        id: string;
-        entry: AnyActivityStream;
-    }
+interface Props {
+    id: string;
+    entry: AnyActivityStream;
+    buttonAction: () => void;
+}
 
-    let { id, entry }: Props = $props();
-export const buttonAction = () => {};
+let { id, entry, buttonAction }: Props = $props();
 </script>
 
 <li>

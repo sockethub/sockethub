@@ -3,16 +3,16 @@ import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
 import { sc } from "$lib/sockethub";
 import type { ActorData } from "$lib/sockethub";
 import type { CredentialsObjectData, SockethubResponse } from "$lib/sockethub";
-import type { Payload, StateStore } from "$lib/types";
+import type { Payload, SockethubStateStore } from "$lib/types";
 
 interface Props {
     credentials: CredentialsObjectData;
     actor: ActorData;
-    state: StateStore;
+    sockethubState: SockethubStateStore;
     context: string;
 }
 
-let { credentials, actor, state, context }: Props = $props();
+let { credentials, actor, sockethubState, context }: Props = $props();
 
 function sendCredentials(data: Payload) {
     const creds = {
@@ -26,7 +26,7 @@ function sendCredentials(data: Payload) {
         if (resp?.error) {
             throw new Error(resp.error);
         }
-        $state.credentialsSet = true;
+        $sockethubState.credentialsSet = true;
     });
 }
 </script>
@@ -36,5 +36,5 @@ function sendCredentials(data: Payload) {
     obj={credentials}
     buttonText="Set Credentials"
     on:submit={sendCredentials}
-    disabled={!$state.actorSet || $state.credentialsSet || false}
+    disabled={!$sockethubState.actorSet || $sockethubState.credentialsSet || false}
 />

@@ -15,31 +15,31 @@ import type { CredentialName } from "$lib/sockethub";
 import { writable } from "svelte/store";
 
 const actorIdStore = writable("user@jabber.org");
-let connecting = false;
+let connecting = $state(false);
 
-$: actorId = `${$actorIdStore}/SockethubExample`;
+let actorId = $derived(`${$actorIdStore}/SockethubExample`);
 
 const room = "kosmos-random@kosmos.chat";
 
-const state = writable({
+const sockethubState = writable({
     actorSet: false,
     credentialsSet: false,
     connected: false,
     joined: false,
 });
 
-$: actor = {
+let actor = $derived({
     id: actorId,
     type: "person",
     name: actorId,
-};
+});
 
-$: credentials = {
+let credentials = $derived({
     type: "credentials" as CredentialName,
     userAddress: $actorIdStore,
     password: "123456",
     resource: "SockethubExample",
-};
+});
 
 async function connectXmpp(): Promise<void> {
     connecting = true;
@@ -49,10 +49,10 @@ async function connectXmpp(): Promise<void> {
         actor: actorId,
     } as AnyActivityStream)
         .then(() => {
-            $state.connected = true;
+            $sockethubState.connected = true;
         })
         .catch(() => {
-            $state.connected = false;
+            $sockethubState.connected = false;
         });
 }
 </script>
@@ -62,7 +62,7 @@ async function connectXmpp(): Promise<void> {
     <p>Example for the XMPP platform</p>
 </Intro>
 
-<ActivityActor {actor} {state} />
+<ActivityActor {actor} {sockethubState} />
 <div class="w-full pb-4">
     <label for="actor-id-input" class="pr-3">Actor ID</label>
     <input
@@ -73,14 +73,14 @@ async function connectXmpp(): Promise<void> {
     />
 </div>
 
-<Credentials context="xmpp" {credentials} {actor} {state} />
+<Credentials context="xmpp" {credentials} {actor} {sockethubState} />
 
 <div>
     <div class="w-full text-right">
         <SockethubButton
-            disabled={!$state.credentialsSet || $state.connected || connecting}
+            disabled={!$sockethubState.credentialsSet || $sockethubState.connected || connecting}
             buttonAction={connectXmpp}
-            >{$state.connected
+            >{$sockethubState.connected
                 ? "Connected"
                 : connecting
                   ? "Connecting"
@@ -89,10 +89,10 @@ async function connectXmpp(): Promise<void> {
     </div>
 </div>
 
-<Room {actor} {state} {room} context="xmpp" />
+<Room {actor} {sockethubState} {room} context="xmpp" />
 
 <IncomingMessage />
 
-<SendMessage context="xmpp" {actor} {state} {room} />
+<SendMessage context="xmpp" {actor} {sockethubState} {room} />
 
 <Logger />

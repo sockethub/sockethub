@@ -2,11 +2,11 @@
 import ContentArea from "./ContentArea.svelte";
 
 interface Props {
+    title: string;
     children?: import("svelte").Snippet;
 }
 
-let { children }: Props = $props();
-export const title = "";
+let { children, title }: Props = $props();
 </script>
 
 <ContentArea>

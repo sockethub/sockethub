@@ -1,18 +1,16 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
 import { connected } from "$lib/sockethub";
-    interface Props {
-        children?: import('svelte').Snippet;
-    }
+import { run } from "svelte/legacy";
 
-    let { children }: Props = $props();
-export const disabled: boolean = false;
-export const buttonAction = async (): Promise<void> => {
-    console.log(`buttonAction click, disabled: ${disabled}`);
-    return Promise.resolve();
-};
-let disabledState = $state(false);
+interface Props {
+    disabled: boolean;
+    buttonAction: () => Promise<void>;
+    children?: import("svelte").Snippet;
+}
+
+let { children, disabled, buttonAction }: Props = $props();
+let disabledState = $state(disabled);
+
 run(() => {
     if ($connected) {
         disabledState = disabled;

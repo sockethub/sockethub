@@ -4,15 +4,24 @@
 import SockethubButton from "$components/SockethubButton.svelte";
 import { send } from "$lib/sockethub";
 import type { ActorData } from "$lib/sockethub";
-import type { StateStore } from "$lib/types";
+import type { SockethubStateStore } from "$lib/types";
 
-export let actor: ActorData;
-export let context: string;
-export let state: StateStore;
-export let room: string;
+    interface Props {
+        actor: ActorData;
+        context: string;
+        sockethubState: SockethubStateStore;
+        room: string;
+    }
 
-let message = "";
-let sending = false;
+    let {
+        actor,
+        context,
+        sockethubState,
+        room
+    }: Props = $props();
+
+let message = $state("");
+let sending = $state(false);
 
 async function sendMessage() {
     sending = true;
@@ -43,7 +52,7 @@ async function sendMessage() {
         <input id="sendMessage" bind:value={message} class="border-4 w-full" />
     </div>
     <div class="text-right">
-        <SockethubButton disabled={!$state.connected || sending} buttonAction={sendMessage}
+        <SockethubButton disabled={!$sockethubState.connected || sending} buttonAction={sendMessage}
             >{sending ? "Sending" : "Send"}</SockethubButton
         >
     </div>
