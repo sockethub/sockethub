@@ -122,7 +122,7 @@ export function addObject(
         ? ''
         : 'hidden'} bg-slate-800 bg-opacity-50 fixed top-0 left-0 m-0 w-full h-full overflow-scroll"
 >
-    <div id="modalContent" class="max-w-[95%] bg-offwhite rounded-md m-auto p-2">
+    <div id="modalContent" class="max-w-[95%] rounded-md m-auto p-2">
         <div>
             <div class="text-xs text-slate-500 font-mono">
                 <h2 class="ml-2">Sent</h2>

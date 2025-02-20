@@ -1,7 +1,8 @@
 <script lang="ts">
 import { connected } from "$lib/sockethub";
-export const disabled = false;
+export const disabled: boolean = false;
 export const buttonAction = async (): Promise<void> => {
+    console.log(`buttonAction click, disabled: ${disabled}`);
     return Promise.resolve();
 };
 let disabledState = false;
