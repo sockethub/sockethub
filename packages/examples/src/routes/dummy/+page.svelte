@@ -70,7 +70,6 @@ async function sendFail(): Promise<void> {
         <label for="sendEcho" class="inline-block text-gray-900 font-bold w-32">Object Type</label>
         <div class="flex gap-4">
             <div id="sendEcho">
-                <SockethubButton disabled={true} onclick={sendEcho}>foobar</SockethubButton>
                 <SockethubButton disabled={!$sockethubState.actorSet} buttonAction={sendEcho}
                     >Echo</SockethubButton
                 >
