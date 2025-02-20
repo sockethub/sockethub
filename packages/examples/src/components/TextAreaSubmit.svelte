@@ -1,7 +1,6 @@
 <script lang="ts">
 import TextBox from "$components/TextBox.svelte";
 import type { TextAreaObject } from "$lib/types";
-import { createEventDispatcher } from "svelte";
 import SockethubButton from "./SockethubButton.svelte";
 
 interface Props {
@@ -9,6 +8,7 @@ interface Props {
     disabled: boolean;
     obj: TextAreaObject;
     title: string;
+    submitData: (text: string) => void;
 }
 
 let {
@@ -16,11 +16,10 @@ let {
     disabled,
     obj = $bindable(),
     title,
+    submitData,
 }: Props = $props();
 
 let password = $state("unset");
-
-const dispatcher = createEventDispatcher();
 
 if (obj.password) {
     password = obj.password;
@@ -35,9 +34,7 @@ async function handleSubmit(): Promise<void> {
         obj.password = password;
     }
 
-    dispatcher("submit", {
-        jsonString: JSON.stringify(obj),
-    });
+    submitData(JSON.stringify(obj));
 }
 </script>
 

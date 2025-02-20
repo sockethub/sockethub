@@ -3,7 +3,7 @@ import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
 import { sc } from "$lib/sockethub";
 import type { ActorData } from "$lib/sockethub";
 import type { CredentialsObjectData, SockethubResponse } from "$lib/sockethub";
-import type { Payload, SockethubStateStore } from "$lib/types";
+import type { SockethubStateStore } from "$lib/types";
 
 interface Props {
     credentials: CredentialsObjectData;
@@ -14,12 +14,12 @@ interface Props {
 
 let { credentials, actor, sockethubState, context }: Props = $props();
 
-function sendCredentials(data: Payload) {
+function sendCredentials(data: string) {
     const creds = {
         context: context,
         type: "credentials",
         actor: actor.id,
-        object: JSON.parse(data.detail.jsonString),
+        object: JSON.parse(data),
     };
     console.log("sending credentials: ", creds);
     sc.socket.emit("credentials", creds, (resp: SockethubResponse) => {
@@ -35,6 +35,6 @@ function sendCredentials(data: Payload) {
     title="Credentials"
     obj={credentials}
     buttonText="Set Credentials"
-    on:submit={sendCredentials}
+    submitData={sendCredentials}
     disabled={!$sockethubState.actorSet || $sockethubState.credentialsSet || false}
 />

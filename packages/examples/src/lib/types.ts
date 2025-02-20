@@ -1,11 +1,5 @@
 import type { Writable } from "svelte/store";
 
-export type Payload = {
-    detail: {
-        jsonString: string;
-    };
-};
-
 export type TextAreaObject = {
     password?: string;
     id?: string;
