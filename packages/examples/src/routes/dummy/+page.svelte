@@ -1,3 +1,5 @@
+<!-- @migration-task Error while migrating Svelte code: can't migrate `let content = "";` to `$state` because there's a variable named state.
+     Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
 import type { AnyActivityStream } from "$lib/sockethub";
 import { send } from "$lib/sockethub";

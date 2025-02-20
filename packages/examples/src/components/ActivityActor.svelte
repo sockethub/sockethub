@@ -4,8 +4,12 @@ import { sc } from "$lib/sockethub";
 import type { Payload, StateStore } from "$lib/types";
 import type { ActivityActor } from "@sockethub/schemas";
 
-export let actor: ActivityActor;
-export let state: StateStore;
+interface Props {
+    actor: ActivityActor;
+    state: StateStore;
+}
+
+let { actor, state }: Props = $props();
 
 function sendActivityObjectCreate(data: Payload) {
     const actorObj = JSON.parse(data.detail.jsonString);

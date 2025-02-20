@@ -1,14 +1,25 @@
 <script lang="ts">
+import { run } from "svelte/legacy";
+
 import type { TextAreaObject } from "$lib/types";
 import { createEventDispatcher } from "svelte";
 import SockethubButton from "./SockethubButton.svelte";
 
-export let buttonText = "Send";
-export let disabled: boolean;
-export let obj: TextAreaObject;
-export let title: string;
+interface Props {
+    buttonText?: string;
+    disabled: boolean;
+    obj: TextAreaObject;
+    title: string;
+}
 
-let password = "unset";
+let {
+    buttonText = "Send",
+    disabled,
+    obj = $bindable(),
+    title,
+}: Props = $props();
+
+let password = $state("unset");
 
 const dispatcher = createEventDispatcher();
 
@@ -17,7 +28,10 @@ if (obj.password) {
     obj.password = undefined;
 }
 
-$: objString = JSON.stringify(obj, null, 3);
+let objString;
+run(() => {
+    objString = JSON.stringify(obj, null, 3);
+});
 
 async function handleSubmit(): Promise<void> {
     console.log("PASSWORD: ", password);

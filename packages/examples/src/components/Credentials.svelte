@@ -5,11 +5,14 @@ import type { ActorData } from "$lib/sockethub";
 import type { CredentialsObjectData, SockethubResponse } from "$lib/sockethub";
 import type { Payload, StateStore } from "$lib/types";
 
-export let credentials: CredentialsObjectData;
-export let actor: ActorData;
-export let state: StateStore;
+interface Props {
+    credentials: CredentialsObjectData;
+    actor: ActorData;
+    state: StateStore;
+    context: string;
+}
 
-export let context: string;
+let { credentials, actor, state, context }: Props = $props();
 
 function sendCredentials(data: Payload) {
     const creds = {
