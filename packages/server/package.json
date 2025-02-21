@@ -54,8 +54,8 @@
     "socket.io": "4.7.5"
   },
   "scripts": {
-    "start": "DEBUG=sockethub* ./bin/sockethub",
-    "dev": "DEBUG=sockethub* ./bin/sockethub --examples"
+    "start": "DEBUG=sockethub* bun run ./bin/sockethub",
+    "dev": "--hot DEBUG=sockethub* bun run ./bin/sockethub --examples"
   },
   "devDependencies": {
     "@types/body-parser": "1.19.5",
