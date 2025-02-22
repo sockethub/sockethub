@@ -10,8 +10,8 @@
     "secret": 1234567890
   },
   "sentry": {
-    "enabled": false,
-    "dsn": ""
+    "dsn": "",
+    "traceSampleRate": 1.0
   },
   "sockethub": {
     "port": 10550,

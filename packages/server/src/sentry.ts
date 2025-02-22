@@ -5,10 +5,6 @@
 import * as Sentry from "@sentry/bun";
 import config from "./config";
 if (!config.get("sentry:dsn")) {
-    throw new Error("Sentry enabled but no DSN provided");
+    throw new Error("Sentry attempted initialization with no DSN provided");
 }
-Sentry.init({
-    dsn: config.get("sentry:dsn"),
-    // Tracing
-    tracesSampleRate: 1.0, // Capture 100% of the transactions
-});
+Sentry.init(config.get("sentry"));

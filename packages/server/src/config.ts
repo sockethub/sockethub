@@ -41,10 +41,6 @@ export class Config {
                 describe: "Redis URL e.g. redis://host:port",
             },
             sentry: {
-                type: "boolean",
-                describe: "enable Sentry",
-            },
-            sentry_dsn: {
                 alias: "sentry.dsn",
                 describe: "Provide your Sentry DSN",
             },
