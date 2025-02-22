@@ -40,7 +40,6 @@ export class Config {
                 alias: "redis.url",
             },
             sentry: {
-                alias: "sentry",
                 describe: "Enable sentry by providing the dsn",
             },
         });
