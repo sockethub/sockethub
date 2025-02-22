@@ -5,7 +5,7 @@ import Sockethub from "./sockethub.js";
 const log = debug("sockethub:init");
 
 (async () => {
-    if (config.get("sentry")) {
+    if (config.get("sentry:enabled")) {
         log("initializing sentry");
         await import("./sentry");
     }
