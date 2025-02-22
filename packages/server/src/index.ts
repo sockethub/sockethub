@@ -1,4 +1,15 @@
+import debug from "debug";
+import config from "./config";
 import Sockethub from "./sockethub.js";
+
+const log = debug("sockethub:init");
+
+(async () => {
+    if (config.get("sentry")) {
+        log("initializing sentry");
+        await import("./sentry");
+    }
+})();
 
 const sockethub = new Sockethub();
 

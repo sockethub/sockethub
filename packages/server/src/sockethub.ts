@@ -1,5 +1,4 @@
 import debug from "debug";
-import nconf from "nconf";
 import type { Socket } from "socket.io";
 
 import { crypto } from "@sockethub/crypto";
@@ -11,6 +10,7 @@ import type {
 } from "@sockethub/schemas";
 
 import getInitObject from "./bootstrap/init.js";
+import config from "./config";
 import janitor from "./janitor.js";
 import listener from "./listener.js";
 import middleware from "./middleware.js";
@@ -106,7 +106,7 @@ class Sockethub {
                 this.parentId,
                 socket.id,
                 this.parentSecret1 + sessionSecret,
-                nconf.get("redis"),
+                config.get("redis"),
             );
 
         sessionLog("socket.io connection");

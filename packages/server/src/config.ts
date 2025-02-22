@@ -1,4 +1,4 @@
-import * as fs from "node:fs";
+import fs from "node:fs";
 import path from "node:path";
 import debug from "debug";
 import nconf from "nconf";
@@ -6,9 +6,11 @@ import nconf from "nconf";
 import { __dirname } from "./util.js";
 
 const log = debug("sockethub:server:bootstrap:config");
-const data: object = await import(`${__dirname}/defaults.json`, {
-    with: { type: "json" },
-});
+const data = JSON.parse(
+    fs.readFileSync(path.resolve(__dirname, "defaults.json"), "utf-8"),
+);
+
+const defaultConfig = "sockethub.config.json";
 
 export class Config {
     constructor() {
@@ -26,7 +28,6 @@ export class Config {
             },
             config: {
                 alias: "c",
-                default: "",
                 describe: "Path to sockethub.config.json",
             },
             port: {
@@ -37,6 +38,10 @@ export class Config {
             },
             redis_url: {
                 alias: "redis.url",
+            },
+            sentry: {
+                alias: "sentry",
+                describe: "Enable sentry by providing the dsn",
             },
         });
 
@@ -53,8 +58,10 @@ export class Config {
             log(`reading config file at ${configFile}`);
             nconf.file(configFile);
         } else {
-            log("No config file specified, using defaults");
-            console.log("No config file specified, using defaults");
+            if (fs.existsSync(`${process.cwd()}/${defaultConfig}`)) {
+                log(`loading local ${defaultConfig}`);
+                nconf.file(`${process.cwd()}/${defaultConfig}`);
+            }
             nconf.use("memory");
         }
 
@@ -65,9 +72,7 @@ export class Config {
         );
 
         // load defaults
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        nconf.defaults(data.default);
+        nconf.defaults(data);
 
         nconf.required(["platforms"]);
 
@@ -85,7 +90,7 @@ export class Config {
             nconf.set("redis:url", process.env.REDIS_URL);
         }
     }
-    get = (key: string): unknown => nconf.get(key);
+    get = (key: string) => nconf.get(key);
 }
 
 const config = new Config();

@@ -9,6 +9,7 @@
     "enabled": true,
     "secret": 1234567890
   },
+  "sentry": "",
   "sockethub": {
     "port": 10550,
     "host": "localhost",
