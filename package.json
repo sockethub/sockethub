@@ -19,7 +19,7 @@
     "typescript": "5.3.3"
   },
   "engines": {
-    "bun": ">=1.2"
+    "bun": "==1.2"
   },
   "packageManager": "bun@1.2.2",
   "private": true,

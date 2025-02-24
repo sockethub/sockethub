@@ -38,6 +38,7 @@ export default class XMPP {
     constructor(session) {
         this.id = session.id; // actor
         this.config = {
+            connectTimeoutMs: 3000,
             persist: true,
             initialized: false,
             requireCredentials: ["connect"],
@@ -129,9 +130,10 @@ export default class XMPP {
             return done();
         }
         this.debug(`connect called for ${job.actor.id}`);
-        this.__client = this.__clientConstructor(
-            utils.buildXmppCredentials(credentials),
-        );
+        this.__client = this.__clientConstructor({
+            ...utils.buildXmppCredentials(credentials),
+            ...{ timeout: this.config.connectTimeoutMs },
+        });
         this.__client.on("offline", () => {
             this.debug("offline");
         });
@@ -450,7 +452,7 @@ export default class XMPP {
     }
 
     /**
-     * Indicate an intent to query something (ie. get a list of users in a room).
+     * Indicate an intent to query something (i.e. get a list of users in a room).
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
@@ -524,7 +526,6 @@ export default class XMPP {
      */
     cleanup(done) {
         this.debug("attempting to close connection now");
-        this.__forceDisconnect = true;
         this.__client.stop();
         done();
     }

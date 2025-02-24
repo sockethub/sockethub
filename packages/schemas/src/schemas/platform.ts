@@ -19,6 +19,7 @@
 // this schema defines the general structure of the schema object which should
 // be returned from platforms.
 export const PlatformSchema = {
+    $id: "https://sockethub.org/schemas/v/platform.json",
     type: "object",
     required: ["name", "version", "messages"],
     additionalProperties: false,

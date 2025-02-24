@@ -1,8 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { displayMessage } from "$components/chat/IncomingMessages.svelte";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import { addObject } from "$components/logs/Logger.svelte";
 import SockethubClient from "@sockethub/client";
 import { io } from "socket.io-client";
@@ -123,8 +121,6 @@ function sockethubConnect(config: typeof defaultConfig = defaultConfig) {
 }
 
 if (typeof window === "object") {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     console.log("connecting to sockethub");
     fetch("/config.json")
         .then(async (res) => {

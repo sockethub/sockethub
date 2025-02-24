@@ -8,16 +8,16 @@ import type { AnyActivityStream } from "$lib/sockethub";
 import { writable } from "svelte/store";
 
 const actorId = "https://sockethub.org/examples/feedsUser";
-const state = writable({
+const sockethubState = writable({
     actorSet: false,
 });
-$: actor = {
+let actor = $derived({
     id: actorId,
     type: "person",
     name: "Sockethub Examples Feeds",
-};
+});
 
-let url = "https://sockethub.org/feed.xml";
+let url = $state("https://sockethub.org/feed.xml");
 
 function send(obj: AnyActivityStream) {
     sc.socket.emit(
@@ -62,7 +62,7 @@ async function sendFetch(): Promise<void> {
     </p>
 </Intro>
 
-<ActivityActor {actor} {state} />
+<ActivityActor {actor} {sockethubState} />
 
 <div>
     <div class="w-full p-2">
@@ -70,7 +70,7 @@ async function sendFetch(): Promise<void> {
         <input id="URL" bind:value={url} class="border-4" />
     </div>
     <div class="w-full text-right">
-        <SockethubButton disabled={!$state.actorSet} buttonAction={sendFetch}>Fetch</SockethubButton
+        <SockethubButton disabled={!$sockethubState.actorSet} buttonAction={sendFetch}>Fetch</SockethubButton
         >
     </div>
 </div>

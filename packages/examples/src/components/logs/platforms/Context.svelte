@@ -1,7 +1,11 @@
 <script lang="ts">
 import type { AnyActivityStream } from "$lib/sockethub.js";
 
-export let entry: AnyActivityStream;
+interface Props {
+    entry: AnyActivityStream;
+}
+
+let { entry }: Props = $props();
 </script>
 
 <span>[{entry.context}:{entry.type}]</span>

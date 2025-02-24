@@ -74,10 +74,6 @@ interface IrcSocketOptions {
  * @description
  * Handles all actions related to communication via. the IRC protocol.
  *
- * Uses the `irc-factory` node module as a base tool for interacting with IRC.
- *
- * {@link https://github.com/ircanywhere/irc-factory}
- *
  * @param {object} cfg a unique config object for this instance
  */
 export default class IRC implements PlatformInterface {
@@ -87,6 +83,7 @@ export default class IRC implements PlatformInterface {
         persist: true,
         requireCredentials: ["connect", "update"],
         initialized: false,
+        connectTimeoutMs: 30000,
     };
     private readonly updateActor: PlatformUpdateActor;
     private readonly sendToClient: PlatformSendToClient;
@@ -138,7 +135,7 @@ export default class IRC implements PlatformInterface {
      *      type: 'credentials',
      *      server: 'irc.host.net',
      *      nick: 'testuser',
-     *      password: 'asdasdasdasd',
+     *      password: 'secret',
      *      port: 6697,
      *      secure: true,
      *      sasl: true
@@ -163,8 +160,7 @@ export default class IRC implements PlatformInterface {
         credentials: PlatformIrcCredentialsObject,
         done: PlatformCallback,
     ) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        this.getClient(job.actor.id, credentials, (err, client) => {
+        this.getClient(job.actor.id, credentials, (err) => {
             if (err) {
                 return done(err);
             }
@@ -305,7 +301,7 @@ export default class IRC implements PlatformInterface {
 
             const match = /(\/\w+)\s*([\s\S]*)/.exec(job.object.content);
             if (match) {
-                const cmd = match[1].substr(1).toUpperCase(); // get command
+                const cmd = match[1].substring(1).toUpperCase(); // get command
                 const msg = match[2].trim(); // remove leading/trailing whitespace from remaining text
                 if (cmd === "ME") {
                     // handle /me messages uniquely
@@ -373,14 +369,14 @@ export default class IRC implements PlatformInterface {
      *   },
      *   object: {
      *     type: 'topic',
-     *     content: 'New version of Socekthub released!'
+     *     content: 'New version of Sockethub released!'
      *   }
      * }
      *
      * @example change nickname
      *  {
      *    context: 'irc'
-     *    type: 'udpate',
+     *    type: 'update',
      *    actor: {
      *      id: 'slvrbckt@irc.freenode.net',
      *      type: 'person',
@@ -392,7 +388,7 @@ export default class IRC implements PlatformInterface {
      *    target: {
      *      id: 'cooldude@irc.freenode.net',
      *      type: 'person',
-     *      name: cooldude
+     *      name: 'cooldude'
      *    }
      *  }
      */
@@ -568,7 +564,7 @@ export default class IRC implements PlatformInterface {
                     return cb(null, this.client);
                 }
                 return cb("failed to get irc client, please try again.");
-            }, 30000);
+            }, this.config.connectTimeoutMs);
             return;
         }
 
@@ -578,7 +574,7 @@ export default class IRC implements PlatformInterface {
             );
         }
 
-        this.ircConnect(key, credentials, (err, client) => {
+        this.ircConnect(credentials, (err, client) => {
             if (err) {
                 this.config.initialized = false;
                 return cb(err);
@@ -592,7 +588,6 @@ export default class IRC implements PlatformInterface {
     }
 
     private ircConnect(
-        key: string,
         credentials: PlatformIrcCredentialsObject,
         cb: GetClientCallback,
     ) {

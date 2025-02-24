@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { AnyActivityStream } from "$lib/sockethub";
 import { send } from "$lib/sockethub";
-import type { StateStore } from "$lib/types";
+import type { SockethubStateStore } from "$lib/types";
 import { writable } from "svelte/store";
 import ActivityActor from "../../components/ActivityActor.svelte";
 import Intro from "../../components/Intro.svelte";
@@ -10,17 +10,17 @@ import Logger from "../../components/logs/Logger.svelte";
 
 const actorId = "https://sockethub.org/examples/dummyUser";
 
-const state: StateStore = writable({
+const sockethubState: SockethubStateStore = writable({
     actorSet: false,
 });
 
-$: actor = {
+let actor = $derived({
     id: actorId,
     type: "person",
     name: "Sockethub Examples Dummy",
-};
+});
 
-let content = "";
+let content = $state("");
 
 function getASObj(type: string): AnyActivityStream {
     return {
@@ -52,7 +52,7 @@ async function sendFail(): Promise<void> {
     <p>You can use either the echo or fail types on your Activity Stream object.</p>
 </Intro>
 
-<ActivityActor {actor} {state} />
+<ActivityActor {actor} {sockethubState} />
 
 <div>
     <div class="w-full p-2">
@@ -70,10 +70,10 @@ async function sendFail(): Promise<void> {
         <label for="sendEcho" class="inline-block text-gray-900 font-bold w-32">Object Type</label>
         <div class="flex gap-4">
             <div id="sendEcho">
-                <SockethubButton disabled={!$state.actorSet} buttonAction={sendEcho}
+                <SockethubButton disabled={!$sockethubState.actorSet} buttonAction={sendEcho}
                     >Echo</SockethubButton
                 >
-                <SockethubButton disabled={!$state.actorSet} buttonAction={sendFail}
+                <SockethubButton disabled={!$sockethubState.actorSet} buttonAction={sendFail}
                     >Fail</SockethubButton
                 >
             </div>
