@@ -1,9 +1,14 @@
-<script>
+<script lang="ts">
 import "../app.css";
 import { base } from "$app/paths";
 import edgeLight from "svelte-highlight/styles/edge-light";
 import ConnectStatus from "../components/ConnectWidget.svelte";
 import Nav from "../components/Nav.svelte";
+interface Props {
+    children?: import("svelte").Snippet;
+}
+
+let { children }: Props = $props();
 </script>
 
 <svelte:head>
@@ -23,6 +28,6 @@ import Nav from "../components/Nav.svelte";
         </div>
     </div>
     <div class="pt-5">
-        <slot />
+        {@render children?.()}
     </div>
 </main>

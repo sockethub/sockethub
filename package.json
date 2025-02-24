@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "bun@1.2.2",
   "engines": {
-    "bun": ">=1.2"
+    "bun": "==1.2.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

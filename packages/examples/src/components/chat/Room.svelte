@@ -1,16 +1,22 @@
+<!-- @migration-task Error while migrating Svelte code: can't migrate `let joining = false;` to `$state` because there's a variable named state.
+     Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
 import SockethubButton from "$components/SockethubButton.svelte";
 import { send } from "$lib/sockethub";
 import type { ActorData } from "$lib/sockethub";
 import type { AnyActivityStream } from "$lib/sockethub";
-import type { StateStore } from "$lib/types";
+import type { SockethubStateStore } from "$lib/types";
 
-export let room: string;
-export let actor: ActorData;
-export let context: string;
-export let state: StateStore;
+interface Props {
+    room: string;
+    actor: ActorData;
+    context: string;
+    sockethubState: SockethubStateStore;
+}
 
-let joining = false;
+let { room = $bindable(), actor, context, sockethubState }: Props = $props();
+
+let joining = $state(false);
 
 async function joinRoom(): Promise<void> {
     joining = true;
@@ -25,11 +31,11 @@ async function joinRoom(): Promise<void> {
         },
     } as AnyActivityStream)
         .catch(() => {
-            $state.joined = false;
+            $sockethubState.joined = false;
         })
         .then(() => {
             // $actor.roomId = room;
-            $state.joined = true;
+            $sockethubState.joined = true;
         });
 }
 </script>
@@ -41,9 +47,9 @@ async function joinRoom(): Promise<void> {
     </div>
     <div class="w-full text-right">
         <SockethubButton
-            disabled={!$state.connected || $state.joined || joining}
+            disabled={!$sockethubState.connected || $sockethubState.joined || joining}
             buttonAction={joinRoom}
-            >{joining ? "Joining" : $state.joined ? "Joined" : "Join"}</SockethubButton
+            >{joining ? "Joining" : $sockethubState.joined ? "Joined" : "Join"}</SockethubButton
         >
     </div>
 </div>

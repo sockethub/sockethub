@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 import type { AnyActivityStream } from "$lib/sockethub";
 import { writable } from "svelte/store";
 
@@ -49,10 +49,10 @@ export function addObject(
     import Highlight from "svelte-highlight";
     import json from "svelte-highlight/languages/json";
 
-    let logs: LogEntries;
-    let logModalState = false;
-    let jsonSend = "";
-    let jsonResp = "";
+    let logs: LogEntries = $state();
+    let logModalState = $state(false);
+    let jsonSend = $state("");
+    let jsonResp = $state("");
 
     Logs.subscribe((data: LogEntries) => {
         logs = data;
@@ -122,7 +122,7 @@ export function addObject(
         ? ''
         : 'hidden'} bg-slate-800 bg-opacity-50 fixed top-0 left-0 m-0 w-full h-full overflow-scroll"
 >
-    <div id="modalContent" class="max-w-[95%] bg-offwhite rounded-md m-auto p-2">
+    <div id="modalContent" class="max-w-[95%] rounded-md m-auto p-2">
         <div>
             <div class="text-xs text-slate-500 font-mono">
                 <h2 class="ml-2">Sent</h2>
@@ -135,7 +135,7 @@ export function addObject(
         </div>
         <div class="w-full text-center">
             <button
-                on:click={() => (logModalState = false)}
+                onclick={() => (logModalState = false)}
                 class="bg-indigo-500 px-7 py-2 w-[95%] rounded-md text-sm text-white font-semibold"
                 >Ok</button
             >

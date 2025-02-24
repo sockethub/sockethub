@@ -3,27 +3,30 @@ import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
 import { sc } from "$lib/sockethub";
 import type { ActorData } from "$lib/sockethub";
 import type { CredentialsObjectData, SockethubResponse } from "$lib/sockethub";
-import type { Payload, StateStore } from "$lib/types";
+import type { SockethubStateStore } from "$lib/types";
 
-export let credentials: CredentialsObjectData;
-export let actor: ActorData;
-export let state: StateStore;
+interface Props {
+    credentials: CredentialsObjectData;
+    actor: ActorData;
+    sockethubState: SockethubStateStore;
+    context: string;
+}
 
-export let context: string;
+let { credentials, actor, sockethubState, context }: Props = $props();
 
-function sendCredentials(data: Payload) {
+function sendCredentials(data: string) {
     const creds = {
         context: context,
         type: "credentials",
         actor: actor.id,
-        object: JSON.parse(data.detail.jsonString),
+        object: JSON.parse(data),
     };
     console.log("sending credentials: ", creds);
     sc.socket.emit("credentials", creds, (resp: SockethubResponse) => {
         if (resp?.error) {
             throw new Error(resp.error);
         }
-        $state.credentialsSet = true;
+        $sockethubState.credentialsSet = true;
     });
 }
 </script>
@@ -32,6 +35,6 @@ function sendCredentials(data: Payload) {
     title="Credentials"
     obj={credentials}
     buttonText="Set Credentials"
-    on:submit={sendCredentials}
-    disabled={!$state.actorSet || $state.credentialsSet || false}
+    submitData={sendCredentials}
+    disabled={!$sockethubState.actorSet || $sockethubState.credentialsSet || false}
 />

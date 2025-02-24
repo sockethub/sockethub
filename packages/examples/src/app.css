@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@tailwind base;
 @layer base {
     h1 {
         @apply text-2xl;
@@ -14,16 +13,15 @@
         @apply text-blue-600 underline;
     }
     button:disabled {
-        background-color: lightgrey;
+        background-color: lightgrey !important;
     }
     button:disabled:hover {
-        background-color: lightgrey;
+        background-color: lightgrey !important;
     }
     pre {
         white-space: pre-wrap;
     }
 }
-@tailwind components;
 @layer components {
     .incoming-messages {
         list-style-type: none;
