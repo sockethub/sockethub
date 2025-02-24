@@ -8,7 +8,7 @@ jobs:
 
         strategy:
             matrix:
-                bun-version: [1.2]
+                bun-version: [1.2.2, 1.2.3]
 
         steps:
             - run: sudo chown -R $USER:$USER ${{ github.workspace }}
@@ -18,7 +18,7 @@ jobs:
               uses: oven-sh/setup-bun@v2.0.1
               with:
                   bun-version: ${{ matrix.node-version }}
-            - run: bun install
+            - run: bun install --frozen-lockfile
             - run: bun run lint
 
     build:
@@ -27,7 +27,7 @@ jobs:
 
         strategy:
             matrix:
-                bun-version: [1.2]
+                bun-version: [1.2.2, 1.2.3]
 
         steps:
             - run: sudo chown -R $USER:$USER ${{ github.workspace }}
@@ -37,7 +37,7 @@ jobs:
               uses: oven-sh/setup-bun@v2.0.1
               with:
                   bun-version: ${{ matrix.node-version }}
-            - run: bun install
+            - run: bun install --frozen-lockfile
             - run: bun run build
 
     test:
@@ -46,7 +46,7 @@ jobs:
 
         strategy:
             matrix:
-                bun-version: [1.2]
+                bun-version: [1.2.2, 1.2.3]
 
         steps:
             - run: sudo chown -R $USER:$USER ${{ github.workspace }}
@@ -56,6 +56,6 @@ jobs:
               uses: oven-sh/setup-bun@v2.0.1
               with:
                   bun-version: ${{ matrix.node-version }}
-            - run: bun install
+            - run: bun install --frozen-lockfile
             - run: bun run build
             - run: bun test
