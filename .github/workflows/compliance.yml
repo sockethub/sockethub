@@ -17,7 +17,7 @@ jobs:
             - name: Use Bun ${{ matrix.bun-version }}
               uses: oven-sh/setup-bun@v2.0.1
               with:
-                  bun-version: ${{ matrix.node-version }}
+                  bun-version: ${{ matrix.bun-version }}
             - run: bun install --frozen-lockfile
             - run: bun run lint
 
@@ -36,7 +36,7 @@ jobs:
             - name: Use Bun ${{ matrix.bun-version }}
               uses: oven-sh/setup-bun@v2.0.1
               with:
-                  bun-version: ${{ matrix.node-version }}
+                  bun-version: ${{ matrix.bun-version }}
             - run: bun install --frozen-lockfile
             - run: bun run build
 
@@ -55,7 +55,7 @@ jobs:
             - name: Use Bun ${{ matrix.bun-version }}
               uses: oven-sh/setup-bun@v2.0.1
               with:
-                  bun-version: ${{ matrix.node-version }}
+                  bun-version: ${{ matrix.bun-version }}
             - run: bun install --frozen-lockfile
             - run: bun run build
             - run: bun test
