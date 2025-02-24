@@ -28,20 +28,23 @@ export class Config {
             },
             config: {
                 alias: "c",
+                type: "string",
                 describe: "Path to sockethub.config.json",
             },
             port: {
+                type: "number",
                 alias: "sockethub.port",
             },
             host: {
+                type: "string",
                 alias: "sockethub.host",
             },
-            redis_url: {
-                alias: "redis.url",
+            "redis.url": {
+                type: "string",
                 describe: "Redis URL e.g. redis://host:port",
             },
-            sentry: {
-                alias: "sentry.dsn",
+            "sentry.dsn": {
+                type: "string",
                 describe: "Provide your Sentry DSN",
             },
         });
@@ -67,10 +70,7 @@ export class Config {
         }
 
         // only override config file if explicitly mentioned in command-line params
-        nconf.set(
-            "examples:enabled",
-            examples ? true : nconf.get("examples:enabled"),
-        );
+        nconf.set("examples", examples ? true : nconf.get("examples"));
 
         // load defaults
         nconf.defaults(data);
