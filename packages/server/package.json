@@ -74,6 +74,7 @@
     "@sockethub/platform-dummy": "workspace:*",
     "@sockethub/platform-feeds": "workspace:*",
     "@sockethub/platform-irc": "workspace:*",
+    "@sockethub/platform-metadata": "workspace:*",
     "@sockethub/platform-xmpp": "workspace:*"
   }
 }
