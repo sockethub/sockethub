@@ -1,3 +1,5 @@
+<!-- @migration-task Error while migrating Svelte code: can't migrate `let server = "chat.freenode.net";` to `$state` because there's a variable named state.
+     Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
 import ActivityActor from "$components/ActivityActor.svelte";
 import Credentials from "$components/Credentials.svelte";
@@ -15,31 +17,31 @@ const actorIdStore = writable(
     `sh-${(Math.random() + 1).toString(36).substring(7)}`,
 );
 
-let server = "chat.freenode.net";
-let port = 6697;
+let server = $state("chat.freenode.net");
+let port = $state(6697);
 let room = "#sh-random";
-let connecting = false;
+let connecting = $state(false);
 
-const state = writable({
+const sockethubState = writable({
     actorSet: false,
     credentialsSet: false,
     connected: false,
     joined: false,
 });
 
-$: actor = {
+let actor = $derived({
     id: $actorIdStore,
     type: "person",
     name: $actorIdStore,
-};
+});
 
-$: credentials = {
+let credentials = $derived({
     type: "credentials" as CredentialName,
     nick: $actorIdStore,
     server: server,
     port: port,
     secure: true,
-};
+});
 
 async function connectIrc(): Promise<void> {
     connecting = true;
@@ -49,11 +51,11 @@ async function connectIrc(): Promise<void> {
         actor: $actorIdStore,
     } as AnyActivityStream)
         .catch(() => {
-            $state.connected = false;
+            $sockethubState.connected = false;
             connecting = false;
         })
         .then(() => {
-            $state.connected = true;
+            $sockethubState.connected = true;
             connecting = false;
         });
 }
@@ -74,8 +76,8 @@ async function connectIrc(): Promise<void> {
     />
 </div>
 
-<ActivityActor {actor} {state} />
-<Credentials context="irc" {credentials} {actor} {state} />
+<ActivityActor {actor} {sockethubState} />
+<Credentials context="irc" {credentials} {actor} {sockethubState} />
 
 <div>
     <div class="w-full p-2">
@@ -88,9 +90,9 @@ async function connectIrc(): Promise<void> {
     </div>
     <div class="w-full text-right">
         <SockethubButton
-            disabled={!$state.credentialsSet || $state.connected || connecting}
+            disabled={!$sockethubState.credentialsSet || $sockethubState.connected || connecting}
             buttonAction={connectIrc}
-            >{$state.connected
+            >{$sockethubState.connected
                 ? "Connected"
                 : connecting
                   ? "Connecting"
@@ -99,10 +101,10 @@ async function connectIrc(): Promise<void> {
     </div>
 </div>
 
-<Room {actor} {state} {room} context="irc" />
+<Room {actor} {sockethubState} {room} context="irc" />
 
 <IncomingMessage />
 
-<SendMessage context="irc" {actor} {state} {room} />
+<SendMessage context="irc" {actor} {sockethubState} {room} />
 
 <Logger />

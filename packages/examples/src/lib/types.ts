@@ -1,11 +1,5 @@
 import type { Writable } from "svelte/store";
 
-export type Payload = {
-    detail: {
-        jsonString: string;
-    };
-};
-
 export type TextAreaObject = {
     password?: string;
     id?: string;
@@ -13,14 +7,14 @@ export type TextAreaObject = {
     name?: string;
 };
 
-type StateData = {
+type SockethubStateData = {
     actorSet: boolean;
     credentialsSet?: boolean;
     connected?: boolean;
     joined?: boolean;
 };
 
-export type StateStore = {
-    set: Writable<StateData>["set"];
-    subscribe: Writable<StateData>["subscribe"];
+export type SockethubStateStore = {
+    set: Writable<SockethubStateData>["set"];
+    subscribe: Writable<SockethubStateData>["subscribe"];
 };

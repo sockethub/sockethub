@@ -1,8 +1,12 @@
 <script lang="ts">
 import type { AnyActivityStream } from "$lib/sockethub";
 import Context from "./Context.svelte";
-export let id: string;
-export let entry: AnyActivityStream;
+interface Props {
+    id: string;
+    entry: AnyActivityStream;
+}
+
+let { id, entry }: Props = $props();
 </script>
 
 <Context {entry} />

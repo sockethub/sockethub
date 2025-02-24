@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
 import type { AnyActivityStream } from "$lib/sockethub";
 import { get, writable } from "svelte/store";
 

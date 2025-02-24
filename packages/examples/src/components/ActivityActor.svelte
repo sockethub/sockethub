@@ -1,17 +1,21 @@
 <script lang="ts">
 import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
 import { sc } from "$lib/sockethub";
-import type { Payload, StateStore } from "$lib/types";
+import type { SockethubStateStore } from "$lib/types";
 import type { ActivityActor } from "@sockethub/schemas";
 
-export let actor: ActivityActor;
-export let state: StateStore;
+interface Props {
+    actor: ActivityActor;
+    sockethubState: SockethubStateStore;
+}
 
-function sendActivityObjectCreate(data: Payload) {
-    const actorObj = JSON.parse(data.detail.jsonString);
+let { actor, sockethubState }: Props = $props();
+
+function sendActivityObjectCreate(data: string) {
+    const actorObj = JSON.parse(data);
     console.log("creating activity object:  ", actorObj);
     sc.ActivityStreams.Object.create(actorObj);
-    state.set({
+    sockethubState.set({
         actorSet: true,
         credentialsSet: false,
         connected: false,
@@ -28,6 +32,6 @@ function sendActivityObjectCreate(data: Payload) {
     title="Activity Stream Actor"
     obj={actor}
     buttonText="Activity Object Create"
-    on:submit={sendActivityObjectCreate}
-    disabled={$state.actorSet}
+    submitData={sendActivityObjectCreate}
+    disabled={$sockethubState.actorSet}
 />
