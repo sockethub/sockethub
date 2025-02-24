@@ -3,7 +3,7 @@ import { ActivityObjectSchema } from "./activity-object.js";
 
 const validActorRefs = ActivityObjectSchema.properties.object.oneOf;
 const validTargetRefs = ActivityObjectSchema.properties.object.oneOf;
-console.log(validActorRefs);
+// console.log(validActorRefs);
 
 const validObjectRefs = [];
 
