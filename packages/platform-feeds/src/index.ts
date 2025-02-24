@@ -17,7 +17,7 @@
  */
 
 import htmlTags from "html-tags";
-import getPodcastFromFeed, { type Meta } from "podparse";
+import getPodcastFromFeed, { type Episode, type Meta } from "podparse";
 
 import type {
     ActivityStream,
@@ -63,7 +63,7 @@ function isHtml(s: string): boolean {
  *
  * - Atom
  *
- * Uses the `podparser` module as a base tool fetching feeds.
+ * Uses the `podparse` module as a base tool fetching feeds.
  *
  * https://github.com/Tombarr/podcast-feed-parser
  *
@@ -73,6 +73,7 @@ export default class Feeds implements PlatformInterface {
     debug: Logger;
     config: PlatformConfig = {
         persist: false,
+        connectTimeoutMs: 5000,
     };
 
     /**
@@ -178,7 +179,13 @@ export default class Feeds implements PlatformInterface {
         id: string,
     ): Promise<Array<PlatformFeedsActivityStream>> {
         this.debug(`fetching ${url}`);
-        const res = await fetch(url);
+        const opts = {
+            signal: undefined,
+        };
+        if (this.config.connectTimeoutMs) {
+            opts.signal = AbortSignal.timeout(this.config.connectTimeoutMs);
+        }
+        const res = await fetch(url, opts);
         const feed = getPodcastFromFeed(await res.text());
         const actor = buildFeedChannel(url, feed.meta);
         const articles = [];
@@ -186,14 +193,22 @@ export default class Feeds implements PlatformInterface {
         for (const item of feed.episodes) {
             const article = buildFeedStruct(actor);
             article.id = id;
-            article.object = buildFeedItem(item);
+            article.object = buildFeedItem(item as FeedItem);
             articles.push(article);
         }
         return articles;
     }
 }
 
-function buildFeedItem(item): PlatformFeedsActivityObject {
+interface FeedItem extends Episode {
+    meta: Meta;
+    date: string;
+    categories: Array<string>;
+    media: Array<unknown>;
+    source: string;
+}
+
+function buildFeedItem(item: FeedItem): PlatformFeedsActivityObject {
     const dateNum = Date.parse(item.pubDate.toString()) || 0;
     return {
         type:
