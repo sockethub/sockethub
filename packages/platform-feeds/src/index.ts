@@ -173,6 +173,7 @@ export default class Feeds implements PlatformInterface {
         this.fetchFeed(job.target.id, job.id)
             .then((results) => {
                 return done(null, {
+                    id: job.id || null,
                     context: "feeds",
                     type: "collection",
                     summary: results.length > 0 ? results[0].actor.name : null,
