@@ -2,9 +2,8 @@
 import ActivityActor from "$components/ActivityActor.svelte";
 import Intro from "$components/Intro.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
-import Logger, { addObject } from "$components/logs/Logger.svelte";
-import { sc } from "$lib/sockethub";
-import type { AnyActivityStream } from "$lib/sockethub";
+import Logger from "$components/logs/Logger.svelte";
+import { send } from "$lib/sockethub";
 import { writable } from "svelte/store";
 
 const actorId = "https://sockethub.org/examples/feedsUser";
@@ -18,24 +17,6 @@ let actor = $derived({
 });
 
 let url = $state("https://sockethub.org/feed.xml");
-
-function send(obj: AnyActivityStream) {
-    sc.socket.emit(
-        "message",
-        addObject("SEND", obj, obj.id || ""),
-        (resp: AnyActivityStream) => {
-            if (Array.isArray(resp)) {
-                let i = 1;
-                for (const r of resp.reverse()) {
-                    addObject("RESP", r, `${r.id}.${i}`);
-                    i += 1;
-                }
-            } else {
-                addObject("RESP", resp, resp?.id || "");
-            }
-        },
-    );
-}
 
 function getASObj(type: string) {
     return {

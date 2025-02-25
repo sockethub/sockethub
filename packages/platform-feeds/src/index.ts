@@ -207,7 +207,6 @@ export default class Feeds implements PlatformInterface {
         this.debug(`fetching ${url}`);
         const res = await this.makeRequest(url);
         const feed = getPodcastFromFeed(res);
-        this.debug(`got result: ${res}`);
         const actor = buildFeedChannel(url, feed.meta);
         const articles = [];
 
