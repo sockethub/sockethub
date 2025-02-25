@@ -185,6 +185,8 @@ export default class XMPP {
         // TODO investigate implementation reserved nickname discovery
         const id = job.target.id.split("/")[0];
 
+        throw new Error("Test one two");
+
         this.__client
             .send(
                 this.__xml("presence", {
