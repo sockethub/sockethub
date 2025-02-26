@@ -113,8 +113,9 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                             },
                         },
                         (msg) => {
-                            expect(msg.length).to.eql(20);
-                            for (const m of msg) {
+                            expect(msg.totalItems).to.eql(20);
+                            expect(msg.items.length).to.eql(20);
+                            for (const m of msg.items) {
                                 expect(typeof m.object.content).to.equal(
                                     "string",
                                 );
