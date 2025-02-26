@@ -3,9 +3,9 @@
   "version": "1.0.0-alpha.4",
   "type": "module",
   "files": ["build"],
-  "packageManager": "bun@1.2.2",
+  "packageManager": "bun@1.2.4",
   "engines": {
-    "bun": ">=1.2"
+    "bun": ">=1.2.4"
   },
   "keywords": ["sockethub", "example", "web app", "xmpp", "irc", "rss", "atom"],
   "repository": {

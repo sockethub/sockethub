@@ -8,9 +8,9 @@
   "main": "",
   "bin": "bin/sockethub",
   "preferGlobal": true,
-  "packageManager": "bun@1.2.2",
+  "packageManager": "bun@1.2.4",
   "engines": {
-    "bun": ">=1.2"
+    "bun": ">=1.2.4"
   },
   "keywords": [
     "sockethub",

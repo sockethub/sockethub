@@ -19,9 +19,9 @@
     "typescript": "5.3.3"
   },
   "engines": {
-    "bun": "==1.2"
+    "bun": ">=1.2.4"
   },
-  "packageManager": "bun@1.2.2",
+  "packageManager": "bun@1.2.4",
   "private": true,
   "resolutions": {
     "node-fetch": "3.3.2",
@@ -35,7 +35,7 @@
     "clean:deps": "bun run --filter='*' clean:deps && bunx rimraf node_modules",
     "dev": "cd packages/sockethub && bun run dev",
     "doc": "bun run --filter='*' doc",
-    "docker:start": "docker compose -f docker-compose.yml up prosody sockethub -d",
+    "docker:start": "docker compose up prosody sockethub -d",
     "docker:start:redis": "docker compose up redis -d",
     "docker:clean:all": "bun run docker:stop && docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1; docker rmi sockethub_sockethub",
     "docker:clean:sockethub": "bun run docker:stop && docker rm sockethub-sockethub-1; docker rmi sockethub-sockethub",
@@ -44,7 +44,7 @@
     "docker:build": "bun run docker:clean:sockethub; bun run docker:start",
     "integration": "bun run integration:redis && bun run integration:browser",
     "integration:browser": "bun run docker:start && bun run integration:browser:run; RES=$?; exit $RES",
-    "integration:browser:run": "web-test-runner ./integration/browser.integration.js --node-resolve",
+    "integration:browser:run": "bunx --bun web-test-runner ./integration/browser.integration.js --node-resolve",
     "integration:redis": "bun run docker:start:redis && bun run integration:redis:run; RES=$?; docker compose down; exit $RES",
     "integration:redis:run": "DEBUG=ioredis*,bullmq*,sockethub* bun test ./integration/redis.integration.ts",
     "lint": "biome check && bun run lint:doc",
