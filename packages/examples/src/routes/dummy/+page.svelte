@@ -14,12 +14,6 @@ const sockethubState: SockethubStateStore = writable({
     actorSet: false,
 });
 
-let actor = $derived({
-    id: actorId,
-    type: "person",
-    name: "Sockethub Examples Dummy",
-});
-
 let content = $state("");
 
 function getASObj(type: string): AnyActivityStream {
@@ -58,8 +52,6 @@ async function sendGreet(): Promise<void> {
     </p>
     <p>You can use either the echo or fail types on your Activity Stream object.</p>
 </Intro>
-
-<ActivityActor {actor} {sockethubState} />
 
 <div>
     <div class="w-full p-2">
