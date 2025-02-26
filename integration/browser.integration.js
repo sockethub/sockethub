@@ -93,6 +93,31 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                     }
                 });
             });
+
+            it("sends a throw and returns error", (done) => {
+                const dummyObj = {
+                    type: "throw",
+                    actor: actor.id,
+                    context: "dummy",
+                    object: { type: "message", content: "failure message" },
+                };
+                sc.socket.emit("message", dummyObj, (msg) => {
+                    if (msg?.error) {
+                        dummyObj.error = "failure message";
+                        dummyObj.actor = sc.ActivityStreams.Object.get(
+                            actor.id,
+                        );
+                        expect(msg).to.eql(dummyObj);
+                        done();
+                    } else {
+                        done(
+                            new Error(
+                                "didn't receive expected failure from dummy platform",
+                            ),
+                        );
+                    }
+                });
+            });
         });
 
         describe("Feeds", () => {
@@ -112,7 +137,9 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                                 id: `http://localhost:${SH_PORT}/feed.xml`,
                             },
                         },
-                        (msg) => {
+                        (msg, second) => {
+                            console.log("feeds: received message", msg);
+                            console.log("feeds: second", second);
                             expect(msg.length).to.eql(20);
                             for (const m of msg) {
                                 expect(typeof m.object.content).to.equal(
@@ -122,6 +149,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                                 expect(m.actor.type).to.equal("feed");
                                 expect(m.type).to.equal("post");
                             }
+                            console.log("feeds: resolving test");
                             done(
                                 msg?.error
                                     ? new Error(
