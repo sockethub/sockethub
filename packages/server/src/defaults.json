@@ -12,6 +12,7 @@
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",
+    "@sockethub/platform-metadata",
     "@sockethub/platform-xmpp"
   ],
   "public": {
