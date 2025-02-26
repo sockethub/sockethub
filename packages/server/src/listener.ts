@@ -41,7 +41,7 @@ class Listener {
 
         routes.setup(app);
 
-        if (config.get("examples:enabled")) {
+        if (config.get("examples")) {
             this.addExamplesRoutes(app);
         }
 

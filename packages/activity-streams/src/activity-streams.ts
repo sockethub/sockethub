@@ -296,3 +296,8 @@ export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
         off: (event, funcName) => ee.off(event, funcName),
     } as ASManager;
 }
+
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+((global: any) => {
+    global.ASFactor = ASFactory;
+})(typeof window === "object" ? window : {});

@@ -1,3 +1,12 @@
+/**
+ * This runs as a stand-alone separate process that handles starting up an
+ * instance of a given platform, connecting to the redis job queue, sending the
+ * platform jobs and handling the result by putting back on the queue for
+ * sockethub core to send back to the client.
+ *
+ * If an exception is thrown by the platform, this process will die along with
+ * it and sockethub will start up another process. This ensures memory safety.
+ */
 import { crypto, getPlatformId } from "@sockethub/crypto";
 import {
     CredentialsStore,
@@ -13,6 +22,7 @@ import type {
     PlatformSession,
 } from "@sockethub/schemas";
 import debug from "debug";
+import config from "./config";
 
 // command-line params
 const parentId = process.argv[2];
@@ -22,6 +32,17 @@ const redisUrl = process.env.REDIS_URL;
 
 const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
 let logger = debug(loggerPrefix);
+
+// conditionally initialize sentry
+let sentry: { readonly reportError: (err: Error) => void } = {
+    reportError: (err: Error) => {},
+};
+(async () => {
+    if (config.get("sentry:dsn")) {
+        logger("initializing sentry");
+        sentry = await import("./sentry");
+    }
+})();
 
 let jobWorker: JobWorker;
 let jobWorkerStarted = false;
@@ -59,8 +80,17 @@ const platform: PlatformInterface = await (async () => {
 /**
  * Handle any uncaught errors from the platform by alerting the worker and shutting down.
  */
-process.on("uncaughtException", (err) => {
+process.once("uncaughtException", (err: Error) => {
     console.log("EXCEPTION IN PLATFORM");
+    sentry.reportError(err);
+    console.log("error:\n", err.stack);
+    process.send(["error", err.toString()]);
+    process.exit(1);
+});
+
+process.once("unhandledRejection", (err: Error) => {
+    console.log("EXCEPTION IN PLATFORM");
+    sentry.reportError(err);
     console.log("error:\n", err.stack);
     process.send(["error", err.toString()]);
     process.exit(1);
@@ -123,6 +153,7 @@ function getJobHandler(): JobHandler {
                     } catch (err) {
                         errMsg = err;
                     }
+                    sentry.reportError(new Error(errMsg as string));
                     reject(new Error(errMsg as string));
                 } else {
                     jobLog(`completed ${job.title} ${job.msg.type}`);
@@ -148,8 +179,9 @@ function getJobHandler(): JobHandler {
                         );
                     })
                     .catch((err) => {
-                        console.log("error:\n", err);
+                        console.error(err);
                         jobLog(`error ${err.toString()}`);
+                        sentry.reportError(err);
                         reject(err);
                     });
             } else if (
@@ -162,7 +194,13 @@ function getJobHandler(): JobHandler {
                     ),
                 );
             } else {
-                platform[job.msg.type](job.msg, doneCallback);
+                try {
+                    platform[job.msg.type](job.msg, doneCallback);
+                } catch (err) {
+                    jobLog(`failed ${err.toString()}`);
+                    sentry.reportError(err);
+                    reject(err);
+                }
             }
         });
     };

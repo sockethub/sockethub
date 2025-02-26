@@ -1,10 +1,44 @@
-import Sockethub from "./sockethub.js";
+import debug from "debug";
+import config from "./config";
+import Sockethub from "./sockethub";
 
-const sockethub = new Sockethub();
+let sentry: { readonly reportError: (err: Error) => void } = {
+    reportError: (err: Error) => {},
+};
 
 export async function server() {
-    process.once("uncaughtException", (err) => {
-        console.log("UNCAUGHT EXCEPTION\n", err.stack);
+    let sockethub: Sockethub;
+    const log = debug("sockethub:init");
+
+    // conditionally initialize sentry
+    if (config.get("sentry:dsn")) {
+        log("initializing sentry");
+        sentry = await import("./sentry");
+    }
+
+    try {
+        sockethub = new Sockethub();
+    } catch (err) {
+        sentry.reportError(err);
+        console.error(err);
+        process.exit(1);
+    }
+
+    process.once("uncaughtException", (err: Error) => {
+        console.error(
+            `${(new Date()).toUTCString()} UNCAUGHT EXCEPTION\n`,
+            err.stack,
+        );
+        sentry.reportError(err);
+        process.exit(1);
+    });
+
+    process.once("unhandledRejection", (err: Error) => {
+        console.error(
+            `${(new Date()).toUTCString()} UNHANDLED REJECTION\n`,
+            err,
+        );
+        sentry.reportError(err);
         process.exit(1);
     });
 
@@ -19,8 +53,16 @@ export async function server() {
     });
 
     process.once("exit", async () => {
+        console.log("sockethub shutdown...");
         await sockethub.shutdown();
+        process.exit(0);
     });
 
-    await sockethub.boot();
+    try {
+        await sockethub.boot();
+    } catch (err) {
+        sentry.reportError(err);
+        console.error(err);
+        process.exit(1);
+    }
 }

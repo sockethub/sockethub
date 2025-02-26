@@ -17,14 +17,14 @@
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
+    "dev": "bunx --bun vite dev",
+    "build": "bunx --bun vite build",
     "test": "bun run test:unit",
-    "test:integration": "playwright test",
-    "test:unit": "vitest run",
-    "preview": "vite preview",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+    "test:integration": "bunx --bun playwright test",
+    "test:unit": "bunx --bun vitest run",
+    "preview": "bunx --bun vite preview",
+    "check": "bunx --bun svelte-kit sync && bunx --bun svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "bunx --bun svelte-kit sync && bunx --bun svelte-check --tsconfig ./tsconfig.json --watch"
   },
   "devDependencies": {
     "@playwright/test": "^1.50.1",

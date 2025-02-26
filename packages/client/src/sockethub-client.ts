@@ -171,3 +171,8 @@ export default class SockethubClient {
         }
     }
 }
+
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+((global: any) => {
+    global.SockethubClient = SockethubClient;
+})(typeof window === "object" ? window : {});

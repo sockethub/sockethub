@@ -44,7 +44,7 @@ You can place it somewhere accessible from the web and include
 it via a `script` tag.
 
 ```
-<script src="http://example.com/sockethub-client.js"></script>
+<script src="http://example.com/sockethub-client.js" type="module"></script>
 ```
 
 Once included in a web-page, the `SockethubClient` base object
