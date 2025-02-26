@@ -129,7 +129,7 @@ export default class XMPP {
             this.config.initialized = true;
             return done();
         }
-        this.debug(`connect called for ${job.actor.id}`);
+        this.debug(`connect() called for ${job.actor.id}`);
         this.__client = this.__clientConstructor({
             ...utils.buildXmppCredentials(credentials),
             ...{ timeout: this.config.connectTimeoutMs },
@@ -148,9 +148,8 @@ export default class XMPP {
                 return done();
             })
             .catch((err) => {
-                this.debug(`connect error: ${err}`);
                 this.__client = undefined;
-                return done(err);
+                return done("connection failed");
             });
     }
 

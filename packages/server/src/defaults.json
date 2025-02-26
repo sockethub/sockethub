@@ -1,9 +1,6 @@
 {
   "$schema": "https://sockethub.org/schemas/3.0.0-alpha.4/sockethub-config.json",
-  "examples": {
-    "enabled": true,
-    "secret": "1234567890"
-  },
+  "examples": true,
   "log_file": "",
   "packageConfig": {
     "@sockethub/activity-streams": {
@@ -25,6 +22,10 @@
   },
   "redis": {
     "url": "redis://127.0.0.1:6379"
+  },
+  "sentry": {
+    "dsn": "",
+    "traceSampleRate": 1.0
   },
   "sockethub": {
     "port": 10550,

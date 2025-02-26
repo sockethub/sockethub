@@ -36,9 +36,7 @@ function printSettingsInfo(
         "public:port",
     )}${config.get("public:path")}`;
     console.log(
-        `examples: ${
-            config.get("examples:enabled") ? examplesUrl : "disabled"
-        }`,
+        `examples: ${config.get("examples") ? examplesUrl : "disabled"}`,
     );
 
     console.log();

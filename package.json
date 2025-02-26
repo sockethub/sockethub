@@ -1,10 +1,5 @@
 {
   "name": "root",
-  "private": true,
-  "packageManager": "bun@1.2.2",
-  "engines": {
-    "bun": "==1.2.2"
-  },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@esm-bundle/chai": "^4.3.4-fix.0",
@@ -22,6 +17,16 @@
     "markdownlint-cli": "0.38.0",
     "mocha": "10.4.0",
     "typescript": "5.3.3"
+  },
+  "engines": {
+    "bun": "==1.2"
+  },
+  "packageManager": "bun@1.2.2",
+  "private": true,
+  "resolutions": {
+    "node-fetch": "3.3.2",
+    "engine.io": "6.5.4",
+    "socket.io": "4.7.5"
   },
   "scripts": {
     "build": "bun run --filter='*' build && bun run build:server:post",
@@ -50,11 +55,6 @@
     "postinstall": "bun run build",
     "publish": "bun run clean && bun run lint && bun run build && bun run doc && bun test && lerna publish --dist-tag latest --pre-dist-tag next",
     "start": "bun run --filter 'sockethub' start"
-  },
-  "resolutions": {
-    "node-fetch": "3.3.2",
-    "engine.io": "6.5.4",
-    "socket.io": "4.7.5"
   },
   "workspaces": ["packages/*"]
 }

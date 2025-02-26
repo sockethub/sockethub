@@ -1,5 +1,5 @@
 import { expect } from "@esm-bundle/chai";
-import SockethubClient from "./../packages/server/res/sockethub-client.js";
+import "./../packages/server/res/sockethub-client.js";
 import "./../packages/server/res/socket.io.js";
 
 const SH_PORT = 10550;

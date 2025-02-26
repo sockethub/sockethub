@@ -1,7 +1,6 @@
 import { type ChildProcess, fork } from "node:child_process";
 import { join } from "node:path";
 import debug from "debug";
-import nconf from "nconf";
 
 import { type JobDataDecrypted, JobQueue } from "@sockethub/data-layer";
 import type {
@@ -140,7 +139,7 @@ export default class PlatformInstance {
             this.parentId,
             this.id,
             secret,
-            nconf.get("redis"),
+            config.get("redis"),
         );
 
         this.queue.on(

@@ -33,7 +33,7 @@ export default class Dummy implements PlatformInterface {
                 required: ["type"],
                 properties: {
                     type: {
-                        enum: ["echo", "fail", "greet"],
+                        enum: ["echo", "fail", "throw", "greet"],
                     },
                 },
             },
@@ -54,13 +54,17 @@ export default class Dummy implements PlatformInterface {
         cb(new Error(job.object.content));
     }
 
+    throw(job: ActivityStream, cb: PlatformCallback) {
+        throw new Error(job.object.content);
+    }
+
     greet(job: ActivityStream, cb: PlatformCallback) {
         job.target = job.actor;
         job.actor = {
             id: "dummy",
             type: "platform",
         };
-        job.object.content = `${this.config.greeting} ${job.actor.name}`;
+        job.object.content = `${this.config.greeting} ${job.object.content}`;
         cb(undefined, job);
     }
 

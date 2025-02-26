@@ -50,7 +50,7 @@ import '@sockethub/activity-streams/dist/activity-streams.js';
 You can place it somewhere accessible from the web and include it via a `script` tag.
 
 ```javascript
-<script src="http://example.com/activity-streams.js"></script>
+<script src="http://example.com/activity-streams.js" type="module"></script>
 ```
 
 Once included in a web-page, the `ActivityStreams` base object should be on the global scope, with

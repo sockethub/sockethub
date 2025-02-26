@@ -41,6 +41,13 @@ async function sendEcho(): Promise<void> {
 async function sendFail(): Promise<void> {
     send(getASObj("fail"));
 }
+
+async function sendThrow(): Promise<void> {
+    send(getASObj("throw"));
+}
+async function sendGreet(): Promise<void> {
+    send(getASObj("greet"));
+}
 </script>
 
 <Intro title="Dummy Platform Example">
@@ -73,8 +80,14 @@ async function sendFail(): Promise<void> {
                 <SockethubButton disabled={!$sockethubState.actorSet} buttonAction={sendEcho}
                     >Echo</SockethubButton
                 >
+                <SockethubButton disabled={!$sockethubState.actorSet} buttonAction={sendGreet}
+                    >Greet</SockethubButton
+                >
                 <SockethubButton disabled={!$sockethubState.actorSet} buttonAction={sendFail}
                     >Fail</SockethubButton
+                >
+                <SockethubButton disabled={!$sockethubState.actorSet} buttonAction={sendThrow}
+                    >Throw</SockethubButton
                 >
             </div>
         </div>
