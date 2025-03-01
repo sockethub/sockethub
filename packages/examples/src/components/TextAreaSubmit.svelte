@@ -6,7 +6,7 @@ import SockethubButton from "./SockethubButton.svelte";
 interface Props {
     buttonText?: string;
     disabled: boolean;
-    obj: TextAreaObject;
+    obj: TextAreaObject | string;
     title: string;
     submitData: (text: string) => void;
 }
@@ -21,16 +21,18 @@ let {
 
 let password = $state("unset");
 
-if (obj.password) {
+if (typeof obj === "object" && obj.password) {
     password = obj.password;
     obj.password = undefined;
 }
 
-const objString = $derived(JSON.stringify(obj, null, 3));
+const objString = $derived(
+    typeof obj === "string" ? obj : JSON.stringify(obj, null, 3),
+);
 
 async function handleSubmit(): Promise<void> {
     console.log("PASSWORD: ", password);
-    if (password !== "unset") {
+    if (password !== "unset" && typeof obj === "object") {
         obj.password = password;
     }
 

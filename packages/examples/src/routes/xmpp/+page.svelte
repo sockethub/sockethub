@@ -9,17 +9,22 @@ import IncomingMessage from "$components/chat/IncomingMessages.svelte";
 import Room from "$components/chat/Room.svelte";
 import SendMessage from "$components/chat/SendMessage.svelte";
 import Logger from "$components/logs/Logger.svelte";
+import XMLPassthrough from "$components/xmpp/XMLPassthrough.svelte";
 import { send } from "$lib/sockethub";
 import type { AnyActivityStream } from "$lib/sockethub";
 import type { CredentialName } from "$lib/sockethub";
 import { writable } from "svelte/store";
+import customConfig from "./custom-xmpp-creds";
 
-const actorIdStore = writable("user@jabber.org");
+let actorIdStore = writable("user@jabber.org");
 let connecting = $state(false);
-
 let actorId = $derived(`${$actorIdStore}/SockethubExample`);
-
-const room = "kosmos-random@kosmos.chat";
+let roomId = $state("kosmos-random@kosmos.chat");
+let room = $derived.by(() => {
+    if (roomId) {
+        return roomId;
+    }
+});
 
 const sockethubState = writable({
     actorSet: false,
@@ -34,12 +39,41 @@ let actor = $derived({
     name: actorId,
 });
 
-let credentials = $derived({
+let credentials = $state({
     type: "credentials" as CredentialName,
     userAddress: $actorIdStore,
     password: "123456",
-    resource: "SockethubExample",
+    resource: "shExample",
 });
+
+/**
+ * If a custom file exists in this dir, we load it in and use it for our pre-defined
+ * actor, creds and room.
+ */
+if (customConfig) {
+    actorIdStore.set(customConfig.actor.id);
+    roomId = customConfig.target.id;
+    credentials = {
+        type: customConfig.object.type as CredentialName,
+        userAddress: $actorIdStore,
+        password: customConfig.object.password,
+        resource: customConfig.object.resource,
+    };
+}
+
+/**
+ * <iq type='result' from='roomname@conference.example.com' to='user@example.com' id='disco1'>
+ *   <query xmlns='http://jabber.org/protocol/disco#info'>
+ *     <identity category='conference' type='text' name='MUC Room'/>
+ *     <feature var='http://jabber.org/protocol/muc'/>
+ *   </query>
+ * </iq>
+ */
+let xml = $derived(`
+<iq type='get' from='user@example.com' to='roomname@conference.example.com' id='disco1'>
+  <query xmlns='http://jabber.org/protocol/disco#info'/>
+</iq>
+`);
 
 async function connectXmpp(): Promise<void> {
     connecting = true;
@@ -90,6 +124,8 @@ async function connectXmpp(): Promise<void> {
 </div>
 
 <Room {actor} {sockethubState} {room} context="xmpp" />
+
+<XMLPassthrough {actor} {sockethubState} {xml} context="xmpp"/>
 
 <IncomingMessage />
 

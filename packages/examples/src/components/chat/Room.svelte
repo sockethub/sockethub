@@ -6,6 +6,7 @@ import { send } from "$lib/sockethub";
 import type { ActorData } from "$lib/sockethub";
 import type { AnyActivityStream } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
+import type { Writable } from "svelte/store";
 
 interface Props {
     room: string;
@@ -14,7 +15,7 @@ interface Props {
     sockethubState: SockethubStateStore;
 }
 
-let { room = $bindable(), actor, context, sockethubState }: Props = $props();
+let { room, actor, context, sockethubState }: Props = $props();
 
 let joining = $state(false);
 
