@@ -502,15 +502,20 @@ export default class IRC implements PlatformInterface {
         });
     }
 
+    disconnect(job: ActivityStream, done: PlatformCallback) {
+        this.debug(`disconnect called for ${job.actor.id}`);
+        this.client(done);
+    }
+
     cleanup(done: PlatformCallback) {
         this.debug("cleanup() called");
+        this.config.initialized = false;
         this.forceDisconnect = true;
         if (typeof this.client === "object") {
             if (typeof this.client.end === "function") {
                 this.client.end();
             }
         }
-        this.config.initialized = false;
         this.client = undefined;
         return done();
     }

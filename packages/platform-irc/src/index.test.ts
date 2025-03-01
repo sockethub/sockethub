@@ -75,6 +75,7 @@ describe("Initialize IRC Platform", () => {
             "send",
             "query",
             "announce",
+            "disconnect"
         ]);
     });
 

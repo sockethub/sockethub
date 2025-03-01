@@ -9,14 +9,15 @@ export const PlatformSchema = {
             type: {
                 enum: [
                     "connect",
-                    "update",
-                    "send",
                     "join",
                     "leave",
-                    "query",
+                    "send",
+                    "update",
                     "request-friend",
                     "remove-friend",
                     "make-friend",
+                    "query",
+                    "disconnect",
                 ],
             },
         },

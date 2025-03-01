@@ -16,6 +16,7 @@ export const PlatformIrcSchema = {
                     "send",
                     "query",
                     "announce",
+                    "disconnect",
                 ],
             },
         },
