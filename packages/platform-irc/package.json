@@ -33,7 +33,7 @@
   "devDependencies": {
     "@sockethub/schemas": "workspace:*",
     "@types/bun": "latest",
-    "jsdoc-to-markdown": "8.0.0"
+    "jsdoc-to-markdown": "8.0.3"
   },
   "peerDependencies": {
     "@sockethub/server": "workspace:*"
