@@ -546,7 +546,7 @@ export default class XMPP {
      */
     cleanup(done) {
         this.debug("cleanup");
-        this.initialized = false;
+        this.config.initialized = false;
         this.__client.stop();
         done();
     }
