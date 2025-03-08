@@ -520,7 +520,7 @@ export default class IRC implements PlatformInterface {
      */
     disconnect(job: ActivityStream, done: PlatformCallback) {
         this.debug(`disconnect called for ${job.actor.id}`);
-        this.client(done);
+        this.cleanup(done);
     }
 
     cleanup(done: PlatformCallback) {
