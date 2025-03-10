@@ -144,6 +144,7 @@ describe("Platform", () => {
             start: sinon.fake.resolves(),
             send: sinon.fake.resolves(),
             join: sinon.fake.resolves(),
+            stop: sinon.fake.resolves()
         };
         clientFake = sinon.fake.returns(clientObjectFake);
         xmlFake = sinon.fake();
@@ -426,6 +427,31 @@ describe("Platform", () => {
                     done();
                 });
             });
+        });
+
+        describe("#disconnect", () => {
+            it("calls cleanup", (done) => {
+                let cleanupCalled = false;
+                xp.cleanup = (done) => {
+                    cleanupCalled = true;
+                    done();
+                }
+                xp.disconnect(job, () => {
+                    expect(cleanupCalled).toEqual(true);
+                    done()
+                });
+            })
+        });
+
+        describe("#cleanup", () => {
+            it("calls client.stop", (done) => {
+                expect(xp.config.initialized).toEqual(true);
+                xp.cleanup(() => {
+                    expect(xp.config.initialized).toEqual(false);
+                    sinon.assert.calledOnce(xp.__client.stop);
+                    done()
+                });
+            })
         });
     });
 });

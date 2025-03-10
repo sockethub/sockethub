@@ -502,15 +502,36 @@ export default class IRC implements PlatformInterface {
         });
     }
 
+    /**
+     * Disconnect IRC client
+     * @param {object} job activity streams object
+     * @param done
+     *
+     * @example
+     *
+     * {
+     *    context: 'irc',
+     *    type: 'disconnect',
+     *    actor: {
+     *      id: 'slvrbckt@irc.freenode.net',
+     *      type: 'person'
+     *    }
+     *  }
+     */
+    disconnect(job: ActivityStream, done: PlatformCallback) {
+        this.debug(`disconnect called for ${job.actor.id}`);
+        this.cleanup(done);
+    }
+
     cleanup(done: PlatformCallback) {
         this.debug("cleanup() called");
+        this.config.initialized = false;
         this.forceDisconnect = true;
         if (typeof this.client === "object") {
             if (typeof this.client.end === "function") {
                 this.client.end();
             }
         }
-        this.config.initialized = false;
         this.client = undefined;
         return done();
     }

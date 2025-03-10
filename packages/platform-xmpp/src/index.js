@@ -519,12 +519,34 @@ export default class XMPP {
     }
 
     /**
+     * Disconnect XMPP client
+     * @param {object} job activity streams object
+     * @param done
+     *
+     * @example
+     *
+     * {
+     *    context: 'xmpp',
+     *    type: 'disconnect',
+     *    actor: {
+     *      id: 'slvrbckt@jabber.net/Home',
+     *      type: 'person'
+     *    }
+     *  }
+     */
+    disconnect(job, done) {
+        this.debug("disconnecting");
+        this.cleanup(done);
+    }
+
+    /**
      * Called when it's time to close any connections or clean data before being wiped
      * forcefully.
      * @param {function} done - callback when complete
      */
     cleanup(done) {
-        this.debug("attempting to close connection now");
+        this.debug("cleanup");
+        this.config.initialized = false;
         this.__client.stop();
         done();
     }
