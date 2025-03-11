@@ -75,6 +75,7 @@ describe("Initialize IRC Platform", () => {
             "send",
             "query",
             "announce",
+            "disconnect"
         ]);
     });
 
@@ -243,6 +244,25 @@ describe("Initialize IRC Platform", () => {
                     done,
                 );
                 platform.completeJob();
+            });
+
+            it("disconnect()", (done) => {
+                expect(platform.config.initialized).toEqual(true);
+                let cleanupCalled = false;
+                platform.cleanup = (cb) => {
+                    cleanupCalled = true;
+                    cb();
+                }
+                platform.disconnect({
+                        context: "irc",
+                        type: "disconnect",
+                        actor: actor,
+                    },
+                    () => {
+                    expect(platform.config.initialized).toEqual(true);
+                    expect(cleanupCalled).toEqual(true);
+                    done();
+                });
             });
 
             it("cleanup()", (done) => {

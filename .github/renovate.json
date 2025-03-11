@@ -1,22 +1,22 @@
 {
-    "labels": ["kredits-1", "type:dependencies"],
-    "reviewers": ["silverbucket", "galfert"],
-    "extends": ["config:recommended"],
-    "packageRules": [
-        {
-            "matchDepTypes": ["devDependencies", "dependencies"],
-            "matchUpdateTypes": ["patch", "minor"],
-            "groupName": "devDependencies (non-major)"
-        }
-    ],
-    "dependencyDashboard": true,
-    "lockFileMaintenance": {
-        "enabled": true
-    },
-    "prCreation": "not-pending",
-    "rebaseWhen": "behind-base-branch",
-    "schedule": "before 7am on the first day of the month",
-    "minimumReleaseAge": "7 days",
-    "internalChecksFilter": "strict",
-    "updateNotScheduled": true
+  "labels": ["kredits-1", "type:dependencies"],
+  "reviewers": ["silverbucket", "galfert"],
+  "extends": ["config:recommended"],
+  "packageRules": [
+    {
+      "matchDepTypes": ["devDependencies", "dependencies"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "devDependencies (non-major)"
+    }
+  ],
+  "dependencyDashboard": true,
+  "lockFileMaintenance": {
+    "enabled": false
+  },
+  "prCreation": "not-pending",
+  "rebaseWhen": "behind-base-branch",
+  "schedule": "before 7am on the first day of the month",
+  "minimumReleaseAge": "7 days",
+  "internalChecksFilter": "strict",
+  "updateNotScheduled": true
 }
