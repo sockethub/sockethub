@@ -7,18 +7,14 @@ jobs:
   redis:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        bun-version: [1.2.x]
-
     steps:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Use Bun ${{ matrix.bun-version }}
+      - name: Use Bun latest
         uses: oven-sh/setup-bun@v2.0.1
         with:
-          bun-version: ${{ matrix.bun-version }}
+          bun-version: latest
       - run: bun install
       - run: bun run build
 
@@ -34,22 +30,18 @@ jobs:
   browser:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        bun-version: [1.2.x]
-
     steps:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Use Bun ${{ matrix.bun-version }}
+      - name: Use Bun latest
         uses: oven-sh/setup-bun@v2.0.1
         with:
-          bun-version: ${{ matrix.bun-version }}
+          bun-version: latest
       - run: bun install
       - run: bun run build
 
-      - run: docker compose build --build-arg bun_version=${{ matrix.bun-version }}
+      - run: docker compose build --build-arg bun_version=latest
 
       - run: bun run docker:start
       - run: sleep 5
