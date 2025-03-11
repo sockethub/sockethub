@@ -21,7 +21,6 @@
   "engines": {
     "bun": ">=1.2.4"
   },
-  "packageManager": "bun@1.2.4",
   "private": true,
   "resolutions": {
     "node-fetch": "3.3.2",
