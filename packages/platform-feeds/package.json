@@ -8,7 +8,6 @@
   "license": "LGPL-3.0+",
   "main": "./src/index.ts",
   "files": ["src/"],
-  "packageManager": "bun@1.2.2",
   "engines": {
     "bun": ">=1.2"
   },

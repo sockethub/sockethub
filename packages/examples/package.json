@@ -3,7 +3,6 @@
   "version": "1.0.0-alpha.4",
   "type": "module",
   "files": ["build"],
-  "packageManager": "bun@1.2.2",
   "engines": {
     "bun": ">=1.2"
   },
