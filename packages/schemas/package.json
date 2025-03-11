@@ -8,7 +8,6 @@
   "license": "MIT",
   "main": "src/index.ts",
   "files": ["src/schemas"],
-  "packageManager": "bun@1.2.2",
   "engines": {
     "bun": ">=1.2"
   },

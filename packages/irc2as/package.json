@@ -4,7 +4,6 @@
   "description": "IRC to ActivityStreams objects",
   "type": "module",
   "main": "src/index.js",
-  "packageManager": "bun@1.2.2",
   "engines": {
     "bun": ">=1.2"
   },
