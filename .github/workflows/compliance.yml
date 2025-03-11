@@ -8,7 +8,7 @@ jobs:
 
         strategy:
             matrix:
-                bun-version: [1.2]
+                bun-version: [1.2.x]
 
         steps:
             - run: sudo chown -R $USER:$USER ${{ github.workspace }}
@@ -27,7 +27,7 @@ jobs:
 
         strategy:
             matrix:
-                bun-version: [1.2]
+                bun-version: [1.2.x]
 
         steps:
             - run: sudo chown -R $USER:$USER ${{ github.workspace }}
@@ -46,7 +46,7 @@ jobs:
 
         strategy:
             matrix:
-                bun-version: [1.2]
+                bun-version: [1.2.x]
 
         steps:
             - run: sudo chown -R $USER:$USER ${{ github.workspace }}
