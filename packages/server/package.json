@@ -10,7 +10,7 @@
   "bin": "bin/sockethub",
   "preferGlobal": true,
   "engines": {
-    "bun": ">=1.2"
+    "bun": ">=1.2.4"
   },
   "keywords": [
     "sockethub",
@@ -73,6 +73,7 @@
     "@sockethub/platform-dummy": "workspace:*",
     "@sockethub/platform-feeds": "workspace:*",
     "@sockethub/platform-irc": "workspace:*",
+    "@sockethub/platform-metadata": "workspace:*",
     "@sockethub/platform-xmpp": "workspace:*"
   }
 }

@@ -102,11 +102,6 @@ export default class Feeds implements PlatformInterface {
      *    context: "feeds",
      *    type: "fetch",
      *    actor: {
-     *      id: 'https://dogfeed.com/user/nick@silverbucket',
-     *      type: "person",
-     *      name: "nick@silverbucket.net"
-     *    },
-     *    target: {
      *      id: 'http://blog.example.com/rss',
      *      type: "feed"
      *    }
@@ -161,7 +156,7 @@ export default class Feeds implements PlatformInterface {
      */
     fetch(job: ActivityStream, done: PlatformCallback) {
         // ready to execute job
-        this.fetchFeed(job.target.id, job.id)
+        this.fetchFeed(job.actor.id, job.id)
             .then((results) => {
                 return done(null, results);
             })

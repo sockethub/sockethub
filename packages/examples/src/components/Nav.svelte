@@ -7,6 +7,7 @@ const navItems = [
     ["Dummy", "/dummy"],
     ["Feeds", "/feeds"],
     ["IRC", "/irc"],
+    ["Metadata", "/metadata"],
     ["XMPP", "/xmpp"],
 ];
 </script>

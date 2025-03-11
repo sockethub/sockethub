@@ -102,15 +102,16 @@ export function addObject(
                         {#if r}
                             <LogEntry
                                 buttonAction={showLog(`${id}-${s}`)}
+                                response={typeof logs[id][1] !== "undefined"}
                                 id={`${id}-${s}`}
                                 entry={r}
                             />
                         {/if}
                     {/each}
                 {:else if Object.prototype.hasOwnProperty.call(tuple[1], "context")}
-                    <LogEntry buttonAction={showLog(id)} {id} entry={tuple[1]} />
+                    <LogEntry buttonAction={showLog(id)} {id} response={true} entry={tuple[1]} />
                 {:else}
-                    <LogEntry buttonAction={showLog(id)} {id} entry={tuple[0]} />
+                    <LogEntry buttonAction={showLog(id)} {id} response{false} entry={tuple[0]} />
                 {/if}
             {/each}
         </ul>

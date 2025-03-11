@@ -1,6 +1,8 @@
 services:
     sockethub:
-        build: .
+        build:
+            context: .
+            target: prod
         environment:
             - REDIS_URL=redis://redis:6379
         ports:
