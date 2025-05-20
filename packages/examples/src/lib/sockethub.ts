@@ -80,10 +80,12 @@ export type SockethubResponse = {
 };
 
 export async function send(obj: AnyActivityStream) {
+    console.log("sending ->", obj);
     sc.socket.emit(
         "message",
         addObject("SEND", obj),
         (resp: AnyActivityStream) => {
+            console.log("received <-", resp);
             addObject("RESP", resp, resp.id);
             displayMessage(resp);
         },

@@ -3,44 +3,21 @@ import ActivityActor from "$components/ActivityActor.svelte";
 import Intro from "$components/Intro.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
 import Logger, { addObject } from "$components/logs/Logger.svelte";
-import { sc } from "$lib/sockethub";
-import type { AnyActivityStream } from "$lib/sockethub";
+import { send } from "$lib/sockethub";
 import { writable } from "svelte/store";
 
 const sockethubState = writable({
     actorSet: false,
 });
-
-let url = $state("https://sockethub.org/feed.xml");
-
+let url = $state("https://sockethub.org");
 let actor = $derived({
     id: url,
-    type: "feed",
+    type: "website",
 });
-
-function send(obj: AnyActivityStream) {
-    console.log("sending ->", obj);
-    sc.socket.emit(
-        "message",
-        addObject("SEND", obj, obj.id || ""),
-        (resp: AnyActivityStream) => {
-            console.log("incoming feed <-", resp);
-            if (Array.isArray(resp)) {
-                let i = 1;
-                for (const r of resp.reverse()) {
-                    addObject("RESP", r, `${r.id}.${i}`);
-                    i += 1;
-                }
-            } else {
-                addObject("RESP", resp, resp?.id || "");
-            }
-        },
-    );
-}
 
 function getASObj(type: string) {
     return {
-        context: "feeds",
+        context: "metadata",
         type: type,
         actor: actor,
     };
@@ -52,10 +29,9 @@ async function sendFetch(): Promise<void> {
 </script>
 
 <Intro title="Feeds Platform Example">
-    <title>Feeds Example</title>
+    <title>Metadata Example</title>
     <p>
-        The feeds platform takes an RSS/ATOM feed URL, fetches and parses it, and returns an array
-        of Activity Objects for each entry.
+        The metadata platform takes a URL, fetches and parses it for any metadata.
     </p>
 </Intro>
 

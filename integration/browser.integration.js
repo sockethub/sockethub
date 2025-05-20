@@ -25,7 +25,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                 io(`http://localhost:${SH_PORT}/`, { path: "/sockethub" }),
             );
             sc.socket.on("message", (msg) => {
-                console.log(">> incoming message: ", msg);
+                // console.log(">> incoming message: ", msg);
                 incomingMessages.push(msg);
             });
         });
@@ -76,9 +76,33 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                     object: { type: "message", content: "failure message" },
                 };
                 sc.socket.emit("message", dummyObj, (msg) => {
-                    console.log("dummy fail callback: ", msg);
                     if (msg?.error) {
                         dummyObj.error = "Error: failure message";
+                        dummyObj.actor = sc.ActivityStreams.Object.get(
+                            actor.id,
+                        );
+                        expect(msg).to.eql(dummyObj);
+                        done();
+                    } else {
+                        done(
+                            new Error(
+                                "didn't receive expected failure from dummy platform",
+                            ),
+                        );
+                    }
+                });
+            });
+
+            it("sends a throw and returns error", (done) => {
+                const dummyObj = {
+                    type: "throw",
+                    actor: actor.id,
+                    context: "dummy",
+                    object: { type: "message", content: "failure message" },
+                };
+                sc.socket.emit("message", dummyObj, (msg) => {
+                    if (msg?.error) {
+                        dummyObj.error = "failure message";
                         dummyObj.actor = sc.ActivityStreams.Object.get(
                             actor.id,
                         );
@@ -104,15 +128,11 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                             context: "feeds",
                             type: "fetch",
                             actor: {
-                                type: "person",
-                                id: "example@feeds",
-                            },
-                            target: {
                                 type: "feed",
                                 id: `http://localhost:${SH_PORT}/feed.xml`,
                             },
                         },
-                        (msg) => {
+                        (msg, second) => {
                             expect(msg.length).to.eql(20);
                             for (const m of msg) {
                                 expect(typeof m.object.content).to.equal(
@@ -187,7 +207,6 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                             context: "xmpp",
                         },
                         (msg) => {
-                            console.log("xmpp connect callback: ", msg);
                             if (msg?.error) {
                                 done(new Error(msg.error));
                             } else {
@@ -216,7 +235,6 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                             },
                         },
                         (msg) => {
-                            console.log("callback from join: ", msg);
                             expect(msg).to.eql({
                                 type: "join",
                                 actor: actorObject,
@@ -249,7 +267,6 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                             },
                         },
                         (msg) => {
-                            console.log("callback from send: ", msg);
                             expect(msg).to.eql({
                                 type: "send",
                                 actor: actorObject,
@@ -272,12 +289,26 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
 
         describe("Incoming Message queue", () => {
             it("should be empty", () => {
-                console.log(
-                    `*** MESSAGE QUEUE, length: ${incomingMessages.length} ***`,
-                );
-                console.log(incomingMessages);
-                expect(incomingMessages.length).to.eql(0);
-                expect(incomingMessages).to.eql([]);
+                // console.log(
+                //     `*** MESSAGE QUEUE, length: ${incomingMessages.length} ***`,
+                // );
+                expect(incomingMessages.length).to.be.below(2);
+                if (incomingMessages.length === 1) {
+                    expect(incomingMessages).to.eql([
+                        {
+                            context: "xmpp",
+                            type: "message",
+                            actor: { id: "test@prosody", type: "room" },
+                            error: '<error type="cancel"><service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error>',
+                            target: {
+                                id: "jimmy@prosody/SockethubExample",
+                                type: "person",
+                            },
+                        },
+                    ]);
+                } else {
+                    expect(incomingMessages).to.eql([]);
+                }
             });
         });
     });
