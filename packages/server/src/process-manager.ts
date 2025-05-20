@@ -1,11 +1,11 @@
 import { getPlatformId } from "@sockethub/crypto";
 
-import type { IInitObject } from "./bootstrap/init.js";
+import type { IInitObject } from "./bootstrap/init";
 import PlatformInstance, {
     platformInstances,
     type PlatformInstanceParams,
     type MessageFromParent,
-} from "./platform-instance.js";
+} from "./platform-instance";
 
 class ProcessManager {
     private readonly parentId: string;

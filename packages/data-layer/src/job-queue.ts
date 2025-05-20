@@ -67,13 +67,12 @@ export class JobQueue extends JobBase {
     protected redisConnection;
 
     constructor(
-        instanceId: string,
-        sessionId: string,
+        uid: string,
         secret: string,
         redisConfig: RedisConfig,
     ) {
         super(secret);
-        this.uid = `sockethub:data-layer:queue:${instanceId}:${sessionId}`;
+        this.uid = `sockethub:data-layer:queue:${uid}`;
         this.debug = debug(this.uid);
         this.init(redisConfig);
     }

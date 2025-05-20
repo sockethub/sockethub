@@ -136,8 +136,7 @@ export default class PlatformInstance {
      */
     public initQueue(secret: string) {
         this.queue = new this.JobQueue(
-            this.parentId,
-            this.id,
+            `${this.parentId}:${this.id}`,
             secret,
             config.get("redis"),
         );

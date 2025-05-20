@@ -1,4 +1,18 @@
 #!/usr/bin/env bun
+
+['log', 'warn'].forEach(function(method) {
+  var old = console[method];
+  console[method] = function() {
+    var stack = (new Error()).stack.split(/\n/);
+    // Chrome includes a single "Error" line, Firefox doesn't.
+    if (stack.:inlineRefs{references="&#91;&#123;&quot;type&quot;&#58;&quot;inline_reference&quot;,&quot;start_index&quot;&#58;584,&quot;end_index&quot;&#58;587,&quot;number&quot;&#58;0,&quot;url&quot;&#58;&quot;https&#58;//bugfender.com/blog/javascript-console-log/&quot;,&quot;favicon&quot;&#58;&quot;https&#58;//imgs.search.brave.com/fhRSddIYm1NIgy5DGF6vuWuswOP4GCRNbHpaJ69ry0A/rs&#58;fit&#58;32&#58;32&#58;1&#58;0/g&#58;ce/aHR0cDovL2Zhdmlj/b25zLnNlYXJjaC5i/cmF2ZS5jb20vaWNv/bnMvNWVkMmE0ZjZm/Yzk5YjliZTI0OTZl/ODBhZjYyMmE5NzY5/MjVkZTkzOTAyOTAw/YmMwNmI5MzEzZjdi/ZWJlN2U5ZS9idWdm/ZW5kZXIuY29tLw&quot;,&quot;snippet&quot;&#58;&quot;Specifier&#58;&#32;%o&#32;•&#32;Description&#58;&#32;It&#32;can&#32;be&#32;used&#32;to&#32;print&#32;a&#32;DOM&#32;Element…&quot;&#125;&#93;"}indexOf('Error') === 0) {
+      stack = stack.slice(1);
+    }
+    var args = [].slice.apply(arguments).concat([stack.:inlineRefs{references="&#91;&#123;&quot;type&quot;&#58;&quot;inline_reference&quot;,&quot;start_index&quot;&#58;704,&quot;end_index&quot;&#58;707,&quot;number&quot;&#58;1,&quot;url&quot;&#58;&quot;https&#58;//www.techonthenet.com/js/open_console_log.php&quot;,&quot;favicon&quot;&#58;&quot;https&#58;//imgs.search.brave.com/R9V4PMYN-2mbvO-NL2T8Ycc5RabDaM7ia_bBYpy0luk/rs&#58;fit&#58;32&#58;32&#58;1&#58;0/g&#58;ce/aHR0cDovL2Zhdmlj/b25zLnNlYXJjaC5i/cmF2ZS5jb20vaWNv/bnMvMjBkYmM5YmIw/OTUwMDgyY2VjYTIx/ZmNlNTczOWUxZDEw/YzU2ZWQwMmQwNDE0/ZDk0NTQ1YmM4OTFk/OGU3OGRiNC93d3cu/dGVjaG9udGhlbmV0/LmNvbS8&quot;,&quot;snippet&quot;&#58;&quot;As&#32;you&#32;can&#32;see,&#32;we&#32;have&#32;written&#32;the&#32;output&#32;from&#32;the&#32;JavaScript&#32;slice()&#32;method&#32;four&#32;times&#32;to&#32;the&#32;console&#32;log,&#32;which&#32;output&#32;the&#32;values&#32;'Tech',&#32;'On',&#32;'The',&#32;and&#32;'Net'.&#32;There&#32;are&#32;also&#32;several&#32;shortcut&#32;keys&#32;that&#32;you&#32;can&#32;use&#32;to&#32;open&#32;the&#32;Chrome&#32;Developer&#32;Tools.&#32;Here&#32;are&#32;some&#32;of&#32;the&#32;shortcuts&#32;that&#32;you&#32;can&#32;use,&#32;depending&#32;on&#32;your&#32;version&#32;of&#32;Chrome&#58;&#32;...&#32;While&#32;using&#32;this&#32;site,&#32;you&#32;agree&#32;to&#32;have&#32;read&#32;and&#32;accep…&quot;&#125;&#93;"}trim()]);
+    return old.apply(console, args);
+  };
+});
+
 import("@sockethub/server").then((sockethub) => {
     sockethub.server();
 });

@@ -304,6 +304,7 @@ export default class XMPP {
                   })
                 : undefined,
         );
+        console.log("sending message", message.toString());
         this.__client.send(message).then(done);
     }
 

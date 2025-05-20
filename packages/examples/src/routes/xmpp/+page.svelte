@@ -14,10 +14,10 @@ import type { AnyActivityStream } from "$lib/sockethub";
 import type { CredentialName } from "$lib/sockethub";
 import { writable } from "svelte/store";
 
-const actorIdStore = writable("user@jabber.org");
+const actorId = writable("user@jabber.org");
 let connecting = $state(false);
 
-let actorId = $derived(`${$actorIdStore}/SockethubExample`);
+// let actorId = $derived(`${$actorIdStore}/SockethubExample`);
 
 const room = "kosmos-random@kosmos.chat";
 
@@ -29,15 +29,15 @@ const sockethubState = writable({
 });
 
 let actor = $derived({
-    id: actorId,
+    id: $actorId,
     type: "person",
-    name: actorId,
+    name: $actorId,
 });
 
 let credentials = $derived({
     type: "credentials" as CredentialName,
-    userAddress: $actorIdStore,
-    password: "123456",
+    userAddress: $actorId,
+    password: "***",
     resource: "SockethubExample",
 });
 
@@ -46,7 +46,7 @@ async function connectXmpp(): Promise<void> {
     return await send({
         context: "xmpp",
         type: "connect",
-        actor: actorId,
+        actor: $actorId,
     } as AnyActivityStream)
         .then(() => {
             $sockethubState.connected = true;
@@ -69,7 +69,7 @@ async function connectXmpp(): Promise<void> {
         id="actor-id-input"
         class=" bg-white border border-solid border-gray-300 rounded"
         type="text"
-        bind:value={$actorIdStore}
+        bind:value={$actorId}
     />
 </div>
 

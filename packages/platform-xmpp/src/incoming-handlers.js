@@ -88,6 +88,7 @@ export class IncomingHandlers {
     }
 
     presence(stanza) {
+        console.log('presence', stanza);
         const obj = {
             context: "xmpp",
             type: "update",
