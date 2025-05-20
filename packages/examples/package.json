@@ -4,7 +4,7 @@
   "type": "module",
   "files": ["build"],
   "engines": {
-    "bun": ">=1.2"
+    "bun": ">=1.2.4"
   },
   "keywords": ["sockethub", "example", "web app", "xmpp", "irc", "rss", "atom"],
   "repository": {

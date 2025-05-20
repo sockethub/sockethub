@@ -14,12 +14,6 @@ const sockethubState: SockethubStateStore = writable({
     actorSet: false,
 });
 
-let actor = $derived({
-    id: actorId,
-    type: "person",
-    name: "Sockethub Examples Dummy",
-});
-
 let content = $state("");
 
 function getASObj(type: string): AnyActivityStream {
@@ -59,8 +53,6 @@ async function sendGreet(): Promise<void> {
     <p>You can use either the echo or fail types on your Activity Stream object.</p>
 </Intro>
 
-<ActivityActor {actor} {sockethubState} />
-
 <div>
     <div class="w-full p-2">
         <label for="objectContent" class="inline-block text-gray-900 font-bold w-32"
@@ -77,16 +69,16 @@ async function sendGreet(): Promise<void> {
         <label for="sendEcho" class="inline-block text-gray-900 font-bold w-32">Object Type</label>
         <div class="flex gap-4">
             <div id="sendEcho">
-                <SockethubButton disabled={!$sockethubState.actorSet} buttonAction={sendEcho}
+                <SockethubButton buttonAction={sendEcho}
                     >Echo</SockethubButton
                 >
-                <SockethubButton disabled={!$sockethubState.actorSet} buttonAction={sendGreet}
+                <SockethubButton buttonAction={sendGreet}
                     >Greet</SockethubButton
                 >
-                <SockethubButton disabled={!$sockethubState.actorSet} buttonAction={sendFail}
+                <SockethubButton buttonAction={sendFail}
                     >Fail</SockethubButton
                 >
-                <SockethubButton disabled={!$sockethubState.actorSet} buttonAction={sendThrow}
+                <SockethubButton buttonAction={sendThrow}
                     >Throw</SockethubButton
                 >
             </div>

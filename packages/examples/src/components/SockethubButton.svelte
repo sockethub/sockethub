@@ -2,7 +2,7 @@
 import { connected } from "$lib/sockethub";
 
 interface Props {
-    disabled: boolean;
+    disabled?: boolean;
     buttonAction: () => Promise<void>;
     children?: import("svelte").Snippet;
 }
