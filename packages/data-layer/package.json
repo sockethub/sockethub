@@ -27,7 +27,7 @@
   "dependencies": {
     "@sockethub/crypto": "workspace:*",
     "@sockethub/schemas": "workspace:*",
-    "bullmq": "4.15.2",
+    "bullmq": "5.56.4",
     "debug": "4.3.4",
     "ioredis": "5.3.2",
     "secure-store-redis": "3.0.7"
