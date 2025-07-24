@@ -316,8 +316,8 @@ export class IncomingHandlers {
 
             // Handle room info disco#info responses
             if (
-                stanza.attrs.id?.startsWith("room_info_") &&
-                stanza.attrs.type === "result"
+                stanza.attrs.type === "result" &&
+                stanza.attrs.id?.startsWith("room_info_")
             ) {
                 this.session.debug("got room info response");
                 return this.notifyRoomInfo(stanza);
