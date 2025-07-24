@@ -101,7 +101,7 @@ export default [
         error:
             "Error: /object: must match exactly one schema in oneOf: " +
             "credentials, feed, message, me, person, room, service, website, " +
-            "attendance, presence, relationship, topic, address",
+            "attendance, room-info, presence, relationship, topic, address",
     },
     {
         name: "alone credentials (as credentials)",
