@@ -38,6 +38,8 @@ export interface AnyActivityStream {
     id?: string;
     context: string;
     type: string;
+    totalItems?: number;
+    items?: AnyActivityStream[];
     actor?: BaseProps | string;
     object?: BaseProps;
     target?: BaseProps | string;
@@ -85,8 +87,14 @@ export async function send(obj: AnyActivityStream) {
         "message",
         addObject("SEND", obj),
         (resp: AnyActivityStream) => {
-            console.log("received <-", resp);
-            addObject("RESP", resp, resp.id);
+            if (resp.totalItems && resp.items) {
+                for (const item of resp.items) {
+                    addObject("RESP", item, resp.id);
+                }
+            } else {
+                console.log("received <-", resp);
+                addObject("RESP", resp, resp.id);
+            }
             displayMessage(resp);
         },
     );

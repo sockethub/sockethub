@@ -90,14 +90,14 @@ export default class Feeds implements PlatformInterface {
 
     /**
      * Fetch feeds from specified source. Upon completion, it will send back a
-     * response to the original request with a complete list of URLs in the feed
-     * and total count.
+     * response to the original request with a complete ActivityStreams Collection
+     * containing all feed items and metadata.
      *
-     * @param job - Activity streams object containing job data.
-     * @param done - Callback function
+     * @param job - Activity streams object containing job data with actor.id as feed URL
+     * @param done - Callback function that receives (error, ASCollection)
      *
      * @example
-     *
+     * Request:
      *  {
      *    context: "feeds",
      *    type: "fetch",
@@ -115,42 +115,51 @@ export default class Feeds implements PlatformInterface {
      *
      *   {
      *     context: 'feeds',
-     *     type: 'post',
-     *     actor: {
-     *       type: 'feed',
-     *       name: 'Best Feed Inc.',
-     *       id: 'http://blog.example.com/rss',
-     *       description: 'Where the best feed comes to be the best',
-     *       image: {
-     *         width: '144',
-     *         height: '144',
-     *         url: 'http://blog.example.com/images/bestfeed.jpg',
-     *       }
-     *       favicon: 'http://blog.example.com/favicon.ico',
-     *       link: 'http://blog.example.com',
-     *       categories: ['best', 'feed', 'aminals'],
-     *       language: 'en',
-     *       author: 'John Doe'
-     *     },
-     *     object: {
-     *       id: "http://blog.example.com/articles/about-stuff"
-     *       type: 'article',
-     *       title: 'About stuff...',
-     *       url: "http://blog.example.com/articles/about-stuff"
-     *       date: "2013-05-28T12:00:00.000Z",
-     *       datenum: 1369742400000,
-     *       brief: "Brief synopsis of stuff...",
-     *       content: "Once upon a time...",
-     *       contentType: "text",
-     *       media: [
-     *         {
-     *           length: '13908973',
-     *           type: 'audio/mpeg',
-     *           url: 'http://blog.example.com/media/thing.mpg'
+     *     type: 'collection',
+     *     summary: 'Best Feed Inc.'
+     *     totalItems: 10,
+     *     items: [
+     *       {
+     *         context: 'feeds',
+     *         type: 'post',
+     *         actor: {
+     *           type: 'feed',
+     *           name: 'Best Feed Inc.',
+     *           id: 'http://blog.example.com/rss',
+     *           description: 'Where the best feed comes to be the best',
+     *           image: {
+     *             width: '144',
+     *             height: '144',
+     *             url: 'http://blog.example.com/images/bestfeed.jpg',
+     *           }
+     *           favicon: 'http://blog.example.com/favicon.ico',
+     *           link: 'http://blog.example.com',
+     *           categories: ['best', 'feed', 'aminals'],
+     *           language: 'en',
+     *           author: 'John Doe'
+     *         },
+     *         object: {
+     *           id: "http://blog.example.com/articles/about-stuff"
+     *           type: 'article',
+     *           title: 'About stuff...',
+     *           url: "http://blog.example.com/articles/about-stuff"
+     *           date: "2013-05-28T12:00:00.000Z",
+     *           datenum: 1369742400000,
+     *           brief: "Brief synopsis of stuff...",
+     *           content: "Once upon a time...",
+     *           contentType: "text",
+     *           media: [
+     *             {
+     *               length: '13908973',
+     *               type: 'audio/mpeg',
+     *               url: 'http://blog.example.com/media/thing.mpg'
+     *             }
+     *           ]
+     *           tags: ['foo', 'bar']
      *         }
-     *       ]
-     *       tags: ['foo', 'bar']
-     *     }
+     *       },
+     *       ...
+     *     ]
      *   }
      *
      */
@@ -158,13 +167,40 @@ export default class Feeds implements PlatformInterface {
         // ready to execute job
         this.fetchFeed(job.actor.id, job.id)
             .then((results) => {
-                return done(null, results);
+                return done(null, {
+                    id: job.id || null,
+                    context: "feeds",
+                    type: "collection",
+                    summary:
+                        results.length > 0 && results[0]?.actor?.name
+                            ? results[0].actor.name
+                            : "Unknown Feed",
+                    totalItems: results.length,
+                    items: results,
+                });
             })
             .catch(done);
     }
 
+    /**
+     * Cleanup method called when platform instance is being shut down.
+     * Currently no cleanup required for feeds platform.
+     *
+     * @param done - Callback function to signal completion
+     */
     cleanup(done: PlatformCallback) {
         done();
+    }
+
+    private async makeRequest(url: string): Promise<string> {
+        const opts = {
+            signal: undefined,
+        };
+        if (this.config.connectTimeoutMs) {
+            opts.signal = AbortSignal.timeout(this.config.connectTimeoutMs);
+        }
+        const res = await fetch(url, opts);
+        return await res.text();
     }
 
     // fetches the articles from a feed, adding them to an array
@@ -174,14 +210,8 @@ export default class Feeds implements PlatformInterface {
         id: string,
     ): Promise<Array<PlatformFeedsActivityStream>> {
         this.debug(`fetching ${url}`);
-        const opts = {
-            signal: undefined,
-        };
-        if (this.config.connectTimeoutMs) {
-            opts.signal = AbortSignal.timeout(this.config.connectTimeoutMs);
-        }
-        const res = await fetch(url, opts);
-        const feed = getPodcastFromFeed(await res.text());
+        const res = await this.makeRequest(url);
+        const feed = getPodcastFromFeed(res);
         const actor = buildFeedChannel(url, feed.meta);
         const articles = [];
 

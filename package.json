@@ -46,10 +46,10 @@
     "integration:browser:run": "bunx --bun web-test-runner ./integration/browser.integration.js --node-resolve",
     "integration:redis": "bun run docker:start:redis && bun run integration:redis:run; RES=$?; docker compose down; exit $RES",
     "integration:redis:run": "DEBUG=ioredis*,bullmq*,sockethub* bun test ./integration/redis.integration.ts",
-    "lint": "biome check && bun run lint:doc",
+    "lint": "bunx biome check && bun run lint:doc",
     "lint:doc": "bunx markdownlint '**/*.md'",
     "lint:doc:fix": "bunx markdownlint --fix '**/*.md' && bunx mdspell -n -a --en-us ./README.md ./packages/*/README.md",
-    "lint:fix": "biome check --write && bun run lint:doc:fix",
+    "lint:fix": "bunx biome check --write && bun run lint:doc:fix",
     "preinstall": "bunx only-allow bun",
     "publish": "bun run clean && bun run lint && bun run build && bun run doc && bun test && lerna publish --dist-tag latest --pre-dist-tag next",
     "start": "bun run --filter 'sockethub' start"
