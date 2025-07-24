@@ -16,6 +16,7 @@ More details can be found in the API docs [here](API.md)
 * update
 * join
 * observe
+* room-info
 
 ## Example
 
