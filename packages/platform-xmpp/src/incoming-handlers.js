@@ -123,8 +123,14 @@ export class IncomingHandlers {
             this.jidTypeCache.set(bareJid, "person");
             return "person";
         } catch (error) {
+            // Provide more specific error messages for debugging
+            const errorType =
+                error.name === "TimeoutError" ||
+                error.message.includes("timeout")
+                    ? "timeout"
+                    : "error";
             this.session.debug(
-                `Service discovery failed for ${bareJid}, falling back to heuristic: ${error.message}`,
+                `Service discovery ${errorType} for ${bareJid}, falling back to heuristic: ${error.message}`,
             );
 
             // Fallback: Use heuristic - if JID looks like a conference server, assume room
