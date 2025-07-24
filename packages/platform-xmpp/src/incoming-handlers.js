@@ -55,6 +55,89 @@ function getPresence(stanza) {
 export class IncomingHandlers {
     constructor(session) {
         this.session = session;
+        // Cache for JID type discoveries to avoid repeated queries
+        this.jidTypeCache = new Map();
+    }
+
+    /**
+     * Determines the actor type (person or room) for a JID using service discovery.
+     * Falls back to heuristic if service discovery fails.
+     * @param {string} jid - The JID to check
+     * @returns {Promise<string>} - 'person' or 'room'
+     */
+    async determineActorType(jid) {
+        // Remove resource part for bare JID
+        const bareJid = jid.split("/")[0];
+
+        // Check cache first
+        if (this.jidTypeCache.has(bareJid)) {
+            return this.jidTypeCache.get(bareJid);
+        }
+
+        try {
+            // Perform service discovery
+            const discoId = `disco_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+            const discoIq = this.session.__xml(
+                "iq",
+                {
+                    type: "get",
+                    to: bareJid,
+                    id: discoId,
+                },
+                this.session.__xml("query", {
+                    xmlns: "http://jabber.org/protocol/disco#info",
+                }),
+            );
+
+            // Send disco query and wait for response
+            const response = await this.session.__client.sendReceive(
+                discoIq,
+                5000,
+            ); // 5 second timeout
+
+            // Look for MUC feature or room identity
+            const query = response.getChild("query");
+            if (query) {
+                // Check for MUC feature
+                const features = query.getChildren("feature");
+                for (const feature of features) {
+                    if (
+                        feature.attrs.var === "http://jabber.org/protocol/muc"
+                    ) {
+                        this.jidTypeCache.set(bareJid, "room");
+                        return "room";
+                    }
+                }
+
+                // Check for conference identity
+                const identities = query.getChildren("identity");
+                for (const identity of identities) {
+                    if (identity.attrs.category === "conference") {
+                        this.jidTypeCache.set(bareJid, "room");
+                        return "room";
+                    }
+                }
+            }
+
+            // Default to person if no room indicators found
+            this.jidTypeCache.set(bareJid, "person");
+            return "person";
+        } catch (error) {
+            this.session.debug(
+                `Service discovery failed for ${bareJid}, falling back to heuristic: ${error.message}`,
+            );
+
+            // Fallback: Use heuristic - if JID looks like a conference server, assume room
+            // This is a simple heuristic based on common patterns
+            const type =
+                bareJid.includes("conference.") ||
+                bareJid.includes("muc.") ||
+                bareJid.includes("chat.")
+                    ? "room"
+                    : "person";
+            this.jidTypeCache.set(bareJid, type);
+            return type;
+        }
     }
 
     close() {
@@ -87,12 +170,15 @@ export class IncomingHandlers {
         }
     }
 
-    presence(stanza) {
+    async presence(stanza) {
+        // Determine the actor type using service discovery
+        const actorType = await this.determineActorType(stanza.attrs.from);
+
         const obj = {
             context: "xmpp",
             type: "update",
             actor: {
-                type: "person",
+                type: actorType,
                 id: stanza.attrs.from,
             },
             object: {
@@ -109,7 +195,7 @@ export class IncomingHandlers {
             obj.actor.name = stanza.attrs.from.split("/")[1];
         }
         this.session.debug(
-            `received contact presence update from ${stanza.attrs.from}`,
+            `received ${actorType} presence update from ${stanza.attrs.from}`,
         );
         this.session.sendToClient(obj);
     }
@@ -256,14 +342,21 @@ export class IncomingHandlers {
     /**
      * Handles all unknown conditions that we don't have an explicit handler for
      **/
-    stanza(stanza) {
+    async stanza(stanza) {
         // console.log("incoming stanza ", stanza);
         if (stanza.attrs.type === "error") {
             this.notifyError(stanza);
         } else if (stanza.is("message")) {
             this.notifyChatMessage(stanza);
         } else if (stanza.is("presence")) {
-            this.presence(stanza);
+            // Handle async presence method
+            try {
+                await this.presence(stanza);
+            } catch (error) {
+                this.session.debug(
+                    `Error handling presence stanza: ${error.message}`,
+                );
+            }
         } else if (stanza.is("iq")) {
             if (
                 stanza.attrs.id === "muc_id" &&
