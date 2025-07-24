@@ -249,6 +249,47 @@ export class IncomingHandlers {
         }
     }
 
+    notifyRoomInfo(stanza) {
+        const query = stanza.getChild("query");
+        if (
+            query &&
+            query.attrs.xmlns === "http://jabber.org/protocol/disco#info"
+        ) {
+            // Extract identity information
+            const identity = query.getChild("identity");
+            const identityObj = identity
+                ? {
+                      category: identity.attrs.category,
+                      type: identity.attrs.type,
+                      name: identity.attrs.name,
+                  }
+                : null;
+
+            // Extract features
+            const features = query.getChildren("feature");
+            const featureList = features.map((feature) => feature.attrs.var);
+
+            this.session.sendToClient({
+                context: "xmpp",
+                type: "room-info",
+                actor: {
+                    id: stanza.attrs.from,
+                    type: "room",
+                    name: identityObj?.name || stanza.attrs.from,
+                },
+                target: {
+                    id: stanza.attrs.to,
+                    type: "person",
+                },
+                object: {
+                    type: "room-info",
+                    features: featureList,
+                    identity: identityObj,
+                },
+            });
+        }
+    }
+
     online() {
         this.session.debug("online");
     }
@@ -271,6 +312,15 @@ export class IncomingHandlers {
             ) {
                 this.session.debug("got room attendance list");
                 return this.notifyRoomAttendance(stanza);
+            }
+
+            // Handle room info disco#info responses
+            if (
+                stanza.attrs.id?.startsWith("room_info_") &&
+                stanza.attrs.type === "result"
+            ) {
+                this.session.debug("got room info response");
+                return this.notifyRoomInfo(stanza);
             }
 
             // todo: clean up this area, unsure of what these are
