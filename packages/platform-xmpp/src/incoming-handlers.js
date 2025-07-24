@@ -1,3 +1,5 @@
+const DISCOVERY_TIMEOUT = 5000;
+
 function getMessageBody(stanza) {
     for (const elem of stanza.children) {
         if (elem.name === "body") {
@@ -92,7 +94,7 @@ export class IncomingHandlers {
             // Send disco query and wait for response
             const response = await this.session.__client.sendReceive(
                 discoIq,
-                5000,
+                DISCOVERY_TIMEOUT,
             ); // 5 second timeout
 
             // Look for MUC feature or room identity
