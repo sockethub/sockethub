@@ -257,4 +257,41 @@ export const stanzas = [
     //   jid='hag66@shakespeare.lit/pda' role='participant'/> </x> </presence>`,
     //   {}
     // ]
+    [
+        "room info response",
+        `<iq from='kosmos@kosmos.chat' to='jimmy@kosmos.org/pidgin' type='result' id='room_info_123456'>
+          <query xmlns='http://jabber.org/protocol/disco#info'>
+            <identity category='conference' name='Kosmos Development Room' type='text'/>
+            <feature var='http://jabber.org/protocol/muc'/>
+            <feature var='muc_passwordprotected'/>
+            <feature var='muc_persistent'/>
+          </query>
+        </iq>`,
+        {
+            context: "xmpp",
+            type: "room-info",
+            actor: {
+                id: "kosmos@kosmos.chat",
+                type: "room",
+                name: "Kosmos Development Room",
+            },
+            target: {
+                id: "jimmy@kosmos.org/pidgin",
+                type: "person",
+            },
+            object: {
+                type: "room-info",
+                features: [
+                    "http://jabber.org/protocol/muc",
+                    "muc_passwordprotected",
+                    "muc_persistent",
+                ],
+                identity: {
+                    category: "conference",
+                    type: "text",
+                    name: "Kosmos Development Room",
+                },
+            },
+        },
+    ],
 ];
