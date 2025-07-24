@@ -158,7 +158,7 @@ export const stanzas = [
             type: "update",
             actor: {
                 id: "room@xmpp.example.org/speedboat",
-                type: "person",
+                type: "room",
                 name: "speedboat",
             },
             object: { type: "presence", content: "brrroom!", presence: "chat" },
