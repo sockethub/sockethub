@@ -90,14 +90,14 @@ export default class Feeds implements PlatformInterface {
 
     /**
      * Fetch feeds from specified source. Upon completion, it will send back a
-     * response to the original request with a complete list of URLs in the feed
-     * and total count.
+     * response to the original request with a complete ActivityStreams Collection
+     * containing all feed items and metadata.
      *
-     * @param job - Activity streams object containing job data.
-     * @param done - Callback function
+     * @param job - Activity streams object containing job data with actor.id as feed URL
+     * @param done - Callback function that receives (error, ASCollection)
      *
      * @example
-     *
+     * Request:
      *  {
      *    context: "feeds",
      *    type: "fetch",
@@ -182,6 +182,12 @@ export default class Feeds implements PlatformInterface {
             .catch(done);
     }
 
+    /**
+     * Cleanup method called when platform instance is being shut down.
+     * Currently no cleanup required for feeds platform.
+     *
+     * @param done - Callback function to signal completion
+     */
     cleanup(done: PlatformCallback) {
         done();
     }

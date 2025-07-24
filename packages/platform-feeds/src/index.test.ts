@@ -109,4 +109,31 @@ describe("platform-feeds", () => {
             expect(results).toBeUndefined();
         })
     })
+
+    it("validates collection structure matches ASCollection interface", () => {
+        platform.fetch({
+            id: "validation-test-id",
+            actor: {
+                id: "some url"
+            }
+        }, (err, results: ASCollection) => {
+            expect(err).toBeNull();
+            
+            // Validate required ASCollection properties
+            expect(results).toHaveProperty("context");
+            expect(results).toHaveProperty("type", "collection");
+            expect(results).toHaveProperty("summary");
+            expect(results).toHaveProperty("totalItems");
+            expect(results).toHaveProperty("items");
+            
+            // Validate types
+            expect(typeof results.context).toBe("string");
+            expect(typeof results.summary).toBe("string");
+            expect(typeof results.totalItems).toBe("number");
+            expect(Array.isArray(results.items)).toBe(true);
+            
+            // Validate collection consistency
+            expect(results.items.length).toEqual(results.totalItems);
+        })
+    })
 })
