@@ -147,7 +147,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                             done(
                                 msg?.error
                                     ? new Error(
-                                          `Failed to fetch ${msg.target.id}: ${msg.error}`,
+                                          `Failed to fetch ${msg.items?.[0]?.actor?.id || "feed"}: ${msg.error}`,
                                       )
                                     : undefined,
                             );

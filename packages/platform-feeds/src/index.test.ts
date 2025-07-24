@@ -43,4 +43,70 @@ describe("platform-feeds", () => {
             })
         })
     })
+
+    it("handles empty feed gracefully", () => {
+        // Mock empty feed
+        platform.makeRequest = (): Promise<string> => {
+            return Promise.resolve('<rss><channel><title>Empty Feed</title></channel></rss>');
+        };
+
+        platform.fetch({
+            id: "empty-feed-id",
+            actor: {
+                id: "http://example.com/empty.xml"
+            }
+        }, (err, results: ASCollection) => {
+            expect(err).toBeNull();
+            expect(results.type).toEqual("collection");
+            expect(results.totalItems).toEqual(0);
+            expect(results.items).toEqual([]);
+            expect(results.summary).toEqual("Unknown Feed");
+        })
+    })
+
+    it("handles feed with no actor name", () => {
+        // Mock feed with no title/name but proper structure
+        platform.makeRequest = (): Promise<string> => {
+            return Promise.resolve(`
+                <rss>
+                    <channel>
+                        <item>
+                            <title>Test Item</title>
+                            <description>Test content</description>
+                            <link>http://example.com/item</link>
+                            <pubDate>Thu, 01 Jan 2024 00:00:00 GMT</pubDate>
+                        </item>
+                    </channel>
+                </rss>
+            `);
+        };
+
+        platform.fetch({
+            id: "no-name-feed-id", 
+            actor: {
+                id: "http://example.com/noname.xml"
+            }
+        }, (err, results: ASCollection) => {
+            expect(err).toBeNull();
+            // When no title is provided, buildFeedChannel falls back to URL
+            expect(results.summary).toEqual("http://example.com/noname.xml");
+        })
+    })
+
+    it("handles network errors properly", () => {
+        platform.makeRequest = (): Promise<string> => {
+            return Promise.reject(new Error("Network timeout"));
+        };
+
+        platform.fetch({
+            id: "error-test-id",
+            actor: {
+                id: "http://example.com/timeout.xml"
+            }
+        }, (err, results: ASCollection) => {
+            expect(err).toBeInstanceOf(Error);
+            expect(err.message).toEqual("Network timeout");
+            expect(results).toBeUndefined();
+        })
+    })
 })

@@ -171,9 +171,12 @@ export default class Feeds implements PlatformInterface {
                     id: job.id || null,
                     context: "feeds",
                     type: "collection",
-                    summary: results.length > 0 ? results[0].actor.name : null,
+                    summary:
+                        results.length > 0 && results[0]?.actor?.name
+                            ? results[0].actor.name
+                            : "Unknown Feed",
                     totalItems: results.length,
-                    items: results as Array<ActivityStream>,
+                    items: results,
                 });
             })
             .catch(done);
