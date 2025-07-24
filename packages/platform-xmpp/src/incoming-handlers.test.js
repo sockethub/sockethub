@@ -22,11 +22,11 @@ describe("Incoming handlers", () => {
                 }
             });
             
-            // Mock determineActorType for testing
+            // Mock determineActorType for testing - matches production heuristic
             ih.determineActorType = sinon.fake(async (jid) => {
-                // Simple heuristic for tests: if JID contains 'room' or 'chat', it's a room
+                // Use same heuristic as production fallback
                 const bareJid = jid.split('/')[0];
-                return bareJid.includes('room') || bareJid.includes('chat') ? 'room' : 'person';
+                return bareJid.includes('conference.') || bareJid.includes('muc.') || bareJid.includes('chat.') ? 'room' : 'person';
             });
         });
 
