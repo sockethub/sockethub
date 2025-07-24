@@ -16,13 +16,28 @@ describe("Incoming handlers", () => {
             ih = new IncomingHandlers({
                 sendToClient: sendToClient,
                 debug: sinon.fake(),
+                __xml: () => ({}),
+                __client: {
+                    sendReceive: sinon.fake.rejects(new Error('Service discovery not available in tests'))
+                }
+            });
+            
+            // Mock determineActorType for testing
+            ih.determineActorType = sinon.fake(async (jid) => {
+                // Simple heuristic for tests: if JID contains 'room' or 'chat', it's a room
+                const bareJid = jid.split('/')[0];
+                return bareJid.includes('room') || bareJid.includes('chat') ? 'room' : 'person';
             });
         });
 
         stanzas.forEach(([name, stanza, asobject]) => {
-            it(name, () => {
+            it(name, async () => {
                 const xmlObj = parse(stanza);
-                ih.stanza(xmlObj);
+                await ih.stanza(xmlObj);
+                
+                // Wait a bit for async operations to complete
+                await new Promise(resolve => setTimeout(resolve, 10));
+                
                 sinon.assert.calledWith(sendToClient, asobject);
             });
 
