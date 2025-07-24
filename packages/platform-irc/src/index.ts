@@ -706,9 +706,13 @@ export default class IRC implements PlatformInterface {
         const done = this.jobQueue.shift();
         if (typeof done === "function") {
             done(err);
-        } else {
+        } else if (this.jobQueue.length === 0) {
             this.debug(
                 "WARNING: job completion event received with an empty job queue.",
+            );
+        } else {
+            this.debug(
+                `job queue has ${this.jobQueue.length} pending items but no function at head`,
             );
         }
     }
