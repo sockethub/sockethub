@@ -16,6 +16,7 @@ updates through ActivityStreams messages.
 * **request-friend** - Send contact/buddy requests
 * **remove-friend** - Remove contacts from roster
 * **make-friend** - Accept contact requests
+* **room-info** - Query room info
 * **update** - Update presence status and information
 
 ## Usage
