@@ -21,7 +21,7 @@ describe("platform-feeds", () => {
     it("fetches expected feed", () => {
         platform.fetch({
             id: "an id",
-            target: {
+            actor: {
                 id: "some url"
             }
         }, (err, results: ASCollection) => {
