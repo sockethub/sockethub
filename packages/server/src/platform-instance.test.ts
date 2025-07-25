@@ -130,12 +130,12 @@ describe("PlatformInstance", () => {
                 expect(pi.sessions.has("my session id")).toEqual(true);
             });
 
-            it("is able to generate failure reports", () => {
+            it("is able to generate failure reports", async () => {
                 pi.registerSession("my session id");
                 expect(pi.sessions.has("my session id")).toEqual(true);
-                pi.reportError("my session id", "an error message");
                 pi.sendToClient = sandbox.stub();
                 pi.shutdown = sandbox.stub();
+                await pi.reportError("my session id", "an error message");
                 expect(pi.sessions.size).toEqual(0);
             });
         });
@@ -236,9 +236,13 @@ describe("PlatformInstance", () => {
                 pi.updateIdentifier = sandbox.fake();
             });
 
-            it("close events from platform thread are reported", () => {
+            it("close events from platform thread are reported", async () => {
+                // Mock process as connected and not flagged for termination
+                pi.process.connected = true;
+                pi.flaggedForTermination = false;
+                
                 const close = pi.callbackFunction("close", "my session id");
-                close("error msg");
+                await close("error msg");
                 sandbox.assert.calledWith(
                     pi.reportError,
                     "my session id",
