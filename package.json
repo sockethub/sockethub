@@ -1,7 +1,7 @@
 {
   "name": "root",
   "devDependencies": {
-    "@biomejs/biome": "^2.2.4",
+    "@biomejs/biome": "1.9.4",
     "@esm-bundle/chai": "^4.3.4-fix.0",
     "@lerna-lite/cli": "4.9.0",
     "@lerna-lite/publish": "4.9.0",
