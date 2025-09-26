@@ -9,7 +9,7 @@
     "@sockethub/schemas": "workspace:3.0.0-alpha.4",
     "@types/bun": "latest",
     "@types/mocha": "10.0.10",
-    "@web/test-runner": "^0.20.0",
+    "@web/test-runner": "^0.20.2",
     "chai": "4.3.10",
     "find-up": "7.0.0",
     "globals": "^15.15.0",
