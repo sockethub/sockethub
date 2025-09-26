@@ -38,7 +38,7 @@
   },
   "homepage": "https://sockethub.org",
   "dependencies": {
-    "@sentry/bun": "^9.1.0",
+    "@sentry/bun": "^10.15.0",
     "@sockethub/activity-streams": "workspace:^",
     "@sockethub/client": "workspace:^",
     "@sockethub/crypto": "workspace:^",
