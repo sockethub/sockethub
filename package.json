@@ -1,22 +1,22 @@
 {
   "name": "root",
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "1.9.4",
     "@esm-bundle/chai": "^4.3.4-fix.0",
-    "@lerna-lite/cli": "3.12.1",
-    "@lerna-lite/publish": "3.12.2",
+    "@lerna-lite/cli": "4.9.0",
+    "@lerna-lite/publish": "4.9.0",
     "@sockethub/data-layer": "workspace:1.0.0-alpha.4",
     "@sockethub/schemas": "workspace:3.0.0-alpha.4",
-    "@types/bun": "latest",
+    "@types/bun": "^1.2.22",
     "@types/mocha": "10.0.10",
-    "@web/test-runner": "^0.20.0",
-    "chai": "4.3.10",
-    "find-up": "7.0.0",
-    "globals": "^15.15.0",
+    "@web/test-runner": "^0.20.2",
+    "chai": "6.0.1",
+    "find-up": "8.0.0",
+    "globals": "^16.4.0",
     "markdown-spellcheck": "1.3.1",
-    "markdownlint-cli": "0.44.0",
-    "mocha": "10.4.0",
-    "typescript": "5.8.2"
+    "markdownlint-cli": "0.45.0",
+    "mocha": "11.7.2",
+    "typescript": "5.9.2"
   },
   "engines": {
     "bun": ">=1.2.4"
