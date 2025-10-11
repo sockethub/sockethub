@@ -293,10 +293,10 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
             // Test to reproduce the ERR_IPC_CHANNEL_CLOSED error
             // This simulates the scenario where wrong credentials cause platform termination
             // while the platform is still trying to send messages
-            
+
             describe("XMPP with invalid credentials", () => {
                 const invalidActorId = "baduser@prosody/TestResource";
-                
+
                 it("should handle IPC channel closure gracefully when using wrong credentials", (done) => {
                     // First set invalid credentials
                     sc.socket.emit(
@@ -334,18 +334,22 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                                         expect(msg.error).to.be.a("string");
                                         done();
                                     } else {
-                                        done(new Error("Expected authentication failure with wrong credentials"));
+                                        done(
+                                            new Error(
+                                                "Expected authentication failure with wrong credentials",
+                                            ),
+                                        );
                                     }
-                                }
+                                },
                             );
-                        }
+                        },
                     );
                 });
             });
 
             describe("IRC with invalid credentials", () => {
                 const invalidIrcActorId = "baduser@irc.libera.chat";
-                
+
                 it("should handle IPC channel closure gracefully with IRC wrong credentials", (done) => {
                     // Set invalid IRC credentials
                     sc.socket.emit(
@@ -384,9 +388,9 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                                         // The test is mainly to ensure no crashes occur
                                         done();
                                     }
-                                }
+                                },
                             );
-                        }
+                        },
                     );
                 });
             });
