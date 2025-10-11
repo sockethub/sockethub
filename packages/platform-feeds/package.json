@@ -34,6 +34,7 @@
     "podparse": "1.6.0"
   },
   "devDependencies": {
+    "debug": "^4.4.3",
     "@sockethub/schemas": "workspace:*",
     "@types/bun": "latest"
   },
