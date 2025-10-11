@@ -2,11 +2,13 @@ import { beforeEach, describe, expect, it } from "bun:test";
 import { RSSFeed} from "./index.test.data";
 import Feeds from "./index";
 import { ASCollection, PlatformSession } from "@sockethub/schemas";
+import debug from "debug";
 
 describe("platform-feeds", () => {
     let platform;
     beforeEach(() => {
         platform = new Feeds({
+            debug: debug("sockethub:platform:feeds")
         } as unknown as PlatformSession);
 
         platform.makeRequest = (
