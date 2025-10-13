@@ -17,14 +17,14 @@ type ObjectType = "SEND" | "RESP";
 export function addObject(
     type: ObjectType,
     obj: AnyActivityStream,
-    id?: string,
+    parentId?: string,
 ) {
-    let index: string;
-    if (!id) {
-        index = `${++counter}`;
+    let index = "unset";
+    if (parentId) {
+        index = `${parentId}-${++counter}`;
         obj.id = index;
-    } else {
-        index = id;
+    } else if (obj.id) {
+        index = obj.id;
     }
 
     Logs.update((currentLogs: LogEntries) => {

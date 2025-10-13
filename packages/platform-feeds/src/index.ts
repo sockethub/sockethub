@@ -167,8 +167,9 @@ export default class Feeds implements PlatformInterface {
         // ready to execute job
         this.fetchFeed(job.actor.id, job.id)
             .then((results) => {
+                console.log(`sending result for job ${job.id}`);
                 return done(null, {
-                    id: job.id || null,
+                    id: job.id,
                     context: "feeds",
                     type: "collection",
                     summary:
@@ -184,7 +185,7 @@ export default class Feeds implements PlatformInterface {
 
     /**
      * Cleanup method called when platform instance is being shut down.
-     * Currently no cleanup required for feeds platform.
+     * Currently, no cleanup required for feeds platform.
      *
      * @param done - Callback function to signal completion
      */
@@ -221,6 +222,7 @@ export default class Feeds implements PlatformInterface {
             article.object = buildFeedItem(item as FeedItem);
             articles.push(article);
         }
+        this.debug(`fetched ${articles.length} articles`);
         return articles;
     }
 }

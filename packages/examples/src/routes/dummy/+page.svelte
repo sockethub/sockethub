@@ -8,7 +8,7 @@ import Intro from "../../components/Intro.svelte";
 import SockethubButton from "../../components/SockethubButton.svelte";
 import Logger from "../../components/logs/Logger.svelte";
 
-const actorId = "https://sockethub.org/examples/dummyUser";
+const actorId = "https://sockethub.org/examples/dummy";
 
 const sockethubState: SockethubStateStore = writable({
     actorSet: false,
@@ -20,7 +20,10 @@ function getASObj(type: string): AnyActivityStream {
     return {
         context: "dummy",
         type: type,
-        actor: actorId,
+        actor: {
+            type: "person",
+            id: actorId,
+        },
         object: {
             type: "message",
             content: content,

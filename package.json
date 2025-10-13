@@ -57,5 +57,8 @@
     "publish": "bun run clean && bun run lint && bun run build && bun run doc && bun test && lerna publish --dist-tag latest --pre-dist-tag next",
     "start": "bun run --filter 'sockethub' start"
   },
-  "workspaces": ["packages/*"]
+  "workspaces": ["packages/*"],
+  "dependencies": {
+    "caniuse-lite": "^1.0.30001750"
+  }
 }

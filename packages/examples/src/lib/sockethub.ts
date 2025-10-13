@@ -81,19 +81,26 @@ export type SockethubResponse = {
     error: string;
 };
 
+let idCounter = 0;
+
 export async function send(obj: AnyActivityStream) {
+    if (!obj.id) {
+        obj.id = `${++idCounter}`;
+    }
     console.log("sending ->", obj);
+
     sc.socket.emit(
         "message",
         addObject("SEND", obj),
         (resp: AnyActivityStream) => {
             if (resp.totalItems && resp.items) {
+                console.log(`received ${resp.totalItems} items response`, resp);
                 for (const item of resp.items) {
                     addObject("RESP", item, resp.id);
                 }
             } else {
                 console.log("received <-", resp);
-                addObject("RESP", resp, resp.id);
+                addObject("RESP", resp);
             }
             displayMessage(resp);
         },
