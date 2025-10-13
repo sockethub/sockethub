@@ -12,6 +12,11 @@ const sockethubState = writable({
 
 let url = $state("https://sockethub.org/feed.xml");
 
+const actor = $derived({
+    type: "website",
+    id: url,
+});
+
 function getASObj(type: string) {
     return {
         context: "feeds",
@@ -33,17 +38,22 @@ async function sendFetch(): Promise<void> {
     </p>
 </Intro>
 
-<ActivityActor {actor} {sockethubState} />
 
 <div>
     <div class="w-full p-2">
         <label for="URL" class="inline-block text-gray-900 font-bold w-32">Feed URL</label>
         <input id="URL" bind:value={url} class="border-4" />
     </div>
+</div>
+
+<ActivityActor {actor} {sockethubState} />
+
+<div>
     <div class="w-full text-right">
         <SockethubButton buttonAction={sendFetch}>Fetch</SockethubButton
         >
     </div>
 </div>
+
 
 <Logger />

@@ -184,7 +184,7 @@ export default class Feeds implements PlatformInterface {
 
     /**
      * Cleanup method called when platform instance is being shut down.
-     * Currently no cleanup required for feeds platform.
+     * Currently, no cleanup required for feeds platform.
      *
      * @param done - Callback function to signal completion
      */
@@ -221,6 +221,7 @@ export default class Feeds implements PlatformInterface {
             article.object = buildFeedItem(item as FeedItem);
             articles.push(article);
         }
+        this.debug(`fetched ${articles.length} articles`);
         return articles;
     }
 }
