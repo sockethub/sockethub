@@ -39,6 +39,7 @@ export interface AnyActivityStream {
     context: string;
     type: string;
     totalItems?: number;
+    summary?: string;
     items?: AnyActivityStream[];
     actor?: BaseProps | string;
     object?: BaseProps;
@@ -81,26 +82,19 @@ export type SockethubResponse = {
     error: string;
 };
 
-let idCounter = 0;
-
 export async function send(obj: AnyActivityStream) {
-    if (!obj.id) {
-        obj.id = `${++idCounter}`;
-    }
     console.log("sending ->", obj);
 
     sc.socket.emit(
         "message",
         addObject("SEND", obj),
         (resp: AnyActivityStream) => {
+            console.log("received <-", resp);
+            addObject("RESP", resp);
             if (resp.totalItems && resp.items) {
-                console.log(`received ${resp.totalItems} items response`, resp);
-                for (const item of resp.items) {
-                    addObject("RESP", item, resp.id);
+                for (const item of resp.items.reverse()) {
+                    addObject("RESP", item, true);
                 }
-            } else {
-                console.log("received <-", resp);
-                addObject("RESP", resp);
             }
             displayMessage(resp);
         },

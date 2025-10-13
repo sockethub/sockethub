@@ -17,14 +17,20 @@ type ObjectType = "SEND" | "RESP";
 export function addObject(
     type: ObjectType,
     obj: AnyActivityStream,
-    parentId?: string,
-) {
-    let index = "unset";
-    if (parentId) {
-        index = `${parentId}-${++counter}`;
-        obj.id = index;
-    } else if (obj.id) {
+    isBatch = false,
+): AnyActivityStream {
+    let index: string;
+
+    if (obj.id) {
         index = obj.id;
+    } else {
+        index = `${++counter}`;
+    }
+
+    obj.id = index;
+
+    if (isBatch) {
+        index = `${index}-${++counter}`;
     }
 
     Logs.update((currentLogs: LogEntries) => {
