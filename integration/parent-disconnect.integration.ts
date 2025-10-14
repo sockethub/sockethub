@@ -1,7 +1,7 @@
-import { spawn, type ChildProcess } from "node:child_process";
-import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { io, type Socket } from "socket.io-client";
+import { type ChildProcess, spawn } from "node:child_process";
+import { join } from "node:path";
+import { type Socket, io } from "socket.io-client";
 
 const REDIS_HOST = "localhost";
 const REDIS_PORT = "16379";
@@ -276,14 +276,14 @@ describe("Parent Process Sudden Termination", () => {
                 console.log(
                     "All processes containing 'platform' or 'sockethub':",
                 );
-                allProcesses.split("\n").forEach((line) => {
+                for (const line of allProcesses.split("\n")) {
                     if (
                         line.includes("platform") ||
                         line.includes("sockethub")
                     ) {
                         console.log(line);
                     }
-                });
+                }
             }
 
             expect(childPids.length).toBeGreaterThan(0);
