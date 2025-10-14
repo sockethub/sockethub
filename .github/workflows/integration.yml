@@ -50,6 +50,14 @@ jobs:
       - name: Verifying Child Process Termination
         run: bun run integration:process:run
 
+      - name: View running processes
+        if: always()
+        run: ps ax | grep sockethub
+
+      - name: Print Sockethub logs
+        if: always()
+        run: bun run docker:logs:sockethub
+
   browser:
     runs-on: ubuntu-latest
 
