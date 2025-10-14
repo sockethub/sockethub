@@ -112,9 +112,7 @@ describe("Parent Process Sudden Termination", () => {
                     `XMPP server (Prosody) is not reachable at localhost:${XMPP_PORT}`,
                 );
                 console.log("Make sure to run: bun run docker:start:xmpp");
-                throw new Error(
-                    "XMPP server not available - aborting test",
-                );
+                throw new Error("XMPP server not available - aborting test");
             }
             console.log("XMPP server verified as reachable");
         } catch (e) {
@@ -175,11 +173,18 @@ describe("Parent Process Sudden Termination", () => {
                 reject(new Error("Credentials timeout"));
             }, 5000);
 
-            testConfig.client.emit("message", credentialsMessage, (response) => {
-                clearTimeout(timeout);
-                console.log("Credentials response:", JSON.stringify(response, null, 2));
-                resolve();
-            });
+            testConfig.client.emit(
+                "message",
+                credentialsMessage,
+                (response) => {
+                    clearTimeout(timeout);
+                    console.log(
+                        "Credentials response:",
+                        JSON.stringify(response, null, 2),
+                    );
+                    resolve();
+                },
+            );
         });
 
         // Create a persistent XMPP connection
@@ -200,7 +205,10 @@ describe("Parent Process Sudden Termination", () => {
 
             testConfig.client.emit("message", connectMessage, (response) => {
                 clearTimeout(timeout);
-                console.log("XMPP connect response:", JSON.stringify(response, null, 2));
+                console.log(
+                    "XMPP connect response:",
+                    JSON.stringify(response, null, 2),
+                );
                 resolve();
             });
         });
@@ -255,15 +263,10 @@ describe("Parent Process Sudden Termination", () => {
 
         // Get all child processes that should include our XMPP platform
         const childPids = await findChildProcesses();
-        console.log(
-            `Found ${childPids.length} child processes:`,
-            childPids,
-        );
+        console.log(`Found ${childPids.length} child processes:`, childPids);
 
         if (childPids.length === 0) {
-            console.log(
-                "No child processes found. Let's check all processes:",
-            );
+            console.log("No child processes found. Let's check all processes:");
             const allProcesses = await new Promise<string>((resolve) => {
                 const ps = spawn("ps", ["-eo", "pid,ppid,command"], {
                     stdio: ["ignore", "pipe", "pipe"],
@@ -274,14 +277,9 @@ describe("Parent Process Sudden Termination", () => {
                 });
                 ps.on("close", () => resolve(output));
             });
-            console.log(
-                "All processes containing 'platform' or 'sockethub':",
-            );
+            console.log("All processes containing 'platform' or 'sockethub':");
             for (const line of allProcesses.split("\n")) {
-                if (
-                    line.includes("platform") ||
-                    line.includes("sockethub")
-                ) {
+                if (line.includes("platform") || line.includes("sockethub")) {
                     console.log(line);
                 }
             }
