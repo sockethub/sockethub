@@ -97,6 +97,15 @@ process.once("unhandledRejection", (err: Error) => {
 });
 
 /**
+ * In the case of a parent disconnect, terminate child process.
+ */
+// Detect parent death via IPC disconnect
+process.on("disconnect", () => {
+    console.log(`Parent disconnected. Child ${process.pid} exiting.`);
+    process.exit(1);
+});
+
+/**
  * Incoming messages from the worker to this platform. Data is an array, the first property is the
  * method to call, the rest are params.
  */
