@@ -27,6 +27,37 @@ jobs:
       - name: Redis Integration Tests
         run: bun run integration:redis:run
 
+  process:
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: sudo chown -R $USER:$USER ${{ github.workspace }}
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Use Bun latest
+        uses: oven-sh/setup-bun@v2.0.1
+        with:
+          bun-version: latest
+      - run: bun install
+      - run: bun run build
+
+      - run: bun run docker:start:redis
+      - run: bun run docker:start:xmpp
+      - run: sleep 5
+
+      - name: Verify Redis is listening
+        run: nc -zv localhost 16379
+
+      - name: Verify XMPP is listening
+        run: nc -zv localhost 8222
+
+      - name: Verifying Child Process Termination
+        run: bun run integration:process:run
+
+      - name: View running processes
+        if: always()
+        run: ps ax | grep sockethub
+
   browser:
     runs-on: ubuntu-latest
 

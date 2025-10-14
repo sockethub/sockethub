@@ -19,6 +19,8 @@ services:
             - sockethub-net
     prosody:
         image: prosody/prosody:latest
+        ports:
+          - "8222:5222"
         volumes:
             - ./integration/prosody:/etc/prosody
         environment:
