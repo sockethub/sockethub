@@ -41,8 +41,12 @@ jobs:
       - run: bun install
       - run: bun run build
 
+      - run: bun run docker:start:redis
       - run: bun run docker:start:xmpp
       - run: sleep 5
+
+      - name: Verify Redis is listening
+        run: nc -zv localhost 16379
 
       - name: Verify XMPP is listening
         run: nc -zv localhost 8222
@@ -53,10 +57,6 @@ jobs:
       - name: View running processes
         if: always()
         run: ps ax | grep sockethub
-
-      - name: Print Sockethub logs
-        if: always()
-        run: bun run docker:logs:sockethub
 
   browser:
     runs-on: ubuntu-latest

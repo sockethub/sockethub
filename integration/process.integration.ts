@@ -47,22 +47,47 @@ describe("Parent Process Sudden Termination", () => {
                 );
             }, timeout);
 
+            let serverStarted = false;
+
             // NOTE: Sockethub debug messages go to stderr (likely due to debug module behavior)
             testConfig.sockethubProcess.stderr.on("data", (data) => {
                 const output = data.toString();
-                if (output.includes("sockethub listening")) {
+                console.log("Sockethub stderr:", output);
+                
+                if (output.includes("sockethub listening") && !serverStarted) {
+                    serverStarted = true;
                     clearTimeout(timeoutId);
                     resolve();
+                }
+                
+                // Check for shutdown message which indicates failure
+                if (output.includes("sockethub shutdown")) {
+                    clearTimeout(timeoutId);
+                    reject(new Error("Sockethub process shut down unexpectedly during startup"));
                 }
             });
 
             testConfig.sockethubProcess.stdout.on("data", (data) => {
-                console.log("Sockethub stdout:", data.toString());
+                const output = data.toString();
+                console.log("Sockethub stdout:", output);
+                
+                // Also check stdout for shutdown message
+                if (output.includes("sockethub shutdown")) {
+                    clearTimeout(timeoutId);
+                    reject(new Error("Sockethub process shut down unexpectedly during startup"));
+                }
             });
 
             testConfig.sockethubProcess.on("error", (err) => {
                 clearTimeout(timeoutId);
                 reject(err);
+            });
+
+            testConfig.sockethubProcess.on("exit", (code, signal) => {
+                if (!serverStarted) {
+                    clearTimeout(timeoutId);
+                    reject(new Error(`Sockethub process exited with code ${code} and signal ${signal} before startup completed`));
+                }
             });
         });
     });
@@ -85,6 +110,38 @@ describe("Parent Process Sudden Termination", () => {
 
         // Reset test config
         testConfig.platformChildPid = undefined;
+    });
+
+    it("should verify Redis server is reachable", async () => {
+        try {
+            const redisCheck = spawn("nc", ["-z", "-v", "localhost", REDIS_PORT], {
+                stdio: ["ignore", "pipe", "pipe"],
+            });
+            const checkResult = await new Promise<boolean>((resolve) => {
+                let success = false;
+                redisCheck.stderr.on("data", (data) => {
+                    if (data.toString().includes("succeeded")) {
+                        success = true;
+                    }
+                });
+                redisCheck.on("close", () => resolve(success));
+                setTimeout(() => resolve(false), 2000);
+            });
+
+            if (!checkResult) {
+                console.log(
+                    `Redis server is not reachable at localhost:${REDIS_PORT}`,
+                );
+                console.log("Make sure to run: bun run docker:start:redis");
+                throw new Error("Redis server not available - aborting test");
+            }
+            console.log("Redis server verified as reachable");
+        } catch (e) {
+            console.log(
+                "Could not verify Redis connectivity (nc command failed)",
+            );
+            throw new Error("Redis server not reachable - aborting test");
+        }
     });
 
     it("should verify XMPP server is reachable", async () => {
