@@ -52,7 +52,7 @@
     "integration:redis": "bun run docker:start:redis && bun run integration:redis:run; RES=$?; docker compose down; exit $RES",
     "integration:redis:run": "DEBUG=ioredis*,bullmq*,sockethub* bun test ./integration/redis.integration.ts",
     "integration:process": "bun run docker:start:xmpp && bun run integration:process:run",
-    "integration:process:run": "bun test ./integration/parent-disconnect.integration.ts",
+    "integration:process:run": "bun test ./integration/process.integration.ts",
     "lint": "bunx biome check && bun run lint:doc",
     "lint:doc": "bunx markdownlint '**/*.md'",
     "lint:doc:fix": "bunx markdownlint --fix '**/*.md' && bunx mdspell -n -a --en-us ./README.md ./packages/*/README.md",
