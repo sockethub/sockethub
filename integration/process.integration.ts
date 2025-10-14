@@ -53,28 +53,36 @@ describe("Parent Process Sudden Termination", () => {
             testConfig.sockethubProcess.stderr.on("data", (data) => {
                 const output = data.toString();
                 console.log("Sockethub stderr:", output);
-                
+
                 if (output.includes("sockethub listening") && !serverStarted) {
                     serverStarted = true;
                     clearTimeout(timeoutId);
                     resolve();
                 }
-                
+
                 // Check for shutdown message which indicates failure
                 if (output.includes("sockethub shutdown")) {
                     clearTimeout(timeoutId);
-                    reject(new Error("Sockethub process shut down unexpectedly during startup"));
+                    reject(
+                        new Error(
+                            "Sockethub process shut down unexpectedly during startup",
+                        ),
+                    );
                 }
             });
 
             testConfig.sockethubProcess.stdout.on("data", (data) => {
                 const output = data.toString();
                 console.log("Sockethub stdout:", output);
-                
+
                 // Also check stdout for shutdown message
                 if (output.includes("sockethub shutdown")) {
                     clearTimeout(timeoutId);
-                    reject(new Error("Sockethub process shut down unexpectedly during startup"));
+                    reject(
+                        new Error(
+                            "Sockethub process shut down unexpectedly during startup",
+                        ),
+                    );
                 }
             });
 
@@ -86,7 +94,11 @@ describe("Parent Process Sudden Termination", () => {
             testConfig.sockethubProcess.on("exit", (code, signal) => {
                 if (!serverStarted) {
                     clearTimeout(timeoutId);
-                    reject(new Error(`Sockethub process exited with code ${code} and signal ${signal} before startup completed`));
+                    reject(
+                        new Error(
+                            `Sockethub process exited with code ${code} and signal ${signal} before startup completed`,
+                        ),
+                    );
                 }
             });
         });
@@ -114,9 +126,13 @@ describe("Parent Process Sudden Termination", () => {
 
     it("should verify Redis server is reachable", async () => {
         try {
-            const redisCheck = spawn("nc", ["-z", "-v", "localhost", REDIS_PORT], {
-                stdio: ["ignore", "pipe", "pipe"],
-            });
+            const redisCheck = spawn(
+                "nc",
+                ["-z", "-v", "localhost", REDIS_PORT],
+                {
+                    stdio: ["ignore", "pipe", "pipe"],
+                },
+            );
             const checkResult = await new Promise<boolean>((resolve) => {
                 let success = false;
                 redisCheck.stderr.on("data", (data) => {
