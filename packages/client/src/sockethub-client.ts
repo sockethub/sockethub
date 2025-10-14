@@ -165,7 +165,7 @@ export default class SockethubClient {
     }
 
     private replay(name: string, asMap: Map<string, unknown>) {
-        for (const obj of asMap) {
+        for (const obj of asMap.values()) {
             this.log(`replaying ${name}`, obj);
             this._socket.emit(name, obj);
         }
@@ -175,4 +175,5 @@ export default class SockethubClient {
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 ((global: any) => {
     global.SockethubClient = SockethubClient;
+    // @ts-ignore
 })(typeof window === "object" ? window : {});
