@@ -48,11 +48,12 @@ of additional 'platforms' to carry out tasks.
 
 ## Documentation
 
-* **[Wiki](https://github.com/sockethub/sockethub/wiki)** - Overall documentation and user guides
-* **[Server](packages/server/README.md)** - Core server implementation and configuration
-* **[Client](packages/client/README.md)** - Browser client library usage
-* **[Platform Development](packages/platform-dummy/README.md)** - How to create custom platforms
-* **[Schemas](packages/schemas/README.md)** - ActivityStreams validation and data structures
+* **[Documentation Hub](docs/README.md)** - Complete documentation index and guides
+* **[Getting Started](docs/getting-started/installation.md)** - Installation and quick start
+* **[Client Library](docs/client/README.md)** - Browser client library usage
+* **[Platform Development](docs/platform-development/creating-platforms.md)** - Creating custom platforms
+* **[Architecture](docs/architecture/overview.md)** - Technical architecture overview
+* **[Deployment](docs/deployment/server-config.md)** - Production deployment guides
 
 ## Features
 
