@@ -24,11 +24,11 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
     function createClient(userId) {
         console.log(`Creating client ${userId}`);
 
-        const actorId = `user${userId}@prosody/SockethubTest${userId}`;
+        const actorId = `jimmy@prosody/SockethubTest${userId}`;
         const actorObject = {
             id: actorId,
             type: "person",
-            name: `Test User ${userId}`,
+            name: `Jimmy Session ${userId}`,
         };
 
         const clientSetup = createSockethubClient(`user${userId}`);
@@ -116,7 +116,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                 setXMPPCredentials(
                     client.socket,
                     client.actorId,
-                    `user${client.id}`,
+                    "jimmy",
                     "passw0rd",
                 ),
             );
@@ -344,7 +344,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
             await setXMPPCredentials(
                 testClient.socket,
                 testClient.actorId,
-                `user${testClient.id}`,
+                "jimmy",
                 "passw0rd",
             );
 
@@ -414,7 +414,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                 await setXMPPCredentials(
                     client.socket,
                     client.actorId,
-                    `user${client.id}`,
+                    "jimmy",
                     "passw0rd",
                 );
 
