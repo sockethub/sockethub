@@ -4,7 +4,9 @@ A Sockethub platform module implementing XMPP (Jabber) functionality for instant
 
 ## About
 
-This platform provides XMPP client functionality, allowing web applications to connect to XMPP servers, send messages, manage contacts, join chat rooms, and handle presence updates through ActivityStreams messages.
+This platform provides XMPP client functionality, allowing web applications to connect to
+XMPP servers, send messages, manage contacts, join chat rooms, and handle presence
+updates through ActivityStreams messages.
 
 ## Implemented Verbs (`@type`)
 
@@ -69,18 +71,18 @@ This platform provides XMPP client functionality, allowing web applications to c
 
 ## Features
 
-- **Instant messaging**: Send and receive one-on-one messages
-- **Multi-user chat**: Join and participate in chat rooms (MUCs)
-- **Contact management**: Add, remove, and manage contact lists
-- **Presence**: Handle online/offline status and presence updates
-- **Authentication**: Support for various XMPP authentication methods
+* **Instant messaging**: Send and receive one-on-one messages
+* **Multi-user chat**: Join and participate in chat rooms (MUCs)
+* **Contact management**: Add, remove, and manage contact lists
+* **Presence**: Handle online/offline status and presence updates
+* **Authentication**: Support for various XMPP authentication methods
 
 ## Use Cases
 
-- **Web-based chat**: Build XMPP chat clients in web browsers
-- **Integration platforms**: Connect web services to XMPP networks
-- **Notification systems**: Send alerts through XMPP messages
-- **Federated communication**: Connect to the decentralized XMPP network
+* **Web-based chat**: Build XMPP chat clients in web browsers
+* **Integration platforms**: Connect web services to XMPP networks
+* **Notification systems**: Send alerts through XMPP messages
+* **Federated communication**: Connect to the decentralized XMPP network
 
 ## API
 

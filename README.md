@@ -83,8 +83,9 @@ For platform development guidance, see the [Platform Development documentation](
 ## Quick Start
 
 ### Prerequisites
-- **Bun** v1.2+ (Node.js runtime and package manager)
-- **Redis** server (for data layer and job queue)
+
+* **Bun** v1.2+ (Node.js runtime and package manager)
+* **Redis** server (for data layer and job queue)
 
 ### Installation & Development
 
@@ -126,14 +127,15 @@ bun run lint:fix           # Auto-fix linting issues
 For debugging and configuration options, see the [Server package documentation](packages/server/README.md#environment-variables).
 
 **Debug logging:**
+
 ```bash
 DEBUG=sockethub* bun run dev
 ```
 
-
 ## Packages
 
 ### Core Infrastructure
+
 * **[sockethub](packages/sockethub)** - Main package and configuration
 * **[@sockethub/server](packages/server)** - Core server implementation with Socket.IO interface
 * **[@sockethub/data-layer](packages/data-layer)** - Redis-based job queue and credential storage
@@ -141,9 +143,11 @@ DEBUG=sockethub* bun run dev
 * **[@sockethub/client](packages/client)** - Browser client library for connecting to Sockethub
 
 ### Interactive Demos
+
 * **[@sockethub/examples](packages/examples)** - Interactive web examples and demos
 
 ### Platform Implementations
+
 * **[@sockethub/platform-dummy](packages/platform-dummy)** - Example platform for development reference
 * **[@sockethub/platform-feeds](packages/platform-feeds)** - RSS and Atom feed processing
 * **[@sockethub/platform-irc](packages/platform-irc)** - IRC protocol support
@@ -151,6 +155,7 @@ DEBUG=sockethub* bun run dev
 * **[@sockethub/platform-xmpp](packages/platform-xmpp)** - XMPP protocol support
 
 ### Utilities
+
 * **[@sockethub/activity-streams](packages/activity-streams)** - ActivityStreams object utilities
 * **[@sockethub/crypto](packages/crypto)** - Cryptographic utilities for secure storage
 * **[@sockethub/irc2as](packages/irc2as)** - IRC to ActivityStreams translation

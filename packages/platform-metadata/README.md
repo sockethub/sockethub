@@ -4,7 +4,9 @@ A Sockethub platform module for extracting metadata from web pages using Open Gr
 
 ## About
 
-This platform fetches and extracts metadata from web pages, including Open Graph data, site information, images, and other structured metadata. It uses the `open-graph-scraper` library to analyze web pages and return structured data in ActivityStreams format.
+This platform fetches and extracts metadata from web pages, including Open Graph data,
+site information, images, and other structured metadata. It uses the `open-graph-scraper`
+library to analyze web pages and return structured data in ActivityStreams format.
 
 ## Implemented Verbs (`@type`)
 
@@ -12,7 +14,8 @@ This platform fetches and extracts metadata from web pages, including Open Graph
 
 ## Usage
 
-Each Sockethub platform uses JSON Activity Streams 2.0 which are received from and sent to clients through the Sockethub service.
+Each Sockethub platform uses JSON Activity Streams 2.0 which are received from and sent
+to clients through the Sockethub service.
 
 ### Request Format
 
@@ -63,23 +66,25 @@ The platform returns an ActivityStream object with extracted metadata:
 
 The platform extracts the following metadata when available:
 
-- **Open Graph data**: Title, description, images, site name, URL, locale
-- **Site information**: Favicon, character encoding
-- **Canonical URLs**: Resolved and canonical page URLs
-- **Media**: Images with dimensions and type information
+* **Open Graph data**: Title, description, images, site name, URL, locale
+* **Site information**: Favicon, character encoding
+* **Canonical URLs**: Resolved and canonical page URLs
+* **Media**: Images with dimensions and type information
 
 ## Dependencies
 
-- **open-graph-scraper**: Core library for extracting Open Graph and metadata from web pages
+* **open-graph-scraper**: Core library for extracting Open Graph and metadata from web
+  pages
 
 ## Error Handling
 
-If metadata extraction fails (invalid URL, network issues, parsing errors), the platform will return an error through the standard Sockethub error handling mechanism.
+If metadata extraction fails (invalid URL, network issues, parsing errors), the platform
+will return an error through the standard Sockethub error handling mechanism.
 
 ## Use Cases
 
-- **Link previews**: Generate rich previews for shared URLs
-- **Content analysis**: Extract structured data from web pages
-- **Social media integration**: Get Open Graph data for social sharing
-- **Web scraping**: Collect metadata from multiple pages
-- **SEO analysis**: Analyze page metadata and structure
+* **Link previews**: Generate rich previews for shared URLs
+* **Content analysis**: Extract structured data from web pages
+* **Social media integration**: Get Open Graph data for social sharing
+* **Web scraping**: Collect metadata from multiple pages
+* **SEO analysis**: Analyze page metadata and structure

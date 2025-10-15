@@ -1,10 +1,12 @@
 # @sockethub/data-layer
 
-Redis-based data storage and job queue infrastructure for Sockethub, providing reliable message processing and secure credential storage.
+Redis-based data storage and job queue infrastructure for Sockethub, providing reliable
+message processing and secure credential storage.
 
 ## About
 
-The data layer package provides the core infrastructure components that enable Sockethub's distributed architecture:
+The data layer package provides the core infrastructure components that enable
+Sockethub's distributed architecture:
 
 - **Job Queue System**: Redis-backed message queuing using BullMQ for reliable ActivityStreams processing
 - **Credentials Store**: Encrypted storage for user credentials and authentication data
@@ -15,11 +17,14 @@ The data layer package provides the core infrastructure components that enable S
 
 ### JobQueue & JobWorker
 
-Handles asynchronous message processing between Sockethub server and platform instances. The JobQueue manages job creation and queuing on the server side, while JobWorker processes jobs within platform child processes.
+Handles asynchronous message processing between Sockethub server and platform instances.
+The JobQueue manages job creation and queuing on the server side, while JobWorker
+processes jobs within platform child processes.
 
 ### CredentialsStore
 
-Provides secure, encrypted storage for user credentials with automatic encryption/decryption and session-based isolation.
+Provides secure, encrypted storage for user credentials with automatic
+encryption/decryption and session-based isolation.
 
 ## Key Features
 
@@ -49,13 +54,15 @@ Provides secure, encrypted storage for user credentials with automatic encryptio
 **Redis Configuration**: Requires a Redis URL in the format `redis://host:port` or `redis://user:pass@host:port`
 
 **Dependencies:**
+
 - Redis server (6.0+)
 - `@sockethub/crypto` for encryption
 - `@sockethub/schemas` for type definitions
 
 ## API Documentation
 
-For detailed API documentation including method signatures, parameters, and examples, generate the API docs from JSDoc comments:
+For detailed API documentation including method signatures, parameters, and examples,
+generate the API docs from JSDoc comments:
 
 ```bash
 bun run doc
@@ -90,11 +97,13 @@ The data layer provides comprehensive error handling:
 ## Performance Considerations
 
 **Memory Management:**
+
 - Completed jobs are automatically cleaned up
 - Connection pooling minimizes resource usage
 - Per-session isolation prevents memory leaks
 
 **Network Efficiency:**
+
 - Redis pipelining for batch operations
 - Compressed job payloads for large messages
 - Keep-alive connections reduce overhead

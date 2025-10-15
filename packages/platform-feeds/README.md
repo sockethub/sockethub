@@ -4,7 +4,9 @@ A Sockethub platform module for fetching and parsing RSS and Atom feeds.
 
 ## About
 
-This platform fetches RSS and Atom feeds from URLs and converts feed entries into ActivityStreams objects. It handles various feed formats and provides structured data for web applications to consume feed content.
+This platform fetches RSS and Atom feeds from URLs and converts feed entries into
+ActivityStreams objects. It handles various feed formats and provides structured data for
+web applications to consume feed content.
 
 ## Implemented Verbs (`@type`)
 
@@ -54,13 +56,13 @@ Returns an ActivityStreams Collection with feed entries:
 
 ## Supported Feed Formats
 
-- **RSS 2.0**: Standard RSS feeds
-- **Atom 1.0**: Atom syndication format
-- **RSS 1.0/RDF**: RDF-based RSS feeds
+* **RSS 2.0**: Standard RSS feeds
+* **Atom 1.0**: Atom syndication format
+* **RSS 1.0/RDF**: RDF-based RSS feeds
 
 ## Use Cases
 
-- **Content aggregation**: Collect posts from multiple blogs and news sites
-- **Feed readers**: Build web-based feed reading applications
-- **Content monitoring**: Track updates from RSS/Atom feeds
-- **Data integration**: Import feed content into other systems
+* **Content aggregation**: Collect posts from multiple blogs and news sites
+* **Feed readers**: Build web-based feed reading applications
+* **Content monitoring**: Track updates from RSS/Atom feeds
+* **Data integration**: Import feed content into other systems

@@ -4,7 +4,9 @@ A Sockethub platform module implementing IRC (Internet Relay Chat) functionality
 
 ## About
 
-This platform provides IRC client functionality, allowing web applications to connect to IRC servers, join channels, send messages, and handle IRC events through ActivityStreams messages.
+This platform provides IRC client functionality, allowing web applications to connect to
+IRC servers, join channels, send messages, and handle IRC events through ActivityStreams
+messages.
 
 ## Implemented Verbs (`@type`)
 
@@ -71,18 +73,18 @@ This platform provides IRC client functionality, allowing web applications to co
 
 ## Features
 
-- **Channel communication**: Join and participate in IRC channels
-- **Private messaging**: Send direct messages to other users
-- **User management**: Handle nick changes and user information
-- **Network support**: Connect to various IRC networks
-- **Event handling**: Process IRC events and convert to ActivityStreams
+* **Channel communication**: Join and participate in IRC channels
+* **Private messaging**: Send direct messages to other users
+* **User management**: Handle nick changes and user information
+* **Network support**: Connect to various IRC networks
+* **Event handling**: Process IRC events and convert to ActivityStreams
 
 ## Use Cases
 
-- **Web IRC clients**: Build browser-based IRC chat applications
-- **Chatbots**: Create IRC bots that integrate with web services
-- **Notification systems**: Send alerts to IRC channels
-- **Community integration**: Connect web platforms to IRC communities
+* **Web IRC clients**: Build browser-based IRC chat applications
+* **Chatbots**: Create IRC bots that integrate with web services
+* **Notification systems**: Send alerts to IRC channels
+* **Community integration**: Connect web platforms to IRC communities
 
 ## API
 

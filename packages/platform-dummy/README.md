@@ -4,7 +4,9 @@ A Sockethub test platform for development and testing purposes.
 
 ## About
 
-This platform provides basic testing functionality for Sockethub development. It implements simple verbs that can be used to test ActivityStreams message flow, error handling, and platform communication without requiring external service connections.
+This platform provides basic testing functionality for Sockethub development. It implements
+simple verbs that can be used to test ActivityStreams message flow, error handling, and
+platform communication without requiring external service connections.
 
 ## Implemented Verbs (`@type`)
 
@@ -47,7 +49,7 @@ This platform provides basic testing functionality for Sockethub development. It
 
 ## Use Cases
 
-- **Development testing**: Test ActivityStreams message processing
-- **Integration testing**: Verify platform loading and communication
-- **Error handling**: Test error scenarios and exception handling
-- **Learning**: Understand Sockethub platform structure and ActivityStreams format
+* **Development testing**: Test ActivityStreams message processing
+* **Integration testing**: Verify platform loading and communication
+* **Error handling**: Test error scenarios and exception handling
+* **Learning**: Understand Sockethub platform structure and ActivityStreams format
