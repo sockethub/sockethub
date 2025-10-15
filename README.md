@@ -15,7 +15,11 @@ Sockethub is a translation layer for web applications to communicate with
 other protocols and services that are traditionally either inaccessible or
 impractical to use from in-browser JavaScript.
 
-Using [ActivityStream](http://activitystrea.ms/) (AS) objects to pass messages
+Built with modern TypeScript and powered by Bun, Sockethub is organized as a
+monorepo containing multiple packages that work together to provide a robust,
+extensible platform gateway.
+
+Using [ActivityStreams](https://www.w3.org/TR/activitystreams-core/) (AS) objects to pass messages
 to and from the web app, Sockethub acts as a smart proxy server/agent, which
 can maintain state, and connect to sockets, endpoints, and networks that would
 otherwise, be restricted from an application running in the browser.
@@ -27,21 +31,28 @@ applications, Sockethub's functionality can also fit into a more traditional
 development stack, removing the need for custom code to handle various protocol
 specifics at the application layer.
 
-Example uses of Sockethub are:
+Example uses of Sockethub include:
 
-* Writing and receiving messages (SMTP, IMAP, Nostr ...)
+* **Chat protocols**: XMPP, IRC
 
-* Chat (XMPP, IRC, SimpleX, ...)
+* **Feed processing**: RSS, Atom feeds
 
-* Discovery (WebFinger, RDF(a), Link preview generation ...)
+* **Metadata discovery**: Link preview generation, metadata extraction
+
+* **Protocol translation**: Converting between web-friendly ActivityStreams and traditional protocols
+
+*Additional protocols like SMTP, IMAP, Nostr, and others can be implemented as custom platforms.*
 
 The architecture of Sockethub is extensible and supports easy implementation
 of additional 'platforms' to carry out tasks.
 
-## Docs
+## Documentation
 
-See the [Sockethub wiki](https://github.com/sockethub/sockethub/wiki) for
-documentation.
+* **[Wiki](https://github.com/sockethub/sockethub/wiki)** - Overall documentation and user guides
+* **[Server](packages/server/README.md)** - Core server implementation and configuration
+* **[Client](packages/client/README.md)** - Browser client library usage
+* **[Platform Development](packages/platform-dummy/README.md)** - How to create custom platforms
+* **[Schemas](packages/schemas/README.md)** - ActivityStreams validation and data structures
 
 ## Features
 
@@ -50,88 +61,99 @@ We use ActivityStreams to map the various actions of a platform to a set of AS
 platform, a friend request/accept cycle would use the activity stream types
 'request-friend', 'remove-friend', 'make-friend'.
 
-Below is a list of platform contexts we're currently working on and their types,
-both the completed and not yet implemented ones. They are all implemented in
-Sockethub platforms (each in their own repository) and can be enabled/disabled
-in the `config.json`.
-
 ## Platforms
 
 Making a platform is as simple as creating a platform module that defines a
-schema and a series of functions that map to verbs. Take a look at some of
-our existing platforms for examples.
+schema and a series of functions that map to ActivityStream verbs. Each platform
+can be enabled/disabled in the `config.json`.
 
-* [Feeds](packages/platform-feeds) *(RSS, Atom)*
+### Currently Implemented Platforms
 
-* [IRC](packages/platform-irc)
+* **[Feeds](packages/platform-feeds)** - RSS and Atom feed processing
+* **[IRC](packages/platform-irc)** - Internet Relay Chat protocol support  
+* **[XMPP](packages/platform-xmpp)** - Extensible Messaging and Presence Protocol
+* **[Metadata](packages/platform-metadata)** - Link preview and metadata extraction
 
-* [XMPP](packages/platform-xmpp)
+### Development Reference
 
-## Run
+* **[Dummy](packages/platform-dummy)** - Example platform implementation for developers
 
-To get up and running quickly, you only need the following commands:
+For platform development guidance, see the [Platform Development documentation](packages/platform-dummy/README.md).
+
+## Quick Start
+
+### Prerequisites
+- **Bun** v1.2+ (Node.js runtime and package manager)
+- **Redis** server (for data layer and job queue)
+
+### Installation & Development
 
 ```bash
+# Install dependencies
 bun install
+
+# Start Redis (required for data layer)
+# - Using Docker: docker run -d -p 6379:6379 redis:alpine
+# - Using system package manager: brew install redis && brew services start redis
+
+# Build and start development server with examples
 bun run dev
 ```
 
-### Dependencies
+Browse to `http://localhost:10550` to try the interactive examples.
 
-```bun install```
+### Production
 
-### Build
+```bash
+# Build for production
+bun run build
 
-```bun run build```
+# Start production server (examples disabled)
+bun run start
+```
 
-### Tests
+### Development Commands
 
-```bun test```
+```bash
+bun test                    # Run unit tests
+bun run integration         # Run integration tests (requires Redis + Docker)
+bun run lint                # Check code style
+bun run lint:fix           # Auto-fix linting issues
+```
 
-### Linter
+### Environment Variables
 
-```bun run lint```
+For debugging and configuration options, see the [Server package documentation](packages/server/README.md#environment-variables).
 
-Or, to automatically fix linting errors:
+**Debug logging:**
+```bash
+DEBUG=sockethub* bun run dev
+```
 
-```bun run lint:fix```
-
-### Integration Tests
-
-```bun run  integration```
-
-## Start
-
-For development purposes, with examples enabled, run:
-
-`DEBUG=sockethub* bun run dev`
-
-You should then be able to browse to `http://localhost:10550` and try out the examples.
-
-For production, with examples disabled.
-
-`DEBUG=sockethub* bun run start`
-
-*For more info on configuration options, see the
-[Sockethub README](packages/sockethub/README.md#environment-variables)*
-section on environment variables.*
 
 ## Packages
 
-* [sockethub](packages/sockethub)
-* [@sockethub/activity-streams](packages/activity-streams)
-* [@sockethub/client](packages/client)
-* [@sockethub/crypto](packages/crypto)
-* [@sockethub/data-layer](packages/data-layer)
-* [@sockethub/examples](packages/examples)
-* [@sockethub/irc2as](packages/irc2as)
-* [@sockethub/platform-dummy](packages/platform-dummy)
-* [@sockethub/platform-feeds](packages/platform-feeds)
-* [@sockethub/platform-irc](packages/platform-irc)
-* [@sockethub/platform-metadata](packages/platform-metadata)
-* [@sockethub/platform-xmpp](packages/platform-xmpp)
-* [@sockethub/schemas](packages/schemas)
-* [@sockethub/server](packages/server)
+### Core Infrastructure
+* **[sockethub](packages/sockethub)** - Main package and configuration
+* **[@sockethub/server](packages/server)** - Core server implementation with Socket.IO interface
+* **[@sockethub/data-layer](packages/data-layer)** - Redis-based job queue and credential storage
+* **[@sockethub/schemas](packages/schemas)** - ActivityStreams validation and TypeScript types
+* **[@sockethub/client](packages/client)** - Browser client library for connecting to Sockethub
+
+### Interactive Demos
+* **[@sockethub/examples](packages/examples)** - Interactive web examples and demos
+
+### Platform Implementations
+* **[@sockethub/platform-dummy](packages/platform-dummy)** - Example platform for development reference
+* **[@sockethub/platform-feeds](packages/platform-feeds)** - RSS and Atom feed processing
+* **[@sockethub/platform-irc](packages/platform-irc)** - IRC protocol support
+* **[@sockethub/platform-metadata](packages/platform-metadata)** - Link preview and metadata extraction
+* **[@sockethub/platform-xmpp](packages/platform-xmpp)** - XMPP protocol support
+
+### Utilities
+* **[@sockethub/activity-streams](packages/activity-streams)** - ActivityStreams object utilities
+* **[@sockethub/crypto](packages/crypto)** - Cryptographic utilities for secure storage
+* **[@sockethub/irc2as](packages/irc2as)** - IRC to ActivityStreams translation
 
 ## Credits
 
