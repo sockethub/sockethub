@@ -19,7 +19,7 @@ let content = $state("");
 /**
  * Creates an ActivityStreams object for Sockethub's dummy platform.
  * Sockethub's dummy platform is used for testing basic functionality.
- * 
+ *
  * @param type - The activity type (echo, fail, throw, greet)
  * @returns ActivityStreams object ready to send to Sockethub's dummy platform
  */

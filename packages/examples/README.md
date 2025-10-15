@@ -1,36 +1,51 @@
 # Sockethub Examples
 
-A collection of interactive web examples demonstrating how to use Sockethub's various protocol platforms. These examples show how client applications can communicate with Sockethub using ActivityStreams messages to interact with different protocols like IRC, XMPP, RSS feeds, and more.
+A collection of interactive web examples demonstrating how to use Sockethub's various protocol platforms.
+These examples show how client applications can communicate with Sockethub using ActivityStreams messages
+to interact with different protocols like IRC, XMPP, RSS feeds, and more.
 
 ## What is Sockethub?
 
-Sockethub is a protocol gateway that translates web application messages into various protocols (IRC, XMPP, RSS, etc.) using ActivityStreams objects. These examples demonstrate the client-side interaction - sending ActivityStreams messages to Sockethub, which handles all the protocol-specific communication.
+Sockethub is a protocol gateway that translates web application messages into various protocols
+(IRC, XMPP, RSS, etc.) using ActivityStreams objects. These examples demonstrate the client-side
+interaction - sending ActivityStreams messages to Sockethub, which handles all the protocol-specific
+communication.
 
 ## Available Platform Examples
 
 ### Dummy Platform
+
 **Purpose**: Testing and learning ActivityStreams basics
+
 - Sends test messages to Sockethub's dummy platform
 - Demonstrates echo, fail, throw, and greet activities
 - Perfect for understanding ActivityStreams message structure
 
 ### Feeds Platform  
+
 **Purpose**: RSS/ATOM feed processing
+
 - Fetches and parses RSS/ATOM feeds through Sockethub
 - Converts feed entries to ActivityStreams objects
 
 ### IRC Platform
+
 **Purpose**: Internet Relay Chat communication
+
 - Connects to IRC servers through Sockethub's IRC platform
 - Supports joining channels and sending/receiving messages
 
 ### XMPP Platform
+
 **Purpose**: XMPP (Jabber) chat communication  
+
 - Connects to XMPP servers through Sockethub's XMPP platform
 - Supports joining chat rooms and messaging
 
 ### Metadata Platform
+
 **Purpose**: Website metadata extraction
+
 - Extracts metadata from web pages through Sockethub
 - Analyzes Open Graph, Twitter Cards, and other metadata
 
@@ -102,7 +117,8 @@ bun run dev
 bun run build
 ```
 
-The build output goes to the `build/` directory and is automatically copied to the main Sockethub server's static assets.
+The build output goes to the `build/` directory and is automatically copied to the main Sockethub
+server's static assets.
 
 ### Testing
 
@@ -119,26 +135,31 @@ bun run test:integration
 ### Connection Issues
 
 **Problem**: "Failed to connect to Sockethub"
+
 - **Solution**: Ensure Sockethub server is running on `localhost:10550`
 - **Check**: `curl http://localhost:10550/sockethub` should return server info
 
-**Problem**: "Platform not available" 
+**Problem**: "Platform not available"
+
 - **Solution**: Check that the platform is enabled in Sockethub configuration
 - **Check**: Server logs for platform initialization errors
 
 ### Platform-Specific Issues
 
-**IRC**: 
+**IRC**:
+
 - Verify server address and port are correct
 - Check if server requires registration/authentication
 - Some networks block connections from certain IPs
 
 **XMPP**:
+
 - Ensure XMPP account credentials are valid
 - Check if server allows external connections
 - Verify server supports the features being used
 
 **Feeds**:
+
 - Confirm feed URL is accessible and valid RSS/ATOM
 - Check for CORS issues with feed domain
 - Some feeds may require authentication

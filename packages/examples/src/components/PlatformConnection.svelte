@@ -1,22 +1,22 @@
 <script lang="ts">
-import SockethubButton from "./SockethubButton.svelte";
 import type { SockethubStateStore } from "$lib/types";
+import SockethubButton from "./SockethubButton.svelte";
 
 /**
  * Standardized connection button for Sockethub platforms.
  * Handles connection state display and provides consistent connect/disconnect UI.
- * 
+ *
  * The button text changes based on state:
  * - "Connect" (initial state)
  * - "Connecting" (during connection attempt)
  * - "Connected" (successfully connected)
- * 
+ *
  * @example
  * ```svelte
- * <PlatformConnection 
- *   {sockethubState} 
- *   {connecting} 
- *   onConnect={connectToIRC} 
+ * <PlatformConnection
+ *   {sockethubState}
+ *   {connecting}
+ *   onConnect={connectToIRC}
  * />
  * ```
  */
@@ -31,21 +31,26 @@ interface Props {
     disabled?: boolean;
 }
 
-let { sockethubState, connecting, onConnect, disabled = false }: Props = $props();
+let {
+    sockethubState,
+    connecting,
+    onConnect,
+    disabled = false,
+}: Props = $props();
 
 let isDisabled = $derived(
-    disabled || 
-    !$sockethubState.credentialsSet || 
-    $sockethubState.connected || 
-    connecting
+    disabled ||
+        !$sockethubState.credentialsSet ||
+        $sockethubState.connected ||
+        connecting,
 );
 
 let buttonText = $derived(
-    $sockethubState.connected 
-        ? "Connected" 
-        : connecting 
-            ? "Connecting" 
-            : "Connect"
+    $sockethubState.connected
+        ? "Connected"
+        : connecting
+          ? "Connecting"
+          : "Connect",
 );
 </script>
 

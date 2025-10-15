@@ -20,7 +20,7 @@ const actor = $derived({
 /**
  * Creates an ActivityStreams object for the feeds platform.
  * This is sent to Sockethub, which handles the actual RSS/ATOM feed processing.
- * 
+ *
  * @param type - The activity type (typically "fetch" for feeds)
  * @returns ActivityStreams object that tells Sockethub which feed to process
  */
@@ -37,7 +37,7 @@ function getASObj(type: string) {
 
 /**
  * Sends a fetch request to Sockethub's feeds platform.
- * 
+ *
  * This example app sends the request, then Sockethub will:
  * 1. Download the feed content from the URL
  * 2. Parse the RSS/ATOM format

@@ -5,7 +5,7 @@ import Logger from "./logs/Logger.svelte";
 /**
  * Base layout component for all Sockethub platform examples.
  * Provides consistent structure with title, description, content area, and logger.
- * 
+ *
  * @example
  * ```svelte
  * <BaseExample title="IRC Example" description="Connect to IRC servers">

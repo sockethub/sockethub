@@ -4,9 +4,9 @@ interface Props {
     class?: string;
 }
 
-let { 
+let {
     value = $bindable(),
-    class: customClass = "bg-white border border-solid border-gray-300 rounded"
+    class: customClass = "bg-white border border-solid border-gray-300 rounded",
 }: Props = $props();
 </script>
 

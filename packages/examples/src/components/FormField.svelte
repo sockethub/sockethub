@@ -2,28 +2,28 @@
 /**
  * Standardized form input field with consistent styling and labeling.
  * Supports all HTML input types and provides consistent spacing and accessibility.
- * 
+ *
  * @example
  * ```svelte
  * <!-- Text input -->
  * <FormField label="Server" id="server" bind:value={serverName} />
- * 
+ *
  * <!-- Number input with placeholder -->
- * <FormField 
- *   label="Port" 
- *   id="port" 
- *   type="number" 
+ * <FormField
+ *   label="Port"
+ *   id="port"
+ *   type="number"
  *   placeholder="6667"
- *   bind:value={portNumber} 
+ *   bind:value={portNumber}
  * />
- * 
+ *
  * <!-- URL input -->
- * <FormField 
- *   label="Feed URL" 
- *   id="url" 
+ * <FormField
+ *   label="Feed URL"
+ *   id="url"
  *   type="url"
  *   placeholder="https://example.com/feed.xml"
- *   bind:value={feedUrl} 
+ *   bind:value={feedUrl}
  * />
  * ```
  */
@@ -44,14 +44,14 @@ interface Props {
     class?: string;
 }
 
-let { 
-    label, 
-    id, 
-    type = "text", 
-    placeholder = "", 
+let {
+    label,
+    id,
+    type = "text",
+    placeholder = "",
     value = $bindable(),
     onInput,
-    class: customClass = ""
+    class: customClass = "",
 }: Props = $props();
 
 let inputClass = $derived(`border-4 ${customClass}`.trim());
