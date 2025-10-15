@@ -23,11 +23,11 @@ Sockethub is designed as a modular, distributed system with five major component
                                  │ Job Queue (Redis)
                                  │
         ┌────────────────────────┼────────────────────────┐
-        │                       │                        │
-┌───────▼───────┐    ┌──────────▼──────────┐    ┌────────▼────────┐
-│ Platform Inst │    │  Platform Instance  │    │ Platform Inst   │
-│    (IRC)      │    │      (XMPP)         │    │   (Feeds)       │
-└───────────────┘    └─────────────────────┘    └─────────────────┘
+        │                        │                        │
+┌───────▼───────┐     ┌──────────▼──────────┐    ┌────────▼────────┐
+│ Platform Inst │     │  Platform Instance  │    │ Platform Inst   │
+│    (IRC)      │     │      (XMPP)         │    │   (Feeds)       │
+└───────────────┘     └─────────────────────┘    └─────────────────┘
 ```
 
 ## Core Components
