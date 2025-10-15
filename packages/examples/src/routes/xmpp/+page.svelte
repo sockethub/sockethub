@@ -2,13 +2,12 @@
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
 import ActivityActor from "$components/ActivityActor.svelte";
+import BaseExample from "$components/BaseExample.svelte";
 import Credentials from "$components/Credentials.svelte";
-import Intro from "$components/Intro.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
 import IncomingMessage from "$components/chat/IncomingMessages.svelte";
 import Room from "$components/chat/Room.svelte";
 import SendMessage from "$components/chat/SendMessage.svelte";
-import Logger from "$components/logs/Logger.svelte";
 import { send } from "$lib/sockethub";
 import type { AnyActivityStream } from "$lib/sockethub";
 import type { CredentialName } from "$lib/sockethub";
@@ -57,42 +56,41 @@ async function connectXmpp(): Promise<void> {
 }
 </script>
 
-<Intro title="XMPP Platform Example">
-    <title>XMPP Example</title>
-    <p>Example for the XMPP platform</p>
-</Intro>
+<BaseExample 
+    title="XMPP Platform Example"
+    description="Example for the XMPP platform"
+>
 
-<ActivityActor {actor} {sockethubState} />
-<div class="w-full pb-4">
-    <label for="actor-id-input" class="pr-3">Actor ID</label>
-    <input
-        id="actor-id-input"
-        class=" bg-white border border-solid border-gray-300 rounded"
-        type="text"
-        bind:value={$actorIdStore}
-    />
-</div>
-
-<Credentials context="xmpp" {credentials} {actor} {sockethubState} />
-
-<div>
-    <div class="w-full text-right">
-        <SockethubButton
-            disabled={!$sockethubState.credentialsSet || $sockethubState.connected || connecting}
-            buttonAction={connectXmpp}
-            >{$sockethubState.connected
-                ? "Connected"
-                : connecting
-                  ? "Connecting"
-                  : "Connect"}</SockethubButton
-        >
+    <ActivityActor {actor} {sockethubState} />
+    <div class="w-full pb-4">
+        <label for="actor-id-input" class="pr-3">Actor ID</label>
+        <input
+            id="actor-id-input"
+            class=" bg-white border border-solid border-gray-300 rounded"
+            type="text"
+            bind:value={$actorIdStore}
+        />
     </div>
-</div>
 
-<Room {actor} {sockethubState} {room} context="xmpp" />
+    <Credentials context="xmpp" {credentials} {actor} {sockethubState} />
 
-<IncomingMessage />
+    <div>
+        <div class="w-full text-right">
+            <SockethubButton
+                disabled={!$sockethubState.credentialsSet || $sockethubState.connected || connecting}
+                buttonAction={connectXmpp}
+                >{$sockethubState.connected
+                    ? "Connected"
+                    : connecting
+                      ? "Connecting"
+                      : "Connect"}</SockethubButton
+            >
+        </div>
+    </div>
 
-<SendMessage context="xmpp" {actor} {sockethubState} {room} />
+    <Room {actor} {sockethubState} {room} context="xmpp" />
 
-<Logger />
+    <IncomingMessage />
+
+    <SendMessage context="xmpp" {actor} {sockethubState} {room} />
+</BaseExample>

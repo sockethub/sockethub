@@ -2,13 +2,12 @@
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
 import ActivityActor from "$components/ActivityActor.svelte";
+import BaseExample from "$components/BaseExample.svelte";
 import Credentials from "$components/Credentials.svelte";
-import Intro from "$components/Intro.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
 import IncomingMessage from "$components/chat/IncomingMessages.svelte";
 import Room from "$components/chat/Room.svelte";
 import SendMessage from "$components/chat/SendMessage.svelte";
-import Logger from "$components/logs/Logger.svelte";
 import type { AnyActivityStream, CredentialName } from "$lib/sockethub";
 import { send } from "$lib/sockethub";
 import { writable } from "svelte/store";
@@ -61,50 +60,48 @@ async function connectIrc(): Promise<void> {
 }
 </script>
 
-<Intro title="IRC Platform Example">
-    <title>IRC Example</title>
-    <p>Example for the IRC platform</p>
-</Intro>
-
-<div class="pb-4">
-    <label for="actor-id-input" class="pr-3">Actor ID</label>
-    <input
-        id="actor-id-input"
-        class=" bg-white border border-solid border-gray-300 rounded"
-        type="text"
-        bind:value={$actorIdStore}
-    />
-</div>
-
-<ActivityActor {actor} {sockethubState} />
-<Credentials context="irc" {credentials} {actor} {sockethubState} />
-
-<div>
-    <div class="w-full p-2">
-        <label for="server" class="inline-block text-gray-900 font-bold w-32">IRC Server</label>
-        <input id="server" bind:value={server} class="border-4" />
+<BaseExample 
+    title="IRC Platform Example"
+    description="Example for the IRC platform"
+>
+    <div class="pb-4">
+        <label for="actor-id-input" class="pr-3">Actor ID</label>
+        <input
+            id="actor-id-input"
+            class=" bg-white border border-solid border-gray-300 rounded"
+            type="text"
+            bind:value={$actorIdStore}
+        />
     </div>
-    <div class="w-full p-2">
-        <label for="port" class="inline-block text-gray-900 font-bold w-32">Port</label>
-        <input id="port" bind:value={port} class="border-4" />
+
+    <ActivityActor {actor} {sockethubState} />
+    <Credentials context="irc" {credentials} {actor} {sockethubState} />
+
+    <div>
+        <div class="w-full p-2">
+            <label for="server" class="inline-block text-gray-900 font-bold w-32">IRC Server</label>
+            <input id="server" bind:value={server} class="border-4" />
+        </div>
+        <div class="w-full p-2">
+            <label for="port" class="inline-block text-gray-900 font-bold w-32">Port</label>
+            <input id="port" bind:value={port} class="border-4" />
+        </div>
+        <div class="w-full text-right">
+            <SockethubButton
+                disabled={!$sockethubState.credentialsSet || $sockethubState.connected || connecting}
+                buttonAction={connectIrc}
+                >{$sockethubState.connected
+                    ? "Connected"
+                    : connecting
+                      ? "Connecting"
+                      : "Connect"}</SockethubButton
+            >
+        </div>
     </div>
-    <div class="w-full text-right">
-        <SockethubButton
-            disabled={!$sockethubState.credentialsSet || $sockethubState.connected || connecting}
-            buttonAction={connectIrc}
-            >{$sockethubState.connected
-                ? "Connected"
-                : connecting
-                  ? "Connecting"
-                  : "Connect"}</SockethubButton
-        >
-    </div>
-</div>
 
-<Room {actor} {sockethubState} {room} context="irc" />
+    <Room {actor} {sockethubState} {room} context="irc" />
 
-<IncomingMessage />
+    <IncomingMessage />
 
-<SendMessage context="irc" {actor} {sockethubState} {room} />
-
-<Logger />
+    <SendMessage context="irc" {actor} {sockethubState} {room} />
+</BaseExample>
