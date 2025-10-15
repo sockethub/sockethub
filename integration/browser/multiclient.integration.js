@@ -22,6 +22,8 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
 
     // Helper function to create a client with unique credentials
     function createClient(userId) {
+        console.log(`Creating client ${userId}`);
+
         const actorId = `user${userId}@prosody/SockethubTest${userId}`;
         const actorObject = {
             id: actorId,
@@ -31,14 +33,34 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
 
         const clientSetup = createSockethubClient(`user${userId}`);
 
+        // Log Socket.IO connection events for debugging
+        clientSetup.socket.on("connect", () => {
+            console.log(
+                `[${userId}] Socket.IO connected with ID: ${clientSetup.socket.id}`,
+            );
+        });
+
+        clientSetup.socket.on("disconnect", (reason) => {
+            console.log(`[${userId}] Socket.IO disconnected: ${reason}`);
+        });
+
+        clientSetup.socket.on("connect_error", (error) => {
+            console.error(`[${userId}] Socket.IO connection error:`, error);
+        });
+
         // Track all incoming messages for verification
         clientSetup.client.socket.on("message", (msg) => {
+            console.log(`[${userId}] Received message:`, msg);
             messageLog.push({
                 clientId: userId,
                 timestamp: Date.now(),
                 message: msg,
             });
         });
+
+        console.log(
+            `[${userId}] Client created with Socket.IO connected: ${clientSetup.socket.connected}`,
+        );
 
         return {
             id: userId,
@@ -51,10 +73,24 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
     }
 
     before(() => {
+        console.log(
+            `Initializing ${CLIENT_COUNT} clients for multi-client XMPP test`,
+        );
+
         // Create all clients
         for (let i = 1; i <= CLIENT_COUNT; i++) {
             clients.push(createClient(i));
         }
+
+        console.log(`Created ${clients.length} clients successfully`);
+
+        // Log initial Socket.IO connection status
+        const connectedClients = clients.filter(
+            (c) => c.socket.connected,
+        ).length;
+        console.log(
+            `Initial Socket.IO connections: ${connectedClients}/${CLIENT_COUNT}`,
+        );
     });
 
     after(() => {
@@ -72,6 +108,10 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
 
     describe("Concurrent Client Connections", () => {
         it("all clients can set credentials simultaneously", async () => {
+            console.log(
+                `Setting credentials for ${CLIENT_COUNT} clients simultaneously`,
+            );
+
             const credentialPromises = clients.map((client) =>
                 setXMPPCredentials(
                     client.socket,
@@ -81,12 +121,26 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                 ),
             );
 
-            await Promise.all(credentialPromises);
+            try {
+                await Promise.all(credentialPromises);
+                console.log(`All ${CLIENT_COUNT} credentials set successfully`);
+            } catch (error) {
+                console.error("Credential setting failed:", error.message);
+                throw error;
+            }
         });
 
         it("all clients can connect simultaneously", async () => {
+            console.log(
+                `Starting simultaneous connection test with ${CLIENT_COUNT} clients`,
+            );
+
             const connectPromises = clients.map((client) => {
                 return new Promise((resolve, reject) => {
+                    console.log(
+                        `[${client.id}] Creating activity object and starting connection`,
+                    );
+
                     // Create activity object first
                     client.client.ActivityStreams.Object.create(
                         client.actorObject,
@@ -94,6 +148,9 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
 
                     connectXMPP(client.socket, client.actorId)
                         .then((msg) => {
+                            console.log(
+                                `[${client.id}] Connection completed successfully`,
+                            );
                             client.connected = true;
                             connectionLog.push({
                                 clientId: client.id,
@@ -102,17 +159,50 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                             });
                             resolve(msg);
                         })
-                        .catch(reject);
+                        .catch((error) => {
+                            console.error(
+                                `[${client.id}] Connection failed:`,
+                                error.message,
+                            );
+                            reject(error);
+                        });
                 });
             });
 
-            const results = await Promise.all(connectPromises);
-
-            // Verify all clients connected successfully
-            expect(results).to.have.length(CLIENT_COUNT);
-            expect(clients.filter((c) => c.connected)).to.have.length(
-                CLIENT_COUNT,
+            console.log(
+                `Waiting for ${CLIENT_COUNT} concurrent connections to complete...`,
             );
+
+            try {
+                const results = await Promise.all(connectPromises);
+                console.log(
+                    `All ${results.length} connections completed successfully`,
+                );
+
+                // Verify all clients connected successfully
+                expect(results).to.have.length(CLIENT_COUNT);
+                expect(clients.filter((c) => c.connected)).to.have.length(
+                    CLIENT_COUNT,
+                );
+            } catch (error) {
+                // Log which clients succeeded and which failed
+                const connected = clients.filter((c) => c.connected);
+                const failed = clients.filter((c) => !c.connected);
+
+                console.error(
+                    `Connection test failed. Connected: ${connected.length}, Failed: ${failed.length}`,
+                );
+                console.error(
+                    "Connected clients:",
+                    connected.map((c) => c.id),
+                );
+                console.error(
+                    "Failed clients:",
+                    failed.map((c) => c.id),
+                );
+
+                throw error;
+            }
         });
 
         it("all clients can join the test room simultaneously", async () => {
