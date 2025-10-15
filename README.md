@@ -128,6 +128,7 @@ section on environment variables.*
 * [@sockethub/platform-dummy](packages/platform-dummy)
 * [@sockethub/platform-feeds](packages/platform-feeds)
 * [@sockethub/platform-irc](packages/platform-irc)
+* [@sockethub/platform-metadata](packages/platform-metadata)
 * [@sockethub/platform-xmpp](packages/platform-xmpp)
 * [@sockethub/schemas](packages/schemas)
 * [@sockethub/server](packages/server)
