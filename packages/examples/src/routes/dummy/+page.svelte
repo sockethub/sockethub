@@ -25,12 +25,16 @@ let content = $state("");
  */
 function getASObj(type: string): AnyActivityStream {
     return {
+        // Platform context - tells Sockethub which platform to route this to
         context: "dummy",
+        // Activity type - what action to perform (echo, fail, throw, greet)
         type: type,
+        // Actor - who is performing the action
         actor: {
             type: "person",
             id: actorId,
         },
+        // Object - what the action is performed on
         object: {
             type: "message",
             content: content,
@@ -80,7 +84,7 @@ async function sendGreet(): Promise<void> {
             label="Message Content" 
             id="objectContent" 
             bind:value={content}
-            placeholder="Text to send as content"
+            placeholder="Hello from Sockethub"
         />
         <div class="w-full p-2">
             <label for="sendEcho" class="inline-block text-gray-900 font-bold w-32">Object Type</label>

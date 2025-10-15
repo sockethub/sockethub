@@ -26,8 +26,11 @@ const actor = $derived({
  */
 function getASObj(type: string) {
     return {
+        // Platform context - routes to Sockethub's feeds platform
         context: "feeds",
+        // Activity type - "fetch" tells the platform to download and parse the feed
         type: type,
+        // Actor - the feed URL to fetch (represented as a "website" actor)
         actor: actor,
     };
 }
@@ -50,7 +53,7 @@ async function sendFetch(): Promise<void> {
     title="Feeds Platform Example"
     description="The feeds platform takes an RSS/ATOM feed URL, fetches and parses it, and returns an array of Activity Objects for each entry."
 >
-    <FormField label="Feed URL" id="URL" bind:value={url} />
+    <FormField label="Feed URL" id="URL" bind:value={url} placeholder="https://example.com/feed.xml" />
 
     <ActivityActor {actor} {sockethubState} />
 

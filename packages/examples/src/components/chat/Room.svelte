@@ -21,9 +21,13 @@ let joining = $state(false);
 async function joinRoom(): Promise<void> {
     joining = true;
     return await send({
+        // Platform context - routes to the appropriate chat platform (irc, xmpp)
         context: context,
+        // Activity type - "join" means join a chat room/channel
         type: "join",
+        // Actor - who is joining (the connected user)
         actor: actor.id,
+        // Target - what room/channel to join
         target: {
             id: room,
             name: room,

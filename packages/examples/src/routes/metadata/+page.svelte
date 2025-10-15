@@ -1,8 +1,8 @@
 <script lang="ts">
 import ActivityActor from "$components/ActivityActor.svelte";
-import Intro from "$components/Intro.svelte";
+import BaseExample from "$components/BaseExample.svelte";
+import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
-import Logger, { addObject } from "$components/logs/Logger.svelte";
 import { send } from "$lib/sockethub";
 import { writable } from "svelte/store";
 
@@ -17,8 +17,11 @@ let actor = $derived({
 
 function getASObj(type: string) {
     return {
+        // Platform context - routes to Sockethub's metadata platform
         context: "metadata",
+        // Activity type - "fetch" tells the platform to extract metadata
         type: type,
+        // Actor - the website URL to analyze (represented as a "website" actor)
         actor: actor,
     };
 }
@@ -28,24 +31,15 @@ async function sendFetch(): Promise<void> {
 }
 </script>
 
-<Intro title="Feeds Platform Example">
-    <title>Metadata Example</title>
-    <p>
-        The metadata platform takes a URL, fetches and parses it for any metadata.
-    </p>
-</Intro>
+<BaseExample 
+    title="Metadata Platform Example"
+    description="Sockethub's metadata platform takes a URL, fetches and parses it for any metadata."
+>
+    <FormField label="Website URL" id="URL" bind:value={url} placeholder="https://example.com" />
 
-<ActivityActor {actor} {sockethubState} />
+    <ActivityActor {actor} {sockethubState} />
 
-<div>
-    <div class="w-full p-2">
-        <label for="URL" class="inline-block text-gray-900 font-bold w-32">Feed URL</label>
-        <input id="URL" bind:value={url} class="border-4" />
-    </div>
     <div class="w-full text-right">
-        <SockethubButton buttonAction={sendFetch}>Fetch</SockethubButton
-        >
+        <SockethubButton buttonAction={sendFetch}>Fetch</SockethubButton>
     </div>
-</div>
-
-<Logger />
+</BaseExample>

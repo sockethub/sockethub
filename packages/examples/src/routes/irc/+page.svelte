@@ -59,9 +59,13 @@ let credentials = $derived({
 async function connectIrc(): Promise<void> {
     connecting = true;
     await send({
+        // Platform context - routes to Sockethub's IRC platform
         context: "irc",
+        // Activity type - "connect" establishes IRC connection
         type: "connect",
+        // Actor - the IRC nick/identity making the connection
         actor: $actorIdStore,
+        // Note: credentials (server, port, etc.) are sent separately via the Credentials component
     } as AnyActivityStream)
         .catch(() => {
             $sockethubState.connected = false;
@@ -84,8 +88,8 @@ async function connectIrc(): Promise<void> {
     <Credentials context="irc" {credentials} {actor} {sockethubState} />
 
     <div>
-        <FormField label="IRC Server" id="server" bind:value={server} />
-        <FormField label="Port" id="port" type="number" bind:value={port} />
+        <FormField label="IRC Server" id="server" bind:value={server} placeholder="irc.example.com" />
+        <FormField label="Port" id="port" type="number" bind:value={port} placeholder="6667" />
         <PlatformConnection 
             {sockethubState} 
             {connecting} 
