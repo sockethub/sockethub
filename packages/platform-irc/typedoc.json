@@ -1,0 +1,11 @@
+{
+  "entryPoints": ["./src/index.ts"],
+  "out": "./docs",
+  "readme": "none",
+  "includeVersion": true,
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/node_modules/**"],
+  "skipErrorChecking": true,
+  "compilerOptions": {
+    "skipLibCheck": true
+  }
+}

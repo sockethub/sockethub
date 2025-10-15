@@ -32,7 +32,7 @@
   "devDependencies": {
     "@sockethub/schemas": "workspace:*",
     "@types/bun": "latest",
-    "jsdoc-to-markdown": "8.0.0"
+    "typedoc": "^0.28.14"
   },
   "peerDependencies": {
     "@sockethub/server": "workspace:*"
@@ -43,6 +43,6 @@
     }
   },
   "scripts": {
-    "doc": "jsdoc2md --no-gfm --heading-depth 1 dist/index.ts  > API.md"
+    "doc": "typedoc --options typedoc.json"
   }
 }

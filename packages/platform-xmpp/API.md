@@ -48,7 +48,10 @@ Valid presence values are &quot;away&quot;, &quot;chat&quot;, &quot;dnd&quot;, &
 <dd><p>Confirm a friend request</p>
 </dd>
 <dt><a href="#query">query(job, done)</a></dt>
-<dd><p>Indicate an intent to query something (ie. get a list of users in a room).</p>
+<dd><p>Indicate an intent to query something (i.e. get a list of users in a room).</p>
+</dd>
+<dt><a href="#disconnect">disconnect(job, done)</a></dt>
+<dd><p>Disconnect XMPP client</p>
 </dd>
 <dt><a href="#cleanup">cleanup(done)</a></dt>
 <dd><p>Called when it&#39;s time to close any connections or clean data before being wiped
@@ -423,7 +426,7 @@ Confirm a friend request
 <a name="query"></a>
 
 # query(job, done)
-Indicate an intent to query something (ie. get a list of users in a room).
+Indicate an intent to query something (i.e. get a list of users in a room).
 
 **Kind**: global function  
 <table>
@@ -481,6 +484,38 @@ Indicate an intent to query something (ie. get a list of users in a room).
        'Smoochie',
        'neo'
      ]
+   }
+ }
+```
+<a name="disconnect"></a>
+
+# disconnect(job, done)
+Disconnect XMPP client
+
+**Kind**: global function  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
+</td>
+    </tr><tr>
+    <td>done</td><td></td><td></td>
+    </tr>  </tbody>
+</table>
+
+**Example**  
+```js
+{
+   context: 'xmpp',
+   type: 'disconnect',
+   actor: {
+     id: 'slvrbckt@jabber.net/Home',
+     type: 'person'
    }
  }
 ```
