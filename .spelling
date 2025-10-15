@@ -63,3 +63,23 @@ index.ts
 Metadata
 metadata
 IPs
+runtime
+socket.io
+BullMQ
+JobQueue
+JobWorker
+CredentialsStore
+aes-256
+plaintext
+JSDoc
+backoff
+pipelining
+RDF-based
+chatbots
+favicon
+MUCs
+Middleware
+config
+SENTRY_DSN
+ - ./README.md
+v1.2
