@@ -57,6 +57,19 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
     });
 }
 
+/**
+ * Redis-backed job queue for managing ActivityStreams message processing.
+ * 
+ * Creates isolated queues per platform instance and session, providing reliable
+ * message delivery and processing coordination between Sockethub server and 
+ * platform workers.
+ * 
+ * @example
+ * ```typescript
+ * const queue = new JobQueue('irc-platform', 'session123', secret, redisConfig);
+ * await queue.add('socket-id', activityStreamMessage);
+ * ```
+ */
 export class JobQueue extends JobBase {
     readonly uid: string;
     protected queue: Queue;
@@ -66,6 +79,14 @@ export class JobQueue extends JobBase {
     private initialized = false;
     protected redisConnection;
 
+    /**
+     * Creates a new JobQueue instance.
+     * 
+     * @param instanceId - Unique identifier for the platform instance
+     * @param sessionId - Client session identifier for queue isolation
+     * @param secret - 32-character encryption secret for message security
+     * @param redisConfig - Redis connection configuration
+     */
     constructor(
         instanceId: string,
         sessionId: string,
@@ -108,6 +129,14 @@ export class JobQueue extends JobBase {
         this.debug("initialized");
     }
 
+    /**
+     * Adds an ActivityStreams message to the job queue for processing.
+     * 
+     * @param socketId - Socket.IO connection identifier for response routing
+     * @param msg - ActivityStreams message to be processed by platform worker
+     * @returns Promise resolving to encrypted job data
+     * @throws Error if queue is closed or Redis connection fails
+     */
     async add(
         socketId: string,
         msg: ActivityStream,
@@ -125,16 +154,25 @@ export class JobQueue extends JobBase {
         return job;
     }
 
+    /**
+     * Pauses job processing. New jobs can still be added but won't be processed.
+     */
     async pause() {
         await this.queue.pause();
         this.debug("paused");
     }
 
+    /**
+     * Resumes job processing after being paused.
+     */
     async resume() {
         await this.queue.resume();
         this.debug("resumed");
     }
 
+    /**
+     * Gracefully shuts down the queue, cleaning up all resources and connections.
+     */
     async shutdown() {
         this.removeAllListeners();
         this.queue.removeAllListeners();

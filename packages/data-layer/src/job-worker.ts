@@ -4,6 +4,22 @@ import debug, { type Debugger } from "debug";
 import { JobBase, createIORedisConnection } from "./job-base.js";
 import type { JobEncrypted, JobHandler, RedisConfig } from "./types.js";
 
+/**
+ * Worker for processing jobs from a Redis queue within platform child processes.
+ * 
+ * Connects to the same queue as its corresponding JobQueue instance and processes
+ * jobs using a platform-specific handler function. Provides automatic decryption
+ * of job data and error handling.
+ * 
+ * @example
+ * ```typescript
+ * const worker = new JobWorker('irc-platform', 'session123', secret, redisConfig);
+ * worker.onJob(async (job) => {
+ *   // Process the decrypted ActivityStreams message
+ *   return await processMessage(job.msg);
+ * });
+ * ```
+ */
 export class JobWorker extends JobBase {
     readonly uid: string;
     protected worker: Worker;
@@ -14,6 +30,14 @@ export class JobWorker extends JobBase {
     private readonly queueId: string;
     private initialized = false;
 
+    /**
+     * Creates a new JobWorker instance.
+     * 
+     * @param instanceId - Must match the instanceId of the corresponding JobQueue
+     * @param sessionId - Must match the sessionId of the corresponding JobQueue  
+     * @param secret - 32-character encryption secret, must match JobQueue secret
+     * @param redisConfig - Redis connection configuration
+     */
     constructor(
         instanceId: string,
         sessionId: string,
@@ -39,11 +63,19 @@ export class JobWorker extends JobBase {
         this.debug("initialized");
     }
 
+    /**
+     * Registers a job handler function and starts processing jobs from the queue.
+     * 
+     * @param handler - Function that processes decrypted job data and returns results
+     */
     onJob(handler: JobHandler): void {
         this.handler = handler;
         this.init();
     }
 
+    /**
+     * Gracefully shuts down the worker, stopping job processing and cleaning up connections.
+     */
     async shutdown() {
         await this.worker.pause();
         this.removeAllListeners();
