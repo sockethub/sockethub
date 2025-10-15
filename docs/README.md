@@ -21,7 +21,6 @@ about using, deploying, and extending Sockethub.
 
 * **[Creating Platforms](platform-development/creating-platforms.md)** - Build custom protocol platforms
 * **[Platform API](platform-development/platform-api.md)** - Platform development interface
-* **[Testing](platform-development/testing.md)** - Testing your platforms
 
 ### Architecture & Deployment
 
