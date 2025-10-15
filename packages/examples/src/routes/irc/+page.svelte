@@ -44,6 +44,18 @@ let credentials = $derived({
     secure: true,
 });
 
+/**
+ * Sends a connect request to Sockethub's IRC platform.
+ * 
+ * This example app:
+ * 1. Sets the connecting state to show "Connecting" button text
+ * 2. Sends a connect ActivityStreams message to Sockethub's IRC platform
+ * 3. Updates connection state based on Sockethub's response
+ * 4. Resets the connecting state
+ * 
+ * Sockethub's IRC platform will handle the actual IRC protocol connection
+ * using the credentials (server, port, nick, secure) that were previously sent.
+ */
 async function connectIrc(): Promise<void> {
     connecting = true;
     await send({

@@ -2,10 +2,32 @@
 import SockethubButton from "./SockethubButton.svelte";
 import type { SockethubStateStore } from "$lib/types";
 
+/**
+ * Standardized connection button for Sockethub platforms.
+ * Handles connection state display and provides consistent connect/disconnect UI.
+ * 
+ * The button text changes based on state:
+ * - "Connect" (initial state)
+ * - "Connecting" (during connection attempt)
+ * - "Connected" (successfully connected)
+ * 
+ * @example
+ * ```svelte
+ * <PlatformConnection 
+ *   {sockethubState} 
+ *   {connecting} 
+ *   onConnect={connectToIRC} 
+ * />
+ * ```
+ */
 interface Props {
+    /** Writable store containing platform connection state */
     sockethubState: SockethubStateStore;
+    /** True when a connection attempt is in progress */
     connecting: boolean;
+    /** Function to call when user clicks connect button */
     onConnect: () => void | Promise<void>;
+    /** Optional additional disabled condition */
     disabled?: boolean;
 }
 

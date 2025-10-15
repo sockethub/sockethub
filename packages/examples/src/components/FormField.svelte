@@ -1,11 +1,46 @@
 <script lang="ts">
+/**
+ * Standardized form input field with consistent styling and labeling.
+ * Supports all HTML input types and provides consistent spacing and accessibility.
+ * 
+ * @example
+ * ```svelte
+ * <!-- Text input -->
+ * <FormField label="Server" id="server" bind:value={serverName} />
+ * 
+ * <!-- Number input with placeholder -->
+ * <FormField 
+ *   label="Port" 
+ *   id="port" 
+ *   type="number" 
+ *   placeholder="6667"
+ *   bind:value={portNumber} 
+ * />
+ * 
+ * <!-- URL input -->
+ * <FormField 
+ *   label="Feed URL" 
+ *   id="url" 
+ *   type="url"
+ *   placeholder="https://example.com/feed.xml"
+ *   bind:value={feedUrl} 
+ * />
+ * ```
+ */
 interface Props {
+    /** Label text displayed next to the input */
     label: string;
+    /** Unique ID for the input element (required for accessibility) */
     id: string;
+    /** HTML input type (text, number, url, email, etc.) */
     type?: string;
+    /** Placeholder text shown when input is empty */
     placeholder?: string;
+    /** Current value of the input (bindable) */
     value: string | number;
+    /** Optional callback fired when input value changes */
     onInput?: (value: string | number) => void;
+    /** Additional CSS classes to apply to the input */
     class?: string;
 }
 

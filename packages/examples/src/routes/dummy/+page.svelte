@@ -16,6 +16,13 @@ const sockethubState: SockethubStateStore = writable({
 
 let content = $state("");
 
+/**
+ * Creates an ActivityStreams object for Sockethub's dummy platform.
+ * Sockethub's dummy platform is used for testing basic functionality.
+ * 
+ * @param type - The activity type (echo, fail, throw, greet)
+ * @returns ActivityStreams object ready to send to Sockethub's dummy platform
+ */
 function getASObj(type: string): AnyActivityStream {
     return {
         context: "dummy",
@@ -31,17 +38,34 @@ function getASObj(type: string): AnyActivityStream {
     };
 }
 
+/**
+ * Sends an echo request to Sockethub's dummy platform.
+ * Sockethub will respond with the same message content.
+ */
 async function sendEcho(): Promise<void> {
     send(getASObj("echo"));
 }
 
+/**
+ * Sends a fail request to Sockethub's dummy platform.
+ * Sockethub will respond with an error message for testing error handling.
+ */
 async function sendFail(): Promise<void> {
     send(getASObj("fail"));
 }
 
+/**
+ * Sends a throw request to Sockethub's dummy platform.
+ * Sockethub will throw an exception for testing exception handling.
+ */
 async function sendThrow(): Promise<void> {
     send(getASObj("throw"));
 }
+
+/**
+ * Sends a greet request to Sockethub's dummy platform.
+ * Sockethub will respond with a greeting message.
+ */
 async function sendGreet(): Promise<void> {
     send(getASObj("greet"));
 }
