@@ -23,9 +23,11 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
             name: `Test User ${userId}`,
         };
 
-        const socket = io(`http://localhost:${SH_PORT}/`, { path: "/sockethub" });
+        const socket = io(`http://localhost:${SH_PORT}/`, {
+            path: "/sockethub",
+        });
         const sc = new SockethubClient(socket);
-        
+
         // Track all incoming messages for verification
         sc.socket.on("message", (msg) => {
             messageLog.push({
@@ -54,7 +56,11 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                 if (condition()) {
                     resolve();
                 } else if (Date.now() - startTime > timeout) {
-                    reject(new Error(`Timeout waiting for condition after ${timeout}ms`));
+                    reject(
+                        new Error(
+                            `Timeout waiting for condition after ${timeout}ms`,
+                        ),
+                    );
                 } else {
                     setTimeout(check, interval);
                 }
@@ -72,11 +78,11 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
 
     after(() => {
         // Cleanup all clients
-        clients.forEach(client => {
+        for (const client of clients) {
             if (client.socket.connected) {
                 client.socket.disconnect();
             }
-        });
+        }
         clients = [];
     });
 
@@ -87,7 +93,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
 
     describe("Concurrent Client Connections", () => {
         it("all clients can set credentials simultaneously", async () => {
-            const credentialPromises = clients.map(client => {
+            const credentialPromises = clients.map((client) => {
                 return new Promise((resolve, reject) => {
                     client.socket.emit(
                         "credentials",
@@ -107,11 +113,15 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                         },
                         (response) => {
                             if (response?.error) {
-                                reject(new Error(`Client ${client.id} credentials failed: ${response.error}`));
+                                reject(
+                                    new Error(
+                                        `Client ${client.id} credentials failed: ${response.error}`,
+                                    ),
+                                );
                             } else {
                                 resolve();
                             }
-                        }
+                        },
                     );
                 });
             });
@@ -120,10 +130,12 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
         });
 
         it("all clients can connect simultaneously", async () => {
-            const connectPromises = clients.map(client => {
+            const connectPromises = clients.map((client) => {
                 return new Promise((resolve, reject) => {
                     // Create activity object first
-                    client.client.ActivityStreams.Object.create(client.actorObject);
+                    client.client.ActivityStreams.Object.create(
+                        client.actorObject,
+                    );
 
                     client.socket.emit(
                         "message",
@@ -134,30 +146,36 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                         },
                         (msg) => {
                             if (msg?.error) {
-                                reject(new Error(`Client ${client.id} connection failed: ${msg.error}`));
+                                reject(
+                                    new Error(
+                                        `Client ${client.id} connection failed: ${msg.error}`,
+                                    ),
+                                );
                             } else {
                                 client.connected = true;
                                 connectionLog.push({
                                     clientId: client.id,
                                     timestamp: Date.now(),
-                                    action: "connected"
+                                    action: "connected",
                                 });
                                 resolve(msg);
                             }
-                        }
+                        },
                     );
                 });
             });
 
             const results = await Promise.all(connectPromises);
-            
+
             // Verify all clients connected successfully
             expect(results).to.have.length(CLIENT_COUNT);
-            expect(clients.filter(c => c.connected)).to.have.length(CLIENT_COUNT);
+            expect(clients.filter((c) => c.connected)).to.have.length(
+                CLIENT_COUNT,
+            );
         });
 
         it("all clients can join the test room simultaneously", async () => {
-            const joinPromises = clients.map(client => {
+            const joinPromises = clients.map((client) => {
                 return new Promise((resolve, reject) => {
                     client.socket.emit(
                         "message",
@@ -172,26 +190,32 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                         },
                         (msg) => {
                             if (msg?.error) {
-                                reject(new Error(`Client ${client.id} join failed: ${msg.error}`));
+                                reject(
+                                    new Error(
+                                        `Client ${client.id} join failed: ${msg.error}`,
+                                    ),
+                                );
                             } else {
                                 client.joinedRoom = true;
                                 connectionLog.push({
                                     clientId: client.id,
                                     timestamp: Date.now(),
-                                    action: "joined_room"
+                                    action: "joined_room",
                                 });
                                 resolve(msg);
                             }
-                        }
+                        },
                     );
                 });
             });
 
             const results = await Promise.all(joinPromises);
-            
+
             // Verify all clients joined successfully
             expect(results).to.have.length(CLIENT_COUNT);
-            expect(clients.filter(c => c.joinedRoom)).to.have.length(CLIENT_COUNT);
+            expect(clients.filter((c) => c.joinedRoom)).to.have.length(
+                CLIENT_COUNT,
+            );
         });
     });
 
@@ -199,7 +223,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
         it("message from client 1 is received by all other clients", async () => {
             const testMessage = `Test message from client 1 at ${Date.now()}`;
             const sendingClient = clients[0];
-            
+
             // Clear message log
             messageLog.length = 0;
 
@@ -226,24 +250,28 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                         } else {
                             resolve(msg);
                         }
-                    }
+                    },
                 );
             });
 
             // Wait for messages to propagate to other clients
             await waitFor(
-                () => messageLog.filter(log => 
-                    log.message?.object?.content === testMessage &&
-                    log.message?.type === "message"
-                ).length >= CLIENT_COUNT - 1,
-                10000
+                () =>
+                    messageLog.filter(
+                        (log) =>
+                            log.message?.object?.content === testMessage &&
+                            log.message?.type === "message",
+                    ).length >=
+                    CLIENT_COUNT - 1,
+                10000,
             );
 
             // Verify message was received by other clients
-            const receivedMessages = messageLog.filter(log => 
-                log.message?.object?.content === testMessage &&
-                log.message?.type === "message" &&
-                log.clientId !== sendingClient.id
+            const receivedMessages = messageLog.filter(
+                (log) =>
+                    log.message?.object?.content === testMessage &&
+                    log.message?.type === "message" &&
+                    log.clientId !== sendingClient.id,
             );
 
             expect(receivedMessages).to.have.length.at.least(CLIENT_COUNT - 1);
@@ -254,62 +282,69 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
             messageLog.length = 0;
 
             // Each client sends a unique message rapidly
-            const sendPromises = clients.slice(0, 5).map(async (client, index) => {
-                const message = `Rapid message ${index} from client ${client.id} at ${Date.now()}`;
-                testMessages.push(message);
+            const sendPromises = clients
+                .slice(0, 5)
+                .map(async (client, index) => {
+                    const message = `Rapid message ${index} from client ${client.id} at ${Date.now()}`;
+                    testMessages.push(message);
 
-                return new Promise((resolve, reject) => {
-                    client.socket.emit(
-                        "message",
-                        {
-                            type: "send",
-                            actor: client.actorId,
-                            context: "xmpp",
-                            object: {
-                                type: "message",
-                                content: message,
+                    return new Promise((resolve, reject) => {
+                        client.socket.emit(
+                            "message",
+                            {
+                                type: "send",
+                                actor: client.actorId,
+                                context: "xmpp",
+                                object: {
+                                    type: "message",
+                                    content: message,
+                                },
+                                target: {
+                                    type: "room",
+                                    id: TEST_ROOM,
+                                },
                             },
-                            target: {
-                                type: "room",
-                                id: TEST_ROOM,
+                            (msg) => {
+                                if (msg?.error) {
+                                    reject(
+                                        new Error(`Send failed: ${msg.error}`),
+                                    );
+                                } else {
+                                    resolve(msg);
+                                }
                             },
-                        },
-                        (msg) => {
-                            if (msg?.error) {
-                                reject(new Error(`Send failed: ${msg.error}`));
-                            } else {
-                                resolve(msg);
-                            }
-                        }
-                    );
+                        );
+                    });
                 });
-            });
 
             await Promise.all(sendPromises);
 
             // Wait for all messages to propagate
-            await waitFor(
-                () => {
-                    const receivedCount = testMessages.reduce((count, testMsg) => {
-                        const received = messageLog.filter(log => 
+            await waitFor(() => {
+                const receivedCount = testMessages.reduce((count, testMsg) => {
+                    const received = messageLog.filter(
+                        (log) =>
                             log.message?.object?.content === testMsg &&
-                            log.message?.type === "message"
-                        ).length;
-                        return count + received;
-                    }, 0);
-                    return receivedCount >= testMessages.length * (CLIENT_COUNT - 1);
-                },
-                15000
-            );
+                            log.message?.type === "message",
+                    ).length;
+                    return count + received;
+                }, 0);
+                return (
+                    receivedCount >= testMessages.length * (CLIENT_COUNT - 1)
+                );
+            }, 15000);
 
             // Verify all messages were received by all other clients
-            testMessages.forEach(testMsg => {
-                const receivedMessages = messageLog.filter(log => 
-                    log.message?.object?.content === testMsg &&
-                    log.message?.type === "message"
+            for (const testMsg of testMessages) {
+                const receivedMessages = messageLog.filter(
+                    (log) =>
+                        log.message?.object?.content === testMsg &&
+                        log.message?.type === "message",
                 );
-                expect(receivedMessages).to.have.length.at.least(CLIENT_COUNT - 1);
-            });
+                expect(receivedMessages).to.have.length.at.least(
+                    CLIENT_COUNT - 1,
+                );
+            }
         });
     });
 
@@ -317,18 +352,18 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
         it("handles client disconnection and reconnection gracefully", async () => {
             const testClient = clients[0];
             const testMessage = `Message after reconnection ${Date.now()}`;
-            
+
             // Disconnect client
             testClient.socket.disconnect();
             testClient.connected = false;
             testClient.joinedRoom = false;
 
             // Wait a bit
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 1000));
 
             // Reconnect and rejoin
             testClient.socket.connect();
-            
+
             // Wait for connection
             await waitFor(() => testClient.socket.connected, 5000);
 
@@ -352,11 +387,15 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                     },
                     (response) => {
                         if (response?.error) {
-                            reject(new Error(`Credentials failed: ${response.error}`));
+                            reject(
+                                new Error(
+                                    `Credentials failed: ${response.error}`,
+                                ),
+                            );
                         } else {
                             resolve();
                         }
-                    }
+                    },
                 );
             });
 
@@ -375,7 +414,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                             testClient.connected = true;
                             resolve(msg);
                         }
-                    }
+                    },
                 );
             });
 
@@ -398,7 +437,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                             testClient.joinedRoom = true;
                             resolve(msg);
                         }
-                    }
+                    },
                 );
             });
 
@@ -423,28 +462,36 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                     },
                     (msg) => {
                         if (msg?.error) {
-                            reject(new Error(`Send after reconnect failed: ${msg.error}`));
+                            reject(
+                                new Error(
+                                    `Send after reconnect failed: ${msg.error}`,
+                                ),
+                            );
                         } else {
                             resolve(msg);
                         }
-                    }
+                    },
                 );
             });
 
             // Verify other clients received the message
             await waitFor(
-                () => messageLog.filter(log => 
-                    log.message?.object?.content === testMessage &&
-                    log.message?.type === "message" &&
-                    log.clientId !== testClient.id
-                ).length >= CLIENT_COUNT - 1,
-                10000
+                () =>
+                    messageLog.filter(
+                        (log) =>
+                            log.message?.object?.content === testMessage &&
+                            log.message?.type === "message" &&
+                            log.clientId !== testClient.id,
+                    ).length >=
+                    CLIENT_COUNT - 1,
+                10000,
             );
 
-            const receivedMessages = messageLog.filter(log => 
-                log.message?.object?.content === testMessage &&
-                log.message?.type === "message" &&
-                log.clientId !== testClient.id
+            const receivedMessages = messageLog.filter(
+                (log) =>
+                    log.message?.object?.content === testMessage &&
+                    log.message?.type === "message" &&
+                    log.clientId !== testClient.id,
             );
 
             expect(receivedMessages).to.have.length.at.least(CLIENT_COUNT - 1);
@@ -454,77 +501,96 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
     describe("Performance and Load Testing", () => {
         it("handles staggered client connections", async () => {
             // Disconnect all clients first
-            await Promise.all(clients.map(client => {
-                if (client.socket.connected) {
-                    client.socket.disconnect();
-                }
-                client.connected = false;
-                client.joinedRoom = false;
-            }));
+            await Promise.all(
+                clients.map((client) => {
+                    if (client.socket.connected) {
+                        client.socket.disconnect();
+                    }
+                    client.connected = false;
+                    client.joinedRoom = false;
+                }),
+            );
 
             // Staggered reconnection with 200ms delays
             for (let i = 0; i < clients.length; i++) {
                 const client = clients[i];
-                
+
                 client.socket.connect();
                 await waitFor(() => client.socket.connected, 5000);
 
                 // Set credentials and connect
                 await new Promise((resolve, reject) => {
-                    client.socket.emit("credentials", {
-                        actor: { id: client.actorId, type: "person" },
-                        context: "xmpp",
-                        type: "credentials",
-                        object: {
+                    client.socket.emit(
+                        "credentials",
+                        {
+                            actor: { id: client.actorId, type: "person" },
+                            context: "xmpp",
                             type: "credentials",
-                            password: "passw0rd",
-                            resource: `SockethubTest${client.id}`,
-                            userAddress: `user${client.id}@prosody`,
+                            object: {
+                                type: "credentials",
+                                password: "passw0rd",
+                                resource: `SockethubTest${client.id}`,
+                                userAddress: `user${client.id}@prosody`,
+                            },
                         },
-                    }, (response) => {
-                        if (response?.error) reject(new Error(response.error));
-                        else resolve();
-                    });
+                        (response) => {
+                            if (response?.error)
+                                reject(new Error(response.error));
+                            else resolve();
+                        },
+                    );
                 });
 
                 await new Promise((resolve, reject) => {
-                    client.socket.emit("message", {
-                        type: "connect",
-                        actor: client.actorId,
-                        context: "xmpp",
-                    }, (msg) => {
-                        if (msg?.error) reject(new Error(msg.error));
-                        else {
-                            client.connected = true;
-                            resolve(msg);
-                        }
-                    });
+                    client.socket.emit(
+                        "message",
+                        {
+                            type: "connect",
+                            actor: client.actorId,
+                            context: "xmpp",
+                        },
+                        (msg) => {
+                            if (msg?.error) reject(new Error(msg.error));
+                            else {
+                                client.connected = true;
+                                resolve(msg);
+                            }
+                        },
+                    );
                 });
 
                 await new Promise((resolve, reject) => {
-                    client.socket.emit("message", {
-                        type: "join",
-                        actor: client.actorId,
-                        context: "xmpp",
-                        target: { type: "room", id: TEST_ROOM },
-                    }, (msg) => {
-                        if (msg?.error) reject(new Error(msg.error));
-                        else {
-                            client.joinedRoom = true;
-                            resolve(msg);
-                        }
-                    });
+                    client.socket.emit(
+                        "message",
+                        {
+                            type: "join",
+                            actor: client.actorId,
+                            context: "xmpp",
+                            target: { type: "room", id: TEST_ROOM },
+                        },
+                        (msg) => {
+                            if (msg?.error) reject(new Error(msg.error));
+                            else {
+                                client.joinedRoom = true;
+                                resolve(msg);
+                            }
+                        },
+                    );
                 });
 
                 // Wait 200ms before next client
                 if (i < clients.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 200));
+                    await new Promise((resolve) => setTimeout(resolve, 200));
                 }
             }
 
             // Verify all clients are connected and joined
-            expect(clients.filter(c => c.connected)).to.have.length(CLIENT_COUNT);
-            expect(clients.filter(c => c.joinedRoom)).to.have.length(CLIENT_COUNT);
+            expect(clients.filter((c) => c.connected)).to.have.length(
+                CLIENT_COUNT,
+            );
+            expect(clients.filter((c) => c.joinedRoom)).to.have.length(
+                CLIENT_COUNT,
+            );
         });
     });
 });
