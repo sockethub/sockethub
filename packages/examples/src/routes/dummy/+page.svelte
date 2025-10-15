@@ -5,6 +5,7 @@ import type { SockethubStateStore } from "$lib/types";
 import { writable } from "svelte/store";
 import ActivityActor from "../../components/ActivityActor.svelte";
 import BaseExample from "../../components/BaseExample.svelte";
+import FormField from "../../components/FormField.svelte";
 import SockethubButton from "../../components/SockethubButton.svelte";
 
 const actorId = "https://sockethub.org/examples/dummy";
@@ -51,17 +52,12 @@ async function sendGreet(): Promise<void> {
     description="The dummy platform is the most basic test to communicate via Sockethub to a platform, and receive a response back. You can use either the echo or fail types on your Activity Stream object."
 >
     <div>
-        <div class="w-full p-2">
-            <label for="objectContent" class="inline-block text-gray-900 font-bold w-32"
-                >Message Content</label
-            >
-            <input
-                id="objectContent"
-                bind:value={content}
-                class="border-4"
-                placeholder="Text to send as content"
-            />
-        </div>
+        <FormField 
+            label="Message Content" 
+            id="objectContent" 
+            bind:value={content}
+            placeholder="Text to send as content"
+        />
         <div class="w-full p-2">
             <label for="sendEcho" class="inline-block text-gray-900 font-bold w-32">Object Type</label>
             <div class="flex gap-4">

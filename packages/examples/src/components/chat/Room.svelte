@@ -32,10 +32,12 @@ async function joinRoom(): Promise<void> {
     } as AnyActivityStream)
         .catch(() => {
             $sockethubState.joined = false;
+            joining = false;
         })
         .then(() => {
             // $actor.roomId = room;
             $sockethubState.joined = true;
+            joining = false;
         });
 }
 </script>

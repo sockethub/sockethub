@@ -2,6 +2,7 @@
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
 import ActivityActor from "$components/ActivityActor.svelte";
+import ActorIdField from "$components/ActorIdField.svelte";
 import BaseExample from "$components/BaseExample.svelte";
 import Credentials from "$components/Credentials.svelte";
 import PlatformConnection from "$components/PlatformConnection.svelte";
@@ -62,15 +63,7 @@ async function connectXmpp(): Promise<void> {
 >
 
     <ActivityActor {actor} {sockethubState} />
-    <div class="w-full pb-4">
-        <label for="actor-id-input" class="pr-3">Actor ID</label>
-        <input
-            id="actor-id-input"
-            class=" bg-white border border-solid border-gray-300 rounded"
-            type="text"
-            bind:value={$actorIdStore}
-        />
-    </div>
+    <ActorIdField bind:value={$actorIdStore} />
 
     <Credentials context="xmpp" {credentials} {actor} {sockethubState} />
 

@@ -2,8 +2,10 @@
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
 import ActivityActor from "$components/ActivityActor.svelte";
+import ActorIdField from "$components/ActorIdField.svelte";
 import BaseExample from "$components/BaseExample.svelte";
 import Credentials from "$components/Credentials.svelte";
+import FormField from "$components/FormField.svelte";
 import PlatformConnection from "$components/PlatformConnection.svelte";
 import IncomingMessage from "$components/chat/IncomingMessages.svelte";
 import Room from "$components/chat/Room.svelte";
@@ -64,28 +66,14 @@ async function connectIrc(): Promise<void> {
     title="IRC Platform Example"
     description="Example for the IRC platform"
 >
-    <div class="pb-4">
-        <label for="actor-id-input" class="pr-3">Actor ID</label>
-        <input
-            id="actor-id-input"
-            class=" bg-white border border-solid border-gray-300 rounded"
-            type="text"
-            bind:value={$actorIdStore}
-        />
-    </div>
+    <ActorIdField bind:value={$actorIdStore} />
 
     <ActivityActor {actor} {sockethubState} />
     <Credentials context="irc" {credentials} {actor} {sockethubState} />
 
     <div>
-        <div class="w-full p-2">
-            <label for="server" class="inline-block text-gray-900 font-bold w-32">IRC Server</label>
-            <input id="server" bind:value={server} class="border-4" />
-        </div>
-        <div class="w-full p-2">
-            <label for="port" class="inline-block text-gray-900 font-bold w-32">Port</label>
-            <input id="port" bind:value={port} class="border-4" />
-        </div>
+        <FormField label="IRC Server" id="server" bind:value={server} />
+        <FormField label="Port" id="port" type="number" bind:value={port} />
         <PlatformConnection 
             {sockethubState} 
             {connecting} 
