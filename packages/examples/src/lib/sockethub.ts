@@ -97,7 +97,7 @@ export async function send(obj: AnyActivityStream) {
                         addObject("RESP", item, true);
                     }
                 }
-                displayMessage(resp);
+                displayMessage(resp, true);
                 if (resp.error) {
                     reject(resp.error);
                 } else {
@@ -120,7 +120,7 @@ function stateChange(state: string) {
 
 function handleIncomingMessage(msg: AnyActivityStream) {
     console.log("handle incoming: ", msg);
-    displayMessage(msg);
+    displayMessage(msg, false);
 }
 
 function sockethubConnect(config: typeof defaultConfig = defaultConfig) {
