@@ -6,11 +6,11 @@ import type { JobEncrypted, JobHandler, RedisConfig } from "./types.js";
 
 /**
  * Worker for processing jobs from a Redis queue within platform child processes.
- * 
+ *
  * Connects to the same queue as its corresponding JobQueue instance and processes
  * jobs using a platform-specific handler function. Provides automatic decryption
  * of job data and error handling.
- * 
+ *
  * @example
  * ```typescript
  * const worker = new JobWorker('irc-platform', 'session123', secret, redisConfig);
@@ -32,9 +32,9 @@ export class JobWorker extends JobBase {
 
     /**
      * Creates a new JobWorker instance.
-     * 
+     *
      * @param instanceId - Must match the instanceId of the corresponding JobQueue
-     * @param sessionId - Must match the sessionId of the corresponding JobQueue  
+     * @param sessionId - Must match the sessionId of the corresponding JobQueue
      * @param secret - 32-character encryption secret, must match JobQueue secret
      * @param redisConfig - Redis connection configuration
      */
@@ -65,7 +65,7 @@ export class JobWorker extends JobBase {
 
     /**
      * Registers a job handler function and starts processing jobs from the queue.
-     * 
+     *
      * @param handler - Function that processes decrypted job data and returns results
      */
     onJob(handler: JobHandler): void {

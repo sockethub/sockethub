@@ -290,7 +290,7 @@ export default class IRC implements PlatformInterface {
         this.debug(
             `send() called for ${job.actor.id} target: ${job.target.id}`,
         );
-        this.getClient(job.actor.id, false, (err, client) => {
+        this.getClient(job.actor.id, false, async (err, client) => {
             if (err) {
                 return done(err);
             }

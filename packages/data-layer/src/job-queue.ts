@@ -59,11 +59,11 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
 
 /**
  * Redis-backed job queue for managing ActivityStreams message processing.
- * 
+ *
  * Creates isolated queues per platform instance and session, providing reliable
- * message delivery and processing coordination between Sockethub server and 
+ * message delivery and processing coordination between Sockethub server and
  * platform workers.
- * 
+ *
  * @example
  * ```typescript
  * const queue = new JobQueue('irc-platform', 'session123', secret, redisConfig);
@@ -81,7 +81,7 @@ export class JobQueue extends JobBase {
 
     /**
      * Creates a new JobQueue instance.
-     * 
+     *
      * @param instanceId - Unique identifier for the platform instance
      * @param sessionId - Client session identifier for queue isolation
      * @param secret - 32-character encryption secret for message security
@@ -131,7 +131,7 @@ export class JobQueue extends JobBase {
 
     /**
      * Adds an ActivityStreams message to the job queue for processing.
-     * 
+     *
      * @param socketId - Socket.IO connection identifier for response routing
      * @param msg - ActivityStreams message to be processed by platform worker
      * @returns Promise resolving to encrypted job data

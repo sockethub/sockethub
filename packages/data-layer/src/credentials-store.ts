@@ -25,23 +25,23 @@ export async function verifySecureStore(config: RedisConfig): Promise<void> {
 
 /**
  * Secure, encrypted storage for user credentials with session-based isolation.
- * 
+ *
  * Provides automatic encryption/decryption of credential objects stored in Redis,
  * ensuring that sensitive authentication data is never stored in plaintext.
  * Each session gets its own isolated credential store.
- * 
+ *
  * @example
  * ```typescript
  * const store = new CredentialsStore('session123', secret, redisConfig);
- * 
+ *
  * // Store credentials
  * await store.save('user@example.com', {
  *   username: 'user',
  *   password: 'secret',
  *   server: 'irc.freenode.net'
  * });
- * 
- * // Retrieve credentials  
+ *
+ * // Retrieve credentials
  * const creds = await store.get('user@example.com', credentialsHash);
  * ```
  */
@@ -53,7 +53,7 @@ export class CredentialsStore implements CredentialsStoreInterface {
 
     /**
      * Creates a new CredentialsStore instance.
-     * 
+     *
      * @param parentId - Unique identifier for the parent instance (e.g. server ID)
      * @param sessionId - Client session identifier for credential isolation
      * @param secret - 32-character encryption secret for credential security
