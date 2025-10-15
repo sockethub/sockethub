@@ -4,7 +4,7 @@
 import ActivityActor from "$components/ActivityActor.svelte";
 import BaseExample from "$components/BaseExample.svelte";
 import Credentials from "$components/Credentials.svelte";
-import SockethubButton from "$components/SockethubButton.svelte";
+import PlatformConnection from "$components/PlatformConnection.svelte";
 import IncomingMessage from "$components/chat/IncomingMessages.svelte";
 import Room from "$components/chat/Room.svelte";
 import SendMessage from "$components/chat/SendMessage.svelte";
@@ -86,17 +86,11 @@ async function connectIrc(): Promise<void> {
             <label for="port" class="inline-block text-gray-900 font-bold w-32">Port</label>
             <input id="port" bind:value={port} class="border-4" />
         </div>
-        <div class="w-full text-right">
-            <SockethubButton
-                disabled={!$sockethubState.credentialsSet || $sockethubState.connected || connecting}
-                buttonAction={connectIrc}
-                >{$sockethubState.connected
-                    ? "Connected"
-                    : connecting
-                      ? "Connecting"
-                      : "Connect"}</SockethubButton
-            >
-        </div>
+        <PlatformConnection 
+            {sockethubState} 
+            {connecting} 
+            onConnect={connectIrc} 
+        />
     </div>
 
     <Room {actor} {sockethubState} {room} context="irc" />
