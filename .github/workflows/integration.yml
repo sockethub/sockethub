@@ -83,8 +83,11 @@ jobs:
       - name: Verify Redis is listening
         run: nc -zv localhost 16379
 
-      - name: Browser Integration Tests
+      - name: Basic Browser Integration Tests
         run: bun run integration:browser:run
+
+      - name: Multiclient XMPP Integration Tests
+        run: bun run integration:xmpp-multiclient:run
 
       - name: Print Sockethub logs
         if: always()
