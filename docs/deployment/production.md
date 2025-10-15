@@ -40,6 +40,7 @@ Create a `sockethub.config.json` file for production:
 ### Key Production Settings
 
 **Disable Examples:**
+
 ```json
 {
   "examples": false
@@ -47,6 +48,7 @@ Create a `sockethub.config.json` file for production:
 ```
 
 **Configure Sentry (Optional):**
+
 ```json
 {
   "sentry": {
@@ -229,16 +231,19 @@ pm2 logs sockethub
 ### Common Issues
 
 **Redis Connection Failed:**
+
 - Ensure Redis is running
 - Check Redis password in config
 - Test: `redis-cli ping`
 
 **WebSocket Connection Issues:**
+
 - Check CORS configuration
 - Verify client is connecting to correct URL
 - Enable debug logging: `DEBUG=sockethub* npm start`
 
 **Platform Errors:**
+
 - Check platform-specific requirements
 - Verify credentials format matches platform documentation
 - Review debug logs for specific platform errors
@@ -256,7 +261,8 @@ DEBUG=sockethub:platform:irc sockethub --config sockethub.config.json
 DEBUG=sockethub:server:middleware sockethub --config sockethub.config.json
 ```
 
-This covers the essential Sockethub-specific configuration and deployment considerations for production use.
+This covers the essential Sockethub-specific configuration and deployment considerations
+for production use.
 
 ## See Also
 

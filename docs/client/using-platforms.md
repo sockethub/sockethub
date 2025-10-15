@@ -1,6 +1,7 @@
 # Using Platforms
 
-This guide covers how to use each of Sockethub's built-in platforms, including setup, configuration, and common usage patterns.
+This guide covers how to use each of Sockethub's built-in platforms, including setup,
+configuration, and common usage patterns.
 
 ## Available Platforms
 
@@ -85,7 +86,7 @@ sc.socket.emit('message', {
 
 Connect to IRC servers and participate in channels.
 
-### Credentials
+### IRC Credentials
 
 ```javascript
 {
@@ -98,7 +99,7 @@ Connect to IRC servers and participate in channels.
 }
 ```
 
-### Common Actions
+### IRC Actions
 
 #### Connect to IRC Server
 
@@ -162,7 +163,7 @@ sc.socket.emit('message', {
 });
 ```
 
-### Incoming Events
+### IRC Incoming Events
 
 Listen for incoming IRC messages:
 
@@ -190,7 +191,7 @@ sc.socket.on('message', function(msg) {
 
 Connect to XMPP (Jabber) servers for instant messaging and presence.
 
-### Credentials
+### XMPP Credentials
 
 ```javascript
 {
@@ -202,7 +203,7 @@ Connect to XMPP (Jabber) servers for instant messaging and presence.
 }
 ```
 
-### Common Actions
+### XMPP Actions
 
 #### Connect to XMPP Server
 
@@ -266,7 +267,7 @@ sc.socket.emit('message', {
 });
 ```
 
-### Incoming Events
+### XMPP Incoming Events
 
 ```javascript
 sc.socket.on('message', function(msg) {
@@ -308,7 +309,7 @@ sc.socket.emit('message', {
 });
 ```
 
-### Response Format
+### Feeds Response Format
 
 The platform returns a collection of feed entries:
 

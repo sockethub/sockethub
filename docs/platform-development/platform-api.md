@@ -1,10 +1,12 @@
 # Platform API Reference
 
-This document provides a comprehensive reference for developing Sockethub platforms, including all interfaces, types, and required methods.
+This document provides a comprehensive reference for developing Sockethub platforms,
+including all interfaces, types, and required methods.
 
 ## Overview
 
-A Sockethub platform is a Node.js class that implements the `PlatformInterface` and handles translation between ActivityStreams messages and protocol-specific actions.
+A Sockethub platform is a Node.js class that implements the `PlatformInterface` and
+handles translation between ActivityStreams messages and protocol-specific actions.
 
 ## Core Interfaces
 

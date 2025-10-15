@@ -1,6 +1,7 @@
 # Message Flow
 
-This document provides a detailed breakdown of how messages flow through Sockethub's architecture, from client request to platform response and back.
+This document provides a detailed breakdown of how messages flow through Sockethub's
+architecture, from client request to platform response and back.
 
 ## Overview
 
@@ -34,6 +35,7 @@ Sockethub processes messages through several distinct phases:
 ```
 
 **Steps:**
+
 1. Client connects to `http://sockethub-server:10550` with Socket.IO
 2. Server creates unique session ID
 3. Server establishes isolated Redis namespace for session
@@ -67,6 +69,7 @@ Sockethub processes messages through several distinct phases:
 ```
 
 **Example credential message:**
+
 ```json
 {
   "context": "xmpp",
@@ -126,24 +129,28 @@ Sockethub processes messages through several distinct phases:
 #### Middleware Pipeline Details
 
 **1. Validate Middleware** (`packages/server/src/middleware/validate.ts`)
+
 - Validates ActivityStreams schema compliance
 - Checks required fields (`@type`, `context`, `actor`)
 - Verifies platform exists and is enabled
 - Returns validation errors if invalid
 
 **2. Expand ActivityStream** (`packages/server/src/middleware/expand-activity-stream.ts`)
+
 - Normalizes ActivityStreams format
 - Adds default values for optional fields
 - Resolves actor references
 - Ensures consistent message structure
 
 **3. Create Activity Object** (`packages/server/src/middleware/create-activity-object.ts`)
+
 - Converts message to internal ActivityObject format
 - Adds session metadata
 - Generates unique message IDs
 - Prepares for platform processing
 
 **4. Store Credentials** (`packages/server/src/middleware/store-credentials.ts`)
+
 - Extracts credentials from message if present
 - Encrypts credentials with session key
 - Stores in Redis under session namespace
@@ -177,6 +184,7 @@ Sockethub processes messages through several distinct phases:
 ```
 
 **Job Queue Implementation** (`packages/data-layer/src/job-queue.ts`):
+
 - Uses BullMQ for reliable job processing
 - Jobs encrypted before queuing
 - Separate queue per platform type
@@ -219,6 +227,7 @@ Sockethub processes messages through several distinct phases:
 ```
 
 **Example Platform Method Flow** (IRC send message):
+
 1. Worker receives encrypted job from queue
 2. Worker checks if verb requires credentials (`requireCredentials` config)
 3. If needed, worker requests credentials from CredentialsStore
@@ -257,6 +266,7 @@ Sockethub processes messages through several distinct phases:
 ```
 
 **Success Response:**
+
 ```json
 {
   "@type": "send",
@@ -277,6 +287,7 @@ Sockethub processes messages through several distinct phases:
 ```
 
 **Failure Response:**
+
 ```json
 {
   "@type": "failure",
@@ -331,6 +342,7 @@ For platforms that receive events (IRC messages, XMPP presence, etc.):
 ```
 
 **Example Incoming IRC Message:**
+
 ```json
 {
   "@type": "send",
@@ -433,6 +445,7 @@ Each client session is completely isolated:
 ### Error Types and Sources
 
 **Validation Errors** (Middleware):
+
 ```json
 {
   "@type": "failure",
@@ -446,6 +459,7 @@ Each client session is completely isolated:
 ```
 
 **Platform Errors** (Platform Instance):
+
 ```json
 {
   "@type": "failure", 
@@ -459,6 +473,7 @@ Each client session is completely isolated:
 ```
 
 **System Errors** (Server/Redis):
+
 ```json
 {
   "@type": "failure",
