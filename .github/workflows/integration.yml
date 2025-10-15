@@ -84,10 +84,10 @@ jobs:
         run: nc -zv localhost 16379
 
       - name: Basic Browser Integration Tests
-        run: bun run integration:browser:run
+        run: bun run integration:browser:basic:run
 
       - name: Multiclient XMPP Integration Tests
-        run: bun run integration:xmpp-multiclient:run
+        run: bun run integration:browser:multiclient:run
 
       - name: Print Sockethub logs
         if: always()
