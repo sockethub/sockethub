@@ -29,12 +29,18 @@ let { title, description, children }: Props = $props();
 <Intro {title}>
     <title>{title}</title>
     {#if description}
-        <p>{description}</p>
+        <p class="text-lg text-gray-600 leading-relaxed">{description}</p>
     {/if}
 </Intro>
 
-<div class="space-y-6">
-    {@render children?.()}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div class="bg-white shadow-sm border border-gray-200 rounded-xl p-8">
+        <div class="space-y-8">
+            {@render children?.()}
+        </div>
+    </div>
 </div>
 
-<Logger />
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+    <Logger />
+</div>

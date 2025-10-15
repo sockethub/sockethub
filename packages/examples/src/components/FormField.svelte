@@ -57,14 +57,14 @@ let {
 let inputClass = $derived(`border-4 ${customClass}`.trim());
 </script>
 
-<div class="w-full p-2">
-    <label for={id} class="inline-block text-gray-900 font-bold w-32">{label}</label>
+<div class="w-full space-y-2">
+    <label for={id} class="block text-sm font-semibold text-gray-700">{label}</label>
     <input 
         {id} 
         {type}
         {placeholder}
         bind:value 
-        class={inputClass}
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-gray-900 placeholder-gray-500 {customClass}"
         oninput={onInput ? () => onInput(value) : undefined}
     />
 </div>

@@ -79,16 +79,43 @@ async function sendGreet(): Promise<void> {
     title="Dummy Platform Example"
     description="The dummy platform is the most basic test to communicate via Sockethub to a platform, and receive a response back. You can use either the echo or fail types on your Activity Stream object."
 >
-    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg mb-6">
-        <h3 class="text-lg font-semibold text-blue-800 mb-2">💡 What You'll Learn</h3>
-        <p class="text-blue-700 text-sm mb-3">
+    <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-6 shadow-sm">
+        <h3 class="text-xl font-bold text-blue-900 mb-3 flex items-center">
+            <span class="mr-2">💡</span>
+            What You'll Learn
+        </h3>
+        <p class="text-blue-800 mb-4 leading-relaxed">
             This example demonstrates the core Sockethub workflow with a test platform that doesn't require external connections.
         </p>
-        <div class="text-blue-700 text-sm space-y-1">
-            <div><strong>📤 Sending:</strong> How to create and send ActivityStreams messages</div>
-            <div><strong>📥 Receiving:</strong> How Sockethub responds with results or errors</div>
-            <div><strong>🎯 Actor:</strong> How your identity is represented</div>
-            <div><strong>🔄 Types:</strong> Different activity types (echo, greet, fail, throw)</div>
+        <div class="grid md:grid-cols-2 gap-3 text-blue-800">
+            <div class="flex items-start space-x-2">
+                <span class="text-lg">📤</span>
+                <div>
+                    <div class="font-semibold">Sending</div>
+                    <div class="text-sm text-blue-700">How to create and send ActivityStreams messages</div>
+                </div>
+            </div>
+            <div class="flex items-start space-x-2">
+                <span class="text-lg">📥</span>
+                <div>
+                    <div class="font-semibold">Receiving</div>
+                    <div class="text-sm text-blue-700">How Sockethub responds with results or errors</div>
+                </div>
+            </div>
+            <div class="flex items-start space-x-2">
+                <span class="text-lg">🎯</span>
+                <div>
+                    <div class="font-semibold">Actor</div>
+                    <div class="text-sm text-blue-700">How your identity is represented</div>
+                </div>
+            </div>
+            <div class="flex items-start space-x-2">
+                <span class="text-lg">🔄</span>
+                <div>
+                    <div class="font-semibold">Types</div>
+                    <div class="text-sm text-blue-700">Different activity types (echo, greet, fail, throw)</div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="space-y-4">
@@ -102,29 +129,54 @@ async function sendGreet(): Promise<void> {
             ⬆️ This text will be included in the <code>object.content</code> field of your ActivityStreams message.
         </p>
         
-        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
-            <h4 class="font-semibold text-yellow-800 mb-2">Try Different Activity Types</h4>
-            <p class="text-yellow-700 text-sm mb-3">Each button sends the same basic message structure but with a different <code>type</code> field:</p>
+        <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-6 shadow-sm">
+            <h4 class="text-lg font-bold text-amber-900 mb-3 flex items-center">
+                <span class="mr-2">🚀</span>
+                Try Different Activity Types
+            </h4>
+            <p class="text-amber-800 mb-4 leading-relaxed">
+                Each button sends the same basic message structure but with a different <code class="bg-amber-100 px-1 rounded text-sm">type</code> field:
+            </p>
             
-            <div class="grid grid-cols-2 gap-3 text-sm">
-                <div class="space-y-2">
-                    <div>
-                        <SockethubButton buttonAction={sendEcho}>Echo</SockethubButton>
-                        <p class="text-yellow-600 text-xs mt-1">Returns your message back unchanged</p>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="space-y-4">
+                    <div class="bg-white rounded-lg p-4 border border-amber-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="font-semibold text-amber-900 mb-1">Echo</div>
+                                <p class="text-amber-700 text-sm">Returns your message back unchanged</p>
+                            </div>
+                            <SockethubButton buttonAction={sendEcho}>Echo</SockethubButton>
+                        </div>
                     </div>
-                    <div>
-                        <SockethubButton buttonAction={sendGreet}>Greet</SockethubButton>
-                        <p class="text-yellow-600 text-xs mt-1">Returns a friendly greeting</p>
+                    <div class="bg-white rounded-lg p-4 border border-amber-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="font-semibold text-amber-900 mb-1">Greet</div>
+                                <p class="text-amber-700 text-sm">Returns a friendly greeting</p>
+                            </div>
+                            <SockethubButton buttonAction={sendGreet}>Greet</SockethubButton>
+                        </div>
                     </div>
                 </div>
-                <div class="space-y-2">
-                    <div>
-                        <SockethubButton buttonAction={sendFail}>Fail</SockethubButton>
-                        <p class="text-yellow-600 text-xs mt-1">Returns an error message (for testing error handling)</p>
+                <div class="space-y-4">
+                    <div class="bg-white rounded-lg p-4 border border-amber-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="font-semibold text-amber-900 mb-1">Fail</div>
+                                <p class="text-amber-700 text-sm">Returns an error message (for testing error handling)</p>
+                            </div>
+                            <SockethubButton buttonAction={sendFail}>Fail</SockethubButton>
+                        </div>
                     </div>
-                    <div>
-                        <SockethubButton buttonAction={sendThrow}>Throw</SockethubButton>
-                        <p class="text-yellow-600 text-xs mt-1">Throws an exception (for testing exception handling)</p>
+                    <div class="bg-white rounded-lg p-4 border border-amber-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="font-semibold text-amber-900 mb-1">Throw</div>
+                                <p class="text-amber-700 text-sm">Throws an exception (for testing exception handling)</p>
+                            </div>
+                            <SockethubButton buttonAction={sendThrow}>Throw</SockethubButton>
+                        </div>
                     </div>
                 </div>
             </div>
