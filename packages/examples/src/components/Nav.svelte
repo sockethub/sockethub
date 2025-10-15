@@ -15,7 +15,7 @@ const navItems = [
 <nav class="flex justify-center flex-wrap gap-2 p-2">
     {#each navItems as [icon, title, path, description]}
         <a
-            class="group relative rounded-lg px-3 py-2 font-medium transition-all duration-200 {$page.url.pathname.endsWith(path)
+            class="group relative rounded-lg px-3 py-2 font-medium transition-all duration-200 no-underline {$page.url.pathname.endsWith(path)
                 ? 'bg-orange-600 text-blue-50 shadow-md'
                 : 'text-slate-700 hover:bg-slate-200 hover:shadow-sm'}"
             href="{base}{path}"
