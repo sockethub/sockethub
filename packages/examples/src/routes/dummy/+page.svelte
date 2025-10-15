@@ -79,29 +79,53 @@ async function sendGreet(): Promise<void> {
     title="Dummy Platform Example"
     description="The dummy platform is the most basic test to communicate via Sockethub to a platform, and receive a response back. You can use either the echo or fail types on your Activity Stream object."
 >
-    <div>
+    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg mb-6">
+        <h3 class="text-lg font-semibold text-blue-800 mb-2">💡 What You'll Learn</h3>
+        <p class="text-blue-700 text-sm mb-3">
+            This example demonstrates the core Sockethub workflow with a test platform that doesn't require external connections.
+        </p>
+        <div class="text-blue-700 text-sm space-y-1">
+            <div><strong>📤 Sending:</strong> How to create and send ActivityStreams messages</div>
+            <div><strong>📥 Receiving:</strong> How Sockethub responds with results or errors</div>
+            <div><strong>🎯 Actor:</strong> How your identity is represented</div>
+            <div><strong>🔄 Types:</strong> Different activity types (echo, greet, fail, throw)</div>
+        </div>
+    </div>
+    <div class="space-y-4">
         <FormField 
             label="Message Content" 
             id="objectContent" 
             bind:value={content}
             placeholder="Hello from Sockethub"
         />
-        <div class="w-full p-2">
-            <label for="sendEcho" class="inline-block text-gray-900 font-bold w-32">Object Type</label>
-            <div class="flex gap-4">
-                <div id="sendEcho">
-                    <SockethubButton buttonAction={sendEcho}
-                        >Echo</SockethubButton
-                    >
-                    <SockethubButton buttonAction={sendGreet}
-                        >Greet</SockethubButton
-                    >
-                    <SockethubButton buttonAction={sendFail}
-                        >Fail</SockethubButton
-                    >
-                    <SockethubButton buttonAction={sendThrow}
-                        >Throw</SockethubButton
-                    >
+        <p class="text-gray-600 text-sm">
+            ⬆️ This text will be included in the <code>object.content</code> field of your ActivityStreams message.
+        </p>
+        
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+            <h4 class="font-semibold text-yellow-800 mb-2">Try Different Activity Types</h4>
+            <p class="text-yellow-700 text-sm mb-3">Each button sends the same basic message structure but with a different <code>type</code> field:</p>
+            
+            <div class="grid grid-cols-2 gap-3 text-sm">
+                <div class="space-y-2">
+                    <div>
+                        <SockethubButton buttonAction={sendEcho}>Echo</SockethubButton>
+                        <p class="text-yellow-600 text-xs mt-1">Returns your message back unchanged</p>
+                    </div>
+                    <div>
+                        <SockethubButton buttonAction={sendGreet}>Greet</SockethubButton>
+                        <p class="text-yellow-600 text-xs mt-1">Returns a friendly greeting</p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div>
+                        <SockethubButton buttonAction={sendFail}>Fail</SockethubButton>
+                        <p class="text-yellow-600 text-xs mt-1">Returns an error message (for testing error handling)</p>
+                    </div>
+                    <div>
+                        <SockethubButton buttonAction={sendThrow}>Throw</SockethubButton>
+                        <p class="text-yellow-600 text-xs mt-1">Throws an exception (for testing exception handling)</p>
+                    </div>
                 </div>
             </div>
         </div>

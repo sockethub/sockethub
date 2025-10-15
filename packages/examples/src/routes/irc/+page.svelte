@@ -80,26 +80,66 @@ async function connectIrc(): Promise<void> {
 
 <BaseExample 
     title="IRC Platform Example"
-    description="Example for the IRC platform"
+    description="Connect to IRC servers, join channels, and send messages using Sockethub's IRC platform."
 >
-    <ActorIdField bind:value={$actorIdStore} />
-
-    <ActivityActor {actor} {sockethubState} />
-    <Credentials context="irc" {credentials} {actor} {sockethubState} />
-
-    <div>
-        <FormField label="IRC Server" id="server" bind:value={server} placeholder="irc.example.com" />
-        <FormField label="Port" id="port" type="number" bind:value={port} placeholder="6667" />
-        <PlatformConnection 
-            {sockethubState} 
-            {connecting} 
-            onConnect={connectIrc} 
-        />
+    <div class="bg-orange-50 border-l-4 border-orange-400 p-4 rounded-r-lg mb-6">
+        <h3 class="text-lg font-semibold text-orange-800 mb-2">💬 IRC Connection Process</h3>
+        <p class="text-orange-700 text-sm mb-3">
+            IRC (Internet Relay Chat) requires several steps to get connected and chatting.
+        </p>
+        <div class="text-orange-700 text-sm space-y-1">
+            <div><strong>1. 🎭 Set Actor:</strong> Choose your IRC nickname</div>
+            <div><strong>2. 🔐 Set Credentials:</strong> Provide server connection details</div>
+            <div><strong>3. 🔌 Connect:</strong> Establish connection to IRC server</div>
+            <div><strong>4. 🏠 Join Room:</strong> Enter a channel to start chatting</div>
+            <div><strong>5. 💬 Send Messages:</strong> Chat with other users</div>
+        </div>
     </div>
+    <div class="space-y-6">
+        <!-- Step 1: Setup Identity -->
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <h4 class="font-semibold text-gray-800 mb-3">Step 1: Choose Your IRC Nickname</h4>
+            <ActorIdField bind:value={$actorIdStore} />
+            <ActivityActor {actor} {sockethubState} />
+        </div>
 
-    <Room {actor} {sockethubState} {room} context="irc" />
+        <!-- Step 2: Server Configuration -->
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <h4 class="font-semibold text-gray-800 mb-3">Step 2: Configure Server Connection</h4>
+            <div class="space-y-4">
+                <FormField label="IRC Server" id="server" bind:value={server} placeholder="irc.libera.chat" />
+                <FormField label="Port" id="port" type="number" bind:value={port} placeholder="6697" />
+                <p class="text-gray-600 text-sm">
+                    💡 Popular IRC networks: irc.libera.chat, irc.oftc.net, irc.rizon.net
+                </p>
+                <Credentials context="irc" {credentials} {actor} {sockethubState} />
+            </div>
+        </div>
 
-    <IncomingMessage />
+        <!-- Step 3: Connect -->
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <h4 class="font-semibold text-gray-800 mb-3">Step 3: Connect to Server</h4>
+            <PlatformConnection 
+                {sockethubState} 
+                {connecting} 
+                onConnect={connectIrc} 
+            />
+        </div>
 
-    <SendMessage context="irc" {actor} {sockethubState} {room} />
+        <!-- Step 4 & 5: Chat Interface (only shown when connected) -->
+        {#if $sockethubState.connected}
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                <h4 class="font-semibold text-gray-800 mb-3">Step 4 & 5: Join Channel and Chat</h4>
+                <div class="space-y-4">
+                    <Room {actor} {sockethubState} {room} context="irc" />
+                    <IncomingMessage />
+                    <SendMessage context="irc" {actor} {sockethubState} {room} />
+                </div>
+            </div>
+        {:else}
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                <p class="text-gray-500">Connect to the IRC server to access chat features</p>
+            </div>
+        {/if}
+    </div>
 </BaseExample>
