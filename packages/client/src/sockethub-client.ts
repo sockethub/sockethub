@@ -28,7 +28,7 @@ export default class SockethubClient {
     private _socket: Socket;
     public ActivityStreams: ASManager;
     public socket: CustomEmitter;
-    public online = false;
+    public connected = false;
     public debug = true;
 
     constructor(socket: Socket) {
@@ -98,7 +98,7 @@ export default class SockethubClient {
     }
 
     private eventMessage(content: BaseActivityObject) {
-        if (!this.online) {
+        if (!this.connected) {
             return;
         }
         // either stores or delete the specified content onto the storedJoins map,
@@ -137,7 +137,7 @@ export default class SockethubClient {
         const callHandler = (event: string) => {
             return async (obj?: unknown) => {
                 if (event === "connect") {
-                    this.online = true;
+                    this.connected = true;
                     this.replay(
                         "activity-object",
                         this.events["activity-object"],
@@ -146,7 +146,7 @@ export default class SockethubClient {
                     this.replay("message", this.events.connect);
                     this.replay("message", this.events.join);
                 } else if (event === "disconnect") {
-                    this.online = false;
+                    this.connected = false;
                 }
                 this.socket._emit(event, obj);
             };
@@ -175,4 +175,5 @@ export default class SockethubClient {
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 ((global: any) => {
     global.SockethubClient = SockethubClient;
+    // @ts-ignore
 })(typeof window === "object" ? window : {});
