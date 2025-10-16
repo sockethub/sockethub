@@ -20,95 +20,42 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
     const messageLog = [];
     const connectionLog = [];
 
-    // Helper function to create a client with unique credentials
-    function createClient(userId) {
-        console.log(`Creating client ${userId}`);
-
-        const actorId = `jimmy@prosody/SockethubTest${userId}`;
-        const actorObject = {
-            id: actorId,
-            type: "person",
-            name: `Jimmy Session ${userId}`,
-        };
-
-        const clientSetup = createSockethubClient(`user${userId}`);
-
-        // Log Socket.IO connection events for debugging
-        clientSetup.client.socket.on("connect", () => {
-            console.log(
-                `[${userId}] Socket.IO connected with ID: ${clientSetup.client.socket.id}, connected: ${clientSetup.client.socket.connected}`,
-            );
-        });
-
-        clientSetup.client.socket.on("disconnect", (reason) => {
-            console.log(`[${userId}] Socket.IO disconnected: ${reason}`);
-        });
-
-        clientSetup.client.socket.on("connect_error", (error) => {
-            console.error(`[${userId}] Socket.IO connection error:`, error);
-        });
-
-        // Track all incoming messages for verification
-        clientSetup.client.socket.on("message", (msg) => {
-            console.log(`[${userId}] Received message:`, msg);
-            messageLog.push({
-                clientId: userId,
-                timestamp: Date.now(),
-                message: msg,
-            });
-        });
-
-        console.log(
-            `[${userId}] Client created with Socket.IO connected: ${clientSetup.client.socket.connected}`,
-        );
-
-        return {
-            id: userId,
-            actorId,
-            actorObject,
-            client: clientSetup.client,
-            socket: clientSetup.client.socket, // Use the same pattern as basic test
-            messageLog: clientSetup.messageLog,
-            cleanup: clientSetup.cleanup,
-            connected: false,
-            joinedRoom: false,
-        };
-    }
-
-    before(async () => {
+    before(() => {
         console.log(
             `Initializing ${CLIENT_COUNT} clients for multi-client XMPP test`,
         );
 
-        // Create all clients
+        // Create all clients using the EXACT same pattern as basic test
         for (let i = 1; i <= CLIENT_COUNT; i++) {
-            clients.push(createClient(i));
+            const clientSetup = createSockethubClient(`client-${i}`);
+            const client = {
+                id: i,
+                actorId: `jimmy@prosody/SockethubTest${i}`,
+                actorObject: {
+                    id: `jimmy@prosody/SockethubTest${i}`,
+                    type: "person",
+                    name: `Jimmy Session ${i}`,
+                },
+                client: clientSetup.client,
+                socket: clientSetup.client.socket,
+                cleanup: clientSetup.cleanup,
+                connected: false,
+                joinedRoom: false,
+            };
+
+            // Track messages for this client
+            client.socket.on("message", (msg) => {
+                messageLog.push({
+                    clientId: i,
+                    timestamp: Date.now(),
+                    message: msg,
+                });
+            });
+
+            clients.push(client);
         }
 
         console.log(`Created ${clients.length} clients successfully`);
-
-        // Wait for all Socket.IO connections to establish
-        console.log(`Waiting for all ${CLIENT_COUNT} Socket.IO connections...`);
-        await Promise.all(
-            clients.map((client, index) =>
-                waitFor(() => {
-                    const isConnected = client.socket.connected;
-                    if (!isConnected) {
-                        console.log(
-                            `[DEBUG] Client ${index + 1} connected status: ${isConnected}`,
-                        );
-                    }
-                    return isConnected;
-                }, 10000),
-            ),
-        );
-
-        const connectedClients = clients.filter(
-            (c) => c.socket.connected,
-        ).length;
-        console.log(
-            `All Socket.IO connections established: ${connectedClients}/${CLIENT_COUNT}`,
-        );
     });
 
     after(() => {
