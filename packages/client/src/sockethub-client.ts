@@ -165,8 +165,8 @@ export default class SockethubClient {
     }
 
     private replay(name: string, asMap: Map<string, unknown>) {
-        for (const obj of asMap) {
-            this.log(`replaying ${name}`, obj);
+        for (const obj of asMap.values()) {
+            this.log(`replaying ${name} for ${obj.actor?.id}`);
             this._socket.emit(name, obj);
         }
     }
