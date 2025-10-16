@@ -34,17 +34,17 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
         const clientSetup = createSockethubClient(`user${userId}`);
 
         // Log Socket.IO connection events for debugging
-        clientSetup.socket.on("connect", () => {
+        clientSetup.client.socket.on("connect", () => {
             console.log(
-                `[${userId}] Socket.IO connected with ID: ${clientSetup.socket.id}, connected: ${clientSetup.socket.connected}`,
+                `[${userId}] Socket.IO connected with ID: ${clientSetup.client.socket.id}, connected: ${clientSetup.client.socket.connected}`,
             );
         });
 
-        clientSetup.socket.on("disconnect", (reason) => {
+        clientSetup.client.socket.on("disconnect", (reason) => {
             console.log(`[${userId}] Socket.IO disconnected: ${reason}`);
         });
 
-        clientSetup.socket.on("connect_error", (error) => {
+        clientSetup.client.socket.on("connect_error", (error) => {
             console.error(`[${userId}] Socket.IO connection error:`, error);
         });
 
@@ -59,14 +59,17 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
         });
 
         console.log(
-            `[${userId}] Client created with Socket.IO connected: ${clientSetup.socket.connected}`,
+            `[${userId}] Client created with Socket.IO connected: ${clientSetup.client.socket.connected}`,
         );
 
         return {
             id: userId,
             actorId,
             actorObject,
-            ...clientSetup,
+            client: clientSetup.client,
+            socket: clientSetup.client.socket, // Use the same pattern as basic test
+            messageLog: clientSetup.messageLog,
+            cleanup: clientSetup.cleanup,
             connected: false,
             joinedRoom: false,
         };
