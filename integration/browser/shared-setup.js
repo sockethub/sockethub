@@ -75,7 +75,12 @@ export function setXMPPCredentials(
     actorId,
     userId = "jimmy",
     password = "passw0rd",
+    resource = null,
 ) {
+    // Extract resource from actorId if not provided
+    const defaultResource =
+        resource || actorId.split("/")[1] || "SockethubTest";
+
     return new Promise((resolve, reject) => {
         console.log(`[${userId}] Setting XMPP credentials for ${actorId}`);
 
@@ -91,7 +96,7 @@ export function setXMPPCredentials(
                 object: {
                     type: "credentials",
                     password,
-                    resource: "SockethubTest",
+                    resource: defaultResource,
                     userAddress: `${userId}@prosody`,
                 },
             },
