@@ -22,7 +22,6 @@ export function validateGlobals() {
     });
 }
 
-
 // Helper function to wait for a condition with timeout
 export function waitFor(
     condition,

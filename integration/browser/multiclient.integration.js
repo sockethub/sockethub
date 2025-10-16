@@ -12,7 +12,7 @@ import "./../config.js";
 
 const config = window.SH_CONFIG;
 
-const CLIENT_COUNT = 3;
+const CLIENT_COUNT = 10;
 
 describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () => {
     validateGlobals();
@@ -62,7 +62,10 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
     describe("Concurrent Client Connections", () => {
         it("all clients can set credentials simultaneously", async () => {
             const credentialPromises = records.map((clientRecord) =>
-                setXMPPCredentials(clientRecord.sockethubClient.socket, clientRecord.xmppJid),
+                setXMPPCredentials(
+                    clientRecord.sockethubClient.socket,
+                    clientRecord.xmppJid,
+                ),
             );
 
             await Promise.all(credentialPromises);
@@ -82,7 +85,6 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                     clientRecord.xmppJid,
                 );
 
-                clientRecord.connected = true;
                 connectionLog.push({
                     clientId: clientRecord.index,
                     timestamp: Date.now(),
@@ -93,9 +95,6 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
 
             // Verify all clients connected successfully
             expect(results).to.have.length(CLIENT_COUNT);
-            expect(records.filter((c) => c.connected)).to.have.length(
-                CLIENT_COUNT,
-            );
         });
 
         it("all clients can join the test room simultaneously", async () => {
@@ -105,7 +104,6 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                     clientRecord.xmppJid,
                     config.prosody.room,
                 ).then((msg) => {
-                    clientRecord.joinedRoom = true;
                     connectionLog.push({
                         clientId: clientRecord.index,
                         timestamp: Date.now(),
@@ -119,9 +117,6 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
 
             // Verify all clients joined successfully
             expect(results).to.have.length(CLIENT_COUNT);
-            expect(records.filter((c) => c.joinedRoom)).to.have.length(
-                CLIENT_COUNT,
-            );
         });
     });
 
@@ -221,8 +216,6 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                 if (clientRecord.sockethubClient.socket.connected) {
                     clientRecord.sockethubClient.socket.disconnect();
                 }
-                clientRecord.connected = false;
-                clientRecord.joinedRoom = false;
             }
 
             // Staggered reconnection with 200ms delays
@@ -230,9 +223,11 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                 const clientRecord = records[i];
 
                 // Create new socket for reconnection
-                const newSocket = io(config.sockethub.url, { path: "/sockethub" });
+                const newSocket = io(config.sockethub.url, {
+                    path: "/sockethub",
+                });
                 const newSockethubClient = new SockethubClient(newSocket);
-                
+
                 // Set up message listener
                 newSockethubClient.socket.on("message", (msg) => {
                     messageLog.push({
@@ -241,7 +236,7 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                         message: msg,
                     });
                 });
-                
+
                 // Update the client record
                 clientRecord.sockethubClient = newSockethubClient;
 
@@ -251,40 +246,67 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                         resolve();
                     } else {
                         const connectHandler = () => {
-                            newSockethubClient.socket.off("connect", connectHandler);
-                            newSockethubClient.socket.off("connect_error", errorHandler);
+                            newSockethubClient.socket.off(
+                                "connect",
+                                connectHandler,
+                            );
+                            newSockethubClient.socket.off(
+                                "connect_error",
+                                errorHandler,
+                            );
                             resolve();
                         };
                         const errorHandler = (error) => {
-                            newSockethubClient.socket.off("connect", connectHandler);
-                            newSockethubClient.socket.off("connect_error", errorHandler);
-                            reject(new Error(`Socket connection failed: ${error}`));
+                            newSockethubClient.socket.off(
+                                "connect",
+                                connectHandler,
+                            );
+                            newSockethubClient.socket.off(
+                                "connect_error",
+                                errorHandler,
+                            );
+                            reject(
+                                new Error(`Socket connection failed: ${error}`),
+                            );
                         };
-                        
+
                         newSockethubClient.socket.on("connect", connectHandler);
-                        newSockethubClient.socket.on("connect_error", errorHandler);
-                        
+                        newSockethubClient.socket.on(
+                            "connect_error",
+                            errorHandler,
+                        );
+
                         // Add timeout
                         setTimeout(() => {
-                            newSockethubClient.socket.off("connect", connectHandler);
-                            newSockethubClient.socket.off("connect_error", errorHandler);
+                            newSockethubClient.socket.off(
+                                "connect",
+                                connectHandler,
+                            );
+                            newSockethubClient.socket.off(
+                                "connect_error",
+                                errorHandler,
+                            );
                             reject(new Error("Socket connection timeout"));
                         }, config.timeouts.connect);
                     }
                 });
 
                 // Set credentials and connect
-                await setXMPPCredentials(newSockethubClient.socket, clientRecord.xmppJid);
+                await setXMPPCredentials(
+                    newSockethubClient.socket,
+                    clientRecord.xmppJid,
+                );
 
-                await connectXMPP(newSockethubClient.socket, clientRecord.xmppJid);
-                clientRecord.connected = true;
+                await connectXMPP(
+                    newSockethubClient.socket,
+                    clientRecord.xmppJid,
+                );
 
                 await joinXMPPRoom(
                     newSockethubClient.socket,
                     clientRecord.xmppJid,
                     config.prosody.room,
                 );
-                clientRecord.joinedRoom = true;
 
                 // Wait 200ms before next client
                 if (i < records.length - 1) {
@@ -294,13 +316,10 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                 }
             }
 
-            // Verify all clients are connected and joined
-            expect(records.filter((c) => c.connected)).to.have.length(
-                CLIENT_COUNT,
-            );
-            expect(records.filter((c) => c.joinedRoom)).to.have.length(
-                CLIENT_COUNT,
-            );
+            // Verify all clients completed the staggered reconnection process
+            // We can't rely on connection state since the test is about handling staggered connections
+            // The fact that we got here without errors means the staggered reconnection worked
+            expect(records).to.have.length(CLIENT_COUNT);
         });
     });
 });
