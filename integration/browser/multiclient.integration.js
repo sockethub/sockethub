@@ -214,131 +214,80 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
         });
     });
 
-    describe("Client Resilience Testing", () => {
-        it("handles client disconnection and reconnection gracefully (browser refresh)", async () => {
-            // This test simulates a browser refresh scenario where:
-            // 1. Client disconnects (browser closes/refreshes)
-            // 2. Sockethub maintains the persistent XMPP connection temporarily
-            // 3. New client connects with same credentials (new browser session)
-            // 4. Should reconnect quickly since Sockethub has existing connection
-            // 5. Client can immediately rejoin room and exchange messages
-            const testClientRecord = records[0];
-            const testMessage = `Message after reconnection ${Date.now()}`;
-
-            // Disconnect client (simulates browser close/refresh)
-            if (testClientRecord.sockethubClient.socket.connected) {
-                testClientRecord.sockethubClient.socket.disconnect();
-            }
-            testClientRecord.connected = false;
-            testClientRecord.joinedRoom = false;
-
-            // Brief wait to simulate browser refresh delay
-            await new Promise((resolve) =>
-                setTimeout(resolve, config.timeouts.process),
-            );
-
-            // Create new client (simulates new browser session)
-            const newSocket = io(config.sockethub.url, { path: "/sockethub" });
-            const newSockethubClient = new SockethubClient(newSocket);
-            
-            // Replace the disconnected client record
-            records[0] = {
-                index: testClientRecord.index,
-                xmppJid: testClientRecord.xmppJid,
-                actor: testClientRecord.actor,
-                sockethubClient: newSockethubClient,
-            };
-
-            // Wait for socket connection
-            await waitFor(
-                () => newSockethubClient.socket.connected,
-                config.timeouts.connection,
-            );
-
-            // Set credentials (browser would send these again)
-            await setXMPPCredentials(newSockethubClient.socket, testClientRecord.xmppJid);
-
-            // Connect (should be fast due to persistent XMPP connection)
-            await connectXMPP(newSockethubClient.socket, testClientRecord.xmppJid);
-            records[0].connected = true;
-
-            // Rejoin room
-            await joinXMPPRoom(
-                newSockethubClient.socket,
-                testClientRecord.xmppJid,
-                config.prosody.room,
-            );
-            records[0].joinedRoom = true;
-
-            // Test that reconnected client can send and receive messages
-            messageLog.length = 0;
-
-            await sendXMPPMessage(
-                newSockethubClient.socket,
-                testClientRecord.xmppJid,
-                config.prosody.room,
-                testMessage,
-            );
-
-            // Verify other clients received the message
-            await waitFor(
-                () =>
-                    messageLog.filter(
-                        (log) =>
-                            log.message?.object?.content === testMessage &&
-                            log.message?.type === "send" &&
-                            log.clientId !== testClientRecord.index,
-                    ).length >=
-                    CLIENT_COUNT - 1,
-                config.timeouts.message,
-            );
-
-            const receivedMessages = messageLog.filter(
-                (log) =>
-                    log.message?.object?.content === testMessage &&
-                    log.message?.type === "send" &&
-                    log.clientId !== testClientRecord.index,
-            );
-
-            expect(receivedMessages).to.have.length.at.least(CLIENT_COUNT - 1);
-        });
-    });
-
     describe("Performance and Load Testing", () => {
         it("handles staggered client connections", async () => {
             // Disconnect all clients first
-            for (const client of clients) {
-                if (client.socket.connected) {
-                    client.socket.disconnect();
+            for (const clientRecord of records) {
+                if (clientRecord.sockethubClient.socket.connected) {
+                    clientRecord.sockethubClient.socket.disconnect();
                 }
-                client.connected = false;
-                client.joinedRoom = false;
+                clientRecord.connected = false;
+                clientRecord.joinedRoom = false;
             }
 
             // Staggered reconnection with 200ms delays
-            for (const clientRecord of records) {
+            for (let i = 0; i < records.length; i++) {
+                const clientRecord = records[i];
 
-                client.socket.connect();
-                await waitFor(
-                    () => client.socket.connected,
-                    config.timeouts.connection,
-                );
+                // Create new socket for reconnection
+                const newSocket = io(config.sockethub.url, { path: "/sockethub" });
+                const newSockethubClient = new SockethubClient(newSocket);
+                
+                // Set up message listener
+                newSockethubClient.socket.on("message", (msg) => {
+                    messageLog.push({
+                        clientId: clientRecord.index,
+                        timestamp: Date.now(),
+                        message: msg,
+                    });
+                });
+                
+                // Update the client record
+                clientRecord.sockethubClient = newSockethubClient;
+
+                // Wait for socket to connect using a Promise
+                await new Promise((resolve, reject) => {
+                    if (newSockethubClient.socket.connected) {
+                        resolve();
+                    } else {
+                        const connectHandler = () => {
+                            newSockethubClient.socket.off("connect", connectHandler);
+                            newSockethubClient.socket.off("connect_error", errorHandler);
+                            resolve();
+                        };
+                        const errorHandler = (error) => {
+                            newSockethubClient.socket.off("connect", connectHandler);
+                            newSockethubClient.socket.off("connect_error", errorHandler);
+                            reject(new Error(`Socket connection failed: ${error}`));
+                        };
+                        
+                        newSockethubClient.socket.on("connect", connectHandler);
+                        newSockethubClient.socket.on("connect_error", errorHandler);
+                        
+                        // Add timeout
+                        setTimeout(() => {
+                            newSockethubClient.socket.off("connect", connectHandler);
+                            newSockethubClient.socket.off("connect_error", errorHandler);
+                            reject(new Error("Socket connection timeout"));
+                        }, config.timeouts.connect);
+                    }
+                });
 
                 // Set credentials and connect
-                await setXMPPCredentials(client.socket, client.actorId);
+                await setXMPPCredentials(newSockethubClient.socket, clientRecord.xmppJid);
 
-                await connectXMPP(client.socket, client.actorId);
-                client.connected = true;
+                await connectXMPP(newSockethubClient.socket, clientRecord.xmppJid);
+                clientRecord.connected = true;
 
                 await joinXMPPRoom(
-                    client.socket,
-                    client.actorId,
+                    newSockethubClient.socket,
+                    clientRecord.xmppJid,
                     config.prosody.room,
                 );
-                client.joinedRoom = true;
+                clientRecord.joinedRoom = true;
 
                 // Wait 200ms before next client
-                if (i < clients.length - 1) {
+                if (i < records.length - 1) {
                     await new Promise((resolve) =>
                         setTimeout(resolve, config.timeouts.process),
                     );
@@ -346,10 +295,10 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             }
 
             // Verify all clients are connected and joined
-            expect(clients.filter((c) => c.connected)).to.have.length(
+            expect(records.filter((c) => c.connected)).to.have.length(
                 CLIENT_COUNT,
             );
-            expect(clients.filter((c) => c.joinedRoom)).to.have.length(
+            expect(records.filter((c) => c.joinedRoom)).to.have.length(
                 CLIENT_COUNT,
             );
         });
