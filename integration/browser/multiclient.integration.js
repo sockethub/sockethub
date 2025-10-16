@@ -37,7 +37,12 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
             };
 
             client.socket.on("message", (msg) => {
-                messageLog.push(msg);
+                console.log(`[Client ${i}] Received message:`, msg);
+                messageLog.push({
+                    clientId: i,
+                    timestamp: Date.now(),
+                    message: msg,
+                });
             });
 
             clients.push(client);

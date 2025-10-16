@@ -86,9 +86,15 @@ jobs:
       - name: Basic Browser Integration Tests
         run: bun run integration:browser:basic:run
 
+      - name: Sockethub Logs - Basic
+        if: always()
+        run: docker logs sockethub-sockethub-1
+
+      - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+
       - name: Multiclient XMPP Integration Tests
         run: bun run integration:browser:multiclient:run
 
-      - name: Print Sockethub logs
+      - name: Sockethub Logs - Basic
         if: always()
-        run: bun run docker:logs:sockethub
+        run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
