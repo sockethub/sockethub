@@ -91,7 +91,9 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                 waitFor(() => {
                     const isConnected = client.socket.connected;
                     if (!isConnected) {
-                        console.log(`[DEBUG] Client ${index + 1} connected status: ${isConnected}`);
+                        console.log(
+                            `[DEBUG] Client ${index + 1} connected status: ${isConnected}`,
+                        );
                     }
                     return isConnected;
                 }, 10000),
