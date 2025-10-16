@@ -3,11 +3,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { join } from "node:path";
 import { type Socket, io } from "socket.io-client";
 
-const REDIS_HOST = "localhost";
-const REDIS_PORT = "16379";
-const REDIS_URL = `redis://${REDIS_HOST}:${REDIS_PORT}`;
-const SOCKETHUB_PORT = 10550; // Sockethub default port
-const XMPP_PORT = "8222";
+const config = require("./config.js");
 
 interface TestConfig {
     sockethubProcess?: ChildProcess;
@@ -17,7 +13,6 @@ interface TestConfig {
 
 describe("Parent Process Sudden Termination", () => {
     const testConfig: TestConfig = {};
-    const timeout = 20000; // 20 second timeout for process operations
 
     beforeAll(async () => {
         // Start Sockethub server in separate process
@@ -29,8 +24,8 @@ describe("Parent Process Sudden Termination", () => {
         testConfig.sockethubProcess = spawn("bun", ["run", sockethubPath], {
             env: {
                 ...process.env,
-                REDIS_URL,
-                PORT: SOCKETHUB_PORT.toString(),
+                REDIS_URL: config.redis.url,
+                PORT: config.sockethub.port,
                 NODE_ENV: "test",
                 DEBUG: "sockethub*",
             },
@@ -45,7 +40,7 @@ describe("Parent Process Sudden Termination", () => {
                         "Sockethub server failed to start within timeout",
                     ),
                 );
-            }, timeout);
+            }, config.timeouts.process);
 
             let serverStarted = false;
 
@@ -128,7 +123,7 @@ describe("Parent Process Sudden Termination", () => {
         try {
             const redisCheck = spawn(
                 "nc",
-                ["-z", "-v", "localhost", REDIS_PORT],
+                ["-z", "-v", config.redis.host, config.redis.port],
                 {
                     stdio: ["ignore", "pipe", "pipe"],
                 },
@@ -141,12 +136,12 @@ describe("Parent Process Sudden Termination", () => {
                     }
                 });
                 redisCheck.on("close", () => resolve(success));
-                setTimeout(() => resolve(false), 2000);
+                setTimeout(() => resolve(false), config.timeouts.message);
             });
 
             if (!checkResult) {
                 console.log(
-                    `Redis server is not reachable at localhost:${REDIS_PORT}`,
+                    `Redis server is not reachable at ${config.redis.host}:${config.redis.port}`,
                 );
                 console.log("Make sure to run: bun run docker:start:redis");
                 throw new Error("Redis server not available - aborting test");
@@ -164,7 +159,7 @@ describe("Parent Process Sudden Termination", () => {
         try {
             const xmppCheck = spawn(
                 "nc",
-                ["-z", "-v", "localhost", XMPP_PORT],
+                ["-z", "-v", config.prosody.host, config.prosody.port],
                 {
                     stdio: ["ignore", "pipe", "pipe"],
                 },
@@ -177,12 +172,12 @@ describe("Parent Process Sudden Termination", () => {
                     }
                 });
                 xmppCheck.on("close", () => resolve(success));
-                setTimeout(() => resolve(false), 2000);
+                setTimeout(() => resolve(false), config.timeouts.message);
             });
 
             if (!checkResult) {
                 console.log(
-                    `XMPP server (Prosody) is not reachable at localhost:${XMPP_PORT}`,
+                    `XMPP server (Prosody) is not reachable at ${config.prosody.host}:${config.prosody.port}`,
                 );
                 console.log("Make sure to run: bun run docker:start:xmpp");
                 throw new Error("XMPP server not available - aborting test");
@@ -197,7 +192,7 @@ describe("Parent Process Sudden Termination", () => {
     });
 
     it("should connect to Sockethub via Socket.IO", async () => {
-        testConfig.client = io(`http://localhost:${SOCKETHUB_PORT}`, {
+        testConfig.client = io(config.sockethub.url, {
             path: "/sockethub",
             transports: ["websocket"],
         });
@@ -205,7 +200,7 @@ describe("Parent Process Sudden Termination", () => {
         await new Promise<void>((resolve, reject) => {
             const timeoutId = setTimeout(() => {
                 reject(new Error("Failed to connect to Sockethub"));
-            }, 5000);
+            }, config.timeouts.connect);
 
             testConfig.client.on("connect", () => {
                 clearTimeout(timeoutId);
@@ -224,19 +219,20 @@ describe("Parent Process Sudden Termination", () => {
         if (!testConfig.client) {
             throw new Error("No client connection - run previous test first");
         }
+        const actorId = config.createXmppJid();
         const credentialsMessage = {
             type: "credentials",
             context: "xmpp",
             actor: {
-                id: "jimmy@prosody/SockethubTest",
+                id: actorId,
                 type: "person",
             },
             object: {
                 type: "credentials",
-                password: "passw0rd",
-                resource: "SockethubTest",
-                port: XMPP_PORT,
-                userAddress: "jimmy@prosody",
+                password: config.prosody.testUser.password,
+                port: config.prosody.port,
+                resource: "SockethubTest1",
+                userAddress: config.prosody.testUser.fullJid,
             },
         };
 
@@ -265,7 +261,7 @@ describe("Parent Process Sudden Termination", () => {
             type: "connect",
             context: "xmpp",
             actor: {
-                id: "jimmy@prosody/SockethubTest",
+                id: actorId,
                 type: "person",
             },
         };
@@ -274,7 +270,7 @@ describe("Parent Process Sudden Termination", () => {
         await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => {
                 reject(new Error("XMPP connect timeout"));
-            }, 5000);
+            }, config.timeouts.connect);
 
             testConfig.client.emit("message", connectMessage, (response) => {
                 clearTimeout(timeout);
@@ -389,7 +385,9 @@ describe("Parent Process Sudden Termination", () => {
         testConfig.sockethubProcess.kill("SIGKILL");
 
         // Wait for OS to clean up orphaned processes
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await new Promise((resolve) =>
+            setTimeout(resolve, config.timeouts.cleanup),
+        );
 
         // Verify the child process is no longer running
         const childStillRunning = isProcessRunning(testConfig.platformChildPid);
