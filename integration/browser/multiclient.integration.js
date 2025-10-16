@@ -20,12 +20,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
     const messageLog = [];
     const connectionLog = [];
 
-    before(async () => {
-        console.log(
-            `Initializing ${CLIENT_COUNT} clients for multi-client XMPP test`,
-        );
-
-        // Create single client first (just like basic test)
+    before(() => {
         const clientSetup = createSockethubClient("test-client");
         const client = {
             id: 1,
@@ -37,36 +32,13 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
             },
             client: clientSetup.client,
             socket: clientSetup.client.socket,
-            cleanup: clientSetup.cleanup,
-            connected: false,
-            joinedRoom: false,
         };
 
-        // Track messages for this client
         client.socket.on("message", (msg) => {
-            messageLog.push({
-                clientId: 1,
-                timestamp: Date.now(),
-                message: msg,
-            });
+            messageLog.push(msg);
         });
 
         clients.push(client);
-        console.log(
-            `Client created. Socket connected: ${client.socket.connected}`,
-        );
-
-        console.log(`Created ${clients.length} clients successfully`);
-
-        // Wait for all Socket.IO connections to establish
-        console.log(`Waiting for all ${CLIENT_COUNT} Socket.IO connections...`);
-        await Promise.all(
-            clients.map((client) =>
-                waitFor(() => client.socket.connected, 10000),
-            ),
-        );
-
-        console.log("All Socket.IO connections established");
     });
 
     after(() => {
