@@ -72,7 +72,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
         };
     }
 
-    before(() => {
+    before(async () => {
         console.log(
             `Initializing ${CLIENT_COUNT} clients for multi-client XMPP test`,
         );
@@ -84,12 +84,17 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
 
         console.log(`Created ${clients.length} clients successfully`);
 
-        // Log initial Socket.IO connection status
+        // Wait for all Socket.IO connections to establish
+        console.log(`Waiting for all ${CLIENT_COUNT} Socket.IO connections...`);
+        await Promise.all(clients.map(client => 
+            waitFor(() => client.socket.connected, 10000)
+        ));
+
         const connectedClients = clients.filter(
             (c) => c.socket.connected,
         ).length;
         console.log(
-            `Initial Socket.IO connections: ${connectedClients}/${CLIENT_COUNT}`,
+            `All Socket.IO connections established: ${connectedClients}/${CLIENT_COUNT}`,
         );
     });
 
