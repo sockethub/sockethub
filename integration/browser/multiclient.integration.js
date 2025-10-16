@@ -36,7 +36,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
         // Log Socket.IO connection events for debugging
         clientSetup.socket.on("connect", () => {
             console.log(
-                `[${userId}] Socket.IO connected with ID: ${clientSetup.socket.id}`,
+                `[${userId}] Socket.IO connected with ID: ${clientSetup.socket.id}, connected: ${clientSetup.socket.connected}`,
             );
         });
 
@@ -86,9 +86,17 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
 
         // Wait for all Socket.IO connections to establish
         console.log(`Waiting for all ${CLIENT_COUNT} Socket.IO connections...`);
-        await Promise.all(clients.map(client => 
-            waitFor(() => client.socket.connected, 10000)
-        ));
+        await Promise.all(
+            clients.map((client, index) =>
+                waitFor(() => {
+                    const isConnected = client.socket.connected;
+                    if (!isConnected) {
+                        console.log(`[DEBUG] Client ${index + 1} connected status: ${isConnected}`);
+                    }
+                    return isConnected;
+                }, 10000),
+            ),
+        );
 
         const connectedClients = clients.filter(
             (c) => c.socket.connected,
