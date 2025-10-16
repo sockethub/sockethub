@@ -52,7 +52,7 @@ export function createSockethubClient(clientId = "default") {
 // Helper function to wait for a condition with timeout
 export function waitFor(
     condition,
-    timeout = config.getTimeout("message"),
+    timeout = config.timeouts.message,
     interval = 100,
 ) {
     return new Promise((resolve, reject) => {
@@ -105,6 +105,11 @@ export function setXMPPCredentials(
                     password,
                     resource: defaultResource,
                     userAddress: `${userId}@${config.prosody.host}`,
+                    // We use xmpp://user@host:port to get around limitations with our prosody docker instance.
+                    // - The port is specified explicitly to bypass DNS SRV record lookups that were timing out
+                    // - The `xmpp://` URI scheme is specified explicitly to enable a plain-text connection,
+                    // avoiding the TLS negotiation issues that were causing connection failures.
+                    server: `xmpp://${config.prosody.host}:${config.prosody.port}`,
                 },
             },
             (response) => {
