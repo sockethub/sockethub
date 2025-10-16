@@ -41,7 +41,7 @@ const config = {
             password: "passw0rd",
             // fullJid: IS_DOCKER ? "jimmy@prosody" : "jimmy@localhost",
         },
-        room: "testroom@prosody",
+        room: "testroom@conference.prosody",
     },
 
     timeouts: {
