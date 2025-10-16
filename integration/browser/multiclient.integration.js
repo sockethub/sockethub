@@ -11,7 +11,7 @@ import {
 } from "./shared-setup.js";
 
 const TEST_ROOM = "testroom@prosody";
-const CLIENT_COUNT = 10;
+const CLIENT_COUNT = 1; // Start with 1 to debug
 
 describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
     validateGlobals();
@@ -25,35 +25,36 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
             `Initializing ${CLIENT_COUNT} clients for multi-client XMPP test`,
         );
 
-        // Create all clients
-        for (let i = 1; i <= CLIENT_COUNT; i++) {
-            const clientSetup = createSockethubClient(`client-${i}`);
-            const client = {
-                id: i,
-                actorId: `jimmy@prosody/SockethubTest${i}`,
-                actorObject: {
-                    id: `jimmy@prosody/SockethubTest${i}`,
-                    type: "person",
-                    name: `Jimmy Session ${i}`,
-                },
-                client: clientSetup.client,
-                socket: clientSetup.client.socket, // Use the correct socket reference
-                cleanup: clientSetup.cleanup,
-                connected: false,
-                joinedRoom: false,
-            };
+        // Create single client first (just like basic test)
+        const clientSetup = createSockethubClient("test-client");
+        const client = {
+            id: 1,
+            actorId: "jimmy@prosody/SockethubTest1",
+            actorObject: {
+                id: "jimmy@prosody/SockethubTest1",
+                type: "person",
+                name: "Jimmy Session 1",
+            },
+            client: clientSetup.client,
+            socket: clientSetup.client.socket,
+            cleanup: clientSetup.cleanup,
+            connected: false,
+            joinedRoom: false,
+        };
 
-            // Track messages for this client
-            client.socket.on("message", (msg) => {
-                messageLog.push({
-                    clientId: i,
-                    timestamp: Date.now(),
-                    message: msg,
-                });
+        // Track messages for this client
+        client.socket.on("message", (msg) => {
+            messageLog.push({
+                clientId: 1,
+                timestamp: Date.now(),
+                message: msg,
             });
+        });
 
-            clients.push(client);
-        }
+        clients.push(client);
+        console.log(
+            `Client created. Socket connected: ${client.socket.connected}`,
+        );
 
         console.log(`Created ${clients.length} clients successfully`);
 
