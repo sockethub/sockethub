@@ -44,6 +44,14 @@ let credentials = $derived({
     secure: true,
 });
 
+function resetState() {
+    $sockethubState.actorSet = false;
+    $sockethubState.credentialsSet = false;
+    $sockethubState.connected = false;
+    $sockethubState.joined = false;
+    connecting = false;
+}
+
 /**
  * Sends a connect request to Sockethub's IRC platform.
  *
@@ -68,17 +76,22 @@ async function connectIrc(): Promise<void> {
         // Note: credentials (server, port, etc.) are sent separately via the Credentials component
     } as AnyActivityStream)
         .catch(() => {
-            $sockethubState.connected = false;
-            connecting = false;
+            resetState();
         })
-        .then(() => {
-            $sockethubState.connected = true;
-            connecting = false;
-        });
+        .then(
+            () => {
+                $sockethubState.connected = true;
+                connecting = false;
+            },
+            (err) => {
+                console.error(err);
+                resetState();
+            },
+        );
 }
 </script>
 
-<BaseExample 
+<BaseExample
     title="IRC Platform Example"
     description="Connect to IRC servers, join channels, and send messages using Sockethub's IRC platform."
 >
@@ -134,10 +147,10 @@ async function connectIrc(): Promise<void> {
                 <span class="mr-3 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</span>
                 Connect to Server
             </h4>
-            <PlatformConnection 
-                {sockethubState} 
-                {connecting} 
-                onConnect={connectIrc} 
+            <PlatformConnection
+                {sockethubState}
+                {connecting}
+                onConnect={connectIrc}
             />
         </div>
 
