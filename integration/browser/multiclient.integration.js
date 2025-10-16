@@ -1,6 +1,5 @@
 import { expect } from "@esm-bundle/chai";
 import {
-    SH_PORT,
     connectXMPP,
     createSockethubClient,
     joinXMPPRoom,
@@ -10,10 +9,13 @@ import {
     waitFor,
 } from "./shared-setup.js";
 
-const TEST_ROOM = "testroom@prosody";
-const CLIENT_COUNT = 3; // Start small and expand
+import "./../config.js";
 
-describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
+const config = window.SH_CONFIG;
+
+const CLIENT_COUNT = 3;
+
+describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () => {
     validateGlobals();
 
     let clients = [];
@@ -25,12 +27,8 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
             const clientSetup = createSockethubClient(`test-client-${i}`);
             const client = {
                 id: i,
-                actorId: `jimmy@prosody/SockethubTest${i}`,
-                actorObject: {
-                    id: `jimmy@prosody/SockethubTest${i}`,
-                    type: "person",
-                    name: `Jimmy Session ${i}`,
-                },
+                actorId: config.createXmppJid(i),
+                actorObject: config.createActorObject(i),
                 client: clientSetup.client,
                 socket: clientSetup.client.socket,
                 cleanup: clientSetup.cleanup,
@@ -69,12 +67,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
             );
 
             const credentialPromises = clients.map((client) =>
-                setXMPPCredentials(
-                    client.socket,
-                    client.actorId,
-                    "jimmy",
-                    "passw0rd",
-                ),
+                setXMPPCredentials(client.socket, client.actorId),
             );
 
             try {
@@ -166,7 +159,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                 return joinXMPPRoom(
                     client.socket,
                     client.actorId,
-                    TEST_ROOM,
+                    config.prosody.room,
                 ).then((msg) => {
                     client.joinedRoom = true;
                     connectionLog.push({
@@ -200,7 +193,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
             await sendXMPPMessage(
                 sendingClient.socket,
                 sendingClient.actorId,
-                TEST_ROOM,
+                config.prosody.room,
                 testMessage,
             );
 
@@ -213,7 +206,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                             log.message?.type === "message",
                     ).length >=
                     CLIENT_COUNT - 1,
-                10000,
+                config.timeouts.message,
             );
 
             // Verify message was received by other clients
@@ -241,7 +234,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                     return sendXMPPMessage(
                         client.socket,
                         client.actorId,
-                        TEST_ROOM,
+                        config.prosody.room,
                         message,
                     );
                 });
@@ -261,7 +254,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                 return (
                     receivedCount >= testMessages.length * (CLIENT_COUNT - 1)
                 );
-            }, 15000);
+            }, config.timeouts.message);
 
             // Verify all messages were received by all other clients
             for (const testMsg of testMessages) {
@@ -288,21 +281,21 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
             testClient.joinedRoom = false;
 
             // Wait a bit
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) =>
+                setTimeout(resolve, config.timeouts.process),
+            );
 
             // Reconnect and rejoin
             testClient.socket.connect();
 
             // Wait for connection
-            await waitFor(() => testClient.socket.connected, 5000);
+            await waitFor(
+                () => testClient.socket.connected,
+                config.timeouts.connection,
+            );
 
             // Re-establish credentials and connection
-            await setXMPPCredentials(
-                testClient.socket,
-                testClient.actorId,
-                "jimmy",
-                "passw0rd",
-            );
+            await setXMPPCredentials(testClient.socket, testClient.actorId);
 
             await connectXMPP(testClient.socket, testClient.actorId);
             testClient.connected = true;
@@ -310,7 +303,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
             await joinXMPPRoom(
                 testClient.socket,
                 testClient.actorId,
-                TEST_ROOM,
+                config.prosody.room,
             );
             testClient.joinedRoom = true;
 
@@ -320,7 +313,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
             await sendXMPPMessage(
                 testClient.socket,
                 testClient.actorId,
-                TEST_ROOM,
+                config.prosody.room,
                 testMessage,
             );
 
@@ -334,7 +327,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                             log.clientId !== testClient.id,
                     ).length >=
                     CLIENT_COUNT - 1,
-                10000,
+                config.timeouts.message,
             );
 
             const receivedMessages = messageLog.filter(
@@ -364,25 +357,29 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
                 const client = clients[i];
 
                 client.socket.connect();
-                await waitFor(() => client.socket.connected, 5000);
+                await waitFor(
+                    () => client.socket.connected,
+                    config.timeouts.connection,
+                );
 
                 // Set credentials and connect
-                await setXMPPCredentials(
-                    client.socket,
-                    client.actorId,
-                    "jimmy",
-                    "passw0rd",
-                );
+                await setXMPPCredentials(client.socket, client.actorId);
 
                 await connectXMPP(client.socket, client.actorId);
                 client.connected = true;
 
-                await joinXMPPRoom(client.socket, client.actorId, TEST_ROOM);
+                await joinXMPPRoom(
+                    client.socket,
+                    client.actorId,
+                    config.prosody.room,
+                );
                 client.joinedRoom = true;
 
                 // Wait 200ms before next client
                 if (i < clients.length - 1) {
-                    await new Promise((resolve) => setTimeout(resolve, 200));
+                    await new Promise((resolve) =>
+                        setTimeout(resolve, config.timeouts.process),
+                    );
                 }
             }
 

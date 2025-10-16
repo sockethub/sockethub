@@ -1,6 +1,5 @@
 import { expect } from "@esm-bundle/chai";
 import {
-    SH_PORT,
     connectXMPP,
     createSockethubClient,
     joinXMPPRoom,
@@ -9,7 +8,9 @@ import {
     validateGlobals,
 } from "./shared-setup.js";
 
-describe(`Sockethub Basic Integration Tests at port ${SH_PORT}`, () => {
+const config = window.SH_CONFIG;
+
+describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
     validateGlobals();
 
     describe("SockethubClient()", () => {
@@ -123,7 +124,7 @@ describe(`Sockethub Basic Integration Tests at port ${SH_PORT}`, () => {
                             type: "fetch",
                             actor: {
                                 type: "feed",
-                                id: `http://localhost:${SH_PORT}/feed.xml`,
+                                id: `${config.sockethub.url}/feed.xml`,
                             },
                         },
                         (msg, second) => {
@@ -152,7 +153,7 @@ describe(`Sockethub Basic Integration Tests at port ${SH_PORT}`, () => {
         });
 
         describe("XMPP", () => {
-            const actorId = "jimmy@prosody/SockethubExample";
+            const actorId = config.createXmppJid();
             const actorObject = {
                 id: actorId,
                 type: "person",
@@ -242,7 +243,7 @@ describe(`Sockethub Basic Integration Tests at port ${SH_PORT}`, () => {
                             actor: { id: "test@prosody", type: "room" },
                             error: '<error type="cancel"><service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error>',
                             target: {
-                                id: "jimmy@prosody/SockethubExample",
+                                id: actorId,
                                 type: "person",
                             },
                         },

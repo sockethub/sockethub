@@ -1,8 +1,9 @@
 import { expect } from "@esm-bundle/chai";
 import "./../../packages/server/res/sockethub-client.js";
 import "./../../packages/server/res/socket.io.js";
+import "./../config.js";
 
-export const SH_PORT = 10550;
+const config = window.SH_CONFIG;
 
 // Mocha configuration
 mocha.bail(true);
@@ -24,7 +25,7 @@ export function validateGlobals() {
 // Helper function to create a client with message tracking
 export function createSockethubClient(clientId = "default") {
     const messageLog = [];
-    const socket = io(`http://localhost:${SH_PORT}/`, { path: "/sockethub" });
+    const socket = io(config.sockethub.url, { path: "/sockethub" });
     const sc = new SockethubClient(socket);
 
     // Track all incoming messages
@@ -49,7 +50,11 @@ export function createSockethubClient(clientId = "default") {
 }
 
 // Helper function to wait for a condition with timeout
-export function waitFor(condition, timeout = 5000, interval = 100) {
+export function waitFor(
+    condition,
+    timeout = config.getTimeout("message"),
+    interval = 100,
+) {
     return new Promise((resolve, reject) => {
         const startTime = Date.now();
         const check = () => {
@@ -73,13 +78,15 @@ export function waitFor(condition, timeout = 5000, interval = 100) {
 export function setXMPPCredentials(
     socket,
     actorId,
-    userId = "jimmy",
-    password = "passw0rd",
+    userId = config.prosody.testUser.username,
+    password = config.prosody.testUser.password,
     resource = null,
 ) {
     // Extract resource from actorId if not provided
     const defaultResource =
-        resource || actorId.split("/")[1] || "SockethubTest";
+        resource ||
+        actorId.split("/")[1] ||
+        config.test.multiClient.baseResource;
 
     return new Promise((resolve, reject) => {
         console.log(`[${userId}] Setting XMPP credentials for ${actorId}`);
@@ -97,7 +104,7 @@ export function setXMPPCredentials(
                     type: "credentials",
                     password,
                     resource: defaultResource,
-                    userAddress: `${userId}@prosody`,
+                    userAddress: `${userId}@${config.prosody.host}`,
                 },
             },
             (response) => {

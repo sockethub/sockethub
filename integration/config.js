@@ -41,6 +41,7 @@ const config = {
             password: "passw0rd",
             // fullJid: IS_DOCKER ? "jimmy@prosody" : "jimmy@localhost",
         },
+        room: "testroom@prosody",
     },
 
     timeouts: {
@@ -67,7 +68,7 @@ const config = {
 
 // Helper functions
 config.createXmppJid = (clientId = null) => {
-    const resource = `${config.prosody.resource}${clientId ? `:${clientId}` : ""}`;
+    const resource = `${config.prosody.resource}${clientId ? `${clientId}` : ""}`;
     return `${config.prosody.testUser.username}@${config.prosody.host}/${resource}`;
 };
 
