@@ -22,32 +22,6 @@ export function validateGlobals() {
     });
 }
 
-// Helper function to create a client with message tracking
-export function createSockethubClient(clientId = "default") {
-    const messageLog = [];
-    const socket = io(config.sockethub.url, { path: "/sockethub" });
-    const sc = new SockethubClient(socket);
-
-    // Track all incoming messages
-    sc.socket.on("message", (msg) => {
-        messageLog.push({
-            clientId,
-            timestamp: Date.now(),
-            message: msg,
-        });
-    });
-
-    return {
-        client: sc,
-        socket: sc.socket,
-        messageLog,
-        cleanup: () => {
-            if (sc.socket.connected) {
-                sc.socket.disconnect();
-            }
-        },
-    };
-}
 
 // Helper function to wait for a condition with timeout
 export function waitFor(
@@ -89,8 +63,6 @@ export function setXMPPCredentials(
         config.test.multiClient.baseResource;
 
     return new Promise((resolve, reject) => {
-        console.log(`[${userId}] Setting XMPP credentials for ${actorId}`);
-
         socket.emit(
             "credentials",
             {
@@ -114,17 +86,12 @@ export function setXMPPCredentials(
             },
             (response) => {
                 if (response?.error) {
-                    console.error(
-                        `[${userId}] Credentials failed:`,
-                        response.error,
-                    );
                     reject(
                         new Error(
                             `Credentials failed for ${userId}: ${response.error}`,
                         ),
                     );
                 } else {
-                    console.log(`[${userId}] Credentials set successfully`);
                     resolve();
                 }
             },
@@ -136,9 +103,6 @@ export function setXMPPCredentials(
 export function connectXMPP(socket, actorId) {
     const userId = actorId.split("@")[0]; // Extract user part for logging
     return new Promise((resolve, reject) => {
-        console.log(`[${userId}] Attempting XMPP connection for ${actorId}`);
-
-        const startTime = Date.now();
         socket.emit(
             "message",
             {
@@ -147,24 +111,11 @@ export function connectXMPP(socket, actorId) {
                 context: "xmpp",
             },
             (msg) => {
-                const duration = Date.now() - startTime;
                 if (msg?.error) {
-                    console.error(
-                        `[${userId}] XMPP connection failed after ${duration}ms:`,
-                        {
-                            error: msg.error,
-                            fullMessage: msg,
-                            socketConnected: socket.connected,
-                            socketId: socket.id,
-                        },
-                    );
                     reject(
                         new Error(`Connect failed for ${userId}: ${msg.error}`),
                     );
                 } else {
-                    console.log(
-                        `[${userId}] XMPP connection successful after ${duration}ms`,
-                    );
                     resolve(msg);
                 }
             },
@@ -176,8 +127,6 @@ export function connectXMPP(socket, actorId) {
 export function joinXMPPRoom(socket, actorId, roomId) {
     const userId = actorId.split("@")[0];
     return new Promise((resolve, reject) => {
-        console.log(`[${userId}] Attempting to join room ${roomId}`);
-
         socket.emit(
             "message",
             {
@@ -191,14 +140,10 @@ export function joinXMPPRoom(socket, actorId, roomId) {
             },
             (msg) => {
                 if (msg?.error) {
-                    console.error(`[${userId}] Room join failed:`, msg.error);
                     reject(
                         new Error(`Join failed for ${userId}: ${msg.error}`),
                     );
                 } else {
-                    console.log(
-                        `[${userId}] Successfully joined room ${roomId}`,
-                    );
                     resolve(msg);
                 }
             },
@@ -210,10 +155,6 @@ export function joinXMPPRoom(socket, actorId, roomId) {
 export function sendXMPPMessage(socket, actorId, roomId, content) {
     const userId = actorId.split("@")[0];
     return new Promise((resolve, reject) => {
-        console.log(
-            `[${userId}] Sending message to ${roomId}: ${content.substring(0, 50)}...`,
-        );
-
         socket.emit(
             "message",
             {
@@ -231,15 +172,10 @@ export function sendXMPPMessage(socket, actorId, roomId, content) {
             },
             (msg) => {
                 if (msg?.error) {
-                    console.error(
-                        `[${userId}] Message send failed:`,
-                        msg.error,
-                    );
                     reject(
                         new Error(`Send failed for ${userId}: ${msg.error}`),
                     );
                 } else {
-                    console.log(`[${userId}] Message sent successfully`);
                     resolve(msg);
                 }
             },

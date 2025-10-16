@@ -209,6 +209,12 @@ modules_enabled = { "muc_mam" }
 --- MUC configuration
 restrict_room_creation = false
 max_history_messages = 20
+muc_room_locking = false
+muc_room_lock_timeout = 0
+muc_room_default_public = true
+muc_room_default_persistent = false
+muc_room_default_members_only = false
+muc_room_default_moderated = false
 
 ---Set up an external component (default component port is 5347)
 --
