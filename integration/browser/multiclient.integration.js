@@ -11,7 +11,7 @@ import {
 } from "./shared-setup.js";
 
 const TEST_ROOM = "testroom@prosody";
-const CLIENT_COUNT = 1; // Start with 1 to debug
+const CLIENT_COUNT = 3; // Start small and expand
 
 describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
     validateGlobals();
@@ -21,24 +21,27 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
     const connectionLog = [];
 
     before(() => {
-        const clientSetup = createSockethubClient("test-client");
-        const client = {
-            id: 1,
-            actorId: "jimmy@prosody/SockethubTest1",
-            actorObject: {
-                id: "jimmy@prosody/SockethubTest1",
-                type: "person",
-                name: "Jimmy Session 1",
-            },
-            client: clientSetup.client,
-            socket: clientSetup.client.socket,
-        };
+        for (let i = 1; i <= CLIENT_COUNT; i++) {
+            const clientSetup = createSockethubClient(`test-client-${i}`);
+            const client = {
+                id: i,
+                actorId: `jimmy@prosody/SockethubTest${i}`,
+                actorObject: {
+                    id: `jimmy@prosody/SockethubTest${i}`,
+                    type: "person",
+                    name: `Jimmy Session ${i}`,
+                },
+                client: clientSetup.client,
+                socket: clientSetup.client.socket,
+                cleanup: clientSetup.cleanup,
+            };
 
-        client.socket.on("message", (msg) => {
-            messageLog.push(msg);
-        });
+            client.socket.on("message", (msg) => {
+                messageLog.push(msg);
+            });
 
-        clients.push(client);
+            clients.push(client);
+        }
     });
 
     after(() => {
@@ -275,7 +278,7 @@ describe(`Multi-Client XMPP Integration Tests at port ${SH_PORT}`, () => {
             const testMessage = `Message after reconnection ${Date.now()}`;
 
             // Disconnect client
-            testClient.socket.disconnect();
+            testClient.cleanup();
             testClient.connected = false;
             testClient.joinedRoom = false;
 
