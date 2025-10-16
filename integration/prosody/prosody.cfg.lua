@@ -86,7 +86,7 @@ modules_enabled = {
 -- to disable them then uncomment them here:
 modules_disabled = {
 	-- "offline"; -- Store offline messages
-	-- "c2s"; -- Handle client connections
+    -- 	"c2s"; -- Handle client connections
 	-- "s2s"; -- Handle server-to-server connections
 	-- "posix"; -- POSIX functionality, sends server to background, enables syslog, etc.
 }
@@ -99,11 +99,13 @@ allow_registration = false
 -- prevent clients from authenticating unless they are using encryption.
 
 c2s_require_encryption = false
+allow_unencrypted_plain_auth = true
+insecure_sasl_mechanisms = {"PLAIN", "LOGIN"}
 
 -- Force servers to use encrypted connections? This option will
 -- prevent servers from authenticating unless they are using encryption.
 
-s2s_require_encryption = true
+s2s_require_encryption = false
 
 -- Force certificate authentication for server-to-server connections?
 
@@ -114,7 +116,7 @@ s2s_secure_auth = false
 -- certificates. They will be authenticated using DNS instead, even
 -- when s2s_secure_auth is enabled.
 
---s2s_insecure_domains = { "insecure.example" }
+s2s_insecure_domains = { "localhost" }
 
 -- Even if you disable s2s_secure_auth, you can still require valid
 -- certificates for some domains by specifying a list here.
@@ -167,7 +169,7 @@ archive_expires_after = "1w" -- Remove archived messages after 1 week
 -- Logging configuration
 -- For advanced logging see https://prosody.im/doc/logging
 log = {
-    {levels = {min = "info"}, to = "console"};
+    {levels = {min = "debug"}, to = "console"};
 }
 
 -- Uncomment to enable statistics
