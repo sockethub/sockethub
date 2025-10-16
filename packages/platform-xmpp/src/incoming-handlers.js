@@ -62,7 +62,7 @@ export class IncomingHandlers {
             console.debug("close event received but session is undefined");
             return;
         }
-        
+
         this.session.debug("received close event with no handler specified");
         if (this.session.actor && this.session.sendToClient) {
             this.session.sendToClient({
@@ -75,7 +75,10 @@ export class IncomingHandlers {
                 `**** xmpp this.session.for ${this.session.actor.id} closed`,
             );
         }
-        if (this.session.connection && typeof this.session.connection.disconnect === 'function') {
+        if (
+            this.session.connection &&
+            typeof this.session.connection.disconnect === "function"
+        ) {
             this.session.connection.disconnect();
         }
     }

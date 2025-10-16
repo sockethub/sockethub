@@ -130,19 +130,22 @@ export default class XMPP {
             return done();
         }
         this.debug(`connect() called for ${job.actor.id}`);
-        
+
         // Log credential processing
         const xmppCreds = utils.buildXmppCredentials(credentials);
-        this.debug(`building XMPP credentials for ${job.actor.id}:`, JSON.stringify({
-            service: xmppCreds.service,
-            username: xmppCreds.username,
-            resource: xmppCreds.resource,
-            timeout: this.config.connectTimeoutMs
-        }));
-        
+        this.debug(
+            `building XMPP credentials for ${job.actor.id}:`,
+            JSON.stringify({
+                service: xmppCreds.service,
+                username: xmppCreds.username,
+                resource: xmppCreds.resource,
+                timeout: this.config.connectTimeoutMs,
+            }),
+        );
+
         // Log before client creation
         this.debug(`creating XMPP client for ${job.actor.id}`);
-        
+
         try {
             this.__client = this.__clientConstructor({
                 ...xmppCreds,
@@ -153,40 +156,45 @@ export default class XMPP {
             this.debug(`XMPP client creation failed for ${job.actor.id}:`, err);
             return done(`client creation failed: ${err.message}`);
         }
-        
+
         this.__client.on("offline", () => {
             this.debug(`offline event received for ${job.actor.id}`);
         });
-        
+
         this.__client.on("error", (err) => {
             this.debug(`client error event for ${job.actor.id}:`, err);
         });
-        
+
         this.__client.on("online", () => {
             this.debug(`online event received for ${job.actor.id}`);
         });
 
         this.debug(`starting XMPP client connection for ${job.actor.id}`);
         const startTime = Date.now();
-        
+
         this.__client
             .start()
             .then(() => {
                 // connected
                 const duration = Date.now() - startTime;
-                this.debug(`connection successful for ${job.actor.id} after ${duration}ms`);
+                this.debug(
+                    `connection successful for ${job.actor.id} after ${duration}ms`,
+                );
                 this.config.initialized = true;
                 this.__registerHandlers();
                 return done();
             })
             .catch((err) => {
                 const duration = Date.now() - startTime;
-                this.debug(`connection failed for ${job.actor.id} after ${duration}ms:`, {
-                    error: err,
-                    message: err?.message,
-                    code: err?.code,
-                    stack: err?.stack
-                });
+                this.debug(
+                    `connection failed for ${job.actor.id} after ${duration}ms:`,
+                    {
+                        error: err,
+                        message: err?.message,
+                        code: err?.code,
+                        stack: err?.stack,
+                    },
+                );
                 this.__client = undefined;
                 return done(`connection failed: ${err?.message || err}`);
             });
@@ -228,10 +236,8 @@ export default class XMPP {
             to: `${job.target.id}/${job.actor.name || id}`,
         });
         presence.c("x", { xmlns: "http://jabber.org/protocol/muc" });
-        
-        this.__client
-            .send(presence)
-            .then(done);
+
+        this.__client.send(presence).then(done);
     }
 
     /**
