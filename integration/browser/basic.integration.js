@@ -1,7 +1,6 @@
 import { expect } from "@esm-bundle/chai";
 import {
     connectXMPP,
-    createSockethubClient,
     joinXMPPRoom,
     sendXMPPMessage,
     setXMPPCredentials,
@@ -18,8 +17,9 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
         const incomingMessages = [];
 
         before(() => {
-            const clientSetup = createSockethubClient("basic-test");
-            sc = clientSetup.client;
+            sc = new SockethubClient(
+                io(config.sockethub.url, { path: "/sockethub" }),
+            );
             sc.socket.on("message", (msg) => {
                 incomingMessages.push(msg);
             });
