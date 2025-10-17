@@ -22,7 +22,7 @@ jobs:
       - run: sleep 5
 
       - name: Verify Redis is listening
-        run: nc -zv localhost 16379
+        run: nc -zv localhost 6379
 
       - name: Redis Integration Tests
         run: bun run integration:redis:run
