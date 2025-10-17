@@ -18,6 +18,8 @@ export function getConfig() {
     throw new Error("TEST_CONFIG not available in browser environment");
 }
 
+const config = getConfig();
+
 // Shared setup and validation functions
 export function validateGlobals() {
     describe("Global Library Validation", () => {
@@ -34,11 +36,9 @@ export function validateGlobals() {
 // Helper function to wait for a condition with timeout
 export function waitFor(
     condition,
-    timeout = null,
+    timeout = config.timeouts.message,
     interval = 100,
 ) {
-    const config = getConfig();
-    timeout = timeout ? timeout : config.timeouts.message;
     return new Promise((resolve, reject) => {
         const startTime = Date.now();
         const check = () => {
@@ -62,21 +62,11 @@ export function waitFor(
 export function setXMPPCredentials(
     socket,
     actorId,
-    userId = null,
-    password = null,
-    resource = null,
+    userId = config.prosody.testUser.username,
+    password = config.prosody.testUser.password,
+    resource = config.prosody.resource,
 ) {
     const config = getConfig();
-    
-    // Use defaults from config if not provided
-    userId = userId ? userId : config.prosody.testUser.username;
-    password = password ? password : config.prosody.testUser.password;
-    
-    // Extract resource from actorId if not provided
-    const defaultResource =
-        resource ||
-        actorId.split("/")[1] ||
-        config.prosody.resource;
 
     return new Promise((resolve, reject) => {
         socket.emit(
@@ -91,7 +81,7 @@ export function setXMPPCredentials(
                 object: {
                     type: "credentials",
                     password,
-                    resource: defaultResource,
+                    resource: resource,
                     userAddress: `${userId}@${config.prosody.host}`,
                     // We use xmpp://user@host:port to get around limitations with our prosody docker instance.
                     // - The port is specified explicitly to bypass DNS SRV record lookups that were timing out

@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { spawn } from "node:child_process";
-import { writeFileSync, unlinkSync } from "node:fs";
+import { unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import config from "../config.js";
 
@@ -32,13 +32,7 @@ writeFileSync(configPath, configContent);
 
 // Run web-test-runner with temporary config
 const cmd = "bunx";
-const args = [
-    "--bun",
-    "web-test-runner", 
-    testFile,
-    "--config",
-    configPath,
-];
+const args = ["--bun", "web-test-runner", testFile, "--config", configPath];
 
 const child = spawn(cmd, args, { stdio: "inherit" });
 child.on("exit", (code) => {
