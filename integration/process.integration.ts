@@ -2,8 +2,10 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { type ChildProcess, spawn } from "node:child_process";
 import { join } from "node:path";
 import { type Socket, io } from "socket.io-client";
+import config from "./config.js";
+import createTestUtils from "./utils.js";
 
-const config = require("./config.js");
+const utils = createTestUtils(config);
 
 interface TestConfig {
     sockethubProcess?: ChildProcess;
@@ -269,7 +271,7 @@ describe("Parent Process Sudden Termination", () => {
         if (!testConfig.client) {
             throw new Error("No client connection - run previous test first");
         }
-        const actorId = config.createXmppJid();
+        const actorId = utils.createXmppJid();
         const credentialsMessage = {
             type: "credentials",
             context: "xmpp",
