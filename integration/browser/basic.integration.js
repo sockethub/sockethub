@@ -1,14 +1,16 @@
 import { expect } from "@esm-bundle/chai";
+import createTestUtils from "../utils.js";
 import {
     connectXMPP,
+    getConfig,
     joinXMPPRoom,
-    parseConfig,
     sendXMPPMessage,
     setXMPPCredentials,
     validateGlobals,
 } from "./shared-setup.js";
 
-const config = parseConfig();
+const config = getConfig();
+const utils = createTestUtils(config);
 
 describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
     validateGlobals();
@@ -153,14 +155,14 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             });
         });
 
-        describe("XMPP", () => {
-            const actorId = config.createXmppJid();
-            const actorObject = {
-                id: actorId,
-                type: "person",
-                name: "Jimmy Userson",
-            };
+        const actorId = utils.createXmppJid();
+        const actorObject = {
+            id: actorId,
+            type: "person",
+            name: "Jimmy Userson",
+        };
 
+        describe("XMPP", () => {
             describe("Credentials", () => {
                 it("fires an empty callback", async () => {
                     await setXMPPCredentials(sc.socket, actorId);

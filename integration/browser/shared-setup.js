@@ -1,5 +1,5 @@
 import { expect } from "@esm-bundle/chai";
-import createTestUtils, { parseConfigFromQueryParams } from "../utils.js";
+import createTestUtils from "../utils.js";
 import "../../packages/server/res/sockethub-client.js";
 import "../../packages/server/res/socket.io.js";
 
@@ -8,11 +8,14 @@ mocha.bail(true);
 mocha.timeout("120s");
 
 /**
- * Parse configuration for browser tests
+ * Get configuration for browser tests
  * @returns {object} Configuration object
  */
-export function parseConfig() {
-    return parseConfigFromQueryParams();
+export function getConfig() {
+    if (typeof window !== "undefined" && window.TEST_CONFIG) {
+        return window.TEST_CONFIG;
+    }
+    throw new Error("TEST_CONFIG not available in browser environment");
 }
 
 // Shared setup and validation functions
@@ -31,9 +34,11 @@ export function validateGlobals() {
 // Helper function to wait for a condition with timeout
 export function waitFor(
     condition,
-    timeout = config.timeouts.message,
+    timeout = null,
     interval = 100,
 ) {
+    const config = getConfig();
+    timeout = timeout ? timeout : config.timeouts.message;
     return new Promise((resolve, reject) => {
         const startTime = Date.now();
         const check = () => {
@@ -57,15 +62,21 @@ export function waitFor(
 export function setXMPPCredentials(
     socket,
     actorId,
-    userId = config.prosody.testUser.username,
-    password = config.prosody.testUser.password,
+    userId = null,
+    password = null,
     resource = null,
 ) {
+    const config = getConfig();
+    
+    // Use defaults from config if not provided
+    userId = userId ? userId : config.prosody.testUser.username;
+    password = password ? password : config.prosody.testUser.password;
+    
     // Extract resource from actorId if not provided
     const defaultResource =
         resource ||
         actorId.split("/")[1] ||
-        config.test.multiClient.baseResource;
+        config.prosody.resource;
 
     return new Promise((resolve, reject) => {
         socket.emit(

@@ -1,5 +1,7 @@
 #!/usr/bin/env bun
 import { spawn } from "node:child_process";
+import { writeFileSync, unlinkSync } from "node:fs";
+import { join } from "node:path";
 import config from "../config.js";
 
 const testFile = process.argv[2];
@@ -9,43 +11,42 @@ if (!testFile) {
     process.exit(1);
 }
 
-// Flattens nested config object into dot-notation query parameters
-// e.g. {prosody: {host: "localhost"}} becomes "prosody.host=localhost"
-function configToQueryParams(configObj) {
-    const params = new URLSearchParams();
+// Create temporary WTR config file with injected global config
+const configPath = join(process.cwd(), "web-test-runner.config.temp.mjs");
+const configContent = `export default {
+    nodeResolve: true,
+    testRunnerHtml: (testFramework) => \`
+        <!DOCTYPE html>
+        <html>
+            <body>
+                <script>
+                    window.TEST_CONFIG = ${JSON.stringify(config)};
+                </script>
+                <script type="module" src="\${testFramework}"></script>
+            </body>
+        </html>
+    \`
+};`;
 
-    function flattenConfig(obj, prefix = "") {
-        for (const [key, value] of Object.entries(obj)) {
-            const paramKey = prefix ? `${prefix}.${key}` : key;
+writeFileSync(configPath, configContent);
 
-            if (
-                typeof value === "object" &&
-                value !== null &&
-                !Array.isArray(value)
-            ) {
-                flattenConfig(value, paramKey);
-            } else {
-                params.set(paramKey, String(value));
-            }
-        }
-    }
-
-    flattenConfig(configObj);
-    return params.toString();
-}
-
-const queryParams = configToQueryParams(config);
-
-// Run web-test-runner with query parameters
+// Run web-test-runner with temporary config
 const cmd = "bunx";
 const args = [
     "--bun",
-    "web-test-runner",
+    "web-test-runner", 
     testFile,
-    "--node-resolve",
-    "--dev-server-query-params",
-    queryParams,
+    "--config",
+    configPath,
 ];
 
 const child = spawn(cmd, args, { stdio: "inherit" });
-child.on("exit", (code) => process.exit(code));
+child.on("exit", (code) => {
+    // Clean up temp config file
+    try {
+        unlinkSync(configPath);
+    } catch (e) {
+        // Ignore cleanup errors
+    }
+    process.exit(code);
+});

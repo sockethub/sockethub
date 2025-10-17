@@ -1,15 +1,17 @@
 import { expect } from "@esm-bundle/chai";
+import createTestUtils from "../utils.js";
 import {
     connectXMPP,
+    getConfig,
     joinXMPPRoom,
-    parseConfig,
     sendXMPPMessage,
     setXMPPCredentials,
     validateGlobals,
     waitFor,
 } from "./shared-setup.js";
 
-const config = parseConfig();
+const config = getConfig();
+const utils = createTestUtils(config);
 
 const CLIENT_COUNT = 10;
 
@@ -26,8 +28,8 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             const sockethubClient = new SockethubClient(socket);
             const clientRecord = {
                 index: i,
-                xmppJid: config.createXmppJid(i),
-                actor: config.createActorObject(i),
+                xmppJid: utils.createXmppJid(i),
+                actor: utils.createActorObject(i),
                 sockethubClient: sockethubClient,
             };
 
