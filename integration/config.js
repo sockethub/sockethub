@@ -50,20 +50,6 @@ const config = {
         message: 2000,
         process: 10000, // starting a process
     },
-
-    // Test configuration
-    // test: {
-    //     multiClient: {
-    //         defaultCount: 3,
-    //         baseResource: "SockethubTest",
-    //         testRoom: "testroom@prosody",
-    //     },
-    //     timeouts: {
-    //         connection: 3000,
-    //         message: 2000,
-    //         wait: 200,
-    //     },
-    // },
 };
 
 // Helper functions
