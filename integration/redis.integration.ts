@@ -6,8 +6,8 @@ import {
     JobWorker,
 } from "@sockethub/data-layer";
 import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
+import config from "./config.js";
 
-const config = require("./config.js");
 const REDIS_URL = config.redis.url;
 
 const actor = `${(Math.random() + 1).toString(36).substring(2)}`;
