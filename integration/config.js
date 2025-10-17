@@ -1,45 +1,35 @@
 /**
  * Centralized configuration for Sockethub integration tests
- * Detects Docker environment and provides appropriate configuration values
  */
 
-// Detect if running inside Docker container
-function isDockerEnvironment() {
-    // In browser environment, assume local development
-    if (typeof window !== "undefined") return false;
-
-    // Check for Docker-specific networking
-    if (process.env.REDIS_URL?.includes("redis://redis:")) return true;
-
-    return false;
-}
-
-const IS_DOCKER = isDockerEnvironment();
+// If sockethub is inside a docker image, the hosts might have unique names
+XMPP_HOST = process.env.XMPP_HOST || "localhost";
+SOCKETHUB_HOST = process.env.SOCKETHUB_HOST || "localhost";
+REDIS_HOST = process.env.REDIS_HOST || "localhost";
 
 // Base configuration
 const config = {
     // Sockethub server configuration
     sockethub: {
         port: "10550",
-        url: IS_DOCKER ? "http://sockethub:10550" : "http://localhost:10550",
+        url: SOCKETHUB_HOST,
     },
 
     // Redis configuration
     redis: {
-        host: IS_DOCKER ? "redis" : "localhost",
+        host: REDIS_HOST,
         port: "6379",
-        url: IS_DOCKER ? "redis://redis:6379" : "redis://localhost:6379",
+        url: `redis://${REDIS_HOST}:6379`,
     },
 
     // Prosody XMPP server configuration
     prosody: {
-        host: IS_DOCKER ? "prosody" : "localhost",
+        host: XMPP_HOST,
         port: "5222",
         resource: "SockethubTest",
         testUser: {
             username: "jimmy",
             password: "passw0rd",
-            // fullJid: IS_DOCKER ? "jimmy@prosody" : "jimmy@localhost",
         },
         room: "testroom@conference.prosody",
     },

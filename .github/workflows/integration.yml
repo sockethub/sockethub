@@ -46,10 +46,10 @@ jobs:
       - run: sleep 5
 
       - name: Verify Redis is listening
-        run: nc -zv localhost 16379
+        run: nc -zv localhost 6379
 
       - name: Verify XMPP is listening
-        run: nc -zv localhost 8222
+        run: nc -zv localhost 5222
 
       - name: Verifying Child Process Termination
         run: bun run integration:process:run
@@ -87,7 +87,7 @@ jobs:
         run: nc -zv localhost 5222
 
       - name: Basic Browser Integration Tests
-        run: bun run integration:browser:basic:run
+        run: XMPP_HOST=prosody bun run integration:browser:basic:run
 
       - name: Sockethub Logs - Basic
         if: always()
@@ -96,7 +96,7 @@ jobs:
       - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
 
       - name: Multiclient XMPP Integration Tests
-        run: bun run integration:browser:multiclient:run
+        run: XMPP_HOST=prosody bun run integration:browser:multiclient:run
 
       - name: Sockethub Logs - Multiclient
         if: always()
