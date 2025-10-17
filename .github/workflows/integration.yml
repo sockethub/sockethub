@@ -81,7 +81,10 @@ jobs:
         run: nc -zv localhost 10550
 
       - name: Verify Redis is listening
-        run: nc -zv localhost 16379
+        run: nc -zv localhost 6379
+
+      - name: Verify XMPP is listening
+        run: nc -zv localhost 5222
 
       - name: Basic Browser Integration Tests
         run: bun run integration:browser:basic:run
@@ -95,6 +98,6 @@ jobs:
       - name: Multiclient XMPP Integration Tests
         run: bun run integration:browser:multiclient:run
 
-      - name: Sockethub Logs - Basic
+      - name: Sockethub Logs - Multiclient
         if: always()
         run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
