@@ -5,27 +5,25 @@
 export default function createTestUtils(config) {
     return {
         /**
-         * Create XMPP JID from config and optional client ID
-         * @param {string|null} clientId - Optional client ID suffix
+         * Create XMPP JID
+         @param {string|null} resource - optional client resource
          * @returns {string} Generated XMPP JID
          */
-        createXmppJid(clientId = null) {
-            const resource = `${config.prosody?.resource || "SockethubTest"}${clientId ? clientId : ""}`;
-            return `${config.prosody?.testUser?.username}@${config.prosody?.host}/${resource}`;
+        createXmppJid(resource = config.prosody.resource) {
+            return `${config.prosody.testUser.username}@${config.prosody.host}/${resource}`;
         },
 
         /**
          * Create actor object from config and client ID
-         * @param {string} clientId - Client ID
-         * @param {string|null} name - Optional name override
+         * @param {string|null} resource - optional client resource
          * @returns {object} Actor object
          */
-        createActorObject(clientId, name = null) {
-            const actorId = this.createXmppJid(clientId);
+        createActorObject(resource = config.prosody.resource) {
+            const actorId = this.createXmppJid(resource);
             return {
                 id: actorId,
                 type: "person",
-                name: name || `Jimmy Session ${clientId}`,
+                name: `${config.prosody.testUser.username} ${resource}`,
             };
         },
     };

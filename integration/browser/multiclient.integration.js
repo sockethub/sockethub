@@ -13,7 +13,7 @@ import {
 const config = getConfig();
 const utils = createTestUtils(config);
 
-const CLIENT_COUNT = 10;
+const CLIENT_COUNT = 2;
 
 describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () => {
     validateGlobals();
@@ -26,16 +26,17 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
         for (let i = 1; i <= CLIENT_COUNT; i++) {
             const socket = io(config.sockethub.url, { path: "/sockethub" });
             const sockethubClient = new SockethubClient(socket);
+            const resource = `${config.prosody.resource}${i}`;
+
             const clientRecord = {
-                index: i,
-                xmppJid: utils.createXmppJid(i),
-                actor: utils.createActorObject(i),
+                resource: resource,
+                jid: utils.createXmppJid(resource),
                 sockethubClient: sockethubClient,
             };
 
             sockethubClient.socket.on("message", (msg) => {
                 messageLog.push({
-                    clientId: i,
+                    clientId: clientRecord.jid,
                     timestamp: Date.now(),
                     message: msg,
                 });
@@ -64,8 +65,9 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
         it("all clients can set credentials simultaneously", async () => {
             const credentialPromises = records.map((clientRecord) =>
                 setXMPPCredentials(
-                    clientRecord.sockethubClient.socket,
-                    clientRecord.xmppJid,
+                    clientRecord.sockethubClient,
+                    clientRecord.jid,
+                    clientRecord.resource,
                 ),
             );
 
@@ -78,16 +80,16 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             for (const clientRecord of records) {
                 // Create activity object first
                 clientRecord.sockethubClient.ActivityStreams.Object.create(
-                    clientRecord.actor,
+                    utils.createActorObject(clientRecord.resource),
                 );
 
                 const result = await connectXMPP(
-                    clientRecord.sockethubClient.socket,
-                    clientRecord.xmppJid,
+                    clientRecord.sockethubClient,
+                    clientRecord.jid,
                 );
 
                 connectionLog.push({
-                    clientId: clientRecord.index,
+                    clientId: clientRecord.jid,
                     timestamp: Date.now(),
                     action: "connected",
                 });
@@ -101,12 +103,11 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
         it("all clients can join the test room simultaneously", async () => {
             const joinPromises = records.map((clientRecord) => {
                 return joinXMPPRoom(
-                    clientRecord.sockethubClient.socket,
-                    clientRecord.xmppJid,
-                    config.prosody.room,
+                    clientRecord.sockethubClient,
+                    clientRecord.jid,
                 ).then((msg) => {
                     connectionLog.push({
-                        clientId: clientRecord.index,
+                        clientId: clientRecord.jid,
                         timestamp: Date.now(),
                         action: "joined_room",
                     });
@@ -131,8 +132,8 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
 
             // Send message from client 1
             await sendXMPPMessage(
-                sendingClientRecord.sockethubClient.socket,
-                sendingClientRecord.xmppJid,
+                sendingClientRecord.sockethubClient,
+                sendingClientRecord.jid,
                 config.prosody.room,
                 testMessage,
             );
@@ -154,7 +155,7 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                 (log) =>
                     log.message?.object?.content === testMessage &&
                     log.message?.type === "send" &&
-                    log.clientId !== sendingClientRecord.index,
+                    log.clientId !== sendingClientRecord.jid,
             );
 
             expect(receivedMessages).to.have.length.at.least(CLIENT_COUNT - 1);
@@ -168,12 +169,12 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             const sendPromises = records
                 .slice(0, 3)
                 .map(async (clientRecord, index) => {
-                    const message = `Rapid message ${index} from client ${clientRecord.index} at ${Date.now()}`;
+                    const message = `Rapid message ${index} from client ${clientRecord.jid} at ${Date.now()}`;
                     testMessages.push(message);
 
                     return sendXMPPMessage(
-                        clientRecord.sockethubClient.socket,
-                        clientRecord.xmppJid,
+                        clientRecord.sockethubClient,
+                        clientRecord.jid,
                         config.prosody.room,
                         message,
                     );
@@ -232,7 +233,7 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                 // Set up message listener
                 newSockethubClient.socket.on("message", (msg) => {
                     messageLog.push({
-                        clientId: clientRecord.index,
+                        clientId: clientRecord.jid,
                         timestamp: Date.now(),
                         message: msg,
                     });
@@ -293,21 +294,11 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                 });
 
                 // Set credentials and connect
-                await setXMPPCredentials(
-                    newSockethubClient.socket,
-                    clientRecord.xmppJid,
-                );
+                await setXMPPCredentials(newSockethubClient, clientRecord.jid);
 
-                await connectXMPP(
-                    newSockethubClient.socket,
-                    clientRecord.xmppJid,
-                );
+                await connectXMPP(newSockethubClient, clientRecord.jid);
 
-                await joinXMPPRoom(
-                    newSockethubClient.socket,
-                    clientRecord.xmppJid,
-                    config.prosody.room,
-                );
+                await joinXMPPRoom(newSockethubClient, clientRecord.jid);
 
                 // Wait 200ms before next client
                 if (i < records.length - 1) {

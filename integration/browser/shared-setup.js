@@ -60,66 +60,60 @@ export function waitFor(
 
 // Helper function to set XMPP credentials
 export function setXMPPCredentials(
-    socket,
-    actorId,
-    userId = config.prosody.testUser.username,
-    password = config.prosody.testUser.password,
+    sh,
+    jid,
     resource = config.prosody.resource,
+    username = config.prosody.testUser.username,
+    password = config.prosody.testUser.password,
 ) {
     const config = getConfig();
 
     return new Promise((resolve, reject) => {
-        socket.emit(
-            "credentials",
-            {
-                actor: {
-                    id: actorId,
-                    type: "person",
-                },
-                context: "xmpp",
+        const creds = {
+            actor: jid,
+            context: "xmpp",
+            type: "credentials",
+            object: {
                 type: "credentials",
-                object: {
-                    type: "credentials",
-                    password,
-                    resource: resource,
-                    userAddress: `${userId}@${config.prosody.host}`,
-                    // We use xmpp://user@host:port to get around limitations with our prosody docker instance.
-                    // - The port is specified explicitly to bypass DNS SRV record lookups that were timing out
-                    // - The `xmpp://` URI scheme is specified explicitly to enable a plain-text connection,
-                    // avoiding the TLS negotiation issues that were causing connection failures.
-                    server: `xmpp://${config.prosody.host}:${config.prosody.port}`,
-                },
+                password,
+                resource: resource,
+                userAddress: `${username}@${config.prosody.host}`,
+                // We use xmpp://user@host:port to get around limitations with our prosody docker instance.
+                // - The port is specified explicitly to bypass DNS SRV record lookups that were timing out
+                // - The `xmpp://` URI scheme is specified explicitly to enable a plain-text connection,
+                // avoiding the TLS negotiation issues that were causing connection failures.
+                server: `xmpp://${config.prosody.host}:${config.prosody.port}`,
             },
-            (response) => {
-                if (response?.error) {
-                    reject(
-                        new Error(
-                            `Credentials failed for ${userId}: ${response.error}`,
-                        ),
-                    );
-                } else {
-                    resolve();
-                }
-            },
-        );
+        };
+        console.log("sending credentials: ", creds);
+        sh.socket.emit("credentials", creds, (response) => {
+            if (response?.error) {
+                reject(
+                    new Error(
+                        `Credentials failed for ${jid}: ${response.error}`,
+                    ),
+                );
+            } else {
+                resolve();
+            }
+        });
     });
 }
 
 // Helper function to connect to XMPP
-export function connectXMPP(socket, actorId) {
-    const userId = actorId.split("@")[0]; // Extract user part for logging
+export function connectXMPP(sh, jid) {
     return new Promise((resolve, reject) => {
-        socket.emit(
+        sh.socket.emit(
             "message",
             {
                 type: "connect",
-                actor: actorId,
+                actor: jid,
                 context: "xmpp",
             },
             (msg) => {
                 if (msg?.error) {
                     reject(
-                        new Error(`Connect failed for ${userId}: ${msg.error}`),
+                        new Error(`Connect failed for ${jid}: ${msg.error}`),
                     );
                 } else {
                     resolve(msg);
@@ -130,25 +124,22 @@ export function connectXMPP(socket, actorId) {
 }
 
 // Helper function to join XMPP room
-export function joinXMPPRoom(socket, actorId, roomId) {
-    const userId = actorId.split("@")[0];
+export function joinXMPPRoom(sh, jid, room = config.prosody.room) {
     return new Promise((resolve, reject) => {
-        socket.emit(
+        sh.socket.emit(
             "message",
             {
                 type: "join",
-                actor: actorId,
+                actor: jid,
                 context: "xmpp",
                 target: {
                     type: "room",
-                    id: roomId,
+                    id: room,
                 },
             },
             (msg) => {
                 if (msg?.error) {
-                    reject(
-                        new Error(`Join failed for ${userId}: ${msg.error}`),
-                    );
+                    reject(new Error(`Join failed for ${jid}: ${msg.error}`));
                 } else {
                     resolve(msg);
                 }
@@ -158,14 +149,13 @@ export function joinXMPPRoom(socket, actorId, roomId) {
 }
 
 // Helper function to send XMPP message
-export function sendXMPPMessage(socket, actorId, roomId, content) {
-    const userId = actorId.split("@")[0];
+export function sendXMPPMessage(sh, jid, room, content) {
     return new Promise((resolve, reject) => {
-        socket.emit(
+        sh.socket.emit(
             "message",
             {
                 type: "send",
-                actor: actorId,
+                actor: jid,
                 context: "xmpp",
                 object: {
                     type: "message",
@@ -173,14 +163,12 @@ export function sendXMPPMessage(socket, actorId, roomId, content) {
                 },
                 target: {
                     type: "room",
-                    id: roomId,
+                    id: room,
                 },
             },
             (msg) => {
                 if (msg?.error) {
-                    reject(
-                        new Error(`Send failed for ${userId}: ${msg.error}`),
-                    );
+                    reject(new Error(`Send failed for ${jid}: ${msg.error}`));
                 } else {
                     resolve(msg);
                 }
