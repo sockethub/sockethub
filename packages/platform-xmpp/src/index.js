@@ -196,7 +196,9 @@ export default class XMPP {
                     },
                 );
                 this.__client = undefined;
-                return done(`connection failed: ${err?.message || err}`);
+                return done(
+                    `connection failed: ${err?.message || err}. (service: ${xmppCreds.service})`,
+                );
             });
     }
 
