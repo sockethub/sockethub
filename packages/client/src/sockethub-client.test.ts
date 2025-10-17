@@ -62,7 +62,7 @@ describe("SockethubClient", () => {
         // the object we passed in should not be the publically available one
         expect(sc.socket.__instance).to.not.equal("socketio");
         expect(sc.debug).to.be.true;
-        expect(sc.online).to.be.false;
+        expect(sc.connected).to.be.false;
     });
 
     it("registers listeners for ActivityStream events", () => {
@@ -105,9 +105,9 @@ describe("SockethubClient", () => {
         });
 
         it("connect", (done) => {
-            expect(sc.online).to.be.false;
+            expect(sc.connected).to.be.false;
             sc.socket.on("connect", () => {
-                expect(sc.online).to.be.true;
+                expect(sc.connected).to.be.true;
                 expect(sc.socket._emit.callCount).to.equal(1);
                 expect(sc.socket._emit.calledWithMatch("connect"));
                 done();
@@ -116,9 +116,9 @@ describe("SockethubClient", () => {
         });
 
         it("disconnect", (done) => {
-            sc.online = true;
+            sc.connected = true;
             sc.socket.on("disconnect", () => {
-                expect(sc.online).to.be.false;
+                expect(sc.connected).to.be.false;
                 expect(sc.socket._emit.callCount).to.equal(1);
                 expect(sc.socket._emit.calledWithMatch("disconnect"));
                 done();
@@ -147,7 +147,7 @@ describe("SockethubClient", () => {
 
     describe("event emitting", () => {
         it("message (no actor)", () => {
-            sc.online = true;
+            sc.connected = true;
             const callback = () => {};
             expect(() => {
                 sc.socket.emit("message", { foo: "bar" }, callback);
@@ -155,7 +155,7 @@ describe("SockethubClient", () => {
         });
 
         it("message", (done) => {
-            sc.online = true;
+            sc.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar", type: "bar" });
@@ -166,7 +166,7 @@ describe("SockethubClient", () => {
         });
 
         it("message (join)", (done) => {
-            sc.online = true;
+            sc.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar", type: "join" });
@@ -177,7 +177,7 @@ describe("SockethubClient", () => {
         });
 
         it("message (leave)", (done) => {
-            sc.online = true;
+            sc.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar", type: "leave" });
@@ -192,7 +192,7 @@ describe("SockethubClient", () => {
         });
 
         it("message (connect)", (done) => {
-            sc.online = true;
+            sc.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar", type: "connect" });
@@ -207,7 +207,7 @@ describe("SockethubClient", () => {
         });
 
         it("message (disconnect)", (done) => {
-            sc.online = true;
+            sc.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar", type: "disconnect" });
@@ -222,7 +222,7 @@ describe("SockethubClient", () => {
         });
 
         it("message (offline)", (done) => {
-            sc.online = false;
+            sc.connected = false;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar" });
@@ -233,7 +233,7 @@ describe("SockethubClient", () => {
         });
 
         it("activity-object", (done) => {
-            sc.online = true;
+            sc.connected = true;
             const callback = () => {};
             socket.once("activity-object", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar" });
@@ -244,7 +244,7 @@ describe("SockethubClient", () => {
         });
 
         it("credentials", (done) => {
-            sc.online = true;
+            sc.connected = true;
             const callback = () => {};
             socket.once("credentials", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar" });
