@@ -12,7 +12,7 @@ const config = {
     // Sockethub server configuration
     sockethub: {
         port: "10550",
-        url: SOCKETHUB_HOST,
+        url: `http://${SOCKETHUB_HOST}:10550`,
     },
 
     // Redis configuration

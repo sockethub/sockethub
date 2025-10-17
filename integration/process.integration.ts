@@ -241,7 +241,7 @@ describe("Parent Process Sudden Termination", () => {
         }
     });
 
-    it("should connect to Sockethub via Socket.IO", async () => {
+    it("should connect to Sockethub", async () => {
         testConfig.client = io(config.sockethub.url, {
             path: "/sockethub",
             transports: ["websocket"],
