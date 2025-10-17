@@ -135,7 +135,7 @@ function renameProp<T>(obj: T, key: string): T {
     return obj;
 }
 
-function validateObject<T>(type: string, incomingObj: T) {
+function validateObject<T>(type: string, incomingObj: T, requireId: boolean = false) {
     // Input validation with clear error messages
     if (incomingObj === null) {
         throw new Error(`ActivityStreams validation failed: the "${type}" property is null. Example: { id: "user@example.com", type: "person" }`);
@@ -153,6 +153,12 @@ function validateObject<T>(type: string, incomingObj: T) {
         const receivedType = Array.isArray(incomingObj) ? 'array' : typeof incomingObj;
         const receivedValue = String(incomingObj);
         throw new Error(`ActivityStreams validation failed: the "${type}" property must be an object, received ${receivedType} (${receivedValue}). Example: { id: "user@example.com", type: "person" }`);
+    }
+
+    // Require 'id' property when explicitly requested (e.g., Object.create())
+    const obj = incomingObj as ActivityObject;
+    if (requireId && !obj.id) {
+        throw new Error(`ActivityStreams validation failed: the "${type}" property requires an 'id' property. Example: { id: "user@example.com", type: "person" }`);
     }
 
     const unknownKeys = Object.keys(incomingObj).filter(
@@ -246,7 +252,7 @@ export interface ActivityObjectManager {
 
 const _Object: ActivityObjectManager = {
     create: (obj: ActivityObject) => {
-        validateObject("object", obj);
+        validateObject("object", obj, true); // require ID for Object.create()
         const ao = ensureProps(obj);
         objs.set(ao.id, ao);
         ee.emit("activity-object-create", ao);

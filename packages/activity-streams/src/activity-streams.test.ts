@@ -282,10 +282,16 @@ describe("Object.create error handling tests", () => {
         }).toThrow('ActivityStreams validation failed: the "object" property must be an object, received array (). Example: { id: "user@example.com", type: "person" }');
     });
 
-    test("does not throw when passed empty object (gets processed)", () => {
+    test("throws clear error when passed empty object (missing required id)", () => {
         expect(() => {
             activity.Object.create({});
-        }).not.toThrow(); // JavaScript creates properties automatically
+        }).toThrow('ActivityStreams validation failed: the "object" property requires an \'id\' property. Example: { id: "user@example.com", type: "person" }');
+    });
+
+    test("throws clear error when object has properties but missing id", () => {
+        expect(() => {
+            activity.Object.create({ type: "person", name: "John" });
+        }).toThrow('ActivityStreams validation failed: the "object" property requires an \'id\' property. Example: { id: "user@example.com", type: "person" }');
     });
 
     test("handles object with only id property", () => {
