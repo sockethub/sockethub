@@ -80,7 +80,7 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             for (const clientRecord of records) {
                 // Create activity object first
                 clientRecord.sockethubClient.ActivityStreams.Object.create(
-                    utils.createActorObject(clientRecord.resource),
+                    utils.createActorObject(clientRecord.jid),
                 );
 
                 const result = await connectXMPP(

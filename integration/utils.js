@@ -15,15 +15,14 @@ export default function createTestUtils(config) {
 
         /**
          * Create actor object from config and client ID
-         * @param {string|null} resource - optional client resource
+         * @param {string|null} jid - optional client jid
          * @returns {object} Actor object
          */
-        createActorObject(resource = config.prosody.resource) {
-            const actorId = this.createXmppJid(resource);
+        createActorObject(jid = this.createXmppJid(config.prosody.resource)) {
             return {
-                id: actorId,
+                id: jid,
                 type: "person",
-                name: `${config.prosody.testUser.username} ${resource}`,
+                name: `${config.prosody.testUser.username} ${jid}`,
             };
         },
     };
