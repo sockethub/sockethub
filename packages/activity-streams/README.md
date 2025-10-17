@@ -3,13 +3,21 @@
 [![License](https://img.shields.io/npm/l/activity-streams.svg?style=flat)](https://npmjs.org/package/@sockethub/activity-streams)
 [![Downloads](http://img.shields.io/npm/dm/activity-streams.svg?style=flat)](https://npmjs.org/package/@sockethub/activity-streams)
 
-A simple tool to facilitate handling and referencing activity streams and it's objects, cutting
+A simple tool to facilitate handling and referencing activity streams and its objects, cutting
 down on verbosity.
 
 Designed to run in both `node.js`, `bun` and the `browser`.
 
-This is a WIP and not fully JSON-LD or ActivityStreams2 compliance, suggestions for improvement
+This is a WIP and not fully JSON-LD or ActivityStreams2 compliant, suggestions for improvement
 are very welcome.
+
+## What it does
+
+This library helps you:
+- **Create and store** ActivityStream objects with validation
+- **Auto-expand** string references into full objects (e.g., `"user@example.com"` becomes `{id: "user@example.com"}`)
+- **Build Activity Streams** that automatically link to stored objects
+- **Listen for events** when objects are created or deleted
 
 ## Install
 
@@ -26,7 +34,7 @@ are very welcome.
 ```javascript
 const ASFactory = require('@sockethub/activity-streams');
 const ActivityStreams = ASFactory({
-  failOnUnkownObjectProperties: false // default
+  failOnUnknownObjectProperties: false // default
 });
 ```
 
@@ -35,7 +43,7 @@ const ActivityStreams = ASFactory({
 ```javascript
 import { ASFactory } from '@sockethub/activity-streams';
 const ActivityStreams = ASFactory({
-  failOnUnkownObjectProperties: false // default
+  failOnUnknownObjectProperties: false // default
 });
 ```
 
@@ -55,6 +63,55 @@ You can place it somewhere accessible from the web and include it via a `script`
 
 Once included in a web-page, the `ActivityStreams` base object should be on the global scope, with
 the sub-properties `ActivityStreams.Object` and `ActivityStreams.Stream`.
+
+## Quick Start
+
+### Standalone Usage
+
+```javascript
+import { ASFactory } from '@sockethub/activity-streams';
+const ActivityStreams = ASFactory();
+
+// Create an object
+const user = ActivityStreams.Object.create({
+  id: "user@example.com",
+  type: "person",
+  name: "John Doe"
+});
+
+// Create an activity that references it
+const activity = ActivityStreams.Stream({
+  type: "send",
+  context: "irc",
+  actor: "user@example.com",  // automatically expands to full object
+  object: { type: "message", content: "Hello!" }
+});
+```
+
+### With Sockethub Client
+
+If you're using the Sockethub client, this library is already bundled and available:
+
+```javascript
+import SockethubClient from '@sockethub/client';
+
+const socket = io('http://localhost:10550');
+const sockethubClient = new SockethubClient(socket);
+
+// Access ActivityStreams through the client
+const user = sockethubClient.ActivityStreams.Object.create({
+  id: "user@example.com", 
+  type: "person",
+  name: "John Doe"
+});
+
+const activity = sockethubClient.ActivityStreams.Stream({
+  type: "send",
+  context: "irc",
+  actor: "user@example.com",
+  object: { type: "message", content: "Hello!" }
+});
+```
 
 ## Example
 
@@ -101,7 +158,7 @@ const exampleUser = ActivityStreams.Object.get('irc://exampleUser@irc.freenode.n
     //  }
 
 ActivityStreams.Stream({
-  context: 'send',
+  type: 'send',
   actor: 'irc://exampleUser@irc.freenode.net',
   object: {
     type: "message",
@@ -111,7 +168,7 @@ ActivityStreams.Stream({
 });
     // ... returns:
     //  {
-    //    '@context': 'send',
+    //    type: 'send',
     //    actor: {
     //      id: 'irc://exampleUser@irc.freenode.net',
     //      type: "person",
@@ -134,4 +191,19 @@ ActivityStreams.Stream({
     //      name: '#activitystreams'
     //    }
     //  }
+```
+
+## Error Handling
+
+The library provides clear error messages when validation fails:
+
+```javascript
+// This will throw: "ActivityStreams validation failed: the 'object' property is null"
+ActivityStreams.Object.create(null);
+
+// This will throw: "ActivityStreams validation failed: the 'object' property received string..."
+ActivityStreams.Object.create("just-a-string");
+
+// This will throw: "ActivityStreams validation failed: property 'foo' with value 'bar' is not allowed..."
+ActivityStreams.Object.create({ id: "test", foo: "bar" });
 ```

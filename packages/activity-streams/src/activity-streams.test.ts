@@ -47,6 +47,7 @@ describe("basic tests", () => {
     const config = {
         customProps: {
             credentials: ["secure"],
+            dude: ["foo", "secure"],
         },
         specialObjs: ["dude"],
         failOnUnknownObjectProperties: true,
@@ -206,7 +207,7 @@ describe("basic tests", () => {
                     },
                     target: ["thingy1", "thingy2"],
                 });
-            }).toThrow('invalid property: "foo"');
+            }).toThrow('ActivityStreams validation failed: property "foo" with value "bar" is not allowed on the "object" object of type "hola".');
         });
     });
 
@@ -226,5 +227,70 @@ describe("basic tests", () => {
             });
             activity.Object.delete("thingy2");
         });
+    });
+});
+
+describe("Object.create error handling tests", () => {
+    const activity = ASFactory();
+
+    test("throws clear error when passed null", () => {
+        expect(() => {
+            // @ts-ignore - intentionally testing invalid input
+            activity.Object.create(null);
+        }).toThrow('ActivityStreams validation failed: the "object" property is null. Example: { id: "user@example.com", type: "person" }');
+    });
+
+    test("throws clear error when passed undefined", () => {
+        expect(() => {
+            // @ts-ignore - intentionally testing invalid input
+            activity.Object.create(undefined);
+        }).toThrow('ActivityStreams validation failed: the "object" property is undefined. Example: { id: "user@example.com", type: "person" }');
+    });
+
+    test("throws clear error when passed string", () => {
+        expect(() => {
+            // @ts-ignore - intentionally testing invalid input
+            activity.Object.create("string value");
+        }).toThrow('ActivityStreams validation failed: the "object" property received string "string value" but expected an object. Use: { id: "string value", type: "person" }');
+    });
+
+    test("throws clear error when passed number", () => {
+        expect(() => {
+            // @ts-ignore - intentionally testing invalid input
+            activity.Object.create(123);
+        }).toThrow('ActivityStreams validation failed: the "object" property must be an object, received number (123). Example: { id: "user@example.com", type: "person" }');
+    });
+
+    test("throws clear error when passed boolean false", () => {
+        expect(() => {
+            // @ts-ignore - intentionally testing invalid input
+            activity.Object.create(false);
+        }).toThrow('ActivityStreams validation failed: the "object" property must be an object, received boolean (false). Example: { id: "user@example.com", type: "person" }');
+    });
+
+    test("throws clear error when passed boolean true", () => {
+        expect(() => {
+            // @ts-ignore - intentionally testing invalid input
+            activity.Object.create(true);
+        }).toThrow('ActivityStreams validation failed: the "object" property must be an object, received boolean (true). Example: { id: "user@example.com", type: "person" }');
+    });
+
+    test("throws clear error when passed array", () => {
+        expect(() => {
+            // @ts-ignore - intentionally testing invalid input
+            activity.Object.create([]);
+        }).toThrow('ActivityStreams validation failed: the "object" property must be an object, received array (). Example: { id: "user@example.com", type: "person" }');
+    });
+
+    test("does not throw when passed empty object (gets processed)", () => {
+        expect(() => {
+            activity.Object.create({});
+        }).not.toThrow(); // JavaScript creates properties automatically
+    });
+
+    test("handles object with only id property", () => {
+        expect(() => {
+            activity.Object.create({ id: "test-id" });
+        }).not.toThrow();
     });
 });
