@@ -9,12 +9,12 @@
 export function parseConfigFromQueryParams() {
     const params = new URLSearchParams(window.location.search);
     const config = {};
-    
+
     // Reconstruct nested config object from flattened query parameters
     for (const [key, value] of params.entries()) {
         const keys = key.split(".");
         let current = config;
-        
+
         // Navigate/create nested structure
         for (let i = 0; i < keys.length - 1; i++) {
             if (!current[keys[i]]) {
@@ -22,7 +22,7 @@ export function parseConfigFromQueryParams() {
             }
             current = current[keys[i]];
         }
-        
+
         // Set the final value with type conversion
         const finalKey = keys[keys.length - 1];
         if (value === "true") {
@@ -35,13 +35,12 @@ export function parseConfigFromQueryParams() {
             current[finalKey] = value;
         }
     }
-    
+
     return config;
 }
 
 export default function createTestUtils(config) {
     return {
-
         /**
          * Create XMPP JID from config and optional client ID
          * @param {string|null} clientId - Optional client ID suffix

@@ -13,19 +13,23 @@ if (!testFile) {
 // e.g. {prosody: {host: "localhost"}} becomes "prosody.host=localhost"
 function configToQueryParams(configObj) {
     const params = new URLSearchParams();
-    
+
     function flattenConfig(obj, prefix = "") {
         for (const [key, value] of Object.entries(obj)) {
             const paramKey = prefix ? `${prefix}.${key}` : key;
-            
-            if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+
+            if (
+                typeof value === "object" &&
+                value !== null &&
+                !Array.isArray(value)
+            ) {
                 flattenConfig(value, paramKey);
             } else {
                 params.set(paramKey, String(value));
             }
         }
     }
-    
+
     flattenConfig(configObj);
     return params.toString();
 }
@@ -35,12 +39,12 @@ const queryParams = configToQueryParams(config);
 // Run web-test-runner with query parameters
 const cmd = "bunx";
 const args = [
-    "--bun", 
-    "web-test-runner", 
-    testFile, 
-    "--node-resolve", 
-    "--dev-server-query-params", 
-    queryParams
+    "--bun",
+    "web-test-runner",
+    testFile,
+    "--node-resolve",
+    "--dev-server-query-params",
+    queryParams,
 ];
 
 const child = spawn(cmd, args, { stdio: "inherit" });
