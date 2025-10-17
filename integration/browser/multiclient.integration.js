@@ -13,7 +13,7 @@ import {
 const config = getConfig();
 const utils = createTestUtils(config);
 
-const CLIENT_COUNT = 2;
+const CLIENT_COUNT = 10;
 
 describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () => {
     validateGlobals();
