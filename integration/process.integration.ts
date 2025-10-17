@@ -20,12 +20,14 @@ describe("Parent Process Sudden Termination", () => {
     };
 
     // Helper function to show recent logs on failure
-    function showRecentLogs(context: string, lastNLines: number = 15) {
+    function showRecentLogs(context: string, lastNLines = 15) {
         console.log(`\n=== Recent Sockethub Logs (${context}) ===`);
         const recentLogs = testConfig.sockethubLogs.slice(-lastNLines);
-        
+
         if (recentLogs.length > 0) {
-            recentLogs.forEach(log => console.log(log.trim()));
+            for (const log of recentLogs) {
+                console.log(log.trim());
+            }
         } else {
             console.log("No recent logs found");
         }
@@ -34,7 +36,9 @@ describe("Parent Process Sudden Termination", () => {
 
     // Helper function to mark a point in logs for debugging
     function markLogPoint(context: string) {
-        testConfig.sockethubLogs.push(`[TEST-MARKER] ${context} - ${new Date().toISOString()}`);
+        testConfig.sockethubLogs.push(
+            `[TEST-MARKER] ${context} - ${new Date().toISOString()}`,
+        );
     }
 
     beforeAll(async () => {
@@ -71,7 +75,7 @@ describe("Parent Process Sudden Termination", () => {
             testConfig.sockethubProcess.stderr.on("data", (data) => {
                 const output = data.toString();
                 testConfig.sockethubLogs.push(output);
-                
+
                 if (testConfig.isVerbose) {
                     console.log("Sockethub stderr:", output);
                 }
@@ -102,7 +106,7 @@ describe("Parent Process Sudden Termination", () => {
             testConfig.sockethubProcess.stdout.on("data", (data) => {
                 const output = data.toString();
                 testConfig.sockethubLogs.push(output);
-                
+
                 if (testConfig.isVerbose) {
                     console.log("Sockethub stdout:", output);
                 }
@@ -284,7 +288,7 @@ describe("Parent Process Sudden Termination", () => {
 
         // Mark the point where we're about to send credentials
         markLogPoint("Sending XMPP credentials");
-        
+
         // Send credentials and wait for confirmation
         await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => {
@@ -320,7 +324,7 @@ describe("Parent Process Sudden Termination", () => {
 
         // Mark the point where we're about to send the connect message
         markLogPoint("Sending XMPP connect message");
-        
+
         // Send connect message and wait for response
         await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => {
@@ -397,15 +401,18 @@ describe("Parent Process Sudden Termination", () => {
 
         // Get all child processes that should include our XMPP platform
         const childPids = await findChildProcesses();
-        
+
         if (testConfig.isVerbose) {
-            console.log(`Found ${childPids.length} child processes:`, childPids);
+            console.log(
+                `Found ${childPids.length} child processes:`,
+                childPids,
+            );
         }
 
         if (childPids.length === 0) {
             console.log("❌ No XMPP platform child processes found");
             showRecentLogs("Child Process Detection", 20);
-            
+
             if (testConfig.isVerbose) {
                 console.log("Checking all processes for debugging:");
                 const allProcesses = await new Promise<string>((resolve) => {
@@ -418,15 +425,22 @@ describe("Parent Process Sudden Termination", () => {
                     });
                     ps.on("close", () => resolve(output));
                 });
-                console.log("All processes containing 'platform' or 'sockethub':");
+                console.log(
+                    "All processes containing 'platform' or 'sockethub':",
+                );
                 for (const line of allProcesses.split("\n")) {
-                    if (line.includes("platform") || line.includes("sockethub")) {
+                    if (
+                        line.includes("platform") ||
+                        line.includes("sockethub")
+                    ) {
                         console.log(line);
                     }
                 }
             }
         } else {
-            console.log(`✓ Found ${childPids.length} XMPP platform process(es)`);
+            console.log(
+                `✓ Found ${childPids.length} XMPP platform process(es)`,
+            );
         }
 
         expect(childPids.length).toBeGreaterThan(0);
@@ -445,10 +459,14 @@ describe("Parent Process Sudden Termination", () => {
 
         const isRunning = isProcessRunning(testConfig.platformChildPid);
         if (!isRunning) {
-            console.log(`❌ Platform child process ${testConfig.platformChildPid} is not running`);
+            console.log(
+                `❌ Platform child process ${testConfig.platformChildPid} is not running`,
+            );
             showRecentLogs("Process Verification", 10);
         } else {
-            console.log(`✓ Platform child process ${testConfig.platformChildPid} is running`);
+            console.log(
+                `✓ Platform child process ${testConfig.platformChildPid} is running`,
+            );
         }
         expect(isRunning).toBe(true);
     });
