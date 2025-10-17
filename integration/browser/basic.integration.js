@@ -28,6 +28,46 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             });
         });
 
+        describe("ActivityStreams", () => {
+            it("handles empty objects", () => {
+                expect(() => {
+                    sc.ActivityStreams.Object.create(undefined);
+                }).to.throw(
+                    'ActivityStreams validation failed: the "object" property is undefined. Example: { id: "user@example.com", type: "person" }',
+                );
+                expect(() => {
+                    sc.ActivityStreams.Object.create(null);
+                }).to.throw(
+                    'ActivityStreams validation failed: the "object" property is null. Example: { id: "user@example.com", type: "person" }',
+                );
+                expect(() => {
+                    sc.ActivityStreams.Object.create("");
+                }).to.throw(
+                    'ActivityStreams validation failed: the "object" property received string "" but expected an object. Use: { id: "", type: "person" }',
+                );
+                expect(() => {
+                    sc.ActivityStreams.Object.create("foo");
+                }).to.throw(
+                    'ActivityStreams validation failed: the "object" property received string "foo" but expected an object. Use: { id: "foo", type: "person" }',
+                );
+                expect(() => {
+                    sc.ActivityStreams.Object.create(123);
+                }).to.throw(
+                    'ActivityStreams validation failed: the "object" property must be an object, received number (123). Example: { id: "user@example.com", type: "person" }',
+                );
+                expect(() => {
+                    sc.ActivityStreams.Object.create([]);
+                }).to.throw(
+                    'ActivityStreams validation failed: the "object" property must be an object, received array (). Example: { id: "user@example.com", type: "person" }',
+                );
+                expect(() => {
+                    sc.ActivityStreams.Object.create({});
+                }).to.throw(
+                    'ActivityStreams validation failed: the "object" property requires an \'id\' property. Example: { id: "user@example.com", type: "person" }',
+                );
+            });
+        });
+
         describe("Dummy", () => {
             const actor = {
                 id: "jimmy@dummy",
