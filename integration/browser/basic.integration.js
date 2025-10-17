@@ -155,9 +155,9 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             });
         });
 
-        const actorId = utils.createXmppJid();
+        const jid = utils.createXmppJid();
         const actorObject = {
-            id: actorId,
+            id: jid,
             type: "person",
             name: "Jimmy Userson",
         };
@@ -165,7 +165,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
         describe("XMPP", () => {
             describe("Credentials", () => {
                 it("fires an empty callback", async () => {
-                    await setXMPPCredentials(sc.socket, actorId);
+                    await setXMPPCredentials(sc, jid);
                 });
             });
 
@@ -182,7 +182,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
 
             describe("connect", () => {
                 it("is successful", async () => {
-                    const msg = await connectXMPP(sc.socket, actorId);
+                    const msg = await connectXMPP(sc, jid);
                     expect(msg).to.eql({
                         type: "connect",
                         actor: actorObject,
@@ -193,11 +193,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
 
             describe("Join", () => {
                 it("should be successful", async () => {
-                    const msg = await joinXMPPRoom(
-                        sc.socket,
-                        actorId,
-                        "test@prosody",
-                    );
+                    const msg = await joinXMPPRoom(sc, jid, "test@prosody");
                     expect(msg).to.eql({
                         type: "join",
                         actor: actorObject,
@@ -213,8 +209,8 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             describe("Send", () => {
                 it("should be successful", async () => {
                     const msg = await sendXMPPMessage(
-                        sc.socket,
-                        actorId,
+                        sc,
+                        jid,
                         "test@prosody",
                         "Hello, world!",
                     );
@@ -246,7 +242,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                             actor: { id: "test@prosody", type: "room" },
                             error: '<error type="cancel"><service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error>',
                             target: {
-                                id: actorId,
+                                id: jid,
                                 type: "person",
                             },
                         },
