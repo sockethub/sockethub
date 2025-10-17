@@ -2,15 +2,14 @@ import { expect } from "@esm-bundle/chai";
 import {
     connectXMPP,
     joinXMPPRoom,
+    parseConfig,
     sendXMPPMessage,
     setXMPPCredentials,
     validateGlobals,
     waitFor,
 } from "./shared-setup.js";
 
-import "./../config.js";
-
-const config = window.SH_CONFIG;
+const config = parseConfig();
 
 const CLIENT_COUNT = 10;
 

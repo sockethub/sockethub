@@ -3,9 +3,9 @@
  */
 
 // If sockethub is inside a docker image, the hosts might have unique names
-XMPP_HOST = process.env.XMPP_HOST || "localhost";
-SOCKETHUB_HOST = process.env.SOCKETHUB_HOST || "localhost";
-REDIS_HOST = process.env.REDIS_HOST || "localhost";
+const XMPP_HOST = process.env.XMPP_HOST || "localhost";
+const SOCKETHUB_HOST = process.env.SOCKETHUB_HOST || "localhost";
+const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 
 // Base configuration
 const config = {
@@ -41,25 +41,4 @@ const config = {
         process: 10000, // starting a process
     },
 };
-
-// Helper functions
-config.createXmppJid = (clientId = null) => {
-    const resource = `${config.prosody.resource}${clientId ? `${clientId}` : ""}`;
-    return `${config.prosody.testUser.username}@${config.prosody.host}/${resource}`;
-};
-
-config.createActorObject = (clientId, name = null) => {
-    const actorId = config.createXmppJid(clientId);
-    return {
-        id: actorId,
-        type: "person",
-        name: name || `Jimmy Session ${clientId}`,
-    };
-};
-
-// Export configuration for both Node.js and browser environments
-if (typeof module !== "undefined" && module.exports) {
-    module.exports = config;
-} else if (typeof window !== "undefined") {
-    window.SH_CONFIG = config;
-}
+export default config;

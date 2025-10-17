@@ -2,12 +2,13 @@ import { expect } from "@esm-bundle/chai";
 import {
     connectXMPP,
     joinXMPPRoom,
+    parseConfig,
     sendXMPPMessage,
     setXMPPCredentials,
     validateGlobals,
 } from "./shared-setup.js";
 
-const config = window.SH_CONFIG;
+const config = parseConfig();
 
 describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
     validateGlobals();

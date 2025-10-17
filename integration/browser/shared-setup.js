@@ -1,13 +1,19 @@
 import { expect } from "@esm-bundle/chai";
-import "./../../packages/server/res/sockethub-client.js";
-import "./../../packages/server/res/socket.io.js";
-import "./../config.js";
-
-const config = window.SH_CONFIG;
+import createTestUtils, { parseConfigFromQueryParams } from "../utils.js";
+import "../../packages/server/res/sockethub-client.js";
+import "../../packages/server/res/socket.io.js";
 
 // Mocha configuration
 mocha.bail(true);
 mocha.timeout("120s");
+
+/**
+ * Parse configuration for browser tests
+ * @returns {object} Configuration object
+ */
+export function parseConfig() {
+    return parseConfigFromQueryParams();
+}
 
 // Shared setup and validation functions
 export function validateGlobals() {
