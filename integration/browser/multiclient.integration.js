@@ -302,9 +302,7 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
 
                 // Wait 200ms before next client
                 if (i < records.length - 1) {
-                    await new Promise((resolve) =>
-                        setTimeout(resolve, config.timeouts.process),
-                    );
+                    await new Promise((resolve) => setTimeout(resolve, 200));
                 }
             }
 
