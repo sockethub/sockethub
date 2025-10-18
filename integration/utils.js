@@ -6,7 +6,7 @@ export default function createTestUtils(config) {
     return {
         /**
          * Create XMPP JID
-         @param {string|null} resource - optional client resource
+         * @param {string|null} resource - optional client resource
          * @returns {string} Generated XMPP JID
          */
         createXmppJid(resource = config.prosody.resource) {
