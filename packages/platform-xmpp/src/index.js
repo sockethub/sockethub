@@ -261,7 +261,7 @@ export default class XMPP {
 
                 as.error = `Connection lost: ${err.toString()}. Attempting automatic reconnection...`;
                 as.object = {
-                    type: "connection",
+                    type: "connect",
                     status: "reconnecting",
                     condition: err.condition || "network",
                 };
@@ -271,7 +271,7 @@ export default class XMPP {
 
                 as.error = `Connection failed: ${err.toString()}. Manual reconnection required.`;
                 as.object = {
-                    type: "connection",
+                    type: "connect",
                     status: "failed",
                     condition: err.condition || "protocol",
                 };

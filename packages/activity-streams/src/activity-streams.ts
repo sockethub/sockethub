@@ -40,6 +40,7 @@ const baseProps = {
         "attachment",
         "attributedTo",
         "attributedWith",
+        "condition",
         "content",
         "contentMap",
         "context",
