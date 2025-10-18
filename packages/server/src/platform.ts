@@ -206,7 +206,7 @@ function getJobHandler(): JobHandler {
                 try {
                     platform[job.msg.type](job.msg, doneCallback);
                 } catch (err) {
-                    jobLog(`failed ${err.toString()}`);
+                    jobLog(`platform call failed ${err.toString()}`);
                     sentry.reportError(err);
                     reject(err);
                 }
