@@ -16,6 +16,7 @@ export interface EventMapping {
 
 interface CustomEmitter extends EventEmitter {
     _emit(s: string, o: unknown, c?: unknown): void;
+    readonly connected: boolean;
 }
 
 export default class SockethubClient {
@@ -28,7 +29,6 @@ export default class SockethubClient {
     private _socket: Socket;
     public ActivityStreams: ASManager;
     public socket: CustomEmitter;
-    public connected = false;
     public debug = true;
 
     constructor(socket: Socket) {
@@ -80,6 +80,7 @@ export default class SockethubClient {
             }
             this._socket.emit(event as string, content, callback);
         };
+        socket.connected = false;
         return socket;
     }
 
@@ -98,7 +99,7 @@ export default class SockethubClient {
     }
 
     private eventMessage(content: BaseActivityObject) {
-        if (!this.connected) {
+        if (!this._socket.connected) {
             return;
         }
         // either stores or delete the specified content onto the storedJoins map,
@@ -137,7 +138,7 @@ export default class SockethubClient {
         const callHandler = (event: string) => {
             return async (obj?: unknown) => {
                 if (event === "connect") {
-                    this.connected = true;
+                    this.socket.connected = true;
                     this.replay(
                         "activity-object",
                         this.events["activity-object"],
@@ -146,7 +147,7 @@ export default class SockethubClient {
                     this.replay("message", this.events.connect);
                     this.replay("message", this.events.join);
                 } else if (event === "disconnect") {
-                    this.connected = false;
+                    this.socket.connected = false;
                 }
                 this.socket._emit(event, obj);
             };
