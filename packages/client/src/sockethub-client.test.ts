@@ -149,9 +149,7 @@ describe("SockethubClient", () => {
     describe("event emitting", () => {
         it("message (no actor)", () => {
             sc._socket.connected = true;
-            console.log('setting callback')
-            const callback = (d) => {
-                console.log('received callback message ', d)
+            const callback = () => {
             };
             expect(() => {
                 sc.socket.emit("message", { foo: "bar" }, callback);
