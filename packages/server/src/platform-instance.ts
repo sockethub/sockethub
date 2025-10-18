@@ -106,7 +106,7 @@ export default class PlatformInstance {
      * Destroys all references to this platform instance, internal listeners and controlled processes
      */
     public async shutdown() {
-        this.debug("shutdown");
+        this.debug("platform process shutdown");
         this.flaggedForTermination = true;
 
         try {

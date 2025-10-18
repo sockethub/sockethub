@@ -83,6 +83,7 @@ const baseProps = {
         "titleMap",
         "updated",
         "url",
+        "xmpp:stanza-id",
     ],
 };
 const rename = {

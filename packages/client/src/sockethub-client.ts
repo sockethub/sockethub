@@ -16,7 +16,9 @@ export interface EventMapping {
 
 interface CustomEmitter extends EventEmitter {
     _emit(s: string, o: unknown, c?: unknown): void;
-    readonly connected: boolean;
+    connect(): void;
+    disconnect(): void;
+    connected: boolean;
 }
 
 export default class SockethubClient {
@@ -81,6 +83,12 @@ export default class SockethubClient {
             this._socket.emit(event as string, content, callback);
         };
         socket.connected = false;
+        socket.disconnect = () => {
+            this._socket.disconnect();
+        };
+        socket.connect = () => {
+            this._socket.connect();
+        };
         return socket;
     }
 
@@ -165,9 +173,9 @@ export default class SockethubClient {
         });
     }
 
-    private replay(name: string, asMap: Map<string, unknown>) {
+    private replay(name: string, asMap: Map<string, ActivityStream>) {
         for (const obj of asMap.values()) {
-            this.log(`replaying ${name} for ${obj.actor?.id}`);
+            this.log(`replaying ${name} for ${obj?.actor?.id}`);
             this._socket.emit(name, obj);
         }
     }
