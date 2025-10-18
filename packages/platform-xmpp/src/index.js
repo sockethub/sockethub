@@ -57,6 +57,87 @@ export default class XMPP {
     }
 
     /**
+     * Mark the platform as disconnected and uninitialized
+     * @param {boolean} stopReconnection - If true, stop automatic reconnection
+     */
+    __markDisconnected(stopReconnection = false) {
+        this.debug(`marking client as disconnected for ${this.id}`);
+
+        if (stopReconnection && this.__client) {
+            this.debug(`stopping automatic reconnection for ${this.id}`);
+            this.__client.stop();
+        }
+
+        this.__client = undefined;
+        this.config.initialized = false;
+    }
+
+    /**
+     * Classify error to determine if reconnection should be attempted
+     * @param {Error} err - The error from XMPP client
+     * @returns {string} 'RECOVERABLE' or 'NON_RECOVERABLE'
+     */
+    __classifyError(err) {
+        const errorString = err.toString();
+        const condition = err.condition;
+
+        // ONLY these errors are safe to reconnect on
+        const recoverableErrors = [
+            "ECONNRESET", // Network connection reset
+            "ECONNREFUSED", // Connection refused (server down)
+            "ETIMEDOUT", // Network timeout
+            "ENOTFOUND", // DNS resolution failed
+            "EHOSTUNREACH", // Host unreachable
+            "ENETUNREACH", // Network unreachable
+        ];
+
+        // Check if this is explicitly a recoverable network error
+        if (
+            recoverableErrors.some((pattern) => errorString.includes(pattern))
+        ) {
+            return "RECOVERABLE";
+        }
+
+        // Also check for specific network-level error codes
+        if (err.code && recoverableErrors.includes(err.code)) {
+            return "RECOVERABLE";
+        }
+
+        // DEFAULT: Everything else is non-recoverable
+        // This includes:
+        // - StreamError: conflict
+        // - SASLError: not-authorized
+        // - StreamError: policy-violation
+        // - Any unknown XMPP protocol errors
+        // - Any authentication failures
+        // - Any server policy violations
+        // - Any new error types we haven't seen before
+        return "NON_RECOVERABLE";
+    }
+
+    /**
+     * Check if the XMPP client is properly connected and can send messages
+     * @returns {boolean} true if client is connected and operational
+     */
+    __isClientConnected() {
+        if (!this.__client) {
+            return false;
+        }
+
+        // Check if the client has a socket and it's writable
+        try {
+            return (
+                this.__client.socket &&
+                this.__client.socket.writable !== false &&
+                this.__client.status === "online"
+            );
+        } catch (err) {
+            this.debug("Error checking client connection status:", err);
+            return false;
+        }
+    }
+
+    /**
      * @description
      * JSON schema defining the types this platform accepts.
      *
@@ -123,8 +204,7 @@ export default class XMPP {
      * }
      */
     connect(job, credentials, done) {
-        if (this.__client) {
-            // TODO verify client is actually connected
+        if (this.__isClientConnected()) {
             this.debug(`client connection already exists for ${job.actor.id}`);
             this.config.initialized = true;
             return done();
@@ -159,10 +239,44 @@ export default class XMPP {
 
         this.__client.on("offline", () => {
             this.debug(`offline event received for ${job.actor.id}`);
+            this.__markDisconnected();
         });
 
         this.__client.on("error", (err) => {
-            this.debug(`client error event for ${job.actor.id}:`, err);
+            this.debug(
+                `network error event for ${job.actor.id}:${err.toString()}`,
+            );
+
+            const errorType = this.__classifyError(err);
+
+            const as = {
+                context: "xmpp",
+                type: "connect",
+                actor: { id: job.actor.id },
+            };
+
+            if (errorType === "RECOVERABLE") {
+                // Clean up state but allow reconnection
+                this.__markDisconnected(false);
+
+                as.error = `Connection lost: ${err.toString()}. Attempting automatic reconnection...`;
+                as.object = {
+                    type: "connection",
+                    status: "reconnecting",
+                    condition: err.condition || "network",
+                };
+            } else {
+                // Clean up state and stop reconnection
+                this.__markDisconnected(true);
+
+                as.error = `Connection failed: ${err.toString()}. Manual reconnection required.`;
+                as.object = {
+                    type: "connection",
+                    status: "failed",
+                    condition: err.condition || "protocol",
+                };
+            }
+            this.sendToClient(as);
         });
 
         this.__client.on("online", () => {
@@ -224,7 +338,7 @@ export default class XMPP {
      *   }
      * }
      */
-    join(job, done) {
+    async join(job, done) {
         this.debug(
             `sending join from ${job.actor.id} to ` +
                 `${job.target.id}/${job.actor.name}`,
@@ -239,7 +353,7 @@ export default class XMPP {
         });
         presence.c("x", { xmlns: "http://jabber.org/protocol/muc" });
 
-        this.__client.send(presence).then(done);
+        return this.__client.send(presence).then(done).catch(done);
     }
 
     /**

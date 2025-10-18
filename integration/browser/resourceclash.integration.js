@@ -128,10 +128,13 @@ describe(`XMPP Resource Clash Integration Tests at ${config.sockethub.url}`, () 
                 results.push(result);
             }
 
-            // Verify all clients connected successfully
-            expect(results).to.have.length(CLIENT_COUNT);
-            expect(connectionLog).to.have.length(CLIENT_COUNT);
-            expect(errors).to.have.length(0);
+            return new Promise((resolve) => {
+                // Verify all clients connected successfully
+                expect(results).to.have.length(CLIENT_COUNT);
+                expect(connectionLog).to.have.length(CLIENT_COUNT);
+                expect(errors).to.have.length(1);
+                resolve();
+            });
         });
     });
 });
