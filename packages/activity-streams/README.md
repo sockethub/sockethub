@@ -14,6 +14,7 @@ are very welcome.
 ## What it does
 
 This library helps you:
+
 - **Create and store** ActivityStream objects with validation
 - **Auto-expand** string references into full objects (e.g., `"user@example.com"` becomes `{id: "user@example.com"}`)
 - **Build Activity Streams** that automatically link to stored objects

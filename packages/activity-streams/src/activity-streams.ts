@@ -135,30 +135,42 @@ function renameProp<T>(obj: T, key: string): T {
     return obj;
 }
 
-function validateObject<T>(type: string, incomingObj: T, requireId: boolean = false) {
+function validateObject<T>(type: string, incomingObj: T, requireId = false) {
     // Input validation with clear error messages
     if (incomingObj === null) {
-        throw new Error(`ActivityStreams validation failed: the "${type}" property is null. Example: { id: "user@example.com", type: "person" }`);
+        throw new Error(
+            `ActivityStreams validation failed: the "${type}" property is null. Example: { id: "user@example.com", type: "person" }`,
+        );
     }
-    
+
     if (incomingObj === undefined) {
-        throw new Error(`ActivityStreams validation failed: the "${type}" property is undefined. Example: { id: "user@example.com", type: "person" }`);
+        throw new Error(
+            `ActivityStreams validation failed: the "${type}" property is undefined. Example: { id: "user@example.com", type: "person" }`,
+        );
     }
-    
-    if (typeof incomingObj === 'string') {
-        throw new Error(`ActivityStreams validation failed: the "${type}" property received string "${incomingObj}" but expected an object. Use: { id: "${incomingObj}", type: "person" }`);
+
+    if (typeof incomingObj === "string") {
+        throw new Error(
+            `ActivityStreams validation failed: the "${type}" property received string "${incomingObj}" but expected an object. Use: { id: "${incomingObj}", type: "person" }`,
+        );
     }
-    
-    if (typeof incomingObj !== 'object' || Array.isArray(incomingObj)) {
-        const receivedType = Array.isArray(incomingObj) ? 'array' : typeof incomingObj;
+
+    if (typeof incomingObj !== "object" || Array.isArray(incomingObj)) {
+        const receivedType = Array.isArray(incomingObj)
+            ? "array"
+            : typeof incomingObj;
         const receivedValue = String(incomingObj);
-        throw new Error(`ActivityStreams validation failed: the "${type}" property must be an object, received ${receivedType} (${receivedValue}). Example: { id: "user@example.com", type: "person" }`);
+        throw new Error(
+            `ActivityStreams validation failed: the "${type}" property must be an object, received ${receivedType} (${receivedValue}). Example: { id: "user@example.com", type: "person" }`,
+        );
     }
 
     // Require 'id' property when explicitly requested (e.g., Object.create())
     const obj = incomingObj as ActivityObject;
     if (requireId && !obj.id) {
-        throw new Error(`ActivityStreams validation failed: the "${type}" property requires an 'id' property. Example: { id: "user@example.com", type: "person" }`);
+        throw new Error(
+            `ActivityStreams validation failed: the "${type}" property requires an 'id' property. Example: { id: "user@example.com", type: "person" }`,
+        );
     }
 
     const unknownKeys = Object.keys(incomingObj).filter(
@@ -184,7 +196,8 @@ function validateObject<T>(type: string, incomingObj: T, requireId: boolean = fa
             // not defined as a special prop
             // don't know what to do with it, so throw error
             console.log(ao);
-            const receivedValue = typeof ao[key] === 'string' ? `"${ao[key]}"` : String(ao[key]);
+            const receivedValue =
+                typeof ao[key] === "string" ? `"${ao[key]}"` : String(ao[key]);
             const err = `ActivityStreams validation failed: property "${key}" with value ${receivedValue} is not allowed on the "${type}" object of type "${ao.type}".`;
             if (failOnUnknownObjectProperties) {
                 throw new Error(err);
