@@ -74,13 +74,79 @@ describe(`XMPP Client Reconnection Tests at ${config.sockethub.url}`, () => {
             clientRecord.joinedRoom = true;
         });
 
-        it("handles disconnection and reconnection gracefully (browser refresh)", async () => {
-            // This test simulates a browser refresh scenario where:
-            // 1. Client disconnects (browser closes/refreshes)
-            // 2. Sockethub should maintain the persistent XMPP connection temporarily
-            // 3. New client connects with same credentials (new browser session)
-            // 4. Should reconnect quickly since Sockethub may have existing connection
-            // 5. Client can immediately rejoin room and send messages
+        it("handles disconnection and reconnection gracefully (browser refresh) [working]", async () => {
+            const testMessage = `Message after reconnection ${Date.now()}`;
+
+            // Disconnect client (simulates browser close/refresh)
+            if (clientRecord.sockethubClient.socket.connected) {
+                clientRecord.sockethubClient.socket.disconnect();
+            }
+            clientRecord.connected = false;
+            clientRecord.joinedRoom = false;
+
+            // Brief wait to simulate browser refresh delay
+            await new Promise((resolve) =>
+                setTimeout(resolve, config.timeouts.process),
+            );
+
+            // Create new client (simulates new browser session)
+            const newSocket = io(config.sockethub.url, { path: "/sockethub" });
+            const newSockethubClient = new SockethubClient(newSocket);
+
+            // Set up message listener for new socket
+            newSockethubClient.socket.on("message", (msg) => {
+                messageLog.push({
+                    timestamp: Date.now(),
+                    message: msg,
+                });
+            });
+
+            // Replace the disconnected client record
+            clientRecord = {
+                xmppJid: clientRecord.xmppJid,
+                actor: clientRecord.actor,
+                sockethubClient: newSockethubClient,
+            };
+
+            // Wait for socket connection
+            await waitFor(
+                () => newSockethubClient.socket.connected,
+                config.timeouts.connect,
+            );
+
+            // Set credentials (browser would send these again) -- VALID
+            await setXMPPCredentials(
+                newSockethubClient.socket,
+                clientRecord.xmppJid,
+            );
+
+            // Connect (should be fast due to persistent XMPP connection)
+            await connectXMPP(newSockethubClient.socket, clientRecord.xmppJid);
+            clientRecord.connected = true;
+
+            // Rejoin room
+            await joinXMPPRoom(
+                newSockethubClient.socket,
+                clientRecord.xmppJid,
+                config.prosody.room,
+            );
+            clientRecord.joinedRoom = true;
+
+            // Test that reconnected client can send messages
+            messageLog.length = 0;
+
+            await sendXMPPMessage(
+                newSockethubClient.socket,
+                clientRecord.xmppJid,
+                config.prosody.room,
+                testMessage,
+            );
+
+            expect(clientRecord.connected).to.be.true;
+            expect(clientRecord.joinedRoom).to.be.true;
+        });
+
+        it("reconnection with wrong creds causes platform cleanup and crash", async () => {
             const testMessage = `Message after reconnection ${Date.now()}`;
 
             // Disconnect client (simulates browser close/refresh)
@@ -121,9 +187,13 @@ describe(`XMPP Client Reconnection Tests at ${config.sockethub.url}`, () => {
             );
 
             // Set credentials (browser would send these again)
+            // Use INVALID credentials to simulate the bug scenario
             await setXMPPCredentials(
                 newSockethubClient.socket,
                 clientRecord.xmppJid,
+                undefined, // resource
+                "invaliduser", // intentionally wrong username
+                "invalidpassword", // intentionally wrong password
             );
 
             // Connect (should be fast due to persistent XMPP connection)
@@ -148,9 +218,8 @@ describe(`XMPP Client Reconnection Tests at ${config.sockethub.url}`, () => {
                 testMessage,
             );
 
-            // Verify the message was sent successfully (no timeout or error)
-            // In a single-client scenario, we just verify the send operation completed
-            // The fact that we got here without an exception means reconnection worked
+            // The client believes it is connected, but Sockethub will eventually destroy the platform
+            // You may want to add additional assertions or logs here to observe the cleanup/crash
             expect(clientRecord.connected).to.be.true;
             expect(clientRecord.joinedRoom).to.be.true;
         });
