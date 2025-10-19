@@ -16,6 +16,9 @@ export interface EventMapping {
 
 interface CustomEmitter extends EventEmitter {
     _emit(s: string, o: unknown, c?: unknown): void;
+    connect(): void;
+    disconnect(): void;
+    connected: boolean;
 }
 
 export default class SockethubClient {
@@ -28,7 +31,6 @@ export default class SockethubClient {
     private _socket: Socket;
     public ActivityStreams: ASManager;
     public socket: CustomEmitter;
-    public online = false;
     public debug = true;
 
     constructor(socket: Socket) {
@@ -80,6 +82,13 @@ export default class SockethubClient {
             }
             this._socket.emit(event as string, content, callback);
         };
+        socket.connected = false;
+        socket.disconnect = () => {
+            this._socket.disconnect();
+        };
+        socket.connect = () => {
+            this._socket.connect();
+        };
         return socket;
     }
 
@@ -98,7 +107,7 @@ export default class SockethubClient {
     }
 
     private eventMessage(content: BaseActivityObject) {
-        if (!this.online) {
+        if (!this._socket.connected) {
             return;
         }
         // either stores or delete the specified content onto the storedJoins map,
@@ -137,7 +146,7 @@ export default class SockethubClient {
         const callHandler = (event: string) => {
             return async (obj?: unknown) => {
                 if (event === "connect") {
-                    this.online = true;
+                    this.socket.connected = true;
                     this.replay(
                         "activity-object",
                         this.events["activity-object"],
@@ -146,7 +155,7 @@ export default class SockethubClient {
                     this.replay("message", this.events.connect);
                     this.replay("message", this.events.join);
                 } else if (event === "disconnect") {
-                    this.online = false;
+                    this.socket.connected = false;
                 }
                 this.socket._emit(event, obj);
             };
@@ -164,9 +173,9 @@ export default class SockethubClient {
         });
     }
 
-    private replay(name: string, asMap: Map<string, unknown>) {
-        for (const obj of asMap) {
-            this.log(`replaying ${name}`, obj);
+    private replay(name: string, asMap: Map<string, ActivityStream>) {
+        for (const obj of asMap.values()) {
+            this.log(`replaying ${name} for ${obj?.actor?.id}`);
             this._socket.emit(name, obj);
         }
     }
@@ -175,4 +184,5 @@ export default class SockethubClient {
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 ((global: any) => {
     global.SockethubClient = SockethubClient;
+    // @ts-ignore
 })(typeof window === "object" ? window : {});

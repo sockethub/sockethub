@@ -4,22 +4,22 @@ import createActivityObject from "./create-activity-object.js";
 describe("Middleware: createActivityObject", () => {
     it("Calls activity.Object.create and fails with invalid property", async () => {
         expect(() => {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
             createActivityObject({ foo: "bar" }, (o) => {
                 expect(o).not.toEqual({ foo: "bar" });
             });
-        }).toThrow('invalid property: "foo"');
+        }).toThrow("ActivityStreams validation failed: the \"object\" property requires an 'id' property. Example: { id: \"user@example.com\", type: \"person\" }");
     });
     it("Calls activity.Object.create with incoming data", async () => {
         createActivityObject(
             {
+                id: "test",
                 context: "foo",
                 type: "bar",
                 content: "some text",
             },
             (o) => {
                 expect(o).toEqual({
+                    id: "test",
                     context: "foo",
                     type: "bar",
                     content: "some text",

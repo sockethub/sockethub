@@ -14,19 +14,17 @@ services:
     redis:
         image: redis
         ports:
-            - "16379:6379"
+            - "6379:6379"
         networks:
             - sockethub-net
     prosody:
         image: prosody/prosody:latest
+        user: prosody
         ports:
-          - "8222:5222"
+          - "5222:5222"
         volumes:
             - ./integration/prosody:/etc/prosody
-        environment:
-            LOCAL: jimmy
-            DOMAIN: prosody
-            PASSWORD: passw0rd
+        entrypoint: [ "/bin/bash", "/etc/prosody/start.sh" ]
         networks:
             - sockethub-net
 

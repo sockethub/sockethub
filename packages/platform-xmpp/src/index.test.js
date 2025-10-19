@@ -135,7 +135,7 @@ const job = {
     },
 };
 
-describe("Platform", () => {
+describe("XMPP", () => {
     let clientFake, xmlFake, clientObjectFake, xp;
 
     beforeEach(() => {
@@ -147,7 +147,32 @@ describe("Platform", () => {
             stop: sinon.fake.resolves()
         };
         clientFake = sinon.fake.returns(clientObjectFake);
-        xmlFake = sinon.fake();
+
+        // Mock XML object with chainable .c() method for building stanzas
+        const mockXmlElement = {
+            name: "presence",
+            attrs: {},
+            children: [],
+            c: sinon.fake.returns({
+                name: "x",
+                attrs: { xmlns: "http://jabber.org/protocol/muc" },
+                parent: null
+            }),
+            getChild: sinon.fake((name, xmlns) => {
+                if (name === "x" && xmlns === "http://jabber.org/protocol/muc") {
+                    return { attrs: { xmlns: "http://jabber.org/protocol/muc" } };
+                }
+                return null;
+            })
+        };
+
+        // Create a smart fake that returns complex object for presence, simple for others
+        xmlFake = sinon.fake((elementName) => {
+            if (elementName === "presence") {
+                return mockXmlElement;
+            }
+            return undefined; // Default return for other elements
+        });
 
         class TestXMPP extends XMPP {
             createClient() {
@@ -186,9 +211,17 @@ describe("Platform", () => {
 
     describe("Bad initialization", () => {
         it("returns the existing __client object", (done) => {
-            xp.__client = "foo";
-            xp.connect(job.connect, credentials, () => {
-                expect(xp.__client).toEqual("foo");
+            const dummyClient =  {
+                foo: "bar",
+                socket: {
+                    writable: true
+                },
+                status: "online"
+            };
+            xp.__client = dummyClient
+            xp.connect(job.connect, credentials, (d) => {
+                console.log('result: ', d);
+                expect(xp.__client).toEqual(dummyClient);
                 sinon.assert.notCalled(clientFake);
                 sinon.assert.notCalled(xp.sendToClient);
                 // sinon.assert.calledOnce(clientFake);
@@ -217,10 +250,17 @@ describe("Platform", () => {
                 expect(xp.__client.send).toBeInstanceOf(Function);
                 xp.join(job.join, () => {
                     sinon.assert.calledOnce(xp.__client.send);
+
+                    // Verify presence stanza was created with correct attributes
                     sinon.assert.calledWith(xmlFake, "presence", {
                         from: "testingham@jabber.net",
                         to: "partyroom@jabber.net/testing ham",
                     });
+
+                    // Verify MUC namespace was added
+                    const mockXmlElement = xmlFake.returnValues[0];
+                    sinon.assert.calledWith(mockXmlElement.c, "x", { xmlns: "http://jabber.org/protocol/muc" });
+
                     done();
                 });
             });
@@ -452,6 +492,37 @@ describe("Platform", () => {
                     done()
                 });
             })
+        });
+
+        describe("#join", () => {
+            it("creates correct MUC presence stanza with namespace", (done) => {
+                const joinJob = {
+                    actor: {
+                        id: "testingham@jabber.net",
+                        name: "Testing Ham"
+                    },
+                    target: {
+                        id: "testroom@conference.jabber.net"
+                    }
+                };
+
+                xp.join(joinJob, () => {
+                    sinon.assert.calledOnce(xp.__client.send);
+
+                    // Verify presence stanza was created
+                    sinon.assert.calledWith(xmlFake, "presence", {
+                        from: "testingham@jabber.net",
+                        to: "testroom@conference.jabber.net/Testing Ham",
+                    });
+
+                    // Verify MUC namespace was added to the presence
+                    const sentStanza = xp.__client.send.getCall(0).args[0];
+                    expect(sentStanza.name).toEqual("presence");
+                    sinon.assert.calledWith(sentStanza.c, "x", { xmlns: "http://jabber.org/protocol/muc" });
+
+                    done();
+                });
+            });
         });
     });
 });

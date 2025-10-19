@@ -22,10 +22,10 @@ jobs:
       - run: sleep 5
 
       - name: Verify Redis is listening
-        run: nc -zv localhost 16379
+        run: nc -zv localhost 6379
 
       - name: Redis Integration Tests
-        run: bun run integration:redis:run
+        run: bun run integration:redis
 
   process:
     runs-on: ubuntu-latest
@@ -46,13 +46,13 @@ jobs:
       - run: sleep 5
 
       - name: Verify Redis is listening
-        run: nc -zv localhost 16379
+        run: nc -zv localhost 6379
 
       - name: Verify XMPP is listening
-        run: nc -zv localhost 8222
+        run: nc -zv localhost 5222
 
       - name: Verifying Child Process Termination
-        run: bun run integration:process:run
+        run: bun run integration:process
 
       - name: View running processes
         if: always()
@@ -81,11 +81,32 @@ jobs:
         run: nc -zv localhost 10550
 
       - name: Verify Redis is listening
-        run: nc -zv localhost 16379
+        run: nc -zv localhost 6379
 
-      - name: Browser Integration Tests
-        run: bun run integration:browser:run
+      - name: Verify XMPP is listening
+        run: nc -zv localhost 5222
 
-      - name: Print Sockethub logs
+      - name: Basic Browser Integration Tests
+        run: XMPP_HOST=prosody bun run integration:browser:basic
+
+      - name: Sockethub Logs - Basic
         if: always()
-        run: bun run docker:logs:sockethub
+        run: docker logs sockethub-sockethub-1
+
+      - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+
+      - name: Multiclient XMPP Integration Tests
+        run: XMPP_HOST=prosody bun run integration:browser:multiclient
+
+      - name: Sockethub Logs - Multiclient
+        if: always()
+        run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
+
+      - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+
+      - name: Resource Clash XMPP Integration Tests
+        run: XMPP_HOST=prosody bun run integration:browser:resourceclash
+
+      - name: Sockethub Logs - Resource Clash
+        if: always()
+        run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1

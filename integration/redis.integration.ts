@@ -6,10 +6,9 @@ import {
     JobWorker,
 } from "@sockethub/data-layer";
 import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
+import config from "./config.js";
 
-const REDIS_HOST = "localhost";
-const REDIS_PORT = "16379";
-const REDIS_URL = `redis://${REDIS_HOST}:${REDIS_PORT}`;
+const REDIS_URL = config.redis.url;
 
 const actor = `${(Math.random() + 1).toString(36).substring(2)}`;
 const creds: CredentialsObject = {

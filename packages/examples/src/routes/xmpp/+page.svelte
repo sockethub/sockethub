@@ -41,6 +41,14 @@ let credentials = $derived({
     resource: "SockethubExample",
 });
 
+function resetState() {
+    $sockethubState.actorSet = false;
+    $sockethubState.credentialsSet = false;
+    $sockethubState.connected = false;
+    $sockethubState.joined = false;
+    connecting = false;
+}
+
 async function connectXmpp(): Promise<void> {
     connecting = true;
     return await send({
@@ -48,16 +56,22 @@ async function connectXmpp(): Promise<void> {
         type: "connect",
         actor: actorId,
     } as AnyActivityStream)
-        .then(() => {
-            $sockethubState.connected = true;
-        })
+        .then(
+            () => {
+                $sockethubState.connected = true;
+            },
+            (err) => {
+                console.error(err);
+                resetState();
+            },
+        )
         .catch(() => {
-            $sockethubState.connected = false;
+            resetState();
         });
 }
 </script>
 
-<BaseExample 
+<BaseExample
     title="XMPP Platform Example"
     description="Connect to XMPP servers (Jabber), join multi-user chats, and exchange messages using Sockethub's XMPP platform."
 >
@@ -98,10 +112,10 @@ async function connectXmpp(): Promise<void> {
         <!-- Step 3: Connect -->
         <div class="bg-white border border-gray-200 rounded-lg p-4">
             <h4 class="font-semibold text-gray-800 mb-3">Step 3: Connect to XMPP Server</h4>
-            <PlatformConnection 
-                {sockethubState} 
-                {connecting} 
-                onConnect={connectXmpp} 
+            <PlatformConnection
+                {sockethubState}
+                {connecting}
+                onConnect={connectXmpp}
             />
         </div>
 
