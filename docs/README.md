@@ -7,27 +7,21 @@ about using, deploying, and extending Sockethub.
 
 ### Getting Started
 
-* **[Installation](getting-started/installation.md)** - How to install and run Sockethub
-* **[Quick Start](getting-started/quick-start.md)** - Get up and running quickly
-* **[Configuration](getting-started/configuration.md)** - Server configuration options
+* **[Getting Started](getting-started.md)** - Installation, first app, and basic concepts
+* **[Configuration](configuration.md)** - Server configuration options
 
 ### For App Developers
 
-* **[Client Library](client/README.md)** - Using the Sockethub client in web applications
-* **[ActivityStreams](client/activitystreams.md)** - Working with ActivityStreams objects
-* **[Platform Usage](client/using-platforms.md)** - How to use different protocol platforms
+* **[Client Guide](client-guide.md)** - Using the Sockethub client in web applications
+* **[Platforms](platforms.md)** - Available platforms and usage examples
 
 ### For Platform Developers
 
-* **[Creating Platforms](platform-development/creating-platforms.md)** - Build custom protocol platforms
-* **[Platform API](platform-development/platform-api.md)** - Platform development interface
+* **[Platform Development](platform-development.md)** - Build custom protocol platforms
 
-### Architecture & Deployment
+### Architecture
 
-* **[Architecture Overview](architecture/overview.md)** - How Sockethub works internally
-* **[Message Flow](architecture/message-flow.md)** - Request/response processing
-* **[Deployment](deployment/production.md)** - Production deployment guide
-* **[Server Configuration Examples](deployment/server-config.md)** - Reverse proxy setup
+* **[Architecture](architecture.md)** - How Sockethub works internally
 
 ## What is Sockethub?
 
