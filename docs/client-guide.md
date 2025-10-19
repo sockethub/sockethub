@@ -83,6 +83,7 @@ sc.socket.emit('message', {
 ## Platform Examples
 
 ### Dummy (Testing)
+
 ```javascript
 sc.socket.emit('message', {
     type: 'echo',
@@ -93,6 +94,7 @@ sc.socket.emit('message', {
 ```
 
 ### Feeds (RSS/Atom)
+
 ```javascript
 sc.socket.emit('message', {
     type: 'fetch',
@@ -102,6 +104,7 @@ sc.socket.emit('message', {
 ```
 
 ### IRC (Chat)
+
 ```javascript
 // Join channel
 sc.socket.emit('message', {

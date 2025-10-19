@@ -42,7 +42,8 @@ Sockethub is a protocol gateway that runs as four coordinated components:
 └────────────────┘     └─────────────────────┘    └─────────────────┘
 ```
 
-**Data Flow**: All ActivityStreams messages, credentials, and job data are encrypted before storage or transmission. Each phase handles specific responsibilities:
+**Data Flow**: All ActivityStreams messages, credentials, and job data are encrypted before
+storage or transmission. Each phase handles specific responsibilities:
 
 - **Web App**: Sends standardized ActivityStreams messages
 - **Sockethub Server**: Validates, encrypts, and routes messages  
@@ -53,16 +54,24 @@ Sockethub is a protocol gateway that runs as four coordinated components:
 
 ### Process Isolation
 
-Think of Sockethub as a manager supervising multiple specialized workers, where each worker is completely independent:
+Think of Sockethub as a manager supervising multiple specialized workers, where each worker
+is completely independent:
 
-**Each Platform = Separate Process**: Every protocol (IRC, XMPP, Feeds) runs as its own child process spawned by the main server. If the IRC platform crashes while processing a message, it doesn't affect XMPP or the main server.
+**Each Platform = Separate Process**: Every protocol (IRC, XMPP, Feeds) runs as its own child
+process spawned by the main server. If the IRC platform crashes while processing a message, it
+doesn't affect XMPP or the main server.
 
-**Per-Login Isolation for Persistent Platforms**: For platforms that maintain connections (like IRC or XMPP), each user login gets its own dedicated process. So if Alice connects to IRC as "alice" and Bob connects as "bob", they each get separate IRC processes. This means:
+**Per-Login Isolation for Persistent Platforms**: For platforms that maintain connections (like
+IRC or XMPP), each user login gets its own dedicated process. So if Alice connects to IRC as
+"alice" and Bob connects as "bob", they each get separate IRC processes. This means:
+
 - Alice's IRC connection problems don't affect Bob's
 - Memory leaks from one user's connection are contained
 - Each user's IRC session can be managed independently
 
-**Why This Matters**: In traditional architectures, one bad connection or memory leak can bring down the entire service. Sockethub's isolation means problems are contained to individual users and platforms.
+**Why This Matters**: In traditional architectures, one bad connection or memory leak can bring
+down the entire service. Sockethub's isolation means problems are contained to individual users
+and platforms.
 
 ### Session Isolation
 
@@ -150,12 +159,18 @@ ActivityStreams Message → Schema Validation → Platform Verification → Encr
 Platforms are configured to operate in two different modes based on their protocol requirements:
 
 ### Stateless Platforms
-These don't maintain persistent connections and start fresh for each job. Good for protocols like RSS feeds or HTTP APIs where you just fetch data when needed.
+
+These don't maintain persistent connections and start fresh for each job. Good for protocols
+like RSS feeds or HTTP APIs where you just fetch data when needed.
 
 ### Persistent Platforms  
-These maintain long-running connections and require authentication. Examples include IRC (which requires login and maintains a connection to send/receive real-time messages) or XMPP (which keeps a connection open for instant messaging).
 
-The platform configuration determines which mode a platform operates in, affecting how many processes are spawned and how credentials are handled.
+These maintain long-running connections and require authentication. Examples include IRC (which
+requires login and maintains a connection to send/receive real-time messages) or XMPP (which
+keeps a connection open for instant messaging).
+
+The platform configuration determines which mode a platform operates in, affecting how many
+processes are spawned and how credentials are handled.
 
 ## Scalability Characteristics
 
@@ -175,9 +190,11 @@ The platform configuration determines which mode a platform operates in, affecti
 
 ## ActivityStreams Translation
 
-The core value of Sockethub is translating between web-friendly ActivityStreams and traditional internet protocols:
+The core value of Sockethub is translating between web-friendly ActivityStreams and traditional
+internet protocols:
 
 ### Incoming Translation
+
 ```
 IRC: ":alice!user@host PRIVMSG #room :hello world"
   ↓
@@ -191,6 +208,7 @@ ActivityStreams: {
 ```
 
 ### Outgoing Translation  
+
 ```
 ActivityStreams: {
   "type": "join",
@@ -221,10 +239,15 @@ Web applications send the same ActivityStreams format regardless of target proto
 
 ### Custom Platforms
 
-Create new platforms by implementing the standard interface and packaging as npm modules following the `@sockethub/platform-*` naming convention. Add to the platform configuration array to enable.
+Create new platforms by implementing the standard interface and packaging as npm modules
+following the `@sockethub/platform-*` naming convention. Add to the platform configuration
+array to enable.
 
 ### Middleware Pipeline
 
-Extend server functionality through middleware for custom validation, message transformation, authentication integration, or monitoring.
+Extend server functionality through middleware for custom validation, message transformation,
+authentication integration, or monitoring.
 
-This architecture provides a robust, secure, and scalable foundation for bridging web applications with any internet protocol while maintaining strong isolation and reliability guarantees.
+This architecture provides a robust, secure, and scalable foundation for bridging web
+applications with any internet protocol while maintaining strong isolation and reliability
+guarantees.

@@ -140,11 +140,12 @@ bun run start
 ## Next Steps
 
 ### For App Developers
+
 - **[Client Guide](client-guide.md)** - Detailed client library usage
 - **[Platform Documentation](platforms.md)** - Working with specific platforms
 - **[Configuration](configuration.md)** - Server configuration options
 
 ### For Platform Developers
+
 - **[Creating Platforms](platform-development/creating-platforms.md)** - Build custom platforms
 - **[Platform API](platform-development/platform-api.md)** - Development interface
-

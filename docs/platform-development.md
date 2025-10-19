@@ -4,9 +4,13 @@ Creating custom platforms to add new protocols to Sockethub.
 
 ## What is a Platform?
 
-A platform is a Node.js package that acts as a bridge between Sockethub and external services. When a web application sends an ActivityStreams message to Sockethub, the platform translates it into the specific protocol's format and handles the communication.
+A platform is a Node.js package that acts as a bridge between Sockethub and external services.
+When a web application sends an ActivityStreams message to Sockethub, the platform translates it
+into the specific protocol's format and handles the communication.
 
-For example: A web app sends `{ type: "send", context: "irc", object: { content: "hello" } }` → the IRC platform converts this to an IRC `PRIVMSG #channel :hello` command and sends it to the IRC server.
+For example: A web app sends `{ type: "send", context: "irc", object: { content: "hello" } }`
+→ the IRC platform converts this to an IRC `PRIVMSG #channel :hello` command and sends it to
+the IRC server.
 
 ## Quick Start
 
@@ -198,6 +202,7 @@ export default class ChatBot implements PlatformInterface {
 ## Reference
 
 ### Example Platforms
+
 - **[Dummy Platform](../packages/platform-dummy/README.md)** - Simple testing platform
 - **[Feeds Platform](../packages/platform-feeds/README.md)** - RSS/Atom feed processing
 - **[IRC Platform](../packages/platform-irc/README.md)** - IRC chat protocol
@@ -205,7 +210,9 @@ export default class ChatBot implements PlatformInterface {
 - **[XMPP Platform](../packages/platform-xmpp/README.md)** - XMPP/Jabber messaging
 
 ### TypeScript Interfaces
+
 - **[Schemas Package](../packages/schemas/README.md)** - Complete interface definitions and types
 
 ### Documentation
+
 - **[Client Guide](client-guide.md)** - How clients send messages to your platform

@@ -5,6 +5,7 @@ Sockethub configuration options for different deployment scenarios.
 ## Configuration File
 
 Sockethub uses a JSON configuration file:
+
 - Development: `sockethub.config.json` in current working directory
 - Production: Specify via `--config` flag or `SOCKETHUB_CONFIG` environment variable
 
@@ -107,6 +108,7 @@ To disable a platform, remove it from the array.
 ```
 
 For authentication:
+
 ```json
 {
   "redis": {
@@ -276,4 +278,5 @@ pm2 logs sockethub
 npm update sockethub
 pm2 restart sockethub
 ```
+
 - **[Troubleshooting](troubleshooting.md)** - Common configuration issues
