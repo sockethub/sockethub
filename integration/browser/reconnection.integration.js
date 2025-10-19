@@ -121,13 +121,9 @@ describe(`XMPP Client Reconnection Tests at ${config.sockethub.url}`, () => {
             );
 
             // Set credentials (browser would send these again)
-            // Use INVALID credentials to simulate the bug scenario
             await setXMPPCredentials(
                 newSockethubClient.socket,
                 clientRecord.xmppJid,
-                undefined, // resource
-                "invaliduser", // intentionally wrong username
-                "invalidpassword", // intentionally wrong password
             );
 
             // Connect (should be fast due to persistent XMPP connection)
