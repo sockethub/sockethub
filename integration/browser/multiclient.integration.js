@@ -35,6 +35,7 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             };
 
             sockethubClient.socket.on("message", (msg) => {
+                console.log(`[${clientRecord.jid}] received message:`, JSON.stringify(msg));
                 messageLog.push({
                     clientId: clientRecord.jid,
                     timestamp: Date.now(),
@@ -131,12 +132,14 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             messageLog.length = 0;
 
             // Send message from client 1
+            console.log(`[TEST] Sending message from ${sendingClientRecord.jid}: "${testMessage}"`);
             await sendXMPPMessage(
                 sendingClientRecord.sockethubClient,
                 sendingClientRecord.jid,
                 config.prosody.room,
                 testMessage,
             );
+            console.log(`[TEST] Message sent, waiting for delivery to ${CLIENT_COUNT - 1} other clients...`);
 
             // Wait for messages to propagate to other clients
             await waitFor(
@@ -149,6 +152,9 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                     CLIENT_COUNT - 1,
                 config.timeouts.message,
             );
+
+            console.log(`[TEST] Received ${messageLog.length} total messages`);
+            console.log(`[TEST] Message log:`, messageLog.map(l => ({ client: l.clientId, type: l.message?.type, content: l.message?.object?.content })));
 
             // Verify message was received by other clients
             const receivedMessages = messageLog.filter(

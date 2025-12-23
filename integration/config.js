@@ -7,6 +7,7 @@ const XMPP_HOST = process.env.XMPP_HOST || "localhost";
 const SOCKETHUB_HOST = process.env.SOCKETHUB_HOST || "localhost";
 const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 
+
 // Base configuration
 const config = {
     // Sockethub server configuration
@@ -38,7 +39,7 @@ const config = {
         connect: 5000,
         cleanup: 3000,
         message: 2000,
-        process: 10000, // starting a process
+        process: 5000, // starting a process
     },
 };
 export default config;
