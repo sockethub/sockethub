@@ -1,7 +1,9 @@
 /**
- * This runs as a stand-alone separate process that handles starting up an
- * instance of a given platform, connecting to the redis job queue, sending the
- * platform jobs and handling the result by putting back on the queue for
+ * This runs as a stand-alone separate process that handles:
+ * 1. Starting up an instance of a given platform
+ * 2. Connecting to the redis job queue
+ * 3. Sending the platform jobs
+ * 4. Handling the result by putting it in the outgoing queue for
  * sockethub core to send back to the client.
  *
  * If an exception is thrown by the platform, this process will die along with
@@ -176,8 +178,6 @@ function getJobHandler(): JobHandler {
                 credentialStore
                     .get(
                         job.msg.actor.id,
-                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                        // @ts-ignore
                         platform.credentialsHash,
                     )
                     .then((credentials) => {
@@ -243,11 +243,7 @@ async function updateActor(credentials: CredentialsObject): Promise<void> {
         `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
     );
     logger = debug(`sockethub:platform:${identifier}`);
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     platform.credentialsHash = crypto.objectHash(credentials.object);
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     platform.debug = debug(`sockethub:platform:${platformName}:${identifier}`);
     process.send(["updateActor", undefined, identifier]);
     await startQueueListener(true);
