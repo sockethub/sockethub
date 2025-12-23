@@ -181,17 +181,40 @@ function getJobHandler(): JobHandler {
                         platform.credentialsHash,
                     )
                     .then((credentials) => {
+                        // Create wrapper callback that updates credentialsHash after successful call
+                        const wrappedCallback: PlatformCallback = (
+                            err: Error | null,
+                            result: null | ActivityStream,
+                        ): void => {
+                            if (!err) {
+                                // Update credentialsHash after successful platform call
+                                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                                // @ts-ignore
+                                platform.credentialsHash = crypto.objectHash(
+                                    credentials.object,
+                                );
+                            }
+                            doneCallback(err, result);
+                        };
+
+                        // Proceed with platform method call
                         platform[job.msg.type](
                             job.msg,
                             credentials,
-                            doneCallback,
+                            wrappedCallback,
                         );
                     })
                     .catch((err) => {
-                        console.error(err);
-                        jobLog(`error ${err.toString()}`);
-                        sentry.reportError(err);
-                        reject(err);
+                        // Credential store error (invalid/missing credentials)
+                        jobLog(`credential error ${err.toString()}`);
+                        if (platform.config.initialized) {
+                            // Platform already running - don't terminate
+                            doneCallback(err, null);
+                        } else {
+                            // Platform not initialized - terminate
+                            sentry.reportError(err);
+                            reject(err);
+                        }
                     });
             } else if (
                 platform.config.persist &&
