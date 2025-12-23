@@ -176,10 +176,7 @@ function getJobHandler(): JobHandler {
                 // this method requires credentials and should be called even if the platform is not
                 // yet initialized, because they need to authenticate before they are initialized.
                 credentialStore
-                    .get(
-                        job.msg.actor.id,
-                        platform.credentialsHash,
-                    )
+                    .get(job.msg.actor.id, platform.credentialsHash)
                     .then((credentials) => {
                         // Create wrapper callback that updates credentialsHash after successful call
                         const wrappedCallback: PlatformCallback = (

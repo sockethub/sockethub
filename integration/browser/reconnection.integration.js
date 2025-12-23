@@ -119,7 +119,12 @@ describe("XMPP Client Reconnection Tests", () => {
 
             // Test that reconnected client can send messages
             console.log("sending test message after manual reconnection");
-            await sendXMPPMessage(nsc, jid, config.prosody.room, "Reconnection test message");
+            await sendXMPPMessage(
+                nsc,
+                jid,
+                config.prosody.room,
+                "Reconnection test message",
+            );
 
             // Wait for message to process
             await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -154,7 +159,9 @@ describe("XMPP Client Reconnection Tests", () => {
 
             // Step 2: Disconnect client (simulates browser close/refresh)
             sc.socket.disconnect();
-            await new Promise((resolve) => setTimeout(resolve, config.timeouts.process));
+            await new Promise((resolve) =>
+                setTimeout(resolve, config.timeouts.process),
+            );
 
             console.log("Step 2: Client disconnected");
 
@@ -170,7 +177,9 @@ describe("XMPP Client Reconnection Tests", () => {
 
             await waitFor(() => nsc.socket.connected, config.timeouts.connect);
 
-            console.log("Step 3: New socket connected, setting invalid credentials");
+            console.log(
+                "Step 3: New socket connected, setting invalid credentials",
+            );
 
             // Use INVALID credentials - different username/password
             await setXMPPCredentials(
@@ -191,7 +200,9 @@ describe("XMPP Client Reconnection Tests", () => {
                 console.log("Connection failed as expected:", err.message);
                 connectFailed = true;
                 // Verify the error is related to authentication
-                expect(err.message).to.match(/not-authorized|authentication|failed/i);
+                expect(err.message).to.match(
+                    /not-authorized|authentication|failed/i,
+                );
             }
 
             expect(connectFailed).to.be.true;
@@ -211,7 +222,9 @@ describe("XMPP Client Reconnection Tests", () => {
             nsc2.ActivityStreams.Object.create(utils.createActorObject(jid));
             await connectXMPP(nsc2, jid);
 
-            console.log("Step 6: Fresh connection with valid credentials succeeded - cleanup was proper");
+            console.log(
+                "Step 6: Fresh connection with valid credentials succeeded - cleanup was proper",
+            );
 
             // Clean up
             if (nsc.socket.connected) {

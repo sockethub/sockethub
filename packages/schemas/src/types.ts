@@ -125,7 +125,11 @@ export interface PlatformInterface {
 export interface PersistentPlatformInterface extends PlatformInterface {
     credentialsHash: string;
     get config(): PersistentPlatformConfig;
-    connect(job: ActivityStream, credentials: CredentialsObject, done: PlatformCallback): void;
+    connect(
+        job: ActivityStream,
+        credentials: CredentialsObject,
+        done: PlatformCallback,
+    ): void;
 }
 
 export interface PlatformSession {

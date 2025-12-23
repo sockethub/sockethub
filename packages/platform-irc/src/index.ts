@@ -24,7 +24,8 @@ import { IrcToActivityStreams } from "@sockethub/irc2as";
 import type {
     ActivityStream,
     Logger,
-    PersistentPlatformConfig, PersistentPlatformInterface,
+    PersistentPlatformConfig,
+    PersistentPlatformInterface,
     PlatformCallback,
     PlatformSchemaStruct,
     PlatformSendToClient,
