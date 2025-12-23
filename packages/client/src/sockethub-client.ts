@@ -19,6 +19,7 @@ interface CustomEmitter extends EventEmitter {
     connect(): void;
     disconnect(): void;
     connected: boolean;
+    id: string;
 }
 
 export default class SockethubClient {
@@ -102,6 +103,7 @@ export default class SockethubClient {
         if (content.object && content.object.type === "credentials") {
             const key: string =
                 content.actor.id || (content.actor as unknown as string);
+            console.log("sc: set credentials", key, content);
             this.events.credentials.set(key, content);
         }
     }
@@ -146,6 +148,11 @@ export default class SockethubClient {
         const callHandler = (event: string) => {
             return async (obj?: unknown) => {
                 if (event === "connect") {
+                    console.log(
+                        `sc event ${event} triggered`,
+                        this.events.credentials,
+                    );
+                    this.socket.id = this._socket.id;
                     this.socket.connected = true;
                     this.replay(
                         "activity-object",
@@ -166,17 +173,32 @@ export default class SockethubClient {
         this._socket.on("connect_error", callHandler("connect_error"));
         this._socket.on("disconnect", callHandler("disconnect"));
 
-        // use as a middleware to receive incoming Sockethub messages and unpack them
+        // use as middleware to receive incoming Sockethub messages and unpack them
         // using the ActivityStreams library before passing them along to the app.
         this._socket.on("message", (obj) => {
             this.socket._emit("message", this.ActivityStreams.Stream(obj));
         });
     }
 
-    private replay(name: string, asMap: Map<string, ActivityStream>) {
+    private replay(
+        name: string,
+        asMap: Map<string, ActivityStream | BaseActivityObject>,
+    ) {
         for (const obj of asMap.values()) {
-            this.log(`replaying ${name} for ${obj?.actor?.id}`);
-            this._socket.emit(name, obj);
+            const expandedObj = this.ActivityStreams.Stream(obj);
+            console.log("replaying", name, expandedObj);
+            let id = expandedObj?.id;
+            if ("actor" in expandedObj) {
+                console.log(
+                    "getting actor id ",
+                    expandedObj.actor,
+                    " ",
+                    expandedObj.actor.id,
+                );
+                id = expandedObj.actor.id;
+            }
+            this.log(`replaying ${name} for ${id}`);
+            this._socket.emit(name, expandedObj);
         }
     }
 }
