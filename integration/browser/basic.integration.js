@@ -29,7 +29,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
         });
 
         after(() => {
-            if (sc && sc.socket) {
+            if (sc?.socket) {
                 sc.socket.disconnect();
             }
         });

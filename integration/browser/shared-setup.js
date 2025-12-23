@@ -104,7 +104,7 @@ export function connectXMPP(sh, jid) {
         const timeout = setTimeout(() => {
             reject(new Error("XMPP connect timeout after 10 seconds"));
         }, 10000);
-        
+
         sh.socket.emit(
             "message",
             {

@@ -15,8 +15,8 @@ if (!testFile) {
 const configPath = join(process.cwd(), "web-test-runner.config.temp.mjs");
 const configContent = `export default {
     nodeResolve: true,
-    open: ${process.argv.includes('--open')},
-    manual: ${process.argv.includes('--manual')},
+    open: ${process.argv.includes("--open")},
+    manual: ${process.argv.includes("--manual")},
     testRunnerHtml: (testFramework) => \`
         <!DOCTYPE html>
         <html>

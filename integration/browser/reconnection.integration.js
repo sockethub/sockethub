@@ -104,10 +104,10 @@ describe("XMPP Client Reconnection Tests", () => {
             // - join
 
             console.log("checking for automatic replays...");
-            
+
             // Wait to see if Sockethub automatically replays previous state
             await new Promise((resolve) => setTimeout(resolve, 3000));
-            
+
             const replayMessages = messages.get(nsc.socket.id) || [];
             console.log("replay messages received:", replayMessages);
 
@@ -119,8 +119,13 @@ describe("XMPP Client Reconnection Tests", () => {
 
             // Test that reconnected client can send messages
             console.log("sending test message after manual reconnection");
-            await sendXMPPMessage(nsc, jid, config.prosody.room, "Reconnection test message");
-            
+            await sendXMPPMessage(
+                nsc,
+                jid,
+                config.prosody.room,
+                "Reconnection test message",
+            );
+
             // Wait for message to process
             await new Promise((resolve) => setTimeout(resolve, 1000));
 

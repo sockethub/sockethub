@@ -22,7 +22,7 @@ export default function createTestUtils(config) {
             return {
                 id: jid,
                 type: "person",
-                name: jid.split('/')[1] || config.prosody.testUser.username,
+                name: jid.split("/")[1] || config.prosody.testUser.username,
             };
         },
     };
