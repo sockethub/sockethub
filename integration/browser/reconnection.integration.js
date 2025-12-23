@@ -119,12 +119,7 @@ describe("XMPP Client Reconnection Tests", () => {
 
             // Test that reconnected client can send messages
             console.log("sending test message after manual reconnection");
-            await sendXMPPMessage(
-                nsc,
-                jid,
-                config.prosody.room,
-                "Reconnection test message",
-            );
+            await sendXMPPMessage(nsc, jid, config.prosody.room, "Reconnection test message");
 
             // Wait for message to process
             await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -136,82 +131,95 @@ describe("XMPP Client Reconnection Tests", () => {
             expect(nsc.socket.connected).to.be.true;
         });
 
-        // it("reconnection with wrong creds causes platform cleanup and crash", async () => {
-        //     const testMessage = `Message after reconnection ${Date.now()}`;
-        //
-        //     // Disconnect client (simulates browser close/refresh)
-        //     if (clientRecord.sockethubClient.socket.connected) {
-        //         clientRecord.sockethubClient.socket.disconnect();
-        //     }
-        //     clientRecord.connected = false;
-        //     clientRecord.joinedRoom = false;
-        //
-        //     // Brief wait to simulate browser refresh delay
-        //     await new Promise((resolve) =>
-        //         setTimeout(resolve, config.timeouts.process),
-        //     );
-        //
-        //     // Create new client (simulates new browser session)
-        //     const newSocket = io(config.sockethub.url, { path: "/sockethub" });
-        //     const newSockethubClient = new SockethubClient(newSocket);
-        //
-        //     // Set up message listener for new socket
-        //     newSockethubClient.socket.on("message", (msg) => {
-        //         messageLog.push({
-        //             timestamp: Date.now(),
-        //             message: msg,
-        //         });
-        //     });
-        //
-        //     // Replace the disconnected client record
-        //     clientRecord = {
-        //         xmppJid: clientRecord.xmppJid,
-        //         actor: clientRecord.actor,
-        //         sockethubClient: newSockethubClient,
-        //     };
-        //
-        //     // Wait for socket connection
-        //     await waitFor(
-        //         () => newSockethubClient.socket.connected,
-        //         config.timeouts.connect,
-        //     );
-        //
-        //     // Set credentials (browser would send these again)
-        //     // Use INVALID credentials to simulate the bug scenario
-        //     await setXMPPCredentials(
-        //         newSockethubClient.socket,
-        //         clientRecord.xmppJid,
-        //         undefined, // resource
-        //         "invaliduser", // intentionally wrong username
-        //         "invalidpassword", // intentionally wrong password
-        //     );
-        //
-        //     // Connect (should be fast due to persistent XMPP connection)
-        //     await connectXMPP(newSockethubClient.socket, clientRecord.xmppJid);
-        //     clientRecord.connected = true;
-        //
-        //     // Rejoin room
-        //     await joinXMPPRoom(
-        //         newSockethubClient.socket,
-        //         clientRecord.xmppJid,
-        //         config.prosody.room,
-        //     );
-        //     clientRecord.joinedRoom = true;
-        //
-        //     // Test that reconnected client can send messages
-        //     messageLog.length = 0;
-        //
-        //     await sendXMPPMessage(
-        //         newSockethubClient.socket,
-        //         clientRecord.xmppJid,
-        //         config.prosody.room,
-        //         testMessage,
-        //     );
-        //
-        //     // The client believes it is connected, but Sockethub will eventually destroy the platform
-        //     // You may want to add additional assertions or logs here to observe the cleanup/crash
-        //     expect(clientRecord.connected).to.be.true;
-        //     expect(clientRecord.joinedRoom).to.be.true;
-        // });
+        it("reconnection with wrong creds causes proper platform cleanup (no zombie processes or memory leaks)", async () => {
+            const messageLog = [];
+
+            // Step 1: Establish initial valid connection
+            const sc = connectSockethubClient();
+            const jid = utils.createXmppJid("ReconnectCleanup");
+
+            sc.socket.on("message", (msg) => {
+                messageLog.push({
+                    timestamp: Date.now(),
+                    message: msg,
+                });
+            });
+
+            await setXMPPCredentials(sc, jid);
+            sc.ActivityStreams.Object.create(utils.createActorObject(jid));
+            await connectXMPP(sc, jid);
+            await joinXMPPRoom(sc, jid, config.prosody.room);
+
+            console.log("Step 1: Initial connection established");
+
+            // Step 2: Disconnect client (simulates browser close/refresh)
+            sc.socket.disconnect();
+            await new Promise((resolve) => setTimeout(resolve, config.timeouts.process));
+
+            console.log("Step 2: Client disconnected");
+
+            // Step 3: Create new client with INVALID credentials
+            const nsc = connectSockethubClient();
+
+            nsc.socket.on("message", (msg) => {
+                messageLog.push({
+                    timestamp: Date.now(),
+                    message: msg,
+                });
+            });
+
+            await waitFor(() => nsc.socket.connected, config.timeouts.connect);
+
+            console.log("Step 3: New socket connected, setting invalid credentials");
+
+            // Use INVALID credentials - different username/password
+            await setXMPPCredentials(
+                nsc,
+                jid,
+                "ReconnectCleanup", // resource
+                "invaliduser", // intentionally wrong username
+                "invalidpassword", // intentionally wrong password
+            );
+
+            console.log("Step 4: Attempting to connect with wrong credentials");
+
+            // Step 4: Attempt to connect - should FAIL
+            let connectFailed = false;
+            try {
+                await connectXMPP(nsc, jid);
+            } catch (err) {
+                console.log("Connection failed as expected:", err.message);
+                connectFailed = true;
+                // Verify the error is related to authentication
+                expect(err.message).to.match(/not-authorized|authentication|failed/i);
+            }
+
+            expect(connectFailed).to.be.true;
+
+            // Step 5: Wait to ensure platform cleanup completes
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+
+            console.log("Step 5: Verifying cleanup completed");
+
+            // Step 6: Verify proper cleanup by attempting a fresh connection with VALID credentials
+            // If cleanup was proper, this should work fine
+            const nsc2 = connectSockethubClient();
+            await waitFor(() => nsc2.socket.connected, config.timeouts.connect);
+
+            // Use VALID credentials this time
+            await setXMPPCredentials(nsc2, jid);
+            nsc2.ActivityStreams.Object.create(utils.createActorObject(jid));
+            await connectXMPP(nsc2, jid);
+
+            console.log("Step 6: Fresh connection with valid credentials succeeded - cleanup was proper");
+
+            // Clean up
+            if (nsc.socket.connected) {
+                nsc.socket.disconnect();
+            }
+            if (nsc2.socket.connected) {
+                nsc2.socket.disconnect();
+            }
+        });
     });
 });
