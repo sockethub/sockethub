@@ -306,7 +306,7 @@ export interface ASFactoryOptions {
 type EventCallback = (...args: unknown[]) => void;
 
 export interface ASManager {
-    Stream(meta: unknown): unknown;
+    Stream(meta: unknown): ActivityStream | ActivityObject;
     Object: ActivityObjectManager;
     on(event: string, func: EventCallback): void;
     once(event: string, func: EventCallback): void;
