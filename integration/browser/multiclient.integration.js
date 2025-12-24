@@ -314,7 +314,11 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                 });
 
                 // Set credentials and connect
-                await setXMPPCredentials(newSockethubClient, clientRecord.jid);
+                await setXMPPCredentials(
+                    newSockethubClient,
+                    clientRecord.jid,
+                    clientRecord.resource,
+                );
 
                 await connectXMPP(newSockethubClient, clientRecord.jid);
 
@@ -330,6 +334,87 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             // We can't rely on connection state since the test is about handling staggered connections
             // The fact that we got here without errors means the staggered reconnection worked
             expect(records).to.have.length(CLIENT_COUNT);
+        });
+
+        it("rejects connection with mismatched credentials (same actor, different credentials)", async () => {
+            // Take first client's JID but use different resource credentials
+            const originalClient = records[0];
+            const originalJid = originalClient.jid;
+            const wrongResource = "DifferentResource"; // Different from SockethubTest1
+
+            // Create a new socket connection
+            const newSocket = io(config.sockethub.url, {
+                path: "/sockethub",
+            });
+            const newSockethubClient = new SockethubClient(newSocket);
+
+            let connectError = null;
+
+            // Set up error listener
+            newSockethubClient.socket.on("message", (msg) => {
+                if (msg.type === "error") {
+                    connectError = msg.error;
+                }
+            });
+
+            // Wait for socket to connect
+            await new Promise((resolve, reject) => {
+                if (newSockethubClient.socket.connected) {
+                    resolve();
+                } else {
+                    const connectHandler = () => {
+                        newSockethubClient.socket.off("connect", connectHandler);
+                        newSockethubClient.socket.off(
+                            "connect_error",
+                            errorHandler,
+                        );
+                        resolve();
+                    };
+                    const errorHandler = (error) => {
+                        newSockethubClient.socket.off("connect", connectHandler);
+                        newSockethubClient.socket.off(
+                            "connect_error",
+                            errorHandler,
+                        );
+                        reject(new Error(`Socket connection failed: ${error}`));
+                    };
+
+                    newSockethubClient.socket.on("connect", connectHandler);
+                    newSockethubClient.socket.on("connect_error", errorHandler);
+
+                    setTimeout(() => {
+                        newSockethubClient.socket.off("connect", connectHandler);
+                        newSockethubClient.socket.off(
+                            "connect_error",
+                            errorHandler,
+                        );
+                        reject(new Error("Socket connection timeout"));
+                    }, config.timeouts.connect);
+                }
+            });
+
+            // Set WRONG credentials (same actor JID, different resource)
+            await setXMPPCredentials(
+                newSockethubClient,
+                originalJid,
+                wrongResource,
+            );
+
+            // Try to connect - this should fail with credential error
+            try {
+                await connectXMPP(newSockethubClient, originalJid);
+                // If we reach here, the test should fail
+                expect.fail(
+                    "Connection should have been rejected with mismatched credentials",
+                );
+            } catch (error) {
+                // Connection should fail
+                expect(error.message).to.include("Connect failed");
+                expect(error.message).to.include("invalid credentials");
+            } finally {
+                // Clean up
+                newSockethubClient.socket.disconnect();
+            }
         });
     });
 });
