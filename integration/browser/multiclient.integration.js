@@ -363,7 +363,10 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                     resolve();
                 } else {
                     const connectHandler = () => {
-                        newSockethubClient.socket.off("connect", connectHandler);
+                        newSockethubClient.socket.off(
+                            "connect",
+                            connectHandler,
+                        );
                         newSockethubClient.socket.off(
                             "connect_error",
                             errorHandler,
@@ -371,7 +374,10 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                         resolve();
                     };
                     const errorHandler = (error) => {
-                        newSockethubClient.socket.off("connect", connectHandler);
+                        newSockethubClient.socket.off(
+                            "connect",
+                            connectHandler,
+                        );
                         newSockethubClient.socket.off(
                             "connect_error",
                             errorHandler,
@@ -383,7 +389,10 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                     newSockethubClient.socket.on("connect_error", errorHandler);
 
                     setTimeout(() => {
-                        newSockethubClient.socket.off("connect", connectHandler);
+                        newSockethubClient.socket.off(
+                            "connect",
+                            connectHandler,
+                        );
                         newSockethubClient.socket.off(
                             "connect_error",
                             errorHandler,
