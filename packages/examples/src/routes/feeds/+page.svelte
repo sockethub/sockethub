@@ -1,8 +1,12 @@
 <script lang="ts">
 import { writable } from "svelte/store";
+import ActivityActor from "$components/ActivityActor.svelte";
+import BaseExample from "$components/BaseExample.svelte";
+import FormField from "$components/FormField.svelte";
+import SockethubButton from "$components/SockethubButton.svelte";
 import { send } from "$lib/sockethub";
 
-const _sockethubState = writable({
+const sockethubState = writable({
     actorSet: false,
 });
 
@@ -40,12 +44,12 @@ function getASObj(type: string) {
  * 3. Convert entries to ActivityStreams objects
  * 4. Send the results back to this client for display
  */
-async function _sendFetch(): Promise<void> {
+async function sendFetch(): Promise<void> {
     send(getASObj("fetch"));
 }
 </script>
 
-<BaseExample 
+<BaseExample
     title="Feeds Platform Example"
     description="The feeds platform takes an RSS/ATOM feed URL, fetches and parses it, and returns an array of Activity Objects for each entry."
 >
@@ -68,7 +72,7 @@ async function _sendFetch(): Promise<void> {
         </p>
 
         <ActivityActor {actor} {sockethubState} />
-        
+
         <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg">
             <p class="text-blue-700 text-sm">
                 <strong>💡 What happens when you click Fetch:</strong><br>

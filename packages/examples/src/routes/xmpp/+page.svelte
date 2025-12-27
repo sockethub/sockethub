@@ -2,30 +2,38 @@
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
 import { writable } from "svelte/store";
+import ActivityActor from "$components/ActivityActor.svelte";
+import ActorIdField from "$components/ActorIdField.svelte";
+import BaseExample from "$components/BaseExample.svelte";
+import Credentials from "$components/Credentials.svelte";
+import IncomingMessage from "$components/chat/IncomingMessages.svelte";
+import Room from "$components/chat/Room.svelte";
+import SendMessage from "$components/chat/SendMessage.svelte";
+import PlatformConnection from "$components/PlatformConnection.svelte";
 import type { AnyActivityStream, CredentialName } from "$lib/sockethub";
 import { send } from "$lib/sockethub";
 
-const _actorIdStore = writable("user@jabber.org");
-let _connecting = $state(false);
+const actorIdStore = writable("user@jabber.org");
+let connecting = $state(false);
 
 let actorId = $derived(`${$actorIdStore}/SockethubExample`);
 
-const _room = "kosmos-random@kosmos.chat";
+const room = "kosmos-random@kosmos.chat";
 
-const _sockethubState = writable({
+const sockethubState = writable({
     actorSet: false,
     credentialsSet: false,
     connected: false,
     joined: false,
 });
 
-let _actor = $derived({
+let actor = $derived({
     id: actorId,
     type: "person",
     name: actorId,
 });
 
-let _credentials = $derived({
+let credentials = $derived({
     type: "credentials" as CredentialName,
     userAddress: $actorIdStore,
     password: "123456",
@@ -37,11 +45,11 @@ function resetState() {
     $sockethubState.credentialsSet = false;
     $sockethubState.connected = false;
     $sockethubState.joined = false;
-    _connecting = false;
+    connecting = false;
 }
 
 async function _connectXmpp(): Promise<void> {
-    _connecting = true;
+    connecting = true;
     return await send({
         context: "xmpp",
         type: "connect",
@@ -106,7 +114,7 @@ async function _connectXmpp(): Promise<void> {
             <PlatformConnection
                 {sockethubState}
                 {connecting}
-                onConnect={connectXmpp}
+                onConnect={_connectXmpp}
             />
         </div>
 

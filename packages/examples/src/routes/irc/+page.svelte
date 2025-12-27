@@ -2,32 +2,41 @@
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
 import { writable } from "svelte/store";
+import ActivityActor from "$components/ActivityActor.svelte";
+import ActorIdField from "$components/ActorIdField.svelte";
+import BaseExample from "$components/BaseExample.svelte";
+import Credentials from "$components/Credentials.svelte";
+import IncomingMessage from "$components/chat/IncomingMessages.svelte";
+import Room from "$components/chat/Room.svelte";
+import SendMessage from "$components/chat/SendMessage.svelte";
+import FormField from "$components/FormField.svelte";
+import PlatformConnection from "$components/PlatformConnection.svelte";
 import type { AnyActivityStream, CredentialName } from "$lib/sockethub";
 import { send } from "$lib/sockethub";
 
-const _actorIdStore = writable(
+const actorIdStore = writable(
     `sh-${(Math.random() + 1).toString(36).substring(7)}`,
 );
 
 let server = $state("chat.freenode.net");
 let port = $state(6697);
-let _room = "#sh-random";
-let _connecting = $state(false);
+let room = "#sh-random";
+let connecting = $state(false);
 
-const _sockethubState = writable({
+const sockethubState = writable({
     actorSet: false,
     credentialsSet: false,
     connected: false,
     joined: false,
 });
 
-let _actor = $derived({
+let actor = $derived({
     id: $actorIdStore,
     type: "person",
     name: $actorIdStore,
 });
 
-let _credentials = $derived({
+let credentials = $derived({
     type: "credentials" as CredentialName,
     nick: $actorIdStore,
     server: server,
@@ -40,7 +49,7 @@ function resetState() {
     $sockethubState.credentialsSet = false;
     $sockethubState.connected = false;
     $sockethubState.joined = false;
-    _connecting = false;
+    connecting = false;
 }
 
 /**
@@ -56,7 +65,7 @@ function resetState() {
  * using the credentials (server, port, nick, secure) that were previously sent.
  */
 async function _connectIrc(): Promise<void> {
-    _connecting = true;
+    connecting = true;
     await send({
         // Platform context - routes to Sockethub's IRC platform
         context: "irc",
@@ -72,7 +81,7 @@ async function _connectIrc(): Promise<void> {
         .then(
             () => {
                 $sockethubState.connected = true;
-                _connecting = false;
+                connecting = false;
             },
             (err) => {
                 console.error(err);

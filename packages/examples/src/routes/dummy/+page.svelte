@@ -3,10 +3,13 @@ import { writable } from "svelte/store";
 import type { AnyActivityStream } from "$lib/sockethub";
 import { send } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
+import BaseExample from "../../components/BaseExample.svelte";
+import FormField from "../../components/FormField.svelte";
+import SockethubButton from "../../components/SockethubButton.svelte";
 
 const actorId = "https://sockethub.org/examples/dummy";
 
-const _sockethubState: SockethubStateStore = writable({
+const sockethubState: SockethubStateStore = writable({
     actorSet: false,
 });
 
@@ -42,7 +45,7 @@ function getASObj(type: string): AnyActivityStream {
  * Sends an echo request to Sockethub's dummy platform.
  * Sockethub will respond with the same message content.
  */
-async function _sendEcho(): Promise<void> {
+async function sendEcho(): Promise<void> {
     send(getASObj("echo"));
 }
 
@@ -50,7 +53,7 @@ async function _sendEcho(): Promise<void> {
  * Sends a fail request to Sockethub's dummy platform.
  * Sockethub will respond with an error message for testing error handling.
  */
-async function _sendFail(): Promise<void> {
+async function sendFail(): Promise<void> {
     send(getASObj("fail"));
 }
 
@@ -58,7 +61,7 @@ async function _sendFail(): Promise<void> {
  * Sends a throw request to Sockethub's dummy platform.
  * Sockethub will throw an exception for testing exception handling.
  */
-async function _sendThrow(): Promise<void> {
+async function sendThrow(): Promise<void> {
     send(getASObj("throw"));
 }
 
@@ -66,12 +69,12 @@ async function _sendThrow(): Promise<void> {
  * Sends a greet request to Sockethub's dummy platform.
  * Sockethub will respond with a greeting message.
  */
-async function _sendGreet(): Promise<void> {
+async function sendGreet(): Promise<void> {
     send(getASObj("greet"));
 }
 </script>
 
-<BaseExample 
+<BaseExample
     title="Dummy Platform Example"
     description="The dummy platform is the most basic test to communicate via Sockethub to a platform, and receive a response back. You can use either the echo or fail types on your Activity Stream object."
 >
@@ -115,16 +118,16 @@ async function _sendGreet(): Promise<void> {
         </div>
     </div>
     <div class="space-y-4">
-        <FormField 
-            label="Message Content" 
-            id="objectContent" 
+        <FormField
+            label="Message Content"
+            id="objectContent"
             bind:value={content}
             placeholder="Hello from Sockethub"
         />
         <p class="text-gray-600 text-sm">
             ⬆️ This text will be included in the <code>object.content</code> field of your ActivityStreams message.
         </p>
-        
+
         <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-6 shadow-sm">
             <h4 class="text-lg font-bold text-amber-900 mb-3 flex items-center">
                 <span class="mr-2">🚀</span>
@@ -133,7 +136,7 @@ async function _sendGreet(): Promise<void> {
             <p class="text-amber-800 mb-4 leading-relaxed">
                 Each button sends the same basic message structure but with a different <code class="bg-amber-100 px-1 rounded text-sm">type</code> field:
             </p>
-            
+
             <div class="grid md:grid-cols-2 gap-4">
                 <div class="space-y-4">
                     <div class="bg-white rounded-lg p-4 border border-amber-200">
