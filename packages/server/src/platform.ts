@@ -139,7 +139,6 @@ function getJobHandler(): JobHandler {
                     url: redisUrl,
                 },
             );
-            // biome-ignore lint/performance/noDelete: <explanation>
             delete job.msg.sessionSecret;
 
             let jobCallbackCalled = false;
@@ -174,12 +173,7 @@ function getJobHandler(): JobHandler {
                 // this method requires credentials and should be called even if the platform is not
                 // yet initialized, because they need to authenticate before they are initialized.
                 credentialStore
-                    .get(
-                        job.msg.actor.id,
-                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                        // @ts-expect-error
-                        platform.credentialsHash,
-                    )
+                    .get(job.msg.actor.id, platform.credentialsHash)
                     .then((credentials) => {
                         platform[job.msg.type](
                             job.msg,
@@ -246,8 +240,6 @@ async function updateActor(credentials: CredentialsObject): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     platform.credentialsHash = crypto.objectHash(credentials.object);
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
     platform.debug = debug(`sockethub:platform:${platformName}:${identifier}`);
     process.send(["updateActor", undefined, identifier]);
     await startQueueListener(true);

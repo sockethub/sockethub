@@ -34,7 +34,6 @@ function attachError(err: unknown, msg: InternalActivityStream | undefined) {
         content: {},
     };
 
-    // biome-ignore lint/performance/noDelete: <explanation>
     delete msg.sessionSecret;
 
     if (msg) {

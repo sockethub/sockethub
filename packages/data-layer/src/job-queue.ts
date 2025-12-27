@@ -191,7 +191,6 @@ export class JobQueue extends JobBase {
         if (job) {
             job.data = this.decryptJobData(job);
             try {
-                // biome-ignore lint/performance/noDelete: <explanation>
                 delete job.data.msg.sessionSecret;
             } catch (_e) {
                 // this property should never be exposed externally

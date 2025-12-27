@@ -67,8 +67,6 @@ export default class SockethubClient {
 
     private createPublicEmitter(): CustomEmitter {
         const socket = new EventEmitter() as CustomEmitter;
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error
         socket._emit = socket.emit;
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-expect-error
@@ -181,7 +179,7 @@ export default class SockethubClient {
     }
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+// biome-ignore lint/suspicious/noExplicitAny: wrapper for client
 ((global: any) => {
     global.SockethubClient = SockethubClient;
     // @ts-expect-error

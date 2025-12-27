@@ -59,8 +59,8 @@ export type PlatformSendToClient = (
 export type PlatformUpdateActor = (credentials: object) => Promise<void>;
 
 export interface Logger {
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    // biome-ignore lint/style/useShorthandFunctionType: <explanation>
+    // biome-ignore lint/suspicious/noExplicitAny: exception
+    // biome-ignore lint/style/useShorthandFunctionType: exception
     (msg: string, data?: any): void;
 }
 

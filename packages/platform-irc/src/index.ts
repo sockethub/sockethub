@@ -323,7 +323,7 @@ export default class IRC implements PlatformInterface {
                 // https://github.com/jsdoc2md/jsdoc-to-markdown/issues/197#issuecomment-976851915
                 const buildCommand = await import("./octal-hack.js");
                 const message = buildCommand(job.object.content);
-                // biome-ignore lint/style/useTemplate: <explanation>
+                // biome-ignore lint/style/useTemplate: needs to maintain formatting
                 client.raw("PRIVMSG " + job.target.name + " :" + message);
                 return done("IRC commands temporarily disabled");
             }

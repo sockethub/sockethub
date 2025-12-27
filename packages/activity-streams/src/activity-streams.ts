@@ -338,7 +338,7 @@ export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
     } as ASManager;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+// biome-ignore lint/suspicious/noExplicitAny: wrapper for client
 ((global: any) => {
     global.ASFactor = ASFactory;
 })(typeof window === "object" ? window : {});

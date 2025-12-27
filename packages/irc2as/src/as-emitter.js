@@ -197,9 +197,9 @@ export class ASEmitter {
         if (content.startsWith("+\u0001ACTION ")) {
             type = "me";
             message = content
-                // biome-ignore lint/suspicious/noControlCharactersInRegex: <explanation>
+                // biome-ignore lint/suspicious/noControlCharactersInRegex: hack
                 .split(/^\+\u0001ACTION\s+/)[1]
-                // biome-ignore lint/suspicious/noControlCharactersInRegex: <explanation>
+                // biome-ignore lint/suspicious/noControlCharactersInRegex: hack
                 .split(/\u0001$/)[0];
         } else {
             type = "message";

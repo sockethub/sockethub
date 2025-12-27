@@ -13,7 +13,8 @@
       "!**/*.test.js",
       "!**/packages/examples/build",
       "!**/packages/server/res",
-      "!**/packages/schemas/src/schemas/json"
+      "!**/packages/schemas/src/schemas/json",
+      "!**/build"
     ]
   },
   "formatter": {
@@ -31,7 +32,16 @@
   "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
-    "rules": { "recommended": true }
+    "rules": {
+      "recommended": true,
+      "suspicious": {
+        "noUnknownAtRules": {
+          "options": {
+            "ignore": ["tailwind"]
+          }
+        }
+      }
+    }
   },
   "javascript": {
     "formatter": {
