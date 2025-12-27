@@ -1,18 +1,18 @@
 <!-- @migration-task Error while migrating Svelte code: can't migrate `let server = "chat.freenode.net";` to `$state` because there's a variable named state.
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
+import { writable } from "svelte/store";
 import ActivityActor from "$components/ActivityActor.svelte";
 import ActorIdField from "$components/ActorIdField.svelte";
 import BaseExample from "$components/BaseExample.svelte";
 import Credentials from "$components/Credentials.svelte";
-import FormField from "$components/FormField.svelte";
-import PlatformConnection from "$components/PlatformConnection.svelte";
 import IncomingMessage from "$components/chat/IncomingMessages.svelte";
 import Room from "$components/chat/Room.svelte";
 import SendMessage from "$components/chat/SendMessage.svelte";
+import FormField from "$components/FormField.svelte";
+import PlatformConnection from "$components/PlatformConnection.svelte";
 import type { AnyActivityStream, CredentialName } from "$lib/sockethub";
 import { send } from "$lib/sockethub";
-import { writable } from "svelte/store";
 
 const actorIdStore = writable(
     `sh-${(Math.random() + 1).toString(36).substring(7)}`,

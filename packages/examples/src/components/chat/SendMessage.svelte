@@ -2,8 +2,8 @@
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
 import SockethubButton from "$components/SockethubButton.svelte";
-import { send } from "$lib/sockethub";
 import type { ActorData } from "$lib/sockethub";
+import { send } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
 
 interface Props {

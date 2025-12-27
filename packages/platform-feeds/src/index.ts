@@ -16,9 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import htmlTags from "html-tags";
-import getPodcastFromFeed, { type Episode, type Meta } from "podparse";
-
 import type {
     ActivityStream,
     Logger,
@@ -28,6 +25,8 @@ import type {
     PlatformSchemaStruct,
     PlatformSession,
 } from "@sockethub/schemas";
+import htmlTags from "html-tags";
+import getPodcastFromFeed, { type Episode, type Meta } from "podparse";
 
 import PlatformSchema from "./schema.js";
 import {

@@ -1,9 +1,8 @@
+import type { ActivityStream } from "@sockethub/schemas";
 import { type Job, Queue, QueueEvents, Worker } from "bullmq";
 import debug, { type Debugger } from "debug";
 
-import type { ActivityStream } from "@sockethub/schemas";
-
-import { JobBase, createIORedisConnection } from "./job-base.js";
+import { createIORedisConnection, JobBase } from "./job-base.js";
 import type { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types.js";
 
 export async function verifyJobQueue(config: RedisConfig): Promise<void> {

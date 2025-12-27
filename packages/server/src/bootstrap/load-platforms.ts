@@ -5,7 +5,6 @@
  * platforms, and whitelisting or blacklisting (or neither) based on the
  * config.
  */
-import debug from "debug";
 
 import {
     type PlatformConfig,
@@ -14,6 +13,7 @@ import {
     type PlatformSession,
     validatePlatformSchema,
 } from "@sockethub/schemas";
+import debug from "debug";
 
 const log = debug("sockethub:server:bootstrap:platforms");
 

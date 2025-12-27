@@ -1,8 +1,6 @@
-import debug from "debug";
-
 import { type RedisConfig, redisCheck } from "@sockethub/data-layer";
-
 import { addPlatformSchema } from "@sockethub/schemas";
+import debug from "debug";
 import config from "../config.js";
 import loadPlatforms, {
     type PlatformMap,

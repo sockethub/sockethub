@@ -1,7 +1,5 @@
 import { type ChildProcess, fork } from "node:child_process";
 import { join } from "node:path";
-import debug from "debug";
-
 import { type JobDataDecrypted, JobQueue } from "@sockethub/data-layer";
 import type {
     ActivityStream,
@@ -10,6 +8,7 @@ import type {
     Logger,
     PlatformConfig,
 } from "@sockethub/schemas";
+import debug from "debug";
 import type { Socket } from "socket.io";
 
 import config from "./config.js";

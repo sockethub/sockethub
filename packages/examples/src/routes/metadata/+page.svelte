@@ -1,10 +1,10 @@
 <script lang="ts">
+import { writable } from "svelte/store";
 import ActivityActor from "$components/ActivityActor.svelte";
 import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
 import { send } from "$lib/sockethub";
-import { writable } from "svelte/store";
 
 const sockethubState = writable({
     actorSet: false,

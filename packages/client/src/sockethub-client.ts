@@ -68,10 +68,10 @@ export default class SockethubClient {
     private createPublicEmitter(): CustomEmitter {
         const socket = new EventEmitter() as CustomEmitter;
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
+        // @ts-expect-error
         socket._emit = socket.emit;
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
+        // @ts-expect-error
         socket.emit = (event, content, callback): void => {
             if (event === "credentials") {
                 this.eventCredentials(content);
@@ -184,5 +184,5 @@ export default class SockethubClient {
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 ((global: any) => {
     global.SockethubClient = SockethubClient;
-    // @ts-ignore
+    // @ts-expect-error
 })(typeof window === "object" ? window : {});

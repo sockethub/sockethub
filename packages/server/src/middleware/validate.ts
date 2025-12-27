@@ -1,7 +1,6 @@
 /**
  * responsible for handling the validation and expansion (when applicable) of all incoming objects
  */
-import debug from "debug";
 
 import {
     type ActivityStream,
@@ -10,6 +9,7 @@ import {
     validateActivityStream,
     validateCredentials,
 } from "@sockethub/schemas";
+import debug from "debug";
 
 import getInitObject, { type IInitObject } from "../bootstrap/init.js";
 

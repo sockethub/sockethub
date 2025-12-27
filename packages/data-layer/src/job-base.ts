@@ -1,8 +1,7 @@
 import EventEmitter from "node:events";
-import IORedis, { type Redis } from "ioredis";
-
-import { crypto, type Crypto } from "@sockethub/crypto";
+import { type Crypto, crypto } from "@sockethub/crypto";
 import type { ActivityStream } from "@sockethub/schemas";
+import IORedis, { type Redis } from "ioredis";
 
 import type { JobDataDecrypted, JobEncrypted, RedisConfig } from "./types.js";
 

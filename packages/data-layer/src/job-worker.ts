@@ -1,7 +1,7 @@
 import { Worker } from "bullmq";
 import debug, { type Debugger } from "debug";
 
-import { JobBase, createIORedisConnection } from "./job-base.js";
+import { createIORedisConnection, JobBase } from "./job-base.js";
 import type { JobEncrypted, JobHandler, RedisConfig } from "./types.js";
 
 /**

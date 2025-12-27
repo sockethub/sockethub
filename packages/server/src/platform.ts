@@ -8,12 +8,12 @@
  * it and sockethub will start up another process. This ensures memory safety.
  */
 import { crypto, getPlatformId } from "@sockethub/crypto";
+import type { JobHandler } from "@sockethub/data-layer";
 import {
     CredentialsStore,
     type JobDataDecrypted,
     JobWorker,
 } from "@sockethub/data-layer";
-import type { JobHandler } from "@sockethub/data-layer";
 import type {
     ActivityStream,
     CredentialsObject,
@@ -177,7 +177,7 @@ function getJobHandler(): JobHandler {
                     .get(
                         job.msg.actor.id,
                         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                        // @ts-ignore
+                        // @ts-expect-error
                         platform.credentialsHash,
                     )
                     .then((credentials) => {
@@ -244,10 +244,10 @@ async function updateActor(credentials: CredentialsObject): Promise<void> {
     );
     logger = debug(`sockethub:platform:${identifier}`);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+    // @ts-expect-error
     platform.credentialsHash = crypto.objectHash(credentials.object);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+    // @ts-expect-error
     platform.debug = debug(`sockethub:platform:${platformName}:${identifier}`);
     process.send(["updateActor", undefined, identifier]);
     await startQueueListener(true);

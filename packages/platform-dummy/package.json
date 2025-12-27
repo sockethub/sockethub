@@ -10,7 +10,10 @@
   "engines": {
     "bun": ">=1.2"
   },
-  "keywords": ["sockethub", "dummy"],
+  "keywords": [
+    "sockethub",
+    "dummy"
+  ],
   "devDependencies": {
     "@sockethub/schemas": "workspace:*",
     "@types/bun": "latest"

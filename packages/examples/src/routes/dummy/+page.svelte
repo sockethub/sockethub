@@ -1,8 +1,8 @@
 <script lang="ts">
+import { writable } from "svelte/store";
 import type { AnyActivityStream } from "$lib/sockethub";
 import { send } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
-import { writable } from "svelte/store";
 import ActivityActor from "../../components/ActivityActor.svelte";
 import BaseExample from "../../components/BaseExample.svelte";
 import FormField from "../../components/FormField.svelte";

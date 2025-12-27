@@ -1,23 +1,22 @@
-import debug from "debug";
-import type { Socket } from "socket.io";
-
 import { crypto } from "@sockethub/crypto";
-import { CredentialsStore } from "@sockethub/data-layer";
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
+import { CredentialsStore } from "@sockethub/data-layer";
 import type {
     ActivityStream,
     InternalActivityStream,
 } from "@sockethub/schemas";
+import debug from "debug";
+import type { Socket } from "socket.io";
 
 import getInitObject from "./bootstrap/init.js";
 import config from "./config";
 import janitor from "./janitor.js";
 import listener from "./listener.js";
-import middleware from "./middleware.js";
 import createActivityObject from "./middleware/create-activity-object.js";
 import expandActivityStream from "./middleware/expand-activity-stream.js";
 import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
+import middleware from "./middleware.js";
 import ProcessManager from "./process-manager.js";
 
 const log = debug("sockethub:server:core");
