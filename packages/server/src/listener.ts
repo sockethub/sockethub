@@ -64,7 +64,7 @@ class Listener {
             "examples",
             "index.html",
         );
-        app.get("*", (req, res) => {
+        app.get("*", (_req, res) => {
             res.sendFile(examplesIndex);
         });
         log(

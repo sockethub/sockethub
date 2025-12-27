@@ -1,5 +1,4 @@
 import { expect } from "@esm-bundle/chai";
-import createTestUtils from "../utils.js";
 import "../../packages/server/res/sockethub-client.js";
 import "../../packages/server/res/socket.io.js";
 

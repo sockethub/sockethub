@@ -1,8 +1,5 @@
 <script lang="ts">
 import type { AnyActivityStream } from "$lib/sockethub";
-import DummyEntry from "./platforms/DummyEntry.svelte";
-import FeedsEntry from "./platforms/FeedsEntry.svelte";
-import GenericEntry from "./platforms/GenericEntry.svelte";
 
 interface Props {
     id: string;

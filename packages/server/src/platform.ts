@@ -35,7 +35,7 @@ let logger = debug(loggerPrefix);
 
 // conditionally initialize sentry
 let sentry: { readonly reportError: (err: Error) => void } = {
-    reportError: (err: Error) => {},
+    reportError: (_err: Error) => {},
 };
 (async () => {
     if (config.get("sentry:dsn")) {

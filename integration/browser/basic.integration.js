@@ -170,7 +170,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                                 id: `${config.sockethub.url}/feed.xml`,
                             },
                         },
-                        (msg, second) => {
+                        (msg, _second) => {
                             expect(msg.type).to.eql("collection");
                             expect(msg.items.length).to.eql(20);
                             expect(msg.totalItems).to.eql(20);

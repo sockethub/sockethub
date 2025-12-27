@@ -1,6 +1,5 @@
 <script lang="ts">
 import type { SockethubStateStore } from "$lib/types";
-import SockethubButton from "./SockethubButton.svelte";
 
 /**
  * Standardized connection button for Sockethub platforms.
@@ -38,14 +37,14 @@ let {
     disabled = false,
 }: Props = $props();
 
-let isDisabled = $derived(
+let _isDisabled = $derived(
     disabled ||
         !$sockethubState.credentialsSet ||
         $sockethubState.connected ||
         connecting,
 );
 
-let buttonText = $derived(
+let _buttonText = $derived(
     $sockethubState.connected
         ? "Connected"
         : connecting

@@ -3,7 +3,7 @@ import config from "./config";
 import Sockethub from "./sockethub";
 
 let sentry: { readonly reportError: (err: Error) => void } = {
-    reportError: (err: Error) => {},
+    reportError: (_err: Error) => {},
 };
 
 export async function server() {

@@ -193,7 +193,7 @@ export class JobQueue extends JobBase {
             try {
                 // biome-ignore lint/performance/noDelete: <explanation>
                 delete job.data.msg.sessionSecret;
-            } catch (e) {
+            } catch (_e) {
                 // this property should never be exposed externally
             }
         }

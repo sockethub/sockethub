@@ -112,20 +112,20 @@ export default class PlatformInstance {
             this.process.removeAllListeners("close");
             this.process.unref();
             this.process.kill();
-        } catch (e) {
+        } catch (_e) {
             // needs to happen
         }
 
         try {
             await this.queue.shutdown();
             this.queue = undefined;
-        } catch (e) {
+        } catch (_e) {
             // this needs to happen
         }
 
         try {
             platformInstances.delete(this.id);
-        } catch (e) {
+        } catch (_e) {
             // this needs to happen
         }
     }

@@ -54,7 +54,7 @@ export default class Dummy implements PlatformInterface {
         cb(new Error(job.object.content));
     }
 
-    throw(job: ActivityStream, cb: PlatformCallback) {
+    throw(job: ActivityStream, _cb: PlatformCallback) {
         throw new Error(job.object.content);
     }
 

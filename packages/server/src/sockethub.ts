@@ -124,7 +124,7 @@ class Sockethub {
                     // error handler
                     next(attachError(err, data));
                 })
-                .use((data, next) => {
+                .use((_data, next) => {
                     next();
                 })
                 .done(),
@@ -140,7 +140,7 @@ class Sockethub {
                 .use((err, data, next) => {
                     next(attachError(err, data));
                 })
-                .use((data, next) => {
+                .use((_data, next) => {
                     next();
                 })
                 .done(),

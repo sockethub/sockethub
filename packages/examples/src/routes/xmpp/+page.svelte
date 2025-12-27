@@ -2,38 +2,30 @@
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
 import { writable } from "svelte/store";
-import ActivityActor from "$components/ActivityActor.svelte";
-import ActorIdField from "$components/ActorIdField.svelte";
-import BaseExample from "$components/BaseExample.svelte";
-import Credentials from "$components/Credentials.svelte";
-import IncomingMessage from "$components/chat/IncomingMessages.svelte";
-import Room from "$components/chat/Room.svelte";
-import SendMessage from "$components/chat/SendMessage.svelte";
-import PlatformConnection from "$components/PlatformConnection.svelte";
 import type { AnyActivityStream, CredentialName } from "$lib/sockethub";
 import { send } from "$lib/sockethub";
 
-const actorIdStore = writable("user@jabber.org");
-let connecting = $state(false);
+const _actorIdStore = writable("user@jabber.org");
+let _connecting = $state(false);
 
 let actorId = $derived(`${$actorIdStore}/SockethubExample`);
 
-const room = "kosmos-random@kosmos.chat";
+const _room = "kosmos-random@kosmos.chat";
 
-const sockethubState = writable({
+const _sockethubState = writable({
     actorSet: false,
     credentialsSet: false,
     connected: false,
     joined: false,
 });
 
-let actor = $derived({
+let _actor = $derived({
     id: actorId,
     type: "person",
     name: actorId,
 });
 
-let credentials = $derived({
+let _credentials = $derived({
     type: "credentials" as CredentialName,
     userAddress: $actorIdStore,
     password: "123456",
@@ -45,11 +37,11 @@ function resetState() {
     $sockethubState.credentialsSet = false;
     $sockethubState.connected = false;
     $sockethubState.joined = false;
-    connecting = false;
+    _connecting = false;
 }
 
-async function connectXmpp(): Promise<void> {
-    connecting = true;
+async function _connectXmpp(): Promise<void> {
+    _connecting = true;
     return await send({
         context: "xmpp",
         type: "connect",

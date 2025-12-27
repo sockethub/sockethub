@@ -1,6 +1,4 @@
 <script lang="ts">
-import { connected } from "$lib/sockethub";
-
 interface Props {
     disabled?: boolean;
     buttonAction: () => Promise<void>;
@@ -8,7 +6,7 @@ interface Props {
 }
 
 let { children, disabled, buttonAction }: Props = $props();
-const isDisabled = $derived(!$connected ? true : !!disabled);
+const _isDisabled = $derived(!$connected ? true : !!disabled);
 </script>
 
 <button

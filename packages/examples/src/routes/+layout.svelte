@@ -1,9 +1,5 @@
 <script lang="ts">
 import "../app.css";
-import edgeLight from "svelte-highlight/styles/edge-light";
-import { base } from "$app/paths";
-import ConnectStatus from "../components/ConnectWidget.svelte";
-import Nav from "../components/Nav.svelte";
 
 interface Props {
     children?: import("svelte").Snippet;

@@ -1,6 +1,5 @@
 <script lang="ts">
 import type { AnyActivityStream } from "$lib/sockethub";
-import Context from "./Context.svelte";
 
 /**
  * Feeds log entries come in two types:
@@ -28,9 +27,9 @@ const isCollection = entry.totalItems !== undefined;
 
 // For feed collections, the URL is in the summary field
 // For individual items, the URL is in object.url (link to the article)
-const feedUrl = isCollection ? entry.summary : entry.object?.url;
+const _feedUrl = isCollection ? entry.summary : entry.object?.url;
 
-const actorName =
+const _actorName =
     typeof entry.actor === "string"
         ? entry.actor
         : entry.actor?.name || entry.actor?.id;

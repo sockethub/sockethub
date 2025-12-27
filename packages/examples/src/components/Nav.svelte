@@ -1,8 +1,5 @@
 <script>
-import { base } from "$app/paths";
-import { page } from "$app/stores";
-
-const navItems = [
+const _navItems = [
     ["🏠", "Home", "/", "Start here to understand Sockethub"],
     ["🔧", "Dummy", "/dummy", "Basic examples • Start here"],
     ["📰", "Feeds", "/feeds", "RSS/ATOM feed parsing"],
