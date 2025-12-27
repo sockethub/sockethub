@@ -1,6 +1,7 @@
 <!-- @migration-task Error while migrating Svelte code: can't migrate `let joining = false;` to `$state` because there's a variable named state.
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
+import SockethubButton from "$components/SockethubButton.svelte";
 import type { ActorData, AnyActivityStream } from "$lib/sockethub";
 import { send } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
@@ -14,10 +15,10 @@ interface Props {
 
 let { room = $bindable(), actor, context, sockethubState }: Props = $props();
 
-let _joining = $state(false);
+let joining = $state(false);
 
-async function _joinRoom(): Promise<void> {
-    _joining = true;
+async function joinRoom(): Promise<void> {
+    joining = true;
     return await send({
         // Platform context - routes to the appropriate chat platform (irc, xmpp)
         context: context,
@@ -34,12 +35,12 @@ async function _joinRoom(): Promise<void> {
     } as AnyActivityStream)
         .catch(() => {
             $sockethubState.joined = false;
-            _joining = false;
+            joining = false;
         })
         .then(() => {
             // $actor.roomId = room;
             $sockethubState.joined = true;
-            _joining = false;
+            joining = false;
         });
 }
 </script>
@@ -49,21 +50,21 @@ async function _joinRoom(): Promise<void> {
         <span class="mr-2">🏠</span>
         Join Chat Room
     </h4>
-    
+
     <div class="space-y-4">
         <div class="w-full space-y-2">
             <label for="room" class="block text-sm font-semibold text-gray-700">Room/Channel</label>
-            <input 
-                id="room" 
-                bind:value={room} 
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 text-gray-900 placeholder-gray-500" 
+            <input
+                id="room"
+                bind:value={room}
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 text-gray-900 placeholder-gray-500"
                 placeholder="#general, kosmos-random@kosmos.chat"
             />
             <p class="text-gray-500 text-xs">
                 💡 IRC: Use #channel-name | XMPP: Use room@server.com
             </p>
         </div>
-        
+
         <div class="flex justify-end">
             <SockethubButton
                 disabled={!$sockethubState.connected || $sockethubState.joined || joining}

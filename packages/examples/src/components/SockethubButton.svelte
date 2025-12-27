@@ -1,4 +1,6 @@
 <script lang="ts">
+import { connected } from "$lib/sockethub";
+
 interface Props {
     disabled?: boolean;
     buttonAction: () => Promise<void>;
@@ -6,16 +8,16 @@ interface Props {
 }
 
 let { children, disabled, buttonAction }: Props = $props();
-const _isDisabled = $derived(!$connected ? true : !!disabled);
+const isDisabled = $derived(!$connected ? true : !!disabled);
 </script>
 
 <button
     onclick={buttonAction}
     class="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold border border-transparent rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed transition-all duration-200 {
-        isDisabled && !$connected 
-            ? 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100' 
-            : isDisabled 
-                ? 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100' 
+        isDisabled && !$connected
+            ? 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100'
+            : isDisabled
+                ? 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100'
                 : 'text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
     }"
     disabled={isDisabled}

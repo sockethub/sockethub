@@ -1,6 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-
 import SockethubClient from "@sockethub/client";
 import { io } from "socket.io-client";
 import { writable } from "svelte/store";

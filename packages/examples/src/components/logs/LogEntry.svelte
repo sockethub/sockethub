@@ -1,5 +1,8 @@
 <script lang="ts">
 import type { AnyActivityStream } from "$lib/sockethub";
+import DummyEntry from "./platforms/DummyEntry.svelte";
+import FeedsEntry from "./platforms/FeedsEntry.svelte";
+import GenericEntry from "./platforms/GenericEntry.svelte";
 
 interface Props {
     id: string;
@@ -18,7 +21,7 @@ let { id, entry, buttonAction, response }: Props = $props();
             <div class="w-3 h-3 {response ? 'bg-green-500' : 'bg-orange-400'} rounded-full"></div>
             <div class="text-xs text-gray-400 font-mono">#{id}</div>
         </div>
-        
+
         <!-- Content -->
         <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between mb-2">
@@ -37,7 +40,7 @@ let { id, entry, buttonAction, response }: Props = $props();
                         </span>
                     {/if}
                 </div>
-                
+
                 <button
                     onclick={buttonAction}
                     class="px-3 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-md transition-colors flex items-center space-x-1"
@@ -48,7 +51,7 @@ let { id, entry, buttonAction, response }: Props = $props();
                     <span>View Details</span>
                 </button>
             </div>
-            
+
             <!-- Platform-specific content -->
             <div class="text-sm text-gray-600">
                 {#if entry.context === "dummy"}
@@ -59,7 +62,7 @@ let { id, entry, buttonAction, response }: Props = $props();
                     <GenericEntry {id} {entry} />
                 {/if}
             </div>
-            
+
             <!-- Error display -->
             {#if entry.error}
                 <div class="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">

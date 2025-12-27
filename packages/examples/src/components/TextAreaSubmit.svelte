@@ -1,5 +1,7 @@
 <script lang="ts">
+import TextBox from "$components/TextBox.svelte";
 import type { TextAreaObject } from "$lib/types";
+import SockethubButton from "./SockethubButton.svelte";
 
 interface Props {
     buttonText?: string;
@@ -24,9 +26,9 @@ if (obj.password) {
     obj.password = undefined;
 }
 
-const _objString = $derived(JSON.stringify(obj, null, 3));
+const objString = $derived(JSON.stringify(obj, null, 3));
 
-async function _handleSubmit(): Promise<void> {
+async function handleSubmit(): Promise<void> {
     console.log("PASSWORD: ", password);
     if (password !== "unset") {
         obj.password = password;

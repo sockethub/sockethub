@@ -1,4 +1,6 @@
 <script lang="ts">
+import ContentArea from "./ContentArea.svelte";
+
 interface Props {
     title: string;
     children?: import("svelte").Snippet;
