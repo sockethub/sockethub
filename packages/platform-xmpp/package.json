@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-xmpp",
   "dependencies": {
-    "@xmpp/client": "^0.13.1"
+    "@xmpp/client": "^0.13.6"
   },
   "devDependencies": {
     "@sockethub/schemas": "workspace:*",

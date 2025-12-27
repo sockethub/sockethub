@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-metadata",
   "dependencies": {
-    "open-graph-scraper": "^6.9.0"
+    "open-graph-scraper": "^6.11.0"
   },
   "devDependencies": {
     "@sockethub/schemas": "workspace:*"
