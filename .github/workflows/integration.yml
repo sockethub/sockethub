@@ -86,6 +86,9 @@ jobs:
       - name: Verify XMPP is listening
         run: nc -zv localhost 5222
 
+      - name: Examples Page Integration Tests
+        run: bun run integration:browser:examples
+
       - name: Basic Browser Integration Tests
         run: XMPP_HOST=prosody bun run integration:browser:basic
 
