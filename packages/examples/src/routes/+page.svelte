@@ -1,5 +1,6 @@
 <script>
-
+import { base } from "$app/paths";
+import Intro from "../components/Intro.svelte";
 </script>
 
 <Intro title="Sockethub Examples">
