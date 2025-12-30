@@ -5,6 +5,15 @@ const config = getConfig();
 
 describe(`Examples Page Integration Tests at ${config.sockethub.url}`, () => {
     describe("Examples Page Loading", () => {
+        it("can reach sockethub HTTP server", async () => {
+            // Test that we can access the sockethub client JS file (always available)
+            const response = await fetch(
+                `${config.sockethub.url}/sockethub-client.js`,
+            );
+            expect(response.ok).to.be.true;
+            expect(response.status).to.equal(200);
+        });
+
         it("loads the main examples page", async () => {
             const response = await fetch(`${config.sockethub.url}/`);
             expect(response.ok).to.be.true;
