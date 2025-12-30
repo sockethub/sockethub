@@ -90,6 +90,11 @@ export class Config {
         if (process.env.REDIS_URL) {
             nconf.set("redis:url", process.env.REDIS_URL);
         }
+
+        // allow EXAMPLES environment variable (lower priority than command-line)
+        if (!examples && process.env.EXAMPLES !== undefined) {
+            nconf.set("examples", process.env.EXAMPLES === "true");
+        }
     }
     get = (key: string) => nconf.get(key);
 }

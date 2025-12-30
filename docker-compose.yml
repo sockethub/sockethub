@@ -5,6 +5,7 @@ services:
             target: prod
         environment:
             - REDIS_URL=redis://redis:6379
+            - EXAMPLES=${EXAMPLES:-false}
         ports:
             - "10550:10550"
         networks:
