@@ -57,7 +57,14 @@ class Listener {
                 public: config.get("public"),
             }),
         );
-        app.use(express.static(`${__dirname}/../res/examples/`));
+        // Serve static files with CORS headers
+        app.use(
+            express.static(`${__dirname}/../res/examples/`, {
+                setHeaders: (res) => {
+                    res.setHeader("Access-Control-Allow-Origin", "*");
+                },
+            }),
+        );
         const examplesIndex = path.resolve(
             __dirname,
             "..",
@@ -72,6 +79,7 @@ class Listener {
             message: "Too many requests from this IP, please try again later.",
         });
         app.get("*", examplesLimiter, (_req, res) => {
+            res.setHeader("Access-Control-Allow-Origin", "*");
             res.sendFile(examplesIndex);
         });
         log(
