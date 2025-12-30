@@ -64,7 +64,7 @@ function resetState() {
  * Sockethub's IRC platform will handle the actual IRC protocol connection
  * using the credentials (server, port, nick, secure) that were previously sent.
  */
-async function _connectIrc(): Promise<void> {
+async function connectIrc(): Promise<void> {
     connecting = true;
     await send({
         // Platform context - routes to Sockethub's IRC platform

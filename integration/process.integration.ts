@@ -380,7 +380,6 @@ describe("Parent Process Sudden Termination", () => {
                         const parts = line.trim().split(/\s+/);
                         if (parts.length >= 3) {
                             const pid = Number.parseInt(parts[0], 10);
-                            const _ppid = Number.parseInt(parts[1], 10);
                             const command = parts.slice(2).join(" ");
 
                             // Look for XMPP platform processes (may be daemonized under PID 1)

@@ -48,7 +48,7 @@ function resetState() {
     connecting = false;
 }
 
-async function _connectXmpp(): Promise<void> {
+async function connectXmpp(): Promise<void> {
     connecting = true;
     return await send({
         context: "xmpp",
@@ -114,7 +114,7 @@ async function _connectXmpp(): Promise<void> {
             <PlatformConnection
                 {sockethubState}
                 {connecting}
-                onConnect={_connectXmpp}
+                onConnect={connectXmpp}
             />
         </div>
 

@@ -4,6 +4,7 @@ import path from "node:path";
 import bodyParser from "body-parser";
 import debug from "debug";
 import express from "express";
+import rateLimit from "express-rate-limit";
 import { Server } from "socket.io";
 
 import config from "./config.js";
@@ -64,7 +65,13 @@ class Listener {
             "examples",
             "index.html",
         );
-        app.get("*", (_req, res) => {
+        // Rate limit the examples catch-all route to prevent abuse
+        const examplesLimiter = rateLimit({
+            windowMs: 1 * 60 * 1000, // 1 minute
+            max: 100, // limit each IP to 100 requests per windowMs
+            message: "Too many requests from this IP, please try again later.",
+        });
+        app.get("*", examplesLimiter, (_req, res) => {
             res.sendFile(examplesIndex);
         });
         log(
