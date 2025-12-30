@@ -117,7 +117,10 @@ describe(`Examples Page Integration Tests at ${config.sockethub.url}`, () => {
             expect(configData).to.have.property("sockethub");
             expect(configData.sockethub).to.have.property("host");
             expect(configData.sockethub).to.have.property("port");
-            expect(configData.sockethub.port).to.equal(config.sockethub.port);
+            // Port can be either number or string, just verify it's the right value
+            expect(String(configData.sockethub.port)).to.equal(
+                String(config.sockethub.port),
+            );
         });
     });
 });
