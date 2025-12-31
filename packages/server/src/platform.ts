@@ -204,11 +204,35 @@ function getJobHandler(): JobHandler {
                     .catch((err) => {
                         // Credential store error (invalid/missing credentials)
                         jobLog(`credential error ${err.toString()}`);
+
+                        /**
+                         * Critical distinction: handle credential errors differently based on platform state.
+                         *
+                         * For INITIALIZED platforms (already running):
+                         * - Reject ONLY this job via doneCallback(err, null)
+                         * - Keep the platform process running
+                         * - Why: Platform instances can be shared by multiple clients (sessions).
+                         *   Terminating on credential error would crash the platform for ALL users,
+                         *   including those with valid credentials. This would create a DoS vector
+                         *   where one user's mistake (browser refresh with wrong creds, mistyped
+                         *   password, expired token) would break the service for everyone sharing
+                         *   that platform instance.
+                         * - The failing client receives an error message, while other clients
+                         *   continue operating normally.
+                         *
+                         * For UNINITIALIZED platforms (not yet started):
+                         * - Terminate the platform process via reject(err)
+                         * - Why: If the initial connection fails due to invalid credentials, there's
+                         *   no valid session to preserve. The platform instance was created specifically
+                         *   for this connection attempt and has no other users. Terminating allows
+                         *   proper cleanup and a fresh start on the next attempt.
+                         * - Error is reported to Sentry for monitoring authentication issues.
+                         */
                         if (platform.config.initialized) {
-                            // Platform already running - don't terminate
+                            // Platform already running - reject job only, preserve platform instance
                             doneCallback(err, null);
                         } else {
-                            // Platform not initialized - terminate
+                            // Platform not initialized - terminate platform process
                             sentry.reportError(err);
                             reject(err);
                         }
