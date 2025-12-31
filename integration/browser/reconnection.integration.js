@@ -23,21 +23,17 @@ describe("XMPP Client Reconnection Tests", () => {
         const sc = new SockethubClient(socket);
 
         sc.socket.on("connect", () => {
-            console.log("-- socket connected: ", sc.socket.id);
             connect.set(sc.socket.id, true);
         });
         sc.socket.on("connect_error", () => {
-            console.log("socket connect error: ", sc.socket.id);
             connect.set(sc.socket.id, false);
             connectError.set(sc.socket.id, true);
         });
         sc.socket.on("disconnect", () => {
-            console.log("socket disconnect: ", sc.socket.id);
             connect.set(sc.socket.id, false);
         });
 
         sc.socket.on("message", (msg) => {
-            console.log(`${sc.socket.id} message received: `, msg);
             const m = messages.get(sc.socket.id) || [];
             m.push({
                 timestamp: Date.now(),
@@ -55,7 +51,7 @@ describe("XMPP Client Reconnection Tests", () => {
     });
 
     describe("Browser Refresh Scenario", () => {
-        it("handles disconnection and reconnection gracefully (browser refresh) [working]", async () => {
+        it("handles disconnection and reconnection gracefully (browser refresh)", async () => {
             const sc = connectSockethubClient();
             const jid = utils.createXmppJid("Reconnect");
             await setXMPPCredentials(sc, jid);
@@ -64,9 +60,6 @@ describe("XMPP Client Reconnection Tests", () => {
             await joinXMPPRoom(sc, jid, config.prosody.room);
             expect(connect.get(sc.socket.id)).to.be.true;
             expect(connectError.get(sc.socket.id)).to.not.be.true;
-            const m = messages.get(sc.socket.id) || [];
-            console.log("messages: ", m);
-            // expect(m.length).to.equal(0);
 
             console.log("connected to sockethub, sending message");
             await sendXMPPMessage(sc, jid, config.prosody.room, "Hello world");
@@ -76,8 +69,6 @@ describe("XMPP Client Reconnection Tests", () => {
             if (sc.socket.connected) {
                 sc.socket.disconnect();
             }
-
-            console.log("...");
 
             // Brief wait to simulate browser refresh delay
             await new Promise((resolve) =>
@@ -106,10 +97,9 @@ describe("XMPP Client Reconnection Tests", () => {
             console.log("checking for automatic replays...");
 
             // Wait to see if Sockethub automatically replays previous state
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-
-            const replayMessages = messages.get(nsc.socket.id) || [];
-            console.log("replay messages received:", replayMessages);
+            await new Promise((resolve) =>
+                setTimeout(resolve, config.timeouts.message),
+            );
 
             // Manually set credentials and reconnect (what browser would do)
             await setXMPPCredentials(nsc, jid);
@@ -127,11 +117,11 @@ describe("XMPP Client Reconnection Tests", () => {
             );
 
             // Wait for message to process
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) =>
+                setTimeout(resolve, config.timeouts.message),
+            );
 
-            // Test that the reconnected client can send messages
-            console.log("old sc messages: ", messages.get(sc.socket.id));
-            console.log("new sc messages: ", messages.get(nsc.socket.id));
+            // Verify connection states
             expect(sc.socket.connected).to.be.false;
             expect(nsc.socket.connected).to.be.true;
         });
@@ -208,7 +198,9 @@ describe("XMPP Client Reconnection Tests", () => {
             expect(connectFailed).to.be.true;
 
             // Step 5: Wait to ensure platform cleanup completes
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            await new Promise((resolve) =>
+                setTimeout(resolve, config.timeouts.cleanup),
+            );
 
             console.log("Step 5: Verifying cleanup completed");
 

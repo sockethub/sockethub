@@ -103,7 +103,6 @@ export default class SockethubClient {
         if (content.object && content.object.type === "credentials") {
             const key: string =
                 content.actor.id || (content.actor as unknown as string);
-            console.log("sc: set credentials", key, content);
             this.events.credentials.set(key, content);
         }
     }
@@ -186,15 +185,8 @@ export default class SockethubClient {
     ) {
         for (const obj of asMap.values()) {
             const expandedObj = this.ActivityStreams.Stream(obj);
-            console.log("replaying", name, expandedObj);
             let id = expandedObj?.id;
             if ("actor" in expandedObj) {
-                console.log(
-                    "getting actor id ",
-                    expandedObj.actor,
-                    " ",
-                    expandedObj.actor.id,
-                );
                 id = expandedObj.actor.id;
             }
             this.log(`replaying ${name} for ${id}`);
