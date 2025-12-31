@@ -338,49 +338,10 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             });
 
             // Wait for socket to connect
-            await new Promise((resolve, reject) => {
-                if (newSockethubClient.socket.connected) {
-                    resolve();
-                } else {
-                    const connectHandler = () => {
-                        newSockethubClient.socket.off(
-                            "connect",
-                            connectHandler,
-                        );
-                        newSockethubClient.socket.off(
-                            "connect_error",
-                            errorHandler,
-                        );
-                        resolve();
-                    };
-                    const errorHandler = (error) => {
-                        newSockethubClient.socket.off(
-                            "connect",
-                            connectHandler,
-                        );
-                        newSockethubClient.socket.off(
-                            "connect_error",
-                            errorHandler,
-                        );
-                        reject(new Error(`Socket connection failed: ${error}`));
-                    };
-
-                    newSockethubClient.socket.on("connect", connectHandler);
-                    newSockethubClient.socket.on("connect_error", errorHandler);
-
-                    setTimeout(() => {
-                        newSockethubClient.socket.off(
-                            "connect",
-                            connectHandler,
-                        );
-                        newSockethubClient.socket.off(
-                            "connect_error",
-                            errorHandler,
-                        );
-                        reject(new Error("Socket connection timeout"));
-                    }, config.timeouts.connect);
-                }
-            });
+            await waitFor(
+                () => newSockethubClient.socket.connected,
+                config.timeouts.connect,
+            );
 
             // Set WRONG credentials (same actor JID, different resource)
             await setXMPPCredentials(
