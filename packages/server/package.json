@@ -45,26 +45,26 @@
     "@sockethub/data-layer": "workspace:^",
     "@sockethub/examples": "workspace:^",
     "@sockethub/schemas": "workspace:^",
-    "body-parser": "1.20.3",
-    "debug": "4.3.4",
+    "body-parser": "1.20.4",
+    "debug": "4.4.3",
     "ejs": "3.1.10",
-    "express": "4.20.0",
+    "express": "4.22.1",
     "jquery": "3.7.1",
-    "nconf": "0.12.1",
-    "socket.io": "4.7.5"
+    "nconf": "0.13.0",
+    "socket.io": "4.8.3"
   },
   "scripts": {
     "dev": "DEBUG=sockethub* bun run --hot ./bin/sockethub --examples",
     "start": "DEBUG=sockethub* bun run ./bin/sockethub"
   },
   "devDependencies": {
-    "@types/body-parser": "1.19.5",
+    "@types/body-parser": "1.19.6",
     "@types/bun": "latest",
     "@types/debug": "4.1.12",
-    "@types/express": "4.17.21",
-    "@types/jquery": "3.5.29",
-    "@types/nconf": "0.10.6",
-    "@types/sinon": "17.0.2",
+    "@types/express": "4.17.25",
+    "@types/jquery": "3.5.33",
+    "@types/nconf": "0.10.7",
+    "@types/sinon": "17.0.4",
     "jaribu": "2.2.3",
     "sinon": "17.0.1",
     "web-streams-polyfill": "^3.3.3"

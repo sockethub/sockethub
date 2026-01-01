@@ -33,7 +33,7 @@
   "devDependencies": {
     "@sockethub/schemas": "workspace:*",
     "@types/bun": "latest",
-    "@web/test-runner": "^0.19.0",
-    "@web/test-runner-puppeteer": "^0.17.0"
+    "@web/test-runner": "^0.20.0",
+    "@web/test-runner-puppeteer": "^0.18.0"
   }
 }

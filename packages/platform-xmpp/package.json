@@ -26,12 +26,12 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-xmpp",
   "dependencies": {
-    "@xmpp/client": "^0.13.1"
+    "@xmpp/client": "^0.14.0"
   },
   "devDependencies": {
     "@sockethub/schemas": "workspace:*",
-    "@xmpp/xml": "0.13.3",
-    "jsdoc-to-markdown": "8.0.0",
+    "@xmpp/xml": "0.14.0",
+    "jsdoc-to-markdown": "8.0.3",
     "sinon": "17.0.1"
   },
   "peerDependencies": {
