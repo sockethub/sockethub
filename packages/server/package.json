@@ -67,7 +67,7 @@
     "@types/sinon": "17.0.2",
     "jaribu": "2.2.3",
     "sinon": "17.0.1",
-    "web-streams-polyfill": "^3.3.3"
+    "web-streams-polyfill": "^4.0.0"
   },
   "optionalDependencies": {
     "@sockethub/platform-dummy": "workspace:*",
