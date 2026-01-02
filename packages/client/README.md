@@ -58,9 +58,9 @@ import SockethubClient from '@sockethub/client';
 import { io } from 'socket.io-client';
 
 const socket = io('http://localhost:10550', { path: '/sockethub' });
-const client = new SockethubClient(socket);
+const sc = new SockethubClient(socket);
 
-client.socket.on('message', (msg) => console.log(msg));
+sc.socket.on('message', (msg) => console.log(msg));
 ```
 
 See the [Client Guide](../../docs/client-guide.md) for detailed usage and examples.
@@ -68,10 +68,10 @@ See the [Client Guide](../../docs/client-guide.md) for detailed usage and exampl
 ## API
 
 - **`new SockethubClient(socket)`** - Create client instance
-- **`client.socket.emit(event, data)`** - Send messages
-- **`client.socket.on(event, handler)`** - Listen for messages
-- **`client.clearCredentials()`** - Clear stored credentials
-- **`client.ActivityStreams`** - ActivityStreams library
+- **`sc.socket.emit(event, data)`** - Send messages
+- **`sc.socket.on(event, handler)`** - Listen for messages
+- **`sc.clearCredentials()`** - Clear stored credentials
+- **`sc.ActivityStreams`** - ActivityStreams library
 
 ## Security & State Management
 
