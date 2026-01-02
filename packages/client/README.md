@@ -99,7 +99,6 @@ If you need to disable automatic credential replay for security reasons:
 ```javascript
 // Clear credentials before they can be replayed
 sc.socket.on('disconnect', () => {
-    // Clear stored credentials
-    sc.events.credentials.clear();
+    sc.clearCredentials();
 });
 ```

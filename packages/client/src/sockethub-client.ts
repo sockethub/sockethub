@@ -132,6 +132,25 @@ export default class SockethubClient {
         this.ActivityStreams = ASFactory({ specialObjs: ["credentials"] });
     }
 
+    /**
+     * Clear stored credentials to prevent automatic replay on reconnection.
+     *
+     * This method removes all stored credentials from memory. Useful for
+     * security-sensitive applications that want to prevent automatic credential
+     * replay when the socket reconnects.
+     *
+     * @example
+     * ```typescript
+     * // Clear credentials on disconnect
+     * sc.socket.on('disconnect', () => {
+     *   sc.clearCredentials();
+     * });
+     * ```
+     */
+    public clearCredentials(): void {
+        this.events.credentials.clear();
+    }
+
     private createPublicEmitter(): CustomEmitter {
         const socket = new EventEmitter() as CustomEmitter;
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
