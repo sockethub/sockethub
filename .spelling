@@ -81,5 +81,9 @@ MUCs
 Middleware
 config
 SENTRY_DSN
+SockethubClient
+localStorage
+sessionStorage
+IndexedDB
  - ./README.md
 v1.2
