@@ -54,7 +54,8 @@ should be on the global scope.
 
 ### Automatic Reconnection
 
-The SockethubClient automatically handles brief network disconnections by storing connection state in memory and replaying it when the connection is re-established.
+The SockethubClient automatically handles brief network disconnections by storing connection state in
+memory and replaying it when the connection is re-established.
 
 #### What Gets Stored
 
@@ -66,6 +67,7 @@ The SockethubClient automatically handles brief network disconnections by storin
 #### Storage Location
 
 **All state is stored ONLY in JavaScript memory.** Nothing is persisted to:
+
 - localStorage
 - sessionStorage
 - Cookies
@@ -75,6 +77,7 @@ The SockethubClient automatically handles brief network disconnections by storin
 #### Lifetime
 
 State exists only during the current browser tab session:
+
 - ✅ Survives brief network interruptions
 - ❌ Cleared on page refresh
 - ❌ Cleared when tab closes
@@ -83,6 +86,7 @@ State exists only during the current browser tab session:
 #### Server Restart Behavior
 
 If the Sockethub server restarts:
+
 1. Client socket will automatically reconnect
 2. Client will replay stored credentials
 3. **Server must validate replayed credentials** (may be expired/revoked)
