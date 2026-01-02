@@ -256,4 +256,48 @@ describe("SockethubClient", () => {
             sc.socket.emit("credentials", { actor: "bar" }, callback);
         });
     });
+
+    describe("clearCredentials", () => {
+        it("clears stored credentials", () => {
+            // Store some credentials
+            sc.socket.emit("credentials", {
+                actor: { id: "user@example.com" },
+                object: { type: "credentials", username: "user", password: "pass" },
+            });
+
+            // Verify credentials are stored
+            expect(sc.events.credentials.size).to.equal(1);
+
+            // Clear credentials
+            sc.clearCredentials();
+
+            // Verify credentials are cleared
+            expect(sc.events.credentials.size).to.equal(0);
+        });
+
+        it("prevents credential replay after clearing", (done) => {
+            // Store credentials
+            sc.socket.emit("credentials", {
+                actor: { id: "user@example.com" },
+                object: { type: "credentials", username: "user", password: "pass" },
+            });
+
+            // Clear credentials
+            sc.clearCredentials();
+
+            // Trigger reconnect
+            let replayAttempts = 0;
+            socket.on("credentials", () => {
+                replayAttempts++;
+            });
+
+            socket.emit("connect");
+
+            setTimeout(() => {
+                // No credentials should have been replayed
+                expect(replayAttempts).to.equal(0);
+                done();
+            }, 10);
+        });
+    });
 });

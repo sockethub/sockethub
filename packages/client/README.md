@@ -1,8 +1,8 @@
 # @sockethub/client
 
-The client library for Sockethub.
+JavaScript client for [Sockethub](https://github.com/sockethub/sockethub) - a protocol gateway that translates ActivityStreams messages into various protocols (XMPP, IRC, RSS, etc.).
 
-Designed to run in both `node.js` and the `browser`.
+Works in Node.js and browsers.
 
 ## Install
 
@@ -49,6 +49,28 @@ it via a `script` tag.
 
 Once included in a web-page, the `SockethubClient` base object
 should be on the global scope.
+
+## Quick Start
+
+```javascript
+import SockethubClient from '@sockethub/client';
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:10550', { path: '/sockethub' });
+const client = new SockethubClient(socket);
+
+client.socket.on('message', (msg) => console.log(msg));
+```
+
+See the [Client Guide](../../docs/client-guide.md) for detailed usage and examples.
+
+## API
+
+- **`new SockethubClient(socket)`** - Create client instance
+- **`client.socket.emit(event, data)`** - Send messages
+- **`client.socket.on(event, handler)`** - Listen for messages
+- **`client.clearCredentials()`** - Clear stored credentials
+- **`client.ActivityStreams`** - ActivityStreams library
 
 ## Security & State Management
 
