@@ -1,6 +1,7 @@
 # @sockethub/client
 
-JavaScript client for [Sockethub](https://github.com/sockethub/sockethub) - a protocol gateway that translates ActivityStreams messages into various protocols (XMPP, IRC, RSS, etc.).
+JavaScript client for [Sockethub](https://github.com/sockethub/sockethub) - a protocol
+gateway that translates ActivityStreams messages into various protocols (XMPP, IRC, RSS, etc.).
 
 Works in Node.js and browsers.
 
