@@ -298,8 +298,8 @@ export default class SockethubClient {
      * @param asMap - Map of events to replay
      */
     private replay(
-            name: string,
-            asMap: Map<string, ActivityStream | BaseActivityObject>,
+        name: string,
+        asMap: Map<string, ActivityStream | BaseActivityObject>,
     ) {
         for (const obj of asMap.values()) {
             const expandedObj = this.ActivityStreams.Stream(obj);
