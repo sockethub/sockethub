@@ -46,6 +46,30 @@ Example uses of Sockethub include:
 The architecture of Sockethub is extensible and supports easy implementation
 of additional 'platforms' to carry out tasks.
 
+## Architecture
+
+Sockethub uses a multi-process architecture for stability and isolation:
+
+* **Main Server** (`packages/server/`) - Socket.IO connections, middleware
+  pipeline for validation and routing
+* **Platform Processes** - Each protocol (IRC, XMPP, Feeds) runs as an
+  isolated child process
+* **Job Queue** - Redis-backed BullMQ ensures reliable message delivery
+  between server and platforms
+* **Data Layer** - Encrypted credential storage and session management in Redis
+* **ActivityStreams** - Uniform message format for all platform communication
+
+**Request Flow:**
+
+1. Client connects via Socket.IO
+2. Messages validated through middleware pipeline
+3. Credentials encrypted and stored per-session in Redis
+4. Messages queued to appropriate platform instance
+5. Platform processes handle protocol-specific logic
+6. Responses sent back through Socket.IO
+
+For detailed architecture documentation, see [Architecture Overview](docs/architecture/overview.md).
+
 ## Documentation
 
 * **[Documentation Hub](docs/README.md)** - Complete documentation index and guides
@@ -83,6 +107,8 @@ For platform development guidance, see the [Platform Development documentation](
 
 ## Quick Start
 
+**Note:** This is a monorepo using Bun workspaces managed by Lerna Lite.
+
 ### Prerequisites
 
 * **Bun** v1.2+ (Node.js runtime and package manager)
@@ -117,10 +143,24 @@ bun run start
 ### Development Commands
 
 ```bash
-bun test                    # Run unit tests
-bun run integration         # Run integration tests (requires Redis + Docker)
-bun run lint                # Check code style
+# Testing
+bun test                    # Run unit tests across all packages
+bun run integration         # Run both Redis and browser integration tests
+bun run integration:redis   # Run Redis integration tests with Docker
+bun run integration:browser # Run browser integration tests with Docker
+
+# Code Quality
+bun run lint                # Run Biome linter and markdown lint
 bun run lint:fix           # Auto-fix linting issues
+
+# Maintenance
+bun run clean              # Clean build artifacts
+bun run clean:deps         # Clean dependencies and node_modules
+
+# Docker
+bun run docker:start       # Start Prosody and Sockethub services
+bun run docker:start:redis # Start only Redis service
+bun run docker:stop        # Stop all Docker services
 ```
 
 ### Environment Variables
@@ -160,6 +200,42 @@ DEBUG=sockethub* bun run dev
 * **[@sockethub/activity-streams](packages/activity-streams)** - ActivityStreams object utilities
 * **[@sockethub/crypto](packages/crypto)** - Cryptographic utilities for secure storage
 * **[@sockethub/irc2as](packages/irc2as)** - IRC to ActivityStreams translation
+
+## Contributing
+
+### Key Files to Understand
+
+* `packages/sockethub/sockethub.config.json` - Main configuration file
+* `packages/server/src/sockethub.ts` - Main server class handling Socket.IO
+  connections
+* `packages/server/src/platform-instance.ts` - Platform process management
+* `packages/server/src/middleware/` - Request processing pipeline
+* `packages/data-layer/src/job-queue.ts` - Redis-based job queue (BullMQ)
+* `packages/data-layer/src/credentials-store.ts` - Encrypted credential storage
+* `packages/platform-*/` - Individual protocol implementations
+
+### Creating a New Platform
+
+Each platform must:
+
+1. Implement the `PlatformInterface` from `@sockethub/schemas`
+2. Define a schema with supported message types and credential requirements
+3. Run as an isolated child process (managed by the server)
+4. Translate between protocol-specific messages and ActivityStreams objects
+
+See the [Platform Development documentation](docs/platform-development/creating-platforms.md)
+and [Dummy platform](packages/platform-dummy) for a complete reference
+implementation.
+
+### Architectural Patterns to Follow
+
+* **Process Isolation**: Platforms run as separate child processes for stability
+* **Job Queue**: All platform communication goes through Redis-backed BullMQ
+* **Middleware Pipeline**: Requests flow through validation, credential storage,
+  and routing
+* **Session Management**: Credentials are encrypted per-session and isolated per
+  connection
+* **ActivityStreams**: Use ActivityStreams objects as the uniform message format
 
 ## Credits
 
