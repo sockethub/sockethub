@@ -102,8 +102,12 @@ export function setXMPPCredentials(
 export function connectXMPP(sh, jid) {
     return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
-            reject(new Error("XMPP connect timeout after 10 seconds"));
-        }, 10000);
+            reject(
+                new Error(
+                    `XMPP connect timeout after ${config.timeouts.connect}ms`,
+                ),
+            );
+        }, config.timeouts.connect);
 
         sh.socket.emit(
             "message",

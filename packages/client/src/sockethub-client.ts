@@ -278,6 +278,21 @@ export default class SockethubClient {
     }
 
     /**
+     * Type guard to check if an object is an ActivityStream with a valid actor.id.
+     */
+    private hasActorId(
+        obj: ActivityStream | ActivityObject,
+    ): obj is ActivityStream {
+        return (
+            "actor" in obj &&
+            obj.actor !== null &&
+            typeof obj.actor === "object" &&
+            "id" in obj.actor &&
+            typeof obj.actor.id === "string"
+        );
+    }
+
+    /**
      * Replays previously sent events to the server after reconnection.
      *
      * This method is called automatically when the Socket.IO connection is
@@ -300,7 +315,7 @@ export default class SockethubClient {
         for (const obj of asMap.values()) {
             const expandedObj = this.ActivityStreams.Stream(obj);
             let id = expandedObj?.id;
-            if ("actor" in expandedObj) {
+            if (this.hasActorId(expandedObj)) {
                 id = expandedObj.actor.id;
             }
             this.log(`replaying ${name} for ${id}`);
