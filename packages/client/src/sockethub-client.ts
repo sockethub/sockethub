@@ -233,10 +233,6 @@ export default class SockethubClient {
         const callHandler = (event: string) => {
             return async (obj?: unknown) => {
                 if (event === "connect") {
-                    console.log(
-                        `sc event ${event} triggered`,
-                        this.events.credentials,
-                    );
                     this.socket.id = this._socket.id;
                     this.socket.connected = true;
 

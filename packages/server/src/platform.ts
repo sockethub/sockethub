@@ -19,6 +19,7 @@ import type { JobHandler } from "@sockethub/data-layer";
 import type {
     ActivityStream,
     CredentialsObject,
+    PersistentPlatformInterface,
     PlatformCallback,
     PlatformInterface,
     PlatformSession,
@@ -78,6 +79,15 @@ const platform: PlatformInterface = await (async () => {
     logger(`platform handler loaded for ${platformName} ${identifier}`);
     return p as PlatformInterface;
 })();
+
+/**
+ * Type guard to check if a platform is persistent and has credentialsHash.
+ */
+function isPersistentPlatform(
+    platform: PlatformInterface,
+): platform is PersistentPlatformInterface {
+    return platform.config.persist === true;
+}
 
 /**
  * Handle any uncaught errors from the platform by alerting the worker and shutting down.
@@ -173,20 +183,27 @@ function getJobHandler(): JobHandler {
             };
 
             if (platform.config.requireCredentials?.includes(job.msg.type)) {
-                // this method requires credentials and should be called even if the platform is not
+                // This method requires credentials and should be called even if the platform is not
                 // yet initialized, because they need to authenticate before they are initialized.
+
+                // Get credentialsHash for validation.
+                // For persistent platforms: validates credentials match the platform instance
+                // For stateless platforms: undefined (no validation, credentials used once)
+                const credentialsHash = isPersistentPlatform(platform)
+                    ? platform.credentialsHash
+                    : undefined;
+
                 credentialStore
-                    .get(job.msg.actor.id, platform.credentialsHash)
+                    .get(job.msg.actor.id, credentialsHash)
                     .then((credentials) => {
                         // Create wrapper callback that updates credentialsHash after successful call
                         const wrappedCallback: PlatformCallback = (
                             err: Error | null,
                             result: null | ActivityStream,
                         ): void => {
-                            if (!err) {
-                                // Update credentialsHash after successful platform call
-                                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                                // @ts-ignore
+                            if (!err && isPersistentPlatform(platform)) {
+                                // Update credentialsHash after successful platform call.
+                                // Only persistent platforms track credential state across requests.
                                 platform.credentialsHash = crypto.objectHash(
                                     credentials.object,
                                 );
@@ -287,7 +304,12 @@ async function updateActor(credentials: CredentialsObject): Promise<void> {
         `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
     );
     logger = debug(`sockethub:platform:${identifier}`);
-    platform.credentialsHash = crypto.objectHash(credentials.object);
+
+    // Update credentialsHash for persistent platforms (tracks actor-specific state)
+    if (isPersistentPlatform(platform)) {
+        platform.credentialsHash = crypto.objectHash(credentials.object);
+    }
+
     platform.debug = debug(`sockethub:platform:${platformName}:${identifier}`);
     process.send(["updateActor", undefined, identifier]);
     await startQueueListener(true);
