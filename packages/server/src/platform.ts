@@ -187,7 +187,8 @@ function getJobHandler(): JobHandler {
                 // yet initialized, because they need to authenticate before they are initialized.
 
                 // Get credentialsHash for validation.
-                // For persistent platforms: undefined initially, then set to hash after first successful call
+                // For persistent platforms: undefined (or empty string) initially, then we set to hash after first
+                // successful call.
                 // For stateless platforms: always undefined (no validation, credentials used once per request)
                 // CredentialsStore skips validation when credentialsHash is falsy (undefined or empty string)
                 const credentialsHash = isPersistentPlatform(platform)
