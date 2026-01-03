@@ -163,8 +163,10 @@ export interface PersistentPlatformInterface extends PlatformInterface {
      * Hash of the credentials object this platform instance is bound to.
      * Used to validate that incoming requests match the actor this instance serves.
      * Prevents credential mismatches and ensures single-actor per instance.
+     *
+     * May be undefined before credentials are established. Callers should handle both cases.
      */
-    credentialsHash: string;
+    credentialsHash: string | undefined;
     get config(): PersistentPlatformConfig;
     connect(
         job: ActivityStream,
