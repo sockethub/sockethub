@@ -6,9 +6,11 @@ AI-specific guidance for working with this codebase. See [README.md](README.md) 
 
 **ALWAYS run these commands before creating a commit:**
 
-1. `bun run lint` - Check code style with Biome
-2. `bun test` - Run unit tests to ensure nothing broke
-3. Fix any failures before committing
+1. `bun install` - Ensure expected dependencies are installed
+2. `bun run lint` - Check code style with Biome
+3. `bun run build` - Ensure the code builds
+4. `bun test` - Run unit tests to ensure nothing broke
+5. Fix any failures before committing
 
 If tests or linting fail, the commit should not be created.
 
