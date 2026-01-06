@@ -8,7 +8,7 @@ import type { RedisConfig } from "./types.js";
 export interface CredentialsStoreInterface {
     get(
         actor: string,
-        credentialsHash: string,
+        credentialsHash: string | undefined,
     ): Promise<CredentialsObject | undefined>;
     save(actor: string, creds: CredentialsObject): Promise<number>;
 }
@@ -93,11 +93,11 @@ export class CredentialsStore implements CredentialsStoreInterface {
     /**
      * Gets the credentials for a given actor ID
      * @param actor
-     * @param credentialHash
+     * @param credentialsHash - Optional hash to validate credentials. If undefined, validation is skipped.
      */
     async get(
         actor: string,
-        credentialHash: string,
+        credentialsHash: string | undefined,
     ): Promise<CredentialsObject> {
         this.log(`get credentials for ${actor}`);
         const credentials: CredentialsObject = await this.store.get(actor);
@@ -105,8 +105,8 @@ export class CredentialsStore implements CredentialsStoreInterface {
             throw new Error(`credentials not found for ${actor}`);
         }
 
-        if (credentialHash) {
-            if (credentialHash !== this.objectHash(credentials.object)) {
+        if (credentialsHash) {
+            if (credentialsHash !== this.objectHash(credentials.object)) {
                 throw new Error(`invalid credentials for ${actor}`);
             }
         }

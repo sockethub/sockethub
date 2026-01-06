@@ -28,6 +28,12 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             });
         });
 
+        after(() => {
+            if (sc?.socket) {
+                sc.socket.disconnect();
+            }
+        });
+
         describe("ActivityStreams", () => {
             it("handles empty objects", () => {
                 expect(() => {

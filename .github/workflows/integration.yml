@@ -104,6 +104,15 @@ jobs:
 
       - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
 
+      - name: Reconnection XMPP Integration Tests
+        run: XMPP_HOST=prosody bun run integration:browser:reconnection
+
+      - name: Sockethub Logs - Reconnection
+        if: always()
+        run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
+
+      - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+
       - name: Resource Clash XMPP Integration Tests
         run: XMPP_HOST=prosody bun run integration:browser:resourceclash
 

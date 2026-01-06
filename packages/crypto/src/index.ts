@@ -56,7 +56,7 @@ export class Crypto {
         return SHASum.digest("hex").substring(0, 7);
     }
 
-    objectHash(object: never): string {
+    objectHash(object: object): string {
         return hash(object);
     }
 

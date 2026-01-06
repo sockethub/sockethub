@@ -251,15 +251,14 @@ describe("XMPP", () => {
                 xp.join(job.join, () => {
                     sinon.assert.calledOnce(xp.__client.send);
 
+                    // Verify MUC <x> element was created with correct namespace
+                    sinon.assert.calledWith(xmlFake, "x", { xmlns: "http://jabber.org/protocol/muc" });
+
                     // Verify presence stanza was created with correct attributes
                     sinon.assert.calledWith(xmlFake, "presence", {
                         from: "testingham@jabber.net",
                         to: "partyroom@jabber.net/testing ham",
                     });
-
-                    // Verify MUC namespace was added
-                    const mockXmlElement = xmlFake.returnValues[0];
-                    sinon.assert.calledWith(mockXmlElement.c, "x", { xmlns: "http://jabber.org/protocol/muc" });
 
                     done();
                 });
@@ -509,16 +508,14 @@ describe("XMPP", () => {
                 xp.join(joinJob, () => {
                     sinon.assert.calledOnce(xp.__client.send);
 
-                    // Verify presence stanza was created
+                    // Verify MUC <x> element was created with correct namespace
+                    sinon.assert.calledWith(xmlFake, "x", { xmlns: "http://jabber.org/protocol/muc" });
+
+                    // Verify presence stanza was created with correct attributes
                     sinon.assert.calledWith(xmlFake, "presence", {
                         from: "testingham@jabber.net",
                         to: "testroom@conference.jabber.net/Testing Ham",
                     });
-
-                    // Verify MUC namespace was added to the presence
-                    const sentStanza = xp.__client.send.getCall(0).args[0];
-                    expect(sentStanza.name).toEqual("presence");
-                    sinon.assert.calledWith(sentStanza.c, "x", { xmlns: "http://jabber.org/protocol/muc" });
 
                     done();
                 });

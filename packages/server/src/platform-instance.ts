@@ -220,19 +220,19 @@ export default class PlatformInstance {
 
     // handle job results coming in on the queue from platform instances
     private async handleJobResult(
-        type: string,
+        state: string,
         job: JobDataDecrypted,
         result: ActivityStream | undefined,
     ) {
         let payload = result; // some platforms return new AS objects as result
-        if (type === "failed") {
+        if (state === "failed") {
             payload = job.msg; // failures always use original AS job object
             payload.error = result
                 ? result.toString()
                 : "job failed for unknown reason";
         }
         this.debug(
-            `${job.title} ${type}${payload?.error ? `: ${payload.error}` : ""}`,
+            `${job.title} ${state}${payload?.error ? `: ${payload.error}` : ""}`,
         );
 
         if (!payload || typeof payload === "string") {
@@ -259,13 +259,22 @@ export default class PlatformInstance {
             this.config.persist &&
             this.config.requireCredentials?.includes(job.msg.type)
         ) {
-            if (type === "failed") {
-                this.debug(
-                    `critical job type ${job.msg.type} failed, flagging for termination`,
-                );
-                await this.queue.pause();
-                this.config.initialized = false;
-                this.flaggedForTermination = true;
+            if (state === "failed") {
+                // Only terminate if platform is not yet initialized
+                // If already initialized, credential failures are non-fatal (wrong session credentials)
+                if (!this.config.initialized) {
+                    this.debug(
+                        `critical job type ${job.msg.type} failed during initialization, flagging for termination`,
+                    );
+                    await this.queue.pause();
+                    this.config.initialized = false;
+                    this.flaggedForTermination = true;
+                } else {
+                    this.debug(
+                        `credential job ${job.msg.type} failed on initialized platform, not flagged for termination`,
+                    );
+                    // Platform stays alive - error sent to client via sendToClient above
+                }
             } else {
                 this.debug("persistent platform initialized");
                 await this.queue.resume();

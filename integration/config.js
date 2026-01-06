@@ -38,7 +38,7 @@ const config = {
         connect: 5000,
         cleanup: 3000,
         message: 2000,
-        process: 10000, // starting a process
+        process: 5000, // starting a process
     },
 };
 export default config;

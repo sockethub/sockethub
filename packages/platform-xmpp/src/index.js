@@ -347,11 +347,14 @@ export default class XMPP {
         // TODO investigate implementation reserved nickname discovery
         const id = job.target.id.split("/")[0];
 
-        const presence = this.__xml("presence", {
-            from: job.actor.id,
-            to: `${job.target.id}/${job.actor.name || id}`,
-        });
-        presence.c("x", { xmlns: "http://jabber.org/protocol/muc" });
+        const presence = this.__xml(
+            "presence",
+            {
+                from: job.actor.id,
+                to: `${job.target.id}/${job.actor.name || id}`,
+            },
+            this.__xml("x", { xmlns: "http://jabber.org/protocol/muc" }),
+        );
 
         return this.__client.send(presence).then(done).catch(done);
     }

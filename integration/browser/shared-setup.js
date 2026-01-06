@@ -66,8 +66,6 @@ export function setXMPPCredentials(
     username = config.prosody.testUser.username,
     password = config.prosody.testUser.password,
 ) {
-    const config = getConfig();
-
     return new Promise((resolve, reject) => {
         const creds = {
             actor: jid,
@@ -103,6 +101,14 @@ export function setXMPPCredentials(
 // Helper function to connect to XMPP
 export function connectXMPP(sh, jid) {
     return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+            reject(
+                new Error(
+                    `XMPP connect timeout after ${config.timeouts.connect}ms`,
+                ),
+            );
+        }, config.timeouts.connect);
+
         sh.socket.emit(
             "message",
             {
@@ -111,6 +117,7 @@ export function connectXMPP(sh, jid) {
                 context: "xmpp",
             },
             (msg) => {
+                clearTimeout(timeout);
                 if (msg?.error) {
                     reject(
                         new Error(`Connect failed for ${jid}: ${msg.error}`),

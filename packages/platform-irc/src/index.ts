@@ -25,8 +25,8 @@ import type {
     ActivityStream,
     Logger,
     PersistentPlatformConfig,
+    PersistentPlatformInterface,
     PlatformCallback,
-    PlatformInterface,
     PlatformSchemaStruct,
     PlatformSendToClient,
     PlatformSession,
@@ -76,7 +76,7 @@ interface IrcSocketOptions {
  *
  * @param {object} cfg a unique config object for this instance
  */
-export default class IRC implements PlatformInterface {
+export default class IRC implements PersistentPlatformInterface {
     debug: Logger;
     credentialsHash: string;
     config: PersistentPlatformConfig = {
