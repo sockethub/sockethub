@@ -351,7 +351,7 @@ export default class PlatformInstance {
                     await this.reportError(sessionId, second);
                 } else {
                     // treat like a message to clients
-                    this.sendToClient(sessionId, second);
+                    await this.sendToClient(sessionId, second);
                 }
             },
         };

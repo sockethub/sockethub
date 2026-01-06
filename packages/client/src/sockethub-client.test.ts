@@ -33,7 +33,7 @@ describe("SockethubClient", () => {
         asInstance = new EventEmitter();
         sandbox.spy(asInstance, "on");
         sandbox.spy(asInstance, "emit");
-        asInstance.Stream = sandbox.stub();
+        asInstance.Stream = sandbox.stub().returnsArg(0);
         asInstance.Object = {
             create: sandbox.stub(),
         };
