@@ -713,7 +713,7 @@ export default class IRC implements PersistentPlatformInterface {
             );
         } else {
             this.debug(
-                `job queue has ${this.jobQueue.length} pending items but no function at head`,
+                `WARNING: job completion found non-function in queue (${typeof done}), ${this.jobQueue.length} items remain.`,
             );
         }
     }
