@@ -169,18 +169,24 @@ class Sockethub {
                         socket.id,
                     );
                     // job validated and queued, stores socket.io callback for when job is completed
-                    const job = await platformInstance.queue.add(
-                        socket.id,
-                        msg,
-                    );
-                    if (job) {
-                        platformInstance.completedJobHandlers.set(
-                            job.title,
-                            next,
+                    try {
+                        const job = await platformInstance.queue.add(
+                            socket.id,
+                            msg,
                         );
-                    } else {
-                        // failed to add job to queue, reject handler immediately
-                        msg.error = "failed to add job to queue";
+                        if (job) {
+                            platformInstance.completedJobHandlers.set(
+                                job.title,
+                                next,
+                            );
+                        } else {
+                            // failed to add job to queue, reject handler immediately
+                            msg.error = "failed to add job to queue";
+                            next(msg);
+                        }
+                    } catch (err) {
+                        // Queue is closed (platform terminating) - send error to client
+                        msg.error = err.message || "platform unavailable";
                         next(msg);
                     }
                 })

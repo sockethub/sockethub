@@ -275,4 +275,227 @@ describe("PlatformInstance", () => {
             });
         });
     });
+
+    describe("credential failure handling", () => {
+        let queueMock: any;
+        let processMock: any;
+
+        beforeEach(() => {
+            queueMock = {
+                pause: sandbox.stub().resolves(),
+                resume: sandbox.stub().resolves(),
+                shutdown: sandbox.stub().resolves(),
+                on: sandbox.stub(),
+                getJob: sandbox.stub(),
+                initResultEvents: sandbox.stub(),
+            };
+
+            processMock = {
+                removeAllListeners: sandbox.stub(),
+                unref: sandbox.stub(),
+                kill: sandbox.stub(),
+            };
+        });
+
+        describe("POSITIVE: Platform initialized - credential failure should NOT terminate", () => {
+            it("should keep platform alive when credential job fails on initialized platform", async () => {
+                const TestPlatformInstance = getTestPlatformInstanceClass();
+                pi = new TestPlatformInstance({
+                    identifier: "test-platform-id",
+                    platform: "xmpp",
+                    parentId: "test-parent",
+                    actor: "testuser@localhost",
+                });
+
+                // Override queue with our mock
+                pi.queue = queueMock;
+                pi.process = processMock;
+
+                // Setup: Platform is already initialized
+                pi.config = {
+                    persist: true,
+                    initialized: true,
+                    requireCredentials: ["connect"],
+                };
+                pi.flaggedForTermination = false;
+
+                const job = {
+                    sessionId: "session123",
+                    msg: {
+                        type: "connect",
+                        context: "xmpp",
+                        actor: { id: "testuser@localhost", type: "person" },
+                    },
+                    title: "xmpp-1",
+                    sessionSecret: "secret",
+                };
+
+                const errorResult = "credentials mismatch for testuser@localhost";
+
+                pi.sendToClient = sandbox.stub();
+
+                // Simulate job failure
+                await pi.handleJobResult("failed", job, errorResult);
+
+                // ASSERTIONS
+                // 1. Platform should NOT be flagged for termination
+                expect(pi.flaggedForTermination).toBe(false);
+
+                // 2. Queue should NOT be paused
+                sinon.assert.notCalled(queueMock.pause);
+
+                // 3. Platform should remain initialized
+                expect(pi.config.initialized).toBe(true);
+
+                // 4. Error should still be sent to client
+                sinon.assert.called(pi.sendToClient);
+            });
+
+            it("should allow subsequent jobs after non-fatal credential error", async () => {
+                const TestPlatformInstance = getTestPlatformInstanceClass();
+                pi = new TestPlatformInstance({
+                    identifier: "test-platform-id",
+                    platform: "xmpp",
+                    parentId: "test-parent",
+                    actor: "testuser@localhost",
+                });
+
+                pi.queue = queueMock;
+                pi.process = processMock;
+
+                pi.config = {
+                    persist: true,
+                    initialized: true,
+                    requireCredentials: ["connect"],
+                };
+                pi.flaggedForTermination = false;
+                pi.sendToClient = sandbox.stub();
+
+                const failedJob = {
+                    sessionId: "session123",
+                    msg: {
+                        type: "connect",
+                        context: "xmpp",
+                        actor: { id: "testuser@localhost", type: "person" },
+                    },
+                    title: "xmpp-1",
+                    sessionSecret: "secret",
+                };
+
+                // First job fails with credential error
+                await pi.handleJobResult("failed", failedJob, "credential error");
+
+                // Platform should still be operational
+                expect(pi.flaggedForTermination).toBe(false);
+                expect(pi.config.initialized).toBe(true);
+
+                // Second job succeeds
+                const successJob = {
+                    sessionId: "session456",
+                    msg: {
+                        type: "send",
+                        context: "xmpp",
+                        actor: { id: "testuser@localhost", type: "person" },
+                    },
+                    title: "xmpp-2",
+                    sessionSecret: "secret",
+                };
+
+                await pi.handleJobResult("completed", successJob, undefined);
+
+                // Platform should still be alive
+                expect(pi.flaggedForTermination).toBe(false);
+                expect(pi.config.initialized).toBe(true);
+            });
+        });
+
+        describe("NEGATIVE: Platform NOT initialized - credential failure SHOULD terminate", () => {
+            it("should terminate platform when credential job fails on uninitialized platform", async () => {
+                const TestPlatformInstance = getTestPlatformInstanceClass();
+                pi = new TestPlatformInstance({
+                    identifier: "test-platform-id",
+                    platform: "xmpp",
+                    parentId: "test-parent",
+                    actor: "testuser@localhost",
+                });
+
+                pi.queue = queueMock;
+                pi.process = processMock;
+
+                // Setup: Platform is NOT initialized
+                pi.config = {
+                    persist: true,
+                    initialized: false,
+                    requireCredentials: ["connect"],
+                };
+                pi.flaggedForTermination = false;
+                pi.sendToClient = sandbox.stub();
+
+                const job = {
+                    sessionId: "session123",
+                    msg: {
+                        type: "connect",
+                        context: "xmpp",
+                        actor: { id: "testuser@localhost", type: "person" },
+                    },
+                    title: "xmpp-1",
+                    sessionSecret: "secret",
+                };
+
+                const errorResult = "invalid credentials for testuser@localhost";
+
+                // Simulate job failure on uninitialized platform
+                await pi.handleJobResult("failed", job, errorResult);
+
+                // ASSERTIONS
+                // 1. Platform SHOULD be flagged for termination
+                expect(pi.flaggedForTermination).toBe(true);
+
+                // 2. Queue SHOULD be paused
+                sinon.assert.calledOnce(queueMock.pause);
+
+                // 3. Platform should remain uninitialized
+                expect(pi.config.initialized).toBe(false);
+
+                // 4. Error should still be sent to client
+                sinon.assert.called(pi.sendToClient);
+            });
+
+            it("should pause queue when credential initialization fails", async () => {
+                const TestPlatformInstance = getTestPlatformInstanceClass();
+                pi = new TestPlatformInstance({
+                    identifier: "test-platform-id",
+                    platform: "xmpp",
+                    parentId: "test-parent",
+                    actor: "testuser@localhost",
+                });
+
+                pi.queue = queueMock;
+                pi.process = processMock;
+
+                pi.config = {
+                    persist: true,
+                    initialized: false,
+                    requireCredentials: ["connect"],
+                };
+                pi.sendToClient = sandbox.stub();
+
+                const job = {
+                    sessionId: "session123",
+                    msg: {
+                        type: "connect",
+                        context: "xmpp",
+                        actor: { id: "testuser@localhost", type: "person" },
+                    },
+                    title: "xmpp-1",
+                    sessionSecret: "secret",
+                };
+
+                await pi.handleJobResult("failed", job, "connection failed");
+
+                // Queue must be paused
+                sinon.assert.calledOnce(queueMock.pause);
+            });
+        });
+    });
 });

@@ -109,7 +109,8 @@ export class Janitor {
 
     private async performStaleCheck(platformInstance: PlatformInstance) {
         this.removeStaleSocketSessions(platformInstance);
-        // Static platforms are for global use, not tied to a unique to session (e.g. credentials)
+        // Static platforms are for global use, not tied to a unique to session
+        // (e.g. a stateful platform where credentials are supplied)
         if (!platformInstance.global) {
             if (
                 (platformInstance.config.persist &&

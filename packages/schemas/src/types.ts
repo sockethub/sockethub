@@ -81,19 +81,44 @@ export interface CredentialsObject {
     target?: ActivityActor;
 }
 
-export type PlatformConfig = PersistentPlatformConfig | StatelessPlatformConfig;
+/**
+ * Platform configuration discriminated union.
+ *
+ * Sockethub platforms are either stateless or persistent:
+ *
+ * **Stateless (persist: false):**
+ * - Process starts per-request and exits when complete
+ * - May require credentials for individual operations
+ * - No state maintained between requests
+ * - Example: Feeds, Metadata
+ *
+ * **Persistent (persist: true):**
+ * - Process maintains long-running connection state
+ * - Always requires credentials (connection tied to actor identity)
+ * - Single actor per instance (credentialsHash validates requests)
+ * - Example: IRC, XMPP
+ */
+export type PlatformConfig = StatelessPlatformConfig | PersistentPlatformConfig;
 
 interface BasePlatformConfig {
     connectTimeoutMs?: number;
 }
+
+/** Configuration for stateless platforms that start/stop per-request */
 export interface StatelessPlatformConfig extends BasePlatformConfig {
     persist: false;
     requireCredentials?: string[];
 }
 
+/**
+ * Configuration for persistent platforms with long-running connections.
+ * These always require credentials because persistent state is actor-specific.
+ */
 export interface PersistentPlatformConfig extends BasePlatformConfig {
     persist: true;
+    /** Message types requiring credentials (must be non-empty for persistent platforms) */
     requireCredentials: string[];
+    /** Whether the platform has completed initialization */
     initialized: boolean;
 }
 
@@ -115,12 +140,39 @@ export interface PlatformConstructor {
     new (session: PlatformSession): { debug: Logger };
 }
 
+/**
+ * Base interface for all Sockethub platforms.
+ * Platforms implement protocol-specific logic for ActivityStreams messages.
+ */
 export interface PlatformInterface {
     debug: Logger;
-    credentialsHash?: string;
     get config(): PlatformConfig;
     get schema(): PlatformSchemaStruct;
     cleanup(cb: PlatformCallback): void;
+}
+
+/**
+ * Interface for persistent platforms with long-running connections.
+ *
+ * Persistent platforms maintain state tied to a single actor's credentials.
+ * The credentialsHash property tracks which credentials this instance is bound to,
+ * ensuring that all requests to this platform instance come from the same actor.
+ */
+export interface PersistentPlatformInterface extends PlatformInterface {
+    /**
+     * Hash of the credentials object this platform instance is bound to.
+     * Used to validate that incoming requests match the actor this instance serves.
+     * Prevents credential mismatches and ensures single-actor per instance.
+     *
+     * May be undefined before credentials are established. Callers should handle both cases.
+     */
+    credentialsHash: string | undefined;
+    get config(): PersistentPlatformConfig;
+    connect(
+        job: ActivityStream,
+        credentials: CredentialsObject,
+        done: PlatformCallback,
+    ): void;
 }
 
 export interface PlatformSession {

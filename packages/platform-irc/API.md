@@ -1,45 +1,56 @@
-<a name="IRC"></a>
+# Members
 
-# IRC
-IRC
+<dl>
+<dt><a href="#schema">schema</a></dt>
+<dd><p>JSON schema defining the types this platform accepts.</p>
+<p>In the below example, Sockethub will validate the incoming credentials object
+against whatever is defined in the <code>credentials</code> portion of the schema
+object.</p>
+<p>It will also check if the incoming AS object uses a type which exists in the
+<code>types</code> portion of the schema object (should be an array of type names).</p>
+<ul>
+<li><strong>NOTE</strong>: For more information on using the credentials object from a client,
+see <a href="https://github.com/sockethub/sockethub/wiki/Sockethub-Client">Sockethub Client</a></li>
+</ul>
+<p>Valid AS object for setting IRC credentials:</p>
+</dd>
+</dl>
 
-**Kind**: global class  
+# Functions
 
-* [IRC](#IRC)
-    * [new IRC(cfg)](#new_IRC_new)
-    * [.schema](#IRC+schema)
-    * [.connect(job, credentials, done)](#IRC+connect)
-    * [.join(job, done)](#IRC+join)
-    * [.leave(job, done)](#IRC+leave)
-    * [.send(job, done)](#IRC+send)
-    * [.update(job, done)](#IRC+update)
-    * [.query(job, done)](#IRC+query)
+<dl>
+<dt><a href="#connect">connect(job, credentials, done)</a></dt>
+<dd><p>Function: connect</p>
+<p>Connect to an IRC server.</p>
+</dd>
+<dt><a href="#join">join(job, done)</a></dt>
+<dd><p>Function: join</p>
+<p>Join a room or private conversation.</p>
+</dd>
+<dt><a href="#leave">leave(job, done)</a></dt>
+<dd><p>Function leave</p>
+<p>Leave a room or private conversation.</p>
+</dd>
+<dt><a href="#send">send(job, done)</a></dt>
+<dd><p>Function: send</p>
+<p>Send a message to a room or private conversation.</p>
+</dd>
+<dt><a href="#update">update(job, credentials, done)</a></dt>
+<dd><p>Function: update</p>
+<p>Indicate a change (i.e. room topic update, or nickname change).</p>
+</dd>
+<dt><a href="#query">query(job, done)</a></dt>
+<dd><p>Function: query</p>
+<p>Indicate an intent to query something (e.g. get a list of users in a room).</p>
+</dd>
+<dt><a href="#disconnect">disconnect(job, done)</a></dt>
+<dd><p>Disconnect IRC client</p>
+</dd>
+</dl>
 
-<a name="new_IRC_new"></a>
+<a name="schema"></a>
 
-## new IRC(cfg)
-Handles all actions related to communication via. the IRC protocol.
-
-Uses the `irc-factory` node module as a base tool for interacting with IRC.
-
-[https://github.com/ircanywhere/irc-factory](https://github.com/ircanywhere/irc-factory)
-
-<table>
-  <thead>
-    <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-<tr>
-    <td>cfg</td><td><code>object</code></td><td><p>a unique config object for this instance</p>
-</td>
-    </tr>  </tbody>
-</table>
-
-<a name="IRC+schema"></a>
-
-## irC.schema
+# schema
 JSON schema defining the types this platform accepts.
 
 
@@ -56,7 +67,7 @@ see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Cli
 
 Valid AS object for setting IRC credentials:
 
-**Kind**: instance property of [<code>IRC</code>](#IRC)  
+**Kind**: global variable  
 **Example**  
 ```js
 {
@@ -72,21 +83,21 @@ Valid AS object for setting IRC credentials:
      type: 'credentials',
      server: 'irc.host.net',
      nick: 'testuser',
-     password: 'asdasdasdasd',
+     password: 'secret',
      port: 6697,
      secure: true,
      sasl: true
    }
  }
 ```
-<a name="IRC+connect"></a>
+<a name="connect"></a>
 
-## irC.connect(job, credentials, done)
+# connect(job, credentials, done)
 Function: connect
 
-Conenct to an IRC server.
+Connect to an IRC server.
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)  
+**Kind**: global function  
 <table>
   <thead>
     <tr>
@@ -106,14 +117,14 @@ Conenct to an IRC server.
     </tr>  </tbody>
 </table>
 
-<a name="IRC+join"></a>
+<a name="join"></a>
 
-## irC.join(job, done)
+# join(job, done)
 Function: join
 
 Join a room or private conversation.
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)  
+**Kind**: global function  
 <table>
   <thead>
     <tr>
@@ -148,14 +159,14 @@ Join a room or private conversation.
   object: {}
 }
 ```
-<a name="IRC+leave"></a>
+<a name="leave"></a>
 
-## irC.leave(job, done)
+# leave(job, done)
 Function leave
 
 Leave a room or private conversation.
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)  
+**Kind**: global function  
 <table>
   <thead>
     <tr>
@@ -190,14 +201,14 @@ Leave a room or private conversation.
   object: {}
 }
 ```
-<a name="IRC+send"></a>
+<a name="send"></a>
 
-## irC.send(job, done)
+# send(job, done)
 Function: send
 
 Send a message to a room or private conversation.
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)  
+**Kind**: global function  
 <table>
   <thead>
     <tr>
@@ -236,14 +247,14 @@ Send a message to a room or private conversation.
    }
  }
 ```
-<a name="IRC+update"></a>
+<a name="update"></a>
 
-## irC.update(job, done)
+# update(job, credentials, done)
 Function: update
 
-Indicate a change (ie. room topic update, or nickname change).
+Indicate a change (i.e. room topic update, or nickname change).
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)  
+**Kind**: global function  
 <table>
   <thead>
     <tr>
@@ -253,6 +264,9 @@ Indicate a change (ie. room topic update, or nickname change).
   <tbody>
 <tr>
     <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
+</td>
+    </tr><tr>
+    <td>credentials</td><td><code>object</code></td><td><p>credentials to verify this user is the right one</p>
 </td>
     </tr><tr>
     <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
@@ -280,7 +294,7 @@ change topic
   },
   object: {
     type: 'topic',
-    content: 'New version of Socekthub released!'
+    content: 'New version of Sockethub released!'
   }
 }
 ```
@@ -289,7 +303,7 @@ change topic
 change nickname
  {
    context: 'irc'
-   type: 'udpate',
+   type: 'update',
    actor: {
      id: 'slvrbckt@irc.freenode.net',
      type: 'person',
@@ -301,18 +315,18 @@ change nickname
    target: {
      id: 'cooldude@irc.freenode.net',
      type: 'person',
-     name: cooldude
+     name: 'cooldude'
    }
  }
 ```
-<a name="IRC+query"></a>
+<a name="query"></a>
 
-## irC.query(job, done)
+# query(job, done)
 Function: query
 
 Indicate an intent to query something (e.g. get a list of users in a room).
 
-**Kind**: instance method of [<code>IRC</code>](#IRC)  
+**Kind**: global function  
 <table>
   <thead>
     <tr>
@@ -370,6 +384,38 @@ Indicate an intent to query something (e.g. get a list of users in a room).
        'Smoochie',
        'neo'
      ]
+   }
+ }
+```
+<a name="disconnect"></a>
+
+# disconnect(job, done)
+Disconnect IRC client
+
+**Kind**: global function  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
+</td>
+    </tr><tr>
+    <td>done</td><td></td><td></td>
+    </tr>  </tbody>
+</table>
+
+**Example**  
+```js
+{
+   context: 'irc',
+   type: 'disconnect',
+   actor: {
+     id: 'slvrbckt@irc.freenode.net',
+     type: 'person'
    }
  }
 ```

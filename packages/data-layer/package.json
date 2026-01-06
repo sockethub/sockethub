@@ -24,6 +24,9 @@
     "directory": "packages/data-layer"
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
+  "scripts": {
+    "doc": "typedoc --options typedoc.json"
+  },
   "dependencies": {
     "@sockethub/crypto": "workspace:*",
     "@sockethub/schemas": "workspace:*",
@@ -36,6 +39,8 @@
     "@types/bun": "latest",
     "@types/debug": "4.1.12",
     "@types/sinon": "17.0.2",
-    "sinon": "17.0.1"
+    "sinon": "17.0.1",
+    "typedoc": "^0.28.14",
+    "typedoc-plugin-markdown": "^4.9.0"
   }
 }

@@ -40,6 +40,7 @@ const baseProps = {
         "attachment",
         "attributedTo",
         "attributedWith",
+        "condition",
         "content",
         "contentMap",
         "context",
@@ -83,6 +84,7 @@ const baseProps = {
         "titleMap",
         "updated",
         "url",
+        "xmpp:stanza-id",
     ],
 };
 const rename = {
@@ -135,7 +137,44 @@ function renameProp<T>(obj: T, key: string): T {
     return obj;
 }
 
-function validateObject<T>(type: string, incomingObj: T) {
+function validateObject<T>(type: string, incomingObj: T, requireId = false) {
+    // Input validation with clear error messages
+    if (incomingObj === null) {
+        throw new Error(
+            `ActivityStreams validation failed: the "${type}" property is null. Example: { id: "user@example.com", type: "person" }`,
+        );
+    }
+
+    if (incomingObj === undefined) {
+        throw new Error(
+            `ActivityStreams validation failed: the "${type}" property is undefined. Example: { id: "user@example.com", type: "person" }`,
+        );
+    }
+
+    if (typeof incomingObj === "string") {
+        throw new Error(
+            `ActivityStreams validation failed: the "${type}" property received string "${incomingObj}" but expected an object. Use: { id: "${incomingObj}", type: "person" }`,
+        );
+    }
+
+    if (typeof incomingObj !== "object" || Array.isArray(incomingObj)) {
+        const receivedType = Array.isArray(incomingObj)
+            ? "array"
+            : typeof incomingObj;
+        const receivedValue = String(incomingObj);
+        throw new Error(
+            `ActivityStreams validation failed: the "${type}" property must be an object, received ${receivedType} (${receivedValue}). Example: { id: "user@example.com", type: "person" }`,
+        );
+    }
+
+    // Require 'id' property when explicitly requested (e.g., Object.create())
+    const obj = incomingObj as ActivityObject;
+    if (requireId && !obj.id) {
+        throw new Error(
+            `ActivityStreams validation failed: the "${type}" property requires an 'id' property. Example: { id: "user@example.com", type: "person" }`,
+        );
+    }
+
     const unknownKeys = Object.keys(incomingObj).filter(
         (key: string): boolean => {
             return !baseProps[type].includes(key);
@@ -159,7 +198,9 @@ function validateObject<T>(type: string, incomingObj: T) {
             // not defined as a special prop
             // don't know what to do with it, so throw error
             console.log(ao);
-            const err = `invalid property: "${key}" (${ao.type}, ${ao.content})`;
+            const receivedValue =
+                typeof ao[key] === "string" ? `"${ao[key]}"` : String(ao[key]);
+            const err = `ActivityStreams validation failed: property "${key}" with value ${receivedValue} is not allowed on the "${type}" object of type "${ao.type}".`;
             if (failOnUnknownObjectProperties) {
                 throw new Error(err);
             }
@@ -226,7 +267,7 @@ export interface ActivityObjectManager {
 
 const _Object: ActivityObjectManager = {
     create: (obj: ActivityObject) => {
-        validateObject("object", obj);
+        validateObject("object", obj, true); // require ID for Object.create()
         const ao = ensureProps(obj);
         objs.set(ao.id, ao);
         ee.emit("activity-object-create", ao);
@@ -265,7 +306,7 @@ export interface ASFactoryOptions {
 type EventCallback = (...args: unknown[]) => void;
 
 export interface ASManager {
-    Stream(meta: unknown): unknown;
+    Stream(meta: unknown): ActivityStream | ActivityObject;
     Object: ActivityObjectManager;
     on(event: string, func: EventCallback): void;
     once(event: string, func: EventCallback): void;

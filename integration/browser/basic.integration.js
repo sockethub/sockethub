@@ -1,20 +1,19 @@
 import { expect } from "@esm-bundle/chai";
-import "./../packages/server/res/sockethub-client.js";
-import "./../packages/server/res/socket.io.js";
+import createTestUtils from "../utils.js";
+import {
+    connectXMPP,
+    getConfig,
+    joinXMPPRoom,
+    sendXMPPMessage,
+    setXMPPCredentials,
+    validateGlobals,
+} from "./shared-setup.js";
 
-const SH_PORT = 10550;
+const config = getConfig();
+const utils = createTestUtils(config);
 
-mocha.bail(true);
-mocha.timeout("60s");
-
-describe(`Sockethub tests at port ${SH_PORT}`, () => {
-    it("has global `io`", () => {
-        typeof expect(typeof io).to.equal("function");
-    });
-
-    it("has global `SockethubClient`", () => {
-        typeof expect(typeof SockethubClient).to.equal("function");
-    });
+describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
+    validateGlobals();
 
     describe("SockethubClient()", () => {
         let sc;
@@ -22,11 +21,56 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
 
         before(() => {
             sc = new SockethubClient(
-                io(`http://localhost:${SH_PORT}/`, { path: "/sockethub" }),
+                io(config.sockethub.url, { path: "/sockethub" }),
             );
             sc.socket.on("message", (msg) => {
-                // console.log(">> incoming message: ", msg);
                 incomingMessages.push(msg);
+            });
+        });
+
+        after(() => {
+            if (sc?.socket) {
+                sc.socket.disconnect();
+            }
+        });
+
+        describe("ActivityStreams", () => {
+            it("handles empty objects", () => {
+                expect(() => {
+                    sc.ActivityStreams.Object.create(undefined);
+                }).to.throw(
+                    'ActivityStreams validation failed: the "object" property is undefined. Example: { id: "user@example.com", type: "person" }',
+                );
+                expect(() => {
+                    sc.ActivityStreams.Object.create(null);
+                }).to.throw(
+                    'ActivityStreams validation failed: the "object" property is null. Example: { id: "user@example.com", type: "person" }',
+                );
+                expect(() => {
+                    sc.ActivityStreams.Object.create("");
+                }).to.throw(
+                    'ActivityStreams validation failed: the "object" property received string "" but expected an object. Use: { id: "", type: "person" }',
+                );
+                expect(() => {
+                    sc.ActivityStreams.Object.create("foo");
+                }).to.throw(
+                    'ActivityStreams validation failed: the "object" property received string "foo" but expected an object. Use: { id: "foo", type: "person" }',
+                );
+                expect(() => {
+                    sc.ActivityStreams.Object.create(123);
+                }).to.throw(
+                    'ActivityStreams validation failed: the "object" property must be an object, received number (123). Example: { id: "user@example.com", type: "person" }',
+                );
+                expect(() => {
+                    sc.ActivityStreams.Object.create([]);
+                }).to.throw(
+                    'ActivityStreams validation failed: the "object" property must be an object, received array (). Example: { id: "user@example.com", type: "person" }',
+                );
+                expect(() => {
+                    sc.ActivityStreams.Object.create({});
+                }).to.throw(
+                    'ActivityStreams validation failed: the "object" property requires an \'id\' property. Example: { id: "user@example.com", type: "person" }',
+                );
             });
         });
 
@@ -129,7 +173,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                             type: "fetch",
                             actor: {
                                 type: "feed",
-                                id: `http://localhost:${SH_PORT}/feed.xml`,
+                                id: `${config.sockethub.url}/feed.xml`,
                             },
                         },
                         (msg, second) => {
@@ -157,34 +201,17 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
             });
         });
 
-        describe("XMPP", () => {
-            const actorId = "jimmy@prosody/SockethubExample";
-            const actorObject = {
-                id: actorId,
-                type: "person",
-                name: "Jimmy Userson",
-            };
+        const jid = utils.createXmppJid();
+        const actorObject = {
+            id: jid,
+            type: "person",
+            name: "Jimmy Userson",
+        };
 
+        describe("XMPP", () => {
             describe("Credentials", () => {
-                it("fires an empty callback", (done) => {
-                    sc.socket.emit(
-                        "credentials",
-                        {
-                            actor: {
-                                id: actorId,
-                                type: "person",
-                            },
-                            context: "xmpp",
-                            type: "credentials",
-                            object: {
-                                type: "credentials",
-                                password: "passw0rd",
-                                resource: "SockethubExample",
-                                userAddress: "jimmy@prosody",
-                            },
-                        },
-                        done,
-                    );
+                it("fires an empty callback", async () => {
+                    await setXMPPCredentials(sc, jid);
                 });
             });
 
@@ -200,91 +227,52 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
             });
 
             describe("connect", () => {
-                it("is successful", (done) => {
-                    sc.socket.emit(
-                        "message",
-                        {
-                            type: "connect",
-                            actor: actorId,
-                            context: "xmpp",
-                        },
-                        (msg) => {
-                            if (msg?.error) {
-                                done(new Error(msg.error));
-                            } else {
-                                expect(msg).to.eql({
-                                    type: "connect",
-                                    actor: actorObject,
-                                    context: "xmpp",
-                                });
-                                done();
-                            }
-                        },
-                    );
+                it("is successful", async () => {
+                    const msg = await connectXMPP(sc, jid);
+                    expect(msg).to.eql({
+                        type: "connect",
+                        actor: actorObject,
+                        context: "xmpp",
+                    });
                 });
             });
+
             describe("Join", () => {
-                it("should be successful", (done) => {
-                    sc.socket.emit(
-                        "message",
-                        {
-                            type: "join",
-                            actor: actorId,
-                            context: "xmpp",
-                            target: {
-                                type: "room",
-                                id: "test@prosody",
-                            },
+                it("should be successful", async () => {
+                    const msg = await joinXMPPRoom(sc, jid, "test@prosody");
+                    expect(msg).to.eql({
+                        type: "join",
+                        actor: actorObject,
+                        context: "xmpp",
+                        target: {
+                            id: "test@prosody",
+                            type: "room",
                         },
-                        (msg) => {
-                            expect(msg).to.eql({
-                                type: "join",
-                                actor: actorObject,
-                                context: "xmpp",
-                                target: {
-                                    id: "test@prosody",
-                                    type: "room",
-                                },
-                            });
-                            done();
-                        },
-                    );
+                    });
                 });
             });
+
             describe("Send", () => {
-                it("should be successful", (done) => {
-                    sc.socket.emit(
-                        "message",
-                        {
-                            type: "send",
-                            actor: actorId,
-                            context: "xmpp",
-                            object: {
-                                type: "message",
-                                content: "Hello, world!",
-                            },
-                            target: {
-                                type: "room",
-                                id: "test@prosody",
-                            },
-                        },
-                        (msg) => {
-                            expect(msg).to.eql({
-                                type: "send",
-                                actor: actorObject,
-                                context: "xmpp",
-                                object: {
-                                    type: "message",
-                                    content: "Hello, world!",
-                                },
-                                target: {
-                                    id: "test@prosody",
-                                    type: "room",
-                                },
-                            });
-                            done();
-                        },
+                it("should be successful", async () => {
+                    const msg = await sendXMPPMessage(
+                        sc,
+                        jid,
+                        "test@prosody",
+                        "Hello, world!",
                     );
+                    expect(msg).to.eql({
+                        type: "send",
+                        actor: actorObject,
+                        context: "xmpp",
+                        object: {
+                            type: "message",
+                            content: "Hello, world!",
+                        },
+                        target: {
+                            id: "test@prosody",
+                            type: "room",
+                        },
+                    });
                 });
             });
         });
@@ -398,9 +386,6 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
 
         describe("Incoming Message queue", () => {
             it("should be empty", () => {
-                // console.log(
-                //     `*** MESSAGE QUEUE, length: ${incomingMessages.length} ***`,
-                // );
                 expect(incomingMessages.length).to.be.below(2);
                 if (incomingMessages.length === 1) {
                     expect(incomingMessages).to.eql([
@@ -410,7 +395,7 @@ describe(`Sockethub tests at port ${SH_PORT}`, () => {
                             actor: { id: "test@prosody", type: "room" },
                             error: '<error type="cancel"><service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error>',
                             target: {
-                                id: "jimmy@prosody/SockethubExample",
+                                id: jid,
                                 type: "person",
                             },
                         },

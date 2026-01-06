@@ -25,8 +25,8 @@ import type {
     ActivityStream,
     Logger,
     PersistentPlatformConfig,
+    PersistentPlatformInterface,
     PlatformCallback,
-    PlatformInterface,
     PlatformSchemaStruct,
     PlatformSendToClient,
     PlatformSession,
@@ -76,7 +76,7 @@ interface IrcSocketOptions {
  *
  * @param {object} cfg a unique config object for this instance
  */
-export default class IRC implements PlatformInterface {
+export default class IRC implements PersistentPlatformInterface {
     debug: Logger;
     credentialsHash: string;
     config: PersistentPlatformConfig = {
@@ -290,7 +290,7 @@ export default class IRC implements PlatformInterface {
         this.debug(
             `send() called for ${job.actor.id} target: ${job.target.id}`,
         );
-        this.getClient(job.actor.id, false, (err, client) => {
+        this.getClient(job.actor.id, false, async (err, client) => {
             if (err) {
                 return done(err);
             }
@@ -322,9 +322,10 @@ export default class IRC implements PlatformInterface {
                 // so the following line needs to be commented out when the API doc is built.
                 // investigate:
                 // https://github.com/jsdoc2md/jsdoc-to-markdown/issues/197#issuecomment-976851915
-                // const buildCommand = await import("./octal-hack.js");
-                // const message = buildCommand(job.object.content);
-                // client.raw("PRIVMSG " + job.target.name + " :" + message);
+                const buildCommand = await import("./octal-hack.js");
+                const message = buildCommand(job.object.content);
+                // biome-ignore lint/style/useTemplate: <explanation>
+                client.raw("PRIVMSG " + job.target.name + " :" + message);
                 return done("IRC commands temporarily disabled");
             }
             if (job.object.type === "notice") {

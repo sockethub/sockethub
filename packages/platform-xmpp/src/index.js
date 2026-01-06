@@ -38,7 +38,7 @@ export default class XMPP {
     constructor(session) {
         this.id = session.id; // actor
         this.config = {
-            connectTimeoutMs: 3000,
+            connectTimeoutMs: 10000,
             persist: true,
             initialized: false,
             requireCredentials: ["connect"],
@@ -54,6 +54,87 @@ export default class XMPP {
     }
     createXml() {
         this.__xml = xml;
+    }
+
+    /**
+     * Mark the platform as disconnected and uninitialized
+     * @param {boolean} stopReconnection - If true, stop automatic reconnection
+     */
+    __markDisconnected(stopReconnection = false) {
+        this.debug(`marking client as disconnected for ${this.id}`);
+
+        if (stopReconnection && this.__client) {
+            this.debug(`stopping automatic reconnection for ${this.id}`);
+            this.__client.stop();
+        }
+
+        this.__client = undefined;
+        this.config.initialized = false;
+    }
+
+    /**
+     * Classify error to determine if reconnection should be attempted
+     * @param {Error} err - The error from XMPP client
+     * @returns {string} 'RECOVERABLE' or 'NON_RECOVERABLE'
+     */
+    __classifyError(err) {
+        const errorString = err.toString();
+        const condition = err.condition;
+
+        // ONLY these errors are safe to reconnect on
+        const recoverableErrors = [
+            "ECONNRESET", // Network connection reset
+            "ECONNREFUSED", // Connection refused (server down)
+            "ETIMEDOUT", // Network timeout
+            "ENOTFOUND", // DNS resolution failed
+            "EHOSTUNREACH", // Host unreachable
+            "ENETUNREACH", // Network unreachable
+        ];
+
+        // Check if this is explicitly a recoverable network error
+        if (
+            recoverableErrors.some((pattern) => errorString.includes(pattern))
+        ) {
+            return "RECOVERABLE";
+        }
+
+        // Also check for specific network-level error codes
+        if (err.code && recoverableErrors.includes(err.code)) {
+            return "RECOVERABLE";
+        }
+
+        // DEFAULT: Everything else is non-recoverable
+        // This includes:
+        // - StreamError: conflict
+        // - SASLError: not-authorized
+        // - StreamError: policy-violation
+        // - Any unknown XMPP protocol errors
+        // - Any authentication failures
+        // - Any server policy violations
+        // - Any new error types we haven't seen before
+        return "NON_RECOVERABLE";
+    }
+
+    /**
+     * Check if the XMPP client is properly connected and can send messages
+     * @returns {boolean} true if client is connected and operational
+     */
+    __isClientConnected() {
+        if (!this.__client) {
+            return false;
+        }
+
+        // Check if the client has a socket and it's writable
+        try {
+            return (
+                this.__client.socket &&
+                this.__client.socket.writable !== false &&
+                this.__client.status === "online"
+            );
+        } catch (err) {
+            this.debug("Error checking client connection status:", err);
+            return false;
+        }
     }
 
     /**
@@ -123,33 +204,115 @@ export default class XMPP {
      * }
      */
     connect(job, credentials, done) {
-        if (this.__client) {
-            // TODO verify client is actually connected
+        if (this.__isClientConnected()) {
             this.debug(`client connection already exists for ${job.actor.id}`);
             this.config.initialized = true;
             return done();
         }
         this.debug(`connect() called for ${job.actor.id}`);
-        this.__client = this.__clientConstructor({
-            ...utils.buildXmppCredentials(credentials),
-            ...{ timeout: this.config.connectTimeoutMs },
-        });
+
+        // Log credential processing
+        const xmppCreds = utils.buildXmppCredentials(credentials);
+        this.debug(
+            `building XMPP credentials for ${job.actor.id}:`,
+            JSON.stringify({
+                service: xmppCreds.service,
+                username: xmppCreds.username,
+                resource: xmppCreds.resource,
+                timeout: this.config.connectTimeoutMs,
+            }),
+        );
+
+        // Log before client creation
+        this.debug(`creating XMPP client for ${job.actor.id}`);
+
+        try {
+            this.__client = this.__clientConstructor({
+                ...xmppCreds,
+                ...{ timeout: this.config.connectTimeoutMs, tls: false },
+            });
+            this.debug(`XMPP client created successfully for ${job.actor.id}`);
+        } catch (err) {
+            this.debug(`XMPP client creation failed for ${job.actor.id}:`, err);
+            return done(`client creation failed: ${err.message}`);
+        }
+
         this.__client.on("offline", () => {
-            this.debug("offline");
+            this.debug(`offline event received for ${job.actor.id}`);
+            this.__markDisconnected();
         });
+
+        this.__client.on("error", (err) => {
+            this.debug(
+                `network error event for ${job.actor.id}:${err.toString()}`,
+            );
+
+            const errorType = this.__classifyError(err);
+
+            const as = {
+                context: "xmpp",
+                type: "connect",
+                actor: { id: job.actor.id },
+            };
+
+            if (errorType === "RECOVERABLE") {
+                // Clean up state but allow reconnection
+                this.__markDisconnected(false);
+
+                as.error = `Connection lost: ${err.toString()}. Attempting automatic reconnection...`;
+                as.object = {
+                    type: "connect",
+                    status: "reconnecting",
+                    condition: err.condition || "network",
+                };
+            } else {
+                // Clean up state and stop reconnection
+                this.__markDisconnected(true);
+
+                as.error = `Connection failed: ${err.toString()}. Manual reconnection required.`;
+                as.object = {
+                    type: "connect",
+                    status: "failed",
+                    condition: err.condition || "protocol",
+                };
+            }
+            this.sendToClient(as);
+        });
+
+        this.__client.on("online", () => {
+            this.debug(`online event received for ${job.actor.id}`);
+        });
+
+        this.debug(`starting XMPP client connection for ${job.actor.id}`);
+        const startTime = Date.now();
 
         this.__client
             .start()
             .then(() => {
                 // connected
-                this.debug("connection successful");
+                const duration = Date.now() - startTime;
+                this.debug(
+                    `connection successful for ${job.actor.id} after ${duration}ms`,
+                );
                 this.config.initialized = true;
                 this.__registerHandlers();
                 return done();
             })
             .catch((err) => {
+                const duration = Date.now() - startTime;
+                this.debug(
+                    `connection failed for ${job.actor.id} after ${duration}ms:`,
+                    {
+                        error: err,
+                        message: err?.message,
+                        code: err?.code,
+                        stack: err?.stack,
+                    },
+                );
                 this.__client = undefined;
-                return done("connection failed");
+                return done(
+                    `connection failed: ${err?.message || err}. (service: ${xmppCreds.service})`,
+                );
             });
     }
 
@@ -175,7 +338,7 @@ export default class XMPP {
      *   }
      * }
      */
-    join(job, done) {
+    async join(job, done) {
         this.debug(
             `sending join from ${job.actor.id} to ` +
                 `${job.target.id}/${job.actor.name}`,
@@ -184,14 +347,16 @@ export default class XMPP {
         // TODO investigate implementation reserved nickname discovery
         const id = job.target.id.split("/")[0];
 
-        this.__client
-            .send(
-                this.__xml("presence", {
-                    from: job.actor.id,
-                    to: `${job.target.id}/${job.actor.name || id}`,
-                }),
-            )
-            .then(done);
+        const presence = this.__xml(
+            "presence",
+            {
+                from: job.actor.id,
+                to: `${job.target.id}/${job.actor.name || id}`,
+            },
+            this.__xml("x", { xmlns: "http://jabber.org/protocol/muc" }),
+        );
+
+        return this.__client.send(presence).then(done).catch(done);
     }
 
     /**
