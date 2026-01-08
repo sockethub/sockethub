@@ -8,7 +8,7 @@ import type { RedisConfig } from "./types.js";
 export interface CredentialsStoreInterface {
     get(
         actor: string,
-        credentialsHash: string,
+        credentialsHash: string | undefined,
     ): Promise<CredentialsObject | undefined>;
     save(actor: string, creds: CredentialsObject): Promise<number>;
 }
@@ -24,7 +24,26 @@ export async function verifySecureStore(config: RedisConfig): Promise<void> {
 }
 
 /**
- * Encapsulates the storing and fetching of credential objects.
+ * Secure, encrypted storage for user credentials with session-based isolation.
+ *
+ * Provides automatic encryption/decryption of credential objects stored in Redis,
+ * ensuring that sensitive authentication data is never stored in plaintext.
+ * Each session gets its own isolated credential store.
+ *
+ * @example
+ * ```typescript
+ * const store = new CredentialsStore('session123', secret, redisConfig);
+ *
+ * // Store credentials
+ * await store.save('user@example.com', {
+ *   username: 'user',
+ *   password: 'secret',
+ *   server: 'irc.freenode.net'
+ * });
+ *
+ * // Retrieve credentials
+ * const creds = await store.get('user@example.com', credentialsHash);
+ * ```
  */
 export class CredentialsStore implements CredentialsStoreInterface {
     readonly uid: string;
@@ -33,10 +52,13 @@ export class CredentialsStore implements CredentialsStoreInterface {
     private readonly log: Debugger;
 
     /**
-     * @param parentId - The ID of the parent instance (e.g. sockethub itself)
-     * @param sessionId - The ID of the session (socket.io connection)
-     * @param secret - The encryption secret (parent + session secrets) must be 32 chars
-     * @param redisConfig - Connect info for redis
+     * Creates a new CredentialsStore instance.
+     *
+     * @param parentId - Unique identifier for the parent instance (e.g. server ID)
+     * @param sessionId - Client session identifier for credential isolation
+     * @param secret - 32-character encryption secret for credential security
+     * @param redisConfig - Redis connection configuration
+     * @throws Error if secret is not exactly 32 characters
      */
     constructor(
         parentId: string,
@@ -71,11 +93,11 @@ export class CredentialsStore implements CredentialsStoreInterface {
     /**
      * Gets the credentials for a given actor ID
      * @param actor
-     * @param credentialHash
+     * @param credentialsHash - Optional hash to validate credentials. If undefined, validation is skipped.
      */
     async get(
         actor: string,
-        credentialHash: string,
+        credentialsHash: string | undefined,
     ): Promise<CredentialsObject> {
         this.log(`get credentials for ${actor}`);
         const credentials: CredentialsObject = await this.store.get(actor);
@@ -83,8 +105,8 @@ export class CredentialsStore implements CredentialsStoreInterface {
             throw new Error(`credentials not found for ${actor}`);
         }
 
-        if (credentialHash) {
-            if (credentialHash !== this.objectHash(credentials.object)) {
+        if (credentialsHash) {
+            if (credentialsHash !== this.objectHash(credentials.object)) {
                 throw new Error(`invalid credentials for ${actor}`);
             }
         }

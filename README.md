@@ -15,7 +15,11 @@ Sockethub is a translation layer for web applications to communicate with
 other protocols and services that are traditionally either inaccessible or
 impractical to use from in-browser JavaScript.
 
-Using [ActivityStream](http://activitystrea.ms/) (AS) objects to pass messages
+Built with modern TypeScript and powered by Bun, Sockethub is organized as a
+monorepo containing multiple packages that work together to provide a robust,
+extensible platform gateway.
+
+Using [ActivityStreams](https://www.w3.org/TR/activitystreams-core/) (AS) objects to pass messages
 to and from the web app, Sockethub acts as a smart proxy server/agent, which
 can maintain state, and connect to sockets, endpoints, and networks that would
 otherwise, be restricted from an application running in the browser.
@@ -27,21 +31,53 @@ applications, Sockethub's functionality can also fit into a more traditional
 development stack, removing the need for custom code to handle various protocol
 specifics at the application layer.
 
-Example uses of Sockethub are:
+Example uses of Sockethub include:
 
-* Writing and receiving messages (SMTP, IMAP, Nostr ...)
+* **Chat protocols**: XMPP, IRC
 
-* Chat (XMPP, IRC, SimpleX, ...)
+* **Feed processing**: RSS, Atom feeds
 
-* Discovery (WebFinger, RDF(a), Link preview generation ...)
+* **Metadata discovery**: Link preview generation, metadata extraction
+
+* **Protocol translation**: Converting between web-friendly ActivityStreams and traditional protocols
+
+*Additional protocols like SMTP, IMAP, Nostr, and others can be implemented as custom platforms.*
 
 The architecture of Sockethub is extensible and supports easy implementation
 of additional 'platforms' to carry out tasks.
 
-## Docs
+## Architecture
 
-See the [Sockethub wiki](https://github.com/sockethub/sockethub/wiki) for
-documentation.
+Sockethub uses a multi-process architecture for stability and isolation:
+
+* **Main Server** (`packages/server/`) - Socket.IO connections, middleware
+  pipeline for validation and routing
+* **Platform Processes** - Each protocol (IRC, XMPP, Feeds) runs as an
+  isolated child process
+* **Job Queue** - Redis-backed BullMQ ensures reliable message delivery
+  between server and platforms
+* **Data Layer** - Encrypted credential storage and session management in Redis
+* **ActivityStreams** - Uniform message format for all platform communication
+
+**Request Flow:**
+
+1. Client connects via Socket.IO
+2. Messages validated through middleware pipeline
+3. Credentials encrypted and stored per-session in Redis
+4. Messages queued to appropriate platform instance
+5. Platform processes handle protocol-specific logic
+6. Responses sent back through Socket.IO
+
+For detailed architecture documentation, see [Architecture Overview](docs/architecture/overview.md).
+
+## Documentation
+
+* **[Documentation Hub](docs/README.md)** - Complete documentation index and guides
+* **[Getting Started](docs/getting-started/installation.md)** - Installation and quick start
+* **[Client Library](docs/client/README.md)** - Browser client library usage
+* **[Platform Development](docs/platform-development/creating-platforms.md)** - Creating custom platforms
+* **[Architecture](docs/architecture/overview.md)** - Technical architecture overview
+* **[Deployment](docs/deployment/server-config.md)** - Production deployment guides
 
 ## Features
 
@@ -50,87 +86,156 @@ We use ActivityStreams to map the various actions of a platform to a set of AS
 platform, a friend request/accept cycle would use the activity stream types
 'request-friend', 'remove-friend', 'make-friend'.
 
-Below is a list of platform contexts we're currently working on and their types,
-both the completed and not yet implemented ones. They are all implemented in
-Sockethub platforms (each in their own repository) and can be enabled/disabled
-in the `config.json`.
-
 ## Platforms
 
 Making a platform is as simple as creating a platform module that defines a
-schema and a series of functions that map to verbs. Take a look at some of
-our existing platforms for examples.
+schema and a series of functions that map to ActivityStream verbs. Each platform
+can be enabled/disabled in the `config.json`.
 
-* [Feeds](packages/platform-feeds) *(RSS, Atom)*
+### Currently Implemented Platforms
 
-* [IRC](packages/platform-irc)
+* **[Feeds](packages/platform-feeds)** - RSS and Atom feed processing
+* **[IRC](packages/platform-irc)** - Internet Relay Chat protocol support  
+* **[XMPP](packages/platform-xmpp)** - Extensible Messaging and Presence Protocol
+* **[Metadata](packages/platform-metadata)** - Link preview and metadata extraction
 
-* [XMPP](packages/platform-xmpp)
+### Development Reference
 
-## Run
+* **[Dummy](packages/platform-dummy)** - Example platform implementation for developers
 
-To get up and running quickly, you only need the following commands:
+For platform development guidance, see the [Platform Development documentation](packages/platform-dummy/README.md).
+
+## Quick Start
+
+**Note:** This is a monorepo using Bun workspaces managed by Lerna Lite.
+
+### Prerequisites
+
+* **Bun** v1.2+ (Node.js runtime and package manager)
+* **Redis** server (for data layer and job queue)
+
+### Installation & Development
 
 ```bash
+# Install dependencies
 bun install
+
+# Start Redis (required for data layer)
+# - Using Docker: docker run -d -p 6379:6379 redis:alpine
+# - Using system package manager: brew install redis && brew services start redis
+
+# Build and start development server with examples
 bun run dev
 ```
 
-### Dependencies
+Browse to `http://localhost:10550` to try the interactive examples.
 
-```bun install```
+### Production
 
-### Build
+```bash
+# Build for production
+bun run build
 
-```bun run build```
+# Start production server (examples disabled)
+bun run start
+```
 
-### Tests
+### Development Commands
 
-```bun test```
+```bash
+# Testing
+bun test                    # Run unit tests across all packages
+bun run integration         # Run both Redis and browser integration tests
+bun run integration:redis   # Run Redis integration tests with Docker
+bun run integration:browser # Run browser integration tests with Docker
 
-### Linter
+# Code Quality
+bun run lint                # Run Biome linter and markdown lint
+bun run lint:fix           # Auto-fix linting issues
 
-```bun run lint```
+# Maintenance
+bun run clean              # Clean build artifacts
+bun run clean:deps         # Clean dependencies and node_modules
 
-Or, to automatically fix linting errors:
+# Docker
+bun run docker:start       # Start Prosody and Sockethub services
+bun run docker:start:redis # Start only Redis service
+bun run docker:stop        # Stop all Docker services
+```
 
-```bun run lint:fix```
+### Environment Variables
 
-### Integration Tests
+For debugging and configuration options, see the [Server package documentation](packages/server/README.md#environment-variables).
 
-```bun run  integration```
+**Debug logging:**
 
-## Start
-
-For development purposes, with examples enabled, run:
-
-`DEBUG=sockethub* bun run dev`
-
-You should then be able to browse to `http://localhost:10550` and try out the examples.
-
-For production, with examples disabled.
-
-`DEBUG=sockethub* bun run start`
-
-*For more info on configuration options, see the
-[Sockethub README](packages/sockethub/README.md#environment-variables)*
-section on environment variables.*
+```bash
+DEBUG=sockethub* bun run dev
+```
 
 ## Packages
 
-* [sockethub](packages/sockethub)
-* [@sockethub/activity-streams](packages/activity-streams)
-* [@sockethub/client](packages/client)
-* [@sockethub/crypto](packages/crypto)
-* [@sockethub/data-layer](packages/data-layer)
-* [@sockethub/examples](packages/examples)
-* [@sockethub/irc2as](packages/irc2as)
-* [@sockethub/platform-dummy](packages/platform-dummy)
-* [@sockethub/platform-feeds](packages/platform-feeds)
-* [@sockethub/platform-irc](packages/platform-irc)
-* [@sockethub/platform-xmpp](packages/platform-xmpp)
-* [@sockethub/schemas](packages/schemas)
-* [@sockethub/server](packages/server)
+### Core Infrastructure
+
+* **[sockethub](packages/sockethub)** - Main package and configuration
+* **[@sockethub/server](packages/server)** - Core server implementation with Socket.IO interface
+* **[@sockethub/data-layer](packages/data-layer)** - Redis-based job queue and credential storage
+* **[@sockethub/schemas](packages/schemas)** - ActivityStreams validation and TypeScript types
+* **[@sockethub/client](packages/client)** - Browser client library for connecting to Sockethub
+
+### Interactive Demos
+
+* **[@sockethub/examples](packages/examples)** - Interactive web examples and demos
+
+### Platform Implementations
+
+* **[@sockethub/platform-dummy](packages/platform-dummy)** - Example platform for development reference
+* **[@sockethub/platform-feeds](packages/platform-feeds)** - RSS and Atom feed processing
+* **[@sockethub/platform-irc](packages/platform-irc)** - IRC protocol support
+* **[@sockethub/platform-metadata](packages/platform-metadata)** - Link preview and metadata extraction
+* **[@sockethub/platform-xmpp](packages/platform-xmpp)** - XMPP protocol support
+
+### Utilities
+
+* **[@sockethub/activity-streams](packages/activity-streams)** - ActivityStreams object utilities
+* **[@sockethub/crypto](packages/crypto)** - Cryptographic utilities for secure storage
+* **[@sockethub/irc2as](packages/irc2as)** - IRC to ActivityStreams translation
+
+## Contributing
+
+### Key Files to Understand
+
+* `packages/sockethub/sockethub.config.json` - Main configuration file
+* `packages/server/src/sockethub.ts` - Main server class handling Socket.IO
+  connections
+* `packages/server/src/platform-instance.ts` - Platform process management
+* `packages/server/src/middleware/` - Request processing pipeline
+* `packages/data-layer/src/job-queue.ts` - Redis-based job queue (BullMQ)
+* `packages/data-layer/src/credentials-store.ts` - Encrypted credential storage
+* `packages/platform-*/` - Individual protocol implementations
+
+### Creating a New Platform
+
+Each platform must:
+
+1. Implement the `PlatformInterface` from `@sockethub/schemas`
+2. Define a schema with supported message types and credential requirements
+3. Run as an isolated child process (managed by the server)
+4. Translate between protocol-specific messages and ActivityStreams objects
+
+See the [Platform Development documentation](docs/platform-development/creating-platforms.md)
+and [Dummy platform](packages/platform-dummy) for a complete reference
+implementation.
+
+### Architectural Patterns to Follow
+
+* **Process Isolation**: Platforms run as separate child processes for stability
+* **Job Queue**: All platform communication goes through Redis-backed BullMQ
+* **Middleware Pipeline**: Requests flow through validation, credential storage,
+  and routing
+* **Session Management**: Credentials are encrypted per-session and isolated per
+  connection
+* **ActivityStreams**: Use ActivityStreams objects as the uniform message format
 
 ## Credits
 

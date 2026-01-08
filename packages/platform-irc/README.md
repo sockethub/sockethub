@@ -1,101 +1,91 @@
 # @sockethub/platform-irc
 
-A sockethub platform module implementing IRC functionality.
+A Sockethub platform module implementing IRC (Internet Relay Chat) functionality.
 
 ## About
 
-This module contains all of the implementation details of an IRC client and is
-used as a sockethub platform.
+This platform provides IRC client functionality, allowing web applications to connect to
+IRC servers, join channels, send messages, and handle IRC events through ActivityStreams
+messages.
 
 ## Implemented Verbs (`@type`)
 
-More details can be found in the API docs [here](API.md)
+* **send** - Send messages to channels or users
+* **join** - Join IRC channels
+* **leave** - Leave IRC channels
+* **observe** - Monitor channel activity and user events
+* **update** - Update user information (nick, etc.)
 
-* send
-* join
-* leave
-* observe
-* update
+## Usage
 
-## Example
-
-Each sockethub platform uses JSON Activity Streams 2.0 which are received from and sent to clients,
-through the Sockethub service.
-
-### Incoming
-
-Connected to IRC
+### Send Message Example
 
 ```json
 {
-  "@type": "announce",
+  "@type": "send",
   "context": "irc",
   "actor": {
-    "@id": "irc.freenode.net",
-    "@type": "service"
+    "@id": "mynick@irc.libera.chat"
   },
-  "published": "2015-05-20T22:32:06.212Z",
   "target": {
-    "@id": "foobar@irc.freenode.net",
-    "@type": "person",
-    "displayName": "Foobar McUser"
+    "@id": "#general@irc.libera.chat"
   },
   "object": {
-    "@type": "content",
-    "content": {
-      "network":{
-         "name":"freenode",
-         "hostname":"orwell.freenode.net",
-         "ircd":"ircd-seven-1.1.3",
-         "nicklength":16,
-         "maxtargets":{
-            "NAMES":1,
-            "LIST":1,
-            "KICK":1,
-            "WHOIS":1,
-            "PRIVMSG":4,
-            "NOTICE":4,
-            "ACCEPT":0,
-            "MONITOR":0
-         }
-      },
-      "channel":{
-         "idlength":{
-
-         },
-         "limit":{
-            "#":120
-         },
-         "length":50,
-         "modes":4,
-         "types":"#",
-         "kicklength":0,
-         "topiclength":390
-      },
-      "modes":{
-         "user":"DOQRSZaghilopswz",
-         "channel":"CFILMPQSbcefgijklmnopqrstvz",
-         "param":"bkloveqjfI",
-         "types":{
-            "a":"eIbq",
-            "b":"kov",
-            "c":"flj",
-            "d":"CFLMPQScgimnprstz"
-         },
-         "prefixes":"@+",
-         "prefixmodes":{
-            "o":"@",
-            "v":"+"
-         },
-         "maxlist":{
-            "bqeI":100
-         }
-      }
-    }
+    "@type": "Note",
+    "content": "Hello IRC channel!"
   }
 }
 ```
 
+### Join Channel Example
+
+```json
+{
+  "@type": "join",
+  "context": "irc",
+  "actor": {
+    "@id": "mynick@irc.libera.chat"
+  },
+  "target": {
+    "@id": "#general@irc.libera.chat"
+  }
+}
+```
+
+### Private Message Example
+
+```json
+{
+  "@type": "send",
+  "context": "irc",
+  "actor": {
+    "@id": "mynick@irc.libera.chat"
+  },
+  "target": {
+    "@id": "friend@irc.libera.chat"
+  },
+  "object": {
+    "@type": "Note",
+    "content": "Hello friend!"
+  }
+}
+```
+
+## Features
+
+* **Channel communication**: Join and participate in IRC channels
+* **Private messaging**: Send direct messages to other users
+* **User management**: Handle nick changes and user information
+* **Network support**: Connect to various IRC networks
+* **Event handling**: Process IRC events and convert to ActivityStreams
+
+## Use Cases
+
+* **Web IRC clients**: Build browser-based IRC chat applications
+* **Chatbots**: Create IRC bots that integrate with web services
+* **Notification systems**: Send alerts to IRC channels
+* **Community integration**: Connect web platforms to IRC communities
+
 ## API
 
-API docs can be found [here](API.md)
+Detailed API documentation can be found [here](API.md)

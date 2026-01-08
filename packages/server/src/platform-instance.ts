@@ -106,7 +106,7 @@ export default class PlatformInstance {
      * Destroys all references to this platform instance, internal listeners and controlled processes
      */
     public async shutdown() {
-        this.debug("shutdown");
+        this.debug("platform process shutdown");
         this.flaggedForTermination = true;
 
         try {
@@ -220,19 +220,19 @@ export default class PlatformInstance {
 
     // handle job results coming in on the queue from platform instances
     private async handleJobResult(
-        type: string,
+        state: string,
         job: JobDataDecrypted,
         result: ActivityStream | undefined,
     ) {
         let payload = result; // some platforms return new AS objects as result
-        if (type === "failed") {
+        if (state === "failed") {
             payload = job.msg; // failures always use original AS job object
             payload.error = result
                 ? result.toString()
                 : "job failed for unknown reason";
         }
         this.debug(
-            `${job.title} ${type}${payload?.error ? `: ${payload.error}` : ""}`,
+            `${job.title} ${state}${payload?.error ? `: ${payload.error}` : ""}`,
         );
 
         if (!payload || typeof payload === "string") {
@@ -259,13 +259,22 @@ export default class PlatformInstance {
             this.config.persist &&
             this.config.requireCredentials?.includes(job.msg.type)
         ) {
-            if (type === "failed") {
-                this.debug(
-                    `critical job type ${job.msg.type} failed, flagging for termination`,
-                );
-                await this.queue.pause();
-                this.config.initialized = false;
-                this.flaggedForTermination = true;
+            if (state === "failed") {
+                // Only terminate if platform is not yet initialized
+                // If already initialized, credential failures are non-fatal (wrong session credentials)
+                if (!this.config.initialized) {
+                    this.debug(
+                        `critical job type ${job.msg.type} failed during initialization, flagging for termination`,
+                    );
+                    await this.queue.pause();
+                    this.config.initialized = false;
+                    this.flaggedForTermination = true;
+                } else {
+                    this.debug(
+                        `credential job ${job.msg.type} failed on initialized platform, not flagged for termination`,
+                    );
+                    // Platform stays alive - error sent to client via sendToClient above
+                }
             } else {
                 this.debug("persistent platform initialized");
                 await this.queue.resume();
@@ -287,7 +296,16 @@ export default class PlatformInstance {
             actor: { id: this.actor, type: "unknown" },
             error: errorMessage,
         };
-        this.sendToClient(sessionId, errorObject);
+
+        // Only attempt to send to client if we have a valid session
+        try {
+            if (sessionId && this.sessions.has(sessionId)) {
+                await this.sendToClient(sessionId, errorObject);
+            }
+        } catch (err) {
+            this.debug(`Failed to send error to client: ${err.message}`);
+        }
+
         this.sessions.clear();
         await this.shutdown();
     }
@@ -311,11 +329,19 @@ export default class PlatformInstance {
     private callbackFunction(listener: string, sessionId: string) {
         const funcs = {
             close: async (e: object) => {
-                this.debug(`close even triggered ${this.id}: ${e}`);
-                await this.reportError(
-                    sessionId,
-                    `Error: session thread closed unexpectedly: ${e}`,
-                );
+                this.debug(`close event triggered ${this.id}: ${e}`);
+                // Check if process is still connected before attempting error reporting
+                if (this.process?.connected && !this.flaggedForTermination) {
+                    await this.reportError(
+                        sessionId,
+                        `Error: session thread closed unexpectedly: ${e}`,
+                    );
+                } else {
+                    this.debug(
+                        "Process already disconnected or flagged for termination, skipping error report",
+                    );
+                    await this.shutdown();
+                }
             },
             message: async ([first, second, third]: MessageFromPlatform) => {
                 if (first === "updateActor") {
@@ -325,7 +351,7 @@ export default class PlatformInstance {
                     await this.reportError(sessionId, second);
                 } else {
                     // treat like a message to clients
-                    this.sendToClient(sessionId, second);
+                    await this.sendToClient(sessionId, second);
                 }
             },
         };

@@ -133,4 +133,62 @@ describe("Incoming handlers", () => {
             sinon.assert.calledOnce(mockSession.__client.sendReceive);
         });
     });
+  
+    describe("Error handling edge cases", () => {
+        it("close() should handle undefined session gracefully", () => {
+            const ih = new IncomingHandlers();
+            ih.session = undefined;
+            
+            // This should not throw an error
+            expect(() => ih.close()).not.toThrow();
+        });
+
+        it("close() should handle session without actor gracefully", () => {
+            const sendToClient = sinon.fake();
+            const debug = sinon.fake();
+            
+            const ih = new IncomingHandlers({
+                sendToClient: sendToClient,
+                debug: debug,
+                actor: undefined,
+                connection: undefined
+            });
+            
+            // This should not throw an error
+            expect(() => ih.close()).not.toThrow();
+            
+            // Should still call debug
+            sinon.assert.calledWith(debug, "received close event with no handler specified");
+        });
+
+        it("close() should handle session without connection gracefully", () => {
+            const sendToClient = sinon.fake();
+            const debug = sinon.fake();
+            
+            const ih = new IncomingHandlers({
+                sendToClient: sendToClient,
+                debug: debug,
+                actor: { id: "test@example.com" },
+                connection: undefined
+            });
+            
+            // This should not throw an error
+            expect(() => ih.close()).not.toThrow();
+        });
+
+        it("close() should handle session with invalid connection gracefully", () => {
+            const sendToClient = sinon.fake();
+            const debug = sinon.fake();
+            
+            const ih = new IncomingHandlers({
+                sendToClient: sendToClient,
+                debug: debug,
+                actor: { id: "test@example.com" },
+                connection: { disconnect: null } // invalid disconnect method
+            });
+            
+            // This should not throw an error
+            expect(() => ih.close()).not.toThrow();
+        });
+    });
 });

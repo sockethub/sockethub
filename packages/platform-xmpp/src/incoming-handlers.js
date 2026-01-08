@@ -149,17 +149,29 @@ export class IncomingHandlers {
     }
 
     close() {
+        if (!this.session) {
+            console.debug("close event received but session is undefined");
+            return;
+        }
+
         this.session.debug("received close event with no handler specified");
-        this.session.sendToClient({
-            context: "xmpp",
-            type: "close",
-            actor: this.session.actor,
-            target: this.session.actor,
-        });
-        this.session.debug(
-            `**** xmpp this.session.for ${this.session.actor.id} closed`,
-        );
-        this.session.connection.disconnect();
+        if (this.session.actor && this.session.sendToClient) {
+            this.session.sendToClient({
+                context: "xmpp",
+                type: "close",
+                actor: this.session.actor,
+                target: this.session.actor,
+            });
+            this.session.debug(
+                `**** xmpp this.session.for ${this.session.actor.id} closed`,
+            );
+        }
+        if (
+            this.session.connection &&
+            typeof this.session.connection.disconnect === "function"
+        ) {
+            this.session.connection.disconnect();
+        }
     }
 
     error(err) {

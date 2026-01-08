@@ -86,7 +86,7 @@ modules_enabled = {
 -- to disable them then uncomment them here:
 modules_disabled = {
 	-- "offline"; -- Store offline messages
-	-- "c2s"; -- Handle client connections
+    -- 	"c2s"; -- Handle client connections
 	-- "s2s"; -- Handle server-to-server connections
 	-- "posix"; -- POSIX functionality, sends server to background, enables syslog, etc.
 }
@@ -103,7 +103,7 @@ c2s_require_encryption = false
 -- Force servers to use encrypted connections? This option will
 -- prevent servers from authenticating unless they are using encryption.
 
-s2s_require_encryption = true
+s2s_require_encryption = false
 
 -- Force certificate authentication for server-to-server connections?
 
@@ -114,7 +114,7 @@ s2s_secure_auth = false
 -- certificates. They will be authenticated using DNS instead, even
 -- when s2s_secure_auth is enabled.
 
---s2s_insecure_domains = { "insecure.example" }
+-- s2s_insecure_domains = { "localhost" }
 
 -- Even if you disable s2s_secure_auth, you can still require valid
 -- certificates for some domains by specifying a list here.
@@ -167,7 +167,7 @@ archive_expires_after = "1w" -- Remove archived messages after 1 week
 -- Logging configuration
 -- For advanced logging see https://prosody.im/doc/logging
 log = {
-    {levels = {min = "info"}, to = "console"};
+    {levels = {min = "debug"}, to = "console"};
 }
 
 -- Uncomment to enable statistics
@@ -203,9 +203,18 @@ VirtualHost "prosody"
 -- For more information on components, see https://prosody.im/doc/components
 
 ---Set up a MUC (multi-user chat) room server on conference.example.com:
---Component "conference.example.com" "muc"
+Component "conference.prosody" "muc"
 --- Store MUC messages in an archive and allow users to access it
---modules_enabled = { "muc_mam" }
+modules_enabled = { "muc_mam" }
+--- MUC configuration
+restrict_room_creation = false
+max_history_messages = 20
+muc_room_locking = false
+muc_room_lock_timeout = 0
+muc_room_default_public = true
+muc_room_default_persistent = false
+muc_room_default_members_only = false
+muc_room_default_moderated = false
 
 ---Set up an external component (default component port is 5347)
 --

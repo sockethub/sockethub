@@ -90,13 +90,13 @@ describe("CredentialsStore", () => {
         });
 
         it("validates credentialsHash when provided", async () => {
-            MockObjectHash.returns("a credentialHash string");
+            MockObjectHash.returns("a credentialsHash string");
             MockStoreGet.returns({
                 object: "a credential",
             });
             const res = await credentialsStore.get(
                 "an actor",
-                "a credentialHash string",
+                "a credentialsHash string",
             );
             sinon.assert.calledOnce(MockStoreGet);
             sinon.assert.calledWith(MockStoreGet, "an actor");
@@ -107,7 +107,7 @@ describe("CredentialsStore", () => {
         });
 
         it("invalidates credentialsHash when provided", async () => {
-            MockObjectHash.returns("the original credentialHash string");
+            MockObjectHash.returns("the original credentialsHash string");
             MockStoreGet.returns({
                 object: "a credential",
             });
@@ -115,7 +115,7 @@ describe("CredentialsStore", () => {
                 expect(
                     await credentialsStore.get(
                         "an actor",
-                        "a different credentialHash string",
+                        "a different credentialsHash string",
                     ),
                 ).toBeUndefined();
                 expect(false).toEqual(true);

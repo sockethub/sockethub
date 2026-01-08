@@ -1,7 +1,9 @@
 /**
- * This runs as a stand-alone separate process that handles starting up an
- * instance of a given platform, connecting to the redis job queue, sending the
- * platform jobs and handling the result by putting back on the queue for
+ * This runs as a stand-alone separate process that handles:
+ * 1. Starting up an instance of a given platform
+ * 2. Connecting to the redis job queue
+ * 3. Sending the platform jobs
+ * 4. Handling the result by putting it in the outgoing queue for
  * sockethub core to send back to the client.
  *
  * If an exception is thrown by the platform, this process will die along with
@@ -17,6 +19,7 @@ import type { JobHandler } from "@sockethub/data-layer";
 import type {
     ActivityStream,
     CredentialsObject,
+    PersistentPlatformInterface,
     PlatformCallback,
     PlatformInterface,
     PlatformSession,
@@ -78,13 +81,37 @@ const platform: PlatformInterface = await (async () => {
 })();
 
 /**
+ * Safely send error message to parent process, handling IPC channel closure
+ */
+function safeProcessSend(message: [string, string]) {
+    if (process.send && process.connected) {
+        try {
+            process.send(message);
+        } catch (ipcErr) {
+            console.error(`Failed to report error via IPC: ${ipcErr.message}`);
+        }
+    } else {
+        console.error("Cannot report error: IPC channel not available");
+    }
+}
+
+/**
+ * Type guard to check if a platform is persistent and has credentialsHash.
+ */
+function isPersistentPlatform(
+    platform: PlatformInterface,
+): platform is PersistentPlatformInterface {
+    return platform.config.persist === true;
+}
+
+/**
  * Handle any uncaught errors from the platform by alerting the worker and shutting down.
  */
 process.once("uncaughtException", (err: Error) => {
     console.log("EXCEPTION IN PLATFORM");
     sentry.reportError(err);
     console.log("error:\n", err.stack);
-    process.send(["error", err.toString()]);
+    safeProcessSend(["error", err.toString()]);
     process.exit(1);
 });
 
@@ -92,7 +119,7 @@ process.once("unhandledRejection", (err: Error) => {
     console.log("EXCEPTION IN PLATFORM");
     sentry.reportError(err);
     console.log("error:\n", err.stack);
-    process.send(["error", err.toString()]);
+    safeProcessSend(["error", err.toString()]);
     process.exit(1);
 });
 
@@ -171,27 +198,78 @@ function getJobHandler(): JobHandler {
             };
 
             if (platform.config.requireCredentials?.includes(job.msg.type)) {
-                // this method requires credentials and should be called even if the platform is not
+                // This method requires credentials and should be called even if the platform is not
                 // yet initialized, because they need to authenticate before they are initialized.
+
+                // Get credentialsHash for validation.
+                // For persistent platforms: undefined (or empty string) initially, then we set to hash after first
+                // successful call.
+                // For stateless platforms: always undefined (no validation, credentials used once per request)
+                // CredentialsStore skips validation when credentialsHash is falsy (undefined or empty string)
+                const credentialsHash = isPersistentPlatform(platform)
+                    ? platform.credentialsHash
+                    : undefined;
+
                 credentialStore
-                    .get(
-                        job.msg.actor.id,
-                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                        // @ts-ignore
-                        platform.credentialsHash,
-                    )
+                    .get(job.msg.actor.id, credentialsHash)
                     .then((credentials) => {
+                        // Create wrapper callback that updates credentialsHash after successful call
+                        const wrappedCallback: PlatformCallback = (
+                            err: Error | null,
+                            result: null | ActivityStream,
+                        ): void => {
+                            if (!err && isPersistentPlatform(platform)) {
+                                // Update credentialsHash after successful platform call.
+                                // Only persistent platforms track credential state across requests.
+                                platform.credentialsHash = crypto.objectHash(
+                                    credentials.object,
+                                );
+                            }
+                            doneCallback(err, result);
+                        };
+
+                        // Proceed with platform method call
                         platform[job.msg.type](
                             job.msg,
                             credentials,
-                            doneCallback,
+                            wrappedCallback,
                         );
                     })
                     .catch((err) => {
-                        console.error(err);
-                        jobLog(`error ${err.toString()}`);
-                        sentry.reportError(err);
-                        reject(err);
+                        // Credential store error (invalid/missing credentials)
+                        jobLog(`credential error ${err.toString()}`);
+
+                        /**
+                         * Critical distinction: handle credential errors differently based on platform state.
+                         *
+                         * For INITIALIZED platforms (already running):
+                         * - Reject ONLY this job via doneCallback(err, null)
+                         * - Keep the platform process running
+                         * - Why: Platform instances can be shared by multiple clients (sessions).
+                         *   Terminating on credential error would crash the platform for ALL users,
+                         *   including those with valid credentials. This would create a DoS vector
+                         *   where one user's mistake (browser refresh with wrong creds, mistyped
+                         *   password, expired token) would break the service for everyone sharing
+                         *   that platform instance.
+                         * - The failing client receives an error message, while other clients
+                         *   continue operating normally.
+                         *
+                         * For UNINITIALIZED platforms (not yet started):
+                         * - Terminate the platform process via reject(err)
+                         * - Why: If the initial connection fails due to invalid credentials, there's
+                         *   no valid session to preserve. The platform instance was created specifically
+                         *   for this connection attempt and has no other users. Terminating allows
+                         *   proper cleanup and a fresh start on the next attempt.
+                         * - Error is reported to Sentry for monitoring authentication issues.
+                         */
+                        if (platform.config.initialized) {
+                            // Platform already running - reject job only, preserve platform instance
+                            doneCallback(err, null);
+                        } else {
+                            // Platform not initialized - terminate platform process
+                            sentry.reportError(err);
+                            reject(err);
+                        }
                     });
             } else if (
                 platform.config.persist &&
@@ -206,7 +284,7 @@ function getJobHandler(): JobHandler {
                 try {
                     platform[job.msg.type](job.msg, doneCallback);
                 } catch (err) {
-                    jobLog(`failed ${err.toString()}`);
+                    jobLog(`platform call failed ${err.toString()}`);
                     sentry.reportError(err);
                     reject(err);
                 }
@@ -243,11 +321,12 @@ async function updateActor(credentials: CredentialsObject): Promise<void> {
         `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
     );
     logger = debug(`sockethub:platform:${identifier}`);
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    platform.credentialsHash = crypto.objectHash(credentials.object);
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+
+    // Update credentialsHash for persistent platforms (tracks actor-specific state)
+    if (isPersistentPlatform(platform)) {
+        platform.credentialsHash = crypto.objectHash(credentials.object);
+    }
+
     platform.debug = debug(`sockethub:platform:${platformName}:${identifier}`);
     process.send(["updateActor", undefined, identifier]);
     await startQueueListener(true);
