@@ -84,6 +84,9 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "branch=release/v$VERSION" >> $GITHUB_OUTPUT
 
+      - name: Verify changes pass linting
+        run: bun run lint
+
       - name: Create release branch
         run: |
           git checkout -b ${{ steps.extract_version.outputs.branch }}
