@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh pr:*)",
+      "Bash(bun test:*)",
+      "Bash(bun run lint:*)",
+      "Bash(bunx biome check:*)",
+      "Bash(gh issue view:*)",
+      "WebFetch(domain:xmpp.org)",
+      "WebFetch(domain:github.com)",
+      "Bash(find:*)",
+      "Bash(bun run:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh api:*)"
+    ],
+    "deny": []
+  }
+}

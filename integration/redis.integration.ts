@@ -127,16 +127,13 @@ describe("JobQueue", () => {
     let queue: JobQueue;
     let worker: JobWorker;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         queue = new JobQueue("testid", "sessionid", testSecret, {
             url: REDIS_URL,
         });
         worker = new JobWorker("testid", "sessionid", testSecret, {
             url: REDIS_URL,
         });
-        worker.init();
-        // Give worker time to establish Redis connection and start polling
-        await new Promise((resolve) => setTimeout(resolve, 100));
     });
 
     it("add job and get job on queue", async () => {
@@ -165,6 +162,9 @@ describe("JobQueue", () => {
                 return undefined;
             },
         );
+
+        // Give worker time to establish Redis connection and start polling
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
         // Add job and verify it was queued
         const job = await queue.add("socket id", as);
@@ -280,6 +280,7 @@ describe("JobQueue", () => {
     });
 
     afterEach(async () => {
+        queue.removeAllListeners();
         await queue.shutdown();
         await worker.shutdown();
     });

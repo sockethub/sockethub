@@ -1,0 +1,220 @@
+name: Publish Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - master
+
+jobs:
+  publish:
+    # Only run if PR was merged and branch matches release pattern
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Extract version from branch name
+        id: extract_version
+        run: |
+          BRANCH="${{ github.event.pull_request.head.ref }}"
+          VERSION="${BRANCH#release/v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Determine dist-tag
+        id: dist_tag
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
+          DIST_TAG="latest"
+          
+          if echo "$VERSION" | grep -qE -- '-alpha\.[0-9]+$'; then
+            DIST_TAG="alpha"
+          elif echo "$VERSION" | grep -qE -- '-beta\.[0-9]+$'; then
+            DIST_TAG="beta"
+          elif echo "$VERSION" | grep -qE -- '-rc\.[0-9]+$'; then
+            DIST_TAG="next"
+          fi
+          
+          echo "tag=$DIST_TAG" >> $GITHUB_OUTPUT
+          echo "Publishing with dist-tag: $DIST_TAG"
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run lint
+        run: bun run lint
+
+      - name: Build all packages
+        run: bun run build
+
+      - name: Run tests
+        run: bun test
+
+      - name: Setup NPM authentication
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Validate NPM token
+        run: |
+          npm whoami || (echo "❌ NPM_TOKEN is invalid or expired" && exit 1)
+
+      - name: Publish to npm
+        id: npm_publish
+        run: |
+          lerna publish from-package \
+            --dist-tag ${{ steps.dist_tag.outputs.tag }} \
+            --yes \
+            --no-git-tag-version \
+            --no-push
+        continue-on-error: true
+
+      - name: Verify packages on npm
+        id: verify_npm
+        if: steps.npm_publish.outcome == 'success'
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
+          DIST_TAG="${{ steps.dist_tag.outputs.tag }}"
+          
+          echo "Waiting 30 seconds for npm registry to update..."
+          sleep 30
+          
+          # Get list of all published packages
+          PACKAGES=$(find packages -name "package.json" -not -path "*/node_modules/*" -exec dirname {} \;)
+          
+          FAILED=false
+          for pkg_dir in $PACKAGES; do
+            PKG_NAME=$(node -p "require('./$pkg_dir/package.json').name")
+            PKG_VERSION=$(node -p "require('./$pkg_dir/package.json').version")
+            
+            echo "Verifying $PKG_NAME@$PKG_VERSION..."
+            
+            # Check if package exists on npm with correct version
+            if npm view "$PKG_NAME@$PKG_VERSION" version >/dev/null 2>&1; then
+              echo "✅ $PKG_NAME@$PKG_VERSION verified on npm"
+            else
+              echo "❌ $PKG_NAME@$PKG_VERSION not found on npm"
+              FAILED=true
+            fi
+          done
+          
+          if [ "$FAILED" = true ]; then
+            echo "verification_failed=true" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "verification_failed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create git tag
+        if: steps.verify_npm.outputs.verification_failed != 'true'
+        run: |
+          git tag "v${{ steps.extract_version.outputs.version }}"
+          git push origin "v${{ steps.extract_version.outputs.version }}"
+
+      - name: Generate release notes
+        if: steps.verify_npm.outputs.verification_failed != 'true'
+        id: release_notes
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
+          
+          # Extract changelog section for this version from root CHANGELOG.md
+          if [ -f CHANGELOG.md ]; then
+            # Get content between this version heading and next version heading
+            NOTES=$(awk "/^## .*$VERSION/,/^## [0-9]/" CHANGELOG.md | head -n -1)
+            
+            if [ -z "$NOTES" ]; then
+              NOTES="Release v$VERSION - see individual package changelogs for details"
+            fi
+          else
+            NOTES="Release v$VERSION - see individual package changelogs for details"
+          fi
+          
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        if: steps.verify_npm.outputs.verification_failed != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
+          DIST_TAG="${{ steps.dist_tag.outputs.tag }}"
+          PRERELEASE_FLAG=""
+          
+          # Mark as prerelease if not latest
+          if [ "$DIST_TAG" != "latest" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          
+          gh release create "v$VERSION" \
+            --title "v$VERSION" \
+            --notes "${{ steps.release_notes.outputs.notes }}" \
+            $PRERELEASE_FLAG
+
+      - name: Rollback on failure
+        if: steps.npm_publish.outcome == 'failure' || steps.verify_npm.outputs.verification_failed == 'true'
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
+          
+          echo "## 🚨 Release Failed" >> rollback_report.md
+          echo "" >> rollback_report.md
+          echo "Release v$VERSION failed during publishing or verification." >> rollback_report.md
+          echo "" >> rollback_report.md
+          echo "### Failure Details" >> rollback_report.md
+          
+          if [ "${{ steps.npm_publish.outcome }}" == "failure" ]; then
+            echo "- NPM publish step failed" >> rollback_report.md
+          fi
+          
+          if [ "${{ steps.verify_npm.outputs.verification_failed }}" == "true" ]; then
+            echo "- Package verification failed (packages not found on npm)" >> rollback_report.md
+          fi
+          
+          echo "" >> rollback_report.md
+          echo "### Required Actions" >> rollback_report.md
+          echo "1. Investigate the failure cause" >> rollback_report.md
+          echo "2. Fix the issue (expired NPM token, network error, etc.)" >> rollback_report.md
+          echo "3. Revert the merge commit on master if needed" >> rollback_report.md
+          echo "4. Create a new release PR with corrected version" >> rollback_report.md
+          echo "" >> rollback_report.md
+          echo "### Cleanup Needed" >> rollback_report.md
+          echo "- No git tag was created (safe)" >> rollback_report.md
+          echo "- No GitHub release was created (safe)" >> rollback_report.md
+          echo "- Some packages may have been published (check npm manually)" >> rollback_report.md
+          
+          cat rollback_report.md
+
+      - name: Create failure issue
+        if: steps.npm_publish.outcome == 'failure' || steps.verify_npm.outputs.verification_failed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
+          
+          gh issue create \
+            --title "❌ Release v$VERSION failed" \
+            --body "$(cat rollback_report.md)" \
+            --label "release" \
+            --label "bug"
+          
+          exit 1
