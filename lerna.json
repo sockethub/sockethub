@@ -1,5 +1,13 @@
 {
   "packages": ["packages/*"],
   "npmClient": "bun",
-  "version": "independent"
+  "version": "independent",
+  "command": {
+    "publish": {
+      "conventionalCommits": true,
+      "message": "chore(release): publish [skip ci]",
+      "allowBranch": ["alpha"],
+      "registry": "https://registry.npmjs.org/"
+    }
+  }
 }

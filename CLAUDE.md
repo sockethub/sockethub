@@ -14,6 +14,43 @@ AI-specific guidance for working with this codebase. See [README.md](README.md) 
 
 If tests or linting fail, the commit should not be created.
 
+## Release Process
+
+This project uses automated releases via GitHub Actions for alpha releases.
+
+### Alpha Releases (alpha branch)
+
+**Manual trigger only** via GitHub Actions:
+
+1. Ensure you're on the `alpha` branch
+2. Go to Actions → "Release (Alpha)" → "Run workflow"
+3. Select bump type:
+   - **prerelease**: Bumps `5.0.0-alpha.4` → `5.0.0-alpha.5` (most common)
+   - **preminor**: Bumps `5.0.0-alpha.4` → `5.1.0-alpha.0` (new minor features)
+   - **premajor**: Bumps `5.0.0-alpha.4` → `6.0.0-alpha.0` (breaking changes)
+
+The workflow will:
+- Run lint, build, and tests
+- Version packages using Lerna (independent versioning)
+- Publish to npm with `@alpha` dist-tag
+- Create a GitHub release
+
+**Install alpha releases:**
+```bash
+bun install sockethub@alpha
+bun install @sockethub/client@alpha
+```
+
+**Required secrets:**
+- `NPM_TOKEN` - npm automation token with publish permissions
+
+### Branch Strategy
+
+- `alpha` - Alpha releases (unstable, breaking changes expected)
+- `master` - Stable releases (future, not yet used for v5)
+
+All development targeting alpha releases should be done on feature branches that PR into `alpha`.
+
 ## Code Style Preferences
 
 ### Testing
