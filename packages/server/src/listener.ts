@@ -4,6 +4,7 @@ import path from "node:path";
 import bodyParser from "body-parser";
 import debug from "debug";
 import express from "express";
+import rateLimit from "express-rate-limit";
 import { Server } from "socket.io";
 
 import config from "./config.js";
@@ -49,6 +50,14 @@ class Listener {
     }
 
     private addExamplesRoutes(app) {
+        // Set up rate limiter to prevent DoS attacks on file system access
+        const limiter = rateLimit({
+            windowMs: 1 * 60 * 1000, // 1 minute
+            max: 60, // max 60 requests per windowMs
+            standardHeaders: true,
+            legacyHeaders: false,
+        });
+
         writeFileSync(
             `${__dirname}/../res/examples/config.json`,
             JSON.stringify({
@@ -64,7 +73,7 @@ class Listener {
             "examples",
             "index.html",
         );
-        app.get("*", (req, res) => {
+        app.get("*", limiter, (req, res) => {
             res.sendFile(examplesIndex);
         });
         log(
