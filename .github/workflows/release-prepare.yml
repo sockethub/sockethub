@@ -56,28 +56,25 @@ jobs:
           PREID="${{ inputs.preid }}"
           
           if [ -n "$PREID" ]; then
-            CMD="lerna version $BUMP --preid $PREID --conventional-commits --no-push --no-git-tag-version --yes"
+            CMD="lerna version $BUMP --preid $PREID --no-push --no-git-tag-version --yes"
           else
-            CMD="lerna version $BUMP --conventional-commits --no-push --no-git-tag-version --yes"
+            CMD="lerna version $BUMP --no-push --no-git-tag-version --yes"
           fi
           
           echo "command=$CMD" >> $GITHUB_OUTPUT
 
-      - name: Run lerna version
+      - name: Bump versions
         run: ${{ steps.version_cmd.outputs.command }}
 
-      - name: Remove per-package changelogs
+      - name: Generate root changelog
         run: |
-          # Keep only root CHANGELOG.md, remove per-package changelogs
-          find packages -name "CHANGELOG.md" -type f -delete
-          echo "Removed per-package changelogs, keeping root CHANGELOG.md only"
-
-      - name: Fix package.json formatting
-        run: |
-          # Lerna modifies package.json with inconsistent formatting
-          # Run biome format to fix any formatting issues
-          bunx biome format --write "packages/*/package.json"
-          echo "Fixed package.json formatting"
+          # Install conventional-changelog-cli
+          bun add -D conventional-changelog-cli
+          
+          # Generate root CHANGELOG.md
+          bunx conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 0
+          
+          echo "Generated root CHANGELOG.md"
 
       - name: Extract new version
         id: extract_version
@@ -118,7 +115,7 @@ jobs:
 
           ### Changes Included
           - Version bumps across all changed packages
-          - Updated CHANGELOG.md files
+          - Updated CHANGELOG.md
           - Conventional commits since last release
 
           ### Review Checklist
