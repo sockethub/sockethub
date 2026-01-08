@@ -139,6 +139,7 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             );
 
             // Wait for messages to propagate to other clients
+            // Use longer timeout for multi-client tests due to XMPP routing delays
             await waitFor(
                 () =>
                     messageLog.filter(
@@ -147,7 +148,10 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                             log.message?.type === "send",
                     ).length >=
                     CLIENT_COUNT - 1,
-                config.timeouts.message,
+                config.timeouts.multiClientMessage,
+                50,
+                () =>
+                    `Received ${messageLog.filter((log) => log.message?.object?.content === testMessage).length}/${CLIENT_COUNT - 1} messages`,
             );
 
             // Verify message was received by other clients
@@ -183,19 +187,41 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             await Promise.all(sendPromises);
 
             // Wait for all messages to propagate
-            await waitFor(() => {
-                const receivedCount = testMessages.reduce((count, testMsg) => {
-                    const received = messageLog.filter(
-                        (log) =>
-                            log.message?.object?.content === testMsg &&
-                            log.message?.type === "send",
-                    ).length;
-                    return count + received;
-                }, 0);
-                return (
-                    receivedCount >= testMessages.length * (CLIENT_COUNT - 1)
-                );
-            }, config.timeouts.message);
+            // Use longer timeout for rapid multi-client message delivery
+            const expectedMessageCount =
+                testMessages.length * (CLIENT_COUNT - 1);
+            await waitFor(
+                () => {
+                    const receivedCount = testMessages.reduce(
+                        (count, testMsg) => {
+                            const received = messageLog.filter(
+                                (log) =>
+                                    log.message?.object?.content === testMsg &&
+                                    log.message?.type === "send",
+                            ).length;
+                            return count + received;
+                        },
+                        0,
+                    );
+                    return receivedCount >= expectedMessageCount;
+                },
+                config.timeouts.multiClientMessage,
+                50,
+                () => {
+                    const receivedCount = testMessages.reduce(
+                        (count, testMsg) => {
+                            const received = messageLog.filter(
+                                (log) =>
+                                    log.message?.object?.content === testMsg &&
+                                    log.message?.type === "send",
+                            ).length;
+                            return count + received;
+                        },
+                        0,
+                    );
+                    return `Received ${receivedCount}/${expectedMessageCount} messages`;
+                },
+            );
 
             // Verify all messages were received by all other clients
             for (const testMsg of testMessages) {

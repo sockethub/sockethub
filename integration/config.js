@@ -38,6 +38,9 @@ const config = {
         connect: 5000,
         cleanup: 3000,
         message: 2000,
+        // Longer timeout for multi-client message delivery tests
+        // Allows for XMPP server processing + network delays across multiple clients
+        multiClientMessage: 5000,
         process: 5000, // starting a process
     },
 };
