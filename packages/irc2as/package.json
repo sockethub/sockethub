@@ -1,6 +1,6 @@
 {
   "name": "@sockethub/irc2as",
-  "version": "4.0.0-alpha.4",
+  "version": "4.0.0-alpha.5",
   "description": "IRC to ActivityStreams objects",
   "type": "module",
   "main": "src/index.js",
@@ -12,7 +12,12 @@
     "url": "git+https://github.com/sockethub/sockethub.git",
     "directory": "packages/irc2as"
   },
-  "keywords": ["irc", "activitystreams", "activity-streams", "sockethub"],
+  "keywords": [
+    "irc",
+    "activitystreams",
+    "activity-streams",
+    "sockethub"
+  ],
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
   "bugs": {

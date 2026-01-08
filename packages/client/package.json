@@ -1,9 +1,11 @@
 {
   "name": "@sockethub/client",
-  "version": "5.0.0-alpha.4",
+  "version": "5.0.0-alpha.5",
   "description": "A JavaScript client for the Sockethub protocol gateway",
   "main": "./src/sockethub-client.ts",
-  "files": ["dist/"],
+  "files": [
+    "dist/"
+  ],
   "engines": {
     "bun": ">=1.2"
   },
@@ -35,9 +37,9 @@
     "eventemitter3": "5.0.1"
   },
   "devDependencies": {
-    "@types/bun": "latest",
     "@sockethub/activity-streams": "workspace:*",
     "@sockethub/schemas": "workspace:*",
+    "@types/bun": "latest",
     "@types/sinon": "17.0.2",
     "@web/test-runner": "^0.19.0",
     "@web/test-runner-puppeteer": "^0.17.0",
