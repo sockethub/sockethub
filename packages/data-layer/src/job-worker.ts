@@ -24,7 +24,6 @@ export class JobWorker extends JobBase {
     readonly uid: string;
     protected worker: Worker;
     protected handler: JobHandler;
-    protected redisConnection;
     private readonly debug: Debugger;
     private readonly redisConfig: RedisConfig;
     private readonly queueId: string;
@@ -56,9 +55,16 @@ export class JobWorker extends JobBase {
             throw new Error(`JobWorker already initialized for ${this.uid}`);
         }
         this.initialized = true;
-        this.redisConnection = createIORedisConnection(this.redisConfig);
-        this.worker = new Worker(this.queueId, this.jobHandler.bind(this), {
-            connection: this.redisConnection,
+        // BullMQ v5+ prohibits colons in queue names, so replace with dashes
+        // while keeping queueId with colons for debug namespace convention
+        const queueName = this.queueId.replace(/:/g, "-");
+        // Let BullMQ create its own connection for better lifecycle management
+        this.worker = new Worker(queueName, this.jobHandler.bind(this), {
+            connection: this.redisConfig,
+            // Prevent infinite retry loops when platform child process crashes mid-job.
+            // If worker disappears (crash/disconnect), job becomes "stalled" and retries
+            // up to maxStalledCount times (with default 30s interval) before failing permanently.
+            maxStalledCount: 3,
         });
         this.debug("initialized");
     }
@@ -81,8 +87,6 @@ export class JobWorker extends JobBase {
         this.removeAllListeners();
         this.worker.removeAllListeners();
         await this.worker.close();
-        await this.worker.disconnect();
-        await this.redisConnection.disconnect();
     }
 
     protected async jobHandler(encryptedJob: JobEncrypted) {

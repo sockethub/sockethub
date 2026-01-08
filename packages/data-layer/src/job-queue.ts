@@ -77,7 +77,6 @@ export class JobQueue extends JobBase {
     private readonly debug: Debugger;
     private counter = 0;
     private initialized = false;
-    protected redisConnection;
 
     /**
      * Creates a new JobQueue instance.
@@ -105,12 +104,15 @@ export class JobQueue extends JobBase {
         }
         this.initialized = true;
 
-        this.redisConnection = createIORedisConnection(redisConfig);
-        this.queue = new Queue(this.uid, {
-            connection: this.redisConnection,
+        // BullMQ v5+ prohibits colons in queue names, so replace with dashes
+        // while keeping uid with colons for debug namespace convention
+        const queueName = this.uid.replace(/:/g, "-");
+        // Let BullMQ create its own connections for better lifecycle management
+        this.queue = new Queue(queueName, {
+            connection: redisConfig,
         });
-        this.events = new QueueEvents(this.uid, {
-            connection: this.redisConnection,
+        this.events = new QueueEvents(queueName, {
+            connection: redisConfig,
         });
 
         this.events.on("completed", async ({ jobId, returnvalue }) => {
@@ -149,7 +151,13 @@ export class JobQueue extends JobBase {
             );
             throw new Error("queue closed");
         }
-        await this.queue.add(job.title, job);
+        await this.queue.add(job.title, job, {
+            // Auto-remove jobs after 5 minutes to prevent Redis memory buildup.
+            // Jobs only need to exist long enough for event handlers to look them up
+            // by jobId and send results to clients (typically < 1 second).
+            removeOnComplete: { age: 300 }, // 5 minutes in seconds
+            removeOnFail: { age: 300 },
+        });
         this.debug(`added ${job.title} ${msg.type} to queue`);
         return job;
     }
@@ -181,10 +189,7 @@ export class JobQueue extends JobBase {
         }
         await this.queue.obliterate({ force: true });
         await this.queue.close();
-        await this.queue.disconnect();
         await this.events.close();
-        await this.events.disconnect();
-        await this.redisConnection.disconnect();
     }
 
     private async getJob(jobId: string): Promise<JobDecrypted> {

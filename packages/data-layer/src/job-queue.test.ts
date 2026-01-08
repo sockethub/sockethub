@@ -195,6 +195,10 @@ describe("JobQueue", () => {
                 jobQueue.queue.add,
                 "a platform-an identifier",
                 resultJob,
+                {
+                    removeOnComplete: { age: 300 },
+                    removeOnFail: { age: 300 },
+                },
             );
             expect(res).to.eql(resultJob);
         });
