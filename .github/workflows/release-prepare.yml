@@ -72,6 +72,13 @@ jobs:
           find packages -name "CHANGELOG.md" -type f -delete
           echo "Removed per-package changelogs, keeping root CHANGELOG.md only"
 
+      - name: Fix package.json formatting
+        run: |
+          # Lerna modifies package.json with inconsistent formatting
+          # Run biome format to fix any formatting issues
+          bunx biome format --write "packages/*/package.json"
+          echo "Fixed package.json formatting"
+
       - name: Extract new version
         id: extract_version
         run: |
