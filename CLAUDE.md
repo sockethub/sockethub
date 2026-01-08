@@ -27,6 +27,13 @@ If tests or linting fail, the commit should not be created.
 - Use `const` over `let` where applicable
 - Platform implementations MUST implement `PlatformInterface` exactly
 
+### Commit Messages
+- Follow [Conventional Commits](https://www.conventionalcommits.org/)
+- Common types: `feat`, `fix`, `docs`, `test`, `chore`, `ci`
+- Format: `type(scope): description` or `type: description`
+- Breaking changes: `type(scope)!: description` + footer with `BREAKING CHANGE:`
+- See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for complete guide
+
 ### Debugging
 - Use `this.debug()` from platform session (don't create new debug instances)
 - Debug patterns: `DEBUG=sockethub:*` or `DEBUG=sockethub:platform:irc`

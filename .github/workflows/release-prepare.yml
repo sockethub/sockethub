@@ -84,8 +84,8 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "branch=release/v$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Verify changes pass linting
-        run: bun run lint
+      - name: Verify and fix formatting
+        run: bunx biome check --write
 
       - name: Create release branch
         run: |
