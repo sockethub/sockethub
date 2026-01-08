@@ -136,16 +136,20 @@ describe("JobQueue", () => {
         });
     });
 
-    it("add job and get job on queue", (done) => {
-        // queue.initResultEvents();
-        queue.on("completed", (jobData: JobDataDecrypted) => {
-            expect(jobData).toEqual({
-                title: "bar-0",
-                sessionId: "socket id",
-                msg: as,
+    it("add job and get job on queue", async () => {
+        // Set up promise that resolves when job completes
+        const completedPromise = new Promise<JobDataDecrypted>((resolve) => {
+            queue.on("completed", (jobData: JobDataDecrypted) => {
+                expect(jobData).toEqual({
+                    title: "bar-0",
+                    sessionId: "socket id",
+                    msg: as,
+                });
+                resolve(jobData);
             });
-            done();
         });
+
+        // Register job handler before adding job
         worker.onJob(
             async (
                 job: JobDataDecrypted,
@@ -158,11 +162,18 @@ describe("JobQueue", () => {
                 return undefined;
             },
         );
-        queue.add("socket id", as).then((job) => {
-            expect(job.msg.length).toEqual(193);
-            expect(job.title).toEqual("bar-0");
-            expect(job.sessionId).toEqual("socket id");
-        });
+
+        // Give worker time to establish Redis connection and start polling
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Add job and verify it was queued
+        const job = await queue.add("socket id", as);
+        expect(job.msg.length).toEqual(193);
+        expect(job.title).toEqual("bar-0");
+        expect(job.sessionId).toEqual("socket id");
+
+        // Wait for job to complete
+        await completedPromise;
     });
 
     it("handles job failures", (done) => {
@@ -238,14 +249,13 @@ describe("JobQueue", () => {
     });
 
     it("handles worker returning undefined", (done) => {
-        worker.onJob(async () => undefined);
-
         queue.on("completed", (jobData, result) => {
             // BullMQ converts undefined to null in the result
             expect(result).toBeNull();
             done();
         });
 
+        worker.onJob(async () => undefined);
         queue.add("socket id", as);
     });
 
