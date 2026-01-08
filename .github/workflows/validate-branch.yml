@@ -1,0 +1,61 @@
+name: Validate Branch Name
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate branch name
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          
+          # Allow release branches (created by automation)
+          if [[ "$BRANCH" =~ ^release/v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            echo "✅ Release branch: $BRANCH"
+            exit 0
+          fi
+          
+          # Define valid prefixes
+          VALID_PREFIXES=(
+            "feat/"
+            "fix/"
+            "docs/"
+            "style/"
+            "refactor/"
+            "perf/"
+            "test/"
+            "build/"
+            "ci/"
+            "chore/"
+            "revert/"
+            "infra/"
+          )
+          
+          # Check if branch starts with any valid prefix
+          VALID=false
+          for prefix in "${VALID_PREFIXES[@]}"; do
+            if [[ "$BRANCH" == "$prefix"* ]]; then
+              VALID=true
+              echo "✅ Valid branch name: $BRANCH (prefix: $prefix)"
+              break
+            fi
+          done
+          
+          if [ "$VALID" = false ]; then
+            echo "❌ Invalid branch name: $BRANCH"
+            echo ""
+            echo "Branch names must start with one of these prefixes:"
+            printf '  - %s\n' "${VALID_PREFIXES[@]}"
+            echo ""
+            echo "Examples:"
+            echo "  - feat/add-reconnection-logic"
+            echo "  - fix/handle-null-credentials"
+            echo "  - docs/update-contributing-guide"
+            echo "  - infra/automated-releases"
+            echo ""
+            echo "See docs/CONTRIBUTING.md for details"
+            exit 1
+          fi
