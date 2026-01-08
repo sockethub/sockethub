@@ -1,4 +1,4 @@
-name: Validate Branch Name
+name: Validate PR
 
 on:
   pull_request:
@@ -59,3 +59,39 @@ jobs:
             echo "See docs/CONTRIBUTING.md for details"
             exit 1
           fi
+
+      - name: Validate PR title
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          
+          # Allow release PR titles (created by automation)
+          if [[ "$TITLE" =~ ^chore\(release\):\ prepare\ v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            echo "✅ Release PR title: $TITLE"
+            exit 0
+          fi
+          
+          # Check conventional commit format: type(scope): description
+          # or: type: description
+          if [[ "$TITLE" =~ ^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|infra)(\(.+\))?:\ .+ ]]; then
+            echo "✅ Valid PR title: $TITLE"
+            exit 0
+          fi
+          
+          echo "❌ Invalid PR title: $TITLE"
+          echo ""
+          echo "PR titles must follow conventional commit format:"
+          echo "  type(scope): description"
+          echo "  or"
+          echo "  type: description"
+          echo ""
+          echo "Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, infra"
+          echo ""
+          echo "Examples:"
+          echo "  - feat(irc): add reconnection logic"
+          echo "  - fix: handle null credentials properly"
+          echo "  - docs: update contributing guide"
+          echo "  - infra: implement automated releases"
+          echo ""
+          echo "The PR title becomes the merge commit message and appears in the changelog."
+          echo "See docs/CONTRIBUTING.md for details"
+          exit 1
