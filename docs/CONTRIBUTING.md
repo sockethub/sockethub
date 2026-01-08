@@ -2,7 +2,8 @@
 
 ## Commit Message Format
 
-Sockethub follows the [Conventional Commits](https://www.conventionalcommits.org/) specification for all commit messages and branch names.
+Sockethub follows the [Conventional Commits](https://www.conventionalcommits.org/)
+specification for all commit messages and branch names.
 
 ### Commit Structure
 
@@ -22,7 +23,7 @@ Sockethub follows the [Conventional Commits](https://www.conventionalcommits.org
 | `fix` | Bug fix | Patch (0.0.x) | `fix(server): handle null credentials` |
 | `docs` | Documentation only | None | `docs: update installation guide` |
 | `style` | Code style/formatting (no logic change) | None | `style: fix indentation in server.ts` |
-| `refactor` | Code restructuring (no behavior change) | None | `refactor(platform-irc): simplify connection logic` |
+| `refactor` | Code restructuring (no behavior change) | None | `refactor(irc): simplify` |
 | `perf` | Performance improvement | Patch | `perf(job-queue): reduce Redis queries` |
 | `test` | Add or update tests | None | `test(client): add reconnection tests` |
 | `build` | Build system or dependencies | None | `build: upgrade to Bun 1.2` |
@@ -48,6 +49,7 @@ Breaking changes trigger a **major version bump** (x.0.0).
 Scopes indicate which part of the codebase is affected:
 
 **Package names:**
+
 - `client` - @sockethub/client package
 - `server` - @sockethub/server package
 - `data-layer` - @sockethub/data-layer package
@@ -57,6 +59,7 @@ Scopes indicate which part of the codebase is affected:
 - (any other package name)
 
 **Components:**
+
 - `job-queue` - BullMQ job queue system
 - `credentials` - Credential storage/encryption
 - `session` - Session management
@@ -64,10 +67,11 @@ Scopes indicate which part of the codebase is affected:
 - `config` - Configuration handling
 
 **No scope:**
+
 - Use when change affects multiple packages
 - Use for root-level changes (CI, docs, etc.)
 
-### Examples
+### Commit Message Examples
 
 ```bash
 # Feature with scope
@@ -105,7 +109,7 @@ Branch names should follow the same conventional format:
 <type>/<description>
 ```
 
-### Examples
+### Branch Naming Examples
 
 ```bash
 feat/add-matrix-platform
@@ -119,12 +123,16 @@ chore/update-dependencies
 
 ### Branch Name Validation
 
-All PRs must have branch names that start with a valid type prefix. The CI will reject PRs with invalid branch names.
+All PRs must have branch names that start with a valid type prefix. The CI will reject
+PRs with invalid branch names.
 
 **Valid prefixes:**
-- `feat/`, `fix/`, `docs/`, `style/`, `refactor/`, `perf/`, `test/`, `build/`, `ci/`, `chore/`, `revert/`, `infra/`
+
+- `feat/`, `fix/`, `docs/`, `style/`, `refactor/`, `perf/`, `test/`, `build/`, `ci/`,
+  `chore/`, `revert/`, `infra/`
 
 **Invalid examples:**
+
 - `my-feature` ❌
 - `update-docs` ❌
 - `bugfix/connection-issue` ❌ (use `fix/` not `bugfix/`)
@@ -138,9 +146,10 @@ PR titles should also follow conventional format:
 <type>(<scope>): <description>
 ```
 
-The PR title will be used for the squash commit message, so it should be clear and descriptive.
+The PR title will be used for the squash commit message, so it should be clear and
+descriptive.
 
-### Examples
+### Pull Request Title Examples
 
 ```
 feat(client): add automatic reconnection logic
@@ -256,11 +265,13 @@ EOF
 git config --global commit.template ~/.gitmessage
 ```
 
-### Changelog Impact
+### Commit Message Impact on Changelogs
 
-Only `feat` and `fix` types appear in user-facing changelogs. Other types may appear in detailed logs but won't trigger version bumps.
+Only `feat` and `fix` types appear in user-facing changelogs. Other types may appear in
+detailed logs but won't trigger version bumps.
 
 Choose `feat` vs `fix` based on user impact:
+
 - **feat**: User gets new capability
 - **fix**: User's existing workflow now works correctly
 
@@ -268,4 +279,4 @@ Choose `feat` vs `fix` based on user impact:
 
 - See [RELEASING.md](RELEASING.md) for release workflow
 - See [CLAUDE.md](../CLAUDE.md) for AI assistant guidelines
-- See https://www.conventionalcommits.org/ for full specification
+- See <https://www.conventionalcommits.org/> for full specification

@@ -7,11 +7,7 @@
       "conventionalCommits": true,
       "createRelease": "github",
       "message": "chore(release): prepare %s",
-      "ignoreChanges": [
-        "**/*.md",
-        "**/*.test.ts",
-        "**/test/**"
-      ]
+      "ignoreChanges": ["**/*.md", "**/*.test.ts", "**/test/**"]
     },
     "publish": {
       "registry": "https://registry.npmjs.org/"

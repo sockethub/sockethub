@@ -45,6 +45,7 @@ npm dist-tags are determined automatically from the version string:
 Go to **Actions** → **Prepare Release** → **Run workflow**
 
 Choose your bump type:
+
 - `prerelease` - Bump prerelease number (5.0.0-alpha.4 → 5.0.0-alpha.5)
 - `prepatch` - Bump patch and add prerelease (5.0.0 → 5.0.1-alpha.0)
 - `preminor` - Bump minor and add prerelease (5.0.0 → 5.1.0-alpha.0)
@@ -54,6 +55,7 @@ Choose your bump type:
 - `major` - Bump major version (5.0.0 → 6.0.0)
 
 Enter prerelease identifier if needed:
+
 - `alpha` for alpha releases
 - `beta` for beta releases
 - `rc` for release candidates
@@ -62,17 +64,20 @@ Enter prerelease identifier if needed:
 ### 2. Review the Release PR
 
 The workflow creates a PR with:
+
 - ✅ Version bumps in all changed packages
 - ✅ Updated CHANGELOG.md files (root + per-package)
 - ✅ Conventional commit summaries
 
 **Review checklist:**
+
 - [ ] Version numbers are correct
 - [ ] Changelog entries are accurate and complete
 - [ ] No unintended changes included
 - [ ] All CI checks pass
 
 You can manually edit the PR to:
+
 - Improve changelog wording
 - Add missing context
 - Fix version numbers (if needed)
@@ -82,6 +87,7 @@ You can manually edit the PR to:
 ### 3. Merge to Publish
 
 When you merge the PR:
+
 - 🔨 Lint, build, and tests run
 - 📦 All packages publish to npm with correct dist-tag
 - ✅ Packages are verified on npm registry
@@ -89,11 +95,12 @@ When you merge the PR:
 - 📝 GitHub Release is created
 
 If anything fails:
+
 - ❌ Git tag is NOT created
 - ❌ GitHub Release is NOT created
 - 🐛 Issue is created with rollback instructions
 
-## Examples
+## Release Examples
 
 ### Example 1: Next Alpha Release
 
@@ -153,6 +160,7 @@ chore(deps): update bullmq to v5
 ```
 
 **Types** (affects changelog grouping):
+
 - `feat`: New feature (shows in changelog)
 - `fix`: Bug fix (shows in changelog)
 - `docs`: Documentation only
@@ -162,6 +170,7 @@ chore(deps): update bullmq to v5
 - `perf`: Performance improvements
 
 **Scopes** (affects per-package changelogs):
+
 - Package name: `client`, `server`, `platform-irc`, etc.
 - Component: `job-queue`, `credentials`, `session`, etc.
 
@@ -170,6 +179,7 @@ chore(deps): update bullmq to v5
 ### Root Changelog (`/CHANGELOG.md`)
 
 High-level overview of changes across all packages:
+
 ```markdown
 ## v5.0.0-alpha.5 (2026-01-08)
 
@@ -184,6 +194,7 @@ High-level overview of changes across all packages:
 ### Per-Package Changelogs (`/packages/*/CHANGELOG.md`)
 
 Detailed changes for specific package:
+
 ```markdown
 ## @sockethub/client v5.0.0-alpha.5 (2026-01-08)
 
@@ -198,11 +209,13 @@ Detailed changes for specific package:
 ## Independent Versioning
 
 Sockethub uses Lerna's **independent** versioning mode:
+
 - Each package has its own version number
 - Only changed packages get version bumps
 - Unchanged packages keep their current version
 
 A single release might update:
+
 - `@sockethub/client`: `5.0.0-alpha.4` → `5.0.0-alpha.5`
 - `@sockethub/platform-irc`: `5.0.0-alpha.3` → `5.0.0-alpha.4`
 - `@sockethub/server`: `5.0.0-alpha.4` (unchanged)
@@ -214,7 +227,8 @@ A single release might update:
 **Error**: `NPM_TOKEN is invalid or expired`
 
 **Solution**:
-1. Generate new token at https://www.npmjs.com/settings/YOUR_USERNAME/tokens
+
+1. Generate new token at <https://www.npmjs.com/settings/YOUR_USERNAME/tokens>
 2. Update GitHub secret: Settings → Secrets → `NPM_TOKEN`
 3. Re-run the publish workflow or create a new release PR
 
@@ -225,11 +239,13 @@ A single release might update:
 **Error**: `Package not found on npm`
 
 **Causes**:
+
 - npm registry propagation delay (should auto-retry)
 - Publish partially failed
 - Network issues
 
 **Solution**:
+
 1. Check npm manually: `npm view @sockethub/client@X.Y.Z`
 2. If packages exist, git tag manually and create GitHub Release
 3. If packages missing, republish: `lerna publish from-package --dist-tag <tag>`
@@ -239,6 +255,7 @@ A single release might update:
 **Problem**: Published with wrong dist-tag (e.g., `alpha` instead of `beta`)
 
 **Solution**:
+
 ```bash
 # Add correct tag
 npm dist-tag add @sockethub/client@5.0.0-beta.1 beta
@@ -250,11 +267,13 @@ npm dist-tag rm @sockethub/client alpha
 ### Changelog Empty or Incorrect
 
 **Causes**:
+
 - Commits don't follow conventional format
 - No commits since last release
 - Wrong scope in commit messages
 
 **Solution**:
+
 1. Edit changelog manually in release PR before merging
 2. Future: Follow conventional commit format
 
@@ -263,6 +282,7 @@ npm dist-tag rm @sockethub/client alpha
 **Problem**: Tests fail in release PR
 
 **Solution**:
+
 1. Close the release PR (don't merge)
 2. Fix the failing tests on master
 3. Create a new release PR
@@ -276,7 +296,8 @@ npm dist-tag rm @sockethub/client alpha
 **Frequency**: Every 90 days (set reminder)
 
 **Steps**:
-1. Log in to https://www.npmjs.com/
+
+1. Log in to <https://www.npmjs.com/>
 2. Settings → Access Tokens → Generate New Token
 3. Type: "Automation" or "Publish"
 4. Copy token
@@ -299,6 +320,7 @@ npm dist-tag ls sockethub
 ### Clean Up Old Releases
 
 GitHub releases and git tags are permanent, but you can hide old prereleases:
+
 - Edit GitHub Release → Check "Set as a pre-release"
 - This hides it from the main releases page
 
@@ -309,6 +331,7 @@ GitHub releases and git tags are permanent, but you can hide old prereleases:
 **Trigger**: Manual workflow dispatch
 
 **Steps**:
+
 1. Checkout `master`
 2. Run `lerna version` with chosen bump type
 3. Create `release/vX.Y.Z` branch
@@ -322,6 +345,7 @@ GitHub releases and git tags are permanent, but you can hide old prereleases:
 **Trigger**: PR merge to `master` where branch matches `release/v*`
 
 **Steps**:
+
 1. Extract version from branch name
 2. Determine dist-tag from version pattern
 3. Run lint, build, tests
@@ -344,11 +368,13 @@ GitHub releases and git tags are permanent, but you can hide old prereleases:
 ### Token Scopes
 
 **NPM_TOKEN**:
+
 - Type: "Automation" or "Publish"
 - Permissions: Publish and manage packages
 - Expiration: 90 days (max)
 
 **GITHUB_TOKEN**:
+
 - Permissions: `contents: write`, `pull-requests: write`
 - Scoped to repository only
 - Expires after workflow run
@@ -362,7 +388,8 @@ A: Yes, just close the PR without merging. The release branch can be deleted.
 A: Yes, but be careful to update all package.json files consistently.
 
 **Q: What if I merge a release PR by accident?**
-A: The publish workflow will run. If you catch it quickly, you can manually fail the workflow in the Actions tab.
+A: The publish workflow will run. If you catch it quickly, you can manually fail the
+workflow in the Actions tab.
 
 **Q: How do I unpublish a bad release?**
 A: npm doesn't allow unpublishing after 24 hours. Instead, publish a new patch version with the fix.
