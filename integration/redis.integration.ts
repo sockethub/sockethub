@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { crypto } from "@sockethub/crypto";
 import {
     CredentialsStore,
     type JobDataDecrypted,
@@ -46,6 +47,35 @@ describe("CredentialsStore", () => {
 
     it("get", async () => {
         expect(await store.get(actor, credsHash)).toEqual(creds);
+    });
+
+    it("handles credential updates", async () => {
+        await store.save(actor, creds);
+
+        const updatedCreds = { ...creds, object: { type: "updated" } };
+        await store.save(actor, updatedCreds);
+
+        const newHash = crypto.objectHash(updatedCreds.object);
+        const retrieved = await store.get(actor, newHash);
+        expect(retrieved).toEqual(updatedCreds);
+    });
+
+    it("isolates credentials by session", async () => {
+        const store2 = new CredentialsStore(
+            "foo",
+            "different-session",
+            testSecret,
+            {
+                url: REDIS_URL,
+            },
+        );
+
+        await store.save(actor, creds);
+
+        // Different session shouldn't see these creds
+        await expect(store2.get(actor, credsHash)).rejects.toThrow();
+
+        await store2.store.disconnect();
     });
 
     it("shutdown", async () => {
@@ -133,6 +163,109 @@ describe("JobQueue", () => {
             expect(job.title).toEqual("bar-0");
             expect(job.sessionId).toEqual("socket id");
         });
+    });
+
+    it("handles job failures", (done) => {
+        queue.on("failed", (jobData: JobDataDecrypted, error: string) => {
+            expect(jobData.msg.type).toEqual("foo");
+            expect(error).toContain("simulated error");
+            done();
+        });
+
+        worker.onJob(async (job: JobDataDecrypted) => {
+            throw new Error("simulated error");
+        });
+
+        queue.add("socket id", as);
+    });
+
+    it("rejects jobs when queue is paused", async () => {
+        // Initialize worker first (even though we won't use it) to avoid shutdown errors
+        worker.onJob(async () => undefined);
+
+        await queue.pause();
+
+        await expect(queue.add("socket id", as)).rejects.toThrow(
+            "queue closed",
+        );
+    });
+
+    it("can resume paused queue", async () => {
+        await queue.pause();
+        await queue.resume();
+
+        worker.onJob(async () => undefined);
+
+        // Should work after resume
+        const job = await queue.add("socket id", as);
+        expect(job.title).toBeDefined();
+    });
+
+    it("processes multiple jobs in sequence", (done) => {
+        let completedCount = 0;
+        const jobCount = 5;
+
+        queue.on("completed", () => {
+            completedCount++;
+            if (completedCount === jobCount) {
+                done();
+            }
+        });
+
+        worker.onJob(async (job: JobDataDecrypted) => {
+            return undefined;
+        });
+
+        for (let i = 0; i < jobCount; i++) {
+            queue.add("socket id", { ...as, id: `job-${i}` });
+        }
+    });
+
+    it("handles worker returning ActivityStream", (done) => {
+        const returnAS: ActivityStream = {
+            type: "result",
+            context: "bar",
+            actor: { id: "bar", type: "person" },
+        };
+
+        queue.on("completed", (jobData, result) => {
+            expect(result).toEqual(returnAS);
+            done();
+        });
+
+        worker.onJob(async () => returnAS);
+        queue.add("socket id", as);
+    });
+
+    it("handles worker returning undefined", (done) => {
+        queue.on("completed", (jobData, result) => {
+            // BullMQ converts undefined to null in the result
+            expect(result).toBeNull();
+            done();
+        });
+
+        worker.onJob(async () => undefined);
+        queue.add("socket id", as);
+    });
+
+    it("encrypts and decrypts job data correctly", (done) => {
+        const complexAS: ActivityStream = {
+            type: "send",
+            context: "irc",
+            actor: { id: "user@example.com", type: "person" },
+            object: {
+                type: "message",
+                content: "Hello with special chars: émojis 🎉",
+            },
+        };
+
+        worker.onJob(async (job: JobDataDecrypted) => {
+            expect(job.msg).toEqual(complexAS);
+            done();
+            return undefined;
+        });
+
+        queue.add("socket id", complexAS);
     });
 
     afterEach(async () => {
