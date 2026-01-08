@@ -1,12 +1,22 @@
 {
   "name": "@sockethub/examples",
-  "version": "1.0.0-alpha.4",
+  "version": "1.0.0-alpha.5",
   "type": "module",
-  "files": ["build"],
+  "files": [
+    "build"
+  ],
   "engines": {
     "bun": ">=1.2.4"
   },
-  "keywords": ["sockethub", "example", "web app", "xmpp", "irc", "rss", "atom"],
+  "keywords": [
+    "sockethub",
+    "example",
+    "web app",
+    "xmpp",
+    "irc",
+    "rss",
+    "atom"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sockethub/sockethub.git",
