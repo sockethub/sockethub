@@ -66,7 +66,7 @@ Enter prerelease identifier if needed:
 The workflow creates a PR with:
 
 - ✅ Version bumps in all changed packages
-- ✅ Updated CHANGELOG.md files (root + per-package)
+- ✅ Updated root CHANGELOG.md (aggregated from all packages)
 - ✅ Conventional commit summaries
 
 **Review checklist:**
