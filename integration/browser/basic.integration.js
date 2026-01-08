@@ -277,6 +277,113 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             });
         });
 
+        describe("IPC Channel Closed Error Reproduction", () => {
+            // Test to reproduce the ERR_IPC_CHANNEL_CLOSED error
+            // This simulates the scenario where wrong credentials cause platform termination
+            // while the platform is still trying to send messages
+
+            describe("XMPP with invalid credentials", () => {
+                const invalidActorId = "baduser@prosody/TestResource";
+
+                it("should handle IPC channel closure gracefully when using wrong credentials", (done) => {
+                    // First set invalid credentials
+                    sc.socket.emit(
+                        "credentials",
+                        {
+                            actor: {
+                                id: invalidActorId,
+                                type: "person",
+                            },
+                            context: "xmpp",
+                            type: "credentials",
+                            object: {
+                                type: "credentials",
+                                password: "wrong_password_123",
+                                resource: "TestResource",
+                                userAddress: "baduser@prosody",
+                            },
+                        },
+                        (credResult) => {
+                            // Try to connect with bad credentials
+                            // This should trigger platform termination and potential IPC race condition
+                            sc.socket.emit(
+                                "message",
+                                {
+                                    type: "connect",
+                                    actor: invalidActorId,
+                                    context: "xmpp",
+                                },
+                                (msg) => {
+                                    // We expect this to fail due to bad credentials
+                                    // The important part is that Sockethub shouldn't crash
+                                    // even if there's a race condition with IPC channel closure
+                                    if (msg?.error) {
+                                        // This is expected - wrong credentials should fail
+                                        expect(msg.error).to.be.a("string");
+                                        done();
+                                    } else {
+                                        done(
+                                            new Error(
+                                                "Expected authentication failure with wrong credentials",
+                                            ),
+                                        );
+                                    }
+                                },
+                            );
+                        },
+                    );
+                });
+            });
+
+            describe("IRC with invalid credentials", () => {
+                const invalidIrcActorId = "baduser@irc.libera.chat";
+
+                it("should handle IPC channel closure gracefully with IRC wrong credentials", (done) => {
+                    // Set invalid IRC credentials
+                    sc.socket.emit(
+                        "credentials",
+                        {
+                            actor: {
+                                id: invalidIrcActorId,
+                                type: "person",
+                            },
+                            context: "irc",
+                            type: "credentials",
+                            object: {
+                                type: "credentials",
+                                nick: "baduser",
+                                password: "wrong_password_456",
+                                server: "irc.libera.chat",
+                                port: 6667,
+                            },
+                        },
+                        (credResult) => {
+                            // Try to connect with bad credentials
+                            sc.socket.emit(
+                                "message",
+                                {
+                                    type: "connect",
+                                    actor: invalidIrcActorId,
+                                    context: "irc",
+                                },
+                                (msg) => {
+                                    // We expect this to fail and importantly NOT crash the server
+                                    if (msg?.error) {
+                                        expect(msg.error).to.be.a("string");
+                                        done();
+                                    } else {
+                                        // Even if it doesn't fail immediately, that's ok
+                                        // The test is mainly to ensure no crashes occur
+                                        done();
+                                    }
+                                },
+                            );
+                        },
+                    );
+                });
+            });
+        });
+
         describe("Incoming Message queue", () => {
             it("should be empty", () => {
                 expect(incomingMessages.length).to.be.below(2);

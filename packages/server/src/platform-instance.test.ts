@@ -130,12 +130,12 @@ describe("PlatformInstance", () => {
                 expect(pi.sessions.has("my session id")).toEqual(true);
             });
 
-            it("is able to generate failure reports", () => {
+            it("is able to generate failure reports", async () => {
                 pi.registerSession("my session id");
                 expect(pi.sessions.has("my session id")).toEqual(true);
-                pi.reportError("my session id", "an error message");
                 pi.sendToClient = sandbox.stub();
                 pi.shutdown = sandbox.stub();
+                await pi.reportError("my session id", "an error message");
                 expect(pi.sessions.size).toEqual(0);
             });
         });
@@ -236,14 +236,48 @@ describe("PlatformInstance", () => {
                 pi.updateIdentifier = sandbox.fake();
             });
 
-            it("close events from platform thread are reported", () => {
+            it("close events from platform thread are reported", async () => {
+                // Mock process as connected and not flagged for termination
+                pi.process.connected = true;
+                pi.flaggedForTermination = false;
+
                 const close = pi.callbackFunction("close", "my session id");
-                close("error msg");
+                await close("error msg");
                 sandbox.assert.calledWith(
                     pi.reportError,
                     "my session id",
                     "Error: session thread closed unexpectedly: error msg",
                 );
+            });
+
+            it("close events skip error reporting when process disconnected", async () => {
+                // Mock process as disconnected
+                pi.process.connected = false;
+                pi.flaggedForTermination = false;
+                pi.shutdown = sandbox.stub();
+
+                const close = pi.callbackFunction("close", "my session id");
+                await close("error msg");
+
+                // Should NOT attempt to report error
+                sandbox.assert.notCalled(pi.reportError);
+                // Should call shutdown
+                sandbox.assert.called(pi.shutdown);
+            });
+
+            it("close events skip error reporting when flagged for termination", async () => {
+                // Mock process as flagged for termination
+                pi.process.connected = true;
+                pi.flaggedForTermination = true;
+                pi.shutdown = sandbox.stub();
+
+                const close = pi.callbackFunction("close", "my session id");
+                await close("error msg");
+
+                // Should NOT attempt to report error
+                sandbox.assert.notCalled(pi.reportError);
+                // Should call shutdown
+                sandbox.assert.called(pi.shutdown);
             });
 
             it("message events from platform thread are route based on command: error", () => {

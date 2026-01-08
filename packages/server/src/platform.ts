@@ -81,6 +81,21 @@ const platform: PlatformInterface = await (async () => {
 })();
 
 /**
+ * Safely send error message to parent process, handling IPC channel closure
+ */
+function safeProcessSend(message: [string, string]) {
+    if (process.send && process.connected) {
+        try {
+            process.send(message);
+        } catch (ipcErr) {
+            console.error(`Failed to report error via IPC: ${ipcErr.message}`);
+        }
+    } else {
+        console.error("Cannot report error: IPC channel not available");
+    }
+}
+
+/**
  * Type guard to check if a platform is persistent and has credentialsHash.
  */
 function isPersistentPlatform(
@@ -96,7 +111,7 @@ process.once("uncaughtException", (err: Error) => {
     console.log("EXCEPTION IN PLATFORM");
     sentry.reportError(err);
     console.log("error:\n", err.stack);
-    process.send(["error", err.toString()]);
+    safeProcessSend(["error", err.toString()]);
     process.exit(1);
 });
 
@@ -104,7 +119,7 @@ process.once("unhandledRejection", (err: Error) => {
     console.log("EXCEPTION IN PLATFORM");
     sentry.reportError(err);
     console.log("error:\n", err.stack);
-    process.send(["error", err.toString()]);
+    safeProcessSend(["error", err.toString()]);
     process.exit(1);
 });
 

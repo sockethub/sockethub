@@ -33,7 +33,7 @@ describe("SockethubClient", () => {
         asInstance = new EventEmitter();
         sandbox.spy(asInstance, "on");
         sandbox.spy(asInstance, "emit");
-        asInstance.Stream = sandbox.stub();
+        asInstance.Stream = sandbox.stub().returnsArg(0);
         asInstance.Object = {
             create: sandbox.stub(),
         };
@@ -254,6 +254,28 @@ describe("SockethubClient", () => {
                 done();
             });
             sc.socket.emit("credentials", { actor: "bar" }, callback);
+        });
+    });
+
+    describe("replay functionality", () => {
+        it("replays map values, not [key, val] pairs", (done) => {
+            // Directly populate the activity-object map to test replay
+            const testObj = { id: "test1", type: "like", content: "test" };
+            sc.events["activity-object"].set("test1", testObj);
+
+            // Reset socket spy and trigger replay
+            socket.emit.resetHistory();
+            socket.emit("connect");
+
+            setTimeout(() => {
+                const replayCalls = socket.emit.getCalls().filter(call => call.args[0] === "activity-object");
+
+                expect(replayCalls).to.have.length(1);
+                expect(replayCalls[0].args[1]).to.deep.equal(testObj);
+                expect(Array.isArray(replayCalls[0].args[1])).to.be.false;
+
+                done();
+            }, 0);
         });
     });
 

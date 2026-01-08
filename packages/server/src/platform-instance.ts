@@ -296,7 +296,16 @@ export default class PlatformInstance {
             actor: { id: this.actor, type: "unknown" },
             error: errorMessage,
         };
-        this.sendToClient(sessionId, errorObject);
+
+        // Only attempt to send to client if we have a valid session
+        try {
+            if (sessionId && this.sessions.has(sessionId)) {
+                await this.sendToClient(sessionId, errorObject);
+            }
+        } catch (err) {
+            this.debug(`Failed to send error to client: ${err.message}`);
+        }
+
         this.sessions.clear();
         await this.shutdown();
     }
@@ -320,11 +329,19 @@ export default class PlatformInstance {
     private callbackFunction(listener: string, sessionId: string) {
         const funcs = {
             close: async (e: object) => {
-                this.debug(`close even triggered ${this.id}: ${e}`);
-                await this.reportError(
-                    sessionId,
-                    `Error: session thread closed unexpectedly: ${e}`,
-                );
+                this.debug(`close event triggered ${this.id}: ${e}`);
+                // Check if process is still connected before attempting error reporting
+                if (this.process?.connected && !this.flaggedForTermination) {
+                    await this.reportError(
+                        sessionId,
+                        `Error: session thread closed unexpectedly: ${e}`,
+                    );
+                } else {
+                    this.debug(
+                        "Process already disconnected or flagged for termination, skipping error report",
+                    );
+                    await this.shutdown();
+                }
             },
             message: async ([first, second, third]: MessageFromPlatform) => {
                 if (first === "updateActor") {
@@ -334,7 +351,7 @@ export default class PlatformInstance {
                     await this.reportError(sessionId, second);
                 } else {
                     // treat like a message to clients
-                    this.sendToClient(sessionId, second);
+                    await this.sendToClient(sessionId, second);
                 }
             },
         };

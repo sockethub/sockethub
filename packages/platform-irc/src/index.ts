@@ -707,9 +707,13 @@ export default class IRC implements PersistentPlatformInterface {
         const done = this.jobQueue.shift();
         if (typeof done === "function") {
             done(err);
-        } else {
+        } else if (this.jobQueue.length === 0) {
             this.debug(
                 "WARNING: job completion event received with an empty job queue.",
+            );
+        } else {
+            this.debug(
+                `WARNING: job completion found non-function in queue (${typeof done}), ${this.jobQueue.length} items remain.`,
             );
         }
     }
