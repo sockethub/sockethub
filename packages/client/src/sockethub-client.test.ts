@@ -21,24 +21,25 @@ describe("SockethubClient bad initialization", () => {
 });
 
 describe("SockethubClient", () => {
-    let asinstance: any, socket: any, sc: any, sandbox: any;
+    let asInstance: any, socket: any, sc: any, sandbox: any;
 
     beforeEach(() => {
         sandbox = sandbox = createSandbox();
         socket = new EventEmitter();
+        socket.connected = false;
         socket.__instance = "socketio"; // used to uniquely identify the object we're passing in
         sandbox.spy(socket, "on");
         sandbox.spy(socket, "emit");
-        asinstance = new EventEmitter();
-        sandbox.spy(asinstance, "on");
-        sandbox.spy(asinstance, "emit");
-        asinstance.Stream = sandbox.stub();
-        asinstance.Object = {
+        asInstance = new EventEmitter();
+        sandbox.spy(asInstance, "on");
+        sandbox.spy(asInstance, "emit");
+        asInstance.Stream = sandbox.stub().returnsArg(0);
+        asInstance.Object = {
             create: sandbox.stub(),
         };
         class TestSockethubClient extends SockethubClient {
             initActivityStreams() {
-                this.ActivityStreams = asinstance as ASManager;
+                this.ActivityStreams = asInstance as ASManager;
             }
         }
         sc = new TestSockethubClient(socket);
@@ -52,22 +53,22 @@ describe("SockethubClient", () => {
     });
 
     it("contains the ActivityStreams property", () => {
-        expect(asinstance).to.be.eql(sc.ActivityStreams);
-        expect(typeof asinstance.Stream).to.equal("function");
+        expect(asInstance).to.be.eql(sc.ActivityStreams);
+        expect(typeof asInstance.Stream).to.equal("function");
         expect(typeof sc.ActivityStreams.Object.create).to.equal("function");
     });
 
     it("contains the socket property", () => {
         expect(sc.socket instanceof EventEmitter).to.be.true;
-        // the object we passed in should not be the publically available one
+        // the object we passed in should not be the publicly available one
         expect(sc.socket.__instance).to.not.equal("socketio");
         expect(sc.debug).to.be.true;
-        expect(sc.online).to.be.false;
+        expect(sc.socket.connected).to.be.false;
     });
 
     it("registers listeners for ActivityStream events", () => {
-        expect(asinstance.on.callCount).to.equal(1);
-        expect(asinstance.on.calledWithMatch("activity-object-create")).to.be
+        expect(asInstance.on.callCount).to.equal(1);
+        expect(asInstance.on.calledWithMatch("activity-object-create")).to.be
             .true;
     });
 
@@ -84,7 +85,7 @@ describe("SockethubClient", () => {
         it("activity-object", (done) => {
             socket.emit("activity-object", { foo: "bar" });
             setTimeout(() => {
-                sandbox.assert.calledWith(asinstance.Object.create, {
+                sandbox.assert.calledWith(asInstance.Object.create, {
                     foo: "bar",
                 });
                 done();
@@ -92,7 +93,7 @@ describe("SockethubClient", () => {
         });
 
         it("activity-object-create", (done) => {
-            asinstance.emit("activity-object-create", { foo: "bar" });
+            asInstance.emit("activity-object-create", { foo: "bar" });
             setTimeout(() => {
                 expect(socket.emit.callCount).to.equal(1);
                 expect(
@@ -105,9 +106,9 @@ describe("SockethubClient", () => {
         });
 
         it("connect", (done) => {
-            expect(sc.online).to.be.false;
+            expect(sc.socket.connected).to.be.false;
             sc.socket.on("connect", () => {
-                expect(sc.online).to.be.true;
+                expect(sc.socket.connected).to.be.true;
                 expect(sc.socket._emit.callCount).to.equal(1);
                 expect(sc.socket._emit.calledWithMatch("connect"));
                 done();
@@ -116,9 +117,9 @@ describe("SockethubClient", () => {
         });
 
         it("disconnect", (done) => {
-            sc.online = true;
+            sc.socket.connected = true;
             sc.socket.on("disconnect", () => {
-                expect(sc.online).to.be.false;
+                expect(sc.socket.connected).to.be.false;
                 expect(sc.socket._emit.callCount).to.equal(1);
                 expect(sc.socket._emit.calledWithMatch("disconnect"));
                 done();
@@ -147,15 +148,16 @@ describe("SockethubClient", () => {
 
     describe("event emitting", () => {
         it("message (no actor)", () => {
-            sc.online = true;
-            const callback = () => {};
+            sc._socket.connected = true;
+            const callback = () => {
+            };
             expect(() => {
                 sc.socket.emit("message", { foo: "bar" }, callback);
             }).to.throw("actor property not present");
         });
 
         it("message", (done) => {
-            sc.online = true;
+            sc.socket.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar", type: "bar" });
@@ -166,7 +168,7 @@ describe("SockethubClient", () => {
         });
 
         it("message (join)", (done) => {
-            sc.online = true;
+            sc.socket.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar", type: "join" });
@@ -177,7 +179,7 @@ describe("SockethubClient", () => {
         });
 
         it("message (leave)", (done) => {
-            sc.online = true;
+            sc.socket.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar", type: "leave" });
@@ -192,7 +194,7 @@ describe("SockethubClient", () => {
         });
 
         it("message (connect)", (done) => {
-            sc.online = true;
+            sc.socket.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar", type: "connect" });
@@ -207,7 +209,7 @@ describe("SockethubClient", () => {
         });
 
         it("message (disconnect)", (done) => {
-            sc.online = true;
+            sc.socket.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar", type: "disconnect" });
@@ -222,7 +224,7 @@ describe("SockethubClient", () => {
         });
 
         it("message (offline)", (done) => {
-            sc.online = false;
+            sc.socket.connected = false;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar" });
@@ -233,7 +235,7 @@ describe("SockethubClient", () => {
         });
 
         it("activity-object", (done) => {
-            sc.online = true;
+            sc.socket.connected = true;
             const callback = () => {};
             socket.once("activity-object", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar" });
@@ -244,7 +246,7 @@ describe("SockethubClient", () => {
         });
 
         it("credentials", (done) => {
-            sc.online = true;
+            sc.socket.connected = true;
             const callback = () => {};
             socket.once("credentials", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar" });
@@ -252,6 +254,72 @@ describe("SockethubClient", () => {
                 done();
             });
             sc.socket.emit("credentials", { actor: "bar" }, callback);
+        });
+    });
+
+    describe("replay functionality", () => {
+        it("replays map values, not [key, val] pairs", (done) => {
+            // Directly populate the activity-object map to test replay
+            const testObj = { id: "test1", type: "like", content: "test" };
+            sc.events["activity-object"].set("test1", testObj);
+
+            // Reset socket spy and trigger replay
+            socket.emit.resetHistory();
+            socket.emit("connect");
+
+            setTimeout(() => {
+                const replayCalls = socket.emit.getCalls().filter(call => call.args[0] === "activity-object");
+
+                expect(replayCalls).to.have.length(1);
+                expect(replayCalls[0].args[1]).to.deep.equal(testObj);
+                expect(Array.isArray(replayCalls[0].args[1])).to.be.false;
+
+                done();
+            }, 0);
+        });
+    });
+
+    describe("clearCredentials", () => {
+        it("clears stored credentials", () => {
+            // Store some credentials
+            sc.socket.emit("credentials", {
+                actor: { id: "user@example.com" },
+                object: { type: "credentials", username: "user", password: "pass" },
+            });
+
+            // Verify credentials are stored
+            expect(sc.events.credentials.size).to.equal(1);
+
+            // Clear credentials
+            sc.clearCredentials();
+
+            // Verify credentials are cleared
+            expect(sc.events.credentials.size).to.equal(0);
+        });
+
+        it("prevents credential replay after clearing", (done) => {
+            // Store credentials
+            sc.socket.emit("credentials", {
+                actor: { id: "user@example.com" },
+                object: { type: "credentials", username: "user", password: "pass" },
+            });
+
+            // Clear credentials
+            sc.clearCredentials();
+
+            // Trigger reconnect
+            let replayAttempts = 0;
+            socket.on("credentials", () => {
+                replayAttempts++;
+            });
+
+            socket.emit("connect");
+
+            setTimeout(() => {
+                // No credentials should have been replayed
+                expect(replayAttempts).to.equal(0);
+                done();
+            }, 10);
         });
     });
 });

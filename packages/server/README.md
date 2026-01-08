@@ -2,57 +2,28 @@
 
 ## About
 
-Sockethub is a translation layer for web applications to communicate with
-other protocols and services that are traditionally either inaccessible or
-impractical to use from in-browser JavaScript.
+The core Sockethub server package that handles client connections, manages platform
+instances, and orchestrates message routing between web clients and protocol platforms.
 
-Using [ActivityStream](http://activitystrea.ms/) (AS) objects to pass messages
-to and from the web app, Sockethub acts as a smart proxy server/agent, which
-can maintain state, and connect to sockets, endpoints and networks that would
-otherwise be restricted from an application running in the browser.
+This package can be used independently if you want to build a custom Sockethub
+deployment or integrate server functionality into your own application. For a complete
+setup with all platforms and dependencies, use the main `sockethub` package instead.
 
-Originally inspired as a sister project to
-[RemoteStorage](https://remotestorage.io), and assisting in the development of
-[unhosted](http://unhosted.org) and [noBackend](http://nobackend.org)
-applications, Sockethub's functionality can also fit into a more traditional
-development stack, removing the need for custom code to handle various protocol
-specifics at the application layer.
+## Architecture
 
-Example uses of Sockethub are:
+The server implements:
 
-* Writing and receiving messages (SMTP, IMAP, Facebook, Twitter, ...)
+- **Socket.IO Connection Management**: Handles web client connections and real-time communication
+- **Platform Instance Management**: Spawns and manages child processes for each protocol platform
+- **Job Queue Integration**: Uses Redis and BullMQ for reliable message queuing
+- **Middleware Pipeline**: Extensible request processing including validation and credential storage
+- **Session Management**: Per-connection credential isolation and state management
+- **Error Reporting**: Optional Sentry integration for production error monitoring and debugging
 
-* Instant messaging (XMPP, IRC, MSN, FB Messenger, Hangouts, ...)
+## Documentation
 
-* Discovery (WebFinger, RDF(a), ...)
-
-The architecture of Sockethub is extensible and supports easy implementation
-of additional 'platforms' to carry out tasks.
-
-## Docs
-
-See the [Sockethub wiki](https://github.com/sockethub/sockethub/wiki) for
-documentation.
-
-## Features
-
-We use ActivityStreams to map the various actions of a platform to a set of AS
-'@type's which identify the underlying action. For example, using the XMPP
-platform, a friend request/accept cycle would use the activity stream types
-'request-friend', 'remove-friend', 'make-friend'.
-
-Below is a list of platform contexts we're currently working on and their types,
-both the completed and not yet implemented ones. They are all implemented in
-Sockethub platforms (each in their own repository) and can be enabled/disabled
-in the `config.json`.
-
-## Platforms
-
-* [Feeds](../platform-feeds) *(RSS, Atom)*
-
-* [IRC](../platform-irc)
-
-* [XMPP](../platform-xmpp)
+For complete Sockethub documentation, see the [main repository README](../../README.md)
+and [Sockethub wiki](https://github.com/sockethub/sockethub/wiki).
 
 ## Install
 
@@ -64,34 +35,59 @@ in the `config.json`.
 
 ### Environment Variables
 
-* PORT
+- PORT
 
 Default: `10550`
 
-* HOST
+- HOST
 
 Default: `localhost`
 
-* DEBUG
+- DEBUG
 
 Specify the namespace to console log, e.g. `sockethub*` will print all sockethub
 related debug statements, whereas `*` will also print any other modules debug
 statements that use the `debug` module.
 
-* REDIS_PORT
+- REDIS_PORT
 
 Default: `6379`
 
-* REDIS_HOST
+- REDIS_HOST
 
 Default: `localhost`
 
 ***OR***
 
-* REDIS_URL
+- REDIS_URL
 
 Overrides `REDIS_HOST` and `REDIS_PORT`, can specify a full redis connect URL
 (eq. `redis://username:password@host:port`)
+
+#### Sentry Configuration
+
+Sentry error reporting can be configured via environment variable or config file:
+
+**Environment Variable:**
+
+- SENTRY_DSN - Set this to enable basic Sentry error reporting
+
+**Config File:**
+For more advanced Sentry configuration, add a `sentry` section to your
+`sockethub.config.json`:
+
+```json
+{
+  "sentry": {
+    "dsn": "https://your-dsn@sentry.io/project-id",
+    "environment": "production",
+    "traceSampleRate": 1.0
+  }
+}
+```
+
+When configured, the server automatically reports errors to Sentry for monitoring and
+debugging in production environments.
 
 ### Command-line params
 
