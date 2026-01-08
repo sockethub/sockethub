@@ -128,7 +128,9 @@ export class JobQueue extends JobBase {
         this.events.on("failed", async ({ jobId, failedReason }) => {
             const job = await this.getJob(jobId);
             if (!job) {
-                this.debug(`failed job ${jobId} (already removed): ${failedReason}`);
+                this.debug(
+                    `failed job ${jobId} (already removed): ${failedReason}`,
+                );
                 return;
             }
             this.debug(
