@@ -1,0 +1,129 @@
+name: Prepare Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - prerelease
+          - prepatch
+          - preminor
+          - premajor
+          - patch
+          - minor
+          - major
+      preid:
+        description: 'Prerelease identifier (alpha, beta, rc) - optional for stable releases'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Determine version command
+        id: version_cmd
+        run: |
+          BUMP="${{ inputs.bump }}"
+          PREID="${{ inputs.preid }}"
+          
+          if [ -n "$PREID" ]; then
+            CMD="lerna version $BUMP --preid $PREID --conventional-commits --no-push --no-git-tag-version --yes"
+          else
+            CMD="lerna version $BUMP --conventional-commits --no-push --no-git-tag-version --yes"
+          fi
+          
+          echo "command=$CMD" >> $GITHUB_OUTPUT
+
+      - name: Run lerna version
+        run: ${{ steps.version_cmd.outputs.command }}
+
+      - name: Remove per-package changelogs
+        run: |
+          # Keep only root CHANGELOG.md, remove per-package changelogs
+          find packages -name "CHANGELOG.md" -type f -delete
+          echo "Removed per-package changelogs, keeping root CHANGELOG.md only"
+
+      - name: Extract new version
+        id: extract_version
+        run: |
+          # Get version from the main sockethub package
+          VERSION=$(node -p "require('./packages/sockethub/package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "branch=release/v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create release branch
+        run: |
+          git checkout -b ${{ steps.extract_version.outputs.branch }}
+
+      - name: Commit version changes
+        run: |
+          git add .
+          git commit -m "chore(release): prepare v${{ steps.extract_version.outputs.version }}"
+
+      - name: Push release branch
+        run: |
+          git push origin ${{ steps.extract_version.outputs.branch }}
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base master \
+            --head ${{ steps.extract_version.outputs.branch }} \
+            --title "Release v${{ steps.extract_version.outputs.version }}" \
+            --body "## Release v${{ steps.extract_version.outputs.version }}
+
+          This PR prepares the release for version **${{ steps.extract_version.outputs.version }}**.
+
+          ### Bump Type
+          - Type: \`${{ inputs.bump }}\`
+          - Prerelease ID: \`${{ inputs.preid || 'none (stable release)' }}\`
+
+          ### Changes Included
+          - Version bumps across all changed packages
+          - Updated CHANGELOG.md files
+          - Conventional commits since last release
+
+          ### Review Checklist
+          - [ ] Version numbers are correct
+          - [ ] Changelog entries are accurate
+          - [ ] All tests pass
+          - [ ] No unintended changes included
+
+          ### What Happens on Merge
+          - Packages will be published to npm with appropriate dist-tag
+          - GitHub release will be created
+          - Git tag will be added
+
+          ---
+          **⚠️ Do not include code changes in this PR - only version/changelog updates**"

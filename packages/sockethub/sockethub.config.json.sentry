@@ -1,0 +1,7 @@
+{
+  "$schema": "https://sockethub.org/schemas/3.0.0-alpha.4/sockethub-config.json",
+  "sentry": {
+    "dsn": "https://ffc702eb2f3b24d9e06ca20e1ef1fd09@o4508859714895872.ingest.de.sentry.io/4508859718369360",
+    "environment": "production"
+  }
+}

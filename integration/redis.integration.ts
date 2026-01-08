@@ -238,13 +238,14 @@ describe("JobQueue", () => {
     });
 
     it("handles worker returning undefined", (done) => {
+        worker.onJob(async () => undefined);
+
         queue.on("completed", (jobData, result) => {
             // BullMQ converts undefined to null in the result
             expect(result).toBeNull();
             done();
         });
 
-        worker.onJob(async () => undefined);
         queue.add("socket id", as);
     });
 
@@ -269,6 +270,7 @@ describe("JobQueue", () => {
     });
 
     afterEach(async () => {
+        queue.removeAllListeners();
         await queue.shutdown();
         await worker.shutdown();
     });
