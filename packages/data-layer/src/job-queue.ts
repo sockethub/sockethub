@@ -151,7 +151,13 @@ export class JobQueue extends JobBase {
             );
             throw new Error("queue closed");
         }
-        await this.queue.add(job.title, job);
+        await this.queue.add(job.title, job, {
+            // Auto-remove jobs after 5 minutes to prevent Redis memory buildup.
+            // Jobs only need to exist long enough for event handlers to look them up
+            // by jobId and send results to clients (typically < 1 second).
+            removeOnComplete: { age: 300 }, // 5 minutes in seconds
+            removeOnFail: { age: 300 },
+        });
         this.debug(`added ${job.title} ${msg.type} to queue`);
         return job;
     }
