@@ -61,6 +61,10 @@ export class JobWorker extends JobBase {
         // Let BullMQ create its own connection for better lifecycle management
         this.worker = new Worker(queueName, this.jobHandler.bind(this), {
             connection: this.redisConfig,
+            // Prevent infinite retry loops when platform child process crashes mid-job.
+            // If worker disappears (crash/disconnect), job becomes "stalled" and retries
+            // up to maxStalledCount times (with default 30s interval) before failing permanently.
+            maxStalledCount: 3,
         });
         this.debug("initialized");
     }

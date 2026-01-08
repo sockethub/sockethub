@@ -37,21 +37,30 @@ export function validateGlobals() {
 export function waitFor(
     condition,
     timeout = config.timeouts.message,
-    interval = 100,
+    interval = 50, // Reduced from 100ms to 50ms for faster condition detection
+    debugInfo = null,
 ) {
     return new Promise((resolve, reject) => {
         const startTime = Date.now();
         const check = () => {
-            if (condition()) {
-                resolve();
-            } else if (Date.now() - startTime > timeout) {
-                reject(
-                    new Error(
-                        `Timeout waiting for condition after ${timeout}ms`,
-                    ),
-                );
-            } else {
-                setTimeout(check, interval);
+            try {
+                if (condition()) {
+                    resolve();
+                } else if (Date.now() - startTime > timeout) {
+                    const elapsed = Date.now() - startTime;
+                    const debugMsg = debugInfo
+                        ? ` Debug: ${typeof debugInfo === "function" ? debugInfo() : debugInfo}`
+                        : "";
+                    reject(
+                        new Error(
+                            `Timeout waiting for condition after ${elapsed}ms (limit: ${timeout}ms).${debugMsg}`,
+                        ),
+                    );
+                } else {
+                    setTimeout(check, interval);
+                }
+            } catch (error) {
+                reject(new Error(`Error checking condition: ${error.message}`));
             }
         };
         check();
