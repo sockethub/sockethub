@@ -66,6 +66,12 @@ jobs:
       - name: Run lerna version
         run: ${{ steps.version_cmd.outputs.command }}
 
+      - name: Remove per-package changelogs
+        run: |
+          # Keep only root CHANGELOG.md, remove per-package changelogs
+          find packages -name "CHANGELOG.md" -type f -delete
+          echo "Removed per-package changelogs, keeping root CHANGELOG.md only"
+
       - name: Extract new version
         id: extract_version
         run: |
