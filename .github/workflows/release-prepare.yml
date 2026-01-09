@@ -77,6 +77,23 @@ jobs:
       - name: Verify and fix formatting
         run: bunx biome check --write
 
+      - name: Check for existing release branch
+        run: |
+          BRANCH="${{ steps.extract_version.outputs.branch }}"
+
+          # Check if branch exists on remote (from previous cancelled/closed PR)
+          if git ls-remote --heads origin "$BRANCH" | grep -q "$BRANCH"; then
+            echo "::error::Release branch $BRANCH already exists on remote"
+            echo ""
+            echo "This usually means a previous release PR was closed without being merged."
+            echo "To proceed, you need to manually delete the old branch:"
+            echo ""
+            echo "  git push origin --delete $BRANCH"
+            echo ""
+            echo "Then re-run this workflow."
+            exit 1
+          fi
+
       - name: Create release branch
         run: |
           git checkout -b ${{ steps.extract_version.outputs.branch }}
