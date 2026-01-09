@@ -162,54 +162,78 @@ If anything fails:
 
 ## Conventional Commits and PR Titles
 
+## PR Titles and Release Notes
+
 Release notes are generated from **Pull Request titles and labels**, not individual commits.
 
-### PR Title Format
+### PR Title Format (Required)
 
-All PRs must follow conventional commit format in their title:
+All PRs **must** follow this format in their title:
 
 ```
 type(scope): description
 
-feat(client): add automatic reconnection
-fix(server): handle platform crash during job
-docs: update installation instructions
+Examples:
+feat(platform-irc): add oauth support
+fix(data-layer): handle redis connection timeout
+docs(platform-xmpp): update authentication guide
+perf(client): optimize reconnection logic
 ci: improve release workflow
 ```
+
+**Pattern**: `type(scope): description`
+
+- `type`: Required - The type of change (feat, fix, docs, etc.)
+- `scope`: Optional - The package/area affected (platform-irc, data-layer, etc.)
+- `!`: Optional - Add after type/scope for breaking changes (e.g., `feat!:` or `feat(platform-irc)!:`)
+
+**The PR title format is enforced by CI** - you cannot merge a PR with an invalid title.
 
 ### Automatic Labeling
 
 When you create or update a PR, the `auto-label-pr` workflow automatically:
 
-1. Reads the PR title
-2. Extracts the conventional commit prefix (e.g., `feat:`, `fix:`)
-3. Applies appropriate labels (e.g., `feat`, `enhancement`)
-4. These labels determine which section the PR appears in the release notes
+1. Reads the PR title and parses the format
+2. Applies `type:*` label based on the type (e.g., `type:feat`, `type:fix`)
+3. If a scope is present, validates and applies `scope:*` label (e.g., `scope:platform-irc`)
+4. If `!` is present, applies `breaking-change` label
+5. These labels determine which section the PR appears in the release notes
 
-### Commit Messages vs PR Titles
+**Examples**:
 
-- **Individual commits**: Can be messy, don't affect release notes
-- **PR title**: Must be clean, follows conventional format, appears in release notes
-- **Squash merging**: PR title becomes the commit message on master
+- `feat(platform-irc): add oauth` → Labels: `type:feat`, `scope:platform-irc`
+- `fix: general bugfix` → Label: `type:fix`
+- `feat(data-layer)!: breaking api` → Labels: `type:feat`, `scope:data-layer`, `breaking-change`
 
-**Best practice**: Use conventional format for PR titles. Individual commits can be informal.
+**Important**: Scopes must match existing `scope:*` labels. If you use an invalid scope
+(e.g., `feat(typo): ...`), the CI check will fail.
+
+### Merge Strategy
+
+PRs are **squash merged** - the PR title becomes the commit message on the main branch.
+Individual commit messages within the PR can be informal and don't need to follow any format.
 
 **Types** (affects release notes grouping):
 
-- `feat`: New feature (🚀 Features section)
-- `fix`: Bug fix (🐛 Bug Fixes section)
-- `docs`: Documentation (📚 Documentation section)
-- `test`: Tests (🧪 Tests section)
-- `perf`: Performance (⚡ Performance section)
-- `refactor`: Refactoring (🔧 Refactoring section)
-- `ci`: CI/CD (🔨 Build & CI section)
-- `build`: Build system (🔨 Build & CI section)
-- `chore`: Maintenance (🧹 Maintenance section)
+- `feat`: New feature → `type:feat` label (🚀 Features section)
+- `fix`: Bug fix → `type:fix` label (🐛 Bug Fixes section)
+- `docs`: Documentation → `type:docs` label (📚 Documentation section)
+- `test`: Tests → `type:test` label (🧪 Tests section)
+- `perf`: Performance → `type:perf` label (⚡ Performance section)
+- `refactor`: Refactoring → `type:refactor` label (🔧 Refactoring section)
+- `ci`: CI/CD → `type:ci` label (🔨 Build & CI section)
+- `build`: Build system → `type:build` label (🔨 Build & CI section)
+- `chore`: Maintenance → `type:chore` label (🧹 Maintenance section)
+
+**Valid scopes** (applies `scope:*` label):
+
+- `platform-irc`, `platform-xmpp`, `platform-feeds` - Platform packages
+- `data-layer`, `client`, `activity-streams`, `irc2as`, `examples` - Core packages
 
 **Special markers**:
 
-- `!` after type = Breaking change (e.g., `feat!:` or `fix!:`)
-- `BREAKING CHANGE:` in PR body = Breaking change section (💥 Breaking Changes)
+- `!` after type/scope = Breaking change (e.g., `feat!:` or `feat(platform-irc)!:`)
+- Applies `breaking-change` label → appears in (💥 Breaking Changes) section
 
 ## Release Notes Strategy
 
@@ -232,10 +256,10 @@ Release notes show **incremental changes** since the last release:
 ## v5.0.0-alpha.5 (2026-01-08) [Prerelease]
 
 ### 🚀 Features
-- **client**: Add automatic reconnection (#123) @username
+- **platform-irc**: Add automatic reconnection (#123) @username
 
 ### 🐛 Bug Fixes
-- **server**: Handle platform crash during job (#789) @username
+- **data-layer**: Handle redis connection timeout (#789) @username
 
 ### 🔨 Build & CI
 - Improve release workflow (#954) @username
