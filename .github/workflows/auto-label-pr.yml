@@ -1,0 +1,74 @@
+name: Auto Label PR
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    
+    steps:
+      - name: Auto-label based on PR title
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title.toLowerCase();
+            const labels = [];
+            
+            // Map conventional commit types to labels
+            if (title.startsWith('feat:') || title.startsWith('feat(')) {
+              labels.push('feat', 'enhancement');
+            } else if (title.startsWith('fix:') || title.startsWith('fix(')) {
+              labels.push('fix', 'bug');
+            } else if (title.startsWith('docs:') || title.startsWith('docs(')) {
+              labels.push('docs', 'documentation');
+            } else if (title.startsWith('test:') || title.startsWith('test(')) {
+              labels.push('test', 'tests');
+            } else if (title.startsWith('perf:') || title.startsWith('perf(')) {
+              labels.push('perf', 'performance');
+            } else if (title.startsWith('refactor:') || title.startsWith('refactor(')) {
+              labels.push('refactor', 'refactoring');
+            } else if (title.startsWith('ci:') || title.startsWith('ci(')) {
+              labels.push('ci');
+            } else if (title.startsWith('build:') || title.startsWith('build(')) {
+              labels.push('build');
+            } else if (title.startsWith('chore:') || title.startsWith('chore(')) {
+              labels.push('chore');
+            }
+            
+            // Check for breaking changes
+            if (title.includes('!:') || title.includes('breaking')) {
+              labels.push('breaking-change');
+            }
+            
+            // Check for dependency updates
+            if (title.includes('deps') || title.includes('dependencies') || title.includes('bump')) {
+              labels.push('dependencies');
+            }
+            
+            if (labels.length > 0) {
+              // Get existing labels
+              const existingLabels = context.payload.pull_request.labels.map(l => l.name);
+              
+              // Only add labels that don't already exist
+              const newLabels = labels.filter(l => !existingLabels.includes(l));
+              
+              if (newLabels.length > 0) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.payload.pull_request.number,
+                  labels: newLabels
+                });
+                
+                core.info(`Added labels: ${newLabels.join(', ')}`);
+              } else {
+                core.info('All appropriate labels already exist');
+              }
+            } else {
+              core.warning('No conventional commit prefix found in PR title');
+            }

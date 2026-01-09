@@ -66,13 +66,6 @@ jobs:
       - name: Bump versions
         run: ${{ steps.version_cmd.outputs.command }}
 
-      - name: Generate root changelog
-        run: |
-          # Generate root CHANGELOG.md using bunx (no install needed)
-          bunx conventional-changelog-cli -p conventionalcommits -i CHANGELOG.md -s -r 0
-          
-          echo "Generated root CHANGELOG.md"
-
       - name: Extract new version
         id: extract_version
         run: |
@@ -97,6 +90,77 @@ jobs:
         run: |
           git push origin ${{ steps.extract_version.outputs.branch }}
 
+      - name: Determine release type and last stable tag
+        id: release_type
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
+          
+          if [[ "$VERSION" =~ - ]]; then
+            # Any prerelease (alpha, beta, rc)
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "Release type: prerelease"
+          else
+            # Stable release
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            
+            # Find last stable tag for rollup (tags like v5.0.0, not v5.0.0-alpha.1)
+            LAST_STABLE=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | grep -v -- '-' | head -1)
+            echo "last_stable=$LAST_STABLE" >> $GITHUB_OUTPUT
+            echo "Release type: stable (rollup from $LAST_STABLE)"
+          fi
+
+      - name: Clean up existing draft release if present
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
+          
+          # Check if a draft release already exists (from previous cancelled/closed PR)
+          if gh release view "v$VERSION" --json isDraft --jq '.isDraft' 2>/dev/null | grep -q true; then
+            echo "⚠️ Found existing draft release for v$VERSION (likely from previous attempt)"
+            echo "Deleting old draft to create fresh release notes..."
+            gh release delete "v$VERSION" --yes --cleanup-tag
+          else
+            echo "No existing draft release found, proceeding with creation"
+          fi
+
+      - name: Create draft GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
+          
+          if [[ "${{ steps.release_type.outputs.is_prerelease }}" == "true" ]]; then
+            # Prerelease: incremental notes since last tag
+            echo "Creating draft prerelease with auto-generated notes"
+            gh release create "v$VERSION" \
+              --draft \
+              --prerelease \
+              --generate-notes \
+              --title "v$VERSION" \
+              --notes "**⚠️ DRAFT RELEASE - Review and edit before merging the release PR**"
+          else
+            # Stable: rollup from last stable (or incremental if no last stable found)
+            LAST_STABLE="${{ steps.release_type.outputs.last_stable }}"
+            
+            if [ -n "$LAST_STABLE" ]; then
+              echo "Creating draft stable release with rollup from $LAST_STABLE"
+              gh release create "v$VERSION" \
+                --draft \
+                --generate-notes \
+                --notes-start-tag "$LAST_STABLE" \
+                --title "v$VERSION" \
+                --notes "**⚠️ DRAFT RELEASE - Review and edit before merging the release PR**"
+            else
+              echo "Creating draft stable release with auto-generated notes (no previous stable tag found)"
+              gh release create "v$VERSION" \
+                --draft \
+                --generate-notes \
+                --title "v$VERSION" \
+                --notes "**⚠️ DRAFT RELEASE - Review and edit before merging the release PR**"
+            fi
+          fi
+
       - name: Create Pull Request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -115,19 +179,18 @@ jobs:
 
           ### Changes Included
           - Version bumps across all changed packages
-          - Updated CHANGELOG.md
-          - Conventional commits since last release
 
           ### Review Checklist
           - [ ] Version numbers are correct
-          - [ ] Changelog entries are accurate
           - [ ] All tests pass
           - [ ] No unintended changes included
+          - [ ] **Review and edit draft GitHub release notes**: https://github.com/sockethub/sockethub/releases/tag/v${{ steps.extract_version.outputs.version }}
 
           ### What Happens on Merge
           - Packages will be published to npm with appropriate dist-tag
-          - GitHub release will be created
+          - Draft GitHub release will be published (must exist or merge will fail)
           - Git tag will be added
 
           ---
-          **⚠️ Do not include code changes in this PR - only version/changelog updates**"
+          **⚠️ Do not include code changes in this PR - only version updates**
+          **⚠️ Do not merge until you've reviewed and polished the draft release notes**"
