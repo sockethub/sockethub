@@ -68,11 +68,8 @@ jobs:
 
       - name: Generate root changelog
         run: |
-          # Install conventional-changelog-cli
-          bun add -D conventional-changelog-cli
-          
-          # Generate root CHANGELOG.md
-          bunx conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 0
+          # Generate root CHANGELOG.md using bunx (no install needed)
+          bunx conventional-changelog-cli -p conventionalcommits -i CHANGELOG.md -s -r 0
           
           echo "Generated root CHANGELOG.md"
 
