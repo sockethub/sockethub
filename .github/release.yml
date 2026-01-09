@@ -1,0 +1,69 @@
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+      - duplicate
+      - question
+      - invalid
+      - wontfix
+    authors:
+      - dependabot
+      - github-actions
+
+  categories:
+    - title: 🚀 Features
+      labels:
+        - feat
+        - feature
+        - enhancement
+    
+    - title: 🐛 Bug Fixes
+      labels:
+        - fix
+        - bug
+        - bugfix
+    
+    - title: 📚 Documentation
+      labels:
+        - docs
+        - documentation
+    
+    - title: 🧪 Tests
+      labels:
+        - test
+        - tests
+    
+    - title: ⚡ Performance
+      labels:
+        - perf
+        - performance
+    
+    - title: 🔧 Refactoring
+      labels:
+        - refactor
+        - refactoring
+    
+    - title: 🔨 Build & CI
+      labels:
+        - ci
+        - build
+        - infra
+    
+    - title: 🧹 Maintenance
+      labels:
+        - chore
+        - dependencies
+        - deps
+    
+    - title: 🔒 Security
+      labels:
+        - security
+    
+    - title: 💥 Breaking Changes
+      labels:
+        - breaking
+        - breaking-change
+    
+    - title: 🎨 Other Changes
+      labels:
+        - "*"
