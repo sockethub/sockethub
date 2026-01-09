@@ -5,7 +5,7 @@
   "command": {
     "version": {
       "conventionalCommits": true,
-      "createRelease": "github",
+      "changelog": false,
       "message": "chore(release): prepare %s",
       "ignoreChanges": ["**/*.md", "**/*.test.ts", "**/test/**"]
     },
