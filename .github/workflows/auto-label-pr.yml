@@ -16,38 +16,46 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const title = context.payload.pull_request.title.toLowerCase();
+            const title = context.payload.pull_request.title;
             const labels = [];
             
-            // Map conventional commit types to labels
-            if (title.startsWith('feat:') || title.startsWith('feat(')) {
-              labels.push('feat', 'enhancement');
-            } else if (title.startsWith('fix:') || title.startsWith('fix(')) {
-              labels.push('fix', 'bug');
-            } else if (title.startsWith('docs:') || title.startsWith('docs(')) {
-              labels.push('docs', 'documentation');
-            } else if (title.startsWith('test:') || title.startsWith('test(')) {
-              labels.push('test', 'tests');
-            } else if (title.startsWith('perf:') || title.startsWith('perf(')) {
-              labels.push('perf', 'performance');
-            } else if (title.startsWith('refactor:') || title.startsWith('refactor(')) {
-              labels.push('refactor', 'refactoring');
-            } else if (title.startsWith('ci:') || title.startsWith('ci(')) {
-              labels.push('ci');
-            } else if (title.startsWith('build:') || title.startsWith('build(')) {
-              labels.push('build');
-            } else if (title.startsWith('chore:') || title.startsWith('chore(')) {
-              labels.push('chore');
-            }
+            // Match conventional commit pattern: type(scope)!?: description
+            const match = title.match(/^(\w+)(?:\(([^)]+)\))?(!)?:\s*/);
             
-            // Check for breaking changes
-            if (title.includes('!:') || title.includes('breaking')) {
-              labels.push('breaking-change');
-            }
-            
-            // Check for dependency updates
-            if (title.includes('deps') || title.includes('dependencies') || title.includes('bump')) {
-              labels.push('dependencies');
+            if (match) {
+              const [, type, scope, breaking] = match;
+              
+              // Add type label with type: prefix
+              const typeLabel = `type:${type.toLowerCase()}`;
+              labels.push(typeLabel);
+              
+              // If scope is present, validate it exists with scope: prefix
+              if (scope) {
+                const scopeLabel = `scope:${scope.toLowerCase()}`;
+                
+                // Check if scope label exists in repository
+                try {
+                  await github.rest.issues.getLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: scopeLabel
+                  });
+                  
+                  // Label exists, add it
+                  labels.push(scopeLabel);
+                } catch (error) {
+                  if (error.status === 404) {
+                    core.setFailed(`❌ Invalid scope in PR title: "${scopeLabel}" is not an existing label. Please use an existing scope label (e.g., platform-irc, data-layer) or update the PR title.`);
+                    return;
+                  }
+                  throw error;
+                }
+              }
+              
+              // Special case: any type with ! adds breaking-change
+              if (breaking === '!') {
+                labels.push('breaking-change');
+              }
             }
             
             if (labels.length > 0) {
