@@ -24,7 +24,7 @@ specification for all commit messages and branch names.
 | `docs` | Documentation only | None | `docs: update installation guide` |
 | `style` | Code style/formatting (no logic change) | None | `style: fix indentation in server.ts` |
 | `refactor` | Code restructuring (no behavior change) | None | `refactor(irc): simplify` |
-| `perf` | Performance improvement | Patch | `perf(job-queue): reduce Redis queries` |
+| `perf` | Performance improvement | Patch | `perf(data-layer): reduce Redis queries` |
 | `test` | Add or update tests | None | `test(client): add reconnection tests` |
 | `build` | Build system or dependencies | None | `build: upgrade to Bun 1.2` |
 | `ci` | CI/CD, automation, infrastructure | None | `ci: add automated release workflow` |
