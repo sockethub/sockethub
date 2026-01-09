@@ -182,6 +182,7 @@ ci: improve release workflow
 ```
 
 **Pattern**: `type(scope): description`
+
 - `type`: Required - The type of change (feat, fix, docs, etc.)
 - `scope`: Optional - The package/area affected (platform-irc, data-layer, etc.)
 - `!`: Optional - Add after type/scope for breaking changes (e.g., `feat!:` or `feat(platform-irc)!:`)
@@ -199,15 +200,18 @@ When you create or update a PR, the `auto-label-pr` workflow automatically:
 5. These labels determine which section the PR appears in the release notes
 
 **Examples**:
+
 - `feat(platform-irc): add oauth` → Labels: `type:feat`, `scope:platform-irc`
 - `fix: general bugfix` → Label: `type:fix`
 - `feat(data-layer)!: breaking api` → Labels: `type:feat`, `scope:data-layer`, `breaking-change`
 
-**Important**: Scopes must match existing `scope:*` labels. If you use an invalid scope (e.g., `feat(typo): ...`), the CI check will fail.
+**Important**: Scopes must match existing `scope:*` labels. If you use an invalid scope
+(e.g., `feat(typo): ...`), the CI check will fail.
 
 ### Merge Strategy
 
-PRs are **squash merged** - the PR title becomes the commit message on the main branch. Individual commit messages within the PR can be informal and don't need to follow any format.
+PRs are **squash merged** - the PR title becomes the commit message on the main branch.
+Individual commit messages within the PR can be informal and don't need to follow any format.
 
 **Types** (affects release notes grouping):
 
