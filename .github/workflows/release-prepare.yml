@@ -137,12 +137,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ steps.extract_version.outputs.version }}"
-          
+
           # Check if a draft release already exists (from previous cancelled/closed PR)
           if gh release view "v$VERSION" --json isDraft --jq '.isDraft' 2>/dev/null | grep -q true; then
             echo "⚠️ Found existing draft release for v$VERSION (likely from previous attempt)"
             echo "Deleting old draft to create fresh release notes..."
-            gh release delete "v$VERSION" --yes --cleanup-tag
+            # Don't use --cleanup-tag since tag doesn't exist for drafts
+            gh release delete "v$VERSION" --yes
           else
             echo "No existing draft release found, proceeding with creation"
           fi
