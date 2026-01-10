@@ -11,58 +11,67 @@ changelog:
       - github-actions
 
   categories:
+    - title: 💥 Breaking Changes
+      labels:
+        - breaking-change
+
     - title: 🚀 Features
       labels:
+        - type:feat
         - feat
         - feature
         - enhancement
-    
+
     - title: 🐛 Bug Fixes
       labels:
+        - type:fix
         - fix
         - bug
         - bugfix
-    
-    - title: 📚 Documentation
+
+    - title: 🔒 Security
       labels:
-        - docs
-        - documentation
-    
-    - title: 🧪 Tests
-      labels:
-        - test
-        - tests
-    
+        - type:security
+        - security
+
     - title: ⚡ Performance
       labels:
+        - type:perf
         - perf
         - performance
-    
+
+    - title: 📚 Documentation
+      labels:
+        - type:docs
+        - docs
+        - documentation
+
+    - title: 🧪 Tests
+      labels:
+        - type:test
+        - test
+        - tests
+
     - title: 🔧 Refactoring
       labels:
+        - type:refactor
         - refactor
         - refactoring
-    
+
     - title: 🔨 Build & CI
       labels:
+        - type:ci
+        - type:build
         - ci
         - build
         - infra
-    
+
     - title: 🧹 Maintenance
       labels:
+        - type:chore
         - chore
         - dependencies
         - deps
-    
-    - title: 🔒 Security
-      labels:
-        - security
-    
-    - title: 💥 Breaking Changes
-      labels:
-        - breaking
-        - breaking-change
     
     - title: 🎨 Other Changes
       labels:
