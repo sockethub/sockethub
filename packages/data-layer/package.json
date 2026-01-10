@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/data-layer",
   "description": "Storing and RPC of data for Sockethub",
-  "version": "1.0.0-alpha.4",
+  "version": "5.0.0-alpha.4",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
