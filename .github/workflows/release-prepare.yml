@@ -107,21 +107,27 @@ jobs:
         run: |
           git push origin ${{ steps.extract_version.outputs.branch }}
 
-      - name: Determine release type and last stable tag
+      - name: Determine release type and previous tag
         id: release_type
         run: |
           VERSION="${{ steps.extract_version.outputs.version }}"
-          
+
           if [[ "$VERSION" =~ - ]]; then
             # Any prerelease (alpha, beta, rc)
             echo "is_prerelease=true" >> $GITHUB_OUTPUT
             echo "Release type: prerelease"
+
+            # Find the most recent tag (prerelease or stable) for incremental notes
+            PREVIOUS_TAG=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | head -1)
+            echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+            echo "Previous tag: $PREVIOUS_TAG"
           else
             # Stable release
             echo "is_prerelease=false" >> $GITHUB_OUTPUT
-            
+
             # Find last stable tag for rollup (tags like v5.0.0, not v5.0.0-alpha.1)
             LAST_STABLE=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | grep -v -- '-' | head -1)
+            echo "previous_tag=$LAST_STABLE" >> $GITHUB_OUTPUT
             echo "last_stable=$LAST_STABLE" >> $GITHUB_OUTPUT
             echo "Release type: stable (rollup from $LAST_STABLE)"
           fi
@@ -142,41 +148,54 @@ jobs:
           fi
 
       - name: Create draft GitHub Release
+        id: create_release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ steps.extract_version.outputs.version }}"
-          
+          PREVIOUS_TAG="${{ steps.release_type.outputs.previous_tag }}"
+
           if [[ "${{ steps.release_type.outputs.is_prerelease }}" == "true" ]]; then
             # Prerelease: incremental notes since last tag
-            echo "Creating draft prerelease with auto-generated notes"
-            gh release create "v$VERSION" \
-              --draft \
-              --prerelease \
-              --generate-notes \
-              --title "v$VERSION" \
-              --notes "**⚠️ DRAFT RELEASE - Review and edit before merging the release PR**"
-          else
-            # Stable: rollup from last stable (or incremental if no last stable found)
-            LAST_STABLE="${{ steps.release_type.outputs.last_stable }}"
-            
-            if [ -n "$LAST_STABLE" ]; then
-              echo "Creating draft stable release with rollup from $LAST_STABLE"
-              gh release create "v$VERSION" \
+            if [ -n "$PREVIOUS_TAG" ]; then
+              echo "Creating draft prerelease with notes since $PREVIOUS_TAG"
+              RELEASE_URL=$(gh release create "v$VERSION" \
                 --draft \
+                --prerelease \
                 --generate-notes \
-                --notes-start-tag "$LAST_STABLE" \
+                --notes-start-tag "$PREVIOUS_TAG" \
                 --title "v$VERSION" \
-                --notes "**⚠️ DRAFT RELEASE - Review and edit before merging the release PR**"
+                --notes "**⚠️ DRAFT RELEASE - Review and edit before merging the release PR**")
             else
-              echo "Creating draft stable release with auto-generated notes (no previous stable tag found)"
-              gh release create "v$VERSION" \
+              echo "Creating draft prerelease with auto-generated notes (no previous tag found)"
+              RELEASE_URL=$(gh release create "v$VERSION" \
+                --draft \
+                --prerelease \
+                --generate-notes \
+                --title "v$VERSION" \
+                --notes "**⚠️ DRAFT RELEASE - Review and edit before merging the release PR**")
+            fi
+          else
+            # Stable: rollup from last stable (or incremental if no previous tag found)
+            if [ -n "$PREVIOUS_TAG" ]; then
+              echo "Creating draft stable release with rollup from $PREVIOUS_TAG"
+              RELEASE_URL=$(gh release create "v$VERSION" \
+                --draft \
+                --generate-notes \
+                --notes-start-tag "$PREVIOUS_TAG" \
+                --title "v$VERSION" \
+                --notes "**⚠️ DRAFT RELEASE - Review and edit before merging the release PR**")
+            else
+              echo "Creating draft stable release with auto-generated notes (no previous tag found)"
+              RELEASE_URL=$(gh release create "v$VERSION" \
                 --draft \
                 --generate-notes \
                 --title "v$VERSION" \
-                --notes "**⚠️ DRAFT RELEASE - Review and edit before merging the release PR**"
+                --notes "**⚠️ DRAFT RELEASE - Review and edit before merging the release PR**")
             fi
           fi
+
+          echo "release_url=$RELEASE_URL" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
         env:
@@ -201,7 +220,7 @@ jobs:
           - [ ] Version numbers are correct
           - [ ] All tests pass
           - [ ] No unintended changes included
-          - [ ] **Review and edit draft GitHub release notes**: https://github.com/sockethub/sockethub/releases/tag/v${{ steps.extract_version.outputs.version }}
+          - [ ] **Review and edit draft GitHub release notes**: ${{ steps.create_release.outputs.release_url }}
 
           ### What Happens on Merge
           - Packages will be published to npm with appropriate dist-tag
