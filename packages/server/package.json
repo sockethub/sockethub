@@ -46,6 +46,7 @@
     "@sockethub/examples": "workspace:^",
     "@sockethub/schemas": "workspace:^",
     "body-parser": "1.20.3",
+    "chalk": "^5.3.0",
     "debug": "4.3.4",
     "ejs": "3.1.10",
     "express": "4.20.0",

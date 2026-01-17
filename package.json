@@ -46,6 +46,7 @@
     "docker:logs:sockethub": "docker logs sockethub-sockethub-1",
     "docker:stop": "docker compose down",
     "docker:build": "bun run docker:clean:sockethub; bun run docker:start",
+    "info": "cd packages/sockethub && bun run info",
     "integration": "bun run docker:start && bun run integration:redis && bun run integration:browser",
     "integration:browser": "bun run integration:browser:basic && bun run integration:browser:multiclient && bun run integration:browser:reconnection && bun run integration:browser:resourceclash",
     "integration:browser:basic": "bun integration/browser/test-runner.js ./integration/browser/basic.integration.js",
