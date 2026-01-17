@@ -130,46 +130,35 @@ jobs:
           git tag "v${{ steps.extract_version.outputs.version }}"
           git push origin "v${{ steps.extract_version.outputs.version }}"
 
-      - name: Generate release notes
-        if: steps.verify_npm.outputs.verification_failed != 'true'
-        id: release_notes
-        run: |
-          VERSION="${{ steps.extract_version.outputs.version }}"
-          
-          # Extract changelog section for this version from root CHANGELOG.md
-          if [ -f CHANGELOG.md ]; then
-            # Get content between this version heading and next version heading
-            NOTES=$(awk "/^## .*$VERSION/,/^## [0-9]/" CHANGELOG.md | head -n -1)
-            
-            if [ -z "$NOTES" ]; then
-              NOTES="Release v$VERSION - see individual package changelogs for details"
-            fi
-          else
-            NOTES="Release v$VERSION - see individual package changelogs for details"
-          fi
-          
-          echo "notes<<EOF" >> $GITHUB_OUTPUT
-          echo "$NOTES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Create GitHub Release
+      - name: Verify draft GitHub Release exists
         if: steps.verify_npm.outputs.verification_failed != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ steps.extract_version.outputs.version }}"
-          DIST_TAG="${{ steps.dist_tag.outputs.tag }}"
-          PRERELEASE_FLAG=""
           
-          # Mark as prerelease if not latest
-          if [ "$DIST_TAG" != "latest" ]; then
-            PRERELEASE_FLAG="--prerelease"
+          # Check if draft release exists for this version
+          if gh release view "v$VERSION" --json isDraft --jq '.isDraft' | grep -q true; then
+            echo "✅ Draft release found for v$VERSION"
+          else
+            echo "❌ No draft release found for v$VERSION"
+            echo ""
+            echo "Expected a draft release to exist from the release-prepare workflow."
+            echo "Please ensure the release preparation workflow completed successfully."
+            echo "You can manually create a draft release at:"
+            echo "https://github.com/sockethub/sockethub/releases/new?tag=v$VERSION"
+            exit 1
           fi
+
+      - name: Publish GitHub Release
+        if: steps.verify_npm.outputs.verification_failed != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
           
-          gh release create "v$VERSION" \
-            --title "v$VERSION" \
-            --notes "${{ steps.release_notes.outputs.notes }}" \
-            $PRERELEASE_FLAG
+          echo "Publishing draft release v$VERSION"
+          gh release edit "v$VERSION" --draft=false
 
       - name: Rollback on failure
         if: steps.npm_publish.outcome == 'failure' || steps.verify_npm.outputs.verification_failed == 'true'

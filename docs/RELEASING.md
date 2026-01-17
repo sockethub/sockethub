@@ -63,28 +63,42 @@ Enter prerelease identifier if needed:
 
 ### 2. Review the Release PR
 
-The workflow creates a PR with:
+The workflow creates a PR **and a draft GitHub Release** with:
 
 - ✅ Version bumps in all changed packages
-- ✅ Updated root CHANGELOG.md (aggregated from all packages)
-- ✅ Conventional commit summaries
+- ✅ Formatted with Biome (auto-fixed)
+- ✅ Draft GitHub Release with auto-generated notes
 
 **Review checklist:**
 
-- [ ] Version numbers are correct
-- [ ] Changelog entries are accurate and complete
+- [ ] Version numbers are correct in PR
+- [ ] All CI checks pass on PR
+- [ ] **Draft release notes are reviewed and polished** (see link in PR description)
 - [ ] No unintended changes included
-- [ ] All CI checks pass
 
-You can manually edit the PR to:
+### 3. Review and Edit Draft Release Notes
 
-- Improve changelog wording
-- Add missing context
-- Fix version numbers (if needed)
+**CRITICAL**: Before merging the PR, you **must** review and edit the draft GitHub release:
 
-**⚠️ Important**: Only edit version/changelog files, not code.
+1. Click the draft release link in the PR description, or go to:
+   `https://github.com/sockethub/sockethub/releases/tag/vX.Y.Z`
+2. Click **Edit release** (or **Edit draft**)
+3. Review the auto-generated notes:
+   - [ ] All important changes are mentioned
+   - [ ] Commit messages are clear and user-friendly
+   - [ ] No sensitive information or internal details exposed
+   - [ ] Breaking changes are highlighted (if applicable)
+4. Polish the release notes:
+   - Reword unclear commit messages
+   - Add context or migration notes
+   - Group related changes
+   - Add a summary at the top for major releases
+5. **Save draft** (do NOT publish yet)
 
-### 3. Merge to Publish
+**Note**: The publish workflow will FAIL if no draft release exists. Auto-generated notes are a
+starting point - always polish them before merging.
+
+### 4. Merge to Publish
 
 When you merge the PR:
 
@@ -92,12 +106,12 @@ When you merge the PR:
 - 📦 All packages publish to npm with correct dist-tag
 - ✅ Packages are verified on npm registry
 - 🏷️ Git tag is created (`vX.Y.Z`)
-- 📝 GitHub Release is created
+- 📝 Draft GitHub Release is published (must exist or publish fails)
 
 If anything fails:
 
 - ❌ Git tag is NOT created
-- ❌ GitHub Release is NOT created
+- ❌ GitHub Release is NOT published
 - 🐛 Issue is created with rollback instructions
 
 ## Release Examples
@@ -146,65 +160,159 @@ If anything fails:
 2. Review PR `release/v5.0.1`
 3. Merge → Publishes to `npm install sockethub@latest`
 
-## Conventional Commits
+## Conventional Commits and PR Titles
 
-Changelog quality depends on commit message format:
+## PR Titles and Release Notes
+
+Release notes are generated from **Pull Request titles and labels**, not individual commits.
+
+### PR Title Format (Required)
+
+All PRs **must** follow this format in their title:
 
 ```
 type(scope): description
 
-feat(client): add automatic reconnection
-fix(server): handle platform crash during job
-docs: update installation instructions
-chore(deps): update bullmq to v5
+Examples:
+feat(platform-irc): add oauth support
+fix(data-layer): handle redis connection timeout
+docs(platform-xmpp): update authentication guide
+perf(client): optimize reconnection logic
+ci: improve release workflow
 ```
 
-**Types** (affects changelog grouping):
+**Pattern**: `type(scope): description`
 
-- `feat`: New feature (shows in changelog)
-- `fix`: Bug fix (shows in changelog)
-- `docs`: Documentation only
-- `chore`: Maintenance (dependency updates, etc.)
-- `test`: Test additions/changes
-- `refactor`: Code restructuring without behavior change
-- `perf`: Performance improvements
+- `type`: Required - The type of change (feat, fix, docs, etc.)
+- `scope`: Optional - The package/area affected (platform-irc, data-layer, etc.)
+- `!`: Optional - Add after type/scope for breaking changes (e.g., `feat!:` or `feat(platform-irc)!:`)
 
-**Scopes** (affects per-package changelogs):
+**The PR title format is enforced by CI** - you cannot merge a PR with an invalid title.
 
-- Package name: `client`, `server`, `platform-irc`, etc.
-- Component: `job-queue`, `credentials`, `session`, etc.
+### Automatic Labeling
 
-## Changelog Structure
+When you create or update a PR, the `auto-label-pr` workflow automatically:
 
-### Root Changelog (`/CHANGELOG.md`)
+1. Reads the PR title and parses the format
+2. Applies `type:*` label based on the type (e.g., `type:feat`, `type:fix`)
+3. If a scope is present, validates and applies `scope:*` label (e.g., `scope:platform-irc`)
+4. If `!` is present, applies `breaking-change` label
+5. These labels determine which section the PR appears in the release notes
 
-High-level overview of changes across all packages:
+**Examples**:
+
+- `feat(platform-irc): add oauth` → Labels: `type:feat`, `scope:platform-irc`
+- `fix: general bugfix` → Label: `type:fix`
+- `feat(data-layer)!: breaking api` → Labels: `type:feat`, `scope:data-layer`, `breaking-change`
+
+**Important**: Scopes must match existing `scope:*` labels. If you use an invalid scope
+(e.g., `feat(typo): ...`), the CI check will fail.
+
+### Merge Strategy
+
+PRs are **squash merged** - the PR title becomes the commit message on the main branch.
+Individual commit messages within the PR can be informal and don't need to follow any format.
+
+**Types** (affects release notes grouping):
+
+- `feat`: New feature → `type:feat` label (🚀 Features section)
+- `fix`: Bug fix → `type:fix` label (🐛 Bug Fixes section)
+- `docs`: Documentation → `type:docs` label (📚 Documentation section)
+- `test`: Tests → `type:test` label (🧪 Tests section)
+- `perf`: Performance → `type:perf` label (⚡ Performance section)
+- `refactor`: Refactoring → `type:refactor` label (🔧 Refactoring section)
+- `ci`: CI/CD → `type:ci` label (🔨 Build & CI section)
+- `build`: Build system → `type:build` label (🔨 Build & CI section)
+- `chore`: Maintenance → `type:chore` label (🧹 Maintenance section)
+
+**Valid scopes** (applies `scope:*` label):
+
+- `platform-irc`, `platform-xmpp`, `platform-feeds` - Platform packages
+- `data-layer`, `client`, `activity-streams`, `irc2as`, `examples` - Core packages
+
+**Special markers**:
+
+- `!` after type/scope = Breaking change (e.g., `feat!:` or `feat(platform-irc)!:`)
+- Applies `breaking-change` label → appears in (💥 Breaking Changes) section
+
+## Release Notes Strategy
+
+Sockethub uses **GitHub Releases** as the single source of truth (no CHANGELOG.md files).
+
+### Draft Release Creation
+
+The **release-prepare** workflow creates a **draft GitHub release** with auto-generated notes:
+
+- **Prereleases** (alpha, beta, rc): Incremental changes since last release
+- **Stable releases**: Rollup of ALL changes since last stable release
+
+You **must** review and polish these notes before merging the release PR.
+
+### For Prereleases (alpha, beta, rc)
+
+Release notes show **incremental changes** since the last release:
 
 ```markdown
-## v5.0.0-alpha.5 (2026-01-08)
+## v5.0.0-alpha.5 (2026-01-08) [Prerelease]
 
-### Features
-- **client**: Add automatic reconnection (#123)
-- **platform-irc**: Support SASL authentication (#456)
+### 🚀 Features
+- **platform-irc**: Add automatic reconnection (#123) @username
 
-### Bug Fixes
-- **server**: Handle platform crash during job (#789)
+### 🐛 Bug Fixes
+- **data-layer**: Handle redis connection timeout (#789) @username
+
+### 🔨 Build & CI
+- Improve release workflow (#954) @username
 ```
 
-### Per-Package Changelogs (`/packages/*/CHANGELOG.md`)
+### For Stable Releases
 
-Detailed changes for specific package:
+Release notes show **rollup of ALL changes** since the last stable release:
 
 ```markdown
-## @sockethub/client v5.0.0-alpha.5 (2026-01-08)
+## v5.0.0 (2026-02-01)
 
-### Features
-- Add automatic reconnection with exponential backoff
-- Support custom retry strategies
+### 🚀 Features
+- **client**: Add automatic reconnection (#123) @username
+- **platform-irc**: Support SASL authentication (#456) @username
+- **server**: Add job retry mechanism (#234) @username
 
-### Bug Fixes
-- Fix memory leak in event listeners
+### 🐛 Bug Fixes  
+- **server**: Handle platform crash during job (#789) @username
+- **client**: Fix memory leak in event listeners (#567) @username
+
+### 📚 Documentation
+- Update installation guide (#345) @username
+
+### 🧹 Maintenance
+- Update dependencies (#678) @dependabot
 ```
+
+This rollup includes everything from `v5.0.0-alpha.1` through `v5.0.0-rc.3`, giving users a
+complete view of what's new.
+
+### Release Notes Formatting
+
+Release notes are automatically categorized and formatted with:
+
+- **Emojis** for visual organization (🚀 Features, 🐛 Bug Fixes, 📚 Documentation, etc.)
+- **PR links** for traceability (#123)
+- **Contributor credits** with GitHub usernames (@username)
+- **Grouped by category** using PR labels
+
+**How it works**:
+
+1. PRs are automatically labeled based on their title (e.g., `feat:` → `feat` label)
+2. GitHub uses `.github/release.yml` to categorize PRs by label
+3. Each category gets an emoji and descriptive heading
+4. Contributors are automatically credited
+
+See `.github/LABELS.md` for the full list of labels and categories.
+
+### Historical Record
+
+Previous prerelease entries remain in history unchanged (not merged or deleted). Users can filter
+to show/hide them in the GitHub UI.
 
 ## Independent Versioning
 
@@ -264,7 +372,25 @@ npm dist-tag add @sockethub/client@5.0.0-beta.1 beta
 npm dist-tag rm @sockethub/client alpha
 ```
 
-### Changelog Empty or Incorrect
+### Missing Draft Release
+
+**Error**: `No draft release found for vX.Y.Z`
+
+**Causes**:
+
+- release-prepare workflow failed or was cancelled
+- Draft release was manually deleted
+- Wrong version tag
+
+**Solution**:
+
+1. Close the release PR
+2. Re-run the release-prepare workflow
+3. Or manually create a draft release at: `https://github.com/sockethub/sockethub/releases/new?tag=vX.Y.Z`
+4. Edit the draft release notes
+5. Merge the PR
+
+### Release Notes Empty or Incorrect
 
 **Causes**:
 
@@ -274,8 +400,8 @@ npm dist-tag rm @sockethub/client alpha
 
 **Solution**:
 
-1. Edit changelog manually in release PR before merging
-2. Future: Follow conventional commit format
+1. Edit the draft GitHub Release before merging the PR
+2. Future: Follow conventional commit format (see CONTRIBUTING.md)
 
 ### Release PR CI Failed
 
@@ -334,11 +460,17 @@ GitHub releases and git tags are permanent, but you can hide old prereleases:
 
 1. Checkout `master`
 2. Run `lerna version` with chosen bump type
-3. Create `release/vX.Y.Z` branch
-4. Commit version changes
-5. Create PR to `master`
+3. Auto-fix formatting with Biome
+4. Create `release/vX.Y.Z` branch
+5. Commit version changes
+6. **Clean up existing draft release if present** (from previous cancelled attempt)
+7. **Create draft GitHub Release** with auto-generated notes
+8. Create PR to `master` with link to draft release
 
-**Outputs**: Pull Request URL
+**Outputs**: Pull Request URL, Draft GitHub Release URL
+
+**Note**: If a release PR is closed without merging, you can safely re-run the workflow. Any
+existing draft release will be automatically deleted and recreated with fresh notes.
 
 ### Publish Workflow (`.github/workflows/release-publish.yml`)
 
@@ -353,10 +485,11 @@ GitHub releases and git tags are permanent, but you can hide old prereleases:
 5. Publish packages: `lerna publish from-package --dist-tag <tag>`
 6. Verify packages on npm (wait 30s, then check each)
 7. Create git tag `vX.Y.Z`
-8. Create GitHub Release with changelog
-9. If any step fails: Create issue with rollback instructions
+8. **Verify draft GitHub Release exists** (fail if not found)
+9. Publish the draft release (makes it public)
+10. If any step fails: Create issue with rollback instructions
 
-**Outputs**: Published packages, GitHub Release, git tag
+**Outputs**: Published packages, Published GitHub Release, git tag
 
 ## Security
 
@@ -382,7 +515,13 @@ GitHub releases and git tags are permanent, but you can hide old prereleases:
 ## FAQ
 
 **Q: Can I cancel a release after creating the PR?**
-A: Yes, just close the PR without merging. The release branch can be deleted.
+A: Yes, just close the PR without merging. The draft release will remain but will be
+automatically cleaned up if you re-run the workflow for the same version. You can also manually
+delete it from the Releases page.
+
+**Q: What if I close a release PR and then create a new one for the same version?**
+A: The workflow automatically detects and deletes any existing draft release before creating a
+new one. This ensures fresh release notes are generated from the latest commits.
 
 **Q: Can I edit versions manually in the PR?**
 A: Yes, but be careful to update all package.json files consistently.

@@ -56,21 +56,15 @@ jobs:
           PREID="${{ inputs.preid }}"
           
           if [ -n "$PREID" ]; then
-            CMD="lerna version $BUMP --preid $PREID --conventional-commits --no-push --no-git-tag-version --yes"
+            CMD="lerna version $BUMP --preid $PREID --no-push --no-git-tag-version --yes"
           else
-            CMD="lerna version $BUMP --conventional-commits --no-push --no-git-tag-version --yes"
+            CMD="lerna version $BUMP --no-push --no-git-tag-version --yes"
           fi
           
           echo "command=$CMD" >> $GITHUB_OUTPUT
 
-      - name: Run lerna version
+      - name: Bump versions
         run: ${{ steps.version_cmd.outputs.command }}
-
-      - name: Remove per-package changelogs
-        run: |
-          # Keep only root CHANGELOG.md, remove per-package changelogs
-          find packages -name "CHANGELOG.md" -type f -delete
-          echo "Removed per-package changelogs, keeping root CHANGELOG.md only"
 
       - name: Extract new version
         id: extract_version
@@ -79,6 +73,26 @@ jobs:
           VERSION=$(node -p "require('./packages/sockethub/package.json').version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "branch=release/v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Verify and fix formatting
+        run: bunx biome check --write
+
+      - name: Check for existing release branch
+        run: |
+          BRANCH="${{ steps.extract_version.outputs.branch }}"
+
+          # Check if branch exists on remote (from previous cancelled/closed PR)
+          if git ls-remote --heads origin "$BRANCH" | grep -q "$BRANCH"; then
+            echo "::error::Release branch $BRANCH already exists on remote"
+            echo ""
+            echo "This usually means a previous release PR was closed without being merged."
+            echo "To proceed, you need to manually delete the old branch:"
+            echo ""
+            echo "  git push origin --delete $BRANCH"
+            echo ""
+            echo "Then re-run this workflow."
+            exit 1
+          fi
 
       - name: Create release branch
         run: |
@@ -92,6 +106,97 @@ jobs:
       - name: Push release branch
         run: |
           git push origin ${{ steps.extract_version.outputs.branch }}
+
+      - name: Determine release type and previous tag
+        id: release_type
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
+
+          if [[ "$VERSION" =~ - ]]; then
+            # Any prerelease (alpha, beta, rc)
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "Release type: prerelease"
+
+            # Find the most recent tag (prerelease or stable) for incremental notes
+            PREVIOUS_TAG=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | head -1)
+            echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+            echo "Previous tag: $PREVIOUS_TAG"
+          else
+            # Stable release
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+
+            # Find last stable tag for rollup (tags like v5.0.0, not v5.0.0-alpha.1)
+            LAST_STABLE=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | grep -v -- '-' | head -1)
+            echo "previous_tag=$LAST_STABLE" >> $GITHUB_OUTPUT
+            echo "last_stable=$LAST_STABLE" >> $GITHUB_OUTPUT
+            echo "Release type: stable (rollup from $LAST_STABLE)"
+          fi
+
+      - name: Clean up existing draft release if present
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
+
+          # Check if a draft release already exists (from previous cancelled/closed PR)
+          if gh release view "v$VERSION" --json isDraft --jq '.isDraft' 2>/dev/null | grep -q true; then
+            echo "⚠️ Found existing draft release for v$VERSION (likely from previous attempt)"
+            echo "Deleting old draft to create fresh release notes..."
+            # Don't use --cleanup-tag since tag doesn't exist for drafts
+            gh release delete "v$VERSION" --yes
+          else
+            echo "No existing draft release found, proceeding with creation"
+          fi
+
+      - name: Create draft GitHub Release
+        id: create_release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
+          PREVIOUS_TAG="${{ steps.release_type.outputs.previous_tag }}"
+
+          if [[ "${{ steps.release_type.outputs.is_prerelease }}" == "true" ]]; then
+            # Prerelease: incremental notes since last tag
+            if [ -n "$PREVIOUS_TAG" ]; then
+              echo "Creating draft prerelease with notes since $PREVIOUS_TAG"
+              RELEASE_URL=$(gh release create "v$VERSION" \
+                --draft \
+                --prerelease \
+                --generate-notes \
+                --notes-start-tag "$PREVIOUS_TAG" \
+                --title "v$VERSION" \
+                --notes "**⚠️ DRAFT RELEASE - Review and edit before merging the release PR**")
+            else
+              echo "Creating draft prerelease with auto-generated notes (no previous tag found)"
+              RELEASE_URL=$(gh release create "v$VERSION" \
+                --draft \
+                --prerelease \
+                --generate-notes \
+                --title "v$VERSION" \
+                --notes "**⚠️ DRAFT RELEASE - Review and edit before merging the release PR**")
+            fi
+          else
+            # Stable: rollup from last stable (or incremental if no previous tag found)
+            if [ -n "$PREVIOUS_TAG" ]; then
+              echo "Creating draft stable release with rollup from $PREVIOUS_TAG"
+              RELEASE_URL=$(gh release create "v$VERSION" \
+                --draft \
+                --generate-notes \
+                --notes-start-tag "$PREVIOUS_TAG" \
+                --title "v$VERSION" \
+                --notes "**⚠️ DRAFT RELEASE - Review and edit before merging the release PR**")
+            else
+              echo "Creating draft stable release with auto-generated notes (no previous tag found)"
+              RELEASE_URL=$(gh release create "v$VERSION" \
+                --draft \
+                --generate-notes \
+                --title "v$VERSION" \
+                --notes "**⚠️ DRAFT RELEASE - Review and edit before merging the release PR**")
+            fi
+          fi
+
+          echo "release_url=$RELEASE_URL" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
         env:
@@ -111,19 +216,18 @@ jobs:
 
           ### Changes Included
           - Version bumps across all changed packages
-          - Updated CHANGELOG.md files
-          - Conventional commits since last release
 
           ### Review Checklist
           - [ ] Version numbers are correct
-          - [ ] Changelog entries are accurate
           - [ ] All tests pass
           - [ ] No unintended changes included
+          - [ ] **Review and edit draft GitHub release notes**: ${{ steps.create_release.outputs.release_url }}
 
           ### What Happens on Merge
           - Packages will be published to npm with appropriate dist-tag
-          - GitHub release will be created
+          - Draft GitHub release will be published (must exist or merge will fail)
           - Git tag will be added
 
           ---
-          **⚠️ Do not include code changes in this PR - only version/changelog updates**"
+          **⚠️ Do not include code changes in this PR - only version updates**
+          **⚠️ Do not merge until you've reviewed and polished the draft release notes**"

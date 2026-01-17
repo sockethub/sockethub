@@ -1,4 +1,4 @@
-name: Validate PR
+name: Validate PR Branch and Title
 
 on:
   pull_request:
@@ -21,6 +21,7 @@ jobs:
           # Define valid prefixes
           VALID_PREFIXES=(
             "feat/"
+            "feature/"
             "fix/"
             "docs/"
             "style/"
@@ -31,7 +32,6 @@ jobs:
             "ci/"
             "chore/"
             "revert/"
-            "infra/"
           )
           
           # Check if branch starts with any valid prefix
@@ -54,7 +54,7 @@ jobs:
             echo "  - feat/add-reconnection-logic"
             echo "  - fix/handle-null-credentials"
             echo "  - docs/update-contributing-guide"
-            echo "  - infra/automated-releases"
+            echo "  - ci/automated-releases"
             echo ""
             echo "See docs/CONTRIBUTING.md for details"
             exit 1
@@ -72,7 +72,7 @@ jobs:
           
           # Check conventional commit format: type(scope): description
           # or: type: description
-          if [[ "$TITLE" =~ ^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|infra)(\(.+\))?:\ .+ ]]; then
+          if [[ "$TITLE" =~ ^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?:\ .+ ]]; then
             echo "✅ Valid PR title: $TITLE"
             exit 0
           fi
@@ -84,13 +84,13 @@ jobs:
           echo "  or"
           echo "  type: description"
           echo ""
-          echo "Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, infra"
+          echo "Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
           echo ""
           echo "Examples:"
           echo "  - feat(irc): add reconnection logic"
           echo "  - fix: handle null credentials properly"
           echo "  - docs: update contributing guide"
-          echo "  - infra: implement automated releases"
+          echo "  - ci: implement automated releases"
           echo ""
           echo "The PR title becomes the merge commit message and appears in the changelog."
           echo "See docs/CONTRIBUTING.md for details"

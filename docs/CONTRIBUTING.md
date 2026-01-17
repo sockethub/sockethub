@@ -24,13 +24,12 @@ specification for all commit messages and branch names.
 | `docs` | Documentation only | None | `docs: update installation guide` |
 | `style` | Code style/formatting (no logic change) | None | `style: fix indentation in server.ts` |
 | `refactor` | Code restructuring (no behavior change) | None | `refactor(irc): simplify` |
-| `perf` | Performance improvement | Patch | `perf(job-queue): reduce Redis queries` |
+| `perf` | Performance improvement | Patch | `perf(data-layer): reduce Redis queries` |
 | `test` | Add or update tests | None | `test(client): add reconnection tests` |
 | `build` | Build system or dependencies | None | `build: upgrade to Bun 1.2` |
-| `ci` | CI/CD configuration | None | `ci: add test coverage reporting` |
+| `ci` | CI/CD, automation, infrastructure | None | `ci: add automated release workflow` |
 | `chore` | Maintenance tasks | None | `chore(deps): update bullmq to v5` |
 | `revert` | Revert previous commit | Depends | `revert: "feat(client): add reconnection"` |
-| `infra` | Infrastructure changes | None | `infra: add automated release workflow` |
 
 ### Breaking Changes
 
@@ -91,8 +90,9 @@ BREAKING CHANGE: ActivityStream now requires 'published' timestamp field
 # Chore with scope
 chore(deps): bump @types/node from 20.0.0 to 20.1.0
 
-# Infrastructure change
-infra: configure automated npm publishing workflow
+# CI/CD and infrastructure
+ci: configure automated npm publishing workflow
+ci: add docker compose for local development
 
 # Test addition
 test(server): add integration tests for credential encryption
@@ -117,7 +117,7 @@ fix/irc-reconnection-loop
 docs/update-platform-guide
 refactor/simplify-job-queue
 test/add-integration-tests
-infra/automated-releases
+ci/automated-releases
 chore/update-dependencies
 ```
 
@@ -237,7 +237,7 @@ fix      - Bug fix
 docs     - Documentation
 test     - Tests
 chore    - Dependencies, maintenance
-infra    - CI/CD, infrastructure
+ci       - CI/CD, automation, infrastructure
 
 # Remember: type(scope): description
 ```
