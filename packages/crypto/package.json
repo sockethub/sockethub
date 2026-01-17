@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/crypto",
   "description": "Crypto functions and helpers for Sockethub",
-  "version": "1.0.0-alpha.4",
+  "version": "1.0.0-alpha.5",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",

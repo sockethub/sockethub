@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/platform-dummy",
   "description": "A sockethub platform dummy module",
-  "version": "3.0.0-alpha.4",
+  "version": "3.0.0-alpha.5",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
