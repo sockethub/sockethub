@@ -65,7 +65,7 @@ jobs:
           TITLE="${{ github.event.pull_request.title }}"
           
           # Allow release PR titles (created by automation)
-          if [[ "$TITLE" =~ ^chore\(release\):\ prepare\ v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+          if [[ "$TITLE" =~ ^Release\ v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
             echo "✅ Release PR title: $TITLE"
             exit 0
           fi
