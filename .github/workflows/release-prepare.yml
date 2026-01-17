@@ -66,6 +66,9 @@ jobs:
       - name: Bump versions
         run: ${{ steps.version_cmd.outputs.command }}
 
+      - name: Sync workspace dependency versions
+        run: bun run scripts/sync-workspace-deps.js
+
       - name: Extract new version
         id: extract_version
         run: |
