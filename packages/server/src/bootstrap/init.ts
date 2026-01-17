@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url";
+import chalk from "chalk";
 import debug from "debug";
 
 import { type RedisConfig, redisCheck } from "@sockethub/data-layer";
@@ -18,41 +20,56 @@ export interface IInitObject {
 
 let init: IInitObject;
 
-function printSettingsInfo(
+function getExecutablePath(): string {
+    // Primary: use the actual invoked script path
+    if (process.argv[1]) {
+        return process.argv[1];
+    }
+    // Fallback: resolve from import.meta.url
+    return fileURLToPath(import.meta.url);
+}
+
+export function printSettingsInfo(
     version: string,
     platforms: Map<string, PlatformStruct>,
 ) {
-    console.log(`sockethub ${version}`);
+    const execPath = getExecutablePath();
+
+    console.log(`${chalk.cyan("sockethub")} ${version}`);
+    console.log(`${chalk.cyan("executable:")} ${execPath}`);
     console.log();
 
-    console.log(
-        `websocket: ws://${config.get("sockethub:host")}:${config.get(
-            "sockethub:port",
-        )}${config.get("sockethub:path")}`,
-    );
+    const wsUrl = `ws://${config.get("sockethub:host")}:${config.get("sockethub:port")}${config.get("sockethub:path")}`;
+    console.log(`${chalk.cyan("websocket:")} ${chalk.blue(wsUrl)}`);
 
     console.log();
     const examplesUrl = `http://${config.get("public:host")}:${config.get(
         "public:port",
     )}${config.get("public:path")}`;
     console.log(
-        `examples: ${config.get("examples") ? examplesUrl : "disabled"}`,
+        `${chalk.cyan("examples:")} ${config.get("examples") ? chalk.blue(examplesUrl) : "disabled"}`,
     );
 
     console.log();
-    console.log(`redis URL: ${config.get("redis:url")}`);
+    console.log(
+        `${chalk.cyan("redis URL:")} ${chalk.blue(config.get("redis:url"))}`,
+    );
 
     console.log();
-    console.log(`platforms: ${Array.from(platforms.keys()).join(", ")}`);
+    console.log(
+        `${chalk.cyan("platforms:")} ${Array.from(platforms.keys()).join(", ")}`,
+    );
 
     if (platforms.size > 0) {
         for (const platform of platforms.values()) {
             console.log();
-            console.log(`- ${platform.moduleName}`);
-            console.log(` version: ${platform.version}`);
-            console.log(` AS types: ${platform.types.join(", ")}`);
+            console.log(chalk.green(`- ${platform.moduleName}`));
+            console.log(` ${chalk.dim("version:")} ${platform.version}`);
+            console.log(
+                ` ${chalk.dim("AS types:")} ${platform.types.map((t) => chalk.yellow(t)).join(", ")}`,
+            );
             if (platform.modulePath) {
-                console.log(` path: ${platform.modulePath}`);
+                console.log(` ${chalk.dim("path:")} ${platform.modulePath}`);
             }
         }
     }
