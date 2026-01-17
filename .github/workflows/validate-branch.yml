@@ -21,6 +21,7 @@ jobs:
           # Define valid prefixes
           VALID_PREFIXES=(
             "feat/"
+            "feature/"
             "fix/"
             "docs/"
             "style/"
