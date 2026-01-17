@@ -85,5 +85,7 @@ SockethubClient
 localStorage
 sessionStorage
 IndexedDB
+middleware
+Lerna
  - ./README.md
 v1.2
