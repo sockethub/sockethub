@@ -139,6 +139,7 @@ jobs:
         if: inputs.unpublish_npm && steps.npm_check.outputs.has_published == 'true'
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          chmod 600 ~/.npmrc
 
       - name: Unpublish npm packages
         if: inputs.unpublish_npm && steps.npm_check.outputs.has_published == 'true'
