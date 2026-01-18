@@ -62,11 +62,11 @@ jobs:
           echo ""
 
           # Check GitHub release
-          RELEASE_EXISTS=$(gh release view "$TAG" --json tagName 2>/dev/null && echo "true" || echo "false")
-          echo "release_exists=$RELEASE_EXISTS" >> $GITHUB_OUTPUT
-          if [ "$RELEASE_EXISTS" = "true" ]; then
+          if gh release view "$TAG" &>/dev/null; then
+            echo "release_exists=true" >> $GITHUB_OUTPUT
             echo "✅ GitHub release exists: $TAG"
           else
+            echo "release_exists=false" >> $GITHUB_OUTPUT
             echo "ℹ️ No GitHub release found for $TAG"
           fi
 
