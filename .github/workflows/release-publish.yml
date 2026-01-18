@@ -5,11 +5,24 @@ on:
     types: [closed]
     branches:
       - master
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 5.0.0-alpha.5)'
+        required: true
+        type: string
+      skip_tag_if_exists:
+        description: 'Skip tag creation if tag already exists (for recovery scenarios)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   publish:
-    # Only run if PR was merged and branch matches release pattern
-    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/v')
+    # Run if: PR was merged from release branch OR manual trigger with version
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/v')) ||
+      (github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -37,11 +50,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Extract version from branch name
+      - name: Extract version
         id: version
         run: |
-          BRANCH="${{ github.event.pull_request.head.ref }}"
-          VERSION="${BRANCH#release/v}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            BRANCH="${{ github.event.pull_request.head.ref }}"
+            VERSION="${BRANCH#release/v}"
+          fi
+
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
           echo "📦 Release version: $VERSION"
@@ -205,14 +223,19 @@ jobs:
         if: steps.verify.outputs.success == 'true'
         run: |
           TAG="${{ steps.version.outputs.tag }}"
+          SKIP_IF_EXISTS="${{ inputs.skip_tag_if_exists }}"
 
           if [ "${{ steps.preflight.outputs.tag_exists }}" = "true" ]; then
             if [ "${{ steps.preflight.outputs.tag_matches }}" = "true" ]; then
               echo "✅ Tag $TAG already exists and points to current commit, skipping"
               echo "created=false" >> $GITHUB_OUTPUT
+            elif [ "$SKIP_IF_EXISTS" = "true" ]; then
+              echo "⚠️ Tag $TAG exists but points to different commit"
+              echo "   skip_tag_if_exists=true, continuing anyway..."
+              echo "created=false" >> $GITHUB_OUTPUT
             else
               echo "❌ Tag $TAG exists but points to different commit!"
-              echo "This requires manual intervention."
+              echo "   This requires manual intervention, or re-run with skip_tag_if_exists=true"
               echo "created=false" >> $GITHUB_OUTPUT
               exit 1
             fi
