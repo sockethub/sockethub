@@ -1,0 +1,203 @@
+name: Unpublish Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to unpublish (e.g., 5.0.0-alpha.5)'
+        required: true
+        type: string
+      delete_release:
+        description: 'Delete GitHub release'
+        required: false
+        type: boolean
+        default: true
+      delete_tag:
+        description: 'Delete git tag'
+        required: false
+        type: boolean
+        default: true
+      unpublish_npm:
+        description: 'Unpublish npm packages (only works within 72 hours)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Validate version format
+        run: |
+          VERSION="${{ inputs.version }}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z]+\.[0-9]+)?$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "Expected format: X.Y.Z or X.Y.Z-prerelease.N"
+            exit 1
+          fi
+          echo "✅ Version format valid: $VERSION"
+
+      - name: Check current state
+        id: state
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ inputs.version }}"
+          TAG="v$VERSION"
+
+          echo "🔍 Checking state for $TAG"
+          echo ""
+
+          # Check GitHub release
+          RELEASE_EXISTS=$(gh release view "$TAG" --json tagName 2>/dev/null && echo "true" || echo "false")
+          echo "release_exists=$RELEASE_EXISTS" >> $GITHUB_OUTPUT
+          if [ "$RELEASE_EXISTS" = "true" ]; then
+            echo "✅ GitHub release exists: $TAG"
+          else
+            echo "ℹ️ No GitHub release found for $TAG"
+          fi
+
+          # Check git tag
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG$"; then
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+            echo "✅ Git tag exists: $TAG"
+          else
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No git tag found for $TAG"
+          fi
+
+          echo ""
+
+      - name: Check npm packages
+        id: npm_check
+        run: |
+          VERSION="${{ inputs.version }}"
+          echo "🔍 Checking npm packages for version $VERSION"
+          echo ""
+
+          PUBLISHED_PACKAGES=""
+          PACKAGES=$(find packages -maxdepth 2 -name "package.json" -not -path "*/node_modules/*")
+
+          for pkg_json in $PACKAGES; do
+            PKG_NAME=$(node -p "require('./$pkg_json').name")
+            PKG_PRIVATE=$(node -p "require('./$pkg_json').private || false")
+
+            if [ "$PKG_PRIVATE" = "true" ]; then
+              continue
+            fi
+
+            NPM_VERSION=$(npm view "$PKG_NAME@$VERSION" version 2>/dev/null || echo "")
+            if [ -n "$NPM_VERSION" ]; then
+              echo "✅ $PKG_NAME@$VERSION - published"
+              PUBLISHED_PACKAGES="$PUBLISHED_PACKAGES $PKG_NAME"
+            fi
+          done
+
+          if [ -z "$PUBLISHED_PACKAGES" ]; then
+            echo ""
+            echo "ℹ️ No packages published for version $VERSION"
+            echo "has_published=false" >> $GITHUB_OUTPUT
+          else
+            echo ""
+            echo "📦 Published packages:$PUBLISHED_PACKAGES"
+            echo "has_published=true" >> $GITHUB_OUTPUT
+            echo "packages=$PUBLISHED_PACKAGES" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Delete GitHub release
+        if: inputs.delete_release && steps.state.outputs.release_exists == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ inputs.version }}"
+          echo "🗑️ Deleting GitHub release $TAG..."
+          gh release delete "$TAG" --yes
+          echo "✅ Release deleted"
+
+      - name: Delete git tag
+        if: inputs.delete_tag && steps.state.outputs.tag_exists == 'true'
+        run: |
+          TAG="v${{ inputs.version }}"
+          echo "🗑️ Deleting git tag $TAG..."
+          git push origin --delete "$TAG"
+          echo "✅ Tag deleted"
+
+      - name: Setup NPM authentication
+        if: inputs.unpublish_npm && steps.npm_check.outputs.has_published == 'true'
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          chmod 600 ~/.npmrc
+
+      - name: Unpublish npm packages
+        if: inputs.unpublish_npm && steps.npm_check.outputs.has_published == 'true'
+        run: |
+          VERSION="${{ inputs.version }}"
+          PACKAGES="${{ steps.npm_check.outputs.packages }}"
+
+          echo "🗑️ Unpublishing npm packages..."
+          echo ""
+          echo "⚠️ Note: npm unpublish only works within 72 hours of publishing"
+          echo ""
+
+          FAILED=false
+          for PKG in $PACKAGES; do
+            echo "Unpublishing $PKG@$VERSION..."
+            if OUTPUT=$(npm unpublish "$PKG@$VERSION" 2>&1); then
+              echo "$OUTPUT"
+              echo "✅ $PKG@$VERSION unpublished"
+            else
+              echo "$OUTPUT"
+              echo "❌ Failed to unpublish $PKG@$VERSION (may be past 72 hour window)"
+              FAILED=true
+            fi
+          done
+
+          if [ "$FAILED" = "true" ]; then
+            echo ""
+            echo "⚠️ Some packages could not be unpublished"
+            echo "This may be because they were published more than 72 hours ago"
+            exit 1
+          fi
+
+      - name: Summary
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ inputs.version }}"
+          TAG="v$VERSION"
+
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📋 Unpublish Summary for $TAG"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+
+          # Check final state
+          if gh release view "$TAG" &>/dev/null; then
+            echo "GitHub Release: ⚠️ Still exists"
+          else
+            echo "GitHub Release: ✅ Deleted/Not found"
+          fi
+
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG$"; then
+            echo "Git Tag: ⚠️ Still exists"
+          else
+            echo "Git Tag: ✅ Deleted/Not found"
+          fi
+
+          echo ""
+          echo "To verify npm packages, run locally:"
+          echo "  ./scripts/verify-npm-publish.sh --version $VERSION"
