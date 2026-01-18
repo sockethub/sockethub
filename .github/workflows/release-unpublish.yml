@@ -154,9 +154,11 @@ jobs:
           FAILED=false
           for PKG in $PACKAGES; do
             echo "Unpublishing $PKG@$VERSION..."
-            if npm unpublish "$PKG@$VERSION" 2>&1; then
+            if OUTPUT=$(npm unpublish "$PKG@$VERSION" 2>&1); then
+              echo "$OUTPUT"
               echo "✅ $PKG@$VERSION unpublished"
             else
+              echo "$OUTPUT"
               echo "❌ Failed to unpublish $PKG@$VERSION (may be past 72 hour window)"
               FAILED=true
             fi
