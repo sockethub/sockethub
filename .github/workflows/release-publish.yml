@@ -14,8 +14,12 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    
+      issues: write
+
     steps:
+      # ============================================================
+      # SETUP PHASE
+      # ============================================================
       - name: Checkout master
         uses: actions/checkout@v4
         with:
@@ -34,30 +38,35 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Extract version from branch name
-        id: extract_version
+        id: version
         run: |
           BRANCH="${{ github.event.pull_request.head.ref }}"
           VERSION="${BRANCH#release/v}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Extracted version: $VERSION"
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Release version: $VERSION"
 
-      - name: Determine dist-tag
+      - name: Determine npm dist-tag
         id: dist_tag
         run: |
-          VERSION="${{ steps.extract_version.outputs.version }}"
-          DIST_TAG="latest"
-          
+          VERSION="${{ steps.version.outputs.version }}"
+
           if echo "$VERSION" | grep -qE -- '-alpha\.[0-9]+$'; then
             DIST_TAG="alpha"
           elif echo "$VERSION" | grep -qE -- '-beta\.[0-9]+$'; then
             DIST_TAG="beta"
           elif echo "$VERSION" | grep -qE -- '-rc\.[0-9]+$'; then
             DIST_TAG="next"
+          else
+            DIST_TAG="latest"
           fi
-          
-          echo "tag=$DIST_TAG" >> $GITHUB_OUTPUT
-          echo "Publishing with dist-tag: $DIST_TAG"
 
+          echo "tag=$DIST_TAG" >> $GITHUB_OUTPUT
+          echo "📌 npm dist-tag: $DIST_TAG"
+
+      # ============================================================
+      # BUILD & TEST PHASE
+      # ============================================================
       - name: Install dependencies
         run: bun install
 
@@ -70,140 +79,277 @@ jobs:
       - name: Run tests
         run: bun test
 
+      # ============================================================
+      # PRE-FLIGHT CHECK PHASE
+      # Report current state to help with reruns
+      # ============================================================
+      - name: Check current release state
+        id: preflight
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.version.outputs.tag }}"
+
+          echo "🔍 Pre-flight check for release $TAG"
+          echo ""
+
+          # Check npm packages
+          echo "### NPM Packages ###"
+          chmod +x ./scripts/verify-npm-publish.sh
+          if ./scripts/verify-npm-publish.sh 2>/dev/null; then
+            echo "npm_complete=true" >> $GITHUB_OUTPUT
+            echo ""
+            echo "✅ All packages already published to npm"
+          else
+            echo "npm_complete=false" >> $GITHUB_OUTPUT
+            echo ""
+            echo "⚠️ Some packages need to be published"
+          fi
+          echo ""
+
+          # Check git tag
+          echo "### Git Tag ###"
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG$"; then
+            REMOTE_COMMIT=$(git ls-remote --tags origin | grep "refs/tags/$TAG$" | cut -f1)
+            LOCAL_COMMIT=$(git rev-parse HEAD)
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+            echo "tag_commit=$REMOTE_COMMIT" >> $GITHUB_OUTPUT
+
+            if [ "$REMOTE_COMMIT" = "$LOCAL_COMMIT" ]; then
+              echo "tag_matches=true" >> $GITHUB_OUTPUT
+              echo "✅ Tag $TAG exists and points to current commit"
+            else
+              echo "tag_matches=false" >> $GITHUB_OUTPUT
+              echo "⚠️ Tag $TAG exists but points to different commit!"
+              echo "   Remote: $REMOTE_COMMIT"
+              echo "   Local:  $LOCAL_COMMIT"
+            fi
+          else
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+            echo "tag_matches=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ Tag $TAG does not exist yet"
+          fi
+          echo ""
+
+          # Check GitHub release
+          echo "### GitHub Release ###"
+          RELEASE_STATUS=$(gh release view "$TAG" --json isDraft,name 2>/dev/null || echo "NOT_FOUND")
+          if [ "$RELEASE_STATUS" = "NOT_FOUND" ]; then
+            echo "release_status=not_found" >> $GITHUB_OUTPUT
+            echo "⚠️ No GitHub release found for $TAG"
+          else
+            IS_DRAFT=$(echo "$RELEASE_STATUS" | jq -r '.isDraft')
+            if [ "$IS_DRAFT" = "true" ]; then
+              echo "release_status=draft" >> $GITHUB_OUTPUT
+              echo "✅ Draft release exists for $TAG"
+            else
+              echo "release_status=published" >> $GITHUB_OUTPUT
+              echo "✅ Release $TAG is already published"
+            fi
+          fi
+          echo ""
+
+      # ============================================================
+      # NPM PUBLISH PHASE
+      # ============================================================
       - name: Setup NPM authentication
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
       - name: Validate NPM token
         run: |
+          echo -n "NPM authenticated as: "
           npm whoami || (echo "❌ NPM_TOKEN is invalid or expired" && exit 1)
 
       - name: Publish to npm
         id: npm_publish
+        if: steps.preflight.outputs.npm_complete != 'true'
         run: |
+          echo "Publishing packages to npm with dist-tag: ${{ steps.dist_tag.outputs.tag }}"
           lerna publish from-package \
             --dist-tag ${{ steps.dist_tag.outputs.tag }} \
             --yes \
             --no-git-tag-version \
             --no-push
-        continue-on-error: true
 
-      - name: Verify packages on npm
-        id: verify_npm
-        if: steps.npm_publish.outcome == 'success'
+      - name: Skip npm publish (already complete)
+        if: steps.preflight.outputs.npm_complete == 'true'
         run: |
-          VERSION="${{ steps.extract_version.outputs.version }}"
-          DIST_TAG="${{ steps.dist_tag.outputs.tag }}"
-          
-          echo "Waiting 30 seconds for npm registry to update..."
+          echo "✅ All packages already published, skipping npm publish"
+
+      # ============================================================
+      # VERIFICATION PHASE
+      # Always verify regardless of publish step outcome
+      # ============================================================
+      - name: Verify all packages on npm
+        id: verify
+        run: |
+          echo "⏳ Waiting 30 seconds for npm registry to propagate..."
           sleep 30
-          
-          # Get list of all published packages
-          PACKAGES=$(find packages -name "package.json" -not -path "*/node_modules/*" -exec dirname {} \;)
-          
-          FAILED=false
-          for pkg_dir in $PACKAGES; do
-            PKG_NAME=$(node -p "require('./$pkg_dir/package.json').name")
-            PKG_VERSION=$(node -p "require('./$pkg_dir/package.json').version")
-            
-            echo "Verifying $PKG_NAME@$PKG_VERSION..."
-            
-            # Check if package exists on npm with correct version
-            if npm view "$PKG_NAME@$PKG_VERSION" version >/dev/null 2>&1; then
-              echo "✅ $PKG_NAME@$PKG_VERSION verified on npm"
-            else
-              echo "❌ $PKG_NAME@$PKG_VERSION not found on npm"
-              FAILED=true
-            fi
-          done
-          
-          if [ "$FAILED" = true ]; then
-            echo "verification_failed=true" >> $GITHUB_OUTPUT
-            exit 1
+          echo ""
+
+          if ./scripts/verify-npm-publish.sh; then
+            echo "success=true" >> $GITHUB_OUTPUT
           else
-            echo "verification_failed=false" >> $GITHUB_OUTPUT
+            echo "success=false" >> $GITHUB_OUTPUT
+            exit 1
           fi
 
+      # ============================================================
+      # FINALIZATION PHASE
+      # Only proceed if all packages verified
+      # ============================================================
       - name: Create git tag
-        if: steps.verify_npm.outputs.verification_failed != 'true'
+        id: create_tag
+        if: steps.verify.outputs.success == 'true'
         run: |
-          git tag "v${{ steps.extract_version.outputs.version }}"
-          git push origin "v${{ steps.extract_version.outputs.version }}"
+          TAG="${{ steps.version.outputs.tag }}"
 
-      - name: Verify draft GitHub Release exists
-        if: steps.verify_npm.outputs.verification_failed != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="${{ steps.extract_version.outputs.version }}"
-          
-          # Check if draft release exists for this version
-          if gh release view "v$VERSION" --json isDraft --jq '.isDraft' | grep -q true; then
-            echo "✅ Draft release found for v$VERSION"
+          if [ "${{ steps.preflight.outputs.tag_exists }}" = "true" ]; then
+            if [ "${{ steps.preflight.outputs.tag_matches }}" = "true" ]; then
+              echo "✅ Tag $TAG already exists and points to current commit, skipping"
+              echo "created=false" >> $GITHUB_OUTPUT
+            else
+              echo "❌ Tag $TAG exists but points to different commit!"
+              echo "This requires manual intervention."
+              echo "created=false" >> $GITHUB_OUTPUT
+              exit 1
+            fi
           else
-            echo "❌ No draft release found for v$VERSION"
-            echo ""
-            echo "Expected a draft release to exist from the release-prepare workflow."
-            echo "Please ensure the release preparation workflow completed successfully."
-            echo "You can manually create a draft release at:"
-            echo "https://github.com/sockethub/sockethub/releases/new?tag=v$VERSION"
-            exit 1
+            echo "Creating tag $TAG..."
+            git tag "$TAG"
+            git push origin "$TAG"
+            echo "created=true" >> $GITHUB_OUTPUT
+            echo "✅ Tag $TAG created and pushed"
           fi
 
       - name: Publish GitHub Release
-        if: steps.verify_npm.outputs.verification_failed != 'true'
+        id: publish_release
+        if: steps.verify.outputs.success == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="${{ steps.extract_version.outputs.version }}"
-          
-          echo "Publishing draft release v$VERSION"
-          gh release edit "v$VERSION" --draft=false
+          TAG="${{ steps.version.outputs.tag }}"
+          RELEASE_STATUS="${{ steps.preflight.outputs.release_status }}"
 
-      - name: Rollback on failure
-        if: steps.npm_publish.outcome == 'failure' || steps.verify_npm.outputs.verification_failed == 'true'
+          if [ "$RELEASE_STATUS" = "published" ]; then
+            echo "✅ Release $TAG is already published, skipping"
+            echo "published=false" >> $GITHUB_OUTPUT
+          elif [ "$RELEASE_STATUS" = "draft" ]; then
+            echo "Publishing draft release $TAG..."
+            gh release edit "$TAG" --draft=false
+            echo "published=true" >> $GITHUB_OUTPUT
+            echo "✅ Release $TAG published"
+          else
+            echo "❌ No draft release found for $TAG"
+            echo ""
+            echo "Expected a draft release from the release-prepare workflow."
+            echo "Please create one manually at:"
+            echo "https://github.com/${{ github.repository }}/releases/new?tag=$TAG"
+            echo "published=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      # ============================================================
+      # SUCCESS SUMMARY
+      # ============================================================
+      - name: Release summary
+        if: steps.verify.outputs.success == 'true'
         run: |
-          VERSION="${{ steps.extract_version.outputs.version }}"
-          
-          echo "## 🚨 Release Failed" >> rollback_report.md
-          echo "" >> rollback_report.md
-          echo "Release v$VERSION failed during publishing or verification." >> rollback_report.md
-          echo "" >> rollback_report.md
-          echo "### Failure Details" >> rollback_report.md
-          
-          if [ "${{ steps.npm_publish.outcome }}" == "failure" ]; then
-            echo "- NPM publish step failed" >> rollback_report.md
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.version.outputs.tag }}"
+          DIST_TAG="${{ steps.dist_tag.outputs.tag }}"
+
+          echo ""
+          echo "🎉 Release $TAG completed successfully!"
+          echo ""
+          echo "### Summary"
+          echo "- Version: $VERSION"
+          echo "- npm dist-tag: $DIST_TAG"
+          echo "- Git tag: $TAG"
+          echo "- GitHub Release: https://github.com/${{ github.repository }}/releases/tag/$TAG"
+          echo ""
+          echo "### Install"
+          echo "\`\`\`"
+          echo "npm install sockethub@$DIST_TAG"
+          echo "\`\`\`"
+
+      # ============================================================
+      # FAILURE HANDLING
+      # Clean up and report on any failure
+      # ============================================================
+      - name: Cleanup on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+
+          # Only delete tag if we created it in this run
+          if [ "${{ steps.create_tag.outputs.created }}" = "true" ]; then
+            echo "🧹 Cleaning up tag $TAG created in this run..."
+            git push origin --delete "$TAG" 2>/dev/null || true
+            git tag -d "$TAG" 2>/dev/null || true
+            echo "✅ Tag cleaned up"
           fi
-          
-          if [ "${{ steps.verify_npm.outputs.verification_failed }}" == "true" ]; then
-            echo "- Package verification failed (packages not found on npm)" >> rollback_report.md
-          fi
-          
-          echo "" >> rollback_report.md
-          echo "### Required Actions" >> rollback_report.md
-          echo "1. Investigate the failure cause" >> rollback_report.md
-          echo "2. Fix the issue (expired NPM token, network error, etc.)" >> rollback_report.md
-          echo "3. Revert the merge commit on master if needed" >> rollback_report.md
-          echo "4. Create a new release PR with corrected version" >> rollback_report.md
-          echo "" >> rollback_report.md
-          echo "### Cleanup Needed" >> rollback_report.md
-          echo "- No git tag was created (safe)" >> rollback_report.md
-          echo "- No GitHub release was created (safe)" >> rollback_report.md
-          echo "- Some packages may have been published (check npm manually)" >> rollback_report.md
-          
-          cat rollback_report.md
+
+      - name: Generate failure report
+        if: failure()
+        id: failure_report
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.version.outputs.tag }}"
+
+          cat > failure_report.md << 'EOF'
+          ## 🚨 Release Failed
+
+          Release **$TAG** failed. See the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
+
+          ### Current State
+
+          | Component | Status |
+          |-----------|--------|
+          | npm packages | Run `./scripts/verify-npm-publish.sh` to check |
+          | Git tag | ${{ steps.preflight.outputs.tag_exists == 'true' && '✅ Exists' || '❌ Not created' }} |
+          | GitHub Release | ${{ steps.preflight.outputs.release_status }} |
+
+          ### Recovery Steps
+
+          1. **Check npm state**: `./scripts/verify-npm-publish.sh`
+          2. **If tag exists but shouldn't**: `git push origin --delete $TAG`
+          3. **Re-run the workflow**: The workflow is idempotent and will skip completed steps
+          4. **If issues persist**: Check NPM_TOKEN secret and npm permissions
+
+          ### Workflow Run
+
+          - Run ID: ${{ github.run_id }}
+          - Attempt: ${{ github.run_attempt }}
+          EOF
+
+          # Replace variables in the report
+          sed -i "s|\$TAG|$TAG|g" failure_report.md
+          sed -i "s|\$VERSION|$VERSION|g" failure_report.md
+
+          cat failure_report.md
 
       - name: Create failure issue
-        if: steps.npm_publish.outcome == 'failure' || steps.verify_npm.outputs.verification_failed == 'true'
+        if: failure()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="${{ steps.extract_version.outputs.version }}"
-          
-          gh issue create \
-            --title "❌ Release v$VERSION failed" \
-            --body "$(cat rollback_report.md)" \
-            --label "release" \
-            --label "bug"
-          
-          exit 1
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Check if an issue already exists for this version
+          EXISTING=$(gh issue list --search "Release v$VERSION failed in:title" --state open --json number --jq '.[0].number')
+
+          if [ -n "$EXISTING" ]; then
+            echo "📝 Updating existing issue #$EXISTING"
+            gh issue comment "$EXISTING" --body "$(cat failure_report.md)"
+          else
+            echo "📝 Creating new failure issue"
+            gh issue create \
+              --title "❌ Release v$VERSION failed" \
+              --body "$(cat failure_report.md)" \
+              --label "release"
+          fi
