@@ -6,6 +6,9 @@
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "src/index.ts",
   "files": ["src/schemas"],
   "engines": {

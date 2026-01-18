@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "root",
@@ -9,10 +8,10 @@
         "@esm-bundle/chai": "^4.3.4-fix.0",
         "@lerna-lite/cli": "4.9.0",
         "@lerna-lite/publish": "4.9.0",
-        "@sockethub/client": "workspace:5.0.0-alpha.4",
-        "@sockethub/data-layer": "workspace:1.0.0-alpha.4",
-        "@sockethub/examples": "workspace:1.0.0-alpha.4",
-        "@sockethub/schemas": "workspace:3.0.0-alpha.4",
+        "@sockethub/client": "workspace:5.0.0-alpha.5",
+        "@sockethub/data-layer": "workspace:1.0.0-alpha.5",
+        "@sockethub/examples": "workspace:1.0.0-alpha.5",
+        "@sockethub/schemas": "workspace:3.0.0-alpha.5",
         "@types/bun": "^1.2.22",
         "@types/mocha": "10.0.10",
         "@web/test-runner": "^0.20.2",
@@ -29,7 +28,7 @@
     },
     "packages/activity-streams": {
       "name": "@sockethub/activity-streams",
-      "version": "4.4.0-alpha.4",
+      "version": "4.4.0-alpha.5",
       "dependencies": {
         "eventemitter3": "5.0.1",
       },
@@ -42,7 +41,7 @@
     },
     "packages/client": {
       "name": "@sockethub/client",
-      "version": "5.0.0-alpha.4",
+      "version": "5.0.0-alpha.5",
       "dependencies": {
         "eventemitter3": "5.0.1",
       },
@@ -59,7 +58,7 @@
     },
     "packages/crypto": {
       "name": "@sockethub/crypto",
-      "version": "1.0.0-alpha.4",
+      "version": "1.0.0-alpha.5",
       "dependencies": {
         "@sockethub/schemas": "workspace:*",
         "object-hash": "3.0.0",
@@ -74,7 +73,7 @@
     },
     "packages/data-layer": {
       "name": "@sockethub/data-layer",
-      "version": "1.0.0-alpha.4",
+      "version": "1.0.0-alpha.5",
       "dependencies": {
         "@sockethub/crypto": "workspace:*",
         "@sockethub/schemas": "workspace:*",
@@ -94,7 +93,7 @@
     },
     "packages/examples": {
       "name": "@sockethub/examples",
-      "version": "1.0.0-alpha.4",
+      "version": "1.0.0-alpha.5",
       "devDependencies": {
         "@playwright/test": "^1.50.1",
         "@sockethub/client": "workspace:^",
@@ -119,7 +118,7 @@
     },
     "packages/irc2as": {
       "name": "@sockethub/irc2as",
-      "version": "4.0.0-alpha.4",
+      "version": "4.0.0-alpha.5",
       "dependencies": {
         "debug": "^4.4.0",
         "fast-deep-equal": "^3.1.3",
@@ -130,7 +129,7 @@
     },
     "packages/platform-dummy": {
       "name": "@sockethub/platform-dummy",
-      "version": "3.0.0-alpha.4",
+      "version": "3.0.0-alpha.5",
       "devDependencies": {
         "@sockethub/schemas": "workspace:*",
         "@types/bun": "latest",
@@ -144,7 +143,7 @@
     },
     "packages/platform-feeds": {
       "name": "@sockethub/platform-feeds",
-      "version": "4.0.0-alpha.4",
+      "version": "4.0.0-alpha.5",
       "dependencies": {
         "html-tags": "3.3.1",
         "htmlparser2": "9.0.0",
@@ -164,9 +163,9 @@
     },
     "packages/platform-irc": {
       "name": "@sockethub/platform-irc",
-      "version": "4.0.0-alpha.4",
+      "version": "4.0.0-alpha.5",
       "dependencies": {
-        "@sockethub/irc2as": "workspace:4.0.0-alpha.4",
+        "@sockethub/irc2as": "workspace:4.0.0-alpha.5",
         "irc-socket-sasl": "4.0.0",
       },
       "devDependencies": {
@@ -183,7 +182,7 @@
     },
     "packages/platform-metadata": {
       "name": "@sockethub/platform-metadata",
-      "version": "1.0.0",
+      "version": "1.0.1-alpha.0",
       "dependencies": {
         "open-graph-scraper": "^6.9.0",
       },
@@ -196,7 +195,7 @@
     },
     "packages/platform-xmpp": {
       "name": "@sockethub/platform-xmpp",
-      "version": "5.0.0-alpha.4",
+      "version": "5.0.0-alpha.5",
       "dependencies": {
         "@xmpp/client": "^0.13.1",
       },
@@ -215,7 +214,7 @@
     },
     "packages/schemas": {
       "name": "@sockethub/schemas",
-      "version": "3.0.0-alpha.4",
+      "version": "3.0.0-alpha.5",
       "dependencies": {
         "ajv": "8.12.0",
         "ajv-formats": "2.1.1",
@@ -229,7 +228,7 @@
     },
     "packages/server": {
       "name": "@sockethub/server",
-      "version": "5.0.0-alpha.4",
+      "version": "5.0.0-alpha.5",
       "bin": "bin/sockethub",
       "dependencies": {
         "@sentry/bun": "^10.15.0",
@@ -237,7 +236,6 @@
         "@sockethub/client": "workspace:^",
         "@sockethub/crypto": "workspace:^",
         "@sockethub/data-layer": "workspace:^",
-        "@sockethub/examples": "workspace:^",
         "@sockethub/schemas": "workspace:^",
         "body-parser": "1.20.3",
         "chalk": "^5.3.0",
@@ -262,6 +260,7 @@
         "web-streams-polyfill": "^3.3.3",
       },
       "optionalDependencies": {
+        "@sockethub/examples": "workspace:^",
         "@sockethub/platform-dummy": "workspace:*",
         "@sockethub/platform-feeds": "workspace:*",
         "@sockethub/platform-irc": "workspace:*",
@@ -271,7 +270,7 @@
     },
     "packages/sockethub": {
       "name": "sockethub",
-      "version": "5.0.0-alpha.4",
+      "version": "5.0.0-alpha.5",
       "bin": "bin/sockethub",
       "dependencies": {
         "@sockethub/platform-dummy": "workspace:*",

@@ -4,6 +4,9 @@
   "description": "Fetch metadata from a given URL",
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "src/index.ts",
   "engines": {

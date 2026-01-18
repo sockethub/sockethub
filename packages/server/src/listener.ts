@@ -1,5 +1,6 @@
-import { writeFileSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
 import * as HTTP from "node:http";
+import { createRequire } from "node:module";
 import path from "node:path";
 import bodyParser from "body-parser";
 import debug from "debug";
@@ -9,7 +10,7 @@ import { Server } from "socket.io";
 
 import config from "./config.js";
 import routes from "./routes.js";
-import { __dirname } from "./util.js";
+const require = createRequire(import.meta.url);
 
 const log = debug("sockethub:server:listener");
 
@@ -49,7 +50,47 @@ class Listener {
         this.startHttp();
     }
 
+    /**
+     * Resolves the path to the examples static files from @sockethub/examples package.
+     * Returns null if the package is not installed.
+     */
+    private resolveExamplesPath(): string | null {
+        try {
+            const examplesPkgPath = require.resolve(
+                "@sockethub/examples/package.json",
+            );
+            const examplesDir = path.join(
+                path.dirname(examplesPkgPath),
+                "build",
+            );
+            if (existsSync(examplesDir)) {
+                log(
+                    `examples resolved from @sockethub/examples: ${examplesDir}`,
+                );
+                return examplesDir;
+            }
+            log(
+                `@sockethub/examples found but build directory missing: ${examplesDir}`,
+            );
+            return null;
+        } catch {
+            return null;
+        }
+    }
+
     private addExamplesRoutes(app) {
+        const examplesPath = this.resolveExamplesPath();
+
+        if (!examplesPath) {
+            console.error(
+                "\n❌ Error: --examples flag requires @sockethub/examples package\n\n" +
+                    "The examples package is not installed. To use the examples feature, install it:\n\n" +
+                    "  bun add @sockethub/examples\n\n" +
+                    "Or run sockethub without the --examples flag.\n",
+            );
+            process.exit(1);
+        }
+
         // Set up rate limiter to prevent DoS attacks on file system access
         const limiter = rateLimit({
             windowMs: 1 * 60 * 1000, // 1 minute
@@ -58,24 +99,22 @@ class Listener {
             legacyHeaders: false,
         });
 
+        // Write runtime config for the examples app
         writeFileSync(
-            `${__dirname}/../res/examples/config.json`,
+            path.join(examplesPath, "config.json"),
             JSON.stringify({
                 sockethub: config.get("sockethub"),
                 public: config.get("public"),
             }),
         );
-        app.use(express.static(`${__dirname}/../res/examples/`));
-        const examplesIndex = path.resolve(
-            __dirname,
-            "..",
-            "res",
-            "examples",
-            "index.html",
-        );
+
+        app.use(express.static(examplesPath));
+
+        const examplesIndex = path.join(examplesPath, "index.html");
         app.get("*", limiter, (req, res) => {
             res.sendFile(examplesIndex);
         });
+
         log(
             `examples served at http://${config.get("sockethub:host")}:${config.get(
                 "sockethub:port",
