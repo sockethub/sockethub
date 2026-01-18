@@ -16,6 +16,9 @@
   "keywords": ["activity", "streams", "json-ld", "activity-streams"],
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "bugs": {
     "url": "https://github.com/sockethub/sockethub/issues"
   },

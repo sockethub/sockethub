@@ -15,6 +15,9 @@
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/client",
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "sockethub",
     "messaging",

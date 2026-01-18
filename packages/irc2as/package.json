@@ -15,6 +15,9 @@
   "keywords": ["irc", "activitystreams", "activity-streams", "sockethub"],
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "bugs": {
     "url": "https://github.com/sockethub/sockethub/issues"
   },

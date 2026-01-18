@@ -15,6 +15,9 @@
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/examples",
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "dev": "bunx --bun vite dev",
     "build": "bunx --bun vite build",
