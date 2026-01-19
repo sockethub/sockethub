@@ -3,6 +3,20 @@ on:
     pull_request:
 
 jobs:
+    validate-packages:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+            - name: Use Bun latest
+              uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+            - run: bun install --frozen-lockfile
+            - name: Validate package configurations
+              run: ./scripts/validate-packages.sh
+
     lint:
         runs-on: ubuntu-latest
 

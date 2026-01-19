@@ -69,6 +69,21 @@ jobs:
       - name: Sync workspace dependency versions
         run: bun run scripts/sync-workspace-deps.js
 
+      - name: Setup NPM authentication (for dry-run)
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Validate packages and dry-run publish
+        run: |
+          echo "🔍 Running pre-release validation..."
+          echo ""
+
+          # Run validation with dry-run to catch any issues before creating PR
+          ./scripts/validate-packages.sh --dry-run
+
+          echo ""
+          echo "✅ Pre-release validation passed"
+
       - name: Extract new version
         id: extract_version
         run: |
