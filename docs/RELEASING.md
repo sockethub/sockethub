@@ -40,6 +40,15 @@ npm dist-tags are determined automatically from the version string:
 
 ## Quick Start
 
+### Prerequisites
+
+**IMPORTANT**: To ensure CI workflows run automatically on release PRs, you need to configure a Personal Access Token (PAT). See [Release PR CI Workflows](release-ci-workflows.md) for setup instructions.
+
+Without the PAT:
+- ⚠️ CI workflows won't run automatically on release PRs
+- 🔧 You'll need to manually trigger CI or push additional commits
+- ✅ The release will still work, but with less automated verification
+
 ### 1. Trigger Release Preparation
 
 Go to **Actions** → **Prepare Release** → **Run workflow**

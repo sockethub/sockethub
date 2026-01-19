@@ -1,5 +1,9 @@
 name: Prepare Release
 
+# IMPORTANT: This workflow requires a PAT with 'repo' scope to be set as a secret named GH_PAT
+# Without it, the created PR will not trigger CI workflows (GitHub security restriction)
+# See: https://docs.github.com/en/actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow
+
 on:
   workflow_dispatch:
     inputs:
@@ -220,9 +224,21 @@ jobs:
 
           echo "release_url=$RELEASE_URL" >> $GITHUB_OUTPUT
 
+      - name: Check for GH_PAT token
+        run: |
+          if [ -z "${{ secrets.GH_PAT }}" ]; then
+            echo "::warning::GH_PAT secret not configured - CI workflows will not run automatically on the release PR"
+            echo "::warning::To fix: Create a PAT with 'repo' scope and add it as a secret named GH_PAT"
+            echo "::warning::See: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token"
+          else
+            echo "✓ GH_PAT configured - CI workflows will trigger automatically"
+          fi
+
       - name: Create Pull Request
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use GH_PAT if available to trigger CI workflows, fallback to GITHUB_TOKEN
+          # Note: GITHUB_TOKEN will not trigger other workflow runs due to GitHub security restrictions
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
         run: |
           gh pr create \
             --base master \
