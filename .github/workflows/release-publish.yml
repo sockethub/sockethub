@@ -180,6 +180,22 @@ jobs:
           echo -n "NPM authenticated as: "
           npm whoami || (echo "❌ NPM_TOKEN is invalid or expired" && exit 1)
 
+      # ============================================================
+      # PRE-PUBLISH VALIDATION PHASE
+      # Catch errors before any packages are published
+      # ============================================================
+      - name: Validate packages and dry-run publish
+        if: steps.preflight.outputs.npm_complete != 'true'
+        run: |
+          echo "🔍 Running pre-publish validation..."
+          echo ""
+
+          # Run validation with dry-run to catch any issues
+          ./scripts/validate-packages.sh --dry-run
+
+          echo ""
+          echo "✅ Pre-publish validation passed - proceeding with actual publish"
+
       - name: Publish to npm
         id: npm_publish
         if: steps.preflight.outputs.npm_complete != 'true'
