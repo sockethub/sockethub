@@ -72,6 +72,7 @@ jobs:
       - name: Setup NPM authentication (for dry-run)
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          chmod 600 ~/.npmrc
 
       - name: Validate packages and dry-run publish
         run: |
