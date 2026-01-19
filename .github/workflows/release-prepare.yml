@@ -69,6 +69,9 @@ jobs:
       - name: Sync workspace dependency versions
         run: bun run scripts/sync-workspace-deps.js
 
+      - name: Verify and fix formatting
+        run: bunx biome check --write
+
       - name: Setup NPM authentication (for dry-run)
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
@@ -92,9 +95,6 @@ jobs:
           VERSION=$(node -p "require('./packages/sockethub/package.json').version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "branch=release/v$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Verify and fix formatting
-        run: bunx biome check --write
 
       - name: Check for existing release branch
         run: |
