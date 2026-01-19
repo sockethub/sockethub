@@ -60,7 +60,6 @@
     "lint:doc:fix": "bunx markdownlint --fix '**/*.md' && bunx mdspell -n -a --en-us ./README.md ./packages/*/README.md",
     "lint:fix": "bunx biome check --write && bun run lint:doc:fix",
     "preinstall": "bunx only-allow bun",
-    "publish": "bun run clean && bun run lint && bun run build && bun run doc && bun test && lerna publish --dist-tag latest --pre-dist-tag next",
     "start": "bun run --filter 'sockethub' start"
   },
   "workspaces": ["packages/*"]
