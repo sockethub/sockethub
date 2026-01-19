@@ -117,6 +117,9 @@ jobs:
         run: |
           git checkout -b ${{ steps.extract_version.outputs.branch }}
 
+      - name: Format code
+        run: bun run lint:fix
+
       - name: Commit version changes
         run: |
           git add .
