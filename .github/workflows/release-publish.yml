@@ -196,6 +196,9 @@ jobs:
           echo ""
           echo "✅ Pre-publish validation passed - proceeding with actual publish"
 
+      - name: Clean checkout
+        run: git checkout .
+        
       - name: Publish to npm
         id: npm_publish
         if: steps.preflight.outputs.npm_complete != 'true'
