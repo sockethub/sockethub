@@ -69,8 +69,8 @@ jobs:
       - name: Sync workspace dependency versions
         run: bun run scripts/sync-workspace-deps.js
 
-      - name: Verify and fix formatting
-        run: bunx biome check --write
+      - name: Format code after version bumps
+        run: bun run lint:fix
 
       - name: Setup NPM authentication (for dry-run)
         run: |

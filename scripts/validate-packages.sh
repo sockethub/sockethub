@@ -118,7 +118,10 @@ if [ "$DRY_RUN" = "true" ]; then
   echo "### Running publish dry-run ###"
   echo ""
 
-  if bunx lerna publish from-package --yes --no-git-tag-version --no-push --dry-run 2>&1; then
+  # Note: --ignore-scripts skips the root 'publish' lifecycle script
+  # This is intentional - we've already validated formatting/linting/tests
+  # in the workflow before this validation runs
+  if bunx lerna publish from-package --yes --no-git-tag-version --no-push --dry-run --ignore-scripts 2>&1; then
     echo ""
     echo "✅ Dry-run completed successfully"
   else
