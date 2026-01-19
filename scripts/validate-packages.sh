@@ -88,7 +88,7 @@ for pkg_json in $PACKAGES; do
         DEP_SPEC=$(echo "$dep" | rev | cut -d'@' -f1 | rev)
 
         # workspace:* and workspace:^ are valid, as are workspace:X.Y.Z
-        if [[ "$DEP_SPEC" != "workspace:*" && "$DEP_SPEC" != "workspace:^" && ! "$DEP_SPEC" =~ ^workspace:[0-9] ]]; then
+        if [[ "$DEP_SPEC" != "workspace:*" && "$DEP_SPEC" != "workspace:^" && ! "$DEP_SPEC" =~ ^workspace:[0-9]+ ]]; then
           echo "⚠️  $PKG_NAME has unusual workspace specifier: $DEP_NAME@$DEP_SPEC"
           WARNINGS=true
         fi
