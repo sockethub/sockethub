@@ -1,12 +1,22 @@
 {
   "name": "@sockethub/examples",
-  "version": "1.0.0-alpha.5",
+  "version": "1.0.0-alpha.6",
   "type": "module",
-  "files": ["build"],
+  "files": [
+    "build"
+  ],
   "engines": {
     "bun": ">=1.2.4"
   },
-  "keywords": ["sockethub", "example", "web app", "xmpp", "irc", "rss", "atom"],
+  "keywords": [
+    "sockethub",
+    "example",
+    "web app",
+    "xmpp",
+    "irc",
+    "rss",
+    "atom"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sockethub/sockethub.git",
@@ -30,7 +40,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.50.1",
-    "@sockethub/client": "workspace:^",
+    "@sockethub/client": "^5.0.0-alpha.6",
     "@sveltejs/adapter-static": "^3.0.8",
     "@sveltejs/kit": "^2.16.1",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
@@ -48,5 +58,6 @@
     "update-browserslist-db": "^1.1.3",
     "vite": "^6.3.6",
     "vitest": "^3.0.4"
-  }
+  },
+  "gitHead": "cec966381dc9a4aee21b4d95f563c2c7cdc60088"
 }

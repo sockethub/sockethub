@@ -1,10 +1,12 @@
 {
   "name": "@sockethub/activity-streams",
-  "version": "4.4.0-alpha.5",
+  "version": "4.4.0-alpha.6",
   "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
   "type": "module",
   "main": "./src/activity-streams.ts",
-  "files": ["dist/"],
+  "files": [
+    "dist/"
+  ],
   "engines": {
     "bun": ">=1.2"
   },
@@ -13,7 +15,12 @@
     "url": "git+https://github.com/sockethub/sockethub.git",
     "directory": "packages/activity-streams"
   },
-  "keywords": ["activity", "streams", "json-ld", "activity-streams"],
+  "keywords": [
+    "activity",
+    "streams",
+    "json-ld",
+    "activity-streams"
+  ],
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
   "publishConfig": {
@@ -34,9 +41,10 @@
     "eventemitter3": "5.0.1"
   },
   "devDependencies": {
-    "@sockethub/schemas": "workspace:*",
+    "@sockethub/schemas": "3.0.0-alpha.6",
     "@types/bun": "latest",
     "@web/test-runner": "^0.19.0",
     "@web/test-runner-puppeteer": "^0.17.0"
-  }
+  },
+  "gitHead": "cec966381dc9a4aee21b4d95f563c2c7cdc60088"
 }
