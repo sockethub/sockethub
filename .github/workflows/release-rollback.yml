@@ -1,10 +1,10 @@
-name: Unpublish Release
+name: Rollback Release
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to unpublish (e.g., 5.0.0-alpha.5)'
+        description: 'Version to rollback (e.g., 5.0.0-alpha.5)'
         required: true
         type: string
       delete_release:
@@ -17,14 +17,19 @@ on:
         required: false
         type: boolean
         default: true
-      unpublish_npm:
-        description: 'Unpublish npm packages (only works within 72 hours)'
+      deprecate_npm:
+        description: 'Deprecate npm packages (marks as broken, users see warning)'
         required: false
         type: boolean
-        default: false
+        default: true
+      deprecation_message:
+        description: 'Deprecation message (shown to users who install)'
+        required: false
+        type: string
+        default: 'This version has been deprecated due to a failed release. Please use a newer version.'
 
 jobs:
-  cleanup:
+  rollback:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -81,11 +86,10 @@ jobs:
 
           echo ""
 
-      - name: Check npm packages
+      - name: Find published npm packages
         id: npm_check
         run: |
-          VERSION="${{ inputs.version }}"
-          echo "🔍 Checking npm packages for version $VERSION"
+          echo "🔍 Finding published npm packages..."
           echo ""
 
           PUBLISHED_PACKAGES=""
@@ -94,21 +98,25 @@ jobs:
           for pkg_json in $PACKAGES; do
             PKG_NAME=$(node -p "require('./$pkg_json').name")
             PKG_PRIVATE=$(node -p "require('./$pkg_json').private || false")
+            PKG_VERSION=$(node -p "require('./$pkg_json').version")
 
             if [ "$PKG_PRIVATE" = "true" ]; then
               continue
             fi
 
-            NPM_VERSION=$(npm view "$PKG_NAME@$VERSION" version 2>/dev/null || echo "")
+            # Check if this package version is published
+            NPM_VERSION=$(npm view "$PKG_NAME@$PKG_VERSION" version 2>/dev/null || echo "")
             if [ -n "$NPM_VERSION" ]; then
-              echo "✅ $PKG_NAME@$VERSION - published"
-              PUBLISHED_PACKAGES="$PUBLISHED_PACKAGES $PKG_NAME"
+              echo "✅ $PKG_NAME@$PKG_VERSION - published"
+              PUBLISHED_PACKAGES="$PUBLISHED_PACKAGES $PKG_NAME@$PKG_VERSION"
+            else
+              echo "⏭️  $PKG_NAME@$PKG_VERSION - not published"
             fi
           done
 
           if [ -z "$PUBLISHED_PACKAGES" ]; then
             echo ""
-            echo "ℹ️ No packages published for version $VERSION"
+            echo "ℹ️ No packages published for this release"
             echo "has_published=false" >> $GITHUB_OUTPUT
           else
             echo ""
@@ -136,39 +144,36 @@ jobs:
           echo "✅ Tag deleted"
 
       - name: Setup NPM authentication
-        if: inputs.unpublish_npm && steps.npm_check.outputs.has_published == 'true'
+        if: inputs.deprecate_npm && steps.npm_check.outputs.has_published == 'true'
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
           chmod 600 ~/.npmrc
 
-      - name: Unpublish npm packages
-        if: inputs.unpublish_npm && steps.npm_check.outputs.has_published == 'true'
+      - name: Deprecate npm packages
+        if: inputs.deprecate_npm && steps.npm_check.outputs.has_published == 'true'
         run: |
-          VERSION="${{ inputs.version }}"
           PACKAGES="${{ steps.npm_check.outputs.packages }}"
+          MESSAGE="${{ inputs.deprecation_message }}"
 
-          echo "🗑️ Unpublishing npm packages..."
-          echo ""
-          echo "⚠️ Note: npm unpublish only works within 72 hours of publishing"
+          echo "⚠️ Deprecating npm packages..."
+          echo "Message: $MESSAGE"
           echo ""
 
           FAILED=false
-          for PKG in $PACKAGES; do
-            echo "Unpublishing $PKG@$VERSION..."
-            if OUTPUT=$(npm unpublish "$PKG@$VERSION" 2>&1); then
-              echo "$OUTPUT"
-              echo "✅ $PKG@$VERSION unpublished"
+          for PKG_WITH_VERSION in $PACKAGES; do
+            echo "Deprecating $PKG_WITH_VERSION..."
+            if OUTPUT=$(npm deprecate "$PKG_WITH_VERSION" "$MESSAGE" 2>&1); then
+              echo "✅ $PKG_WITH_VERSION deprecated"
             else
               echo "$OUTPUT"
-              echo "❌ Failed to unpublish $PKG@$VERSION (may be past 72 hour window)"
+              echo "❌ Failed to deprecate $PKG_WITH_VERSION"
               FAILED=true
             fi
           done
 
           if [ "$FAILED" = "true" ]; then
             echo ""
-            echo "⚠️ Some packages could not be unpublished"
-            echo "This may be because they were published more than 72 hours ago"
+            echo "⚠️ Some packages could not be deprecated"
             exit 1
           fi
 
@@ -181,7 +186,7 @@ jobs:
 
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "📋 Unpublish Summary for $TAG"
+          echo "📋 Rollback Summary for $TAG"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
 
@@ -198,6 +203,8 @@ jobs:
             echo "Git Tag: ✅ Deleted/Not found"
           fi
 
+          if [ "${{ inputs.deprecate_npm }}" = "true" ]; then
+            echo "npm Packages: ✅ Deprecated (users will see warning on install)"
+          fi
+
           echo ""
-          echo "To verify npm packages, run locally:"
-          echo "  ./scripts/verify-npm-publish.sh --version $VERSION"
