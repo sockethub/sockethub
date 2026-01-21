@@ -23,11 +23,11 @@
   },
   "keywords": ["sockethub", "dummy"],
   "devDependencies": {
-    "@sockethub/schemas": "3.0.0-alpha.6",
+    "@sockethub/schemas": "^3.0.0-alpha.6",
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "@sockethub/server": "5.0.0-alpha.6"
+    "@sockethub/server": "^5.0.0-alpha.6"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {

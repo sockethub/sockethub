@@ -43,12 +43,12 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "html-tags": "3.3.1",
-    "htmlparser2": "9.0.0",
-    "podparse": "1.6.0"
+    "html-tags": "^3.3.1",
+    "htmlparser2": "^9.1.0",
+    "podparse": "^1.6.0"
   },
   "devDependencies": {
-    "@sockethub/schemas": "3.0.0-alpha.6",
+    "@sockethub/schemas": "^3.0.0-alpha.6",
     "@types/bun": "latest",
     "debug": "^4.4.3"
   },

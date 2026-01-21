@@ -40,15 +40,15 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@sockethub/schemas": "3.0.0-alpha.6",
-    "object-hash": "3.0.0"
+    "@sockethub/schemas": "^3.0.0-alpha.6",
+    "object-hash": "^3.0.0"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/debug": "4.1.12",
-    "@types/object-hash": "3.0.6",
-    "@types/sinon": "17.0.2",
-    "sinon": "17.0.1"
+    "@types/debug": "^4.1.12",
+    "@types/object-hash": "^3.0.6",
+    "@types/sinon": "^17.0.4",
+    "sinon": "^17.0.2"
   },
   "gitHead": "32e7d5d3d38eff4de29407dd6705d32057087ceb"
 }
