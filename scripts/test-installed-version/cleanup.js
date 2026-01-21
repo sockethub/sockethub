@@ -21,8 +21,12 @@ export async function cleanup(services, installDir, logger) {
     await logger.error("Failed to stop services", error);
   }
 
-  // Remove install directory if it's the default test directory
-  if (installDir.startsWith("./test-install")) {
+  // Remove install directory if it's in /tmp or the default pattern
+  const shouldRemove =
+    installDir.includes("/tmp/sockethub-test-install") ||
+    installDir.includes("/sockethub-test-install");
+
+  if (shouldRemove) {
     try {
       await rm(installDir, { recursive: true, force: true });
       await logger.success(`Removed installation directory: ${installDir}`);

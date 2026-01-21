@@ -39,8 +39,10 @@ export class TestRunner {
           await this.runBrowserTests();
           break;
         case "all":
+          // Process tests are excluded from "all" because they test sudden
+          // process termination and leave Sockethub in a dirty state.
+          // They run in isolation in CI and should be run with --suite process
           await this.runRedisTests();
-          await this.runProcessTests();
           await this.runBrowserTests();
           break;
         default:

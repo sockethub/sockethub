@@ -103,14 +103,40 @@ export class ServiceManager {
       `Starting Sockethub with ${runtime} runtime...`,
     );
 
+    // Extract install directory from binPath
+    // binPath is like "./test-install/node_modules/.bin/sockethub"
+    // installDir should be "./test-install"
+    const installDir = binPath.split("/node_modules/")[0];
+
+    // Convert binPath to be relative to installDir
+    const relativeBinPath = "node_modules/.bin/sockethub";
+
     // Choose the runtime command
     const command = runtime === "bun" ? "bun" : "node";
+
+    // Get Sockethub info before starting
+    await this.logger.info("Getting Sockethub info...");
+    const infoResult = await this.logger.exec(
+      command,
+      [relativeBinPath, "--info"],
+      { cwd: installDir },
+      "sockethub-info.log",
+    );
+
+    if (infoResult.exitCode === 0) {
+      // Display info output to console
+      const infoOutput = infoResult.stdout.trim();
+      console.log("\n" + infoOutput + "\n");
+    } else {
+      await this.logger.error("Failed to get Sockethub info");
+    }
 
     // Spawn Sockethub process
     this.sockethubProcess = this.logger.spawn(
       command,
-      [binPath],
+      [relativeBinPath],
       {
+        cwd: installDir,
         env: {
           ...process.env,
           REDIS_URL: "redis://127.0.0.1:6379",

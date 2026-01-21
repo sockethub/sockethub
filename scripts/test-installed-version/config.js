@@ -3,7 +3,7 @@
  */
 
 export const CONFIG = {
-  DEFAULT_INSTALL_DIR: "./test-install",
+  DEFAULT_INSTALL_DIR: `${process.env.TMPDIR || "/tmp"}/sockethub-test-install`,
   DEFAULT_OUTPUT_DIR: "./test-results",
   DEFAULT_SUITE: "all",
   DEFAULT_RUNTIME: "both",
