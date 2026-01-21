@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/crypto",
   "description": "Crypto functions and helpers for Sockethub",
-  "version": "1.0.0-alpha.6",
+  "version": "1.0.0-alpha.7",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -40,7 +40,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@sockethub/schemas": "3.0.0-alpha.6",
+    "@sockethub/schemas": "^3.0.0-alpha.7",
     "object-hash": "3.0.0"
   },
   "devDependencies": {
@@ -50,5 +50,5 @@
     "@types/sinon": "17.0.2",
     "sinon": "17.0.1"
   },
-  "gitHead": "32e7d5d3d38eff4de29407dd6705d32057087ceb"
+  "gitHead": "b5931fff768dd9be9093df5c01a4fee9fa88068f"
 }
