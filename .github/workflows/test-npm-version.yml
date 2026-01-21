@@ -1,0 +1,101 @@
+name: Test NPM Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Sockethub version to test (e.g., 5.0.0-alpha.6, latest)'
+        required: true
+        default: 'latest'
+      runtime:
+        description: 'Runtime to test (bun, node, both)'
+        required: false
+        default: 'both'
+      suite:
+        description: 'Test suite to run (all, redis, process, browser)'
+        required: false
+        default: 'all'
+  schedule:
+    - cron: '0 2 * * *'  # Nightly at 2am UTC
+
+jobs:
+  test-npm-version:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        runtime: [bun, node]
+      fail-fast: false  # Continue testing other runtimes even if one fails
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2.0.1
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies (for test runner)
+        run: bun install
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "version=latest" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Determine suite
+        id: suite
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "suite=all" >> $GITHUB_OUTPUT
+          else
+            echo "suite=${{ github.event.inputs.suite || 'all' }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Determine runtime
+        id: runtime
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "run_test=true" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.inputs.runtime }}" = "both" ]; then
+            echo "run_test=true" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.inputs.runtime }}" = "${{ matrix.runtime }}" ]; then
+            echo "run_test=true" >> $GITHUB_OUTPUT
+          else
+            echo "run_test=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run tests against installed version
+        if: steps.runtime.outputs.run_test == 'true'
+        run: |
+          bun run scripts/test-installed-version.js \
+            ${{ steps.version.outputs.version }} \
+            --runtime ${{ matrix.runtime }} \
+            --suite ${{ steps.suite.outputs.suite }} \
+            --verbose
+
+      - name: Upload test results
+        if: always() && steps.runtime.outputs.run_test == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results-${{ steps.version.outputs.version }}-${{ matrix.runtime }}
+          path: test-results/
+          retention-days: 30
+
+      - name: Report status
+        if: always() && steps.runtime.outputs.run_test == 'true'
+        run: |
+          if [ -f test-results/*/summary.json ]; then
+            echo "Test Results Summary:"
+            cat test-results/*/summary.json
+          fi
