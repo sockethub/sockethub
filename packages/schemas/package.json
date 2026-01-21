@@ -9,8 +9,15 @@
   "publishConfig": {
     "access": "public"
   },
-  "main": "src/index.ts",
-  "files": ["src/schemas"],
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["src/", "dist/"],
   "engines": {
     "bun": ">=1.2"
   },
@@ -32,7 +39,8 @@
     "@types/debug": "4.1.12"
   },
   "scripts": {
-    "build": "bun ./scripts/export-json-schema.ts"
+    "build": "bun ./scripts/export-json-schema.ts && bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "ajv": "8.12.0",

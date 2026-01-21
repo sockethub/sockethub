@@ -9,7 +9,15 @@
   "publishConfig": {
     "access": "public"
   },
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["src/", "dist/", "bin/", "res/"],
   "bin": "bin/sockethub",
   "preferGlobal": true,
   "engines": {
@@ -58,6 +66,8 @@
     "socket.io": "4.7.5"
   },
   "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist",
     "dev": "DEBUG=sockethub* bun run --hot ./bin/sockethub --examples",
     "start": "DEBUG=sockethub* bun run ./bin/sockethub"
   },

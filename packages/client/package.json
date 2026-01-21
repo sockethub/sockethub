@@ -2,8 +2,15 @@
   "name": "@sockethub/client",
   "version": "5.0.0-alpha.6",
   "description": "A JavaScript client for the Sockethub protocol gateway",
-  "main": "./src/sockethub-client.ts",
-  "files": ["dist/"],
+  "main": "./dist/sockethub-client.js",
+  "exports": {
+    ".": {
+      "bun": "./src/sockethub-client.ts",
+      "import": "./dist/sockethub-client.js",
+      "default": "./dist/sockethub-client.js"
+    }
+  },
+  "files": ["src/", "dist/"],
   "engines": {
     "bun": ">=1.2"
   },
