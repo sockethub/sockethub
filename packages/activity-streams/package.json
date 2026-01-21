@@ -3,8 +3,15 @@
   "version": "4.4.0-alpha.6",
   "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
   "type": "module",
-  "main": "./src/activity-streams.ts",
-  "files": ["dist/"],
+  "main": "./dist/activity-streams.js",
+  "exports": {
+    ".": {
+      "bun": "./src/activity-streams.ts",
+      "import": "./dist/activity-streams.js",
+      "default": "./dist/activity-streams.js"
+    }
+  },
+  "files": ["src/", "dist/"],
   "engines": {
     "bun": ">=1.2"
   },

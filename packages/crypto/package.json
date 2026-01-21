@@ -9,7 +9,15 @@
   "publishConfig": {
     "access": "public"
   },
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["src/", "dist/"],
   "engines": {
     "bun": ">=1.2"
   },
@@ -27,6 +35,10 @@
     "directory": "packages/data-layer"
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist"
+  },
   "dependencies": {
     "@sockethub/schemas": "3.0.0-alpha.6",
     "object-hash": "3.0.0"

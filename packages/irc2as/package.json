@@ -3,7 +3,15 @@
   "version": "4.0.0-alpha.6",
   "description": "IRC to ActivityStreams objects",
   "type": "module",
-  "main": "src/index.js",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "bun": "./src/index.js",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["src/", "dist/"],
   "engines": {
     "bun": ">=1.2"
   },
@@ -22,6 +30,10 @@
     "url": "https://github.com/sockethub/sockethub/issues"
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/irc2as",
+  "scripts": {
+    "build": "bun build src/index.js --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist"
+  },
   "dependencies": {
     "debug": "^4.4.0",
     "fast-deep-equal": "^3.1.3"

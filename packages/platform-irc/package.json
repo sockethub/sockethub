@@ -9,7 +9,15 @@
     "access": "public"
   },
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["src/", "dist/"],
   "engines": {
     "bun": ">=1.2"
   },
@@ -28,6 +36,10 @@
     "directory": "packages/platform-irc"
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-irc",
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist"
+  },
   "dependencies": {
     "@sockethub/irc2as": "4.0.0-alpha.6",
     "irc-socket-sasl": "4.0.0"
