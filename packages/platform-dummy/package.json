@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/platform-dummy",
   "description": "A sockethub platform dummy module",
-  "version": "3.0.0-alpha.6",
+  "version": "3.0.0-alpha.7",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -9,22 +9,34 @@
   "publishConfig": {
     "access": "public"
   },
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["src/", "dist/"],
   "engines": {
     "bun": ">=1.2"
   },
   "keywords": ["sockethub", "dummy"],
   "devDependencies": {
-    "@sockethub/schemas": "3.0.0-alpha.6",
+    "@sockethub/schemas": "^3.0.0-alpha.7",
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "@sockethub/server": "5.0.0-alpha.6"
+    "@sockethub/server": "^5.0.0-alpha.6"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {
       "optional": true
     }
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist"
   },
   "repository": {
     "type": "git",
@@ -32,5 +44,5 @@
     "directory": "packages/platform-dummy"
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-dummy",
-  "gitHead": "32e7d5d3d38eff4de29407dd6705d32057087ceb"
+  "gitHead": "e69e26b98c4bce1279aae4dc356b9a0f7e7de659"
 }

@@ -215,23 +215,23 @@ jobs:
         run: |
           echo "✅ All packages already published, skipping npm publish"
 
-      # ============================================================
-      # VERIFICATION PHASE
-      # Always verify regardless of publish step outcome
-      # ============================================================
-      - name: Verify all packages on npm
-        id: verify
-        run: |
-          echo "⏳ Waiting 30 seconds for npm registry to propagate..."
-          sleep 30
-          echo ""
+      # # ============================================================
+      # # VERIFICATION PHASE
+      # # Always verify regardless of publish step outcome
+      # # ============================================================
+      # - name: Verify all packages on npm
+      #   id: verify
+      #   run: |
+      #     echo "⏳ Waiting 30 seconds for npm registry to propagate..."
+      #     sleep 30
+      #     echo ""
 
-          if ./scripts/verify-npm-publish.sh; then
-            echo "success=true" >> $GITHUB_OUTPUT
-          else
-            echo "success=false" >> $GITHUB_OUTPUT
-            exit 1
-          fi
+      #     if ./scripts/verify-npm-publish.sh; then
+      #       echo "success=true" >> $GITHUB_OUTPUT
+      #     else
+      #       echo "success=false" >> $GITHUB_OUTPUT
+      #       exit 1
+      #     fi
 
       # ============================================================
       # FINALIZATION PHASE

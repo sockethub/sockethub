@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/data-layer",
   "description": "Storing and RPC of data for Sockethub",
-  "version": "1.0.0-alpha.6",
+  "version": "1.0.0-alpha.7",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -9,7 +9,15 @@
   "publishConfig": {
     "access": "public"
   },
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["src/", "dist/"],
   "engines": {
     "bun": ">=1.2"
   },
@@ -28,23 +36,25 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
   "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist",
     "doc": "typedoc --options typedoc.json"
   },
   "dependencies": {
-    "@sockethub/crypto": "1.0.0-alpha.6",
-    "@sockethub/schemas": "3.0.0-alpha.6",
-    "bullmq": "5.66.4",
-    "debug": "4.3.4",
-    "ioredis": "5.3.2",
-    "secure-store-redis": "3.0.7"
+    "@sockethub/crypto": "^1.0.0-alpha.7",
+    "@sockethub/schemas": "^3.0.0-alpha.7",
+    "bullmq": "^5.66.5",
+    "debug": "^4.4.3",
+    "ioredis": "^5.9.2",
+    "secure-store-redis": "^3.0.7"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/debug": "4.1.12",
-    "@types/sinon": "17.0.2",
-    "sinon": "17.0.1",
-    "typedoc": "^0.28.14",
+    "@types/debug": "^4.1.12",
+    "@types/sinon": "^17.0.4",
+    "sinon": "^17.0.2",
+    "typedoc": "^0.28.16",
     "typedoc-plugin-markdown": "^4.9.0"
   },
-  "gitHead": "32e7d5d3d38eff4de29407dd6705d32057087ceb"
+  "gitHead": "e69e26b98c4bce1279aae4dc356b9a0f7e7de659"
 }
