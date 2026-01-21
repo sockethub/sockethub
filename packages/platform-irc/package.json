@@ -42,16 +42,16 @@
     "doc": "typedoc --options typedoc.json"
   },
   "dependencies": {
-    "@sockethub/irc2as": "4.0.0-alpha.6",
-    "irc-socket-sasl": "4.0.0"
+    "@sockethub/irc2as": "^4.0.0-alpha.6",
+    "irc-socket-sasl": "^4.0.0"
   },
   "devDependencies": {
-    "@sockethub/schemas": "3.0.0-alpha.6",
+    "@sockethub/schemas": "^3.0.0-alpha.6",
     "@types/bun": "latest",
     "typedoc": "^0.28.14"
   },
   "peerDependencies": {
-    "@sockethub/server": "5.0.0-alpha.6"
+    "@sockethub/server": "^5.0.0-alpha.6"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {

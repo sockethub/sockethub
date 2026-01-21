@@ -42,16 +42,16 @@
     "doc": "jsdoc2md --no-gfm --heading-depth 1 src/index.js > API.md"
   },
   "dependencies": {
-    "@xmpp/client": "^0.13.1"
+    "@xmpp/client": "^0.13.6"
   },
   "devDependencies": {
-    "@sockethub/schemas": "3.0.0-alpha.6",
-    "@xmpp/xml": "0.13.3",
-    "jsdoc-to-markdown": "8.0.0",
-    "sinon": "17.0.1"
+    "@sockethub/schemas": "^3.0.0-alpha.6",
+    "@xmpp/xml": "^0.13.2",
+    "jsdoc-to-markdown": "^8.0.3",
+    "sinon": "^17.0.2"
   },
   "peerDependencies": {
-    "@sockethub/server": "5.0.0-alpha.6"
+    "@sockethub/server": "^5.0.0-alpha.6"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {

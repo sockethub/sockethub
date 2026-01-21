@@ -39,13 +39,13 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "open-graph-scraper": "^6.9.0"
+    "open-graph-scraper": "^6.11.0"
   },
   "devDependencies": {
-    "@sockethub/schemas": "3.0.0-alpha.6"
+    "@sockethub/schemas": "^3.0.0-alpha.6"
   },
   "peerDependencies": {
-    "@sockethub/server": "5.0.0-alpha.6"
+    "@sockethub/server": "^5.0.0-alpha.6"
   },
   "gitHead": "32e7d5d3d38eff4de29407dd6705d32057087ceb"
 }

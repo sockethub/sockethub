@@ -37,11 +37,11 @@
   },
   "homepage": "https://sockethub.org",
   "dependencies": {
-    "@sockethub/platform-dummy": "3.0.0-alpha.6",
-    "@sockethub/platform-feeds": "4.0.0-alpha.6",
-    "@sockethub/platform-irc": "4.0.0-alpha.6",
-    "@sockethub/platform-xmpp": "5.0.0-alpha.6",
-    "@sockethub/server": "5.0.0-alpha.6"
+    "@sockethub/platform-dummy": "^3.0.0-alpha.6",
+    "@sockethub/platform-feeds": "^4.0.0-alpha.6",
+    "@sockethub/platform-irc": "^4.0.0-alpha.6",
+    "@sockethub/platform-xmpp": "^5.0.0-alpha.6",
+    "@sockethub/server": "^5.0.0-alpha.6"
   },
   "scripts": {
     "build": "bun build.js",
