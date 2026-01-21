@@ -2,7 +2,7 @@
   "name": "@sockethub/client",
   "version": "5.0.0-alpha.6",
   "description": "A JavaScript client for the Sockethub protocol gateway",
-  "main": "./src/sockethub-client.ts",
+  "main": "./dist/sockethub-client.js",
   "files": ["dist/"],
   "engines": {
     "bun": ">=1.2"
@@ -32,7 +32,8 @@
     "build:js": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=esm --outdir=dist/ ",
     "build:minify": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=esm --outfile=dist/sockethub-client.min.js --minify",
     "clean": "rm -rf dist",
-    "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer"
+    "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer",
+    "prepublishOnly": "bun run build && bun run ../../scripts/validate-packages.js"
   },
   "dependencies": {
     "eventemitter3": "5.0.1"

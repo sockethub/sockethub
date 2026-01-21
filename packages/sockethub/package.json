@@ -47,7 +47,8 @@
     "build": "bun build.js",
     "dev": "DEBUG=sockethub* bun run --hot ./bin/sockethub --examples",
     "info": "DEBUG=sockethub* bun run ./bin/sockethub --info",
-    "start": "DEBUG=sockethub* bun run ./bin/sockethub"
+    "start": "DEBUG=sockethub* bun run ./bin/sockethub",
+    "preinstall": "node scripts/check-runtime.js"
   },
   "gitHead": "32e7d5d3d38eff4de29407dd6705d32057087ceb"
 }

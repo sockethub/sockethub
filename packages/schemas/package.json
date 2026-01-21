@@ -10,7 +10,7 @@
     "access": "public"
   },
   "main": "src/index.ts",
-  "files": ["src/schemas"],
+  "files": ["src/"],
   "engines": {
     "bun": ">=1.2"
   },

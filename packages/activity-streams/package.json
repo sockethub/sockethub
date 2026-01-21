@@ -3,7 +3,7 @@
   "version": "4.4.0-alpha.6",
   "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
   "type": "module",
-  "main": "./src/activity-streams.ts",
+  "main": "./dist/activity-streams.js",
   "files": ["dist/"],
   "engines": {
     "bun": ">=1.2"
@@ -28,7 +28,8 @@
     "build:js": "bun build ./src/activity-streams.ts --target=browser --sourcemap=inline --format=esm --outdir=dist/",
     "build:minify": "bun build ./src/activity-streams.ts --target=browser --sourcemap=inline --format=esm --outfile=dist/activity-streams.min.js --minify",
     "clean": "rm -rf dist",
-    "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer"
+    "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer",
+    "prepublishOnly": "bun run build && bun run ../../scripts/validate-packages.js"
   },
   "dependencies": {
     "eventemitter3": "5.0.1"
