@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/schemas",
   "description": "JSON schema files for validating Sockethub Activity Streams",
-  "version": "3.0.0-alpha.7",
+  "version": "3.0.0-alpha.8",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -48,5 +48,5 @@
     "ajv-formats-draft2019": "^1.6.1",
     "debug": "^4.4.3"
   },
-  "gitHead": "e69e26b98c4bce1279aae4dc356b9a0f7e7de659"
+  "gitHead": "df82c84a3724c92a9b50e46e9205fa57d834a951"
 }

@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/platform-dummy",
   "description": "A sockethub platform dummy module",
-  "version": "3.0.0-alpha.7",
+  "version": "3.0.0-alpha.8",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -23,7 +23,7 @@
   },
   "keywords": ["sockethub", "dummy"],
   "devDependencies": {
-    "@sockethub/schemas": "^3.0.0-alpha.7",
+    "@sockethub/schemas": "^3.0.0-alpha.8",
     "@types/bun": "latest"
   },
   "peerDependencies": {
@@ -44,5 +44,5 @@
     "directory": "packages/platform-dummy"
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-dummy",
-  "gitHead": "e69e26b98c4bce1279aae4dc356b9a0f7e7de659"
+  "gitHead": "df82c84a3724c92a9b50e46e9205fa57d834a951"
 }
