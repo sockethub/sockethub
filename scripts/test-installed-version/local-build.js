@@ -2,7 +2,7 @@
  * Local package building and packing for test-installed-version script
  */
 
-import { execSync } from "node:child_process";
+import { execSync, execFileSync } from "node:child_process";
 import { readFile, writeFile, readdir, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -60,7 +60,7 @@ export async function buildAndPackLocally(logger) {
 
       // Move to tarballs directory
       execSync(`mv "${tarballPath}" "${tarballsDir}/"`, { cwd: repoRoot });
-
+      execFileSync("mv", [tarballPath, `${tarballsDir}/`], { cwd: repoRoot });
       tarballs.set(pkgJson.name, join(tarballsDir, tarballName));
 
       await logger.info(`  ✓ ${pkgJson.name}`);
