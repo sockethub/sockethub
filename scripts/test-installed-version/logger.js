@@ -7,10 +7,9 @@ import { appendFile, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 export class Logger {
-    constructor(outputDir, version, runtime, verbose = false) {
+    constructor(outputDir, version, runtime) {
         this.version = version;
         this.runtime = runtime;
-        this.verbose = verbose;
 
         // Create timestamped directory
         const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -55,7 +54,7 @@ export class Logger {
         console.error(`✗ ${message}`);
         if (error) {
             console.error(error.message);
-            if (this.verbose && error.stack) {
+            if (error.stack) {
                 console.error(error.stack);
             }
         }
@@ -76,46 +75,44 @@ export class Logger {
      * @returns {Promise<{exitCode: number, stdout: string, stderr: string}>}
      */
     async exec(command, args = [], options = {}, logFile = null) {
-        const cmdString = `${command} ${args.join(" ")}`;
-
-        if (this.verbose) {
-            await this.info(`Executing: ${cmdString}`);
-        }
-
         return new Promise((resolve, reject) => {
             const proc = spawn(command, args, {
                 ...options,
-                stdio: this.verbose ? "inherit" : "pipe",
+                stdio: "pipe", // Always pipe to capture output
             });
 
             let stdout = "";
             let stderr = "";
 
-            if (!this.verbose) {
-                proc.stdout?.on("data", (data) => {
-                    stdout += data.toString();
-                    if (logFile) {
-                        appendFile(
-                            this.getLogPath(logFile),
-                            data.toString(),
-                        ).catch(() => {
-                            // Ignore errors
-                        });
-                    }
-                });
+            proc.stdout?.on("data", (data) => {
+                const text = data.toString();
+                stdout += text;
 
-                proc.stderr?.on("data", (data) => {
-                    stderr += data.toString();
-                    if (logFile) {
-                        appendFile(
-                            this.getLogPath(logFile),
-                            data.toString(),
-                        ).catch(() => {
-                            // Ignore errors
-                        });
-                    }
-                });
-            }
+                // Write to log file
+                if (logFile) {
+                    appendFile(
+                        this.getLogPath(logFile),
+                        text,
+                    ).catch(() => {
+                        // Ignore errors
+                    });
+                }
+            });
+
+            proc.stderr?.on("data", (data) => {
+                const text = data.toString();
+                stderr += text;
+
+                // Write to log file
+                if (logFile) {
+                    appendFile(
+                        this.getLogPath(logFile),
+                        text,
+                    ).catch(() => {
+                        // Ignore errors
+                    });
+                }
+            });
 
             proc.on("close", (exitCode) => {
                 resolve({ exitCode, stdout, stderr });
@@ -131,32 +128,28 @@ export class Logger {
      * Spawn a background process and return the process object
      */
     spawn(command, args = [], options = {}, logFile = null) {
-        const cmdString = `${command} ${args.join(" ")}`;
-
-        if (this.verbose) {
-            this.info(`Spawning: ${cmdString}`).catch(() => {});
-        }
-
         const proc = spawn(command, args, {
             ...options,
-            stdio: this.verbose ? "inherit" : "pipe",
+            stdio: "pipe", // Always pipe to capture output
         });
 
-        if (!this.verbose && logFile) {
+        if (logFile) {
             proc.stdout?.on("data", (data) => {
-                appendFile(this.getLogPath(logFile), data.toString()).catch(
-                    () => {
-                        // Ignore errors
-                    },
-                );
+                const text = data.toString();
+
+                // Write to log file
+                appendFile(this.getLogPath(logFile), text).catch(() => {
+                    // Ignore errors
+                });
             });
 
             proc.stderr?.on("data", (data) => {
-                appendFile(this.getLogPath(logFile), data.toString()).catch(
-                    () => {
-                        // Ignore errors
-                    },
-                );
+                const text = data.toString();
+
+                // Write to log file
+                appendFile(this.getLogPath(logFile), text).catch(() => {
+                    // Ignore errors
+                });
             });
         }
 

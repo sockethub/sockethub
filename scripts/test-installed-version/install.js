@@ -13,31 +13,45 @@ export class InstallManager {
 
     /**
      * Install sockethub package from npm or local tarball
-     * @param {string} version - Version to install (e.g., "5.0.0-alpha.6", "latest") or path to tarball
+     * @param {string} source - Version to install (e.g., "5.0.0-alpha.6", "latest") or path to local tarball
      * @param {string} runtime - Runtime to use for installation ("bun" or "node")
      * @param {boolean} isLocal - Whether this is a local tarball installation
      */
-    async install(version, runtime, isLocal = false) {
-        const source = isLocal
-            ? `local tarball (${version})`
-            : `npm (sockethub@${version})`;
+    async install(source, runtime, isLocal = false) {
+        const description = isLocal
+            ? `local tarball (${source})`
+            : `npm (sockethub@${source})`;
 
-        await this.logger.info(`Installing from ${source} using ${runtime}...`);
+        await this.logger.info(`Installing from ${description} using ${runtime}...`);
 
         // Create install directory
         await mkdir(this.installDir, { recursive: true });
 
-        // Create package.json
-        const packageJson = {
-            name: "sockethub-test-install",
-            private: true,
-            dependencies: {
-                sockethub: isLocal ? `file:${version}` : version,
-            },
-        };
+        if (isLocal) {
+            // Create package.json that references local tarball
+            const packageJson = {
+                name: "sockethub-test-install",
+                private: true,
+                dependencies: {
+                    sockethub: `file:${source}`,
+                },
+            };
 
-        const pkgPath = join(this.installDir, "package.json");
-        await writeFile(pkgPath, JSON.stringify(packageJson, null, 2));
+            const pkgPath = join(this.installDir, "package.json");
+            await writeFile(pkgPath, JSON.stringify(packageJson, null, 2));
+        } else {
+            // Create package.json for npm install
+            const packageJson = {
+                name: "sockethub-test-install",
+                private: true,
+                dependencies: {
+                    sockethub: source,
+                },
+            };
+
+            const pkgPath = join(this.installDir, "package.json");
+            await writeFile(pkgPath, JSON.stringify(packageJson, null, 2));
+        }
 
         // Install using appropriate package manager
         let installCmd;
@@ -64,7 +78,7 @@ export class InstallManager {
             );
         }
 
-        await this.logger.success(`Installed from ${source} using ${runtime}`);
+        await this.logger.success(`Installed from ${description} using ${runtime}`);
     }
 
     /**

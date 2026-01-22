@@ -19,7 +19,6 @@
  *   --skip-cleanup         Don't remove resources after test
  *   --install-dir <path>   Installation directory (default: "./test-install")
  *   --output-dir <path>    Output directory (default: "./test-results")
- *   --verbose              Show verbose output
  */
 
 import { join } from "node:path";
@@ -43,7 +42,6 @@ const { values, positionals } = parseArgs({
         "skip-cleanup": { type: "boolean", default: false },
         "install-dir": { type: "string", default: CONFIG.DEFAULT_INSTALL_DIR },
         "output-dir": { type: "string", default: CONFIG.DEFAULT_OUTPUT_DIR },
-        verbose: { type: "boolean", default: false },
     },
     allowPositionals: true,
 });
@@ -63,7 +61,7 @@ if (!version && !values.local) {
         "  bun run scripts/test-installed-version.js 5.0.0-alpha.6 --runtime bun",
     );
     console.error(
-        "  bun run scripts/test-installed-version.js latest --suite redis --verbose",
+        "  bun run scripts/test-installed-version.js latest --suite redis",
     );
     console.error("  bun run scripts/test-installed-version.js --local --runtime bun");
     process.exit(1);
@@ -97,7 +95,7 @@ if (!validSuites.includes(values.suite)) {
 /**
  * Run tests for a single runtime
  */
-async function runTestsForRuntime(runtime, isFirstRun, actualVersion, tarballPath) {
+async function runTestsForRuntime(runtime, isFirstRun, actualVersion, installSource) {
     console.log(`\n${"=".repeat(60)}`);
     console.log(`Testing with runtime: ${runtime.toUpperCase()}`);
     console.log("=".repeat(60));
@@ -106,7 +104,6 @@ async function runTestsForRuntime(runtime, isFirstRun, actualVersion, tarballPat
         values["output-dir"],
         actualVersion,
         runtime,
-        values.verbose,
     );
 
     await logger.init();
@@ -120,17 +117,17 @@ async function runTestsForRuntime(runtime, isFirstRun, actualVersion, tarballPat
             installer = new InstallManager(values["install-dir"], logger);
 
             if (values.local) {
-                // Install from local tarball
-                await installer.install(tarballPath, runtime, true);
+                // Install from local tarballs directory
+                await installer.install(installSource, runtime, true);
                 const installedVersion = await installer.verifyVersion(actualVersion);
                 logger.version = installedVersion;
             } else {
                 // Install from npm
-                await installer.install(actualVersion, runtime, false);
-                const installedVersion = await installer.verifyVersion(actualVersion);
+                await installer.install(installSource, runtime, false);
+                const installedVersion = await installer.verifyVersion(installSource);
 
                 // Update version in results if "latest" was used
-                if (actualVersion === "latest") {
+                if (installSource === "latest") {
                     logger.version = installedVersion;
                 }
             }
@@ -196,7 +193,7 @@ async function main() {
     console.log("=".repeat(60));
 
     // Build and pack locally if --local flag is set
-    let tarballPath;
+    let installSource;
     let actualVersion = version;
 
     if (values.local) {
@@ -205,22 +202,20 @@ async function main() {
             values["output-dir"],
             "local",
             "build",
-            values.verbose,
         );
         await tempLogger.init();
 
-        tarballPath = await buildAndPackLocally(tempLogger);
+        const { version: builtVersion, tarballPath } =
+            await buildAndPackLocally(tempLogger);
 
-        // Extract version from tarball path
-        const match = tarballPath.match(/sockethub-([\d.a-z-]+)\.tgz$/);
-        if (match) {
-            actualVersion = match[1];
-        }
+        actualVersion = builtVersion;
+        installSource = tarballPath;
 
         console.log(`Built version: ${actualVersion}`);
-        console.log(`Tarball: ${tarballPath}`);
+        console.log(`Install from: ${tarballPath}`);
     } else {
         console.log(`Version: ${version}`);
+        installSource = version;
     }
 
     console.log(`Runtime(s): ${values.runtime}`);
@@ -243,7 +238,7 @@ async function main() {
             runtime,
             isFirstRun,
             actualVersion,
-            tarballPath,
+            installSource,
         );
         allResults.push(result);
     }

@@ -91,14 +91,12 @@ jobs:
             bun run scripts/test-installed-version.js \
               --local \
               --runtime ${{ matrix.runtime }} \
-              --suite ${{ steps.suite.outputs.suite }} \
-              --verbose
+              --suite ${{ steps.suite.outputs.suite }}
           else
             bun run scripts/test-installed-version.js \
               ${{ steps.version.outputs.version }} \
               --runtime ${{ matrix.runtime }} \
-              --suite ${{ steps.suite.outputs.suite }} \
-              --verbose
+              --suite ${{ steps.suite.outputs.suite }}
           fi
 
       - name: Upload test results

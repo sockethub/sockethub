@@ -97,8 +97,7 @@ jobs:
           bun run scripts/test-installed-version.js \
             --local \
             --runtime both \
-            --suite all \
-            --verbose
+            --suite all
 
           echo ""
           echo "✅ Local package tests passed"
