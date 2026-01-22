@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/data-layer",
   "description": "Storing and RPC of data for Sockethub",
-  "version": "1.0.0-alpha.8",
+  "version": "1.0.0-alpha.9",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -41,8 +41,8 @@
     "doc": "typedoc --options typedoc.json"
   },
   "dependencies": {
-    "@sockethub/crypto": "^1.0.0-alpha.8",
-    "@sockethub/schemas": "^3.0.0-alpha.8",
+    "@sockethub/crypto": "^1.0.0-alpha.9",
+    "@sockethub/schemas": "^3.0.0-alpha.9",
     "bullmq": "^5.66.5",
     "debug": "^4.4.3",
     "ioredis": "^5.9.2",
@@ -56,5 +56,5 @@
     "typedoc": "^0.28.16",
     "typedoc-plugin-markdown": "^4.9.0"
   },
-  "gitHead": "df82c84a3724c92a9b50e46e9205fa57d834a951"
+  "gitHead": "917cd17f403768037a0ee3d251ac720a81f55d86"
 }
