@@ -90,10 +90,7 @@ export class Logger {
 
                 // Write to log file
                 if (logFile) {
-                    appendFile(
-                        this.getLogPath(logFile),
-                        text,
-                    ).catch(() => {
+                    appendFile(this.getLogPath(logFile), text).catch(() => {
                         // Ignore errors
                     });
                 }
@@ -105,10 +102,7 @@ export class Logger {
 
                 // Write to log file
                 if (logFile) {
-                    appendFile(
-                        this.getLogPath(logFile),
-                        text,
-                    ).catch(() => {
+                    appendFile(this.getLogPath(logFile), text).catch(() => {
                         // Ignore errors
                     });
                 }

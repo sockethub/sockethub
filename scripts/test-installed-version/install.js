@@ -22,7 +22,9 @@ export class InstallManager {
             ? `local tarball (${source})`
             : `npm (sockethub@${source})`;
 
-        await this.logger.info(`Installing from ${description} using ${runtime}...`);
+        await this.logger.info(
+            `Installing from ${description} using ${runtime}...`,
+        );
 
         // Create install directory
         await mkdir(this.installDir, { recursive: true });
@@ -78,7 +80,9 @@ export class InstallManager {
             );
         }
 
-        await this.logger.success(`Installed from ${description} using ${runtime}`);
+        await this.logger.success(
+            `Installed from ${description} using ${runtime}`,
+        );
     }
 
     /**

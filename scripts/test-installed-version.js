@@ -63,7 +63,9 @@ if (!version && !values.local) {
     console.error(
         "  bun run scripts/test-installed-version.js latest --suite redis",
     );
-    console.error("  bun run scripts/test-installed-version.js --local --runtime bun");
+    console.error(
+        "  bun run scripts/test-installed-version.js --local --runtime bun",
+    );
     process.exit(1);
 }
 
@@ -95,16 +97,17 @@ if (!validSuites.includes(values.suite)) {
 /**
  * Run tests for a single runtime
  */
-async function runTestsForRuntime(runtime, isFirstRun, actualVersion, installSource) {
+async function runTestsForRuntime(
+    runtime,
+    isFirstRun,
+    actualVersion,
+    installSource,
+) {
     console.log(`\n${"=".repeat(60)}`);
     console.log(`Testing with runtime: ${runtime.toUpperCase()}`);
     console.log("=".repeat(60));
 
-    const logger = new Logger(
-        values["output-dir"],
-        actualVersion,
-        runtime,
-    );
+    const logger = new Logger(values["output-dir"], actualVersion, runtime);
 
     await logger.init();
 
@@ -119,12 +122,14 @@ async function runTestsForRuntime(runtime, isFirstRun, actualVersion, installSou
             if (values.local) {
                 // Install from local tarballs directory
                 await installer.install(installSource, runtime, true);
-                const installedVersion = await installer.verifyVersion(actualVersion);
+                const installedVersion =
+                    await installer.verifyVersion(actualVersion);
                 logger.version = installedVersion;
             } else {
                 // Install from npm
                 await installer.install(installSource, runtime, false);
-                const installedVersion = await installer.verifyVersion(installSource);
+                const installedVersion =
+                    await installer.verifyVersion(installSource);
 
                 // Update version in results if "latest" was used
                 if (installSource === "latest") {
@@ -198,11 +203,7 @@ async function main() {
 
     if (values.local) {
         console.log("Mode: Local (build and pack from source)");
-        const tempLogger = new Logger(
-            values["output-dir"],
-            "local",
-            "build",
-        );
+        const tempLogger = new Logger(values["output-dir"], "local", "build");
         await tempLogger.init();
 
         const { version: builtVersion, tarballPath } =
