@@ -14,6 +14,7 @@
  * Options:
  *   --runtime <bun|node|both>  Runtime to test (default: "both")
  *   --suite <redis|process|browser|all>  Test suite (default: "all")
+ *   --local                Build and pack from source instead of installing from npm
  *   --skip-install         Skip npm install
  *   --skip-cleanup         Don't remove resources after test
  *   --install-dir <path>   Installation directory (default: "./test-install")
@@ -26,6 +27,7 @@ import { parseArgs } from "node:util";
 import { cleanup } from "./test-installed-version/cleanup.js";
 import { CONFIG } from "./test-installed-version/config.js";
 import { InstallManager } from "./test-installed-version/install.js";
+import { buildAndPackLocally } from "./test-installed-version/local-build.js";
 import { Logger } from "./test-installed-version/logger.js";
 import { TestRunner } from "./test-installed-version/runner.js";
 import { ServiceManager } from "./test-installed-version/services.js";
@@ -36,6 +38,7 @@ const { values, positionals } = parseArgs({
     options: {
         runtime: { type: "string", default: CONFIG.DEFAULT_RUNTIME },
         suite: { type: "string", default: CONFIG.DEFAULT_SUITE },
+        local: { type: "boolean", default: false },
         "skip-install": { type: "boolean", default: false },
         "skip-cleanup": { type: "boolean", default: false },
         "install-dir": { type: "string", default: CONFIG.DEFAULT_INSTALL_DIR },
@@ -45,10 +48,10 @@ const { values, positionals } = parseArgs({
     allowPositionals: true,
 });
 
-// Validate version argument
+// Validate version argument (not required for --local)
 const version = positionals[0];
-if (!version) {
-    console.error("Error: Version argument is required");
+if (!version && !values.local) {
+    console.error("Error: Version argument is required (unless using --local)");
     console.error("");
     console.error(
         "Usage: bun run scripts/test-installed-version.js <version> [options]",
@@ -62,6 +65,7 @@ if (!version) {
     console.error(
         "  bun run scripts/test-installed-version.js latest --suite redis --verbose",
     );
+    console.error("  bun run scripts/test-installed-version.js --local --runtime bun");
     process.exit(1);
 }
 
@@ -93,14 +97,14 @@ if (!validSuites.includes(values.suite)) {
 /**
  * Run tests for a single runtime
  */
-async function runTestsForRuntime(runtime, isFirstRun) {
+async function runTestsForRuntime(runtime, isFirstRun, actualVersion, tarballPath) {
     console.log(`\n${"=".repeat(60)}`);
     console.log(`Testing with runtime: ${runtime.toUpperCase()}`);
     console.log("=".repeat(60));
 
     const logger = new Logger(
         values["output-dir"],
-        version,
+        actualVersion,
         runtime,
         values.verbose,
     );
@@ -114,12 +118,21 @@ async function runTestsForRuntime(runtime, isFirstRun) {
         // Install (if needed)
         if (!values["skip-install"] || isFirstRun) {
             installer = new InstallManager(values["install-dir"], logger);
-            await installer.install(version, runtime);
-            const installedVersion = await installer.verifyVersion(version);
 
-            // Update version in results if "latest" was used
-            if (version === "latest") {
+            if (values.local) {
+                // Install from local tarball
+                await installer.install(tarballPath, runtime, true);
+                const installedVersion = await installer.verifyVersion(actualVersion);
                 logger.version = installedVersion;
+            } else {
+                // Install from npm
+                await installer.install(actualVersion, runtime, false);
+                const installedVersion = await installer.verifyVersion(actualVersion);
+
+                // Update version in results if "latest" was used
+                if (actualVersion === "latest") {
+                    logger.version = installedVersion;
+                }
             }
         } else {
             await logger.info("Skipping installation (--skip-install)");
@@ -181,7 +194,35 @@ async function main() {
     console.log("=".repeat(60));
     console.log("Sockethub NPM Version Test Runner");
     console.log("=".repeat(60));
-    console.log(`Version: ${version}`);
+
+    // Build and pack locally if --local flag is set
+    let tarballPath;
+    let actualVersion = version;
+
+    if (values.local) {
+        console.log("Mode: Local (build and pack from source)");
+        const tempLogger = new Logger(
+            values["output-dir"],
+            "local",
+            "build",
+            values.verbose,
+        );
+        await tempLogger.init();
+
+        tarballPath = await buildAndPackLocally(tempLogger);
+
+        // Extract version from tarball path
+        const match = tarballPath.match(/sockethub-([\d.a-z-]+)\.tgz$/);
+        if (match) {
+            actualVersion = match[1];
+        }
+
+        console.log(`Built version: ${actualVersion}`);
+        console.log(`Tarball: ${tarballPath}`);
+    } else {
+        console.log(`Version: ${version}`);
+    }
+
     console.log(`Runtime(s): ${values.runtime}`);
     console.log(`Test suite: ${values.suite}`);
     console.log("=".repeat(60));
@@ -198,7 +239,12 @@ async function main() {
     for (let i = 0; i < runtimes.length; i++) {
         const runtime = runtimes[i];
         const isFirstRun = i === 0;
-        const result = await runTestsForRuntime(runtime, isFirstRun);
+        const result = await runTestsForRuntime(
+            runtime,
+            isFirstRun,
+            actualVersion,
+            tarballPath,
+        );
         allResults.push(result);
     }
 

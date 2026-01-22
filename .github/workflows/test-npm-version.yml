@@ -15,6 +15,11 @@ on:
         description: 'Test suite to run (all, redis, process, browser)'
         required: false
         default: 'all'
+      local:
+        description: 'Build and pack from source instead of installing from npm'
+        required: false
+        type: boolean
+        default: false
   schedule:
     - cron: '0 2 * * *'  # Nightly at 2am UTC
 
@@ -43,6 +48,10 @@ jobs:
 
       - name: Install dependencies (for test runner)
         run: bun install
+
+      - name: Build packages (if local mode)
+        if: github.event.inputs.local == 'true'
+        run: bun run build
 
       - name: Determine version
         id: version
@@ -78,11 +87,19 @@ jobs:
       - name: Run tests against installed version
         if: steps.runtime.outputs.run_test == 'true'
         run: |
-          bun run scripts/test-installed-version.js \
-            ${{ steps.version.outputs.version }} \
-            --runtime ${{ matrix.runtime }} \
-            --suite ${{ steps.suite.outputs.suite }} \
-            --verbose
+          if [ "${{ github.event.inputs.local }}" = "true" ]; then
+            bun run scripts/test-installed-version.js \
+              --local \
+              --runtime ${{ matrix.runtime }} \
+              --suite ${{ steps.suite.outputs.suite }} \
+              --verbose
+          else
+            bun run scripts/test-installed-version.js \
+              ${{ steps.version.outputs.version }} \
+              --runtime ${{ matrix.runtime }} \
+              --suite ${{ steps.suite.outputs.suite }} \
+              --verbose
+          fi
 
       - name: Upload test results
         if: always() && steps.runtime.outputs.run_test == 'true'

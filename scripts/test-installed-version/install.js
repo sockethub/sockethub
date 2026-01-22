@@ -12,14 +12,17 @@ export class InstallManager {
     }
 
     /**
-     * Install sockethub package from npm
-     * @param {string} version - Version to install (e.g., "5.0.0-alpha.6", "latest")
+     * Install sockethub package from npm or local tarball
+     * @param {string} version - Version to install (e.g., "5.0.0-alpha.6", "latest") or path to tarball
      * @param {string} runtime - Runtime to use for installation ("bun" or "node")
+     * @param {boolean} isLocal - Whether this is a local tarball installation
      */
-    async install(version, runtime) {
-        await this.logger.info(
-            `Installing sockethub@${version} using ${runtime}...`,
-        );
+    async install(version, runtime, isLocal = false) {
+        const source = isLocal
+            ? `local tarball (${version})`
+            : `npm (sockethub@${version})`;
+
+        await this.logger.info(`Installing from ${source} using ${runtime}...`);
 
         // Create install directory
         await mkdir(this.installDir, { recursive: true });
@@ -29,7 +32,7 @@ export class InstallManager {
             name: "sockethub-test-install",
             private: true,
             dependencies: {
-                sockethub: version,
+                sockethub: isLocal ? `file:${version}` : version,
             },
         };
 
@@ -42,7 +45,7 @@ export class InstallManager {
 
         if (runtime === "bun") {
             installCmd = "bun";
-            installArgs = ["install", "--frozen-lockfile"];
+            installArgs = ["install"];
         } else {
             installCmd = "npm";
             installArgs = ["install", "--legacy-peer-deps"];
@@ -61,9 +64,7 @@ export class InstallManager {
             );
         }
 
-        await this.logger.success(
-            `Installed sockethub@${version} using ${runtime}`,
-        );
+        await this.logger.success(`Installed from ${source} using ${runtime}`);
     }
 
     /**

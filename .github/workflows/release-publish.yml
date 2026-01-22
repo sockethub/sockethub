@@ -97,6 +97,21 @@ jobs:
       - name: Run tests
         run: bun test
 
+      - name: Test locally built packages
+        run: |
+          echo "🧪 Testing locally built packages before publish..."
+          echo ""
+
+          # Test with both Bun and Node runtimes
+          bun run scripts/test-installed-version.js \
+            --local \
+            --runtime both \
+            --suite all \
+            --verbose
+
+          echo ""
+          echo "✅ Local package tests passed - safe to publish"
+
       # ============================================================
       # PRE-FLIGHT CHECK PHASE
       # Report current state to help with reruns
