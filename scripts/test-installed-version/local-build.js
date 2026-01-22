@@ -98,8 +98,7 @@ export async function buildAndPackLocally(logger) {
 
     // Copy bin script
     execSync(
-        "cp",
-        ["-r", join(packagesDir, "sockethub/bin"), `${tarballsDir}/`],
+        `cp -r ${join(packagesDir, "sockethub/bin")} ${tarballsDir}/`,
         {
             cwd: repoRoot,
             stdio: "inherit",
