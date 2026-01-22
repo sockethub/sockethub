@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/server",
   "description": "A polyglot messaging service, server libraries",
-  "version": "5.0.0-alpha.7",
+  "version": "5.0.0-alpha.8",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -50,11 +50,11 @@
   "homepage": "https://sockethub.org",
   "dependencies": {
     "@sentry/bun": "^10.36.0",
-    "@sockethub/activity-streams": "^4.4.0-alpha.7",
-    "@sockethub/client": "^5.0.0-alpha.7",
-    "@sockethub/crypto": "^1.0.0-alpha.7",
-    "@sockethub/data-layer": "^1.0.0-alpha.7",
-    "@sockethub/schemas": "^3.0.0-alpha.7",
+    "@sockethub/activity-streams": "^4.4.0-alpha.8",
+    "@sockethub/client": "^5.0.0-alpha.8",
+    "@sockethub/crypto": "^1.0.0-alpha.8",
+    "@sockethub/data-layer": "^1.0.0-alpha.8",
+    "@sockethub/schemas": "^3.0.0-alpha.8",
     "body-parser": "^1.20.4",
     "chalk": "^5.6.2",
     "debug": "^4.4.3",
@@ -84,12 +84,12 @@
     "web-streams-polyfill": "^3.3.3"
   },
   "optionalDependencies": {
-    "@sockethub/examples": "^1.0.0-alpha.7",
-    "@sockethub/platform-dummy": "^3.0.0-alpha.7",
-    "@sockethub/platform-feeds": "^4.0.0-alpha.7",
-    "@sockethub/platform-irc": "^4.0.0-alpha.7",
-    "@sockethub/platform-metadata": "^1.0.1-alpha.2",
-    "@sockethub/platform-xmpp": "^5.0.0-alpha.7"
+    "@sockethub/examples": "^1.0.0-alpha.8",
+    "@sockethub/platform-dummy": "^3.0.0-alpha.8",
+    "@sockethub/platform-feeds": "^4.0.0-alpha.8",
+    "@sockethub/platform-irc": "^4.0.0-alpha.8",
+    "@sockethub/platform-metadata": "^1.0.1-alpha.3",
+    "@sockethub/platform-xmpp": "^5.0.0-alpha.8"
   },
-  "gitHead": "e69e26b98c4bce1279aae4dc356b9a0f7e7de659"
+  "gitHead": "df82c84a3724c92a9b50e46e9205fa57d834a951"
 }

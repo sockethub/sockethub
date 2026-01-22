@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/platform-xmpp",
   "description": "A sockethub platform module implementing XMPP functionality",
-  "version": "5.0.0-alpha.7",
+  "version": "5.0.0-alpha.8",
   "private": false,
   "type": "module",
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -45,7 +45,7 @@
     "@xmpp/client": "^0.13.6"
   },
   "devDependencies": {
-    "@sockethub/schemas": "^3.0.0-alpha.7",
+    "@sockethub/schemas": "^3.0.0-alpha.8",
     "@xmpp/xml": "^0.13.2",
     "jsdoc-to-markdown": "^8.0.3",
     "sinon": "^17.0.2"
@@ -58,5 +58,5 @@
       "optional": true
     }
   },
-  "gitHead": "e69e26b98c4bce1279aae4dc356b9a0f7e7de659"
+  "gitHead": "df82c84a3724c92a9b50e46e9205fa57d834a951"
 }

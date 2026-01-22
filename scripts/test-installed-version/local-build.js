@@ -97,13 +97,10 @@ export async function buildAndPackLocally(logger) {
     await writeFile(modifiedPkgPath, JSON.stringify(modifiedPkg, null, 2));
 
     // Copy bin script
-    execSync(
-        `cp -r ${join(packagesDir, "sockethub/bin")} ${tarballsDir}/`,
-        {
-            cwd: repoRoot,
-            stdio: "inherit",
-        },
-    );
+    execSync(`cp -r ${join(packagesDir, "sockethub/bin")} ${tarballsDir}/`, {
+        cwd: repoRoot,
+        stdio: "inherit",
+    });
     await logger.success("Created local package configuration");
 
     // Pack the modified sockethub package as a tarball
