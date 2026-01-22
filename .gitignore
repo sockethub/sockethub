@@ -10,3 +10,6 @@ sockethub.config.json
 .claude/
 CLAUDE.md
 packages/sockethub/sockethub.config.json.sentry
+test-install/
+test-results/
+.local-tarballs/

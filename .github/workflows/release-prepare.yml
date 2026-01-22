@@ -88,6 +88,20 @@ jobs:
           echo ""
           echo "✅ Pre-release validation passed"
 
+      - name: Test locally built packages
+        run: |
+          echo "🧪 Testing locally built packages..."
+          echo ""
+
+          # Test with both Bun and Node runtimes
+          bun run scripts/test-installed-version.js \
+            --local \
+            --runtime both \
+            --suite all
+
+          echo ""
+          echo "✅ Local package tests passed"
+
       - name: Extract new version
         id: extract_version
         run: |
