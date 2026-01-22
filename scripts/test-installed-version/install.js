@@ -64,7 +64,7 @@ export class InstallManager {
             installArgs = ["install"];
         } else {
             installCmd = "npm";
-            installArgs = ["install", "--legacy-peer-deps"];
+            installArgs = ["install"];
         }
 
         const result = await this.logger.exec(
