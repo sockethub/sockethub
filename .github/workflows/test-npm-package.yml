@@ -20,6 +20,28 @@ on:
         required: false
         type: boolean
         default: false
+  workflow_call:
+    inputs:
+      version:
+        description: 'Sockethub version to test (e.g., 5.0.0-alpha.6, latest)'
+        required: false
+        type: string
+        default: 'latest'
+      runtime:
+        description: 'Runtime to test (bun, node, both)'
+        required: false
+        type: string
+        default: 'both'
+      suite:
+        description: 'Test suite to run (all, redis, process, browser)'
+        required: false
+        type: string
+        default: 'all'
+      local:
+        description: 'Build and pack from source instead of installing from npm'
+        required: false
+        type: boolean
+        default: false
   schedule:
     - cron: '0 2 * * *'  # Nightly at 2am UTC
 

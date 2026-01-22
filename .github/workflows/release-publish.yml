@@ -18,11 +18,19 @@ on:
         default: false
 
 jobs:
-  publish:
+  test-local-packages:
     # Run if: PR was merged from release branch OR manual trigger with version
     if: |
       (github.event_name == 'pull_request' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/v')) ||
       (github.event_name == 'workflow_dispatch')
+    uses: ./.github/workflows/test-npm-package.yml
+    with:
+      local: true
+      runtime: both
+      suite: all
+
+  publish:
+    needs: test-local-packages
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -96,20 +104,6 @@ jobs:
 
       - name: Run tests
         run: bun test
-
-      - name: Test locally built packages
-        run: |
-          echo "🧪 Testing locally built packages before publish..."
-          echo ""
-
-          # Test with both Bun and Node runtimes
-          bun run scripts/test-installed-version.js \
-            --local \
-            --runtime both \
-            --suite all
-
-          echo ""
-          echo "✅ Local package tests passed - safe to publish"
 
       # ============================================================
       # PRE-FLIGHT CHECK PHASE

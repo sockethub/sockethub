@@ -22,7 +22,15 @@ on:
         default: ''
 
 jobs:
+  test-local-packages:
+    uses: ./.github/workflows/test-npm-package.yml
+    with:
+      local: true
+      runtime: both
+      suite: all
+
   prepare:
+    needs: test-local-packages
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -87,20 +95,6 @@ jobs:
 
           echo ""
           echo "✅ Pre-release validation passed"
-
-      - name: Test locally built packages
-        run: |
-          echo "🧪 Testing locally built packages..."
-          echo ""
-
-          # Test with both Bun and Node runtimes
-          bun run scripts/test-installed-version.js \
-            --local \
-            --runtime both \
-            --suite all
-
-          echo ""
-          echo "✅ Local package tests passed"
 
       - name: Extract new version
         id: extract_version
