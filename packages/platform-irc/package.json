@@ -17,7 +17,10 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["src/", "dist/"],
+  "files": [
+    "src/",
+    "dist/"
+  ],
   "engines": {
     "bun": ">=1.2"
   },
@@ -51,7 +54,7 @@
     "typedoc": "^0.28.14"
   },
   "peerDependencies": {
-    "@sockethub/server": "^5.0.0-alpha.6"
+    "@sockethub/server": "^5.0.0-alpha.8"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {

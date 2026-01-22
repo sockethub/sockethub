@@ -17,17 +17,23 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["src/", "dist/"],
+  "files": [
+    "src/",
+    "dist/"
+  ],
   "engines": {
     "bun": ">=1.2"
   },
-  "keywords": ["sockethub", "dummy"],
+  "keywords": [
+    "sockethub",
+    "dummy"
+  ],
   "devDependencies": {
     "@sockethub/schemas": "^3.0.0-alpha.8",
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "@sockethub/server": "^5.0.0-alpha.6"
+    "@sockethub/server": "^5.0.0-alpha.8"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {
