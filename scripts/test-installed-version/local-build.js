@@ -3,7 +3,7 @@
  */
 
 import { execSync } from "node:child_process";
-import { readFile, writeFile, readdir } from "node:fs/promises";
+import { readFile, writeFile, readdir, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
 /**
@@ -29,10 +29,9 @@ export async function buildAndPackLocally(logger) {
     throw new Error(`Build failed: ${error.message}`);
   }
 
-  // Clean and create tarballs directory
-  execSync(`rm -rf ${tarballsDir} && mkdir -p ${tarballsDir}`, {
-    cwd: repoRoot,
-  });
+  // Clean and create tarballs directory without using a shell
+  await rm(tarballsDir, { recursive: true, force: true });
+  await mkdir(tarballsDir, { recursive: true });
 
   // Get list of all packages
   const packageDirs = await readdir(packagesDir);
