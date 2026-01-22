@@ -16,10 +16,7 @@
       "default": "./dist/index.js"
     }
   },
-  "files": [
-    "src/",
-    "dist/"
-  ],
+  "files": ["src/", "dist/"],
   "engines": {
     "bun": ">=1.2"
   },

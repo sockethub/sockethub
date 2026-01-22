@@ -68,9 +68,11 @@ function updateWorkspaceDeps(packageJson, label) {
                 typeof currentVersion === "string" &&
                 currentVersion.startsWith("workspace:")
             ) {
-                if (["workspace:^", "workspace:*", "workspace:~"].includes(
-                    currentVersion,
-                )) {
+                if (
+                    ["workspace:^", "workspace:*", "workspace:~"].includes(
+                        currentVersion,
+                    )
+                ) {
                     continue; // Skip range specifiers
                 }
 
