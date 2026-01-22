@@ -57,27 +57,61 @@ function updateWorkspaceDeps(packageJson, label) {
         for (const [pkgName, currentVersion] of Object.entries(
             packageJson[depType],
         )) {
+            const actualVersion = packageVersions.get(pkgName);
+
+            // Only process if this is a workspace package
+            if (!actualVersion) continue;
+
             // Check if it's a workspace protocol dependency with explicit version
             // Skip workspace:^, workspace:*, workspace:~ as they don't need updating
             if (
                 typeof currentVersion === "string" &&
-                currentVersion.startsWith("workspace:") &&
-                !["workspace:^", "workspace:*", "workspace:~"].includes(
-                    currentVersion,
-                )
+                currentVersion.startsWith("workspace:")
             ) {
-                const actualVersion = packageVersions.get(pkgName);
+                if (
+                    ["workspace:^", "workspace:*", "workspace:~"].includes(
+                        currentVersion,
+                    )
+                ) {
+                    continue; // Skip range specifiers
+                }
 
-                if (actualVersion) {
-                    const expectedVersion = `workspace:${actualVersion}`;
+                const expectedVersion = `workspace:${actualVersion}`;
 
-                    if (currentVersion !== expectedVersion) {
-                        console.log(
-                            `[${label}] ${pkgName}: ${currentVersion} → ${expectedVersion}`,
-                        );
-                        packageJson[depType][pkgName] = expectedVersion;
-                        updated = true;
-                    }
+                if (currentVersion !== expectedVersion) {
+                    console.log(
+                        `[${label}] ${depType}.${pkgName}: ${currentVersion} → ${expectedVersion}`,
+                    );
+                    packageJson[depType][pkgName] = expectedVersion;
+                    updated = true;
+                }
+            }
+            // For peerDependencies, also update regular version strings (not workspace protocol)
+            else if (
+                depType === "peerDependencies" &&
+                typeof currentVersion === "string"
+            ) {
+                let expectedVersion;
+
+                // Preserve the range prefix (^, ~, >, <, etc.)
+                if (currentVersion.startsWith("^")) {
+                    expectedVersion = `^${actualVersion}`;
+                } else if (currentVersion.startsWith("~")) {
+                    expectedVersion = `~${actualVersion}`;
+                } else if (currentVersion.match(/^[><]=?/)) {
+                    // Don't update comparison operators (>=, >, <=, <)
+                    continue;
+                } else {
+                    // Exact version
+                    expectedVersion = actualVersion;
+                }
+
+                if (currentVersion !== expectedVersion) {
+                    console.log(
+                        `[${label}] ${depType}.${pkgName}: ${currentVersion} → ${expectedVersion}`,
+                    );
+                    packageJson[depType][pkgName] = expectedVersion;
+                    updated = true;
                 }
             }
         }

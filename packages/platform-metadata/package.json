@@ -45,7 +45,7 @@
     "@sockethub/schemas": "^3.0.0-alpha.8"
   },
   "peerDependencies": {
-    "@sockethub/server": "^5.0.0-alpha.6"
+    "@sockethub/server": "^5.0.0-alpha.8"
   },
   "gitHead": "df82c84a3724c92a9b50e46e9205fa57d834a951"
 }
