@@ -5,6 +5,9 @@
  * platforms, and whitelisting or blacklisting (or neither) based on the
  * config.
  */
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import debug from "debug";
 
 import {
@@ -20,6 +23,7 @@ const log = debug("sockethub:server:bootstrap:platforms");
 export type PlatformStruct = {
     id: string;
     moduleName: string;
+    modulePath?: string;
     config: PlatformConfig;
     schemas: PlatformSchemaStruct;
     version: string;
@@ -41,6 +45,35 @@ function platformListsSupportedTypes(p): boolean {
         p.schema.messages.properties?.type?.enum &&
         p.schema.messages.properties.type.enum.length > 0
     );
+}
+
+// Resolve the absolute filesystem path to a platform module
+function resolveModulePath(platformName: string): string | undefined {
+    try {
+        // Resolve to file:// URL
+        const resolved = import.meta.resolve(platformName);
+
+        // Convert to absolute path
+        const filePath = fileURLToPath(resolved);
+
+        // Walk up to find package.json (package root)
+        let dir = dirname(filePath);
+        for (let i = 0; i < 5; i++) {
+            const pkgPath = join(dir, "package.json");
+            if (existsSync(pkgPath)) {
+                return dir;
+            }
+            dir = dirname(dir);
+        }
+
+        // Fallback: return directory of entry point
+        return dirname(filePath);
+    } catch (err) {
+        log(
+            `failed to resolve module path for ${platformName}: ${err.message}`,
+        );
+        return undefined;
+    }
 }
 
 async function loadPlatform(platformName: string, injectRequire) {
@@ -95,9 +128,15 @@ export default async function loadPlatforms(
             types = [...types, ...p.schema.messages.properties.type.enum];
         }
 
+        // Resolve module path (skip in test mode with injectRequire)
+        const modulePath = injectRequire
+            ? undefined
+            : resolveModulePath(platformName);
+
         platforms.set(p.schema.name, {
             id: p.schema.name,
             moduleName: p.schema.name,
+            modulePath: modulePath,
             config: p.config,
             schemas: {
                 credentials: p.schema.credentials || {},

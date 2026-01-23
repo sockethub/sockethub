@@ -1,0 +1,210 @@
+name: Rollback Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to rollback (e.g., 5.0.0-alpha.5)'
+        required: true
+        type: string
+      delete_release:
+        description: 'Delete GitHub release'
+        required: false
+        type: boolean
+        default: true
+      delete_tag:
+        description: 'Delete git tag'
+        required: false
+        type: boolean
+        default: true
+      deprecate_npm:
+        description: 'Deprecate npm packages (marks as broken, users see warning)'
+        required: false
+        type: boolean
+        default: true
+      deprecation_message:
+        description: 'Deprecation message (shown to users who install)'
+        required: false
+        type: string
+        default: 'This version has been deprecated due to a failed release. Please use a newer version.'
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Validate version format
+        run: |
+          VERSION="${{ inputs.version }}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z]+\.[0-9]+)?$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "Expected format: X.Y.Z or X.Y.Z-prerelease.N"
+            exit 1
+          fi
+          echo "✅ Version format valid: $VERSION"
+
+      - name: Check current state
+        id: state
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ inputs.version }}"
+          TAG="v$VERSION"
+
+          echo "🔍 Checking state for $TAG"
+          echo ""
+
+          # Check GitHub release
+          if gh release view "$TAG" &>/dev/null; then
+            echo "release_exists=true" >> $GITHUB_OUTPUT
+            echo "✅ GitHub release exists: $TAG"
+          else
+            echo "release_exists=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No GitHub release found for $TAG"
+          fi
+
+          # Check git tag
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG$"; then
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+            echo "✅ Git tag exists: $TAG"
+          else
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No git tag found for $TAG"
+          fi
+
+          echo ""
+
+      - name: Find published npm packages
+        id: npm_check
+        run: |
+          echo "🔍 Finding published npm packages..."
+          echo ""
+
+          PUBLISHED_PACKAGES=""
+          PACKAGES=$(find packages -maxdepth 2 -name "package.json" -not -path "*/node_modules/*")
+
+          for pkg_json in $PACKAGES; do
+            PKG_NAME=$(node -p "require('./$pkg_json').name")
+            PKG_PRIVATE=$(node -p "require('./$pkg_json').private || false")
+            PKG_VERSION=$(node -p "require('./$pkg_json').version")
+
+            if [ "$PKG_PRIVATE" = "true" ]; then
+              continue
+            fi
+
+            # Check if this package version is published
+            NPM_VERSION=$(npm view "$PKG_NAME@$PKG_VERSION" version 2>/dev/null || echo "")
+            if [ -n "$NPM_VERSION" ]; then
+              echo "✅ $PKG_NAME@$PKG_VERSION - published"
+              PUBLISHED_PACKAGES="$PUBLISHED_PACKAGES $PKG_NAME@$PKG_VERSION"
+            else
+              echo "⏭️  $PKG_NAME@$PKG_VERSION - not published"
+            fi
+          done
+
+          if [ -z "$PUBLISHED_PACKAGES" ]; then
+            echo ""
+            echo "ℹ️ No packages published for this release"
+            echo "has_published=false" >> $GITHUB_OUTPUT
+          else
+            echo ""
+            echo "📦 Published packages:$PUBLISHED_PACKAGES"
+            echo "has_published=true" >> $GITHUB_OUTPUT
+            echo "packages=$PUBLISHED_PACKAGES" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Delete GitHub release
+        if: inputs.delete_release && steps.state.outputs.release_exists == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ inputs.version }}"
+          echo "🗑️ Deleting GitHub release $TAG..."
+          gh release delete "$TAG" --yes
+          echo "✅ Release deleted"
+
+      - name: Delete git tag
+        if: inputs.delete_tag && steps.state.outputs.tag_exists == 'true'
+        run: |
+          TAG="v${{ inputs.version }}"
+          echo "🗑️ Deleting git tag $TAG..."
+          git push origin --delete "$TAG"
+          echo "✅ Tag deleted"
+
+      - name: Setup NPM authentication
+        if: inputs.deprecate_npm && steps.npm_check.outputs.has_published == 'true'
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          chmod 600 ~/.npmrc
+
+      - name: Deprecate npm packages
+        if: inputs.deprecate_npm && steps.npm_check.outputs.has_published == 'true'
+        run: |
+          PACKAGES="${{ steps.npm_check.outputs.packages }}"
+          MESSAGE="${{ inputs.deprecation_message }}"
+
+          echo "⚠️ Deprecating npm packages..."
+          echo "Message: $MESSAGE"
+          echo ""
+
+          FAILED=false
+          for PKG_WITH_VERSION in $PACKAGES; do
+            echo "Deprecating $PKG_WITH_VERSION..."
+            if OUTPUT=$(npm deprecate "$PKG_WITH_VERSION" "$MESSAGE" 2>&1); then
+              echo "✅ $PKG_WITH_VERSION deprecated"
+            else
+              echo "$OUTPUT"
+              echo "❌ Failed to deprecate $PKG_WITH_VERSION"
+              FAILED=true
+            fi
+          done
+
+          if [ "$FAILED" = "true" ]; then
+            echo ""
+            echo "⚠️ Some packages could not be deprecated"
+            exit 1
+          fi
+
+      - name: Summary
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ inputs.version }}"
+          TAG="v$VERSION"
+
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📋 Rollback Summary for $TAG"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+
+          # Check final state
+          if gh release view "$TAG" &>/dev/null; then
+            echo "GitHub Release: ⚠️ Still exists"
+          else
+            echo "GitHub Release: ✅ Deleted/Not found"
+          fi
+
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG$"; then
+            echo "Git Tag: ⚠️ Still exists"
+          else
+            echo "Git Tag: ✅ Deleted/Not found"
+          fi
+
+          if [ "${{ inputs.deprecate_npm }}" = "true" ]; then
+            echo "npm Packages: ✅ Deprecated (users will see warning on install)"
+          fi
+
+          echo ""

@@ -1,9 +1,17 @@
 {
   "name": "@sockethub/irc2as",
-  "version": "4.0.0-alpha.4",
+  "version": "4.0.0-alpha.10",
   "description": "IRC to ActivityStreams objects",
   "type": "module",
-  "main": "src/index.js",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "bun": "./src/index.js",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["src/", "dist/"],
   "engines": {
     "bun": ">=1.2"
   },
@@ -15,15 +23,23 @@
   "keywords": ["irc", "activitystreams", "activity-streams", "sockethub"],
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "bugs": {
     "url": "https://github.com/sockethub/sockethub/issues"
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/irc2as",
+  "scripts": {
+    "build": "bun build src/index.js --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist"
+  },
   "dependencies": {
-    "debug": "^4.4.0",
+    "debug": "^4.4.3",
     "fast-deep-equal": "^3.1.3"
   },
   "devDependencies": {
-    "@sockethub/schemas": "workspace:*"
-  }
+    "@sockethub/schemas": "^3.0.0-alpha.10"
+  },
+  "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
 }

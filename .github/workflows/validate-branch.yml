@@ -65,7 +65,7 @@ jobs:
           TITLE="${{ github.event.pull_request.title }}"
           
           # Allow release PR titles (created by automation)
-          if [[ "$TITLE" =~ ^chore\(release\):\ prepare\ v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+          if [[ "$TITLE" =~ ^Release\ v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
             echo "✅ Release PR title: $TITLE"
             exit 0
           fi
@@ -87,7 +87,7 @@ jobs:
           echo "Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
           echo ""
           echo "Examples:"
-          echo "  - feat(irc): add reconnection logic"
+          echo "  - feat(platform-irc): add reconnection logic"
           echo "  - fix: handle null credentials properly"
           echo "  - docs: update contributing guide"
           echo "  - ci: implement automated releases"

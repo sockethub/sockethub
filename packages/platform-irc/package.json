@@ -1,12 +1,23 @@
 {
   "name": "@sockethub/platform-irc",
   "description": "A sockethub platform module implementing IRC functionality",
-  "version": "4.0.0-alpha.4",
+  "version": "4.0.0-alpha.10",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["src/", "dist/"],
   "engines": {
     "bun": ">=1.2"
   },
@@ -25,24 +36,27 @@
     "directory": "packages/platform-irc"
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-irc",
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist",
+    "doc": "typedoc --options typedoc.json"
+  },
   "dependencies": {
-    "@sockethub/irc2as": "workspace:4.0.0-alpha.4",
-    "irc-socket-sasl": "4.0.0"
+    "@sockethub/irc2as": "^4.0.0-alpha.10",
+    "irc-socket-sasl": "^4.0.0"
   },
   "devDependencies": {
-    "@sockethub/schemas": "workspace:*",
+    "@sockethub/schemas": "^3.0.0-alpha.10",
     "@types/bun": "latest",
     "typedoc": "^0.28.14"
   },
   "peerDependencies": {
-    "@sockethub/server": "workspace:*"
+    "@sockethub/server": "^5.0.0-alpha.10"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {
       "optional": true
     }
   },
-  "scripts": {
-    "doc": "typedoc --options typedoc.json"
-  }
+  "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
 }

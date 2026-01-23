@@ -8,12 +8,12 @@ FROM base AS build
 WORKDIR /app
 COPY . ./
 RUN apt update && apt install python3 python3-pip make g++ -y
-RUN bun install --frozen-lockfile
+RUN bun install
 RUN bun run build
 CMD DEBUG=secure-store*,sockethub* /app/packages/sockethub/bin/sockethub --host 0.0.0.0
 
 FROM base AS prod
 WORKDIR /app
 COPY --exclude=node_modules --from=build /app ./
-RUN bun install --frozen-lockfile --production
+RUN bun install --production
 CMD DEBUG=secure-store*,sockethub* /app/packages/sockethub/bin/sockethub --host 0.0.0.0

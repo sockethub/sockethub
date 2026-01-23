@@ -1,9 +1,16 @@
 {
   "name": "@sockethub/client",
-  "version": "5.0.0-alpha.4",
+  "version": "5.0.0-alpha.10",
   "description": "A JavaScript client for the Sockethub protocol gateway",
-  "main": "./src/sockethub-client.ts",
-  "files": ["dist/"],
+  "main": "./dist/sockethub-client.js",
+  "exports": {
+    ".": {
+      "bun": "./src/sockethub-client.ts",
+      "import": "./dist/sockethub-client.js",
+      "default": "./dist/sockethub-client.js"
+    }
+  },
+  "files": ["src/", "dist/"],
   "engines": {
     "bun": ">=1.2"
   },
@@ -15,6 +22,9 @@
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/client",
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "sockethub",
     "messaging",
@@ -25,23 +35,25 @@
     "client"
   ],
   "scripts": {
-    "build": "bun run clean && bun run build:js && bun run build:minify",
-    "build:js": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=esm --outdir=dist/ ",
-    "build:minify": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=esm --outfile=dist/sockethub-client.min.js --minify",
+    "build": "bun run clean && bun run build:esm && bun run build:browser && bun run build:minify",
+    "build:esm": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=esm --outdir=dist/ ",
+    "build:browser": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=iife --global-name=SockethubClient --outfile=dist/sockethub-client.browser.js",
+    "build:minify": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=iife --global-name=SockethubClient --outfile=dist/sockethub-client.min.js --minify",
     "clean": "rm -rf dist",
     "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer"
   },
   "dependencies": {
-    "eventemitter3": "5.0.1"
+    "eventemitter3": "^5.0.4"
   },
   "devDependencies": {
+    "@sockethub/activity-streams": "^4.4.0-alpha.10",
+    "@sockethub/schemas": "^3.0.0-alpha.10",
     "@types/bun": "latest",
-    "@sockethub/activity-streams": "workspace:*",
-    "@sockethub/schemas": "workspace:*",
-    "@types/sinon": "17.0.2",
+    "@types/sinon": "^17.0.4",
     "@web/test-runner": "^0.19.0",
     "@web/test-runner-puppeteer": "^0.17.0",
-    "sinon": "17.0.1",
-    "socket.io-client": "4.8.1"
-  }
+    "sinon": "^17.0.2",
+    "socket.io-client": "^4.8.3"
+  },
+  "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
 }

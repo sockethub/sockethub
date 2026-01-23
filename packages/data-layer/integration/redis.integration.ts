@@ -7,9 +7,9 @@ import {
     JobWorker,
 } from "@sockethub/data-layer";
 import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
-import config from "./config.js";
 
-const REDIS_URL = config.redis.url;
+const REDIS_HOST = process.env.REDIS_HOST || "localhost";
+const REDIS_URL = `redis://${REDIS_HOST}:6379`;
 
 const actor = `${(Math.random() + 1).toString(36).substring(2)}`;
 const creds: CredentialsObject = {
@@ -176,18 +176,27 @@ describe("JobQueue", () => {
         await completedPromise;
     });
 
-    it("handles job failures", (done) => {
-        queue.on("failed", (jobData: JobDataDecrypted, error: string) => {
-            expect(jobData.msg.type).toEqual("foo");
-            expect(error).toContain("simulated error");
-            done();
+    it("handles job failures", async () => {
+        // Set up promise that resolves when job fails
+        const failedPromise = new Promise<void>((resolve) => {
+            queue.on("failed", (jobData: JobDataDecrypted, error: string) => {
+                expect(jobData.msg.type).toEqual("foo");
+                expect(error).toContain("simulated error");
+                resolve();
+            });
         });
 
+        // Register job handler that will fail
         worker.onJob(async (job: JobDataDecrypted) => {
             throw new Error("simulated error");
         });
 
-        queue.add("socket id", as);
+        // Give worker time to establish Redis connection and start polling
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Add job and wait for it to fail
+        await queue.add("socket id", as);
+        await failedPromise;
     });
 
     it("rejects jobs when queue is paused", async () => {
@@ -212,54 +221,85 @@ describe("JobQueue", () => {
         expect(job.title).toBeDefined();
     });
 
-    it("processes multiple jobs in sequence", (done) => {
-        let completedCount = 0;
+    it("processes multiple jobs in sequence", async () => {
         const jobCount = 5;
+        let completedCount = 0;
 
-        queue.on("completed", () => {
-            completedCount++;
-            if (completedCount === jobCount) {
-                done();
-            }
+        // Set up promise that resolves when all jobs complete
+        const allCompletedPromise = new Promise<void>((resolve) => {
+            queue.on("completed", () => {
+                completedCount++;
+                if (completedCount === jobCount) {
+                    resolve();
+                }
+            });
         });
 
+        // Register job handler
         worker.onJob(async (job: JobDataDecrypted) => {
             return undefined;
         });
 
+        // Give worker time to be ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Add all jobs
         for (let i = 0; i < jobCount; i++) {
-            queue.add("socket id", { ...as, id: `job-${i}` });
+            await queue.add("socket id", { ...as, id: `job-${i}` });
         }
+
+        // Wait for all jobs to complete
+        await allCompletedPromise;
     });
 
-    it("handles worker returning ActivityStream", (done) => {
+    it("handles worker returning ActivityStream", async () => {
         const returnAS: ActivityStream = {
             type: "result",
             context: "bar",
             actor: { id: "bar", type: "person" },
         };
 
-        queue.on("completed", (jobData, result) => {
-            expect(result).toEqual(returnAS);
-            done();
+        // Set up promise that resolves when job completes
+        const completedPromise = new Promise<void>((resolve) => {
+            queue.on("completed", (jobData, result) => {
+                expect(result).toEqual(returnAS);
+                resolve();
+            });
         });
 
+        // Register job handler
         worker.onJob(async () => returnAS);
-        queue.add("socket id", as);
+
+        // Give worker time to be ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Add job and wait for completion
+        await queue.add("socket id", as);
+        await completedPromise;
     });
 
-    it("handles worker returning undefined", (done) => {
-        queue.on("completed", (jobData, result) => {
-            // BullMQ converts undefined to null in the result
-            expect(result).toBeNull();
-            done();
+    it("handles worker returning undefined", async () => {
+        // Set up promise that resolves when job completes
+        const completedPromise = new Promise<void>((resolve) => {
+            queue.on("completed", (jobData, result) => {
+                // BullMQ converts undefined to null in the result
+                expect(result).toBeNull();
+                resolve();
+            });
         });
 
+        // Register job handler
         worker.onJob(async () => undefined);
-        queue.add("socket id", as);
+
+        // Give worker time to be ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Add job and wait for completion
+        await queue.add("socket id", as);
+        await completedPromise;
     });
 
-    it("encrypts and decrypts job data correctly", (done) => {
+    it("encrypts and decrypts job data correctly", async () => {
         const complexAS: ActivityStream = {
             type: "send",
             context: "irc",
@@ -270,13 +310,21 @@ describe("JobQueue", () => {
             },
         };
 
-        worker.onJob(async (job: JobDataDecrypted) => {
-            expect(job.msg).toEqual(complexAS);
-            done();
-            return undefined;
+        // Set up promise that resolves when job is processed
+        const processedPromise = new Promise<void>((resolve) => {
+            worker.onJob(async (job: JobDataDecrypted) => {
+                expect(job.msg).toEqual(complexAS);
+                resolve();
+                return undefined;
+            });
         });
 
-        queue.add("socket id", complexAS);
+        // Give worker time to be ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Add job and wait for processing
+        await queue.add("socket id", complexAS);
+        await processedPromise;
     });
 
     afterEach(async () => {
