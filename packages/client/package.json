@@ -35,9 +35,10 @@
     "client"
   ],
   "scripts": {
-    "build": "bun run clean && bun run build:js && bun run build:minify",
-    "build:js": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=esm --outdir=dist/ ",
-    "build:minify": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=esm --outfile=dist/sockethub-client.min.js --minify",
+    "build": "bun run clean && bun run build:esm && bun run build:browser && bun run build:minify",
+    "build:esm": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=esm --outdir=dist/ ",
+    "build:browser": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=iife --global-name=SockethubClient --outfile=dist/sockethub-client.browser.js",
+    "build:minify": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=iife --global-name=SockethubClient --outfile=dist/sockethub-client.min.js --minify",
     "clean": "rm -rf dist",
     "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer"
   },

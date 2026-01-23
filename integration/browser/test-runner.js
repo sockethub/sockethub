@@ -11,7 +11,7 @@ if (!testFile) {
     process.exit(1);
 }
 
-// Create temporary WTR config file with injected global config
+// Create temporary WTR config file with injected global config and HTTP-loaded scripts
 const configPath = join(process.cwd(), "web-test-runner.config.temp.mjs");
 const configContent = `export default {
     nodeResolve: true,
@@ -20,10 +20,16 @@ const configContent = `export default {
     testRunnerHtml: (testFramework) => \`
         <!DOCTYPE html>
         <html>
-            <body>
+            <head>
                 <script>
                     window.TEST_CONFIG = ${JSON.stringify(config)};
                 </script>
+                <!-- Load sockethub-client and socket.io from running Sockethub server -->
+                <!-- These must load synchronously before the test framework -->
+                <script src="${config.sockethub.url}/socket.io.js"></script>
+                <script src="${config.sockethub.url}/sockethub-client.js"></script>
+            </head>
+            <body>
                 <script type="module" src="\${testFramework}"></script>
             </body>
         </html>
@@ -44,5 +50,6 @@ child.on("exit", (code) => {
     } catch (e) {
         // Ignore cleanup errors
     }
+
     process.exit(code);
 });
