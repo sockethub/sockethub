@@ -9,7 +9,9 @@ if (typeof window.io === "undefined") {
     throw new Error("socket.io.js failed to load - window.io is undefined");
 }
 if (typeof window.SockethubClient === "undefined") {
-    throw new Error("sockethub-client.js failed to load - window.SockethubClient is undefined");
+    throw new Error(
+        "sockethub-client.js failed to load - window.SockethubClient is undefined",
+    );
 }
 
 // Mocha configuration
