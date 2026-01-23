@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { spawn } from "node:child_process";
-import { writeFileSync, unlinkSync } from "node:fs";
+import { unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import config from "../config.js";
 
