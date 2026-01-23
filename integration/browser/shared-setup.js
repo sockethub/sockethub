@@ -1,7 +1,8 @@
 import { expect } from "@esm-bundle/chai";
 import createTestUtils from "../utils.js";
-import "../../packages/server/res/sockethub-client.js";
-import "../../packages/server/res/socket.io.js";
+
+// sockethub-client.js and socket.io.js are loaded via <script> tags
+// in the test runner HTML (injected from the running Sockethub server)
 
 // Mocha configuration
 mocha.bail(true);

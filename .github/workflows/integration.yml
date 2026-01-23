@@ -4,7 +4,7 @@ on:
 
 jobs:
 
-  redis:
+  data-layer:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,8 +24,8 @@ jobs:
       - name: Verify Redis is listening
         run: nc -zv localhost 6379
 
-      - name: Redis Integration Tests
-        run: bun run integration:redis
+      - name: Data Layer Integration Tests
+        run: bun run integration:data-layer
 
   process:
     runs-on: ubuntu-latest

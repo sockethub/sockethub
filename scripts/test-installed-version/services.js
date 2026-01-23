@@ -13,14 +13,12 @@ export class ServiceManager {
 
     /**
      * Start required Docker services based on test suite
-     * @param {string} suite - Test suite (redis, process, browser, all)
+     * @param {string} suite - Test suite (process, browser, all)
      */
     async start(suite) {
         await this.logger.info(`Starting services for suite: ${suite}`);
 
-        const needsRedis = ["all", "redis", "process", "browser"].includes(
-            suite,
-        );
+        const needsRedis = ["all", "process", "browser"].includes(suite);
         const needsXmpp = ["all", "process", "browser"].includes(suite);
 
         if (needsRedis) {

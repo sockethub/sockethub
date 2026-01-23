@@ -19,7 +19,7 @@ export class TestRunner {
 
     /**
      * Run specified test suite(s)
-     * @param {string} suite - Suite to run (redis, process, browser, all)
+     * @param {string} suite - Suite to run (process, browser, all)
      * @returns {object} Test results
      */
     async run(suite) {
@@ -29,9 +29,6 @@ export class TestRunner {
 
         try {
             switch (suite) {
-                case "redis":
-                    await this.runRedisTests();
-                    break;
                 case "process":
                     await this.runProcessTests();
                     break;
@@ -39,10 +36,7 @@ export class TestRunner {
                     await this.runBrowserTests();
                     break;
                 case "all":
-                    // Process tests are excluded from "all" because they test sudden
-                    // process termination and leave Sockethub in a dirty state.
-                    // They run in isolation in CI and should be run with --suite process
-                    await this.runRedisTests();
+                    await this.runProcessTests();
                     await this.runBrowserTests();
                     break;
                 default:
@@ -56,48 +50,6 @@ export class TestRunner {
         this.results.totalDuration = Date.now() - startTime;
 
         return this.results;
-    }
-
-    /**
-     * Run Redis integration tests
-     */
-    async runRedisTests() {
-        await this.logger.info("Running Redis integration tests...");
-
-        const startTime = Date.now();
-        const result = await this.logger.exec(
-            "bun",
-            ["test", "./integration/redis.integration.ts"],
-            {
-                env: {
-                    ...process.env,
-                    DEBUG: "ioredis*,bullmq*,sockethub*",
-                },
-            },
-            "integration-redis.log",
-        );
-
-        const duration = Date.now() - startTime;
-        const passed = result.exitCode === 0;
-
-        this.results.suites.push({
-            name: "redis",
-            passed,
-            exitCode: result.exitCode,
-            duration,
-        });
-
-        if (passed) {
-            this.results.passed++;
-            await this.logger.success(
-                `Redis tests passed (${Math.round(duration / 1000)}s)`,
-            );
-        } else {
-            this.results.failed++;
-            await this.logger.error(
-                `Redis tests failed (exit code ${result.exitCode})`,
-            );
-        }
     }
 
     /**

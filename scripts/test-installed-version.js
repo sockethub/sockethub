@@ -13,7 +13,7 @@
  *
  * Options:
  *   --runtime <bun|node|both>  Runtime to test (default: "both")
- *   --suite <redis|process|browser|all>  Test suite (default: "all")
+ *   --suite <process|browser|all>  Test suite (default: "all")
  *   --local                Build and pack from source instead of installing from npm
  *   --skip-install         Skip npm install
  *   --skip-cleanup         Don't remove resources after test
@@ -61,7 +61,7 @@ if (!version && !values.local) {
         "  bun run scripts/test-installed-version.js 5.0.0-alpha.6 --runtime bun",
     );
     console.error(
-        "  bun run scripts/test-installed-version.js latest --suite redis",
+        "  bun run scripts/test-installed-version.js latest --suite browser",
     );
     console.error(
         "  bun run scripts/test-installed-version.js --local --runtime bun",

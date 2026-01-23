@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { spawn } from "node:child_process";
-import { unlinkSync, writeFileSync } from "node:fs";
+import { writeFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import config from "../config.js";
 
@@ -11,7 +11,7 @@ if (!testFile) {
     process.exit(1);
 }
 
-// Create temporary WTR config file with injected global config
+// Create temporary WTR config file with injected global config and HTTP-loaded scripts
 const configPath = join(process.cwd(), "web-test-runner.config.temp.mjs");
 const configContent = `export default {
     nodeResolve: true,
@@ -24,6 +24,9 @@ const configContent = `export default {
                 <script>
                     window.TEST_CONFIG = ${JSON.stringify(config)};
                 </script>
+                <!-- Load sockethub-client and socket.io from running Sockethub server -->
+                <script src="${config.sockethub.url}/socket.io.js"></script>
+                <script src="${config.sockethub.url}/sockethub-client.js"></script>
                 <script type="module" src="\${testFramework}"></script>
             </body>
         </html>
@@ -44,5 +47,6 @@ child.on("exit", (code) => {
     } catch (e) {
         // Ignore cleanup errors
     }
+
     process.exit(code);
 });
