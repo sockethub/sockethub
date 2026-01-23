@@ -4,6 +4,14 @@ import createTestUtils from "../utils.js";
 // sockethub-client.js and socket.io.js are loaded via <script> tags
 // in the test runner HTML (injected from the running Sockethub server)
 
+// Verify globals are loaded
+if (typeof window.io === "undefined") {
+    throw new Error("socket.io.js failed to load - window.io is undefined");
+}
+if (typeof window.SockethubClient === "undefined") {
+    throw new Error("sockethub-client.js failed to load - window.SockethubClient is undefined");
+}
+
 // Mocha configuration
 mocha.bail(true);
 mocha.timeout("120s");
