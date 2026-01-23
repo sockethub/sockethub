@@ -4,7 +4,7 @@ on:
 
 jobs:
 
-  redis:
+  data-layer:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,8 +24,8 @@ jobs:
       - name: Verify Redis is listening
         run: nc -zv localhost 6379
 
-      - name: Redis Integration Tests
-        run: bun run integration:redis
+      - name: Data Layer Integration Tests
+        run: bun run integration:data-layer
 
   process:
     runs-on: ubuntu-latest
@@ -85,6 +85,11 @@ jobs:
 
       - name: Verify XMPP is listening
         run: nc -zv localhost 5222
+
+      - name: Verify Sockethub serves client files
+        run: |
+          curl -f http://localhost:10550/socket.io.js > /dev/null
+          curl -f http://localhost:10550/sockethub-client.js > /dev/null
 
       - name: Basic Browser Integration Tests
         run: XMPP_HOST=prosody bun run integration:browser:basic

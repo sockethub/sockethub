@@ -1,13 +1,23 @@
 {
   "name": "@sockethub/platform-feeds",
   "description": "A sockethub platform module implementing RSS/Atom functionality",
-  "version": "4.0.0-alpha.4",
+  "version": "4.0.0-alpha.10",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
-  "main": "./src/index.ts",
-  "files": ["src/"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["src/", "dist/"],
   "engines": {
     "bun": ">=1.2"
   },
@@ -28,22 +38,27 @@
     "directory": "packages/platform-feeds"
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-feeds",
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist"
+  },
   "dependencies": {
-    "html-tags": "3.3.1",
-    "htmlparser2": "9.0.0",
-    "podparse": "1.6.0"
+    "html-tags": "^3.3.1",
+    "htmlparser2": "^9.1.0",
+    "podparse": "^1.6.0"
   },
   "devDependencies": {
-    "debug": "^4.4.3",
-    "@sockethub/schemas": "workspace:*",
-    "@types/bun": "latest"
+    "@sockethub/schemas": "^3.0.0-alpha.10",
+    "@types/bun": "latest",
+    "debug": "^4.4.3"
   },
   "peerDependencies": {
-    "@sockethub/server": "workspace:*"
+    "@sockethub/server": "5.0.0-alpha.10"
   },
   "peerDependenciesMeta": {
     "@sockethub/server": {
       "optional": true
     }
-  }
+  },
+  "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
 }

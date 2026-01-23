@@ -1,11 +1,22 @@
 {
   "name": "@sockethub/platform-metadata",
-  "version": "1.0.0",
+  "version": "1.0.1-alpha.5",
   "description": "Fetch metadata from a given URL",
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["src/", "dist/"],
   "engines": {
     "bun": ">=1.2"
   },
@@ -23,13 +34,18 @@
     "directory": "packages/platform-metadata"
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-metadata",
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist"
+  },
   "dependencies": {
-    "open-graph-scraper": "^6.9.0"
+    "open-graph-scraper": "^6.11.0"
   },
   "devDependencies": {
-    "@sockethub/schemas": "workspace:*"
+    "@sockethub/schemas": "^3.0.0-alpha.10"
   },
   "peerDependencies": {
-    "@sockethub/server": "workspace:*"
-  }
+    "@sockethub/server": "^5.0.0-alpha.10"
+  },
+  "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
 }

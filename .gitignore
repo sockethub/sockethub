@@ -7,5 +7,9 @@ node_modules
 .vscode
 .DS_Store
 sockethub.config.json
-.claude/settings.local.json
+.claude/
+CLAUDE.md
 packages/sockethub/sockethub.config.json.sentry
+test-install/
+test-results/
+.local-tarballs/

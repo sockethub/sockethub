@@ -1,12 +1,23 @@
 {
   "name": "@sockethub/crypto",
   "description": "Crypto functions and helpers for Sockethub",
-  "version": "1.0.0-alpha.4",
+  "version": "1.0.0-alpha.10",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
-  "main": "src/index.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["src/", "dist/"],
   "engines": {
     "bun": ">=1.2"
   },
@@ -24,15 +35,20 @@
     "directory": "packages/data-layer"
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist"
+  },
   "dependencies": {
-    "@sockethub/schemas": "workspace:*",
-    "object-hash": "3.0.0"
+    "@sockethub/schemas": "^3.0.0-alpha.10",
+    "object-hash": "^3.0.0"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/debug": "4.1.12",
-    "@types/object-hash": "3.0.6",
-    "@types/sinon": "17.0.2",
-    "sinon": "17.0.1"
-  }
+    "@types/debug": "^4.1.12",
+    "@types/object-hash": "^3.0.6",
+    "@types/sinon": "^17.0.4",
+    "sinon": "^17.0.2"
+  },
+  "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
 }

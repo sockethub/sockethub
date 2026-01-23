@@ -1,12 +1,23 @@
 {
   "name": "@sockethub/server",
   "description": "A polyglot messaging service, server libraries",
-  "version": "5.0.0-alpha.4",
+  "version": "5.0.0-alpha.10",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
-  "main": "src/index.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["src/", "dist/", "bin/", "res/"],
   "bin": "bin/sockethub",
   "preferGlobal": true,
   "engines": {
@@ -38,43 +49,47 @@
   },
   "homepage": "https://sockethub.org",
   "dependencies": {
-    "@sentry/bun": "^10.15.0",
-    "@sockethub/activity-streams": "workspace:^",
-    "@sockethub/client": "workspace:^",
-    "@sockethub/crypto": "workspace:^",
-    "@sockethub/data-layer": "workspace:^",
-    "@sockethub/examples": "workspace:^",
-    "@sockethub/schemas": "workspace:^",
-    "body-parser": "1.20.3",
-    "debug": "4.3.4",
-    "ejs": "3.1.10",
-    "express": "4.20.0",
+    "@sentry/bun": "^10.36.0",
+    "@sockethub/activity-streams": "^4.4.0-alpha.10",
+    "@sockethub/client": "^5.0.0-alpha.10",
+    "@sockethub/crypto": "^1.0.0-alpha.10",
+    "@sockethub/data-layer": "^1.0.0-alpha.10",
+    "@sockethub/schemas": "^3.0.0-alpha.10",
+    "body-parser": "^1.20.4",
+    "chalk": "^5.6.2",
+    "debug": "^4.4.3",
+    "ejs": "^3.1.10",
+    "express": "^4.22.1",
     "express-rate-limit": "^8.2.1",
-    "jquery": "3.7.1",
-    "nconf": "0.12.1",
-    "socket.io": "4.7.5"
+    "jquery": "^3.7.1",
+    "nconf": "^0.12.1",
+    "socket.io": "^4.7.5"
   },
   "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external && bun build src/platform.ts --outdir dist --target node --format esm --sourcemap=external && cp src/defaults.json dist/defaults.json",
+    "clean": "rm -rf dist",
     "dev": "DEBUG=sockethub* bun run --hot ./bin/sockethub --examples",
     "start": "DEBUG=sockethub* bun run ./bin/sockethub"
   },
   "devDependencies": {
-    "@types/body-parser": "1.19.5",
+    "@types/body-parser": "^1.19.6",
     "@types/bun": "latest",
-    "@types/debug": "4.1.12",
-    "@types/express": "4.17.21",
-    "@types/jquery": "3.5.29",
-    "@types/nconf": "0.10.6",
-    "@types/sinon": "17.0.2",
-    "jaribu": "2.2.3",
-    "sinon": "17.0.1",
+    "@types/debug": "^4.1.12",
+    "@types/express": "^4.17.25",
+    "@types/jquery": "^3.5.33",
+    "@types/nconf": "^0.10.7",
+    "@types/sinon": "^17.0.4",
+    "jaribu": "^2.2.3",
+    "sinon": "^17.0.2",
     "web-streams-polyfill": "^3.3.3"
   },
   "optionalDependencies": {
-    "@sockethub/platform-dummy": "workspace:*",
-    "@sockethub/platform-feeds": "workspace:*",
-    "@sockethub/platform-irc": "workspace:*",
-    "@sockethub/platform-metadata": "workspace:*",
-    "@sockethub/platform-xmpp": "workspace:*"
-  }
+    "@sockethub/examples": "^1.0.0-alpha.10",
+    "@sockethub/platform-dummy": "^3.0.0-alpha.10",
+    "@sockethub/platform-feeds": "^4.0.0-alpha.10",
+    "@sockethub/platform-irc": "^4.0.0-alpha.10",
+    "@sockethub/platform-metadata": "^1.0.1-alpha.5",
+    "@sockethub/platform-xmpp": "^5.0.0-alpha.10"
+  },
+  "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
 }
