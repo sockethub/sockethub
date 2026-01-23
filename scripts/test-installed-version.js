@@ -13,7 +13,7 @@
  *
  * Options:
  *   --runtime <bun|node|both>  Runtime to test (default: "both")
- *   --suite <process|browser|all>  Test suite (default: "all")
+ *   --suite <browser|all>  Test suite (default: "all")
  *   --local                Build and pack from source instead of installing from npm
  *   --skip-install         Skip npm install
  *   --skip-cleanup         Don't remove resources after test

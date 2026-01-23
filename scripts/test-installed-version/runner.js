@@ -19,7 +19,7 @@ export class TestRunner {
 
     /**
      * Run specified test suite(s)
-     * @param {string} suite - Suite to run (process, browser, all)
+     * @param {string} suite - Suite to run (browser, all)
      * @returns {object} Test results
      */
     async run(suite) {
@@ -29,14 +29,14 @@ export class TestRunner {
 
         try {
             switch (suite) {
-                case "process":
-                    await this.runProcessTests();
-                    break;
                 case "browser":
                     await this.runBrowserTests();
                     break;
                 case "all":
-                    await this.runProcessTests();
+                    // Process tests are excluded from package verification because they:
+                    // 1. Test internal process management (not public API)
+                    // 2. Start their own Sockethub instance from packages/sockethub/bin
+                    // They run separately in repo CI
                     await this.runBrowserTests();
                     break;
                 default:
@@ -50,43 +50,6 @@ export class TestRunner {
         this.results.totalDuration = Date.now() - startTime;
 
         return this.results;
-    }
-
-    /**
-     * Run process integration tests
-     */
-    async runProcessTests() {
-        await this.logger.info("Running process integration tests...");
-
-        const startTime = Date.now();
-        const result = await this.logger.exec(
-            "bun",
-            ["test", "./integration/process.integration.ts"],
-            {},
-            "integration-process.log",
-        );
-
-        const duration = Date.now() - startTime;
-        const passed = result.exitCode === 0;
-
-        this.results.suites.push({
-            name: "process",
-            passed,
-            exitCode: result.exitCode,
-            duration,
-        });
-
-        if (passed) {
-            this.results.passed++;
-            await this.logger.success(
-                `Process tests passed (${Math.round(duration / 1000)}s)`,
-            );
-        } else {
-            this.results.failed++;
-            await this.logger.error(
-                `Process tests failed (exit code ${result.exitCode})`,
-            );
-        }
     }
 
     /**
