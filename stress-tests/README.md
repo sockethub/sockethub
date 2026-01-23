@@ -80,11 +80,13 @@ Redis + Platforms (XMPP, Feed, etc.)
 
 **What we test:** Full stack - client + server capacity under load
 **Why @sockethub/client:**
+
 - Ensures correct ActivityStreams message formatting
 - Tests the actual client library users will use
 - Proper error handling and validation
 
 **Testing local vs Docker:**
+
 - **Local**: `docker:start:deps` + `bun run start` (tests your working code)
 - **Docker**: `docker:start` (tests Dockerized build, different use case)
 
@@ -139,17 +141,20 @@ bun run stress:baseline
 Tests automatically detect and report:
 
 **Sockethub Errors (validation, processing):**
+
 - Credentials errors (authentication failures)
 - Echo/message errors (Dummy platform rejections)
 - XMPP errors (protocol failures)
 - Feed errors (fetch failures)
 
 **Test Failures:**
+
 - Tests fail if >5% of users encounter Sockethub errors
 - Tests fail if >50% Artillery connection errors
 - Tests fail if all connections fail
 
 **Error Output:**
+
 ```
 Sockethub errors: 15 (3.2%)
   - Credentials errors: 5
@@ -184,12 +189,12 @@ Report: stress-tests/reports/2026-01-23-full-suite.json
 
 **Recommended:** Don't run full tests in CI (too slow, unreliable hardware)
 
-**Option 1: No CI** (recommended)
+### Option 1: No CI (recommended)
 
 - Run tests manually before releases
 - Track trends locally
 
-**Option 2: Smoke Test Only**
+### Option 2: Smoke Test Only
 
 ```yaml
 # .github/workflows/stress-test.yml

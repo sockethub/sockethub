@@ -134,7 +134,13 @@ function parseArgs(args: string[]): RunnerOptions {
     for (const arg of args) {
         if (arg.startsWith("--type=")) {
             const type = arg.split("=")[1];
-            if (type === "performance" || type === "stress" || type === "soak" || type === "all" || type === "ci") {
+            if (
+                type === "performance" ||
+                type === "stress" ||
+                type === "soak" ||
+                type === "all" ||
+                type === "ci"
+            ) {
                 options.type = type;
             }
         } else if (arg === "--all") {
@@ -154,13 +160,13 @@ async function runTest(
     ciMode?: boolean,
 ): Promise<TestResult> {
     const scenarioPath = `${join(
-            import.meta.dir,
-            "artillery",
-            "scenarios",
-            test.scenario.includes("/")
-                ? test.scenario
-                : `${test.type}/${test.scenario}`,
-        )}.yml`;
+        import.meta.dir,
+        "artillery",
+        "scenarios",
+        test.scenario.includes("/")
+            ? test.scenario
+            : `${test.type}/${test.scenario}`,
+    )}.yml`;
 
     const reportPath = join(REPORTS_DIR, `temp-${Date.now()}.json`);
 
@@ -299,7 +305,22 @@ async function runTest(
     }
 }
 
-function calculateErrorRate(report: any, sockethubErrors = 0): number {
+interface ArtilleryReport {
+    aggregate?: {
+        counters?: Record<string, number>;
+        rates?: Record<string, number>;
+        summaries?: Record<
+            string,
+            { median?: number; p95?: number; p99?: number }
+        >;
+        lastCounterAt?: number;
+    };
+}
+
+function calculateErrorRate(
+    report: ArtilleryReport,
+    sockethubErrors = 0,
+): number {
     const vusersCreated = report.aggregate?.counters?.["vusers.created"] || 0;
     const artilleryErrors = report.aggregate?.counters?.["errors.total"] || 0;
 

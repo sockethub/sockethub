@@ -5,7 +5,7 @@ import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { DEFAULT_THRESHOLDS } from "../config";
-import type { Baseline, TestResult } from "../types";
+import type { Baseline, SystemProfile, TestResult } from "../types";
 import { getBaselineFilename, getSystemProfile } from "./system-profiler";
 
 const WARMUP_RUNS = 3;
@@ -178,7 +178,7 @@ function calculateErrorRate(report: ArtilleryReport): number {
 }
 
 function calculateBaseline(
-    systemProfile: any,
+    systemProfile: SystemProfile,
     sockethubVersion: string,
     results: TestResult[],
 ): Baseline {
