@@ -20,13 +20,16 @@ const configContent = `export default {
     testRunnerHtml: (testFramework) => \`
         <!DOCTYPE html>
         <html>
-            <body>
+            <head>
                 <script>
                     window.TEST_CONFIG = ${JSON.stringify(config)};
                 </script>
                 <!-- Load sockethub-client and socket.io from running Sockethub server -->
+                <!-- These must load synchronously before the test framework -->
                 <script src="${config.sockethub.url}/socket.io.js"></script>
                 <script src="${config.sockethub.url}/sockethub-client.js"></script>
+            </head>
+            <body>
                 <script type="module" src="\${testFramework}"></script>
             </body>
         </html>
