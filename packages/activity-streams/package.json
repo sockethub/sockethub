@@ -1,6 +1,6 @@
 {
   "name": "@sockethub/activity-streams",
-  "version": "4.4.0-alpha.9",
+  "version": "4.4.0-alpha.10",
   "description": "A simple tool to facilitate handling and referencing activity streams without unnecessary verbosity",
   "type": "module",
   "main": "./dist/activity-streams.js",
@@ -41,10 +41,10 @@
     "eventemitter3": "^5.0.4"
   },
   "devDependencies": {
-    "@sockethub/schemas": "^3.0.0-alpha.9",
+    "@sockethub/schemas": "^3.0.0-alpha.10",
     "@types/bun": "latest",
     "@web/test-runner": "^0.19.0",
     "@web/test-runner-puppeteer": "^0.17.0"
   },
-  "gitHead": "917cd17f403768037a0ee3d251ac720a81f55d86"
+  "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
 }
