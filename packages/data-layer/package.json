@@ -40,7 +40,7 @@
     "clean": "rm -rf dist",
     "doc": "typedoc --options typedoc.json",
     "test": "bun test src/",
-    "test:integration": "bun test integration/"
+    "test:integration": "DEBUG=ioredis*,bullmq*,sockethub* bun test integration/redis.integration.ts"
   },
   "dependencies": {
     "@sockethub/crypto": "^1.0.0-alpha.9",
