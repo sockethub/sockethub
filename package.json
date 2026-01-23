@@ -33,7 +33,7 @@
   },
   "scripts": {
     "build": "bun run --filter='*' build && bun run build:server:post",
-    "build:server:post": "rm -rf packages/server/res && mkdir -p packages/server/res && cp node_modules/@sockethub/client/dist/* packages/server/res/ && cp node_modules/socket.io-client/dist/socket.io.js packages/server/res/socket.io.js",
+    "build:server:post": "rm -rf packages/server/res && mkdir -p packages/server/res && cp node_modules/@sockethub/client/dist/sockethub-client.browser.js packages/server/res/sockethub-client.js && cp node_modules/@sockethub/client/dist/sockethub-client.min.js packages/server/res/sockethub-client.min.js && cp node_modules/socket.io-client/dist/socket.io.js packages/server/res/socket.io.js",
     "clean": "bun run --filter='*' clean",
     "clean:deps": "bun run --filter='*' clean:deps && bunx rimraf node_modules",
     "dev": "bun run build && cd packages/sockethub && bun run dev",
