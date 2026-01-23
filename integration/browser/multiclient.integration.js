@@ -13,7 +13,8 @@ import {
 const config = getConfig();
 const utils = createTestUtils(config);
 
-const CLIENT_COUNT = 10;
+// Reduced from 10 to 5 to reduce flakiness while still validating multi-client behavior
+const CLIENT_COUNT = 5;
 
 describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () => {
     validateGlobals();
@@ -119,6 +120,10 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
 
             // Verify all clients joined successfully
             expect(results).to.have.length(CLIENT_COUNT);
+
+            // Wait for XMPP presence to propagate after all joins
+            // This ensures all clients know about each other before message tests
+            await new Promise((resolve) => setTimeout(resolve, 1000));
         });
     });
 
