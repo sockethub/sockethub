@@ -1,0 +1,28 @@
+config:
+  target: "http://localhost:10550"
+  phases:
+    - duration: 60
+      arrivalRate: 50
+      name: "50 clients requesting feeds"
+  processor: "../../processors/sockethub-client.js"
+
+scenarios:
+  - name: "Feed Processing Stress Test"
+    engine: socketio
+    flow:
+      # Setup client and connect
+      - function: "setupClient"
+      - think: 0.5
+
+      # Send credentials
+      - function: "sendCredentials"
+      - think: 0.5
+
+      # Request multiple feeds simultaneously
+      - loop:
+          - function: "sendFeedMessage"
+          - think: 0.1
+        count: 10
+
+      # Cleanup
+      - function: "disconnectClient"

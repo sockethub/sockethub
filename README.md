@@ -77,6 +77,7 @@ For detailed architecture documentation, see [Architecture Overview](docs/archit
 * **[Platform Development](docs/platform-development/creating-platforms.md)** - Creating custom platforms
 * **[Architecture](docs/architecture/overview.md)** - Technical architecture overview
 * **[Deployment](docs/deployment/server-config.md)** - Production deployment guides
+* **[Performance Testing](stress-tests/README.md)** - Load testing and benchmarking
 
 ## Features
 
@@ -147,6 +148,15 @@ bun test                    # Run unit tests across all packages
 bun run integration         # Run both Redis and browser integration tests
 bun run integration:redis   # Run Redis integration tests with Docker
 bun run integration:browser # Run browser integration tests with Docker
+
+# Performance & Stress Testing
+bun run stress:baseline     # Generate system performance baseline (first time)
+bun run stress:performance  # Run performance tests (~10 min)
+bun run stress:stress       # Run stress tests (~15 min)
+bun run stress:soak         # Run soak test (30 min)
+bun run stress:all          # Run all tests (~60 min)
+bun run stress:ci           # CI smoke test (1-2 min)
+bun run stress:report --latest  # View latest test results
 
 # Code Quality
 bun run lint                # Run Biome linter and markdown lint

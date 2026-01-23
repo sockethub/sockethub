@@ -1,0 +1,27 @@
+config:
+  target: "http://localhost:10550"
+  phases:
+    - duration: 10
+      arrivalRate: 10
+      name: "Ramp up connections"
+    - duration: 120
+      arrivalRate: 0
+      name: "Hold connections"
+  processor: "../../processors/sockethub-client.js"
+
+scenarios:
+  - name: "Connection Performance Test"
+    engine: socketio
+    flow:
+      # Setup client and connect
+      - function: "setupClient"
+      - think: 0.5
+
+      # Send credentials
+      - function: "sendCredentials"
+
+      # Hold connection
+      - think: 120
+
+      # Cleanup
+      - function: "disconnectClient"
