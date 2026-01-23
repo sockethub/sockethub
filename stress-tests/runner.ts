@@ -13,7 +13,7 @@ import {
     STRESS_TESTS,
 } from "./config";
 import { generateConsoleSummary } from "./reporter";
-import type { TestConfig, TestResult } from "./types";
+import type { Baseline, TestConfig, TestResult } from "./types";
 
 const REPORTS_DIR = join(import.meta.dir, "reports");
 
@@ -75,7 +75,6 @@ async function main() {
             case "soak":
                 testsToRun = SOAK_TESTS;
                 break;
-            case "all":
             default:
                 testsToRun = ALL_TESTS;
                 break;
@@ -134,7 +133,10 @@ function parseArgs(args: string[]): RunnerOptions {
 
     for (const arg of args) {
         if (arg.startsWith("--type=")) {
-            options.type = arg.split("=")[1] as any;
+            const type = arg.split("=")[1];
+            if (type === "performance" || type === "stress" || type === "soak" || type === "all" || type === "ci") {
+                options.type = type;
+            }
         } else if (arg === "--all") {
             options.type = "all";
         } else if (arg === "--ci-mode" || arg === "--ci") {
@@ -148,18 +150,17 @@ function parseArgs(args: string[]): RunnerOptions {
 
 async function runTest(
     test: TestConfig,
-    baseline: any,
+    baseline: Baseline | null,
     ciMode?: boolean,
 ): Promise<TestResult> {
-    const scenarioPath =
-        join(
+    const scenarioPath = `${join(
             import.meta.dir,
             "artillery",
             "scenarios",
             test.scenario.includes("/")
                 ? test.scenario
                 : `${test.type}/${test.scenario}`,
-        ) + ".yml";
+        )}.yml`;
 
     const reportPath = join(REPORTS_DIR, `temp-${Date.now()}.json`);
 

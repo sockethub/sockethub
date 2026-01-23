@@ -3,11 +3,11 @@
  * This ensures proper ActivityStreams formatting and error handling
  */
 
-// Import at module level (Artillery processors run in Node.js)
-import SockethubClient from "@sockethub/client";
-import { io } from "socket.io-client";
+// CommonJS imports (Artillery runs in Node.js)
+const SockethubClient = require("@sockethub/client").default;
+const { io } = require("socket.io-client");
 
-export default {
+module.exports = {
     setupClient,
     sendCredentials,
     sendDummyEcho,
