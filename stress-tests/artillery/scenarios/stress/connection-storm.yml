@@ -9,7 +9,6 @@ config:
 
 scenarios:
   - name: "Connection Storm Stress Test"
-    engine: socketio
     flow:
       # Setup client and connect
       - function: "setupClient"

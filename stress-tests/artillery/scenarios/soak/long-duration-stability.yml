@@ -9,7 +9,6 @@ config:
 
 scenarios:
   - name: "Long Duration Stability Test"
-    engine: socketio
     flow:
       # Setup client and connect
       - function: "setupClient"

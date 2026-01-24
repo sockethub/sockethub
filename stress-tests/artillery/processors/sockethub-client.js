@@ -28,19 +28,29 @@ function setupClient(context, events, done) {
     context.vars.client = new SockethubClient(socket);
     context.vars.actorId = `test-${context.vars.$uuid}@dummy`;
     context.vars.errors = [];
+    context.vars.connected = false;
 
     // Track connection
     socket.on("connect", () => {
         events.emit("counter", "sockethub.connected", 1);
+        context.vars.connected = true;
     });
 
     socket.on("connect_error", (err) => {
         events.emit("counter", "sockethub.connect_error", 1);
         console.error("Connection error:", err.message);
+        context.vars.errors.push(`Connection: ${err.message}`);
     });
 
-    // Give socket time to connect
-    setTimeout(done, 100);
+    // Wait for connection or timeout
+    setTimeout(() => {
+        if (!context.vars.connected) {
+            console.error("Connection timeout - socket never connected");
+            events.emit("counter", "sockethub.connect_timeout", 1);
+            context.vars.errors.push("Connection timeout");
+        }
+        done();
+    }, 1000);
 }
 
 /**
@@ -50,6 +60,13 @@ function sendCredentials(context, events, done) {
     const client = context.vars.client;
     const actorId = context.vars.actorId;
 
+    // Check if connected
+    if (!context.vars.connected) {
+        events.emit("counter", "sockethub.error.not_connected", 1);
+        console.error("Cannot send credentials - not connected");
+        return done();
+    }
+
     // Create actor object using client's ActivityStreams API
     const actor = client.ActivityStreams.Object.create({
         id: actorId,
@@ -57,18 +74,21 @@ function sendCredentials(context, events, done) {
         name: `Test User ${context.vars.$uuid}`,
     });
 
-    // Send credentials message
+    // Send credentials message (uses 'credentials' event, not 'message')
     const credentialsMsg = {
         type: "credentials",
         context: "dummy",
-        actor: actorId,
+        actor: {
+            id: actorId,
+            type: "person",
+        },
         object: {
             type: "credentials",
             secret: "test-secret",
         },
     };
 
-    client.socket.emit("message", credentialsMsg, (response) => {
+    client.socket.emit("credentials", credentialsMsg, (response) => {
         if (response?.error) {
             events.emit("counter", "sockethub.error.credentials", 1);
             console.error("Credentials error:", response.error);
@@ -90,7 +110,10 @@ function sendDummyEcho(context, events, done) {
     const message = {
         type: "echo",
         context: "dummy",
-        actor: actorId,
+        actor: {
+            id: actorId,
+            type: "person",
+        },
         object: {
             type: "message",
             content: `Test echo ${Date.now()}`,
@@ -124,7 +147,10 @@ function sendXMPPMessage(context, events, done) {
     const message = {
         type: "send",
         context: "xmpp",
-        actor: actorId,
+        actor: {
+            id: actorId,
+            type: "person",
+        },
         target: "testroom@conference.localhost",
         object: {
             type: "message",
@@ -165,7 +191,10 @@ function sendFeedMessage(context, events, done) {
     const message = {
         type: "fetch",
         context: "feeds",
-        actor: actorId,
+        actor: {
+            id: actorId,
+            type: "person",
+        },
         object: {
             type: "feed",
             id: feedUrls[Math.floor(Math.random() * feedUrls.length)],

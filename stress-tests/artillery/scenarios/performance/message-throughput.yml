@@ -8,7 +8,6 @@ config:
 
 scenarios:
   - name: "Message Throughput Test"
-    engine: socketio
     flow:
       # Setup client and connect
       - function: "setupClient"

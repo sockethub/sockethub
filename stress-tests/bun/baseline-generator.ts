@@ -159,7 +159,7 @@ function runTest(scenario: string): TestResult {
             duration_sec: 0,
             metrics: {
                 latency_p95:
-                    report.aggregate.summaries["http.response_time"]?.p95 || 0,
+                    report.aggregate.summaries["sockethub.latency.echo"]?.p95 || 0,
                 throughput: report.aggregate.rates["http.request_rate"] || 0,
                 error_rate: calculateErrorRate(report),
             },

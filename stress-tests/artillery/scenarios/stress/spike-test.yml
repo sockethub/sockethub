@@ -14,7 +14,6 @@ config:
 
 scenarios:
   - name: "Spike Test"
-    engine: socketio
     flow:
       # Setup client and connect
       - function: "setupClient"

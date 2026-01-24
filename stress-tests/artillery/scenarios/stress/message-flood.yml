@@ -9,7 +9,6 @@ config:
 
 scenarios:
   - name: "Message Flood Stress Test"
-    engine: socketio
     flow:
       # Setup client and connect
       - function: "setupClient"

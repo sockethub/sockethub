@@ -11,7 +11,6 @@ config:
 
 scenarios:
   - name: "Connection Performance Test"
-    engine: socketio
     flow:
       # Setup client and connect
       - function: "setupClient"
