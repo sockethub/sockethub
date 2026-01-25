@@ -8,8 +8,11 @@ import { compareToBaseline, loadBaseline } from "./bun/baseline-comparator";
 import { getSystemProfile } from "./bun/system-profiler";
 import {
     ALL_TESTS,
+    ARTILLERY_ERROR_THRESHOLD_RATIO,
+    CI_ERROR_RATE_THRESHOLD_PCT,
     PERFORMANCE_TESTS,
     SOAK_TESTS,
+    SOCKETHUB_ERROR_THRESHOLD_PCT,
     STRESS_TESTS,
 } from "./config";
 import { generateConsoleSummary } from "./reporter";
@@ -133,7 +136,8 @@ function parseArgs(args: string[]): RunnerOptions {
 
     for (const arg of args) {
         if (arg.startsWith("--type=")) {
-            const type = arg.split("=")[1];
+            const parts = arg.split("=");
+            const type = parts.length > 1 ? parts[1] : undefined;
             if (
                 type === "performance" ||
                 type === "stress" ||
@@ -244,7 +248,7 @@ async function runTest(
             return result;
         }
 
-        if (errorsTotal > vusersCreated * 0.5) {
+        if (errorsTotal > vusersCreated * ARTILLERY_ERROR_THRESHOLD_RATIO) {
             result.status = "fail";
             console.error(
                 `      High Artillery error rate (${errorsTotal} errors, ${vusersCreated} users)`,
@@ -255,7 +259,7 @@ async function runTest(
         // Check for Sockethub errors (validation, malformed messages, etc.)
         if (totalSockethubErrors > 0) {
             const errorPct = (totalSockethubErrors / vusersCreated) * 100;
-            if (errorPct > 5) {
+            if (errorPct > SOCKETHUB_ERROR_THRESHOLD_PCT) {
                 result.status = "fail";
                 console.error(
                     `      Sockethub errors: ${totalSockethubErrors} (${errorPct.toFixed(1)}%)`,
@@ -286,8 +290,8 @@ async function runTest(
             result.baseline_comparison = comparison;
             result.status = comparison.status;
         } else if (ciMode) {
-            // In CI mode, only check for crashes (error rate > 10%)
-            if (metrics.error_rate > 10) {
+            // In CI mode, only check for crashes
+            if (metrics.error_rate > CI_ERROR_RATE_THRESHOLD_PCT) {
                 result.status = "fail";
             }
         }

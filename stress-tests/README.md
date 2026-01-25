@@ -304,8 +304,7 @@ bun add -d artillery
 
 ## Limitations
 
-- Tests server only (not @sockethub/client library)
-- Uses Artillery's Socket.IO client (not @sockethub/client)
+- Tests server capacity (uses @sockethub/client for proper ActivityStreams formatting)
 - Baseline requires consistent hardware
 - CI results are unreliable (variable performance)
 - Long tests (soak) are expensive

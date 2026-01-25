@@ -7,6 +7,11 @@ export const DEFAULT_SOCKETHUB_URL = "http://localhost:10550";
 
 export const TOLERANCE_PCT = 15; // ±15% baseline tolerance
 
+// Error thresholds for test pass/fail determination
+export const CI_ERROR_RATE_THRESHOLD_PCT = 10; // CI mode: fail if error rate exceeds this
+export const SOCKETHUB_ERROR_THRESHOLD_PCT = 5; // Fail if Sockethub errors exceed this % of users
+export const ARTILLERY_ERROR_THRESHOLD_RATIO = 0.5; // Fail if Artillery errors exceed this ratio of users
+
 export const DEFAULT_THRESHOLDS: Thresholds = {
     latency_p95_warn_ms: 150,
     latency_p95_fail_ms: 200,
