@@ -40,7 +40,8 @@
   },
   "scripts": {
     "build": "bun ./scripts/export-json-schema.ts && bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "clean:deps": "rm -rf node_modules"
   },
   "dependencies": {
     "ajv": "^8.17.1",

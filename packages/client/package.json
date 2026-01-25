@@ -40,6 +40,7 @@
     "build:browser": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=iife --global-name=SockethubClient --outfile=dist/sockethub-client.browser.js",
     "build:minify": "bun build ./src/sockethub-client.ts --target=browser --sourcemap=inline --format=iife --global-name=SockethubClient --outfile=dist/sockethub-client.min.js --minify",
     "clean": "rm -rf dist",
+    "clean:deps": "rm -rf node_modules",
     "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer"
   },
   "dependencies": {

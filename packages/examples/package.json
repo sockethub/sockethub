@@ -25,6 +25,8 @@
     "test:integration": "bunx --bun playwright test",
     "test:unit": "bunx --bun vitest run",
     "preview": "bunx --bun vite preview",
+    "clean": "rm -rf build",
+    "clean:deps": "rm -rf node_modules",
     "check": "bunx --bun svelte-kit sync && bunx --bun svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "bunx --bun svelte-kit sync && bunx --bun svelte-check --tsconfig ./tsconfig.json --watch"
   },

@@ -25,7 +25,7 @@ const creds: CredentialsObject = {
     },
 };
 const credsHash = "e591ec978a505aee278f372354c229d165d2c096";
-const testSecret = "baz1234567890baz1234567890abcdef";
+const testSecret = "aB3#xK9mP2qR7wZ4cT8nY6vH1jL5fD0s";
 
 describe("CredentialsStore", () => {
     let store: CredentialsStore;

@@ -39,6 +39,7 @@
   "scripts": {
     "build": "bun build src/index.js --outdir dist --target node --format esm --sourcemap=external",
     "clean": "rm -rf dist",
+    "clean:deps": "rm -rf node_modules",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 src/index.js > API.md"
   },
   "dependencies": {
