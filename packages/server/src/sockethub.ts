@@ -2,6 +2,7 @@ import debug from "debug";
 import type { Socket } from "socket.io";
 
 import { crypto } from "@sockethub/crypto";
+import { cleanupClient, createRateLimiter } from "./rate-limiter.js";
 import { CredentialsStore } from "@sockethub/data-layer";
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import type {
@@ -99,8 +100,6 @@ class Sockethub {
         // session-specific debug messages
         const sessionLog = debug(`sockethub:server:core:${socket.id}`);
         const sessionSecret = crypto.randToken(16);
-        // stores instance is session-specific
-        // stores = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret);
         const credentialsStore: CredentialsStoreInterface =
             new CredentialsStore(
                 this.parentId,
@@ -111,8 +110,15 @@ class Sockethub {
 
         sessionLog("socket.io connection");
 
+        // Rate limiting middleware - runs on every incoming event
+        const rateLimiter = createRateLimiter();
+        socket.use((event, next) => {
+            rateLimiter(socket, event[0], next);
+        });
+
         socket.on("disconnect", () => {
             sessionLog("disconnect received from client");
+            cleanupClient(socket.id);
         });
 
         socket.on(
