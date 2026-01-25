@@ -66,6 +66,12 @@ export class JobWorker extends JobBase {
             // up to maxStalledCount times (with default 30s interval) before failing permanently.
             maxStalledCount: 3,
         });
+
+        // Handle Redis contention errors (e.g., BUSY from Lua scripts)
+        this.worker.on("error", (err) => {
+            this.debug(`worker error: ${err.message}`);
+        });
+
         this.debug("initialized");
     }
 

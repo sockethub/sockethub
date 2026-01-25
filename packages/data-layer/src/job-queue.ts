@@ -115,6 +115,15 @@ export class JobQueue extends JobBase {
             connection: redisConfig,
         });
 
+        // Handle Redis contention errors (e.g., BUSY from Lua scripts)
+        this.queue.on("error", (err) => {
+            this.debug(`queue error: ${err.message}`);
+        });
+
+        this.events.on("error", (err) => {
+            this.debug(`events error: ${err.message}`);
+        });
+
         this.events.on("completed", async ({ jobId, returnvalue }) => {
             const job = await this.getJob(jobId);
             if (!job) {
