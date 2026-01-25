@@ -22,25 +22,46 @@ const DEFAULT_CONFIG: RateLimitConfig = {
     blockDurationMs: 5000, // Block for 5 seconds if exceeded
 };
 
+// Cleanup thresholds
+const STALE_ENTRY_THRESHOLD_MS = 60000; // 60 seconds
+const CLEANUP_INTERVAL_MS = 30000; // 30 seconds
+
 const clientStates = new Map<string, ClientState>();
 
+let cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
+
 // Cleanup stale entries periodically
-setInterval(() => {
-    const now = Date.now();
-    for (const [socketId, state] of clientStates.entries()) {
-        // Remove entries that haven't been active for 60 seconds
-        if (now - state.windowStart > 60000) {
-            clientStates.delete(socketId);
-        }
+function startCleanup() {
+    if (cleanupIntervalId !== null) {
+        return;
     }
-}, 30000);
+    cleanupIntervalId = setInterval(() => {
+        const now = Date.now();
+        for (const [socketId, state] of clientStates.entries()) {
+            // Remove entries that haven't been active for 60 seconds
+            if (now - state.windowStart > STALE_ENTRY_THRESHOLD_MS) {
+                clientStates.delete(socketId);
+            }
+        }
+    }, CLEANUP_INTERVAL_MS);
+}
+
+export function stopCleanup() {
+    if (cleanupIntervalId !== null) {
+        clearInterval(cleanupIntervalId);
+        cleanupIntervalId = null;
+    }
+}
 
 export function createRateLimiter(config: Partial<RateLimitConfig> = {}) {
     const cfg = { ...DEFAULT_CONFIG, ...config };
+    
+    // Start the cleanup interval when the rate limiter is created
+    startCleanup();
 
     return function rateLimitMiddleware(
         socket: Socket,
-        event: string,
+        eventName: string,
         next: (err?: Error) => void,
     ) {
         const now = Date.now();
@@ -61,7 +82,7 @@ export function createRateLimiter(config: Partial<RateLimitConfig> = {}) {
             if (now < state.blockedUntil) {
                 // Still blocked, drop and log for debugging
                 log(
-                    `dropping event "${event}" for blocked socket ${socket.id}; blocked until ${new Date(
+                    `dropping event "${eventName}" for blocked socket ${socket.id}; blocked until ${new Date(
                         state.blockedUntil,
                     ).toISOString()}`,
                 );

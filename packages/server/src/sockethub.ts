@@ -8,7 +8,7 @@ import type {
     ActivityStream,
     InternalActivityStream,
 } from "@sockethub/schemas";
-import { cleanupClient, createRateLimiter } from "./rate-limiter.js";
+import { cleanupClient, createRateLimiter, stopCleanup } from "./rate-limiter.js";
 
 import getInitObject from "./bootstrap/init.js";
 import config from "./config";
@@ -53,6 +53,7 @@ class Sockethub {
     platforms: Map<string, object>;
     status: boolean;
     processManager: ProcessManager;
+    private rateLimiter: ReturnType<typeof createRateLimiter>;
 
     constructor() {
         this.status = false;
@@ -85,6 +86,9 @@ class Sockethub {
 
         this.platforms = init.platforms;
 
+        // Create rate limiter once at server level
+        this.rateLimiter = createRateLimiter(config.get("rateLimiter"));
+
         log("active platforms: ", [...init.platforms.keys()]);
         listener.start(); // start external services
         janitor.start(); // start cleanup cycle
@@ -94,6 +98,7 @@ class Sockethub {
 
     async shutdown() {
         await janitor.stop();
+        stopCleanup();
     }
 
     private handleIncomingConnection(socket: Socket) {
@@ -111,9 +116,8 @@ class Sockethub {
         sessionLog("socket.io connection");
 
         // Rate limiting middleware - runs on every incoming event
-        const rateLimiter = createRateLimiter(config.get("rateLimiter"));
         socket.use((event, next) => {
-            rateLimiter(socket, event[0], next);
+            this.rateLimiter(socket, event[0], next);
         });
 
         socket.on("disconnect", () => {
