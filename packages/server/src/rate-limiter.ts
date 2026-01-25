@@ -59,7 +59,12 @@ export function createRateLimiter(config: Partial<RateLimitConfig> = {}) {
         // Check if currently blocked
         if (state.blocked) {
             if (now < state.blockedUntil) {
-                // Still blocked, silently drop
+                // Still blocked, drop and log for debugging
+                log(
+                    `dropping event "${event}" for blocked socket ${socket.id}; blocked until ${new Date(
+                        state.blockedUntil,
+                    ).toISOString()}`,
+                );
                 return;
             }
             // Block expired, reset
