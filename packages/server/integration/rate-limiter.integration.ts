@@ -29,7 +29,7 @@ describe("Rate Limiter Integration Tests", () => {
 
             client.on("connect", () => {
                 // Listen for error event
-                client.on("error", (errorMsg: any) => {
+                client.on("error", (errorMsg: unknown) => {
                     if (!errorReceived) {
                         errorReceived = true;
 
@@ -40,7 +40,9 @@ describe("Rate Limiter Integration Tests", () => {
                             expect(errorMsg.context).toBe("error");
                             expect(errorMsg.actor).toBeDefined();
                             expect(errorMsg.actor.type).toBe("Application");
-                            expect(errorMsg.actor.name).toBe("sockethub-server");
+                            expect(errorMsg.actor.name).toBe(
+                                "sockethub-server",
+                            );
                             expect(errorMsg.summary).toBe(
                                 "rate limit exceeded, temporarily blocked",
                             );
@@ -82,7 +84,11 @@ describe("Rate Limiter Integration Tests", () => {
             setTimeout(() => {
                 if (!errorReceived) {
                     client.disconnect();
-                    reject(new Error("Rate limit error not received within timeout"));
+                    reject(
+                        new Error(
+                            "Rate limit error not received within timeout",
+                        ),
+                    );
                 }
             }, 10000);
         });
@@ -96,15 +102,18 @@ describe("Rate Limiter Integration Tests", () => {
             const startTime = Date.now();
 
             client.on("connect", () => {
-                client.on("error", (errorMsg: any) => {
-                    if (errorMsg.summary === "rate limit exceeded, temporarily blocked") {
+                client.on("error", (errorMsg: unknown) => {
+                    if (
+                        errorMsg.summary ===
+                        "rate limit exceeded, temporarily blocked"
+                    ) {
                         errorCount++;
 
                         if (errorCount === 1) {
                             // First error received - verify it's the rate limit error
                             expect(errorMsg.type).toBe("Error");
                             expect(errorMsg.context).toBe("error");
-                            
+
                             // Once we get the first error, we're done - client is blocked
                             const elapsed = Date.now() - startTime;
                             // Should be quick (within first second)
@@ -155,8 +164,11 @@ describe("Rate Limiter Integration Tests", () => {
             let unblocked = false;
 
             client.on("connect", () => {
-                client.on("error", (errorMsg: any) => {
-                    if (errorMsg.summary === "rate limit exceeded, temporarily blocked") {
+                client.on("error", (errorMsg: unknown) => {
+                    if (
+                        errorMsg.summary ===
+                        "rate limit exceeded, temporarily blocked"
+                    ) {
                         blocked = true;
                     }
                 });
@@ -180,9 +192,12 @@ describe("Rate Limiter Integration Tests", () => {
                             type: "echo",
                             actor: { id: "test3@dummy", type: "person" },
                             context: "dummy",
-                            object: { type: "message", content: "unblock test" },
+                            object: {
+                                type: "message",
+                                content: "unblock test",
+                            },
                         },
-                        (response: any) => {
+                        (response: unknown) => {
                             if (!response?.error) {
                                 unblocked = true;
                                 expect(blocked).toBe(true);
@@ -241,9 +256,10 @@ describe("Rate Limiter Integration Tests", () => {
                 if (connectCount === 2) {
                     // Both clients connected, start test
                     // Listen for errors on client1
-                    client1.on("error", (errorMsg: any) => {
+                    client1.on("error", (errorMsg: unknown) => {
                         if (
-                            errorMsg.summary === "rate limit exceeded, temporarily blocked"
+                            errorMsg.summary ===
+                            "rate limit exceeded, temporarily blocked"
                         ) {
                             client1Blocked = true;
                             checkComplete();
@@ -256,7 +272,10 @@ describe("Rate Limiter Integration Tests", () => {
                             type: "echo",
                             actor: { id: "test4@dummy", type: "person" },
                             context: "dummy",
-                            object: { type: "message", content: `client1 msg ${i}` },
+                            object: {
+                                type: "message",
+                                content: `client1 msg ${i}`,
+                            },
                         });
                     }
 
@@ -268,9 +287,12 @@ describe("Rate Limiter Integration Tests", () => {
                                 type: "echo",
                                 actor: { id: "test5@dummy", type: "person" },
                                 context: "dummy",
-                                object: { type: "message", content: "client2 test" },
+                                object: {
+                                    type: "message",
+                                    content: "client2 test",
+                                },
                             },
-                            (response: any) => {
+                            (response: unknown) => {
                                 if (!response?.error) {
                                     client2Success = true;
                                     checkComplete();
