@@ -146,6 +146,7 @@ export default class PlatformInstance {
             this.id,
             secret,
             config.get("redis"),
+            this.log,
         );
 
         this.queue.on(

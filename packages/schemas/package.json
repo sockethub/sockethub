@@ -38,8 +38,7 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/schemas",
   "devDependencies": {
-    "@types/bun": "latest",
-    "@types/debug": "^4.1.12"
+    "@types/bun": "latest"
   },
   "scripts": {
     "build": "bun ./scripts/export-json-schema.ts && bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
@@ -49,8 +48,7 @@
   "dependencies": {
     "ajv": "^8.17.1",
     "ajv-formats": "^2.1.1",
-    "ajv-formats-draft2019": "^1.6.1",
-    "debug": "^4.4.3"
+    "ajv-formats-draft2019": "^1.6.1"
   },
   "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
 }

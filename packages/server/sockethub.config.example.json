@@ -1,5 +1,5 @@
 {
-  "$schema": "@sockethub/schemas/json/sockethub-config.json",
+  "$schema": "../schemas/src/schemas/json/sockethub-config.json",
   "activity-streams": {
     "opts": {
       "specialObjs": ["credentials"]

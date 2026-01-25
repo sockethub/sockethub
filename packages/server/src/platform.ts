@@ -169,6 +169,7 @@ function getJobHandler(): JobHandler {
                 {
                     url: redisUrl,
                 },
+                jobLog,
             );
             // biome-ignore lint/performance/noDelete: <explanation>
             delete job.msg.sessionSecret;
@@ -357,6 +358,7 @@ async function startQueueListener(refresh = false) {
         identifier,
         parentSecret1 + parentSecret2,
         { url: redisUrl },
+        logger,
     );
     logger.info("listening on the queue for incoming jobs");
     jobWorker.onJob(getJobHandler());

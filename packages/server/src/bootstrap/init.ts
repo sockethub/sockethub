@@ -142,7 +142,7 @@ async function __loadInit(): Promise<IInitObject> {
         config.get("platforms") as Array<string>,
     );
 
-    await redisCheck(config.get("redis") as RedisConfig);
+    await redisCheck(config.get("redis") as RedisConfig, log);
 
     if (config.get("info")) {
         printSettingsInfo(packageJSON.default.version, platforms);

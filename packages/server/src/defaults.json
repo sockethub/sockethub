@@ -1,5 +1,5 @@
 {
-  "$schema": "@sockethub/schemas/json/sockethub-config.json",
+  "$schema": "../../schemas/src/schemas/json/sockethub-config.json",
   "examples": true,
   "logFile": "",
   "packageConfig": {

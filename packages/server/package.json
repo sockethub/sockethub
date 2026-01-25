@@ -57,7 +57,6 @@
     "@sockethub/schemas": "^3.0.0-alpha.10",
     "body-parser": "^1.20.4",
     "chalk": "^5.6.2",
-    "debug": "^4.4.3",
     "ejs": "^3.1.10",
     "express": "^4.22.1",
     "express-rate-limit": "^8.2.1",

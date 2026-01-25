@@ -117,6 +117,7 @@ class Sockethub {
                 socket.id,
                 this.parentSecret1 + sessionSecret,
                 config.get("redis"),
+                sessionLog,
             );
 
         sessionLog.debug("socket.io connection");
