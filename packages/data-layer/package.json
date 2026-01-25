@@ -49,7 +49,7 @@
     "bullmq": "^5.66.5",
     "debug": "^4.4.3",
     "ioredis": "^5.9.2",
-    "secure-store-redis": "^4.0.0"
+    "secure-store-redis": "^4.1.0"
   },
   "devDependencies": {
     "@types/bun": "latest",

@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "root",
@@ -63,6 +64,7 @@
       "dependencies": {
         "@sockethub/schemas": "^3.0.0-alpha.10",
         "object-hash": "^3.0.0",
+        "secure-store-redis": "^4.1.0",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -81,7 +83,7 @@
         "bullmq": "^5.66.5",
         "debug": "^4.4.3",
         "ioredis": "^5.9.2",
-        "secure-store-redis": "^4.0.0",
+        "secure-store-redis": "^4.1.0",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -3086,7 +3088,7 @@
 
     "secure-keys": ["secure-keys@1.0.0", "", {}, "sha512-nZi59hW3Sl5P3+wOO89eHBAAGwmCPd2aE1+dLZV5MO+ItQctIvAqihzaAXIQhvtH4KJPxM080HsnqltR2y8cWg=="],
 
-    "secure-store-redis": ["secure-store-redis@4.0.0", "", { "dependencies": { "debug": "4.4.3", "ioredis": "^5.9.2" } }, "sha512-OKqVs+bbNCm39uMvZBZnE2gmCCLUWmOS6IR5pME6fSjok/kEwNBrxxdYhT49kWlkYAR1oaIfTgo8N0efQtNP5w=="],
+    "secure-store-redis": ["secure-store-redis@4.1.0", "", { "dependencies": { "debug": "4.4.3", "ioredis": "^5.9.2" } }, "sha512-7jgWbPZI4k5opY46r0AqCY36N4L5eiqlU9uh0uNohc69ZGjJL+aryDbqfYhTAr/BDETaP+wqCUseoA5uoTRNXw=="],
 
     "seedrandom": ["seedrandom@3.0.5", "", {}, "sha512-8OwmbklUNzwezjGInmZ+2clQmExQPvomqjL7LFqOYqtmuxRgQYqOD3mHaU+MvZn5FLUeVxVfQjwLZW/n/JFuqg=="],
 
