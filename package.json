@@ -62,7 +62,7 @@
     "lint:doc:fix": "bunx markdownlint --fix '**/*.md' && bunx mdspell -n -a --en-us ./README.md ./packages/*/README.md",
     "lint:fix": "bunx biome check --write && bun run lint:doc:fix",
     "preinstall": "bunx only-allow bun",
-    "start": "bun run --filter 'sockethub' start",
+    "start": "bun run packages/sockethub/bin/sockethub-logged",
     "stress:all": "bun run stress-tests/runner.ts --all",
     "stress:performance": "bun run stress-tests/runner.ts --type=performance",
     "stress:stress": "bun run stress-tests/runner.ts --type=stress",

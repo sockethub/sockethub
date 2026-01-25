@@ -7,12 +7,33 @@
 const SockethubClient = require("@sockethub/client").default;
 const { io } = require("socket.io-client");
 
-// Circuit breaker - abort test if too many consecutive connection failures
-let consecutiveConnectionFailures = 0;
-const MAX_CONSECUTIVE_FAILURES = 10;
-let circuitBreakerTriggered = false;
-let lastAlertTime = 0;
-const ALERT_INTERVAL_MS = 5000; // Alert every 5 seconds
+// Circuit breaker - abort test if Sockethub becomes unavailable
+const FAILURE_THRESHOLD = 10; // Consecutive failures before abort
+let consecutiveFailures = 0;
+let lastSuccessTime = Date.now();
+
+function checkCircuitBreaker() {
+    if (consecutiveFailures >= FAILURE_THRESHOLD) {
+        const downtime = Math.round((Date.now() - lastSuccessTime) / 1000);
+        console.error("\n╔══════════════════════════════════════════════════════════╗");
+        console.error("║  ❌ SOCKETHUB UNAVAILABLE - ABORTING STRESS TEST          ║");
+        console.error("╚══════════════════════════════════════════════════════════╝");
+        console.error(`\n${consecutiveFailures} consecutive connection failures`);
+        console.error(`Sockethub has been down for ~${downtime}s`);
+        console.error("Check server logs for crash details.\n");
+        process.exit(1);
+    }
+}
+
+function recordSuccess() {
+    consecutiveFailures = 0;
+    lastSuccessTime = Date.now();
+}
+
+function recordFailure() {
+    consecutiveFailures++;
+    checkCircuitBreaker();
+}
 
 module.exports = {
     setupClient,
@@ -68,8 +89,7 @@ function setupClient(context, events, done) {
     socket.on("connect", () => {
         events.emit("counter", "sockethub.connected", 1);
         context.vars.connected = true;
-        consecutiveConnectionFailures = 0; // Reset on successful connection
-        circuitBreakerTriggered = false; // Reset circuit breaker
+        recordSuccess();
     });
 
     socket.on("connect_error", (err) => {
@@ -80,6 +100,13 @@ function setupClient(context, events, done) {
             console.error(`Connection error (${consecutiveConnectionFailures}): ${err.message}`);
         }
         context.vars.errors.push(`Connection: ${err.message}`);
+        recordFailure();
+    });
+
+    socket.on("disconnect", (reason) => {
+        if (reason === "transport close" || reason === "transport error") {
+            recordFailure();
+        }
     });
 
     // Wait for connection or timeout
@@ -91,6 +118,7 @@ function setupClient(context, events, done) {
             }
             events.emit("counter", "sockethub.connect_timeout", 1);
             context.vars.errors.push("Connection timeout");
+            recordFailure();
         }
         done();
     }, 2000);

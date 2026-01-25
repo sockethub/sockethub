@@ -62,6 +62,29 @@ export class Crypto {
         return hash(object);
     }
 
+    /**
+     * Derive a high-entropy secret from multiple input secrets.
+     * Uses SHA-256 for mixing, then encodes with a shuffled 70-char set
+     * to meet SecureStoreRedis requirements and avoid weak pattern detection.
+     */
+    deriveSecret(...secrets: string[]): string {
+        const hash = createHash("sha256");
+        hash.update(secrets.join(":"));
+        const bytes = hash.digest();
+
+        // Shuffled 70-char set - breaks sequential patterns like "123", "abc", "qwerty"
+        // that would otherwise trigger SecureStoreRedis weak pattern detection
+        const chars =
+            "JDOwSa4kUbA6ixneEfHcBzC7&dIWZvqYPh8N1mG!05loQ2RjXF9*p@MgKuT$y#3L^s%rVt";
+        const charsLength = chars.length; // 70
+
+        let result = "";
+        for (let i = 0; i < 32; i++) {
+            result += chars[bytes[i] % charsLength];
+        }
+        return result;
+    }
+
     randToken(len: number): string {
         if (len > 32) {
             throw new Error(

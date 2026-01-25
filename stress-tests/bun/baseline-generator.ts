@@ -5,9 +5,15 @@ import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { connect } from "node:net";
 import { join } from "node:path";
+import { io } from "socket.io-client";
 import { DEFAULT_THRESHOLDS } from "../config";
 import type { Baseline, SystemProfile, TestResult } from "../types";
 import { getBaselineFilename, getSystemProfile } from "./system-profiler";
+
+const SOCKETHUB_URL = process.env.SOCKETHUB_URL || "http://localhost:10550";
+const HEALTH_CHECK_TIMEOUT = 5000;
+const MAX_HEALTH_RETRIES = 3;
+const HEALTH_RETRY_DELAY = 2000;
 
 const WARMUP_RUNS = 3;
 const BASELINE_RUNS = 5;
@@ -55,6 +61,68 @@ async function ensureSockethubAvailable(maxRetries = 3): Promise<void> {
     throw new Error(
         "Sockethub is not available. Please ensure it is running on localhost:10550",
     );
+}
+
+/**
+ * Check if Sockethub is healthy by attempting a socket.io connection
+ */
+async function checkSockethubHealth(): Promise<boolean> {
+    return new Promise((resolve) => {
+        const socket = io(SOCKETHUB_URL, {
+            path: "/sockethub",
+            transports: ["websocket"],
+            timeout: HEALTH_CHECK_TIMEOUT,
+            reconnection: false,
+        });
+
+        const cleanup = () => {
+            socket.removeAllListeners();
+            socket.disconnect();
+        };
+
+        socket.on("connect", () => {
+            cleanup();
+            resolve(true);
+        });
+
+        socket.on("connect_error", () => {
+            cleanup();
+            resolve(false);
+        });
+
+        setTimeout(() => {
+            cleanup();
+            resolve(false);
+        }, HEALTH_CHECK_TIMEOUT);
+    });
+}
+
+/**
+ * Ensure Sockethub is available, with retries and alerting
+ */
+async function ensureSockethubAvailable(): Promise<void> {
+    for (let attempt = 1; attempt <= MAX_HEALTH_RETRIES; attempt++) {
+        const healthy = await checkSockethubHealth();
+        if (healthy) {
+            return;
+        }
+        console.error(
+            `\n⚠️  SOCKETHUB CONNECTION FAILED (attempt ${attempt}/${MAX_HEALTH_RETRIES})`,
+        );
+        console.error(`   URL: ${SOCKETHUB_URL}`);
+
+        if (attempt < MAX_HEALTH_RETRIES) {
+            console.error(`   Retrying in ${HEALTH_RETRY_DELAY / 1000}s...`);
+            await new Promise((r) => setTimeout(r, HEALTH_RETRY_DELAY));
+        }
+    }
+
+    console.error("\n╔══════════════════════════════════════════════════════════╗");
+    console.error("║  ❌ SOCKETHUB UNAVAILABLE - ABORTING STRESS TEST          ║");
+    console.error("╚══════════════════════════════════════════════════════════╝");
+    console.error(`\nFailed to connect to Sockethub at ${SOCKETHUB_URL}`);
+    console.error("Please ensure Sockethub is running: bun run start\n");
+    process.exit(1);
 }
 
 interface ArtilleryReport {
@@ -126,6 +194,11 @@ async function main() {
     if (!existsSync(BASELINE_DIR)) {
         mkdirSync(BASELINE_DIR, { recursive: true });
     }
+
+    // Initial health check
+    console.log("Checking Sockethub connectivity...");
+    await ensureSockethubAvailable();
+    console.log("✓ Sockethub is available\n");
 
     console.log("Starting baseline generation...\n");
 
