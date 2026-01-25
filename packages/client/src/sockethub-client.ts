@@ -313,10 +313,15 @@ export default class SockethubClient {
         asMap: Map<string, ActivityStream | BaseActivityObject>,
     ) {
         for (const obj of asMap.values()) {
-            const expandedObj = this.ActivityStreams.Stream(obj);
+            // activity-objects are raw objects, don't pass through Stream()
+            // which is designed for activity streams with actor/object structure
+            const isActivityObject = name === "activity-object";
+            const expandedObj = isActivityObject
+                ? obj
+                : this.ActivityStreams.Stream(obj);
             let id = expandedObj?.id;
-            if (this.hasActorId(expandedObj)) {
-                id = expandedObj.actor.id;
+            if (!isActivityObject && this.hasActorId(expandedObj)) {
+                id = (expandedObj as ActivityStream).actor.id;
             }
             this.log(`replaying ${name} for ${id}`);
             this._socket.emit(name, expandedObj);
