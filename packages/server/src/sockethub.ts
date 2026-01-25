@@ -2,13 +2,13 @@ import debug from "debug";
 import type { Socket } from "socket.io";
 
 import { crypto } from "@sockethub/crypto";
-import { cleanupClient, createRateLimiter } from "./rate-limiter.js";
 import { CredentialsStore } from "@sockethub/data-layer";
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import type {
     ActivityStream,
     InternalActivityStream,
 } from "@sockethub/schemas";
+import { cleanupClient, createRateLimiter } from "./rate-limiter.js";
 
 import getInitObject from "./bootstrap/init.js";
 import config from "./config";

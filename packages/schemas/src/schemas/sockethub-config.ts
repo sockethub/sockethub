@@ -11,16 +11,16 @@ export const SockethubConfigSchema = {
     required: ["platforms"],
     additionalProperties: false,
     properties: {
-        "$schema": {
-            type: "string"
+        $schema: {
+            type: "string",
         },
         examples: {
             type: "boolean",
-            default: true
+            default: true,
         },
         log_file: {
             type: "string",
-            default: "sockethub.log"
+            default: "sockethub.log",
         },
         packageConfig: {
             type: "object",
@@ -85,7 +85,7 @@ export const SockethubConfigSchema = {
                 "@sockethub/platform-feeds",
                 "@sockethub/platform-irc",
                 "@sockethub/platform-metadata",
-                "@sockethub/platform-xmpp"
+                "@sockethub/platform-xmpp",
             ],
         },
         public: {
@@ -116,15 +116,15 @@ export const SockethubConfigSchema = {
             properties: {
                 windowMs: {
                     type: "number",
-                    default: 1000
+                    default: 1000,
                 },
                 maxRequests: {
                     type: "number",
-                    default: 100
+                    default: 100,
                 },
                 blockDurationMs: {
                     type: "number",
-                    default: 5000
+                    default: 5000,
                 },
             },
         },
@@ -144,12 +144,12 @@ export const SockethubConfigSchema = {
             properties: {
                 dsn: {
                     type: "string",
-                    default: ""
+                    default: "",
                 },
                 traceSampleRate: {
                     type: "number",
-                    default: 1.0
-                }
+                    default: 1.0,
+                },
             },
         },
         sockethub: {
