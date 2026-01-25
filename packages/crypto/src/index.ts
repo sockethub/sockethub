@@ -66,8 +66,24 @@ export class Crypto {
                 `crypto.randToken supports a length param of up to 32, ${len} given`,
             );
         }
-        const buf = this.randomBytes(len);
-        return buf.toString("hex").substring(0, len);
+        // Use diverse character set for better entropy and secure-store-redis compatibility
+        const chars =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+        const charsLength = chars.length;
+        // Use rejection sampling to avoid modulo bias
+        const maxValidByte = 256 - (256 % charsLength);
+
+        let token = "";
+        while (token.length < len) {
+            const bytes = this.randomBytes(len * 2);
+            for (const byte of bytes) {
+                if (byte < maxValidByte) {
+                    token += chars[byte % charsLength];
+                    if (token.length === len) break;
+                }
+            }
+        }
+        return token;
     }
 
     private static ensureSecret(secret: string) {

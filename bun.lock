@@ -9,10 +9,10 @@
         "@esm-bundle/chai": "^4.3.4-fix.0",
         "@lerna-lite/cli": "4.9.0",
         "@lerna-lite/publish": "4.9.0",
-        "@sockethub/client": "workspace:5.0.0-alpha.7",
-        "@sockethub/data-layer": "workspace:1.0.0-alpha.7",
-        "@sockethub/examples": "workspace:1.0.0-alpha.7",
-        "@sockethub/schemas": "workspace:3.0.0-alpha.7",
+        "@sockethub/client": "workspace:5.0.0-alpha.10",
+        "@sockethub/data-layer": "workspace:1.0.0-alpha.10",
+        "@sockethub/examples": "workspace:1.0.0-alpha.10",
+        "@sockethub/schemas": "workspace:3.0.0-alpha.10",
         "@types/bun": "^1.3.6",
         "@types/mocha": "10.0.10",
         "@web/test-runner": "^0.20.2",
@@ -29,7 +29,7 @@
     },
     "packages/activity-streams": {
       "name": "@sockethub/activity-streams",
-      "version": "4.4.0-alpha.7",
+      "version": "4.4.0-alpha.10",
       "dependencies": {
         "eventemitter3": "^5.0.4",
       },
@@ -42,7 +42,7 @@
     },
     "packages/client": {
       "name": "@sockethub/client",
-      "version": "5.0.0-alpha.7",
+      "version": "5.0.0-alpha.10",
       "dependencies": {
         "eventemitter3": "^5.0.4",
       },
@@ -59,9 +59,9 @@
     },
     "packages/crypto": {
       "name": "@sockethub/crypto",
-      "version": "1.0.0-alpha.7",
+      "version": "1.0.0-alpha.10",
       "dependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.6",
+        "@sockethub/schemas": "^3.0.0-alpha.10",
         "object-hash": "^3.0.0",
       },
       "devDependencies": {
@@ -74,14 +74,14 @@
     },
     "packages/data-layer": {
       "name": "@sockethub/data-layer",
-      "version": "1.0.0-alpha.7",
+      "version": "1.0.0-alpha.10",
       "dependencies": {
-        "@sockethub/crypto": "^1.0.0-alpha.6",
-        "@sockethub/schemas": "^3.0.0-alpha.6",
+        "@sockethub/crypto": "^1.0.0-alpha.10",
+        "@sockethub/schemas": "^3.0.0-alpha.10",
         "bullmq": "^5.66.5",
         "debug": "^4.4.3",
         "ioredis": "^5.9.2",
-        "secure-store-redis": "^3.0.7",
+        "secure-store-redis": "^4.0.0",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -94,7 +94,7 @@
     },
     "packages/examples": {
       "name": "@sockethub/examples",
-      "version": "1.0.0-alpha.7",
+      "version": "1.0.0-alpha.10",
       "devDependencies": {
         "@playwright/test": "^1.57.0",
         "@sockethub/client": "^5.0.0-alpha.6",
@@ -119,7 +119,7 @@
     },
     "packages/irc2as": {
       "name": "@sockethub/irc2as",
-      "version": "4.0.0-alpha.7",
+      "version": "4.0.0-alpha.10",
       "dependencies": {
         "debug": "^4.4.3",
         "fast-deep-equal": "^3.1.3",
@@ -130,7 +130,7 @@
     },
     "packages/platform-dummy": {
       "name": "@sockethub/platform-dummy",
-      "version": "3.0.0-alpha.7",
+      "version": "3.0.0-alpha.10",
       "devDependencies": {
         "@sockethub/schemas": "^3.0.0-alpha.6",
         "@types/bun": "latest",
@@ -144,7 +144,7 @@
     },
     "packages/platform-feeds": {
       "name": "@sockethub/platform-feeds",
-      "version": "4.0.0-alpha.7",
+      "version": "4.0.0-alpha.10",
       "dependencies": {
         "html-tags": "^3.3.1",
         "htmlparser2": "^9.1.0",
@@ -164,7 +164,7 @@
     },
     "packages/platform-irc": {
       "name": "@sockethub/platform-irc",
-      "version": "4.0.0-alpha.7",
+      "version": "4.0.0-alpha.10",
       "dependencies": {
         "@sockethub/irc2as": "^4.0.0-alpha.6",
         "irc-socket-sasl": "^4.0.0",
@@ -183,7 +183,7 @@
     },
     "packages/platform-metadata": {
       "name": "@sockethub/platform-metadata",
-      "version": "1.0.1-alpha.2",
+      "version": "1.0.1-alpha.5",
       "dependencies": {
         "open-graph-scraper": "^6.11.0",
       },
@@ -196,7 +196,7 @@
     },
     "packages/platform-xmpp": {
       "name": "@sockethub/platform-xmpp",
-      "version": "5.0.0-alpha.7",
+      "version": "5.0.0-alpha.10",
       "dependencies": {
         "@xmpp/client": "^0.13.6",
       },
@@ -215,7 +215,7 @@
     },
     "packages/schemas": {
       "name": "@sockethub/schemas",
-      "version": "3.0.0-alpha.7",
+      "version": "3.0.0-alpha.10",
       "dependencies": {
         "ajv": "^8.17.1",
         "ajv-formats": "^2.1.1",
@@ -229,7 +229,7 @@
     },
     "packages/server": {
       "name": "@sockethub/server",
-      "version": "5.0.0-alpha.7",
+      "version": "5.0.0-alpha.10",
       "bin": "bin/sockethub",
       "dependencies": {
         "@sentry/bun": "^10.36.0",
@@ -271,7 +271,7 @@
     },
     "packages/sockethub": {
       "name": "sockethub",
-      "version": "5.0.0-alpha.7",
+      "version": "5.0.0-alpha.10",
       "bin": "bin/sockethub",
       "dependencies": {
         "@sockethub/platform-dummy": "^3.0.0-alpha.6",
@@ -615,18 +615,6 @@
     "@prisma/instrumentation": ["@prisma/instrumentation@7.2.0", "", { "dependencies": { "@opentelemetry/instrumentation": "^0.207.0" }, "peerDependencies": { "@opentelemetry/api": "^1.8" } }, "sha512-Rh9Z4x5kEj1OdARd7U18AtVrnL6rmLSI0qYShaB4W7Wx5BKbgzndWF+QnuzMb7GLfVdlT5aYCXoPQVYuYtVu0g=="],
 
     "@puppeteer/browsers": ["@puppeteer/browsers@2.6.1", "", { "dependencies": { "debug": "^4.4.0", "extract-zip": "^2.0.1", "progress": "^2.0.3", "proxy-agent": "^6.5.0", "semver": "^7.6.3", "tar-fs": "^3.0.6", "unbzip2-stream": "^1.4.3", "yargs": "^17.7.2" }, "bin": { "browsers": "lib/cjs/main-cli.js" } }, "sha512-aBSREisdsGH890S2rQqK82qmQYU3uFpSH8wcZWHgHzl3LfzsxAKbLNiAG9mO8v1Y0UICBeClICxPJvyr0rcuxg=="],
-
-    "@redis/bloom": ["@redis/bloom@1.2.0", "", { "peerDependencies": { "@redis/client": "^1.0.0" } }, "sha512-HG2DFjYKbpNmVXsa0keLHp/3leGJz1mjh09f2RLGGLQZzSHpkmZWuwJbAvo3QcRY8p80m5+ZdXZdYOSBLlp7Cg=="],
-
-    "@redis/client": ["@redis/client@1.6.0", "", { "dependencies": { "cluster-key-slot": "1.1.2", "generic-pool": "3.9.0", "yallist": "4.0.0" } }, "sha512-aR0uffYI700OEEH4gYnitAnv3vzVGXCFvYfdpu/CJKvk4pHfLPEy/JSZyrpQ+15WhXe1yJRXLtfQ84s4mEXnPg=="],
-
-    "@redis/graph": ["@redis/graph@1.1.1", "", { "peerDependencies": { "@redis/client": "^1.0.0" } }, "sha512-FEMTcTHZozZciLRl6GiiIB4zGm5z5F3F6a6FZCyrfxdKOhFlGkiAqlexWMBzCi4DcRoyiOsuLfW+cjlGWyExOw=="],
-
-    "@redis/json": ["@redis/json@1.0.7", "", { "peerDependencies": { "@redis/client": "^1.0.0" } }, "sha512-6UyXfjVaTBTJtKNG4/9Z8PSpKE6XgSyEb8iwaqDcy+uKrd/DGYHTWkUdnQDyzm727V7p21WUMhsqz5oy65kPcQ=="],
-
-    "@redis/search": ["@redis/search@1.2.0", "", { "peerDependencies": { "@redis/client": "^1.0.0" } }, "sha512-tYoDBbtqOVigEDMAcTGsRlMycIIjwMCgD8eR2t0NANeQmgK/lvxNAvYyb6bZDD4frHRhIHkJu2TBRvB0ERkOmw=="],
-
-    "@redis/time-series": ["@redis/time-series@1.1.0", "", { "peerDependencies": { "@redis/client": "^1.0.0" } }, "sha512-c1Q99M5ljsIuc4YdaCwfUEXsofakb9c8+Zse2qxTadu8TalLXuAESzLvFAvNVbkmSlvlzIQOLpBCmWI9wTOt+g=="],
 
     "@rgrove/parse-xml": ["@rgrove/parse-xml@4.2.0", "", {}, "sha512-UuBOt7BOsKVOkFXRe4Ypd/lADuNIfqJXv8GvHqtXaTYXPPKkj2nS2zPllVsrtRjcomDhIJVBnZwfmlI222WH8g=="],
 
@@ -1574,8 +1562,6 @@
 
     "functions-have-names": ["functions-have-names@1.2.3", "", {}, "sha512-xckBUXyTIqT97tq2x2AMb+g163b5JFysYk0x4qxNFwbfQkmNZoiRHb6sPzI9/QV33WeuvVYBUIiD4NzNIyqaRQ=="],
 
-    "generic-pool": ["generic-pool@3.9.0", "", {}, "sha512-hymDOu5B53XvN4QT9dBmZxPX4CWhBPPLguTZ9MMFeFa/Kg0xWVfylOVNlJji/E7yTZWFd/q9GO5TxDLq156D7g=="],
-
     "gensync": ["gensync@1.0.0-beta.2", "", {}, "sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg=="],
 
     "get-caller-file": ["get-caller-file@2.0.5", "", {}, "sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg=="],
@@ -2364,8 +2350,6 @@
 
     "readdirp": ["readdirp@4.1.2", "", {}, "sha512-GDhwkLfywWL2s6vEjyhri+eXmfH6j1L7JE27WhqLeYzoh/A3DBaYGEj2H/HFZCn/kMfim73FXxEJTw06WtxQwg=="],
 
-    "redis": ["redis@4.7.0", "", { "dependencies": { "@redis/bloom": "1.2.0", "@redis/client": "1.6.0", "@redis/graph": "1.1.1", "@redis/json": "1.0.7", "@redis/search": "1.2.0", "@redis/time-series": "1.1.0" } }, "sha512-zvmkHEAdGMn+hMRXuMBtu4Vo5P6rHQjLoHftu+lBqq8ZTA3RCVC/WzD790bkKKiNFp7d5/9PcSD19fJyyRvOdQ=="],
-
     "redis-errors": ["redis-errors@1.2.0", "", {}, "sha512-1qny3OExCf0UvUV/5wpYKf2YwPcOqXzkwKKSmKHiE6ZMQs5heeE/c8eXK+PNllPvmjgAbfnsbpkGZWy8cBpn9w=="],
 
     "redis-parser": ["redis-parser@3.0.0", "", { "dependencies": { "redis-errors": "^1.0.0" } }, "sha512-DJnGAeenTdpMEH6uAJRK/uiyEIH9WVsUmoLwzudwGJUwZPp80PDBWPHXSAGNPwNvIXAbe7MSUB1zQFugFml66A=="],
@@ -2444,7 +2428,7 @@
 
     "secure-keys": ["secure-keys@1.0.0", "", {}, "sha512-nZi59hW3Sl5P3+wOO89eHBAAGwmCPd2aE1+dLZV5MO+ItQctIvAqihzaAXIQhvtH4KJPxM080HsnqltR2y8cWg=="],
 
-    "secure-store-redis": ["secure-store-redis@3.0.7", "", { "dependencies": { "redis": "4.7.0" } }, "sha512-qGjrzape72Ju02uHCDrrZy8tohgQsr2opFg0RUVMMiOFhQVPY4EhEWU19FXyzAA4zVIIPIvAtklLffnd8PvDeQ=="],
+    "secure-store-redis": ["secure-store-redis@4.0.0", "", { "dependencies": { "debug": "4.4.3", "ioredis": "^5.9.2" } }, "sha512-OKqVs+bbNCm39uMvZBZnE2gmCCLUWmOS6IR5pME6fSjok/kEwNBrxxdYhT49kWlkYAR1oaIfTgo8N0efQtNP5w=="],
 
     "semver": ["semver@7.7.2", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA=="],
 
@@ -2875,8 +2859,6 @@
     "@puppeteer/browsers/semver": ["semver@7.7.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-hlq8tAfn0m/61p4BVRcPzIGr6LKiMwo4VM6dGi6pt4qcRkmNzTcWq6eCEjEh+qXjkMDvPlOFFSGwQjoEa6gyMA=="],
 
     "@puppeteer/browsers/yargs": ["yargs@17.7.2", "", { "dependencies": { "cliui": "^8.0.1", "escalade": "^3.1.1", "get-caller-file": "^2.0.5", "require-directory": "^2.1.1", "string-width": "^4.2.3", "y18n": "^5.0.5", "yargs-parser": "^21.1.1" } }, "sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w=="],
-
-    "@redis/client/yallist": ["yallist@4.0.0", "", {}, "sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A=="],
 
     "@rollup/pluginutils/estree-walker": ["estree-walker@2.0.2", "", {}, "sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w=="],
 
