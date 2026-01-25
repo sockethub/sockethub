@@ -1,0 +1,27 @@
+config:
+  target: "http://localhost:10550"
+  phases:
+    - duration: 300
+      arrivalRate: 50
+      name: "Sustained load - 50 clients"
+  processor: "../../processors/sockethub-client.js"
+
+scenarios:
+  - name: "Message Throughput Test"
+    flow:
+      # Setup client and connect
+      - function: "setupClient"
+      - think: 0.5
+
+      # Send credentials
+      - function: "sendCredentials"
+      - think: 0.5
+
+      # Send echo messages at 10 msg/sec per client
+      - loop:
+          - function: "sendDummyEcho"
+          - think: 0.1
+        count: 50
+
+      # Cleanup
+      - function: "disconnectClient"

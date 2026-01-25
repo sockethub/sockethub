@@ -48,7 +48,7 @@
     "clean:deps": "rm -rf node_modules",
     "dev": "DEBUG=sockethub* bun run --hot ./bin/sockethub --examples",
     "info": "DEBUG=sockethub* bun run ./bin/sockethub --info",
-    "start": "DEBUG=sockethub* bun run ./bin/sockethub"
+    "start": "bun run ./bin/sockethub"
   },
   "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
 }

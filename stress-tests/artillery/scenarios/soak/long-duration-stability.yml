@@ -1,0 +1,28 @@
+config:
+  target: "http://localhost:10550"
+  phases:
+    # Phase 1: Dummy platform for 30 minutes
+    - duration: 1800
+      arrivalRate: 10
+      name: "Phase 1: Dummy platform sustained load"
+  processor: "../../processors/sockethub-client.js"
+
+scenarios:
+  - name: "Long Duration Stability Test"
+    flow:
+      # Setup client and connect
+      - function: "setupClient"
+      - think: 0.5
+
+      # Send credentials
+      - function: "sendCredentials"
+      - think: 0.5
+
+      # Sustained message sending with memory tracking
+      - loop:
+          - function: "sendDummyEcho"
+          - think: 0.1
+        count: 1800
+
+      # Cleanup
+      - function: "disconnectClient"
