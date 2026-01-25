@@ -21,47 +21,7 @@ const BASELINE_DIR = join(import.meta.dir, "..", "baselines");
 const SOCKETHUB_HOST = "localhost";
 const SOCKETHUB_PORT = 10550;
 
-/**
- * Check if Sockethub is responding
- */
-async function checkSockethubHealth(): Promise<boolean> {
-    return new Promise((resolve) => {
-        const socket = connect(SOCKETHUB_PORT, SOCKETHUB_HOST);
-        const timeout = setTimeout(() => {
-            socket.destroy();
-            resolve(false);
-        }, 2000);
 
-        socket.on("connect", () => {
-            clearTimeout(timeout);
-            socket.destroy();
-            resolve(true);
-        });
-
-        socket.on("error", () => {
-            clearTimeout(timeout);
-            resolve(false);
-        });
-    });
-}
-
-/**
- * Wait for Sockethub to be available, or throw if unavailable
- */
-async function ensureSockethubAvailable(maxRetries = 3): Promise<void> {
-    for (let i = 0; i < maxRetries; i++) {
-        if (await checkSockethubHealth()) {
-            return;
-        }
-        if (i < maxRetries - 1) {
-            console.log(`  Sockethub not responding, retrying in 2s...`);
-            await new Promise((r) => setTimeout(r, 2000));
-        }
-    }
-    throw new Error(
-        "Sockethub is not available. Please ensure it is running on localhost:10550",
-    );
-}
 
 /**
  * Check if Sockethub is healthy by attempting a socket.io connection
@@ -210,17 +170,19 @@ async function main() {
     console.log("Step 1: Warmup runs (discarded)");
     for (let i = 1; i <= WARMUP_RUNS; i++) {
         await ensureSockethubAvailable();
-        console.log(`  Warmup ${i}/${WARMUP_RUNS}...`);
-        runTest("message-throughput");
+        console.log(`  Warmup ${i}/${WARMUP_RUNS} - starting...`);
+        await runTest("message-throughput");
+        console.log(`  Warmup ${i}/${WARMUP_RUNS} - complete`);
     }
 
     console.log("\nStep 2: Baseline runs (recorded)");
     const results: TestResult[] = [];
     for (let i = 1; i <= BASELINE_RUNS; i++) {
         await ensureSockethubAvailable();
-        console.log(`  Run ${i}/${BASELINE_RUNS}...`);
-        const result = runTest("message-throughput");
+        console.log(`  Run ${i}/${BASELINE_RUNS} - starting...`);
+        const result = await runTest("message-throughput");
         results.push(result);
+        console.log(`  Run ${i}/${BASELINE_RUNS} - complete`);
     }
 
     // Calculate median metrics
@@ -248,7 +210,7 @@ async function main() {
     );
 }
 
-function runTest(scenario: string): TestResult {
+async function runTest(scenario: string): Promise<TestResult> {
     const scenarioPath = join(
         import.meta.dir,
         "..",
@@ -266,14 +228,16 @@ function runTest(scenario: string): TestResult {
     );
 
     try {
-        execSync(
-            `bunx artillery run ${scenarioPath} --output ${reportPath} --quiet`,
+        console.log(`    → Running artillery scenario: ${scenario}`);
+        const output = execSync(
+            `bunx artillery run ${scenarioPath} --output ${reportPath}`,
             {
                 stdio: "pipe",
                 maxBuffer: 50 * 1024 * 1024, // 50MB buffer
                 encoding: "utf-8",
             },
         );
+        console.log(`    → Artillery complete`);
 
         const report: ArtilleryReport = JSON.parse(
             readFileSync(reportPath, "utf-8"),

@@ -8,31 +8,21 @@ const SockethubClient = require("@sockethub/client").default;
 const { io } = require("socket.io-client");
 
 // Circuit breaker - abort test if Sockethub becomes unavailable
-const FAILURE_THRESHOLD = 10; // Consecutive failures before abort
-let consecutiveFailures = 0;
+const MAX_CONSECUTIVE_FAILURES = 10; // Consecutive failures before triggering circuit breaker
+const ALERT_INTERVAL_MS = 5000; // Alert every 5 seconds when circuit breaker is open
+
+let consecutiveConnectionFailures = 0;
+let circuitBreakerTriggered = false;
+let lastAlertTime = 0;
 let lastSuccessTime = Date.now();
 
-function checkCircuitBreaker() {
-    if (consecutiveFailures >= FAILURE_THRESHOLD) {
-        const downtime = Math.round((Date.now() - lastSuccessTime) / 1000);
-        console.error("\n╔══════════════════════════════════════════════════════════╗");
-        console.error("║  ❌ SOCKETHUB UNAVAILABLE - ABORTING STRESS TEST          ║");
-        console.error("╚══════════════════════════════════════════════════════════╝");
-        console.error(`\n${consecutiveFailures} consecutive connection failures`);
-        console.error(`Sockethub has been down for ~${downtime}s`);
-        console.error("Check server logs for crash details.\n");
-        process.exit(1);
-    }
-}
-
 function recordSuccess() {
-    consecutiveFailures = 0;
+    consecutiveConnectionFailures = 0;
     lastSuccessTime = Date.now();
 }
 
 function recordFailure() {
-    consecutiveFailures++;
-    checkCircuitBreaker();
+    consecutiveConnectionFailures++;
 }
 
 module.exports = {
@@ -63,10 +53,11 @@ function setupClient(context, events, done) {
 
     if (consecutiveConnectionFailures >= MAX_CONSECUTIVE_FAILURES && !circuitBreakerTriggered) {
         circuitBreakerTriggered = true;
+        const downtime = Math.round((Date.now() - lastSuccessTime) / 1000);
         console.error(
             `\n🛑 CIRCUIT BREAKER TRIGGERED: ${consecutiveConnectionFailures} consecutive failures.\n` +
-            `   Sockethub appears to be down. Aborting new connections.\n` +
-            `   Press Ctrl+C to stop the test.\n`,
+            `   Sockethub has been down for ~${downtime}s\n` +
+            `   Aborting new connections. Press Ctrl+C to stop the test.\n`,
         );
         lastAlertTime = Date.now();
         events.emit("counter", "sockethub.circuit_breaker", 1);
@@ -156,7 +147,7 @@ function sendCredentials(context, events, done) {
         object: {
             id: `creds-${context.vars.$uuid}`,
             type: "credentials",
-            secret: "test-secret",
+            secret: `test-secret-${context.vars.$uuid}-with-sufficient-entropy`,
         },
     };
 
