@@ -111,7 +111,7 @@ class Sockethub {
         sessionLog("socket.io connection");
 
         // Rate limiting middleware - runs on every incoming event
-        const rateLimiter = createRateLimiter();
+        const rateLimiter = createRateLimiter(config.get("rateLimiter"));
         socket.use((event, next) => {
             rateLimiter(socket, event[0], next);
         });

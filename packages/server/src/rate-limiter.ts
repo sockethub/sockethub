@@ -1,0 +1,98 @@
+import debug from "debug";
+import type { Socket } from "socket.io";
+
+const log = debug("sockethub:server:rate-limiter");
+
+interface RateLimitConfig {
+    windowMs: number; // Time window in milliseconds
+    maxRequests: number; // Max requests per window
+    blockDurationMs: number; // How long to block after exceeding limit
+}
+
+interface ClientState {
+    count: number;
+    windowStart: number;
+    blocked: boolean;
+    blockedUntil: number;
+}
+
+const DEFAULT_CONFIG: RateLimitConfig = {
+    windowMs: 1000, // 1 second window
+    maxRequests: 100, // 100 messages per second per client
+    blockDurationMs: 5000, // Block for 5 seconds if exceeded
+};
+
+const clientStates = new Map<string, ClientState>();
+
+// Cleanup stale entries periodically
+setInterval(() => {
+    const now = Date.now();
+    for (const [socketId, state] of clientStates.entries()) {
+        // Remove entries that haven't been active for 60 seconds
+        if (now - state.windowStart > 60000) {
+            clientStates.delete(socketId);
+        }
+    }
+}, 30000);
+
+export function createRateLimiter(config: Partial<RateLimitConfig> = {}) {
+    const cfg = { ...DEFAULT_CONFIG, ...config };
+
+    return function rateLimitMiddleware(
+        socket: Socket,
+        event: string,
+        next: (err?: Error) => void,
+    ) {
+        const now = Date.now();
+        let state = clientStates.get(socket.id);
+
+        if (!state) {
+            state = {
+                count: 0,
+                windowStart: now,
+                blocked: false,
+                blockedUntil: 0,
+            };
+            clientStates.set(socket.id, state);
+        }
+
+        // Check if currently blocked
+        if (state.blocked) {
+            if (now < state.blockedUntil) {
+                // Still blocked, silently drop
+                return;
+            }
+            // Block expired, reset
+            state.blocked = false;
+            state.count = 0;
+            state.windowStart = now;
+        }
+
+        // Reset window if expired
+        if (now - state.windowStart > cfg.windowMs) {
+            state.count = 0;
+            state.windowStart = now;
+        }
+
+        state.count++;
+
+        if (state.count > cfg.maxRequests) {
+            state.blocked = true;
+            state.blockedUntil = now + cfg.blockDurationMs;
+            log(
+                `rate limit exceeded for ${socket.id}: ${state.count} requests in ${cfg.windowMs}ms, blocking for ${cfg.blockDurationMs}ms`,
+            );
+            socket.emit("error", {
+                context: "error",
+                error: "rate limit exceeded, temporarily blocked",
+            });
+            return;
+        }
+
+        next();
+    };
+}
+
+export function cleanupClient(socketId: string) {
+    clientStates.delete(socketId);
+}
