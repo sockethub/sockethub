@@ -15,7 +15,7 @@ Sockethub uses a JSON configuration file:
 {
   "$schema": "https://sockethub.org/schemas/3.0.0-alpha.4/sockethub-config.json",
   "examples": true,
-  "log_file": "",
+  "logFile": "",
   "packageConfig": {
     "@sockethub/activity-streams": {
       "specialObjs": ["credentials"],
@@ -155,7 +155,7 @@ Enable/disable example pages:
 
 ```json
 {
-  "log_file": "/var/log/sockethub/app.log"  // Empty string for console only
+  "logFile": "/var/log/sockethub/app.log"  // Empty string for console only
 }
 ```
 
@@ -243,7 +243,7 @@ export DEBUG=sockethub*
 ```json
 {
   "examples": false,
-  "log_file": "/var/log/sockethub/app.log",
+  "logFile": "/var/log/sockethub/app.log",
   "sockethub": {
     "port": 10550,
     "host": "0.0.0.0",

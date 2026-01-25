@@ -15,6 +15,9 @@
       "bun": "./src/index.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./schemas/json/sockethub-config.json": {
+      "default": "./src/schemas/json/sockethub-config.json"
     }
   },
   "files": ["src/", "dist/"],

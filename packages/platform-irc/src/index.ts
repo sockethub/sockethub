@@ -423,9 +423,7 @@ export default class IRC implements PersistentPlatformInterface {
                 client.raw(["NICK", job.target.name]);
             } else if (job.object.type === "topic") {
                 // update topic
-                this.log.debug(
-                    `changing topic in channel ${job.target.name}`,
-                );
+                this.log.debug(`changing topic in channel ${job.target.name}`);
                 this.jobQueue.push(done);
                 client.raw(["topic", job.target.name, job.object.content]);
             } else {
@@ -711,9 +709,7 @@ export default class IRC implements PersistentPlatformInterface {
     }
 
     private completeJob(err?: string) {
-        this.log.debug(
-            `completing job, queue count: ${this.jobQueue.length}`,
-        );
+        this.log.debug(`completing job, queue count: ${this.jobQueue.length}`);
         const done = this.jobQueue.shift();
         if (typeof done === "function") {
             done(err);
@@ -758,9 +754,7 @@ export default class IRC implements PersistentPlatformInterface {
         // however for irc2as this event delivers an AS object of type `error`.
 
         this.irc2as.events.on("error", (asObject: ActivityStream) => {
-            this.log.debug(
-                `message error response ${asObject.object.content}`,
-            );
+            this.log.debug(`message error response ${asObject.object.content}`);
             this.completeJob(asObject.object.content);
         });
 

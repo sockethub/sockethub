@@ -1,7 +1,7 @@
 {
   "$schema": "@sockethub/schemas/json/sockethub-config.json",
   "examples": true,
-  "log_file": "",
+  "logFile": "",
   "packageConfig": {
     "@sockethub/activity-streams": {
       "specialObjs": ["credentials"],

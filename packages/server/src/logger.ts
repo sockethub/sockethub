@@ -83,7 +83,7 @@ let defaultLogger: Logger;
 export function getDefaultLogger(): Logger {
     if (!defaultLogger) {
         const config = require("./config.js").default;
-        const logFile = config.get("log_file") as string;
+        const logFile = config.get("logFile") as string;
         defaultLogger = createLogger({ logFile });
     }
     return defaultLogger;

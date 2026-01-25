@@ -18,7 +18,7 @@ export const SockethubConfigSchema = {
             type: "boolean",
             default: true,
         },
-        log_file: {
+        logFile: {
             type: "string",
             default: "sockethub.log",
         },
