@@ -29,14 +29,14 @@ const CLEANUP_INTERVAL_MS = 30000; // 30 seconds
 const clientStates = new Map<string, ClientState>();
 
 let cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
-let isCleanupStarted = false;
+let cleanupIntervalRunning = false;
 
 // Cleanup stale entries periodically
 function startCleanup() {
-    if (isCleanupStarted) {
+    if (cleanupIntervalRunning) {
         return;
     }
-    isCleanupStarted = true;
+    cleanupIntervalRunning = true;
     cleanupIntervalId = setInterval(() => {
         const now = Date.now();
         for (const [socketId, state] of clientStates.entries()) {
@@ -52,7 +52,7 @@ export function stopCleanup() {
     if (cleanupIntervalId !== null) {
         clearInterval(cleanupIntervalId);
         cleanupIntervalId = null;
-        isCleanupStarted = false;
+        cleanupIntervalRunning = false;
     }
 }
 
@@ -64,7 +64,7 @@ export function createRateLimiter(config: Partial<RateLimitConfig> = {}) {
 
     return function rateLimitMiddleware(
         socket: Socket,
-        eventName: string,
+        _eventName: string,
         next: (err?: Error) => void,
     ) {
         const now = Date.now();
