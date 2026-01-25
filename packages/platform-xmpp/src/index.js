@@ -43,7 +43,7 @@ export default class XMPP {
             initialized: false,
             requireCredentials: ["connect"],
         };
-        this.debug = session.log;
+        this.log = session.log;
         this.sendToClient = session.sendToClient;
         this.createClient();
         this.createXml();
@@ -61,10 +61,10 @@ export default class XMPP {
      * @param {boolean} stopReconnection - If true, stop automatic reconnection
      */
     __markDisconnected(stopReconnection = false) {
-        this.debug.debug(`marking client as disconnected for ${this.id}`);
+        this.log.debug(`marking client as disconnected for ${this.id}`);
 
         if (stopReconnection && this.__client) {
-            this.debug.debug(`stopping automatic reconnection for ${this.id}`);
+            this.log.debug(`stopping automatic reconnection for ${this.id}`);
             this.__client.stop();
         }
 
@@ -132,7 +132,7 @@ export default class XMPP {
                 this.__client.status === "online"
             );
         } catch (err) {
-            this.debug.debug("Error checking client connection status:", err);
+            this.log.debug("Error checking client connection status:", err);
             return false;
         }
     }
@@ -205,17 +205,17 @@ export default class XMPP {
      */
     connect(job, credentials, done) {
         if (this.__isClientConnected()) {
-            this.debug.debug(
+            this.log.debug(
                 `client connection already exists for ${job.actor.id}`,
             );
             this.config.initialized = true;
             return done();
         }
-        this.debug.debug(`connect() called for ${job.actor.id}`);
+        this.log.debug(`connect() called for ${job.actor.id}`);
 
         // Log credential processing
         const xmppCreds = utils.buildXmppCredentials(credentials);
-        this.debug.debug(
+        this.log.debug(
             `building XMPP credentials for ${job.actor.id}:`,
             JSON.stringify({
                 service: xmppCreds.service,
@@ -226,18 +226,18 @@ export default class XMPP {
         );
 
         // Log before client creation
-        this.debug.debug(`creating XMPP client for ${job.actor.id}`);
+        this.log.debug(`creating XMPP client for ${job.actor.id}`);
 
         try {
             this.__client = this.__clientConstructor({
                 ...xmppCreds,
                 ...{ timeout: this.config.connectTimeoutMs, tls: false },
             });
-            this.debug.debug(
+            this.log.debug(
                 `XMPP client created successfully for ${job.actor.id}`,
             );
         } catch (err) {
-            this.debug.debug(
+            this.log.debug(
                 `XMPP client creation failed for ${job.actor.id}:`,
                 err,
             );
@@ -245,12 +245,12 @@ export default class XMPP {
         }
 
         this.__client.on("offline", () => {
-            this.debug.debug(`offline event received for ${job.actor.id}`);
+            this.log.debug(`offline event received for ${job.actor.id}`);
             this.__markDisconnected();
         });
 
         this.__client.on("error", (err) => {
-            this.debug.debug(
+            this.log.debug(
                 `network error event for ${job.actor.id}:${err.toString()}`,
             );
 
@@ -287,10 +287,10 @@ export default class XMPP {
         });
 
         this.__client.on("online", () => {
-            this.debug.debug(`online event received for ${job.actor.id}`);
+            this.log.debug(`online event received for ${job.actor.id}`);
         });
 
-        this.debug.debug(`starting XMPP client connection for ${job.actor.id}`);
+        this.log.debug(`starting XMPP client connection for ${job.actor.id}`);
         const startTime = Date.now();
 
         this.__client
@@ -298,7 +298,7 @@ export default class XMPP {
             .then(() => {
                 // connected
                 const duration = Date.now() - startTime;
-                this.debug.debug(
+                this.log.debug(
                     `connection successful for ${job.actor.id} after ${duration}ms`,
                 );
                 this.config.initialized = true;
@@ -307,7 +307,7 @@ export default class XMPP {
             })
             .catch((err) => {
                 const duration = Date.now() - startTime;
-                this.debug.debug(
+                this.log.debug(
                     `connection failed for ${job.actor.id} after ${duration}ms:`,
                     {
                         error: err,
@@ -346,7 +346,7 @@ export default class XMPP {
      * }
      */
     async join(job, done) {
-        this.debug.debug(
+        this.log.debug(
             `sending join from ${job.actor.id} to ` +
                 `${job.target.id}/${job.actor.name}`,
         );
@@ -389,7 +389,7 @@ export default class XMPP {
      * }
      */
     leave(job, done) {
-        this.debug.debug(
+        this.log.debug(
             `sending leave from ${job.actor.id} to ` +
                 `${job.target.id}/${job.actor.name}`,
         );
@@ -459,7 +459,7 @@ export default class XMPP {
      *
      */
     send(job, done) {
-        this.debug.debug(`send() called for ${job.actor.id}`);
+        this.log.debug(`send() called for ${job.actor.id}`);
         // send message
         const message = this.__xml(
             "message",
@@ -503,7 +503,7 @@ export default class XMPP {
      * }
      */
     update(job, done) {
-        this.debug.debug(`update() called for ${job.actor.id}`);
+        this.log.debug(`update() called for ${job.actor.id}`);
         const props = {};
         const show = {};
         const status = {};
@@ -517,7 +517,7 @@ export default class XMPP {
                 status.status = job.object.content;
             }
             // setting presence
-            this.debug.debug(`setting presence: ${job.object.presence}`);
+            this.log.debug(`setting presence: ${job.object.presence}`);
             this.__client
                 .send(this.__xml("presence", props, show, status))
                 .then(done);
@@ -547,7 +547,7 @@ export default class XMPP {
      * }
      */
     "request-friend"(job, done) {
-        this.debug.debug(`request-friend() called for ${job.actor.id}`);
+        this.log.debug(`request-friend() called for ${job.actor.id}`);
         this.__client
             .send(
                 this.__xml("presence", {
@@ -579,7 +579,7 @@ export default class XMPP {
      * }
      */
     "remove-friend"(job, done) {
-        this.debug.debug(`remove-friend() called for ${job.actor.id}`);
+        this.log.debug(`remove-friend() called for ${job.actor.id}`);
         this.__client
             .send(
                 this.__xml("presence", {
@@ -611,7 +611,7 @@ export default class XMPP {
      * }
      */
     "make-friend"(job, done) {
-        this.debug.debug(`make-friend() called for ${job.actor.id}`);
+        this.log.debug(`make-friend() called for ${job.actor.id}`);
         this.__client
             .send(
                 this.__xml("presence", {
@@ -671,7 +671,7 @@ export default class XMPP {
      *  }
      */
     query(job, done) {
-        this.debug.debug(
+        this.log.debug(
             `sending query from ${job.actor.id} for ${job.target.id}`,
         );
         this.__client
@@ -709,7 +709,7 @@ export default class XMPP {
      *  }
      */
     disconnect(job, done) {
-        this.debug.debug("disconnecting");
+        this.log.debug("disconnecting");
         this.cleanup(done);
     }
 
@@ -719,7 +719,7 @@ export default class XMPP {
      * @param {function} done - callback when complete
      */
     cleanup(done) {
-        this.debug.debug("cleanup");
+        this.log.debug("cleanup");
         this.config.initialized = false;
         this.__client.stop();
         done();

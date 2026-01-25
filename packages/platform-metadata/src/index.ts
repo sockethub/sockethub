@@ -10,12 +10,12 @@ import ogs from "open-graph-scraper";
 import { PlatformMetadataSchema } from "./schema";
 
 export default class Metadata implements PlatformInterface {
-    readonly debug: Logger;
+    readonly log: Logger;
     config: PlatformConfig = {
         persist: false,
     };
     constructor(session: PlatformSession) {
-        this.debug = session.log;
+        this.log = session.log;
     }
 
     get schema() {
@@ -23,7 +23,7 @@ export default class Metadata implements PlatformInterface {
     }
 
     fetch(job: ActivityStream, cb: PlatformCallback) {
-        this.debug.debug(`fetching ${job.actor.id}`);
+        this.log.debug(`fetching ${job.actor.id}`);
         ogs({
             url: job.actor.id,
         })

@@ -70,7 +70,7 @@ function isHtml(s: string): boolean {
  */
 export default class Feeds implements PlatformInterface {
     id: string;
-    debug: Logger;
+    log: Logger;
     config: PlatformConfig = {
         persist: false,
         connectTimeoutMs: 5000,
@@ -81,7 +81,7 @@ export default class Feeds implements PlatformInterface {
      * @param session - a unique session object for this platform instance
      */
     constructor(session: PlatformSession) {
-        this.debug = session.log;
+        this.log = session.log;
     }
 
     get schema(): PlatformSchemaStruct {
@@ -209,7 +209,7 @@ export default class Feeds implements PlatformInterface {
         url: string,
         id: string,
     ): Promise<Array<PlatformFeedsActivityStream>> {
-        this.debug.debug(`fetching ${url}`);
+        this.log.debug(`fetching ${url}`);
         const res = await this.makeRequest(url);
         const feed = getPodcastFromFeed(res);
         const actor = buildFeedChannel(url, feed.meta);
@@ -221,7 +221,7 @@ export default class Feeds implements PlatformInterface {
             article.object = buildFeedItem(item as FeedItem);
             articles.push(article);
         }
-        this.debug.debug(`fetched ${articles.length} articles`);
+        this.log.debug(`fetched ${articles.length} articles`);
         return articles;
     }
 }
