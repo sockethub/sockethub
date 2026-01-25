@@ -7,6 +7,10 @@
 const SockethubClient = require("@sockethub/client").default;
 const { io } = require("socket.io-client");
 
+// Circuit breaker - abort test if too many consecutive connection failures
+let consecutiveConnectionFailures = 0;
+const MAX_CONSECUTIVE_FAILURES = 10;
+
 module.exports = {
     setupClient,
     sendCredentials,
@@ -20,9 +24,19 @@ module.exports = {
  * Setup Sockethub client for this virtual user
  */
 function setupClient(context, events, done) {
+    // Circuit breaker - abort if server appears down
+    if (consecutiveConnectionFailures >= MAX_CONSECUTIVE_FAILURES) {
+        console.error(
+            `Circuit breaker: ${consecutiveConnectionFailures} consecutive failures, aborting`,
+        );
+        events.emit("counter", "sockethub.circuit_breaker", 1);
+        return done(new Error("Circuit breaker triggered - server unavailable"));
+    }
+
     const socket = io("http://localhost:10550", {
         path: "/sockethub",
         transports: ["websocket"],
+        reconnection: false, // Don't auto-reconnect during stress tests
     });
 
     context.vars.client = new SockethubClient(socket);
@@ -34,18 +48,26 @@ function setupClient(context, events, done) {
     socket.on("connect", () => {
         events.emit("counter", "sockethub.connected", 1);
         context.vars.connected = true;
+        consecutiveConnectionFailures = 0; // Reset on successful connection
     });
 
     socket.on("connect_error", (err) => {
         events.emit("counter", "sockethub.connect_error", 1);
-        console.error("Connection error:", err.message);
+        consecutiveConnectionFailures++;
+        // Only log occasionally to avoid spam
+        if (consecutiveConnectionFailures <= 3 || consecutiveConnectionFailures % 10 === 0) {
+            console.error(`Connection error (${consecutiveConnectionFailures}): ${err.message}`);
+        }
         context.vars.errors.push(`Connection: ${err.message}`);
     });
 
     // Wait for connection or timeout
     setTimeout(() => {
         if (!context.vars.connected) {
-            console.error("Connection timeout - socket never connected");
+            consecutiveConnectionFailures++;
+            if (consecutiveConnectionFailures <= 3) {
+                console.error("Connection timeout - socket never connected");
+            }
             events.emit("counter", "sockethub.connect_timeout", 1);
             context.vars.errors.push("Connection timeout");
         }
@@ -83,6 +105,7 @@ function sendCredentials(context, events, done) {
             type: "person",
         },
         object: {
+            id: `creds-${context.vars.$uuid}`,
             type: "credentials",
             secret: "test-secret",
         },
@@ -115,6 +138,7 @@ function sendDummyEcho(context, events, done) {
             type: "person",
         },
         object: {
+            id: `echo-${Date.now()}`,
             type: "message",
             content: `Test echo ${Date.now()}`,
         },
@@ -151,8 +175,12 @@ function sendXMPPMessage(context, events, done) {
             id: actorId,
             type: "person",
         },
-        target: "testroom@conference.localhost",
+        target: {
+            id: "testroom@conference.localhost",
+            type: "room",
+        },
         object: {
+            id: `xmpp-${Date.now()}`,
             type: "message",
             content: `XMPP test ${Date.now()}`,
         },

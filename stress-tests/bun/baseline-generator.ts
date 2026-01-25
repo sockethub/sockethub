@@ -3,6 +3,7 @@
  */
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { connect } from "node:net";
 import { join } from "node:path";
 import { DEFAULT_THRESHOLDS } from "../config";
 import type { Baseline, SystemProfile, TestResult } from "../types";
@@ -11,6 +12,50 @@ import { getBaselineFilename, getSystemProfile } from "./system-profiler";
 const WARMUP_RUNS = 3;
 const BASELINE_RUNS = 5;
 const BASELINE_DIR = join(import.meta.dir, "..", "baselines");
+const SOCKETHUB_HOST = "localhost";
+const SOCKETHUB_PORT = 10550;
+
+/**
+ * Check if Sockethub is responding
+ */
+async function checkSockethubHealth(): Promise<boolean> {
+    return new Promise((resolve) => {
+        const socket = connect(SOCKETHUB_PORT, SOCKETHUB_HOST);
+        const timeout = setTimeout(() => {
+            socket.destroy();
+            resolve(false);
+        }, 2000);
+
+        socket.on("connect", () => {
+            clearTimeout(timeout);
+            socket.destroy();
+            resolve(true);
+        });
+
+        socket.on("error", () => {
+            clearTimeout(timeout);
+            resolve(false);
+        });
+    });
+}
+
+/**
+ * Wait for Sockethub to be available, or throw if unavailable
+ */
+async function ensureSockethubAvailable(maxRetries = 3): Promise<void> {
+    for (let i = 0; i < maxRetries; i++) {
+        if (await checkSockethubHealth()) {
+            return;
+        }
+        if (i < maxRetries - 1) {
+            console.log(`  Sockethub not responding, retrying in 2s...`);
+            await new Promise((r) => setTimeout(r, 2000));
+        }
+    }
+    throw new Error(
+        "Sockethub is not available. Please ensure it is running on localhost:10550",
+    );
+}
 
 interface ArtilleryReport {
     aggregate: {
@@ -83,8 +128,15 @@ async function main() {
     }
 
     console.log("Starting baseline generation...\n");
+
+    // Verify Sockethub is available before starting
+    console.log("Checking Sockethub availability...");
+    await ensureSockethubAvailable();
+    console.log("✓ Sockethub is responding\n");
+
     console.log("Step 1: Warmup runs (discarded)");
     for (let i = 1; i <= WARMUP_RUNS; i++) {
+        await ensureSockethubAvailable();
         console.log(`  Warmup ${i}/${WARMUP_RUNS}...`);
         runTest("message-throughput");
     }
@@ -92,6 +144,7 @@ async function main() {
     console.log("\nStep 2: Baseline runs (recorded)");
     const results: TestResult[] = [];
     for (let i = 1; i <= BASELINE_RUNS; i++) {
+        await ensureSockethubAvailable();
         console.log(`  Run ${i}/${BASELINE_RUNS}...`);
         const result = runTest("message-throughput");
         results.push(result);
