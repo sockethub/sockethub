@@ -29,7 +29,7 @@ export async function verifyJobQueue(
                     "Worker job completed unsuccessfully during JobQueue connection test",
                 );
             }
-            log.info("connection verified");
+            log.info("job queue connection verified");
             await queue.close();
             await worker.close();
             resolve();

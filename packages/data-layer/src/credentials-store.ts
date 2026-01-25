@@ -23,7 +23,7 @@ export async function verifySecureStore(
     });
     await ss.connect();
     await ss.disconnect();
-    log.info("redis connection verified");
+    log.info("secure store connection verified");
 }
 
 /**

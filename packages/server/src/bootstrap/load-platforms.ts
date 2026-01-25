@@ -145,6 +145,7 @@ export default async function loadPlatforms(
             version: p.schema.version,
             types: types,
         });
+        log.info(`loaded platform ${p.schema.name} v${p.schema.version}`);
     }
 
     return platforms;

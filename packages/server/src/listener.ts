@@ -11,8 +11,16 @@ import config from "./config.js";
 import { createLogger } from "./logger.js";
 import routes from "./routes.js";
 const require = createRequire(import.meta.url);
+const packageJson = require("../package.json");
 
 const log = createLogger({ namespace: "sockethub:server:listener" });
+// initial details
+log.info(`sockethub v${packageJson.version}`);
+const logFile = config.get("logging")?.file;
+if (logFile) {
+    const absolutePath = path.resolve(logFile);
+    log.info(`logs being written to ${absolutePath}`);
+}
 
 /**
  * Handles the initialization and access of Sockethub resources.
