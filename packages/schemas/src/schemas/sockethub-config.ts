@@ -18,9 +18,25 @@ export const SockethubConfigSchema = {
             type: "boolean",
             default: true,
         },
-        logFile: {
-            type: "string",
-            default: "sockethub.log",
+        logging: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+                level: {
+                    type: "string",
+                    enum: ["error", "warn", "info", "debug"],
+                    default: "info",
+                },
+                fileLevel: {
+                    type: "string",
+                    enum: ["error", "warn", "info", "debug"],
+                    default: "debug",
+                },
+                file: {
+                    type: "string",
+                    default: "sockethub.log",
+                },
+            },
         },
         packageConfig: {
             type: "object",
