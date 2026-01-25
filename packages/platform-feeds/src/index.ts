@@ -81,7 +81,7 @@ export default class Feeds implements PlatformInterface {
      * @param session - a unique session object for this platform instance
      */
     constructor(session: PlatformSession) {
-        this.debug = session.debug;
+        this.debug = session.log;
     }
 
     get schema(): PlatformSchemaStruct {
@@ -209,7 +209,7 @@ export default class Feeds implements PlatformInterface {
         url: string,
         id: string,
     ): Promise<Array<PlatformFeedsActivityStream>> {
-        this.debug(`fetching ${url}`);
+        this.debug.debug(`fetching ${url}`);
         const res = await this.makeRequest(url);
         const feed = getPodcastFromFeed(res);
         const actor = buildFeedChannel(url, feed.meta);
@@ -221,7 +221,7 @@ export default class Feeds implements PlatformInterface {
             article.object = buildFeedItem(item as FeedItem);
             articles.push(article);
         }
-        this.debug(`fetched ${articles.length} articles`);
+        this.debug.debug(`fetched ${articles.length} articles`);
         return articles;
     }
 }

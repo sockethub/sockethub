@@ -185,7 +185,12 @@ describe("XMPP", () => {
 
         xp = new TestXMPP({
             id: actor,
-            debug: sinon.fake(),
+            log: {
+                error: sinon.fake(),
+                warn: sinon.fake(),
+                info: sinon.fake(),
+                debug: sinon.fake(),
+            },
             sendToClient: sinon.fake(),
         });
     });

@@ -1,10 +1,9 @@
-import debug from "debug";
-
 import listener, { type SocketInstance } from "./listener.js";
+import { createLogger } from "./logger.js";
 import type PlatformInstance from "./platform-instance.js";
 import { platformInstances } from "./platform-instance.js";
 
-const rmLog = debug("sockethub:server:janitor");
+const rmLog = createLogger({ namespace: "sockethub:server:janitor" });
 
 export class Janitor {
     cycleInterval = 15000;
@@ -23,15 +22,15 @@ export class Janitor {
      * refreshes not destroying platform instances)
      */
     start(): void {
-        rmLog("initializing");
+        rmLog.debug("initializing");
         this.clean().then(() => {
-            rmLog("cleaning cycle started");
+            rmLog.info("cleaning cycle started");
         });
     }
 
     async stop(): Promise<void> {
         this.stopTriggered = true;
-        rmLog("stopping, terminating all sessions");
+        rmLog.info("stopping, terminating all sessions");
         for (const platformInstance of platformInstances.values()) {
             this.removeStaleSocketSessions(platformInstance);
             await this.removeStalePlatformInstance(platformInstance);
@@ -66,7 +65,7 @@ export class Janitor {
         platformInstance: PlatformInstance,
         sessionId: string,
     ) {
-        rmLog(
+        rmLog.debug(
             `removing ${
                 !this.stopTriggered ? "stale " : ""
             }socket session reference ${sessionId} 
@@ -80,10 +79,10 @@ export class Janitor {
         platformInstance: PlatformInstance,
     ): Promise<void> {
         if (platformInstance.flaggedForTermination || this.stopTriggered) {
-            rmLog(`terminating platform instance ${platformInstance.id}`);
+            rmLog.info(`terminating platform instance ${platformInstance.id}`);
             await platformInstance.shutdown(); // terminate
         } else {
-            rmLog(
+            rmLog.debug(
                 `flagging for termination platform instance ${platformInstance.id} (no registered sessions found)`,
             );
             platformInstance.flaggedForTermination = true;
@@ -139,7 +138,7 @@ export class Janitor {
 
         if (!(this.cycleCount % 4)) {
             this.reportCount++;
-            rmLog(
+            rmLog.info(
                 `socket sessions: ${this.sockets.length} platform instances: ${platformInstances.size}`,
             );
         }

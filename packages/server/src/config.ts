@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import debug from "debug";
 import nconf from "nconf";
 
+import { createLogger } from "./logger.js";
 import { __dirname } from "./util.js";
 
-const log = debug("sockethub:server:bootstrap:config");
+const log = createLogger({ namespace: "sockethub:server:bootstrap:config" });
 const data = JSON.parse(
     fs.readFileSync(path.resolve(__dirname, "defaults.json"), "utf-8"),
 );
@@ -14,7 +14,7 @@ const defaultConfig = "sockethub.config.json";
 
 export class Config {
     constructor() {
-        log("initializing config");
+        log.debug("initializing config");
         // assign config loading priorities (command-line, environment, cfg, defaults)
         nconf.argv({
             info: {
@@ -59,11 +59,11 @@ export class Config {
             if (!fs.existsSync(configFile)) {
                 throw new Error(`Config file not found: ${configFile}`);
             }
-            log(`reading config file at ${configFile}`);
+            log.debug(`reading config file at ${configFile}`);
             nconf.file(configFile);
         } else {
             if (fs.existsSync(`${process.cwd()}/${defaultConfig}`)) {
-                log(`loading local ${defaultConfig}`);
+                log.debug(`loading local ${defaultConfig}`);
                 nconf.file(`${process.cwd()}/${defaultConfig}`);
             }
             nconf.use("memory");

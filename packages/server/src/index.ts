@@ -1,5 +1,5 @@
-import debug from "debug";
 import config from "./config";
+import { createLogger } from "./logger";
 import Sockethub from "./sockethub";
 
 let sentry: { readonly reportError: (err: Error) => void } = {
@@ -8,11 +8,11 @@ let sentry: { readonly reportError: (err: Error) => void } = {
 
 export async function server() {
     let sockethub: Sockethub;
-    const log = debug("sockethub:init");
+    const log = createLogger({ namespace: "sockethub:init" });
 
     // conditionally initialize sentry
     if (config.get("sentry:dsn")) {
-        log("initializing sentry");
+        log.info("initializing sentry");
         sentry = await import("./sentry");
     }
 

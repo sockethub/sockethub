@@ -63,7 +63,9 @@ export class IncomingHandlers {
             return;
         }
 
-        this.session.debug("received close event with no handler specified");
+        this.session.log.debug(
+            "received close event with no handler specified",
+        );
         if (this.session.actor && this.session.sendToClient) {
             this.session.sendToClient({
                 context: "xmpp",
@@ -71,7 +73,7 @@ export class IncomingHandlers {
                 actor: this.session.actor,
                 target: this.session.actor,
             });
-            this.session.debug(
+            this.session.log.debug(
                 `**** xmpp this.session.for ${this.session.actor.id} closed`,
             );
         }

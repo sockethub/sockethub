@@ -3,16 +3,16 @@ import * as HTTP from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
 import bodyParser from "body-parser";
-import debug from "debug";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import { Server } from "socket.io";
 
 import config from "./config.js";
+import { createLogger } from "./logger.js";
 import routes from "./routes.js";
 const require = createRequire(import.meta.url);
 
-const log = debug("sockethub:server:listener");
+const log = createLogger({ namespace: "sockethub:server:listener" });
 
 /**
  * Handles the initialization and access of Sockethub resources.
@@ -64,12 +64,12 @@ class Listener {
                 "build",
             );
             if (existsSync(examplesDir)) {
-                log(
+                log.debug(
                     `examples resolved from @sockethub/examples: ${examplesDir}`,
                 );
                 return examplesDir;
             }
-            log(
+            log.debug(
                 `@sockethub/examples found but build directory missing: ${examplesDir}`,
             );
             return null;
@@ -115,7 +115,7 @@ class Listener {
             res.sendFile(examplesIndex);
         });
 
-        log(
+        log.info(
             `examples served at http://${config.get("sockethub:host")}:${config.get(
                 "sockethub:port",
             )}`,
@@ -127,7 +127,7 @@ class Listener {
             config.get("sockethub:port"),
             config.get("sockethub:host") as number,
             () => {
-                log(
+                log.info(
                     `sockethub listening on ws://${config.get("sockethub:host")}:${config.get(
                         "sockethub:port",
                     )}`,

@@ -1,5 +1,9 @@
-import type { ActivityObject, ActivityStream } from "@sockethub/schemas";
-import debug, { type Debugger } from "debug";
+import type {
+    ActivityObject,
+    ActivityStream,
+    Logger,
+} from "@sockethub/schemas";
+import { createLogger } from "./logger.js";
 
 export default function middleware(name: string): MiddlewareChain {
     return new MiddlewareChain(name);
@@ -21,11 +25,13 @@ export class MiddlewareChain {
     private errHandler: ErrorHandlerInterface = (err: Error) => {
         throw err;
     };
-    private readonly logger: Debugger;
+    private readonly logger: Logger;
 
     constructor(name: string) {
         this.name = name;
-        this.logger = debug(`sockethub:middleware:${name}`);
+        this.logger = createLogger({
+            namespace: `sockethub:middleware:${name}`,
+        });
     }
 
     use(func: ErrorHandlerInterface | MiddlewareChainInterface): this {
@@ -57,7 +63,7 @@ export class MiddlewareChain {
             }
             const next = (_data: unknown) => {
                 if (_data instanceof Error) {
-                    this.logger(_data.toString());
+                    this.logger.error(_data.toString());
                     this.errHandler(_data, data, cb);
                 } else if (typeof this.chain[position] === "function") {
                     this.chain[position++](_data as ActivityStream, next);

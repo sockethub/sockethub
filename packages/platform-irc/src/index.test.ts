@@ -45,7 +45,12 @@ describe("Initialize IRC Platform", () => {
     let platform;
     beforeEach(() => {
         platform = new IRC({
-            debug: () => {},
+            log: {
+                error: () => {},
+                warn: () => {},
+                info: () => {},
+                debug: () => {},
+            },
             updateActor: function async() {
                 return Promise.resolve();
             },

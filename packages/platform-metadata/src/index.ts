@@ -15,7 +15,7 @@ export default class Metadata implements PlatformInterface {
         persist: false,
     };
     constructor(session: PlatformSession) {
-        this.debug = session.debug;
+        this.debug = session.log;
     }
 
     get schema() {
@@ -23,7 +23,7 @@ export default class Metadata implements PlatformInterface {
     }
 
     fetch(job: ActivityStream, cb: PlatformCallback) {
-        this.debug(`fetching ${job.actor.id}`);
+        this.debug.debug(`fetching ${job.actor.id}`);
         ogs({
             url: job.actor.id,
         })

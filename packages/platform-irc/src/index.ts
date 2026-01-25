@@ -96,7 +96,7 @@ export default class IRC implements PersistentPlatformInterface {
     private handledActors = new Set();
 
     constructor(session: PlatformSession) {
-        this.debug = session.debug;
+        this.debug = session.log;
         this.sendToClient = session.sendToClient;
         this.updateActor = session.updateActor;
     }
@@ -196,13 +196,13 @@ export default class IRC implements PersistentPlatformInterface {
      *
      */
     join(job: ActivityStream, done: PlatformCallback) {
-        this.debug(`join() called for ${job.actor.id}`);
+        this.debug.debug(`join() called for ${job.actor.id}`);
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
                 return done(err);
             }
             if (this.channels.has(job.target.name)) {
-                this.debug(`channel ${job.target.name} already joined`);
+                this.debug.debug(`channel ${job.target.name} already joined`);
                 return done();
             }
             // join channel
@@ -210,7 +210,7 @@ export default class IRC implements PersistentPlatformInterface {
                 this.hasJoined(job.target.name);
                 done();
             });
-            this.debug(`sending join ${job.target.name}`);
+            this.debug.debug(`sending join ${job.target.name}`);
             client.raw(["JOIN", job.target.name]);
             client.raw(`PING ${job.actor.name}`);
         });
@@ -243,7 +243,7 @@ export default class IRC implements PersistentPlatformInterface {
      *
      */
     leave(job: ActivityStream, done: PlatformCallback) {
-        this.debug(`leave() called for ${job.actor.name}`);
+        this.debug.debug(`leave() called for ${job.actor.name}`);
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
                 return done(err);
@@ -287,7 +287,7 @@ export default class IRC implements PersistentPlatformInterface {
      *
      */
     send(job: ActivityStream, done: PlatformCallback) {
-        this.debug(
+        this.debug.debug(
             `send() called for ${job.actor.id} target: ${job.target.id}`,
         );
         this.getClient(job.actor.id, false, async (err, client) => {
@@ -398,13 +398,13 @@ export default class IRC implements PersistentPlatformInterface {
         credentials: PlatformIrcCredentialsObject,
         done: PlatformCallback,
     ) {
-        this.debug(`update() called for ${job.actor.id}`);
+        this.debug.debug(`update() called for ${job.actor.id}`);
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
                 return done(err);
             }
             if (job.object.type === "address") {
-                this.debug(
+                this.debug.debug(
                     `changing nick from ${job.actor.name} to ${job.target.name}`,
                 );
                 this.handledActors.add(job.target.id);
@@ -423,7 +423,9 @@ export default class IRC implements PersistentPlatformInterface {
                 client.raw(["NICK", job.target.name]);
             } else if (job.object.type === "topic") {
                 // update topic
-                this.debug(`changing topic in channel ${job.target.name}`);
+                this.debug.debug(
+                    `changing topic in channel ${job.target.name}`,
+                );
                 this.jobQueue.push(done);
                 client.raw(["topic", job.target.name, job.object.content]);
             } else {
@@ -487,14 +489,16 @@ export default class IRC implements PersistentPlatformInterface {
      *
      */
     query(job: ActivityStream, done: PlatformCallback) {
-        this.debug(`query() called for ${job.actor.id}`);
+        this.debug.debug(`query() called for ${job.actor.id}`);
         this.getClient(job.actor.id, false, (err, client) => {
             if (err) {
                 return done(err);
             }
 
             if (job.object.type === "attendance") {
-                this.debug(`query() - sending NAMES for ${job.target.name}`);
+                this.debug.debug(
+                    `query() - sending NAMES for ${job.target.name}`,
+                );
                 client.raw(["NAMES", job.target.name]);
                 done();
             } else {
@@ -520,12 +524,12 @@ export default class IRC implements PersistentPlatformInterface {
      *  }
      */
     disconnect(job: ActivityStream, done: PlatformCallback) {
-        this.debug(`disconnect called for ${job.actor.id}`);
+        this.debug.debug(`disconnect called for ${job.actor.id}`);
         this.cleanup(done);
     }
 
     cleanup(done: PlatformCallback) {
-        this.debug("cleanup() called");
+        this.debug.debug("cleanup() called");
         this.config.initialized = false;
         this.forceDisconnect = true;
         if (typeof this.client === "object") {
@@ -551,7 +555,7 @@ export default class IRC implements PersistentPlatformInterface {
     }
 
     private hasJoined(channel: string) {
-        this.debug(`joined ${channel}`);
+        this.debug.debug(`joined ${channel}`);
         // keep track of channels joined
         if (!this.channels.has(channel)) {
             this.channels.add(channel);
@@ -559,7 +563,7 @@ export default class IRC implements PersistentPlatformInterface {
     }
 
     private hasLeft(channel: string) {
-        this.debug(`left ${channel}`);
+        this.debug.debug(`left ${channel}`);
         // keep track of channels left
         if (this.channels.has(channel)) {
             this.channels.delete(channel);
@@ -571,7 +575,9 @@ export default class IRC implements PersistentPlatformInterface {
         credentials: PlatformIrcCredentialsObject | false,
         cb: GetClientCallback,
     ) {
-        this.debug(`getClient called, connecting: ${this.clientConnecting}`);
+        this.debug.debug(
+            `getClient called, connecting: ${this.clientConnecting}`,
+        );
         if (this.client) {
             this.handledActors.add(key);
             return cb(null, this.client);
@@ -581,7 +587,9 @@ export default class IRC implements PersistentPlatformInterface {
             // client is in the process of connecting, wait
             setTimeout(() => {
                 if (this.client) {
-                    this.debug(`resolving delayed getClient call for ${key}`);
+                    this.debug.debug(
+                        `resolving delayed getClient call for ${key}`,
+                    );
                     this.handledActors.add(key);
                     return cb(null, this.client);
                 }
@@ -645,7 +653,7 @@ export default class IRC implements PersistentPlatformInterface {
             module_options.capabilities = { requires: ["sasl"] };
         }
 
-        this.debug(
+        this.debug.debug(
             `attempting to connect to ${module_options.server}:${module_options.port} transport: ${
                 is_secure ? "secure" : "clear"
             } sasl: ${is_sasl}`,
@@ -669,17 +677,17 @@ export default class IRC implements PersistentPlatformInterface {
         };
 
         client.once("error", (err: string) => {
-            this.debug(`irc client 'error' occurred. `, err);
+            this.debug.debug(`irc client 'error' occurred. `, err);
             forceDisconnect("error connecting to server.");
         });
 
         client.once("close", () => {
-            this.debug(`irc client 'close' event fired.`);
+            this.debug.debug(`irc client 'close' event fired.`);
             forceDisconnect("connection to server closed.");
         });
 
         client.once("timeout", () => {
-            this.debug("timeout occurred, force-disconnect");
+            this.debug.debug("timeout occurred, force-disconnect");
             forceDisconnect("connection timeout to server.");
         });
 
@@ -694,7 +702,7 @@ export default class IRC implements PersistentPlatformInterface {
                 return cb("force disconnect active, aborting connect.");
             }
 
-            this.debug(
+            this.debug.debug(
                 `connected to ${module_options.server} capabilities: `,
                 capabilities,
             );
@@ -703,16 +711,18 @@ export default class IRC implements PersistentPlatformInterface {
     }
 
     private completeJob(err?: string) {
-        this.debug(`completing job, queue count: ${this.jobQueue.length}`);
+        this.debug.debug(
+            `completing job, queue count: ${this.jobQueue.length}`,
+        );
         const done = this.jobQueue.shift();
         if (typeof done === "function") {
             done(err);
         } else if (this.jobQueue.length === 0) {
-            this.debug(
+            this.debug.debug(
                 "WARNING: job completion event received with an empty job queue.",
             );
         } else {
-            this.debug(
+            this.debug.debug(
                 `WARNING: job completion found non-function in queue (${typeof done}), ${this.jobQueue.length} items remain.`,
             );
         }
@@ -732,32 +742,35 @@ export default class IRC implements PersistentPlatformInterface {
             ) {
                 this.completeJob();
             } else {
-                this.debug(`calling sendToClient for ${asObject.actor.id}`, [
-                    ...this.handledActors.keys(),
-                ]);
+                this.debug.debug(
+                    `calling sendToClient for ${asObject.actor.id}`,
+                    [...this.handledActors.keys()],
+                );
                 this.sendToClient(asObject);
             }
         });
 
         this.irc2as.events.on("unprocessed", (s: string) => {
-            this.debug(`unprocessed irc message:> ${s}`);
+            this.debug.debug(`unprocessed irc message:> ${s}`);
         });
 
         // The generated eslint error expects that the `error` event is propagating an Error object
         // however for irc2as this event delivers an AS object of type `error`.
 
         this.irc2as.events.on("error", (asObject: ActivityStream) => {
-            this.debug(`message error response ${asObject.object.content}`);
+            this.debug.debug(
+                `message error response ${asObject.object.content}`,
+            );
             this.completeJob(asObject.object.content);
         });
 
         this.irc2as.events.on("pong", (timestamp: string) => {
-            this.debug(`received PONG at ${timestamp}`);
+            this.debug.debug(`received PONG at ${timestamp}`);
             this.completeJob();
         });
 
         this.irc2as.events.on("ping", (timestamp: string) => {
-            this.debug(`received PING at ${timestamp}`);
+            this.debug.debug(`received PING at ${timestamp}`);
             this.client.raw("PONG");
         });
     }
