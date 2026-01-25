@@ -38,8 +38,8 @@
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-irc",
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
-    "clean": "bunx rimraf dist",
-    "clean:deps": "bunx rimraf node_modules",
+    "clean": "rm -rf dist",
+    "clean:deps": "rm -rf node_modules",
     "doc": "typedoc --options typedoc.json"
   },
   "dependencies": {

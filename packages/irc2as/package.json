@@ -32,7 +32,7 @@
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/irc2as",
   "scripts": {
     "build": "bun build src/index.js --outdir dist --target node --format esm --sourcemap=external",
-    "clean:deps": "bunx rimraf node_modules"
+    "clean:deps": "rm -rf node_modules"
   },
   "dependencies": {
     "debug": "^4.4.3",
