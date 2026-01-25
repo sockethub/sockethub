@@ -8,7 +8,11 @@ import type {
     ActivityStream,
     InternalActivityStream,
 } from "@sockethub/schemas";
-import { cleanupClient, createRateLimiter, stopCleanup } from "./rate-limiter.js";
+import {
+    cleanupClient,
+    createRateLimiter,
+    stopCleanup,
+} from "./rate-limiter.js";
 
 import getInitObject from "./bootstrap/init.js";
 import config from "./config";

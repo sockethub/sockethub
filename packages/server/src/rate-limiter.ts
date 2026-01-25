@@ -55,7 +55,7 @@ export function stopCleanup() {
 
 export function createRateLimiter(config: Partial<RateLimitConfig> = {}) {
     const cfg = { ...DEFAULT_CONFIG, ...config };
-    
+
     // Start the cleanup interval when the rate limiter is created
     startCleanup();
 
