@@ -161,7 +161,7 @@ Sockethub uses Winston for logging with separate log levels for console and file
 
 **Log Levels:** `error`, `warn`, `info`, `debug`
 
-#### Configuration File
+#### Logging Configuration File
 
 ```json
 {
@@ -174,11 +174,12 @@ Sockethub uses Winston for logging with separate log levels for console and file
 ```
 
 **Defaults:**
+
 - Console: `info` (shows info, warn, error)
 - File: `debug` (logs everything including debug messages)
 - File path: `sockethub.log` in current directory
 
-#### Environment Variables
+#### Logging Environment Variables
 
 Override log levels via environment:
 
@@ -193,9 +194,10 @@ export LOG_FILE_LEVEL=debug
 LOG_LEVEL=error LOG_FILE_LEVEL=debug sockethub
 ```
 
-#### Configuration Priority
+#### Logging Configuration Priority
 
 For log settings (highest to lowest):
+
 1. Environment variables (`LOG_LEVEL`, `LOG_FILE_LEVEL`)
 2. Configuration file (`logging.level`, `logging.fileLevel`, `logging.file`)
 3. Defaults (`info` for console, `debug` for file)
@@ -203,6 +205,7 @@ For log settings (highest to lowest):
 #### Common Configurations
 
 **Development** (verbose console, no file):
+
 ```json
 {
   "logging": {
@@ -213,6 +216,7 @@ For log settings (highest to lowest):
 ```
 
 **Production** (quiet console, detailed file):
+
 ```json
 {
   "logging": {
@@ -224,6 +228,7 @@ For log settings (highest to lowest):
 ```
 
 **Troubleshooting** (everything everywhere):
+
 ```bash
 LOG_LEVEL=debug LOG_FILE_LEVEL=debug sockethub
 ```
@@ -354,12 +359,14 @@ export SENTRY_DSN=https://your-dsn@sentry.io/project-id
 ## Configuration Priority
 
 **General settings:**
+
 1. Command-line arguments (highest priority)
 2. Environment variables
 3. Configuration file
 4. Default values (lowest priority)
 
 **Log level settings:**
+
 1. Environment variables (`LOG_LEVEL`, `LOG_FILE_LEVEL`) (highest priority)
 2. Configuration file (`logging.level`, `logging.fileLevel`, `logging.file`)
 3. Default values (`info` for console, `debug` for file) (lowest priority)

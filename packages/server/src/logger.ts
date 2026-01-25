@@ -24,7 +24,7 @@ interface LoggerOptions {
  */
 export function createLogger(options: LoggerOptions = {}): Logger {
     const namespace = options.namespace || "sockethub";
-    
+
     // Load config values
     let configLogLevel = "info";
     let configFileLevel = "debug";
@@ -40,12 +40,13 @@ export function createLogger(options: LoggerOptions = {}): Logger {
     } catch (err) {
         // Config not available yet (e.g., during bootstrap)
     }
-    
+
     // Priority: options > env > config > defaults
     const level = options.level || process.env.LOG_LEVEL || configLogLevel;
-    const fileLevel = options.fileLevel || process.env.LOG_FILE_LEVEL || configFileLevel;
+    const fileLevel =
+        options.fileLevel || process.env.LOG_FILE_LEVEL || configFileLevel;
     const logFile = options.logFile || configLogFile;
-    
+
     const isProduction = process.env.NODE_ENV === "production";
 
     const consoleFormat = isProduction
