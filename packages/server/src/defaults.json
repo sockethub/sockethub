@@ -1,5 +1,5 @@
 {
-  "$schema": "https://sockethub.org/schemas/3.0.0-alpha.4/sockethub-config.json",
+  "$schema": "@sockethub/schemas/json/sockethub-config.json",
   "examples": true,
   "log_file": "",
   "packageConfig": {
@@ -20,6 +20,11 @@
     "host": "localhost",
     "port": 10550,
     "path": "/"
+  },
+  "rateLimiter": {
+    "windowMs": 1000,
+    "maxRequests": 100,
+    "blockDurationMs": 5000
   },
   "redis": {
     "url": "redis://127.0.0.1:6379"
