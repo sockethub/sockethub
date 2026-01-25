@@ -9,29 +9,25 @@ export const SockethubConfigSchema = {
     description: "Sockethub Config Schema",
     type: "object",
     required: ["platforms"],
+    additionalProperties: false,
     properties: {
+        "$schema": {
+            type: "string"
+        },
         examples: {
-            type: "object",
-            properties: {
-                enabled: {
-                    type: "boolean",
-                    default: false,
-                },
-                secret: {
-                    type: "string",
-                    default: "1234567890",
-                },
-            },
-            additionalProperties: false,
+            type: "boolean",
+            default: true
         },
         log_file: {
             type: "string",
+            default: "sockethub.log"
         },
         packageConfig: {
             type: "object",
             properties: {
                 "@sockethub/activity-streams": {
                     type: "object",
+                    additionalProperties: false,
                     properties: {
                         specialObjs: {
                             type: "array",
@@ -45,38 +41,37 @@ export const SockethubConfigSchema = {
                             default: true,
                         },
                     },
-                    additionalProperties: false,
                 },
                 "@sockethub/platform-dummy": {
                     type: "object",
+                    additionalProperties: false,
                     properties: {
                         greeting: {
                             type: "string",
                             default: "Hello",
                         },
                     },
-                    additionalProperties: false,
                 },
                 "@sockethub/platform-feeds": {
                     type: "object",
+                    additionalProperties: false,
                     properties: {
                         ...connectConfigPlatforms,
                     },
-                    additionalProperties: false,
                 },
                 "@sockethub/platform-irc": {
                     type: "object",
+                    additionalProperties: false,
                     properties: {
                         ...connectConfigPlatforms,
                     },
-                    additionalProperties: false,
                 },
                 "@sockethub/platform-xmpp": {
                     type: "object",
+                    additionalProperties: false,
                     properties: {
                         ...connectConfigPlatforms,
                     },
-                    additionalProperties: false,
                 },
             },
         },
@@ -85,9 +80,17 @@ export const SockethubConfigSchema = {
             items: {
                 type: "string",
             },
+            default: [
+                "@sockethub/platform-dummy",
+                "@sockethub/platform-feeds",
+                "@sockethub/platform-irc",
+                "@sockethub/platform-metadata",
+                "@sockethub/platform-xmpp"
+            ],
         },
         public: {
             type: "object",
+            additionalProperties: false,
             properties: {
                 protocol: {
                     type: "string",
@@ -106,20 +109,52 @@ export const SockethubConfigSchema = {
                     default: "/",
                 },
             },
+        },
+        rateLimiter: {
+            type: "object",
             additionalProperties: false,
+            properties: {
+                windowMs: {
+                    type: "number",
+                    default: 1000
+                },
+                maxRequests: {
+                    type: "number",
+                    default: 100
+                },
+                blockDurationMs: {
+                    type: "number",
+                    default: 5000
+                },
+            },
         },
         redis: {
             type: "object",
+            additionalProperties: false,
             properties: {
                 url: {
                     type: "string",
                     default: "redis://127.0.0.1:6379",
                 },
             },
+        },
+        sentry: {
+            type: "object",
             additionalProperties: false,
+            properties: {
+                dsn: {
+                    type: "string",
+                    default: ""
+                },
+                traceSampleRate: {
+                    type: "number",
+                    default: 1.0
+                }
+            },
         },
         sockethub: {
             type: "object",
+            additionalProperties: false,
             properties: {
                 port: {
                     type: "number",
@@ -134,7 +169,6 @@ export const SockethubConfigSchema = {
                     default: "/sockethub",
                 },
             },
-            additionalProperties: false,
         },
     },
 };
