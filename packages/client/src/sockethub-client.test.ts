@@ -277,6 +277,70 @@ describe("SockethubClient", () => {
                 done();
             }, 0);
         });
+
+        it("does not call ActivityStreams.Stream() on activity-objects", (done) => {
+            // Store an activity-object directly
+            const activityObject = {
+                id: "test-actor@example.com",
+                type: "person",
+                name: "Test Actor",
+            };
+            sc.events["activity-object"].set(activityObject.id, activityObject);
+
+            // Reset spies
+            socket.emit.resetHistory();
+            asInstance.Stream.resetHistory();
+
+            // Trigger reconnect which calls replay
+            socket.emit("connect");
+
+            setTimeout(() => {
+                // Stream() should NOT be called for activity-objects
+                const streamCalls = asInstance.Stream.getCalls();
+                const activityObjectStreamCalls = streamCalls.filter(
+                    (call: any) => call.args[0]?.id === "test-actor@example.com",
+                );
+                expect(activityObjectStreamCalls).to.have.length(0);
+
+                // But the activity-object should still be emitted
+                const replayCalls = socket.emit
+                    .getCalls()
+                    .filter((call: any) => call.args[0] === "activity-object");
+                expect(replayCalls).to.have.length(1);
+                expect(replayCalls[0].args[1]).to.deep.equal(activityObject);
+
+                done();
+            }, 0);
+        });
+
+        it("calls ActivityStreams.Stream() on credentials during replay", (done) => {
+            // Store credentials
+            const credentials = {
+                actor: { id: "user@example.com", type: "person" },
+                object: { type: "credentials", password: "secret" },
+            };
+            sc.events.credentials.set(credentials.actor.id, credentials);
+
+            // Reset spies
+            socket.emit.resetHistory();
+            asInstance.Stream.resetHistory();
+
+            // Trigger reconnect
+            socket.emit("connect");
+
+            setTimeout(() => {
+                // Stream() SHOULD be called for credentials
+                expect(asInstance.Stream.called).to.be.true;
+
+                // Credentials should be emitted
+                const replayCalls = socket.emit
+                    .getCalls()
+                    .filter((call: any) => call.args[0] === "credentials");
+                expect(replayCalls).to.have.length(1);
+
+                done();
+            }, 0);
+        });
     });
 
     describe("clearCredentials", () => {

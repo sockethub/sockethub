@@ -35,6 +35,11 @@ Sockethub uses a JSON configuration file:
     "port": 10550,
     "path": "/"
   },
+  "rateLimiter": {
+    "windowMs": 1000,
+    "maxRequests": 100,
+    "blockDurationMs": 5000
+  },
   "redis": {
     "url": "redis://127.0.0.1:6379"
   },
@@ -96,6 +101,25 @@ Platforms are specified as an array of package names:
 ```
 
 To disable a platform, remove it from the array.
+
+### Rate Limiting
+
+Protect against event flooding from individual clients:
+
+```json
+{
+  "rateLimiter": {
+    "windowMs": 1000,          // Time window in milliseconds
+    "maxRequests": 100,        // Max events per window per client
+    "blockDurationMs": 5000    // Block duration after exceeding limit
+  }
+}
+```
+
+**Default limits:** 100 events per second per client, 5 second block.
+
+The rate limiter operates per WebSocket connection and blocks clients that exceed the configured
+thresholds. Blocked clients are automatically unblocked after the `blockDurationMs` expires.
 
 ### Redis Configuration
 
@@ -199,6 +223,11 @@ export DEBUG=sockethub*
     "port": 10550,
     "path": "/"
   },
+  "rateLimiter": {
+    "windowMs": 1000,
+    "maxRequests": 100,
+    "blockDurationMs": 5000
+  },
   "redis": {
     "url": "redis://127.0.0.1:6379"
   },
@@ -225,6 +254,11 @@ export DEBUG=sockethub*
     "host": "sockethub.example.com",
     "port": 443,
     "path": "/"
+  },
+  "rateLimiter": {
+    "windowMs": 1000,
+    "maxRequests": 100,
+    "blockDurationMs": 5000
   },
   "redis": {
     "url": "redis://username:password@redis.example.com:6379"
