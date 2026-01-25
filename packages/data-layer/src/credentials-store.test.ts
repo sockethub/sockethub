@@ -16,6 +16,8 @@ describe("CredentialsStore", () => {
         MockSecureStore = sinon.stub().returns({
             get: MockStoreGet,
             save: MockStoreSave,
+            isConnected: true,
+            connect: sinon.stub().resolves(),
         });
         class TestCredentialsStore extends CredentialsStore {
             initCrypto() {
