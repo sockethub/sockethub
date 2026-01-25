@@ -29,12 +29,14 @@ const CLEANUP_INTERVAL_MS = 30000; // 30 seconds
 const clientStates = new Map<string, ClientState>();
 
 let cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
+let isCleanupStarted = false;
 
 // Cleanup stale entries periodically
 function startCleanup() {
-    if (cleanupIntervalId !== null) {
+    if (isCleanupStarted) {
         return;
     }
+    isCleanupStarted = true;
     cleanupIntervalId = setInterval(() => {
         const now = Date.now();
         for (const [socketId, state] of clientStates.entries()) {
@@ -50,6 +52,7 @@ export function stopCleanup() {
     if (cleanupIntervalId !== null) {
         clearInterval(cleanupIntervalId);
         cleanupIntervalId = null;
+        isCleanupStarted = false;
     }
 }
 
@@ -82,10 +85,12 @@ export function createRateLimiter(config: Partial<RateLimitConfig> = {}) {
             if (now < state.blockedUntil) {
                 // Still blocked, drop and log for debugging
                 log(
-                    `dropping event "${eventName}" for blocked socket ${socket.id}; blocked until ${new Date(
+                    `dropping event for blocked socket ${socket.id}; blocked until ${new Date(
                         state.blockedUntil,
                     ).toISOString()}`,
                 );
+                const error = new Error("Rate limit exceeded");
+                next(error);
                 return;
             }
             // Block expired, reset
@@ -109,9 +114,16 @@ export function createRateLimiter(config: Partial<RateLimitConfig> = {}) {
                 `rate limit exceeded for ${socket.id}: ${state.count} requests in ${cfg.windowMs}ms, blocking for ${cfg.blockDurationMs}ms`,
             );
             socket.emit("error", {
+                type: "Error",
                 context: "error",
-                error: "rate limit exceeded, temporarily blocked",
+                actor: {
+                    type: "Application",
+                    name: "sockethub-server",
+                },
+                summary: "rate limit exceeded, temporarily blocked",
             });
+            const error = new Error("Rate limit exceeded");
+            next(error);
             return;
         }
 
