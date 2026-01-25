@@ -16,9 +16,11 @@ export interface CredentialsStoreInterface {
 export async function verifySecureStore(config: RedisConfig): Promise<void> {
     const log = debug("sockethub:data-layer:credentials-store");
     const ss = new SecureStore({
+        uid: "sockethub:data-layer:verify",
+        secret: "aB3#xK9mP2qR7wZ4cT8nY6vH1jL5fD0s",
         redis: config,
     });
-    await ss.init();
+    await ss.connect();
     await ss.disconnect();
     log("redis connection verified");
 }
@@ -100,6 +102,9 @@ export class CredentialsStore implements CredentialsStoreInterface {
         credentialsHash: string | undefined,
     ): Promise<CredentialsObject> {
         this.log(`get credentials for ${actor}`);
+        if (!this.store.isConnected) {
+            await this.store.connect();
+        }
         const credentials: CredentialsObject = await this.store.get(actor);
         if (!credentials) {
             throw new Error(`credentials not found for ${actor}`);
@@ -119,6 +124,9 @@ export class CredentialsStore implements CredentialsStoreInterface {
      * @param creds
      */
     async save(actor: string, creds: CredentialsObject): Promise<number> {
+        if (!this.store.isConnected) {
+            await this.store.connect();
+        }
         return this.store.save(actor, creds);
     }
 }

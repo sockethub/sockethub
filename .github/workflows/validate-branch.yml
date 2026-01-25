@@ -32,6 +32,7 @@ jobs:
             "ci/"
             "chore/"
             "revert/"
+            "deps/"
           )
           
           # Check if branch starts with any valid prefix
@@ -72,7 +73,7 @@ jobs:
           
           # Check conventional commit format: type(scope): description
           # or: type: description
-          if [[ "$TITLE" =~ ^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?:\ .+ ]]; then
+          if [[ "$TITLE" =~ ^(feat|fix|deps|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?:\ .+ ]]; then
             echo "✅ Valid PR title: $TITLE"
             exit 0
           fi
@@ -84,7 +85,7 @@ jobs:
           echo "  or"
           echo "  type: description"
           echo ""
-          echo "Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+          echo "Valid types: feat, fix, deps, docs, style, refactor, perf, test, build, ci, chore, revert"
           echo ""
           echo "Examples:"
           echo "  - feat(platform-irc): add reconnection logic"

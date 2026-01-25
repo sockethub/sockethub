@@ -39,6 +39,7 @@
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
     "clean": "rm -rf dist",
+    "clean:deps": "rm -rf node_modules",
     "doc": "typedoc --options typedoc.json"
   },
   "dependencies": {
