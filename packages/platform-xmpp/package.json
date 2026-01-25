@@ -38,7 +38,8 @@
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-xmpp",
   "scripts": {
     "build": "bun build src/index.js --outdir dist --target node --format esm --sourcemap=external",
-    "clean": "rm -rf dist",
+    "clean": "bunx rimraf dist",
+    "clean:deps": "bunx rimraf node_modules",
     "doc": "jsdoc2md --no-gfm --heading-depth 1 src/index.js > API.md"
   },
   "dependencies": {

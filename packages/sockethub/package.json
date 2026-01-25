@@ -45,6 +45,7 @@
   },
   "scripts": {
     "build": "bun build.js",
+    "clean:deps": "bunx rimraf node_modules",
     "dev": "DEBUG=sockethub* bun run --hot ./bin/sockethub --examples",
     "info": "DEBUG=sockethub* bun run ./bin/sockethub --info",
     "start": "DEBUG=sockethub* bun run ./bin/sockethub"

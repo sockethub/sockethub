@@ -37,7 +37,8 @@
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
-    "clean": "rm -rf dist"
+    "clean": "bunx rimraf dist",
+    "clean:deps": "bunx rimraf node_modules"
   },
   "dependencies": {
     "@sockethub/schemas": "^3.0.0-alpha.10",

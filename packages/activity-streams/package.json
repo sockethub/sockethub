@@ -34,7 +34,8 @@
     "build": "bun run clean && bun run build:js && bun run build:minify",
     "build:js": "bun build ./src/activity-streams.ts --target=browser --sourcemap=inline --format=esm --outdir=dist/",
     "build:minify": "bun build ./src/activity-streams.ts --target=browser --sourcemap=inline --format=esm --outfile=dist/activity-streams.min.js --minify",
-    "clean": "rm -rf dist",
+    "clean": "bunx rimraf dist",
+    "clean:deps": "bunx rimraf node_modules",
     "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer"
   },
   "dependencies": {
