@@ -72,9 +72,9 @@ jobs:
       - run: bun install
       - run: bun run build
 
-      - run: docker compose build --build-arg bun_version=latest
+      - run: docker compose build --build-arg bun_version=latest log_level=debug
 
-      - run: LOG_LEVEL=debug bun run docker:start
+      - run: bun run docker:start
       - run: sleep 5
 
       - name: Verify Sockethub is listening externally
