@@ -245,6 +245,107 @@ describe("XMPP", () => {
         });
     });
 
+    describe("Error handling", () => {
+        let processExitStub;
+
+        beforeEach(() => {
+            // Stub process.exit to prevent test process from exiting
+            processExitStub = sinon.stub(process, "exit");
+        });
+
+        afterEach(() => {
+            processExitStub.restore();
+        });
+
+        it("terminates process on TypeError (internal code error)", (done) => {
+            xp.connect(job.connect, credentials, () => {
+                // Get the error event handler that was registered
+                const errorHandler = clientObjectFake.on.getCalls().find(
+                    (call) => call.args[0] === "error",
+                ).args[1];
+
+                // Simulate a TypeError (internal code error)
+                const typeError = new TypeError("this.session.debug is not a function");
+                errorHandler(typeError);
+
+                // Verify process.exit(1) was called
+                sinon.assert.calledOnce(processExitStub);
+                sinon.assert.calledWith(processExitStub, 1);
+
+                // Verify error was logged
+                sinon.assert.called(xp.log.error);
+                expect(
+                    xp.log.error
+                        .getCalls()
+                        .some((call) =>
+                            call.args[0].includes("FATAL: Internal code error"),
+                        ),
+                ).toBeTrue();
+
+                done();
+            });
+        });
+
+        it("terminates process on ReferenceError (internal code error)", (done) => {
+            xp.connect(job.connect, credentials, () => {
+                const errorHandler = clientObjectFake.on.getCalls().find(
+                    (call) => call.args[0] === "error",
+                ).args[1];
+
+                const refError = new ReferenceError("foo is not defined");
+                errorHandler(refError);
+
+                sinon.assert.calledOnce(processExitStub);
+                sinon.assert.calledWith(processExitStub, 1);
+                sinon.assert.called(xp.log.error);
+
+                done();
+            });
+        });
+
+        it("does NOT terminate process on network errors (recoverable)", (done) => {
+            xp.connect(job.connect, credentials, () => {
+                const errorHandler = clientObjectFake.on.getCalls().find(
+                    (call) => call.args[0] === "error",
+                ).args[1];
+
+                // Simulate a network error
+                const networkError = new Error("ECONNRESET");
+                networkError.code = "ECONNRESET";
+                errorHandler(networkError);
+
+                // Should NOT call process.exit for network errors
+                sinon.assert.notCalled(processExitStub);
+
+                // Should send error to client instead
+                sinon.assert.called(xp.sendToClient);
+
+                done();
+            });
+        });
+
+        it("does NOT terminate process on XMPP protocol errors (non-recoverable)", (done) => {
+            xp.connect(job.connect, credentials, () => {
+                const errorHandler = clientObjectFake.on.getCalls().find(
+                    (call) => call.args[0] === "error",
+                ).args[1];
+
+                // Simulate an XMPP protocol error (e.g., auth failure)
+                const authError = new Error("not-authorized");
+                authError.condition = "not-authorized";
+                errorHandler(authError);
+
+                // Should NOT call process.exit for XMPP errors
+                sinon.assert.notCalled(processExitStub);
+
+                // Should send error to client and mark disconnected
+                sinon.assert.called(xp.sendToClient);
+
+                done();
+            });
+        });
+    });
+
     describe("Platform functionality", () => {
         beforeEach((done) => {
             xp.connect(job.join, credentials, () => done());
