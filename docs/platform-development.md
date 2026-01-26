@@ -134,7 +134,8 @@ isInitialized(): boolean {
 
 ### For Persistent Platforms
 
-Return `true` once connected and ready. Keep returning `true` during temporary network issues with automatic reconnection:
+Return `true` once connected and ready. Keep returning `true` during temporary network issues
+with automatic reconnection:
 
 ```typescript
 isInitialized(): boolean {
@@ -159,7 +160,9 @@ private onNetworkError(err) {
 }
 ```
 
-**Key principle:** Only set `initialized=false` for failures requiring manual intervention (invalid credentials, permanent bans). Keep it `true` during recoverable network issues so queued jobs can retry.
+**Key principle:** Only set `initialized=false` for failures requiring manual intervention
+(invalid credentials, permanent bans). Keep it `true` during recoverable network issues so
+queued jobs can retry.
 
 ## Real Examples
 
