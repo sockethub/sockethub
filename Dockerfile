@@ -4,7 +4,7 @@ ARG bun_version=latest
 FROM oven/bun:${bun_version} AS base
 ARG bun_version
 ARG LOG_LEVEL
-RUN echo "Building Sockethub docker image with Bun version ${bun_version}"
+RUN echo "Building Sockethub docker image with Bun version ${bun_version} and LOG_LEVEL=${LOG_LEVEL}"
 
 FROM base AS build
 WORKDIR /app
@@ -12,10 +12,12 @@ COPY . ./
 RUN apt update && apt install python3 python3-pip make g++ -y
 RUN bun install
 RUN bun run build
-CMD LOG_LEVEL=${LOG_LEVEL} /app/packages/sockethub/bin/sockethub --host 0.0.0.0
+RUN echo "Running sockethub (build): LOG_LEVEL=${LOG_LEVEL} /app/packages/sockethub/bin/sockethub --host 0.0.0.0 "
+CMD LOG_LEVEL=$LOG_LEVEL /app/packages/sockethub/bin/sockethub --host 0.0.0.0
 
 FROM base AS prod
 WORKDIR /app
 COPY --exclude=node_modules --from=build /app ./
 RUN bun install --production
-CMD LOG_LEVEL=${LOG_LEVEL} /app/packages/sockethub/bin/sockethub --host 0.0.0.0
+RUN echo "Running sockethub (prod): LOG_LEVEL=${LOG_LEVEL} /app/packages/sockethub/bin/sockethub --host 0.0.0.0 "
+CMD LOG_LEVEL=$LOG_LEVEL /app/packages/sockethub/bin/sockethub --host 0.0.0.0
