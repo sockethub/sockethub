@@ -257,8 +257,8 @@ export default class XMPP {
 
         this.__client.on("offline", () => {
             this.log.debug(`offline event received for ${job.actor.id}`);
-            // Clean disconnect (not an error) - mark as uninitialized
-            this.__markDisconnected();
+            // Don't mark as uninitialized - the client will auto-reconnect.
+            // Only mark as uninitialized on explicit cleanup() or unrecoverable errors.
         });
 
         this.__client.on("error", (err) => {

@@ -12,11 +12,11 @@ function getPlatformInstanceFake() {
     return {
         flaggedForTermination: false,
         config: {
-            initialized: false,
             persist: true,
             requireCredentials: ["foo", "bar"],
         },
         global: false,
+        isInitialized: sinon.stub().returns(false),
         shutdown: sinon.stub(),
         process: {
             removeListener: sinon.stub(),
@@ -155,7 +155,7 @@ describe("Janitor", () => {
         it("removes flagged and uninitialized platform instances", async () => {
             const pi = getPlatformInstanceFake();
             pi.flaggedForTermination = true;
-            pi["initialized"] = false;
+            pi.isInitialized.returns(false);
             janitor.removeStaleSocketSessions = sandbox.stub();
             janitor.removeStalePlatformInstance = sandbox.stub();
             await janitor.performStaleCheck(pi);
@@ -168,7 +168,7 @@ describe("Janitor", () => {
             const pi = getPlatformInstanceFake();
             pi.sessions = new Set();
             pi.flaggedForTermination = false;
-            pi["initialized"] = true;
+            pi.isInitialized.returns(true);
             janitor.removeStaleSocketSessions = sandbox.stub();
             janitor.removeStalePlatformInstance = sandbox.stub();
             await janitor.performStaleCheck(pi);
