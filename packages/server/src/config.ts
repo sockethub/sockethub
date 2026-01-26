@@ -92,6 +92,20 @@ export class Config {
         if (process.env.REDIS_URL) {
             nconf.set("redis:url", process.env.REDIS_URL);
         }
+
+        // override logging config with environment variables if present
+        nconf.set(
+            "logging:level",
+            process.env.LOG_LEVEL || nconf.get("logging:level"),
+        );
+        nconf.set(
+            "logging:fileLevel",
+            process.env.LOG_FILE_LEVEL || nconf.get("logging:fileLevel"),
+        );
+        nconf.set(
+            "logging:file",
+            process.env.LOG_FILE || nconf.get("logging:file"),
+        );
     }
     get = (key: string) => nconf.get(key);
 }
