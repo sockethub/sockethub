@@ -14,6 +14,7 @@ RUN bun install
 RUN bun run build
 
 FROM base AS prod
+ARG LOG_LEVEL
 WORKDIR /app
 COPY --exclude=node_modules --from=build /app ./
 RUN bun install --production

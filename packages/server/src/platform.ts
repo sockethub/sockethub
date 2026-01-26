@@ -277,7 +277,7 @@ function getJobHandler(): JobHandler {
                          *   proper cleanup and a fresh start on the next attempt.
                          * - Error is reported to Sentry for monitoring authentication issues.
                          */
-                        if (platform.config.initialized) {
+                        if (platform.isInitialized()) {
                             // Platform already running - reject job only, preserve platform instance
                             doneCallback(err, null);
                         } else {

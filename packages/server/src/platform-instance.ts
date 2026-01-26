@@ -110,6 +110,13 @@ export default class PlatformInstance {
     }
 
     /**
+     * Returns whether the platform instance is initialized and ready to handle jobs.
+     */
+    public isInitialized(): boolean {
+        return this.initialized;
+    }
+
+    /**
      * Destroys all references to this platform instance, internal listeners and controlled processes
      */
     public async shutdown() {
