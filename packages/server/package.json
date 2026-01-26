@@ -62,7 +62,8 @@
     "express-rate-limit": "^8.2.1",
     "jquery": "^3.7.1",
     "nconf": "^0.12.1",
-    "socket.io": "^4.7.5"
+    "socket.io": "^4.7.5",
+    "winston": "^3.19.0"
   },
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external && bun build src/platform.ts --outdir dist --target node --format esm --sourcemap=external && cp src/defaults.json dist/defaults.json",

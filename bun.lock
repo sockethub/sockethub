@@ -82,13 +82,11 @@
         "@sockethub/crypto": "^1.0.0-alpha.10",
         "@sockethub/schemas": "^3.0.0-alpha.10",
         "bullmq": "^5.66.5",
-        "debug": "^4.4.3",
         "ioredis": "^5.9.2",
         "secure-store-redis": "^4.1.0",
       },
       "devDependencies": {
         "@types/bun": "latest",
-        "@types/debug": "^4.1.12",
         "@types/sinon": "^17.0.4",
         "@types/winston": "^2.4.4",
         "sinon": "^17.0.2",
@@ -247,6 +245,7 @@
         "jquery": "^3.7.1",
         "nconf": "^0.12.1",
         "socket.io": "^4.7.5",
+        "winston": "^3.19.0",
       },
       "devDependencies": {
         "@types/body-parser": "^1.19.6",
