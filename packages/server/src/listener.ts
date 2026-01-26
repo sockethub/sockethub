@@ -19,7 +19,8 @@ log.info(`sockethub v${packageJson.version}`);
 const logFile = config.get("logging")?.file;
 if (logFile) {
     const absolutePath = path.resolve(logFile);
-    log.info(`logs being written to ${absolutePath}`);
+    log.info(`log file ${absolutePath}`);
+    log.info(`log level ${config.get("logging")?.level}`);
 }
 
 /**
