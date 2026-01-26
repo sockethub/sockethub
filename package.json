@@ -41,7 +41,7 @@
     "clean:deps": "bun run --filter='*' clean:deps && rm -rf node_modules",
     "dev": "bun run build && cd packages/sockethub && bun run dev",
     "doc": "bun run --filter='*' doc",
-    "docker:start": "bun run docker:start:xmpp && docker compose up sockethub -d -e log_level=${LOG_LEVEL:-info}",
+    "docker:start": "bun run docker:start:xmpp && docker compose up sockethub --env log_level=${LOG_LEVEL:-info} -d",
     "docker:start:xmpp": "docker compose up prosody -d",
     "docker:start:redis": "docker compose up redis -d",
     "docker:start:deps": "docker compose up redis prosody -d",
