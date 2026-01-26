@@ -72,7 +72,7 @@ jobs:
       - run: bun install
       - run: bun run build
 
-      - run: docker compose build --build-arg bun_version=latest LOG_LEVEL=debug
+      - run: docker compose build --build-arg bun_version=latest --build-arg LOG_LEVEL=debug
 
       - run: bun run docker:start
       - run: sleep 5
