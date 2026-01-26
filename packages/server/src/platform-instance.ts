@@ -1,6 +1,5 @@
 import { type ChildProcess, fork } from "node:child_process";
 import { join } from "node:path";
-import debug from "debug";
 
 import { type JobDataDecrypted, JobQueue } from "@sockethub/data-layer";
 import type {
@@ -14,6 +13,7 @@ import type { Socket } from "socket.io";
 
 import config from "./config.js";
 import { getSocket } from "./listener.js";
+import { createLogger } from "./logger.js";
 import { __dirname } from "./util.js";
 
 // collection of platform instances, stored by `id`
@@ -28,6 +28,7 @@ export interface PlatformInstanceParams {
 
 type EnvFormat = {
     DEBUG?: string;
+    LOG_LEVEL?: string;
     REDIS_URL: string;
 };
 
@@ -51,9 +52,10 @@ export default class PlatformInstance {
     readonly global: boolean = false;
     readonly completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
     config: PlatformConfig;
+    private initialized = false;
     readonly name: string;
     process: ChildProcess;
-    readonly debug: Logger;
+    readonly log: Logger;
     readonly parentId: string;
     readonly sessions: Set<string> = new Set();
     readonly sessionCallbacks: object = {
@@ -72,12 +74,17 @@ export default class PlatformInstance {
             this.global = true;
         }
 
-        this.debug = debug(`sockethub:server:platform-instance:${this.id}`);
+        this.log = createLogger({
+            namespace: `sockethub:server:platform-instance:${this.id}`,
+        });
         const env: EnvFormat = {
             REDIS_URL: config.get("redis:url") as string,
         };
         if (process.env.DEBUG) {
             env.DEBUG = process.env.DEBUG;
+        }
+        if (process.env.LOG_LEVEL) {
+            env.LOG_LEVEL = process.env.LOG_LEVEL;
         }
 
         this.createQueue();
@@ -103,10 +110,17 @@ export default class PlatformInstance {
     }
 
     /**
+     * Returns whether the platform instance is initialized and ready to handle jobs.
+     */
+    public isInitialized(): boolean {
+        return this.initialized;
+    }
+
+    /**
      * Destroys all references to this platform instance, internal listeners and controlled processes
      */
     public async shutdown() {
-        this.debug("platform process shutdown");
+        this.log.debug("platform process shutdown");
         this.flaggedForTermination = true;
 
         try {
@@ -140,6 +154,7 @@ export default class PlatformInstance {
             this.id,
             secret,
             config.get("redis"),
+            this.log,
         );
 
         this.queue.on(
@@ -204,7 +219,7 @@ export default class PlatformInstance {
                     socket.emit("message", msg as ActivityStream);
                 }
             },
-            (err) => this.debug(`sendToClient ${err}`),
+            (err) => this.log.error(`sendToClient ${err}`),
         );
     }
 
@@ -212,7 +227,7 @@ export default class PlatformInstance {
     private broadcastToSharedPeers(sessionId: string, msg: ActivityStream) {
         for (const sid of this.sessions.values()) {
             if (sid !== sessionId) {
-                this.debug(`broadcasting message to ${sid}`);
+                this.log.debug(`broadcasting message to ${sid}`);
                 this.sendToClient(sid, msg);
             }
         }
@@ -231,7 +246,7 @@ export default class PlatformInstance {
                 ? result.toString()
                 : "job failed for unknown reason";
         }
-        this.debug(
+        this.log.debug(
             `${job.title} ${state}${payload?.error ? `: ${payload.error}` : ""}`,
         );
 
@@ -262,24 +277,24 @@ export default class PlatformInstance {
             if (state === "failed") {
                 // Only terminate if platform is not yet initialized
                 // If already initialized, credential failures are non-fatal (wrong session credentials)
-                if (!this.config.initialized) {
-                    this.debug(
+                if (!this.initialized) {
+                    this.log.warn(
                         `critical job type ${job.msg.type} failed during initialization, flagging for termination`,
                     );
                     await this.queue.pause();
-                    this.config.initialized = false;
+                    this.initialized = false;
                     this.flaggedForTermination = true;
                 } else {
-                    this.debug(
+                    this.log.debug(
                         `credential job ${job.msg.type} failed on initialized platform, not flagged for termination`,
                     );
                     // Platform stays alive - error sent to client via sendToClient above
                 }
             } else {
-                this.debug("persistent platform initialized");
-                await this.queue.resume();
-                this.config.initialized = true;
+                this.log.info("persistent platform initialized");
+                this.initialized = true;
                 this.flaggedForTermination = false;
+                await this.queue.resume();
             }
         }
     }
@@ -303,7 +318,7 @@ export default class PlatformInstance {
                 await this.sendToClient(sessionId, errorObject);
             }
         } catch (err) {
-            this.debug(`Failed to send error to client: ${err.message}`);
+            this.log.error(`Failed to send error to client: ${err.message}`);
         }
 
         this.sessions.clear();
@@ -329,7 +344,7 @@ export default class PlatformInstance {
     private callbackFunction(listener: string, sessionId: string) {
         const funcs = {
             close: async (e: object) => {
-                this.debug(`close event triggered ${this.id}: ${e}`);
+                this.log.error(`close event triggered ${this.id}: ${e}`);
                 // Check if process is still connected before attempting error reporting
                 if (this.process?.connected && !this.flaggedForTermination) {
                     await this.reportError(
@@ -337,7 +352,7 @@ export default class PlatformInstance {
                         `Error: session thread closed unexpectedly: ${e}`,
                     );
                 } else {
-                    this.debug(
+                    this.log.debug(
                         "Process already disconnected or flagged for termination, skipping error report",
                     );
                     await this.shutdown();

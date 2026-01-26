@@ -13,4 +13,4 @@ packages/sockethub/sockethub.config.json.sentry
 test-install/
 test-results/
 .local-tarballs/
-sockethub.log
+**sockethub.log

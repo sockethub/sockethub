@@ -1,7 +1,16 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
 
+import type { Logger } from "@sockethub/schemas";
+
 import { JobWorker } from "./index";
+
+const mockLogger: Logger = {
+    error: () => {},
+    warn: () => {},
+    info: () => {},
+    debug: () => {},
+};
 
 describe("JobWorker", () => {
     let MockBull, jobWorker, cryptoMocks, sandbox;
@@ -49,6 +58,7 @@ describe("JobWorker", () => {
             {
                 url: "redis config",
             },
+            mockLogger,
         );
         jobWorker.emit = sandbox.stub();
     });

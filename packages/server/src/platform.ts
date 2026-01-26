@@ -24,8 +24,8 @@ import type {
     PlatformInterface,
     PlatformSession,
 } from "@sockethub/schemas";
-import debug from "debug";
 import config from "./config";
+import { type Logger, createLogger } from "./logger";
 
 // command-line params
 const parentId = process.argv[2];
@@ -34,7 +34,7 @@ let identifier = process.argv[4];
 const redisUrl = process.env.REDIS_URL;
 
 const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
-let logger = debug(loggerPrefix);
+let logger = createLogger(loggerPrefix);
 
 // conditionally initialize sentry
 let sentry: { readonly reportError: (err: Error) => void } = {
@@ -42,7 +42,7 @@ let sentry: { readonly reportError: (err: Error) => void } = {
 };
 (async () => {
     if (config.get("sentry:dsn")) {
-        logger("initializing sentry");
+        logger.info("initializing sentry");
         sentry = await import("./sentry");
     }
 })();
@@ -52,7 +52,7 @@ let jobWorkerStarted = false;
 let parentSecret1: string;
 let parentSecret2: string;
 
-logger(`platform handler initializing for ${platformName} ${identifier}`);
+logger.debug(`platform handler initializing for ${platformName} ${identifier}`);
 
 interface SecretInterface {
     parentSecret1: string;
@@ -68,7 +68,7 @@ interface SecretFromParent extends Array<string | SecretInterface> {
  * Initialize platform module
  */
 const platformSession: PlatformSession = {
-    debug: debug(`sockethub:platform:${platformName}:${identifier}`),
+    log: createLogger(`sockethub:platform:${platformName}:${identifier}`),
     sendToClient: getSendFunction("message"),
     updateActor: updateActor,
 };
@@ -76,7 +76,7 @@ const platformSession: PlatformSession = {
 const platform: PlatformInterface = await (async () => {
     const PlatformModule = await import(`@sockethub/platform-${platformName}`);
     const p = new PlatformModule.default(platformSession) as PlatformInterface;
-    logger(`platform handler loaded for ${platformName} ${identifier}`);
+    logger.info(`platform handler loaded for ${platformName} ${identifier}`);
     return p as PlatformInterface;
 })();
 
@@ -156,8 +156,8 @@ function getJobHandler(): JobHandler {
         job: JobDataDecrypted,
     ): Promise<string | undefined | ActivityStream> => {
         return new Promise((resolve, reject) => {
-            const jobLog = debug(`${loggerPrefix}:${job.sessionId}`);
-            jobLog(`received ${job.title} ${job.msg.type}`);
+            const jobLog = createLogger(`${loggerPrefix}:${job.sessionId}`);
+            jobLog.debug(`received ${job.title} ${job.msg.type}`);
             const credentialStore = new CredentialsStore(
                 parentId,
                 job.sessionId,
@@ -165,6 +165,7 @@ function getJobHandler(): JobHandler {
                 {
                     url: redisUrl,
                 },
+                jobLog,
             );
             // biome-ignore lint/performance/noDelete: <explanation>
             delete job.msg.sessionSecret;
@@ -180,7 +181,7 @@ function getJobHandler(): JobHandler {
                 }
                 jobCallbackCalled = true;
                 if (err) {
-                    jobLog(`failed ${job.title} ${job.msg.type}`);
+                    jobLog.error(`failed ${job.title} ${job.msg.type}`);
                     let errMsg: string | Error;
                     // some error objects (e.g. TimeoutError) don't interpolate correctly
                     // to being human-readable, so we have to do this little dance
@@ -192,7 +193,21 @@ function getJobHandler(): JobHandler {
                     sentry.reportError(new Error(errMsg as string));
                     reject(new Error(errMsg as string));
                 } else {
-                    jobLog(`completed ${job.title} ${job.msg.type}`);
+                    jobLog.debug(`completed ${job.title} ${job.msg.type}`);
+
+                    // Validate that persistent platforms set their initialized state correctly
+                    if (
+                        platform.config.persist &&
+                        platform.config.requireCredentials?.includes(
+                            job.msg.type,
+                        ) &&
+                        !platform.isInitialized()
+                    ) {
+                        logger.warn(
+                            `Platform ${platform.schema.name} completed '${job.msg.type}' but isInitialized() returned false. Platforms should implement isInitialized() to return true once ready to handle jobs.`,
+                        );
+                    }
+
                     resolve(result);
                 }
             };
@@ -237,7 +252,7 @@ function getJobHandler(): JobHandler {
                     })
                     .catch((err) => {
                         // Credential store error (invalid/missing credentials)
-                        jobLog(`credential error ${err.toString()}`);
+                        jobLog.error(`credential error ${err.toString()}`);
 
                         /**
                          * Critical distinction: handle credential errors differently based on platform state.
@@ -262,7 +277,7 @@ function getJobHandler(): JobHandler {
                          *   proper cleanup and a fresh start on the next attempt.
                          * - Error is reported to Sentry for monitoring authentication issues.
                          */
-                        if (platform.config.initialized) {
+                        if (platform.isInitialized()) {
                             // Platform already running - reject job only, preserve platform instance
                             doneCallback(err, null);
                         } else {
@@ -271,10 +286,7 @@ function getJobHandler(): JobHandler {
                             reject(err);
                         }
                     });
-            } else if (
-                platform.config.persist &&
-                !platform.config.initialized
-            ) {
+            } else if (platform.config.persist && !platform.isInitialized()) {
                 reject(
                     new Error(
                         `${job.msg.type} called on uninitialized platform`,
@@ -284,7 +296,7 @@ function getJobHandler(): JobHandler {
                 try {
                     platform[job.msg.type](job.msg, doneCallback);
                 } catch (err) {
-                    jobLog(`platform call failed ${err.toString()}`);
+                    jobLog.error(`platform call failed ${err.toString()}`);
                     sentry.reportError(err);
                     reject(err);
                 }
@@ -303,7 +315,7 @@ function getSendFunction(command: string) {
         if (platform.config.persist) {
             process.send([command, msg, special]);
         } else {
-            logger(
+            logger.warn(
                 "sendToClient called on non-persistent platform, rejecting.",
             );
         }
@@ -317,17 +329,16 @@ function getSendFunction(command: string) {
  */
 async function updateActor(credentials: CredentialsObject): Promise<void> {
     identifier = getPlatformId(platformName, credentials.actor.id);
-    logger(
+    logger.info(
         `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
     );
-    logger = debug(`sockethub:platform:${identifier}`);
+    logger = createLogger(`sockethub:platform:${identifier}`);
 
     // Update credentialsHash for persistent platforms (tracks actor-specific state)
     if (isPersistentPlatform(platform)) {
         platform.credentialsHash = crypto.objectHash(credentials.object);
     }
 
-    platform.debug = debug(`sockethub:platform:${platformName}:${identifier}`);
     process.send(["updateActor", undefined, identifier]);
     await startQueueListener(true);
 }
@@ -342,7 +353,7 @@ async function startQueueListener(refresh = false) {
         if (refresh) {
             await jobWorker.shutdown();
         } else {
-            logger("start queue called multiple times, skipping");
+            logger.warn("start queue called multiple times, skipping");
             return;
         }
     }
@@ -351,8 +362,9 @@ async function startQueueListener(refresh = false) {
         identifier,
         parentSecret1 + parentSecret2,
         { url: redisUrl },
+        logger,
     );
-    logger("listening on the queue for incoming jobs");
+    logger.info("listening on the queue for incoming jobs");
     jobWorker.onJob(getJobHandler());
     jobWorkerStarted = true;
 }

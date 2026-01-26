@@ -1,13 +1,13 @@
+import type { ActivityStream, Logger } from "@sockethub/schemas";
 import { type Job, Queue, QueueEvents, Worker } from "bullmq";
-import debug, { type Debugger } from "debug";
-
-import type { ActivityStream } from "@sockethub/schemas";
 
 import { JobBase, createIORedisConnection } from "./job-base.js";
 import type { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types.js";
 
-export async function verifyJobQueue(config: RedisConfig): Promise<void> {
-    const log = debug("sockethub:data-layer:queue");
+export async function verifyJobQueue(
+    config: RedisConfig,
+    log: Logger,
+): Promise<void> {
     return new Promise((resolve, reject) => {
         const worker = new Worker(
             "connectiontest",
@@ -29,13 +29,13 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
                     "Worker job completed unsuccessfully during JobQueue connection test",
                 );
             }
-            log("connection verified");
+            log.info("job queue connection verified");
             await queue.close();
             await worker.close();
             resolve();
         });
         worker.on("error", (err) => {
-            log(
+            log.warn(
                 `connection verification worker error received ${err.toString()}`,
             );
             reject(err);
@@ -44,7 +44,7 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
             connection: createIORedisConnection(config),
         });
         queue.on("error", (err) => {
-            log(
+            log.warn(
                 `connection verification queue error received ${err.toString()}`,
             );
             reject(err);
@@ -74,7 +74,7 @@ export class JobQueue extends JobBase {
     readonly uid: string;
     protected queue: Queue;
     protected events: QueueEvents;
-    private readonly debug: Debugger;
+    private readonly log: Logger;
     private counter = 0;
     private initialized = false;
 
@@ -85,16 +85,18 @@ export class JobQueue extends JobBase {
      * @param sessionId - Client session identifier for queue isolation
      * @param secret - 32-character encryption secret for message security
      * @param redisConfig - Redis connection configuration
+     * @param log - Logger instance for logging operations
      */
     constructor(
         instanceId: string,
         sessionId: string,
         secret: string,
         redisConfig: RedisConfig,
+        log: Logger,
     ) {
         super(secret);
         this.uid = `sockethub:data-layer:queue:${instanceId}:${sessionId}`;
-        this.debug = debug(this.uid);
+        this.log = log;
         this.init(redisConfig);
     }
 
@@ -117,37 +119,37 @@ export class JobQueue extends JobBase {
 
         // Handle Redis contention errors (e.g., BUSY from Lua scripts)
         this.queue.on("error", (err) => {
-            this.debug(`queue error: ${err.message}`);
+            this.log.warn(`queue error: ${err.message}`);
         });
 
         this.events.on("error", (err) => {
-            this.debug(`events error: ${err.message}`);
+            this.log.warn(`events error: ${err.message}`);
         });
 
         this.events.on("completed", async ({ jobId, returnvalue }) => {
             const job = await this.getJob(jobId);
             if (!job) {
-                this.debug(`completed job ${jobId} (already removed)`);
+                this.log.debug(`completed job ${jobId} (already removed)`);
                 return;
             }
-            this.debug(`completed ${job.data.title} ${job.data.msg.type}`);
+            this.log.debug(`completed ${job.data.title} ${job.data.msg.type}`);
             this.emit("completed", job.data, returnvalue);
         });
 
         this.events.on("failed", async ({ jobId, failedReason }) => {
             const job = await this.getJob(jobId);
             if (!job) {
-                this.debug(
+                this.log.debug(
                     `failed job ${jobId} (already removed): ${failedReason}`,
                 );
                 return;
             }
-            this.debug(
+            this.log.warn(
                 `failed ${job.data.title} ${job.data.msg.type}: ${failedReason}`,
             );
             this.emit("failed", job.data, failedReason);
         });
-        this.debug("initialized");
+        this.log.info("initialized");
     }
 
     /**
@@ -165,7 +167,7 @@ export class JobQueue extends JobBase {
         const job = this.createJob(socketId, msg);
         if (await this.queue.isPaused()) {
             // this.queue.emit("error", new Error("queue closed"));
-            this.debug(
+            this.log.debug(
                 `failed to add ${job.title} ${msg.type} to queue: queue closed`,
             );
             throw new Error("queue closed");
@@ -177,7 +179,7 @@ export class JobQueue extends JobBase {
             removeOnComplete: { age: 300 }, // 5 minutes in seconds
             removeOnFail: { age: 300 },
         });
-        this.debug(`added ${job.title} ${msg.type} to queue`);
+        this.log.debug(`added ${job.title} ${msg.type} to queue`);
         return job;
     }
 
@@ -186,7 +188,7 @@ export class JobQueue extends JobBase {
      */
     async pause() {
         await this.queue.pause();
-        this.debug("paused");
+        this.log.debug("paused");
     }
 
     /**
@@ -194,7 +196,7 @@ export class JobQueue extends JobBase {
      */
     async resume() {
         await this.queue.resume();
-        this.debug("resumed");
+        this.log.debug("resumed");
     }
 
     /**
