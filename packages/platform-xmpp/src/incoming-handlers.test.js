@@ -15,7 +15,7 @@ describe("Incoming handlers", () => {
             sendToClient = sinon.fake();
             ih = new IncomingHandlers({
                 sendToClient: sendToClient,
-                debug: sinon.fake(),
+                log: { debug: sinon.fake() },
             });
         });
 
