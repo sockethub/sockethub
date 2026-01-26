@@ -72,7 +72,7 @@
     "dev": "DEBUG=sockethub* bun run --hot ./bin/sockethub --examples",
     "start": "DEBUG=sockethub* bun run ./bin/sockethub",
     "test": "bun test src/",
-    "test:integration": "DEBUG=sockethub* bun test ./integration/rate-limiter.integration.ts"
+    "test:integration": "DEBUG=sockethub* bun test ./integration/*.integration.ts"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.6",
