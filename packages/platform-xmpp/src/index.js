@@ -257,8 +257,20 @@ export default class XMPP {
 
         this.__client.on("offline", () => {
             this.log.debug(`offline event received for ${job.actor.id}`);
-            // Don't mark as uninitialized - the client will auto-reconnect.
-            // Only mark as uninitialized on explicit cleanup() or unrecoverable errors.
+            // If we were never initialized, mark as disconnected (connection failed)
+            // If we were previously initialized, keep state (will auto-reconnect)
+            // This preserves initialized state during brief network interruptions
+            // while properly handling initial connection failures
+            if (!this.__initialized) {
+                this.log.debug(
+                    `offline during initial connection for ${job.actor.id}`,
+                );
+                this.__markDisconnected();
+            } else {
+                this.log.debug(
+                    `offline after successful connection for ${job.actor.id}, will auto-reconnect`,
+                );
+            }
         });
 
         this.__client.on("error", (err) => {

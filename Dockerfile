@@ -14,9 +14,10 @@ RUN bun install
 RUN bun run build
 
 FROM base AS prod
-ARG LOG_LEVEL
+ARG LOG_LEVEL=info
+ENV LOG_LEVEL=${LOG_LEVEL}
 WORKDIR /app
 COPY --exclude=node_modules --from=build /app ./
 RUN bun install --production
 RUN echo "Running sockethub (prod): LOG_LEVEL=${LOG_LEVEL} /app/packages/sockethub/bin/sockethub --host 0.0.0.0 "
-CMD LOG_LEVEL=${LOG_LEVEL} /app/packages/sockethub/bin/sockethub --host 0.0.0.0
+CMD /app/packages/sockethub/bin/sockethub --host 0.0.0.0
