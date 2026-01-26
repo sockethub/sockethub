@@ -34,7 +34,7 @@ let identifier = process.argv[4];
 const redisUrl = process.env.REDIS_URL;
 
 const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
-let logger = createLogger({ namespace: loggerPrefix });
+let logger = createLogger(loggerPrefix);
 
 // conditionally initialize sentry
 let sentry: { readonly reportError: (err: Error) => void } = {
@@ -68,9 +68,7 @@ interface SecretFromParent extends Array<string | SecretInterface> {
  * Initialize platform module
  */
 const platformSession: PlatformSession = {
-    log: createLogger({
-        namespace: `sockethub:platform:${platformName}:${identifier}`,
-    }),
+    log: createLogger(`sockethub:platform:${platformName}:${identifier}`),
     sendToClient: getSendFunction("message"),
     updateActor: updateActor,
 };
@@ -158,9 +156,7 @@ function getJobHandler(): JobHandler {
         job: JobDataDecrypted,
     ): Promise<string | undefined | ActivityStream> => {
         return new Promise((resolve, reject) => {
-            const jobLog = createLogger({
-                namespace: `${loggerPrefix}:${job.sessionId}`,
-            });
+            const jobLog = createLogger(`${loggerPrefix}:${job.sessionId}`);
             jobLog.debug(`received ${job.title} ${job.msg.type}`);
             const credentialStore = new CredentialsStore(
                 parentId,
@@ -336,7 +332,7 @@ async function updateActor(credentials: CredentialsObject): Promise<void> {
     logger.info(
         `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
     );
-    logger = createLogger({ namespace: `sockethub:platform:${identifier}` });
+    logger = createLogger(`sockethub:platform:${identifier}`);
 
     // Update credentialsHash for persistent platforms (tracks actor-specific state)
     if (isPersistentPlatform(platform)) {

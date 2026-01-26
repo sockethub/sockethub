@@ -5,7 +5,6 @@ import nconf from "nconf";
 import { createLogger } from "./logger.js";
 import { __dirname } from "./util.js";
 
-const log = createLogger({ namespace: "sockethub:server:bootstrap:config" });
 const data = JSON.parse(
     fs.readFileSync(path.resolve(__dirname, "defaults.json"), "utf-8"),
 );
@@ -14,6 +13,9 @@ const defaultConfig = "sockethub.config.json";
 
 export class Config {
     constructor() {
+        const log = createLogger("sockethub:server:bootstrap:config", {
+            level: "info",
+        });
         log.debug("initializing config");
         // assign config loading priorities (command-line, environment, cfg, defaults)
         nconf.argv({

@@ -1,12 +1,51 @@
+import path from "node:path";
 import winston from "winston";
+import config from "./config.js";
 
 export type Logger = winston.Logger;
+const initializedOptions: LoggerOptions = {};
 
 interface LoggerOptions {
-    namespace?: string;
     level?: string;
     fileLevel?: string;
-    logFile?: string;
+    file?: string;
+}
+
+const log = initWinstonLogger("sockethub:server:logger", mapOptions());
+
+function mapOptions(options: LoggerOptions = {}): LoggerOptions {
+    return {
+        level: options.level || initializedOptions?.level || "info",
+        fileLevel:
+            options.fileLevel || initializedOptions?.fileLevel || "debug",
+        file: options.file || initializedOptions?.file || "",
+    };
+}
+
+function init(options: LoggerOptions): LoggerOptions {
+    if (Object.keys(options).length > 0) {
+        return mapOptions(options);
+    }
+    if (Object.keys(initializedOptions).length > 0) {
+        return initializedOptions;
+    }
+
+    log.debug("logger module initialized");
+
+    const loggingConfig = config.get("logging");
+    const logFile = loggingConfig.file;
+
+    if (logFile) {
+        const absolutePath = path.resolve(logFile);
+        log.info(`log file path: ${absolutePath}`);
+        log.info(`file log level: ${loggingConfig.fileLevel}`);
+    }
+    log.info(`console log level: ${loggingConfig.level}`);
+
+    initializedOptions.level = loggingConfig.level;
+    initializedOptions.fileLevel = loggingConfig.fileLevel;
+    initializedOptions.file = loggingConfig.file;
+    return initializedOptions;
 }
 
 /**
@@ -15,38 +54,25 @@ interface LoggerOptions {
  * Log levels: error, warn, info, debug
  *
  * Configuration priority (highest to lowest):
- * 1. options parameter (level, fileLevel, logFile)
- * 2. Environment variables (LOG_LEVEL, LOG_FILE_LEVEL)
+ * 1. options parameter (level, fileLevel, file)
+ * 2. Environment variables (LOG_LEVEL, LOG_FILE_LEVEL, LOG_FILE)
  * 3. Config file (logging.level, logging.fileLevel, logging.file)
  * 4. Defaults (info for console, debug for file)
  *
  * NODE_ENV=production disables console timestamps (for systemd)
  */
-export function createLogger(options: LoggerOptions = {}): Logger {
-    const namespace = options.namespace || "sockethub";
+export function createLogger(
+    namespace?: string,
+    options: LoggerOptions = {},
+): Logger {
+    const cfg: LoggerOptions = init(options);
+    return initWinstonLogger(namespace, cfg);
+}
 
-    // Load config values
-    let configLogLevel = "info";
-    let configFileLevel = "debug";
-    let configLogFile = "";
-    try {
-        const config = require("./config.js").default;
-        const loggingConfig = config.get("logging");
-        if (loggingConfig) {
-            configLogLevel = loggingConfig.level || "info";
-            configFileLevel = loggingConfig.fileLevel || "debug";
-            configLogFile = loggingConfig.file || "";
-        }
-    } catch (err) {
-        // Config not available yet (e.g., during bootstrap)
-    }
-
-    // Priority: options > env > config > defaults
-    const level = options.level || process.env.LOG_LEVEL || configLogLevel;
-    const fileLevel =
-        options.fileLevel || process.env.LOG_FILE_LEVEL || configFileLevel;
-    const logFile = options.logFile || configLogFile;
-
+function initWinstonLogger(
+    namespace: string | undefined,
+    cfg: LoggerOptions,
+): Logger {
     const isProduction = process.env.NODE_ENV === "production";
 
     const consoleFormat = isProduction
@@ -80,16 +106,16 @@ export function createLogger(options: LoggerOptions = {}): Logger {
 
     const transports: winston.transport[] = [
         new winston.transports.Console({
-            level: level,
+            level: cfg.level,
             format: consoleFormat,
         }),
     ];
 
-    if (logFile) {
+    if (cfg.file) {
         transports.push(
             new winston.transports.File({
-                level: fileLevel,
-                filename: logFile,
+                level: cfg.fileLevel,
+                filename: cfg.file,
                 format: winston.format.combine(
                     winston.format.timestamp(),
                     winston.format.json(),

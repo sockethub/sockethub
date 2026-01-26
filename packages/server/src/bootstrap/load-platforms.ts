@@ -18,7 +18,7 @@ import {
 } from "@sockethub/schemas";
 import { createLogger } from "../logger.js";
 
-const log = createLogger({ namespace: "sockethub:server:bootstrap:platforms" });
+const log = createLogger("sockethub:server:bootstrap:platforms");
 
 export type PlatformStruct = {
     id: string;
@@ -33,7 +33,7 @@ export type PlatformStruct = {
 export type PlatformMap = Map<string, PlatformStruct>;
 
 const dummySession: PlatformSession = {
-    log: createLogger({ namespace: "sockethub:platform:dummy" }),
+    log: createLogger("sockethub:platform:dummy"),
     sendToClient: () => {},
     updateActor: async () => {},
 };
