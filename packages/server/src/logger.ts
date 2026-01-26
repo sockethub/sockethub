@@ -8,32 +8,16 @@ import {
 
 export type { Logger, LoggerOptions };
 
-const initializedOptions: LoggerOptions = {};
-let initLogger: Logger | null = null;
+let hasLoggedInit = false;
 
-function mapOptions(options: LoggerOptions = {}): LoggerOptions {
-    return {
-        level: options.level || initializedOptions?.level || "info",
-        fileLevel:
-            options.fileLevel || initializedOptions?.fileLevel || "debug",
-        file: options.file || initializedOptions?.file || "",
-    };
-}
+function logInitialization(): void {
+    if (hasLoggedInit) return;
+    hasLoggedInit = true;
 
-function init(options: LoggerOptions): LoggerOptions {
-    if (Object.keys(options).length > 0) {
-        return mapOptions(options);
-    }
-    if (Object.keys(initializedOptions).length > 0) {
-        return initializedOptions;
-    }
-
-    // Lazy creation of init logger to avoid circular dependency
-    if (!initLogger) {
-        initLogger = createWinstonLogger("sockethub:server:logger", {
-            level: "info",
-        });
-    }
+    // Use a simple logger for initialization messages
+    const initLogger = createWinstonLogger("sockethub:server:logger", {
+        level: "info",
+    });
 
     initLogger.debug("logger module initialized");
 
@@ -46,11 +30,6 @@ function init(options: LoggerOptions): LoggerOptions {
         initLogger.info(`file log level: ${loggingConfig.fileLevel}`);
     }
     initLogger.info(`console log level: ${loggingConfig.level}`);
-
-    initializedOptions.level = loggingConfig.level;
-    initializedOptions.fileLevel = loggingConfig.fileLevel;
-    initializedOptions.file = loggingConfig.file;
-    return initializedOptions;
 }
 
 /**
@@ -70,6 +49,28 @@ export function createLogger(
     namespace?: string,
     options: LoggerOptions = {},
 ): Logger {
-    const cfg: LoggerOptions = init(options);
+    // Log initialization on first call
+    if (!hasLoggedInit) {
+        logInitialization();
+    }
+
+    const loggingConfig = config.get("logging");
+
+    // Explicit undefined check to allow passing empty string to disable file logging
+    const cfg: LoggerOptions = {
+        level:
+            options.level !== undefined
+                ? options.level
+                : (loggingConfig.level ?? "info"),
+        fileLevel:
+            options.fileLevel !== undefined
+                ? options.fileLevel
+                : (loggingConfig.fileLevel ?? "debug"),
+        file:
+            options.file !== undefined
+                ? options.file
+                : (loggingConfig.file ?? ""),
+    };
+
     return createWinstonLogger(namespace, cfg);
 }
