@@ -284,9 +284,9 @@ export default class PlatformInstance {
                 }
             } else {
                 this.log.info("persistent platform initialized");
-                await this.queue.resume();
                 this.config.initialized = true;
                 this.flaggedForTermination = false;
+                await this.queue.resume();
             }
         }
     }
