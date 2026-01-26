@@ -274,6 +274,21 @@ export default class XMPP {
         });
 
         this.__client.on("error", (err) => {
+            // Internal code errors (TypeError, ReferenceError, etc.) indicate bugs
+            // in our code. These should crash the platform process immediately
+            // as we can't trust the state after such errors.
+            if (
+                err instanceof TypeError ||
+                err instanceof ReferenceError ||
+                err instanceof SyntaxError
+            ) {
+                this.log.error(
+                    `FATAL: Internal code error in XMPP platform: ${err.toString()}`,
+                );
+                this.log.error(err.stack);
+                process.exit(1);
+            }
+
             this.log.debug(
                 `network error event for ${job.actor.id}:${err.toString()}`,
             );
