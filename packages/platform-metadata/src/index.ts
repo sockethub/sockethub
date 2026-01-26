@@ -10,7 +10,7 @@ import ogs from "open-graph-scraper";
 import { PlatformMetadataSchema } from "./schema";
 
 export default class Metadata implements PlatformInterface {
-    readonly log: Logger;
+    private readonly log: Logger;
     config: PlatformConfig = {
         persist: false,
     };

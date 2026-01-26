@@ -40,9 +40,9 @@ export default class XMPP {
         this.config = {
             connectTimeoutMs: 10000,
             persist: true,
-            initialized: false,
             requireCredentials: ["connect"],
         };
+        this.__initialized = false; // Private state for initialization tracking
         this.log = session.log;
         this.sendToClient = session.sendToClient;
         this.createClient();
@@ -69,7 +69,7 @@ export default class XMPP {
         }
 
         this.__client = undefined;
-        this.config.initialized = false;
+        this.__initialized = false;
     }
 
     /**
@@ -191,7 +191,7 @@ export default class XMPP {
      * @returns {boolean} true if ready to handle jobs
      */
     isInitialized() {
-        return this.config.initialized;
+        return this.__initialized;
     }
 
     /**
@@ -219,7 +219,7 @@ export default class XMPP {
             this.log.debug(
                 `client connection already exists for ${job.actor.id}`,
             );
-            this.config.initialized = true;
+            this.__initialized = true;
             return done();
         }
         this.log.debug(`connect() called for ${job.actor.id}`);
@@ -257,10 +257,8 @@ export default class XMPP {
 
         this.__client.on("offline", () => {
             this.log.debug(`offline event received for ${job.actor.id}`);
-            // Don't mark as uninitialized - automatic reconnection will handle recovery.
-            // Setting initialized=false would cause queued jobs to fail unnecessarily.
-            // The client library handles reconnection automatically.
-            this.__client = undefined;
+            // Clean disconnect (not an error) - mark as uninitialized
+            this.__markDisconnected();
         });
 
         this.__client.on("error", (err) => {
@@ -277,14 +275,9 @@ export default class XMPP {
             };
 
             if (errorType === "RECOVERABLE") {
-                // On recoverable errors, keep initialized=true since automatic reconnection will occur.
-                // This prevents queued jobs from being rejected during brief network interruptions.
-                // Only clear the client reference to trigger reconnection logic.
-                if (this.__client) {
-                    this.__client.stop();
-                    this.__client = undefined;
-                }
-
+                // For recoverable errors, keep initialized=true and let the client
+                // auto-reconnect. Don't call stop() or clear the client reference.
+                // This allows queued jobs to wait for reconnection instead of failing.
                 as.error = `Connection lost: ${err.toString()}. Attempting automatic reconnection...`;
                 as.object = {
                     type: "connect",
@@ -307,17 +300,6 @@ export default class XMPP {
 
         this.__client.on("online", () => {
             this.log.debug(`online event received for ${job.actor.id}`);
-            // If platform was already initialized, this is a reconnection.
-            // Restore initialized flag so queued jobs can proceed.
-            if (this.config.persist && !this.config.initialized) {
-                // Check if this is a reconnection (handlers already registered)
-                if (this.__client) {
-                    this.log.info(
-                        `automatic reconnection successful for ${job.actor.id}`,
-                    );
-                    this.config.initialized = true;
-                }
-            }
         });
 
         this.log.debug(`starting XMPP client connection for ${job.actor.id}`);
@@ -331,7 +313,7 @@ export default class XMPP {
                 this.log.debug(
                     `connection successful for ${job.actor.id} after ${duration}ms`,
                 );
-                this.config.initialized = true;
+                this.__initialized = true;
                 this.__registerHandlers();
                 return done();
             })
@@ -750,7 +732,7 @@ export default class XMPP {
      */
     cleanup(done) {
         this.log.debug("cleanup");
-        this.config.initialized = false;
+        this.__initialized = false;
         this.__client.stop();
         done();
     }

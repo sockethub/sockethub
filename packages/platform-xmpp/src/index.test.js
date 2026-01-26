@@ -489,9 +489,9 @@ describe("XMPP", () => {
 
         describe("#cleanup", () => {
             it("calls client.stop", (done) => {
-                expect(xp.config.initialized).toEqual(true);
+                expect(xp.isInitialized()).toEqual(true);
                 xp.cleanup(() => {
-                    expect(xp.config.initialized).toEqual(false);
+                    expect(xp.isInitialized()).toEqual(false);
                     sinon.assert.calledOnce(xp.__client.stop);
                     done()
                 });

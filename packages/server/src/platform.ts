@@ -343,9 +343,6 @@ async function updateActor(credentials: CredentialsObject): Promise<void> {
         platform.credentialsHash = crypto.objectHash(credentials.object);
     }
 
-    platform.log = createLogger({
-        namespace: `sockethub:platform:${platformName}:${identifier}`,
-    });
     process.send(["updateActor", undefined, identifier]);
     await startQueueListener(true);
 }

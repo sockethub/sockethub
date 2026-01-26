@@ -36,11 +36,11 @@ import type {
 } from "@sockethub/schemas";
 
 export default class MyProtocol implements PlatformInterface {
-    debug;
+    private readonly log: Logger;
     config = { persist: false };
 
     constructor(session: PlatformSession) {
-        this.debug = session.debug;
+        this.log = session.log;
     }
 
     get schema() {
@@ -61,7 +61,7 @@ export default class MyProtocol implements PlatformInterface {
 
     fetch(job: ActivityStream, cb: PlatformCallback) {
         // Your protocol logic here
-        this.debug('Fetching:', job.actor.id);
+        this.log.debug('Fetching:', job.actor.id);
         cb(undefined, job);
     }
 
@@ -90,11 +90,31 @@ In your `sockethub.config.json`:
 Don't maintain connections. Good for HTTP APIs or one-time operations like RSS feeds.
 
 ```typescript
-config = { persist: false };
+export default class MyStatelessPlatform implements PlatformInterface {
+    private readonly log: Logger;
+    config = { persist: false };
 
-// Methods get called fresh each time
-fetch(job: ActivityStream, cb: PlatformCallback) {
-    // No connection state to maintain
+    constructor(session: PlatformSession) {
+        this.log = session.log;
+    }
+
+    get schema() {
+        return { /* schema definition */ };
+    }
+
+    isInitialized(): boolean {
+        return true;  // Always ready
+    }
+
+    fetch(job: ActivityStream, cb: PlatformCallback) {
+        // No connection state to maintain
+        // Process job and call callback
+        cb();
+    }
+
+    cleanup(cb: PlatformCallback) {
+        cb();
+    }
 }
 ```
 
@@ -103,18 +123,41 @@ fetch(job: ActivityStream, cb: PlatformCallback) {
 Maintain connections and require authentication. Good for chat protocols like IRC or XMPP.
 
 ```typescript
-config = {
-    persist: true,
-    requireCredentials: ["connect"],
-    initialized: false
-};
+export default class MyPersistentPlatform implements PersistentPlatformInterface {
+    private readonly log: Logger;
+    credentialsHash: string;
+    config = {
+        persist: true,
+        requireCredentials: ["connect"]
+    };
+    private client;
+    private initialized = false;
 
-// Methods can maintain connection state
-connect(job: ActivityStream, credentials: CredentialsObject, cb: PlatformCallback) {
-    // Connect using credentials
-    this.client = new SomeProtocolClient(credentials.object);
-    this.config.initialized = true;
-    cb();
+    constructor(session: PlatformSession) {
+        this.log = session.log;
+    }
+
+    get schema() {
+        return { /* schema definition */ };
+    }
+
+    isInitialized(): boolean {
+        return this.initialized;
+    }
+
+    connect(job: ActivityStream, credentials: CredentialsObject, cb: PlatformCallback) {
+        this.client = new SomeProtocolClient(credentials.object);
+        this.client.connect().then(() => {
+            this.initialized = true;
+            cb();
+        }).catch(cb);
+    }
+
+    cleanup(cb: PlatformCallback) {
+        if (this.client) this.client.disconnect();
+        this.initialized = false;
+        cb();
+    }
 }
 ```
 
@@ -124,7 +167,7 @@ All platforms must implement `isInitialized()` to declare when they're ready to 
 
 ### For Stateless Platforms
 
-Always return `true` since stateless platforms have no connection state:
+Always return `true`:
 
 ```typescript
 isInitialized(): boolean {
@@ -134,35 +177,19 @@ isInitialized(): boolean {
 
 ### For Persistent Platforms
 
-Return `true` once connected and ready. Keep returning `true` during temporary network issues
-with automatic reconnection:
+Return `true` once connected, `false` otherwise:
 
 ```typescript
 isInitialized(): boolean {
-    return this.config.initialized;
-}
-
-connect(job, credentials, done) {
-    this.client.connect().then(() => {
-        this.config.initialized = true;  // Mark as ready
-        done();
-    }).catch(done);
-}
-
-private onNetworkError(err) {
-    if (this.willAutoReconnect(err)) {
-        // Keep initialized=true during auto-recovery
-        this.client = undefined;
-    } else {
-        // Only mark uninitialized for unrecoverable failures
-        this.config.initialized = false;
-    }
+    // Return true when the platform is connected and ready to handle jobs
+    // Common approach: track state in a private property
+    return this.initialized;
 }
 ```
 
-**Key principle:** Only set `initialized=false` for failures requiring manual intervention
-(invalid credentials, permanent bans). Keep it `true` during recoverable network issues so
-queued jobs can retry.
+**Key principle:** For platforms with automatic reconnection, keep returning `true` during
+temporary network issues. Only return `false` for failures requiring manual intervention
+(invalid credentials, permanent bans). This allows queued jobs to retry instead of failing.
 
 ## Real Examples
 
@@ -170,11 +197,11 @@ queued jobs can retry.
 
 ```typescript
 export default class Webhook implements PlatformInterface {
-    debug;
+    private readonly log: Logger;
     config = { persist: false };
 
     constructor(session: PlatformSession) {
-        this.debug = session.debug;
+        this.log = session.log;
     }
 
     get schema() {
@@ -211,22 +238,28 @@ export default class Webhook implements PlatformInterface {
 ### Chat Bot (Persistent)
 
 ```typescript
-export default class ChatBot implements PlatformInterface {
-    debug;
+export default class ChatBot implements PersistentPlatformInterface {
+    private readonly log: Logger;
+    credentialsHash: string;
     config = {
         persist: true,
-        requireCredentials: ["connect"],
-        initialized: false
+        requireCredentials: ["connect"]
     };
+    private readonly sendToClient: PlatformSendToClient;
     private client;
+    private initialized = false;
 
     constructor(session: PlatformSession) {
-        this.debug = session.debug;
+        this.log = session.log;
         this.sendToClient = session.sendToClient;
     }
 
+    get schema() {
+        return { /* schema definition */ };
+    }
+
     isInitialized(): boolean {
-        return this.config.initialized;
+        return this.initialized;
     }
 
     connect(job: ActivityStream, credentials: CredentialsObject, cb: PlatformCallback) {
@@ -239,7 +272,7 @@ export default class ChatBot implements PlatformInterface {
                 object: { type: 'note', content: msg.text }
             });
         });
-        this.config.initialized = true;
+        this.initialized = true;
         cb();
     }
 
@@ -250,7 +283,7 @@ export default class ChatBot implements PlatformInterface {
 
     cleanup(cb: PlatformCallback) {
         if (this.client) this.client.disconnect();
-        this.config.initialized = false;
+        this.initialized = false;
         cb();
     }
 }

@@ -70,7 +70,7 @@ function isHtml(s: string): boolean {
  */
 export default class Feeds implements PlatformInterface {
     id: string;
-    log: Logger;
+    private readonly log: Logger;
     config: PlatformConfig = {
         persist: false,
         connectTimeoutMs: 5000,

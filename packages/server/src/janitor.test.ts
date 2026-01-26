@@ -155,7 +155,7 @@ describe("Janitor", () => {
         it("removes flagged and uninitialized platform instances", async () => {
             const pi = getPlatformInstanceFake();
             pi.flaggedForTermination = true;
-            pi.config.initialized = false;
+            pi["initialized"] = false;
             janitor.removeStaleSocketSessions = sandbox.stub();
             janitor.removeStalePlatformInstance = sandbox.stub();
             await janitor.performStaleCheck(pi);
@@ -168,7 +168,7 @@ describe("Janitor", () => {
             const pi = getPlatformInstanceFake();
             pi.sessions = new Set();
             pi.flaggedForTermination = false;
-            pi.config.initialized = true;
+            pi["initialized"] = true;
             janitor.removeStaleSocketSessions = sandbox.stub();
             janitor.removeStalePlatformInstance = sandbox.stub();
             await janitor.performStaleCheck(pi);

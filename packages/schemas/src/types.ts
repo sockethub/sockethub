@@ -119,8 +119,6 @@ export interface PersistentPlatformConfig extends BasePlatformConfig {
     persist: true;
     /** Message types requiring credentials (must be non-empty for persistent platforms) */
     requireCredentials: string[];
-    /** Whether the platform has completed initialization */
-    initialized: boolean;
 }
 
 export interface PlatformSchemaStruct {
@@ -146,7 +144,6 @@ export interface PlatformConstructor {
  * Platforms implement protocol-specific logic for ActivityStreams messages.
  */
 export interface PlatformInterface {
-    log: Logger;
     get config(): PlatformConfig;
     get schema(): PlatformSchemaStruct;
     /**

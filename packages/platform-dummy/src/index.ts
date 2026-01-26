@@ -15,14 +15,14 @@ interface DummyPlatformConfig extends StatelessPlatformConfig {
 }
 
 export default class Dummy implements PlatformInterface {
-    debug: Logger;
+    private readonly log: Logger;
     config: DummyPlatformConfig = {
         persist: false,
         greeting: "Hello",
     };
 
     constructor(session: PlatformSession) {
-        this.debug = session.debug;
+        this.log = session.log;
     }
 
     get schema(): PlatformSchemaStruct {
