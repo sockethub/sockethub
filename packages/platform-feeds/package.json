@@ -50,8 +50,7 @@
   },
   "devDependencies": {
     "@sockethub/schemas": "^3.0.0-alpha.10",
-    "@types/bun": "latest",
-    "debug": "^4.4.3"
+    "@types/bun": "latest"
   },
   "peerDependencies": {
     "@sockethub/server": "5.0.0-alpha.10"

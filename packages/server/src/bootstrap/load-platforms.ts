@@ -8,7 +8,6 @@
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import debug from "debug";
 
 import {
     type PlatformConfig,
@@ -17,8 +16,9 @@ import {
     type PlatformSession,
     validatePlatformSchema,
 } from "@sockethub/schemas";
+import { createLogger } from "../logger.js";
 
-const log = debug("sockethub:server:bootstrap:platforms");
+const log = createLogger("sockethub:server:bootstrap:platforms");
 
 export type PlatformStruct = {
     id: string;
@@ -33,7 +33,7 @@ export type PlatformStruct = {
 export type PlatformMap = Map<string, PlatformStruct>;
 
 const dummySession: PlatformSession = {
-    debug: () => {},
+    log: createLogger("sockethub:platform:dummy"),
     sendToClient: () => {},
     updateActor: async () => {},
 };
@@ -69,7 +69,7 @@ function resolveModulePath(platformName: string): string | undefined {
         // Fallback: return directory of entry point
         return dirname(filePath);
     } catch (err) {
-        log(
+        log.warn(
             `failed to resolve module path for ${platformName}: ${err.message}`,
         );
         return undefined;
@@ -77,7 +77,7 @@ function resolveModulePath(platformName: string): string | undefined {
 }
 
 async function loadPlatform(platformName: string, injectRequire) {
-    log(`loading ${platformName}`);
+    log.debug(`loading ${platformName}`);
     let p: PlatformInterface;
     if (injectRequire) {
         const P = await injectRequire(platformName);
@@ -103,7 +103,7 @@ export default async function loadPlatforms(
     platformsList: Array<string>,
     injectRequire = undefined,
 ): Promise<PlatformMap> {
-    log(`platforms to load: ${platformsList}`);
+    log.debug(`platforms to load: ${platformsList}`);
     // load platforms from config.platforms
     const platforms = new Map();
 
@@ -145,6 +145,7 @@ export default async function loadPlatforms(
             version: p.schema.version,
             types: types,
         });
+        log.info(`loaded platform ${p.schema.name} v${p.schema.version}`);
     }
 
     return platforms;

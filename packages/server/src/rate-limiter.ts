@@ -1,7 +1,7 @@
-import debug from "debug";
 import type { Socket } from "socket.io";
+import { createLogger } from "./logger.js";
 
-const log = debug("sockethub:server:rate-limiter");
+const log = createLogger("sockethub:server:rate-limiter");
 
 interface RateLimitConfig {
     windowMs: number; // Time window in milliseconds
@@ -84,7 +84,7 @@ export function createRateLimiter(config: Partial<RateLimitConfig> = {}) {
         if (state.blocked) {
             if (now < state.blockedUntil) {
                 // Still blocked, drop and log for debugging
-                log(
+                log.debug(
                     `dropping event for blocked socket ${socket.id}; blocked until ${new Date(
                         state.blockedUntil,
                     ).toISOString()}`,
@@ -110,7 +110,7 @@ export function createRateLimiter(config: Partial<RateLimitConfig> = {}) {
         if (state.count > cfg.maxRequests) {
             state.blocked = true;
             state.blockedUntil = now + cfg.blockDurationMs;
-            log(
+            log.warn(
                 `rate limit exceeded for ${socket.id}: ${state.count} requests in ${cfg.windowMs}ms, blocking for ${cfg.blockDurationMs}ms`,
             );
             socket.emit("error", {

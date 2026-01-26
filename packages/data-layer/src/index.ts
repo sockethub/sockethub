@@ -1,4 +1,4 @@
-import debug from "debug";
+import type { Logger } from "@sockethub/schemas";
 
 import {
     CredentialsStore,
@@ -10,12 +10,10 @@ import { JobWorker } from "./job-worker.js";
 export * from "./types.js";
 import type { RedisConfig } from "./types.js";
 
-const log = debug("sockethub:data-layer");
-
-async function redisCheck(config: RedisConfig): Promise<void> {
-    log(`checking redis connection ${config.url}`);
-    await verifySecureStore(config);
-    await verifyJobQueue(config);
+async function redisCheck(config: RedisConfig, log: Logger): Promise<void> {
+    log.debug(`checking redis connection ${config.url}`);
+    await verifySecureStore(config, log);
+    await verifyJobQueue(config, log);
 }
 
 export {

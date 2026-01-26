@@ -1,5 +1,5 @@
+import type { Logger } from "@sockethub/schemas";
 import { Worker } from "bullmq";
-import debug, { type Debugger } from "debug";
 
 import { JobBase, createIORedisConnection } from "./job-base.js";
 import type { JobEncrypted, JobHandler, RedisConfig } from "./types.js";
@@ -24,7 +24,7 @@ export class JobWorker extends JobBase {
     readonly uid: string;
     protected worker: Worker;
     protected handler: JobHandler;
-    private readonly debug: Debugger;
+    private readonly log: Logger;
     private readonly redisConfig: RedisConfig;
     private readonly queueId: string;
     private initialized = false;
@@ -36,17 +36,19 @@ export class JobWorker extends JobBase {
      * @param sessionId - Must match the sessionId of the corresponding JobQueue
      * @param secret - 32-character encryption secret, must match JobQueue secret
      * @param redisConfig - Redis connection configuration
+     * @param log - Logger instance for logging operations
      */
     constructor(
         instanceId: string,
         sessionId: string,
         secret: string,
         redisConfig: RedisConfig,
+        log: Logger,
     ) {
         super(secret);
         this.uid = `sockethub:data-layer:worker:${instanceId}:${sessionId}`;
         this.queueId = `sockethub:data-layer:queue:${instanceId}:${sessionId}`;
-        this.debug = debug(this.uid);
+        this.log = log;
         this.redisConfig = redisConfig;
     }
 
@@ -69,10 +71,10 @@ export class JobWorker extends JobBase {
 
         // Handle Redis contention errors (e.g., BUSY from Lua scripts)
         this.worker.on("error", (err) => {
-            this.debug(`worker error: ${err.message}`);
+            this.log.warn(`worker error: ${err.message}`);
         });
 
-        this.debug("initialized");
+        this.log.info("initialized");
     }
 
     /**
@@ -97,7 +99,7 @@ export class JobWorker extends JobBase {
 
     protected async jobHandler(encryptedJob: JobEncrypted) {
         const job = this.decryptJobData(encryptedJob);
-        this.debug(`handling ${job.title} ${job.msg.type}`);
+        this.log.debug(`handling ${job.title} ${job.msg.type}`);
         return await this.handler(job);
     }
 }

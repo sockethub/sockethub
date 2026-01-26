@@ -1,7 +1,16 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import * as sinon from "sinon";
 
+import type { Logger } from "@sockethub/schemas";
+
 import { CredentialsStore } from "./credentials-store";
+
+const mockLogger: Logger = {
+    error: () => {},
+    warn: () => {},
+    info: () => {},
+    debug: () => {},
+};
 
 describe("CredentialsStore", () => {
     let credentialsStore,
@@ -36,6 +45,7 @@ describe("CredentialsStore", () => {
             "a session id",
             "a secret must be 32 chars and th",
             { url: "redis config" },
+            mockLogger,
         );
     });
 

@@ -10,20 +10,27 @@ import ogs from "open-graph-scraper";
 import { PlatformMetadataSchema } from "./schema";
 
 export default class Metadata implements PlatformInterface {
-    readonly debug: Logger;
+    private readonly log: Logger;
     config: PlatformConfig = {
         persist: false,
     };
     constructor(session: PlatformSession) {
-        this.debug = session.debug;
+        this.log = session.log;
     }
 
     get schema() {
         return PlatformMetadataSchema;
     }
 
+    /**
+     * Stateless platforms are always ready to handle jobs.
+     */
+    isInitialized(): boolean {
+        return true;
+    }
+
     fetch(job: ActivityStream, cb: PlatformCallback) {
-        this.debug(`fetching ${job.actor.id}`);
+        this.log.debug(`fetching ${job.actor.id}`);
         ogs({
             url: job.actor.id,
         })
