@@ -198,6 +198,20 @@ function getJobHandler(): JobHandler {
                     reject(new Error(errMsg as string));
                 } else {
                     jobLog.debug(`completed ${job.title} ${job.msg.type}`);
+
+                    // Validate that persistent platforms set their initialized state correctly
+                    if (
+                        platform.config.persist &&
+                        platform.config.requireCredentials?.includes(
+                            job.msg.type,
+                        ) &&
+                        !platform.isInitialized()
+                    ) {
+                        logger.warn(
+                            `Platform ${platform.schema.name} completed '${job.msg.type}' but isInitialized() returned false. Platforms should implement isInitialized() to return true once ready to handle jobs.`,
+                        );
+                    }
+
                     resolve(result);
                 }
             };
@@ -276,10 +290,7 @@ function getJobHandler(): JobHandler {
                             reject(err);
                         }
                     });
-            } else if (
-                platform.config.persist &&
-                !platform.config.initialized
-            ) {
+            } else if (platform.config.persist && !platform.isInitialized()) {
                 reject(
                     new Error(
                         `${job.msg.type} called on uninitialized platform`,

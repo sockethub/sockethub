@@ -22,6 +22,13 @@ export default class Metadata implements PlatformInterface {
         return PlatformMetadataSchema;
     }
 
+    /**
+     * Stateless platforms are always ready to handle jobs.
+     */
+    isInitialized(): boolean {
+        return true;
+    }
+
     fetch(job: ActivityStream, cb: PlatformCallback) {
         this.log.debug(`fetching ${job.actor.id}`);
         ogs({

@@ -147,6 +147,14 @@ export default class IRC implements PersistentPlatformInterface {
     }
 
     /**
+     * Returns whether the platform is ready to handle jobs.
+     * For IRC, this means we have successfully connected to the server.
+     */
+    isInitialized(): boolean {
+        return this.config.initialized;
+    }
+
+    /**
      * Function: connect
      *
      * Connect to an IRC server.

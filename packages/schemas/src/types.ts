@@ -149,6 +149,18 @@ export interface PlatformInterface {
     log: Logger;
     get config(): PlatformConfig;
     get schema(): PlatformSchemaStruct;
+    /**
+     * Returns whether the platform is ready to handle jobs.
+     *
+     * For persistent platforms: Returns true once the initial connection succeeds.
+     * During temporary network interruptions with automatic reconnection, should
+     * remain true to allow queued jobs to retry rather than fail.
+     *
+     * For stateless platforms: Can always return true since they have no connection state.
+     *
+     * @returns true if the platform can process jobs, false otherwise
+     */
+    isInitialized(): boolean;
     cleanup(cb: PlatformCallback): void;
 }
 

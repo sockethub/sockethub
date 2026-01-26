@@ -41,6 +41,13 @@ export default class Dummy implements PlatformInterface {
         };
     }
 
+    /**
+     * Stateless platforms are always ready to handle jobs.
+     */
+    isInitialized(): boolean {
+        return true;
+    }
+
     echo(job: ActivityStream, cb: PlatformCallback) {
         job.target = job.actor;
         job.actor = {

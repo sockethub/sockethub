@@ -184,6 +184,17 @@ export default class XMPP {
     }
 
     /**
+     * Returns whether the platform is ready to handle jobs.
+     * For XMPP, this means we have successfully connected to the server.
+     * During temporary network interruptions with automatic reconnection,
+     * remains true to allow queued jobs to retry rather than fail.
+     * @returns {boolean} true if ready to handle jobs
+     */
+    isInitialized() {
+        return this.config.initialized;
+    }
+
+    /**
      * Connect to the XMPP server.
      *
      * @param {object} job activity streams object
@@ -246,7 +257,10 @@ export default class XMPP {
 
         this.__client.on("offline", () => {
             this.log.debug(`offline event received for ${job.actor.id}`);
-            this.__markDisconnected();
+            // Don't mark as uninitialized - automatic reconnection will handle recovery.
+            // Setting initialized=false would cause queued jobs to fail unnecessarily.
+            // The client library handles reconnection automatically.
+            this.__client = undefined;
         });
 
         this.__client.on("error", (err) => {
@@ -263,8 +277,13 @@ export default class XMPP {
             };
 
             if (errorType === "RECOVERABLE") {
-                // Clean up state but allow reconnection
-                this.__markDisconnected(false);
+                // On recoverable errors, keep initialized=true since automatic reconnection will occur.
+                // This prevents queued jobs from being rejected during brief network interruptions.
+                // Only clear the client reference to trigger reconnection logic.
+                if (this.__client) {
+                    this.__client.stop();
+                    this.__client = undefined;
+                }
 
                 as.error = `Connection lost: ${err.toString()}. Attempting automatic reconnection...`;
                 as.object = {
@@ -273,7 +292,7 @@ export default class XMPP {
                     condition: err.condition || "network",
                 };
             } else {
-                // Clean up state and stop reconnection
+                // On unrecoverable errors, mark as uninitialized and stop reconnection
                 this.__markDisconnected(true);
 
                 as.error = `Connection failed: ${err.toString()}. Manual reconnection required.`;
@@ -288,6 +307,17 @@ export default class XMPP {
 
         this.__client.on("online", () => {
             this.log.debug(`online event received for ${job.actor.id}`);
+            // If platform was already initialized, this is a reconnection.
+            // Restore initialized flag so queued jobs can proceed.
+            if (this.config.persist && !this.config.initialized) {
+                // Check if this is a reconnection (handlers already registered)
+                if (this.__client) {
+                    this.log.info(
+                        `automatic reconnection successful for ${job.actor.id}`,
+                    );
+                    this.config.initialized = true;
+                }
+            }
         });
 
         this.log.debug(`starting XMPP client connection for ${job.actor.id}`);

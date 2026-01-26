@@ -55,6 +55,10 @@ export default class MyProtocol implements PlatformInterface {
         };
     }
 
+    isInitialized(): boolean {
+        return true;
+    }
+
     fetch(job: ActivityStream, cb: PlatformCallback) {
         // Your protocol logic here
         this.debug('Fetching:', job.actor.id);
@@ -114,6 +118,49 @@ connect(job: ActivityStream, credentials: CredentialsObject, cb: PlatformCallbac
 }
 ```
 
+## Managing Initialization State
+
+All platforms must implement `isInitialized()` to declare when they're ready to process jobs.
+
+### For Stateless Platforms
+
+Always return `true` since stateless platforms have no connection state:
+
+```typescript
+isInitialized(): boolean {
+    return true;
+}
+```
+
+### For Persistent Platforms
+
+Return `true` once connected and ready. Keep returning `true` during temporary network issues with automatic reconnection:
+
+```typescript
+isInitialized(): boolean {
+    return this.config.initialized;
+}
+
+connect(job, credentials, done) {
+    this.client.connect().then(() => {
+        this.config.initialized = true;  // Mark as ready
+        done();
+    }).catch(done);
+}
+
+private onNetworkError(err) {
+    if (this.willAutoReconnect(err)) {
+        // Keep initialized=true during auto-recovery
+        this.client = undefined;
+    } else {
+        // Only mark uninitialized for unrecoverable failures
+        this.config.initialized = false;
+    }
+}
+```
+
+**Key principle:** Only set `initialized=false` for failures requiring manual intervention (invalid credentials, permanent bans). Keep it `true` during recoverable network issues so queued jobs can retry.
+
 ## Real Examples
 
 ### Webhook Platform (Stateless)
@@ -135,6 +182,10 @@ export default class Webhook implements PlatformInterface {
                 properties: { type: { enum: ["post"] } }
             }
         };
+    }
+
+    isInitialized(): boolean {
+        return true;  // Stateless platforms are always ready
     }
 
     async post(job: ActivityStream, cb: PlatformCallback) {
@@ -171,6 +222,10 @@ export default class ChatBot implements PlatformInterface {
         this.sendToClient = session.sendToClient;
     }
 
+    isInitialized(): boolean {
+        return this.config.initialized;
+    }
+
     connect(job: ActivityStream, credentials: CredentialsObject, cb: PlatformCallback) {
         this.client = new ChatService(credentials.object.token);
         this.client.on('message', (msg) => {
@@ -186,7 +241,6 @@ export default class ChatBot implements PlatformInterface {
     }
 
     join(job: ActivityStream, cb: PlatformCallback) {
-        if (!this.config.initialized) return cb("Not connected");
         this.client.joinRoom(job.target.id);
         cb();
     }

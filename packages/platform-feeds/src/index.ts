@@ -89,6 +89,13 @@ export default class Feeds implements PlatformInterface {
     }
 
     /**
+     * Stateless platforms are always ready to handle jobs.
+     */
+    isInitialized(): boolean {
+        return true;
+    }
+
+    /**
      * Fetch feeds from specified source. Upon completion, it will send back a
      * response to the original request with a complete ActivityStreams Collection
      * containing all feed items and metadata.
