@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import nconf from "nconf";
 
-import { createLogger } from "./logger.js";
+import { type Logger, createWinstonLogger } from "./logger-core.js";
 import { __dirname } from "./util.js";
 
 const data = JSON.parse(
@@ -12,11 +12,14 @@ const data = JSON.parse(
 const defaultConfig = "sockethub.config.json";
 
 export class Config {
+    private log: Logger;
+
     constructor() {
-        const log = createLogger("sockethub:server:bootstrap:config", {
+        // Use core logger without config dependency
+        this.log = createWinstonLogger("sockethub:server:bootstrap:config", {
             level: "info",
         });
-        log.debug("initializing config");
+        this.log.debug("initializing config");
         // assign config loading priorities (command-line, environment, cfg, defaults)
         nconf.argv({
             info: {
@@ -61,11 +64,11 @@ export class Config {
             if (!fs.existsSync(configFile)) {
                 throw new Error(`Config file not found: ${configFile}`);
             }
-            log.debug(`reading config file at ${configFile}`);
+            this.log.debug(`reading config file at ${configFile}`);
             nconf.file(configFile);
         } else {
             if (fs.existsSync(`${process.cwd()}/${defaultConfig}`)) {
-                log.debug(`loading local ${defaultConfig}`);
+                this.log.debug(`loading local ${defaultConfig}`);
                 nconf.file(`${process.cwd()}/${defaultConfig}`);
             }
             nconf.use("memory");

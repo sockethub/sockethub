@@ -1,17 +1,15 @@
 import path from "node:path";
-import winston from "winston";
 import config from "./config.js";
+import {
+    type Logger,
+    type LoggerOptions,
+    createWinstonLogger,
+} from "./logger-core.js";
 
-export type Logger = winston.Logger;
+export type { Logger, LoggerOptions };
+
 const initializedOptions: LoggerOptions = {};
-
-interface LoggerOptions {
-    level?: string;
-    fileLevel?: string;
-    file?: string;
-}
-
-const log = initWinstonLogger("sockethub:server:logger", mapOptions());
+let initLogger: Logger | null = null;
 
 function mapOptions(options: LoggerOptions = {}): LoggerOptions {
     return {
@@ -30,17 +28,24 @@ function init(options: LoggerOptions): LoggerOptions {
         return initializedOptions;
     }
 
-    log.debug("logger module initialized");
+    // Lazy creation of init logger to avoid circular dependency
+    if (!initLogger) {
+        initLogger = createWinstonLogger("sockethub:server:logger", {
+            level: "info",
+        });
+    }
+
+    initLogger.debug("logger module initialized");
 
     const loggingConfig = config.get("logging");
     const logFile = loggingConfig.file;
 
     if (logFile) {
         const absolutePath = path.resolve(logFile);
-        log.info(`log file path: ${absolutePath}`);
-        log.info(`file log level: ${loggingConfig.fileLevel}`);
+        initLogger.info(`log file path: ${absolutePath}`);
+        initLogger.info(`file log level: ${loggingConfig.fileLevel}`);
     }
-    log.info(`console log level: ${loggingConfig.level}`);
+    initLogger.info(`console log level: ${loggingConfig.level}`);
 
     initializedOptions.level = loggingConfig.level;
     initializedOptions.fileLevel = loggingConfig.fileLevel;
@@ -66,79 +71,5 @@ export function createLogger(
     options: LoggerOptions = {},
 ): Logger {
     const cfg: LoggerOptions = init(options);
-    return initWinstonLogger(namespace, cfg);
-}
-
-function initWinstonLogger(
-    namespace: string | undefined,
-    cfg: LoggerOptions,
-): Logger {
-    const isProduction = process.env.NODE_ENV === "production";
-
-    const consoleFormat = isProduction
-        ? winston.format.combine(
-              winston.format.colorize(),
-              winston.format.printf(
-                  ({ level, message, namespace, ...meta }) => {
-                      const ns = namespace ? `${namespace} ` : "";
-                      const metaStr =
-                          Object.keys(meta).length > 0
-                              ? ` ${JSON.stringify(meta)}`
-                              : "";
-                      return `${level}: ${ns}${message}${metaStr}`;
-                  },
-              ),
-          )
-        : winston.format.combine(
-              winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-              winston.format.colorize(),
-              winston.format.printf(
-                  ({ level, message, timestamp, namespace, ...meta }) => {
-                      const ns = namespace ? `${namespace} ` : "";
-                      const metaStr =
-                          Object.keys(meta).length > 0
-                              ? ` ${JSON.stringify(meta)}`
-                              : "";
-                      return `${timestamp} ${level}: ${ns}${message}${metaStr}`;
-                  },
-              ),
-          );
-
-    const transports: winston.transport[] = [
-        new winston.transports.Console({
-            level: cfg.level,
-            format: consoleFormat,
-        }),
-    ];
-
-    if (cfg.file) {
-        transports.push(
-            new winston.transports.File({
-                level: cfg.fileLevel,
-                filename: cfg.file,
-                format: winston.format.combine(
-                    winston.format.timestamp(),
-                    winston.format.json(),
-                ),
-            }),
-        );
-    }
-
-    return winston.createLogger({
-        level: "debug", // Set to lowest level, let transports filter
-        defaultMeta: { namespace },
-        transports,
-    });
-}
-
-// Default logger instance - created lazily to avoid circular deps with config
-let defaultLogger: Logger;
-export function getDefaultLogger(): Logger {
-    if (!defaultLogger) {
-        const config = require("./config.js").default;
-        const loggingConfig = config.get("logging");
-        const logFile = loggingConfig?.file || "";
-        defaultLogger = createLogger({ logFile });
-    }
-    return defaultLogger;
+    return createWinstonLogger(namespace, cfg);
 }
