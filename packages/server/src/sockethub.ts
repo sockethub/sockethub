@@ -25,7 +25,7 @@ import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
 import ProcessManager from "./process-manager.js";
 
-const log = createLogger({ namespace: "sockethub:server:core" });
+const log = createLogger("sockethub:server:core");
 
 type ErrMsg = {
     context: string;
@@ -107,9 +107,7 @@ class Sockethub {
 
     private handleIncomingConnection(socket: Socket) {
         // session-specific debug messages
-        const sessionLog = createLogger({
-            namespace: `sockethub:server:core:${socket.id}`,
-        });
+        const sessionLog = createLogger(`sockethub:server:core:${socket.id}`);
         const sessionSecret = crypto.randToken(16);
         const credentialsStore: CredentialsStoreInterface =
             new CredentialsStore(

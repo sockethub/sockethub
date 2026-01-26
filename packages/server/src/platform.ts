@@ -34,7 +34,7 @@ let identifier = process.argv[4];
 const redisUrl = process.env.REDIS_URL;
 
 const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
-let logger = createLogger({ namespace: loggerPrefix });
+let logger = createLogger(loggerPrefix);
 
 // conditionally initialize sentry
 let sentry: { readonly reportError: (err: Error) => void } = {
@@ -68,9 +68,7 @@ interface SecretFromParent extends Array<string | SecretInterface> {
  * Initialize platform module
  */
 const platformSession: PlatformSession = {
-    log: createLogger({
-        namespace: `sockethub:platform:${platformName}:${identifier}`,
-    }),
+    log: createLogger(`sockethub:platform:${platformName}:${identifier}`),
     sendToClient: getSendFunction("message"),
     updateActor: updateActor,
 };
@@ -158,9 +156,7 @@ function getJobHandler(): JobHandler {
         job: JobDataDecrypted,
     ): Promise<string | undefined | ActivityStream> => {
         return new Promise((resolve, reject) => {
-            const jobLog = createLogger({
-                namespace: `${loggerPrefix}:${job.sessionId}`,
-            });
+            const jobLog = createLogger(`${loggerPrefix}:${job.sessionId}`);
             jobLog.debug(`received ${job.title} ${job.msg.type}`);
             const credentialStore = new CredentialsStore(
                 parentId,
@@ -198,6 +194,20 @@ function getJobHandler(): JobHandler {
                     reject(new Error(errMsg as string));
                 } else {
                     jobLog.debug(`completed ${job.title} ${job.msg.type}`);
+
+                    // Validate that persistent platforms set their initialized state correctly
+                    if (
+                        platform.config.persist &&
+                        platform.config.requireCredentials?.includes(
+                            job.msg.type,
+                        ) &&
+                        !platform.isInitialized()
+                    ) {
+                        logger.warn(
+                            `Platform ${platform.schema.name} completed '${job.msg.type}' but isInitialized() returned false. Platforms should implement isInitialized() to return true once ready to handle jobs.`,
+                        );
+                    }
+
                     resolve(result);
                 }
             };
@@ -267,7 +277,7 @@ function getJobHandler(): JobHandler {
                          *   proper cleanup and a fresh start on the next attempt.
                          * - Error is reported to Sentry for monitoring authentication issues.
                          */
-                        if (platform.config.initialized) {
+                        if (platform.isInitialized()) {
                             // Platform already running - reject job only, preserve platform instance
                             doneCallback(err, null);
                         } else {
@@ -276,10 +286,7 @@ function getJobHandler(): JobHandler {
                             reject(err);
                         }
                     });
-            } else if (
-                platform.config.persist &&
-                !platform.config.initialized
-            ) {
+            } else if (platform.config.persist && !platform.isInitialized()) {
                 reject(
                     new Error(
                         `${job.msg.type} called on uninitialized platform`,
@@ -325,16 +332,13 @@ async function updateActor(credentials: CredentialsObject): Promise<void> {
     logger.info(
         `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
     );
-    logger = createLogger({ namespace: `sockethub:platform:${identifier}` });
+    logger = createLogger(`sockethub:platform:${identifier}`);
 
     // Update credentialsHash for persistent platforms (tracks actor-specific state)
     if (isPersistentPlatform(platform)) {
         platform.credentialsHash = crypto.objectHash(credentials.object);
     }
 
-    platform.log = createLogger({
-        namespace: `sockethub:platform:${platformName}:${identifier}`,
-    });
     process.send(["updateActor", undefined, identifier]);
     await startQueueListener(true);
 }

@@ -40,9 +40,9 @@ export default class XMPP {
         this.config = {
             connectTimeoutMs: 10000,
             persist: true,
-            initialized: false,
             requireCredentials: ["connect"],
         };
+        this.__initialized = false; // Private state for initialization tracking
         this.log = session.log;
         this.sendToClient = session.sendToClient;
         this.createClient();
@@ -69,7 +69,7 @@ export default class XMPP {
         }
 
         this.__client = undefined;
-        this.config.initialized = false;
+        this.__initialized = false;
     }
 
     /**
@@ -184,6 +184,17 @@ export default class XMPP {
     }
 
     /**
+     * Returns whether the platform is ready to handle jobs.
+     * For XMPP, this means we have successfully connected to the server.
+     * During temporary network interruptions with automatic reconnection,
+     * remains true to allow queued jobs to retry rather than fail.
+     * @returns {boolean} true if ready to handle jobs
+     */
+    isInitialized() {
+        return this.__initialized;
+    }
+
+    /**
      * Connect to the XMPP server.
      *
      * @param {object} job activity streams object
@@ -208,7 +219,7 @@ export default class XMPP {
             this.log.debug(
                 `client connection already exists for ${job.actor.id}`,
             );
-            this.config.initialized = true;
+            this.__initialized = true;
             return done();
         }
         this.log.debug(`connect() called for ${job.actor.id}`);
@@ -246,10 +257,38 @@ export default class XMPP {
 
         this.__client.on("offline", () => {
             this.log.debug(`offline event received for ${job.actor.id}`);
-            this.__markDisconnected();
+            // If we were never initialized, mark as disconnected (connection failed)
+            // If we were previously initialized, keep state (will auto-reconnect)
+            // This preserves initialized state during brief network interruptions
+            // while properly handling initial connection failures
+            if (!this.__initialized) {
+                this.log.debug(
+                    `offline during initial connection for ${job.actor.id}`,
+                );
+                this.__markDisconnected();
+            } else {
+                this.log.debug(
+                    `offline after successful connection for ${job.actor.id}, will auto-reconnect`,
+                );
+            }
         });
 
         this.__client.on("error", (err) => {
+            // Internal code errors (TypeError, ReferenceError, etc.) indicate bugs
+            // in our code. These should crash the platform process immediately
+            // as we can't trust the state after such errors.
+            if (
+                err instanceof TypeError ||
+                err instanceof ReferenceError ||
+                err instanceof SyntaxError
+            ) {
+                this.log.error(
+                    `FATAL: Internal code error in XMPP platform: ${err.toString()}`,
+                );
+                this.log.error(err.stack);
+                process.exit(1);
+            }
+
             this.log.debug(
                 `network error event for ${job.actor.id}:${err.toString()}`,
             );
@@ -263,9 +302,9 @@ export default class XMPP {
             };
 
             if (errorType === "RECOVERABLE") {
-                // Clean up state but allow reconnection
-                this.__markDisconnected(false);
-
+                // For recoverable errors, keep initialized=true and let the client
+                // auto-reconnect. Don't call stop() or clear the client reference.
+                // This allows queued jobs to wait for reconnection instead of failing.
                 as.error = `Connection lost: ${err.toString()}. Attempting automatic reconnection...`;
                 as.object = {
                     type: "connect",
@@ -273,7 +312,7 @@ export default class XMPP {
                     condition: err.condition || "network",
                 };
             } else {
-                // Clean up state and stop reconnection
+                // On unrecoverable errors, mark as uninitialized and stop reconnection
                 this.__markDisconnected(true);
 
                 as.error = `Connection failed: ${err.toString()}. Manual reconnection required.`;
@@ -301,7 +340,7 @@ export default class XMPP {
                 this.log.debug(
                     `connection successful for ${job.actor.id} after ${duration}ms`,
                 );
-                this.config.initialized = true;
+                this.__initialized = true;
                 this.__registerHandlers();
                 return done();
             })
@@ -720,7 +759,7 @@ export default class XMPP {
      */
     cleanup(done) {
         this.log.debug("cleanup");
-        this.config.initialized = false;
+        this.__initialized = false;
         this.__client.stop();
         done();
     }

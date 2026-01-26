@@ -89,7 +89,6 @@ describe("Initialize IRC Platform", () => {
             connectTimeoutMs: 30000,
             persist: true,
             requireCredentials: ["connect", "update"],
-            initialized: false,
         });
     });
 
@@ -252,7 +251,7 @@ describe("Initialize IRC Platform", () => {
             });
 
             it("disconnect()", (done) => {
-                expect(platform.config.initialized).toEqual(true);
+                expect(platform.isInitialized()).toEqual(true);
                 let cleanupCalled = false;
                 platform.cleanup = (cb) => {
                     cleanupCalled = true;
@@ -264,16 +263,16 @@ describe("Initialize IRC Platform", () => {
                         actor: actor,
                     },
                     () => {
-                    expect(platform.config.initialized).toEqual(true);
+                    expect(platform.isInitialized()).toEqual(true);
                     expect(cleanupCalled).toEqual(true);
                     done();
                 });
             });
 
             it("cleanup()", (done) => {
-                expect(platform.config.initialized).toEqual(true);
+                expect(platform.isInitialized()).toEqual(true);
                 platform.cleanup(() => {
-                    expect(platform.config.initialized).toEqual(false);
+                    expect(platform.isInitialized()).toEqual(false);
                     done();
                 });
             });

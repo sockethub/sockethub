@@ -52,6 +52,7 @@ export default class PlatformInstance {
     readonly global: boolean = false;
     readonly completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
     config: PlatformConfig;
+    private initialized = false;
     readonly name: string;
     process: ChildProcess;
     readonly log: Logger;
@@ -106,6 +107,13 @@ export default class PlatformInstance {
 
     createGetSocket() {
         this.getSocket = getSocket;
+    }
+
+    /**
+     * Returns whether the platform instance is initialized and ready to handle jobs.
+     */
+    public isInitialized(): boolean {
+        return this.initialized;
     }
 
     /**
@@ -269,12 +277,12 @@ export default class PlatformInstance {
             if (state === "failed") {
                 // Only terminate if platform is not yet initialized
                 // If already initialized, credential failures are non-fatal (wrong session credentials)
-                if (!this.config.initialized) {
+                if (!this.initialized) {
                     this.log.warn(
                         `critical job type ${job.msg.type} failed during initialization, flagging for termination`,
                     );
                     await this.queue.pause();
-                    this.config.initialized = false;
+                    this.initialized = false;
                     this.flaggedForTermination = true;
                 } else {
                     this.log.debug(
@@ -284,7 +292,7 @@ export default class PlatformInstance {
                 }
             } else {
                 this.log.info("persistent platform initialized");
-                this.config.initialized = true;
+                this.initialized = true;
                 this.flaggedForTermination = false;
                 await this.queue.resume();
             }

@@ -6,7 +6,7 @@ import * as Sentry from "@sentry/bun";
 import config from "./config";
 import { createLogger } from "./logger";
 
-const logger = createLogger({ namespace: "sockethub:sentry" });
+const logger = createLogger("sockethub:sentry");
 if (!config.get("sentry:dsn")) {
     throw new Error("Sentry attempted initialization with no DSN provided");
 }

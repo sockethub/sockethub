@@ -77,12 +77,11 @@ interface IrcSocketOptions {
  * @param {object} cfg a unique config object for this instance
  */
 export default class IRC implements PersistentPlatformInterface {
-    log: Logger;
+    private readonly log: Logger;
     credentialsHash: string;
     config: PersistentPlatformConfig = {
         persist: true,
         requireCredentials: ["connect", "update"],
-        initialized: false,
         connectTimeoutMs: 30000,
     };
     private readonly updateActor: PlatformUpdateActor;
@@ -90,6 +89,7 @@ export default class IRC implements PersistentPlatformInterface {
     private irc2as: typeof IrcToActivityStreams;
     private forceDisconnect = false;
     private clientConnecting = false;
+    private initialized = false;
     private client: typeof IrcSocket;
     private jobQueue = []; // list of handlers to confirm when message delivery confirmed
     private channels = new Set();
@@ -144,6 +144,14 @@ export default class IRC implements PersistentPlatformInterface {
      */
     get schema(): PlatformSchemaStruct {
         return PlatformIrcSchema;
+    }
+
+    /**
+     * Returns whether the platform is ready to handle jobs.
+     * For IRC, this means we have successfully connected to the server.
+     */
+    isInitialized(): boolean {
+        return this.initialized;
     }
 
     /**
@@ -528,7 +536,7 @@ export default class IRC implements PersistentPlatformInterface {
 
     cleanup(done: PlatformCallback) {
         this.log.debug("cleanup() called");
-        this.config.initialized = false;
+        this.initialized = false;
         this.forceDisconnect = true;
         if (typeof this.client === "object") {
             if (typeof this.client.end === "function") {
@@ -604,13 +612,13 @@ export default class IRC implements PersistentPlatformInterface {
 
         this.ircConnect(credentials, (err, client) => {
             if (err) {
-                this.config.initialized = false;
+                this.initialized = false;
                 return cb(err);
             }
             this.handledActors.add(key);
             this.client = client;
             this.registerListeners(credentials.object.server);
-            this.config.initialized = true;
+            this.initialized = true;
             return cb(null, client);
         });
     }

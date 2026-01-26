@@ -3,7 +3,7 @@ import { createLogger } from "./logger.js";
 import type PlatformInstance from "./platform-instance.js";
 import { platformInstances } from "./platform-instance.js";
 
-const rmLog = createLogger({ namespace: "sockethub:server:janitor" });
+const rmLog = createLogger("sockethub:server:janitor");
 
 export class Janitor {
     cycleInterval = 15000;
@@ -113,7 +113,7 @@ export class Janitor {
         if (!platformInstance.global) {
             if (
                 (platformInstance.config.persist &&
-                    !platformInstance.config.initialized) ||
+                    !platformInstance.isInitialized()) ||
                 platformInstance.sessions.size === 0
             ) {
                 // either the platform failed to initialize, or there are no more sessions linked to it

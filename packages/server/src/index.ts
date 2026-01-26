@@ -8,7 +8,7 @@ let sentry: { readonly reportError: (err: Error) => void } = {
 
 export async function server() {
     let sockethub: Sockethub;
-    const log = createLogger({ namespace: "sockethub:init" });
+    const log = createLogger("sockethub:init");
 
     // conditionally initialize sentry
     if (config.get("sentry:dsn")) {

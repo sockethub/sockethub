@@ -70,7 +70,7 @@ function isHtml(s: string): boolean {
  */
 export default class Feeds implements PlatformInterface {
     id: string;
-    log: Logger;
+    private readonly log: Logger;
     config: PlatformConfig = {
         persist: false,
         connectTimeoutMs: 5000,
@@ -86,6 +86,13 @@ export default class Feeds implements PlatformInterface {
 
     get schema(): PlatformSchemaStruct {
         return PlatformSchema;
+    }
+
+    /**
+     * Stateless platforms are always ready to handle jobs.
+     */
+    isInitialized(): boolean {
+        return true;
     }
 
     /**
