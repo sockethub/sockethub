@@ -69,6 +69,62 @@ The logger uses a singleton configuration pattern:
 - `createLogger()` creates individual logger instances using the global config
 - Explicit options in `createLogger()` override global settings for that instance
 
+## Process Context
+
+Set a process-wide context to automatically prefix all logger namespaces. This is useful for
+identifying logs from different processes (e.g., main server vs platform child processes).
+
+### Setting Context
+
+```typescript
+import { setLoggerContext, createLogger } from '@sockethub/logger';
+
+// In main server process
+setLoggerContext('sockethub');
+
+const log1 = createLogger('server:listener');
+// Output namespace: "sockethub:server:listener"
+
+const log2 = createLogger('data-layer:queue:irc:abc123');
+// Output namespace: "sockethub:data-layer:queue:irc:abc123"
+```
+
+### Platform Child Processes
+
+Context is particularly useful for platform child processes where you want all logs
+(including data-layer operations) to include the platform instance identifier:
+
+```typescript
+// In platform child process
+setLoggerContext('sockethub:platform:irc:abc123');
+
+const log = createLogger('main');
+// Output namespace: "sockethub:platform:irc:abc123:main"
+
+// Data-layer components also get the context automatically
+const worker = new JobWorker(...);
+// Worker logs: "sockethub:platform:irc:abc123:data-layer:worker"
+```
+
+### Checking Context
+
+```typescript
+import { getLoggerContext } from '@sockethub/logger';
+
+const context = getLoggerContext();
+if (context.includes(':platform:')) {
+  // We're in a platform child process
+  console.log('Running in platform process:', context);
+}
+```
+
+### Context Benefits
+
+- **Process identification** - Easily identify which process generated a log
+- **Grouped logs** - Filter all logs from a specific process/platform instance
+- **DRY** - Set common prefix once instead of repeating in every createLogger call
+- **Automatic** - Data-layer and other shared components inherit the context
+
 ## Log Levels
 
 Available log levels (highest to lowest priority):
