@@ -28,7 +28,7 @@ export default function validate(
     }
 
     const sessionLog = createLogger({
-        namespace: `sockethub:server:validate:${sockethubId}`,
+        namespace: `server:validate:${sockethubId}`,
     });
     return (msg: ActivityStream, done: MiddlewareCallback) => {
         sessionLog.debug(`applying schema validation for ${type}`);

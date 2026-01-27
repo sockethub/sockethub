@@ -71,7 +71,7 @@ describe("JobWorker", () => {
     it("returns a valid JobWorker object", () => {
         expect(typeof jobWorker).to.equal("object");
         expect(jobWorker.uid).to.equal(
-            `sockethub:data-layer:worker:a parent id:a session id`,
+            `data-layer:worker:a parent id:a session id`,
         );
         expect(typeof jobWorker.onJob).to.equal("function");
         expect(typeof jobWorker.shutdown).to.equal("function");

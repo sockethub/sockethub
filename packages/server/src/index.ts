@@ -1,5 +1,5 @@
 import path from "node:path";
-import { createLogger, initLogger } from "@sockethub/logger";
+import { createLogger, initLogger, setLoggerContext } from "@sockethub/logger";
 import config from "./config";
 import Sockethub from "./sockethub";
 
@@ -19,8 +19,11 @@ export async function server() {
         file: logFile,
     });
 
+    // Set process-wide context for all loggers
+    setLoggerContext("sockethub");
+
     let sockethub: Sockethub;
-    const log = createLogger("sockethub:init");
+    const log = createLogger("server:init");
 
     // conditionally initialize sentry
     if (config.get("sentry:dsn")) {

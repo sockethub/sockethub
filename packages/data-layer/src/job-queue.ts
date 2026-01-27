@@ -6,7 +6,7 @@ import { JobBase, createIORedisConnection } from "./job-base.js";
 import type { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types.js";
 
 export async function verifyJobQueue(config: RedisConfig): Promise<void> {
-    const log = createLogger("sockethub:data-layer:verify-job-queue");
+    const log = createLogger("data-layer:verify-job-queue");
 
     return new Promise((resolve, reject) => {
         const worker = new Worker(
@@ -93,8 +93,12 @@ export class JobQueue extends JobBase {
         redisConfig: RedisConfig,
     ) {
         super(secret);
-        this.uid = `sockethub:data-layer:queue:${instanceId}:${sessionId}`;
-        this.log = createLogger(this.uid);
+        // Use short namespace for logging (context provides process identification)
+        const logNamespace = "data-layer:queue";
+        this.log = createLogger(logNamespace);
+
+        // Queue ID is derived from namespace + identifiers for matching across processes
+        this.uid = `${logNamespace}:${instanceId}:${sessionId}`;
         this.init(redisConfig);
     }
 

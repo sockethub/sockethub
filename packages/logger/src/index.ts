@@ -12,6 +12,9 @@ export interface LoggerOptions {
 let globalConfig: LoggerOptions | null = null;
 let hasLoggedInit = false;
 
+// Process-wide logger context (set once at process startup)
+let loggerContext = "";
+
 /**
  * Initialize the logger system with global configuration.
  *
@@ -47,6 +50,65 @@ export function initLogger(options: LoggerOptions): void {
 }
 
 /**
+ * Set the logger context for this process.
+ *
+ * All subsequent createLogger() calls will prepend this context to their namespace.
+ * This is typically set once at process startup to identify the process (e.g., "sockethub"
+ * for the main server, or "sockethub:platform:irc:abc123" for a platform child process).
+ *
+ * @param context - The context string to prepend to all logger namespaces in this process
+ *
+ * @example
+ * ```typescript
+ * // In main server process
+ * setLoggerContext('sockethub');
+ * const log = createLogger('server:listener');
+ * // Output namespace: "sockethub:server:listener"
+ *
+ * // In platform child process
+ * setLoggerContext('sockethub:platform:irc:abc123');
+ * const log = createLogger('main');
+ * // Output namespace: "sockethub:platform:irc:abc123:main"
+ * ```
+ */
+export function setLoggerContext(context: string): void {
+    loggerContext = context;
+}
+
+/**
+ * Get the current logger context for this process.
+ *
+ * @returns The current logger context string, or empty string if not set
+ *
+ * @example
+ * ```typescript
+ * const context = getLoggerContext();
+ * if (context.includes(':platform:')) {
+ *   // We're in a platform child process
+ * }
+ * ```
+ */
+export function getLoggerContext(): string {
+    return loggerContext;
+}
+
+/**
+ * Reset the logger context.
+ *
+ * Primarily used for testing to reset state between test cases.
+ *
+ * @example
+ * ```typescript
+ * afterEach(() => {
+ *   resetLoggerContext();
+ * });
+ * ```
+ */
+export function resetLoggerContext(): void {
+    loggerContext = "";
+}
+
+/**
  * Creates a Winston logger instance with console and optional file transports.
  *
  * Configuration priority (highest to lowest):
@@ -76,6 +138,11 @@ export function createLogger(
     namespace: string,
     options: LoggerOptions = {},
 ): Logger {
+    // Prepend logger context if set
+    const fullNamespace = loggerContext
+        ? `${loggerContext}:${namespace}`
+        : namespace;
+
     // Priority: explicit options > global config > ENV > defaults
     const cfg: LoggerOptions = {
         level:
@@ -149,7 +216,7 @@ export function createLogger(
 
     return winston.createLogger({
         level: "debug", // Set to lowest level, let transports filter
-        defaultMeta: { namespace },
+        defaultMeta: { namespace: fullNamespace },
         transports,
     });
 }
@@ -161,4 +228,5 @@ export function createLogger(
 export function resetLoggerForTesting(): void {
     globalConfig = null;
     hasLoggedInit = false;
+    loggerContext = "";
 }

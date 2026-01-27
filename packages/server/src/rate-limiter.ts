@@ -1,7 +1,7 @@
 import { createLogger } from "@sockethub/logger";
 import type { Socket } from "socket.io";
 
-const log = createLogger("sockethub:server:rate-limiter");
+const log = createLogger("server:rate-limiter");
 
 interface RateLimitConfig {
     windowMs: number; // Time window in milliseconds
