@@ -16,7 +16,7 @@ import {
     JobWorker,
 } from "@sockethub/data-layer";
 import type { JobHandler } from "@sockethub/data-layer";
-import { type Logger, createLogger } from "@sockethub/logger";
+import { type Logger, createLogger, setLoggerContext } from "@sockethub/logger";
 import type {
     ActivityStream,
     CredentialsObject,
@@ -33,7 +33,10 @@ const platformName = process.argv[3];
 let identifier = process.argv[4];
 const redisUrl = process.env.REDIS_URL;
 
-const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
+// Set process-wide context for all loggers in this platform process
+setLoggerContext(`sockethub:platform:${platformName}:${identifier}`);
+
+const loggerPrefix = "main";
 let logger = createLogger(loggerPrefix);
 
 // Cache logger instances per session to avoid recreating Winston loggers with transports
@@ -71,7 +74,7 @@ interface SecretFromParent extends Array<string | SecretInterface> {
  * Initialize platform module
  */
 const platformSession: PlatformSession = {
-    log: createLogger(`sockethub:platform:${platformName}:${identifier}`),
+    log: logger, // Reuse the logger created above
     sendToClient: getSendFunction("message"),
     updateActor: updateActor,
 };
@@ -160,7 +163,7 @@ function getJobHandler(): JobHandler {
     ): Promise<string | undefined | ActivityStream> => {
         return new Promise((resolve, reject) => {
             // Use cached logger to avoid creating Winston instances per job
-            const logKey = `${loggerPrefix}:${job.sessionId}`;
+            const logKey = job.sessionId;
             let jobLog = loggerCache.get(logKey);
             if (!jobLog) {
                 jobLog = createLogger(logKey);
@@ -340,7 +343,9 @@ async function updateActor(credentials: CredentialsObject): Promise<void> {
     logger.info(
         `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
     );
-    logger = createLogger(`sockethub:platform:${identifier}`);
+    // Update context with new identifier
+    setLoggerContext(`sockethub:platform:${platformName}:${identifier}`);
+    logger = createLogger("main");
 
     // Update credentialsHash for persistent platforms (tracks actor-specific state)
     if (isPersistentPlatform(platform)) {

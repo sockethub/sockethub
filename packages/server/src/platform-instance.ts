@@ -75,7 +75,7 @@ export default class PlatformInstance {
         }
 
         this.log = createLogger({
-            namespace: `sockethub:server:platform-instance:${this.id}`,
+            namespace: `server:platform-instance:${this.id}`,
         });
         const env: EnvFormat = {
             REDIS_URL: config.get("redis:url") as string,

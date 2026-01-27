@@ -3,7 +3,7 @@ import path from "node:path";
 import { createLogger } from "@sockethub/logger";
 import { __dirname } from "./util.js";
 
-const logger = createLogger("sockethub:server:routes");
+const logger = createLogger("server:routes");
 
 export interface IRoutePaths {
     [key: string]: string;

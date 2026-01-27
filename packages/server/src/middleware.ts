@@ -30,7 +30,7 @@ export class MiddlewareChain {
     constructor(name: string) {
         this.name = name;
         this.logger = createLogger({
-            namespace: `sockethub:middleware:${name}`,
+            namespace: `middleware:${name}`,
         });
     }
 

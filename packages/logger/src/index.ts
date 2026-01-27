@@ -13,7 +13,7 @@ let globalConfig: LoggerOptions | null = null;
 let hasLoggedInit = false;
 
 // Process-wide logger context (set once at process startup)
-let loggerContext: string = "";
+let loggerContext = "";
 
 /**
  * Initialize the logger system with global configuration.
