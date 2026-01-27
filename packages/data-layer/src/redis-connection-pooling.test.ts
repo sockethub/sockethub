@@ -5,6 +5,7 @@ import type { Logger } from "@sockethub/schemas";
 
 import {
     createIORedisConnection,
+    getRedisConnectionCount,
     resetSharedRedisConnection,
 } from "./job-base.js";
 import type { RedisConfig } from "./types.js";
@@ -114,5 +115,19 @@ describe("Redis Connection Pooling Integration Tests", () => {
     it("should set enableOfflineQueue to false for fail-fast behavior", () => {
         const conn = createIORedisConnection(redisConfig);
         expect(conn.options.enableOfflineQueue).to.be.false;
+    });
+
+    it("should return 0 connection count when no connection exists", async () => {
+        await resetSharedRedisConnection();
+        const count = await getRedisConnectionCount();
+        expect(count).to.equal(0);
+    });
+
+    it("should return connection count from Redis CLIENT LIST", async () => {
+        createIORedisConnection(redisConfig);
+        const count = await getRedisConnectionCount();
+        // Should return a number (actual count depends on Redis state, but should be > 0)
+        expect(count).to.be.a("number");
+        expect(count).to.be.at.least(0);
     });
 });

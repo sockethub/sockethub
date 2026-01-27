@@ -10,7 +10,7 @@ const logger = createLogger("sockethub:sentry");
 if (!config.get("sentry:dsn")) {
     throw new Error("Sentry attempted initialization with no DSN provided");
 }
-logger.info("initialized");
+logger.info("initialized sentry");
 Sentry.init(config.get("sentry"));
 
 export function reportError(err: Error): void {

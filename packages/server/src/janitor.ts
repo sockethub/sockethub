@@ -1,3 +1,5 @@
+import { getRedisConnectionCount } from "@sockethub/data-layer";
+
 import listener, { type SocketInstance } from "./listener.js";
 import { createLogger } from "./logger.js";
 import type PlatformInstance from "./platform-instance.js";
@@ -138,8 +140,9 @@ export class Janitor {
 
         if (!(this.cycleCount % 4)) {
             this.reportCount++;
+            const redisConnections = await getRedisConnectionCount();
             rmLog.info(
-                `socket sessions: ${this.sockets.length} platform instances: ${platformInstances.size}`,
+                `socket sessions: ${this.sockets.length} platform instances: ${platformInstances.size} redis connections: ${redisConnections}`,
             );
         }
 

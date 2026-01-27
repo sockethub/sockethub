@@ -5,7 +5,10 @@ import {
     type CredentialsStoreInterface,
     verifySecureStore,
 } from "./credentials-store.js";
-import { resetSharedRedisConnection } from "./job-base.js";
+import {
+    getRedisConnectionCount,
+    resetSharedRedisConnection,
+} from "./job-base.js";
 import { JobQueue, verifyJobQueue } from "./job-queue.js";
 import { JobWorker } from "./job-worker.js";
 export * from "./types.js";
@@ -22,6 +25,7 @@ export {
     JobQueue,
     JobWorker,
     CredentialsStore,
+    getRedisConnectionCount,
     resetSharedRedisConnection,
     type CredentialsStoreInterface,
 };

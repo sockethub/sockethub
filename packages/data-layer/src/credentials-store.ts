@@ -80,7 +80,7 @@ export class CredentialsStore implements CredentialsStoreInterface {
         this.log = log;
         this.initCrypto();
         this.initSecureStore(secret, redisConfig);
-        this.log.info("initialized");
+        this.log.debug("initialized");
     }
 
     initCrypto() {

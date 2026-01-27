@@ -50,6 +50,34 @@ export async function resetSharedRedisConnection(): Promise<void> {
     }
 }
 
+/**
+ * Gets the total number of active Redis client connections.
+ *
+ * Note: This queries the Redis server directly using CLIENT LIST and reports
+ * ALL active connections to the Redis instance. This includes connections from
+ * Sockethub (BullMQ queues, workers, and the shared connection) as well as any
+ * other applications or services connected to the same Redis server.
+ *
+ * @returns Number of active Redis connections, or 0 if no connection exists
+ */
+export async function getRedisConnectionCount(): Promise<number> {
+    if (!sharedRedisConnection) {
+        return 0;
+    }
+
+    try {
+        const clientList = await sharedRedisConnection.client("LIST");
+        // CLIENT LIST returns one line per connection, filter out empty lines
+        const connections = clientList
+            .split("\n")
+            .filter((line) => line.trim());
+        return connections.length;
+    } catch (err) {
+        // Return 0 if Redis query fails (connection issues, etc.)
+        return 0;
+    }
+}
+
 export class JobBase extends EventEmitter {
     protected crypto: Crypto;
     private readonly secret: string;
