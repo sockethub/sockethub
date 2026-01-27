@@ -1,4 +1,4 @@
-import { type Logger, createLogger } from "@sockethub/logger";
+import { type Logger, createLogger, getLoggerContext } from "@sockethub/logger";
 import type { ActivityStream } from "@sockethub/schemas";
 import { type Job, Queue, QueueEvents, Worker } from "bullmq";
 
@@ -6,7 +6,7 @@ import { JobBase, createIORedisConnection } from "./job-base.js";
 import type { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types.js";
 
 export async function verifyJobQueue(config: RedisConfig): Promise<void> {
-    const log = createLogger("sockethub:data-layer:verify-job-queue");
+    const log = createLogger("data-layer:verify-job-queue");
 
     return new Promise((resolve, reject) => {
         const worker = new Worker(
@@ -93,7 +93,17 @@ export class JobQueue extends JobBase {
         redisConfig: RedisConfig,
     ) {
         super(secret);
-        this.uid = `sockethub:data-layer:queue:${instanceId}:${sessionId}`;
+        // Check if we're in a platform process (context includes 'platform:')
+        const inPlatformProcess = getLoggerContext().includes(":platform:");
+        if (inPlatformProcess) {
+            // Platform process: context already identifies the session
+            // Use short namespace to avoid redundancy
+            this.uid = "data-layer:queue";
+        } else {
+            // Server process: multiple sessions coexist
+            // Need full identification in namespace
+            this.uid = `sockethub:data-layer:queue:${instanceId}:${sessionId}`;
+        }
         this.log = createLogger(this.uid);
         this.init(redisConfig);
     }
