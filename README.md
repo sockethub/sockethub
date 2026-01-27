@@ -191,6 +191,7 @@ DEBUG=sockethub* bun run dev
 * **[@sockethub/data-layer](packages/data-layer)** - Redis-based job queue and credential storage
 * **[@sockethub/schemas](packages/schemas)** - ActivityStreams validation and TypeScript types
 * **[@sockethub/client](packages/client)** - Browser client library for connecting to Sockethub
+* **[@sockethub/logger](packages/logger)** - Winston-based logger with global configuration
 
 ### Interactive Demos
 
