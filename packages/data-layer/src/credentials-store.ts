@@ -1,5 +1,5 @@
 import { crypto } from "@sockethub/crypto";
-import { type Logger, createLogger, } from "@sockethub/logger";
+import { type Logger, createLogger } from "@sockethub/logger";
 import type { CredentialsObject } from "@sockethub/schemas";
 import SecureStore from "secure-store-redis";
 

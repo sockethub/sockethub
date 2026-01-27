@@ -1,7 +1,7 @@
-import { type Logger, createLogger, } from "@sockethub/logger";
+import { type Logger, createLogger } from "@sockethub/logger";
 import { Worker } from "bullmq";
 
-import { JobBase, } from "./job-base.js";
+import { JobBase } from "./job-base.js";
 import type { JobEncrypted, JobHandler, RedisConfig } from "./types.js";
 
 /**

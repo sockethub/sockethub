@@ -1,4 +1,4 @@
-import { type Logger, createLogger, } from "@sockethub/logger";
+import { type Logger, createLogger } from "@sockethub/logger";
 import type { ActivityStream } from "@sockethub/schemas";
 import { type Job, Queue, QueueEvents, Worker } from "bullmq";
 
