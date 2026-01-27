@@ -186,16 +186,18 @@ DEBUG=sockethub* bun run dev
 
 ### Core Infrastructure
 
-* **[sockethub](packages/sockethub)** - Main package and configuration
-* **[@sockethub/server](packages/server)** - Core server implementation with Socket.IO interface
+* **[sockethub](packages/sockethub)** - Main meta-package for installing Sockethub
+* **[@sockethub/client](packages/client)** - Browser client library for connecting to Sockethub
 * **[@sockethub/data-layer](packages/data-layer)** - Redis-based job queue and credential storage
 * **[@sockethub/schemas](packages/schemas)** - ActivityStreams validation and TypeScript types
-* **[@sockethub/client](packages/client)** - Browser client library for connecting to Sockethub
+* **[@sockethub/server](packages/server)** - Core server implementation with Socket.IO interface
+
+### Libraries
+
+* **[@sockethub/activity-streams](packages/activity-streams)** - ActivityStreams object utilities
+* **[@sockethub/crypto](packages/crypto)** - Cryptographic utilities for secure storage
+* **[@sockethub/irc2as](packages/irc2as)** - IRC to ActivityStreams translation
 * **[@sockethub/logger](packages/logger)** - Winston-based logger with global configuration
-
-### Interactive Demos
-
-* **[@sockethub/examples](packages/examples)** - Interactive web examples and demos
 
 ### Platform Implementations
 
@@ -205,11 +207,9 @@ DEBUG=sockethub* bun run dev
 * **[@sockethub/platform-metadata](packages/platform-metadata)** - Link preview and metadata extraction
 * **[@sockethub/platform-xmpp](packages/platform-xmpp)** - XMPP protocol support
 
-### Utilities
+### Interactive Demo
 
-* **[@sockethub/activity-streams](packages/activity-streams)** - ActivityStreams object utilities
-* **[@sockethub/crypto](packages/crypto)** - Cryptographic utilities for secure storage
-* **[@sockethub/irc2as](packages/irc2as)** - IRC to ActivityStreams translation
+* **[@sockethub/examples](packages/examples)** - Interactive web examples and demos
 
 ## Contributing
 
