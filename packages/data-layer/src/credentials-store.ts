@@ -73,18 +73,12 @@ export class CredentialsStore implements CredentialsStoreInterface {
                 "CredentialsStore secret must be 32 chars in length",
             );
         }
-        // Check if we're in a platform process (context includes 'platform:')
-        const inPlatformProcess = getLoggerContext().includes(":platform:");
-        if (inPlatformProcess) {
-            // Platform process: context already identifies the session
-            // Use short namespace to avoid redundancy
-            this.uid = "data-layer:credentials-store";
-        } else {
-            // Server process: multiple sessions coexist
-            // Need full identification in namespace
-            this.uid = `sockethub:data-layer:credentials-store:${parentId}:${sessionId}`;
-        }
-        this.log = createLogger(this.uid);
+        // Use short namespace for logging (context provides process identification)
+        const logNamespace = "data-layer:credentials-store";
+        this.log = createLogger(logNamespace);
+
+        // Store ID is derived from namespace + identifiers for key naming
+        this.uid = `${logNamespace}:${parentId}:${sessionId}`;
         this.initCrypto();
         this.initSecureStore(secret, redisConfig);
         this.log.info("initialized");

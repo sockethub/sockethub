@@ -44,20 +44,13 @@ export class JobWorker extends JobBase {
         redisConfig: RedisConfig,
     ) {
         super(secret);
-        // Check if we're in a platform process (context includes 'platform:')
-        const inPlatformProcess = getLoggerContext().includes(":platform:");
-        if (inPlatformProcess) {
-            // Platform process: context already identifies the session
-            // Use short namespace to avoid redundancy
-            this.uid = "data-layer:worker";
-            this.queueId = "data-layer:queue";
-        } else {
-            // Server process: multiple sessions coexist
-            // Need full identification in namespace
-            this.uid = `sockethub:data-layer:worker:${instanceId}:${sessionId}`;
-            this.queueId = `sockethub:data-layer:queue:${instanceId}:${sessionId}`;
-        }
-        this.log = createLogger(this.uid);
+        // Use short namespace for logging (context provides process identification)
+        const logNamespace = "data-layer:worker";
+        this.log = createLogger(logNamespace);
+
+        // Queue IDs are derived from namespace + identifiers for matching across processes
+        this.uid = `${logNamespace}:${instanceId}:${sessionId}`;
+        this.queueId = `data-layer:queue:${instanceId}:${sessionId}`;
         this.redisConfig = redisConfig;
     }
 
