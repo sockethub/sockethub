@@ -28,7 +28,7 @@ export function createIORedisConnection(config: RedisConfig): Redis {
                 // Stop retrying after 3 attempts to fail fast
                 if (times > 3) return null;
                 // Exponential backoff: 200ms, 400ms, 800ms
-                return Math.min(Math.pow(2, times - 1) * 200, 2000);
+                return Math.min(2 ** (times - 1) * 200, 2000);
             },
         });
     }
