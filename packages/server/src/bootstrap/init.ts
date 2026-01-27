@@ -3,9 +3,9 @@ import chalk from "chalk";
 
 import { type RedisConfig, redisCheck } from "@sockethub/data-layer";
 
+import { createLogger } from "@sockethub/logger";
 import { addPlatformSchema } from "@sockethub/schemas";
 import config from "../config.js";
-import { createLogger } from "../logger.js";
 import loadPlatforms, {
     type PlatformMap,
     type PlatformStruct,

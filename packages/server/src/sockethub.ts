@@ -13,11 +13,11 @@ import {
     stopCleanup,
 } from "./rate-limiter.js";
 
+import { createLogger } from "@sockethub/logger";
 import getInitObject from "./bootstrap/init.js";
 import config from "./config";
 import janitor from "./janitor.js";
 import listener from "./listener.js";
-import { createLogger } from "./logger.js";
 import middleware from "./middleware.js";
 import createActivityObject from "./middleware/create-activity-object.js";
 import expandActivityStream from "./middleware/expand-activity-stream.js";

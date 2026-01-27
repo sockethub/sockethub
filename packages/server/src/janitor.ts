@@ -1,5 +1,5 @@
+import { createLogger } from "@sockethub/logger";
 import listener, { type SocketInstance } from "./listener.js";
-import { createLogger } from "./logger.js";
 import type PlatformInstance from "./platform-instance.js";
 import { platformInstances } from "./platform-instance.js";
 

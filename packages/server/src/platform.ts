@@ -16,6 +16,7 @@ import {
     JobWorker,
 } from "@sockethub/data-layer";
 import type { JobHandler } from "@sockethub/data-layer";
+import { type Logger, createLogger } from "@sockethub/logger";
 import type {
     ActivityStream,
     CredentialsObject,
@@ -25,7 +26,6 @@ import type {
     PlatformSession,
 } from "@sockethub/schemas";
 import config from "./config";
-import { type Logger, createLogger } from "./logger";
 
 // command-line params
 const parentId = process.argv[2];
