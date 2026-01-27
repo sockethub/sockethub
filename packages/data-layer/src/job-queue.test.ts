@@ -40,11 +40,13 @@ describe("JobQueue", () => {
 
         class TestJobQueue extends JobQueue {
             init() {
+                // BullMQ v5+ prohibits colons in queue names, so replace with dashes
+                const queueName = this.uid.replace(/:/g, "-");
                 this.redisConnection = MockBull();
-                this.queue = MockBull(this.uid, {
+                this.queue = MockBull(queueName, {
                     connection: this.redisConnection,
                 });
-                this.events = MockBull(this.uid, {
+                this.events = MockBull(queueName, {
                     connection: this.redisConnection,
                 });
             }
@@ -73,14 +75,14 @@ describe("JobQueue", () => {
         sinon.assert.calledThrice(MockBull);
         sinon.assert.calledWith(
             MockBull,
-            "sockethub:data-layer:queue:a parent id:a session id",
+            "data-layer-queue-a parent id-a session id",
             {
                 connection: MockBull(),
             },
         );
         expect(typeof jobQueue).to.equal("object");
         expect(jobQueue.uid).to.equal(
-            `sockethub:data-layer:queue:a parent id:a session id`,
+            `data-layer:queue:a parent id:a session id`,
         );
         expect(typeof jobQueue.add).to.equal("function");
         expect(typeof jobQueue.getJob).to.equal("function");

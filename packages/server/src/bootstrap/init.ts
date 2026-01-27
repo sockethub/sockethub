@@ -11,7 +11,7 @@ import loadPlatforms, {
     type PlatformStruct,
 } from "./load-platforms.js";
 
-const log = createLogger("sockethub:server:bootstrap:init");
+const log = createLogger("server:bootstrap:init");
 
 export interface IInitObject {
     version: string;

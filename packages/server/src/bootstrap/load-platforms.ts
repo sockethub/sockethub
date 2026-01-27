@@ -18,7 +18,7 @@ import {
     validatePlatformSchema,
 } from "@sockethub/schemas";
 
-const log = createLogger("sockethub:server:bootstrap:platforms");
+const log = createLogger("server:bootstrap:platforms");
 
 export type PlatformStruct = {
     id: string;
@@ -33,7 +33,7 @@ export type PlatformStruct = {
 export type PlatformMap = Map<string, PlatformStruct>;
 
 const dummySession: PlatformSession = {
-    log: createLogger("sockethub:platform:dummy"),
+    log: createLogger("platform:dummy"),
     sendToClient: () => {},
     updateActor: async () => {},
 };

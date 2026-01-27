@@ -58,7 +58,7 @@ describe("CredentialsStore", () => {
         });
         expect(typeof credentialsStore).toEqual("object");
         expect(credentialsStore.uid).toEqual(
-            `sockethub:data-layer:credentials-store:a parent id:a session id`,
+            `data-layer:credentials-store:a parent id:a session id`,
         );
         expect(typeof credentialsStore.get).toEqual("function");
         expect(typeof credentialsStore.save).toEqual("function");

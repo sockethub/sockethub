@@ -4,7 +4,7 @@ import listener, { type SocketInstance } from "./listener.js";
 import type PlatformInstance from "./platform-instance.js";
 import { platformInstances } from "./platform-instance.js";
 
-const rmLog = createLogger("sockethub:server:janitor");
+const rmLog = createLogger("server:janitor");
 
 export class Janitor {
     cycleInterval = 15000;

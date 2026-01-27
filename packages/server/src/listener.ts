@@ -13,7 +13,7 @@ import routes from "./routes.js";
 const require = createRequire(import.meta.url);
 const packageJson = require("../package.json");
 
-const log = createLogger("sockethub:server:listener");
+const log = createLogger("server:listener");
 // initial details
 log.info(`sockethub v${packageJson.version}`);
 

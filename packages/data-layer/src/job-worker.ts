@@ -1,7 +1,7 @@
 import { type Logger, createLogger } from "@sockethub/logger";
 import { Worker } from "bullmq";
 
-import { JobBase, createIORedisConnection } from "./job-base.js";
+import { JobBase } from "./job-base.js";
 import type { JobEncrypted, JobHandler, RedisConfig } from "./types.js";
 
 /**
@@ -44,9 +44,13 @@ export class JobWorker extends JobBase {
         redisConfig: RedisConfig,
     ) {
         super(secret);
-        this.uid = `sockethub:data-layer:worker:${instanceId}:${sessionId}`;
-        this.queueId = `sockethub:data-layer:queue:${instanceId}:${sessionId}`;
-        this.log = createLogger(this.uid);
+        // Use short namespace for logging (context provides process identification)
+        const logNamespace = "data-layer:worker";
+        this.log = createLogger(logNamespace);
+
+        // Queue IDs are derived from namespace + identifiers for matching across processes
+        this.uid = `${logNamespace}:${instanceId}:${sessionId}`;
+        this.queueId = `data-layer:queue:${instanceId}:${sessionId}`;
         this.redisConfig = redisConfig;
     }
 

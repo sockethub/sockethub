@@ -3,8 +3,11 @@ import {
     type Logger,
     type LoggerOptions,
     createLogger,
+    getLoggerContext,
     initLogger,
+    resetLoggerContext,
     resetLoggerForTesting,
+    setLoggerContext,
 } from "./index.js";
 
 describe("Logger Package", () => {
@@ -150,6 +153,71 @@ describe("Logger Package", () => {
             // No explicit option uses global
             const log2 = createLogger("test:2");
             expect(log2.transports.length).toBe(2);
+        });
+    });
+
+    describe("logger context", () => {
+        it("createLogger without context uses namespace as-is", () => {
+            const log = createLogger("test:namespace");
+            expect(log.defaultMeta.namespace).toBe("test:namespace");
+        });
+
+        it("createLogger with context prepends context to namespace", () => {
+            setLoggerContext("myapp");
+            const log = createLogger("test:namespace");
+            expect(log.defaultMeta.namespace).toBe("myapp:test:namespace");
+        });
+
+        it("getLoggerContext returns empty string by default", () => {
+            expect(getLoggerContext()).toBe("");
+        });
+
+        it("getLoggerContext returns the set context", () => {
+            setLoggerContext("myapp:process");
+            expect(getLoggerContext()).toBe("myapp:process");
+        });
+
+        it("resetLoggerContext clears the context", () => {
+            setLoggerContext("myapp");
+            expect(getLoggerContext()).toBe("myapp");
+
+            resetLoggerContext();
+            expect(getLoggerContext()).toBe("");
+
+            const log = createLogger("test");
+            expect(log.defaultMeta.namespace).toBe("test");
+        });
+
+        it("context works with nested namespaces", () => {
+            setLoggerContext("sockethub:platform:irc:abc123");
+            const log = createLogger("data-layer:worker");
+            expect(log.defaultMeta.namespace).toBe(
+                "sockethub:platform:irc:abc123:data-layer:worker",
+            );
+        });
+
+        it("context is process-wide, affects all subsequent loggers", () => {
+            setLoggerContext("process-context");
+
+            const log1 = createLogger("module1");
+            const log2 = createLogger("module2");
+            const log3 = createLogger("module3");
+
+            expect(log1.defaultMeta.namespace).toBe("process-context:module1");
+            expect(log2.defaultMeta.namespace).toBe("process-context:module2");
+            expect(log3.defaultMeta.namespace).toBe("process-context:module3");
+        });
+
+        it("resetLoggerForTesting also resets context", () => {
+            setLoggerContext("myapp");
+            initLogger({ level: "debug" });
+
+            resetLoggerForTesting();
+
+            expect(getLoggerContext()).toBe("");
+            const log = createLogger("test");
+            expect(log.defaultMeta.namespace).toBe("test");
+            expect(log.transports[0].level).toBe("info"); // back to default
         });
     });
 });

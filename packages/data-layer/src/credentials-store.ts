@@ -14,9 +14,9 @@ export interface CredentialsStoreInterface {
 }
 
 export async function verifySecureStore(config: RedisConfig): Promise<void> {
-    const log = createLogger("sockethub:data-layer:verify-secure-store");
+    const log = createLogger("data-layer:verify-secure-store");
     const ss = new SecureStore({
-        uid: "sockethub:data-layer:verify",
+        uid: "data-layer:verify",
         secret: "aB3#xK9mP2qR7wZ4cT8nY6vH1jL5fD0s",
         redis: config,
     });
@@ -73,8 +73,12 @@ export class CredentialsStore implements CredentialsStoreInterface {
                 "CredentialsStore secret must be 32 chars in length",
             );
         }
-        this.uid = `sockethub:data-layer:credentials-store:${parentId}:${sessionId}`;
-        this.log = createLogger(this.uid);
+        // Use short namespace for logging (context provides process identification)
+        const logNamespace = "data-layer:credentials-store";
+        this.log = createLogger(logNamespace);
+
+        // Store ID is derived from namespace + identifiers for key naming
+        this.uid = `${logNamespace}:${parentId}:${sessionId}`;
         this.initCrypto();
         this.initSecureStore(secret, redisConfig);
         this.log.debug("initialized");
