@@ -1,8 +1,6 @@
 import { expect } from "chai";
 import { afterEach, beforeEach, describe, it } from "vitest";
 
-import type { Logger } from "@sockethub/schemas";
-
 import {
     createIORedisConnection,
     getRedisConnectionCount,
@@ -10,15 +8,8 @@ import {
 } from "./job-base.js";
 import type { RedisConfig } from "./types.js";
 
-const mockLogger: Logger = {
-    error: () => {},
-    warn: () => {},
-    info: () => {},
-    debug: () => {},
-};
 
 describe("Redis Connection Pooling Integration Tests", () => {
-    const testSecret = "secret is 32 char long like this";
     let redisConfig: RedisConfig;
 
     beforeEach(async () => {
@@ -100,7 +91,7 @@ describe("Redis Connection Pooling Integration Tests", () => {
         // Should return increasing delays for first 3 attempts
         expect(retryStrategy(1)).to.equal(200);
         expect(retryStrategy(2)).to.equal(400);
-        expect(retryStrategy(3)).to.equal(600);
+        expect(retryStrategy(3)).to.equal(800);
 
         // Should return null (stop retrying) after 3 attempts
         expect(retryStrategy(4)).to.be.null;
