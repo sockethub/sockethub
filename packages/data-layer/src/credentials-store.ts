@@ -1,5 +1,6 @@
 import { crypto } from "@sockethub/crypto";
-import type { CredentialsObject, Logger } from "@sockethub/schemas";
+import { type Logger, createLogger } from "@sockethub/logger";
+import type { CredentialsObject } from "@sockethub/schemas";
 import SecureStore from "secure-store-redis";
 
 import type { RedisConfig } from "./types.js";
@@ -12,10 +13,8 @@ export interface CredentialsStoreInterface {
     save(actor: string, creds: CredentialsObject): Promise<number>;
 }
 
-export async function verifySecureStore(
-    config: RedisConfig,
-    log: Logger,
-): Promise<void> {
+export async function verifySecureStore(config: RedisConfig): Promise<void> {
+    const log = createLogger("sockethub:data-layer:verify-secure-store");
     const ss = new SecureStore({
         uid: "sockethub:data-layer:verify",
         secret: "aB3#xK9mP2qR7wZ4cT8nY6vH1jL5fD0s",
@@ -61,7 +60,6 @@ export class CredentialsStore implements CredentialsStoreInterface {
      * @param sessionId - Client session identifier for credential isolation
      * @param secret - 32-character encryption secret for credential security
      * @param redisConfig - Redis connection configuration
-     * @param log - Logger instance for logging operations
      * @throws Error if secret is not exactly 32 characters
      */
     constructor(
@@ -69,7 +67,6 @@ export class CredentialsStore implements CredentialsStoreInterface {
         sessionId: string,
         secret: string,
         redisConfig: RedisConfig,
-        log: Logger,
     ) {
         if (secret.length !== 32) {
             throw new Error(
@@ -77,7 +74,7 @@ export class CredentialsStore implements CredentialsStoreInterface {
             );
         }
         this.uid = `sockethub:data-layer:credentials-store:${parentId}:${sessionId}`;
-        this.log = log;
+        this.log = createLogger(this.uid);
         this.initCrypto();
         this.initSecureStore(secret, redisConfig);
         this.log.info("initialized");

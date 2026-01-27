@@ -28,16 +28,13 @@
     "messaging",
     "polyglot",
     "unhosted",
-    "apis",
     "api",
     "protocols",
     "protocol",
     "irc",
     "xmpp",
-    "facebook",
     "rss",
     "atom",
-    "twitter",
     "smtp",
     "imap",
     "email"
@@ -54,6 +51,7 @@
     "@sockethub/client": "^5.0.0-alpha.10",
     "@sockethub/crypto": "^1.0.0-alpha.10",
     "@sockethub/data-layer": "^1.0.0-alpha.10",
+    "@sockethub/logger": "^1.0.0-alpha.10",
     "@sockethub/schemas": "^3.0.0-alpha.10",
     "body-parser": "^1.20.4",
     "chalk": "^5.6.2",
@@ -62,8 +60,7 @@
     "express-rate-limit": "^8.2.1",
     "jquery": "^3.7.1",
     "nconf": "^0.12.1",
-    "socket.io": "^4.7.5",
-    "winston": "^3.19.0"
+    "socket.io": "^4.7.5"
   },
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external && bun build src/platform.ts --outdir dist --target node --format esm --sourcemap=external && cp src/defaults.json dist/defaults.json",

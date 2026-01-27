@@ -1,5 +1,5 @@
+import { createLogger } from "@sockethub/logger";
 import type { Socket } from "socket.io";
-import { createLogger } from "./logger.js";
 
 const log = createLogger("sockethub:server:rate-limiter");
 

@@ -3,8 +3,8 @@
  */
 
 import * as Sentry from "@sentry/bun";
+import { createLogger } from "@sockethub/logger";
 import config from "./config";
-import { createLogger } from "./logger";
 
 const logger = createLogger("sockethub:sentry");
 if (!config.get("sentry:dsn")) {

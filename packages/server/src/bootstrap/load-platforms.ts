@@ -9,6 +9,7 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { createLogger } from "@sockethub/logger";
 import {
     type PlatformConfig,
     type PlatformInterface,
@@ -16,7 +17,6 @@ import {
     type PlatformSession,
     validatePlatformSchema,
 } from "@sockethub/schemas";
-import { createLogger } from "../logger.js";
 
 const log = createLogger("sockethub:server:bootstrap:platforms");
 
