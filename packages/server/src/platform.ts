@@ -36,6 +36,9 @@ const redisUrl = process.env.REDIS_URL;
 const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
 let logger = createLogger(loggerPrefix);
 
+// Cache logger instances per session to avoid recreating Winston loggers with transports
+const loggerCache = new Map<string, Logger>();
+
 // conditionally initialize sentry
 let sentry: { readonly reportError: (err: Error) => void } = {
     reportError: (err: Error) => {},
@@ -156,7 +159,13 @@ function getJobHandler(): JobHandler {
         job: JobDataDecrypted,
     ): Promise<string | undefined | ActivityStream> => {
         return new Promise((resolve, reject) => {
-            const jobLog = createLogger(`${loggerPrefix}:${job.sessionId}`);
+            // Use cached logger to avoid creating Winston instances per job
+            const logKey = `${loggerPrefix}:${job.sessionId}`;
+            let jobLog = loggerCache.get(logKey);
+            if (!jobLog) {
+                jobLog = createLogger(logKey);
+                loggerCache.set(logKey, jobLog);
+            }
             jobLog.debug(`received ${job.title} ${job.msg.type}`);
             const credentialStore = new CredentialsStore(
                 parentId,
