@@ -1,9 +1,9 @@
+import { createLogger } from "@sockethub/logger";
 import type {
     ActivityObject,
     ActivityStream,
     Logger,
 } from "@sockethub/schemas";
-import { createLogger } from "./logger.js";
 
 export default function middleware(name: string): MiddlewareChain {
     return new MiddlewareChain(name);

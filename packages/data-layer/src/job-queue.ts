@@ -1,13 +1,13 @@
-import type { ActivityStream, Logger } from "@sockethub/schemas";
+import { type Logger, createLogger } from "@sockethub/logger";
+import type { ActivityStream } from "@sockethub/schemas";
 import { type Job, Queue, QueueEvents, Worker } from "bullmq";
 
 import { JobBase, createIORedisConnection } from "./job-base.js";
 import type { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types.js";
 
-export async function verifyJobQueue(
-    config: RedisConfig,
-    log: Logger,
-): Promise<void> {
+export async function verifyJobQueue(config: RedisConfig): Promise<void> {
+    const log = createLogger("sockethub:data-layer:verify-job-queue");
+
     return new Promise((resolve, reject) => {
         const worker = new Worker(
             "connectiontest",
@@ -85,18 +85,16 @@ export class JobQueue extends JobBase {
      * @param sessionId - Client session identifier for queue isolation
      * @param secret - 32-character encryption secret for message security
      * @param redisConfig - Redis connection configuration
-     * @param log - Logger instance for logging operations
      */
     constructor(
         instanceId: string,
         sessionId: string,
         secret: string,
         redisConfig: RedisConfig,
-        log: Logger,
     ) {
         super(secret);
         this.uid = `sockethub:data-layer:queue:${instanceId}:${sessionId}`;
-        this.log = log;
+        this.log = createLogger(this.uid);
         this.init(redisConfig);
     }
 

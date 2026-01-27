@@ -7,21 +7,10 @@ import {
     JobWorker,
     redisCheck,
 } from "@sockethub/data-layer";
-import type {
-    ActivityStream,
-    CredentialsObject,
-    Logger,
-} from "@sockethub/schemas";
+import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
 
 const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 const REDIS_URL = `redis://${REDIS_HOST}:6379`;
-
-const mockLogger: Logger = {
-    error: () => {},
-    warn: () => {},
-    info: () => {},
-    debug: () => {},
-};
 
 const actor = `${(Math.random() + 1).toString(36).substring(2)}`;
 const creds: CredentialsObject = {
@@ -41,15 +30,9 @@ const testSecret = "aB3#xK9mP2qR7wZ4cT8nY6vH1jL5fD0s";
 describe("CredentialsStore", () => {
     let store: CredentialsStore;
     it("initializes", () => {
-        store = new CredentialsStore(
-            "foo",
-            "bar",
-            testSecret,
-            {
-                url: REDIS_URL,
-            },
-            mockLogger,
-        );
+        store = new CredentialsStore("foo", "bar", testSecret, {
+            url: REDIS_URL,
+        });
     });
 
     it("get non-existent value", async () => {
@@ -86,7 +69,6 @@ describe("CredentialsStore", () => {
             {
                 url: REDIS_URL,
             },
-            mockLogger,
         );
 
         await store.save(actor, creds);
@@ -115,15 +97,9 @@ describe("connect and disconnect", () => {
         describe(o.name, () => {
             let i: JobInstance;
             beforeEach(() => {
-                i = new o.class(
-                    "testid",
-                    "sessionid",
-                    testSecret,
-                    {
-                        url: REDIS_URL,
-                    },
-                    mockLogger,
-                ) as unknown as JobInstance;
+                i = new o.class("testid", "sessionid", testSecret, {
+                    url: REDIS_URL,
+                }) as unknown as JobInstance;
                 if (o.name === "worker") {
                     i.init();
                 }
@@ -153,24 +129,12 @@ describe("JobQueue", () => {
     let worker: JobWorker;
 
     beforeEach(() => {
-        queue = new JobQueue(
-            "testid",
-            "sessionid",
-            testSecret,
-            {
-                url: REDIS_URL,
-            },
-            mockLogger,
-        );
-        worker = new JobWorker(
-            "testid",
-            "sessionid",
-            testSecret,
-            {
-                url: REDIS_URL,
-            },
-            mockLogger,
-        );
+        queue = new JobQueue("testid", "sessionid", testSecret, {
+            url: REDIS_URL,
+        });
+        worker = new JobWorker("testid", "sessionid", testSecret, {
+            url: REDIS_URL,
+        });
     });
 
     it("add job and get job on queue", async () => {

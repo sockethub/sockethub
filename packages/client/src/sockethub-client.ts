@@ -321,7 +321,9 @@ export default class SockethubClient {
                 : this.ActivityStreams.Stream(obj);
             let id = expandedObj?.id;
             if (!isActivityObject && this.hasActorId(expandedObj)) {
-                id = (expandedObj as ActivityStream).actor.id;
+                const actor = (expandedObj as ActivityStream).actor;
+                // actor can be a string (JID) or an object with an id field
+                id = typeof actor === "string" ? actor : actor.id;
             }
             this.log(`replaying ${name} for ${id}`);
             this._socket.emit(name, expandedObj);
