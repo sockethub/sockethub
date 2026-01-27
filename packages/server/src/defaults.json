@@ -34,8 +34,7 @@
     "url": "redis://127.0.0.1:6379",
     "connectTimeout": 10000,
     "disconnectTimeout": 5000,
-    "maxRetriesPerRequest": null,
-    "connectionName": "sockethub:bullmq"
+    "maxRetriesPerRequest": null
   },
   "sentry": {
     "dsn": "",
