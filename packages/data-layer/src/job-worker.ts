@@ -1,4 +1,4 @@
-import type { Logger } from "@sockethub/schemas";
+import { type Logger, createLogger } from "@sockethub/logger";
 import { Worker } from "bullmq";
 
 import { JobBase, createIORedisConnection } from "./job-base.js";
@@ -36,19 +36,17 @@ export class JobWorker extends JobBase {
      * @param sessionId - Must match the sessionId of the corresponding JobQueue
      * @param secret - 32-character encryption secret, must match JobQueue secret
      * @param redisConfig - Redis connection configuration
-     * @param log - Logger instance for logging operations
      */
     constructor(
         instanceId: string,
         sessionId: string,
         secret: string,
         redisConfig: RedisConfig,
-        log: Logger,
     ) {
         super(secret);
         this.uid = `sockethub:data-layer:worker:${instanceId}:${sessionId}`;
         this.queueId = `sockethub:data-layer:queue:${instanceId}:${sessionId}`;
-        this.log = log;
+        this.log = createLogger(this.uid);
         this.redisConfig = redisConfig;
     }
 
