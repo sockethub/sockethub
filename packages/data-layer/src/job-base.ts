@@ -6,11 +6,48 @@ import type { ActivityStream } from "@sockethub/schemas";
 
 import type { JobDataDecrypted, JobEncrypted, RedisConfig } from "./types.js";
 
+let sharedRedisConnection: Redis | null = null;
+
+/**
+ * Creates or returns a shared Redis connection to enable connection pooling.
+ * This prevents connection exhaustion under high load by reusing a single
+ * connection across all JobQueue and JobWorker instances.
+ *
+ * @param config - Redis configuration with optional timeout and retry settings
+ * @returns Shared Redis connection instance
+ */
 export function createIORedisConnection(config: RedisConfig): Redis {
-    return new IORedis(config.url, {
-        enableOfflineQueue: false,
-        maxRetriesPerRequest: null,
-    });
+    if (!sharedRedisConnection) {
+        sharedRedisConnection = new IORedis(config.url, {
+            enableOfflineQueue: false,
+            maxRetriesPerRequest: config.maxRetriesPerRequest ?? null,
+            connectTimeout: config.connectTimeout ?? 10000,
+            disconnectTimeout: config.disconnectTimeout ?? 5000,
+            lazyConnect: false,
+            retryStrategy: (times: number) => {
+                // Stop retrying after 3 attempts to fail fast
+                if (times > 3) return null;
+                // Exponential backoff: 200ms, 400ms, 800ms
+                return Math.min(times * 200, 2000);
+            },
+        });
+    }
+    return sharedRedisConnection;
+}
+
+/**
+ * Resets the shared Redis connection. Used primarily for testing.
+ * Disconnects the current connection before resetting.
+ */
+export async function resetSharedRedisConnection(): Promise<void> {
+    if (sharedRedisConnection) {
+        try {
+            sharedRedisConnection.disconnect(false);
+        } catch (err) {
+            // Ignore disconnect errors during cleanup
+        }
+        sharedRedisConnection = null;
+    }
 }
 
 export class JobBase extends EventEmitter {

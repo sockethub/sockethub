@@ -5,6 +5,9 @@ import type {
 
 export type RedisConfig = {
     url: string;
+    connectTimeout?: number;
+    disconnectTimeout?: number;
+    maxRetriesPerRequest?: number | null;
 };
 
 export interface JobDataEncrypted {
