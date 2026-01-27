@@ -109,12 +109,17 @@ class Sockethub {
         // session-specific debug messages
         const sessionLog = createLogger(`server:core:${socket.id}`);
         const sessionSecret = crypto.randToken(16);
+        const redisConfig = config.get("redis");
+        const credentialsRedisConfig = {
+            ...redisConfig,
+            connectionName: `sockethub:credentials:${process.pid}`,
+        };
         const credentialsStore: CredentialsStoreInterface =
             new CredentialsStore(
                 this.parentId,
                 socket.id,
                 this.parentSecret1 + sessionSecret,
-                config.get("redis"),
+                credentialsRedisConfig,
             );
 
         sessionLog.debug("socket.io connection");

@@ -174,9 +174,7 @@ function getJobHandler(): JobHandler {
                 parentId,
                 job.sessionId,
                 parentSecret1 + job.msg.sessionSecret,
-                {
-                    url: redisUrl,
-                },
+                { url: redisUrl },
             );
             // biome-ignore lint/performance/noDelete: <explanation>
             delete job.msg.sessionSecret;

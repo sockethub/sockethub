@@ -1,7 +1,7 @@
 import { type Logger, createLogger } from "@sockethub/logger";
 import { Worker } from "bullmq";
 
-import { JobBase } from "./job-base.js";
+import { JobBase, createIORedisConnection } from "./job-base.js";
 import type { JobEncrypted, JobHandler, RedisConfig } from "./types.js";
 
 /**
@@ -51,6 +51,7 @@ export class JobWorker extends JobBase {
         // Queue IDs are derived from namespace + identifiers for matching across processes
         this.uid = `${logNamespace}:${instanceId}:${sessionId}`;
         this.queueId = `data-layer:queue:${instanceId}:${sessionId}`;
+        redisConfig.connectionName = this.uid;
         this.redisConfig = redisConfig;
     }
 
@@ -62,9 +63,9 @@ export class JobWorker extends JobBase {
         // BullMQ v5+ prohibits colons in queue names, so replace with dashes
         // while keeping queueId with colons for debug namespace convention
         const queueName = this.queueId.replace(/:/g, "-");
-        // Let BullMQ create its own connection for better lifecycle management
+        // Use shared Redis connection for connection pooling
         this.worker = new Worker(queueName, this.jobHandler.bind(this), {
-            connection: this.redisConfig,
+            connection: createIORedisConnection(this.redisConfig),
             // Prevent infinite retry loops when platform child process crashes mid-job.
             // If worker disappears (crash/disconnect), job becomes "stalled" and retries
             // up to maxStalledCount times (with default 30s interval) before failing permanently.

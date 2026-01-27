@@ -19,6 +19,7 @@ let sharedRedisConnection: Redis | null = null;
 export function createIORedisConnection(config: RedisConfig): Redis {
     if (!sharedRedisConnection) {
         sharedRedisConnection = new IORedis(config.url, {
+            connectionName: config.connectionName,
             enableOfflineQueue: false,
             maxRetriesPerRequest: config.maxRetriesPerRequest ?? null,
             connectTimeout: config.connectTimeout ?? 10000,

@@ -8,6 +8,7 @@ export type RedisConfig = {
     connectTimeout?: number;
     disconnectTimeout?: number;
     maxRetriesPerRequest?: number | null;
+    connectionName?: string;
 };
 
 export interface JobDataEncrypted {

@@ -3,6 +3,7 @@ import { createLogger } from "@sockethub/logger";
 import {
     CredentialsStore,
     type CredentialsStoreInterface,
+    resetSharedCredentialsRedisConnection,
     verifySecureStore,
 } from "./credentials-store.js";
 import {
@@ -28,5 +29,6 @@ export {
     CredentialsStore,
     getRedisConnectionCount,
     resetSharedRedisConnection,
+    resetSharedCredentialsRedisConnection,
     type CredentialsStoreInterface,
 };
