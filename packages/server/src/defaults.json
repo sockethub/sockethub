@@ -31,7 +31,10 @@
     "blockDurationMs": 5000
   },
   "redis": {
-    "url": "redis://127.0.0.1:6379"
+    "url": "redis://127.0.0.1:6379",
+    "connectTimeout": 10000,
+    "disconnectTimeout": 5000,
+    "maxRetriesPerRequest": null
   },
   "sentry": {
     "dsn": "",

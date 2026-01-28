@@ -54,7 +54,10 @@ describe("CredentialsStore", () => {
         sinon.assert.calledWith(MockSecureStore, {
             namespace: "foo",
             secret: "a secret must be 32 chars and th",
-            redis: { url: "redis config" },
+            redis: {
+                url: "redis config",
+                connectionName: "data-layer:credentials-store:a parent id:a session id",
+            },
         });
         expect(typeof credentialsStore).toEqual("object");
         expect(credentialsStore.uid).toEqual(

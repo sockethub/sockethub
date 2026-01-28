@@ -51,6 +51,7 @@ export class JobWorker extends JobBase {
         // Queue IDs are derived from namespace + identifiers for matching across processes
         this.uid = `${logNamespace}:${instanceId}:${sessionId}`;
         this.queueId = `data-layer:queue:${instanceId}:${sessionId}`;
+        redisConfig.connectionName = this.uid;
         this.redisConfig = redisConfig;
     }
 
@@ -62,7 +63,7 @@ export class JobWorker extends JobBase {
         // BullMQ v5+ prohibits colons in queue names, so replace with dashes
         // while keeping queueId with colons for debug namespace convention
         const queueName = this.queueId.replace(/:/g, "-");
-        // Let BullMQ create its own connection for better lifecycle management
+        // Let BullMQ create its own connection (it duplicates them internally anyway)
         this.worker = new Worker(queueName, this.jobHandler.bind(this), {
             connection: this.redisConfig,
             // Prevent infinite retry loops when platform child process crashes mid-job.

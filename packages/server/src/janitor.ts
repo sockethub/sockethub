@@ -1,9 +1,11 @@
+import { getRedisConnectionCount } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import listener, { type SocketInstance } from "./listener.js";
 import type PlatformInstance from "./platform-instance.js";
 import { platformInstances } from "./platform-instance.js";
 
 const rmLog = createLogger("server:janitor");
+const REPORT_CYCLE_MOD = 2; // report every N cycles
 
 export class Janitor {
     cycleInterval = 15000;
@@ -136,10 +138,11 @@ export class Janitor {
         this.cycleCount++;
         this.sockets = await this.getSockets();
 
-        if (!(this.cycleCount % 4)) {
+        if (!(this.cycleCount % REPORT_CYCLE_MOD)) {
             this.reportCount++;
+            const redisConnections = await getRedisConnectionCount();
             rmLog.info(
-                `socket sessions: ${this.sockets.length} platform instances: ${platformInstances.size}`,
+                `socket sessions: ${this.sockets.length} platform instances: ${platformInstances.size} redis connections: ${redisConnections}`,
             );
         }
 

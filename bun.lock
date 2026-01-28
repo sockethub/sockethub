@@ -257,7 +257,6 @@
         "jquery": "^3.7.1",
         "nconf": "^0.12.1",
         "socket.io": "^4.7.5",
-        "winston": "^3.19.0",
       },
       "devDependencies": {
         "@types/body-parser": "^1.19.6",

@@ -152,6 +152,22 @@ export const SockethubConfigSchema = {
                     type: "string",
                     default: "redis://127.0.0.1:6379",
                 },
+                connectTimeout: {
+                    type: "number",
+                    default: 10000,
+                    description: "Connection timeout in milliseconds",
+                },
+                disconnectTimeout: {
+                    type: "number",
+                    default: 5000,
+                    description: "Disconnect timeout in milliseconds",
+                },
+                maxRetriesPerRequest: {
+                    type: ["number", "null"],
+                    default: null,
+                    description:
+                        "Maximum number of retries per request (null for BullMQ default)",
+                },
             },
         },
         sentry: {
