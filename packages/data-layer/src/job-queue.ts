@@ -112,12 +112,12 @@ export class JobQueue extends JobBase {
         // BullMQ v5+ prohibits colons in queue names, so replace with dashes
         // while keeping uid with colons for debug namespace convention
         const queueName = this.uid.replace(/:/g, "-");
-        // Use shared Redis connection for connection pooling
+        // Let BullMQ create its own connections (it duplicates them internally anyway)
         this.queue = new Queue(queueName, {
-            connection: createIORedisConnection(redisConfig),
+            connection: redisConfig,
         });
         this.events = new QueueEvents(queueName, {
-            connection: createIORedisConnection(redisConfig),
+            connection: redisConfig,
         });
 
         // Handle Redis contention errors (e.g., BUSY from Lua scripts)
