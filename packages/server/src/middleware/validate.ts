@@ -27,9 +27,7 @@ export default function validate(
         });
     }
 
-    const sessionLog = createLogger({
-        namespace: `server:validate:${sockethubId}`,
-    });
+    const sessionLog = createLogger(`server:validate:${sockethubId}`);
     return (msg: ActivityStream, done: MiddlewareCallback) => {
         sessionLog.debug(`applying schema validation for ${type}`);
         if (type === "activity-object") {
