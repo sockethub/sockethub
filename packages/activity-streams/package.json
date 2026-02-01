@@ -44,8 +44,8 @@
   "devDependencies": {
     "@sockethub/schemas": "^3.0.0-alpha.10",
     "@types/bun": "latest",
-    "@web/test-runner": "^0.19.0",
-    "@web/test-runner-puppeteer": "^0.17.0"
+    "@web/test-runner": "^0.20.0",
+    "@web/test-runner-puppeteer": "^0.18.0"
   },
   "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
 }
