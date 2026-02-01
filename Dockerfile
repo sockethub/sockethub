@@ -1,4 +1,4 @@
-# syntax=docker.io/docker/dockerfile:1.7-labs
+# syntax=docker.io/docker/dockerfile:1.21-labs
 ARG LOG_LEVEL=info
 ARG bun_version=latest
 FROM oven/bun:${bun_version} AS base
