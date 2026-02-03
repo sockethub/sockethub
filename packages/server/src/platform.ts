@@ -173,7 +173,7 @@ function getJobHandler(): JobHandler {
             const credentialStore = new CredentialsStore(
                 parentId,
                 job.sessionId,
-                parentSecret1 + job.msg.sessionSecret,
+                crypto.deriveSecret(parentSecret1, job.msg.sessionSecret),
                 {
                     url: redisUrl,
                 },
