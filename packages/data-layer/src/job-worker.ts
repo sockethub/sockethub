@@ -26,12 +26,12 @@ import type { JobEncrypted, JobHandler, RedisConfig } from "./types.js";
  * ```
  */
 export class JobWorker extends JobBase {
-    readonly uid: string;
+    private readonly connectionName: string;
     protected worker: Worker;
     protected handler: JobHandler;
     private readonly log: Logger;
     private readonly redisConfig: RedisConfig;
-    private readonly queueId: string;
+    protected readonly queueId: string;
     private initialized = false;
 
     /**
@@ -53,8 +53,8 @@ export class JobWorker extends JobBase {
         this.log = createLogger(`data-layer:worker:${parentId}:${instanceId}`);
 
         // Use logger's full namespace (includes context) for Redis connection name
-        this.uid = getLoggerNamespace(this.log);
-        redisConfig.connectionName = this.uid;
+        this.connectionName = getLoggerNamespace(this.log);
+        redisConfig.connectionName = this.connectionName;
 
         // Queue ID must match JobQueue's namespace (context-free) for cross-process connection
         this.queueId = buildQueueId(parentId, instanceId);
@@ -63,7 +63,9 @@ export class JobWorker extends JobBase {
 
     protected init() {
         if (this.initialized) {
-            throw new Error(`JobWorker already initialized for ${this.uid}`);
+            throw new Error(
+                `JobWorker already initialized for ${this.queueId}`,
+            );
         }
         this.initialized = true;
         // BullMQ v5+ prohibits colons in queue names; derive the queue name

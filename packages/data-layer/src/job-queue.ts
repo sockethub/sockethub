@@ -76,7 +76,7 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
  * ```
  */
 export class JobQueue extends JobBase {
-    readonly uid: string;
+    private readonly connectionName: string;
     protected readonly queueId: string;
     protected queue: Queue;
     protected events: QueueEvents;
@@ -104,14 +104,14 @@ export class JobQueue extends JobBase {
 
         this.queueId = buildQueueId(parentId, instanceId);
         // Use logger's full namespace (includes context) for Redis connection name
-        this.uid = getLoggerNamespace(this.log);
-        redisConfig.connectionName = this.uid;
+        this.connectionName = getLoggerNamespace(this.log);
+        redisConfig.connectionName = this.connectionName;
         this.init(redisConfig);
     }
 
     protected init(redisConfig: RedisConfig) {
         if (this.initialized) {
-            throw new Error(`JobQueue already initialized for ${this.uid}`);
+            throw new Error(`JobQueue already initialized for ${this.queueId}`);
         }
         this.initialized = true;
 

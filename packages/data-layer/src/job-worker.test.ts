@@ -41,14 +41,18 @@ describe("JobWorker", () => {
         class TestJobWorker extends JobWorker {
             init() {
                 this.redisConnection = MockBull();
+                const queueName = this.queueId.replace(/:/g, "-");
                 this.worker = MockBull(
-                    this.uid,
+                    queueName,
                     this.jobHandler.bind(this),
                     this.redisConnection,
                 );
             }
             initCrypto() {
                 this.crypto = cryptoMocks;
+            }
+            getQueueId() {
+                return this.queueId;
             }
         }
         jobWorker = new TestJobWorker(
@@ -70,8 +74,8 @@ describe("JobWorker", () => {
 
     it("returns a valid JobWorker object", () => {
         expect(typeof jobWorker).to.equal("object");
-        expect(jobWorker.uid).to.equal(
-            `data-layer:worker:a parent id:a session id`,
+        expect(jobWorker.getQueueId()).to.equal(
+            `sockethub:a parent id:data-layer:queue:a session id`,
         );
         expect(typeof jobWorker.onJob).to.equal("function");
         expect(typeof jobWorker.shutdown).to.equal("function");

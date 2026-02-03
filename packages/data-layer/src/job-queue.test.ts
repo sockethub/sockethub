@@ -53,6 +53,9 @@ describe("JobQueue", () => {
             initCrypto() {
                 this.crypto = cryptoMocks;
             }
+            getQueueId() {
+                return this.queueId;
+            }
         }
         jobQueue = new TestJobQueue(
             "a parent id",
@@ -81,8 +84,8 @@ describe("JobQueue", () => {
             },
         );
         expect(typeof jobQueue).to.equal("object");
-        expect(jobQueue.uid).to.equal(
-            `data-layer:queue:a parent id:a session id`,
+        expect(jobQueue.getQueueId()).to.equal(
+            `sockethub:a parent id:data-layer:queue:a session id`,
         );
         expect(typeof jobQueue.add).to.equal("function");
         expect(typeof jobQueue.getJob).to.equal("function");
