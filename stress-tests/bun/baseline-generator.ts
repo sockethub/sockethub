@@ -21,8 +21,6 @@ const BASELINE_DIR = join(import.meta.dir, "..", "baselines");
 const SOCKETHUB_HOST = "localhost";
 const SOCKETHUB_PORT = 10550;
 
-
-
 /**
  * Check if Sockethub is healthy by attempting a socket.io connection
  */
@@ -77,9 +75,15 @@ async function ensureSockethubAvailable(): Promise<void> {
         }
     }
 
-    console.error("\n╔══════════════════════════════════════════════════════════╗");
-    console.error("║  ❌ SOCKETHUB UNAVAILABLE - ABORTING STRESS TEST          ║");
-    console.error("╚══════════════════════════════════════════════════════════╝");
+    console.error(
+        "\n╔══════════════════════════════════════════════════════════╗",
+    );
+    console.error(
+        "║  ❌ SOCKETHUB UNAVAILABLE - ABORTING STRESS TEST          ║",
+    );
+    console.error(
+        "╚══════════════════════════════════════════════════════════╝",
+    );
     console.error(`\nFailed to connect to Sockethub at ${SOCKETHUB_URL}`);
     console.error("Please ensure Sockethub is running: bun run start\n");
     process.exit(1);
@@ -237,7 +241,7 @@ async function runTest(scenario: string): Promise<TestResult> {
                 encoding: "utf-8",
             },
         );
-        console.log(`    → Artillery complete`);
+        console.log("    → Artillery complete");
 
         const report: ArtilleryReport = JSON.parse(
             readFileSync(reportPath, "utf-8"),

@@ -51,17 +51,20 @@ function setupClient(context, events, done) {
         return done(new Error("Circuit breaker open"));
     }
 
-    if (consecutiveConnectionFailures >= MAX_CONSECUTIVE_FAILURES && !circuitBreakerTriggered) {
+    if (
+        consecutiveConnectionFailures >= MAX_CONSECUTIVE_FAILURES &&
+        !circuitBreakerTriggered
+    ) {
         circuitBreakerTriggered = true;
         const downtime = Math.round((Date.now() - lastSuccessTime) / 1000);
         console.error(
-            `\n🛑 CIRCUIT BREAKER TRIGGERED: ${consecutiveConnectionFailures} consecutive failures.\n` +
-            `   Sockethub has been down for ~${downtime}s\n` +
-            `   Aborting new connections. Press Ctrl+C to stop the test.\n`,
+            `\n🛑 CIRCUIT BREAKER TRIGGERED: ${consecutiveConnectionFailures} consecutive failures.\n   Sockethub has been down for ~${downtime}s\n   Aborting new connections. Press Ctrl+C to stop the test.\n`,
         );
         lastAlertTime = Date.now();
         events.emit("counter", "sockethub.circuit_breaker", 1);
-        return done(new Error("Circuit breaker triggered - server unavailable"));
+        return done(
+            new Error("Circuit breaker triggered - server unavailable"),
+        );
     }
 
     const socket = io("http://localhost:10550", {
@@ -88,7 +91,9 @@ function setupClient(context, events, done) {
         consecutiveConnectionFailures++;
         // Only log first few errors
         if (consecutiveConnectionFailures <= 3) {
-            console.error(`Connection error (${consecutiveConnectionFailures}): ${err.message}`);
+            console.error(
+                `Connection error (${consecutiveConnectionFailures}): ${err.message}`,
+            );
         }
         context.vars.errors.push(`Connection: ${err.message}`);
         recordFailure();
