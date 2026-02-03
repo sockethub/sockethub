@@ -27,7 +27,6 @@ export interface PlatformInstanceParams {
 }
 
 type EnvFormat = {
-    DEBUG?: string;
     LOG_LEVEL?: string;
     REDIS_URL: string;
 };
@@ -78,9 +77,6 @@ export default class PlatformInstance {
         const env: EnvFormat = {
             REDIS_URL: config.get("redis:url") as string,
         };
-        if (process.env.DEBUG) {
-            env.DEBUG = process.env.DEBUG;
-        }
         if (process.env.LOG_LEVEL) {
             env.LOG_LEVEL = process.env.LOG_LEVEL;
         }

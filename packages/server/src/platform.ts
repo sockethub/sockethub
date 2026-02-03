@@ -66,7 +66,9 @@ async function startPlatformProcess() {
     let parentSecret1: string;
     let parentSecret2: string;
 
-    logger.debug(`platform handler initializing for ${platformName} ${identifier}`);
+    logger.debug(
+        `platform handler initializing for ${platformName} ${identifier}`,
+    );
 
     interface SecretInterface {
         parentSecret1: string;
@@ -88,9 +90,15 @@ async function startPlatformProcess() {
     };
 
     const platform: PlatformInterface = await (async () => {
-        const PlatformModule = await import(`@sockethub/platform-${platformName}`);
-        const p = new PlatformModule.default(platformSession) as PlatformInterface;
-        logger.info(`platform handler loaded for ${platformName} ${identifier}`);
+        const PlatformModule = await import(
+            `@sockethub/platform-${platformName}`
+        );
+        const p = new PlatformModule.default(
+            platformSession,
+        ) as PlatformInterface;
+        logger.info(
+            `platform handler loaded for ${platformName} ${identifier}`,
+        );
         return p as PlatformInterface;
     })();
 
@@ -102,7 +110,9 @@ async function startPlatformProcess() {
             try {
                 process.send(message);
             } catch (ipcErr) {
-                console.error(`Failed to report error via IPC: ${ipcErr.message}`);
+                console.error(
+                    `Failed to report error via IPC: ${ipcErr.message}`,
+                );
             }
         } else {
             console.error("Cannot report error: IPC channel not available");
@@ -152,8 +162,10 @@ async function startPlatformProcess() {
      */
     process.on("message", async (data: SecretFromParent) => {
         if (data[0] === "secrets") {
-            const { parentSecret2: parentSecret3, parentSecret1: parentSecret } =
-                data[1];
+            const {
+                parentSecret2: parentSecret3,
+                parentSecret1: parentSecret,
+            } = data[1];
             parentSecret1 = parentSecret;
             parentSecret2 = parentSecret3;
             await startQueueListener();
@@ -234,7 +246,9 @@ async function startPlatformProcess() {
                     }
                 };
 
-                if (platform.config.requireCredentials?.includes(job.msg.type)) {
+                if (
+                    platform.config.requireCredentials?.includes(job.msg.type)
+                ) {
                     // This method requires credentials and should be called even if the platform is not
                     // yet initialized, because they need to authenticate before they are initialized.
 
@@ -258,9 +272,8 @@ async function startPlatformProcess() {
                                 if (!err && isPersistentPlatform(platform)) {
                                     // Update credentialsHash after successful platform call.
                                     // Only persistent platforms track credential state across requests.
-                                    platform.credentialsHash = crypto.objectHash(
-                                        credentials.object,
-                                    );
+                                    platform.credentialsHash =
+                                        crypto.objectHash(credentials.object);
                                 }
                                 doneCallback(err, result);
                             };
@@ -308,7 +321,10 @@ async function startPlatformProcess() {
                                 reject(err);
                             }
                         });
-                } else if (platform.config.persist && !platform.isInitialized()) {
+                } else if (
+                    platform.config.persist &&
+                    !platform.isInitialized()
+                ) {
                     reject(
                         new Error(
                             `${job.msg.type} called on uninitialized platform`,
@@ -393,6 +409,6 @@ async function startPlatformProcess() {
     }
 }
 
-if (process.argv[1] && process.argv[1].endsWith("platform.js")) {
+if (process.argv[1]?.endsWith("platform.js")) {
     void startPlatformProcess();
 }
