@@ -1,23 +1,105 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { type ChildProcess, spawn } from "node:child_process";
+import { createConnection } from "node:net";
+import { join } from "node:path";
 import { type Socket, io } from "socket.io-client";
+
+import config from "./config.js";
 
 describe("Rate Limiter Integration Tests", () => {
     let client: Socket;
-    const socketUrl = "http://localhost:10550";
+    const socketUrl = config.sockethub.url;
     const socketPath = "/sockethub";
+    let sockethubProcess: ChildProcess | undefined;
+    let usingExternalSockethub = false;
+
+    async function isPortOpen(host: string, port: number) {
+        return new Promise<boolean>((resolve) => {
+            const socket = createConnection({ host, port });
+            const done = (result: boolean) => {
+                socket.removeAllListeners();
+                socket.end();
+                socket.destroy();
+                resolve(result);
+            };
+            socket.once("connect", () => done(true));
+            socket.once("error", () => done(false));
+            socket.setTimeout(1000, () => done(false));
+        });
+    }
 
     beforeAll(async () => {
-        // Note: These tests expect Sockethub to be running externally
-        // Run with: bun run packages/sockethub/bin/sockethub
-        // Give server time to initialize if just started
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        const port = Number.parseInt(config.sockethub.port, 10);
+        usingExternalSockethub = await isPortOpen("localhost", port);
+
+        if (!usingExternalSockethub) {
+            const sockethubPath = join(
+                process.cwd(),
+                "packages/sockethub/bin/sockethub",
+            );
+
+            sockethubProcess = spawn("bun", ["run", sockethubPath], {
+                env: {
+                    ...process.env,
+                    REDIS_URL: config.redis.url,
+                    PORT: config.sockethub.port,
+                    NODE_ENV: "test",
+                },
+                stdio: ["pipe", "pipe", "pipe"],
+            });
+
+            await new Promise<void>((resolve, reject) => {
+                const timeoutId = setTimeout(() => {
+                    reject(
+                        new Error(
+                            "Sockethub server failed to start within timeout",
+                        ),
+                    );
+                }, 15000);
+
+                let serverStarted = false;
+
+                sockethubProcess?.stdout?.on("data", (data) => {
+                    const output = data.toString();
+                    if (
+                        output.includes(
+                            `sockethub listening on ws://localhost:${config.sockethub.port}`,
+                        ) &&
+                        !serverStarted
+                    ) {
+                        serverStarted = true;
+                        clearTimeout(timeoutId);
+                        resolve();
+                    }
+                });
+
+                sockethubProcess?.on("error", (err) => {
+                    clearTimeout(timeoutId);
+                    reject(err);
+                });
+
+                sockethubProcess?.on("exit", (code, signal) => {
+                    if (!serverStarted) {
+                        clearTimeout(timeoutId);
+                        reject(
+                            new Error(
+                                `Sockethub process exited with code ${code} and signal ${signal} before startup completed`,
+                            ),
+                        );
+                    }
+                });
+            });
+        }
     });
 
     afterAll(async () => {
         if (client?.connected) {
             client.disconnect();
         }
-        // Give time for cleanup
+        if (sockethubProcess && !sockethubProcess.killed) {
+            sockethubProcess.kill("SIGKILL");
+            sockethubProcess = undefined;
+        }
         await new Promise((resolve) => setTimeout(resolve, 200));
     });
 
@@ -28,13 +110,11 @@ describe("Rate Limiter Integration Tests", () => {
             let errorReceived = false;
 
             client.on("connect", () => {
-                // Listen for error event
                 client.on("error", (errorMsg: unknown) => {
                     if (!errorReceived) {
                         errorReceived = true;
 
                         try {
-                            // Verify ActivityStreams format
                             expect(errorMsg).toBeDefined();
                             expect(errorMsg.type).toBe("Error");
                             expect(errorMsg.context).toBe("error");
@@ -56,9 +136,6 @@ describe("Rate Limiter Integration Tests", () => {
                     }
                 });
 
-                // Send rapid events to trigger rate limit
-                // Default config: 100 requests per 1000ms
-                // Send 110 messages rapidly to exceed limit
                 for (let i = 0; i < 110; i++) {
                     client.emit("message", {
                         type: "echo",
@@ -80,7 +157,6 @@ describe("Rate Limiter Integration Tests", () => {
                 );
             });
 
-            // Timeout after 10 seconds
             setTimeout(() => {
                 if (!errorReceived) {
                     client.disconnect();
@@ -110,13 +186,10 @@ describe("Rate Limiter Integration Tests", () => {
                         errorCount++;
 
                         if (errorCount === 1) {
-                            // First error received - verify it's the rate limit error
                             expect(errorMsg.type).toBe("Error");
                             expect(errorMsg.context).toBe("error");
 
-                            // Once we get the first error, we're done - client is blocked
                             const elapsed = Date.now() - startTime;
-                            // Should be quick (within first second)
                             expect(elapsed).toBeLessThan(2000);
                             client.disconnect();
                             resolve();
@@ -124,7 +197,6 @@ describe("Rate Limiter Integration Tests", () => {
                     }
                 });
 
-                // Trigger rate limit
                 for (let i = 0; i < 110; i++) {
                     client.emit("message", {
                         type: "echo",
@@ -173,7 +245,6 @@ describe("Rate Limiter Integration Tests", () => {
                     }
                 });
 
-                // Trigger rate limit
                 for (let i = 0; i < 110; i++) {
                     client.emit("message", {
                         type: "echo",
@@ -183,9 +254,7 @@ describe("Rate Limiter Integration Tests", () => {
                     });
                 }
 
-                // Wait for block duration (5000ms default) + buffer
                 setTimeout(() => {
-                    // Send a test message that should succeed
                     client.emit(
                         "message",
                         {
@@ -214,7 +283,7 @@ describe("Rate Limiter Integration Tests", () => {
                             }
                         },
                     );
-                }, 5500); // Wait 5.5 seconds (block duration + buffer)
+                }, 5500);
             });
 
             client.on("connect_error", (err) => {
@@ -230,7 +299,7 @@ describe("Rate Limiter Integration Tests", () => {
                     client.disconnect();
                     reject(new Error("Client was not unblocked after timeout"));
                 }
-            }, 12000); // Total timeout: 12 seconds
+            }, 12000);
         });
     }, 15000);
 
@@ -254,8 +323,6 @@ describe("Rate Limiter Integration Tests", () => {
             const onConnect = () => {
                 connectCount++;
                 if (connectCount === 2) {
-                    // Both clients connected, start test
-                    // Listen for errors on client1
                     client1.on("error", (errorMsg: unknown) => {
                         if (
                             errorMsg.summary ===
@@ -266,7 +333,6 @@ describe("Rate Limiter Integration Tests", () => {
                         }
                     });
 
-                    // Trigger rate limit on client1
                     for (let i = 0; i < 110; i++) {
                         client1.emit("message", {
                             type: "echo",
@@ -279,7 +345,6 @@ describe("Rate Limiter Integration Tests", () => {
                         });
                     }
 
-                    // Client2 should still work normally
                     setTimeout(() => {
                         client2.emit(
                             "message",

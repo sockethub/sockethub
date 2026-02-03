@@ -54,6 +54,9 @@ jobs:
       - name: Verifying Child Process Termination
         run: bun run integration:process
 
+      - name: Rate Limiter Integration Tests
+        run: bun run integration:rate-limiter
+
       - name: View running processes
         if: always()
         run: ps ax | grep sockethub
