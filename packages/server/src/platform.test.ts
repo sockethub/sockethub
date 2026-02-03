@@ -8,6 +8,7 @@ import type {
     PlatformInterface,
 } from "@sockethub/schemas";
 import type { JobDataDecrypted } from "@sockethub/data-layer";
+import { derivePlatformCredentialsSecret } from "./platform.js";
 
 /**
  * Tests for platform.ts credential handling logic
@@ -17,6 +18,19 @@ import type { JobDataDecrypted } from "@sockethub/data-layer";
  * getJobHandler logic.
  */
 describe("platform.ts credential handling", () => {
+    describe("credentials secret derivation", () => {
+        it("derives the same secret format used for credential storage", () => {
+            const secret = derivePlatformCredentialsSecret(
+                "parent-secret",
+                "session-secret",
+            );
+
+            expect(secret.length).toBe(32);
+            expect(secret).toBe(
+                crypto.deriveSecret("parent-secret", "session-secret"),
+            );
+        });
+    });
     let sandbox: sinon.SinonSandbox;
     let mockPlatform: Partial<PlatformInterface>;
     let mockCredentialStore: any;
