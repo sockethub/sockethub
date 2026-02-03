@@ -14,6 +14,7 @@ let hasLoggedInit = false;
 
 // Process-wide logger context (set once at process startup)
 let loggerContext = "";
+let loggerNamespaceStore = new WeakMap<Logger, string>();
 
 /**
  * Initialize the logger system with global configuration.
@@ -214,11 +215,13 @@ export function createLogger(
         );
     }
 
-    return winston.createLogger({
+    const logger = winston.createLogger({
         level: "debug", // Set to lowest level, let transports filter
         defaultMeta: { namespace: fullNamespace },
         transports,
     });
+    loggerNamespaceStore.set(logger, fullNamespace);
+    return logger;
 }
 
 /**
@@ -241,7 +244,11 @@ export function createLogger(
  * ```
  */
 export function getLoggerNamespace(logger: Logger): string {
-    return (logger.defaultMeta as { namespace?: string })?.namespace ?? "";
+    return (
+        loggerNamespaceStore.get(logger) ??
+        (logger.defaultMeta as { namespace?: string })?.namespace ??
+        ""
+    );
 }
 
 /**
@@ -252,4 +259,5 @@ export function resetLoggerForTesting(): void {
     globalConfig = null;
     hasLoggedInit = false;
     loggerContext = "";
+    loggerNamespaceStore = new WeakMap<Logger, string>();
 }
