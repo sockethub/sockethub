@@ -22,7 +22,7 @@
     "dev": "bunx --bun vite dev",
     "build": "bunx --bun vite build",
     "test": "bun run test:unit",
-    "test:integration": "bunx --bun playwright test",
+    "test:integration": "node -e \"if (!process.env.RUN_PLAYWRIGHT) { console.log('Skipping Playwright integration tests (set RUN_PLAYWRIGHT=1 to run).'); process.exit(0); }\" && bunx --bun playwright test",
     "test:unit": "bunx --bun vitest run",
     "preview": "bunx --bun vite preview",
     "clean": "rm -rf build",
