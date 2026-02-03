@@ -409,6 +409,6 @@ async function startPlatformProcess() {
     }
 }
 
-if (process.argv[1]?.endsWith("platform.js")) {
+if (process.env.SOCKETHUB_PLATFORM_CHILD === "1") {
     void startPlatformProcess();
 }
