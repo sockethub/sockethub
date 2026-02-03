@@ -129,7 +129,7 @@ export class CredentialsStore implements CredentialsStoreInterface {
 
         this.initCrypto();
 
-        // Use context-free namespace for credentials storage keys
+        // Use the canonical, context-free namespace for credentials storage keys
         this.uid = buildCredentialsStoreId(parentId, sessionId);
         // Keep full logger namespace for Redis connection naming
         redisConfig.connectionName = getLoggerNamespace(this.log);
@@ -152,9 +152,10 @@ export class CredentialsStore implements CredentialsStoreInterface {
     }
 
     /**
-     * Gets the credentials for a given actor ID
+     * Gets the credentials for a given actor ID.
      * @param actor
-     * @param credentialsHash - Optional hash to validate credentials. If undefined, validation is skipped.
+     * @param credentialsHash - Optional hash to validate credentials.
+     *   If undefined, validation is skipped.
      */
     async get(
         actor: string,

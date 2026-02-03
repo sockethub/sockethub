@@ -66,8 +66,8 @@ export class JobWorker extends JobBase {
             throw new Error(`JobWorker already initialized for ${this.uid}`);
         }
         this.initialized = true;
-        // BullMQ v5+ prohibits colons in queue names, so replace with dashes
-        // while keeping queueId with colons for debug namespace convention
+        // BullMQ v5+ prohibits colons in queue names; derive the queue name
+        // from the canonical queue id by replacing ':' with '-'.
         const queueName = this.queueId.replace(/:/g, "-");
         // Let BullMQ create its own connection (it duplicates them internally anyway)
         this.worker = new Worker(queueName, this.jobHandler.bind(this), {
