@@ -11,9 +11,9 @@ import type {
 } from "@sockethub/schemas";
 import type { Socket } from "socket.io";
 
+import { createLogger } from "@sockethub/logger";
 import config from "./config.js";
 import { getSocket } from "./listener.js";
-import { createLogger } from "./logger.js";
 import { __dirname } from "./util.js";
 
 // collection of platform instances, stored by `id`
@@ -74,9 +74,7 @@ export default class PlatformInstance {
             this.global = true;
         }
 
-        this.log = createLogger({
-            namespace: `sockethub:server:platform-instance:${this.id}`,
-        });
+        this.log = createLogger(`server:platform-instance:${this.id}`);
         const env: EnvFormat = {
             REDIS_URL: config.get("redis:url") as string,
         };
@@ -154,7 +152,6 @@ export default class PlatformInstance {
             this.id,
             secret,
             config.get("redis"),
-            this.log,
         );
 
         this.queue.on(

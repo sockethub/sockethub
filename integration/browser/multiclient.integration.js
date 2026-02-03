@@ -16,6 +16,25 @@ const utils = createTestUtils(config);
 // Reduced from 10 to 5 to reduce flakiness while still validating multi-client behavior
 const CLIENT_COUNT = 5;
 
+async function ensureSocketsConnected(records) {
+    await Promise.all(
+        records.map(
+            (clientRecord) =>
+                new Promise((resolve) => {
+                    if (clientRecord.sockethubClient.socket.connected) {
+                        resolve();
+                        return;
+                    }
+                    clientRecord.sockethubClient.socket.once(
+                        "connect",
+                        resolve,
+                    );
+                    clientRecord.sockethubClient.socket.connect();
+                }),
+        ),
+    );
+}
+
 describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () => {
     validateGlobals();
 
@@ -173,6 +192,10 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
         it("rapid messages from multiple clients are all delivered", async () => {
             const testMessages = [];
             messageLog.length = 0;
+
+            await ensureSocketsConnected(records);
+            // Allow reconnect replays and presence updates to settle
+            await new Promise((resolve) => setTimeout(resolve, 1000));
 
             // Each client sends a unique message rapidly
             const sendPromises = records

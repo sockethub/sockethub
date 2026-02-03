@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "@sockethub/crypto": "^1.0.0-alpha.10",
+    "@sockethub/logger": "^1.0.0-alpha.10",
     "@sockethub/schemas": "^3.0.0-alpha.10",
     "bullmq": "^5.66.5",
     "ioredis": "^5.9.2",

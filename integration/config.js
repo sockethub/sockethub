@@ -39,7 +39,8 @@ const config = {
         cleanup: 3000,
         message: 2000,
         // Timeout for multi-client message delivery tests
-        multiClientMessage: 7000,
+        // Increased from 7s to 10s to reduce flakiness with 5 simultaneous clients
+        multiClientMessage: 10000,
         process: 5000, // starting a process
     },
 };

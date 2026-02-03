@@ -7,13 +7,13 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import { Server } from "socket.io";
 
+import { createLogger } from "@sockethub/logger";
 import config from "./config.js";
-import { createLogger } from "./logger.js";
 import routes from "./routes.js";
 const require = createRequire(import.meta.url);
 const packageJson = require("../package.json");
 
-const log = createLogger("sockethub:server:listener");
+const log = createLogger("server:listener");
 // initial details
 log.info(`sockethub v${packageJson.version}`);
 

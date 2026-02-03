@@ -16,6 +16,7 @@ import {
     JobWorker,
 } from "@sockethub/data-layer";
 import type { JobHandler } from "@sockethub/data-layer";
+import { type Logger, createLogger, setLoggerContext } from "@sockethub/logger";
 import type {
     ActivityStream,
     CredentialsObject,
@@ -25,7 +26,6 @@ import type {
     PlatformSession,
 } from "@sockethub/schemas";
 import config from "./config";
-import { type Logger, createLogger } from "./logger";
 
 // command-line params
 const parentId = process.argv[2];
@@ -33,8 +33,14 @@ const platformName = process.argv[3];
 let identifier = process.argv[4];
 const redisUrl = process.env.REDIS_URL;
 
-const loggerPrefix = `sockethub:platform:${platformName}:${identifier}`;
+// Set process-wide context for all loggers in this platform process
+setLoggerContext(`sockethub:platform:${platformName}:${identifier}`);
+
+const loggerPrefix = "main";
 let logger = createLogger(loggerPrefix);
+
+// Cache logger instances per session to avoid recreating Winston loggers with transports
+const loggerCache = new Map<string, Logger>();
 
 // conditionally initialize sentry
 let sentry: { readonly reportError: (err: Error) => void } = {
@@ -68,7 +74,7 @@ interface SecretFromParent extends Array<string | SecretInterface> {
  * Initialize platform module
  */
 const platformSession: PlatformSession = {
-    log: createLogger(`sockethub:platform:${platformName}:${identifier}`),
+    log: logger, // Reuse the logger created above
     sendToClient: getSendFunction("message"),
     updateActor: updateActor,
 };
@@ -156,7 +162,13 @@ function getJobHandler(): JobHandler {
         job: JobDataDecrypted,
     ): Promise<string | undefined | ActivityStream> => {
         return new Promise((resolve, reject) => {
-            const jobLog = createLogger(`${loggerPrefix}:${job.sessionId}`);
+            // Use cached logger to avoid creating Winston instances per job
+            const logKey = job.sessionId;
+            let jobLog = loggerCache.get(logKey);
+            if (!jobLog) {
+                jobLog = createLogger(logKey);
+                loggerCache.set(logKey, jobLog);
+            }
             jobLog.debug(`received ${job.title} ${job.msg.type}`);
             const credentialStore = new CredentialsStore(
                 parentId,
@@ -165,7 +177,6 @@ function getJobHandler(): JobHandler {
                 {
                     url: redisUrl,
                 },
-                jobLog,
             );
             // biome-ignore lint/performance/noDelete: <explanation>
             delete job.msg.sessionSecret;
@@ -332,7 +343,9 @@ async function updateActor(credentials: CredentialsObject): Promise<void> {
     logger.info(
         `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
     );
-    logger = createLogger(`sockethub:platform:${identifier}`);
+    // Update context with new identifier
+    setLoggerContext(`sockethub:platform:${platformName}:${identifier}`);
+    logger = createLogger("main");
 
     // Update credentialsHash for persistent platforms (tracks actor-specific state)
     if (isPersistentPlatform(platform)) {
@@ -362,7 +375,6 @@ async function startQueueListener(refresh = false) {
         identifier,
         parentSecret1 + parentSecret2,
         { url: redisUrl },
-        logger,
     );
     logger.info("listening on the queue for incoming jobs");
     jobWorker.onJob(getJobHandler());

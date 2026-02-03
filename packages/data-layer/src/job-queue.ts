@@ -1,13 +1,18 @@
-import type { ActivityStream, Logger } from "@sockethub/schemas";
+import {
+    type Logger,
+    createLogger,
+    getLoggerNamespace,
+} from "@sockethub/logger";
+import type { ActivityStream } from "@sockethub/schemas";
 import { type Job, Queue, QueueEvents, Worker } from "bullmq";
 
 import { JobBase, createIORedisConnection } from "./job-base.js";
+import { buildQueueId } from "./queue-id.js";
 import type { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types.js";
 
-export async function verifyJobQueue(
-    config: RedisConfig,
-    log: Logger,
-): Promise<void> {
+export async function verifyJobQueue(config: RedisConfig): Promise<void> {
+    const log = createLogger("data-layer:verify-job-queue");
+
     return new Promise((resolve, reject) => {
         const worker = new Worker(
             "connectiontest",
@@ -71,7 +76,8 @@ export async function verifyJobQueue(
  * ```
  */
 export class JobQueue extends JobBase {
-    readonly uid: string;
+    private readonly connectionName: string;
+    protected readonly queueId: string;
     protected queue: Queue;
     protected events: QueueEvents;
     private readonly log: Logger;
@@ -81,35 +87,38 @@ export class JobQueue extends JobBase {
     /**
      * Creates a new JobQueue instance.
      *
+     * @param parentId - Sockethub instance identifier for queue isolation
      * @param instanceId - Unique identifier for the platform instance
-     * @param sessionId - Client session identifier for queue isolation
      * @param secret - 32-character encryption secret for message security
      * @param redisConfig - Redis connection configuration
-     * @param log - Logger instance for logging operations
      */
     constructor(
+        parentId: string,
         instanceId: string,
-        sessionId: string,
         secret: string,
         redisConfig: RedisConfig,
-        log: Logger,
     ) {
         super(secret);
-        this.uid = `sockethub:data-layer:queue:${instanceId}:${sessionId}`;
-        this.log = log;
+        // Create logger with full namespace (context will be prepended automatically)
+        this.log = createLogger(`data-layer:queue:${parentId}:${instanceId}`);
+
+        this.queueId = buildQueueId(parentId, instanceId);
+        // Use logger's full namespace (includes context) for Redis connection name
+        this.connectionName = getLoggerNamespace(this.log);
+        redisConfig.connectionName = this.connectionName;
         this.init(redisConfig);
     }
 
     protected init(redisConfig: RedisConfig) {
         if (this.initialized) {
-            throw new Error(`JobQueue already initialized for ${this.uid}`);
+            throw new Error(`JobQueue already initialized for ${this.queueId}`);
         }
         this.initialized = true;
 
-        // BullMQ v5+ prohibits colons in queue names, so replace with dashes
-        // while keeping uid with colons for debug namespace convention
-        const queueName = this.uid.replace(/:/g, "-");
-        // Let BullMQ create its own connections for better lifecycle management
+        // BullMQ v5+ prohibits colons in queue names; derive the queue name
+        // from the canonical queue id by replacing ':' with '-'.
+        const queueName = this.queueId.replace(/:/g, "-");
+        // Let BullMQ create its own connections (it duplicates them internally anyway)
         this.queue = new Queue(queueName, {
             connection: redisConfig,
         });

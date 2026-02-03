@@ -3,15 +3,15 @@ import chalk from "chalk";
 
 import { type RedisConfig, redisCheck } from "@sockethub/data-layer";
 
+import { createLogger } from "@sockethub/logger";
 import { addPlatformSchema } from "@sockethub/schemas";
 import config from "../config.js";
-import { createLogger } from "../logger.js";
 import loadPlatforms, {
     type PlatformMap,
     type PlatformStruct,
 } from "./load-platforms.js";
 
-const log = createLogger("sockethub:server:bootstrap:init");
+const log = createLogger("server:bootstrap:init");
 
 export interface IInitObject {
     version: string;
@@ -142,7 +142,7 @@ async function __loadInit(): Promise<IInitObject> {
         config.get("platforms") as Array<string>,
     );
 
-    await redisCheck(config.get("redis") as RedisConfig, log);
+    await redisCheck(config.get("redis") as RedisConfig);
 
     if (config.get("info")) {
         printSettingsInfo(packageJSON.default.version, platforms);

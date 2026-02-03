@@ -2,6 +2,7 @@
  * responsible for handling the validation and expansion (when applicable) of all incoming objects
  */
 
+import { createLogger } from "@sockethub/logger";
 import {
     type ActivityStream,
     type MiddlewareCallback,
@@ -9,7 +10,6 @@ import {
     validateActivityStream,
     validateCredentials,
 } from "@sockethub/schemas";
-import { createLogger } from "../logger.js";
 
 import getInitObject, { type IInitObject } from "../bootstrap/init.js";
 
@@ -27,9 +27,7 @@ export default function validate(
         });
     }
 
-    const sessionLog = createLogger({
-        namespace: `sockethub:server:validate:${sockethubId}`,
-    });
+    const sessionLog = createLogger(`server:validate:${sockethubId}`);
     return (msg: ActivityStream, done: MiddlewareCallback) => {
         sessionLog.debug(`applying schema validation for ${type}`);
         if (type === "activity-object") {

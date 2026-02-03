@@ -13,11 +13,11 @@ import {
     stopCleanup,
 } from "./rate-limiter.js";
 
+import { createLogger } from "@sockethub/logger";
 import getInitObject from "./bootstrap/init.js";
 import config from "./config";
 import janitor from "./janitor.js";
 import listener from "./listener.js";
-import { createLogger } from "./logger.js";
 import middleware from "./middleware.js";
 import createActivityObject from "./middleware/create-activity-object.js";
 import expandActivityStream from "./middleware/expand-activity-stream.js";
@@ -25,7 +25,7 @@ import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
 import ProcessManager from "./process-manager.js";
 
-const log = createLogger("sockethub:server:core");
+const log = createLogger("server:core");
 
 type ErrMsg = {
     context: string;
@@ -107,7 +107,7 @@ class Sockethub {
 
     private handleIncomingConnection(socket: Socket) {
         // session-specific debug messages
-        const sessionLog = createLogger(`sockethub:server:core:${socket.id}`);
+        const sessionLog = createLogger(`server:core:${socket.id}`);
         const sessionSecret = crypto.randToken(16);
         const credentialsStore: CredentialsStoreInterface =
             new CredentialsStore(
@@ -115,7 +115,6 @@ class Sockethub {
                 socket.id,
                 crypto.deriveSecret(this.parentSecret1, sessionSecret),
                 config.get("redis"),
-                sessionLog,
             );
 
         sessionLog.debug("socket.io connection");
