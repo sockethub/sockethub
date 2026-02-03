@@ -28,6 +28,7 @@ jobs:
             "refactor/"
             "perf/"
             "test/"
+            "tests/"
             "build/"
             "ci/"
             "chore/"
