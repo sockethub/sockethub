@@ -516,8 +516,8 @@ Every Sockethub Client connection creates a completely isolated environment:
 
 **Isolated Credentials**: Each session has separate credential storage
 
-- Session A: `sockethub:...:irc:sessionA:*`
-- Session B: `sockethub:...:irc:sessionB:*`
+- Session A: `sockethub:...:data-layer:credentials-store:...:sessionA:*`
+- Session B: `sockethub:...:data-layer:credentials-store:...:sessionB:*`
 
 **Isolated Processes**: For persistent platforms (IRC, XMPP), each actor gets a
 dedicated platform child process

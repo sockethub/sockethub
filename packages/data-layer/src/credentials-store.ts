@@ -8,6 +8,7 @@ import type { CredentialsObject } from "@sockethub/schemas";
 import IORedis, { type Redis } from "ioredis";
 import SecureStore from "secure-store-redis";
 
+import { buildCredentialsStoreId } from "./queue-id.js";
 import type { RedisConfig } from "./types.js";
 
 let sharedCredentialsRedisConnection: Redis | null = null;
@@ -128,9 +129,10 @@ export class CredentialsStore implements CredentialsStoreInterface {
 
         this.initCrypto();
 
-        // Use logger's full namespace (includes context) for Redis connection name and store ID
-        this.uid = getLoggerNamespace(this.log);
-        redisConfig.connectionName = this.uid;
+        // Use context-free namespace for credentials storage keys
+        this.uid = buildCredentialsStoreId(parentId, sessionId);
+        // Keep full logger namespace for Redis connection naming
+        redisConfig.connectionName = getLoggerNamespace(this.log);
         this.initSecureStore(secret, redisConfig);
         this.log.debug("initialized");
     }
