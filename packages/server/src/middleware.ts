@@ -29,9 +29,7 @@ export class MiddlewareChain {
 
     constructor(name: string) {
         this.name = name;
-        this.logger = createLogger({
-            namespace: `middleware:${name}`,
-        });
+        this.logger = createLogger(`middleware:${name}`);
     }
 
     use(func: ErrorHandlerInterface | MiddlewareChainInterface): this {

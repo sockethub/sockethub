@@ -1,8 +1,13 @@
-import { type Logger, createLogger } from "@sockethub/logger";
+import {
+    type Logger,
+    createLogger,
+    getLoggerNamespace,
+} from "@sockethub/logger";
 import type { ActivityStream } from "@sockethub/schemas";
 import { type Job, Queue, QueueEvents, Worker } from "bullmq";
 
 import { JobBase, createIORedisConnection } from "./job-base.js";
+import { buildQueueId } from "./queue-id.js";
 import type { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types.js";
 
 export async function verifyJobQueue(config: RedisConfig): Promise<void> {
@@ -72,6 +77,7 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
  */
 export class JobQueue extends JobBase {
     readonly uid: string;
+    protected readonly queueId: string;
     protected queue: Queue;
     protected events: QueueEvents;
     private readonly log: Logger;
@@ -81,24 +87,24 @@ export class JobQueue extends JobBase {
     /**
      * Creates a new JobQueue instance.
      *
+     * @param parentId - Sockethub instance identifier for queue isolation
      * @param instanceId - Unique identifier for the platform instance
-     * @param sessionId - Client session identifier for queue isolation
      * @param secret - 32-character encryption secret for message security
      * @param redisConfig - Redis connection configuration
      */
     constructor(
+        parentId: string,
         instanceId: string,
-        sessionId: string,
         secret: string,
         redisConfig: RedisConfig,
     ) {
         super(secret);
-        // Use short namespace for logging (context provides process identification)
-        const logNamespace = "data-layer:queue";
-        this.log = createLogger(logNamespace);
+        // Create logger with full namespace (context will be prepended automatically)
+        this.log = createLogger(`data-layer:queue:${parentId}:${instanceId}`);
 
-        // Queue ID is derived from namespace + identifiers for matching across processes
-        this.uid = `${logNamespace}:${instanceId}:${sessionId}`;
+        this.queueId = buildQueueId(parentId, instanceId);
+        // Use logger's full namespace (includes context) for Redis connection name
+        this.uid = getLoggerNamespace(this.log);
         redisConfig.connectionName = this.uid;
         this.init(redisConfig);
     }
@@ -109,9 +115,9 @@ export class JobQueue extends JobBase {
         }
         this.initialized = true;
 
-        // BullMQ v5+ prohibits colons in queue names, so replace with dashes
-        // while keeping uid with colons for debug namespace convention
-        const queueName = this.uid.replace(/:/g, "-");
+        // BullMQ v5+ prohibits colons in queue names; derive the queue name
+        // from the canonical queue id by replacing ':' with '-'.
+        const queueName = this.queueId.replace(/:/g, "-");
         // Let BullMQ create its own connections (it duplicates them internally anyway)
         this.queue = new Queue(queueName, {
             connection: redisConfig,

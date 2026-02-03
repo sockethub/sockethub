@@ -74,9 +74,7 @@ export default class PlatformInstance {
             this.global = true;
         }
 
-        this.log = createLogger({
-            namespace: `server:platform-instance:${this.id}`,
-        });
+        this.log = createLogger(`server:platform-instance:${this.id}`);
         const env: EnvFormat = {
             REDIS_URL: config.get("redis:url") as string,
         };

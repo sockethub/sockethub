@@ -1,9 +1,14 @@
 import { crypto } from "@sockethub/crypto";
-import { type Logger, createLogger } from "@sockethub/logger";
+import {
+    type Logger,
+    createLogger,
+    getLoggerNamespace,
+} from "@sockethub/logger";
 import type { CredentialsObject } from "@sockethub/schemas";
 import IORedis, { type Redis } from "ioredis";
 import SecureStore from "secure-store-redis";
 
+import { buildCredentialsStoreId } from "./queue-id.js";
 import type { RedisConfig } from "./types.js";
 
 let sharedCredentialsRedisConnection: Redis | null = null;
@@ -117,15 +122,17 @@ export class CredentialsStore implements CredentialsStoreInterface {
                 "CredentialsStore secret must be 32 chars in length",
             );
         }
-        // Use short namespace for logging (context provides process identification)
-        const logNamespace = "data-layer:credentials-store";
-        this.log = createLogger(logNamespace);
+        // Create logger with full namespace (context will be prepended automatically)
+        this.log = createLogger(
+            `data-layer:credentials-store:${parentId}:${sessionId}`,
+        );
 
         this.initCrypto();
 
-        // Store ID is derived from namespace + identifiers for key naming
-        this.uid = `${logNamespace}:${parentId}:${sessionId}`;
-        redisConfig.connectionName = this.uid;
+        // Use the canonical, context-free namespace for credentials storage keys
+        this.uid = buildCredentialsStoreId(parentId, sessionId);
+        // Keep full logger namespace for Redis connection naming
+        redisConfig.connectionName = getLoggerNamespace(this.log);
         this.initSecureStore(secret, redisConfig);
         this.log.debug("initialized");
     }
@@ -145,9 +152,10 @@ export class CredentialsStore implements CredentialsStoreInterface {
     }
 
     /**
-     * Gets the credentials for a given actor ID
+     * Gets the credentials for a given actor ID.
      * @param actor
-     * @param credentialsHash - Optional hash to validate credentials. If undefined, validation is skipped.
+     * @param credentialsHash - Optional hash to validate credentials.
+     *   If undefined, validation is skipped.
      */
     async get(
         actor: string,

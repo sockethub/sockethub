@@ -56,12 +56,13 @@ describe("CredentialsStore", () => {
             secret: "a secret must be 32 chars and th",
             redis: {
                 url: "redis config",
-                connectionName: "data-layer:credentials-store:a parent id:a session id",
+                connectionName:
+                    "data-layer:credentials-store:a parent id:a session id",
             },
         });
         expect(typeof credentialsStore).toEqual("object");
         expect(credentialsStore.uid).toEqual(
-            `data-layer:credentials-store:a parent id:a session id`,
+            `sockethub:a parent id:data-layer:credentials-store:a session id`,
         );
         expect(typeof credentialsStore.get).toEqual("function");
         expect(typeof credentialsStore.save).toEqual("function");

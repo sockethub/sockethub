@@ -222,6 +222,29 @@ export function createLogger(
 }
 
 /**
+ * Get the namespace from a logger instance.
+ *
+ * Extracts the full namespace (including context) that was set when the logger was created.
+ * Useful for reusing the namespace in other systems like Redis connection names.
+ *
+ * @param logger - Logger instance created by createLogger()
+ * @returns The full namespace string, or empty string if not found
+ *
+ * @example
+ * ```typescript
+ * const log = createLogger('data-layer:queue');
+ * const namespace = getLoggerNamespace(log);
+ * // Returns: "sockethub:data-layer:queue" (if context is "sockethub")
+ *
+ * // Use for Redis connection name
+ * redisConfig.connectionName = namespace;
+ * ```
+ */
+export function getLoggerNamespace(logger: Logger): string {
+    return (logger.defaultMeta as { namespace?: string })?.namespace ?? "";
+}
+
+/**
  * Reset logger state. Used primarily for testing.
  * @internal
  */
