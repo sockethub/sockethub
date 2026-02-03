@@ -57,7 +57,7 @@
     "integration:browser:multiclient": "bun integration/browser/test-runner.js ./integration/browser/multiclient.integration.js",
     "integration:browser:reconnection": "bun integration/browser/test-runner.js ./integration/browser/reconnection.integration.js",
     "integration:browser:resourceclash": "bun integration/browser/test-runner.js ./integration/browser/resourceclash.integration.js",
-    "integration:packages": "bun run scripts/run-package-integrations.js",
+    "integration:packages": "bun --workspaces --if-present run test:integration",
     "integration:process": "bun test ./integration/process.integration.ts",
     "lint": "bunx biome check && bun run lint:doc",
     "lint:doc": "bunx markdownlint '**/*.md'",
