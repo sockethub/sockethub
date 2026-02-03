@@ -1,5 +1,9 @@
 import { crypto } from "@sockethub/crypto";
-import { type Logger, createLogger } from "@sockethub/logger";
+import {
+    type Logger,
+    createLogger,
+    getLoggerNamespace,
+} from "@sockethub/logger";
 import type { CredentialsObject } from "@sockethub/schemas";
 import IORedis, { type Redis } from "ioredis";
 import SecureStore from "secure-store-redis";
@@ -117,14 +121,15 @@ export class CredentialsStore implements CredentialsStoreInterface {
                 "CredentialsStore secret must be 32 chars in length",
             );
         }
-        // Use short namespace for logging (context provides process identification)
-        const logNamespace = "data-layer:credentials-store";
-        this.log = createLogger(logNamespace);
+        // Create logger with full namespace (context will be prepended automatically)
+        this.log = createLogger(
+            `data-layer:credentials-store:${parentId}:${sessionId}`,
+        );
 
         this.initCrypto();
 
-        // Store ID is derived from namespace + identifiers for key naming
-        this.uid = `${logNamespace}:${parentId}:${sessionId}`;
+        // Use logger's full namespace (includes context) for Redis connection name and store ID
+        this.uid = getLoggerNamespace(this.log);
         redisConfig.connectionName = this.uid;
         this.initSecureStore(secret, redisConfig);
         this.log.debug("initialized");

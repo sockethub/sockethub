@@ -1,7 +1,12 @@
-import { type Logger, createLogger } from "@sockethub/logger";
+import {
+    type Logger,
+    createLogger,
+    getLoggerNamespace,
+} from "@sockethub/logger";
 import { Worker } from "bullmq";
 
 import { JobBase } from "./job-base.js";
+import { buildQueueId } from "./queue-id.js";
 import type { JobEncrypted, JobHandler, RedisConfig } from "./types.js";
 
 /**
@@ -32,26 +37,27 @@ export class JobWorker extends JobBase {
     /**
      * Creates a new JobWorker instance.
      *
+     * @param parentId - Must match the parentId of the corresponding JobQueue
      * @param instanceId - Must match the instanceId of the corresponding JobQueue
-     * @param sessionId - Must match the sessionId of the corresponding JobQueue
      * @param secret - 32-character encryption secret, must match JobQueue secret
      * @param redisConfig - Redis connection configuration
      */
     constructor(
+        parentId: string,
         instanceId: string,
-        sessionId: string,
         secret: string,
         redisConfig: RedisConfig,
     ) {
         super(secret);
-        // Use short namespace for logging (context provides process identification)
-        const logNamespace = "data-layer:worker";
-        this.log = createLogger(logNamespace);
+        // Create logger with full namespace (context will be prepended automatically)
+        this.log = createLogger(`data-layer:worker:${parentId}:${instanceId}`);
 
-        // Queue IDs are derived from namespace + identifiers for matching across processes
-        this.uid = `${logNamespace}:${instanceId}:${sessionId}`;
-        this.queueId = `data-layer:queue:${instanceId}:${sessionId}`;
+        // Use logger's full namespace (includes context) for Redis connection name
+        this.uid = getLoggerNamespace(this.log);
         redisConfig.connectionName = this.uid;
+
+        // Queue ID must match JobQueue's namespace (context-free) for cross-process connection
+        this.queueId = buildQueueId(parentId, instanceId);
         this.redisConfig = redisConfig;
     }
 

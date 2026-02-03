@@ -41,7 +41,7 @@ describe("JobQueue", () => {
         class TestJobQueue extends JobQueue {
             init() {
                 // BullMQ v5+ prohibits colons in queue names, so replace with dashes
-                const queueName = this.uid.replace(/:/g, "-");
+                const queueName = this.queueId.replace(/:/g, "-");
                 this.redisConnection = MockBull();
                 this.queue = MockBull(queueName, {
                     connection: this.redisConnection,
@@ -75,7 +75,7 @@ describe("JobQueue", () => {
         sinon.assert.calledThrice(MockBull);
         sinon.assert.calledWith(
             MockBull,
-            "data-layer-queue-a parent id-a session id",
+            "sockethub-a parent id-data-layer-queue-a session id",
             {
                 connection: MockBull(),
             },

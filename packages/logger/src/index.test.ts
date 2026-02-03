@@ -4,6 +4,7 @@ import {
     type LoggerOptions,
     createLogger,
     getLoggerContext,
+    getLoggerNamespace,
     initLogger,
     resetLoggerContext,
     resetLoggerForTesting,
@@ -64,6 +65,27 @@ describe("Logger Package", () => {
         it("does not create file transport when file is empty string", () => {
             const log = createLogger("test:namespace", { file: "" });
             expect(log.transports.length).toBe(1); // console only
+        });
+    });
+
+    describe("getLoggerNamespace", () => {
+        it("returns namespace from logger instance", () => {
+            const log = createLogger("test:namespace");
+            const namespace = getLoggerNamespace(log);
+            expect(namespace).toBe("test:namespace");
+        });
+
+        it("returns namespace with context when set", () => {
+            setLoggerContext("myapp");
+            const log = createLogger("test:namespace");
+            const namespace = getLoggerNamespace(log);
+            expect(namespace).toBe("myapp:test:namespace");
+        });
+
+        it("returns empty string for logger without namespace", () => {
+            const log = createLogger("");
+            const namespace = getLoggerNamespace(log);
+            expect(namespace).toBe("");
         });
     });
 
