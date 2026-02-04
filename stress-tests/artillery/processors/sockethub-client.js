@@ -88,7 +88,7 @@ function setupClient(context, events, done) {
 
     socket.on("connect_error", (err) => {
         events.emit("counter", "sockethub.connect_error", 1);
-        consecutiveConnectionFailures++;
+        recordFailure();
         // Only log first few errors
         if (consecutiveConnectionFailures <= 3) {
             console.error(
@@ -96,7 +96,6 @@ function setupClient(context, events, done) {
             );
         }
         context.vars.errors.push(`Connection: ${err.message}`);
-        recordFailure();
     });
 
     socket.on("disconnect", (reason) => {
@@ -108,13 +107,12 @@ function setupClient(context, events, done) {
     // Wait for connection or timeout
     setTimeout(() => {
         if (!context.vars.connected) {
-            consecutiveConnectionFailures++;
+            recordFailure();
             if (consecutiveConnectionFailures <= 3) {
                 console.error("Connection timeout - socket never connected");
             }
             events.emit("counter", "sockethub.connect_timeout", 1);
             context.vars.errors.push("Connection timeout");
-            recordFailure();
         }
         done();
     }, 2000);
