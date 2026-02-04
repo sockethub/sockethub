@@ -1,8 +1,9 @@
 /**
  * Stress test runner - main CLI orchestrator
  */
-import { execSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createConnection } from "node:net";
 import { join } from "node:path";
 import { compareToBaseline, loadBaseline } from "./bun/baseline-comparator";
 import { getSystemProfile } from "./bun/system-profiler";
@@ -24,6 +25,11 @@ interface RunnerOptions {
     type?: "performance" | "stress" | "soak" | "all" | "ci";
     ciMode?: boolean;
 }
+
+const CI_TEST_TIMEOUT_MS = 2 * 60 * 1000;
+const DEFAULT_TEST_TIMEOUT_MS = 20 * 60 * 1000;
+const HEALTH_CHECK_INTERVAL_MS = 2000;
+const HEALTH_CHECK_FAILURE_LIMIT = 2;
 
 async function main() {
     const args = process.argv.slice(2);
@@ -175,15 +181,12 @@ async function runTest(
     const reportPath = join(REPORTS_DIR, `temp-${Date.now()}.json`);
 
     try {
-        // Run Artillery
-        const output = execSync(
-            `bunx artillery run ${scenarioPath} --output ${reportPath} --quiet`,
-            {
-                stdio: "pipe",
-                encoding: "utf-8",
-                maxBuffer: 50 * 1024 * 1024, // 50MB buffer
-            },
-        );
+        await runArtilleryWithGuards({
+            scenarioPath,
+            reportPath,
+            sockethubUrl: test.sockethub_url,
+            timeoutMs: ciMode ? CI_TEST_TIMEOUT_MS : DEFAULT_TEST_TIMEOUT_MS,
+        });
 
         // Parse Artillery report
         const report = JSON.parse(readFileSync(reportPath, "utf-8"));
@@ -319,6 +322,128 @@ interface ArtilleryReport {
         >;
         lastCounterAt?: number;
     };
+}
+
+async function isServiceReachable(url: string): Promise<boolean> {
+    const parsed = new URL(url);
+    const host = parsed.hostname;
+    const port =
+        parsed.port.length > 0
+            ? Number.parseInt(parsed.port, 10)
+            : parsed.protocol === "https:"
+              ? 443
+              : 80;
+
+    return new Promise((resolve) => {
+        const socket = createConnection({ host, port });
+        const done = (result: boolean) => {
+            socket.removeAllListeners();
+            socket.end();
+            socket.destroy();
+            resolve(result);
+        };
+        socket.once("connect", () => done(true));
+        socket.once("error", () => done(false));
+        socket.setTimeout(1000, () => done(false));
+    });
+}
+
+async function runArtilleryWithGuards(options: {
+    scenarioPath: string;
+    reportPath: string;
+    sockethubUrl: string;
+    timeoutMs: number;
+}): Promise<void> {
+    const { scenarioPath, reportPath, sockethubUrl, timeoutMs } = options;
+    let stdout = "";
+    let stderr = "";
+    let failureCount = 0;
+    let completed = false;
+
+    await new Promise<void>((resolve, reject) => {
+        const cmd = spawn(
+            "bunx",
+            [
+                "artillery",
+                "run",
+                scenarioPath,
+                "--output",
+                reportPath,
+                "--quiet",
+            ],
+            {
+                stdio: ["ignore", "pipe", "pipe"],
+                env: process.env,
+            },
+        );
+
+        const stopWithError = (error: Error) => {
+            if (completed) return;
+            completed = true;
+            clearTimeout(timeoutId);
+            clearInterval(healthIntervalId);
+            if (!cmd.killed) {
+                cmd.kill("SIGKILL");
+            }
+            reject(error);
+        };
+
+        cmd.stdout.on("data", (chunk) => {
+            stdout += chunk.toString();
+        });
+        cmd.stderr.on("data", (chunk) => {
+            stderr += chunk.toString();
+        });
+        cmd.once("error", (err) => {
+            stopWithError(
+                new Error(`Failed to start artillery: ${err.message}`),
+            );
+        });
+
+        const timeoutId = setTimeout(() => {
+            stopWithError(
+                new Error(
+                    `Stress test timed out after ${Math.round(timeoutMs / 1000)}s (scenario: ${scenarioPath})`,
+                ),
+            );
+        }, timeoutMs);
+
+        const healthIntervalId = setInterval(async () => {
+            const reachable = await isServiceReachable(sockethubUrl);
+            if (reachable) {
+                failureCount = 0;
+                return;
+            }
+
+            failureCount += 1;
+            if (failureCount >= HEALTH_CHECK_FAILURE_LIMIT) {
+                stopWithError(
+                    new Error(
+                        `Sockethub became unreachable at ${sockethubUrl} during stress test (scenario: ${scenarioPath})`,
+                    ),
+                );
+            }
+        }, HEALTH_CHECK_INTERVAL_MS);
+
+        cmd.once("close", (code) => {
+            if (completed) return;
+            completed = true;
+            clearTimeout(timeoutId);
+            clearInterval(healthIntervalId);
+
+            if (code !== 0) {
+                const details =
+                    stderr.trim() || stdout.trim() || `exit code ${code}`;
+                reject(
+                    new Error(
+                        `Artillery run failed for ${scenarioPath}: ${details}`,
+                    ),
+                );
+                return;
+            }
+            resolve();
+        });
+    });
 }
 
 function calculateErrorRate(

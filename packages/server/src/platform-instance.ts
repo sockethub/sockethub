@@ -27,7 +27,6 @@ export interface PlatformInstanceParams {
 }
 
 type EnvFormat = {
-    DEBUG?: string;
     LOG_LEVEL?: string;
     REDIS_URL: string;
 };
@@ -77,10 +76,8 @@ export default class PlatformInstance {
         this.log = createLogger(`server:platform-instance:${this.id}`);
         const env: EnvFormat = {
             REDIS_URL: config.get("redis:url") as string,
+            SOCKETHUB_PLATFORM_CHILD: "1",
         };
-        if (process.env.DEBUG) {
-            env.DEBUG = process.env.DEBUG;
-        }
         if (process.env.LOG_LEVEL) {
             env.LOG_LEVEL = process.env.LOG_LEVEL;
         }
