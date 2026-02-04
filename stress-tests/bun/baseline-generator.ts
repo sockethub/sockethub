@@ -3,7 +3,6 @@
  */
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { connect } from "node:net";
 import { join } from "node:path";
 import { io } from "socket.io-client";
 import { DEFAULT_THRESHOLDS } from "../config";
@@ -18,8 +17,6 @@ const HEALTH_RETRY_DELAY = 2000;
 const WARMUP_RUNS = 3;
 const BASELINE_RUNS = 5;
 const BASELINE_DIR = join(import.meta.dir, "..", "baselines");
-const SOCKETHUB_HOST = "localhost";
-const SOCKETHUB_PORT = 10550;
 
 /**
  * Check if Sockethub is healthy by attempting a socket.io connection
@@ -165,11 +162,6 @@ async function main() {
     console.log("✓ Sockethub is available\n");
 
     console.log("Starting baseline generation...\n");
-
-    // Verify Sockethub is available before starting
-    console.log("Checking Sockethub availability...");
-    await ensureSockethubAvailable();
-    console.log("✓ Sockethub is responding\n");
 
     console.log("Step 1: Warmup runs (discarded)");
     for (let i = 1; i <= WARMUP_RUNS; i++) {
