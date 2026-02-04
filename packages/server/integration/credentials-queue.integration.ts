@@ -54,7 +54,7 @@ describe("credentials + queue integration", () => {
         }
     });
 
-    it("round-trips credentials through queue + platform secret derivation", async () => {
+    it("verifies credential round-trip through queue with platform secret derivation", async () => {
         const credentialsSecret = crypto.deriveSecret(
             parentSecret1,
             sessionSecret,
