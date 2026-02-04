@@ -4,13 +4,87 @@
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { io } from "socket.io-client";
 import { DEFAULT_THRESHOLDS } from "../config";
 import type { Baseline, SystemProfile, TestResult } from "../types";
 import { getBaselineFilename, getSystemProfile } from "./system-profiler";
 
+const SOCKETHUB_URL = process.env.SOCKETHUB_URL || "http://localhost:10550";
+const HEALTH_CHECK_TIMEOUT = 5000;
+const MAX_HEALTH_RETRIES = 3;
+const HEALTH_RETRY_DELAY = 2000;
+
 const WARMUP_RUNS = 3;
 const BASELINE_RUNS = 5;
 const BASELINE_DIR = join(import.meta.dir, "..", "baselines");
+
+/**
+ * Check if Sockethub is healthy by attempting a socket.io connection
+ */
+async function checkSockethubHealth(): Promise<boolean> {
+    return new Promise((resolve) => {
+        const socket = io(SOCKETHUB_URL, {
+            path: "/sockethub",
+            transports: ["websocket"],
+            timeout: HEALTH_CHECK_TIMEOUT,
+            reconnection: false,
+        });
+
+        const cleanup = () => {
+            socket.removeAllListeners();
+            socket.disconnect();
+        };
+
+        socket.on("connect", () => {
+            cleanup();
+            resolve(true);
+        });
+
+        socket.on("connect_error", () => {
+            cleanup();
+            resolve(false);
+        });
+
+        setTimeout(() => {
+            cleanup();
+            resolve(false);
+        }, HEALTH_CHECK_TIMEOUT);
+    });
+}
+
+/**
+ * Ensure Sockethub is available, with retries and alerting
+ */
+async function ensureSockethubAvailable(): Promise<void> {
+    for (let attempt = 1; attempt <= MAX_HEALTH_RETRIES; attempt++) {
+        const healthy = await checkSockethubHealth();
+        if (healthy) {
+            return;
+        }
+        console.error(
+            `\n⚠️  SOCKETHUB CONNECTION FAILED (attempt ${attempt}/${MAX_HEALTH_RETRIES})`,
+        );
+        console.error(`   URL: ${SOCKETHUB_URL}`);
+
+        if (attempt < MAX_HEALTH_RETRIES) {
+            console.error(`   Retrying in ${HEALTH_RETRY_DELAY / 1000}s...`);
+            await new Promise((r) => setTimeout(r, HEALTH_RETRY_DELAY));
+        }
+    }
+
+    console.error(
+        "\n╔══════════════════════════════════════════════════════════╗",
+    );
+    console.error(
+        "║  ❌ SOCKETHUB UNAVAILABLE - ABORTING STRESS TEST          ║",
+    );
+    console.error(
+        "╚══════════════════════════════════════════════════════════╝",
+    );
+    console.error(`\nFailed to connect to Sockethub at ${SOCKETHUB_URL}`);
+    console.error("Please ensure Sockethub is running: bun run start\n");
+    process.exit(1);
+}
 
 interface ArtilleryReport {
     aggregate: {
@@ -82,19 +156,29 @@ async function main() {
         mkdirSync(BASELINE_DIR, { recursive: true });
     }
 
+    // Initial health check
+    console.log("Checking Sockethub connectivity...");
+    await ensureSockethubAvailable();
+    console.log("✓ Sockethub is available\n");
+
     console.log("Starting baseline generation...\n");
+
     console.log("Step 1: Warmup runs (discarded)");
     for (let i = 1; i <= WARMUP_RUNS; i++) {
-        console.log(`  Warmup ${i}/${WARMUP_RUNS}...`);
-        runTest("message-throughput");
+        await ensureSockethubAvailable();
+        console.log(`  Warmup ${i}/${WARMUP_RUNS} - starting...`);
+        await runTest("message-throughput");
+        console.log(`  Warmup ${i}/${WARMUP_RUNS} - complete`);
     }
 
     console.log("\nStep 2: Baseline runs (recorded)");
     const results: TestResult[] = [];
     for (let i = 1; i <= BASELINE_RUNS; i++) {
-        console.log(`  Run ${i}/${BASELINE_RUNS}...`);
-        const result = runTest("message-throughput");
+        await ensureSockethubAvailable();
+        console.log(`  Run ${i}/${BASELINE_RUNS} - starting...`);
+        const result = await runTest("message-throughput");
         results.push(result);
+        console.log(`  Run ${i}/${BASELINE_RUNS} - complete`);
     }
 
     // Calculate median metrics
@@ -122,7 +206,7 @@ async function main() {
     );
 }
 
-function runTest(scenario: string): TestResult {
+async function runTest(scenario: string): Promise<TestResult> {
     const scenarioPath = join(
         import.meta.dir,
         "..",
@@ -140,14 +224,16 @@ function runTest(scenario: string): TestResult {
     );
 
     try {
-        execSync(
-            `bunx artillery run ${scenarioPath} --output ${reportPath} --quiet`,
+        console.log(`    → Running artillery scenario: ${scenario}`);
+        const output = execSync(
+            `bunx artillery run ${scenarioPath} --output ${reportPath}`,
             {
                 stdio: "pipe",
                 maxBuffer: 50 * 1024 * 1024, // 50MB buffer
                 encoding: "utf-8",
             },
         );
+        console.log("    → Artillery complete");
 
         const report: ArtilleryReport = JSON.parse(
             readFileSync(reportPath, "utf-8"),

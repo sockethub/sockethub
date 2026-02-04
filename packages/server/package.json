@@ -66,10 +66,10 @@
     "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external && bun build src/platform.ts --outdir dist --target node --format esm --sourcemap=external && cp src/defaults.json dist/defaults.json",
     "clean": "rm -rf dist",
     "clean:deps": "rm -rf node_modules",
-    "dev": "DEBUG=sockethub* bun run --hot ./bin/sockethub --examples",
-    "start": "DEBUG=sockethub* bun run ./bin/sockethub",
+    "dev": "bun run --hot ./bin/sockethub --examples",
+    "start": "bun run ./bin/sockethub",
     "test": "bun test src/",
-    "test:integration": "DEBUG=sockethub* bun test ./integration/rate-limiter.integration.ts"
+    "test:integration": "bun test ./integration/*.integration.ts"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.6",

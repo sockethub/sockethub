@@ -46,9 +46,11 @@
   "scripts": {
     "build": "bun build.js",
     "clean:deps": "rm -rf node_modules",
-    "dev": "DEBUG=sockethub* bun run --hot ./bin/sockethub --examples",
-    "info": "DEBUG=sockethub* bun run ./bin/sockethub --info",
-    "start": "bun run ./bin/sockethub"
+    "dev": "bun run --hot ./bin/sockethub --examples",
+    "info": "bun run ./bin/sockethub --info",
+    "start": "bun run ./bin/sockethub-logged",
+    "start:verbose": "bun run ./bin/sockethub",
+    "start:quiet": "bun run ./bin/sockethub"
   },
   "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
 }

@@ -4,7 +4,7 @@ on:
 
 jobs:
 
-  data-layer:
+  packages:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,8 +24,8 @@ jobs:
       - name: Verify Redis is listening
         run: nc -zv localhost 6379
 
-      - name: Data Layer Integration Tests
-        run: bun run integration:data-layer
+      - name: Package Integration Tests
+        run: bun run integration:packages
 
   process:
     runs-on: ubuntu-latest
@@ -53,6 +53,9 @@ jobs:
 
       - name: Verifying Child Process Termination
         run: bun run integration:process
+
+      - name: Rate Limiter Integration Tests
+        run: bun run integration:rate-limiter
 
       - name: View running processes
         if: always()

@@ -56,7 +56,6 @@ describe("Parent Process Sudden Termination", () => {
                 REDIS_URL: config.redis.url,
                 PORT: config.sockethub.port,
                 NODE_ENV: "test",
-                DEBUG: "sockethub*",
             },
             stdio: ["pipe", "pipe", "pipe"],
         });

@@ -7,6 +7,24 @@
 const SockethubClient = require("@sockethub/client").default;
 const { io } = require("socket.io-client");
 
+// Circuit breaker - abort test if Sockethub becomes unavailable
+const MAX_CONSECUTIVE_FAILURES = 10; // Consecutive failures before triggering circuit breaker
+const ALERT_INTERVAL_MS = 5000; // Alert every 5 seconds when circuit breaker is open
+
+let consecutiveConnectionFailures = 0;
+let circuitBreakerTriggered = false;
+let lastAlertTime = 0;
+let lastSuccessTime = Date.now();
+
+function recordSuccess() {
+    consecutiveConnectionFailures = 0;
+    lastSuccessTime = Date.now();
+}
+
+function recordFailure() {
+    consecutiveConnectionFailures++;
+}
+
 module.exports = {
     setupClient,
     sendCredentials,
@@ -20,9 +38,40 @@ module.exports = {
  * Setup Sockethub client for this virtual user
  */
 function setupClient(context, events, done) {
+    // Circuit breaker - abort if server appears down
+    if (circuitBreakerTriggered) {
+        const now = Date.now();
+        if (now - lastAlertTime > ALERT_INTERVAL_MS) {
+            console.error(
+                `\n⚠️  CIRCUIT BREAKER OPEN: Sockethub unavailable (${consecutiveConnectionFailures} failures). Waiting for test to end...\n`,
+            );
+            lastAlertTime = now;
+        }
+        events.emit("counter", "sockethub.circuit_breaker", 1);
+        return done(new Error("Circuit breaker open"));
+    }
+
+    if (
+        consecutiveConnectionFailures >= MAX_CONSECUTIVE_FAILURES &&
+        !circuitBreakerTriggered
+    ) {
+        circuitBreakerTriggered = true;
+        const downtime = Math.round((Date.now() - lastSuccessTime) / 1000);
+        console.error(
+            `\n🛑 CIRCUIT BREAKER TRIGGERED: ${consecutiveConnectionFailures} consecutive failures.\n   Sockethub has been down for ~${downtime}s\n   Aborting new connections. Press Ctrl+C to stop the test.\n`,
+        );
+        lastAlertTime = Date.now();
+        events.emit("counter", "sockethub.circuit_breaker", 1);
+        return done(
+            new Error("Circuit breaker triggered - server unavailable"),
+        );
+    }
+
     const socket = io("http://localhost:10550", {
         path: "/sockethub",
         transports: ["websocket"],
+        reconnection: false, // Don't auto-reconnect during stress tests
+        timeout: 2000,
     });
 
     context.vars.client = new SockethubClient(socket);
@@ -34,23 +83,39 @@ function setupClient(context, events, done) {
     socket.on("connect", () => {
         events.emit("counter", "sockethub.connected", 1);
         context.vars.connected = true;
+        recordSuccess();
     });
 
     socket.on("connect_error", (err) => {
         events.emit("counter", "sockethub.connect_error", 1);
-        console.error("Connection error:", err.message);
+        recordFailure();
+        // Only log first few errors
+        if (consecutiveConnectionFailures <= 3) {
+            console.error(
+                `Connection error (${consecutiveConnectionFailures}): ${err.message}`,
+            );
+        }
         context.vars.errors.push(`Connection: ${err.message}`);
+    });
+
+    socket.on("disconnect", (reason) => {
+        if (reason === "transport close" || reason === "transport error") {
+            recordFailure();
+        }
     });
 
     // Wait for connection or timeout
     setTimeout(() => {
         if (!context.vars.connected) {
-            console.error("Connection timeout - socket never connected");
+            recordFailure();
+            if (consecutiveConnectionFailures <= 3) {
+                console.error("Connection timeout - socket never connected");
+            }
             events.emit("counter", "sockethub.connect_timeout", 1);
             context.vars.errors.push("Connection timeout");
         }
         done();
-    }, 1000);
+    }, 2000);
 }
 
 /**
@@ -83,8 +148,9 @@ function sendCredentials(context, events, done) {
             type: "person",
         },
         object: {
+            id: `creds-${context.vars.$uuid}`,
             type: "credentials",
-            secret: "test-secret",
+            secret: `test-secret-${context.vars.$uuid}-with-sufficient-entropy`,
         },
     };
 
@@ -115,6 +181,7 @@ function sendDummyEcho(context, events, done) {
             type: "person",
         },
         object: {
+            id: `echo-${Date.now()}`,
             type: "message",
             content: `Test echo ${Date.now()}`,
         },
@@ -151,8 +218,12 @@ function sendXMPPMessage(context, events, done) {
             id: actorId,
             type: "person",
         },
-        target: "testroom@conference.localhost",
+        target: {
+            id: "testroom@conference.localhost",
+            type: "room",
+        },
         object: {
+            id: `xmpp-${Date.now()}`,
             type: "message",
             content: `XMPP test ${Date.now()}`,
         },

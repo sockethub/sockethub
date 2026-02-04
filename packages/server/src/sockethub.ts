@@ -113,7 +113,7 @@ class Sockethub {
             new CredentialsStore(
                 this.parentId,
                 socket.id,
-                this.parentSecret1 + sessionSecret,
+                crypto.deriveSecret(this.parentSecret1, sessionSecret),
                 config.get("redis"),
             );
 
