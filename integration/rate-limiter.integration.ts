@@ -28,6 +28,36 @@ describe("Rate Limiter Integration Tests", () => {
         });
     }
 
+    async function stopSockethubProcess(process: ChildProcess) {
+        const waitForExit = (signal: NodeJS.Signals, timeoutMs: number) =>
+            new Promise<boolean>((resolve) => {
+                if (process.exitCode !== null || process.signalCode !== null) {
+                    resolve(true);
+                    return;
+                }
+
+                const onExit = () => {
+                    clearTimeout(timeoutId);
+                    resolve(true);
+                };
+
+                const timeoutId = setTimeout(() => {
+                    process.off("exit", onExit);
+                    resolve(false);
+                }, timeoutMs);
+
+                process.once("exit", onExit);
+                process.kill(signal);
+            });
+
+        const exitedAfterTerm = await waitForExit("SIGTERM", 3000);
+        if (exitedAfterTerm) {
+            return;
+        }
+
+        await waitForExit("SIGKILL", 1000);
+    }
+
     beforeAll(async () => {
         const port = Number.parseInt(config.sockethub.port, 10);
         usingExternalSockethub = await isPortOpen("localhost", port);
@@ -97,7 +127,7 @@ describe("Rate Limiter Integration Tests", () => {
             client.disconnect();
         }
         if (sockethubProcess && !sockethubProcess.killed) {
-            sockethubProcess.kill("SIGKILL");
+            await stopSockethubProcess(sockethubProcess);
             sockethubProcess = undefined;
         }
         await new Promise((resolve) => setTimeout(resolve, 200));

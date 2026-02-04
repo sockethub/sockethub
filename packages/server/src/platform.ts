@@ -27,6 +27,7 @@ import type {
 } from "@sockethub/schemas";
 import config from "./config";
 
+// Simple wrapper function to help with testing
 export function derivePlatformCredentialsSecret(
     parentSecret: string,
     sessionSecret: string,
