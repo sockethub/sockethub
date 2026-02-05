@@ -2,6 +2,7 @@ import { ObjectTypesList } from "./helpers/objects.js";
 import { ActivityObjectSchema } from "./schemas/activity-object.js";
 import { ActivityStreamSchema } from "./schemas/activity-stream.js";
 import { PlatformSchema } from "./schemas/platform.js";
+import { SockethubConfigSchema } from "./schemas/sockethub-config.js";
 import {
     addPlatformSchema,
     getPlatformSchema,
@@ -21,6 +22,7 @@ export {
     PlatformSchema,
     ActivityObjectSchema,
     ActivityStreamSchema,
+    SockethubConfigSchema,
     ObjectTypesList,
 };
 

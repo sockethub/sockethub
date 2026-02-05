@@ -15,7 +15,11 @@ Sockethub uses a JSON configuration file:
 {
   "$schema": "https://sockethub.org/schemas/3.0.0-alpha.4/sockethub-config.json",
   "examples": true,
-  "log_file": "",
+  "logging": {
+    "level": "info",
+    "fileLevel": "debug",
+    "file": "sockethub.log"
+  },
   "packageConfig": {
     "@sockethub/activity-streams": {
       "specialObjs": ["credentials"],
@@ -34,6 +38,11 @@ Sockethub uses a JSON configuration file:
     "host": "localhost",
     "port": 10550,
     "path": "/"
+  },
+  "rateLimiter": {
+    "windowMs": 1000,
+    "maxRequests": 100,
+    "blockDurationMs": 5000
   },
   "redis": {
     "url": "redis://127.0.0.1:6379"
@@ -97,6 +106,25 @@ Platforms are specified as an array of package names:
 
 To disable a platform, remove it from the array.
 
+### Rate Limiting
+
+Protect against event flooding from individual clients:
+
+```json
+{
+  "rateLimiter": {
+    "windowMs": 1000,          // Time window in milliseconds
+    "maxRequests": 100,        // Max events per window per client
+    "blockDurationMs": 5000    // Block duration after exceeding limit
+  }
+}
+```
+
+**Default limits:** 100 events per second per client, 5 second block.
+
+The rate limiter operates per WebSocket connection and blocks clients that exceed the configured
+thresholds. Blocked clients are automatically unblocked after the `blockDurationMs` expires.
+
 ### Redis Configuration
 
 ```json
@@ -129,10 +157,80 @@ Enable/disable example pages:
 
 ### Logging
 
+Sockethub uses Winston for logging with separate log levels for console and file output.
+
+**Log Levels:** `error`, `warn`, `info`, `debug`
+
+#### Logging Configuration File
+
 ```json
 {
-  "log_file": "/var/log/sockethub/app.log"  // Empty string for console only
+  "logging": {
+    "level": "info",           // Console log level
+    "fileLevel": "debug",      // File log level
+    "file": "sockethub.log"    // Path to log file (empty string disables file logging)
+  }
 }
+```
+
+**Defaults:**
+
+- Console: `info` (shows info, warn, error)
+- File: `debug` (logs everything including debug messages)
+- File path: `sockethub.log` in current directory
+
+#### Logging Environment Variables
+
+Override log levels via environment:
+
+```bash
+# Console log level
+export LOG_LEVEL=warn
+
+# File log level  
+export LOG_FILE_LEVEL=debug
+
+# Example: verbose file logging, quiet console
+LOG_LEVEL=error LOG_FILE_LEVEL=debug sockethub
+```
+
+#### Logging Configuration Priority
+
+For log settings (highest to lowest):
+
+1. Environment variables (`LOG_LEVEL`, `LOG_FILE_LEVEL`)
+2. Configuration file (`logging.level`, `logging.fileLevel`, `logging.file`)
+3. Defaults (`info` for console, `debug` for file)
+
+#### Common Configurations
+
+**Development** (verbose console, no file):
+
+```json
+{
+  "logging": {
+    "level": "debug",
+    "file": ""
+  }
+}
+```
+
+**Production** (quiet console, detailed file):
+
+```json
+{
+  "logging": {
+    "level": "warn",
+    "fileLevel": "info",
+    "file": "/var/log/sockethub/app.log"
+  }
+}
+```
+
+**Troubleshooting** (everything everywhere):
+
+```bash
+LOG_LEVEL=debug LOG_FILE_LEVEL=debug sockethub
 ```
 
 ### Sentry Integration
@@ -174,11 +272,12 @@ export PORT=10550
 # Redis connection
 export REDIS_URL=redis://localhost:6379
 
+# Logging
+export LOG_LEVEL=info        # Console log level (error, warn, info, debug)
+export LOG_FILE_LEVEL=debug  # File log level (error, warn, info, debug)
+
 # Sentry (optional)
 export SENTRY_DSN=https://your-dsn@sentry.io/project-id
-
-# Debug logging
-export DEBUG=sockethub*
 ```
 
 ## Environment Examples
@@ -199,6 +298,11 @@ export DEBUG=sockethub*
     "port": 10550,
     "path": "/"
   },
+  "rateLimiter": {
+    "windowMs": 1000,
+    "maxRequests": 100,
+    "blockDurationMs": 5000
+  },
   "redis": {
     "url": "redis://127.0.0.1:6379"
   },
@@ -214,7 +318,11 @@ export DEBUG=sockethub*
 ```json
 {
   "examples": false,
-  "log_file": "/var/log/sockethub/app.log",
+  "logging": {
+    "level": "warn",
+    "fileLevel": "info",
+    "file": "/var/log/sockethub/app.log"
+  },
   "sockethub": {
     "port": 10550,
     "host": "0.0.0.0",
@@ -225,6 +333,11 @@ export DEBUG=sockethub*
     "host": "sockethub.example.com",
     "port": 443,
     "path": "/"
+  },
+  "rateLimiter": {
+    "windowMs": 1000,
+    "maxRequests": 100,
+    "blockDurationMs": 5000
   },
   "redis": {
     "url": "redis://username:password@redis.example.com:6379"
@@ -245,10 +358,18 @@ export DEBUG=sockethub*
 
 ## Configuration Priority
 
+**General settings:**
+
 1. Command-line arguments (highest priority)
 2. Environment variables
 3. Configuration file
 4. Default values (lowest priority)
+
+**Log level settings:**
+
+1. Environment variables (`LOG_LEVEL`, `LOG_FILE_LEVEL`) (highest priority)
+2. Configuration file (`logging.level`, `logging.fileLevel`, `logging.file`)
+3. Default values (`info` for console, `debug` for file) (lowest priority)
 
 ## Process Management
 

@@ -1,0 +1,37 @@
+name: Stress Smoke Test
+on:
+  pull_request:
+
+jobs:
+
+  smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: sudo chown -R $USER:$USER ${{ github.workspace }}
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Use Bun latest
+        uses: oven-sh/setup-bun@v2.0.1
+        with:
+          bun-version: latest
+      - run: bun install
+      - run: bun run build
+
+      - run: docker compose build --build-arg bun_version=latest
+
+      - run: bun run docker:start
+      - run: sleep 5
+
+      - name: Verify Sockethub is listening
+        run: nc -zv localhost 10550
+
+      - name: Verify Redis is listening
+        run: nc -zv localhost 6379
+
+      - name: Stress Smoke Test
+        run: bun run stress:ci
+
+      - name: Sockethub Logs
+        if: always()
+        run: docker logs sockethub-sockethub-1

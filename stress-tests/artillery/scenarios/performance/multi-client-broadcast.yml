@@ -1,0 +1,27 @@
+config:
+  target: "http://localhost:10550"
+  phases:
+    - duration: 60
+      arrivalRate: 20
+      name: "20 clients in shared XMPP room"
+  processor: "../../processors/sockethub-client.js"
+
+scenarios:
+  - name: "Multi-Client Broadcast Performance"
+    flow:
+      # Setup client and connect
+      - function: "setupClient"
+      - think: 0.5
+
+      # Send credentials
+      - function: "sendCredentials"
+      - think: 0.5
+
+      # Send XMPP messages to shared room
+      - loop:
+          - function: "sendXMPPMessage"
+          - think: 0.2
+        count: 25
+
+      # Cleanup
+      - function: "disconnectClient"

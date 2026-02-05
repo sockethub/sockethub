@@ -1,0 +1,28 @@
+config:
+  target: "http://localhost:10550"
+  phases:
+    - duration: 120
+      arrivalRate: 10
+      rampTo: 100
+      name: "Ramp message rate from 10 to 1000 msg/sec"
+  processor: "../../processors/sockethub-client.js"
+
+scenarios:
+  - name: "Message Flood Stress Test"
+    flow:
+      # Setup client and connect
+      - function: "setupClient"
+      - think: 0.5
+
+      # Send credentials
+      - function: "sendCredentials"
+      - think: 0.5
+
+      # Flood with XMPP messages
+      - loop:
+          - function: "sendXMPPMessage"
+          - think: 0.01
+        count: 100
+
+      # Cleanup
+      - function: "disconnectClient"

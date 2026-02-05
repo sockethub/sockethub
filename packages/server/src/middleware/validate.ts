@@ -1,8 +1,8 @@
 /**
  * responsible for handling the validation and expansion (when applicable) of all incoming objects
  */
-import debug from "debug";
 
+import { createLogger } from "@sockethub/logger";
 import {
     type ActivityStream,
     type MiddlewareCallback,
@@ -27,9 +27,9 @@ export default function validate(
         });
     }
 
-    const sessionLog = debug(`sockethub:server:validate:${sockethubId}`);
+    const sessionLog = createLogger(`server:validate:${sockethubId}`);
     return (msg: ActivityStream, done: MiddlewareCallback) => {
-        sessionLog(`applying schema validation for ${type}`);
+        sessionLog.debug(`applying schema validation for ${type}`);
         if (type === "activity-object") {
             const err = validateActivityObject(msg);
             if (err) {

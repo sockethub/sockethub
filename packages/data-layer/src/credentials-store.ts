@@ -1,9 +1,57 @@
 import { crypto } from "@sockethub/crypto";
+import {
+    type Logger,
+    createLogger,
+    getLoggerNamespace,
+} from "@sockethub/logger";
 import type { CredentialsObject } from "@sockethub/schemas";
-import debug, { type Debugger } from "debug";
+import IORedis, { type Redis } from "ioredis";
 import SecureStore from "secure-store-redis";
 
+import { buildCredentialsStoreId } from "./queue-id.js";
 import type { RedisConfig } from "./types.js";
+
+let sharedCredentialsRedisConnection: Redis | null = null;
+
+/**
+ * Creates or returns a shared Redis connection for CredentialsStore instances.
+ * This prevents connection exhaustion by reusing a single connection across
+ * all credential storage operations.
+ *
+ * @param config - Redis configuration
+ * @returns Shared Redis connection instance
+ */
+export function createCredentialsRedisConnection(config: RedisConfig): Redis {
+    if (!sharedCredentialsRedisConnection) {
+        sharedCredentialsRedisConnection = new IORedis(config.url, {
+            connectionName: config.connectionName,
+            enableOfflineQueue: false,
+            maxRetriesPerRequest: config.maxRetriesPerRequest ?? null,
+            connectTimeout: config.connectTimeout ?? 10000,
+            disconnectTimeout: config.disconnectTimeout ?? 5000,
+            lazyConnect: false,
+            retryStrategy: (times: number) => {
+                if (times > 3) return null;
+                return Math.min(2 ** (times - 1) * 200, 2000);
+            },
+        });
+    }
+    return sharedCredentialsRedisConnection;
+}
+
+/**
+ * Resets the shared credentials Redis connection. Used primarily for testing.
+ */
+export async function resetSharedCredentialsRedisConnection(): Promise<void> {
+    if (sharedCredentialsRedisConnection) {
+        try {
+            sharedCredentialsRedisConnection.disconnect(false);
+        } catch (err) {
+            // Ignore disconnect errors during cleanup
+        }
+        sharedCredentialsRedisConnection = null;
+    }
+}
 
 export interface CredentialsStoreInterface {
     get(
@@ -14,15 +62,16 @@ export interface CredentialsStoreInterface {
 }
 
 export async function verifySecureStore(config: RedisConfig): Promise<void> {
-    const log = debug("sockethub:data-layer:credentials-store");
+    const log = createLogger("data-layer:verify-secure-store");
+    const sharedClient = createCredentialsRedisConnection(config);
     const ss = new SecureStore({
-        uid: "sockethub:data-layer:verify",
+        uid: "data-layer:verify",
         secret: "aB3#xK9mP2qR7wZ4cT8nY6vH1jL5fD0s",
-        redis: config,
+        redis: { client: sharedClient },
     });
     await ss.connect();
     await ss.disconnect();
-    log("redis connection verified");
+    log.info("secure store connection verified");
 }
 
 /**
@@ -51,7 +100,7 @@ export class CredentialsStore implements CredentialsStoreInterface {
     readonly uid: string;
     store: SecureStore;
     objectHash: (o: unknown) => string;
-    private readonly log: Debugger;
+    private readonly log: Logger;
 
     /**
      * Creates a new CredentialsStore instance.
@@ -73,11 +122,19 @@ export class CredentialsStore implements CredentialsStoreInterface {
                 "CredentialsStore secret must be 32 chars in length",
             );
         }
-        this.uid = `sockethub:data-layer:credentials-store:${parentId}:${sessionId}`;
-        this.log = debug(this.uid);
+        // Create logger with full namespace (context will be prepended automatically)
+        this.log = createLogger(
+            `data-layer:credentials-store:${parentId}:${sessionId}`,
+        );
+
         this.initCrypto();
+
+        // Use the canonical, context-free namespace for credentials storage keys
+        this.uid = buildCredentialsStoreId(parentId, sessionId);
+        // Keep full logger namespace for Redis connection naming
+        redisConfig.connectionName = getLoggerNamespace(this.log);
         this.initSecureStore(secret, redisConfig);
-        this.log("initialized");
+        this.log.debug("initialized");
     }
 
     initCrypto() {
@@ -85,23 +142,26 @@ export class CredentialsStore implements CredentialsStoreInterface {
     }
 
     initSecureStore(secret: string, redisConfig: RedisConfig) {
+        // Use shared Redis connection for connection pooling
+        const sharedClient = createCredentialsRedisConnection(redisConfig);
         this.store = new SecureStore({
             uid: this.uid,
             secret: secret,
-            redis: redisConfig,
+            redis: { client: sharedClient },
         });
     }
 
     /**
-     * Gets the credentials for a given actor ID
+     * Gets the credentials for a given actor ID.
      * @param actor
-     * @param credentialsHash - Optional hash to validate credentials. If undefined, validation is skipped.
+     * @param credentialsHash - Optional hash to validate credentials.
+     *   If undefined, validation is skipped.
      */
     async get(
         actor: string,
         credentialsHash: string | undefined,
     ): Promise<CredentialsObject> {
-        this.log(`get credentials for ${actor}`);
+        this.log.debug(`get credentials for ${actor}`);
         if (!this.store.isConnected) {
             await this.store.connect();
         }

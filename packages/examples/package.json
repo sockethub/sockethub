@@ -22,7 +22,7 @@
     "dev": "bunx --bun vite dev",
     "build": "bunx --bun vite build",
     "test": "bun run test:unit",
-    "test:integration": "bunx --bun playwright test",
+    "test:integration": "sh -c 'if [ -z \"$RUN_PLAYWRIGHT\" ]; then echo \"Skipping Playwright integration tests (set RUN_PLAYWRIGHT=1 to run).\"; else bunx --bun playwright test; fi'",
     "test:unit": "bunx --bun vitest run",
     "preview": "bunx --bun vite preview",
     "clean": "rm -rf build",

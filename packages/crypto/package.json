@@ -42,11 +42,11 @@
   },
   "dependencies": {
     "@sockethub/schemas": "^3.0.0-alpha.10",
-    "object-hash": "^3.0.0"
+    "object-hash": "^3.0.0",
+    "secure-store-redis": "^4.1.0"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/debug": "^4.1.12",
     "@types/object-hash": "^3.0.6",
     "@types/sinon": "^17.0.4",
     "sinon": "^17.0.2"

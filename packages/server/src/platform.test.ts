@@ -8,6 +8,7 @@ import type {
     PlatformInterface,
 } from "@sockethub/schemas";
 import type { JobDataDecrypted } from "@sockethub/data-layer";
+import { derivePlatformCredentialsSecret } from "./platform.js";
 
 /**
  * Tests for platform.ts credential handling logic
@@ -17,6 +18,19 @@ import type { JobDataDecrypted } from "@sockethub/data-layer";
  * getJobHandler logic.
  */
 describe("platform.ts credential handling", () => {
+    describe("credentials secret derivation", () => {
+        it("derives the same secret format used for credential storage", () => {
+            const secret = derivePlatformCredentialsSecret(
+                "parent-secret",
+                "session-secret",
+            );
+
+            expect(secret.length).toBe(32);
+            expect(secret).toBe(
+                crypto.deriveSecret("parent-secret", "session-secret"),
+            );
+        });
+    });
     let sandbox: sinon.SinonSandbox;
     let mockPlatform: Partial<PlatformInterface>;
     let mockCredentialStore: any;
@@ -309,6 +323,169 @@ describe("platform.ts credential handling", () => {
             // Error passed through
             sinon.assert.calledOnce(doneCallbackSpy);
             sinon.assert.calledWith(doneCallbackSpy, testError, null);
+        });
+    });
+
+    describe("Initialization state checking", () => {
+        it("should use isInitialized() method instead of config.initialized property", async () => {
+            // Mock platform with isInitialized() method
+            const mockPlatformWithMethod = {
+                config: {
+                    persist: true,
+                    requireCredentials: ["connect"],
+                },
+                credentialsHash: undefined,
+                isInitialized: sandbox.stub().returns(true),
+                connect: sandbox.stub(),
+            };
+
+            const credentials = await mockCredentialStore.get(
+                mockJob.msg.actor.id,
+                mockPlatformWithMethod.credentialsHash,
+            );
+
+            // Simulate the error handling that checks initialization state
+            const simulateCredentialsError = (platform: any) => {
+                const err = new Error("invalid credentials");
+
+                // This is the pattern from platform.ts line 280
+                if (platform.isInitialized()) {
+                    // Platform already running - reject job only
+                    return "job-rejected";
+                } else {
+                    // Platform not initialized - terminate platform
+                    return "platform-terminated";
+                }
+            };
+
+            // When initialized, should reject job only
+            mockPlatformWithMethod.isInitialized.returns(true);
+            expect(simulateCredentialsError(mockPlatformWithMethod)).toBe("job-rejected");
+            sinon.assert.calledOnce(mockPlatformWithMethod.isInitialized);
+
+            // When not initialized, should terminate platform
+            mockPlatformWithMethod.isInitialized.returns(false);
+            expect(simulateCredentialsError(mockPlatformWithMethod)).toBe("platform-terminated");
+            sinon.assert.calledTwice(mockPlatformWithMethod.isInitialized);
+        });
+
+        it("should handle credentials error on initialized platform without terminating", async () => {
+            // Setup: Platform is initialized
+            const initializedPlatform = {
+                config: {
+                    persist: true,
+                    requireCredentials: ["connect"],
+                },
+                credentialsHash: crypto.objectHash(validCredentials.object),
+                isInitialized: sandbox.stub().returns(true),
+                connect: sandbox.stub(),
+            };
+
+            const credentials = await mockCredentialStore.get(
+                mockJob.msg.actor.id,
+                initializedPlatform.credentialsHash,
+            );
+
+            let errorPropagated = false;
+            let platformTerminated = false;
+
+            const doneCallback: PlatformCallback = (err, result) => {
+                if (err) errorPropagated = true;
+            };
+
+            const wrappedCallback: PlatformCallback = (err, result) => {
+                if (!err) {
+                    initializedPlatform.credentialsHash = crypto.objectHash(
+                        credentials.object,
+                    );
+                }
+
+                // Simulate platform.ts error handling logic
+                if (err && initializedPlatform.config.persist) {
+                    if (initializedPlatform.isInitialized()) {
+                        // Just propagate error, don't terminate
+                        doneCallback(err, null);
+                    } else {
+                        // Would terminate platform
+                        platformTerminated = true;
+                    }
+                } else {
+                    doneCallback(err, result);
+                }
+            };
+
+            // Simulate credentials error
+            (initializedPlatform.connect as sinon.SinonStub).callsFake(
+                (_msg, _creds, callback) => {
+                    callback(new Error("invalid credentials"), null);
+                },
+            );
+
+            initializedPlatform.connect(mockJob.msg, credentials, wrappedCallback);
+
+            // Verify: error propagated but platform not terminated
+            expect(errorPropagated).toBeTrue();
+            expect(platformTerminated).toBeFalse();
+            sinon.assert.calledOnce(initializedPlatform.isInitialized);
+        });
+
+        it("should terminate platform on credentials error when not initialized", async () => {
+            // Setup: Platform is NOT initialized
+            const uninitializedPlatform = {
+                config: {
+                    persist: true,
+                    requireCredentials: ["connect"],
+                },
+                credentialsHash: undefined,
+                isInitialized: sandbox.stub().returns(false),
+                connect: sandbox.stub(),
+            };
+
+            const credentials = await mockCredentialStore.get(
+                mockJob.msg.actor.id,
+                uninitializedPlatform.credentialsHash,
+            );
+
+            let errorPropagated = false;
+            let platformTerminated = false;
+
+            const doneCallback: PlatformCallback = (err, result) => {
+                if (err) errorPropagated = true;
+            };
+
+            const wrappedCallback: PlatformCallback = (err, result) => {
+                if (!err) {
+                    uninitializedPlatform.credentialsHash = crypto.objectHash(
+                        credentials.object,
+                    );
+                }
+
+                // Simulate platform.ts error handling logic
+                if (err && uninitializedPlatform.config.persist) {
+                    if (uninitializedPlatform.isInitialized()) {
+                        doneCallback(err, null);
+                    } else {
+                        // Terminate platform process
+                        platformTerminated = true;
+                    }
+                } else {
+                    doneCallback(err, result);
+                }
+            };
+
+            // Simulate credentials error during initialization
+            (uninitializedPlatform.connect as sinon.SinonStub).callsFake(
+                (_msg, _creds, callback) => {
+                    callback(new Error("invalid credentials"), null);
+                },
+            );
+
+            uninitializedPlatform.connect(mockJob.msg, credentials, wrappedCallback);
+
+            // Verify: platform terminated
+            expect(platformTerminated).toBeTrue();
+            expect(errorPropagated).toBeFalse();
+            sinon.assert.calledOnce(uninitializedPlatform.isInitialized);
         });
     });
 

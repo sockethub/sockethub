@@ -344,9 +344,9 @@ describe("PlatformInstance", () => {
                 // Setup: Platform is already initialized
                 pi.config = {
                     persist: true,
-                    initialized: true,
                     requireCredentials: ["connect"],
                 };
+                pi["initialized"] = true; // Set private property for test
                 pi.flaggedForTermination = false;
 
                 const job = {
@@ -375,7 +375,7 @@ describe("PlatformInstance", () => {
                 sinon.assert.notCalled(queueMock.pause);
 
                 // 3. Platform should remain initialized
-                expect(pi.config.initialized).toBe(true);
+                expect(pi.isInitialized()).toBe(true);
 
                 // 4. Error should still be sent to client
                 sinon.assert.called(pi.sendToClient);
@@ -395,9 +395,9 @@ describe("PlatformInstance", () => {
 
                 pi.config = {
                     persist: true,
-                    initialized: true,
                     requireCredentials: ["connect"],
                 };
+                pi["initialized"] = true; // Set private property for test
                 pi.flaggedForTermination = false;
                 pi.sendToClient = sandbox.stub();
 
@@ -417,7 +417,7 @@ describe("PlatformInstance", () => {
 
                 // Platform should still be operational
                 expect(pi.flaggedForTermination).toBe(false);
-                expect(pi.config.initialized).toBe(true);
+                expect(pi.isInitialized()).toBe(true);
 
                 // Second job succeeds
                 const successJob = {
@@ -435,7 +435,7 @@ describe("PlatformInstance", () => {
 
                 // Platform should still be alive
                 expect(pi.flaggedForTermination).toBe(false);
-                expect(pi.config.initialized).toBe(true);
+                expect(pi.isInitialized()).toBe(true);
             });
         });
 
@@ -485,7 +485,7 @@ describe("PlatformInstance", () => {
                 sinon.assert.calledOnce(queueMock.pause);
 
                 // 3. Platform should remain uninitialized
-                expect(pi.config.initialized).toBe(false);
+                expect(pi.isInitialized()).toBe(false);
 
                 // 4. Error should still be sent to client
                 sinon.assert.called(pi.sendToClient);

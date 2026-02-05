@@ -1,0 +1,10 @@
+# Generated reports
+reports/*.json
+reports/*.html
+
+# Baseline profiles (system-specific)
+baselines/*.json
+
+# Temp files
+*.tmp
+temp-*

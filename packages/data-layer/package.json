@@ -41,23 +41,24 @@
     "clean:deps": "rm -rf node_modules",
     "doc": "typedoc --options typedoc.json",
     "test": "bun test src/",
-    "test:integration": "DEBUG=ioredis*,bullmq*,sockethub* bun test ./integration/redis.integration.ts"
+    "test:integration": "bun test ./integration/redis.integration.ts"
   },
   "dependencies": {
     "@sockethub/crypto": "^1.0.0-alpha.10",
+    "@sockethub/logger": "^1.0.0-alpha.10",
     "@sockethub/schemas": "^3.0.0-alpha.10",
     "bullmq": "^5.66.5",
-    "debug": "^4.4.3",
     "ioredis": "^5.9.2",
-    "secure-store-redis": "^4.0.0"
+    "secure-store-redis": "^4.1.0"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/debug": "^4.1.12",
     "@types/sinon": "^17.0.4",
+    "@types/winston": "^2.4.4",
     "sinon": "^17.0.2",
     "typedoc": "^0.28.16",
-    "typedoc-plugin-markdown": "^4.9.0"
+    "typedoc-plugin-markdown": "^4.9.0",
+    "winston": "^3.19.0"
   },
   "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
 }
