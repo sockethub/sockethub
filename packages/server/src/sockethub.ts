@@ -152,7 +152,6 @@ class Sockethub {
                         data: ActivityStream,
                         next: (data?: ActivityStream | Error) => void,
                     ) => {
-                        void data;
                         next();
                     },
                 )
@@ -180,7 +179,6 @@ class Sockethub {
                         data: ActivityObject,
                         next: (data?: ActivityObject | Error) => void,
                     ) => {
-                        void data;
                         next();
                     },
                 )
