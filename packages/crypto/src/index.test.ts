@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as sinon from "sinon";
+import { SecretValidator } from "secure-store-redis";
 
 import { Crypto, getPlatformId } from "./index";
 
@@ -56,6 +57,12 @@ describe("crypto", () => {
         it("returns a 32-char string", () => {
             const result = crypto.deriveSecret("secret1", "secret2");
             expect(result.length).toEqual(32);
+        });
+
+        it("returns a validator-safe secret", () => {
+            const result = crypto.deriveSecret("secret1", "secret2");
+            const validation = SecretValidator.validate(result);
+            expect(validation.valid).toEqual(true);
         });
 
         it("is deterministic - same inputs produce same output", () => {
