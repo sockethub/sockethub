@@ -77,6 +77,51 @@ export function waitFor(
     });
 }
 
+function safePreview(value, limit = 1000) {
+    try {
+        const raw = JSON.stringify(value);
+        if (!raw) {
+            return String(value);
+        }
+        return raw.length > limit ? `${raw.slice(0, limit)}…` : raw;
+    } catch (error) {
+        return `<<unserializable:${error.message}>>`;
+    }
+}
+
+export function emitWithAck(
+    socket,
+    event,
+    payload,
+    { timeout = config.timeouts.message, label = "" } = {},
+) {
+    return new Promise((resolve, reject) => {
+        const socketId = socket?.id ?? "unknown";
+        const labelText = label ? ` (${label})` : "";
+        const payloadPreview = safePreview(payload);
+
+        console.log(
+            `[browser-test] emit${labelText} event=${event} socket=${socketId} payload=${payloadPreview}`,
+        );
+
+        const timer = setTimeout(() => {
+            const message = `Timeout waiting for ack after ${timeout}ms for event=${event}${labelText} socket=${socketId} payload=${payloadPreview}`;
+            console.error(`[browser-test] ${message}`);
+            reject(new Error(message));
+        }, timeout);
+
+        socket.emit(event, payload, (...args) => {
+            clearTimeout(timer);
+            if (args.length > 1) {
+                console.log(
+                    `[browser-test] ack${labelText} event=${event} socket=${socketId} extraArgs=${args.length - 1}`,
+                );
+            }
+            resolve(args[0]);
+        });
+    });
+}
+
 // Helper function to set XMPP credentials
 export function setXMPPCredentials(
     sh,
@@ -85,120 +130,100 @@ export function setXMPPCredentials(
     username = config.prosody.testUser.username,
     password = config.prosody.testUser.password,
 ) {
-    return new Promise((resolve, reject) => {
-        const creds = {
-            actor: jid,
-            context: "xmpp",
+    const creds = {
+        actor: jid,
+        context: "xmpp",
+        type: "credentials",
+        object: {
             type: "credentials",
-            object: {
-                type: "credentials",
-                password,
-                resource: resource,
-                userAddress: `${username}@${config.prosody.host}`,
-                // We use xmpp://user@host:port to get around limitations with our prosody docker instance.
-                // - The port is specified explicitly to bypass DNS SRV record lookups that were timing out
-                // - The `xmpp://` URI scheme is specified explicitly to enable a plain-text connection,
-                // avoiding the TLS negotiation issues that were causing connection failures.
-                server: `xmpp://${config.prosody.host}:${config.prosody.port}`,
-            },
-        };
-        console.log("sending credentials: ", creds);
-        sh.socket.emit("credentials", creds, (response) => {
-            if (response?.error) {
-                reject(
-                    new Error(
-                        `Credentials failed for ${jid}: ${response.error}`,
-                    ),
-                );
-            } else {
-                resolve();
-            }
-        });
+            password,
+            resource: resource,
+            userAddress: `${username}@${config.prosody.host}`,
+            // We use xmpp://user@host:port to get around limitations with our prosody docker instance.
+            // - The port is specified explicitly to bypass DNS SRV record lookups that were timing out
+            // - The `xmpp://` URI scheme is specified explicitly to enable a plain-text connection,
+            // avoiding the TLS negotiation issues that were causing connection failures.
+            server: `xmpp://${config.prosody.host}:${config.prosody.port}`,
+        },
+    };
+    console.log("sending credentials: ", creds);
+    return emitWithAck(sh.socket, "credentials", creds, {
+        label: "xmpp credentials",
+    }).then((response) => {
+        if (response?.error) {
+            throw new Error(`Credentials failed for ${jid}: ${response.error}`);
+        }
     });
 }
 
 // Helper function to connect to XMPP
 export function connectXMPP(sh, jid) {
-    return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-            reject(
-                new Error(
-                    `XMPP connect timeout after ${config.timeouts.connect}ms`,
-                ),
-            );
-        }, config.timeouts.connect);
-
-        sh.socket.emit(
-            "message",
-            {
-                type: "connect",
-                actor: jid,
-                context: "xmpp",
-            },
-            (msg) => {
-                clearTimeout(timeout);
-                if (msg?.error) {
-                    reject(
-                        new Error(`Connect failed for ${jid}: ${msg.error}`),
-                    );
-                } else {
-                    resolve(msg);
-                }
-            },
-        );
+    return emitWithAck(
+        sh.socket,
+        "message",
+        {
+            type: "connect",
+            actor: jid,
+            context: "xmpp",
+        },
+        {
+            timeout: config.timeouts.connect,
+            label: "xmpp connect",
+        },
+    ).then((msg) => {
+        if (msg?.error) {
+            throw new Error(`Connect failed for ${jid}: ${msg.error}`);
+        }
+        return msg;
     });
 }
 
 // Helper function to join XMPP room
 export function joinXMPPRoom(sh, jid, room = config.prosody.room) {
-    return new Promise((resolve, reject) => {
-        sh.socket.emit(
-            "message",
-            {
-                type: "join",
-                actor: jid,
-                context: "xmpp",
-                target: {
-                    type: "room",
-                    id: room,
-                },
+    return emitWithAck(
+        sh.socket,
+        "message",
+        {
+            type: "join",
+            actor: jid,
+            context: "xmpp",
+            target: {
+                type: "room",
+                id: room,
             },
-            (msg) => {
-                if (msg?.error) {
-                    reject(new Error(`Join failed for ${jid}: ${msg.error}`));
-                } else {
-                    resolve(msg);
-                }
-            },
-        );
+        },
+        { label: "xmpp join" },
+    ).then((msg) => {
+        if (msg?.error) {
+            throw new Error(`Join failed for ${jid}: ${msg.error}`);
+        }
+        return msg;
     });
 }
 
 // Helper function to send XMPP message
 export function sendXMPPMessage(sh, jid, room, content) {
-    return new Promise((resolve, reject) => {
-        sh.socket.emit(
-            "message",
-            {
-                type: "send",
-                actor: jid,
-                context: "xmpp",
-                object: {
-                    type: "message",
-                    content,
-                },
-                target: {
-                    type: "room",
-                    id: room,
-                },
+    return emitWithAck(
+        sh.socket,
+        "message",
+        {
+            type: "send",
+            actor: jid,
+            context: "xmpp",
+            object: {
+                type: "message",
+                content,
             },
-            (msg) => {
-                if (msg?.error) {
-                    reject(new Error(`Send failed for ${jid}: ${msg.error}`));
-                } else {
-                    resolve(msg);
-                }
+            target: {
+                type: "room",
+                id: room,
             },
-        );
+        },
+        { label: "xmpp send" },
+    ).then((msg) => {
+        if (msg?.error) {
+            throw new Error(`Send failed for ${jid}: ${msg.error}`);
+        }
+        return msg;
     });
 }

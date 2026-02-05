@@ -2,6 +2,7 @@ import { expect } from "@esm-bundle/chai";
 import createTestUtils from "../utils.js";
 import {
     connectXMPP,
+    emitWithAck,
     getConfig,
     joinXMPPRoom,
     sendXMPPMessage,
@@ -88,7 +89,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
 
             const dummyMessageCount = 5;
             for (let i = 0; i < dummyMessageCount; i++) {
-                it(`sends echo ${i} and gets response`, (done) => {
+                it(`sends echo ${i} and gets response`, async () => {
                     const dummyObj = {
                         type: "echo",
                         actor: actor.id,
@@ -98,75 +99,70 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                             content: `hello world ${i}`,
                         },
                     };
-                    sc.socket.emit("message", dummyObj, (msg) => {
-                        if (msg?.error) {
-                            done(new Error(msg.error));
-                        } else {
-                            expect(msg.target).to.eql(
-                                sc.ActivityStreams.Object.get(actor.id),
-                            );
-                            expect(msg.actor.type).to.equal("platform");
-                            done();
-                        }
-                    });
+                    const msg = await emitWithAck(
+                        sc.socket,
+                        "message",
+                        dummyObj,
+                        { label: `dummy echo ${i}` },
+                    );
+                    if (msg?.error) {
+                        throw new Error(msg.error);
+                    }
+                    expect(msg.target).to.eql(
+                        sc.ActivityStreams.Object.get(actor.id),
+                    );
+                    expect(msg.actor.type).to.equal("platform");
                 });
             }
 
-            it("sends fail and returns error", (done) => {
+            it("sends fail and returns error", async () => {
                 const dummyObj = {
                     type: "fail",
                     actor: actor.id,
                     context: "dummy",
                     object: { type: "message", content: "failure message" },
                 };
-                sc.socket.emit("message", dummyObj, (msg) => {
-                    if (msg?.error) {
-                        dummyObj.error = "Error: failure message";
-                        dummyObj.actor = sc.ActivityStreams.Object.get(
-                            actor.id,
-                        );
-                        expect(msg).to.eql(dummyObj);
-                        done();
-                    } else {
-                        done(
-                            new Error(
-                                "didn't receive expected failure from dummy platform",
-                            ),
-                        );
-                    }
+                const msg = await emitWithAck(sc.socket, "message", dummyObj, {
+                    label: "dummy fail",
                 });
+                if (msg?.error) {
+                    dummyObj.error = "Error: failure message";
+                    dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
+                    expect(msg).to.eql(dummyObj);
+                } else {
+                    throw new Error(
+                        "didn't receive expected failure from dummy platform",
+                    );
+                }
             });
 
-            it("sends a throw and returns error", (done) => {
+            it("sends a throw and returns error", async () => {
                 const dummyObj = {
                     type: "throw",
                     actor: actor.id,
                     context: "dummy",
                     object: { type: "message", content: "failure message" },
                 };
-                sc.socket.emit("message", dummyObj, (msg) => {
-                    if (msg?.error) {
-                        dummyObj.error = "failure message";
-                        dummyObj.actor = sc.ActivityStreams.Object.get(
-                            actor.id,
-                        );
-                        expect(msg).to.eql(dummyObj);
-                        done();
-                    } else {
-                        done(
-                            new Error(
-                                "didn't receive expected failure from dummy platform",
-                            ),
-                        );
-                    }
+                const msg = await emitWithAck(sc.socket, "message", dummyObj, {
+                    label: "dummy throw",
                 });
+                if (msg?.error) {
+                    dummyObj.error = "failure message";
+                    dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
+                    expect(msg).to.eql(dummyObj);
+                } else {
+                    throw new Error(
+                        "didn't receive expected failure from dummy platform",
+                    );
+                }
             });
         });
 
         describe("Feeds", () => {
             describe("fetches a feed", () => {
-                it("gets expected results", (done) => {
-                    sc.socket.emit(
+                it("gets expected results", async () => {
+                    const msg = await emitWithAck(
+                        sc.socket,
                         "message",
                         {
                             context: "feeds",
@@ -176,27 +172,22 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                                 id: `${config.sockethub.url}/feed.xml`,
                             },
                         },
-                        (msg, second) => {
-                            expect(msg.type).to.eql("collection");
-                            expect(msg.items.length).to.eql(20);
-                            expect(msg.totalItems).to.eql(20);
-                            for (const m of msg.items) {
-                                expect(typeof m.object.content).to.equal(
-                                    "string",
-                                );
-                                expect(m.object.contentType).to.equal("html");
-                                expect(m.actor.type).to.equal("feed");
-                                expect(m.type).to.equal("post");
-                            }
-                            done(
-                                msg?.error
-                                    ? new Error(
-                                          `Failed to fetch ${msg.items?.[0]?.actor?.id || "feed"}: ${msg.error}`,
-                                      )
-                                    : undefined,
-                            );
-                        },
+                        { label: "feeds fetch" },
                     );
+                    expect(msg.type).to.eql("collection");
+                    expect(msg.items.length).to.eql(20);
+                    expect(msg.totalItems).to.eql(20);
+                    for (const m of msg.items) {
+                        expect(typeof m.object.content).to.equal("string");
+                        expect(m.object.contentType).to.equal("html");
+                        expect(m.actor.type).to.equal("feed");
+                        expect(m.type).to.equal("post");
+                    }
+                    if (msg?.error) {
+                        throw new Error(
+                            `Failed to fetch ${msg.items?.[0]?.actor?.id || "feed"}: ${msg.error}`,
+                        );
+                    }
                 });
             });
         });
@@ -285,9 +276,10 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             describe("XMPP with invalid credentials", () => {
                 const invalidActorId = "baduser@prosody/TestResource";
 
-                it("should handle IPC channel closure gracefully when using wrong credentials", (done) => {
+                it("should handle IPC channel closure gracefully when using wrong credentials", async () => {
                     // First set invalid credentials
-                    sc.socket.emit(
+                    await emitWithAck(
+                        sc.socket,
                         "credentials",
                         {
                             actor: {
@@ -303,44 +295,42 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                                 userAddress: "baduser@prosody",
                             },
                         },
-                        (credResult) => {
-                            // Try to connect with bad credentials
-                            // This should trigger platform termination and potential IPC race condition
-                            sc.socket.emit(
-                                "message",
-                                {
-                                    type: "connect",
-                                    actor: invalidActorId,
-                                    context: "xmpp",
-                                },
-                                (msg) => {
-                                    // We expect this to fail due to bad credentials
-                                    // The important part is that Sockethub shouldn't crash
-                                    // even if there's a race condition with IPC channel closure
-                                    if (msg?.error) {
-                                        // This is expected - wrong credentials should fail
-                                        expect(msg.error).to.be.a("string");
-                                        done();
-                                    } else {
-                                        done(
-                                            new Error(
-                                                "Expected authentication failure with wrong credentials",
-                                            ),
-                                        );
-                                    }
-                                },
-                            );
-                        },
+                        { label: "xmpp invalid credentials" },
                     );
+
+                    // Try to connect with bad credentials
+                    // This should trigger platform termination and potential IPC race condition
+                    const msg = await emitWithAck(
+                        sc.socket,
+                        "message",
+                        {
+                            type: "connect",
+                            actor: invalidActorId,
+                            context: "xmpp",
+                        },
+                        { label: "xmpp invalid connect" },
+                    );
+                    // We expect this to fail due to bad credentials
+                    // The important part is that Sockethub shouldn't crash
+                    // even if there's a race condition with IPC channel closure
+                    if (msg?.error) {
+                        // This is expected - wrong credentials should fail
+                        expect(msg.error).to.be.a("string");
+                    } else {
+                        throw new Error(
+                            "Expected authentication failure with wrong credentials",
+                        );
+                    }
                 });
             });
 
             describe("IRC with invalid credentials", () => {
                 const invalidIrcActorId = "baduser@irc.libera.chat";
 
-                it("should handle IPC channel closure gracefully with IRC wrong credentials", (done) => {
+                it("should handle IPC channel closure gracefully with IRC wrong credentials", async () => {
                     // Set invalid IRC credentials
-                    sc.socket.emit(
+                    await emitWithAck(
+                        sc.socket,
                         "credentials",
                         {
                             actor: {
@@ -357,29 +347,27 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                                 port: 6667,
                             },
                         },
-                        (credResult) => {
-                            // Try to connect with bad credentials
-                            sc.socket.emit(
-                                "message",
-                                {
-                                    type: "connect",
-                                    actor: invalidIrcActorId,
-                                    context: "irc",
-                                },
-                                (msg) => {
-                                    // We expect this to fail and importantly NOT crash the server
-                                    if (msg?.error) {
-                                        expect(msg.error).to.be.a("string");
-                                        done();
-                                    } else {
-                                        // Even if it doesn't fail immediately, that's ok
-                                        // The test is mainly to ensure no crashes occur
-                                        done();
-                                    }
-                                },
-                            );
-                        },
+                        { label: "irc invalid credentials" },
                     );
+
+                    // Try to connect with bad credentials
+                    const msg = await emitWithAck(
+                        sc.socket,
+                        "message",
+                        {
+                            type: "connect",
+                            actor: invalidIrcActorId,
+                            context: "irc",
+                        },
+                        { label: "irc invalid connect" },
+                    );
+                    // We expect this to fail and importantly NOT crash the server
+                    if (msg?.error) {
+                        expect(msg.error).to.be.a("string");
+                    } else {
+                        // Even if it doesn't fail immediately, that's ok
+                        // The test is mainly to ensure no crashes occur
+                    }
                 });
             });
         });
