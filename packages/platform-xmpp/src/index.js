@@ -777,7 +777,7 @@ export default class XMPP {
      * }
      */
     roomInfo(job, done) {
-        this.debug(
+        this.log.debug(
             `sending room-info query from ${job.actor.id} for ${job.target.id}`,
         );
 
