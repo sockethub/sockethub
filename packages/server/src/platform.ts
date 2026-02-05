@@ -103,6 +103,24 @@ async function startPlatformProcess() {
         return p as PlatformInterface;
     })();
 
+    type PlatformHandlerWithCredentials = (
+        msg: ActivityStream,
+        credentials: CredentialsObject,
+        cb: PlatformCallback,
+    ) => void;
+    type PlatformHandler = (msg: ActivityStream, cb: PlatformCallback) => void;
+    function getPlatformHandler(
+        instance: PlatformInterface,
+        name: string,
+    ): PlatformHandlerWithCredentials | PlatformHandler | undefined {
+        const candidate = (
+            instance as PlatformInterface & Record<string, unknown>
+        )[name];
+        return typeof candidate === "function"
+            ? (candidate as PlatformHandlerWithCredentials | PlatformHandler)
+            : undefined;
+    }
+
     /**
      * Safely send error message to parent process, handling IPC channel closure
      */
@@ -286,10 +304,11 @@ async function startPlatformProcess() {
                             };
 
                             // Proceed with platform method call
-                            const handler = (
-                                platform as unknown as Record<string, unknown>
-                            )[job.msg.type];
-                            if (typeof handler !== "function") {
+                            const handler = getPlatformHandler(
+                                platform,
+                                job.msg.type,
+                            );
+                            if (!handler) {
                                 doneCallback(
                                     new Error(
                                         `platform method ${job.msg.type} not available`,
@@ -298,14 +317,7 @@ async function startPlatformProcess() {
                                 );
                                 return;
                             }
-                            (
-                                handler as (
-                                    this: PlatformInterface,
-                                    msg: ActivityStream,
-                                    credentials: CredentialsObject,
-                                    cb: PlatformCallback,
-                                ) => void
-                            ).call(
+                            (handler as PlatformHandlerWithCredentials).call(
                                 platform,
                                 job.msg,
                                 credentials,
@@ -368,21 +380,20 @@ async function startPlatformProcess() {
                     );
                 } else {
                     try {
-                        const handler = (
-                            platform as unknown as Record<string, unknown>
-                        )[job.msg.type];
-                        if (typeof handler !== "function") {
+                        const handler = getPlatformHandler(
+                            platform,
+                            job.msg.type,
+                        );
+                        if (!handler) {
                             throw new Error(
                                 `platform method ${job.msg.type} not available`,
                             );
                         }
-                        (
-                            handler as (
-                                this: PlatformInterface,
-                                msg: ActivityStream,
-                                cb: PlatformCallback,
-                            ) => void
-                        ).call(platform, job.msg, doneCallback);
+                        (handler as PlatformHandler).call(
+                            platform,
+                            job.msg,
+                            doneCallback,
+                        );
                     } catch (err) {
                         const error =
                             err instanceof Error ? err : new Error(String(err));

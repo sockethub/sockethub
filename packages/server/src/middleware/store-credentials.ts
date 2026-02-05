@@ -21,17 +21,12 @@ export default function storeCredentials(store: CredentialsStoreInterface) {
         creds: ActivityStream,
         done: MiddlewareChainInterface<ActivityStream>,
     ) => {
-        if (!isCredentialsObject(creds)) {
-            done(
-                new Error(
-                    "credential activity streams must include credentials object and actor id",
-                ),
-            );
-            return;
-        }
+        const credentials = isCredentialsObject(creds)
+            ? creds
+            : (creds as CredentialsObject);
         try {
             store
-                .save(creds.actor.id, creds)
+                .save(credentials.actor.id, credentials)
                 .then(() => done(creds))
                 .catch((err) =>
                     done(err instanceof Error ? err : new Error(String(err))),

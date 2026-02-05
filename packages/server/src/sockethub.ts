@@ -53,7 +53,7 @@ class Sockethub {
     private readonly parentSecret1: string;
     private readonly parentSecret2: string;
     counter = 0;
-    platforms: PlatformMap = new Map();
+    platformRegistry: PlatformMap = new Map();
     status: boolean;
     processManager!: ProcessManager;
     private rateLimiter!: ReturnType<typeof createRateLimiter>;
@@ -91,7 +91,7 @@ class Sockethub {
             init,
         );
 
-        this.platforms = init.platforms;
+        this.platformRegistry = init.platforms;
 
         // Create rate limiter once at server level
         this.rateLimiter = createRateLimiter(config.get("rateLimiter"));
