@@ -25,16 +25,23 @@ describe("Redis Connection Pooling Integration Tests", () => {
         await resetSharedRedisConnection();
     });
 
-    it("should create a shared connection on first call", () => {
+    it("should create a shared connection on first call", async () => {
         const conn1 = createIORedisConnection(redisConfig);
         expect(conn1).to.exist;
         expect(conn1.status).to.be.oneOf(["connecting", "connect", "ready"]);
+        const pong = await conn1.ping();
+        expect(pong).to.equal("PONG");
     });
 
-    it("should reuse the same connection on subsequent calls", () => {
+    it("should reuse the same connection on subsequent calls", async () => {
         const conn1 = createIORedisConnection(redisConfig);
         const conn2 = createIORedisConnection(redisConfig);
         expect(conn1).to.equal(conn2);
+        const key = `sockethub:test:redis-conn:${Date.now()}`;
+        await conn2.set(key, "ok");
+        const value = await conn1.get(key);
+        expect(value).to.equal("ok");
+        await conn1.del(key);
     });
 
     it("should apply timeout configuration from RedisConfig", async () => {
