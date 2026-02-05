@@ -300,11 +300,17 @@ async function startPlatformProcess() {
                             }
                             (
                                 handler as (
+                                    this: PlatformInterface,
                                     msg: ActivityStream,
                                     credentials: CredentialsObject,
                                     cb: PlatformCallback,
                                 ) => void
-                            )(job.msg, credentials, wrappedCallback);
+                            ).call(
+                                platform,
+                                job.msg,
+                                credentials,
+                                wrappedCallback,
+                            );
                         })
                         .catch((err) => {
                             // Credential store error (invalid/missing credentials)
@@ -372,10 +378,11 @@ async function startPlatformProcess() {
                         }
                         (
                             handler as (
+                                this: PlatformInterface,
                                 msg: ActivityStream,
                                 cb: PlatformCallback,
                             ) => void
-                        )(job.msg, doneCallback);
+                        ).call(platform, job.msg, doneCallback);
                     } catch (err) {
                         const error =
                             err instanceof Error ? err : new Error(String(err));
