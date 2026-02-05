@@ -1,21 +1,27 @@
 ---
 name: sockethub
-description: Bridges web applications to messaging protocols (IRC, XMPP, RSS/Atom) via ActivityStreams. Use when building chat clients, connecting to IRC channels, sending XMPP messages, fetching RSS feeds, or creating protocol-agnostic messaging applications.
+description: Bridges web applications to messaging protocols (IRC, XMPP, RSS/Atom) via
+  ActivityStreams. Use when building chat clients, connecting to IRC channels, sending
+  XMPP messages, fetching RSS feeds, or creating protocol-agnostic messaging applications.
 ---
 
 # Sockethub
 
-A polyglot messaging gateway that translates ActivityStreams messages to protocol-specific formats, enabling browser JavaScript to communicate with IRC, XMPP, and feed services.
+A polyglot messaging gateway that translates ActivityStreams messages to
+protocol-specific formats, enabling browser JavaScript to communicate with IRC,
+XMPP, and feed services.
 
 ## When to Use
 
 Invoke when you need to:
+
 - Connect a web application to IRC networks or XMPP servers
 - Build a browser-based chat client for multiple protocols
 - Fetch and parse RSS/Atom feeds from JavaScript
 - Send messages across different messaging platforms
 - Create protocol-agnostic messaging applications
 - Handle real-time bidirectional communication with legacy protocols
+- Generate metadata previews for shared URLs
 
 ## Quick Start
 
@@ -23,7 +29,7 @@ Invoke when you need to:
 
 ```bash
 # Install globally
-npm install -g sockethub@alpha
+bun add -g sockethub@alpha
 
 # Start server (requires Redis)
 sockethub --port 10550
@@ -57,7 +63,7 @@ sc.socket.emit('message', {
 
 ## Examples
 
-**Example 1: Connect to IRC and join a channel**
+### Example 1: Connect to IRC and join a channel
 
 ```javascript
 // Set credentials
@@ -90,7 +96,7 @@ sc.socket.emit('message', {
 });
 ```
 
-**Example 2: Send XMPP message**
+### Example 2: Send XMPP message
 
 ```javascript
 // Set XMPP credentials
@@ -122,7 +128,7 @@ sc.socket.emit('message', {
 });
 ```
 
-**Example 3: Fetch RSS feed**
+### Example 3: Fetch RSS feed
 
 ```javascript
 sc.socket.emit('message', {
@@ -164,11 +170,11 @@ Environment Variables:
 
 ## Supported Platforms
 
-| Platform | Context | Operations |
-|----------|---------|------------|
-| IRC | `irc` | connect, join, leave, send, update, query, disconnect |
-| XMPP | `xmpp` | connect, join, leave, send, update, request-friend, make-friend, remove-friend, query, disconnect |
-| Feeds | `feeds` | fetch (RSS 2.0, Atom 1.0, RSS 1.0/RDF) |
+- IRC (`irc`): connect, join, leave, send, update, query, disconnect
+- XMPP (`xmpp`): connect, join, leave, send, update, request-friend, make-friend,
+  remove-friend, query, disconnect
+- Feeds (`feeds`): fetch (RSS 2.0, Atom 1.0, RSS 1.0/RDF)
+- Metadata (`metadata`): fetch (Open Graph and page metadata)
 
 ## ActivityStreams Message Format
 
@@ -176,13 +182,17 @@ All messages follow ActivityStreams 2.0 structure:
 
 ```javascript
 {
-  context: 'irc' | 'xmpp' | 'feeds',  // Platform identifier
-  type: 'send' | 'join' | 'connect',  // Action type
-  actor: { id: 'user@server', type: 'person' },  // Who is acting
-  target: { id: 'room@server', type: 'room' },   // Target of action
-  object: { type: 'Note', content: '...' }       // Payload
+  context: 'irc' | 'xmpp' | 'feeds', // Platform identifier
+  type: 'send' | 'join' | 'connect', // Action type
+  actor: { id: 'user@server', type: 'person' }, // Who is acting
+  target: { id: 'room@server', type: 'room' }, // Target of action
+  object: { type: 'Note', content: '...' } // Payload
 }
 ```
+
+If `actor` is provided as a string, Sockethub expands it using any previously
+saved ActivityObject with the same id (including `type` and any other stored
+properties). If none exists, it expands to `{ id }`.
 
 ## API Reference
 
