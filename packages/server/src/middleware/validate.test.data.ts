@@ -197,6 +197,7 @@ export default [
             context: "fakeplatform",
             target: "irc://irc.dooder.net/a-room",
         },
+        // AJV can report different first errors depending on evaluation order.
         error: [
             "Error: [fakeplatform] /actor: must be object",
             "Error: [fakeplatform] /target: must match exactly one schema in oneOf: credentials, feed, message, me, person, room, service, website, attendance, presence, relationship, topic, address",

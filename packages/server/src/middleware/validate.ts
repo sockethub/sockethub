@@ -48,7 +48,7 @@ export default function validate(
     ) => {
         sessionLog.debug(`applying schema validation for ${type}`);
         if (type === "activity-object") {
-            const err = validateActivityObject(msg as ActivityStream);
+            const err = validateActivityObject(msg as ActivityObject);
             if (err) {
                 done(new Error(err));
             } else {
