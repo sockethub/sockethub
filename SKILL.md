@@ -21,6 +21,7 @@ Invoke when you need to:
 - Send messages across different messaging platforms
 - Create protocol-agnostic messaging applications
 - Handle real-time bidirectional communication with legacy protocols
+- Generate metadata previews for shared URLs
 
 ## Quick Start
 
@@ -173,6 +174,7 @@ Environment Variables:
 - XMPP (`xmpp`): connect, join, leave, send, update, request-friend, make-friend,
   remove-friend, query, disconnect
 - Feeds (`feeds`): fetch (RSS 2.0, Atom 1.0, RSS 1.0/RDF)
+- Metadata (`metadata`): fetch (Open Graph and page metadata)
 
 ## ActivityStreams Message Format
 
