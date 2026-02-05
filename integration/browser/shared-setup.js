@@ -77,6 +77,17 @@ export function waitFor(
     });
 }
 
+/**
+ * Safely create a string preview of a value for logging.
+ *
+ * Attempts to JSON.stringify the provided value and truncate the result
+ * to the specified character limit. If serialization fails, returns a
+ * placeholder string indicating that the value was unserializable.
+ *
+ * @param {any} value - The value to generate a preview for.
+ * @param {number} [limit=1000] - Maximum number of characters to include in the preview.
+ * @returns {string} A safe, possibly truncated string representation of the value.
+ */
 function safePreview(value, limit = 1000) {
     try {
         const raw = JSON.stringify(value);
