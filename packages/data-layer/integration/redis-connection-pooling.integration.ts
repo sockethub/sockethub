@@ -78,24 +78,61 @@ describe("Redis Connection Pooling Integration Tests", () => {
         expect(conn2).to.not.equal(conn1);
     });
 
-    it("should configure retry strategy to fail after 3 attempts", async () => {
-        const conn = createIORedisConnection(redisConfig);
+    it("should stop retrying after 3 failed connection attempts", async () => {
+        const badConfig: RedisConfig = {
+            url: "redis://127.0.0.1:6399",
+            connectTimeout: 200,
+            disconnectTimeout: 200,
+            maxRetriesPerRequest: null,
+        };
 
-        // Test retry strategy function exists and returns correct values
-        const retryStrategy = conn.options.retryStrategy as (
-            times: number,
-        ) => number | null;
-        expect(retryStrategy).to.be.a("function");
+        await resetSharedRedisConnection();
+        const conn = createIORedisConnection(badConfig);
 
-        // Should return increasing delays for first 3 attempts
-        expect(retryStrategy(1)).to.equal(200);
-        expect(retryStrategy(2)).to.equal(400);
-        expect(retryStrategy(3)).to.equal(800);
+        let retryCount = 0;
+        const retryDelays: number[] = [];
+        const errors: unknown[] = [];
 
-        // Should return null (stop retrying) after 3 attempts
-        expect(retryStrategy(4)).to.be.null;
-        expect(retryStrategy(5)).to.be.null;
-    });
+        await new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                cleanup();
+                reject(
+                    new Error(
+                        `Timed out waiting for retries (count=${retryCount})`,
+                    ),
+                );
+            }, 5000);
+
+            const onReconnecting = (delay: number) => {
+                retryCount += 1;
+                retryDelays.push(delay);
+            };
+
+            const onEnd = () => {
+                cleanup();
+                resolve();
+            };
+
+            const onError = (err: unknown) => {
+                errors.push(err);
+            };
+
+            const cleanup = () => {
+                clearTimeout(timeout);
+                conn.off("reconnecting", onReconnecting);
+                conn.off("end", onEnd);
+                conn.off("error", onError);
+            };
+
+            conn.on("reconnecting", onReconnecting);
+            conn.on("end", onEnd);
+            conn.on("error", onError);
+        });
+
+        expect(retryCount).to.equal(3);
+        expect(retryDelays).to.eql([200, 400, 800]);
+        expect(errors.length).to.be.greaterThan(0);
+    }, 7000);
 
     it("should set lazyConnect to false for immediate connection", () => {
         const conn = createIORedisConnection(redisConfig);
