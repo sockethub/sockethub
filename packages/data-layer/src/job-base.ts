@@ -6,11 +6,77 @@ import type { ActivityStream } from "@sockethub/schemas";
 
 import type { JobDataDecrypted, JobEncrypted, RedisConfig } from "./types.js";
 
+let sharedRedisConnection: Redis | null = null;
+
+/**
+ * Creates or returns a shared Redis connection to enable connection pooling.
+ * This prevents connection exhaustion under high load by reusing a single
+ * connection across all JobQueue and JobWorker instances.
+ *
+ * @param config - Redis configuration with optional timeout and retry settings
+ * @returns Shared Redis connection instance
+ */
 export function createIORedisConnection(config: RedisConfig): Redis {
-    return new IORedis(config.url, {
-        enableOfflineQueue: false,
-        maxRetriesPerRequest: null,
-    });
+    if (!sharedRedisConnection) {
+        sharedRedisConnection = new IORedis(config.url, {
+            connectionName: config.connectionName,
+            enableOfflineQueue: false,
+            maxRetriesPerRequest: config.maxRetriesPerRequest ?? null,
+            connectTimeout: config.connectTimeout ?? 10000,
+            disconnectTimeout: config.disconnectTimeout ?? 5000,
+            lazyConnect: false,
+            retryStrategy: (times: number) => {
+                // Stop retrying after 3 attempts to fail fast
+                if (times > 3) return null;
+                // Exponential backoff: 200ms, 400ms, 800ms
+                return Math.min(2 ** (times - 1) * 200, 2000);
+            },
+        });
+    }
+    return sharedRedisConnection;
+}
+
+/**
+ * Resets the shared Redis connection. Used primarily for testing.
+ * Disconnects the current connection before resetting.
+ */
+export async function resetSharedRedisConnection(): Promise<void> {
+    if (sharedRedisConnection) {
+        try {
+            sharedRedisConnection.disconnect(false);
+        } catch (err) {
+            // Ignore disconnect errors during cleanup
+        }
+        sharedRedisConnection = null;
+    }
+}
+
+/**
+ * Gets the total number of active Redis client connections.
+ *
+ * Note: This queries the Redis server directly using CLIENT LIST and reports
+ * ALL active connections to the Redis instance. This includes connections from
+ * Sockethub (BullMQ queues, workers, and the shared connection) as well as any
+ * other applications or services connected to the same Redis server.
+ *
+ * @returns Number of active Redis connections, or 0 if no connection exists
+ */
+export async function getRedisConnectionCount(): Promise<number> {
+    if (!sharedRedisConnection) {
+        return 0;
+    }
+
+    try {
+        const clientList = await sharedRedisConnection.client("LIST");
+        // CLIENT LIST returns one line per connection, filter out empty lines
+        const connections = clientList
+            .split("\n")
+            .filter((line) => line.trim());
+        return connections.length;
+    } catch (err) {
+        // Return 0 if Redis query fails (connection issues, etc.)
+        return 0;
+    }
 }
 
 export class JobBase extends EventEmitter {

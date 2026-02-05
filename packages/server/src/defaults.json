@@ -1,7 +1,11 @@
 {
-  "$schema": "https://sockethub.org/schemas/3.0.0-alpha.4/sockethub-config.json",
+  "$schema": "../../schemas/src/schemas/json/sockethub-config.json",
   "examples": true,
-  "log_file": "",
+  "logging": {
+    "level": "info",
+    "fileLevel": "debug",
+    "file": "sockethub.log"
+  },
   "packageConfig": {
     "@sockethub/activity-streams": {
       "specialObjs": ["credentials"],
@@ -21,8 +25,16 @@
     "port": 10550,
     "path": "/"
   },
+  "rateLimiter": {
+    "windowMs": 1000,
+    "maxRequests": 100,
+    "blockDurationMs": 5000
+  },
   "redis": {
-    "url": "redis://127.0.0.1:6379"
+    "url": "redis://127.0.0.1:6379",
+    "connectTimeout": 10000,
+    "disconnectTimeout": 5000,
+    "maxRetriesPerRequest": null
   },
   "sentry": {
     "dsn": "",

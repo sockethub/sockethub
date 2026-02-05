@@ -1,0 +1,93 @@
+#!/usr/bin/env bun
+/**
+ * Sockethub launcher with split logging:
+ * - Console: filtered via DEBUG pattern
+ * - File: full debug output to sockethub.log
+ */
+import { spawn } from "node:child_process";
+import { createWriteStream } from "node:fs";
+import { dirname, join } from "node:path";
+import debug from "debug";
+
+// Console filter using DEBUG syntax
+const CONSOLE_DEBUG = [
+    "sockethub:init",
+    "sockethub:server:bootstrap:*",
+    "sockethub:server:core",
+    "-sockethub:server:core:*", // exclude per-session logs
+    "sockethub:server:listener",
+    "sockethub:server:janitor",
+    "sockethub:server:rate-limiter",
+].join(",");
+
+// Create a filter function using debug's enable/disable logic
+debug.enable(CONSOLE_DEBUG);
+const shouldShow = (namespace: string) => debug.enabled(namespace);
+
+// Extract namespace from debug output line
+// Format: "  sockethub:namespace message +0ms" (with optional ANSI colors)
+const namespaceRegex = /sockethub:[^\s\x1b]+/;
+function getNamespace(line: string): string | null {
+    const match = line.match(namespaceRegex);
+    return match ? match[0] : null;
+}
+
+const logFile = createWriteStream("sockethub.log", { flags: "a" });
+const timestamp = () => new Date().toISOString();
+
+logFile.write(`\n--- Sockethub started at ${timestamp()} ---\n`);
+
+const child = spawn("bun", ["run", join(dirname(import.meta.path), "sockethub")], {
+    env: { ...process.env, DEBUG: "sockethub:*", DEBUG_COLORS: "true" },
+    stdio: ["inherit", "pipe", "pipe"],
+});
+
+function processLine(line: string, stream: "stdout" | "stderr") {
+    // Always write to file
+    logFile.write(`${line}\n`);
+
+    // Check if namespace passes DEBUG filter
+    // Non-debug lines (console.log from init, errors) are always shown
+    const namespace = getNamespace(line);
+    const show = namespace
+        ? shouldShow(namespace)
+        : true; // show non-debug lines (startup banner, errors, etc)
+
+    if (show) {
+        if (stream === "stderr") {
+            process.stderr.write(`${line}\n`);
+        } else {
+            process.stdout.write(`${line}\n`);
+        }
+    }
+}
+
+let stdoutBuffer = "";
+let stderrBuffer = "";
+
+child.stdout?.on("data", (data) => {
+    stdoutBuffer += data.toString();
+    const lines = stdoutBuffer.split("\n");
+    stdoutBuffer = lines.pop() || "";
+    for (const line of lines) {
+        processLine(line, "stdout");
+    }
+});
+
+child.stderr?.on("data", (data) => {
+    stderrBuffer += data.toString();
+    const lines = stderrBuffer.split("\n");
+    stderrBuffer = lines.pop() || "";
+    for (const line of lines) {
+        processLine(line, "stderr");
+    }
+});
+
+child.on("close", (code) => {
+    logFile.write(`--- Sockethub exited with code ${code} at ${timestamp()} ---\n`);
+    logFile.close();
+    process.exit(code || 0);
+});
+
+process.on("SIGINT", () => child.kill("SIGINT"));
+process.on("SIGTERM", () => child.kill("SIGTERM"));

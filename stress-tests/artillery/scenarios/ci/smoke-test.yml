@@ -1,0 +1,27 @@
+config:
+  target: "http://localhost:10550"
+  phases:
+    - duration: 60
+      arrivalRate: 20
+      name: "CI Smoke Test - 60 seconds"
+  processor: "../../processors/sockethub-client.js"
+
+scenarios:
+  - name: "CI Smoke Test"
+    flow:
+      # Setup client and connect
+      - function: "setupClient"
+      - think: 0.5
+
+      # Send credentials
+      - function: "sendCredentials"
+      - think: 0.5
+
+      # Send 10 echo messages
+      - loop:
+          - function: "sendDummyEcho"
+          - think: 0.1
+        count: 10
+
+      # Cleanup
+      - function: "disconnectClient"

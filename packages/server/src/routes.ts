@@ -1,9 +1,9 @@
 import path from "node:path";
-import debug from "debug";
 
+import { createLogger } from "@sockethub/logger";
 import { __dirname } from "./util.js";
 
-const logger = debug("sockethub:server:routes");
+const logger = createLogger("server:routes");
 
 export interface IRoutePaths {
     [key: string]: string;
@@ -34,7 +34,7 @@ function prepFileRoutes(pathMap) {
                 path: key,
             },
             route: (req, res) => {
-                logger(`serving resource ${req.url}`);
+                logger.debug(`serving resource ${req.url}`);
                 res.setHeader("Access-Control-Allow-Origin", "*");
                 res.sendFile(pathMap[req.url]);
             },

@@ -1,4 +1,3 @@
-import debug from "debug";
 import type { Socket } from "socket.io";
 
 import { crypto } from "@sockethub/crypto";
@@ -8,7 +7,13 @@ import type {
     ActivityStream,
     InternalActivityStream,
 } from "@sockethub/schemas";
+import {
+    cleanupClient,
+    createRateLimiter,
+    stopCleanup,
+} from "./rate-limiter.js";
 
+import { createLogger } from "@sockethub/logger";
 import getInitObject from "./bootstrap/init.js";
 import config from "./config";
 import janitor from "./janitor.js";
@@ -20,7 +25,7 @@ import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
 import ProcessManager from "./process-manager.js";
 
-const log = debug("sockethub:server:core");
+const log = createLogger("server:core");
 
 type ErrMsg = {
     context: string;
@@ -52,13 +57,14 @@ class Sockethub {
     platforms: Map<string, object>;
     status: boolean;
     processManager: ProcessManager;
+    private rateLimiter: ReturnType<typeof createRateLimiter>;
 
     constructor() {
         this.status = false;
         this.parentId = crypto.randToken(16);
         this.parentSecret1 = crypto.randToken(16);
         this.parentSecret2 = crypto.randToken(16);
-        log(`session id: ${this.parentId}`);
+        log.debug(`session id: ${this.parentId}`);
     }
 
     /**
@@ -66,12 +72,12 @@ class Sockethub {
      */
     async boot() {
         if (this.status) {
-            return log("Sockethub.boot() called more than once");
+            return log.warn("Sockethub.boot() called more than once");
         }
         this.status = true;
 
         const init = await getInitObject().catch((err) => {
-            log(err);
+            log.error(err);
             process.exit(1);
         });
 
@@ -84,35 +90,43 @@ class Sockethub {
 
         this.platforms = init.platforms;
 
-        log("active platforms: ", [...init.platforms.keys()]);
+        // Create rate limiter once at server level
+        this.rateLimiter = createRateLimiter(config.get("rateLimiter"));
+
+        log.debug("active platforms: ", [...init.platforms.keys()]);
         listener.start(); // start external services
         janitor.start(); // start cleanup cycle
-        log("registering handlers");
+        log.debug("registering handlers");
         listener.io.on("connection", this.handleIncomingConnection.bind(this));
     }
 
     async shutdown() {
         await janitor.stop();
+        stopCleanup();
     }
 
     private handleIncomingConnection(socket: Socket) {
         // session-specific debug messages
-        const sessionLog = debug(`sockethub:server:core:${socket.id}`);
+        const sessionLog = createLogger(`server:core:${socket.id}`);
         const sessionSecret = crypto.randToken(16);
-        // stores instance is session-specific
-        // stores = getSessionStore(this.parentId, this.parentSecret1, socket.id, sessionSecret);
         const credentialsStore: CredentialsStoreInterface =
             new CredentialsStore(
                 this.parentId,
                 socket.id,
-                this.parentSecret1 + sessionSecret,
+                crypto.deriveSecret(this.parentSecret1, sessionSecret),
                 config.get("redis"),
             );
 
-        sessionLog("socket.io connection");
+        sessionLog.debug("socket.io connection");
+
+        // Rate limiting middleware - runs on every incoming event
+        socket.use((event, next) => {
+            this.rateLimiter(socket, event[0], next);
+        });
 
         socket.on("disconnect", () => {
-            sessionLog("disconnect received from client");
+            sessionLog.debug("disconnect received from client");
+            cleanupClient(socket.id);
         });
 
         socket.on(

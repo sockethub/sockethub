@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/server",
   "description": "A polyglot messaging service, server libraries",
-  "version": "5.0.0-alpha.10",
+  "version": "5.0.0-alpha.11",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -28,16 +28,13 @@
     "messaging",
     "polyglot",
     "unhosted",
-    "apis",
     "api",
     "protocols",
     "protocol",
     "irc",
     "xmpp",
-    "facebook",
     "rss",
     "atom",
-    "twitter",
     "smtp",
     "imap",
     "email"
@@ -50,14 +47,14 @@
   "homepage": "https://sockethub.org",
   "dependencies": {
     "@sentry/bun": "^10.36.0",
-    "@sockethub/activity-streams": "^4.4.0-alpha.10",
-    "@sockethub/client": "^5.0.0-alpha.10",
-    "@sockethub/crypto": "^1.0.0-alpha.10",
-    "@sockethub/data-layer": "^1.0.0-alpha.10",
-    "@sockethub/schemas": "^3.0.0-alpha.10",
+    "@sockethub/activity-streams": "^4.4.0-alpha.11",
+    "@sockethub/client": "^5.0.0-alpha.11",
+    "@sockethub/crypto": "^1.0.0-alpha.11",
+    "@sockethub/data-layer": "^1.0.0-alpha.11",
+    "@sockethub/logger": "^1.0.0-alpha.11",
+    "@sockethub/schemas": "^3.0.0-alpha.11",
     "body-parser": "^1.20.4",
     "chalk": "^5.6.2",
-    "debug": "^4.4.3",
     "ejs": "^3.1.10",
     "express": "^4.22.1",
     "express-rate-limit": "^8.2.1",
@@ -68,8 +65,11 @@
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external && bun build src/platform.ts --outdir dist --target node --format esm --sourcemap=external && cp src/defaults.json dist/defaults.json",
     "clean": "rm -rf dist",
-    "dev": "DEBUG=sockethub* bun run --hot ./bin/sockethub --examples",
-    "start": "DEBUG=sockethub* bun run ./bin/sockethub"
+    "clean:deps": "rm -rf node_modules",
+    "dev": "bun run --hot ./bin/sockethub --examples",
+    "start": "bun run ./bin/sockethub",
+    "test": "bun test src/",
+    "test:integration": "bun test ./integration/*.integration.ts"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.6",
@@ -84,12 +84,12 @@
     "web-streams-polyfill": "^3.3.3"
   },
   "optionalDependencies": {
-    "@sockethub/examples": "^1.0.0-alpha.10",
-    "@sockethub/platform-dummy": "^3.0.0-alpha.10",
-    "@sockethub/platform-feeds": "^4.0.0-alpha.10",
-    "@sockethub/platform-irc": "^4.0.0-alpha.10",
-    "@sockethub/platform-metadata": "^1.0.1-alpha.5",
-    "@sockethub/platform-xmpp": "^5.0.0-alpha.10"
+    "@sockethub/examples": "^1.0.0-alpha.11",
+    "@sockethub/platform-dummy": "^3.0.0-alpha.11",
+    "@sockethub/platform-feeds": "^4.0.0-alpha.11",
+    "@sockethub/platform-irc": "^4.0.0-alpha.11",
+    "@sockethub/platform-metadata": "^1.0.1-alpha.6",
+    "@sockethub/platform-xmpp": "^5.0.0-alpha.11"
   },
-  "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
+  "gitHead": "f7fb4fa2599da1def438c710ce81a41b6cfee8a7"
 }

@@ -15,7 +15,7 @@ describe("Incoming handlers", () => {
             sendToClient = sinon.fake();
             ih = new IncomingHandlers({
                 sendToClient: sendToClient,
-                debug: sinon.fake(),
+                log: { debug: sinon.fake() },
                 __xml: () => ({}),
                 __client: {
                     sendReceive: sinon.fake.rejects(new Error('Service discovery not available in tests'))
@@ -145,11 +145,16 @@ describe("Incoming handlers", () => {
 
         it("close() should handle session without actor gracefully", () => {
             const sendToClient = sinon.fake();
-            const debug = sinon.fake();
+            const log = {
+                error: sinon.fake(),
+                warn: sinon.fake(),
+                info: sinon.fake(),
+                debug: sinon.fake(),
+            };
             
             const ih = new IncomingHandlers({
                 sendToClient: sendToClient,
-                debug: debug,
+                log: log,
                 actor: undefined,
                 connection: undefined
             });
@@ -157,17 +162,22 @@ describe("Incoming handlers", () => {
             // This should not throw an error
             expect(() => ih.close()).not.toThrow();
             
-            // Should still call debug
-            sinon.assert.calledWith(debug, "received close event with no handler specified");
+            // Should still call log.debug
+            sinon.assert.calledWith(log.debug, "received close event with no handler specified");
         });
 
         it("close() should handle session without connection gracefully", () => {
             const sendToClient = sinon.fake();
-            const debug = sinon.fake();
+            const log = {
+                error: sinon.fake(),
+                warn: sinon.fake(),
+                info: sinon.fake(),
+                debug: sinon.fake(),
+            };
             
             const ih = new IncomingHandlers({
                 sendToClient: sendToClient,
-                debug: debug,
+                log: log,
                 actor: { id: "test@example.com" },
                 connection: undefined
             });
@@ -178,11 +188,16 @@ describe("Incoming handlers", () => {
 
         it("close() should handle session with invalid connection gracefully", () => {
             const sendToClient = sinon.fake();
-            const debug = sinon.fake();
+            const log = {
+                error: sinon.fake(),
+                warn: sinon.fake(),
+                info: sinon.fake(),
+                debug: sinon.fake(),
+            };
             
             const ih = new IncomingHandlers({
                 sendToClient: sendToClient,
-                debug: debug,
+                log: log,
                 actor: { id: "test@example.com" },
                 connection: { disconnect: null } // invalid disconnect method
             });

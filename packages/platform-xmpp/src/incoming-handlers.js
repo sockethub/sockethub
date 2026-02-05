@@ -154,7 +154,9 @@ export class IncomingHandlers {
             return;
         }
 
-        this.session.debug("received close event with no handler specified");
+        this.session.log.debug(
+            "received close event with no handler specified",
+        );
         if (this.session.actor && this.session.sendToClient) {
             this.session.sendToClient({
                 context: "xmpp",
@@ -162,7 +164,7 @@ export class IncomingHandlers {
                 actor: this.session.actor,
                 target: this.session.actor,
             });
-            this.session.debug(
+            this.session.log.debug(
                 `**** xmpp this.session.for ${this.session.actor.id} closed`,
             );
         }
@@ -186,7 +188,7 @@ export class IncomingHandlers {
                 },
             });
         } catch (e) {
-            this.session.debug("*** XMPP ERROR (rl catch): ", e);
+            this.session.log.debug("*** XMPP ERROR (rl catch): ", e);
         }
     }
 
@@ -214,14 +216,14 @@ export class IncomingHandlers {
         } else {
             obj.actor.name = stanza.attrs.from.split("/")[1];
         }
-        this.session.debug(
-            `received ${actorType} presence update from ${stanza.attrs.from}`,
+        this.session.log.debug(
+            `received ${actorType} contact presence update from ${stanza.attrs.from}`,
         );
         this.session.sendToClient(obj);
     }
 
     subscribe(to, from, name) {
-        this.session.debug(`received subscribe request from ${from}`);
+        this.session.log.debug(`received subscribe request from ${from}`);
         const actor = { id: from, type: "person" };
         if (name) {
             actor.name = name;
@@ -235,7 +237,7 @@ export class IncomingHandlers {
     }
 
     // unsubscribe(from) {
-    //   this.session.debug('received unsubscribe request from ' + from);
+    //   this.session.log.debug('received unsubscribe request from ' + from);
     //   this.session.sendToClient({
     //     type: "remove-friend",
     //     actor: { id: from },
@@ -356,7 +358,7 @@ export class IncomingHandlers {
     }
 
     online() {
-        this.session.debug("online");
+        this.session.log.debug("online");
     }
 
     /**
@@ -382,7 +384,7 @@ export class IncomingHandlers {
                 stanza.attrs.id === "muc_id" &&
                 stanza.attrs.type === "result"
             ) {
-                this.session.debug("got room attendance list");
+                this.session.log.debug("got room attendance list");
                 return this.notifyRoomAttendance(stanza);
             }
 
@@ -394,7 +396,7 @@ export class IncomingHandlers {
                     if (!entries.hasOwn(e)) {
                         continue;
                     }
-                    this.session.debug("STANZA ATTRS: ", entries[e].attrs);
+                    this.session.log.debug("STANZA ATTRS: ", entries[e].attrs);
                     if (entries[e].attrs.subscription === "both") {
                         this.session.sendToClient({
                             context: "xmpp",
@@ -443,7 +445,7 @@ export class IncomingHandlers {
                 }
             }
         } else {
-            this.session.debug(`got XMPP unknown stanza... ${stanza}`);
+            this.session.log.debug(`got XMPP unknown stanza... ${stanza}`);
         }
     }
 }

@@ -1,5 +1,4 @@
 import { expect } from "@esm-bundle/chai";
-import createTestUtils from "../utils.js";
 
 // sockethub-client.js and socket.io.js are loaded via <script> tags
 // in the test runner HTML (injected from the running Sockethub server)

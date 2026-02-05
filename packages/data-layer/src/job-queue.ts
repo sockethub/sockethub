@@ -1,13 +1,18 @@
-import { type Job, Queue, QueueEvents, Worker } from "bullmq";
-import debug, { type Debugger } from "debug";
-
+import {
+    type Logger,
+    createLogger,
+    getLoggerNamespace,
+} from "@sockethub/logger";
 import type { ActivityStream } from "@sockethub/schemas";
+import { type Job, Queue, QueueEvents, Worker } from "bullmq";
 
 import { JobBase, createIORedisConnection } from "./job-base.js";
+import { buildQueueId } from "./queue-id.js";
 import type { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types.js";
 
 export async function verifyJobQueue(config: RedisConfig): Promise<void> {
-    const log = debug("sockethub:data-layer:queue");
+    const log = createLogger("data-layer:verify-job-queue");
+
     return new Promise((resolve, reject) => {
         const worker = new Worker(
             "connectiontest",
@@ -29,13 +34,13 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
                     "Worker job completed unsuccessfully during JobQueue connection test",
                 );
             }
-            log("connection verified");
+            log.info("job queue connection verified");
             await queue.close();
             await worker.close();
             resolve();
         });
         worker.on("error", (err) => {
-            log(
+            log.warn(
                 `connection verification worker error received ${err.toString()}`,
             );
             reject(err);
@@ -44,7 +49,7 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
             connection: createIORedisConnection(config),
         });
         queue.on("error", (err) => {
-            log(
+            log.warn(
                 `connection verification queue error received ${err.toString()}`,
             );
             reject(err);
@@ -71,43 +76,49 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
  * ```
  */
 export class JobQueue extends JobBase {
-    readonly uid: string;
+    private readonly connectionName: string;
+    protected readonly queueId: string;
     protected queue: Queue;
     protected events: QueueEvents;
-    private readonly debug: Debugger;
+    private readonly log: Logger;
     private counter = 0;
     private initialized = false;
 
     /**
      * Creates a new JobQueue instance.
      *
+     * @param parentId - Sockethub instance identifier for queue isolation
      * @param instanceId - Unique identifier for the platform instance
-     * @param sessionId - Client session identifier for queue isolation
      * @param secret - 32-character encryption secret for message security
      * @param redisConfig - Redis connection configuration
      */
     constructor(
+        parentId: string,
         instanceId: string,
-        sessionId: string,
         secret: string,
         redisConfig: RedisConfig,
     ) {
         super(secret);
-        this.uid = `sockethub:data-layer:queue:${instanceId}:${sessionId}`;
-        this.debug = debug(this.uid);
+        // Create logger with full namespace (context will be prepended automatically)
+        this.log = createLogger(`data-layer:queue:${parentId}:${instanceId}`);
+
+        this.queueId = buildQueueId(parentId, instanceId);
+        // Use logger's full namespace (includes context) for Redis connection name
+        this.connectionName = getLoggerNamespace(this.log);
+        redisConfig.connectionName = this.connectionName;
         this.init(redisConfig);
     }
 
     protected init(redisConfig: RedisConfig) {
         if (this.initialized) {
-            throw new Error(`JobQueue already initialized for ${this.uid}`);
+            throw new Error(`JobQueue already initialized for ${this.queueId}`);
         }
         this.initialized = true;
 
-        // BullMQ v5+ prohibits colons in queue names, so replace with dashes
-        // while keeping uid with colons for debug namespace convention
-        const queueName = this.uid.replace(/:/g, "-");
-        // Let BullMQ create its own connections for better lifecycle management
+        // BullMQ v5+ prohibits colons in queue names; derive the queue name
+        // from the canonical queue id by replacing ':' with '-'.
+        const queueName = this.queueId.replace(/:/g, "-");
+        // Let BullMQ create its own connections (it duplicates them internally anyway)
         this.queue = new Queue(queueName, {
             connection: redisConfig,
         });
@@ -115,30 +126,39 @@ export class JobQueue extends JobBase {
             connection: redisConfig,
         });
 
+        // Handle Redis contention errors (e.g., BUSY from Lua scripts)
+        this.queue.on("error", (err) => {
+            this.log.warn(`queue error: ${err.message}`);
+        });
+
+        this.events.on("error", (err) => {
+            this.log.warn(`events error: ${err.message}`);
+        });
+
         this.events.on("completed", async ({ jobId, returnvalue }) => {
             const job = await this.getJob(jobId);
             if (!job) {
-                this.debug(`completed job ${jobId} (already removed)`);
+                this.log.debug(`completed job ${jobId} (already removed)`);
                 return;
             }
-            this.debug(`completed ${job.data.title} ${job.data.msg.type}`);
+            this.log.debug(`completed ${job.data.title} ${job.data.msg.type}`);
             this.emit("completed", job.data, returnvalue);
         });
 
         this.events.on("failed", async ({ jobId, failedReason }) => {
             const job = await this.getJob(jobId);
             if (!job) {
-                this.debug(
+                this.log.debug(
                     `failed job ${jobId} (already removed): ${failedReason}`,
                 );
                 return;
             }
-            this.debug(
+            this.log.warn(
                 `failed ${job.data.title} ${job.data.msg.type}: ${failedReason}`,
             );
             this.emit("failed", job.data, failedReason);
         });
-        this.debug("initialized");
+        this.log.info("initialized");
     }
 
     /**
@@ -156,7 +176,7 @@ export class JobQueue extends JobBase {
         const job = this.createJob(socketId, msg);
         if (await this.queue.isPaused()) {
             // this.queue.emit("error", new Error("queue closed"));
-            this.debug(
+            this.log.debug(
                 `failed to add ${job.title} ${msg.type} to queue: queue closed`,
             );
             throw new Error("queue closed");
@@ -168,7 +188,7 @@ export class JobQueue extends JobBase {
             removeOnComplete: { age: 300 }, // 5 minutes in seconds
             removeOnFail: { age: 300 },
         });
-        this.debug(`added ${job.title} ${msg.type} to queue`);
+        this.log.debug(`added ${job.title} ${msg.type} to queue`);
         return job;
     }
 
@@ -177,7 +197,7 @@ export class JobQueue extends JobBase {
      */
     async pause() {
         await this.queue.pause();
-        this.debug("paused");
+        this.log.debug("paused");
     }
 
     /**
@@ -185,7 +205,7 @@ export class JobQueue extends JobBase {
      */
     async resume() {
         await this.queue.resume();
-        this.debug("resumed");
+        this.log.debug("resumed");
     }
 
     /**

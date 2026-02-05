@@ -28,10 +28,12 @@ jobs:
             "refactor/"
             "perf/"
             "test/"
+            "tests/"
             "build/"
             "ci/"
             "chore/"
             "revert/"
+            "deps/"
           )
           
           # Check if branch starts with any valid prefix
@@ -70,9 +72,11 @@ jobs:
             exit 0
           fi
           
-          # Check conventional commit format: type(scope): description
+          # Check conventional commit format: type(scope)!: description
+          # or: type!: description
+          # or: type(scope): description
           # or: type: description
-          if [[ "$TITLE" =~ ^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?:\ .+ ]]; then
+          if [[ "$TITLE" =~ ^(feat|fix|deps|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?:\ .+ ]]; then
             echo "✅ Valid PR title: $TITLE"
             exit 0
           fi
@@ -80,14 +84,17 @@ jobs:
           echo "❌ Invalid PR title: $TITLE"
           echo ""
           echo "PR titles must follow conventional commit format:"
+          echo "  type(scope)!: description  (breaking change)"
           echo "  type(scope): description"
-          echo "  or"
+          echo "  type!: description         (breaking change)"
           echo "  type: description"
           echo ""
-          echo "Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+          echo "Valid types: feat, fix, deps, docs, style, refactor, perf, test, build, ci, chore, revert"
+          echo "Add ! before the colon to indicate a breaking change"
           echo ""
           echo "Examples:"
           echo "  - feat(platform-irc): add reconnection logic"
+          echo "  - feat!(data-layer): change constructor signature"
           echo "  - fix: handle null credentials properly"
           echo "  - docs: update contributing guide"
           echo "  - ci: implement automated releases"

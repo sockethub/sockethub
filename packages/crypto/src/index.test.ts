@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as sinon from "sinon";
+import { SecretValidator } from "secure-store-redis";
 
 import { Crypto, getPlatformId } from "./index";
 
@@ -50,6 +51,57 @@ describe("crypto", () => {
         expect(() => {
             crypto.randToken(33);
         }).toThrow();
+    });
+
+    describe("deriveSecret", () => {
+        it("returns a 32-char string", () => {
+            const result = crypto.deriveSecret("secret1", "secret2");
+            expect(result.length).toEqual(32);
+        });
+
+        it("returns a validator-safe secret", () => {
+            const result = crypto.deriveSecret("secret1", "secret2");
+            const validation = SecretValidator.validate(result);
+            expect(validation.valid).toEqual(true);
+        });
+
+        it("is deterministic - same inputs produce same output", () => {
+            const result1 = crypto.deriveSecret("foo", "bar");
+            const result2 = crypto.deriveSecret("foo", "bar");
+            expect(result1).toEqual(result2);
+        });
+
+        it("is deterministic - known input/output pair (2 args)", () => {
+            const result = crypto.deriveSecret("parent123", "session456");
+            expect(result).toEqual("uX5MIvHKtFdxZvLbHt0F7G&ufOt0a*hQ");
+        });
+
+        it("is deterministic - known input/output pair (3 args)", () => {
+            const result = crypto.deriveSecret("a", "b", "c");
+            expect(result).toEqual("1ZSGTK2%WDHR98osAZ4oc8&Bw14VFow&");
+        });
+
+        it("returns different results for different inputs", () => {
+            const result1 = crypto.deriveSecret("foo", "bar");
+            const result2 = crypto.deriveSecret("foo", "baz");
+            expect(result1).not.toEqual(result2);
+        });
+
+        it("works with single secret", () => {
+            const result = crypto.deriveSecret("single");
+            expect(result.length).toEqual(32);
+        });
+
+        it("works with multiple secrets", () => {
+            const result = crypto.deriveSecret("a", "b", "c", "d");
+            expect(result.length).toEqual(32);
+        });
+
+        it("produces valid 70-char set characters", () => {
+            const result = crypto.deriveSecret("test", "secret");
+            // Uses A-Za-z0-9!@#$%^&*
+            expect(result).toMatch(/^[A-Za-z0-9!@#$%^&*]{32}$/);
+        });
     });
 });
 

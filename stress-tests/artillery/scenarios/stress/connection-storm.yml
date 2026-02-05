@@ -1,0 +1,24 @@
+config:
+  target: "http://localhost:10550"
+  phases:
+    - duration: 30
+      arrivalRate: 1
+      rampTo: 100
+      name: "Ramp to 1000 connections"
+  processor: "../../processors/sockethub-client.js"
+
+scenarios:
+  - name: "Connection Storm Stress Test"
+    flow:
+      # Setup client and connect
+      - function: "setupClient"
+      - think: 0.5
+
+      # Send credentials
+      - function: "sendCredentials"
+
+      # Hold connection
+      - think: 60
+
+      # Cleanup
+      - function: "disconnectClient"

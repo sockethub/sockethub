@@ -3,7 +3,7 @@
  */
 
 import { execFileSync, execSync } from "node:child_process";
-import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 /**
@@ -50,7 +50,7 @@ export async function buildAndPackLocally(logger) {
             // Skip private packages
             if (pkgJson.private) continue;
 
-            const output = execSync("npm pack", {
+            const output = execFileSync("bun", ["pm", "pack"], {
                 cwd: pkgDir,
                 encoding: "utf-8",
             });
@@ -97,15 +97,14 @@ export async function buildAndPackLocally(logger) {
     await writeFile(modifiedPkgPath, JSON.stringify(modifiedPkg, null, 2));
 
     // Copy bin script
-    execSync(`cp -r ${join(packagesDir, "sockethub/bin")} ${tarballsDir}/`, {
-        cwd: repoRoot,
-        stdio: "inherit",
+    await cp(join(packagesDir, "sockethub/bin"), join(tarballsDir, "bin"), {
+        recursive: true,
     });
     await logger.success("Created local package configuration");
 
     // Pack the modified sockethub package as a tarball
     await logger.info("Packing modified sockethub package...");
-    const packOutput = execSync("npm pack", {
+    const packOutput = execFileSync("bun", ["pm", "pack"], {
         cwd: tarballsDir,
         encoding: "utf-8",
     });

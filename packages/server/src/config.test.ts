@@ -21,7 +21,12 @@ describe("config", () => {
         process.env = { REDIS_URL: "" };
         const config = new Config();
         expect(config).toHaveProperty("get");
-        expect(config.get("redis")).toEqual({ url: "redis://127.0.0.1:6379" });
+        expect(config.get("redis")).toEqual({
+            url: "redis://127.0.0.1:6379",
+            connectTimeout: 10000,
+            disconnectTimeout: 5000,
+            maxRetriesPerRequest: null,
+        });
     });
 
     // it("redis url overridden by env var", () => {

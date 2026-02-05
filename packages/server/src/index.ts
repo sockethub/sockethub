@@ -1,4 +1,5 @@
-import debug from "debug";
+import path from "node:path";
+import { createLogger, initLogger, setLoggerContext } from "@sockethub/logger";
 import config from "./config";
 import Sockethub from "./sockethub";
 
@@ -7,12 +8,26 @@ let sentry: { readonly reportError: (err: Error) => void } = {
 };
 
 export async function server() {
+    // Initialize global logger configuration
+    const loggingConfig = config.get("logging");
+    const logFile = loggingConfig.file
+        ? path.resolve(loggingConfig.file as string)
+        : "";
+    initLogger({
+        level: loggingConfig.level,
+        fileLevel: loggingConfig.fileLevel,
+        file: logFile,
+    });
+
+    // Set process-wide context for all loggers
+    setLoggerContext("sockethub");
+
     let sockethub: Sockethub;
-    const log = debug("sockethub:init");
+    const log = createLogger("server:init");
 
     // conditionally initialize sentry
     if (config.get("sentry:dsn")) {
-        log("initializing sentry");
+        log.info("initializing sentry");
         sentry = await import("./sentry");
     }
 

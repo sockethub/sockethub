@@ -1,7 +1,16 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
 
+import type { Logger } from "@sockethub/schemas";
+
 import { JobQueue } from "./index";
+
+const mockLogger: Logger = {
+    error: () => {},
+    warn: () => {},
+    info: () => {},
+    debug: () => {},
+};
 
 describe("JobQueue", () => {
     let MockBull, jobQueue, cryptoMocks, sandbox;
@@ -31,16 +40,21 @@ describe("JobQueue", () => {
 
         class TestJobQueue extends JobQueue {
             init() {
+                // BullMQ v5+ prohibits colons in queue names, so replace with dashes
+                const queueName = this.queueId.replace(/:/g, "-");
                 this.redisConnection = MockBull();
-                this.queue = MockBull(this.uid, {
+                this.queue = MockBull(queueName, {
                     connection: this.redisConnection,
                 });
-                this.events = MockBull(this.uid, {
+                this.events = MockBull(queueName, {
                     connection: this.redisConnection,
                 });
             }
             initCrypto() {
                 this.crypto = cryptoMocks;
+            }
+            getQueueId() {
+                return this.queueId;
             }
         }
         jobQueue = new TestJobQueue(
@@ -50,6 +64,7 @@ describe("JobQueue", () => {
             {
                 url: "redis config",
             },
+            mockLogger,
         );
         jobQueue.emit = sandbox.stub();
     });
@@ -63,14 +78,14 @@ describe("JobQueue", () => {
         sinon.assert.calledThrice(MockBull);
         sinon.assert.calledWith(
             MockBull,
-            "sockethub:data-layer:queue:a parent id:a session id",
+            "sockethub-a parent id-data-layer-queue-a session id",
             {
                 connection: MockBull(),
             },
         );
         expect(typeof jobQueue).to.equal("object");
-        expect(jobQueue.uid).to.equal(
-            `sockethub:data-layer:queue:a parent id:a session id`,
+        expect(jobQueue.getQueueId()).to.equal(
+            `sockethub:a parent id:data-layer:queue:a session id`,
         );
         expect(typeof jobQueue.add).to.equal("function");
         expect(typeof jobQueue.getJob).to.equal("function");
