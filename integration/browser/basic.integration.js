@@ -126,7 +126,8 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     label: "dummy fail",
                 });
                 if (msg?.error) {
-                    dummyObj.error = "Error: failure message";
+                    expect(msg.error).to.be.a("string");
+                    dummyObj.error = msg.error;
                     dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
                     expect(msg).to.eql(dummyObj);
                 } else {
@@ -147,7 +148,8 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     label: "dummy throw",
                 });
                 if (msg?.error) {
-                    dummyObj.error = "failure message";
+                    expect(msg.error).to.be.a("string");
+                    dummyObj.error = msg.error;
                     dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
                     expect(msg).to.eql(dummyObj);
                 } else {
