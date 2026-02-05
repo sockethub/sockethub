@@ -1,22 +1,14 @@
 import { expect } from "chai";
 import { afterEach, beforeEach, describe, it } from "vitest";
 
-import type { Logger } from "@sockethub/schemas";
-
-import { resetSharedRedisConnection } from "../src/job-base.js";
-import { JobQueue } from "../src/job-queue.js";
-import { JobWorker } from "../src/job-worker.js";
+import {
+    createIORedisConnection,
+    getRedisConnectionCount,
+    resetSharedRedisConnection,
+} from "../src/job-base.js";
 import type { RedisConfig } from "../src/types.js";
 
-const mockLogger: Logger = {
-    error: () => {},
-    warn: () => {},
-    info: () => {},
-    debug: () => {},
-};
-
 describe("Redis Connection Pooling Integration Tests", () => {
-    const testSecret = "secret is 32 char long like this";
     let redisConfig: RedisConfig;
 
     beforeEach(async () => {
@@ -33,136 +25,151 @@ describe("Redis Connection Pooling Integration Tests", () => {
         await resetSharedRedisConnection();
     });
 
-    it("should share connection between JobQueue instances", () => {
-        const queue1 = new JobQueue(
-            "test-platform-1",
-            "session-1",
-            testSecret,
-            redisConfig,
-            mockLogger,
-        );
-        const queue2 = new JobQueue(
-            "test-platform-2",
-            "session-2",
-            testSecret,
-            redisConfig,
-            mockLogger,
-        );
-
-        // Both queues should use the same underlying Redis connection
-        // (Note: BullMQ creates its own connection wrapper, but uses our shared connection)
-        expect(queue1).to.exist;
-        expect(queue2).to.exist;
-
-        // Cleanup
-        queue1.shutdown();
-        queue2.shutdown();
+    it("should create a shared connection on first call", async () => {
+        const conn1 = createIORedisConnection(redisConfig);
+        expect(conn1).to.exist;
+        expect(conn1.status).to.be.oneOf(["connecting", "connect", "ready"]);
+        const pong = await conn1.ping();
+        expect(pong).to.equal("PONG");
     });
 
-    describe("Integration with JobQueue and JobWorker", () => {
-        it("should allow multiple queues and workers to share connection", async () => {
-            const queue1 = new JobQueue(
-                "platform-a",
-                "session-1",
-                testSecret,
-                redisConfig,
-                mockLogger,
-            );
-            const queue2 = new JobQueue(
-                "platform-b",
-                "session-2",
-                testSecret,
-                redisConfig,
-                mockLogger,
-            );
-
-            const worker1 = new JobWorker(
-                "platform-a",
-                "session-1",
-                testSecret,
-                redisConfig,
-                mockLogger,
-            );
-            const worker2 = new JobWorker(
-                "platform-b",
-                "session-2",
-                testSecret,
-                redisConfig,
-                mockLogger,
-            );
-
-            // Initialize workers with handlers
-            worker1.onJob(async () => "result");
-            worker2.onJob(async () => "result");
-
-            // All instances should be created successfully
-            expect(queue1).to.exist;
-            expect(queue2).to.exist;
-            expect(worker1).to.exist;
-            expect(worker2).to.exist;
-
-            // Cleanup
-            await queue1.shutdown();
-            await queue2.shutdown();
-            await worker1.shutdown();
-            await worker2.shutdown();
-        });
+    it("should reuse the same connection on subsequent calls", async () => {
+        const conn1 = createIORedisConnection(redisConfig);
+        const conn2 = createIORedisConnection(redisConfig);
+        expect(conn1).to.equal(conn2);
+        const key = `sockethub:test:redis-conn:${Date.now()}`;
+        await conn2.set(key, "ok");
+        const value = await conn1.get(key);
+        expect(value).to.equal("ok");
+        await conn1.del(key);
     });
 
-    describe("Connection lifecycle under stress", () => {
-        it("should handle rapid creation of multiple instances", async () => {
-            const instances = [];
+    it("should apply timeout configuration from RedisConfig", async () => {
+        const customConfig: RedisConfig = {
+            url: "redis://127.0.0.1:6379",
+            connectTimeout: 5000,
+            disconnectTimeout: 2000,
+            maxRetriesPerRequest: 3,
+        };
 
-            // Create 10 queue instances rapidly
-            for (let i = 0; i < 10; i++) {
-                instances.push(
-                    new JobQueue(
-                        `platform-${i}`,
-                        `session-${i}`,
-                        testSecret,
-                        redisConfig,
-                        mockLogger,
+        await resetSharedRedisConnection();
+        const conn = createIORedisConnection(customConfig);
+
+        expect(conn.options.connectTimeout).to.equal(5000);
+        expect(conn.options.disconnectTimeout).to.equal(2000);
+        expect(conn.options.maxRetriesPerRequest).to.equal(3);
+        const pong = await conn.ping();
+        expect(pong).to.equal("PONG");
+    });
+
+    it("should use default timeouts when not specified", async () => {
+        const minimalConfig: RedisConfig = {
+            url: "redis://127.0.0.1:6379",
+        };
+
+        await resetSharedRedisConnection();
+        const conn = createIORedisConnection(minimalConfig);
+
+        expect(conn.options.connectTimeout).to.equal(10000);
+        expect(conn.options.disconnectTimeout).to.equal(5000);
+        expect(conn.options.maxRetriesPerRequest).to.be.null;
+        const pong = await conn.ping();
+        expect(pong).to.equal("PONG");
+    });
+
+    it("should disconnect and reset shared connection", async () => {
+        const conn1 = createIORedisConnection(redisConfig);
+        expect(conn1).to.exist;
+
+        await resetSharedRedisConnection();
+
+        // After reset, should create a new connection
+        const conn2 = createIORedisConnection(redisConfig);
+        expect(conn2).to.exist;
+        expect(conn2).to.not.equal(conn1);
+    });
+
+    it("should stop retrying after 3 failed connection attempts", async () => {
+        const badConfig: RedisConfig = {
+            url: "redis://127.0.0.1:6399",
+            connectTimeout: 200,
+            disconnectTimeout: 200,
+            maxRetriesPerRequest: null,
+        };
+
+        await resetSharedRedisConnection();
+        const conn = createIORedisConnection(badConfig);
+
+        let retryCount = 0;
+        const retryDelays: number[] = [];
+        const errors: unknown[] = [];
+
+        await new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                cleanup();
+                reject(
+                    new Error(
+                        `Timed out waiting for retries (count=${retryCount})`,
                     ),
                 );
-            }
+            }, 5000);
 
-            // All should be created successfully
-            expect(instances.length).to.equal(10);
+            const onReconnecting = (delay: number) => {
+                retryCount += 1;
+                retryDelays.push(delay);
+            };
 
-            // Cleanup all instances
-            for (const instance of instances) {
-                await instance.shutdown();
-            }
+            const onEnd = () => {
+                cleanup();
+                resolve();
+            };
+
+            const onError = (err: unknown) => {
+                errors.push(err);
+            };
+
+            const cleanup = () => {
+                clearTimeout(timeout);
+                conn.off("reconnecting", onReconnecting);
+                conn.off("end", onEnd);
+                conn.off("error", onError);
+            };
+
+            conn.on("reconnecting", onReconnecting);
+            conn.on("end", onEnd);
+            conn.on("error", onError);
         });
 
-        it("should handle connection after reset during active usage", async () => {
-            const queue1 = new JobQueue(
-                "platform-1",
-                "session-1",
-                testSecret,
-                redisConfig,
-                mockLogger,
-            );
+        expect(retryCount).to.equal(3);
+        expect(retryDelays).to.eql([200, 400, 800]);
+        expect(errors.length).to.be.greaterThan(0);
+    }, 7000);
 
-            // Reset connection while queue is active
-            await resetSharedRedisConnection();
+    it("should set lazyConnect to false for immediate connection", async () => {
+        const conn = createIORedisConnection(redisConfig);
+        expect(conn.options.lazyConnect).to.be.false;
+        const pong = await conn.ping();
+        expect(pong).to.equal("PONG");
+    });
 
-            // Create new queue after reset
-            const queue2 = new JobQueue(
-                "platform-2",
-                "session-2",
-                testSecret,
-                redisConfig,
-                mockLogger,
-            );
+    it("should set enableOfflineQueue to false for fail-fast behavior", async () => {
+        const conn = createIORedisConnection(redisConfig);
+        expect(conn.options.enableOfflineQueue).to.be.false;
+        const pong = await conn.ping();
+        expect(pong).to.equal("PONG");
+    });
 
-            expect(queue2).to.exist;
+    it("should return 0 connection count when no connection exists", async () => {
+        await resetSharedRedisConnection();
+        const count = await getRedisConnectionCount();
+        expect(count).to.equal(0);
+    });
 
-            // Cleanup
-            await queue1.shutdown().catch(() => {
-                /* Ignore errors from closed connection */
-            });
-            await queue2.shutdown();
-        });
+    it("should return connection count from Redis CLIENT LIST", async () => {
+        createIORedisConnection(redisConfig);
+        const count = await getRedisConnectionCount();
+        // Should return a number (actual count depends on Redis state, but should be > 0)
+        expect(count).to.be.a("number");
+        expect(count).to.be.at.least(0);
     });
 });

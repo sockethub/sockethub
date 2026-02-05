@@ -88,8 +88,10 @@ export class Crypto {
             }
 
             try {
-                SecretValidator.validate(result);
-                return result;
+                const validation = SecretValidator.validate(result);
+                if (validation.valid) {
+                    return result;
+                }
             } catch {
                 // continue to next deterministic variant
             }
