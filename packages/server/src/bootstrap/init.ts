@@ -124,7 +124,7 @@ export default async function getInitObject(
 }
 
 export async function registerPlatforms(initObj: IInitObject): Promise<void> {
-    for (const [, platform] of initObj.platforms) {
+    for (const [_platformId, platform] of initObj.platforms) {
         const schemas: PlatformSchemaRegistry = platform.schemas;
         if (schemas.credentials !== undefined) {
             addPlatformSchema(
