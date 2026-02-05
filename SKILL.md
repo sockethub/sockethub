@@ -191,7 +191,7 @@ All messages follow ActivityStreams 2.0 structure:
 ```
 
 If `actor` is provided as a string, Sockethub expands it using any previously
-saved ActivityObject with the same id (including `type` and other stored
+saved ActivityObject with the same id (including `type` and any other stored
 properties). If none exists, it expands to `{ id }`.
 
 ## API Reference
