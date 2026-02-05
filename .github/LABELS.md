@@ -57,11 +57,18 @@ scope → scope:<scope> label (must exist as a label)
 | `scope:platform-irc` | Issues related to the IRC platform | `#000000` |
 | `scope:platform-xmpp` | Issues related to the XMPP platform | `#000000` |
 | `scope:platform-feeds` | Issues related to the Feeds platform | `#000000` |
+| `scope:platform-metadata` | Issues related to the Metadata platform | `#000000` |
+| `scope:platform-dummy` | Issues related to the Dummy platform | `#000000` |
+| `scope:server` | Server implementation changes | `#000000` |
 | `scope:data-layer` | Data layer changes | `#000000` |
 | `scope:client` | Issues related to Sockethub Client package | `#000000` |
+| `scope:schemas` | Schema and validation changes | `#000000` |
+| `scope:logger` | Logger package changes | `#000000` |
 | `scope:activity-streams` | Issues related to ActivityStreams.js | `#000000` |
+| `scope:crypto` | Cryptographic utilities | `#000000` |
 | `scope:irc2as` | Issues related to IRC2AS | `#000000` |
 | `scope:examples` | Example Demo App | `#000000` |
+| `scope:sockethub` | Main Sockethub package | `#000000` |
 
 ## Special Labels
 
@@ -83,7 +90,7 @@ PRs with these labels are excluded from release notes:
 
 The auto-label workflow validates that scope labels exist. If you use a scope that doesn't have a corresponding `scope:*` label, the workflow will fail with an error message.
 
-**Valid scopes**: `platform-irc`, `platform-xmpp`, `platform-feeds`, `data-layer`, `client`, `activity-streams`, `irc2as`, `examples`
+**Valid scopes**: `platform-irc`, `platform-xmpp`, `platform-feeds`, `platform-metadata`, `platform-dummy`, `server`, `data-layer`, `client`, `schemas`, `logger`, `activity-streams`, `crypto`, `irc2as`, `examples`, `sockethub`
 
 **Invalid example**: `feat(ircstypo): ...` → ❌ Fails because `scope:ircstypo` doesn't exist
 

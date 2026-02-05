@@ -56,7 +56,6 @@ describe("Parent Process Sudden Termination", () => {
                 REDIS_URL: config.redis.url,
                 PORT: config.sockethub.port,
                 NODE_ENV: "test",
-                DEBUG: "sockethub*",
             },
             stdio: ["pipe", "pipe", "pipe"],
         });
@@ -73,13 +72,13 @@ describe("Parent Process Sudden Termination", () => {
 
             let serverStarted = false;
 
-            // NOTE: Sockethub debug messages go to stderr (likely due to debug module behavior)
-            testConfig.sockethubProcess.stderr.on("data", (data) => {
+            // NOTE: Winston logs go to stdout (info/warn/error levels)
+            testConfig.sockethubProcess.stdout.on("data", (data) => {
                 const output = data.toString();
                 testConfig.sockethubLogs.push(output);
 
                 if (testConfig.isVerbose) {
-                    console.log("Sockethub stderr:", output);
+                    console.log("Sockethub stdout:", output);
                 }
 
                 if (
@@ -105,15 +104,15 @@ describe("Parent Process Sudden Termination", () => {
                 }
             });
 
-            testConfig.sockethubProcess.stdout.on("data", (data) => {
+            testConfig.sockethubProcess.stderr.on("data", (data) => {
                 const output = data.toString();
                 testConfig.sockethubLogs.push(output);
 
                 if (testConfig.isVerbose) {
-                    console.log("Sockethub stdout:", output);
+                    console.log("Sockethub stderr:", output);
                 }
 
-                // Also check stdout for shutdown message
+                // Also check stderr for shutdown message
                 if (output.includes("sockethub shutdown")) {
                     clearTimeout(timeoutId);
                     reject(

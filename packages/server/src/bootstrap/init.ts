@@ -1,9 +1,9 @@
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
-import debug from "debug";
 
 import { type RedisConfig, redisCheck } from "@sockethub/data-layer";
 
+import { createLogger } from "@sockethub/logger";
 import { addPlatformSchema } from "@sockethub/schemas";
 import config from "../config.js";
 import loadPlatforms, {
@@ -11,7 +11,7 @@ import loadPlatforms, {
     type PlatformStruct,
 } from "./load-platforms.js";
 
-const log = debug("sockethub:server:bootstrap:init");
+const log = createLogger("server:bootstrap:init");
 
 export interface IInitObject {
     version: string;
@@ -133,7 +133,7 @@ export async function registerPlatforms(initObj: IInitObject): Promise<void> {
 }
 
 async function __loadInit(): Promise<IInitObject> {
-    log("running init routines");
+    log.debug("running init routines");
     const packageJSON = await import("./../../package.json", {
         with: { type: "json" },
     });
@@ -147,7 +147,7 @@ async function __loadInit(): Promise<IInitObject> {
     if (config.get("info")) {
         printSettingsInfo(packageJSON.default.version, platforms);
     }
-    log("finished init routines");
+    log.debug("finished init routines");
     return {
         version: version,
         platforms: platforms,

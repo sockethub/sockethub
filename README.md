@@ -77,6 +77,7 @@ For detailed architecture documentation, see [Architecture Overview](docs/archit
 * **[Platform Development](docs/platform-development/creating-platforms.md)** - Creating custom platforms
 * **[Architecture](docs/architecture/overview.md)** - Technical architecture overview
 * **[Deployment](docs/deployment/server-config.md)** - Production deployment guides
+* **[Performance Testing](stress-tests/README.md)** - Load testing and benchmarking
 
 ## Features
 
@@ -148,6 +149,15 @@ bun run integration         # Run both Redis and browser integration tests
 bun run integration:redis   # Run Redis integration tests with Docker
 bun run integration:browser # Run browser integration tests with Docker
 
+# Performance & Stress Testing
+bun run stress:baseline     # Generate system performance baseline (first time)
+bun run stress:performance  # Run performance tests (~10 min)
+bun run stress:stress       # Run stress tests (~15 min)
+bun run stress:soak         # Run soak test (30 min)
+bun run stress:all          # Run all tests (~60 min)
+bun run stress:ci           # CI smoke test (1-2 min)
+bun run stress:report --latest  # View latest test results
+
 # Code Quality
 bun run lint                # Run Biome linter and markdown lint
 bun run lint:fix           # Auto-fix linting issues
@@ -176,15 +186,18 @@ DEBUG=sockethub* bun run dev
 
 ### Core Infrastructure
 
-* **[sockethub](packages/sockethub)** - Main package and configuration
-* **[@sockethub/server](packages/server)** - Core server implementation with Socket.IO interface
+* **[sockethub](packages/sockethub)** - Main meta-package for installing Sockethub
+* **[@sockethub/client](packages/client)** - Browser client library for connecting to Sockethub
 * **[@sockethub/data-layer](packages/data-layer)** - Redis-based job queue and credential storage
 * **[@sockethub/schemas](packages/schemas)** - ActivityStreams validation and TypeScript types
-* **[@sockethub/client](packages/client)** - Browser client library for connecting to Sockethub
+* **[@sockethub/server](packages/server)** - Core server implementation with Socket.IO interface
 
-### Interactive Demos
+### Libraries
 
-* **[@sockethub/examples](packages/examples)** - Interactive web examples and demos
+* **[@sockethub/activity-streams](packages/activity-streams)** - ActivityStreams object utilities
+* **[@sockethub/crypto](packages/crypto)** - Cryptographic utilities for secure storage
+* **[@sockethub/irc2as](packages/irc2as)** - IRC to ActivityStreams translation
+* **[@sockethub/logger](packages/logger)** - Winston-based logger with global configuration
 
 ### Platform Implementations
 
@@ -194,11 +207,9 @@ DEBUG=sockethub* bun run dev
 * **[@sockethub/platform-metadata](packages/platform-metadata)** - Link preview and metadata extraction
 * **[@sockethub/platform-xmpp](packages/platform-xmpp)** - XMPP protocol support
 
-### Utilities
+### Interactive Demo
 
-* **[@sockethub/activity-streams](packages/activity-streams)** - ActivityStreams object utilities
-* **[@sockethub/crypto](packages/crypto)** - Cryptographic utilities for secure storage
-* **[@sockethub/irc2as](packages/irc2as)** - IRC to ActivityStreams translation
+* **[@sockethub/examples](packages/examples)** - Interactive web examples and demos
 
 ## Contributing
 

@@ -1,8 +1,5 @@
 import events from "node:events";
-import debug from "debug";
 import { ASEmitter } from "./as-emitter.js";
-
-const log = debug("irc2as");
 
 const EVENT_INCOMING = "incoming";
 // EVENT_ERROR = 'error',
@@ -69,13 +66,10 @@ export class IrcToActivityStreams {
     }
 
     input(payload) {
-        log(payload);
         if (typeof payload !== "string") {
-            log("unable to process incoming message as it was not a string.");
             return false;
         }
         if (payload.length < 3) {
-            log("unable to process incoming string, length smaller than 3.");
             return false;
         }
         const incoming = payload.trim();
@@ -93,10 +87,6 @@ export class IrcToActivityStreams {
             this.events.emit(EVENT_PING, `${Date.now()}`);
             return true;
         }
-        log(
-            `[${code}] server: ${server} channel: ${channel} 1: ${pos1}, 2: ${pos2}, 3: ${pos3}. content: `,
-            content,
-        );
         this.__processIRCCodes(
             code,
             server,

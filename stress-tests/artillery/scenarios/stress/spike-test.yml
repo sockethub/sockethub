@@ -1,0 +1,33 @@
+config:
+  target: "http://localhost:10550"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: "Baseline load"
+    - duration: 30
+      arrivalRate: 50
+      name: "Spike to 10x load"
+    - duration: 30
+      arrivalRate: 5
+      name: "Return to baseline"
+  processor: "../../processors/sockethub-client.js"
+
+scenarios:
+  - name: "Spike Test"
+    flow:
+      # Setup client and connect
+      - function: "setupClient"
+      - think: 0.5
+
+      # Send credentials
+      - function: "sendCredentials"
+      - think: 0.5
+
+      # Send messages during spike
+      - loop:
+          - function: "sendDummyEcho"
+          - think: 0.1
+        count: 10
+
+      # Cleanup
+      - function: "disconnectClient"

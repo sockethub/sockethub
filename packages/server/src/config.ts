@@ -1,11 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
-import debug from "debug";
 import nconf from "nconf";
 
+import { type Logger, createWinstonLogger } from "./logger-core.js";
 import { __dirname } from "./util.js";
 
-const log = debug("sockethub:server:bootstrap:config");
 const data = JSON.parse(
     fs.readFileSync(path.resolve(__dirname, "defaults.json"), "utf-8"),
 );
@@ -13,8 +12,14 @@ const data = JSON.parse(
 const defaultConfig = "sockethub.config.json";
 
 export class Config {
+    private log: Logger;
+
     constructor() {
-        log("initializing config");
+        // Use core logger without config dependency
+        this.log = createWinstonLogger("sockethub:server:bootstrap:config", {
+            level: "info",
+        });
+        this.log.debug("initializing config");
         // assign config loading priorities (command-line, environment, cfg, defaults)
         nconf.argv({
             info: {
@@ -59,11 +64,11 @@ export class Config {
             if (!fs.existsSync(configFile)) {
                 throw new Error(`Config file not found: ${configFile}`);
             }
-            log(`reading config file at ${configFile}`);
+            this.log.debug(`reading config file at ${configFile}`);
             nconf.file(configFile);
         } else {
             if (fs.existsSync(`${process.cwd()}/${defaultConfig}`)) {
-                log(`loading local ${defaultConfig}`);
+                this.log.debug(`loading local ${defaultConfig}`);
                 nconf.file(`${process.cwd()}/${defaultConfig}`);
             }
             nconf.use("memory");
@@ -90,6 +95,20 @@ export class Config {
         if (process.env.REDIS_URL) {
             nconf.set("redis:url", process.env.REDIS_URL);
         }
+
+        // override logging config with environment variables if present
+        nconf.set(
+            "logging:level",
+            process.env.LOG_LEVEL || nconf.get("logging:level"),
+        );
+        nconf.set(
+            "logging:fileLevel",
+            process.env.LOG_FILE_LEVEL || nconf.get("logging:fileLevel"),
+        );
+        nconf.set(
+            "logging:file",
+            process.env.LOG_FILE || nconf.get("logging:file"),
+        );
     }
     get = (key: string) => nconf.get(key);
 }

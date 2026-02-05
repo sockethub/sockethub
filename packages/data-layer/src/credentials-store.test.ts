@@ -1,7 +1,16 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import * as sinon from "sinon";
 
+import type { Logger } from "@sockethub/schemas";
+
 import { CredentialsStore } from "./credentials-store";
+
+const mockLogger: Logger = {
+    error: () => {},
+    warn: () => {},
+    info: () => {},
+    debug: () => {},
+};
 
 describe("CredentialsStore", () => {
     let credentialsStore,
@@ -16,6 +25,8 @@ describe("CredentialsStore", () => {
         MockSecureStore = sinon.stub().returns({
             get: MockStoreGet,
             save: MockStoreSave,
+            isConnected: true,
+            connect: sinon.stub().resolves(),
         });
         class TestCredentialsStore extends CredentialsStore {
             initCrypto() {
@@ -34,6 +45,7 @@ describe("CredentialsStore", () => {
             "a session id",
             "a secret must be 32 chars and th",
             { url: "redis config" },
+            mockLogger,
         );
     });
 
@@ -42,11 +54,15 @@ describe("CredentialsStore", () => {
         sinon.assert.calledWith(MockSecureStore, {
             namespace: "foo",
             secret: "a secret must be 32 chars and th",
-            redis: { url: "redis config" },
+            redis: {
+                url: "redis config",
+                connectionName:
+                    "data-layer:credentials-store:a parent id:a session id",
+            },
         });
         expect(typeof credentialsStore).toEqual("object");
         expect(credentialsStore.uid).toEqual(
-            `sockethub:data-layer:credentials-store:a parent id:a session id`,
+            `sockethub:a parent id:data-layer:credentials-store:a session id`,
         );
         expect(typeof credentialsStore.get).toEqual("function");
         expect(typeof credentialsStore.save).toEqual("function");

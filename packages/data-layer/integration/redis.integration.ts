@@ -5,6 +5,7 @@ import {
     type JobDataDecrypted,
     JobQueue,
     JobWorker,
+    redisCheck,
 } from "@sockethub/data-layer";
 import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
 
@@ -24,7 +25,7 @@ const creds: CredentialsObject = {
     },
 };
 const credsHash = "e591ec978a505aee278f372354c229d165d2c096";
-const testSecret = "baz1234567890baz1234567890abcdef";
+const testSecret = "aB3#xK9mP2qR7wZ4cT8nY6vH1jL5fD0s";
 
 describe("CredentialsStore", () => {
     let store: CredentialsStore;
@@ -332,4 +333,55 @@ describe("JobQueue", () => {
         await queue.shutdown();
         await worker.shutdown();
     });
+});
+
+/**
+ * Redis connection failure tests
+ *
+ * These tests document a known issue: secure-store-redis (used by CredentialsStore)
+ * does not properly handle Redis connection errors. Instead of returning rejected
+ * promises, errors escape as unhandled exceptions, which can crash the process.
+ *
+ * The workaround in sockethub is to catch errors in middleware (store-credentials.ts)
+ * and handle them gracefully. However, the underlying library bug remains.
+ *
+ * These tests are skipped because they expose unhandled exceptions that crash the
+ * test runner. They serve as documentation of the issue.
+ */
+describe.skip("Redis connection failure", () => {
+    const INVALID_REDIS_URL = "redis://localhost:6399"; // Non-existent port
+
+    it("redisCheck throws on connection timeout", async () => {
+        // BUG: secure-store-redis throws unhandled exceptions instead of rejecting
+        await expect(redisCheck({ url: INVALID_REDIS_URL })).rejects.toThrow();
+    }, 15000);
+
+    it("CredentialsStore fails gracefully on unavailable Redis", async () => {
+        const store = new CredentialsStore("foo", "bar", testSecret, {
+            url: INVALID_REDIS_URL,
+        });
+        // BUG: secure-store-redis throws unhandled exceptions instead of rejecting
+        await expect(store.get("actor", undefined)).rejects.toThrow();
+    }, 15000);
+
+    it("JobQueue fails on unavailable Redis", async () => {
+        const queue = new JobQueue("testid", "sessionid", testSecret, {
+            url: INVALID_REDIS_URL,
+        });
+
+        const as: ActivityStream = {
+            type: "foo",
+            context: "bar",
+            actor: { id: "bar", type: "person" },
+        };
+
+        // BUG: ioredis/BullMQ may also throw unhandled errors
+        await expect(queue.add("socket id", as)).rejects.toThrow();
+
+        try {
+            await queue.shutdown();
+        } catch {
+            // Expected to fail
+        }
+    }, 15000);
 });

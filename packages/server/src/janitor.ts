@@ -1,10 +1,11 @@
-import debug from "debug";
-
+import { getRedisConnectionCount } from "@sockethub/data-layer";
+import { createLogger } from "@sockethub/logger";
 import listener, { type SocketInstance } from "./listener.js";
 import type PlatformInstance from "./platform-instance.js";
 import { platformInstances } from "./platform-instance.js";
 
-const rmLog = debug("sockethub:server:janitor");
+const rmLog = createLogger("server:janitor");
+const REPORT_CYCLE_MOD = 2; // report every N cycles
 
 export class Janitor {
     cycleInterval = 15000;
@@ -23,15 +24,15 @@ export class Janitor {
      * refreshes not destroying platform instances)
      */
     start(): void {
-        rmLog("initializing");
+        rmLog.debug("initializing");
         this.clean().then(() => {
-            rmLog("cleaning cycle started");
+            rmLog.info("cleaning cycle started");
         });
     }
 
     async stop(): Promise<void> {
         this.stopTriggered = true;
-        rmLog("stopping, terminating all sessions");
+        rmLog.info("stopping, terminating all sessions");
         for (const platformInstance of platformInstances.values()) {
             this.removeStaleSocketSessions(platformInstance);
             await this.removeStalePlatformInstance(platformInstance);
@@ -66,7 +67,7 @@ export class Janitor {
         platformInstance: PlatformInstance,
         sessionId: string,
     ) {
-        rmLog(
+        rmLog.debug(
             `removing ${
                 !this.stopTriggered ? "stale " : ""
             }socket session reference ${sessionId} 
@@ -80,10 +81,10 @@ export class Janitor {
         platformInstance: PlatformInstance,
     ): Promise<void> {
         if (platformInstance.flaggedForTermination || this.stopTriggered) {
-            rmLog(`terminating platform instance ${platformInstance.id}`);
+            rmLog.info(`terminating platform instance ${platformInstance.id}`);
             await platformInstance.shutdown(); // terminate
         } else {
-            rmLog(
+            rmLog.debug(
                 `flagging for termination platform instance ${platformInstance.id} (no registered sessions found)`,
             );
             platformInstance.flaggedForTermination = true;
@@ -114,7 +115,7 @@ export class Janitor {
         if (!platformInstance.global) {
             if (
                 (platformInstance.config.persist &&
-                    !platformInstance.config.initialized) ||
+                    !platformInstance.isInitialized()) ||
                 platformInstance.sessions.size === 0
             ) {
                 // either the platform failed to initialize, or there are no more sessions linked to it
@@ -137,10 +138,11 @@ export class Janitor {
         this.cycleCount++;
         this.sockets = await this.getSockets();
 
-        if (!(this.cycleCount % 4)) {
+        if (!(this.cycleCount % REPORT_CYCLE_MOD)) {
             this.reportCount++;
-            rmLog(
-                `socket sessions: ${this.sockets.length} platform instances: ${platformInstances.size}`,
+            const redisConnections = await getRedisConnectionCount();
+            rmLog.info(
+                `socket sessions: ${this.sockets.length} platform instances: ${platformInstances.size} redis connections: ${redisConnections}`,
             );
         }
 

@@ -87,5 +87,11 @@ sessionStorage
 IndexedDB
 middleware
 Lerna
+namespaced
+codebase
+namespaces
+createLogger
+timestamps
+systemd
  - ./README.md
 v1.2

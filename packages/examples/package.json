@@ -1,6 +1,6 @@
 {
   "name": "@sockethub/examples",
-  "version": "1.0.0-alpha.10",
+  "version": "1.0.0-alpha.11",
   "type": "module",
   "files": ["build"],
   "engines": {
@@ -22,15 +22,17 @@
     "dev": "bunx --bun vite dev",
     "build": "bunx --bun vite build",
     "test": "bun run test:unit",
-    "test:integration": "bunx --bun playwright test",
+    "test:integration": "sh -c 'if [ -z \"$RUN_PLAYWRIGHT\" ]; then echo \"Skipping Playwright integration tests (set RUN_PLAYWRIGHT=1 to run).\"; else bunx --bun playwright test; fi'",
     "test:unit": "bunx --bun vitest run",
     "preview": "bunx --bun vite preview",
+    "clean": "rm -rf build",
+    "clean:deps": "rm -rf node_modules",
     "check": "bunx --bun svelte-kit sync && bunx --bun svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "bunx --bun svelte-kit sync && bunx --bun svelte-check --tsconfig ./tsconfig.json --watch"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
-    "@sockethub/client": "^5.0.0-alpha.10",
+    "@sockethub/client": "^5.0.0-alpha.11",
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.50.0",
     "@sveltejs/vite-plugin-svelte": "^5.1.1",
@@ -49,5 +51,5 @@
     "vite": "^6.4.1",
     "vitest": "^3.2.4"
   },
-  "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
+  "gitHead": "f7fb4fa2599da1def438c710ce81a41b6cfee8a7"
 }

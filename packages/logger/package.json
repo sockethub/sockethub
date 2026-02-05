@@ -1,0 +1,44 @@
+{
+  "name": "@sockethub/logger",
+  "description": "Winston-based logger for Sockethub packages",
+  "version": "1.0.0-alpha.11",
+  "type": "module",
+  "private": false,
+  "author": "Nick Jennings <nick@silverbucket.net>",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["src/", "dist/"],
+  "engines": {
+    "bun": ">=1.2"
+  },
+  "keywords": ["sockethub", "logging", "winston"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sockethub/sockethub.git",
+    "directory": "packages/logger"
+  },
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/logger",
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "clean": "rm -rf dist",
+    "clean:deps": "rm -rf node_modules",
+    "test": "bun test src/"
+  },
+  "dependencies": {
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "gitHead": "f7fb4fa2599da1def438c710ce81a41b6cfee8a7"
+}
