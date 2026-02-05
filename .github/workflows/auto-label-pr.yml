@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+      issues: write
       contents: read
     
     steps:
@@ -44,6 +45,10 @@ jobs:
                   // Label exists, add it
                   labels.push(scopeLabel);
                 } catch (error) {
+                  if (error.status === 403) {
+                    core.warning('Skipping label validation due to limited permissions.');
+                    return;
+                  }
                   if (error.status === 404) {
                     core.setFailed(`❌ Invalid scope in PR title: "${scopeLabel}" is not an existing label. Please use an existing scope label (e.g., platform-irc, data-layer) or update the PR title.`);
                     return;
@@ -66,14 +71,22 @@ jobs:
               const newLabels = labels.filter(l => !existingLabels.includes(l));
               
               if (newLabels.length > 0) {
-                await github.rest.issues.addLabels({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: context.payload.pull_request.number,
-                  labels: newLabels
-                });
-                
-                core.info(`Added labels: ${newLabels.join(', ')}`);
+                try {
+                  await github.rest.issues.addLabels({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: context.payload.pull_request.number,
+                    labels: newLabels
+                  });
+                  
+                  core.info(`Added labels: ${newLabels.join(', ')}`);
+                } catch (error) {
+                  if (error.status === 403) {
+                    core.warning('Skipping label updates due to limited permissions.');
+                    return;
+                  }
+                  throw error;
+                }
               } else {
                 core.info('All appropriate labels already exist');
               }
