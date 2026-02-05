@@ -17,6 +17,7 @@ import {
     type PlatformSession,
     validatePlatformSchema,
 } from "@sockethub/schemas";
+import type { Schema } from "ajv";
 
 const log = createLogger("server:bootstrap:platforms");
 
@@ -25,12 +26,19 @@ export type PlatformStruct = {
     moduleName: string;
     modulePath?: string;
     config: PlatformConfig;
-    schemas: PlatformSchemaStruct;
+    schemas: PlatformSchemaRegistry;
     version: string;
     types: Array<string>;
 };
 
 export type PlatformMap = Map<string, PlatformStruct>;
+
+export type PlatformSchemaRegistry = {
+    name: string;
+    version: string;
+    credentials?: Schema | boolean;
+    messages?: Schema | boolean;
+};
 
 const dummySession: PlatformSession = {
     log: createLogger("platform:dummy"),

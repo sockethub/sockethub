@@ -9,6 +9,7 @@ import type { Schema } from "ajv";
 import config from "../config.js";
 import loadPlatforms, {
     type PlatformMap,
+    type PlatformSchemaRegistry,
     type PlatformStruct,
 } from "./load-platforms.js";
 
@@ -124,19 +125,15 @@ export default async function getInitObject(
 
 export async function registerPlatforms(initObj: IInitObject): Promise<void> {
     for (const [, platform] of initObj.platforms) {
-        const schemas = platform.schemas as unknown as Record<
-            string,
-            Schema | boolean | undefined
-        >;
-        for (const key of Object.keys(schemas)) {
-            const schema = schemas[key];
-            if (schema === undefined) {
-                continue;
-            }
-            if (typeof schema !== "object" && typeof schema !== "boolean") {
-                continue;
-            }
-            addPlatformSchema(schema, `${platform.id}/${key}`);
+        const schemas: PlatformSchemaRegistry = platform.schemas;
+        if (schemas.credentials !== undefined) {
+            addPlatformSchema(
+                schemas.credentials,
+                `${platform.id}/credentials`,
+            );
+        }
+        if (schemas.messages !== undefined) {
+            addPlatformSchema(schemas.messages, `${platform.id}/messages`);
         }
     }
 }

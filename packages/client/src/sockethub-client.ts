@@ -14,6 +14,12 @@ export interface EventMapping {
     join: Map<string, ActivityStream>;
 }
 
+type ReplayEventMap = {
+    "activity-object": BaseActivityObject;
+    credentials: ActivityStream;
+    message: ActivityStream;
+};
+
 interface CustomEmitter extends EventEmitter {
     _emit(s: string, o: unknown, c?: unknown): void;
     connect(): void;
@@ -308,24 +314,16 @@ export default class SockethubClient {
      * @param name - Event name to emit ("credentials", "activity-object", "message")
      * @param asMap - Map of events to replay
      */
-    private replay(
-        name: "activity-object",
-        asMap: Map<string, BaseActivityObject>,
-    ): void;
-    private replay(
-        name: "credentials" | "message",
-        asMap: Map<string, ActivityStream>,
-    ): void;
-    private replay(
-        name: string,
-        asMap: Map<string, ActivityStream | BaseActivityObject>,
+    private replay<K extends keyof ReplayEventMap>(
+        name: K,
+        asMap: Map<string, ReplayEventMap[K]>,
     ): void {
         for (const obj of asMap.values()) {
             // activity-objects are raw objects, don't pass through Stream()
             // which is designed for activity streams with actor/object structure
             const isActivityObject = name === "activity-object";
             if (isActivityObject) {
-                const expandedObj = obj;
+                const expandedObj = obj as BaseActivityObject;
                 const id = expandedObj?.id;
                 this.log(`replaying ${name} for ${id}`);
                 this._socket.emit(name, expandedObj);
