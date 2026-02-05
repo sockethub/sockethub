@@ -55,6 +55,13 @@ export default function validate(
                 done(msg);
             }
         } else {
+            if (!initObj) {
+                return done(
+                    new Error(
+                        "Sockethub platforms not initialized for validation.",
+                    ),
+                );
+            }
             const stream = msg as ActivityStream;
             if (!initObj.platforms.has(stream.context)) {
                 return done(
@@ -76,6 +83,13 @@ export default function validate(
                     done(new Error(err));
                 } else {
                     const platformMeta = initObj.platforms.get(stream.context);
+                    if (!platformMeta) {
+                        return done(
+                            new Error(
+                                `platform context ${stream.context} not registered with this Sockethub instance.`,
+                            ),
+                        );
+                    }
                     if (!platformMeta.types.includes(stream.type)) {
                         return done(
                             new Error(

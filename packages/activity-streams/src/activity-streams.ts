@@ -282,9 +282,6 @@ const _Object: ActivityObjectManager = {
     create: (obj: ActivityObject) => {
         validateObject("object", obj, true); // require ID for Object.create()
         const ao = ensureProps(obj);
-        if (!ao.id) {
-            throw new Error("activity object id is required for Object.create");
-        }
         objs.set(ao.id, ao);
         ee.emit("activity-object-create", ao);
         return ao;
@@ -341,9 +338,7 @@ export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
             : warnOnUnknownObjectProperties;
     const customPropsConfig = opts.customProps || {};
     for (const propName of Object.keys(customPropsConfig)) {
-        if (Array.isArray(customPropsConfig[propName])) {
-            customProps[propName] = customPropsConfig[propName];
-        }
+        customProps[propName] = customPropsConfig[propName];
     }
 
     return {
