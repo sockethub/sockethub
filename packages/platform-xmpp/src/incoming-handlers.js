@@ -333,7 +333,7 @@ export class IncomingHandlers {
                 stanza.attrs.type === "result" &&
                 stanza.attrs.id?.startsWith("room_info_")
             ) {
-                this.session.debug("got room info response");
+                this.session.log.debug("got room info response");
                 return this.notifyRoomInfo(stanza);
             }
 
