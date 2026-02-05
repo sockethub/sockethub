@@ -4,6 +4,7 @@ import { crypto } from "@sockethub/crypto";
 import { CredentialsStore } from "@sockethub/data-layer";
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import type {
+    ActivityObject,
     ActivityStream,
     InternalActivityStream,
 } from "@sockethub/schemas";
@@ -27,37 +28,34 @@ import ProcessManager from "./process-manager.js";
 
 const log = createLogger("server:core");
 
-type ErrMsg = {
-    context: string;
-    error: string;
-    content: object;
-};
-
-function attachError(err: unknown, msg: InternalActivityStream | undefined) {
-    const finalError: ErrMsg = {
-        context: "error",
-        error: err.toString(),
-        content: {},
-    };
-
-    // biome-ignore lint/performance/noDelete: <explanation>
-    delete msg.sessionSecret;
-
-    if (msg) {
-        finalError.content = msg;
+function attachError<T extends ActivityStream | ActivityObject>(
+    err: unknown,
+    msg?: T,
+) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    if (!msg) {
+        return new Error(errorMessage);
     }
-    return finalError;
+
+    const cleaned = { ...msg, error: errorMessage } as T & {
+        sessionSecret?: string;
+    };
+    if ("sessionSecret" in cleaned) {
+        // biome-ignore lint/performance/noDelete: <explanation>
+        delete cleaned.sessionSecret;
+    }
+    return cleaned;
 }
 
 class Sockethub {
     private readonly parentId: string;
     private readonly parentSecret1: string;
     private readonly parentSecret2: string;
-    counter: number;
-    platforms: Map<string, object>;
+    counter = 0;
+    platforms: Map<string, object> = new Map();
     status: boolean;
-    processManager: ProcessManager;
-    private rateLimiter: ReturnType<typeof createRateLimiter>;
+    processManager!: ProcessManager;
+    private rateLimiter!: ReturnType<typeof createRateLimiter>;
 
     constructor() {
         this.status = false;
@@ -72,7 +70,8 @@ class Sockethub {
      */
     async boot() {
         if (this.status) {
-            return log.warn("Sockethub.boot() called more than once");
+            log.warn("Sockethub.boot() called more than once");
+            return;
         }
         this.status = true;
 
@@ -80,6 +79,9 @@ class Sockethub {
             log.error(err);
             process.exit(1);
         });
+        if (!init) {
+            return;
+        }
 
         this.processManager = new ProcessManager(
             this.parentId,
@@ -131,17 +133,29 @@ class Sockethub {
 
         socket.on(
             "credentials",
-            middleware("credentials")
+            middleware<ActivityStream>("credentials")
                 .use(expandActivityStream)
                 .use(validate("credentials", socket.id))
                 .use(storeCredentials(credentialsStore))
-                .use((err, data, next) => {
-                    // error handler
-                    next(attachError(err, data));
-                })
-                .use((data, next) => {
-                    next();
-                })
+                .use(
+                    (
+                        err: Error,
+                        data: ActivityStream,
+                        next: (data?: ActivityStream | Error) => void,
+                    ) => {
+                        // error handler
+                        next(attachError(err, data));
+                    },
+                )
+                .use(
+                    (
+                        data: ActivityStream,
+                        next: (data?: ActivityStream | Error) => void,
+                    ) => {
+                        void data;
+                        next();
+                    },
+                )
                 .done(),
         );
 
@@ -149,33 +163,56 @@ class Sockethub {
         // fired, and we receive a copy on the server side.
         socket.on(
             "activity-object",
-            middleware("activity-object")
+            middleware<ActivityObject>("activity-object")
                 .use(validate("activity-object", socket.id))
                 .use(createActivityObject)
-                .use((err, data, next) => {
-                    next(attachError(err, data));
-                })
-                .use((data, next) => {
-                    next();
-                })
+                .use(
+                    (
+                        err: Error,
+                        data: ActivityObject,
+                        next: (data?: ActivityObject | Error) => void,
+                    ) => {
+                        next(attachError(err, data));
+                    },
+                )
+                .use(
+                    (
+                        data: ActivityObject,
+                        next: (data?: ActivityObject | Error) => void,
+                    ) => {
+                        void data;
+                        next();
+                    },
+                )
                 .done(),
         );
 
         socket.on(
             "message",
-            middleware("message")
+            middleware<InternalActivityStream>("message")
                 .use(expandActivityStream)
                 .use(validate("message", socket.id))
-                .use((msg, next) => {
-                    // The platform thread must find the credentials on their own using the given
-                    // sessionSecret, which indicates that this specific session (socket
-                    // connection) has provided credentials.
-                    msg.sessionSecret = sessionSecret;
-                    next(msg);
-                })
-                .use((err, data, next) => {
-                    next(attachError(err, data));
-                })
+                .use(
+                    (
+                        msg: InternalActivityStream,
+                        next: (data?: InternalActivityStream | Error) => void,
+                    ) => {
+                        // The platform thread must find the credentials on their own using the given
+                        // sessionSecret, which indicates that this specific session (socket
+                        // connection) has provided credentials.
+                        msg.sessionSecret = sessionSecret;
+                        next(msg);
+                    },
+                )
+                .use(
+                    (
+                        err: Error,
+                        data: InternalActivityStream,
+                        next: (data?: InternalActivityStream | Error) => void,
+                    ) => {
+                        next(attachError(err, data));
+                    },
+                )
                 .use(async (msg: ActivityStream, next) => {
                     const platformInstance = this.processManager.get(
                         msg.context,
@@ -200,7 +237,9 @@ class Sockethub {
                         }
                     } catch (err) {
                         // Queue is closed (platform terminating) - send error to client
-                        msg.error = err.message || "platform unavailable";
+                        const errorMessage =
+                            err instanceof Error ? err.message : String(err);
+                        msg.error = errorMessage || "platform unavailable";
                         next(msg);
                     }
                 })

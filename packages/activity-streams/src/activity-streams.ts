@@ -86,8 +86,8 @@ const baseProps = {
         "url",
         "xmpp:stanza-id",
     ],
-};
-const rename = {
+} as const;
+const rename: Record<string, string> = {
     "@id": "id",
     "@type": "type",
     verb: "type",
@@ -108,36 +108,39 @@ const expand = {
         primary: "content",
         props: baseProps,
     },
-};
+} as const;
 
-type CustomProps = {
-    [key: string]: string | number | boolean | object | string[];
-};
+type CustomProps = Record<string, string[]>;
 
-const objs = new Map();
+type BasePropKey = keyof typeof baseProps;
+
+const objs = new Map<string, ActivityObject>();
 const customProps: CustomProps = {};
 
 let failOnUnknownObjectProperties = false;
 let warnOnUnknownObjectProperties = true;
-let specialObjs = []; // the objects don't get rejected for bad props
+let specialObjs: string[] = []; // the objects don't get rejected for bad props
 
 function matchesCustomProp(type: string, key: string) {
-    if (customProps[type] instanceof Object) {
-        const obj = customProps[type] as string[];
-        if (obj.includes(key)) {
-            return true;
-        }
-    }
-    return false;
+    const props = customProps[type];
+    return Array.isArray(props) && props.includes(key);
 }
 
-function renameProp<T>(obj: T, key: string): T {
-    obj[rename[key]] = obj[key];
+function renameProp(obj: Record<string, unknown>, key: string) {
+    const renameKey = rename[key];
+    if (!renameKey) {
+        return obj;
+    }
+    obj[renameKey] = obj[key];
     delete obj[key];
     return obj;
 }
 
-function validateObject<T>(type: string, incomingObj: T, requireId = false) {
+function validateObject(
+    type: BasePropKey,
+    incomingObj: unknown,
+    requireId = false,
+) {
     // Input validation with clear error messages
     if (incomingObj === null) {
         throw new Error(
@@ -175,17 +178,19 @@ function validateObject<T>(type: string, incomingObj: T, requireId = false) {
         );
     }
 
-    const unknownKeys = Object.keys(incomingObj).filter(
+    const incomingRecord = incomingObj as Record<string, unknown>;
+    const allowedProps = baseProps[type] as readonly string[];
+    const unknownKeys = Object.keys(incomingRecord).filter(
         (key: string): boolean => {
-            return !baseProps[type].includes(key);
+            return !allowedProps.includes(key);
         },
     );
 
     for (const key of unknownKeys) {
-        let ao: ActivityObject = incomingObj as ActivityObject;
+        const ao = incomingObj as ActivityObject;
         if (rename[key]) {
             // rename property instead of fail
-            ao = renameProp(ao, key);
+            renameProp(ao as Record<string, unknown>, key);
             continue;
         }
 
@@ -218,57 +223,68 @@ function ensureProps(obj: ActivityObject): ActivityObject {
 }
 
 function expandStream(meta: ActivityStream) {
-    const stream = {};
-    for (const key of Object.keys(meta)) {
-        if (typeof meta[key] === "string") {
-            stream[key] = objs.get(meta[key]) || meta[key];
-        } else if (Array.isArray(meta[key])) {
-            stream[key] = [];
-            for (const entry of meta[key]) {
+    const stream: Record<string, unknown> = {};
+    const metaRecord = meta as unknown as Record<string, unknown>;
+    for (const key of Object.keys(metaRecord)) {
+        const value = metaRecord[key];
+        if (typeof value === "string") {
+            stream[key] = objs.get(value) || value;
+        } else if (Array.isArray(value)) {
+            const expanded: Array<ActivityObject | string> = [];
+            for (const entry of value) {
                 if (typeof entry === "string") {
-                    stream[key].push(objs.get(entry) || entry);
+                    expanded.push(objs.get(entry) || entry);
                 }
             }
+            stream[key] = expanded;
         } else {
-            stream[key] = meta[key];
+            stream[key] = value;
         }
     }
 
     // only expand string into objects if they are in the expand list
-    for (const key of Object.keys(expand)) {
-        if (typeof stream[key] === "string") {
+    for (const key of Object.keys(expand) as Array<keyof typeof expand>) {
+        const value = stream[key];
+        if (typeof value === "string") {
             const idx = expand[key].primary;
-            const obj = {};
-            obj[idx] = stream[key];
-            stream[key] = obj;
+            stream[key] = { [idx]: value };
         }
     }
-    return stream;
+    return stream as unknown as ActivityStream;
 }
 
 function Stream(
     meta: ActivityStream,
+): ActivityStream | ActivityObject | Record<string, never>;
+function Stream(
+    meta: unknown,
+): ActivityStream | ActivityObject | Record<string, never>;
+function Stream(
+    meta: ActivityStream | unknown,
 ): ActivityStream | ActivityObject | Record<string, never> {
     validateObject("stream", meta);
-    if (typeof meta.object === "object") {
-        validateObject("object", meta.object);
+    if (typeof (meta as ActivityStream).object === "object") {
+        validateObject("object", (meta as ActivityStream).object);
     }
-    const stream = expandStream(meta);
+    const stream = expandStream(meta as ActivityStream);
     ee.emit("activity-stream", stream);
     return stream;
 }
 
 export interface ActivityObjectManager {
-    create(obj: unknown): unknown;
+    create(obj: ActivityObject): ActivityObject;
     delete(id: string): boolean;
-    list(): IterableIterator<unknown>;
-    get(id: string, expand?: boolean): unknown;
+    list(): IterableIterator<string>;
+    get(id: string, expand?: boolean): ActivityObject | string;
 }
 
 const _Object: ActivityObjectManager = {
     create: (obj: ActivityObject) => {
         validateObject("object", obj, true); // require ID for Object.create()
         const ao = ensureProps(obj);
+        if (!ao.id) {
+            throw new Error("activity object id is required for Object.create");
+        }
         objs.set(ao.id, ao);
         ee.emit("activity-object-create", ao);
         return ao;
@@ -288,12 +304,12 @@ const _Object: ActivityObjectManager = {
             if (!expand) {
                 return id;
             }
-            obj = { id: id };
+            obj = { id: id } as ActivityObject;
         }
         return ensureProps(obj);
     },
 
-    list: (): IterableIterator<unknown> => objs.keys(),
+    list: (): IterableIterator<string> => objs.keys(),
 };
 
 export interface ASFactoryOptions {
@@ -306,7 +322,7 @@ export interface ASFactoryOptions {
 type EventCallback = (...args: unknown[]) => void;
 
 export interface ASManager {
-    Stream(meta: unknown): ActivityStream | ActivityObject;
+    Stream(meta: ActivityStream | unknown): ActivityStream | ActivityObject;
     Object: ActivityObjectManager;
     on(event: string, func: EventCallback): void;
     once(event: string, func: EventCallback): void;
@@ -323,9 +339,10 @@ export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
         typeof opts.warnOnUnknownObjectProperties === "boolean"
             ? opts.warnOnUnknownObjectProperties
             : warnOnUnknownObjectProperties;
-    for (const propName of Object.keys(opts.customProps || {})) {
-        if (typeof opts.customProps[propName] === "object") {
-            customProps[propName] = opts.customProps[propName];
+    const customPropsConfig = opts.customProps || {};
+    for (const propName of Object.keys(customPropsConfig)) {
+        if (Array.isArray(customPropsConfig[propName])) {
+            customProps[propName] = customPropsConfig[propName];
         }
     }
 
@@ -338,7 +355,10 @@ export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
     } as ASManager;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-((global: any) => {
+((global: Record<string, unknown>) => {
     global.ASFactor = ASFactory;
-})(typeof window === "object" ? window : {});
+})(
+    typeof globalThis === "object"
+        ? (globalThis as Record<string, unknown>)
+        : {},
+);

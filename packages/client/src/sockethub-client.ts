@@ -97,8 +97,8 @@ export default class SockethubClient {
         join: new Map(),
     };
     private _socket: Socket;
-    public ActivityStreams: ASManager;
-    public socket: CustomEmitter;
+    public ActivityStreams!: ASManager;
+    public socket!: CustomEmitter;
     public debug = true;
 
     constructor(socket: Socket) {
@@ -318,7 +318,7 @@ export default class SockethubClient {
             const isActivityObject = name === "activity-object";
             const expandedObj = isActivityObject
                 ? obj
-                : this.ActivityStreams.Stream(obj);
+                : this.ActivityStreams.Stream(obj as ActivityStream);
             let id = expandedObj?.id;
             if (!isActivityObject && this.hasActorId(expandedObj)) {
                 const actor = (expandedObj as ActivityStream).actor;
@@ -331,8 +331,10 @@ export default class SockethubClient {
     }
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-((global: any) => {
+((global: Record<string, unknown>) => {
     global.SockethubClient = SockethubClient;
-    // @ts-ignore
-})(typeof window === "object" ? window : {});
+})(
+    typeof globalThis === "object"
+        ? (globalThis as Record<string, unknown>)
+        : {},
+);
