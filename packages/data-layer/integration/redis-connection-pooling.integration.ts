@@ -58,6 +58,8 @@ describe("Redis Connection Pooling Integration Tests", () => {
         expect(conn.options.connectTimeout).to.equal(5000);
         expect(conn.options.disconnectTimeout).to.equal(2000);
         expect(conn.options.maxRetriesPerRequest).to.equal(3);
+        const pong = await conn.ping();
+        expect(pong).to.equal("PONG");
     });
 
     it("should use default timeouts when not specified", async () => {
@@ -71,6 +73,8 @@ describe("Redis Connection Pooling Integration Tests", () => {
         expect(conn.options.connectTimeout).to.equal(10000);
         expect(conn.options.disconnectTimeout).to.equal(5000);
         expect(conn.options.maxRetriesPerRequest).to.be.null;
+        const pong = await conn.ping();
+        expect(pong).to.equal("PONG");
     });
 
     it("should disconnect and reset shared connection", async () => {
@@ -141,14 +145,18 @@ describe("Redis Connection Pooling Integration Tests", () => {
         expect(errors.length).to.be.greaterThan(0);
     }, 7000);
 
-    it("should set lazyConnect to false for immediate connection", () => {
+    it("should set lazyConnect to false for immediate connection", async () => {
         const conn = createIORedisConnection(redisConfig);
         expect(conn.options.lazyConnect).to.be.false;
+        const pong = await conn.ping();
+        expect(pong).to.equal("PONG");
     });
 
-    it("should set enableOfflineQueue to false for fail-fast behavior", () => {
+    it("should set enableOfflineQueue to false for fail-fast behavior", async () => {
         const conn = createIORedisConnection(redisConfig);
         expect(conn.options.enableOfflineQueue).to.be.false;
+        const pong = await conn.ping();
+        expect(pong).to.equal("PONG");
     });
 
     it("should return 0 connection count when no connection exists", async () => {
