@@ -1,7 +1,7 @@
 {
   "name": "@sockethub/data-layer",
   "description": "Storing and RPC of data for Sockethub",
-  "version": "1.0.0-alpha.10",
+  "version": "1.0.0-alpha.11",
   "type": "module",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
@@ -44,9 +44,9 @@
     "test:integration": "bun test ./integration/redis.integration.ts"
   },
   "dependencies": {
-    "@sockethub/crypto": "^1.0.0-alpha.10",
-    "@sockethub/logger": "^1.0.0-alpha.10",
-    "@sockethub/schemas": "^3.0.0-alpha.10",
+    "@sockethub/crypto": "^1.0.0-alpha.11",
+    "@sockethub/logger": "^1.0.0-alpha.11",
+    "@sockethub/schemas": "^3.0.0-alpha.11",
     "bullmq": "^5.66.5",
     "ioredis": "^5.9.2",
     "secure-store-redis": "^4.1.0"
@@ -60,5 +60,5 @@
     "typedoc-plugin-markdown": "^4.9.0",
     "winston": "^3.19.0"
   },
-  "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
+  "gitHead": "f7fb4fa2599da1def438c710ce81a41b6cfee8a7"
 }
