@@ -3,7 +3,7 @@ import * as HTTP from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
 import bodyParser from "body-parser";
-import express from "express";
+import express, { type Express, type Request, type Response } from "express";
 import rateLimit from "express-rate-limit";
 import { Server } from "socket.io";
 
@@ -81,7 +81,7 @@ class Listener {
         }
     }
 
-    private addExamplesRoutes(app) {
+    private addExamplesRoutes(app: Express) {
         const examplesPath = this.resolveExamplesPath();
 
         if (!examplesPath) {
@@ -114,7 +114,8 @@ class Listener {
         app.use(express.static(examplesPath));
 
         const examplesIndex = path.join(examplesPath, "index.html");
-        app.get("*", limiter, (req, res) => {
+        app.get("*", limiter, (req: Request, res: Response) => {
+            log.debug(`examples request ${req.path}`);
             res.sendFile(examplesIndex);
         });
 
@@ -139,7 +140,7 @@ class Listener {
         );
     }
 
-    private static initExpress() {
+    private static initExpress(): Express {
         const app = express();
         // templating engines
         app.set("view engine", "ejs");
@@ -152,9 +153,7 @@ class Listener {
 
 const listener = new Listener();
 
-interface EmitFunction {
-    (type: string, data: unknown);
-}
+type EmitFunction = (type: string, data: unknown) => void;
 
 export interface SocketInstance {
     id: string;

@@ -6,7 +6,7 @@ import {
 import type { ActivityStream } from "@sockethub/schemas";
 import { type Job, Queue, QueueEvents, Worker } from "bullmq";
 
-import { JobBase, createIORedisConnection } from "./job-base.js";
+import { JobBase } from "./job-base.js";
 import { buildQueueId } from "./queue-id.js";
 import type { JobDataEncrypted, JobDecrypted, RedisConfig } from "./types.js";
 
@@ -25,7 +25,7 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
                 job.data.test = "touched by worker";
             },
             {
-                connection: createIORedisConnection(config),
+                connection: config,
             },
         );
         worker.on("completed", async (job: Job) => {
@@ -46,7 +46,7 @@ export async function verifyJobQueue(config: RedisConfig): Promise<void> {
             reject(err);
         });
         const queue = new Queue("connectiontest", {
-            connection: createIORedisConnection(config),
+            connection: config,
         });
         queue.on("error", (err) => {
             log.warn(

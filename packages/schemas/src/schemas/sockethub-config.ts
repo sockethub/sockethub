@@ -164,7 +164,7 @@ export const SockethubConfigSchema = {
                 },
                 maxRetriesPerRequest: {
                     type: ["number", "null"],
-                    default: null,
+                    default: null as number | null,
                     description:
                         "Maximum number of retries per request (null for BullMQ default)",
                 },

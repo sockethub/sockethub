@@ -8,12 +8,10 @@ import { PlatformSchema } from "./schemas/platform.js";
 import type { ActivityStream } from "./types.js";
 
 const ajv = new Ajv({ strictTypes: false, allErrors: true });
-addFormats(ajv);
-additionsFormats2019(ajv);
+addFormats(ajv as unknown as Parameters<typeof addFormats>[0]);
+additionsFormats2019(ajv as unknown as Ajv);
 
-interface SchemasDict {
-    string?: Schema;
-}
+type SchemasDict = Record<string, Schema>;
 
 const schemaURL = "https://sockethub.org/schemas/v0";
 const schemas: SchemasDict = {};

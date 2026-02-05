@@ -309,18 +309,34 @@ export default class SockethubClient {
      * @param asMap - Map of events to replay
      */
     private replay(
+        name: "activity-object",
+        asMap: Map<string, BaseActivityObject>,
+    ): void;
+    private replay(
+        name: "credentials" | "message",
+        asMap: Map<string, ActivityStream>,
+    ): void;
+    private replay(
         name: string,
         asMap: Map<string, ActivityStream | BaseActivityObject>,
-    ) {
+    ): void {
         for (const obj of asMap.values()) {
             // activity-objects are raw objects, don't pass through Stream()
             // which is designed for activity streams with actor/object structure
             const isActivityObject = name === "activity-object";
-            const expandedObj = isActivityObject
-                ? obj
-                : this.ActivityStreams.Stream(obj as ActivityStream);
+            if (isActivityObject) {
+                const expandedObj = obj;
+                const id = expandedObj?.id;
+                this.log(`replaying ${name} for ${id}`);
+                this._socket.emit(name, expandedObj);
+                continue;
+            }
+
+            const expandedObj = this.ActivityStreams.Stream(
+                obj as ActivityStream,
+            );
             let id = expandedObj?.id;
-            if (!isActivityObject && this.hasActorId(expandedObj)) {
+            if (this.hasActorId(expandedObj)) {
                 const actor = (expandedObj as ActivityStream).actor;
                 // actor can be a string (JID) or an object with an id field
                 id = typeof actor === "string" ? actor : actor.id;

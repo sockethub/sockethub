@@ -12,7 +12,7 @@
     "declaration": true,
     "esModuleInterop": true,
     "alwaysStrict": true,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "noImplicitThis": true,
     "useUnknownInCatchVariables": true,
     "noImplicitReturns": true,
@@ -87,7 +87,6 @@
   "exclude": [
     "node_modules",
     "dist",
-    "*.d.ts",
     "**/*.integration.ts",
     "**/*.test.ts",
     "**/*.test.data.ts",

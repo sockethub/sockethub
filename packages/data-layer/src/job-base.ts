@@ -67,11 +67,13 @@ export async function getRedisConnectionCount(): Promise<number> {
     }
 
     try {
-        const clientList = await sharedRedisConnection.client("LIST");
+        const clientList = (await sharedRedisConnection.client(
+            "LIST",
+        )) as string;
         // CLIENT LIST returns one line per connection, filter out empty lines
         const connections = clientList
             .split("\n")
-            .filter((line) => line.trim());
+            .filter((line: string) => line.trim());
         return connections.length;
     } catch (err) {
         // Return 0 if Redis query fails (connection issues, etc.)

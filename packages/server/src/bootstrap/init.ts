@@ -5,6 +5,7 @@ import { type RedisConfig, redisCheck } from "@sockethub/data-layer";
 
 import { createLogger } from "@sockethub/logger";
 import { addPlatformSchema } from "@sockethub/schemas";
+import type { Schema } from "ajv";
 import config from "../config.js";
 import loadPlatforms, {
     type PlatformMap,
@@ -75,8 +76,8 @@ export function printSettingsInfo(
 
 let initCalled = false;
 let initWaitCount = 0;
-let cancelWait: Timer;
-const resolveQueue = [];
+let cancelWait: NodeJS.Timeout | undefined;
+const resolveQueue: Array<(init: IInitObject) => void> = [];
 
 export default async function getInitObject(
     initFunc: () => Promise<IInitObject> = __loadInit,
@@ -122,12 +123,20 @@ export default async function getInitObject(
 }
 
 export async function registerPlatforms(initObj: IInitObject): Promise<void> {
-    for (const [_, platform] of initObj.platforms) {
-        for (const key of Object.keys(platform.schemas)) {
-            if (!platform.schemas[key]) {
-                return;
+    for (const [, platform] of initObj.platforms) {
+        const schemas = platform.schemas as unknown as Record<
+            string,
+            Schema | boolean | undefined
+        >;
+        for (const key of Object.keys(schemas)) {
+            const schema = schemas[key];
+            if (schema === undefined) {
+                continue;
             }
-            addPlatformSchema(platform.schemas[key], `${platform.id}/${key}`);
+            if (typeof schema !== "object" && typeof schema !== "boolean") {
+                continue;
+            }
+            addPlatformSchema(schema, `${platform.id}/${key}`);
         }
     }
 }

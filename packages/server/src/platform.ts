@@ -53,7 +53,7 @@ async function startPlatformProcess() {
 
     // conditionally initialize sentry
     let sentry: { readonly reportError: (err: Error) => void } = {
-        reportError: (err: Error) => {},
+        reportError: (_err: Error) => {},
     };
     (async () => {
         if (config.get("sentry:dsn")) {
@@ -112,7 +112,11 @@ async function startPlatformProcess() {
                 process.send(message);
             } catch (ipcErr) {
                 console.error(
-                    `Failed to report error via IPC: ${ipcErr.message}`,
+                    `Failed to report error via IPC: ${
+                        ipcErr instanceof Error
+                            ? ipcErr.message
+                            : String(ipcErr)
+                    }`,
                 );
             }
         } else {
@@ -223,10 +227,12 @@ async function startPlatformProcess() {
                         try {
                             errMsg = err.toString();
                         } catch (err) {
-                            errMsg = err;
+                            errMsg = err instanceof Error ? err : String(err);
                         }
-                        sentry.reportError(new Error(errMsg as string));
-                        reject(new Error(errMsg as string));
+                        const errorMessage =
+                            errMsg instanceof Error ? errMsg.message : errMsg;
+                        sentry.reportError(new Error(errorMessage));
+                        reject(new Error(errorMessage));
                     } else {
                         jobLog.debug(`completed ${job.title} ${job.msg.type}`);
 
@@ -280,15 +286,29 @@ async function startPlatformProcess() {
                             };
 
                             // Proceed with platform method call
-                            platform[job.msg.type](
-                                job.msg,
-                                credentials,
-                                wrappedCallback,
-                            );
+                            const handler = (
+                                platform as unknown as Record<string, unknown>
+                            )[job.msg.type];
+                            if (typeof handler !== "function") {
+                                doneCallback(
+                                    new Error(
+                                        `platform method ${job.msg.type} not available`,
+                                    ),
+                                    null,
+                                );
+                                return;
+                            }
+                            (
+                                handler as (
+                                    msg: ActivityStream,
+                                    credentials: CredentialsObject,
+                                    cb: PlatformCallback,
+                                ) => void
+                            )(job.msg, credentials, wrappedCallback);
                         })
                         .catch((err) => {
                             // Credential store error (invalid/missing credentials)
-                            jobLog.error(`credential error ${err.toString()}`);
+                            jobLog.error(`credential error ${String(err)}`);
 
                             /**
                              * Critical distinction: handle credential errors differently based on platform state.
@@ -315,11 +335,20 @@ async function startPlatformProcess() {
                              */
                             if (platform.isInitialized()) {
                                 // Platform already running - reject job only, preserve platform instance
-                                doneCallback(err, null);
+                                doneCallback(
+                                    err instanceof Error
+                                        ? err
+                                        : new Error(String(err)),
+                                    null,
+                                );
                             } else {
                                 // Platform not initialized - terminate platform process
-                                sentry.reportError(err);
-                                reject(err);
+                                const error =
+                                    err instanceof Error
+                                        ? err
+                                        : new Error(String(err));
+                                sentry.reportError(error);
+                                reject(error);
                             }
                         });
                 } else if (
@@ -333,11 +362,28 @@ async function startPlatformProcess() {
                     );
                 } else {
                     try {
-                        platform[job.msg.type](job.msg, doneCallback);
+                        const handler = (
+                            platform as unknown as Record<string, unknown>
+                        )[job.msg.type];
+                        if (typeof handler !== "function") {
+                            throw new Error(
+                                `platform method ${job.msg.type} not available`,
+                            );
+                        }
+                        (
+                            handler as (
+                                msg: ActivityStream,
+                                cb: PlatformCallback,
+                            ) => void
+                        )(job.msg, doneCallback);
                     } catch (err) {
-                        jobLog.error(`platform call failed ${err.toString()}`);
-                        sentry.reportError(err);
-                        reject(err);
+                        const error =
+                            err instanceof Error ? err : new Error(String(err));
+                        jobLog.error(
+                            `platform call failed ${error.toString()}`,
+                        );
+                        sentry.reportError(error);
+                        reject(error);
                     }
                 }
             });

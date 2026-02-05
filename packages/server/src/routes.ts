@@ -1,4 +1,5 @@
 import path from "node:path";
+import type { Express, Request, Response } from "express";
 
 import { createLogger } from "@sockethub/logger";
 import { __dirname } from "./util.js";
@@ -25,15 +26,23 @@ export const basePaths: IRoutePaths = {
     "/socket.io.js": path.resolve(__dirname, "..", "res", "socket.io.js"),
 };
 
-function prepFileRoutes(pathMap) {
-    const _routes = [];
+type RouteDefinition = {
+    meta: {
+        method: "GET";
+        path: string;
+    };
+    route: (req: Request, res: Response) => void;
+};
+
+function prepFileRoutes(pathMap: IRoutePaths): Array<RouteDefinition> {
+    const _routes: Array<RouteDefinition> = [];
     for (const key of Object.keys(pathMap)) {
         _routes.push({
             meta: {
                 method: "GET",
                 path: key,
             },
-            route: (req, res) => {
+            route: (req: Request, res: Response) => {
                 logger.debug(`serving resource ${req.url}`);
                 res.setHeader("Access-Control-Allow-Origin", "*");
                 res.sendFile(pathMap[req.url]);
@@ -44,9 +53,9 @@ function prepFileRoutes(pathMap) {
 }
 const baseRoutes = prepFileRoutes(basePaths);
 
-function addRoute(app) {
-    return (route) => {
-        app[route.meta.method.toLowerCase()](route.meta.path, route.route);
+function addRoute(app: Express) {
+    return (route: RouteDefinition) => {
+        app.get(route.meta.path, route.route);
     };
 }
 
@@ -54,7 +63,7 @@ function addRoute(app) {
  * Setup
  */
 const routes = {
-    setup: (app: unknown) => {
+    setup: (app: Express) => {
         baseRoutes.forEach(addRoute(app));
     },
 };

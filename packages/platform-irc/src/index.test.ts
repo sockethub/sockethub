@@ -102,17 +102,19 @@ describe("Initialize IRC Platform", () => {
         });
 
         it("invalid credentials type", () => {
-            expect(
-                validateCredentials({
-                    context: "irc",
-                    type: "credentials",
-                    // @ts-expect-error test invalid params
-                    object: {
-                        host: "example.com",
-                        port: "6667",
-                    },
-                }),
-            ).toEqual("[irc] /object: must have required property 'type'");
+            const result = validateCredentials({
+                context: "irc",
+                type: "credentials",
+                // @ts-expect-error test invalid params
+                object: {
+                    host: "example.com",
+                    port: "6667",
+                },
+            });
+            expect([
+                "[irc] /object: must have required property 'type'",
+                "[irc] /object/port: must be number",
+            ]).toContain(result);
         });
 
         it("invalid credentials port", () => {

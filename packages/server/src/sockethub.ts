@@ -16,6 +16,7 @@ import {
 
 import { createLogger } from "@sockethub/logger";
 import getInitObject from "./bootstrap/init.js";
+import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import config from "./config";
 import janitor from "./janitor.js";
 import listener from "./listener.js";
@@ -52,7 +53,7 @@ class Sockethub {
     private readonly parentSecret1: string;
     private readonly parentSecret2: string;
     counter = 0;
-    platforms: Map<string, object> = new Map();
+    platforms: PlatformMap = new Map();
     status: boolean;
     processManager!: ProcessManager;
     private rateLimiter!: ReturnType<typeof createRateLimiter>;
@@ -152,7 +153,7 @@ class Sockethub {
                         data: ActivityStream,
                         next: (data?: ActivityStream | Error) => void,
                     ) => {
-                        next();
+                        next(data);
                     },
                 )
                 .done(),
@@ -179,7 +180,7 @@ class Sockethub {
                         data: ActivityObject,
                         next: (data?: ActivityObject | Error) => void,
                     ) => {
-                        next();
+                        next(data);
                     },
                 )
                 .done(),
@@ -211,36 +212,43 @@ class Sockethub {
                         next(attachError(err, data));
                     },
                 )
-                .use(async (msg: ActivityStream, next) => {
-                    const platformInstance = this.processManager.get(
-                        msg.context,
-                        msg.actor.id,
-                        socket.id,
-                    );
-                    // job validated and queued, stores socket.io callback for when job is completed
-                    try {
-                        const job = await platformInstance.queue.add(
+                .use(
+                    async (
+                        msg: ActivityStream,
+                        next: (data?: ActivityStream | Error) => void,
+                    ) => {
+                        const platformInstance = this.processManager.get(
+                            msg.context,
+                            msg.actor.id,
                             socket.id,
-                            msg,
                         );
-                        if (job) {
-                            platformInstance.completedJobHandlers.set(
-                                job.title,
-                                next,
+                        // job validated and queued, stores socket.io callback for when job is completed
+                        try {
+                            const job = await platformInstance.queue.add(
+                                socket.id,
+                                msg,
                             );
-                        } else {
-                            // failed to add job to queue, reject handler immediately
-                            msg.error = "failed to add job to queue";
+                            if (job) {
+                                platformInstance.completedJobHandlers.set(
+                                    job.title,
+                                    next,
+                                );
+                            } else {
+                                // failed to add job to queue, reject handler immediately
+                                msg.error = "failed to add job to queue";
+                                next(msg);
+                            }
+                        } catch (err) {
+                            // Queue is closed (platform terminating) - send error to client
+                            const errorMessage =
+                                err instanceof Error
+                                    ? err.message
+                                    : String(err);
+                            msg.error = errorMessage || "platform unavailable";
                             next(msg);
                         }
-                    } catch (err) {
-                        // Queue is closed (platform terminating) - send error to client
-                        const errorMessage =
-                            err instanceof Error ? err.message : String(err);
-                        msg.error = errorMessage || "platform unavailable";
-                        next(msg);
-                    }
-                })
+                    },
+                )
                 .done(),
         );
     }

@@ -58,7 +58,7 @@ export interface CredentialsStoreInterface {
         actor: string,
         credentialsHash: string | undefined,
     ): Promise<CredentialsObject | undefined>;
-    save(actor: string, creds: CredentialsObject): Promise<number>;
+    save(actor: string, creds: CredentialsObject): Promise<void>;
 }
 
 export async function verifySecureStore(config: RedisConfig): Promise<void> {
@@ -183,10 +183,10 @@ export class CredentialsStore implements CredentialsStoreInterface {
      * @param actor
      * @param creds
      */
-    async save(actor: string, creds: CredentialsObject): Promise<number> {
+    async save(actor: string, creds: CredentialsObject): Promise<void> {
         if (!this.store.isConnected) {
             await this.store.connect();
         }
-        return this.store.save(actor, creds);
+        await this.store.save(actor, creds);
     }
 }

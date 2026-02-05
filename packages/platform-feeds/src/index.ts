@@ -200,9 +200,7 @@ export default class Feeds implements PlatformInterface {
     }
 
     private async makeRequest(url: string): Promise<string> {
-        const opts = {
-            signal: undefined,
-        };
+        const opts: RequestInit = {};
         if (this.config.connectTimeoutMs) {
             opts.signal = AbortSignal.timeout(this.config.connectTimeoutMs);
         }
