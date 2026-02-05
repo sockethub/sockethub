@@ -1,6 +1,6 @@
 {
   "name": "@sockethub/examples",
-  "version": "1.0.0-alpha.10",
+  "version": "1.0.0-alpha.11",
   "type": "module",
   "files": ["build"],
   "engines": {
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
-    "@sockethub/client": "^5.0.0-alpha.10",
+    "@sockethub/client": "^5.0.0-alpha.11",
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.50.0",
     "@sveltejs/vite-plugin-svelte": "^5.1.1",
@@ -51,5 +51,5 @@
     "vite": "^6.4.1",
     "vitest": "^3.2.4"
   },
-  "gitHead": "2dc0a34eab5c62afed5a336fc89a8b0318c8b5d4"
+  "gitHead": "f7fb4fa2599da1def438c710ce81a41b6cfee8a7"
 }
