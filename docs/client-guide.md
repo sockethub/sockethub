@@ -57,6 +57,10 @@ sc.socket.emit('message', {
 }
 ```
 
+If `actor` is provided as a string, Sockethub expands it using any previously
+saved ActivityObject with the same id (including `type` and any other stored
+properties). If none exists, it expands to `{ id }`.
+
 ### Platforms Requiring Credentials
 
 ```javascript
