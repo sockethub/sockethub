@@ -24,7 +24,6 @@ export interface PlatformInstanceParams {
     platform: string;
     parentId?: string;
     actor?: string;
-    identifierScope?: string;
 }
 
 type EnvFormat = {
@@ -58,7 +57,6 @@ export default class PlatformInstance {
     process: ChildProcess;
     readonly log: Logger;
     readonly parentId: string;
-    readonly identifierScope?: string;
     readonly sessions: Set<string> = new Set();
     readonly sessionCallbacks: Record<
         "close" | "message",
@@ -73,7 +71,6 @@ export default class PlatformInstance {
         this.id = params.identifier;
         this.name = params.platform;
         this.parentId = params.parentId;
-        this.identifierScope = params.identifierScope;
         if (params.actor) {
             this.actor = params.actor;
         } else {
@@ -90,13 +87,7 @@ export default class PlatformInstance {
         }
 
         this.createQueue();
-        this.initProcess(
-            this.parentId,
-            this.name,
-            this.id,
-            env,
-            this.identifierScope,
-        );
+        this.initProcess(this.parentId, this.name, this.id, env);
         this.createGetSocket();
     }
 
@@ -104,19 +95,15 @@ export default class PlatformInstance {
         this.JobQueue = JobQueue;
     }
 
-    initProcess(
-        parentId: string,
-        name: string,
-        id: string,
-        env: EnvFormat,
-        identifierScope?: string,
-    ) {
-        const args = [parentId, name, id];
-        if (identifierScope) {
-            args.push(identifierScope);
-        }
+    initProcess(parentId: string, name: string, id: string, env: EnvFormat) {
         // spin off a process
-        this.process = fork(join(__dirname, "platform.js"), args, { env: env });
+        this.process = fork(
+            join(__dirname, "platform.js"),
+            [parentId, name, id],
+            {
+                env: env,
+            },
+        );
     }
 
     createGetSocket() {

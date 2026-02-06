@@ -15,17 +15,10 @@ const IV_LENGTH = 16; // For AES, this is always 16
 export function getPlatformId(
     platform: string,
     actor?: string,
-    scope?: string,
     _crypto = crypto,
 ): string {
-    if (actor && scope) {
-        return _crypto.hash(`${platform}${actor}:${scope}`);
-    }
     if (actor) {
         return _crypto.hash(platform + actor);
-    }
-    if (scope) {
-        return _crypto.hash(`${platform}:${scope}`);
     }
     return _crypto.hash(platform);
 }

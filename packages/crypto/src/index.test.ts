@@ -126,31 +126,13 @@ describe("getPlatformId", () => {
     });
 
     it("generates platform hash", () => {
-        expect(getPlatformId("foo", undefined, undefined, crypto)).toEqual(
-            "foo",
-        );
+        expect(getPlatformId("foo", undefined, crypto)).toEqual("foo");
         sinon.assert.calledOnce(cryptoHashStub);
         sinon.assert.calledWith(cryptoHashStub, "foo");
     });
     it("generates platform + actor hash", () => {
-        expect(getPlatformId("foo", "bar", undefined, crypto)).toEqual(
-            "foobar",
-        );
+        expect(getPlatformId("foo", "bar", crypto)).toEqual("foobar");
         sinon.assert.calledOnce(cryptoHashStub);
         sinon.assert.calledWith(cryptoHashStub, "foobar");
-    });
-    it("generates platform + actor + scope hash", () => {
-        expect(getPlatformId("foo", "bar", "baz", crypto)).toEqual(
-            "foobar:baz",
-        );
-        sinon.assert.calledOnce(cryptoHashStub);
-        sinon.assert.calledWith(cryptoHashStub, "foobar:baz");
-    });
-    it("generates platform + scope hash", () => {
-        expect(getPlatformId("foo", undefined, "baz", crypto)).toEqual(
-            "foo:baz",
-        );
-        sinon.assert.calledOnce(cryptoHashStub);
-        sinon.assert.calledWith(cryptoHashStub, "foo:baz");
     });
 });

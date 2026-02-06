@@ -29,19 +29,13 @@ class ProcessManager {
         platform: string,
         actorId: string,
         sessionId?: string,
-        identifierScope?: string,
     ): PlatformInstance {
         const platformDetails = this.init.platforms.get(platform);
         let pi: PlatformInstance;
 
         if (platformDetails.config.persist) {
             // ensure process is started - one for each actor
-            pi = this.ensureProcess(
-                platform,
-                sessionId,
-                actorId,
-                identifierScope,
-            );
+            pi = this.ensureProcess(platform, sessionId, actorId);
         } else {
             // ensure process is started - one for all jobs
             pi = this.ensureProcess(platform);
@@ -54,7 +48,6 @@ class ProcessManager {
         identifier: string,
         platform: string,
         actor?: string,
-        identifierScope?: string,
     ): PlatformInstance {
         const secrets: MessageFromParent = [
             "secrets",
@@ -68,7 +61,6 @@ class ProcessManager {
             platform: platform,
             parentId: this.parentId,
             actor: actor,
-            identifierScope: identifierScope,
         };
         const platformInstance = new PlatformInstance(platformInstanceConfig);
         platformInstance.initQueue(this.parentSecret1 + this.parentSecret2);
@@ -80,17 +72,11 @@ class ProcessManager {
         platform: string,
         sessionId?: string,
         actor?: string,
-        identifierScope?: string,
     ): PlatformInstance {
-        const identifier = getPlatformId(platform, actor, identifierScope);
+        const identifier = getPlatformId(platform, actor);
         const platformInstance =
             platformInstances.get(identifier) ||
-            this.createPlatformInstance(
-                identifier,
-                platform,
-                actor,
-                identifierScope,
-            );
+            this.createPlatformInstance(identifier, platform, actor);
         if (sessionId) {
             platformInstance.registerSession(sessionId);
         }

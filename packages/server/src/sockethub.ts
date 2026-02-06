@@ -1,6 +1,6 @@
 import type { Socket } from "socket.io";
 
-import { crypto } from "@sockethub/crypto";
+import { crypto, getPlatformId } from "@sockethub/crypto";
 import { CredentialsStore } from "@sockethub/data-layer";
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import type {
@@ -26,6 +26,7 @@ import createActivityObject from "./middleware/create-activity-object.js";
 import expandActivityStream from "./middleware/expand-activity-stream.js";
 import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
+import { platformInstances } from "./platform-instance.js";
 import ProcessManager from "./process-manager.js";
 
 const log = createLogger("server:core");
@@ -107,23 +108,6 @@ class Sockethub {
     async shutdown() {
         await janitor.stop();
         stopCleanup();
-    }
-
-    private async resolveSessionScope(
-        msg: ActivityStream,
-        socketId: string,
-        credentialsStore: CredentialsStoreInterface,
-    ): Promise<string | undefined> {
-        const platform = this.platformRegistry.get(msg.context);
-        if (!platform || !platform.config.persist) {
-            return undefined;
-        }
-
-        const credentials = await credentialsStore
-            .get(msg.actor.id, undefined)
-            .catch(() => undefined);
-        const isShareable = this.isShareableCredentials(credentials);
-        return isShareable ? undefined : socketId;
     }
 
     private isShareableCredentials(credentials?: CredentialsObject): boolean {
@@ -242,16 +226,29 @@ class Sockethub {
                         msg: ActivityStream,
                         next: (data?: ActivityStream | Error) => void,
                     ) => {
-                        const identifierScope = await this.resolveSessionScope(
-                            msg,
-                            socket.id,
-                            credentialsStore,
-                        );
+                        const credentials = await credentialsStore
+                            .get(msg.actor.id, undefined)
+                            .catch(() => undefined);
+                        const isShareable =
+                            this.isShareableCredentials(credentials);
+                        if (!isShareable) {
+                            const existing = platformInstances.get(
+                                getPlatformId(msg.context, msg.actor.id),
+                            );
+                            if (
+                                existing &&
+                                existing.sessions.size > 0 &&
+                                !existing.sessions.has(socket.id)
+                            ) {
+                                msg.error = "invalid credentials";
+                                next(msg);
+                                return;
+                            }
+                        }
                         const platformInstance = this.processManager.get(
                             msg.context,
                             msg.actor.id,
                             socket.id,
-                            identifierScope,
                         );
                         // job validated and queued, stores socket.io callback for when job is completed
                         try {
