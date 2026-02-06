@@ -34,11 +34,11 @@ type EnvFormat = {
     SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS?: string;
 };
 
-interface MessageFromPlatform extends Array<string | ActivityStream> {
-    0: string;
-    1: ActivityStream | number | string | undefined;
-    2: string;
-}
+type MessageFromPlatform =
+    | ["updateActor", ActivityStream | undefined, string]
+    | ["error", string]
+    | ["heartbeat", ActivityStream]
+    | [string, ActivityStream, string?];
 
 export interface MessageFromParent extends Array<string | unknown> {
     0: string;
@@ -404,7 +404,7 @@ export default class PlatformInstance {
                 } else if (first === "heartbeat") {
                     this.markHeartbeat();
                     return;
-                } else if (first === "error" && typeof second === "string") {
+                } else if (first === "error") {
                     await this.reportError(sessionId, second);
                 } else {
                     // treat like a message to clients

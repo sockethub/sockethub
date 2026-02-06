@@ -162,7 +162,21 @@ async function startPlatformProcess() {
             return;
         }
         heartbeatTimer = setInterval(() => {
-            safeProcessSend(["heartbeat", Date.now()]);
+            safeProcessSend([
+                "heartbeat",
+                {
+                    type: "heartbeat",
+                    context: "sockethub:internal",
+                    actor: {
+                        id: "sockethub",
+                        type: "platform",
+                    },
+                    object: {
+                        type: "heartbeat",
+                        timestamp: Date.now(),
+                    },
+                } as ActivityStream,
+            ]);
         }, heartbeatIntervalMs);
     }
 
