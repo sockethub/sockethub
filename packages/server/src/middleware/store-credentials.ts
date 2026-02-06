@@ -3,27 +3,12 @@ import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
 
 import type { MiddlewareChainInterface } from "../middleware.js";
 
-function isCredentialsObject(msg: ActivityStream): msg is CredentialsObject {
-    return (
-        typeof msg === "object" &&
-        msg !== null &&
-        typeof msg.context === "string" &&
-        msg.type === "credentials" &&
-        typeof msg.actor?.id === "string" &&
-        typeof msg.object === "object" &&
-        msg.object !== null &&
-        (msg.object as { type?: string }).type === "credentials"
-    );
-}
-
 export default function storeCredentials(store: CredentialsStoreInterface) {
     return (
         creds: ActivityStream,
         done: MiddlewareChainInterface<ActivityStream>,
     ) => {
-        const credentials = isCredentialsObject(creds)
-            ? creds
-            : (creds as CredentialsObject);
+        const credentials = creds as CredentialsObject;
         try {
             store
                 .save(credentials.actor.id, credentials)

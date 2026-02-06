@@ -254,13 +254,7 @@ function expandStream(meta: ActivityStream) {
 }
 
 function Stream(
-    meta: ActivityStream,
-): ActivityStream | ActivityObject | Record<string, never>;
-function Stream(
     meta: unknown,
-): ActivityStream | ActivityObject | Record<string, never>;
-function Stream(
-    meta: ActivityStream | unknown,
 ): ActivityStream | ActivityObject | Record<string, never> {
     validateObject("stream", meta);
     if (typeof (meta as ActivityStream).object === "object") {

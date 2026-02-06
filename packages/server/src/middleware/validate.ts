@@ -16,14 +16,11 @@ import type { MiddlewareChainInterface } from "../middleware.js";
 
 // called when registered with the middleware function, define the type of validation
 // that will be called when the middleware eventually does.
-export default function validate(
+export default function validate<T extends ActivityObject>(
     type: "activity-object",
     sockethubId: string,
     passedInitObj?: IInitObject,
-): (
-    msg: ActivityObject,
-    done: MiddlewareChainInterface<ActivityObject>,
-) => void;
+): (msg: T, done: MiddlewareChainInterface<T>) => void;
 export default function validate<T extends ActivityStream>(
     type: "credentials" | "message",
     sockethubId: string,

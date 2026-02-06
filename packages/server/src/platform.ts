@@ -53,7 +53,14 @@ async function startPlatformProcess() {
 
     // conditionally initialize sentry
     let sentry: { readonly reportError: (err: Error) => void } = {
-        reportError: (_err: Error) => {},
+        reportError: (err: Error) => {
+            logger.debug(
+                "Sentry not configured; error not reported to Sentry",
+                {
+                    error: err,
+                },
+            );
+        },
     };
     (async () => {
         if (config.get("sentry:dsn")) {
