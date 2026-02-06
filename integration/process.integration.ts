@@ -28,9 +28,12 @@ const isProcessRunning = (pid: number | undefined) => {
     }
 };
 
-const findPlatformChildProcesses = async (
-    platformName: string,
-): Promise<number[]> => {
+const findPlatformChildProcesses = async (options?: {
+    platformName?: string;
+    excludeNames?: string[];
+}): Promise<number[]> => {
+    const platformName = options?.platformName;
+    const excludeNames = options?.excludeNames ?? [];
     return new Promise<number[]>((resolve) => {
         const ps = spawn("ps", ["-o", "pid,ppid,command"], {
             stdio: ["ignore", "pipe", "pipe"],
@@ -51,10 +54,14 @@ const findPlatformChildProcesses = async (
                     const pid = Number.parseInt(parts[0]);
                     const command = parts.slice(2).join(" ");
 
-                    if (
-                        command.includes("platform.js") &&
-                        command.includes(platformName)
-                    ) {
+                    const hasPlatformScript = command.includes("platform.js");
+                    const matchesPlatform = platformName
+                        ? command.includes(platformName)
+                        : true;
+                    const isExcluded = excludeNames.some((name) =>
+                        command.includes(name),
+                    );
+                    if (hasPlatformScript && matchesPlatform && !isExcluded) {
                         childPids.push(pid);
                     }
                 }
@@ -66,6 +73,29 @@ const findPlatformChildProcesses = async (
             resolve([]);
         });
     });
+};
+
+const waitForPlatformChildProcesses = async (
+    options: { platformName?: string; excludeNames?: string[] },
+    timeoutMs: number,
+) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+        let childPids = await findPlatformChildProcesses(options);
+        if (childPids.length > 0) {
+            return childPids;
+        }
+        if (options.platformName) {
+            childPids = await findPlatformChildProcesses({
+                excludeNames: options.excludeNames,
+            });
+            if (childPids.length > 0) {
+                return childPids;
+            }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+    return [];
 };
 
 const waitForProcessExit = async (pid: number, timeoutMs: number) => {
@@ -449,7 +479,10 @@ describe("Parent Process Sudden Termination", () => {
             throw new Error("No Sockethub process - run previous tests first");
         }
         // Get all child processes that should include our XMPP platform
-        const childPids = await findPlatformChildProcesses("xmpp");
+        const childPids = await waitForPlatformChildProcesses(
+            { platformName: "xmpp" },
+            config.timeouts.process,
+        );
 
         if (testConfig.isVerbose) {
             console.log(
@@ -518,19 +551,37 @@ describe("Parent Process Sudden Termination", () => {
                     "No client connection - run previous tests first",
                 );
             }
-            await emitWithAck(
+            const response = await emitWithAck(
                 testConfig.client,
                 "message",
                 buildDummyMessage("echo"),
                 config.timeouts.message,
             );
-            const childPids = await findPlatformChildProcesses("dummy");
+            if (
+                response &&
+                typeof response === "object" &&
+                "error" in (response as Record<string, unknown>) &&
+                (response as Record<string, unknown>).error
+            ) {
+                throw new Error(
+                    `Dummy platform error response: ${
+                        (response as Record<string, unknown>).error
+                    }`,
+                );
+            }
+            const childPids = await waitForPlatformChildProcesses(
+                { platformName: "dummy", excludeNames: ["xmpp"] },
+                config.timeouts.process,
+            );
             expect(childPids.length).toBeGreaterThan(0);
             testConfig.dummyChildPid = childPids[0];
         };
 
         const refreshDummyPid = async (oldPid: number) => {
-            const childPids = await findPlatformChildProcesses("dummy");
+            const childPids = await waitForPlatformChildProcesses(
+                { platformName: "dummy", excludeNames: ["xmpp"] },
+                config.timeouts.process,
+            );
             expect(childPids.length).toBeGreaterThan(0);
             const nextPid =
                 childPids.find((pid) => pid !== oldPid) ?? childPids[0];
