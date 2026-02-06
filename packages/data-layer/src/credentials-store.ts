@@ -187,6 +187,6 @@ export class CredentialsStore implements CredentialsStoreInterface {
         if (!this.store.isConnected) {
             await this.store.connect();
         }
-        return this.store.save(actor, creds);
+        return await this.store.save(actor, creds);
     }
 }

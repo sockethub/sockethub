@@ -62,7 +62,7 @@ export default class Dummy implements PlatformInterface {
     }
 
     throw(job: ActivityStream, cb: PlatformCallback) {
-        throw new Error(job.object.content);
+        cb(new Error(job.object.content));
     }
 
     greet(job: ActivityStream, cb: PlatformCallback) {
@@ -76,6 +76,7 @@ export default class Dummy implements PlatformInterface {
     }
 
     cleanup(cb: PlatformCallback) {
+        this.log.debug("cleanup");
         cb();
     }
 }

@@ -29,6 +29,7 @@ export interface PlatformInstanceParams {
 type EnvFormat = {
     LOG_LEVEL?: string;
     REDIS_URL: string;
+    SOCKETHUB_PLATFORM_CHILD?: string;
 };
 
 interface MessageFromPlatform extends Array<string | ActivityStream> {
@@ -57,9 +58,12 @@ export default class PlatformInstance {
     readonly log: Logger;
     readonly parentId: string;
     readonly sessions: Set<string> = new Set();
-    readonly sessionCallbacks: object = {
-        close: (() => new Map())(),
-        message: (() => new Map())(),
+    readonly sessionCallbacks: Record<
+        "close" | "message",
+        Map<string, (...args: Array<unknown>) => void | Promise<void>>
+    > = {
+        close: new Map(),
+        message: new Map(),
     };
     private readonly actor?: string;
 
@@ -179,7 +183,9 @@ export default class PlatformInstance {
     public registerSession(sessionId: string) {
         if (!this.sessions.has(sessionId)) {
             this.sessions.add(sessionId);
-            for (const type of Object.keys(this.sessionCallbacks)) {
+            for (const type of Object.keys(this.sessionCallbacks) as Array<
+                "close" | "message"
+            >) {
                 const cb = this.callbackFunction(type, sessionId);
                 this.process.on(type, cb);
                 this.sessionCallbacks[type].set(sessionId, cb);
@@ -213,7 +219,7 @@ export default class PlatformInstance {
                     socket.emit("message", msg as ActivityStream);
                 }
             },
-            (err) => this.log.error(`sendToClient ${err}`),
+            (err) => this.log.error(`sendToClient ${String(err)}`),
         );
     }
 
@@ -312,7 +318,11 @@ export default class PlatformInstance {
                 await this.sendToClient(sessionId, errorObject);
             }
         } catch (err) {
-            this.log.error(`Failed to send error to client: ${err.message}`);
+            this.log.error(
+                `Failed to send error to client: ${
+                    err instanceof Error ? err.message : String(err)
+                }`,
+            );
         }
 
         this.sessions.clear();
@@ -335,8 +345,11 @@ export default class PlatformInstance {
      * @param listener
      * @param sessionId
      */
-    private callbackFunction(listener: string, sessionId: string) {
-        const funcs = {
+    private callbackFunction(listener: "close" | "message", sessionId: string) {
+        const funcs: Record<
+            "close" | "message",
+            (...args: Array<unknown>) => Promise<void>
+        > = {
             close: async (e: object) => {
                 this.log.error(`close event triggered ${this.id}: ${e}`);
                 // Check if process is still connected before attempting error reporting

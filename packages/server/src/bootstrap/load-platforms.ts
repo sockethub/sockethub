@@ -17,6 +17,7 @@ import {
     type PlatformSession,
     validatePlatformSchema,
 } from "@sockethub/schemas";
+import type { Schema } from "ajv";
 
 const log = createLogger("server:bootstrap:platforms");
 
@@ -25,12 +26,19 @@ export type PlatformStruct = {
     moduleName: string;
     modulePath?: string;
     config: PlatformConfig;
-    schemas: PlatformSchemaStruct;
+    schemas: PlatformSchemaRegistry;
     version: string;
     types: Array<string>;
 };
 
 export type PlatformMap = Map<string, PlatformStruct>;
+
+export type PlatformSchemaRegistry = {
+    name: string;
+    version: string;
+    credentials?: Schema | boolean;
+    messages?: Schema | boolean;
+};
 
 const dummySession: PlatformSession = {
     log: createLogger("platform:dummy"),
@@ -40,7 +48,7 @@ const dummySession: PlatformSession = {
 
 // if the platform schema lists valid types it implements (essentially methods/verbs for
 // Sockethub to call) then add it to the supported types list.
-function platformListsSupportedTypes(p): boolean {
+function platformListsSupportedTypes(p: PlatformInterface): boolean {
     return (
         p.schema.messages.properties?.type?.enum &&
         p.schema.messages.properties.type.enum.length > 0
@@ -70,13 +78,23 @@ function resolveModulePath(platformName: string): string | undefined {
         return dirname(filePath);
     } catch (err) {
         log.warn(
-            `failed to resolve module path for ${platformName}: ${err.message}`,
+            `failed to resolve module path for ${platformName}: ${
+                err instanceof Error ? err.message : String(err)
+            }`,
         );
         return undefined;
     }
 }
 
-async function loadPlatform(platformName: string, injectRequire) {
+type PlatformConstructor = new (...args: unknown[]) => PlatformInterface;
+type InjectRequire = (
+    moduleName: string,
+) => Promise<PlatformConstructor> | PlatformConstructor;
+
+async function loadPlatform(
+    platformName: string,
+    injectRequire?: InjectRequire,
+) {
     log.debug(`loading ${platformName}`);
     let p: PlatformInterface;
     if (injectRequire) {
@@ -101,11 +119,11 @@ async function loadPlatform(platformName: string, injectRequire) {
 
 export default async function loadPlatforms(
     platformsList: Array<string>,
-    injectRequire = undefined,
+    injectRequire?: InjectRequire,
 ): Promise<PlatformMap> {
     log.debug(`platforms to load: ${platformsList}`);
     // load platforms from config.platforms
-    const platforms = new Map();
+    const platforms = new Map<string, PlatformStruct>();
 
     if (platformsList.length <= 0) {
         throw new Error(
@@ -115,7 +133,7 @@ export default async function loadPlatforms(
 
     for (const platformName of platformsList) {
         const p = await loadPlatform(platformName, injectRequire);
-        let types = [];
+        let types: Array<string> = [];
 
         if (p.schema.credentials) {
             // register the platforms credentials schema
@@ -139,6 +157,8 @@ export default async function loadPlatforms(
             modulePath: modulePath,
             config: p.config,
             schemas: {
+                name: p.schema.name,
+                version: p.schema.version,
                 credentials: p.schema.credentials || {},
                 messages: p.schema.messages || {},
             },

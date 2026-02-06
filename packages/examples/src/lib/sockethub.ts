@@ -22,6 +22,7 @@ const defaultConfig = {
         path: "/",
     },
 };
+type SockethubConfig = typeof defaultConfig;
 
 type BaseProps = {
     id?: string;
@@ -85,7 +86,7 @@ export type SockethubResponse = {
 export async function send(obj: AnyActivityStream) {
     console.log("sending ->", obj);
 
-    return new Promise((resolve, reject) => {
+    return new Promise<AnyActivityStream>((resolve, reject) => {
         sc.socket.emit(
             "message",
             addObject("SEND", obj),
@@ -109,7 +110,7 @@ export async function send(obj: AnyActivityStream) {
 }
 
 function stateChange(state: string) {
-    return (e?: never) => {
+    return (e?: unknown) => {
         const c = state === "connect";
         connected.update(() => {
             return c;
@@ -138,11 +139,11 @@ function sockethubConnect(config: typeof defaultConfig = defaultConfig) {
     sc.socket.on("message", handleIncomingMessage);
 }
 
-if (typeof window === "object") {
+if (typeof globalThis === "object" && "window" in globalThis) {
     console.log("connecting to sockethub");
     fetch("/config.json")
         .then(async (res) => {
-            const config = await res.json();
+            const config = (await res.json()) as SockethubConfig;
             sockethubConnect(config);
         })
         .catch(() => {

@@ -1,5 +1,5 @@
-export const validObjectRefs = [];
-export const validObjectDefs = {};
+export const validObjectRefs: Array<{ $ref: string }> = [];
+export const validObjectDefs: Record<string, unknown> = {};
 
 export const ObjectTypesSchema = {
     credentials: {
@@ -223,5 +223,7 @@ for (const type of ObjectTypesList) {
         continue;
     }
     validObjectRefs.push({ $ref: `#/definitions/type/${type}` });
-    validObjectDefs[type] = ObjectTypesSchema[type];
+    validObjectDefs[type] = (ObjectTypesSchema as Record<string, unknown>)[
+        type
+    ];
 }

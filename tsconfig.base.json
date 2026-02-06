@@ -12,11 +12,16 @@
     "declaration": true,
     "esModuleInterop": true,
     "alwaysStrict": true,
-    "strictNullChecks": false,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "useUnknownInCatchVariables": true,
     "noImplicitReturns": true,
-    "noImplicitThis": false,
+    "noImplicitOverride": true,
     "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
     "resolveJsonModule": true,
     "downlevelIteration": true,
     "paths": {
@@ -79,5 +84,14 @@
       "path": "packages/server"
     }
   ],
-  "exclude": ["node_modules", "dist", "*.d.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.integration.ts",
+    "**/*.test.ts",
+    "**/*.test.data.ts",
+    "integration",
+    "stress-tests",
+    "packages/examples/build"
+  ]
 }
