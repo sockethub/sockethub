@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
 
@@ -39,7 +39,7 @@ describe("Middleware: credentialCheck", () => {
         platformInstances.clear();
     });
 
-    it("passes through when credentials are non-empty", async () => {
+    test("passes through when credentials are non-empty", async () => {
         store.get = async () =>
             makeCredentials({ type: "credentials", token: "abc123" });
 
@@ -50,8 +50,10 @@ describe("Middleware: credentialCheck", () => {
         expect(result).toEqual(baseMessage);
     });
 
-    it("blocks when credentials are empty and another session exists", async () => {
-        store.get = async () => makeCredentials({} as CredentialsObject["object"]);
+    test("blocks when credentials are empty and another session exists", async () => {
+        store.get = async () => {
+            throw new Error("invalid credentials");
+        };
         const key = getPlatformId(baseMessage.context, baseMessage.actor.id);
         platformInstances.set(
             key,
@@ -66,8 +68,10 @@ describe("Middleware: credentialCheck", () => {
         expect(result.toString()).toEqual("Error: invalid credentials");
     });
 
-    it("allows when credentials are empty but only this session is attached", async () => {
-        store.get = async () => makeCredentials({} as CredentialsObject["object"]);
+    test("allows when credentials are empty but only this session is attached", async () => {
+        store.get = async () => {
+            throw new Error("invalid credentials");
+        };
         const key = getPlatformId(baseMessage.context, baseMessage.actor.id);
         platformInstances.set(
             key,
@@ -81,7 +85,7 @@ describe("Middleware: credentialCheck", () => {
         expect(result).toEqual(baseMessage);
     });
 
-    it("treats credential lookup failures as non-shareable", async () => {
+    test("treats credential lookup failures as non-shareable", async () => {
         store.get = async () => {
             throw new Error("missing creds");
         };

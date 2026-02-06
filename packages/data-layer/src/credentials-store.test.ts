@@ -19,7 +19,9 @@ describe("CredentialsStore", () => {
         MockStoreSave,
         MockObjectHash;
     beforeEach(() => {
-        MockStoreGet = sinon.stub().returns("credential foo");
+        MockStoreGet = sinon.stub().returns({
+            object: { token: "credential foo" },
+        });
         MockStoreSave = sinon.stub();
         MockObjectHash = sinon.stub();
         MockSecureStore = sinon.stub().returns({
@@ -75,7 +77,7 @@ describe("CredentialsStore", () => {
             sinon.assert.calledWith(MockStoreGet, "an actor");
             sinon.assert.notCalled(MockObjectHash);
             sinon.assert.notCalled(MockStoreSave);
-            expect(res).toEqual("credential foo");
+            expect(res).toEqual({ object: { token: "credential foo" } });
         });
 
         it("handles no credentials found", async () => {
@@ -108,7 +110,7 @@ describe("CredentialsStore", () => {
         it("validates credentialsHash when provided", async () => {
             MockObjectHash.returns("a credentialsHash string");
             MockStoreGet.returns({
-                object: "a credential",
+                object: { token: "a credential" },
             });
             const res = await credentialsStore.get(
                 "an actor",
@@ -117,15 +119,15 @@ describe("CredentialsStore", () => {
             sinon.assert.calledOnce(MockStoreGet);
             sinon.assert.calledWith(MockStoreGet, "an actor");
             sinon.assert.calledOnce(MockObjectHash);
-            sinon.assert.calledWith(MockObjectHash, "a credential");
+            sinon.assert.calledWith(MockObjectHash, { token: "a credential" });
             sinon.assert.notCalled(MockStoreSave);
-            expect(res).toEqual({ object: "a credential" });
+            expect(res).toEqual({ object: { token: "a credential" } });
         });
 
         it("invalidates credentialsHash when provided", async () => {
             MockObjectHash.returns("the original credentialsHash string");
             MockStoreGet.returns({
-                object: "a credential",
+                object: { token: "a credential" },
             });
             try {
                 expect(
@@ -143,7 +145,7 @@ describe("CredentialsStore", () => {
             sinon.assert.calledOnce(MockStoreGet);
             sinon.assert.calledWith(MockStoreGet, "an actor");
             sinon.assert.calledOnce(MockObjectHash);
-            sinon.assert.calledWith(MockObjectHash, "a credential");
+            sinon.assert.calledWith(MockObjectHash, { token: "a credential" });
             sinon.assert.notCalled(MockStoreSave);
         });
     });

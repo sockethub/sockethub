@@ -1,20 +1,12 @@
 import { getPlatformId } from "@sockethub/crypto";
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
-import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
+import type { ActivityStream } from "@sockethub/schemas";
 
+import { createLogger } from "@sockethub/logger";
 import type { MiddlewareNext } from "../middleware.js";
 import { platformInstances } from "../platform-instance.js";
 
-// Treat empty credentials objects as non-shareable to prevent unauthenticated
-// sessions from attaching to an existing persistent platform instance.
-function isShareableCredentials(
-    credentials?: CredentialsObject,
-): credentials is CredentialsObject {
-    if (!credentials || typeof credentials.object !== "object") {
-        return false;
-    }
-    return Object.keys(credentials.object).length > 0;
-}
+const log = createLogger("server:credential-check");
 
 /**
  * Prevents a second socket from attaching to an existing persistent platform
@@ -25,8 +17,8 @@ export default function credentialCheck(
     socketId: string,
 ) {
     return (msg: ActivityStream, next: MiddlewareNext<ActivityStream>) => {
-        const handle = (shareable: boolean) => {
-            if (shareable) {
+        const handle = (credentialsValid: boolean) => {
+            if (credentialsValid) {
                 next(msg);
                 return;
             }
@@ -48,10 +40,14 @@ export default function credentialCheck(
 
         credentialsStore
             .get(msg.actor.id, undefined)
-            .then((credentials) => {
-                handle(isShareableCredentials(credentials));
+            .then(() => {
+                handle(true);
             })
-            .catch(() => {
+            .catch((err) => {
+                log.error(
+                    `credential lookup failed for ${msg.context}:${msg.actor.id}`,
+                    err,
+                );
                 handle(false);
             });
     };

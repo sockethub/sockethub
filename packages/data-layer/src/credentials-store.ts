@@ -169,6 +169,13 @@ export class CredentialsStore implements CredentialsStoreInterface {
         if (!credentials) {
             throw new Error(`credentials not found for ${actor}`);
         }
+        if (
+            !credentials.object ||
+            typeof credentials.object !== "object" ||
+            Object.keys(credentials.object).length === 0
+        ) {
+            throw new Error(`invalid credentials for ${actor}`);
+        }
 
         if (credentialsHash) {
             if (credentialsHash !== this.objectHash(credentials.object)) {
