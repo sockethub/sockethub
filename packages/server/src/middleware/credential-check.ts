@@ -39,7 +39,7 @@ export default function credentialCheck(
         };
 
         credentialsStore
-            .get(msg.actor.id, undefined)
+            .get(msg.actor.id)
             .then(() => {
                 handle(true);
             })
