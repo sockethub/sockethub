@@ -85,7 +85,6 @@ export default class IRC implements PersistentPlatformInterface {
         persist: true,
         requireCredentials: ["connect", "update"],
         connectTimeoutMs: 30000,
-        shareSessions: "auth-only",
     };
     private readonly updateActor: PlatformUpdateActor;
     private readonly sendToClient: PlatformSendToClient;

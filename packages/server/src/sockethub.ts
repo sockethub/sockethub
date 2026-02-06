@@ -119,14 +119,6 @@ class Sockethub {
             return undefined;
         }
 
-        const policy = platform.config.shareSessions ?? "auth-only";
-        if (policy === "always") {
-            return undefined;
-        }
-        if (policy === "never") {
-            return socketId;
-        }
-
         const credentials = await credentialsStore
             .get(msg.actor.id, undefined)
             .catch(() => undefined);

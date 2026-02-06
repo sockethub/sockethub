@@ -41,7 +41,6 @@ export default class XMPP {
             connectTimeoutMs: 10000,
             persist: true,
             requireCredentials: ["connect"],
-            shareSessions: "auth-only",
         };
         this.__initialized = false; // Private state for initialization tracking
         this.log = session.log;
