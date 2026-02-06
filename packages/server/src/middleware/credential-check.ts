@@ -14,7 +14,7 @@ function isShareableCredentials(
     return Object.keys(credentials.object).length > 0;
 }
 
-export default function restrictSharedSessions(
+export default function credentialCheck(
     credentialsStore: CredentialsStoreInterface,
     socketId: string,
 ) {
