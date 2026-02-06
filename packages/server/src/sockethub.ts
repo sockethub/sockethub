@@ -1,12 +1,11 @@
 import type { Socket } from "socket.io";
 
-import { crypto, getPlatformId } from "@sockethub/crypto";
+import { crypto } from "@sockethub/crypto";
 import { CredentialsStore } from "@sockethub/data-layer";
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import type {
     ActivityObject,
     ActivityStream,
-    CredentialsObject,
     InternalActivityStream,
 } from "@sockethub/schemas";
 import {
@@ -24,9 +23,9 @@ import listener from "./listener.js";
 import middleware from "./middleware.js";
 import createActivityObject from "./middleware/create-activity-object.js";
 import expandActivityStream from "./middleware/expand-activity-stream.js";
+import restrictSharedSessions from "./middleware/restrict-shared-sessions.js";
 import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
-import { platformInstances } from "./platform-instance.js";
 import ProcessManager from "./process-manager.js";
 
 const log = createLogger("server:core");
@@ -108,13 +107,6 @@ class Sockethub {
     async shutdown() {
         await janitor.stop();
         stopCleanup();
-    }
-
-    private isShareableCredentials(credentials?: CredentialsObject): boolean {
-        if (!credentials || typeof credentials.object !== "object") {
-            return false;
-        }
-        return Object.keys(credentials.object).length > 0;
     }
 
     private handleIncomingConnection(socket: Socket) {
@@ -212,6 +204,7 @@ class Sockethub {
                         next(msg);
                     },
                 )
+                .use(restrictSharedSessions(credentialsStore, socket.id))
                 .use(
                     (
                         err: Error,
@@ -226,25 +219,6 @@ class Sockethub {
                         msg: ActivityStream,
                         next: (data?: ActivityStream | Error) => void,
                     ) => {
-                        const credentials = await credentialsStore
-                            .get(msg.actor.id, undefined)
-                            .catch(() => undefined);
-                        const isShareable =
-                            this.isShareableCredentials(credentials);
-                        if (!isShareable) {
-                            const existing = platformInstances.get(
-                                getPlatformId(msg.context, msg.actor.id),
-                            );
-                            if (
-                                existing &&
-                                existing.sessions.size > 0 &&
-                                !existing.sessions.has(socket.id)
-                            ) {
-                                msg.error = "invalid credentials";
-                                next(msg);
-                                return;
-                            }
-                        }
                         const platformInstance = this.processManager.get(
                             msg.context,
                             msg.actor.id,
