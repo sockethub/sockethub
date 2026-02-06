@@ -532,6 +532,18 @@ describe("Parent Process Sudden Termination", () => {
     });
 
     describe("Dummy platform crash detection", () => {
+        const runWithLogs = async <T>(
+            context: string,
+            fn: () => Promise<T>,
+        ) => {
+            try {
+                return await fn();
+            } catch (err) {
+                showRecentLogs(context, 60);
+                throw err;
+            }
+        };
+
         const ensureDummyPlatform = async () => {
             if (!testConfig.client) {
                 throw new Error(
@@ -584,110 +596,123 @@ describe("Parent Process Sudden Termination", () => {
             throw new Error("Timed out waiting for dummy platform restart");
         };
 
-        it("should start dummy platform process on first message", async () => {
-            await ensureDummyPlatform();
-            expect(isProcessRunning(testConfig.dummyChildPid)).toBe(true);
-        });
+        it("should start dummy platform process on first message", async () =>
+            runWithLogs("Dummy platform start", async () => {
+                await ensureDummyPlatform();
+                expect(isProcessRunning(testConfig.dummyChildPid)).toBe(true);
+            }));
 
         it(
             "should recover from process.exit(1)",
-            async () => {
-                if (!testConfig.dummyChildPid) {
-                    await ensureDummyPlatform();
-                }
-                const oldPid = testConfig.dummyChildPid as number;
-                testConfig.client?.emit("message", buildDummyMessage("exit1"));
+            async () =>
+                runWithLogs("Dummy crash: exit1", async () => {
+                    if (!testConfig.dummyChildPid) {
+                        await ensureDummyPlatform();
+                    }
+                    const oldPid = testConfig.dummyChildPid as number;
+                    testConfig.client?.emit(
+                        "message",
+                        buildDummyMessage("exit1"),
+                    );
 
-                const exited = await waitForProcessExit(
-                    oldPid,
-                    config.timeouts.process + config.timeouts.cleanup,
-                );
-                expect(exited).toBe(true);
+                    const exited = await waitForProcessExit(
+                        oldPid,
+                        config.timeouts.process + config.timeouts.cleanup,
+                    );
+                    expect(exited).toBe(true);
 
-                const newPid = await waitForDummyRestart(
-                    oldPid,
-                    config.timeouts.process,
-                );
-                expect(newPid).not.toEqual(oldPid);
-            },
+                    const newPid = await waitForDummyRestart(
+                        oldPid,
+                        config.timeouts.process,
+                    );
+                    expect(newPid).not.toEqual(oldPid);
+                }),
             config.timeouts.process + config.timeouts.cleanup + 5000,
         );
 
         it(
             "should recover from uncaught TypeError",
-            async () => {
-                if (!testConfig.dummyChildPid) {
-                    await ensureDummyPlatform();
-                }
-                const oldPid = testConfig.dummyChildPid as number;
-                testConfig.client?.emit(
-                    "message",
-                    buildDummyMessage("throwTypeError"),
-                );
+            async () =>
+                runWithLogs("Dummy crash: TypeError", async () => {
+                    if (!testConfig.dummyChildPid) {
+                        await ensureDummyPlatform();
+                    }
+                    const oldPid = testConfig.dummyChildPid as number;
+                    testConfig.client?.emit(
+                        "message",
+                        buildDummyMessage("throwTypeError"),
+                    );
 
-                const exited = await waitForProcessExit(
-                    oldPid,
-                    config.timeouts.process + config.timeouts.cleanup,
-                );
-                expect(exited).toBe(true);
+                    const exited = await waitForProcessExit(
+                        oldPid,
+                        config.timeouts.process + config.timeouts.cleanup,
+                    );
+                    expect(exited).toBe(true);
 
-                const newPid = await waitForDummyRestart(
-                    oldPid,
-                    config.timeouts.process,
-                );
-                expect(newPid).not.toEqual(oldPid);
-            },
+                    const newPid = await waitForDummyRestart(
+                        oldPid,
+                        config.timeouts.process,
+                    );
+                    expect(newPid).not.toEqual(oldPid);
+                }),
             config.timeouts.process + config.timeouts.cleanup + 5000,
         );
 
         it(
             "should recover from SIGTERM",
-            async () => {
-                if (!testConfig.dummyChildPid) {
-                    await ensureDummyPlatform();
-                }
-                const oldPid = testConfig.dummyChildPid as number;
-                testConfig.client?.emit(
-                    "message",
-                    buildDummyMessage("sigterm"),
-                );
+            async () =>
+                runWithLogs("Dummy crash: SIGTERM", async () => {
+                    if (!testConfig.dummyChildPid) {
+                        await ensureDummyPlatform();
+                    }
+                    const oldPid = testConfig.dummyChildPid as number;
+                    testConfig.client?.emit(
+                        "message",
+                        buildDummyMessage("sigterm"),
+                    );
 
-                const exited = await waitForProcessExit(
-                    oldPid,
-                    config.timeouts.process + config.timeouts.cleanup,
-                );
-                expect(exited).toBe(true);
+                    const exited = await waitForProcessExit(
+                        oldPid,
+                        config.timeouts.process + config.timeouts.cleanup,
+                    );
+                    expect(exited).toBe(true);
 
-                const newPid = await waitForDummyRestart(
-                    oldPid,
-                    config.timeouts.process,
-                );
-                expect(newPid).not.toEqual(oldPid);
-            },
+                    const newPid = await waitForDummyRestart(
+                        oldPid,
+                        config.timeouts.process,
+                    );
+                    expect(newPid).not.toEqual(oldPid);
+                }),
             config.timeouts.process + config.timeouts.cleanup + 5000,
         );
 
         it(
             "should recover from heartbeat timeout (hang)",
-            async () => {
-                if (!testConfig.dummyChildPid) {
-                    await ensureDummyPlatform();
-                }
-                const oldPid = testConfig.dummyChildPid as number;
-                testConfig.client?.emit("message", buildDummyMessage("hang"));
+            async () =>
+                runWithLogs("Dummy crash: heartbeat hang", async () => {
+                    if (!testConfig.dummyChildPid) {
+                        await ensureDummyPlatform();
+                    }
+                    const oldPid = testConfig.dummyChildPid as number;
+                    testConfig.client?.emit(
+                        "message",
+                        buildDummyMessage("hang"),
+                    );
 
-                const exited = await waitForProcessExit(
-                    oldPid,
-                    config.timeouts.process + config.timeouts.cleanup + 3000,
-                );
-                expect(exited).toBe(true);
+                    const exited = await waitForProcessExit(
+                        oldPid,
+                        config.timeouts.process +
+                            config.timeouts.cleanup +
+                            3000,
+                    );
+                    expect(exited).toBe(true);
 
-                const newPid = await waitForDummyRestart(
-                    oldPid,
-                    config.timeouts.process + 2000,
-                );
-                expect(newPid).not.toEqual(oldPid);
-            },
+                    const newPid = await waitForDummyRestart(
+                        oldPid,
+                        config.timeouts.process + 2000,
+                    );
+                    expect(newPid).not.toEqual(oldPid);
+                }),
             config.timeouts.process + config.timeouts.cleanup + 8000,
         );
     });
