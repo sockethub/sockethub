@@ -148,6 +148,24 @@ describe("CredentialsStore", () => {
             sinon.assert.calledWith(MockObjectHash, { token: "a credential" });
             sinon.assert.notCalled(MockStoreSave);
         });
+
+        it("rejects array credentials objects", async () => {
+            MockStoreGet.returns({
+                object: ["token", "a credential"],
+            });
+            try {
+                await credentialsStore.get("an actor");
+                expect(false).toEqual(true);
+            } catch (err) {
+                expect(err.toString()).toEqual(
+                    "Error: invalid credentials for an actor",
+                );
+            }
+            sinon.assert.calledOnce(MockStoreGet);
+            sinon.assert.calledWith(MockStoreGet, "an actor");
+            sinon.assert.notCalled(MockObjectHash);
+            sinon.assert.notCalled(MockStoreSave);
+        });
     });
 
     describe("save", () => {
