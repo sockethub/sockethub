@@ -10,6 +10,7 @@ const { io } = require("socket.io-client");
 // Circuit breaker - abort test if Sockethub becomes unavailable
 const MAX_CONSECUTIVE_FAILURES = 10; // Consecutive failures before triggering circuit breaker
 const ALERT_INTERVAL_MS = 5000; // Alert every 5 seconds when circuit breaker is open
+const DEFAULT_RESPONSE_TIMEOUT_MS = 3000;
 
 let consecutiveConnectionFailures = 0;
 let circuitBreakerTriggered = false;
@@ -23,6 +24,22 @@ function recordSuccess() {
 
 function recordFailure() {
     consecutiveConnectionFailures++;
+}
+
+function emitWithTimeout(socket, event, payload, timeoutMs, onResponse) {
+    let finished = false;
+    const timer = setTimeout(() => {
+        if (finished) return;
+        finished = true;
+        onResponse(new Error(`${event} response timeout`), null);
+    }, timeoutMs);
+
+    socket.emit(event, payload, (response) => {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timer);
+        onResponse(null, response);
+    });
 }
 
 module.exports = {
@@ -154,16 +171,29 @@ function sendCredentials(context, events, done) {
         },
     };
 
-    client.socket.emit("credentials", credentialsMsg, (response) => {
-        if (response?.error) {
-            events.emit("counter", "sockethub.error.credentials", 1);
-            console.error("Credentials error:", response.error);
-            context.vars.errors.push(`Credentials: ${response.error}`);
-        } else {
-            events.emit("counter", "sockethub.success.credentials", 1);
-        }
-        done();
-    });
+    emitWithTimeout(
+        client.socket,
+        "credentials",
+        credentialsMsg,
+        DEFAULT_RESPONSE_TIMEOUT_MS,
+        (err, response) => {
+            if (err) {
+                events.emit("counter", "sockethub.error.credentials", 1);
+                console.error("Credentials timeout");
+                context.vars.errors.push("Credentials: timeout");
+                return done();
+            }
+
+            if (response?.error) {
+                events.emit("counter", "sockethub.error.credentials", 1);
+                console.error("Credentials error:", response.error);
+                context.vars.errors.push(`Credentials: ${response.error}`);
+            } else {
+                events.emit("counter", "sockethub.success.credentials", 1);
+            }
+            done();
+        },
+    );
 }
 
 /**
@@ -172,6 +202,12 @@ function sendCredentials(context, events, done) {
 function sendDummyEcho(context, events, done) {
     const client = context.vars.client;
     const actorId = context.vars.actorId;
+
+    if (!context.vars.connected) {
+        events.emit("counter", "sockethub.error.not_connected", 1);
+        console.error("Cannot send echo - not connected");
+        return done();
+    }
 
     const message = {
         type: "echo",
@@ -189,19 +225,32 @@ function sendDummyEcho(context, events, done) {
 
     const startTime = Date.now();
 
-    client.socket.emit("message", message, (response) => {
-        const latency = Date.now() - startTime;
-        events.emit("histogram", "sockethub.latency.echo", latency);
+    emitWithTimeout(
+        client.socket,
+        "message",
+        message,
+        DEFAULT_RESPONSE_TIMEOUT_MS,
+        (err, response) => {
+            const latency = Date.now() - startTime;
+            events.emit("histogram", "sockethub.latency.echo", latency);
 
-        if (response?.error) {
-            events.emit("counter", "sockethub.error.echo", 1);
-            console.error("Echo error:", response.error);
-            context.vars.errors.push(`Echo: ${response.error}`);
-        } else {
-            events.emit("counter", "sockethub.success.echo", 1);
-        }
-        done();
-    });
+            if (err) {
+                events.emit("counter", "sockethub.error.echo", 1);
+                console.error("Echo timeout");
+                context.vars.errors.push("Echo: timeout");
+                return done();
+            }
+
+            if (response?.error) {
+                events.emit("counter", "sockethub.error.echo", 1);
+                console.error("Echo error:", response.error);
+                context.vars.errors.push(`Echo: ${response.error}`);
+            } else {
+                events.emit("counter", "sockethub.success.echo", 1);
+            }
+            done();
+        },
+    );
 }
 
 /**
@@ -210,6 +259,12 @@ function sendDummyEcho(context, events, done) {
 function sendXMPPMessage(context, events, done) {
     const client = context.vars.client;
     const actorId = context.vars.actorId;
+
+    if (!context.vars.connected) {
+        events.emit("counter", "sockethub.error.not_connected", 1);
+        console.error("Cannot send XMPP - not connected");
+        return done();
+    }
 
     const message = {
         type: "send",
@@ -231,19 +286,32 @@ function sendXMPPMessage(context, events, done) {
 
     const startTime = Date.now();
 
-    client.socket.emit("message", message, (response) => {
-        const latency = Date.now() - startTime;
-        events.emit("histogram", "sockethub.latency.xmpp", latency);
+    emitWithTimeout(
+        client.socket,
+        "message",
+        message,
+        DEFAULT_RESPONSE_TIMEOUT_MS,
+        (err, response) => {
+            const latency = Date.now() - startTime;
+            events.emit("histogram", "sockethub.latency.xmpp", latency);
 
-        if (response?.error) {
-            events.emit("counter", "sockethub.error.xmpp", 1);
-            console.error("XMPP error:", response.error);
-            context.vars.errors.push(`XMPP: ${response.error}`);
-        } else {
-            events.emit("counter", "sockethub.success.xmpp", 1);
-        }
-        done();
-    });
+            if (err) {
+                events.emit("counter", "sockethub.error.xmpp", 1);
+                console.error("XMPP timeout");
+                context.vars.errors.push("XMPP: timeout");
+                return done();
+            }
+
+            if (response?.error) {
+                events.emit("counter", "sockethub.error.xmpp", 1);
+                console.error("XMPP error:", response.error);
+                context.vars.errors.push(`XMPP: ${response.error}`);
+            } else {
+                events.emit("counter", "sockethub.success.xmpp", 1);
+            }
+            done();
+        },
+    );
 }
 
 /**
@@ -252,6 +320,12 @@ function sendXMPPMessage(context, events, done) {
 function sendFeedMessage(context, events, done) {
     const client = context.vars.client;
     const actorId = context.vars.actorId;
+
+    if (!context.vars.connected) {
+        events.emit("counter", "sockethub.error.not_connected", 1);
+        console.error("Cannot send feed - not connected");
+        return done();
+    }
 
     const feedUrls = [
         "https://example.com/feed1.xml",
@@ -274,19 +348,32 @@ function sendFeedMessage(context, events, done) {
 
     const startTime = Date.now();
 
-    client.socket.emit("message", message, (response) => {
-        const latency = Date.now() - startTime;
-        events.emit("histogram", "sockethub.latency.feed", latency);
+    emitWithTimeout(
+        client.socket,
+        "message",
+        message,
+        DEFAULT_RESPONSE_TIMEOUT_MS,
+        (err, response) => {
+            const latency = Date.now() - startTime;
+            events.emit("histogram", "sockethub.latency.feed", latency);
 
-        if (response?.error) {
-            events.emit("counter", "sockethub.error.feed", 1);
-            console.error("Feed error:", response.error);
-            context.vars.errors.push(`Feed: ${response.error}`);
-        } else {
-            events.emit("counter", "sockethub.success.feed", 1);
-        }
-        done();
-    });
+            if (err) {
+                events.emit("counter", "sockethub.error.feed", 1);
+                console.error("Feed timeout");
+                context.vars.errors.push("Feed: timeout");
+                return done();
+            }
+
+            if (response?.error) {
+                events.emit("counter", "sockethub.error.feed", 1);
+                console.error("Feed error:", response.error);
+                context.vars.errors.push(`Feed: ${response.error}`);
+            } else {
+                events.emit("counter", "sockethub.success.feed", 1);
+            }
+            done();
+        },
+    );
 }
 
 /**
