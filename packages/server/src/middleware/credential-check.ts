@@ -5,6 +5,8 @@ import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
 import type { MiddlewareNext } from "../middleware.js";
 import { platformInstances } from "../platform-instance.js";
 
+// Treat empty credentials objects as non-shareable to prevent unauthenticated
+// sessions from attaching to an existing persistent platform instance.
 function isShareableCredentials(
     credentials?: CredentialsObject,
 ): credentials is CredentialsObject {
@@ -14,6 +16,10 @@ function isShareableCredentials(
     return Object.keys(credentials.object).length > 0;
 }
 
+/**
+ * Prevents a second socket from attaching to an existing persistent platform
+ * instance when credentials are "empty" (e.g., unregistered IRC nick).
+ */
 export default function credentialCheck(
     credentialsStore: CredentialsStoreInterface,
     socketId: string,
