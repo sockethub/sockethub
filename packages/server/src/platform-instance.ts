@@ -76,7 +76,6 @@ export default class PlatformInstance {
     };
     private heartbeatLastSeen = Date.now();
     private heartbeatMonitor?: NodeJS.Timeout;
-    private heartbeatListener?: (message: MessageFromPlatform) => void;
     private heartbeatFailureHandled = false;
     private readonly actor?: string;
 
@@ -150,10 +149,6 @@ export default class PlatformInstance {
             if (this.heartbeatMonitor) {
                 clearInterval(this.heartbeatMonitor);
                 this.heartbeatMonitor = undefined;
-            }
-            if (this.heartbeatListener) {
-                this.process.removeListener("message", this.heartbeatListener);
-                this.heartbeatListener = undefined;
             }
             this.process.removeAllListeners("close");
             this.process.unref();
@@ -405,7 +400,19 @@ export default class PlatformInstance {
                     this.markHeartbeat();
                     return;
                 } else if (first === "error") {
-                    await this.reportError(sessionId, second);
+                    let normalizedError: string;
+                    if (typeof second === "string") {
+                        normalizedError = second;
+                    } else if (second instanceof Error) {
+                        normalizedError = second.message;
+                    } else {
+                        try {
+                            normalizedError = JSON.stringify(second);
+                        } catch {
+                            normalizedError = String(second);
+                        }
+                    }
+                    await this.reportError(sessionId, normalizedError);
                 } else {
                     // treat like a message to clients
                     await this.sendToClient(sessionId, second);
@@ -432,12 +439,6 @@ export default class PlatformInstance {
             return;
         }
         this.heartbeatLastSeen = Date.now();
-        this.heartbeatListener = (message: MessageFromPlatform) => {
-            if (Array.isArray(message) && message[0] === "heartbeat") {
-                this.markHeartbeat();
-            }
-        };
-        this.process.on("message", this.heartbeatListener);
         this.heartbeatMonitor = setInterval(() => {
             if (this.flaggedForTermination || this.heartbeatFailureHandled) {
                 return;
