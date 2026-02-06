@@ -130,7 +130,7 @@ const buildDummyMessage = (type: string, content = "dummy test") => ({
     type,
     context: "dummy",
     actor: { id: "test@dummy", type: "person" },
-    object: { type: "note", content },
+    object: { type: "message", content },
 });
 
 describe("Parent Process Sudden Termination", () => {
