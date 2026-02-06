@@ -119,7 +119,7 @@ class Sockethub {
             return undefined;
         }
 
-        const policy = platform.config.shareSessions ?? "always";
+        const policy = platform.config.shareSessions ?? "auth-only";
         if (policy === "always") {
             return undefined;
         }
@@ -130,30 +130,15 @@ class Sockethub {
         const credentials = await credentialsStore
             .get(msg.actor.id, undefined)
             .catch(() => undefined);
-        const isAuthenticated = this.isAuthenticatedForSharing(
-            msg.context,
-            credentials,
-        );
-        return isAuthenticated ? undefined : socketId;
+        const isShareable = this.isShareableCredentials(credentials);
+        return isShareable ? undefined : socketId;
     }
 
-    private isAuthenticatedForSharing(
-        platform: string,
-        credentials?: CredentialsObject,
-    ): boolean {
-        if (platform !== "irc") {
-            return false;
-        }
+    private isShareableCredentials(credentials?: CredentialsObject): boolean {
         if (!credentials || typeof credentials.object !== "object") {
             return false;
         }
-        const object = credentials.object as Record<string, unknown>;
-        const saslSetting = object.sasl;
-        const password =
-            typeof object.password === "string" && object.password.length > 0;
-        const isSasl =
-            typeof saslSetting === "boolean" ? saslSetting : password;
-        return isSasl;
+        return Object.keys(credentials.object).length > 0;
     }
 
     private handleIncomingConnection(socket: Socket) {
