@@ -46,10 +46,10 @@ export interface MessageFromParent extends Array<string | unknown> {
 }
 
 const HEARTBEAT_INTERVAL_MS = Number(
-    process.env.SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS ?? 5000,
+    config.get("platformHeartbeat:intervalMs") ?? 5000,
 );
 const HEARTBEAT_TIMEOUT_MS = Number(
-    process.env.SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS ?? 15000,
+    config.get("platformHeartbeat:timeoutMs") ?? 15000,
 );
 
 export default class PlatformInstance {
@@ -98,13 +98,15 @@ export default class PlatformInstance {
         if (process.env.LOG_LEVEL) {
             env.LOG_LEVEL = process.env.LOG_LEVEL;
         }
-        if (process.env.SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS) {
+        const heartbeatInterval = config.get("platformHeartbeat:intervalMs");
+        if (typeof heartbeatInterval !== "undefined") {
             env.SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS =
-                process.env.SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS;
+                String(heartbeatInterval);
         }
-        if (process.env.SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS) {
+        const heartbeatTimeout = config.get("platformHeartbeat:timeoutMs");
+        if (typeof heartbeatTimeout !== "undefined") {
             env.SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS =
-                process.env.SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS;
+                String(heartbeatTimeout);
         }
 
         this.createQueue();

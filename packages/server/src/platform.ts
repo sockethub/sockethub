@@ -129,7 +129,7 @@ async function startPlatformProcess() {
     }
 
     const heartbeatIntervalMs = Number(
-        process.env.SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS ?? 5000,
+        config.get("platformHeartbeat:intervalMs") ?? 5000,
     );
     let heartbeatTimer: NodeJS.Timeout | undefined;
 
