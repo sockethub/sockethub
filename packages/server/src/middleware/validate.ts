@@ -14,6 +14,20 @@ import {
 import getInitObject, { type IInitObject } from "../bootstrap/init.js";
 import type { MiddlewareChainInterface } from "../middleware.js";
 
+const INTERNAL_AS_TYPES = ["platform", "heartbeat"];
+
+function sanitizeValidationError(message: string): string {
+    let sanitized = message;
+    for (const type of INTERNAL_AS_TYPES) {
+        sanitized = sanitized.replace(new RegExp(`,\\s*${type}\\b`, "g"), "");
+        sanitized = sanitized.replace(
+            new RegExp(`\\b${type}\\b,\\s*`, "g"),
+            "",
+        );
+    }
+    return sanitized;
+}
+
 // called when registered with the middleware function, define the type of validation
 // that will be called when the middleware eventually does.
 export default function validate<T extends ActivityObject>(
@@ -47,7 +61,7 @@ export default function validate(
         if (type === "activity-object") {
             const err = validateActivityObject(msg as ActivityObject);
             if (err) {
-                done(new Error(err));
+                done(new Error(sanitizeValidationError(err)));
             } else {
                 done(msg);
             }
@@ -70,14 +84,14 @@ export default function validate(
             if (type === "credentials") {
                 const err = validateCredentials(stream);
                 if (err) {
-                    done(new Error(err));
+                    done(new Error(sanitizeValidationError(err)));
                 } else {
                     done(stream);
                 }
             } else {
                 const err = validateActivityStream(stream);
                 if (err) {
-                    done(new Error(err));
+                    done(new Error(sanitizeValidationError(err)));
                 } else {
                     const platformMeta = initObj.platforms.get(stream.context);
                     if (!platformMeta) {

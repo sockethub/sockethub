@@ -100,9 +100,8 @@ export default [
         },
         error:
             "Error: /object: must match exactly one schema in oneOf: " +
-            "credentials, feed, message, me, person, room, service, platform, " +
-            "website, attendance, presence, relationship, topic, address, " +
-            "heartbeat",
+            "credentials, feed, message, me, person, room, service, website, " +
+            "attendance, presence, relationship, topic, address",
     },
     {
         name: "alone credentials (as credentials)",
@@ -201,7 +200,7 @@ export default [
         // AJV can report different first errors depending on evaluation order.
         error: [
             "Error: [fakeplatform] /actor: must be object",
-            "Error: [fakeplatform] /target: must match exactly one schema in oneOf: credentials, feed, message, me, person, room, service, platform, website, attendance, presence, relationship, topic, address, heartbeat",
+            "Error: [fakeplatform] /target: must match exactly one schema in oneOf: credentials, feed, message, me, person, room, service, website, attendance, presence, relationship, topic, address",
         ],
     },
     {
