@@ -6,6 +6,7 @@ import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import type {
     ActivityObject,
     ActivityStream,
+    CredentialsObject,
     InternalActivityStream,
 } from "@sockethub/schemas";
 import {
@@ -106,6 +107,53 @@ class Sockethub {
     async shutdown() {
         await janitor.stop();
         stopCleanup();
+    }
+
+    private async resolveSessionScope(
+        msg: ActivityStream,
+        socketId: string,
+        credentialsStore: CredentialsStoreInterface,
+    ): Promise<string | undefined> {
+        const platform = this.platformRegistry.get(msg.context);
+        if (!platform || !platform.config.persist) {
+            return undefined;
+        }
+
+        const policy = platform.config.shareSessions ?? "always";
+        if (policy === "always") {
+            return undefined;
+        }
+        if (policy === "never") {
+            return socketId;
+        }
+
+        const credentials = await credentialsStore
+            .get(msg.actor.id, undefined)
+            .catch(() => undefined);
+        const isAuthenticated = this.isAuthenticatedForSharing(
+            msg.context,
+            credentials,
+        );
+        return isAuthenticated ? undefined : socketId;
+    }
+
+    private isAuthenticatedForSharing(
+        platform: string,
+        credentials?: CredentialsObject,
+    ): boolean {
+        if (platform !== "irc") {
+            return false;
+        }
+        if (!credentials || typeof credentials.object !== "object") {
+            return false;
+        }
+        const object = credentials.object as Record<string, unknown>;
+        const saslSetting = object.sasl;
+        const password =
+            typeof object.password === "string" && object.password.length > 0;
+        const isSasl =
+            typeof saslSetting === "boolean" ? saslSetting : password;
+        return isSasl;
     }
 
     private handleIncomingConnection(socket: Socket) {
@@ -217,10 +265,16 @@ class Sockethub {
                         msg: ActivityStream,
                         next: (data?: ActivityStream | Error) => void,
                     ) => {
+                        const identifierScope = await this.resolveSessionScope(
+                            msg,
+                            socket.id,
+                            credentialsStore,
+                        );
                         const platformInstance = this.processManager.get(
                             msg.context,
                             msg.actor.id,
                             socket.id,
+                            identifierScope,
                         );
                         // job validated and queued, stores socket.io callback for when job is completed
                         try {

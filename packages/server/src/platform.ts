@@ -40,6 +40,7 @@ async function startPlatformProcess() {
     const parentId = process.argv[2];
     const platformName = process.argv[3];
     let identifier = process.argv[4];
+    const identifierScope = process.argv[5];
     const redisUrl = process.env.REDIS_URL;
 
     // Set process-wide context for all loggers in this platform process
@@ -438,7 +439,11 @@ async function startPlatformProcess() {
      * @param credentials
      */
     async function updateActor(credentials: CredentialsObject): Promise<void> {
-        identifier = getPlatformId(platformName, credentials.actor.id);
+        identifier = getPlatformId(
+            platformName,
+            credentials.actor.id,
+            identifierScope,
+        );
         logger.info(
             `platform actor updated to ${credentials.actor.id} identifier ${identifier}`,
         );

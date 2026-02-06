@@ -105,6 +105,8 @@ interface BasePlatformConfig {
     connectTimeoutMs?: number;
 }
 
+export type SessionSharePolicy = "always" | "auth-only" | "never";
+
 /** Configuration for stateless platforms that start/stop per-request */
 export interface StatelessPlatformConfig extends BasePlatformConfig {
     persist: false;
@@ -119,6 +121,13 @@ export interface PersistentPlatformConfig extends BasePlatformConfig {
     persist: true;
     /** Message types requiring credentials (must be non-empty for persistent platforms) */
     requireCredentials: string[];
+    /**
+     * Controls whether sessions can share a single persistent platform instance.
+     * - "always": share across sessions (default)
+     * - "auth-only": share only when credentials indicate authenticated identity
+     * - "never": never share sessions (per-session isolation)
+     */
+    shareSessions?: SessionSharePolicy;
 }
 
 export interface PlatformSchemaStruct {

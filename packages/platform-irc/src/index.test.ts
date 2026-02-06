@@ -89,6 +89,7 @@ describe("Initialize IRC Platform", () => {
             connectTimeoutMs: 30000,
             persist: true,
             requireCredentials: ["connect", "update"],
+            shareSessions: "auth-only",
         });
     });
 
