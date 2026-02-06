@@ -118,6 +118,22 @@ export const ObjectTypesSchema = {
         },
     },
 
+    platform: {
+        required: ["id", "type"],
+        additionalProperties: true,
+        properties: {
+            id: {
+                type: "string",
+            },
+            type: {
+                enum: ["platform"],
+            },
+            name: {
+                type: "string",
+            },
+        },
+    },
+
     website: {
         required: ["id", "type"],
         additionalProperties: true,
@@ -211,6 +227,19 @@ export const ObjectTypesSchema = {
         properties: {
             type: {
                 enum: ["address"],
+            },
+        },
+    },
+
+    heartbeat: {
+        required: ["type", "timestamp"],
+        additionalProperties: false,
+        properties: {
+            type: {
+                enum: ["heartbeat"],
+            },
+            timestamp: {
+                type: "number",
             },
         },
     },
