@@ -166,6 +166,58 @@ describe("CredentialsStore", () => {
             sinon.assert.notCalled(MockObjectHash);
             sinon.assert.notCalled(MockStoreSave);
         });
+
+        it("rejects empty credentials objects", async () => {
+            MockStoreGet.returns({
+                object: {},
+            });
+            try {
+                await credentialsStore.get("an actor");
+                expect(false).toEqual(true);
+            } catch (err) {
+                expect(err.toString()).toEqual(
+                    "Error: invalid credentials for an actor",
+                );
+            }
+            sinon.assert.calledOnce(MockStoreGet);
+            sinon.assert.calledWith(MockStoreGet, "an actor");
+            sinon.assert.notCalled(MockObjectHash);
+            sinon.assert.notCalled(MockStoreSave);
+        });
+
+        it("rejects null credentials objects", async () => {
+            MockStoreGet.returns({
+                object: null,
+            });
+            try {
+                await credentialsStore.get("an actor");
+                expect(false).toEqual(true);
+            } catch (err) {
+                expect(err.toString()).toEqual(
+                    "Error: invalid credentials for an actor",
+                );
+            }
+            sinon.assert.calledOnce(MockStoreGet);
+            sinon.assert.calledWith(MockStoreGet, "an actor");
+            sinon.assert.notCalled(MockObjectHash);
+            sinon.assert.notCalled(MockStoreSave);
+        });
+
+        it("rejects missing credentials objects", async () => {
+            MockStoreGet.returns({});
+            try {
+                await credentialsStore.get("an actor");
+                expect(false).toEqual(true);
+            } catch (err) {
+                expect(err.toString()).toEqual(
+                    "Error: invalid credentials for an actor",
+                );
+            }
+            sinon.assert.calledOnce(MockStoreGet);
+            sinon.assert.calledWith(MockStoreGet, "an actor");
+            sinon.assert.notCalled(MockObjectHash);
+            sinon.assert.notCalled(MockStoreSave);
+        });
     });
 
     describe("save", () => {
