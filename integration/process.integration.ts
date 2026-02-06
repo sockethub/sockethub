@@ -11,9 +11,97 @@ interface TestConfig {
     sockethubProcess?: ChildProcess;
     client?: Socket;
     platformChildPid?: number;
+    dummyChildPid?: number;
     sockethubLogs: string[];
     isVerbose: boolean;
 }
+
+const isProcessRunning = (pid: number | undefined) => {
+    if (!pid) {
+        return false;
+    }
+    try {
+        process.kill(pid, 0);
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+const findPlatformChildProcesses = async (
+    platformName: string,
+): Promise<number[]> => {
+    return new Promise<number[]>((resolve) => {
+        const ps = spawn("ps", ["-o", "pid,ppid,command"], {
+            stdio: ["ignore", "pipe", "pipe"],
+        });
+        let output = "";
+
+        ps.stdout.on("data", (data) => {
+            output += data.toString();
+        });
+
+        ps.on("close", () => {
+            const lines = output.split("\n");
+            const childPids: number[] = [];
+
+            for (const line of lines.slice(1)) {
+                const parts = line.trim().split(/\s+/);
+                if (parts.length >= 3) {
+                    const pid = Number.parseInt(parts[0]);
+                    const command = parts.slice(2).join(" ");
+
+                    if (
+                        command.includes("platform.js") &&
+                        command.includes(platformName)
+                    ) {
+                        childPids.push(pid);
+                    }
+                }
+            }
+            resolve(childPids);
+        });
+
+        ps.on("error", () => {
+            resolve([]);
+        });
+    });
+};
+
+const waitForProcessExit = async (pid: number, timeoutMs: number) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+        if (!isProcessRunning(pid)) {
+            return true;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    return false;
+};
+
+const emitWithAck = async (
+    client: Socket,
+    event: string,
+    payload: unknown,
+    timeoutMs: number,
+) => {
+    return new Promise<unknown>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+            reject(new Error(`Timeout waiting for ${event} response`));
+        }, timeoutMs);
+        client.emit(event, payload, (response: unknown) => {
+            clearTimeout(timeoutId);
+            resolve(response);
+        });
+    });
+};
+
+const buildDummyMessage = (type: string, content = "dummy test") => ({
+    type,
+    context: "dummy",
+    actor: { id: "test@dummy", type: "person" },
+    object: { type: "note", content },
+});
 
 describe("Parent Process Sudden Termination", () => {
     const testConfig: TestConfig = {
@@ -56,6 +144,8 @@ describe("Parent Process Sudden Termination", () => {
                 REDIS_URL: config.redis.url,
                 PORT: config.sockethub.port,
                 NODE_ENV: "test",
+                SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS: "500",
+                SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS: "2000",
             },
             stdio: ["pipe", "pipe", "pipe"],
         });
@@ -358,50 +448,8 @@ describe("Parent Process Sudden Termination", () => {
         if (!testConfig.sockethubProcess) {
             throw new Error("No Sockethub process - run previous tests first");
         }
-        // Look for child processes of the Sockethub parent
-        const findChildProcesses = async (): Promise<number[]> => {
-            return new Promise<number[]>((resolve) => {
-                const ps = spawn("ps", ["-o", "pid,ppid,command"], {
-                    stdio: ["ignore", "pipe", "pipe"],
-                });
-                let output = "";
-
-                ps.stdout.on("data", (data) => {
-                    output += data.toString();
-                });
-
-                ps.on("close", () => {
-                    const lines = output.split("\n");
-                    const childPids: number[] = [];
-
-                    for (const line of lines.slice(1)) {
-                        // Skip header
-                        const parts = line.trim().split(/\s+/);
-                        if (parts.length >= 3) {
-                            const pid = Number.parseInt(parts[0]);
-                            const ppid = Number.parseInt(parts[1]);
-                            const command = parts.slice(2).join(" ");
-
-                            // Look for XMPP platform processes (may be daemonized under PID 1)
-                            if (
-                                command.includes("platform.js") &&
-                                command.includes("xmpp")
-                            ) {
-                                childPids.push(pid);
-                            }
-                        }
-                    }
-                    resolve(childPids);
-                });
-
-                ps.on("error", () => {
-                    resolve([]); // Return empty array if ps fails
-                });
-            });
-        };
-
         // Get all child processes that should include our XMPP platform
-        const childPids = await findChildProcesses();
+        const childPids = await findPlatformChildProcesses("xmpp");
 
         if (testConfig.isVerbose) {
             console.log(
@@ -449,15 +497,6 @@ describe("Parent Process Sudden Termination", () => {
     });
 
     it("should verify child process is running before termination", () => {
-        const isProcessRunning = (pid: number) => {
-            try {
-                process.kill(pid, 0); // Signal 0 just checks if process exists
-                return true;
-            } catch {
-                return false;
-            }
-        };
-
         const isRunning = isProcessRunning(testConfig.platformChildPid);
         if (!isRunning) {
             console.log(
@@ -472,16 +511,135 @@ describe("Parent Process Sudden Termination", () => {
         expect(isRunning).toBe(true);
     });
 
-    it("should terminate child process when parent dies suddenly", async () => {
-        const isProcessRunning = (pid: number) => {
-            try {
-                process.kill(pid, 0); // Signal 0 just checks if process exists
-                return true;
-            } catch {
-                return false;
+    describe("Dummy platform crash detection", () => {
+        const ensureDummyPlatform = async () => {
+            if (!testConfig.client) {
+                throw new Error(
+                    "No client connection - run previous tests first",
+                );
             }
+            await emitWithAck(
+                testConfig.client,
+                "message",
+                buildDummyMessage("echo"),
+                config.timeouts.message,
+            );
+            const childPids = await findPlatformChildProcesses("dummy");
+            expect(childPids.length).toBeGreaterThan(0);
+            testConfig.dummyChildPid = childPids[0];
         };
 
+        const refreshDummyPid = async (oldPid: number) => {
+            const childPids = await findPlatformChildProcesses("dummy");
+            expect(childPids.length).toBeGreaterThan(0);
+            const nextPid =
+                childPids.find((pid) => pid !== oldPid) ?? childPids[0];
+            testConfig.dummyChildPid = nextPid;
+            return nextPid;
+        };
+
+        it("should start dummy platform process on first message", async () => {
+            await ensureDummyPlatform();
+            expect(isProcessRunning(testConfig.dummyChildPid)).toBe(true);
+        });
+
+        it("should recover from process.exit(1)", async () => {
+            if (!testConfig.dummyChildPid) {
+                await ensureDummyPlatform();
+            }
+            const oldPid = testConfig.dummyChildPid as number;
+            testConfig.client?.emit("message", buildDummyMessage("exit1"));
+
+            const exited = await waitForProcessExit(
+                oldPid,
+                config.timeouts.process + config.timeouts.cleanup,
+            );
+            expect(exited).toBe(true);
+
+            await emitWithAck(
+                testConfig.client as Socket,
+                "message",
+                buildDummyMessage("echo"),
+                config.timeouts.message,
+            );
+            const newPid = await refreshDummyPid(oldPid);
+            expect(newPid).not.toEqual(oldPid);
+        });
+
+        it("should recover from uncaught TypeError", async () => {
+            if (!testConfig.dummyChildPid) {
+                await ensureDummyPlatform();
+            }
+            const oldPid = testConfig.dummyChildPid as number;
+            testConfig.client?.emit(
+                "message",
+                buildDummyMessage("throwTypeError"),
+            );
+
+            const exited = await waitForProcessExit(
+                oldPid,
+                config.timeouts.process + config.timeouts.cleanup,
+            );
+            expect(exited).toBe(true);
+
+            await emitWithAck(
+                testConfig.client as Socket,
+                "message",
+                buildDummyMessage("echo"),
+                config.timeouts.message,
+            );
+            const newPid = await refreshDummyPid(oldPid);
+            expect(newPid).not.toEqual(oldPid);
+        });
+
+        it("should recover from SIGTERM", async () => {
+            if (!testConfig.dummyChildPid) {
+                await ensureDummyPlatform();
+            }
+            const oldPid = testConfig.dummyChildPid as number;
+            testConfig.client?.emit("message", buildDummyMessage("sigterm"));
+
+            const exited = await waitForProcessExit(
+                oldPid,
+                config.timeouts.process + config.timeouts.cleanup,
+            );
+            expect(exited).toBe(true);
+
+            await emitWithAck(
+                testConfig.client as Socket,
+                "message",
+                buildDummyMessage("echo"),
+                config.timeouts.message,
+            );
+            const newPid = await refreshDummyPid(oldPid);
+            expect(newPid).not.toEqual(oldPid);
+        });
+
+        it("should recover from heartbeat timeout (hang)", async () => {
+            if (!testConfig.dummyChildPid) {
+                await ensureDummyPlatform();
+            }
+            const oldPid = testConfig.dummyChildPid as number;
+            testConfig.client?.emit("message", buildDummyMessage("hang"));
+
+            const exited = await waitForProcessExit(
+                oldPid,
+                config.timeouts.process + config.timeouts.cleanup + 3000,
+            );
+            expect(exited).toBe(true);
+
+            await emitWithAck(
+                testConfig.client as Socket,
+                "message",
+                buildDummyMessage("echo"),
+                config.timeouts.message,
+            );
+            const newPid = await refreshDummyPid(oldPid);
+            expect(newPid).not.toEqual(oldPid);
+        });
+    });
+
+    it("should terminate child process when parent dies suddenly", async () => {
         // Kill parent process suddenly (SIGKILL - no cleanup possible)
         testConfig.sockethubProcess.kill("SIGKILL");
 
