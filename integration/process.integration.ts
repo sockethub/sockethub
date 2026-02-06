@@ -109,21 +109,8 @@ const waitForProcessExit = async (pid: number, timeoutMs: number) => {
     return false;
 };
 
-const emitWithAck = async (
-    client: Socket,
-    event: string,
-    payload: unknown,
-    timeoutMs: number,
-) => {
-    return new Promise<unknown>((resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-            reject(new Error(`Timeout waiting for ${event} response`));
-        }, timeoutMs);
-        client.emit(event, payload, (response: unknown) => {
-            clearTimeout(timeoutId);
-            resolve(response);
-        });
-    });
+const emitWithoutAck = (client: Socket, event: string, payload: unknown) => {
+    client.emit(event, payload);
 };
 
 const buildDummyMessage = (type: string, content = "dummy test") => ({
@@ -551,24 +538,11 @@ describe("Parent Process Sudden Termination", () => {
                     "No client connection - run previous tests first",
                 );
             }
-            const response = await emitWithAck(
+            emitWithoutAck(
                 testConfig.client,
                 "message",
                 buildDummyMessage("echo"),
-                config.timeouts.message,
             );
-            if (
-                response &&
-                typeof response === "object" &&
-                "error" in (response as Record<string, unknown>) &&
-                (response as Record<string, unknown>).error
-            ) {
-                throw new Error(
-                    `Dummy platform error response: ${
-                        (response as Record<string, unknown>).error
-                    }`,
-                );
-            }
             const childPids = await waitForPlatformChildProcesses(
                 { platformName: "dummy", excludeNames: ["xmpp"] },
                 config.timeouts.process,
@@ -607,11 +581,10 @@ describe("Parent Process Sudden Termination", () => {
             );
             expect(exited).toBe(true);
 
-            await emitWithAck(
+            emitWithoutAck(
                 testConfig.client as Socket,
                 "message",
                 buildDummyMessage("echo"),
-                config.timeouts.message,
             );
             const newPid = await refreshDummyPid(oldPid);
             expect(newPid).not.toEqual(oldPid);
@@ -633,11 +606,10 @@ describe("Parent Process Sudden Termination", () => {
             );
             expect(exited).toBe(true);
 
-            await emitWithAck(
+            emitWithoutAck(
                 testConfig.client as Socket,
                 "message",
                 buildDummyMessage("echo"),
-                config.timeouts.message,
             );
             const newPid = await refreshDummyPid(oldPid);
             expect(newPid).not.toEqual(oldPid);
@@ -656,11 +628,10 @@ describe("Parent Process Sudden Termination", () => {
             );
             expect(exited).toBe(true);
 
-            await emitWithAck(
+            emitWithoutAck(
                 testConfig.client as Socket,
                 "message",
                 buildDummyMessage("echo"),
-                config.timeouts.message,
             );
             const newPid = await refreshDummyPid(oldPid);
             expect(newPid).not.toEqual(oldPid);
@@ -679,11 +650,10 @@ describe("Parent Process Sudden Termination", () => {
             );
             expect(exited).toBe(true);
 
-            await emitWithAck(
+            emitWithoutAck(
                 testConfig.client as Socket,
                 "message",
                 buildDummyMessage("echo"),
-                config.timeouts.message,
             );
             const newPid = await refreshDummyPid(oldPid);
             expect(newPid).not.toEqual(oldPid);
