@@ -12,6 +12,7 @@ interface TestConfig {
     client?: Socket;
     platformChildPid?: number;
     dummyChildPid?: number;
+    dummyChildStartSeconds?: number;
     sockethubLogs: string[];
     isVerbose: boolean;
 }
@@ -66,6 +67,7 @@ const findPlatformChildProcesses = async (options?: {
                     }
                 }
             }
+            childPids.sort((a, b) => a - b);
             resolve(childPids);
         });
 
@@ -103,10 +105,18 @@ const waitForPlatformChildProcesses = async (
 };
 
 const fetchProcessInfo = async (pid: number) => {
-    return new Promise<{ stat: string; command: string } | null>((resolve) => {
-        const ps = spawn("ps", ["-o", "stat=,command=", "-p", String(pid)], {
-            stdio: ["ignore", "pipe", "pipe"],
-        });
+    return new Promise<{
+        stat: string;
+        command: string;
+        elapsedSeconds: number | null;
+    } | null>((resolve) => {
+        const ps = spawn(
+            "ps",
+            ["-o", "stat=,etimes=,command=", "-p", String(pid)],
+            {
+                stdio: ["ignore", "pipe", "pipe"],
+            },
+        );
         let output = "";
 
         ps.stdout.on("data", (data) => {
@@ -121,8 +131,12 @@ const fetchProcessInfo = async (pid: number) => {
             }
             const parts = line.split(/\s+/);
             const stat = parts[0] ?? "";
-            const command = parts.slice(1).join(" ");
-            resolve({ stat, command });
+            const elapsedRaw = parts[1] ?? "";
+            const elapsedSeconds = Number.isFinite(Number(elapsedRaw))
+                ? Number(elapsedRaw)
+                : null;
+            const command = parts.slice(2).join(" ");
+            resolve({ stat, command, elapsedSeconds });
         });
 
         ps.on("error", () => {
@@ -131,7 +145,10 @@ const fetchProcessInfo = async (pid: number) => {
     });
 };
 
-const isPlatformProcessAlive = async (pid: number) => {
+const isPlatformProcessAlive = async (
+    pid: number,
+    minElapsedSeconds?: number,
+) => {
     const info = await fetchProcessInfo(pid);
     if (!info) {
         return false;
@@ -139,13 +156,24 @@ const isPlatformProcessAlive = async (pid: number) => {
     if (info.stat.includes("Z")) {
         return false;
     }
+    if (
+        minElapsedSeconds !== undefined &&
+        info.elapsedSeconds !== null &&
+        info.elapsedSeconds + 1 < minElapsedSeconds
+    ) {
+        return false;
+    }
     return info.command.includes("platform.js");
 };
 
-const waitForProcessExit = async (pid: number, timeoutMs: number) => {
+const waitForProcessExit = async (
+    pid: number,
+    timeoutMs: number,
+    minElapsedSeconds?: number,
+) => {
     const start = Date.now();
     while (Date.now() - start < timeoutMs) {
-        if (!(await isPlatformProcessAlive(pid))) {
+        if (!(await isPlatformProcessAlive(pid, minElapsedSeconds))) {
             return true;
         }
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -654,7 +682,11 @@ describe("Parent Process Sudden Termination", () => {
                 config.timeouts.process,
             );
             expect(childPids.length).toBeGreaterThan(0);
-            testConfig.dummyChildPid = childPids[0];
+            const pid = childPids[childPids.length - 1];
+            testConfig.dummyChildPid = pid;
+            testConfig.dummyChildStartSeconds = (
+                await fetchProcessInfo(pid)
+            )?.elapsedSeconds;
         };
 
         const waitForDummyRestart = async (
@@ -680,9 +712,13 @@ describe("Parent Process Sudden Termination", () => {
                     { platformName: "dummy", excludeNames: ["xmpp"] },
                     500,
                 );
-                const nextPid = childPids.find((pid) => pid !== oldPid);
-                if (nextPid) {
+                const candidates = childPids.filter((pid) => pid !== oldPid);
+                if (candidates.length > 0) {
+                    const nextPid = candidates[candidates.length - 1];
                     testConfig.dummyChildPid = nextPid;
+                    testConfig.dummyChildStartSeconds = (
+                        await fetchProcessInfo(nextPid)
+                    )?.elapsedSeconds;
                     return nextPid;
                 }
                 await new Promise((resolve) => setTimeout(resolve, 200));
@@ -709,6 +745,9 @@ describe("Parent Process Sudden Termination", () => {
                         await ensureDummyPlatform();
                     }
                     const oldPid = testConfig.dummyChildPid as number;
+                    const oldStartSeconds =
+                        (await fetchProcessInfo(oldPid))?.elapsedSeconds ??
+                        testConfig.dummyChildStartSeconds;
                     testConfig.client?.emit(
                         "message",
                         buildDummyMessage("exit1"),
@@ -717,6 +756,7 @@ describe("Parent Process Sudden Termination", () => {
                     const exited = await waitForProcessExit(
                         oldPid,
                         config.timeouts.process + config.timeouts.cleanup,
+                        oldStartSeconds,
                     );
                     expect(exited).toBe(true);
 
@@ -737,6 +777,9 @@ describe("Parent Process Sudden Termination", () => {
                         await ensureDummyPlatform();
                     }
                     const oldPid = testConfig.dummyChildPid as number;
+                    const oldStartSeconds =
+                        (await fetchProcessInfo(oldPid))?.elapsedSeconds ??
+                        testConfig.dummyChildStartSeconds;
                     testConfig.client?.emit(
                         "message",
                         buildDummyMessage("throwTypeError"),
@@ -745,6 +788,7 @@ describe("Parent Process Sudden Termination", () => {
                     const exited = await waitForProcessExit(
                         oldPid,
                         config.timeouts.process + config.timeouts.cleanup,
+                        oldStartSeconds,
                     );
                     expect(exited).toBe(true);
 
@@ -765,6 +809,9 @@ describe("Parent Process Sudden Termination", () => {
                         await ensureDummyPlatform();
                     }
                     const oldPid = testConfig.dummyChildPid as number;
+                    const oldStartSeconds =
+                        (await fetchProcessInfo(oldPid))?.elapsedSeconds ??
+                        testConfig.dummyChildStartSeconds;
                     testConfig.client?.emit(
                         "message",
                         buildDummyMessage("sigterm"),
@@ -773,6 +820,7 @@ describe("Parent Process Sudden Termination", () => {
                     const exited = await waitForProcessExit(
                         oldPid,
                         config.timeouts.process + config.timeouts.cleanup,
+                        oldStartSeconds,
                     );
                     expect(exited).toBe(true);
 
@@ -793,6 +841,9 @@ describe("Parent Process Sudden Termination", () => {
                         await ensureDummyPlatform();
                     }
                     const oldPid = testConfig.dummyChildPid as number;
+                    const oldStartSeconds =
+                        (await fetchProcessInfo(oldPid))?.elapsedSeconds ??
+                        testConfig.dummyChildStartSeconds;
                     testConfig.client?.emit(
                         "message",
                         buildDummyMessage("hang"),
@@ -803,6 +854,7 @@ describe("Parent Process Sudden Termination", () => {
                         config.timeouts.process +
                             config.timeouts.cleanup +
                             3000,
+                        oldStartSeconds,
                     );
                     expect(exited).toBe(true);
 
