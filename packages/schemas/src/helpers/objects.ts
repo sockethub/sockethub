@@ -245,6 +245,7 @@ export const ObjectTypesSchema = {
     },
 };
 
+// Internal AS object types reserved for Sockethub IPC/housekeeping.
 export const InternalObjectTypesList = ["platform", "heartbeat"];
 export const ObjectTypesList = Object.keys(ObjectTypesSchema);
 
