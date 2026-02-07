@@ -89,7 +89,7 @@ Redis so browsers can talk to long-lived connections safely.
 
 1. Client connects via Socket.IO
 2. Message validated and routed
-3. Credentials stored per session
+3. Credentials are encrypted and stored per session in Redis
 4. Message queued to platform
 5. Platform responds via Socket.IO
 
