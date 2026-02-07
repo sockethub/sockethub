@@ -6,7 +6,6 @@ import { createLogger } from "@sockethub/logger";
 import {
     type ActivityObject,
     type ActivityStream,
-    setValidationErrorOptions,
     validateActivityObject,
     validateActivityStream,
     validateCredentials,
@@ -14,9 +13,6 @@ import {
 
 import getInitObject, { type IInitObject } from "../bootstrap/init.js";
 import type { MiddlewareChainInterface } from "../middleware.js";
-
-const INTERNAL_AS_TYPES = ["platform", "heartbeat"];
-setValidationErrorOptions({ excludeTypes: INTERNAL_AS_TYPES });
 
 // called when registered with the middleware function, define the type of validation
 // that will be called when the middleware eventually does.
