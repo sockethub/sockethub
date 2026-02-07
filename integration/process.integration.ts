@@ -152,6 +152,32 @@ describe("Parent Process Sudden Termination", () => {
         );
     }
 
+    function itWithLogs(
+        name: string,
+        fn: () => Promise<void> | void,
+        timeout?: number,
+    ) {
+        return it(
+            name,
+            async () => {
+                console.log(`[TEST-START] ${name}`);
+                try {
+                    await fn();
+                    console.log(`[TEST-PASS] ${name}`);
+                } catch (err) {
+                    const message =
+                        err instanceof Error
+                            ? err.stack || err.message
+                            : String(err);
+                    console.error(`[TEST-FAIL] ${name}: ${message}`);
+                    showRecentLogs(name, 60);
+                    throw err;
+                }
+            },
+            timeout,
+        );
+    }
+
     beforeAll(async () => {
         // Start Sockethub server in separate process
         const sockethubPath = join(
@@ -274,7 +300,7 @@ describe("Parent Process Sudden Termination", () => {
         testConfig.platformChildPid = undefined;
     });
 
-    it("should verify Redis server is reachable", async () => {
+    itWithLogs("should verify Redis server is reachable", async () => {
         try {
             const redisCheck = spawn(
                 "nc",
@@ -312,7 +338,7 @@ describe("Parent Process Sudden Termination", () => {
         }
     });
 
-    it("should verify XMPP server is reachable", async () => {
+    itWithLogs("should verify XMPP server is reachable", async () => {
         try {
             const xmppCheck = spawn(
                 "nc",
@@ -353,7 +379,7 @@ describe("Parent Process Sudden Termination", () => {
         }
     });
 
-    it("should connect to Sockethub", async () => {
+    itWithLogs("should connect to Sockethub", async () => {
         testConfig.client = io(config.sockethub.url, {
             path: "/sockethub",
             transports: ["websocket"],
@@ -376,95 +402,107 @@ describe("Parent Process Sudden Termination", () => {
         });
     });
 
-    it("should send XMPP credentials and establish connection", async () => {
-        // Ensure we have a client connection from previous test
-        if (!testConfig.client) {
-            throw new Error("No client connection - run previous test first");
-        }
-        const actorId = utils.createXmppJid();
-        const credentialsMessage = {
-            type: "credentials",
-            context: "xmpp",
-            actor: {
-                id: actorId,
-                type: "person",
-            },
-            object: {
+    itWithLogs(
+        "should send XMPP credentials and establish connection",
+        async () => {
+            // Ensure we have a client connection from previous test
+            if (!testConfig.client) {
+                throw new Error(
+                    "No client connection - run previous test first",
+                );
+            }
+            const actorId = utils.createXmppJid();
+            const credentialsMessage = {
                 type: "credentials",
-                password: config.prosody.testUser.password,
-                resource: "SockethubTest1",
-                userAddress: `${config.prosody.testUser.username}@${config.prosody.host}`,
-                server: `xmpp://${config.prosody.host}:${config.prosody.port}`,
-            },
-        };
-
-        // Mark the point where we're about to send credentials
-        markLogPoint("Sending XMPP credentials");
-
-        // Send credentials and wait for confirmation
-        await new Promise<void>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                reject(new Error("Credentials timeout"));
-            }, config.timeouts.process);
-
-            console.log("→ Sending credentials message to sockethub");
-            testConfig.client.emit(
-                "credentials",
-                credentialsMessage,
-                (response) => {
-                    clearTimeout(timeout);
-                    if (testConfig.isVerbose) {
-                        console.log(
-                            "Credentials response:",
-                            JSON.stringify(response, null, 2),
-                        );
-                    }
-                    resolve();
+                context: "xmpp",
+                actor: {
+                    id: actorId,
+                    type: "person",
                 },
-            );
-        });
+                object: {
+                    type: "credentials",
+                    password: config.prosody.testUser.password,
+                    resource: "SockethubTest1",
+                    userAddress: `${config.prosody.testUser.username}@${config.prosody.host}`,
+                    server: `xmpp://${config.prosody.host}:${config.prosody.port}`,
+                },
+            };
 
-        // Create a persistent XMPP connection
-        const connectMessage = {
-            type: "connect",
-            context: "xmpp",
-            actor: {
-                id: actorId,
-                type: "person",
-            },
-        };
+            // Mark the point where we're about to send credentials
+            markLogPoint("Sending XMPP credentials");
 
-        // Mark the point where we're about to send the connect message
-        markLogPoint("Sending XMPP connect message");
+            // Send credentials and wait for confirmation
+            await new Promise<void>((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error("Credentials timeout"));
+                }, config.timeouts.process);
 
-        // Send connect message and wait for response
-        await new Promise<void>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                reject(new Error("XMPP connect timeout"));
-            }, config.timeouts.connect);
-
-            console.log("→ Sending XMPP connect message to sockethub");
-            testConfig.client.emit("message", connectMessage, (response) => {
-                clearTimeout(timeout);
-                if (testConfig.isVerbose) {
-                    console.log(
-                        "XMPP connect response:",
-                        JSON.stringify(response, null, 2),
-                    );
-                }
-                if (response.error) {
-                    console.log("XMPP connection failed:", response.error);
-                    showRecentLogs("XMPP Connection", 20);
-                    reject(new Error(response.error));
-                } else {
-                    console.log("✓ XMPP connection established");
-                    resolve();
-                }
+                console.log("→ Sending credentials message to sockethub");
+                testConfig.client.emit(
+                    "credentials",
+                    credentialsMessage,
+                    (response) => {
+                        clearTimeout(timeout);
+                        if (testConfig.isVerbose) {
+                            console.log(
+                                "Credentials response:",
+                                JSON.stringify(response, null, 2),
+                            );
+                        }
+                        resolve();
+                    },
+                );
             });
-        });
-    });
 
-    it("should find XMPP platform child processes", async () => {
+            // Create a persistent XMPP connection
+            const connectMessage = {
+                type: "connect",
+                context: "xmpp",
+                actor: {
+                    id: actorId,
+                    type: "person",
+                },
+            };
+
+            // Mark the point where we're about to send the connect message
+            markLogPoint("Sending XMPP connect message");
+
+            // Send connect message and wait for response
+            await new Promise<void>((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error("XMPP connect timeout"));
+                }, config.timeouts.connect);
+
+                console.log("→ Sending XMPP connect message to sockethub");
+                testConfig.client.emit(
+                    "message",
+                    connectMessage,
+                    (response) => {
+                        clearTimeout(timeout);
+                        if (testConfig.isVerbose) {
+                            console.log(
+                                "XMPP connect response:",
+                                JSON.stringify(response, null, 2),
+                            );
+                        }
+                        if (response.error) {
+                            console.log(
+                                "XMPP connection failed:",
+                                response.error,
+                            );
+                            showRecentLogs("XMPP Connection", 20);
+                            reject(new Error(response.error));
+                        } else {
+                            console.log("✓ XMPP connection established");
+                            resolve();
+                        }
+                    },
+                );
+            });
+        },
+    );
+
+    itWithLogs("should find XMPP platform child processes", async () => {
         // Ensure we have established XMPP connection from previous test
         if (!testConfig.sockethubProcess) {
             throw new Error("No Sockethub process - run previous tests first");
@@ -520,20 +558,23 @@ describe("Parent Process Sudden Termination", () => {
         testConfig.platformChildPid = childPids[0]; // Store first child for next test
     });
 
-    it("should verify child process is running before termination", () => {
-        const isRunning = isProcessRunning(testConfig.platformChildPid);
-        if (!isRunning) {
-            console.log(
-                `❌ Platform child process ${testConfig.platformChildPid} is not running`,
-            );
-            showRecentLogs("Process Verification", 10);
-        } else {
-            console.log(
-                `✓ Platform child process ${testConfig.platformChildPid} is running`,
-            );
-        }
-        expect(isRunning).toBe(true);
-    });
+    itWithLogs(
+        "should verify child process is running before termination",
+        () => {
+            const isRunning = isProcessRunning(testConfig.platformChildPid);
+            if (!isRunning) {
+                console.log(
+                    `❌ Platform child process ${testConfig.platformChildPid} is not running`,
+                );
+                showRecentLogs("Process Verification", 10);
+            } else {
+                console.log(
+                    `✓ Platform child process ${testConfig.platformChildPid} is running`,
+                );
+            }
+            expect(isRunning).toBe(true);
+        },
+    );
 
     describe("Dummy platform crash detection", () => {
         const runWithLogs = async <T>(
@@ -605,13 +646,18 @@ describe("Parent Process Sudden Termination", () => {
             throw new Error("Timed out waiting for dummy platform restart");
         };
 
-        it("should start dummy platform process on first message", async () =>
-            runWithLogs("Dummy platform start", async () => {
-                await ensureDummyPlatform();
-                expect(isProcessRunning(testConfig.dummyChildPid)).toBe(true);
-            }));
+        itWithLogs(
+            "should start dummy platform process on first message",
+            async () =>
+                runWithLogs("Dummy platform start", async () => {
+                    await ensureDummyPlatform();
+                    expect(isProcessRunning(testConfig.dummyChildPid)).toBe(
+                        true,
+                    );
+                }),
+        );
 
-        it(
+        itWithLogs(
             "should recover from process.exit(1)",
             async () =>
                 runWithLogs("Dummy crash: exit1", async () => {
@@ -639,7 +685,7 @@ describe("Parent Process Sudden Termination", () => {
             config.timeouts.process + config.timeouts.cleanup + 5000,
         );
 
-        it(
+        itWithLogs(
             "should recover from uncaught TypeError",
             async () =>
                 runWithLogs("Dummy crash: TypeError", async () => {
@@ -667,7 +713,7 @@ describe("Parent Process Sudden Termination", () => {
             config.timeouts.process + config.timeouts.cleanup + 5000,
         );
 
-        it(
+        itWithLogs(
             "should recover from SIGTERM",
             async () =>
                 runWithLogs("Dummy crash: SIGTERM", async () => {
@@ -695,7 +741,7 @@ describe("Parent Process Sudden Termination", () => {
             config.timeouts.process + config.timeouts.cleanup + 5000,
         );
 
-        it(
+        itWithLogs(
             "should recover from heartbeat timeout (hang)",
             async () =>
                 runWithLogs("Dummy crash: heartbeat hang", async () => {
@@ -726,20 +772,25 @@ describe("Parent Process Sudden Termination", () => {
         );
     });
 
-    it("should terminate child process when parent dies suddenly", async () => {
-        // Kill parent process suddenly (SIGKILL - no cleanup possible)
-        testConfig.sockethubProcess.kill("SIGKILL");
+    itWithLogs(
+        "should terminate child process when parent dies suddenly",
+        async () => {
+            // Kill parent process suddenly (SIGKILL - no cleanup possible)
+            testConfig.sockethubProcess.kill("SIGKILL");
 
-        // Wait for OS to clean up orphaned processes
-        await new Promise((resolve) =>
-            setTimeout(resolve, config.timeouts.cleanup),
-        );
+            // Wait for OS to clean up orphaned processes
+            await new Promise((resolve) =>
+                setTimeout(resolve, config.timeouts.cleanup),
+            );
 
-        // Verify the child process is no longer running
-        const childStillRunning = isProcessRunning(testConfig.platformChildPid);
-        expect(childStillRunning).toBe(false);
+            // Verify the child process is no longer running
+            const childStillRunning = isProcessRunning(
+                testConfig.platformChildPid,
+            );
+            expect(childStillRunning).toBe(false);
 
-        // Clean up reference since parent is already dead
-        testConfig.sockethubProcess = undefined;
-    });
+            // Clean up reference since parent is already dead
+            testConfig.sockethubProcess = undefined;
+        },
+    );
 });
