@@ -36,7 +36,7 @@ shape for IRC, XMPP, feeds, and more, and receives the same shape back. Only
   <tbody>
     <tr>
       <td>
-        <pre><code class="language-json">{
+        <pre style="white-space: pre-wrap; word-break: break-word; margin: 0;"><code class="language-json">{
   "type": "send",
   "context": "irc",
   "actor": { "id": "alice", "type": "person" },
@@ -45,7 +45,7 @@ shape for IRC, XMPP, feeds, and more, and receives the same shape back. Only
 }</code></pre>
       </td>
       <td>
-        <pre><code class="language-json">{
+        <pre style="white-space: pre-wrap; word-break: break-word; margin: 0;"><code class="language-json">{
   "type": "send",
   "context": "irc",
   "actor": { "id": "bob", "type": "person" },
