@@ -543,6 +543,11 @@ describe("Parent Process Sudden Termination", () => {
             try {
                 return await fn();
             } catch (err) {
+                const message =
+                    err instanceof Error
+                        ? err.stack || err.message
+                        : String(err);
+                console.error(`[TEST-FAIL] ${context}: ${message}`);
                 showRecentLogs(context, 60);
                 throw err;
             }
