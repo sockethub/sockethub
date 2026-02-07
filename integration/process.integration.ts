@@ -102,10 +102,50 @@ const waitForPlatformChildProcesses = async (
     return [];
 };
 
+const fetchProcessInfo = async (pid: number) => {
+    return new Promise<{ stat: string; command: string } | null>((resolve) => {
+        const ps = spawn("ps", ["-o", "stat=,command=", "-p", String(pid)], {
+            stdio: ["ignore", "pipe", "pipe"],
+        });
+        let output = "";
+
+        ps.stdout.on("data", (data) => {
+            output += data.toString();
+        });
+
+        ps.on("close", () => {
+            const line = output.trim();
+            if (!line) {
+                resolve(null);
+                return;
+            }
+            const parts = line.split(/\s+/);
+            const stat = parts[0] ?? "";
+            const command = parts.slice(1).join(" ");
+            resolve({ stat, command });
+        });
+
+        ps.on("error", () => {
+            resolve(null);
+        });
+    });
+};
+
+const isPlatformProcessAlive = async (pid: number) => {
+    const info = await fetchProcessInfo(pid);
+    if (!info) {
+        return false;
+    }
+    if (info.stat.includes("Z")) {
+        return false;
+    }
+    return info.command.includes("platform.js");
+};
+
 const waitForProcessExit = async (pid: number, timeoutMs: number) => {
     const start = Date.now();
     while (Date.now() - start < timeoutMs) {
-        if (!isProcessRunning(pid)) {
+        if (!(await isPlatformProcessAlive(pid))) {
             return true;
         }
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -129,6 +169,7 @@ describe("Parent Process Sudden Termination", () => {
         sockethubLogs: [],
         isVerbose: process.env.VERBOSE === "true",
     };
+    let testChain: Promise<void> = Promise.resolve();
 
     // Helper function to show recent logs on failure
     function showRecentLogs(context: string, lastNLines = 15) {
@@ -160,19 +201,22 @@ describe("Parent Process Sudden Termination", () => {
         return it(
             name,
             async () => {
-                console.log(`[TEST-START] ${name}`);
-                try {
-                    await fn();
-                    console.log(`[TEST-PASS] ${name}`);
-                } catch (err) {
-                    const message =
-                        err instanceof Error
-                            ? err.stack || err.message
-                            : String(err);
-                    console.error(`[TEST-FAIL] ${name}: ${message}`);
-                    showRecentLogs(name, 60);
-                    throw err;
-                }
+                testChain = testChain.then(async () => {
+                    console.log(`[TEST-START] ${name}`);
+                    try {
+                        await fn();
+                        console.log(`[TEST-PASS] ${name}`);
+                    } catch (err) {
+                        const message =
+                            err instanceof Error
+                                ? err.stack || err.message
+                                : String(err);
+                        console.error(`[TEST-FAIL] ${name}: ${message}`);
+                        showRecentLogs(name, 60);
+                        throw err;
+                    }
+                });
+                return testChain;
             },
             timeout,
         );
