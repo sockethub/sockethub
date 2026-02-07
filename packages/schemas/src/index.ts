@@ -6,6 +6,7 @@ import { SockethubConfigSchema } from "./schemas/sockethub-config.js";
 import {
     addPlatformSchema,
     getPlatformSchema,
+    setValidationErrorOptions,
     validateActivityObject,
     validateActivityStream,
     validateCredentials,
@@ -19,6 +20,7 @@ export {
     validateCredentials,
     validateActivityStream,
     validateActivityObject,
+    setValidationErrorOptions,
     PlatformSchema,
     ActivityObjectSchema,
     ActivityStreamSchema,
