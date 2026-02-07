@@ -76,7 +76,11 @@ const findPlatformChildProcesses = async (options?: {
 };
 
 const waitForPlatformChildProcesses = async (
-    options: { platformName?: string; excludeNames?: string[] },
+    options: {
+        platformName?: string;
+        excludeNames?: string[];
+        allowAnyPlatformFallback?: boolean;
+    },
     timeoutMs: number,
 ) => {
     const start = Date.now();
@@ -85,7 +89,7 @@ const waitForPlatformChildProcesses = async (
         if (childPids.length > 0) {
             return childPids;
         }
-        if (options.platformName) {
+        if (options.platformName && options.allowAnyPlatformFallback) {
             childPids = await findPlatformChildProcesses({
                 excludeNames: options.excludeNames,
             });
