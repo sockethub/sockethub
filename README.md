@@ -36,22 +36,22 @@ shape for IRC, XMPP, feeds, and more, and receives the same shape back. Only
   <tbody>
     <tr>
       <td>
-        <pre style="white-space: pre-wrap; word-break: break-word; margin: 0;"><code class="language-json">{
-  "type": "send",
-  "context": "irc",
-  "actor": { "id": "alice", "type": "person" },
-  "target": { "id": "#sockethub", "type": "room" },
-  "object": { "type": "message", "content": "Hello from the browser!" }
-}</code></pre>
+        <code>{
+&nbsp;&nbsp;"type": "send",<br />
+&nbsp;&nbsp;"context": "irc",<br />
+&nbsp;&nbsp;"actor": { "id": "alice", "type": "person" },<br />
+&nbsp;&nbsp;"target": { "id": "#sockethub", "type": "room" },<br />
+&nbsp;&nbsp;"object": { "type": "message", "content": "Hello from the browser!" }<br />
+}</code>
       </td>
       <td>
-        <pre style="white-space: pre-wrap; word-break: break-word; margin: 0;"><code class="language-json">{
-  "type": "send",
-  "context": "irc",
-  "actor": { "id": "bob", "type": "person" },
-  "target": { "id": "#sockethub", "type": "room" },
-  "object": { "type": "message", "content": "Hi Alice!" }
-}</code></pre>
+        <code>{
+&nbsp;&nbsp;"type": "send",<br />
+&nbsp;&nbsp;"context": "irc",<br />
+&nbsp;&nbsp;"actor": { "id": "bob", "type": "person" },<br />
+&nbsp;&nbsp;"target": { "id": "#sockethub", "type": "room" },<br />
+&nbsp;&nbsp;"object": { "type": "message", "content": "Hi Alice!" }<br />
+}</code>
       </td>
     </tr>
   </tbody>
