@@ -12,7 +12,8 @@ Sockethub lets browser apps talk to IRC, XMPP, feeds, and other protocols using
 one ActivityStreams JSON format. Your app sends a single message shape, and
 Sockethub handles connections, credentials, and protocol translation.
 
-**What you can do with it**
+## What You Can Do
+
 * Send and receive chat messages (IRC, XMPP)
 * Fetch and parse feeds (RSS, Atom)
 * Generate link previews and metadata
@@ -24,12 +25,21 @@ Sockethub uses ActivityStreams JSON for all platforms. Your app sends the same
 shape for IRC, XMPP, feeds, and more, and receives the same shape back. Only
 `context` changes.
 
-**Side-by-side examples:**
+### Side-by-side Examples
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/activitystreams-send-receive.dark.svg" />
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/activitystreams-send-receive.svg" />
-  <img alt="ActivityStreams send/receive examples" src="docs/assets/activitystreams-send-receive.svg" />
+  <source
+    media="(prefers-color-scheme: dark)"
+    srcset="docs/assets/activitystreams-send-receive.dark.svg"
+  />
+  <source
+    media="(prefers-color-scheme: light)"
+    srcset="docs/assets/activitystreams-send-receive.svg"
+  />
+  <img
+    alt="ActivityStreams send/receive examples"
+    src="docs/assets/activitystreams-send-receive.svg"
+  />
 </picture>
 
 The `context` selects a platform; the rest stays consistent.
@@ -87,13 +97,15 @@ Sockethub standardizes platform actions as ActivityStreams `type` values. For
 example, an XMPP friend request can be modeled as `request-friend`,
 `remove-friend`, and `make-friend` in a consistent format.
 
-**Included platforms**
+### Included Platforms
+
 * **[Feeds](packages/platform-feeds)** - RSS and Atom feed processing
 * **[IRC](packages/platform-irc)** - Internet Relay Chat protocol support
 * **[XMPP](packages/platform-xmpp)** - Extensible Messaging and Presence Protocol
 * **[Metadata](packages/platform-metadata)** - Link preview and metadata extraction
 
-**Build your own**
+### Build Your Own
+
 Create a platform module that defines a schema and maps ActivityStreams verbs.
 Enable or disable platforms in `config.json`.
 
@@ -102,11 +114,13 @@ Enable or disable platforms in `config.json`.
 
 ## Quick Start
 
-**Requirements**
+### Requirements
+
 * **Bun** v1.2+
 * **Redis** (data layer and job queue)
 
-**CLI install**
+### CLI Install
+
 ```bash
 npm install -g sockethub
 sockethub --help
@@ -126,7 +140,8 @@ bun run dev
 
 Open `http://localhost:10550` for the interactive examples.
 
-**Production**
+### Production
+
 ```bash
 bun run build
 bun run start

@@ -18,7 +18,7 @@ specification for all commit messages and branch names.
 ### Types
 
 | Type | Purpose | Version Bump | Example |
-|------|---------|--------------|---------|
+| --- | --- | --- | --- |
 | `feat` | New feature | Minor (0.x.0) | `feat(client): add reconnection logic` |
 | `fix` | Bug fix | Patch (0.0.x) | `fix(server): handle null credentials` |
 | `docs` | Documentation only | None | `docs: update installation guide` |
@@ -216,7 +216,7 @@ Use **squash and merge** to maintain clean commit history. The PR title becomes 
 Version bumps are **automatic** based on commit types:
 
 | Commit Type | Version Bump | Example |
-|-------------|--------------|---------|
+| --- | --- | --- |
 | `feat` | Minor (0.x.0) | 5.0.0 → 5.1.0 |
 | `fix`, `perf` | Patch (0.0.x) | 5.0.0 → 5.0.1 |
 | `BREAKING CHANGE` | Major (x.0.0) | 5.0.0 → 6.0.0 |
