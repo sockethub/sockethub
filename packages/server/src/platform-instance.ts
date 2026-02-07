@@ -399,14 +399,22 @@ export default class PlatformInstance {
             },
             message: async ([first, second, third]: MessageFromPlatform) => {
                 if (first === "updateActor") {
+                    // Internal control message: platform process is reporting a new actor id.
                     // We need to update the key to the store in order to find it in the future.
                     this.updateIdentifier(third);
                 } else if (first === "error") {
+                    // Error messages travel over IPC as plain objects; normalize to a string.
                     let normalizedError: string;
                     if (typeof second === "string") {
                         normalizedError = second;
-                    } else if (second instanceof Error) {
-                        normalizedError = second.message;
+                    } else if (
+                        second &&
+                        typeof second === "object" &&
+                        "message" in (second as Record<string, unknown>)
+                    ) {
+                        normalizedError = String(
+                            (second as Record<string, unknown>).message,
+                        );
                     } else {
                         try {
                             normalizedError = JSON.stringify(second);
@@ -415,6 +423,9 @@ export default class PlatformInstance {
                         }
                     }
                     await this.reportError(sessionId, normalizedError);
+                } else if (first === "heartbeat") {
+                    // Internal heartbeat signals are handled by the monitor listener only.
+                    return;
                 } else {
                     // treat like a message to clients
                     await this.sendToClient(sessionId, second);
@@ -440,6 +451,7 @@ export default class PlatformInstance {
         if (!this.process?.on) {
             return;
         }
+        // Track last heartbeat to detect hung platform processes.
         this.heartbeatLastSeen = Date.now();
         this.heartbeatListener = (message: MessageFromPlatform) => {
             if (Array.isArray(message) && message[0] === "heartbeat") {
@@ -448,6 +460,7 @@ export default class PlatformInstance {
         };
         this.process.on("message", this.heartbeatListener);
         this.heartbeatMonitor = setInterval(() => {
+            // Avoid double-handling once shutdown starts or a timeout was already handled.
             if (this.flaggedForTermination || this.heartbeatFailureHandled) {
                 return;
             }
@@ -460,6 +473,7 @@ export default class PlatformInstance {
                 this.log.error(
                     `heartbeat timeout for ${this.id} after ${elapsed}ms`,
                 );
+                // The child is unresponsive; mark for termination and trigger shutdown.
                 this.flaggedForTermination = true;
                 void this.shutdown();
             }
