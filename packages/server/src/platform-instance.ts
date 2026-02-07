@@ -76,6 +76,7 @@ export default class PlatformInstance {
     };
     private heartbeatLastSeen = Date.now();
     private heartbeatMonitor?: NodeJS.Timeout;
+    private heartbeatListener?: (message: MessageFromPlatform) => void;
     private heartbeatFailureHandled = false;
     private readonly actor?: string;
 
@@ -149,6 +150,10 @@ export default class PlatformInstance {
             if (this.heartbeatMonitor) {
                 clearInterval(this.heartbeatMonitor);
                 this.heartbeatMonitor = undefined;
+            }
+            if (this.heartbeatListener) {
+                this.process.removeListener("message", this.heartbeatListener);
+                this.heartbeatListener = undefined;
             }
             this.process.removeAllListeners("close");
             this.process.unref();
@@ -396,9 +401,6 @@ export default class PlatformInstance {
                 if (first === "updateActor") {
                     // We need to update the key to the store in order to find it in the future.
                     this.updateIdentifier(third);
-                } else if (first === "heartbeat") {
-                    this.markHeartbeat();
-                    return;
                 } else if (first === "error") {
                     let normalizedError: string;
                     if (typeof second === "string") {
@@ -439,6 +441,12 @@ export default class PlatformInstance {
             return;
         }
         this.heartbeatLastSeen = Date.now();
+        this.heartbeatListener = (message: MessageFromPlatform) => {
+            if (Array.isArray(message) && message[0] === "heartbeat") {
+                this.markHeartbeat();
+            }
+        };
+        this.process.on("message", this.heartbeatListener);
         this.heartbeatMonitor = setInterval(() => {
             if (this.flaggedForTermination || this.heartbeatFailureHandled) {
                 return;
