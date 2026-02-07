@@ -245,6 +245,7 @@ export const ObjectTypesSchema = {
     },
 };
 
+export const InternalObjectTypesList = ["platform", "heartbeat"];
 export const ObjectTypesList = Object.keys(ObjectTypesSchema);
 
 for (const type of ObjectTypesList) {

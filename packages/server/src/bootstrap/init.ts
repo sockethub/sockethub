@@ -5,6 +5,7 @@ import { type RedisConfig, redisCheck } from "@sockethub/data-layer";
 
 import { createLogger } from "@sockethub/logger";
 import {
+    InternalObjectTypesList,
     addPlatformSchema,
     setValidationErrorOptions,
 } from "@sockethub/schemas";
@@ -17,7 +18,6 @@ import loadPlatforms, {
 } from "./load-platforms.js";
 
 const log = createLogger("server:bootstrap:init");
-const INTERNAL_AS_TYPES = ["platform", "heartbeat"];
 
 export interface IInitObject {
     version: string;
@@ -114,7 +114,9 @@ export default async function getInitObject(
             if (init) {
                 resolve(init);
             } else {
-                setValidationErrorOptions({ excludeTypes: INTERNAL_AS_TYPES });
+                setValidationErrorOptions({
+                    excludeTypes: InternalObjectTypesList,
+                });
                 initFunc()
                     .then((_init) => {
                         init = _init;
