@@ -26,7 +26,11 @@ shape for IRC, XMPP, feeds, and more, and receives the same shape back. Only
 
 **Side-by-side examples:**
 
-![ActivityStreams send/receive examples](docs/assets/activitystreams-send-receive.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/activitystreams-send-receive.dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/activitystreams-send-receive.svg" />
+  <img alt="ActivityStreams send/receive examples" src="docs/assets/activitystreams-send-receive.svg" />
+</picture>
 
 The `context` selects a platform; the rest stays consistent.
 

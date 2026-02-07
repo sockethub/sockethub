@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="390" viewBox="0 0 1200 390">
   <defs>
     <style><![CDATA[
-      .panel { fill: none; stroke: #2f2f2f; stroke-width: 1.2; }
-      .title { font: 600 16px "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace; fill: #1a1a1a; }
-      .code { font: 14px "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace; fill: #1a1a1a; }
-      .k { fill: #0057ff; }
-      .s { fill: #00a36c; }
-      .p { fill: #3a3a3a; }
+      .panel { fill: none; stroke: #7a7a7a; stroke-width: 1.2; }
+      .title { font: 600 16px "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace; fill: #f3f4f6; }
+      .code { font: 14px "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace; fill: #e5e7eb; }
+      .k { fill: #60a5fa; }
+      .s { fill: #34d399; }
+      .p { fill: #9ca3af; }
     ]]></style>
   </defs>
 
