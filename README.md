@@ -167,9 +167,9 @@ DEBUG=sockethub* bun run dev
 * **[@sockethub/platform-metadata](packages/platform-metadata)** - Link preview and metadata extraction
 * **[@sockethub/platform-xmpp](packages/platform-xmpp)** - XMPP protocol support
 
-### Interactive Demo
+### Example Package
 
-* **[@sockethub/examples](packages/examples)** - Interactive web examples and demos
+* **[@sockethub/examples](packages/examples)** - Example client app (served with `sockethub --examples`)
 
 ## Credits
 
