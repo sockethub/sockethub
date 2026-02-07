@@ -1,6 +1,6 @@
 # Sockethub
 
-[![Sockethub](packages/examples/static/sockethub-logo.svg)](https://sockethub.org)
+[![Sockethub](https://sockethub.org/res/img/sockethub-logo.svg)](https://sockethub.org)
 
 A protocol gateway for the web.
 
@@ -30,15 +30,15 @@ shape for IRC, XMPP, feeds, and more, and receives the same shape back. Only
 <picture>
   <source
     media="(prefers-color-scheme: dark)"
-    srcset="docs/assets/activitystreams-send-receive.dark.svg"
+    srcset="https://sockethub.org/res/img/activitystreams-send-receive.dark.svg"
   />
   <source
     media="(prefers-color-scheme: light)"
-    srcset="docs/assets/activitystreams-send-receive.svg"
+    srcset="https://sockethub.org/res/img/activitystreams-send-receive.svg"
   />
   <img
     alt="ActivityStreams send/receive examples"
-    src="docs/assets/activitystreams-send-receive.svg"
+    src="https://sockethub.org/res/img/activitystreams-send-receive.svg"
   />
 </picture>
 
