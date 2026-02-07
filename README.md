@@ -26,36 +26,7 @@ shape for IRC, XMPP, feeds, and more, and receives the same shape back. Only
 
 **Side-by-side examples:**
 
-<table>
-  <thead>
-    <tr>
-      <th>Send (web app → Sockethub → IRC/XMPP/etc.)</th>
-      <th>Receive (IRC/XMPP/etc. → Sockethub → web app)</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>
-        <code>{
-&nbsp;&nbsp;"type": "send",<br />
-&nbsp;&nbsp;"context": "irc",<br />
-&nbsp;&nbsp;"actor": { "id": "alice", "type": "person" },<br />
-&nbsp;&nbsp;"target": { "id": "#sockethub", "type": "room" },<br />
-&nbsp;&nbsp;"object": { "type": "message", "content": "Hello from the browser!" }<br />
-}</code>
-      </td>
-      <td>
-        <code>{
-&nbsp;&nbsp;"type": "send",<br />
-&nbsp;&nbsp;"context": "irc",<br />
-&nbsp;&nbsp;"actor": { "id": "bob", "type": "person" },<br />
-&nbsp;&nbsp;"target": { "id": "#sockethub", "type": "room" },<br />
-&nbsp;&nbsp;"object": { "type": "message", "content": "Hi Alice!" }<br />
-}</code>
-      </td>
-    </tr>
-  </tbody>
-</table>
+![ActivityStreams send/receive examples](docs/assets/activitystreams-send-receive.svg)
 
 The `context` selects a platform; the rest stays consistent.
 

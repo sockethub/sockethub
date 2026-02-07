@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360">
+  <defs>
+    <style><![CDATA[
+      .panel { fill: #f7f7f7; stroke: #d0d0d0; }
+      .title { font: 600 16px "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace; fill: #111; }
+      .code { font: 14px "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace; }
+      .k { fill: #0050b3; }
+      .s { fill: #0a7a3b; }
+      .p { fill: #444; }
+    ]]></style>
+  </defs>
+
+  <rect x="20" y="20" width="560" height="320" rx="8" class="panel" />
+  <rect x="620" y="20" width="560" height="320" rx="8" class="panel" />
+
+  <text x="40" y="50" class="title">Send (web app → Sockethub → IRC/XMPP/etc.)</text>
+  <text x="640" y="50" class="title">Receive (IRC/XMPP/etc. → Sockethub → web app)</text>
+
+  <!-- Left JSON -->
+  <text x="40" y="85" class="code">
+    <tspan class="p">{</tspan>
+    <tspan class="p"> </tspan>
+    <tspan class="k">"type"</tspan><tspan class="p">:</tspan><tspan class="s">"send"</tspan><tspan class="p">,</tspan>
+    <tspan class="p"> </tspan>
+    <tspan class="k">"context"</tspan><tspan class="p">:</tspan><tspan class="s">"irc"</tspan><tspan class="p">,</tspan>
+    <tspan class="p"> </tspan>
+    <tspan class="k">"actor"</tspan><tspan class="p">:</tspan><tspan class="p">{</tspan>
+    <tspan class="k">"id"</tspan><tspan class="p">:</tspan><tspan class="s">"alice"</tspan><tspan class="p">,</tspan>
+    <tspan class="k">"type"</tspan><tspan class="p">:</tspan><tspan class="s">"person"</tspan><tspan class="p">}</tspan><tspan class="p">,</tspan>
+    <tspan class="p"> </tspan>
+    <tspan class="k">"target"</tspan><tspan class="p">:</tspan><tspan class="p">{</tspan>
+    <tspan class="k">"id"</tspan><tspan class="p">:</tspan><tspan class="s">"#sockethub"</tspan><tspan class="p">,</tspan>
+    <tspan class="k">"type"</tspan><tspan class="p">:</tspan><tspan class="s">"room"</tspan><tspan class="p">}</tspan><tspan class="p">,</tspan>
+    <tspan class="p"> </tspan>
+    <tspan class="k">"object"</tspan><tspan class="p">:</tspan><tspan class="p">{</tspan>
+    <tspan class="k">"type"</tspan><tspan class="p">:</tspan><tspan class="s">"message"</tspan><tspan class="p">,</tspan>
+    <tspan class="k">"content"</tspan><tspan class="p">:</tspan><tspan class="s">"Hello from the browser!"</tspan><tspan class="p">}</tspan>
+    <tspan class="p"> }</tspan>
+  </text>
+
+  <!-- Right JSON -->
+  <text x="640" y="85" class="code">
+    <tspan class="p">{</tspan>
+    <tspan class="p"> </tspan>
+    <tspan class="k">"type"</tspan><tspan class="p">:</tspan><tspan class="s">"send"</tspan><tspan class="p">,</tspan>
+    <tspan class="p"> </tspan>
+    <tspan class="k">"context"</tspan><tspan class="p">:</tspan><tspan class="s">"irc"</tspan><tspan class="p">,</tspan>
+    <tspan class="p"> </tspan>
+    <tspan class="k">"actor"</tspan><tspan class="p">:</tspan><tspan class="p">{</tspan>
+    <tspan class="k">"id"</tspan><tspan class="p">:</tspan><tspan class="s">"bob"</tspan><tspan class="p">,</tspan>
+    <tspan class="k">"type"</tspan><tspan class="p">:</tspan><tspan class="s">"person"</tspan><tspan class="p">}</tspan><tspan class="p">,</tspan>
+    <tspan class="p"> </tspan>
+    <tspan class="k">"target"</tspan><tspan class="p">:</tspan><tspan class="p">{</tspan>
+    <tspan class="k">"id"</tspan><tspan class="p">:</tspan><tspan class="s">"#sockethub"</tspan><tspan class="p">,</tspan>
+    <tspan class="k">"type"</tspan><tspan class="p">:</tspan><tspan class="s">"room"</tspan><tspan class="p">}</tspan><tspan class="p">,</tspan>
+    <tspan class="p"> </tspan>
+    <tspan class="k">"object"</tspan><tspan class="p">:</tspan><tspan class="p">{</tspan>
+    <tspan class="k">"type"</tspan><tspan class="p">:</tspan><tspan class="s">"message"</tspan><tspan class="p">,</tspan>
+    <tspan class="k">"content"</tspan><tspan class="p">:</tspan><tspan class="s">"Hi Alice!"</tspan><tspan class="p">}</tspan>
+    <tspan class="p"> }</tspan>
+  </text>
+</svg>
