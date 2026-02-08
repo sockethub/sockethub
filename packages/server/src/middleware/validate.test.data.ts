@@ -200,7 +200,7 @@ export default [
         // AJV can report different first errors depending on evaluation order.
         error: [
             "Error: [fakeplatform] /actor: must be object",
-            "Error: [fakeplatform] /target: must match exactly one schema in oneOf: credentials, feed, message, me, person, room, service, website, attendance, presence, relationship, topic, address",
+            "Error: [fakeplatform] /target: must match exactly one schema in oneOf: credentials, feed, message, me, person, room, service, website, attendance, room-info, presence, relationship, topic, address",
         ],
     },
     {
