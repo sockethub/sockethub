@@ -2,6 +2,10 @@ import type { ErrorObject } from "ajv";
 import type { ActivityObject, ActivityStream } from "../types.js";
 import { ObjectTypesList } from "./objects.js";
 
+export interface ValidationErrorOptions {
+    excludeTypes?: Array<string>;
+}
+
 interface TypeBreakdown {
     actor: Array<string>;
     object: Array<string>;
@@ -84,6 +88,7 @@ function getTypes(msg: ActivityStream): TypeBreakdown {
 export default function getErrorMessage(
     msg: ActivityStream,
     errors: Array<ErrorObject>,
+    options?: ValidationErrorOptions,
 ): string {
     const types = getTypes(msg);
     let deepest_entry = 0;
@@ -99,17 +104,34 @@ export default function getErrorMessage(
 
     return highest_depth >= 0
         ? parseMsg(errors[deepest_entry])
-        : composeFinalError(errors[errors.length - 1]);
+        : composeFinalError(errors[errors.length - 1], options);
 }
 
-function composeFinalError(error: ErrorObject): string {
+function filterTypeList(
+    types: Array<string>,
+    options?: ValidationErrorOptions,
+): Array<string> {
+    if (!options?.excludeTypes || options.excludeTypes.length === 0) {
+        return types;
+    }
+    const exclude = new Set(options.excludeTypes);
+    return types.filter((type) => !exclude.has(type));
+}
+
+function composeFinalError(
+    error: ErrorObject,
+    options?: ValidationErrorOptions,
+): string {
     // if we have yet to build an error message, assume this is an invalid type value (oneOf),
     // try to build a list of valid types
     let msg: string;
     if (error.keyword === "oneOf") {
+        const filteredTypes = filterTypeList(ObjectTypesList, options);
+        const typesList =
+            filteredTypes.length > 0 ? filteredTypes : ObjectTypesList;
         msg =
             `${error.instancePath}: ${error.message}: ` +
-            `${ObjectTypesList.join(", ")}`;
+            `${typesList.join(", ")}`;
     } else {
         msg = `${
             error.instancePath ? error.instancePath : "activity stream"

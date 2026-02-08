@@ -109,6 +109,17 @@ export class Config {
             "logging:file",
             process.env.LOG_FILE || nconf.get("logging:file"),
         );
+
+        nconf.set(
+            "platformHeartbeat:intervalMs",
+            process.env.SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS ||
+                nconf.get("platformHeartbeat:intervalMs"),
+        );
+        nconf.set(
+            "platformHeartbeat:timeoutMs",
+            process.env.SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS ||
+                nconf.get("platformHeartbeat:timeoutMs"),
+        );
     }
     get = (key: string) => nconf.get(key);
 }

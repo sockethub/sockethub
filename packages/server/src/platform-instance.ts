@@ -30,18 +30,27 @@ type EnvFormat = {
     LOG_LEVEL?: string;
     REDIS_URL: string;
     SOCKETHUB_PLATFORM_CHILD?: string;
+    SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS?: string;
+    SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS?: string;
 };
 
-interface MessageFromPlatform extends Array<string | ActivityStream> {
-    0: string;
-    1: ActivityStream;
-    2: string;
-}
+type MessageFromPlatform =
+    | ["updateActor", ActivityStream | undefined, string]
+    | ["error", string]
+    | ["heartbeat", ActivityStream]
+    | [string, ActivityStream, string?];
 
 export interface MessageFromParent extends Array<string | unknown> {
     0: string;
     1: unknown;
 }
+
+const HEARTBEAT_INTERVAL_MS = Number(
+    config.get("platformHeartbeat:intervalMs") ?? 5000,
+);
+const HEARTBEAT_TIMEOUT_MS = Number(
+    config.get("platformHeartbeat:timeoutMs") ?? 15000,
+);
 
 export default class PlatformInstance {
     id: string;
@@ -65,6 +74,10 @@ export default class PlatformInstance {
         close: new Map(),
         message: new Map(),
     };
+    private heartbeatLastSeen = Date.now();
+    private heartbeatMonitor?: NodeJS.Timeout;
+    private heartbeatListener?: (message: MessageFromPlatform) => void;
+    private heartbeatFailureHandled = false;
     private readonly actor?: string;
 
     constructor(params: PlatformInstanceParams) {
@@ -85,9 +98,20 @@ export default class PlatformInstance {
         if (process.env.LOG_LEVEL) {
             env.LOG_LEVEL = process.env.LOG_LEVEL;
         }
+        const heartbeatInterval = config.get("platformHeartbeat:intervalMs");
+        if (typeof heartbeatInterval !== "undefined") {
+            env.SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS =
+                String(heartbeatInterval);
+        }
+        const heartbeatTimeout = config.get("platformHeartbeat:timeoutMs");
+        if (typeof heartbeatTimeout !== "undefined") {
+            env.SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS =
+                String(heartbeatTimeout);
+        }
 
         this.createQueue();
         this.initProcess(this.parentId, this.name, this.id, env);
+        this.startHeartbeatMonitor();
         this.createGetSocket();
     }
 
@@ -125,6 +149,14 @@ export default class PlatformInstance {
         this.flaggedForTermination = true;
 
         try {
+            if (this.heartbeatMonitor) {
+                clearInterval(this.heartbeatMonitor);
+                this.heartbeatMonitor = undefined;
+            }
+            if (this.heartbeatListener) {
+                this.process.removeListener("message", this.heartbeatListener);
+                this.heartbeatListener = undefined;
+            }
             this.process.removeAllListeners("close");
             this.process.unref();
             this.process.kill();
@@ -369,10 +401,33 @@ export default class PlatformInstance {
             },
             message: async ([first, second, third]: MessageFromPlatform) => {
                 if (first === "updateActor") {
+                    // Internal control message: platform process is reporting a new actor id.
                     // We need to update the key to the store in order to find it in the future.
                     this.updateIdentifier(third);
-                } else if (first === "error" && typeof second === "string") {
-                    await this.reportError(sessionId, second);
+                } else if (first === "error") {
+                    // Error messages travel over IPC as plain objects; normalize to a string.
+                    let normalizedError: string;
+                    if (typeof second === "string") {
+                        normalizedError = second;
+                    } else if (
+                        second &&
+                        typeof second === "object" &&
+                        "message" in (second as Record<string, unknown>)
+                    ) {
+                        normalizedError = String(
+                            (second as Record<string, unknown>).message,
+                        );
+                    } else {
+                        try {
+                            normalizedError = JSON.stringify(second);
+                        } catch {
+                            normalizedError = String(second);
+                        }
+                    }
+                    await this.reportError(sessionId, normalizedError);
+                } else if (first === "heartbeat") {
+                    // Internal heartbeat signals are handled by the monitor listener only.
+                    return;
                 } else {
                     // treat like a message to clients
                     await this.sendToClient(sessionId, second);
@@ -380,5 +435,50 @@ export default class PlatformInstance {
             },
         };
         return funcs[listener];
+    }
+
+    private markHeartbeat() {
+        this.heartbeatLastSeen = Date.now();
+    }
+
+    private startHeartbeatMonitor() {
+        if (
+            !Number.isFinite(HEARTBEAT_INTERVAL_MS) ||
+            HEARTBEAT_INTERVAL_MS <= 0 ||
+            !Number.isFinite(HEARTBEAT_TIMEOUT_MS) ||
+            HEARTBEAT_TIMEOUT_MS <= 0
+        ) {
+            return;
+        }
+        if (!this.process?.on) {
+            return;
+        }
+        // Track last heartbeat to detect hung platform processes.
+        this.heartbeatLastSeen = Date.now();
+        this.heartbeatListener = (message: MessageFromPlatform) => {
+            if (Array.isArray(message) && message[0] === "heartbeat") {
+                this.markHeartbeat();
+            }
+        };
+        this.process.on("message", this.heartbeatListener);
+        this.heartbeatMonitor = setInterval(() => {
+            // Avoid double-handling once shutdown starts or a timeout was already handled.
+            if (this.flaggedForTermination || this.heartbeatFailureHandled) {
+                return;
+            }
+            if (!this.process?.connected) {
+                return;
+            }
+            const elapsed = Date.now() - this.heartbeatLastSeen;
+            if (elapsed > HEARTBEAT_TIMEOUT_MS) {
+                this.heartbeatFailureHandled = true;
+                this.log.error(
+                    `heartbeat timeout for ${this.id} after ${elapsed}ms`,
+                );
+                // The child is unresponsive; mark for termination and trigger shutdown.
+                this.flaggedForTermination = true;
+                void this.shutdown();
+            }
+        }, HEARTBEAT_INTERVAL_MS);
     }
 }
