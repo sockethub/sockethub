@@ -1,8 +1,12 @@
 <script lang="ts">
-import { writable } from "svelte/store";
+import ActivityActor from "$components/ActivityActor.svelte";
+import BaseExample from "$components/BaseExample.svelte";
+import FormField from "$components/FormField.svelte";
+import SockethubButton from "$components/SockethubButton.svelte";
 import { send } from "$lib/sockethub";
+import { writable } from "svelte/store";
 
-const _sockethubState = writable({
+const sockethubState = writable({
     actorSet: false,
 });
 
@@ -40,7 +44,7 @@ function getASObj(type: string) {
  * 3. Convert entries to ActivityStreams objects
  * 4. Send the results back to this client for display
  */
-async function _sendFetch(): Promise<void> {
+async function sendFetch(): Promise<void> {
     send(getASObj("fetch"));
 }
 </script>

@@ -1,6 +1,6 @@
 <script module lang="ts">
-import { get, writable } from "svelte/store";
 import type { AnyActivityStream } from "$lib/sockethub";
+import { get, writable } from "svelte/store";
 
 const messages = writable([] as [string, string | undefined][]);
 

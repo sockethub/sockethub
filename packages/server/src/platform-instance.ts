@@ -235,7 +235,6 @@ export default class PlatformInstance {
             (socket: Socket) => {
                 try {
                     // this property should never be exposed externally
-                    // biome-ignore lint/performance/noDelete: <explanation>
                     delete msg.sessionSecret;
                 } finally {
                     msg.context = this.name;

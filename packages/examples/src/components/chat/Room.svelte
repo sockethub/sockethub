@@ -1,8 +1,10 @@
 <!-- @migration-task Error while migrating Svelte code: can't migrate `let joining = false;` to `$state` because there's a variable named state.
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
-import type { ActorData, AnyActivityStream } from "$lib/sockethub";
+import SockethubButton from "$components/SockethubButton.svelte";
 import { send } from "$lib/sockethub";
+import type { ActorData } from "$lib/sockethub";
+import type { AnyActivityStream } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
 
 interface Props {
@@ -14,10 +16,10 @@ interface Props {
 
 let { room = $bindable(), actor, context, sockethubState }: Props = $props();
 
-let _joining = $state(false);
+let joining = $state(false);
 
-async function _joinRoom(): Promise<void> {
-    _joining = true;
+async function joinRoom(): Promise<void> {
+    joining = true;
     return await send({
         // Platform context - routes to the appropriate chat platform (irc, xmpp)
         context: context,
@@ -34,12 +36,12 @@ async function _joinRoom(): Promise<void> {
     } as AnyActivityStream)
         .catch(() => {
             $sockethubState.joined = false;
-            _joining = false;
+            joining = false;
         })
         .then(() => {
             // $actor.roomId = room;
             $sockethubState.joined = true;
-            _joining = false;
+            joining = false;
         });
 }
 </script>

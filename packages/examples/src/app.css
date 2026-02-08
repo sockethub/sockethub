@@ -13,10 +13,10 @@
         @apply text-blue-600 underline;
     }
     button:disabled {
-        background-color: lightgrey;
+        background-color: lightgrey !important;
     }
     button:disabled:hover {
-        background-color: lightgrey;
+        background-color: lightgrey !important;
     }
     pre {
         white-space: pre-wrap;

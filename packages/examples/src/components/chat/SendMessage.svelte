@@ -1,8 +1,9 @@
 <!-- @migration-task Error while migrating Svelte code: can't migrate `let message = "";` to `$state` because there's a variable named state.
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
-import type { ActorData } from "$lib/sockethub";
+import SockethubButton from "$components/SockethubButton.svelte";
 import { send } from "$lib/sockethub";
+import type { ActorData } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
 
 interface Props {
@@ -15,12 +16,12 @@ interface Props {
 let { actor, context, sockethubState, room }: Props = $props();
 
 let message = $state("");
-let _sending = $state(false);
+let sending = $state(false);
 
-async function _sendMessage() {
+async function sendMessage() {
     if (!message.trim()) return;
 
-    _sending = true;
+    sending = true;
     const messageToSend = message.trim();
     console.log("send message: ", messageToSend);
 
@@ -44,7 +45,7 @@ async function _sendMessage() {
     } catch (error) {
         console.error("Failed to send message:", error);
     } finally {
-        _sending = false;
+        sending = false;
     }
 }
 </script>

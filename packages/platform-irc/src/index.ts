@@ -335,7 +335,7 @@ export default class IRC implements PersistentPlatformInterface {
                     "./octal-hack.js"
                 );
                 const message = buildCommand(job.object.content);
-                // biome-ignore lint/style/useTemplate: <explanation>
+                // biome-ignore lint/style/useTemplate: IRC raw command formatting
                 client.raw("PRIVMSG " + job.target.name + " :" + message);
                 return done("IRC commands temporarily disabled");
             }

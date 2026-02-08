@@ -1,11 +1,10 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-
+// @ts-ignore
+import { displayMessage } from "$components/chat/IncomingMessages.svelte";
+import { addObject } from "$components/logs/Logger.svelte";
 import SockethubClient from "@sockethub/client";
 import { io } from "socket.io-client";
 import { writable } from "svelte/store";
-import { displayMessage } from "$components/chat/IncomingMessages.svelte";
-import { addObject } from "$components/logs/Logger.svelte";
 
 export let sc: SockethubClient;
 export const connected = writable(false);

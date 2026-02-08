@@ -40,7 +40,6 @@ function attachError<T extends ActivityStream | ActivityObject>(
         sessionSecret?: string;
     };
     if ("sessionSecret" in cleaned) {
-        // biome-ignore lint/performance/noDelete: <explanation>
         delete cleaned.sessionSecret;
     }
     return cleaned;

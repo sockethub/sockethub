@@ -1,6 +1,6 @@
 <script lang="ts" module>
-import { writable } from "svelte/store";
 import type { AnyActivityStream } from "$lib/sockethub";
+import { writable } from "svelte/store";
 
 type LogEntries = Record<
     string,
