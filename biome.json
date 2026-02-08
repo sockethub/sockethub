@@ -30,7 +30,12 @@
   "organizeImports": { "enabled": true },
   "linter": {
     "enabled": true,
-    "rules": { "recommended": true }
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "noUnusedImports": "error"
+      }
+    }
   },
   "javascript": {
     "formatter": {
@@ -54,6 +59,16 @@
     }
   },
   "overrides": [
+    {
+      "include": ["packages/examples/**/*.svelte"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedImports": "off"
+          }
+        }
+      }
+    },
     {
       "include": ["**/*.svelte"],
       "linter": {
