@@ -1,8 +1,7 @@
 <script lang="ts">
-import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
+import type { ActivityActor } from "@sockethub/schemas";
 import { sc } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
-import type { ActivityActor } from "@sockethub/schemas";
 
 interface Props {
     actor: ActivityActor;
@@ -11,7 +10,7 @@ interface Props {
 
 let { actor, sockethubState }: Props = $props();
 
-function sendActivityObjectCreate(data: string) {
+function _sendActivityObjectCreate(data: string) {
     const actorObj = JSON.parse(data);
     console.log("creating activity object:  ", actorObj);
     sc.ActivityStreams.Object.create(actorObj);

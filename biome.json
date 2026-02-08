@@ -54,6 +54,11 @@
       "indentWidth": 2
     }
   },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
   "overrides": [
     {
       "includes": ["**/*.svelte"],
@@ -62,6 +67,16 @@
           "style": {
             "useConst": "off",
             "useImportType": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.css"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noUnknownAtRules": "off"
           }
         }
       }

@@ -54,7 +54,7 @@ let {
     class: customClass = "",
 }: Props = $props();
 
-let inputClass = $derived(`border-4 ${customClass}`.trim());
+let _inputClass = $derived(`border-4 ${customClass}`.trim());
 </script>
 
 <div class="w-full space-y-2">

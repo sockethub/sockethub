@@ -1,7 +1,7 @@
 /**
  * Stress test reporter - generates console and HTML reports
  */
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { TestResult } from "./types";
 
@@ -94,7 +94,7 @@ function getStatusIcon(status: string): string {
 }
 
 function formatDeviations(deviations: Record<string, number>): string {
-    const parts = Object.entries(deviations).map(([key, value]) => {
+    const parts = Object.entries(deviations).map(([_key, value]) => {
         const sign = value >= 0 ? "+" : "";
         return `${sign}${value}%`;
     });

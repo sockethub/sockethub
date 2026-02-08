@@ -1,7 +1,4 @@
 <script lang="ts">
-import Intro from "./Intro.svelte";
-import Logger from "./logs/Logger.svelte";
-
 /**
  * Base layout component for all Sockethub platform examples.
  * Provides consistent structure with title, description, content area, and logger.

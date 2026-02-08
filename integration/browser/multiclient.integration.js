@@ -372,12 +372,12 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             });
             const newSockethubClient = new SockethubClient(newSocket);
 
-            let connectError = null;
+            let _connectError = null;
 
             // Set up error listener
             newSockethubClient.socket.on("message", (msg) => {
                 if (msg.type === "error") {
-                    connectError = msg.error;
+                    _connectError = msg.error;
                 }
             });
 

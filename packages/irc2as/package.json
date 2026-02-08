@@ -11,7 +11,10 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["src/", "dist/"],
+  "files": [
+    "src/",
+    "dist/"
+  ],
   "engines": {
     "bun": ">=1.2"
   },
@@ -20,7 +23,12 @@
     "url": "git+https://github.com/sockethub/sockethub.git",
     "directory": "packages/irc2as"
   },
-  "keywords": ["irc", "activitystreams", "activity-streams", "sockethub"],
+  "keywords": [
+    "irc",
+    "activitystreams",
+    "activity-streams",
+    "sockethub"
+  ],
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
   "publishConfig": {

@@ -75,5 +75,7 @@
     "stress:report": "bun run stress-tests/reporter.ts --latest",
     "test:npm-version": "bun run scripts/test-installed-version.js"
   },
-  "workspaces": ["packages/*"]
+  "workspaces": [
+    "packages/*"
+  ]
 }

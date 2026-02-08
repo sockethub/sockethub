@@ -1,8 +1,10 @@
 <script lang="ts">
-import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
+import type {
+    ActorData,
+    CredentialsObjectData,
+    SockethubResponse,
+} from "$lib/sockethub";
 import { sc } from "$lib/sockethub";
-import type { ActorData } from "$lib/sockethub";
-import type { CredentialsObjectData, SockethubResponse } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
 
 interface Props {
@@ -14,7 +16,7 @@ interface Props {
 
 let { credentials, actor, sockethubState, context }: Props = $props();
 
-function sendCredentials(data: string) {
+function _sendCredentials(data: string) {
     const creds = {
         context: context,
         type: "credentials",

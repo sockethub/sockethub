@@ -17,7 +17,12 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["src/", "dist/", "bin/", "res/"],
+  "files": [
+    "src/",
+    "dist/",
+    "bin/",
+    "res/"
+  ],
   "bin": "bin/sockethub",
   "preferGlobal": true,
   "engines": {

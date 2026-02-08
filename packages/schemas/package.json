@@ -20,7 +20,10 @@
       "default": "./src/schemas/json/sockethub-config.json"
     }
   },
-  "files": ["src/", "dist/"],
+  "files": [
+    "src/",
+    "dist/"
+  ],
   "engines": {
     "bun": ">=1.2"
   },

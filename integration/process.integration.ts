@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { type ChildProcess, spawn } from "node:child_process";
 import { join } from "node:path";
-import { type Socket, io } from "socket.io-client";
+import { io, type Socket } from "socket.io-client";
 import config from "./config.js";
 import createTestUtils from "./utils.js";
 
@@ -52,7 +52,7 @@ const findPlatformChildProcesses = async (options?: {
             for (const line of lines.slice(1)) {
                 const parts = line.trim().split(/\s+/);
                 if (parts.length >= 3) {
-                    const pid = Number.parseInt(parts[0]);
+                    const pid = Number.parseInt(parts[0], 10);
                     const command = parts.slice(2).join(" ");
 
                     const hasPlatformScript = command.includes("platform.js");
@@ -402,7 +402,7 @@ describe("Parent Process Sudden Termination", () => {
             if (testConfig.isVerbose) {
                 console.log("Redis server verified as reachable");
             }
-        } catch (e) {
+        } catch (_e) {
             console.log(
                 "Could not verify Redis connectivity (nc command failed)",
             );
@@ -443,7 +443,7 @@ describe("Parent Process Sudden Termination", () => {
             if (testConfig.isVerbose) {
                 console.log("XMPP server verified as reachable");
             }
-        } catch (e) {
+        } catch (_e) {
             console.log(
                 "Could not verify XMPP connectivity (nc command failed)",
             );

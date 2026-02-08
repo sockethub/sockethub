@@ -1,42 +1,33 @@
 <!-- @migration-task Error while migrating Svelte code: can't migrate `let server = "chat.freenode.net";` to `$state` because there's a variable named state.
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
-import ActivityActor from "$components/ActivityActor.svelte";
-import ActorIdField from "$components/ActorIdField.svelte";
-import BaseExample from "$components/BaseExample.svelte";
-import Credentials from "$components/Credentials.svelte";
-import FormField from "$components/FormField.svelte";
-import PlatformConnection from "$components/PlatformConnection.svelte";
-import IncomingMessage from "$components/chat/IncomingMessages.svelte";
-import Room from "$components/chat/Room.svelte";
-import SendMessage from "$components/chat/SendMessage.svelte";
+import { writable } from "svelte/store";
 import type { AnyActivityStream, CredentialName } from "$lib/sockethub";
 import { send } from "$lib/sockethub";
-import { writable } from "svelte/store";
 
-const actorIdStore = writable(
+const _actorIdStore = writable(
     `sh-${(Math.random() + 1).toString(36).substring(7)}`,
 );
 
 let server = $state("chat.freenode.net");
 let port = $state(6697);
-let room = "#sh-random";
-let connecting = $state(false);
+let _room = "#sh-random";
+let _connecting = $state(false);
 
-const sockethubState = writable({
+const _sockethubState = writable({
     actorSet: false,
     credentialsSet: false,
     connected: false,
     joined: false,
 });
 
-let actor = $derived({
+let _actor = $derived({
     id: $actorIdStore,
     type: "person",
     name: $actorIdStore,
 });
 
-let credentials = $derived({
+let _credentials = $derived({
     type: "credentials" as CredentialName,
     nick: $actorIdStore,
     server: server,
@@ -49,7 +40,7 @@ function resetState() {
     $sockethubState.credentialsSet = false;
     $sockethubState.connected = false;
     $sockethubState.joined = false;
-    connecting = false;
+    _connecting = false;
 }
 
 /**
@@ -64,8 +55,8 @@ function resetState() {
  * Sockethub's IRC platform will handle the actual IRC protocol connection
  * using the credentials (server, port, nick, secure) that were previously sent.
  */
-async function connectIrc(): Promise<void> {
-    connecting = true;
+async function _connectIrc(): Promise<void> {
+    _connecting = true;
     await send({
         // Platform context - routes to Sockethub's IRC platform
         context: "irc",
@@ -81,7 +72,7 @@ async function connectIrc(): Promise<void> {
         .then(
             () => {
                 $sockethubState.connected = true;
-                connecting = false;
+                _connecting = false;
             },
             (err) => {
                 console.error(err);

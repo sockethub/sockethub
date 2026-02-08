@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import nconf from "nconf";
 
-import { type Logger, createWinstonLogger } from "./logger-core.js";
+import { createWinstonLogger, type Logger } from "./logger-core.js";
 import { __dirname } from "./util.js";
 
 const data = JSON.parse(

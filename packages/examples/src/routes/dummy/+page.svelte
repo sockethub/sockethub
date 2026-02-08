@@ -1,16 +1,12 @@
 <script lang="ts">
+import { writable } from "svelte/store";
 import type { AnyActivityStream } from "$lib/sockethub";
 import { send } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
-import { writable } from "svelte/store";
-import ActivityActor from "../../components/ActivityActor.svelte";
-import BaseExample from "../../components/BaseExample.svelte";
-import FormField from "../../components/FormField.svelte";
-import SockethubButton from "../../components/SockethubButton.svelte";
 
 const actorId = "https://sockethub.org/examples/dummy";
 
-const sockethubState: SockethubStateStore = writable({
+const _sockethubState: SockethubStateStore = writable({
     actorSet: false,
 });
 
@@ -42,7 +38,7 @@ function getASObj(type: string): AnyActivityStream {
     };
 }
 
-function sendType(type: string): void {
+function _sendType(type: string): void {
     send(getASObj(type));
 }
 
@@ -50,7 +46,7 @@ function sendType(type: string): void {
  * Sends an echo request to Sockethub's dummy platform.
  * Sockethub will respond with the same message content.
  */
-async function sendEcho(): Promise<void> {
+async function _sendEcho(): Promise<void> {
     send(getASObj("echo"));
 }
 
@@ -58,7 +54,7 @@ async function sendEcho(): Promise<void> {
  * Sends a fail request to Sockethub's dummy platform.
  * Sockethub will respond with an error message for testing error handling.
  */
-async function sendFail(): Promise<void> {
+async function _sendFail(): Promise<void> {
     send(getASObj("fail"));
 }
 
@@ -66,7 +62,7 @@ async function sendFail(): Promise<void> {
  * Sends a throw request to Sockethub's dummy platform.
  * Sockethub will throw an exception for testing exception handling.
  */
-async function sendThrow(): Promise<void> {
+async function _sendThrow(): Promise<void> {
     send(getASObj("throw"));
 }
 
@@ -74,7 +70,7 @@ async function sendThrow(): Promise<void> {
  * Sends a greet request to Sockethub's dummy platform.
  * Sockethub will respond with a greeting message.
  */
-async function sendGreet(): Promise<void> {
+async function _sendGreet(): Promise<void> {
     send(getASObj("greet"));
 }
 </script>

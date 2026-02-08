@@ -1,7 +1,6 @@
 import path from "node:path";
-import type { Express, Request, Response } from "express";
-
 import { createLogger } from "@sockethub/logger";
+import type { Express, Request, Response } from "express";
 import { __dirname } from "./util.js";
 
 const logger = createLogger("server:routes");

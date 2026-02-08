@@ -17,11 +17,18 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["src/", "dist/"],
+  "files": [
+    "src/",
+    "dist/"
+  ],
   "engines": {
     "bun": ">=1.2"
   },
-  "keywords": ["sockethub", "logging", "winston"],
+  "keywords": [
+    "sockethub",
+    "logging",
+    "winston"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sockethub/sockethub.git",
