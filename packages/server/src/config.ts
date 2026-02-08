@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import nconf from "nconf";
 
-import { type Logger, createWinstonLogger } from "./logger-core.js";
+import { createWinstonLogger, type Logger } from "./logger-core.js";
 import { __dirname } from "./util.js";
 
 const data = JSON.parse(
@@ -108,6 +108,17 @@ export class Config {
         nconf.set(
             "logging:file",
             process.env.LOG_FILE || nconf.get("logging:file"),
+        );
+
+        nconf.set(
+            "platformHeartbeat:intervalMs",
+            process.env.SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS ||
+                nconf.get("platformHeartbeat:intervalMs"),
+        );
+        nconf.set(
+            "platformHeartbeat:timeoutMs",
+            process.env.SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS ||
+                nconf.get("platformHeartbeat:timeoutMs"),
         );
     }
     get = (key: string) => nconf.get(key);

@@ -52,7 +52,7 @@ jobs:
         run: nc -zv localhost 5222
 
       - name: Verifying Child Process Termination
-        run: bun run integration:process
+        run: VERBOSE=true bun run integration:process
 
       - name: Rate Limiter Integration Tests
         run: bun run integration:rate-limiter

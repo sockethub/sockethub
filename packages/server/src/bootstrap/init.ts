@@ -1,13 +1,16 @@
 import { fileURLToPath } from "node:url";
-import chalk from "chalk";
-
 import { type RedisConfig, redisCheck } from "@sockethub/data-layer";
-
 import { createLogger } from "@sockethub/logger";
-import { addPlatformSchema } from "@sockethub/schemas";
+import {
+    addPlatformSchema,
+    InternalObjectTypesList,
+    setValidationErrorOptions,
+} from "@sockethub/schemas";
+import chalk from "chalk";
 import config from "../config.js";
 import loadPlatforms, {
     type PlatformMap,
+    type PlatformSchemaRegistry,
     type PlatformStruct,
 } from "./load-platforms.js";
 
@@ -75,8 +78,8 @@ export function printSettingsInfo(
 
 let initCalled = false;
 let initWaitCount = 0;
-let cancelWait: Timer;
-const resolveQueue = [];
+let cancelWait: NodeJS.Timeout | undefined;
+const resolveQueue: Array<(init: IInitObject) => void> = [];
 
 export default async function getInitObject(
     initFunc: () => Promise<IInitObject> = __loadInit,
@@ -108,6 +111,9 @@ export default async function getInitObject(
             if (init) {
                 resolve(init);
             } else {
+                setValidationErrorOptions({
+                    excludeTypes: InternalObjectTypesList,
+                });
                 initFunc()
                     .then((_init) => {
                         init = _init;
@@ -122,12 +128,16 @@ export default async function getInitObject(
 }
 
 export async function registerPlatforms(initObj: IInitObject): Promise<void> {
-    for (const [_, platform] of initObj.platforms) {
-        for (const key of Object.keys(platform.schemas)) {
-            if (!platform.schemas[key]) {
-                return;
-            }
-            addPlatformSchema(platform.schemas[key], `${platform.id}/${key}`);
+    for (const [_platformId, platform] of initObj.platforms) {
+        const schemas: PlatformSchemaRegistry = platform.schemas;
+        if (schemas.credentials !== undefined) {
+            addPlatformSchema(
+                schemas.credentials,
+                `${platform.id}/credentials`,
+            );
+        }
+        if (schemas.messages !== undefined) {
+            addPlatformSchema(schemas.messages, `${platform.id}/messages`);
         }
     }
 }

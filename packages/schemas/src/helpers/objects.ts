@@ -1,5 +1,5 @@
-export const validObjectRefs = [];
-export const validObjectDefs = {};
+export const validObjectRefs: Array<{ $ref: string }> = [];
+export const validObjectDefs: Record<string, unknown> = {};
 
 export const ObjectTypesSchema = {
     credentials: {
@@ -118,6 +118,22 @@ export const ObjectTypesSchema = {
         },
     },
 
+    platform: {
+        required: ["id", "type"],
+        additionalProperties: true,
+        properties: {
+            id: {
+                type: "string",
+            },
+            type: {
+                enum: ["platform"],
+            },
+            name: {
+                type: "string",
+            },
+        },
+    },
+
     website: {
         required: ["id", "type"],
         additionalProperties: true,
@@ -214,8 +230,23 @@ export const ObjectTypesSchema = {
             },
         },
     },
+
+    heartbeat: {
+        required: ["type", "timestamp"],
+        additionalProperties: false,
+        properties: {
+            type: {
+                enum: ["heartbeat"],
+            },
+            timestamp: {
+                type: "number",
+            },
+        },
+    },
 };
 
+// Internal AS object types reserved for Sockethub IPC/housekeeping.
+export const InternalObjectTypesList = ["platform", "heartbeat"];
 export const ObjectTypesList = Object.keys(ObjectTypesSchema);
 
 for (const type of ObjectTypesList) {
@@ -223,5 +254,7 @@ for (const type of ObjectTypesList) {
         continue;
     }
     validObjectRefs.push({ $ref: `#/definitions/type/${type}` });
-    validObjectDefs[type] = ObjectTypesSchema[type];
+    validObjectDefs[type] = (ObjectTypesSchema as Record<string, unknown>)[
+        type
+    ];
 }

@@ -1,22 +1,23 @@
 import Ajv, { type Schema } from "ajv";
 import addFormats from "ajv-formats";
 import additionsFormats2019 from "ajv-formats-draft2019";
-import getErrorMessage from "./helpers/error-parser.js";
+import getErrorMessage, {
+    type ValidationErrorOptions,
+} from "./helpers/error-parser.js";
 import { ActivityObjectSchema } from "./schemas/activity-object.js";
 import { ActivityStreamSchema } from "./schemas/activity-stream.js";
 import { PlatformSchema } from "./schemas/platform.js";
 import type { ActivityStream } from "./types.js";
 
 const ajv = new Ajv({ strictTypes: false, allErrors: true });
-addFormats(ajv);
-additionsFormats2019(ajv);
+addFormats(ajv as unknown as Parameters<typeof addFormats>[0]);
+additionsFormats2019(ajv as unknown as Ajv);
 
-interface SchemasDict {
-    string?: Schema;
-}
+type SchemasDict = Record<string, Schema>;
 
 const schemaURL = "https://sockethub.org/schemas/v0";
 const schemas: SchemasDict = {};
+let validationErrorOptions: ValidationErrorOptions = {};
 
 schemas[`${schemaURL}/activity-stream`] = ActivityStreamSchema;
 schemas[`${schemaURL}/activity-object`] = ActivityObjectSchema;
@@ -38,13 +39,23 @@ function handleValidation(
         result = validator(msg);
     }
     if (!result) {
-        let errorMessage = getErrorMessage(msg, validator.errors);
+        let errorMessage = getErrorMessage(
+            msg,
+            validator.errors,
+            validationErrorOptions,
+        );
         if (msg.context) {
             errorMessage = `[${msg.context}] ${errorMessage}`;
         }
         return errorMessage;
     }
     return "";
+}
+
+export function setValidationErrorOptions(
+    options: ValidationErrorOptions,
+): void {
+    validationErrorOptions = { ...validationErrorOptions, ...options };
 }
 
 export function validateActivityObject(msg: ActivityStream): string {

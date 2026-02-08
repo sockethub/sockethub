@@ -6,6 +6,9 @@ Practical guide to using the Sockethub client library in web applications.
 
 ### Installation
 
+You can load the client directly from a running Sockethub server or install it
+from npm/bun for bundling in your app.
+
 **From Sockethub Server** (recommended):
 
 The client library is automatically served by the Sockethub server:

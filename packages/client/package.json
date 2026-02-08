@@ -10,7 +10,10 @@
       "default": "./dist/sockethub-client.js"
     }
   },
-  "files": ["src/", "dist/"],
+  "files": [
+    "src/",
+    "dist/"
+  ],
   "engines": {
     "bun": ">=1.2"
   },

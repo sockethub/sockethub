@@ -10,13 +10,13 @@
  * it and sockethub will start up another process. This ensures memory safety.
  */
 import { crypto, getPlatformId } from "@sockethub/crypto";
+import type { JobHandler } from "@sockethub/data-layer";
 import {
     CredentialsStore,
     type JobDataDecrypted,
     JobWorker,
 } from "@sockethub/data-layer";
-import type { JobHandler } from "@sockethub/data-layer";
-import { type Logger, createLogger, setLoggerContext } from "@sockethub/logger";
+import { createLogger, type Logger, setLoggerContext } from "@sockethub/logger";
 import type {
     ActivityStream,
     CredentialsObject,
@@ -53,7 +53,14 @@ async function startPlatformProcess() {
 
     // conditionally initialize sentry
     let sentry: { readonly reportError: (err: Error) => void } = {
-        reportError: (err: Error) => {},
+        reportError: (err: Error) => {
+            logger.debug(
+                "Sentry not configured; error not reported to Sentry",
+                {
+                    error: err,
+                },
+            );
+        },
     };
     (async () => {
         if (config.get("sentry:dsn")) {
@@ -103,21 +110,74 @@ async function startPlatformProcess() {
         return p as PlatformInterface;
     })();
 
+    type PlatformHandlerWithCredentials = (
+        msg: ActivityStream,
+        credentials: CredentialsObject,
+        cb: PlatformCallback,
+    ) => void;
+    type PlatformHandler = (msg: ActivityStream, cb: PlatformCallback) => void;
+    function getPlatformHandler(
+        instance: PlatformInterface,
+        name: string,
+    ): PlatformHandlerWithCredentials | PlatformHandler | undefined {
+        const candidate = (
+            instance as PlatformInterface & Record<string, unknown>
+        )[name];
+        return typeof candidate === "function"
+            ? (candidate as PlatformHandlerWithCredentials | PlatformHandler)
+            : undefined;
+    }
+
+    const heartbeatIntervalMs = Number(
+        config.get("platformHeartbeat:intervalMs") ?? 5000,
+    );
+    let heartbeatTimer: NodeJS.Timeout | undefined;
+
     /**
-     * Safely send error message to parent process, handling IPC channel closure
+     * Safely send message to parent process, handling IPC channel closure
      */
-    function safeProcessSend(message: [string, string]) {
+    function safeProcessSend(message: [string, unknown]) {
         if (process.send && process.connected) {
             try {
                 process.send(message);
             } catch (ipcErr) {
                 console.error(
-                    `Failed to report error via IPC: ${ipcErr.message}`,
+                    `Failed to report error via IPC: ${
+                        ipcErr instanceof Error
+                            ? ipcErr.message
+                            : String(ipcErr)
+                    }`,
                 );
             }
         } else {
             console.error("Cannot report error: IPC channel not available");
         }
+    }
+
+    function startHeartbeat() {
+        if (!Number.isFinite(heartbeatIntervalMs) || heartbeatIntervalMs <= 0) {
+            return;
+        }
+        if (heartbeatTimer) {
+            return;
+        }
+        heartbeatTimer = setInterval(() => {
+            safeProcessSend([
+                "heartbeat",
+                {
+                    type: "heartbeat",
+                    context: "sockethub:internal",
+                    actor: {
+                        id: "sockethub",
+                        type: "platform",
+                    },
+                    object: {
+                        type: "heartbeat",
+                        timestamp: Date.now(),
+                    },
+                } as ActivityStream,
+            ]);
+        }, heartbeatIntervalMs);
     }
 
     /**
@@ -157,6 +217,12 @@ async function startPlatformProcess() {
         process.exit(1);
     });
 
+    process.once("exit", () => {
+        if (heartbeatTimer) {
+            clearInterval(heartbeatTimer);
+        }
+    });
+
     /**
      * Incoming messages from the worker to this platform. Data is an array, the first property is the
      * method to call, the rest are params.
@@ -170,6 +236,7 @@ async function startPlatformProcess() {
             parentSecret1 = parentSecret;
             parentSecret2 = parentSecret3;
             await startQueueListener();
+            startHeartbeat();
         } else {
             throw new Error("received unknown command from parent thread");
         }
@@ -202,7 +269,6 @@ async function startPlatformProcess() {
                         url: redisUrl,
                     },
                 );
-                // biome-ignore lint/performance/noDelete: <explanation>
                 delete job.msg.sessionSecret;
 
                 let jobCallbackCalled = false;
@@ -223,10 +289,12 @@ async function startPlatformProcess() {
                         try {
                             errMsg = err.toString();
                         } catch (err) {
-                            errMsg = err;
+                            errMsg = err instanceof Error ? err : String(err);
                         }
-                        sentry.reportError(new Error(errMsg as string));
-                        reject(new Error(errMsg as string));
+                        const errorMessage =
+                            errMsg instanceof Error ? errMsg.message : errMsg;
+                        sentry.reportError(new Error(errorMessage));
+                        reject(new Error(errorMessage));
                     } else {
                         jobLog.debug(`completed ${job.title} ${job.msg.type}`);
 
@@ -280,7 +348,21 @@ async function startPlatformProcess() {
                             };
 
                             // Proceed with platform method call
-                            platform[job.msg.type](
+                            const handler = getPlatformHandler(
+                                platform,
+                                job.msg.type,
+                            );
+                            if (!handler) {
+                                doneCallback(
+                                    new Error(
+                                        `platform method ${job.msg.type} not available`,
+                                    ),
+                                    null,
+                                );
+                                return;
+                            }
+                            (handler as PlatformHandlerWithCredentials).call(
+                                platform,
                                 job.msg,
                                 credentials,
                                 wrappedCallback,
@@ -288,7 +370,7 @@ async function startPlatformProcess() {
                         })
                         .catch((err) => {
                             // Credential store error (invalid/missing credentials)
-                            jobLog.error(`credential error ${err.toString()}`);
+                            jobLog.error(`credential error ${String(err)}`);
 
                             /**
                              * Critical distinction: handle credential errors differently based on platform state.
@@ -315,11 +397,20 @@ async function startPlatformProcess() {
                              */
                             if (platform.isInitialized()) {
                                 // Platform already running - reject job only, preserve platform instance
-                                doneCallback(err, null);
+                                doneCallback(
+                                    err instanceof Error
+                                        ? err
+                                        : new Error(String(err)),
+                                    null,
+                                );
                             } else {
                                 // Platform not initialized - terminate platform process
-                                sentry.reportError(err);
-                                reject(err);
+                                const error =
+                                    err instanceof Error
+                                        ? err
+                                        : new Error(String(err));
+                                sentry.reportError(error);
+                                reject(error);
                             }
                         });
                 } else if (
@@ -333,11 +424,28 @@ async function startPlatformProcess() {
                     );
                 } else {
                     try {
-                        platform[job.msg.type](job.msg, doneCallback);
+                        const handler = getPlatformHandler(
+                            platform,
+                            job.msg.type,
+                        );
+                        if (!handler) {
+                            throw new Error(
+                                `platform method ${job.msg.type} not available`,
+                            );
+                        }
+                        (handler as PlatformHandler).call(
+                            platform,
+                            job.msg,
+                            doneCallback,
+                        );
                     } catch (err) {
-                        jobLog.error(`platform call failed ${err.toString()}`);
-                        sentry.reportError(err);
-                        reject(err);
+                        const error =
+                            err instanceof Error ? err : new Error(String(err));
+                        jobLog.error(
+                            `platform call failed ${error.toString()}`,
+                        );
+                        sentry.reportError(error);
+                        reject(error);
                     }
                 }
             });

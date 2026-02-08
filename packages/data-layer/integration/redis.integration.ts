@@ -188,7 +188,7 @@ describe("JobQueue", () => {
         });
 
         // Register job handler that will fail
-        worker.onJob(async (job: JobDataDecrypted) => {
+        worker.onJob(async (_job: JobDataDecrypted) => {
             throw new Error("simulated error");
         });
 
@@ -237,7 +237,7 @@ describe("JobQueue", () => {
         });
 
         // Register job handler
-        worker.onJob(async (job: JobDataDecrypted) => {
+        worker.onJob(async (_job: JobDataDecrypted) => {
             return undefined;
         });
 
@@ -262,7 +262,7 @@ describe("JobQueue", () => {
 
         // Set up promise that resolves when job completes
         const completedPromise = new Promise<void>((resolve) => {
-            queue.on("completed", (jobData, result) => {
+            queue.on("completed", (_jobData, result) => {
                 expect(result).toEqual(returnAS);
                 resolve();
             });
@@ -282,7 +282,7 @@ describe("JobQueue", () => {
     it("handles worker returning undefined", async () => {
         // Set up promise that resolves when job completes
         const completedPromise = new Promise<void>((resolve) => {
-            queue.on("completed", (jobData, result) => {
+            queue.on("completed", (_jobData, result) => {
                 // BullMQ converts undefined to null in the result
                 expect(result).toBeNull();
                 resolve();

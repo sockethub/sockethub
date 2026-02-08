@@ -15,7 +15,7 @@ const activity = ASFactory(
  */
 export default function createActivityObject(
     obj: ActivityObject,
-    done: MiddlewareChainInterface,
+    done: MiddlewareChainInterface<ActivityObject>,
 ) {
     activity.Object.create(obj);
     done(obj);

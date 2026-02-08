@@ -14,6 +14,12 @@ export interface EventMapping {
     join: Map<string, ActivityStream>;
 }
 
+type ReplayEventMap = {
+    "activity-object": BaseActivityObject;
+    credentials: ActivityStream;
+    message: ActivityStream;
+};
+
 interface CustomEmitter extends EventEmitter {
     _emit(s: string, o: unknown, c?: unknown): void;
     connect(): void;
@@ -97,8 +103,8 @@ export default class SockethubClient {
         join: new Map(),
     };
     private _socket: Socket;
-    public ActivityStreams: ASManager;
-    public socket: CustomEmitter;
+    public ActivityStreams!: ASManager;
+    public socket!: CustomEmitter;
     public debug = true;
 
     constructor(socket: Socket) {
@@ -155,10 +161,10 @@ export default class SockethubClient {
     private createPublicEmitter(): CustomEmitter {
         const socket = new EventEmitter() as CustomEmitter;
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
+        // @ts-expect-error
         socket._emit = socket.emit;
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
+        // @ts-expect-error
         socket.emit = (event, content, callback): void => {
             if (event === "credentials") {
                 this.eventCredentials(content);
@@ -308,19 +314,27 @@ export default class SockethubClient {
      * @param name - Event name to emit ("credentials", "activity-object", "message")
      * @param asMap - Map of events to replay
      */
-    private replay(
-        name: string,
-        asMap: Map<string, ActivityStream | BaseActivityObject>,
-    ) {
+    private replay<K extends keyof ReplayEventMap>(
+        name: K,
+        asMap: Map<string, ReplayEventMap[K]>,
+    ): void {
         for (const obj of asMap.values()) {
             // activity-objects are raw objects, don't pass through Stream()
             // which is designed for activity streams with actor/object structure
             const isActivityObject = name === "activity-object";
-            const expandedObj = isActivityObject
-                ? obj
-                : this.ActivityStreams.Stream(obj);
+            if (isActivityObject) {
+                const expandedObj = obj as BaseActivityObject;
+                const id = expandedObj?.id;
+                this.log(`replaying ${name} for ${id}`);
+                this._socket.emit(name, expandedObj);
+                continue;
+            }
+
+            const expandedObj = this.ActivityStreams.Stream(
+                obj as ActivityStream,
+            );
             let id = expandedObj?.id;
-            if (!isActivityObject && this.hasActorId(expandedObj)) {
+            if (this.hasActorId(expandedObj)) {
                 const actor = (expandedObj as ActivityStream).actor;
                 // actor can be a string (JID) or an object with an id field
                 id = typeof actor === "string" ? actor : actor.id;
@@ -331,8 +345,10 @@ export default class SockethubClient {
     }
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-((global: any) => {
+((global: Record<string, unknown>) => {
     global.SockethubClient = SockethubClient;
-    // @ts-ignore
-})(typeof window === "object" ? window : {});
+})(
+    typeof globalThis === "object"
+        ? (globalThis as Record<string, unknown>)
+        : {},
+);

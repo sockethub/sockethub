@@ -2,6 +2,7 @@ import { type ChildProcess, fork } from "node:child_process";
 import { join } from "node:path";
 
 import { type JobDataDecrypted, JobQueue } from "@sockethub/data-layer";
+import { createLogger } from "@sockethub/logger";
 import type {
     ActivityStream,
     CompletedJobHandler,
@@ -10,8 +11,6 @@ import type {
     PlatformConfig,
 } from "@sockethub/schemas";
 import type { Socket } from "socket.io";
-
-import { createLogger } from "@sockethub/logger";
 import config from "./config.js";
 import { getSocket } from "./listener.js";
 import { __dirname } from "./util.js";
@@ -29,18 +28,28 @@ export interface PlatformInstanceParams {
 type EnvFormat = {
     LOG_LEVEL?: string;
     REDIS_URL: string;
+    SOCKETHUB_PLATFORM_CHILD?: string;
+    SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS?: string;
+    SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS?: string;
 };
 
-interface MessageFromPlatform extends Array<string | ActivityStream> {
-    0: string;
-    1: ActivityStream;
-    2: string;
-}
+type MessageFromPlatform =
+    | ["updateActor", ActivityStream | undefined, string]
+    | ["error", string]
+    | ["heartbeat", ActivityStream]
+    | [string, ActivityStream, string?];
 
 export interface MessageFromParent extends Array<string | unknown> {
     0: string;
     1: unknown;
 }
+
+const HEARTBEAT_INTERVAL_MS = Number(
+    config.get("platformHeartbeat:intervalMs") ?? 5000,
+);
+const HEARTBEAT_TIMEOUT_MS = Number(
+    config.get("platformHeartbeat:timeoutMs") ?? 15000,
+);
 
 export default class PlatformInstance {
     id: string;
@@ -57,10 +66,17 @@ export default class PlatformInstance {
     readonly log: Logger;
     readonly parentId: string;
     readonly sessions: Set<string> = new Set();
-    readonly sessionCallbacks: object = {
-        close: (() => new Map())(),
-        message: (() => new Map())(),
+    readonly sessionCallbacks: Record<
+        "close" | "message",
+        Map<string, (...args: Array<unknown>) => void | Promise<void>>
+    > = {
+        close: new Map(),
+        message: new Map(),
     };
+    private heartbeatLastSeen = Date.now();
+    private heartbeatMonitor?: NodeJS.Timeout;
+    private heartbeatListener?: (message: MessageFromPlatform) => void;
+    private heartbeatFailureHandled = false;
     private readonly actor?: string;
 
     constructor(params: PlatformInstanceParams) {
@@ -81,9 +97,20 @@ export default class PlatformInstance {
         if (process.env.LOG_LEVEL) {
             env.LOG_LEVEL = process.env.LOG_LEVEL;
         }
+        const heartbeatInterval = config.get("platformHeartbeat:intervalMs");
+        if (typeof heartbeatInterval !== "undefined") {
+            env.SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS =
+                String(heartbeatInterval);
+        }
+        const heartbeatTimeout = config.get("platformHeartbeat:timeoutMs");
+        if (typeof heartbeatTimeout !== "undefined") {
+            env.SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS =
+                String(heartbeatTimeout);
+        }
 
         this.createQueue();
         this.initProcess(this.parentId, this.name, this.id, env);
+        this.startHeartbeatMonitor();
         this.createGetSocket();
     }
 
@@ -119,23 +146,31 @@ export default class PlatformInstance {
         this.flaggedForTermination = true;
 
         try {
+            if (this.heartbeatMonitor) {
+                clearInterval(this.heartbeatMonitor);
+                this.heartbeatMonitor = undefined;
+            }
+            if (this.heartbeatListener) {
+                this.process.removeListener("message", this.heartbeatListener);
+                this.heartbeatListener = undefined;
+            }
             this.process.removeAllListeners("close");
             this.process.unref();
             this.process.kill();
-        } catch (e) {
+        } catch (_e) {
             // needs to happen
         }
 
         try {
             await this.queue.shutdown();
             this.queue = undefined;
-        } catch (e) {
+        } catch (_e) {
             // this needs to happen
         }
 
         try {
             platformInstances.delete(this.id);
-        } catch (e) {
+        } catch (_e) {
             // this needs to happen
         }
     }
@@ -179,7 +214,9 @@ export default class PlatformInstance {
     public registerSession(sessionId: string) {
         if (!this.sessions.has(sessionId)) {
             this.sessions.add(sessionId);
-            for (const type of Object.keys(this.sessionCallbacks)) {
+            for (const type of Object.keys(this.sessionCallbacks) as Array<
+                "close" | "message"
+            >) {
                 const cb = this.callbackFunction(type, sessionId);
                 this.process.on(type, cb);
                 this.sessionCallbacks[type].set(sessionId, cb);
@@ -198,7 +235,6 @@ export default class PlatformInstance {
             (socket: Socket) => {
                 try {
                     // this property should never be exposed externally
-                    // biome-ignore lint/performance/noDelete: <explanation>
                     delete msg.sessionSecret;
                 } finally {
                     msg.context = this.name;
@@ -213,7 +249,7 @@ export default class PlatformInstance {
                     socket.emit("message", msg as ActivityStream);
                 }
             },
-            (err) => this.log.error(`sendToClient ${err}`),
+            (err) => this.log.error(`sendToClient ${String(err)}`),
         );
     }
 
@@ -312,7 +348,11 @@ export default class PlatformInstance {
                 await this.sendToClient(sessionId, errorObject);
             }
         } catch (err) {
-            this.log.error(`Failed to send error to client: ${err.message}`);
+            this.log.error(
+                `Failed to send error to client: ${
+                    err instanceof Error ? err.message : String(err)
+                }`,
+            );
         }
 
         this.sessions.clear();
@@ -335,8 +375,11 @@ export default class PlatformInstance {
      * @param listener
      * @param sessionId
      */
-    private callbackFunction(listener: string, sessionId: string) {
-        const funcs = {
+    private callbackFunction(listener: "close" | "message", sessionId: string) {
+        const funcs: Record<
+            "close" | "message",
+            (...args: Array<unknown>) => Promise<void>
+        > = {
             close: async (e: object) => {
                 this.log.error(`close event triggered ${this.id}: ${e}`);
                 // Check if process is still connected before attempting error reporting
@@ -354,10 +397,33 @@ export default class PlatformInstance {
             },
             message: async ([first, second, third]: MessageFromPlatform) => {
                 if (first === "updateActor") {
+                    // Internal control message: platform process is reporting a new actor id.
                     // We need to update the key to the store in order to find it in the future.
                     this.updateIdentifier(third);
-                } else if (first === "error" && typeof second === "string") {
-                    await this.reportError(sessionId, second);
+                } else if (first === "error") {
+                    // Error messages travel over IPC as plain objects; normalize to a string.
+                    let normalizedError: string;
+                    if (typeof second === "string") {
+                        normalizedError = second;
+                    } else if (
+                        second &&
+                        typeof second === "object" &&
+                        "message" in (second as Record<string, unknown>)
+                    ) {
+                        normalizedError = String(
+                            (second as Record<string, unknown>).message,
+                        );
+                    } else {
+                        try {
+                            normalizedError = JSON.stringify(second);
+                        } catch {
+                            normalizedError = String(second);
+                        }
+                    }
+                    await this.reportError(sessionId, normalizedError);
+                } else if (first === "heartbeat") {
+                    // Internal heartbeat signals are handled by the monitor listener only.
+                    return;
                 } else {
                     // treat like a message to clients
                     await this.sendToClient(sessionId, second);
@@ -365,5 +431,50 @@ export default class PlatformInstance {
             },
         };
         return funcs[listener];
+    }
+
+    private markHeartbeat() {
+        this.heartbeatLastSeen = Date.now();
+    }
+
+    private startHeartbeatMonitor() {
+        if (
+            !Number.isFinite(HEARTBEAT_INTERVAL_MS) ||
+            HEARTBEAT_INTERVAL_MS <= 0 ||
+            !Number.isFinite(HEARTBEAT_TIMEOUT_MS) ||
+            HEARTBEAT_TIMEOUT_MS <= 0
+        ) {
+            return;
+        }
+        if (!this.process?.on) {
+            return;
+        }
+        // Track last heartbeat to detect hung platform processes.
+        this.heartbeatLastSeen = Date.now();
+        this.heartbeatListener = (message: MessageFromPlatform) => {
+            if (Array.isArray(message) && message[0] === "heartbeat") {
+                this.markHeartbeat();
+            }
+        };
+        this.process.on("message", this.heartbeatListener);
+        this.heartbeatMonitor = setInterval(() => {
+            // Avoid double-handling once shutdown starts or a timeout was already handled.
+            if (this.flaggedForTermination || this.heartbeatFailureHandled) {
+                return;
+            }
+            if (!this.process?.connected) {
+                return;
+            }
+            const elapsed = Date.now() - this.heartbeatLastSeen;
+            if (elapsed > HEARTBEAT_TIMEOUT_MS) {
+                this.heartbeatFailureHandled = true;
+                this.log.error(
+                    `heartbeat timeout for ${this.id} after ${elapsed}ms`,
+                );
+                // The child is unresponsive; mark for termination and trigger shutdown.
+                this.flaggedForTermination = true;
+                void this.shutdown();
+            }
+        }, HEARTBEAT_INTERVAL_MS);
     }
 }

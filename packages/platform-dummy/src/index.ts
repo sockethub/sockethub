@@ -33,7 +33,19 @@ export default class Dummy implements PlatformInterface {
                 required: ["type"],
                 properties: {
                     type: {
-                        enum: ["echo", "fail", "throw", "greet"],
+                        enum: [
+                            "echo",
+                            "fail",
+                            "throw",
+                            "greet",
+                            "exit0",
+                            "exit1",
+                            "throwTypeError",
+                            "throwReferenceError",
+                            "sigterm",
+                            "sigkill",
+                            "hang",
+                        ],
                     },
                 },
             },
@@ -62,7 +74,41 @@ export default class Dummy implements PlatformInterface {
     }
 
     throw(job: ActivityStream, cb: PlatformCallback) {
-        throw new Error(job.object.content);
+        cb(new Error(job.object.content));
+    }
+
+    exit0(_job: ActivityStream, _cb: PlatformCallback) {
+        process.exit(0);
+    }
+
+    exit1(_job: ActivityStream, _cb: PlatformCallback) {
+        process.exit(1);
+    }
+
+    throwTypeError(_job: ActivityStream, _cb: PlatformCallback) {
+        setTimeout(() => {
+            throw new TypeError("dummy type error");
+        }, 0);
+    }
+
+    throwReferenceError(_job: ActivityStream, _cb: PlatformCallback) {
+        setTimeout(() => {
+            throw new ReferenceError("dummy reference error");
+        }, 0);
+    }
+
+    sigterm(_job: ActivityStream, _cb: PlatformCallback) {
+        process.kill(process.pid, "SIGTERM");
+    }
+
+    sigkill(_job: ActivityStream, _cb: PlatformCallback) {
+        process.kill(process.pid, "SIGKILL");
+    }
+
+    hang(_job: ActivityStream, _cb: PlatformCallback) {
+        const buf = new SharedArrayBuffer(4);
+        const arr = new Int32Array(buf);
+        Atomics.wait(arr, 0, 0, 60_000);
     }
 
     greet(job: ActivityStream, cb: PlatformCallback) {
@@ -76,6 +122,7 @@ export default class Dummy implements PlatformInterface {
     }
 
     cleanup(cb: PlatformCallback) {
+        this.log.debug("cleanup");
         cb();
     }
 }

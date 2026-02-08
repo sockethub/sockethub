@@ -18,8 +18,6 @@
 
 import net from "node:net";
 import tls from "node:tls";
-import IrcSocket from "irc-socket-sasl";
-
 import { IrcToActivityStreams } from "@sockethub/irc2as";
 import type {
     ActivityStream,
@@ -32,14 +30,17 @@ import type {
     PlatformSession,
     PlatformUpdateActor,
 } from "@sockethub/schemas";
+import IrcSocket, { type IrcSocketInstance } from "irc-socket-sasl";
 
 import { PlatformIrcSchema } from "./schema.js";
 import type { PlatformIrcCredentialsObject } from "./types.js";
 
 export type GetClientCallback = (
     err: string | null,
-    client?: typeof IrcSocket,
+    client?: IrcSocketInstance,
 ) => void;
+
+type JobQueueHandler = (err?: Error | string) => void | Promise<void>;
 
 interface IrcSocketOptionsCapabilities {
     requires: string[];
@@ -86,12 +87,12 @@ export default class IRC implements PersistentPlatformInterface {
     };
     private readonly updateActor: PlatformUpdateActor;
     private readonly sendToClient: PlatformSendToClient;
-    private irc2as: typeof IrcToActivityStreams;
+    private irc2as!: IrcToActivityStreams;
     private forceDisconnect = false;
     private clientConnecting = false;
     private initialized = false;
-    private client: typeof IrcSocket;
-    private jobQueue = []; // list of handlers to confirm when message delivery confirmed
+    private client?: IrcSocketInstance;
+    private jobQueue: Array<JobQueueHandler> = []; // list of handlers to confirm when message delivery confirmed
     private channels = new Set();
     private handledActors = new Set();
 
@@ -330,9 +331,11 @@ export default class IRC implements PersistentPlatformInterface {
                 // so the following line needs to be commented out when the API doc is built.
                 // investigate:
                 // https://github.com/jsdoc2md/jsdoc-to-markdown/issues/197#issuecomment-976851915
-                const buildCommand = await import("./octal-hack.js");
+                const { default: buildCommand } = await import(
+                    "./octal-hack.js"
+                );
                 const message = buildCommand(job.object.content);
-                // biome-ignore lint/style/useTemplate: <explanation>
+                // biome-ignore lint/style/useTemplate: IRC raw command formatting
                 client.raw("PRIVMSG " + job.target.name + " :" + message);
                 return done("IRC commands temporarily disabled");
             }
@@ -665,10 +668,7 @@ export default class IRC implements PersistentPlatformInterface {
             } sasl: ${is_sasl}`,
         );
 
-        const client: IrcSocket = new IrcSocket(
-            module_options,
-            is_secure ? tls : net,
-        );
+        const client = new IrcSocket(module_options, is_secure ? tls : net);
 
         const forceDisconnect = (err: string) => {
             this.forceDisconnect = true;
@@ -683,7 +683,7 @@ export default class IRC implements PersistentPlatformInterface {
         };
 
         client.once("error", (err: string) => {
-            this.log.debug(`irc client 'error' occurred. `, err);
+            this.log.debug(`irc client 'error' occurred.`, { err });
             forceDisconnect("error connecting to server.");
         });
 
@@ -710,7 +710,7 @@ export default class IRC implements PersistentPlatformInterface {
 
             this.log.debug(
                 `connected to ${module_options.server} capabilities: `,
-                capabilities,
+                { capabilities },
             );
             return cb(null, client);
         });
@@ -734,7 +734,7 @@ export default class IRC implements PersistentPlatformInterface {
 
     private registerListeners(server: string) {
         this.irc2as = new IrcToActivityStreams({ server: server });
-        this.client.on("data", (data: never) => {
+        this.client.on("data", (data: unknown) => {
             this.irc2as.input(data);
         });
 
