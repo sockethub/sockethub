@@ -128,10 +128,15 @@ async function startPlatformProcess() {
             : undefined;
     }
 
+    const heartbeatIntervalMs = Number(
+        config.get("platformHeartbeat:intervalMs") ?? 5000,
+    );
+    let heartbeatTimer: NodeJS.Timeout | undefined;
+
     /**
-     * Safely send error message to parent process, handling IPC channel closure
+     * Safely send message to parent process, handling IPC channel closure
      */
-    function safeProcessSend(message: [string, string]) {
+    function safeProcessSend(message: [string, unknown]) {
         if (process.send && process.connected) {
             try {
                 process.send(message);
@@ -147,6 +152,32 @@ async function startPlatformProcess() {
         } else {
             console.error("Cannot report error: IPC channel not available");
         }
+    }
+
+    function startHeartbeat() {
+        if (!Number.isFinite(heartbeatIntervalMs) || heartbeatIntervalMs <= 0) {
+            return;
+        }
+        if (heartbeatTimer) {
+            return;
+        }
+        heartbeatTimer = setInterval(() => {
+            safeProcessSend([
+                "heartbeat",
+                {
+                    type: "heartbeat",
+                    context: "sockethub:internal",
+                    actor: {
+                        id: "sockethub",
+                        type: "platform",
+                    },
+                    object: {
+                        type: "heartbeat",
+                        timestamp: Date.now(),
+                    },
+                } as ActivityStream,
+            ]);
+        }, heartbeatIntervalMs);
     }
 
     /**
@@ -186,6 +217,12 @@ async function startPlatformProcess() {
         process.exit(1);
     });
 
+    process.once("exit", () => {
+        if (heartbeatTimer) {
+            clearInterval(heartbeatTimer);
+        }
+    });
+
     /**
      * Incoming messages from the worker to this platform. Data is an array, the first property is the
      * method to call, the rest are params.
@@ -199,6 +236,7 @@ async function startPlatformProcess() {
             parentSecret1 = parentSecret;
             parentSecret2 = parentSecret3;
             await startQueueListener();
+            startHeartbeat();
         } else {
             throw new Error("received unknown command from parent thread");
         }

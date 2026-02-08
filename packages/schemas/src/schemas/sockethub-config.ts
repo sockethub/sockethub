@@ -202,5 +202,19 @@ export const SockethubConfigSchema = {
                 },
             },
         },
+        platformHeartbeat: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+                intervalMs: {
+                    type: "number",
+                    default: 5000,
+                },
+                timeoutMs: {
+                    type: "number",
+                    default: 15000,
+                },
+            },
+        },
     },
 };
