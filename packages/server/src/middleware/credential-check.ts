@@ -1,8 +1,7 @@
 import { getPlatformId } from "@sockethub/crypto";
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
-import type { ActivityStream } from "@sockethub/schemas";
-
 import { createLogger } from "@sockethub/logger";
+import type { ActivityStream } from "@sockethub/schemas";
 import type { MiddlewareNext } from "../middleware.js";
 import { platformInstances } from "../platform-instance.js";
 
