@@ -6,7 +6,7 @@ messages across processes while keeping payloads encrypted.
 ## Naming Summary
 
 | Placeholder | Meaning |
-|-----------|---------|
+| --- | --- |
 | `parentId` | Sockethub instance identifier generated at boot |
 | `platformId` | Hash of platform name, or platform+actor for persistent platforms |
 | `sessionId` | Client session identifier (Socket.IO connection id) |

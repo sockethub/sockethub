@@ -32,7 +32,7 @@ Stable releases have no prerelease identifier (`5.0.0`) and become the default i
 npm dist-tags are determined automatically from the version string:
 
 | Version Pattern | Dist-Tag | Install Command |
-|----------------|----------|-----------------|
+| --- | --- | --- |
 | `X.Y.Z-alpha.N` | `@alpha` | `npm install sockethub@alpha` |
 | `X.Y.Z-beta.N` | `@beta` | `npm install sockethub@beta` |
 | `X.Y.Z-rc.N` | `@next` | `npm install sockethub@next` |
