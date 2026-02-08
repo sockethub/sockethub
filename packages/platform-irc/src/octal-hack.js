@@ -1,4 +1,4 @@
 module.exports = (content) => {
-    // biome-ignore lint/style/useTemplate: <explanation>
-    return "\001ACTION " + content + "\001";
+    // biome-ignore lint/style/useTemplate: IRC ACTION wrapper expects raw concatenation
+    return "\x01ACTION " + content + "\x01";
 };

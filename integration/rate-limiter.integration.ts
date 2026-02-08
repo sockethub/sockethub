@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { type ChildProcess, spawn } from "node:child_process";
 import { createConnection } from "node:net";
 import { join } from "node:path";
-import { type Socket, io } from "socket.io-client";
+import { io, type Socket } from "socket.io-client";
 
 import config from "./config.js";
 

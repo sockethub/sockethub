@@ -10,13 +10,13 @@
  * it and sockethub will start up another process. This ensures memory safety.
  */
 import { crypto, getPlatformId } from "@sockethub/crypto";
+import type { JobHandler } from "@sockethub/data-layer";
 import {
     CredentialsStore,
     type JobDataDecrypted,
     JobWorker,
 } from "@sockethub/data-layer";
-import type { JobHandler } from "@sockethub/data-layer";
-import { type Logger, createLogger, setLoggerContext } from "@sockethub/logger";
+import { createLogger, type Logger, setLoggerContext } from "@sockethub/logger";
 import type {
     ActivityStream,
     CredentialsObject,
@@ -269,7 +269,6 @@ async function startPlatformProcess() {
                         url: redisUrl,
                     },
                 );
-                // biome-ignore lint/performance/noDelete: <explanation>
                 delete job.msg.sessionSecret;
 
                 let jobCallbackCalled = false;

@@ -1,7 +1,7 @@
 import {
-    type Logger,
     createLogger,
     getLoggerNamespace,
+    type Logger,
 } from "@sockethub/logger";
 import { Worker } from "bullmq";
 

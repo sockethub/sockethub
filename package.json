@@ -1,7 +1,7 @@
 {
   "name": "root",
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
+    "@biomejs/biome": "2.3.14",
     "@esm-bundle/chai": "^4.3.4-fix.0",
     "@lerna-lite/cli": "4.9.0",
     "@lerna-lite/publish": "4.9.0",
@@ -9,15 +9,15 @@
     "@sockethub/data-layer": "workspace:1.0.0-alpha.11",
     "@sockethub/examples": "workspace:1.0.0-alpha.11",
     "@sockethub/schemas": "workspace:3.0.0-alpha.11",
-    "@types/bun": "^1.3.6",
+    "@types/bun": "^1.3.8",
     "@types/mocha": "10.0.10",
     "@types/winston": "^2.4.4",
     "@web/test-runner": "^0.20.2",
-    "artillery": "^2.0.28",
-    "caniuse-lite": "^1.0.30001765",
+    "artillery": "^2.0.30",
+    "caniuse-lite": "^1.0.30001769",
     "chai": "6.0.1",
     "find-up": "8.0.0",
-    "globals": "^16.5.0",
+    "globals": "^17.3.0",
     "markdown-spellcheck": "1.3.1",
     "markdownlint-cli": "0.45.0",
     "mocha": "11.7.2",
@@ -75,5 +75,7 @@
     "stress:report": "bun run stress-tests/reporter.ts --latest",
     "test:npm-version": "bun run scripts/test-installed-version.js"
   },
-  "workspaces": ["packages/*"]
+  "workspaces": [
+    "packages/*"
+  ]
 }

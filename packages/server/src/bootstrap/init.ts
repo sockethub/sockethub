@@ -1,14 +1,12 @@
 import { fileURLToPath } from "node:url";
-import chalk from "chalk";
-
 import { type RedisConfig, redisCheck } from "@sockethub/data-layer";
-
 import { createLogger } from "@sockethub/logger";
 import {
-    InternalObjectTypesList,
     addPlatformSchema,
+    InternalObjectTypesList,
     setValidationErrorOptions,
 } from "@sockethub/schemas";
+import chalk from "chalk";
 import config from "../config.js";
 import loadPlatforms, {
     type PlatformMap,

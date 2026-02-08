@@ -2,9 +2,9 @@ import { getPlatformId } from "@sockethub/crypto";
 
 import type { IInitObject } from "./bootstrap/init.js";
 import PlatformInstance, {
-    platformInstances,
-    type PlatformInstanceParams,
     type MessageFromParent,
+    type PlatformInstanceParams,
+    platformInstances,
 } from "./platform-instance.js";
 
 class ProcessManager {

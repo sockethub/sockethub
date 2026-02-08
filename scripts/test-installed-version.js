@@ -171,7 +171,7 @@ async function runTestsForRuntime(
         if (services) {
             try {
                 await services.stop();
-            } catch (stopError) {
+            } catch (_stopError) {
                 // Ignore cleanup errors
             }
         }
