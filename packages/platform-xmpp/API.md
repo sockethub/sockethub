@@ -50,6 +50,9 @@ Valid presence values are &quot;away&quot;, &quot;chat&quot;, &quot;dnd&quot;, &
 <dt><a href="#query">query(job, done)</a></dt>
 <dd><p>Indicate an intent to query something (i.e. get a list of users in a room).</p>
 </dd>
+<dt><a href="#roomInfo">roomInfo(job, done)</a></dt>
+<dd><p>Query room information using service discovery (disco#info).</p>
+</dd>
 <dt><a href="#disconnect">disconnect(job, done)</a></dt>
 <dd><p>Disconnect XMPP client</p>
 </dd>
@@ -486,6 +489,67 @@ Indicate an intent to query something (i.e. get a list of users in a room).
      ]
    }
  }
+```
+<a name="roomInfo"></a>
+
+# roomInfo(job, done)
+Query room information using service discovery (disco#info).
+
+**Kind**: global function  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>job</td><td><code>object</code></td><td><p>activity streams object</p>
+</td>
+    </tr><tr>
+    <td>done</td><td><code>object</code></td><td><p>callback when job is done</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+**Example**  
+```js
+{
+  context: 'xmpp',
+  type: 'room-info',
+  actor: {
+    id: 'jimmy@kosmos.org/pidgin',
+    type: 'person'
+  },
+  target: {
+    id: 'kosmos@kosmos.chat',
+    type: 'room'
+  }
+}
+
+// Response:
+{
+  context: 'xmpp',
+  type: 'room-info',
+  actor: {
+    id: 'kosmos@kosmos.chat',
+    type: 'room',
+    name: 'Room Display Name'
+  },
+  target: {
+    id: 'jimmy@kosmos.org/pidgin',
+    type: 'person'
+  },
+  object: {
+    type: 'room-info',
+    features: ['http://jabber.org/protocol/muc', 'muc_passwordprotected'],
+    identity: {
+      category: 'conference',
+      type: 'text',
+      name: 'Room Display Name'
+    }
+  }
+}
 ```
 <a name="disconnect"></a>
 

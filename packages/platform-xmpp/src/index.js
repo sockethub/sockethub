@@ -732,6 +732,77 @@ export default class XMPP {
     }
 
     /**
+     * Query room information using service discovery (disco#info).
+     *
+     * @param {object} job activity streams object
+     * @param {object} done callback when job is done
+     *
+     * @example
+     *
+     * {
+     *   context: 'xmpp',
+     *   type: 'room-info',
+     *   actor: {
+     *     id: 'jimmy@kosmos.org/pidgin',
+     *     type: 'person'
+     *   },
+     *   target: {
+     *     id: 'kosmos@kosmos.chat',
+     *     type: 'room'
+     *   }
+     * }
+     *
+     * // Response:
+     * {
+     *   context: 'xmpp',
+     *   type: 'room-info',
+     *   actor: {
+     *     id: 'kosmos@kosmos.chat',
+     *     type: 'room',
+     *     name: 'Room Display Name'
+     *   },
+     *   target: {
+     *     id: 'jimmy@kosmos.org/pidgin',
+     *     type: 'person'
+     *   },
+     *   object: {
+     *     type: 'room-info',
+     *     features: ['http://jabber.org/protocol/muc', 'muc_passwordprotected'],
+     *     identity: {
+     *       category: 'conference',
+     *       type: 'text',
+     *       name: 'Room Display Name'
+     *     }
+     *   }
+     * }
+     */
+    roomInfo(job, done) {
+        this.log.debug(
+            `sending room-info query from ${job.actor.id} for ${job.target.id}`,
+        );
+
+        // Generate unique ID for this disco#info query
+        const queryId = `room_info_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+
+        this.__client
+            .send(
+                this.__xml(
+                    "iq",
+                    {
+                        id: queryId,
+                        type: "get",
+                        from: job.actor.id,
+                        to: job.target.id,
+                    },
+                    this.__xml("query", {
+                        xmlns: "http://jabber.org/protocol/disco#info",
+                    }),
+                ),
+            )
+            .then(done);
+    }
+
+    /**
      * Disconnect XMPP client
      * @param {object} job activity streams object
      * @param done
