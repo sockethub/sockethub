@@ -33,7 +33,11 @@ describe("Middleware: Validate", async () => {
                     } else {
                         expect(msg).toBeInstanceOf(Error);
                         if (obj.error) {
-                            expect(msg.toString()).toEqual(obj.error);
+                            if (Array.isArray(obj.error)) {
+                                expect(obj.error).toContain(msg.toString());
+                            } else {
+                                expect(msg.toString()).toEqual(obj.error);
+                            }
                         }
                     }
                     done();

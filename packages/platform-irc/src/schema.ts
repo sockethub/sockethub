@@ -1,4 +1,5 @@
 import packageJson from "../package.json" with { type: "json" };
+
 const version = packageJson.version;
 
 export const PlatformIrcSchema = {

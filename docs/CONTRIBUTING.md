@@ -18,7 +18,7 @@ specification for all commit messages and branch names.
 ### Types
 
 | Type | Purpose | Version Bump | Example |
-|------|---------|--------------|---------|
+| --- | --- | --- | --- |
 | `feat` | New feature | Minor (0.x.0) | `feat(client): add reconnection logic` |
 | `fix` | Bug fix | Patch (0.0.x) | `fix(server): handle null credentials` |
 | `docs` | Documentation only | None | `docs: update installation guide` |
@@ -216,7 +216,7 @@ Use **squash and merge** to maintain clean commit history. The PR title becomes 
 Version bumps are **automatic** based on commit types:
 
 | Commit Type | Version Bump | Example |
-|-------------|--------------|---------|
+| --- | --- | --- |
 | `feat` | Minor (0.x.0) | 5.0.0 → 5.1.0 |
 | `fix`, `perf` | Patch (0.0.x) | 5.0.0 → 5.0.1 |
 | `BREAKING CHANGE` | Major (x.0.0) | 5.0.0 → 6.0.0 |
@@ -274,6 +274,72 @@ Choose `feat` vs `fix` based on user impact:
 
 - **feat**: User gets new capability
 - **fix**: User's existing workflow now works correctly
+
+## Development Commands
+
+These are common commands used during development. See `package.json` for the
+full, up-to-date list.
+
+```bash
+# Testing
+bun test                    # Run unit tests across all packages
+bun run integration         # Run both Redis and browser integration tests
+bun run integration:redis   # Run Redis integration tests with Docker
+bun run integration:browser # Run browser integration tests with Docker
+
+# Performance & Stress Testing
+bun run stress:baseline     # Generate system performance baseline (first time)
+bun run stress:performance  # Run performance tests (~10 min)
+bun run stress:stress       # Run stress tests (~15 min)
+bun run stress:soak         # Run soak test (30 min)
+bun run stress:all          # Run all tests (~60 min)
+bun run stress:ci           # CI smoke test (1-2 min)
+bun run stress:report --latest  # View latest test results
+
+# Code Quality
+bun run lint                # Run Biome linter and markdown lint
+bun run lint:fix           # Auto-fix linting issues
+
+# Maintenance
+bun run clean              # Clean build artifacts
+bun run clean:deps         # Clean dependencies and node_modules
+
+# Docker
+bun run docker:start       # Start Prosody and Sockethub services
+bun run docker:start:redis # Start only Redis service
+bun run docker:stop        # Stop all Docker services
+```
+
+## Key Files to Understand
+
+- `packages/sockethub/sockethub.config.json` - Main configuration file
+- `packages/server/src/sockethub.ts` - Main server class handling Socket.IO connections
+- `packages/server/src/platform-instance.ts` - Platform process management
+- `packages/server/src/middleware/` - Request processing pipeline
+- `packages/data-layer/src/job-queue.ts` - Redis-based job queue (BullMQ)
+- `packages/data-layer/src/credentials-store.ts` - Encrypted credential storage
+- `packages/platform-*/` - Individual protocol implementations
+
+## Creating a New Platform
+
+Each platform must:
+
+1. Implement the `PlatformInterface` from `@sockethub/schemas`
+2. Define a schema with supported message types and credential requirements
+3. Run as an isolated child process (managed by the server)
+4. Translate between protocol-specific messages and ActivityStreams objects
+
+See the [Platform Development documentation](platform-development.md) and
+[Dummy platform](../packages/platform-dummy) for a complete reference
+implementation.
+
+## Architectural Patterns to Follow
+
+- **Process Isolation**: Platforms run as separate child processes for stability
+- **Job Queue**: All platform communication goes through Redis-backed BullMQ
+- **Middleware Pipeline**: Requests flow through validation, credential storage, and routing
+- **Session Management**: Credentials are encrypted per-session and isolated per connection
+- **ActivityStreams**: Use ActivityStreams objects as the uniform message format
 
 ## Questions?
 

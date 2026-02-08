@@ -12,7 +12,9 @@ import {
 } from "./job-base.js";
 import { JobQueue, verifyJobQueue } from "./job-queue.js";
 import { JobWorker } from "./job-worker.js";
+
 export * from "./types.js";
+
 import type { RedisConfig } from "./types.js";
 
 async function redisCheck(config: RedisConfig): Promise<void> {

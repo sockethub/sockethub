@@ -44,5 +44,9 @@
     "port": 10550,
     "host": "localhost",
     "path": "/sockethub"
+  },
+  "platformHeartbeat": {
+    "intervalMs": 5000,
+    "timeoutMs": 15000
   }
 }

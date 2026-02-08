@@ -10,7 +10,7 @@ function getMessageTimestamp(stanza) {
     try {
         const delay = stanza.children.find((c) => c.name === "delay");
         return delay.attrs.stamp;
-    } catch (e) {
+    } catch (_e) {
         // no timestamp
         return null;
     }
@@ -19,7 +19,7 @@ function getMessageTimestamp(stanza) {
 function getMessageId(stanza) {
     try {
         return stanza.attrs.id;
-    } catch (e) {
+    } catch (_e) {
         // no message id
         return null;
     }
@@ -29,7 +29,7 @@ function getMessageStanzaId(stanza) {
     try {
         const stanzaId = stanza.children.find((c) => c.name === "stanza-id");
         return stanzaId.attrs.id;
-    } catch (e) {
+    } catch (_e) {
         // no stanza id
         return null;
     }
@@ -39,7 +39,7 @@ function getMessageReplaceId(stanza) {
     try {
         const replaceEl = stanza.children.find((c) => c.name === "replace");
         return replaceEl.attrs.id;
-    } catch (e) {
+    } catch (_e) {
         // no origin id
         return null;
     }
@@ -238,7 +238,7 @@ export class IncomingHandlers {
             const members = [];
             const entries = query.getChildren("item");
             for (const e in entries) {
-                if (!Object.hasOwnProperty.call(entries, e)) {
+                if (!Object.hasOwn(entries, e)) {
                     continue;
                 }
                 members.push(entries[e].attrs.name);

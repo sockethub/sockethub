@@ -225,7 +225,7 @@ async function runTest(scenario: string): Promise<TestResult> {
 
     try {
         console.log(`    → Running artillery scenario: ${scenario}`);
-        const output = execSync(
+        const _output = execSync(
             `bunx artillery run ${scenarioPath} --output ${reportPath}`,
             {
                 stdio: "pipe",

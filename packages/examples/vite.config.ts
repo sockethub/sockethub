@@ -1,3 +1,4 @@
+// @ts-expect-error - SvelteKit types require bundler moduleResolution in the app config.
 import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig } from "vitest/config";
 

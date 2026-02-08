@@ -18,7 +18,7 @@ const metrics = {
 /**
  * Initialize metrics collection
  */
-function initMetrics(context, events, done) {
+function initMetrics(context, _events, done) {
     context.vars.connectStartTime = Date.now();
     return done();
 }
@@ -52,7 +52,7 @@ function trackBroadcastLatency(context, events, done) {
 /**
  * Track memory usage (approximate client-side tracking)
  */
-function trackMemoryUsage(context, events, done) {
+function trackMemoryUsage(_context, events, done) {
     if (global.gc) {
         global.gc();
     }

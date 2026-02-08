@@ -16,9 +16,9 @@ function ensureObject(msg: unknown) {
     return !(typeof msg !== "object" || Array.isArray(msg));
 }
 
-export default function expandActivityStream(
-    msg: ActivityStream,
-    done: MiddlewareChainInterface,
+export default function expandActivityStream<T extends ActivityStream>(
+    msg: T,
+    done: MiddlewareChainInterface<T>,
 ) {
     if (!ensureObject(msg)) {
         done(new Error("message received is not an object."));
@@ -27,7 +27,7 @@ export default function expandActivityStream(
     } else if (typeof msg.type !== "string") {
         done(new Error("activity stream must contain a type property."));
     } else {
-        const msgStream = activity.Stream(msg) as ActivityStream;
+        const msgStream = activity.Stream(msg) as T;
         if (!msgStream.actor) {
             done(new Error("activity stream must contain an actor property."));
         } else {

@@ -21,7 +21,6 @@
  *   --output-dir <path>    Output directory (default: "./test-results")
  */
 
-import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { cleanup } from "./test-installed-version/cleanup.js";
 import { CONFIG } from "./test-installed-version/config.js";
@@ -172,7 +171,7 @@ async function runTestsForRuntime(
         if (services) {
             try {
                 await services.stop();
-            } catch (stopError) {
+            } catch (_stopError) {
                 // Ignore cleanup errors
             }
         }

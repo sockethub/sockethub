@@ -1,10 +1,9 @@
-import type { Author } from "podparse";
-
 import type {
     ActivityActor,
     ActivityObject,
     ActivityStream,
 } from "@sockethub/schemas";
+import type { Author } from "podparse";
 
 export enum ASFeedType {
     FEED_CHANNEL = "feed",

@@ -4,7 +4,7 @@ import config from "./config";
 import Sockethub from "./sockethub";
 
 let sentry: { readonly reportError: (err: Error) => void } = {
-    reportError: (err: Error) => {},
+    reportError: (_err: Error) => {},
 };
 
 export async function server() {
@@ -34,8 +34,9 @@ export async function server() {
     try {
         sockethub = new Sockethub();
     } catch (err) {
-        sentry.reportError(err);
-        console.error(err);
+        const error = err instanceof Error ? err : new Error(String(err));
+        sentry.reportError(error);
+        console.error(error);
         process.exit(1);
     }
 
@@ -48,12 +49,12 @@ export async function server() {
         process.exit(1);
     });
 
-    process.once("unhandledRejection", (err: Error) => {
+    process.once("unhandledRejection", (err: unknown) => {
         console.error(
             `${(new Date()).toUTCString()} UNHANDLED REJECTION\n`,
             err,
         );
-        sentry.reportError(err);
+        sentry.reportError(err instanceof Error ? err : new Error(String(err)));
         process.exit(1);
     });
 
@@ -76,8 +77,9 @@ export async function server() {
     try {
         await sockethub.boot();
     } catch (err) {
-        sentry.reportError(err);
-        console.error(err);
+        const error = err instanceof Error ? err : new Error(String(err));
+        sentry.reportError(error);
+        console.error(error);
         process.exit(1);
     }
 }

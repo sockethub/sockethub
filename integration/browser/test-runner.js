@@ -47,7 +47,7 @@ child.on("exit", (code) => {
     // Clean up temp config file
     try {
         unlinkSync(configPath);
-    } catch (e) {
+    } catch (_e) {
         // Ignore cleanup errors
     }
 

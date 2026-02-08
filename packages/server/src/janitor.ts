@@ -44,7 +44,9 @@ export class Janitor {
         platformInstance: PlatformInstance,
         sessionId: string,
     ): void {
-        for (const key in platformInstance.sessionCallbacks) {
+        for (const key of Object.keys(
+            platformInstance.sessionCallbacks,
+        ) as Array<"close" | "message">) {
             platformInstance.process.removeListener(
                 key,
                 platformInstance.sessionCallbacks[key].get(sessionId),

@@ -1,8 +1,7 @@
 import EventEmitter from "node:events";
-import IORedis, { type Redis } from "ioredis";
-
-import { crypto, type Crypto } from "@sockethub/crypto";
+import { type Crypto, crypto } from "@sockethub/crypto";
 import type { ActivityStream } from "@sockethub/schemas";
+import IORedis, { type Redis } from "ioredis";
 
 import type { JobDataDecrypted, JobEncrypted, RedisConfig } from "./types.js";
 
@@ -44,7 +43,7 @@ export async function resetSharedRedisConnection(): Promise<void> {
     if (sharedRedisConnection) {
         try {
             sharedRedisConnection.disconnect(false);
-        } catch (err) {
+        } catch (_err) {
             // Ignore disconnect errors during cleanup
         }
         sharedRedisConnection = null;
@@ -67,13 +66,15 @@ export async function getRedisConnectionCount(): Promise<number> {
     }
 
     try {
-        const clientList = await sharedRedisConnection.client("LIST");
+        const clientList = (await sharedRedisConnection.client(
+            "LIST",
+        )) as string;
         // CLIENT LIST returns one line per connection, filter out empty lines
         const connections = clientList
             .split("\n")
-            .filter((line) => line.trim());
+            .filter((line: string) => line.trim());
         return connections.length;
-    } catch (err) {
+    } catch (_err) {
         // Return 0 if Redis query fails (connection issues, etc.)
         return 0;
     }

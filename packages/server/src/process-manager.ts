@@ -2,9 +2,9 @@ import { getPlatformId } from "@sockethub/crypto";
 
 import type { IInitObject } from "./bootstrap/init.js";
 import PlatformInstance, {
-    platformInstances,
-    type PlatformInstanceParams,
     type MessageFromParent,
+    type PlatformInstanceParams,
+    platformInstances,
 } from "./platform-instance.js";
 
 class ProcessManager {
@@ -74,14 +74,39 @@ class ProcessManager {
         actor?: string,
     ): PlatformInstance {
         const identifier = getPlatformId(platform, actor);
+        const existing = platformInstances.get(identifier);
         const platformInstance =
-            platformInstances.get(identifier) ||
-            this.createPlatformInstance(identifier, platform, actor);
+            existing && this.isProcessAlive(existing)
+                ? existing
+                : this.createPlatformInstance(identifier, platform, actor);
+        if (existing && existing !== platformInstance) {
+            void existing.shutdown();
+        }
         if (sessionId) {
             platformInstance.registerSession(sessionId);
         }
         platformInstances.set(identifier, platformInstance);
         return platformInstance;
+    }
+
+    private isProcessAlive(platformInstance: PlatformInstance): boolean {
+        const pid = platformInstance.process?.pid;
+        if (!pid) {
+            return false;
+        }
+        if (platformInstance.process.exitCode !== null) {
+            return false;
+        }
+        try {
+            process.kill(pid, 0);
+            return true;
+        } catch (error) {
+            const err = error as NodeJS.ErrnoException;
+            if (err && err.code === "EPERM") {
+                return true;
+            }
+            return false;
+        }
     }
 }
 

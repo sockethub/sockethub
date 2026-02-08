@@ -11,7 +11,10 @@
       "default": "./dist/activity-streams.js"
     }
   },
-  "files": ["src/", "dist/"],
+  "files": [
+    "src/",
+    "dist/"
+  ],
   "engines": {
     "bun": ">=1.2"
   },
@@ -20,7 +23,12 @@
     "url": "git+https://github.com/sockethub/sockethub.git",
     "directory": "packages/activity-streams"
   },
-  "keywords": ["activity", "streams", "json-ld", "activity-streams"],
+  "keywords": [
+    "activity",
+    "streams",
+    "json-ld",
+    "activity-streams"
+  ],
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "MIT",
   "publishConfig": {

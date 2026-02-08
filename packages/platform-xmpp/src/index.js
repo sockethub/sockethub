@@ -79,7 +79,7 @@ export default class XMPP {
      */
     __classifyError(err) {
         const errorString = err.toString();
-        const condition = err.condition;
+        const _condition = err.condition;
 
         // ONLY these errors are safe to reconnect on
         const recoverableErrors = [
@@ -818,7 +818,7 @@ export default class XMPP {
      *    }
      *  }
      */
-    disconnect(job, done) {
+    disconnect(_job, done) {
         this.log.debug("disconnecting");
         this.cleanup(done);
     }

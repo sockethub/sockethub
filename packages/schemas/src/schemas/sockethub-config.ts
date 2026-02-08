@@ -164,7 +164,7 @@ export const SockethubConfigSchema = {
                 },
                 maxRetriesPerRequest: {
                     type: ["number", "null"],
-                    default: null,
+                    default: null as number | null,
                     description:
                         "Maximum number of retries per request (null for BullMQ default)",
                 },
@@ -199,6 +199,20 @@ export const SockethubConfigSchema = {
                 path: {
                     type: "string",
                     default: "/sockethub",
+                },
+            },
+        },
+        platformHeartbeat: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+                intervalMs: {
+                    type: "number",
+                    default: 5000,
+                },
+                timeoutMs: {
+                    type: "number",
+                    default: 15000,
                 },
             },
         },
