@@ -32,6 +32,14 @@ jobs:
       - name: Stress Smoke Test
         run: bun run stress:ci
 
+      - name: Upload Stress Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-smoke-reports
+          path: stress-tests/reports/*.json
+          if-no-files-found: warn
+
       - name: Sockethub Logs
         if: always()
         run: docker logs sockethub-sockethub-1

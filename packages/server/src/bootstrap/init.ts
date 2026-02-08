@@ -9,7 +9,6 @@ import {
     addPlatformSchema,
     setValidationErrorOptions,
 } from "@sockethub/schemas";
-import type { Schema } from "ajv";
 import config from "../config.js";
 import loadPlatforms, {
     type PlatformMap,

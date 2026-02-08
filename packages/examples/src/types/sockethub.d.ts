@@ -1,4 +1,3 @@
-import type { SvelteComponent } from "svelte";
 import type { AnyActivityStream } from "../lib/sockethub";
 
 declare module "$components/chat/IncomingMessages.svelte" {
