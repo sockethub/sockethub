@@ -4,7 +4,11 @@ import chalk from "chalk";
 import { type RedisConfig, redisCheck } from "@sockethub/data-layer";
 
 import { createLogger } from "@sockethub/logger";
-import { addPlatformSchema } from "@sockethub/schemas";
+import {
+    InternalObjectTypesList,
+    addPlatformSchema,
+    setValidationErrorOptions,
+} from "@sockethub/schemas";
 import type { Schema } from "ajv";
 import config from "../config.js";
 import loadPlatforms, {
@@ -110,6 +114,9 @@ export default async function getInitObject(
             if (init) {
                 resolve(init);
             } else {
+                setValidationErrorOptions({
+                    excludeTypes: InternalObjectTypesList,
+                });
                 initFunc()
                     .then((_init) => {
                         init = _init;
