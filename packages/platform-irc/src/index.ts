@@ -18,8 +18,6 @@
 
 import net from "node:net";
 import tls from "node:tls";
-import IrcSocket, { type IrcSocketInstance } from "irc-socket-sasl";
-
 import { IrcToActivityStreams } from "@sockethub/irc2as";
 import type {
     ActivityStream,
@@ -32,6 +30,7 @@ import type {
     PlatformSession,
     PlatformUpdateActor,
 } from "@sockethub/schemas";
+import IrcSocket, { type IrcSocketInstance } from "irc-socket-sasl";
 
 import { PlatformIrcSchema } from "./schema.js";
 import type { PlatformIrcCredentialsObject } from "./types.js";
@@ -336,7 +335,7 @@ export default class IRC implements PersistentPlatformInterface {
                     "./octal-hack.js"
                 );
                 const message = buildCommand(job.object.content);
-                // biome-ignore lint/style/useTemplate: <explanation>
+                // biome-ignore lint/style/useTemplate: IRC raw command formatting
                 client.raw("PRIVMSG " + job.target.name + " :" + message);
                 return done("IRC commands temporarily disabled");
             }

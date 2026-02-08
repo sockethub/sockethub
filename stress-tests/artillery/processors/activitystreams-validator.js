@@ -15,7 +15,7 @@ module.exports = {
 /**
  * Generate Socket.IO connect credentials message
  */
-function generateConnectMessage(context, events, done) {
+function generateConnectMessage(context, _events, done) {
     const actorId = `test-${context.vars.$uuid}@dummy`;
     const actor = {
         id: actorId,
@@ -38,7 +38,7 @@ function generateConnectMessage(context, events, done) {
 /**
  * Generate Dummy platform echo message for performance testing
  */
-function generateDummyEchoMessage(context, events, done) {
+function generateDummyEchoMessage(context, _events, done) {
     context.vars.messageId = `msg-${Date.now()}-${Math.random()}`;
     context.vars.sentTimestamp = Date.now();
 
@@ -62,7 +62,7 @@ function generateDummyEchoMessage(context, events, done) {
 /**
  * Generate XMPP send message for stress testing
  */
-function generateXMPPMessage(context, events, done) {
+function generateXMPPMessage(context, _events, done) {
     context.vars.messageId = `msg-${Date.now()}-${Math.random()}`;
     context.vars.sentTimestamp = Date.now();
 
@@ -90,7 +90,7 @@ function generateXMPPMessage(context, events, done) {
 /**
  * Generate Feed fetch message
  */
-function generateFeedMessage(context, events, done) {
+function generateFeedMessage(context, _events, done) {
     context.vars.messageId = `msg-${Date.now()}-${Math.random()}`;
     context.vars.sentTimestamp = Date.now();
 

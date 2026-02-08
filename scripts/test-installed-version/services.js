@@ -192,7 +192,7 @@ export class ServiceManager {
                 if (result.exitCode === 0) {
                     return; // Service is ready
                 }
-            } catch (error) {
+            } catch (_error) {
                 // nc command failed, service not ready yet
             }
 

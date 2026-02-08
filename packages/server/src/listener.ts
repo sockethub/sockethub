@@ -2,14 +2,14 @@ import { existsSync, writeFileSync } from "node:fs";
 import * as HTTP from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { createLogger } from "@sockethub/logger";
 import bodyParser from "body-parser";
 import express, { type Express, type Request, type Response } from "express";
 import rateLimit from "express-rate-limit";
 import { Server } from "socket.io";
-
-import { createLogger } from "@sockethub/logger";
 import config from "./config.js";
 import routes from "./routes.js";
+
 const require = createRequire(import.meta.url);
 const packageJson = require("../package.json");
 

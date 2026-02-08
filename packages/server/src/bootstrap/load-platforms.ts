@@ -13,7 +13,6 @@ import { createLogger } from "@sockethub/logger";
 import {
     type PlatformConfig,
     type PlatformInterface,
-    type PlatformSchemaStruct,
     type PlatformSession,
     validatePlatformSchema,
 } from "@sockethub/schemas";

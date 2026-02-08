@@ -17,11 +17,17 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["src/", "dist/"],
+  "files": [
+    "src/",
+    "dist/"
+  ],
   "engines": {
     "bun": ">=1.2"
   },
-  "keywords": ["sockethub", "dummy"],
+  "keywords": [
+    "sockethub",
+    "dummy"
+  ],
   "devDependencies": {
     "@sockethub/schemas": "^3.0.0-alpha.11",
     "@types/bun": "latest"

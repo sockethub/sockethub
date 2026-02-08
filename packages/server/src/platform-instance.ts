@@ -2,6 +2,7 @@ import { type ChildProcess, fork } from "node:child_process";
 import { join } from "node:path";
 
 import { type JobDataDecrypted, JobQueue } from "@sockethub/data-layer";
+import { createLogger } from "@sockethub/logger";
 import type {
     ActivityStream,
     CompletedJobHandler,
@@ -10,8 +11,6 @@ import type {
     PlatformConfig,
 } from "@sockethub/schemas";
 import type { Socket } from "socket.io";
-
-import { createLogger } from "@sockethub/logger";
 import config from "./config.js";
 import { getSocket } from "./listener.js";
 import { __dirname } from "./util.js";
@@ -160,20 +159,20 @@ export default class PlatformInstance {
             this.process.removeAllListeners("close");
             this.process.unref();
             this.process.kill();
-        } catch (e) {
+        } catch (_e) {
             // needs to happen
         }
 
         try {
             await this.queue.shutdown();
             this.queue = undefined;
-        } catch (e) {
+        } catch (_e) {
             // this needs to happen
         }
 
         try {
             platformInstances.delete(this.id);
-        } catch (e) {
+        } catch (_e) {
             // this needs to happen
         }
     }
@@ -238,7 +237,6 @@ export default class PlatformInstance {
             (socket: Socket) => {
                 try {
                     // this property should never be exposed externally
-                    // biome-ignore lint/performance/noDelete: <explanation>
                     delete msg.sessionSecret;
                 } finally {
                     msg.context = this.name;

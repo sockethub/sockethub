@@ -1,8 +1,8 @@
 import { crypto } from "@sockethub/crypto";
 import {
-    type Logger,
     createLogger,
     getLoggerNamespace,
+    type Logger,
 } from "@sockethub/logger";
 import type { CredentialsObject } from "@sockethub/schemas";
 import IORedis, { type Redis } from "ioredis";
@@ -46,7 +46,7 @@ export async function resetSharedCredentialsRedisConnection(): Promise<void> {
     if (sharedCredentialsRedisConnection) {
         try {
             sharedCredentialsRedisConnection.disconnect(false);
-        } catch (err) {
+        } catch (_err) {
             // Ignore disconnect errors during cleanup
         }
         sharedCredentialsRedisConnection = null;
