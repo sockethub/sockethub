@@ -22,6 +22,7 @@ import janitor from "./janitor.js";
 import listener from "./listener.js";
 import middleware from "./middleware.js";
 import createActivityObject from "./middleware/create-activity-object.js";
+import credentialCheck from "./middleware/credential-check.js";
 import expandActivityStream from "./middleware/expand-activity-stream.js";
 import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
@@ -203,6 +204,7 @@ class Sockethub {
                         next(msg);
                     },
                 )
+                .use(credentialCheck(credentialsStore, socket.id))
                 .use(
                     (
                         err: Error,

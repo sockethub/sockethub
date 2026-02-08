@@ -124,7 +124,9 @@ export default class PlatformInstance {
         this.process = fork(
             join(__dirname, "platform.js"),
             [parentId, name, id],
-            { env: env },
+            {
+                env: env,
+            },
         );
     }
 
