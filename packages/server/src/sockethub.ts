@@ -113,9 +113,8 @@ class Sockethub {
             sessionId: socket.id,
             sessionSecret,
             credentialsStore,
-            onPlatformInstance: (platformInstance) => {
-                platformInstance.registerSession(socket.id);
-            },
+            // Keep session registration behavior inside ProcessManager.get().
+            platformSessionId: socket.id,
         });
 
         socket.on("credentials", handlers.credentials);

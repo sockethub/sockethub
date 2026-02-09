@@ -458,6 +458,11 @@ export function registerHttpActionsRoutes(
             sessionSecret,
             credentialsStore,
             onPlatformInstance: (platformInstance) => {
+                // Only persistent platforms need lifecycle tracking during
+                // HTTP-only requests.
+                if (!platformInstance.config.persist) {
+                    return;
+                }
                 if (!platformIds.has(platformInstance.id)) {
                     platformIds.add(platformInstance.id);
                     registerHttpSession(platformInstance.id);

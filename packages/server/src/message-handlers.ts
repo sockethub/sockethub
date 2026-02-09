@@ -34,6 +34,8 @@ export interface MessageHandlersOptions {
     sessionId: string;
     sessionSecret: string;
     credentialsStore: CredentialsStoreInterface;
+    // Socket path uses this to preserve existing ProcessManager session behavior.
+    platformSessionId?: string;
     onPlatformInstance?: (platformInstance: PlatformInstance) => void;
 }
 
@@ -63,6 +65,7 @@ export function createMessageHandlers(
         sessionId,
         sessionSecret,
         credentialsStore,
+        platformSessionId,
         onPlatformInstance,
     } = options;
 
@@ -144,6 +147,7 @@ export function createMessageHandlers(
                 const platformInstance = processManager.get(
                     msg.context,
                     msg.actor.id,
+                    platformSessionId,
                 );
                 if (onPlatformInstance) {
                     onPlatformInstance(platformInstance);

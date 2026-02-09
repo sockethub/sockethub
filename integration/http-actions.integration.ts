@@ -10,6 +10,7 @@ import config from "./config.js";
 const socketUrl = config.sockethub.url;
 const httpPath = "/sockethub/http";
 const httpUrl = `${socketUrl}${httpPath}`;
+const requireHttpActions = process.env.REQUIRE_HTTP_ACTIONS === "true";
 
 let sockethubProcess: ChildProcess | undefined;
 let usingExternalSockethub = false;
@@ -167,6 +168,11 @@ describe("HTTP actions integration", () => {
         }
 
         httpActionsAvailable = await waitForHttpActions(5000);
+        if (requireHttpActions && !httpActionsAvailable) {
+            throw new Error(
+                "HTTP actions endpoint is not available but REQUIRE_HTTP_ACTIONS=true",
+            );
+        }
     });
 
     afterAll(async () => {

@@ -137,8 +137,26 @@ thresholds. Blocked clients are automatically unblocked after the `blockDuration
 
 ### HTTP Actions
 
-Enable a streaming HTTP endpoint that accepts ActivityStreams payloads and returns
-results as NDJSON (one JSON object per line) as each job completes.
+HTTP actions provide a one-shot HTTP interface for sending ActivityStreams
+messages without opening a WebSocket connection.
+
+This does **not** introduce a second platform execution path. After the HTTP
+request is parsed, each message goes through the same core routing pipeline:
+
+1. ActivityStreams validation middleware
+2. credential storage middleware (when sending credentials)
+3. Redis-backed job queue
+4. platform child process execution
+5. queue completion callback back to the caller
+
+The only differences from WebSocket transport are:
+
+- input/output transport (`POST` + streaming `NDJSON`)
+- optional idempotent replay (`requestId` + `GET`)
+- no long-lived socket session
+
+Stateless platform session behavior is unchanged. Session lifecycle tracking is
+only used for persistent platforms that need it.
 
 ```json
 {
@@ -155,24 +173,36 @@ results as NDJSON (one JSON object per line) as each job completes.
 }
 ```
 
-Notes:
+Configuration behavior:
 
-- `requireRequestId`: if `true`, clients must send a request id via `X-Request-Id`,
-  `X-Sockethub-Request-Id`, or `requestId` in the JSON body.
-- `maxMessagesPerRequest`: limit for number of ActivityStreams objects in a single POST.
-- `idempotencyTtlMs`: how long completed responses are cached for idempotent replay.
-- If a request id is reused while a prior request is still running, the server responds `409`.
-- HTTP actions use the top-level `rateLimiter` settings (per client IP).
-- `requestTimeoutMs`: hard cap for keeping the response open.
-- `idleTimeoutMs`: closes the response if no results arrive in that window.
+- `enabled`: turns HTTP actions on/off.
+- `path`: route path for `POST` and `GET`.
+- `requireRequestId`: if `true`, caller must provide a request id.
+- `maxMessagesPerRequest`: maximum message count in one HTTP request.
+- `maxPayloadBytes`: JSON body size limit enforced by Express body parser.
+- `idempotencyTtlMs`: how long replay data is kept in Redis.
+- `requestTimeoutMs`: maximum total request time.
+- `idleTimeoutMs`: maximum time between streamed result lines.
+- HTTP actions reuse the top-level `rateLimiter` settings (keyed by client IP).
+
+Request id sources, in priority order:
+
+1. `X-Request-Id` header
+2. `X-Sockethub-Request-Id` header
+3. `requestId` field in JSON body
+
+Conflict behavior:
+
+- same `requestId` + request still running: `409`
+- same `requestId` + request complete: cached results are replayed
 
 Example request:
 
 ```bash
-curl -N \\
-  -H 'Content-Type: application/json' \\
-  -H 'X-Request-Id: 12345' \\
-  -d @- \\
+curl -N \
+  -H 'Content-Type: application/json' \
+  -H 'X-Request-Id: 12345' \
+  -d @- \
   http://localhost:10550/sockethub/http <<'JSON'
 [
   {
@@ -201,7 +231,7 @@ curl -N \\
 JSON
 ```
 
-Example response (NDJSON):
+Example response (streamed NDJSON):
 
 ```json
 {"context":"xmpp","type":"connect","actor":{"id":"me"},"id":"1"}
@@ -209,16 +239,16 @@ Example response (NDJSON):
 {"context":"xmpp","type":"send","actor":{"id":"me"},"id":"3"}
 ```
 
-Fetch cached results later (if the POST was interrupted):
+Replay results after an interrupted request:
 
 ```bash
 curl -N http://localhost:10550/sockethub/http/12345
 ```
 
-You can also supply the request id via query or headers:
+Replay using query parameter:
 
 ```bash
-curl -N \"http://localhost:10550/sockethub/http?requestId=12345\"
+curl -N "http://localhost:10550/sockethub/http?requestId=12345"
 ```
 
 ### Redis Configuration

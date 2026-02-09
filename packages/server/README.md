@@ -77,6 +77,17 @@ Enable the HTTP streaming endpoint and tune limits:
 - SOCKETHUB_HTTP_ACTIONS_REQUEST_TIMEOUT_MS
 - SOCKETHUB_HTTP_ACTIONS_IDLE_TIMEOUT_MS
 
+Request handling stays on Sockethub's existing core path:
+
+- validate message shape
+- store credentials (when applicable)
+- enqueue to Redis
+- process in platform child process
+- stream each result line back to the HTTP client
+
+HTTP actions only change transport and replay behavior. They do not create a
+separate platform routing model.
+
 See `/Users/njenning/.codex/worktrees/6ebe/sockethub/docs/configuration.md` for details and examples.
 
 #### Sentry Configuration
