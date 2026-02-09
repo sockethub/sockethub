@@ -25,6 +25,7 @@ log.info(`sockethub v${packageJson.version}`);
  *  - Socket.io (bidirectional websocket communication)
  */
 class Listener {
+    app?: Express;
     io: Server;
     http: HTTP.Server;
 
@@ -35,6 +36,7 @@ class Listener {
     start() {
         // initialize express and socket.io objects
         const app = Listener.initExpress();
+        this.app = app;
         this.http = new HTTP.Server(app);
         this.io = new Server(this.http, {
             path: config.get("sockethub:path") as string,
@@ -146,8 +148,16 @@ class Listener {
         app.set("view engine", "ejs");
         // use bodyParser
         app.use(bodyParser.urlencoded({ extended: true }));
-        app.use(bodyParser.json());
+        const jsonLimit = config.get("httpActions:maxPayloadBytes") ?? "100kb";
+        app.use(bodyParser.json({ limit: jsonLimit }));
         return app;
+    }
+
+    getApp(): Express {
+        if (!this.app) {
+            throw new Error("listener not started");
+        }
+        return this.app;
     }
 }
 

@@ -120,6 +120,88 @@ export class Config {
             process.env.SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS ||
                 nconf.get("platformHeartbeat:timeoutMs"),
         );
+
+        const parseBoolean = (value?: string) => {
+            if (typeof value === "undefined") {
+                return undefined;
+            }
+            const normalized = value.trim().toLowerCase();
+            return (
+                normalized === "true" ||
+                normalized === "1" ||
+                normalized === "yes"
+            );
+        };
+
+        const parseNumber = (value?: string) => {
+            if (typeof value === "undefined") {
+                return undefined;
+            }
+            const parsed = Number(value);
+            if (!Number.isFinite(parsed)) {
+                return undefined;
+            }
+            return parsed;
+        };
+
+        const httpEnabled = parseBoolean(
+            process.env.SOCKETHUB_HTTP_ACTIONS_ENABLED,
+        );
+        if (typeof httpEnabled === "boolean") {
+            nconf.set("httpActions:enabled", httpEnabled);
+        }
+
+        if (process.env.SOCKETHUB_HTTP_ACTIONS_PATH) {
+            nconf.set(
+                "httpActions:path",
+                process.env.SOCKETHUB_HTTP_ACTIONS_PATH,
+            );
+        }
+
+        const requireRequestId = parseBoolean(
+            process.env.SOCKETHUB_HTTP_ACTIONS_REQUIRE_REQUEST_ID,
+        );
+        if (typeof requireRequestId === "boolean") {
+            nconf.set("httpActions:requireRequestId", requireRequestId);
+        }
+
+        const maxMessagesPerRequest = parseNumber(
+            process.env.SOCKETHUB_HTTP_ACTIONS_MAX_MESSAGES_PER_REQUEST,
+        );
+        if (typeof maxMessagesPerRequest === "number") {
+            nconf.set(
+                "httpActions:maxMessagesPerRequest",
+                maxMessagesPerRequest,
+            );
+        }
+
+        const maxPayloadBytes = parseNumber(
+            process.env.SOCKETHUB_HTTP_ACTIONS_MAX_PAYLOAD_BYTES,
+        );
+        if (typeof maxPayloadBytes === "number") {
+            nconf.set("httpActions:maxPayloadBytes", maxPayloadBytes);
+        }
+
+        const idempotencyTtlMs = parseNumber(
+            process.env.SOCKETHUB_HTTP_ACTIONS_IDEMPOTENCY_TTL_MS,
+        );
+        if (typeof idempotencyTtlMs === "number") {
+            nconf.set("httpActions:idempotencyTtlMs", idempotencyTtlMs);
+        }
+
+        const requestTimeoutMs = parseNumber(
+            process.env.SOCKETHUB_HTTP_ACTIONS_REQUEST_TIMEOUT_MS,
+        );
+        if (typeof requestTimeoutMs === "number") {
+            nconf.set("httpActions:requestTimeoutMs", requestTimeoutMs);
+        }
+
+        const idleTimeoutMs = parseNumber(
+            process.env.SOCKETHUB_HTTP_ACTIONS_IDLE_TIMEOUT_MS,
+        );
+        if (typeof idleTimeoutMs === "number") {
+            nconf.set("httpActions:idleTimeoutMs", idleTimeoutMs);
+        }
     }
     get = (key: string) => nconf.get(key);
 }

@@ -1,5 +1,6 @@
 import { getRedisConnectionCount } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
+import { hasHttpSessions } from "./http/session-registry.js";
 import listener, { type SocketInstance } from "./listener.js";
 import type PlatformInstance from "./platform-instance.js";
 import { platformInstances } from "./platform-instance.js";
@@ -115,10 +116,14 @@ export class Janitor {
         // Static platforms are for global use, not tied to a unique to session
         // (e.g. a stateful platform where credentials are supplied)
         if (!platformInstance.global) {
+            // HTTP requests may not have socket sessions; treat in-flight HTTP as active.
+            const hasSessions =
+                platformInstance.sessions.size > 0 ||
+                hasHttpSessions(platformInstance.id);
             if (
                 (platformInstance.config.persist &&
                     !platformInstance.isInitialized()) ||
-                platformInstance.sessions.size === 0
+                !hasSessions
             ) {
                 // either the platform failed to initialize, or there are no more sessions linked to it
                 await this.removeStalePlatformInstance(platformInstance);

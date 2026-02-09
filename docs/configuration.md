@@ -55,6 +55,16 @@ Sockethub uses a JSON configuration file:
     "port": 10550,
     "host": "localhost", 
     "path": "/sockethub"
+  },
+  "httpActions": {
+    "enabled": false,
+    "path": "/sockethub/http",
+    "requireRequestId": true,
+    "maxMessagesPerRequest": 20,
+    "maxPayloadBytes": 262144,
+    "idempotencyTtlMs": 300000,
+    "requestTimeoutMs": 30000,
+    "idleTimeoutMs": 15000
   }
 }
 ```
@@ -124,6 +134,92 @@ Protect against event flooding from individual clients:
 
 The rate limiter operates per WebSocket connection and blocks clients that exceed the configured
 thresholds. Blocked clients are automatically unblocked after the `blockDurationMs` expires.
+
+### HTTP Actions
+
+Enable a streaming HTTP endpoint that accepts ActivityStreams payloads and returns
+results as NDJSON (one JSON object per line) as each job completes.
+
+```json
+{
+  "httpActions": {
+    "enabled": true,
+    "path": "/sockethub/http",
+    "requireRequestId": true,
+    "maxMessagesPerRequest": 20,
+    "maxPayloadBytes": 262144,
+    "idempotencyTtlMs": 300000,
+    "requestTimeoutMs": 30000,
+    "idleTimeoutMs": 15000
+  }
+}
+```
+
+Notes:
+
+- `requireRequestId`: if `true`, clients must send a request id via `X-Request-Id`,
+  `X-Sockethub-Request-Id`, or `requestId` in the JSON body.
+- `maxMessagesPerRequest`: limit for number of ActivityStreams objects in a single POST.
+- `idempotencyTtlMs`: how long completed responses are cached for idempotent replay.
+- If a request id is reused while a prior request is still running, the server responds `409`.
+- HTTP actions use the top-level `rateLimiter` settings (per client IP).
+- `requestTimeoutMs`: hard cap for keeping the response open.
+- `idleTimeoutMs`: closes the response if no results arrive in that window.
+
+Example request:
+
+```bash
+curl -N \\
+  -H 'Content-Type: application/json' \\
+  -H 'X-Request-Id: 12345' \\
+  -d @- \\
+  http://localhost:10550/sockethub/http <<'JSON'
+[
+  {
+    "context": "xmpp",
+    "type": "credentials",
+    "actor": { "id": "me" },
+    "object": {
+      "type": "Credentials",
+      "object": { "username": "me", "password": "secret" }
+    }
+  },
+  { "context": "xmpp", "type": "connect", "actor": { "id": "me" } },
+  {
+    "context": "xmpp",
+    "type": "join",
+    "actor": { "id": "me" },
+    "target": { "type": "Room", "id": "room@example.com" }
+  },
+  {
+    "context": "xmpp",
+    "type": "send",
+    "actor": { "id": "me" },
+    "object": { "type": "Note", "content": "hello" }
+  }
+]
+JSON
+```
+
+Example response (NDJSON):
+
+```json
+{"context":"xmpp","type":"connect","actor":{"id":"me"},"id":"1"}
+{"context":"xmpp","type":"join","actor":{"id":"me"},"id":"2"}
+{"context":"xmpp","type":"send","actor":{"id":"me"},"id":"3"}
+```
+
+Fetch cached results later (if the POST was interrupted):
+
+```bash
+curl -N http://localhost:10550/sockethub/http/12345
+```
+
+You can also supply the request id via query or headers:
+
+```bash
+curl -N \"http://localhost:10550/sockethub/http?requestId=12345\"
+```
 
 ### Redis Configuration
 

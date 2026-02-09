@@ -2,22 +2,14 @@ import { crypto } from "@sockethub/crypto";
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import { CredentialsStore } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
-import type {
-    ActivityObject,
-    ActivityStream,
-    InternalActivityStream,
-} from "@sockethub/schemas";
 import type { Socket } from "socket.io";
 import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import config from "./config";
+import { registerHttpActionsRoutes } from "./http/actions.js";
 import janitor from "./janitor.js";
 import listener from "./listener.js";
-import createActivityObject from "./middleware/create-activity-object.js";
-import expandActivityStream from "./middleware/expand-activity-stream.js";
-import storeCredentials from "./middleware/store-credentials.js";
-import validate from "./middleware/validate.js";
-import middleware from "./middleware.js";
+import { createMessageHandlers } from "./message-handlers.js";
 import ProcessManager from "./process-manager.js";
 import {
     cleanupClient,
@@ -26,24 +18,6 @@ import {
 } from "./rate-limiter.js";
 
 const log = createLogger("server:core");
-
-function attachError<T extends ActivityStream | ActivityObject>(
-    err: unknown,
-    msg?: T,
-) {
-    const errorMessage = err instanceof Error ? err.message : String(err);
-    if (!msg) {
-        return new Error(errorMessage);
-    }
-
-    const cleaned = { ...msg, error: errorMessage } as T & {
-        sessionSecret?: string;
-    };
-    if ("sessionSecret" in cleaned) {
-        delete cleaned.sessionSecret;
-    }
-    return cleaned;
-}
 
 class Sockethub {
     private readonly parentId: string;
@@ -95,6 +69,11 @@ class Sockethub {
 
         log.debug("active platforms: ", [...init.platforms.keys()]);
         listener.start(); // start external services
+        registerHttpActionsRoutes(listener.getApp(), {
+            processManager: this.processManager,
+            parentId: this.parentId,
+            parentSecret1: this.parentSecret1,
+        });
         janitor.start(); // start cleanup cycle
         log.debug("registering handlers");
         listener.io.on("connection", this.handleIncomingConnection.bind(this));
@@ -129,125 +108,23 @@ class Sockethub {
             cleanupClient(socket.id);
         });
 
-        socket.on(
-            "credentials",
-            middleware<ActivityStream>("credentials")
-                .use(expandActivityStream)
-                .use(validate("credentials", socket.id))
-                .use(storeCredentials(credentialsStore))
-                .use(
-                    (
-                        err: Error,
-                        data: ActivityStream,
-                        next: (data?: ActivityStream | Error) => void,
-                    ) => {
-                        // error handler
-                        next(attachError(err, data));
-                    },
-                )
-                .use(
-                    (
-                        data: ActivityStream,
-                        next: (data?: ActivityStream | Error) => void,
-                    ) => {
-                        next(data);
-                    },
-                )
-                .done(),
-        );
+        const handlers = createMessageHandlers({
+            processManager: this.processManager,
+            sessionId: socket.id,
+            sessionSecret,
+            credentialsStore,
+            onPlatformInstance: (platformInstance) => {
+                platformInstance.registerSession(socket.id);
+            },
+        });
+
+        socket.on("credentials", handlers.credentials);
 
         // when new activity objects are created on the client side, an event is
         // fired, and we receive a copy on the server side.
-        socket.on(
-            "activity-object",
-            middleware<ActivityObject>("activity-object")
-                .use(validate("activity-object", socket.id))
-                .use(createActivityObject)
-                .use(
-                    (
-                        err: Error,
-                        data: ActivityObject,
-                        next: (data?: ActivityObject | Error) => void,
-                    ) => {
-                        next(attachError(err, data));
-                    },
-                )
-                .use(
-                    (
-                        data: ActivityObject,
-                        next: (data?: ActivityObject | Error) => void,
-                    ) => {
-                        next(data);
-                    },
-                )
-                .done(),
-        );
+        socket.on("activity-object", handlers.activityObject);
 
-        socket.on(
-            "message",
-            middleware<InternalActivityStream>("message")
-                .use(expandActivityStream)
-                .use(validate("message", socket.id))
-                .use(
-                    (
-                        msg: InternalActivityStream,
-                        next: (data?: InternalActivityStream | Error) => void,
-                    ) => {
-                        // The platform thread must find the credentials on their own using the given
-                        // sessionSecret, which indicates that this specific session (socket
-                        // connection) has provided credentials.
-                        msg.sessionSecret = sessionSecret;
-                        next(msg);
-                    },
-                )
-                .use(
-                    (
-                        err: Error,
-                        data: InternalActivityStream,
-                        next: (data?: InternalActivityStream | Error) => void,
-                    ) => {
-                        next(attachError(err, data));
-                    },
-                )
-                .use(
-                    async (
-                        msg: ActivityStream,
-                        next: (data?: ActivityStream | Error) => void,
-                    ) => {
-                        const platformInstance = this.processManager.get(
-                            msg.context,
-                            msg.actor.id,
-                            socket.id,
-                        );
-                        // job validated and queued, stores socket.io callback for when job is completed
-                        try {
-                            const job = await platformInstance.queue.add(
-                                socket.id,
-                                msg,
-                            );
-                            if (job) {
-                                platformInstance.completedJobHandlers.set(
-                                    job.title,
-                                    next,
-                                );
-                            } else {
-                                // failed to add job to queue, reject handler immediately
-                                msg.error = "failed to add job to queue";
-                                next(msg);
-                            }
-                        } catch (err) {
-                            // Queue is closed (platform terminating) - send error to client
-                            const errorMessage =
-                                err instanceof Error
-                                    ? err.message
-                                    : String(err);
-                            msg.error = errorMessage || "platform unavailable";
-                            next(msg);
-                        }
-                    },
-                )
-                .done(),
-        );
+        socket.on("message", handlers.message);
     }
 }
 
