@@ -45,6 +45,16 @@
     "host": "localhost",
     "path": "/sockethub"
   },
+  "httpActions": {
+    "enabled": false,
+    "path": "/sockethub/http",
+    "requireRequestId": true,
+    "maxMessagesPerRequest": 20,
+    "maxPayloadBytes": 262144,
+    "idempotencyTtlMs": 300000,
+    "requestTimeoutMs": 30000,
+    "idleTimeoutMs": 15000
+  },
   "platformHeartbeat": {
     "intervalMs": 5000,
     "timeoutMs": 15000

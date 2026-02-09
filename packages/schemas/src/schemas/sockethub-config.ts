@@ -202,6 +202,44 @@ export const SockethubConfigSchema = {
                 },
             },
         },
+        httpActions: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+                enabled: {
+                    type: "boolean",
+                    default: false,
+                },
+                path: {
+                    type: "string",
+                    default: "/sockethub/http",
+                },
+                requireRequestId: {
+                    type: "boolean",
+                    default: true,
+                },
+                maxMessagesPerRequest: {
+                    type: "number",
+                    default: 20,
+                },
+                maxPayloadBytes: {
+                    type: "number",
+                    default: 262144,
+                },
+                idempotencyTtlMs: {
+                    type: "number",
+                    default: 300000,
+                },
+                requestTimeoutMs: {
+                    type: "number",
+                    default: 30000,
+                },
+                idleTimeoutMs: {
+                    type: "number",
+                    default: 15000,
+                },
+            },
+        },
         platformHeartbeat: {
             type: "object",
             additionalProperties: false,

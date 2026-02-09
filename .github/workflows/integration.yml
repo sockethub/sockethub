@@ -54,6 +54,9 @@ jobs:
       - name: Verifying Child Process Termination
         run: VERBOSE=true bun run integration:process
 
+      - name: HTTP actions integration tests
+        run: REQUIRE_HTTP_ACTIONS=true bun run integration:http-actions
+
       - name: Rate Limiter Integration Tests
         run: bun run integration:rate-limiter
 
