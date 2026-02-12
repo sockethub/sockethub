@@ -22,9 +22,10 @@ const creds: CredentialsObject = {
     },
     object: {
         type: "credentials",
+        password: "secret",
     },
 };
-const credsHash = "e591ec978a505aee278f372354c229d165d2c096";
+const credsHash = crypto.objectHash(creds.object);
 const testSecret = "aB3#xK9mP2qR7wZ4cT8nY6vH1jL5fD0s";
 
 describe("CredentialsStore", () => {
@@ -53,12 +54,28 @@ describe("CredentialsStore", () => {
     it("handles credential updates", async () => {
         await store.save(actor, creds);
 
-        const updatedCreds = { ...creds, object: { type: "updated" } };
+        const updatedCreds = {
+            ...creds,
+            object: { type: "updated", password: "updated-secret" },
+        };
         await store.save(actor, updatedCreds);
 
         const newHash = crypto.objectHash(updatedCreds.object);
         const retrieved = await store.get(actor, newHash);
         expect(retrieved).toEqual(updatedCreds);
+    });
+
+    it("rejects hash matching when password is missing", async () => {
+        const noPasswordCreds: CredentialsObject = {
+            ...creds,
+            object: { type: "credentials" },
+        };
+        await store.save(actor, noPasswordCreds);
+
+        const hash = crypto.objectHash(noPasswordCreds.object);
+        await expect(store.get(actor, hash)).rejects.toThrow(
+            `invalid credentials for ${actor}`,
+        );
     });
 
     it("isolates credentials by session", async () => {

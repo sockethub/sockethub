@@ -30,7 +30,8 @@ describe("Middleware: credentialCheck", () => {
     beforeEach(() => {
         platformInstances.clear();
         store = {
-            get: async () => makeCredentials({ type: "credentials" }),
+            get: async () =>
+                makeCredentials({ type: "credentials", password: "secret" }),
             save: async () => 1,
         };
     });
@@ -39,9 +40,17 @@ describe("Middleware: credentialCheck", () => {
         platformInstances.clear();
     });
 
-    test("passes through when credentials are non-empty", async () => {
-        store.get = async () =>
-            makeCredentials({ type: "credentials", token: "abc123" });
+    test("passes through when credentials include a non-empty password", async () => {
+        store.get = async (
+            actor: string,
+            credentialsHash: string | undefined,
+            options?: { requirePassword?: boolean },
+        ) => {
+            expect(actor).toEqual(baseMessage.actor.id);
+            expect(credentialsHash).toBeUndefined();
+            expect(options).toEqual({ requirePassword: true });
+            return makeCredentials({ type: "credentials", password: "abc123" });
+        };
 
         const result = await new Promise<ActivityStream | Error>((resolve) => {
             credentialCheck(store, socketId)(baseMessage, resolve);

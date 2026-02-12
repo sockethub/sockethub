@@ -56,9 +56,14 @@ export async function resetSharedCredentialsRedisConnection(): Promise<void> {
 export interface CredentialsStoreInterface {
     get(
         actor: string,
-        credentialsHash: string | undefined,
+        credentialsHash?: string,
+        options?: CredentialsValidationOptions,
     ): Promise<CredentialsObject | undefined>;
     save(actor: string, creds: CredentialsObject): Promise<number>;
+}
+
+export interface CredentialsValidationOptions {
+    requirePassword?: boolean;
 }
 
 export async function verifySecureStore(config: RedisConfig): Promise<void> {
@@ -159,7 +164,8 @@ export class CredentialsStore implements CredentialsStoreInterface {
      */
     async get(
         actor: string,
-        credentialsHash: string | undefined,
+        credentialsHash?: string,
+        options: CredentialsValidationOptions = {},
     ): Promise<CredentialsObject> {
         this.log.debug(`get credentials for ${actor}`);
         if (!this.store.isConnected) {
@@ -173,13 +179,22 @@ export class CredentialsStore implements CredentialsStoreInterface {
             !credentials.object ||
             typeof credentials.object !== "object" ||
             Array.isArray(credentials.object) ||
-            typeof credentials.object.password !== "string" ||
-            credentials.object.password.length === 0
+            Object.keys(credentials.object).length === 0
         ) {
             throw new Error(`invalid credentials for ${actor}`);
         }
 
+        const password = credentials.object.password;
+        const hasPassword = typeof password === "string" && password.length > 0;
+
+        if (options.requirePassword && !hasPassword) {
+            throw new Error(`invalid credentials for ${actor}`);
+        }
+
         if (credentialsHash) {
+            if (!hasPassword) {
+                throw new Error(`invalid credentials for ${actor}`);
+            }
             if (credentialsHash !== this.objectHash(credentials.object)) {
                 throw new Error(`invalid credentials for ${actor}`);
             }

@@ -153,12 +153,46 @@ describe("CredentialsStore", () => {
             sinon.assert.notCalled(MockStoreSave);
         });
 
-        it("rejects credentials objects without password", async () => {
+        it("allows credentials objects without password when not matching", async () => {
+            MockStoreGet.returns({
+                object: { type: "credentials", token: "a credential" },
+            });
+            const res = await credentialsStore.get("an actor");
+            sinon.assert.calledOnce(MockStoreGet);
+            sinon.assert.calledWith(MockStoreGet, "an actor");
+            sinon.assert.notCalled(MockObjectHash);
+            sinon.assert.notCalled(MockStoreSave);
+            expect(res).toEqual({
+                object: { type: "credentials", token: "a credential" },
+            });
+        });
+
+        it("rejects credentials without password when matching by hash", async () => {
             MockStoreGet.returns({
                 object: { type: "credentials", token: "a credential" },
             });
             try {
-                await credentialsStore.get("an actor");
+                await credentialsStore.get("an actor", "a credentialsHash");
+                expect(false).toEqual(true);
+            } catch (err) {
+                expect(err.toString()).toEqual(
+                    "Error: invalid credentials for an actor",
+                );
+            }
+            sinon.assert.calledOnce(MockStoreGet);
+            sinon.assert.calledWith(MockStoreGet, "an actor");
+            sinon.assert.notCalled(MockObjectHash);
+            sinon.assert.notCalled(MockStoreSave);
+        });
+
+        it("rejects credentials without password when explicitly required", async () => {
+            MockStoreGet.returns({
+                object: { type: "credentials", token: "a credential" },
+            });
+            try {
+                await credentialsStore.get("an actor", undefined, {
+                    requirePassword: true,
+                });
                 expect(false).toEqual(true);
             } catch (err) {
                 expect(err.toString()).toEqual(

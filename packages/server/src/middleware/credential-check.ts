@@ -38,7 +38,7 @@ export default function credentialCheck(
         };
 
         credentialsStore
-            .get(msg.actor.id)
+            .get(msg.actor.id, undefined, { requirePassword: true })
             .then(() => {
                 handle(true);
             })
