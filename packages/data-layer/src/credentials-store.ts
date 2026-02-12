@@ -57,13 +57,8 @@ export interface CredentialsStoreInterface {
     get(
         actor: string,
         credentialsHash?: string,
-        options?: CredentialsValidationOptions,
     ): Promise<CredentialsObject | undefined>;
     save(actor: string, creds: CredentialsObject): Promise<number>;
-}
-
-export interface CredentialsValidationOptions {
-    requirePassword?: boolean;
 }
 
 export async function verifySecureStore(config: RedisConfig): Promise<void> {
@@ -165,7 +160,6 @@ export class CredentialsStore implements CredentialsStoreInterface {
     async get(
         actor: string,
         credentialsHash?: string,
-        options: CredentialsValidationOptions = {},
     ): Promise<CredentialsObject> {
         this.log.debug(`get credentials for ${actor}`);
         if (!this.store.isConnected) {
@@ -187,14 +181,17 @@ export class CredentialsStore implements CredentialsStoreInterface {
         const password = credentials.object.password;
         const hasPassword = typeof password === "string" && password.length > 0;
 
-        if (options.requirePassword && !hasPassword) {
+        // Persistent platform instances are actor-scoped and can be shared across
+        // sessions, so we only treat credentials as valid when they include a
+        // non-empty password. This prevents unauthenticated sessions from
+        // attaching to an existing actor instance.
+        if (!hasPassword) {
             throw new Error(`invalid credentials for ${actor}`);
         }
 
         if (credentialsHash) {
-            if (!hasPassword) {
-                throw new Error(`invalid credentials for ${actor}`);
-            }
+            // If a hash is provided, credentials must match exactly. This blocks
+            // "same actor, different credentials" reuse attempts.
             if (credentialsHash !== this.objectHash(credentials.object)) {
                 throw new Error(`invalid credentials for ${actor}`);
             }

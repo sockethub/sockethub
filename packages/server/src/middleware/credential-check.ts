@@ -38,7 +38,9 @@ export default function credentialCheck(
         };
 
         credentialsStore
-            .get(msg.actor.id, undefined, { requirePassword: true })
+            // `CredentialsStore.get()` enforces non-empty password validation,
+            // so a successful lookup means this actor is safe to share.
+            .get(msg.actor.id)
             .then(() => {
                 handle(true);
             })

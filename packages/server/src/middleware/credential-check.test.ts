@@ -41,14 +41,9 @@ describe("Middleware: credentialCheck", () => {
     });
 
     test("passes through when credentials include a non-empty password", async () => {
-        store.get = async (
-            actor: string,
-            credentialsHash: string | undefined,
-            options?: { requirePassword?: boolean },
-        ) => {
+        store.get = async (actor: string, credentialsHash: string | undefined) => {
             expect(actor).toEqual(baseMessage.actor.id);
             expect(credentialsHash).toBeUndefined();
-            expect(options).toEqual({ requirePassword: true });
             return makeCredentials({ type: "credentials", password: "abc123" });
         };
 

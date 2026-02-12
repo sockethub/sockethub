@@ -25,7 +25,7 @@ const creds: CredentialsObject = {
         password: "secret",
     },
 };
-const credsHash = crypto.objectHash(creds.object);
+const credsHash = "267a747d006c9a2c2e94b2f7d646400ba16e5709";
 const testSecret = "aB3#xK9mP2qR7wZ4cT8nY6vH1jL5fD0s";
 
 describe("CredentialsStore", () => {
