@@ -39,11 +39,8 @@ export default function credentialCheck(
 
         credentialsStore
             .get(msg.actor.id)
-            .then((credentials) => {
-                const password = credentials.object.password;
-                const hasPassword =
-                    typeof password === "string" && password.length > 0;
-                handle(hasPassword);
+            .then(() => {
+                handle(true);
             })
             .catch((err) => {
                 log.error(

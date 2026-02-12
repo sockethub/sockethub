@@ -173,7 +173,8 @@ export class CredentialsStore implements CredentialsStoreInterface {
             !credentials.object ||
             typeof credentials.object !== "object" ||
             Array.isArray(credentials.object) ||
-            Object.keys(credentials.object).length === 0
+            typeof credentials.object.password !== "string" ||
+            credentials.object.password.length === 0
         ) {
             throw new Error(`invalid credentials for ${actor}`);
         }

@@ -20,7 +20,7 @@ describe("CredentialsStore", () => {
         MockObjectHash;
     beforeEach(() => {
         MockStoreGet = sinon.stub().returns({
-            object: { token: "credential foo" },
+            object: { password: "credential foo" },
         });
         MockStoreSave = sinon.stub();
         MockObjectHash = sinon.stub();
@@ -77,7 +77,7 @@ describe("CredentialsStore", () => {
             sinon.assert.calledWith(MockStoreGet, "an actor");
             sinon.assert.notCalled(MockObjectHash);
             sinon.assert.notCalled(MockStoreSave);
-            expect(res).toEqual({ object: { token: "credential foo" } });
+            expect(res).toEqual({ object: { password: "credential foo" } });
         });
 
         it("handles no credentials found", async () => {
@@ -110,7 +110,7 @@ describe("CredentialsStore", () => {
         it("validates credentialsHash when provided", async () => {
             MockObjectHash.returns("a credentialsHash string");
             MockStoreGet.returns({
-                object: { token: "a credential" },
+                object: { password: "a credential" },
             });
             const res = await credentialsStore.get(
                 "an actor",
@@ -119,15 +119,17 @@ describe("CredentialsStore", () => {
             sinon.assert.calledOnce(MockStoreGet);
             sinon.assert.calledWith(MockStoreGet, "an actor");
             sinon.assert.calledOnce(MockObjectHash);
-            sinon.assert.calledWith(MockObjectHash, { token: "a credential" });
+            sinon.assert.calledWith(MockObjectHash, {
+                password: "a credential",
+            });
             sinon.assert.notCalled(MockStoreSave);
-            expect(res).toEqual({ object: { token: "a credential" } });
+            expect(res).toEqual({ object: { password: "a credential" } });
         });
 
         it("invalidates credentialsHash when provided", async () => {
             MockObjectHash.returns("the original credentialsHash string");
             MockStoreGet.returns({
-                object: { token: "a credential" },
+                object: { password: "a credential" },
             });
             try {
                 expect(
@@ -145,7 +147,27 @@ describe("CredentialsStore", () => {
             sinon.assert.calledOnce(MockStoreGet);
             sinon.assert.calledWith(MockStoreGet, "an actor");
             sinon.assert.calledOnce(MockObjectHash);
-            sinon.assert.calledWith(MockObjectHash, { token: "a credential" });
+            sinon.assert.calledWith(MockObjectHash, {
+                password: "a credential",
+            });
+            sinon.assert.notCalled(MockStoreSave);
+        });
+
+        it("rejects credentials objects without password", async () => {
+            MockStoreGet.returns({
+                object: { type: "credentials", token: "a credential" },
+            });
+            try {
+                await credentialsStore.get("an actor");
+                expect(false).toEqual(true);
+            } catch (err) {
+                expect(err.toString()).toEqual(
+                    "Error: invalid credentials for an actor",
+                );
+            }
+            sinon.assert.calledOnce(MockStoreGet);
+            sinon.assert.calledWith(MockStoreGet, "an actor");
+            sinon.assert.notCalled(MockObjectHash);
             sinon.assert.notCalled(MockStoreSave);
         });
 
