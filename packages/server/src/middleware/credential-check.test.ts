@@ -30,7 +30,11 @@ describe("Middleware: credentialCheck", () => {
     beforeEach(() => {
         platformInstances.clear();
         store = {
-            get: async () => makeCredentials({ type: "credentials" }),
+            get: async () =>
+                makeCredentials({
+                    type: "credentials",
+                    password: "secret",
+                }),
             save: async () => 1,
         };
     });
@@ -39,9 +43,9 @@ describe("Middleware: credentialCheck", () => {
         platformInstances.clear();
     });
 
-    test("passes through when credentials are non-empty", async () => {
+    test("passes through when credentials have a password", async () => {
         store.get = async () =>
-            makeCredentials({ type: "credentials", token: "abc123" });
+            makeCredentials({ type: "credentials", password: "abc123" });
 
         const result = await new Promise<ActivityStream | Error>((resolve) => {
             credentialCheck(store, socketId)(baseMessage, resolve);
@@ -50,10 +54,9 @@ describe("Middleware: credentialCheck", () => {
         expect(result).toEqual(baseMessage);
     });
 
-    test("blocks when credentials are empty and another session exists", async () => {
-        store.get = async () => {
-            throw new Error("invalid credentials");
-        };
+    test("blocks when credentials have no password and another session exists", async () => {
+        store.get = async () =>
+            makeCredentials({ type: "credentials", token: "abc123" });
         const key = getPlatformId(baseMessage.context, baseMessage.actor.id);
         platformInstances.set(
             key,
@@ -68,10 +71,9 @@ describe("Middleware: credentialCheck", () => {
         expect(result.toString()).toEqual("Error: invalid credentials");
     });
 
-    test("allows when credentials are empty but only this session is attached", async () => {
-        store.get = async () => {
-            throw new Error("invalid credentials");
-        };
+    test("allows when credentials have no password but only this session is attached", async () => {
+        store.get = async () =>
+            makeCredentials({ type: "credentials", token: "abc123" });
         const key = getPlatformId(baseMessage.context, baseMessage.actor.id);
         platformInstances.set(
             key,
