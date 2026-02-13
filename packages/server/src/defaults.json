@@ -30,6 +30,10 @@
     "maxRequests": 100,
     "blockDurationMs": 5000
   },
+  "credentialCheck": {
+    "reconnectIpSource": "socket",
+    "proxyHeader": "x-forwarded-for"
+  },
   "redis": {
     "url": "redis://127.0.0.1:6379",
     "connectTimeout": 10000,

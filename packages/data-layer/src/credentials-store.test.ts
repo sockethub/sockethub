@@ -3,7 +3,11 @@ import * as sinon from "sinon";
 
 import type { Logger } from "@sockethub/schemas";
 
-import { CredentialsStore } from "./credentials-store";
+import {
+    CredentialsMismatchError,
+    CredentialsNotShareableError,
+    CredentialsStore,
+} from "./credentials-store";
 
 const mockLogger: Logger = {
     error: () => {},
@@ -143,6 +147,7 @@ describe("CredentialsStore", () => {
                 expect(err.toString()).toEqual(
                     "Error: invalid credentials for an actor",
                 );
+                expect(err).toBeInstanceOf(CredentialsMismatchError);
             }
             sinon.assert.calledOnce(MockStoreGet);
             sinon.assert.calledWith(MockStoreGet, "an actor");
@@ -153,22 +158,53 @@ describe("CredentialsStore", () => {
             sinon.assert.notCalled(MockStoreSave);
         });
 
-        it("rejects credentials without password", async () => {
+        it("allows credentials without password when no hash is provided", async () => {
+            MockStoreGet.returns({
+                object: { type: "credentials", token: "a credential" },
+            });
+            const res = await credentialsStore.get("an actor");
+            sinon.assert.calledOnce(MockStoreGet);
+            sinon.assert.calledWith(MockStoreGet, "an actor");
+            sinon.assert.notCalled(MockObjectHash);
+            sinon.assert.notCalled(MockStoreSave);
+            expect(res).toEqual({
+                object: { type: "credentials", token: "a credential" },
+            });
+        });
+
+        it("rejects anonymous credentials for session-share validation", async () => {
             MockStoreGet.returns({
                 object: { type: "credentials", token: "a credential" },
             });
             try {
-                await credentialsStore.get("an actor");
+                await credentialsStore.get("an actor", undefined, {
+                    validateSessionShare: true,
+                });
                 expect(false).toEqual(true);
             } catch (err) {
-                expect(err.toString()).toEqual(
-                    "Error: invalid credentials for an actor",
-                );
+                expect(err.toString()).toEqual("Error: username already in use");
+                expect(err).toBeInstanceOf(CredentialsNotShareableError);
             }
             sinon.assert.calledOnce(MockStoreGet);
             sinon.assert.calledWith(MockStoreGet, "an actor");
             sinon.assert.notCalled(MockObjectHash);
             sinon.assert.notCalled(MockStoreSave);
+        });
+
+        it("allows password credentials for session-share validation", async () => {
+            MockStoreGet.returns({
+                object: { type: "credentials", password: "a credential" },
+            });
+            const res = await credentialsStore.get("an actor", undefined, {
+                validateSessionShare: true,
+            });
+            sinon.assert.calledOnce(MockStoreGet);
+            sinon.assert.calledWith(MockStoreGet, "an actor");
+            sinon.assert.notCalled(MockObjectHash);
+            sinon.assert.notCalled(MockStoreSave);
+            expect(res).toEqual({
+                object: { type: "credentials", password: "a credential" },
+            });
         });
 
         it("rejects array credentials objects", async () => {
@@ -182,6 +218,7 @@ describe("CredentialsStore", () => {
                 expect(err.toString()).toEqual(
                     "Error: invalid credentials for an actor",
                 );
+                expect(err).toBeInstanceOf(CredentialsMismatchError);
             }
             sinon.assert.calledOnce(MockStoreGet);
             sinon.assert.calledWith(MockStoreGet, "an actor");
@@ -200,6 +237,7 @@ describe("CredentialsStore", () => {
                 expect(err.toString()).toEqual(
                     "Error: invalid credentials for an actor",
                 );
+                expect(err).toBeInstanceOf(CredentialsMismatchError);
             }
             sinon.assert.calledOnce(MockStoreGet);
             sinon.assert.calledWith(MockStoreGet, "an actor");
@@ -218,6 +256,7 @@ describe("CredentialsStore", () => {
                 expect(err.toString()).toEqual(
                     "Error: invalid credentials for an actor",
                 );
+                expect(err).toBeInstanceOf(CredentialsMismatchError);
             }
             sinon.assert.calledOnce(MockStoreGet);
             sinon.assert.calledWith(MockStoreGet, "an actor");
@@ -234,6 +273,7 @@ describe("CredentialsStore", () => {
                 expect(err.toString()).toEqual(
                     "Error: invalid credentials for an actor",
                 );
+                expect(err).toBeInstanceOf(CredentialsMismatchError);
             }
             sinon.assert.calledOnce(MockStoreGet);
             sinon.assert.calledWith(MockStoreGet, "an actor");

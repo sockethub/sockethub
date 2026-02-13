@@ -1,8 +1,11 @@
 import { createLogger } from "@sockethub/logger";
 
 import {
+    CredentialsMismatchError,
+    CredentialsNotShareableError,
     CredentialsStore,
     type CredentialsStoreInterface,
+    type CredentialsValidationOptions,
     resetSharedCredentialsRedisConnection,
     verifySecureStore,
 } from "./credentials-store.js";
@@ -29,8 +32,11 @@ export {
     JobQueue,
     JobWorker,
     CredentialsStore,
+    CredentialsMismatchError,
+    CredentialsNotShareableError,
     getRedisConnectionCount,
     resetSharedRedisConnection,
     resetSharedCredentialsRedisConnection,
+    type CredentialsValidationOptions,
     type CredentialsStoreInterface,
 };

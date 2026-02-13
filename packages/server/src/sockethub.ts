@@ -46,6 +46,45 @@ function attachError<T extends ActivityStream | ActivityObject>(
     return cleaned;
 }
 
+function normalizeIp(ip: string | undefined): string {
+    if (!ip) {
+        return "";
+    }
+    const trimmed = ip.split(",")[0].trim();
+    if (trimmed.startsWith("::ffff:")) {
+        return trimmed.slice(7);
+    }
+    return trimmed;
+}
+
+function getClientIp(socket: Socket): string {
+    const ipSource =
+        config.get("credentialCheck:reconnectIpSource") === "proxy"
+            ? "proxy"
+            : "socket";
+
+    if (ipSource === "proxy") {
+        const proxyHeader =
+            (
+                config.get("credentialCheck:proxyHeader") as string | undefined
+            )?.toLowerCase() || "x-forwarded-for";
+        const headerValue = socket.handshake.headers[proxyHeader];
+        if (typeof headerValue === "string") {
+            const normalized = normalizeIp(headerValue);
+            if (normalized) {
+                return normalized;
+            }
+        } else if (Array.isArray(headerValue) && headerValue.length > 0) {
+            const normalized = normalizeIp(headerValue[0]);
+            if (normalized) {
+                return normalized;
+            }
+        }
+    }
+
+    return normalizeIp(socket.handshake.address);
+}
+
 class Sockethub {
     private readonly parentId: string;
     private readonly parentSecret1: string;
@@ -110,6 +149,7 @@ class Sockethub {
         // session-specific debug messages
         const sessionLog = createLogger(`server:core:${socket.id}`);
         const sessionSecret = crypto.randToken(16);
+        const clientIp = getClientIp(socket);
         const credentialsStore: CredentialsStoreInterface =
             new CredentialsStore(
                 this.parentId,
@@ -201,7 +241,16 @@ class Sockethub {
                         next(msg);
                     },
                 )
-                .use(credentialCheck(credentialsStore, socket.id))
+                .use(
+                    credentialCheck(
+                        credentialsStore,
+                        socket.id,
+                        clientIp,
+                        (sessionId) =>
+                            listener.io?.sockets?.sockets?.has(sessionId) ??
+                            false,
+                    ),
+                )
                 .use(
                     (
                         err: Error,
@@ -220,6 +269,7 @@ class Sockethub {
                             msg.context,
                             msg.actor.id,
                             socket.id,
+                            clientIp,
                         );
                         // job validated and queued, stores socket.io callback for when job is completed
                         try {

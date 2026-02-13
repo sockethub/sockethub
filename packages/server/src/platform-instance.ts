@@ -66,6 +66,7 @@ export default class PlatformInstance {
     readonly log: Logger;
     readonly parentId: string;
     readonly sessions: Set<string> = new Set();
+    readonly sessionIps: Map<string, string> = new Map();
     readonly sessionCallbacks: Record<
         "close" | "message",
         Map<string, (...args: Array<unknown>) => void | Promise<void>>
@@ -213,7 +214,10 @@ export default class PlatformInstance {
      * Register listener to be called when the process emits a message.
      * @param sessionId ID of socket connection that will receive messages from platform emits
      */
-    public registerSession(sessionId: string) {
+    public registerSession(sessionId: string, clientIp?: string) {
+        if (clientIp) {
+            this.sessionIps.set(sessionId, clientIp);
+        }
         if (!this.sessions.has(sessionId)) {
             this.sessions.add(sessionId);
             for (const type of Object.keys(this.sessionCallbacks) as Array<
