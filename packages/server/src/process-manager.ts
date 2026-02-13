@@ -29,13 +29,14 @@ class ProcessManager {
         platform: string,
         actorId: string,
         sessionId?: string,
+        sessionIp?: string,
     ): PlatformInstance {
         const platformDetails = this.init.platforms.get(platform);
         let pi: PlatformInstance;
 
         if (platformDetails.config.persist) {
             // ensure process is started - one for each actor
-            pi = this.ensureProcess(platform, sessionId, actorId);
+            pi = this.ensureProcess(platform, sessionId, actorId, sessionIp);
         } else {
             // ensure process is started - one for all jobs
             pi = this.ensureProcess(platform);
@@ -72,6 +73,7 @@ class ProcessManager {
         platform: string,
         sessionId?: string,
         actor?: string,
+        sessionIp?: string,
     ): PlatformInstance {
         const identifier = getPlatformId(platform, actor);
         const existing = platformInstances.get(identifier);
@@ -83,7 +85,7 @@ class ProcessManager {
             void existing.shutdown();
         }
         if (sessionId) {
-            platformInstance.registerSession(sessionId);
+            platformInstance.registerSession(sessionId, sessionIp);
         }
         platformInstances.set(identifier, platformInstance);
         return platformInstance;

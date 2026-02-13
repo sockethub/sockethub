@@ -44,14 +44,6 @@ let credentials = $derived({
     secure: true,
 });
 
-function resetState() {
-    $sockethubState.actorSet = false;
-    $sockethubState.credentialsSet = false;
-    $sockethubState.connected = false;
-    $sockethubState.joined = false;
-    connecting = false;
-}
-
 /**
  * Sends a connect request to Sockethub's IRC platform.
  *
@@ -66,28 +58,25 @@ function resetState() {
  */
 async function connectIrc(): Promise<void> {
     connecting = true;
-    await send({
-        // Platform context - routes to Sockethub's IRC platform
-        context: "irc",
-        // Activity type - "connect" establishes IRC connection
-        type: "connect",
-        // Actor - the IRC nick/identity making the connection
-        actor: $actorIdStore,
-        // Note: credentials (server, port, etc.) are sent separately via the Credentials component
-    } as AnyActivityStream)
-        .catch(() => {
-            resetState();
-        })
-        .then(
-            () => {
-                $sockethubState.connected = true;
-                connecting = false;
-            },
-            (err) => {
-                console.error(err);
-                resetState();
-            },
-        );
+    try {
+        await send({
+            // Platform context - routes to Sockethub's IRC platform
+            context: "irc",
+            // Activity type - "connect" establishes IRC connection
+            type: "connect",
+            // Actor - the IRC nick/identity making the connection
+            actor: $actorIdStore,
+            // Note: credentials (server, port, etc.) are sent separately via the Credentials component
+        } as AnyActivityStream);
+        $sockethubState.connected = true;
+    } catch (err) {
+        console.error(err);
+        // Keep actor/credentials state so the user can immediately retry connect.
+        $sockethubState.connected = false;
+        $sockethubState.joined = false;
+    } finally {
+        connecting = false;
+    }
 }
 </script>
 

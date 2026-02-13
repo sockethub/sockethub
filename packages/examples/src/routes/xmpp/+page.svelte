@@ -41,33 +41,23 @@ let credentials = $derived({
     resource: "SockethubExample",
 });
 
-function resetState() {
-    $sockethubState.actorSet = false;
-    $sockethubState.credentialsSet = false;
-    $sockethubState.connected = false;
-    $sockethubState.joined = false;
-    connecting = false;
-}
-
 async function connectXmpp(): Promise<void> {
     connecting = true;
-    return await send({
-        context: "xmpp",
-        type: "connect",
-        actor: actorId,
-    } as AnyActivityStream)
-        .then(
-            () => {
-                $sockethubState.connected = true;
-            },
-            (err) => {
-                console.error(err);
-                resetState();
-            },
-        )
-        .catch(() => {
-            resetState();
-        });
+    try {
+        await send({
+            context: "xmpp",
+            type: "connect",
+            actor: actorId,
+        } as AnyActivityStream);
+        $sockethubState.connected = true;
+    } catch (err) {
+        console.error(err);
+        // Keep actor/credentials state so the user can immediately retry connect.
+        $sockethubState.connected = false;
+        $sockethubState.joined = false;
+    } finally {
+        connecting = false;
+    }
 }
 </script>
 
