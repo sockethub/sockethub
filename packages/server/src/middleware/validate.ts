@@ -38,7 +38,9 @@ export default function validate(
         });
     }
 
-    const sessionLog = createLogger(`server:validate:${sockethubId}`);
+    const sessionLog = createLogger(
+        `server:middleware:validate:${sockethubId}`,
+    );
     return (
         msg: ActivityStream | ActivityObject,
         done: MiddlewareChainInterface<ActivityStream | ActivityObject>,
