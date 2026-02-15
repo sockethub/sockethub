@@ -65,7 +65,7 @@ describe("CredentialsStore", () => {
         expect(retrieved).toEqual(updatedCreds);
     });
 
-    it("rejects hash matching when password is missing", async () => {
+    it("allows hash matching when password is missing without share validation", async () => {
         const noPasswordCreds: CredentialsObject = {
             ...creds,
             object: { type: "credentials" },
@@ -73,9 +73,19 @@ describe("CredentialsStore", () => {
         await store.save(actor, noPasswordCreds);
 
         const hash = crypto.objectHash(noPasswordCreds.object);
-        await expect(store.get(actor, hash)).rejects.toThrow(
-            `invalid credentials for ${actor}`,
-        );
+        await expect(store.get(actor, hash)).resolves.toEqual(noPasswordCreds);
+    });
+
+    it("rejects anonymous credentials when share validation is requested", async () => {
+        const noPasswordCreds: CredentialsObject = {
+            ...creds,
+            object: { type: "credentials" },
+        };
+        await store.save(actor, noPasswordCreds);
+
+        await expect(
+            store.get(actor, undefined, { validateSessionShare: true }),
+        ).rejects.toThrow("username already in use");
     });
 
     it("isolates credentials by session", async () => {
