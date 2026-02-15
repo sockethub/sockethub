@@ -88,7 +88,7 @@ Request handling stays on Sockethub's existing core path:
 HTTP actions only change transport and replay behavior. They do not create a
 separate platform routing model.
 
-See `/Users/njenning/.codex/worktrees/6ebe/sockethub/docs/configuration.md` for details and examples.
+See [`docs/configuration.md`](../../docs/configuration.md) for details and examples.
 
 #### Sentry Configuration
 
