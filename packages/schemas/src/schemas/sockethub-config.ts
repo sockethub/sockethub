@@ -212,7 +212,7 @@ export const SockethubConfigSchema = {
                 },
                 path: {
                     type: "string",
-                    default: "/sockethub/http",
+                    default: "/sockethub-http",
                 },
                 requireRequestId: {
                     type: "boolean",

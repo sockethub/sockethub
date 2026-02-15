@@ -47,7 +47,7 @@
   },
   "httpActions": {
     "enabled": false,
-    "path": "/sockethub/http",
+    "path": "/sockethub-http",
     "requireRequestId": true,
     "maxMessagesPerRequest": 20,
     "maxPayloadBytes": 262144,

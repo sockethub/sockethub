@@ -1,8 +1,7 @@
 /**
  * Tests for HTTP actions endpoint idempotency and GET replay behavior.
  */
-import { describe, expect, it } from "bun:test";
-import * as sinon from "sinon";
+import { describe, expect, test } from "bun:test";
 
 import { registerHttpActionsRoutes } from "./actions.js";
 
@@ -64,7 +63,7 @@ type ConfigOverrides = Partial<
 
 const DEFAULT_CONFIG: Record<string, unknown> = {
     "httpActions:enabled": true,
-    "httpActions:path": "/sockethub/http",
+    "httpActions:path": "/sockethub-http",
     "httpActions:requireRequestId": true,
     "httpActions:maxMessagesPerRequest": 20,
     "httpActions:idempotencyTtlMs": 1000,
@@ -195,7 +194,7 @@ function buildHandlers({
 }
 
 describe("http actions", () => {
-    it("streams results and caches for idempotent replay", async () => {
+    test("streams results and caches for idempotent replay", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -205,7 +204,7 @@ describe("http actions", () => {
             headers: { "x-request-id": requestId },
         });
 
-        await handlers["/sockethub/http"](req, res);
+        await handlers["/sockethub-http"](req, res);
 
         expect(res.ended).toBeTrue();
         expect(writes.length).toBe(2);
@@ -217,12 +216,12 @@ describe("http actions", () => {
             headers: { "x-request-id": requestId },
         });
 
-        await handlers["/sockethub/http"](replay.req, replay.res);
+        await handlers["/sockethub-http"](replay.req, replay.res);
         expect(replay.res.headers["x-idempotent-replay"]).toBe("true");
         expect(replay.writes.length).toBe(2);
     });
 
-    it("serves cached results via GET", async () => {
+    test("serves cached results via GET", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -232,13 +231,13 @@ describe("http actions", () => {
             headers: { "x-request-id": requestId },
         });
 
-        await handlers["/sockethub/http"](req, res);
+        await handlers["/sockethub-http"](req, res);
         await new Promise((resolve) => setTimeout(resolve, 0));
 
         const getReqRes = createReqRes({
             params: { requestId },
         });
-        await handlers["GET:/sockethub/http/:requestId"](
+        await handlers["GET:/sockethub-http/:requestId"](
             getReqRes.req,
             getReqRes.res,
         );
@@ -247,7 +246,7 @@ describe("http actions", () => {
         expect(getReqRes.writes.length).toBe(1);
     });
 
-    it("accepts GET requestId via query string", async () => {
+    test("accepts GET requestId via query string", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -257,19 +256,19 @@ describe("http actions", () => {
             headers: { "x-request-id": requestId },
         });
 
-        await handlers["/sockethub/http"](req, res);
+        await handlers["/sockethub-http"](req, res);
         await new Promise((resolve) => setTimeout(resolve, 0));
 
         const getReqRes = createReqRes({
             query: { requestId },
         });
-        await handlers["GET:/sockethub/http"](getReqRes.req, getReqRes.res);
+        await handlers["GET:/sockethub-http"](getReqRes.req, getReqRes.res);
 
         expect(getReqRes.res.headers["x-idempotent-replay"]).toBe("true");
         expect(getReqRes.writes.length).toBe(1);
     });
 
-    it("rejects requests over maxMessagesPerRequest", async () => {
+    test("rejects requests over maxMessagesPerRequest", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({
             fakeRedis,
@@ -282,13 +281,13 @@ describe("http actions", () => {
             headers: { "x-request-id": requestId },
         });
 
-        await handlers["/sockethub/http"](req, res);
+        await handlers["/sockethub-http"](req, res);
 
         expect(res.statusCode).toBe(413);
         expect(res.jsonBody.error).toContain("payload limit exceeded");
     });
 
-    it("rejects empty payload arrays", async () => {
+    test("rejects empty payload arrays", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -296,7 +295,7 @@ describe("http actions", () => {
             body: [],
         });
 
-        await handlers["/sockethub/http"](req, res);
+        await handlers["/sockethub-http"](req, res);
 
         expect(res.statusCode).toBe(400);
         expect(res.jsonBody.error).toContain(
@@ -304,7 +303,7 @@ describe("http actions", () => {
         );
     });
 
-    it("requires requestId when configured", async () => {
+    test("requires requestId when configured", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -312,13 +311,13 @@ describe("http actions", () => {
             body: payloads,
         });
 
-        await handlers["/sockethub/http"](req, res);
+        await handlers["/sockethub-http"](req, res);
 
         expect(res.statusCode).toBe(400);
         expect(res.jsonBody.error).toBe("requestId is required");
     });
 
-    it("allows requests without requestId when requireRequestId is false", async () => {
+    test("allows requests without requestId when requireRequestId is false", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({
             fakeRedis,
@@ -329,14 +328,14 @@ describe("http actions", () => {
             body: payloads,
         });
 
-        await handlers["/sockethub/http"](req, res);
+        await handlers["/sockethub-http"](req, res);
 
         expect(res.statusCode).toBe(200);
         expect(res.headers["x-request-id"]).toBeDefined();
         expect(res.ended).toBeTrue();
     });
 
-    it("returns 202 when request is still in progress", async () => {
+    test("returns 202 when request is still in progress", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -350,7 +349,7 @@ describe("http actions", () => {
             params: { requestId },
         });
 
-        await handlers["GET:/sockethub/http/:requestId"](
+        await handlers["GET:/sockethub-http/:requestId"](
             getReqRes.req,
             getReqRes.res,
         );
@@ -359,7 +358,7 @@ describe("http actions", () => {
         expect(getReqRes.res.jsonBody.status).toBe("in-progress");
     });
 
-    it("returns 404 when request id is unknown", async () => {
+    test("returns 404 when request id is unknown", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -367,7 +366,7 @@ describe("http actions", () => {
             params: { requestId: "req-missing" },
         });
 
-        await handlers["GET:/sockethub/http/:requestId"](
+        await handlers["GET:/sockethub-http/:requestId"](
             getReqRes.req,
             getReqRes.res,
         );

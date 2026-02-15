@@ -58,7 +58,7 @@ Sockethub uses a JSON configuration file:
   },
   "httpActions": {
     "enabled": false,
-    "path": "/sockethub/http",
+    "path": "/sockethub-http",
     "requireRequestId": true,
     "maxMessagesPerRequest": 20,
     "maxPayloadBytes": 262144,
@@ -162,7 +162,7 @@ only used for persistent platforms that need it.
 {
   "httpActions": {
     "enabled": true,
-    "path": "/sockethub/http",
+    "path": "/sockethub-http",
     "requireRequestId": true,
     "maxMessagesPerRequest": 20,
     "maxPayloadBytes": 262144,
@@ -203,7 +203,7 @@ curl -N \
   -H 'Content-Type: application/json' \
   -H 'X-Request-Id: 12345' \
   -d @- \
-  http://localhost:10550/sockethub/http <<'JSON'
+  http://localhost:10550/sockethub-http <<'JSON'
 [
   {
     "context": "xmpp",
@@ -214,7 +214,11 @@ curl -N \
       "object": { "username": "me", "password": "secret" }
     }
   },
-  { "context": "xmpp", "type": "connect", "actor": { "id": "me" } },
+  {
+    "context": "xmpp",
+    "type": "connect",
+    "actor": { "id": "me" }
+  },
   {
     "context": "xmpp",
     "type": "join",
@@ -234,21 +238,21 @@ JSON
 Example response (streamed NDJSON):
 
 ```json
-{"context":"xmpp","type":"connect","actor":{"id":"me"},"id":"1"}
-{"context":"xmpp","type":"join","actor":{"id":"me"},"id":"2"}
-{"context":"xmpp","type":"send","actor":{"id":"me"},"id":"3"}
+{"context":"xmpp","type":"connect","actor":{"type":"person","id":"me"},"id":"1"}
+{"context":"xmpp","type":"join","actor":{"type":"person","id":"me"},"target":{"type":"Room","id":"room@example.com"},"id":"2"}
+{"context":"xmpp","type":"send","actor":{"type":"person","id":"me"},"object":{"type":"Note","content":"hello"},"id":"3"}
 ```
 
 Replay results after an interrupted request:
 
 ```bash
-curl -N http://localhost:10550/sockethub/http/12345
+curl -N http://localhost:10550/sockethub-http/12345
 ```
 
 Replay using query parameter:
 
 ```bash
-curl -N "http://localhost:10550/sockethub/http?requestId=12345"
+curl -N "http://localhost:10550/sockethub-http?requestId=12345"
 ```
 
 ### Redis Configuration

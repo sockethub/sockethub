@@ -1,14 +1,14 @@
 /**
  * End-to-end HTTP actions coverage, including hostile input handling.
  */
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { type ChildProcess, spawn } from "node:child_process";
 import { createConnection } from "node:net";
 import { join } from "node:path";
 import config from "./config.js";
 
 const socketUrl = config.sockethub.url;
-const httpPath = "/sockethub/http";
+const httpPath = "/sockethub-http";
 const httpUrl = `${socketUrl}${httpPath}`;
 const requireHttpActions = process.env.REQUIRE_HTTP_ACTIONS === "true";
 
@@ -183,7 +183,7 @@ describe("HTTP actions integration", () => {
         await new Promise((resolve) => setTimeout(resolve, 200));
     });
 
-    it("streams a valid dummy echo response", async () => {
+    test("streams a valid dummy echo response", async () => {
         if (!httpActionsAvailable) {
             return;
         }
@@ -211,7 +211,7 @@ describe("HTTP actions integration", () => {
         expect(lines[0].type).toBe("echo");
     });
 
-    it("replays cached results on POST with the same request id", async () => {
+    test("replays cached results on POST with the same request id", async () => {
         if (!httpActionsAvailable) {
             return;
         }
@@ -242,7 +242,7 @@ describe("HTTP actions integration", () => {
         expect(second.headers.get("x-idempotent-replay")).toBe("true");
     });
 
-    it("serves cached results via GET", async () => {
+    test("serves cached results via GET", async () => {
         if (!httpActionsAvailable) {
             return;
         }
@@ -270,7 +270,7 @@ describe("HTTP actions integration", () => {
         expect(lines.length).toBe(1);
     });
 
-    it("rejects missing request ids", async () => {
+    test("rejects missing request ids", async () => {
         if (!httpActionsAvailable) {
             return;
         }
@@ -288,7 +288,7 @@ describe("HTTP actions integration", () => {
         expect(body.error).toBe("requestId is required");
     });
 
-    it("rejects oversized message batches", async () => {
+    test("rejects oversized message batches", async () => {
         if (!httpActionsAvailable) {
             return;
         }
@@ -315,7 +315,7 @@ describe("HTTP actions integration", () => {
         expect(res.status).toBe(413);
     });
 
-    it("rejects invalid JSON payloads", async () => {
+    test("rejects invalid JSON payloads", async () => {
         if (!httpActionsAvailable) {
             return;
         }
@@ -332,7 +332,7 @@ describe("HTTP actions integration", () => {
         expect(res.status).toBe(400);
     });
 
-    it("rejects non-object JSON bodies", async () => {
+    test("rejects non-object JSON bodies", async () => {
         if (!httpActionsAvailable) {
             return;
         }
@@ -351,7 +351,7 @@ describe("HTTP actions integration", () => {
         expect(body.error).toContain("request body must be a payload object");
     });
 
-    it("returns error payloads for malformed ActivityStreams", async () => {
+    test("returns error payloads for malformed ActivityStreams", async () => {
         if (!httpActionsAvailable) {
             return;
         }
@@ -375,7 +375,7 @@ describe("HTTP actions integration", () => {
         expect(typeof lines[0].error).toBe("string");
     });
 
-    it("handles garbage payloads without crashing", async () => {
+    test("handles garbage payloads without crashing", async () => {
         if (!httpActionsAvailable) {
             return;
         }
@@ -397,7 +397,7 @@ describe("HTTP actions integration", () => {
         }
     });
 
-    it("rejects payloads that exceed the configured byte limit", async () => {
+    test("rejects payloads that exceed the configured byte limit", async () => {
         if (!httpActionsAvailable) {
             return;
         }

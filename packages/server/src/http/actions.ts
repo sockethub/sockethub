@@ -32,6 +32,9 @@ const log = createLogger("server:http:actions");
 // Clients can supply a request id via either header or JSON body. This is used for idempotency.
 const REQUEST_ID_HEADER = "x-request-id";
 const SOCKETHUB_REQUEST_ID_HEADER = "x-sockethub-request-id";
+// Keep HTTP actions off the Socket.IO path namespace (e.g. `/sockethub`) so
+// Engine.IO does not intercept these HTTP requests.
+const DEFAULT_HTTP_ACTIONS_PATH = "/sockethub-http";
 // Redis keys are per request id. Keep list + status separate for replay + progress checks.
 const IDEMPOTENCY_PREFIX = "sockethub:http-actions";
 const IDEMPOTENCY_BATCH_SIZE = 100;
@@ -263,7 +266,7 @@ export function registerHttpActionsRoutes(
     }
 
     const routePath =
-        (getConfig("httpActions:path") as string) ?? "/sockethub/http";
+        (getConfig("httpActions:path") as string) ?? DEFAULT_HTTP_ACTIONS_PATH;
     const requireRequestId =
         getConfig("httpActions:requireRequestId") !== false;
     const maxMessagesPerRequest = resolveConfigNumber(
@@ -343,9 +346,18 @@ export function registerHttpActionsRoutes(
         }
     };
 
+    // lgtm[js/missing-rate-limiting]
+    // CodeQL does not recognize our custom limiter factory, but this route is
+    // rate-limited via the middleware below.
     app.get(routePath, rateLimiter, handleGet);
+    // lgtm[js/missing-rate-limiting]
+    // CodeQL does not recognize our custom limiter factory, but this route is
+    // rate-limited via the middleware below.
     app.get(`${routePath}/:requestId`, rateLimiter, handleGet);
 
+    // lgtm[js/missing-rate-limiting]
+    // CodeQL does not recognize our custom limiter factory, but this route is
+    // rate-limited via the middleware below.
     app.post(routePath, rateLimiter, async (req: Request, res: Response) => {
         const payloads = normalizePayloads(req.body);
         if (payloads.length === 0) {
@@ -480,8 +492,8 @@ export function registerHttpActionsRoutes(
 
         let pending = payloads.length;
         let closed = false;
-        let requestTimeoutId: Timer;
-        let idleTimeoutId: Timer;
+        let requestTimeoutId: ReturnType<typeof setTimeout> | undefined;
+        let idleTimeoutId: ReturnType<typeof setTimeout> | undefined;
         let completionFinalized = false;
         let redisWriteChain = Promise.resolve();
 

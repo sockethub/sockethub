@@ -178,12 +178,9 @@ export function createHttpRateLimiter(config: Partial<RateLimitConfig> = {}) {
         next: NextFunction,
     ) {
         const now = Date.now();
-        const forwarded = req.header("x-forwarded-for");
-        const key =
-            (forwarded ? forwarded.split(",")[0]?.trim() : "") ||
-            req.ip ||
-            req.socket.remoteAddress ||
-            "unknown";
+        // Prefer Express IP resolution (trust proxy aware) and avoid directly
+        // trusting forwarded headers from clients.
+        const key = req.ip || req.socket.remoteAddress || "unknown";
 
         let state = httpClientStates.get(key);
 
