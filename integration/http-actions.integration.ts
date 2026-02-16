@@ -207,7 +207,7 @@ describe("HTTP actions integration", () => {
 
         const lines = parseNdjson(await res.text());
         expect(lines.length).toBe(1);
-        expect(lines[0].actor.id).toBe("dummy");
+        expect(lines[0].actor.id).toBe("test@dummy");
         expect(lines[0].type).toBe("echo");
     });
 

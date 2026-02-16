@@ -153,11 +153,11 @@ function buildHandlers({
 }) {
     const handlers: Record<string, any> = {};
     const app: any = {
-        post: (path: string, _rateLimiter: any, handler: any) => {
-            handlers[path] = handler;
+        post: (path: string, ...args: Array<any>) => {
+            handlers[path] = args[args.length - 1];
         },
-        get: (path: string, _rateLimiter: any, handler: any) => {
-            handlers[`GET:${path}`] = handler;
+        get: (path: string, ...args: Array<any>) => {
+            handlers[`GET:${path}`] = args[args.length - 1];
         },
     };
 
@@ -205,11 +205,10 @@ describe("http actions", () => {
         });
 
         await handlers["/sockethub-http"](req, res);
+        await new Promise((resolve) => setTimeout(resolve, 0));
 
         expect(res.ended).toBeTrue();
         expect(writes.length).toBe(2);
-
-        await new Promise((resolve) => setTimeout(resolve, 0));
 
         const replay = createReqRes({
             body: payloads,

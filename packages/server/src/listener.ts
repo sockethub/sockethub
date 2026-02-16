@@ -4,7 +4,12 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { createLogger } from "@sockethub/logger";
 import bodyParser from "body-parser";
-import express, { type Express, type Request, type Response } from "express";
+import express, {
+    type Express,
+    type NextFunction,
+    type Request,
+    type Response,
+} from "express";
 import rateLimit from "express-rate-limit";
 import { Server } from "socket.io";
 import config from "./config.js";
@@ -116,10 +121,23 @@ class Listener {
         app.use(express.static(examplesPath));
 
         const examplesIndex = path.join(examplesPath, "index.html");
-        app.get("*", limiter, (req: Request, res: Response) => {
-            log.debug(`examples request ${req.path}`);
-            res.sendFile(examplesIndex);
-        });
+        const httpActionsPath = config.get("httpActions:path");
+        app.get(
+            "*",
+            limiter,
+            (req: Request, res: Response, next: NextFunction) => {
+                if (
+                    typeof httpActionsPath === "string" &&
+                    (req.path === httpActionsPath ||
+                        req.path.startsWith(`${httpActionsPath}/`))
+                ) {
+                    next();
+                    return;
+                }
+                log.debug(`examples request ${req.path}`);
+                res.sendFile(examplesIndex);
+            },
+        );
 
         log.info(
             `examples served at http://${config.get("sockethub:host")}:${config.get(
@@ -149,7 +167,9 @@ class Listener {
         // use bodyParser
         app.use(bodyParser.urlencoded({ extended: true }));
         const jsonLimit = config.get("httpActions:maxPayloadBytes") ?? "100kb";
-        app.use(bodyParser.json({ limit: jsonLimit }));
+        // Keep strict=false so primitive JSON values reach route handlers and
+        // can be converted into consistent JSON error responses.
+        app.use(bodyParser.json({ limit: jsonLimit, strict: false }));
         return app;
     }
 
