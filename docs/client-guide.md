@@ -87,6 +87,29 @@ sc.socket.emit('message', {
 });
 ```
 
+### Anonymous IRC Username Collisions
+
+If two sockets use the same IRC actor (same `context` + `actor.id`) without a
+password, Sockethub does not allow them to share one running IRC session.
+
+The rejected request returns an ActivityStream response with an `error`:
+
+```json
+{
+  "context": "irc",
+  "type": "connect",
+  "actor": { "id": "mynick", "type": "person" },
+  "id": "1",
+  "error": "username already in use"
+}
+```
+
+Client apps should treat any callback payload containing `error` as a failed
+action and reset UI state accordingly (for example, re-enable a connect button).
+
+Small exception: after a browser refresh, a reconnect from the same client IP
+may still be allowed while the old stale socket is waiting for janitor cleanup.
+
 ## Platform Examples
 
 ### Dummy (Testing)

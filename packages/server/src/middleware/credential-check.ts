@@ -1,5 +1,6 @@
 import { getPlatformId } from "@sockethub/crypto";
 import {
+    CredentialsMismatchError,
     CredentialsNotShareableError,
     type CredentialsStoreInterface,
 } from "@sockethub/data-layer";
@@ -59,13 +60,35 @@ export default function credentialCheck(
                     next(msg);
                     return;
                 }
-                log.error(
-                    `credential lookup failed for ${msg.context}:${msg.actor.id}`,
-                    err.toString(),
-                );
+
+                const scope = `${msg.context}:${msg.actor.id}`;
+                if (isExpectedCredentialValidationError(err)) {
+                    log.info(
+                        `credential share validation rejected for ${scope} (socketId=${socketId}, validateSessionShare=true)`,
+                        err.toString(),
+                    );
+                } else {
+                    log.error(
+                        `credential lookup failed for ${scope} (socketId=${socketId}, validateSessionShare=true)`,
+                        err.toString(),
+                    );
+                }
                 next(err instanceof Error ? err : new Error(String(err)));
             });
     };
+}
+
+function isExpectedCredentialValidationError(err: unknown): boolean {
+    if (
+        err instanceof CredentialsNotShareableError ||
+        err instanceof CredentialsMismatchError
+    ) {
+        return true;
+    }
+    return (
+        err instanceof Error &&
+        err.message.startsWith("credentials not found for ")
+    );
 }
 
 function normalizeIp(ip: string | undefined): string {

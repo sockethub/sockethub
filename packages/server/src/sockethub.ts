@@ -57,6 +57,14 @@ function normalizeIp(ip: string | undefined): string {
     return trimmed;
 }
 
+function getProxyHeaderName(): string {
+    return (
+        (
+            config.get("credentialCheck:proxyHeader") as string | undefined
+        )?.toLowerCase() || "x-forwarded-for"
+    );
+}
+
 function getClientIp(socket: Socket): string {
     const ipSource =
         config.get("credentialCheck:reconnectIpSource") === "proxy"
@@ -64,10 +72,7 @@ function getClientIp(socket: Socket): string {
             : "socket";
 
     if (ipSource === "proxy") {
-        const proxyHeader =
-            (
-                config.get("credentialCheck:proxyHeader") as string | undefined
-            )?.toLowerCase() || "x-forwarded-for";
+        const proxyHeader = getProxyHeaderName();
         const headerValue = socket.handshake.headers[proxyHeader];
         if (typeof headerValue === "string") {
             const normalized = normalizeIp(headerValue);
@@ -132,6 +137,13 @@ class Sockethub {
 
         // Create rate limiter once at server level
         this.rateLimiter = createRateLimiter(config.get("rateLimiter"));
+
+        if (config.get("credentialCheck:reconnectIpSource") === "proxy") {
+            const proxyHeader = getProxyHeaderName();
+            log.warn(
+                `credentialCheck.reconnectIpSource=proxy enabled; only use this behind a trusted reverse proxy that overwrites '${proxyHeader}'`,
+            );
+        }
 
         log.debug("active platforms: ", [...init.platforms.keys()]);
         listener.start(); // start external services
