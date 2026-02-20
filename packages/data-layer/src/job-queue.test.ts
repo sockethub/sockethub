@@ -109,6 +109,7 @@ describe("JobQueue", () => {
             cryptoMocks.encrypt.returns("an encrypted message");
             const job = jobQueue.createJob("a socket id", {
                 "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/some context/v1.jsonld"],
+                platform: "some context",
                 id: "an identifier",
             });
             expect(job).to.eql({
@@ -122,6 +123,7 @@ describe("JobQueue", () => {
             cryptoMocks.encrypt.returns("an encrypted message");
             let job = jobQueue.createJob("a socket id", {
                 "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/some context/v1.jsonld"],
+                platform: "some context",
             });
             expect(job).to.eql({
                 title: "some context-0",
@@ -130,6 +132,7 @@ describe("JobQueue", () => {
             });
             job = jobQueue.createJob("a socket id", {
                 "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/some context/v1.jsonld"],
+                platform: "some context",
             });
             expect(job).to.eql({
                 title: "some context-1",
@@ -202,6 +205,7 @@ describe("JobQueue", () => {
             };
             const res = await jobQueue.add("a socket id", {
                 "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/a platform/v1.jsonld"],
+                platform: "a platform",
                 id: "an identifier",
             });
             sinon.assert.calledOnce(jobQueue.queue.isPaused);
@@ -223,6 +227,7 @@ describe("JobQueue", () => {
             try {
                 await jobQueue.add("a socket id", {
                     "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/a platform/v1.jsonld"],
+                    platform: "a platform",
                     id: "an identifier",
                 });
             } catch (err) {

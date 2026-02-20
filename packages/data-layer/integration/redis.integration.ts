@@ -123,6 +123,7 @@ describe("connect and disconnect", () => {
 describe("JobQueue", () => {
     const as: ActivityStream = {
         type: "foo",
+        platform: "bar",
         "@context": [
             "https://www.w3.org/ns/activitystreams",
             "https://sockethub.org/ns/context/v1.jsonld",
@@ -264,6 +265,7 @@ describe("JobQueue", () => {
     it("handles worker returning ActivityStream", async () => {
         const returnAS: ActivityStream = {
             type: "result",
+            platform: "bar",
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://sockethub.org/ns/context/v1.jsonld",
@@ -315,6 +317,7 @@ describe("JobQueue", () => {
     it("encrypts and decrypts job data correctly", async () => {
         const complexAS: ActivityStream = {
             type: "send",
+            platform: "irc",
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://sockethub.org/ns/context/v1.jsonld",
@@ -387,6 +390,7 @@ describe.skip("Redis connection failure", () => {
 
         const as: ActivityStream = {
             type: "foo",
+            platform: "bar",
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://sockethub.org/ns/context/v1.jsonld",
