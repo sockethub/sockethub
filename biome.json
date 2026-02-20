@@ -13,7 +13,8 @@
       "!**/*.test.js",
       "!**/packages/examples/build",
       "!**/packages/server/res",
-      "!**/packages/schemas/src/schemas/json"
+      "!**/packages/schemas/src/schemas/json",
+      "!**/packages/schemas/src/generated"
     ]
   },
   "formatter": {
