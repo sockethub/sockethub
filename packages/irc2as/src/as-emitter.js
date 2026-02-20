@@ -16,7 +16,11 @@ export class ASEmitter {
 
     __generalError(nick, content) {
         return {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "update",
             actor: {
                 type: "person",
@@ -33,7 +37,11 @@ export class ASEmitter {
 
     presence(nick, role, channel) {
         this.emitEvent(EVENT_INCOMING, {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "update",
             actor: {
                 type: "person",
@@ -54,7 +62,11 @@ export class ASEmitter {
 
     channelError(channel, nick, content) {
         this.emitEvent(EVENT_ERROR, {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "update",
             actor: {
                 type: "person",
@@ -74,7 +86,11 @@ export class ASEmitter {
 
     notice(nick, content) {
         this.emitEvent(EVENT_INCOMING, {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "send",
             actor: {
                 type: "service",
@@ -98,7 +114,11 @@ export class ASEmitter {
 
     joinError(nick) {
         this.emitEvent(EVENT_ERROR, {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "join",
             actor: {
                 id: this.server,
@@ -114,7 +134,11 @@ export class ASEmitter {
 
     topicChange(channel, nick, content) {
         this.emitEvent(EVENT_INCOMING, {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "update",
             actor: {
                 type: "person",
@@ -135,7 +159,11 @@ export class ASEmitter {
 
     joinRoom(channel, nick) {
         this.emitEvent(EVENT_INCOMING, {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "join",
             actor: {
                 type: "person",
@@ -152,7 +180,11 @@ export class ASEmitter {
 
     userQuit(nick) {
         this.emitEvent(EVENT_INCOMING, {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "leave",
             actor: {
                 type: "person",
@@ -172,7 +204,11 @@ export class ASEmitter {
 
     userPart(channel, nick) {
         this.emitEvent(EVENT_INCOMING, {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "leave",
             actor: {
                 type: "person",
@@ -206,7 +242,11 @@ export class ASEmitter {
             message = content;
         }
         this.emitEvent(EVENT_INCOMING, {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "send",
             actor: {
                 type: "person",
@@ -227,7 +267,11 @@ export class ASEmitter {
 
     role(type, nick, target, role, channel) {
         this.emitEvent(EVENT_INCOMING, {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: type,
             actor: {
                 type: "person",
@@ -257,7 +301,11 @@ export class ASEmitter {
 
     nickChange(nick, content) {
         this.emitEvent(EVENT_INCOMING, {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "update",
             actor: {
                 type: "person",

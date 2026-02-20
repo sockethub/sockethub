@@ -37,7 +37,7 @@ const target = {
 
 const job = {
     connect: {
-        context: "xmpp",
+        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"],
         type: "connect",
         actor: {
             id: "slvrbckt@jabber.net/Home",

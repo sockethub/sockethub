@@ -173,7 +173,11 @@ export class IrcToActivityStreams {
             case MOTD: // MOTD
                 if (!this.__buffer[MOTD]) {
                     this.__buffer[MOTD] = {
-                        context: "irc",
+                        "@context": [
+                            "https://www.w3.org/ns/activitystreams",
+                            "https://sockethub.org/ns/context/v1.jsonld",
+                            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+                        ],
                         type: "update",
                         actor: {
                             type: "service",
@@ -249,7 +253,11 @@ export class IrcToActivityStreams {
             /** */
             case TOPIC_IS: // topic currently set to
                 this.__buffer[TOPIC_IS] = {
-                    context: "irc",
+                    "@context": [
+                        "https://www.w3.org/ns/activitystreams",
+                        "https://sockethub.org/ns/context/v1.jsonld",
+                        "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+                    ],
                     type: "update",
                     actor: undefined,
                     target: {

@@ -7,6 +7,7 @@ import type {
     ActivityStream,
     InternalActivityStream,
 } from "@sockethub/schemas";
+import { resolvePlatformId } from "@sockethub/schemas";
 import type { Socket } from "socket.io";
 import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
@@ -214,8 +215,16 @@ class Sockethub {
                         msg: ActivityStream,
                         next: (data?: ActivityStream | Error) => void,
                     ) => {
+                        const platformId =
+                            msg.platform || resolvePlatformId(msg);
+                        if (!platformId) {
+                            msg.error =
+                                "unable to resolve platform from @context";
+                            next(msg);
+                            return;
+                        }
                         const platformInstance = this.processManager.get(
-                            msg.context,
+                            platformId,
                             msg.actor.id,
                             socket.id,
                         );

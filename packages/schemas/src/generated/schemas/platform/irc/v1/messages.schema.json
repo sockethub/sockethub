@@ -1,0 +1,17 @@
+{
+  "required": ["type"],
+  "properties": {
+    "type": {
+      "enum": [
+        "connect",
+        "update",
+        "join",
+        "leave",
+        "send",
+        "query",
+        "announce",
+        "disconnect"
+      ]
+    }
+  }
+}

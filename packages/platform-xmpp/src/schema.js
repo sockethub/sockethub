@@ -3,6 +3,11 @@ import PackageJSON from "../package.json" with { type: "json" };
 export const PlatformSchema = {
     name: "xmpp",
     version: PackageJSON.version,
+    as2: {
+        contextUrl: "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+        contextVersion: "1",
+        schemaVersion: "1",
+    },
     messages: {
         required: ["type"],
         properties: {

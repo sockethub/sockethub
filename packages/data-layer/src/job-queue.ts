@@ -236,7 +236,13 @@ export class JobQueue extends JobBase {
     }
 
     private createJob(socketId: string, msg: ActivityStream): JobDataEncrypted {
-        const title = `${msg.context}-${msg.id ? msg.id : this.counter++}`;
+        const platformId =
+            msg.platform ||
+            msg["@context"]
+                ?.find((entry) => entry.includes("/platform/"))
+                ?.match(/\/platform\/([^/]+)\//)?.[1] ||
+            "unknown";
+        const title = `${platformId}-${msg.id ? msg.id : this.counter++}`;
         return {
             title: title,
             sessionId: socketId,

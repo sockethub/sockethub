@@ -1,0 +1,7 @@
+{
+  "@context": {
+    "as": "https://www.w3.org/ns/activitystreams#",
+    "sh": "https://sockethub.org/ns#",
+    "platform": "sh:platform"
+  }
+}

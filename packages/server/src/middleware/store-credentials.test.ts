@@ -6,7 +6,7 @@ import storeCredentials from "./store-credentials.js";
 
 const creds: CredentialsObject = {
     type: "credentials",
-    context: "dummy",
+    "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/dummy/v1.jsonld"],
     actor: {
         id: "dood@irc.freenode.net",
         type: "person",

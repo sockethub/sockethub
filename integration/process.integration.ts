@@ -187,7 +187,11 @@ const emitWithoutAck = (client: Socket, event: string, payload: unknown) => {
 
 const buildDummyMessage = (type: string, content = "dummy test") => ({
     type,
-    context: "dummy",
+    "@context": [
+        "https://www.w3.org/ns/activitystreams",
+        "https://sockethub.org/ns/context/v1.jsonld",
+        "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+    ],
     actor: { id: "test@dummy", type: "person" },
     object: { type: "message", content },
 });
@@ -486,7 +490,11 @@ describe("Parent Process Sudden Termination", () => {
             const actorId = utils.createXmppJid();
             const credentialsMessage = {
                 type: "credentials",
-                context: "xmpp",
+                "@context": [
+                    "https://www.w3.org/ns/activitystreams",
+                    "https://sockethub.org/ns/context/v1.jsonld",
+                    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+                ],
                 actor: {
                     id: actorId,
                     type: "person",
@@ -529,7 +537,11 @@ describe("Parent Process Sudden Termination", () => {
             // Create a persistent XMPP connection
             const connectMessage = {
                 type: "connect",
-                context: "xmpp",
+                "@context": [
+                    "https://www.w3.org/ns/activitystreams",
+                    "https://sockethub.org/ns/context/v1.jsonld",
+                    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+                ],
                 actor: {
                     id: actorId,
                     type: "person",

@@ -74,7 +74,7 @@ function getTypes(msg: ActivityStream): TypeBreakdown {
     return {
         actor: getTypeList(msg.actor),
         target: getTypeList(msg.target),
-        object: getTypeList(msg.context ? msg.object : msg),
+        object: getTypeList(msg["@context"] ? msg.object : msg),
     };
 }
 

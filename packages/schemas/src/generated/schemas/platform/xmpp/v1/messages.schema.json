@@ -1,0 +1,19 @@
+{
+  "required": ["type"],
+  "properties": {
+    "type": {
+      "enum": [
+        "connect",
+        "join",
+        "leave",
+        "send",
+        "update",
+        "request-friend",
+        "remove-friend",
+        "make-friend",
+        "query",
+        "disconnect"
+      ]
+    }
+  }
+}

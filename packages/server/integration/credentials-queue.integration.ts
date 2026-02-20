@@ -24,7 +24,11 @@ describe("credentials + queue integration", () => {
     const actorId = `user-${crypto.randToken(6)}@localhost`;
     const credentials: CredentialsObject = {
         type: "credentials",
-        context: "xmpp",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+        ],
         actor: { id: actorId, type: "person" },
         object: {
             type: "credentials",
@@ -73,7 +77,11 @@ describe("credentials + queue integration", () => {
 
         const message = {
             type: "connect",
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             actor: { id: actorId, type: "person" },
             sessionSecret,
         } as ActivityStream & { sessionSecret: string };

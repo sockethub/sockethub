@@ -296,7 +296,11 @@ export default class XMPP {
             const errorType = this.__classifyError(err);
 
             const as = {
-                context: "xmpp",
+                "@context": [
+                    "https://www.w3.org/ns/activitystreams",
+                    "https://sockethub.org/ns/context/v1.jsonld",
+                    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+                ],
                 type: "connect",
                 actor: { id: job.actor.id },
             };

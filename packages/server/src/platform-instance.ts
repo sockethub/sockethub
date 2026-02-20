@@ -10,6 +10,7 @@ import type {
     Logger,
     PlatformConfig,
 } from "@sockethub/schemas";
+import { buildCanonicalContext } from "@sockethub/schemas";
 import type { Socket } from "socket.io";
 import config from "./config.js";
 import { getSocket } from "./listener.js";
@@ -60,6 +61,7 @@ export default class PlatformInstance {
     readonly global: boolean = false;
     readonly completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
     config: PlatformConfig;
+    contextUrl?: string;
     private initialized = false;
     readonly name: string;
     process: ChildProcess;
@@ -237,7 +239,11 @@ export default class PlatformInstance {
                     // this property should never be exposed externally
                     delete msg.sessionSecret;
                 } finally {
-                    msg.context = this.name;
+                    if (this.contextUrl) {
+                        msg["@context"] = buildCanonicalContext(
+                            this.contextUrl,
+                        );
+                    }
                     if (
                         msg.type === "error" &&
                         typeof msg.actor === "undefined" &&
@@ -336,7 +342,9 @@ export default class PlatformInstance {
      */
     private async reportError(sessionId: string, errorMessage: string) {
         const errorObject: ActivityStream = {
-            context: this.name,
+            "@context": this.contextUrl
+                ? buildCanonicalContext(this.contextUrl)
+                : [],
             type: "error",
             actor: { id: this.actor, type: "unknown" },
             error: errorMessage,

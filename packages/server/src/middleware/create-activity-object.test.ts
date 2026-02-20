@@ -13,14 +13,12 @@ describe("Middleware: createActivityObject", () => {
         createActivityObject(
             {
                 id: "test",
-                context: "foo",
                 type: "bar",
                 content: "some text",
             },
             (o) => {
                 expect(o).toEqual({
                     id: "test",
-                    context: "foo",
                     type: "bar",
                     content: "some text",
                 });

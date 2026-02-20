@@ -31,7 +31,7 @@ const targetRoom = {
 };
 
 const validCredentials = {
-    context: "irc",
+    "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
     type: "credentials",
     actor: actor,
     object: {
@@ -103,8 +103,9 @@ describe("Initialize IRC Platform", () => {
 
         it("invalid credentials type", () => {
             const result = validateCredentials({
-                context: "irc",
+                "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
                 type: "credentials",
+                actor,
                 // @ts-expect-error test invalid params
                 object: {
                     host: "example.com",
@@ -114,6 +115,7 @@ describe("Initialize IRC Platform", () => {
             expect([
                 "[irc] /object: must have required property 'type'",
                 "[irc] /object/port: must be number",
+                "[irc] /object: must match exactly one schema in oneOf: credentials, feed, message, me, person, room, service, platform, website, attendance, presence, relationship, topic, address, heartbeat",
             ]).toContain(result);
         });
 
@@ -121,8 +123,9 @@ describe("Initialize IRC Platform", () => {
             expect(
                 // @ts-expect-error test invalid params
                 validateCredentials({
-                    context: "irc",
+                    "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
                     type: "credentials",
+                    actor,
                     object: {
                         type: "credentials",
                         host: "example.com",
@@ -136,8 +139,9 @@ describe("Initialize IRC Platform", () => {
             expect(
                 // @ts-expect-error test invalid params
                 validateCredentials({
-                    context: "irc",
+                    "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
                     type: "credentials",
+                    actor,
                     object: {
                         type: "credentials",
                         host: "example.com",
@@ -154,7 +158,7 @@ describe("Initialize IRC Platform", () => {
         beforeEach((done) => {
             platform.connect(
                 {
-                    context: "irc",
+                    "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
                     type: "connect",
                     actor: actor,
                 },
@@ -167,7 +171,7 @@ describe("Initialize IRC Platform", () => {
             beforeEach((done) => {
                 platform.join(
                     {
-                        context: "irc",
+                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
                         type: "join",
                         actor: actor,
                         target: targetRoom,
@@ -184,7 +188,7 @@ describe("Initialize IRC Platform", () => {
             it("leave()", (done) => {
                 platform.leave(
                     {
-                        context: "irc",
+                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
                         type: "leave",
                         actor: actor,
                         target: targetRoom,
@@ -197,7 +201,7 @@ describe("Initialize IRC Platform", () => {
             it("send()", (done) => {
                 platform.send(
                     {
-                        context: "irc",
+                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
                         type: "send",
                         actor: actor,
                         object: { content: "har dee dar" },
@@ -211,7 +215,7 @@ describe("Initialize IRC Platform", () => {
             it("update() topic", (done) => {
                 platform.update(
                     {
-                        context: "irc",
+                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
                         type: "update",
                         actor: actor,
                         object: { type: "topic", content: "important details" },
@@ -226,7 +230,7 @@ describe("Initialize IRC Platform", () => {
             it("update() nick change", (done) => {
                 platform.update(
                     {
-                        context: "irc",
+                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
                         type: "update",
                         actor: actor,
                         object: { type: "address" },
@@ -241,7 +245,7 @@ describe("Initialize IRC Platform", () => {
             it("query()", (done) => {
                 platform.query(
                     {
-                        context: "irc",
+                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
                         type: "query",
                         actor: actor,
                         target: targetRoom,
@@ -260,7 +264,7 @@ describe("Initialize IRC Platform", () => {
                     cb();
                 }
                 platform.disconnect({
-                        context: "irc",
+                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
                         type: "disconnect",
                         actor: actor,
                     },

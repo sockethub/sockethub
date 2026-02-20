@@ -21,13 +21,12 @@ import EventEmitter from "eventemitter3";
 const ee = new EventEmitter();
 const baseProps = {
     stream: [
+        "@context",
         "id",
         "type",
         "actor",
         "target",
         "object",
-        "context",
-        "context",
         "published",
         "error",
     ],
@@ -87,14 +86,7 @@ const baseProps = {
         "xmpp:stanza-id",
     ],
 } as const;
-const rename: Record<string, string> = {
-    "@id": "id",
-    "@type": "type",
-    verb: "type",
-    displayName: "name",
-    objectType: "type",
-    platform: "context",
-};
+const rename: Record<string, string> = {};
 const expand = {
     actor: {
         primary: "id",

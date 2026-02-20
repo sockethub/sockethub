@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import { readFileSync } from "fs";
-import { validateActivityStream } from "@sockethub/schemas";
+import {
+    addPlatformSchema,
+    getPlatformSchema,
+    validateActivityStream,
+} from "@sockethub/schemas";
 import equal from "fast-deep-equal";
 
 import { IrcToActivityStreams } from "./index.js";
@@ -39,6 +43,15 @@ describe("IrcToActivityStreams", () => {
         pongs = 0,
         pings = 0;
     beforeEach(() => {
+        if (!getPlatformSchema("irc/messages")) {
+            addPlatformSchema(
+                {
+                    type: "object",
+                    additionalProperties: true,
+                },
+                "irc/messages",
+            );
+        }
         irc2as = new IrcToActivityStreams({ server: "localhost" });
         expect(irc2as).toHaveProperty("events");
         expect(typeof irc2as.events.on).toEqual("function");

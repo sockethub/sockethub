@@ -115,7 +115,11 @@ export function createRateLimiter(config: Partial<RateLimitConfig> = {}) {
             );
             socket.emit("error", {
                 type: "Error",
-                context: "error",
+                "@context": [
+                    "https://www.w3.org/ns/activitystreams",
+                    "https://sockethub.org/ns/context/v1.jsonld",
+                    "https://sockethub.org/ns/context/platform/error/v1.jsonld",
+                ],
                 actor: {
                     type: "Application",
                     name: "sockethub-server",

@@ -166,7 +166,11 @@ async function startPlatformProcess() {
                 "heartbeat",
                 {
                     type: "heartbeat",
-                    context: "sockethub:internal",
+                    "@context": [
+                        "https://www.w3.org/ns/activitystreams",
+                        "https://sockethub.org/ns/context/v1.jsonld",
+                        "https://sockethub.org/ns/context/platform/sockethub:internal/v1.jsonld",
+                    ],
                     actor: {
                         id: "sockethub",
                         type: "platform",

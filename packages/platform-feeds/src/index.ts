@@ -105,7 +105,7 @@ export default class Feeds implements PlatformInterface {
      * @example
      * Request:
      *  {
-     *    context: "feeds",
+     *    "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/feeds/v1.jsonld"],
      *    type: "fetch",
      *    actor: {
      *      id: 'http://blog.example.com/rss',
@@ -175,7 +175,11 @@ export default class Feeds implements PlatformInterface {
             .then((results) => {
                 return done(null, {
                     id: job.id || null,
-                    context: "feeds",
+                    "@context": [
+                        "https://www.w3.org/ns/activitystreams",
+                        "https://sockethub.org/ns/context/v1.jsonld",
+                        "https://sockethub.org/ns/context/platform/feeds/v1.jsonld",
+                    ],
                     type: "collection",
                     summary:
                         results.length > 0 && results[0]?.actor?.name
@@ -264,7 +268,11 @@ function buildFeedStruct(
     actor: PlatformFeedsActivityActor,
 ): PlatformFeedsActivityStream {
     return {
-        context: ASFeedType.FEEDS,
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/feeds/v1.jsonld",
+        ],
         actor: actor,
         type: "post",
     };

@@ -29,7 +29,7 @@ export interface PlatformFeedsActivityActor extends ActivityActor {
 
 export interface PlatformFeedsActivityStream extends ActivityStream {
     id?: string;
-    context: ASFeedType.FEEDS;
+    "@context": Array<string>;
     actor: PlatformFeedsActivityActor;
     type: string;
     object?: PlatformFeedsActivityObject;

@@ -4,7 +4,11 @@ export default [
         valid: true,
         type: "credentials",
         input: {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "credentials",
             actor: {
                 id: "sh-9K3Vk@irc.freenode.net",
@@ -33,7 +37,11 @@ export default [
         valid: false,
         type: "credentials",
         input: {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "credentials",
             actor: {
                 id: "sh-9K3Vk@irc.freenode.net",

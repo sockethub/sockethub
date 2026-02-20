@@ -13,7 +13,11 @@ export default [
         input: {
             id: "foo",
             type: "send",
-            context: "dummy",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+            ],
             actor: {
                 id: "dood@irc.freenode.net",
                 type: "person",
@@ -37,7 +41,11 @@ export default [
         input: {
             id: "foo",
             type: "credentials",
-            context: "dummy",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+            ],
             actor: {
                 id: "dood@irc.freenode.net",
                 type: "person",
@@ -60,7 +68,11 @@ export default [
         type: "credentials",
         input: {
             type: "credentials",
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             actor: {
                 id: "sh-9K3Vk@irc.freenode.net",
                 type: "person",
@@ -89,7 +101,11 @@ export default [
         type: "credentials",
         input: {
             actor: "hyper_rau@localhost",
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             object: {
                 username: "hyper_rau",
                 password: "123",
@@ -105,7 +121,11 @@ export default [
         type: "message",
         valid: "true",
         input: {
-            context: "foo",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/foo/v1.jsonld",
+            ],
             type: "bar",
             actor: "foo@bar",
             object: {
@@ -113,7 +133,11 @@ export default [
             },
         },
         output: {
-            context: "foo",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/foo/v1.jsonld",
+            ],
             type: "bar",
             actor: {
                 id: "foo@bar",
@@ -128,7 +152,11 @@ export default [
         type: "message",
         valid: "true",
         input: {
-            context: "foo",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/foo/v1.jsonld",
+            ],
             type: "bar",
             actor: "someone@example.org/resource",
             object: {
@@ -136,7 +164,11 @@ export default [
             },
         },
         output: {
-            context: "foo",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/foo/v1.jsonld",
+            ],
             type: "bar",
             actor: {
                 id: "someone@example.org/resource",
@@ -151,7 +183,11 @@ export default [
         type: "message",
         valid: "true",
         input: {
-            context: "foo",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/foo/v1.jsonld",
+            ],
             type: "bar",
             actor: "xmpp:someone@example.org/resource",
             object: {
@@ -159,7 +195,11 @@ export default [
             },
         },
         output: {
-            context: "foo",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/foo/v1.jsonld",
+            ],
             type: "bar",
             actor: {
                 id: "xmpp:someone@example.org/resource",
@@ -174,13 +214,21 @@ export default [
         type: "message",
         valid: true,
         input: {
-            context: "some context",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/some context/v1.jsonld",
+            ],
             type: "some type",
             actor: "blah",
             object: {},
         },
         output: {
-            context: "some context",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/some context/v1.jsonld",
+            ],
             type: "some type",
             actor: {
                 id: "blah",
@@ -195,13 +243,21 @@ export default [
         valid: true,
         type: "message",
         input: {
-            context: "some context",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/some context/v1.jsonld",
+            ],
             type: "some type",
             actor: "blah2",
             object: {},
         },
         output: {
-            context: "some context",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/some context/v1.jsonld",
+            ],
             type: "some type",
             actor: {
                 id: "blah2",
@@ -229,7 +285,11 @@ export default [
             as: {
                 id: "blah",
                 type: "send",
-                context: "hello",
+                "@context": [
+                    "https://www.w3.org/ns/activitystreams",
+                    "https://sockethub.org/ns/context/v1.jsonld",
+                    "https://sockethub.org/ns/context/platform/hello/v1.jsonld",
+                ],
                 actor: {
                     name: "dood",
                 },
@@ -252,7 +312,7 @@ export default [
                 id: "larg",
             },
         },
-        error: "Error: activity stream must contain a context property",
+        error: "Error: activity stream must contain an @context array.",
     },
     {
         name: "no actor specified",
@@ -260,7 +320,11 @@ export default [
         type: "message",
         input: {
             type: "some type",
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             object: {
                 type: "error",
                 content: "error message",
@@ -275,7 +339,11 @@ export default [
         input: {
             actor: "irc://uuu@localhost",
             type: "join",
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             target: "irc://irc.dooder.net/a-room",
         },
         output: {
@@ -283,7 +351,11 @@ export default [
                 id: "irc://uuu@localhost",
             },
             type: "join",
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             target: {
                 id: "irc://irc.dooder.net/a-room",
             },
@@ -296,7 +368,11 @@ export default [
         input: {
             actor: "hyper_rau@localhost",
             type: "join",
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             object: {},
             target: "dooder",
         },
@@ -305,7 +381,11 @@ export default [
                 id: "hyper_rau@localhost",
             },
             type: "join",
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             object: {},
             target: {
                 id: "dooder",
@@ -320,7 +400,11 @@ export default [
             actor: "sh-9K3Vk@irc.freenode.net",
             target: "blah3",
             type: "send",
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             object: {},
         },
         output: {
@@ -344,7 +428,11 @@ export default [
                 i: ["am", "extras"],
             },
             type: "send",
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             object: {},
         },
     },

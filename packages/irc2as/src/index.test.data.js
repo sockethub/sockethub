@@ -1,6 +1,10 @@
 export const TestData = [
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: {
             type: "service",
@@ -13,7 +17,11 @@ export const TestData = [
         },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: {
             type: "service",
@@ -29,7 +37,11 @@ export const TestData = [
         },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: {
             type: "person",
@@ -40,7 +52,11 @@ export const TestData = [
         object: { type: "address" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "slvrbckt@localhost", name: "slvrbckt" },
         target: {
@@ -51,28 +67,44 @@ export const TestData = [
         object: { type: "address" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "leave",
         actor: { type: "person", id: "slvrbckt@localhost", name: "slvrbckt" },
         target: { type: "room", id: "localhost/#debian", name: "#debian" },
         object: { type: "message", content: "user has left the channel" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "leave",
         actor: { type: "person", id: "jarlaxl_@localhost", name: "jarlaxl_" },
         target: { type: "service", id: "localhost" },
         object: { type: "message", content: "user has quit" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "join",
         actor: { id: "localhost", type: "service" },
         error: "no such channel sdfsdfsdfsdfsdf",
         target: { id: "sdfsdfsdfsdfsdf@localhost", type: "person" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "lio17@localhost", name: "lio17" },
         target: {
@@ -83,7 +115,11 @@ export const TestData = [
         object: { type: "topic", content: "testing123" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "send",
         actor: {
             type: "person",
@@ -98,7 +134,11 @@ export const TestData = [
         object: { type: "message", content: "-ssssssss" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "lio17@localhost", name: "lio17" },
         target: {
@@ -109,7 +149,11 @@ export const TestData = [
         object: { type: "topic", content: "no longer boating in senegal" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "send",
         actor: { type: "person", id: "raucao@localhost", name: "raucao" },
         target: {
@@ -123,7 +167,11 @@ export const TestData = [
         },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         object: { type: "presence", role: "member" },
         actor: {
@@ -138,7 +186,11 @@ export const TestData = [
         },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         object: { type: "presence", role: "member" },
         actor: {
@@ -153,7 +205,11 @@ export const TestData = [
         },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         object: { type: "presence", role: "member" },
         actor: {
@@ -168,7 +224,11 @@ export const TestData = [
         },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         object: { type: "presence", role: "member" },
         actor: {
@@ -183,7 +243,11 @@ export const TestData = [
         },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: {
             type: "person",
@@ -198,7 +262,11 @@ export const TestData = [
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "gregkare@localhost", name: "gregkare" },
         target: {
@@ -209,21 +277,33 @@ export const TestData = [
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "slvrbckt@localhost", name: "slvrbckt" },
         target: { type: "room", id: "localhost/#kosmos", name: "#kosmos" },
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "lio17@localhost", name: "lio17" },
         target: { type: "room", id: "localhost/#kosmos", name: "#kosmos" },
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: {
             type: "person",
@@ -234,35 +314,55 @@ export const TestData = [
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "botka1@localhost", name: "botka1" },
         target: { type: "room", id: "localhost/#kosmos", name: "#kosmos" },
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "derbumi@localhost", name: "derbumi" },
         target: { type: "room", id: "localhost/#kosmos", name: "#kosmos" },
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "ChanServ@localhost", name: "ChanServ" },
         target: { type: "room", id: "localhost/#kosmos", name: "#kosmos" },
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "gregkare@localhost", name: "gregkare" },
         target: { type: "room", id: "localhost/#kosmos", name: "#kosmos" },
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "hal8000@localhost", name: "hal8000" },
         target: {
@@ -273,63 +373,99 @@ export const TestData = [
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "bkero-@localhost", name: "bkero-" },
         target: { type: "room", id: "localhost/#kosmos", name: "#kosmos" },
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "galfert@localhost", name: "galfert" },
         target: { type: "room", id: "localhost/#kosmos", name: "#kosmos" },
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "raucao@localhost", name: "raucao" },
         target: { type: "room", id: "localhost/#kosmos", name: "#kosmos" },
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "hal8000@localhost", name: "hal8000" },
         target: { type: "room", id: "localhost/#kosmos", name: "#kosmos" },
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "bkero@localhost", name: "bkero" },
         target: { type: "room", id: "localhost/#kosmos", name: "#kosmos" },
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "bumi[m]@localhost", name: "bumi[m]" },
         target: { type: "room", id: "localhost/#kosmos", name: "#kosmos" },
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "slvrbckt@localhost" },
         target: { type: "room", id: "localhost/#debian" },
         error: "You're not a channel operator",
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "slvrbckt@localhost" },
         target: { type: "room", id: "localhost/#kosmos-random" },
         error: "You're not a channel operator",
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "add",
         actor: { type: "person", id: "alice@localhost", name: "alice" },
         target: { type: "person", id: "Kilroy@localhost", name: "Kilroy" },
@@ -345,7 +481,11 @@ export const TestData = [
         },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "add",
         actor: { type: "person", id: "bob@localhost", name: "bob" },
         target: { type: "person", id: "alice@localhost", name: "alice" },
@@ -357,7 +497,11 @@ export const TestData = [
         },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "add",
         actor: { type: "person", id: "alice@localhost", name: "alice" },
         target: { type: "person", id: "bob@localhost", name: "bob" },
@@ -369,28 +513,44 @@ export const TestData = [
         },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         target: { type: "room", id: "localhost/#freenode-sponsors" },
         actor: { type: "person", id: "hyper_slvrbckt@localhost" },
         error: "Cannot join channel (+i) - you must be invited",
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         target: { type: "service", id: "localhost" },
         error: "Nickname is already in use.",
         actor: { type: "person", id: "nkj@localhost", name: "nkj" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         target: { type: "service", id: "localhost" },
         error: "Nickname is already in use.",
         actor: { type: "person", id: "slvrbckt@localhost", name: "slvrbckt" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "send",
         actor: { type: "service", id: "localhost" },
         object: {
@@ -401,7 +561,11 @@ export const TestData = [
         target: { type: "person", id: "boo@localhost", name: "boo" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "send",
         actor: { type: "service", id: "localhost" },
         object: {
@@ -412,7 +576,11 @@ export const TestData = [
         target: { type: "person", id: "boo@localhost", name: "boo" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "send",
         actor: { type: "service", id: "localhost" },
         object: {
@@ -422,21 +590,33 @@ export const TestData = [
         target: { type: "person", id: "boo@localhost", name: "boo" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         target: { type: "service", id: "localhost" },
         error: "Nick/channel is temporarily unavailable",
         actor: { type: "person", id: "boo@localhost", name: "boo" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "sh-WjwOE@localhost", name: "sh-WjwOE" },
         target: { type: "person", id: "woooo@localhost", name: "woooo" },
         object: { type: "address" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "send",
         actor: { type: "service", id: "localhost" },
         object: {
@@ -447,7 +627,11 @@ export const TestData = [
         target: { type: "person", id: "slvrbckt@localhost", name: "slvrbckt" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "join",
         actor: { type: "person", id: "myuser@localhost", name: "myuser" },
         target: {
@@ -457,7 +641,11 @@ export const TestData = [
         },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "myuser@localhost", name: "myuser" },
         target: {
@@ -468,7 +656,11 @@ export const TestData = [
         object: { type: "presence", role: "member" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "botka@localhost", name: "botka" },
         target: {
@@ -479,7 +671,11 @@ export const TestData = [
         object: { type: "presence", role: "owner" },
     },
     {
-        context: "irc",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        ],
         type: "update",
         actor: { type: "person", id: "foouser@localhost", name: "foouser" },
         target: {
