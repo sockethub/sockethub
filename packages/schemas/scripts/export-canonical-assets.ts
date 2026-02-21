@@ -42,7 +42,7 @@ type PlatformConstructor = new (
     schema: PlatformSchemaShape;
 };
 
-const outputRoots = [resolve("./dist"), resolve("./src/generated")];
+const outputRoots = [resolve("./dist")];
 
 for (const root of outputRoots) {
     // These directories are fully generated artifacts and are intentionally rebuilt from scratch.
@@ -61,13 +61,6 @@ const mapsDir = resolve("./dist/maps");
 mkdirSync(contextsDir, { recursive: true });
 mkdirSync(schemasDir, { recursive: true });
 mkdirSync(mapsDir, { recursive: true });
-
-const srcGeneratedContextsDir = resolve("./src/generated/contexts");
-const srcGeneratedSchemasDir = resolve("./src/generated/schemas");
-const srcGeneratedMapsDir = resolve("./src/generated/maps");
-mkdirSync(srcGeneratedContextsDir, { recursive: true });
-mkdirSync(srcGeneratedSchemasDir, { recursive: true });
-mkdirSync(srcGeneratedMapsDir, { recursive: true });
 
 async function loadPlatformSchemas(): Promise<Array<PlatformSchemaShape>> {
     const platformDirs = readdirSync(packagesRootDir, { withFileTypes: true })
@@ -199,24 +192,10 @@ for (const platform of allSchemas) {
     mkdirSync(dirname(distContextPath), { recursive: true });
     writeFileSync(distContextPath, JSON.stringify(contextDoc, null, 2));
 
-    const srcContextPath = resolve(
-        srcGeneratedContextsDir,
-        contextRelativePath,
-    );
-    mkdirSync(dirname(srcContextPath), { recursive: true });
-    writeFileSync(srcContextPath, JSON.stringify(contextDoc, null, 2));
-
     const distSchemaPath = resolve(schemasDir, schemaRelativePath);
     mkdirSync(dirname(distSchemaPath), { recursive: true });
     writeFileSync(
         distSchemaPath,
-        JSON.stringify(platform.messages ?? {}, null, 2),
-    );
-
-    const srcSchemaPath = resolve(srcGeneratedSchemasDir, schemaRelativePath);
-    mkdirSync(dirname(srcSchemaPath), { recursive: true });
-    writeFileSync(
-        srcSchemaPath,
         JSON.stringify(platform.messages ?? {}, null, 2),
     );
 
@@ -229,25 +208,11 @@ for (const platform of allSchemas) {
         distCredsSchemaPath,
         JSON.stringify(platform.credentials ?? {}, null, 2),
     );
-
-    const srcCredsSchemaPath = resolve(
-        srcGeneratedSchemasDir,
-        credentialsSchemaRelativePath,
-    );
-    mkdirSync(dirname(srcCredsSchemaPath), { recursive: true });
-    writeFileSync(
-        srcCredsSchemaPath,
-        JSON.stringify(platform.credentials ?? {}, null, 2),
-    );
 }
 
 const baseContextRelativePath = "v1.jsonld";
 writeFileSync(
     resolve(contextsDir, baseContextRelativePath),
-    JSON.stringify(baseContext, null, 2),
-);
-writeFileSync(
-    resolve(srcGeneratedContextsDir, baseContextRelativePath),
     JSON.stringify(baseContext, null, 2),
 );
 
@@ -265,9 +230,5 @@ const contextMapDoc = {
 
 writeFileSync(
     resolve(mapsDir, "context-map.json"),
-    JSON.stringify(contextMapDoc, null, 2),
-);
-writeFileSync(
-    resolve(srcGeneratedMapsDir, "context-map.json"),
     JSON.stringify(contextMapDoc, null, 2),
 );
