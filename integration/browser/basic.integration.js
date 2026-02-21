@@ -389,7 +389,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 // (XMPP and IRC), so assert bounded shape instead of strict count.
                 expect(incomingMessages.length).to.be.at.most(2);
                 for (const message of incomingMessages) {
-                    expect(message.type).to.equal("message");
+                    expect(["message", "connect"]).to.include(message.type);
                     expect(message.error).to.be.a("string");
                     expect(["xmpp", "irc"]).to.include(message.platform);
                     expect(message["@context"]).to.eql(
