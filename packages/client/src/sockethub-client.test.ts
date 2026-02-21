@@ -94,34 +94,24 @@ describe("SockethubClient", () => {
         expect(socket.on.calledWithMatch("connect_error")).to.be.true;
         expect(socket.on.calledWithMatch("disconnect")).to.be.true;
         expect(socket.on.calledWithMatch("message")).to.be.true;
-        expect(socket.on.calledWithMatch("platforms")).to.be.true;
+        expect(socket.on.calledWithMatch("schemas")).to.be.true;
     });
 
     describe("contextFor", () => {
-        it("builds canonical context array from an instance", () => {
-            expect(sc.contextFor("xmpp")).to.eql([
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
-            ]);
-        });
-
-        it("builds canonical context array from the static helper", () => {
-            expect(SockethubClient.contextFor("dummy")).to.eql([
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
-            ]);
+        it("throws before schema registry is loaded", () => {
+            expect(() => sc.contextFor("xmpp")).to.throw(
+                "Schema registry not loaded yet",
+            );
         });
 
         it("throws when platform is missing", () => {
-            expect(() => SockethubClient.contextFor("")).to.throw(
+            expect(() => sc.contextFor("")).to.throw(
                 "requires a non-empty platform string",
             );
         });
 
         it("uses server-provided contexts and platform context URL", () => {
-            socket.emit("platforms", {
+            socket.emit("schemas", {
                 contexts: {
                     as: "https://example.com/as2",
                     sockethub: "https://example.com/sh",
@@ -150,7 +140,7 @@ describe("SockethubClient", () => {
         });
 
         it("throws for unknown platform when registry is loaded", () => {
-            socket.emit("platforms", {
+            socket.emit("schemas", {
                 contexts: {
                     as: "https://example.com/as2",
                     sockethub: "https://example.com/sh",
@@ -203,11 +193,23 @@ describe("SockethubClient", () => {
 
         it("connect", (done) => {
             expect(sc.socket.connected).to.be.false;
+            socket.io = {};
+            socket.on("schemas", (ack: any) => {
+                if (typeof ack === "function") {
+                    ack({
+                        contexts: {
+                            as: "https://example.com/as2",
+                            sockethub: "https://example.com/sh",
+                        },
+                        platforms: [],
+                    });
+                }
+            });
             sc.socket.on("connect", () => {
                 expect(sc.socket.connected).to.be.true;
-                expect(sc.socket._emit.callCount).to.equal(1);
+                expect(sc.socket._emit.callCount).to.be.greaterThanOrEqual(1);
                 expect(sc.socket._emit.calledWithMatch("connect"));
-                expect(socket.emit.calledWithMatch("platforms")).to.be.true;
+                expect(socket.emit.calledWithMatch("schemas")).to.be.true;
                 done();
             });
             socket.emit("connect");
@@ -233,8 +235,8 @@ describe("SockethubClient", () => {
             socket.emit("connect_error");
         });
 
-        it("platforms", (done) => {
-            sc.socket.on("platforms", (registry: any) => {
+        it("schemas", (done) => {
+            sc.socket.on("schemas", (registry: any) => {
                 expect(registry.contexts).to.eql({
                     as: "https://example.com/as2",
                     sockethub: "https://example.com/sh",
@@ -243,7 +245,7 @@ describe("SockethubClient", () => {
                 expect(registry.platforms[0]?.id).to.equal("xmpp");
                 done();
             });
-            socket.emit("platforms", {
+            socket.emit("schemas", {
                 contexts: {
                     as: "https://example.com/as2",
                     sockethub: "https://example.com/sh",

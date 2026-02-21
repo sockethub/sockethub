@@ -33,8 +33,8 @@ const sc = new SockethubClient(
 // Handle messages
 sc.socket.on('message', (msg) => console.log('Received:', msg));
 
-// Server-synced platform registry payload (base contexts + platforms)
-sc.socket.on('platforms', (registry) => {
+// Server-synced schema registry payload (base contexts + platforms)
+sc.socket.on('schemas', (registry) => {
   console.log('Base contexts:', registry.contexts);
   console.log('Platforms:', registry.platforms);
 });
@@ -43,13 +43,15 @@ sc.socket.on('platforms', (registry) => {
 ### First Message
 
 ```javascript
-// Echo test with dummy platform
-sc.socket.emit('message', {
-    type: 'echo',
-    '@context': sc.contextFor('dummy'),
-    actor: { id: 'test', type: 'person' },
-    object: { type: 'note', content: 'Hello!' }
-}, (response) => console.log(response));
+// Echo test with dummy platform (after schemas registry is loaded)
+sc.socket.on('schemas', () => {
+  sc.socket.emit('message', {
+      type: 'echo',
+      '@context': sc.contextFor('dummy'),
+      actor: { id: 'test', type: 'person' },
+      object: { type: 'note', content: 'Hello!' }
+  }, (response) => console.log(response));
+});
 ```
 
 ## Core Patterns

@@ -61,12 +61,6 @@ export interface PlatformRegistryPayload {
     platforms?: Array<PlatformRegistryEntry>;
 }
 
-const AS2_CONTEXT_URL = "https://www.w3.org/ns/activitystreams";
-const SOCKETHUB_CONTEXT_URL = "https://sockethub.org/ns/context/v1.jsonld";
-const SOCKETHUB_PLATFORM_CONTEXT_BASE_URL =
-    "https://sockethub.org/ns/context/platform";
-const SOCKETHUB_PLATFORM_CONTEXT_VERSION = "v1";
-
 /**
  * SockethubClient - Client library for Sockethub protocol gateway
  *
@@ -129,13 +123,6 @@ const SOCKETHUB_PLATFORM_CONTEXT_VERSION = "v1";
  * ```
  */
 export default class SockethubClient {
-    public static readonly AS2_CONTEXT_URL = AS2_CONTEXT_URL;
-    public static readonly SOCKETHUB_CONTEXT_URL = SOCKETHUB_CONTEXT_URL;
-    public static readonly SOCKETHUB_PLATFORM_CONTEXT_BASE_URL =
-        SOCKETHUB_PLATFORM_CONTEXT_BASE_URL;
-    public static readonly SOCKETHUB_PLATFORM_CONTEXT_VERSION =
-        SOCKETHUB_PLATFORM_CONTEXT_VERSION;
-
     /**
      * In-memory storage for client state that should be replayed on reconnection.
      *
@@ -153,8 +140,8 @@ export default class SockethubClient {
     public socket!: CustomEmitter;
     public debug = true;
     private platformRegistry = new Map<string, PlatformRegistryEntry>();
-    private asContextUrl = SockethubClient.AS2_CONTEXT_URL;
-    private sockethubContextUrl = SockethubClient.SOCKETHUB_CONTEXT_URL;
+    private asContextUrl?: string;
+    private sockethubContextUrl?: string;
 
     constructor(socket: Socket) {
         if (!socket) {
@@ -222,6 +209,11 @@ export default class SockethubClient {
      * Return the canonical base contexts learned from the server registry.
      */
     public getRegisteredBaseContexts(): { as: string; sockethub: string } {
+        if (!this.asContextUrl || !this.sockethubContextUrl) {
+            throw new Error(
+                "Schema registry not loaded yet. Wait for the 'schemas' event after connect.",
+            );
+        }
         return {
             as: this.asContextUrl,
             sockethub: this.sockethubContextUrl,
@@ -253,27 +245,7 @@ export default class SockethubClient {
     }
 
     /**
-     * Build canonical Sockethub contexts for a platform.
-     *
-     * This is the preferred way to compose `@context` in outbound messages.
-     */
-    public static contextFor(platform: string): ActivityStream["@context"] {
-        if (typeof platform !== "string" || platform.trim().length === 0) {
-            throw new Error(
-                "SockethubClient.contextFor(platform) requires a non-empty platform string",
-            );
-        }
-
-        const normalizedPlatform = platform.trim();
-        return [
-            SockethubClient.AS2_CONTEXT_URL,
-            SockethubClient.SOCKETHUB_CONTEXT_URL,
-            `${SockethubClient.SOCKETHUB_PLATFORM_CONTEXT_BASE_URL}/${normalizedPlatform}/${SockethubClient.SOCKETHUB_PLATFORM_CONTEXT_VERSION}.jsonld`,
-        ];
-    }
-
-    /**
-     * Instance wrapper for `SockethubClient.contextFor(platform)`.
+     * Build canonical Sockethub contexts for a platform using server-provided schema metadata.
      */
     public contextFor(platform: string): ActivityStream["@context"] {
         if (typeof platform !== "string" || platform.trim().length === 0) {
@@ -281,22 +253,22 @@ export default class SockethubClient {
                 "SockethubClient.contextFor(platform) requires a non-empty platform string",
             );
         }
-        const normalizedPlatform = platform.trim();
-        if (this.platformRegistry.size > 0) {
-            const entry = this.platformRegistry.get(normalizedPlatform);
-            if (!entry) {
-                const names = Array.from(this.platformRegistry.keys()).sort();
-                throw new Error(
-                    `unknown platform '${normalizedPlatform}'. Registered platforms: ${names.join(", ")}`,
-                );
-            }
-            return [
-                this.asContextUrl,
-                this.sockethubContextUrl,
-                entry.contextUrl,
-            ];
+
+        if (!this.asContextUrl || !this.sockethubContextUrl) {
+            throw new Error(
+                "Schema registry not loaded yet. Wait for the 'schemas' event after connect.",
+            );
         }
-        return SockethubClient.contextFor(normalizedPlatform);
+
+        const normalizedPlatform = platform.trim();
+        const entry = this.platformRegistry.get(normalizedPlatform);
+        if (!entry) {
+            const names = Array.from(this.platformRegistry.keys()).sort();
+            throw new Error(
+                `unknown platform '${normalizedPlatform}'. Registered platforms: ${names.join(", ")}`,
+            );
+        }
+        return [this.asContextUrl, this.sockethubContextUrl, entry.contextUrl];
     }
 
     private createPublicEmitter(): CustomEmitter {
@@ -363,9 +335,32 @@ export default class SockethubClient {
      * Ask server for the latest platform/context registry via ack callback.
      * This keeps client context composition aligned with server schema state.
      */
-    private requestPlatformRegistry() {
-        this._socket.emit("platforms", (payload: unknown) => {
-            this.applyPlatformRegistry(payload);
+    private requestSchemaRegistry(timeoutMs = 2000): Promise<void> {
+        return new Promise((resolve) => {
+            let settled = false;
+            const done = () => {
+                if (!settled) {
+                    settled = true;
+                    clearTimeout(timer);
+                    resolve();
+                }
+            };
+
+            const timer = setTimeout(done, timeoutMs);
+            const socketLike = this._socket as unknown as Record<
+                string,
+                unknown
+            >;
+            if (!("io" in socketLike)) {
+                clearTimeout(timer);
+                done();
+                return;
+            }
+
+            this._socket.emit("schemas", (payload: unknown) => {
+                this.applyPlatformRegistry(payload);
+                done();
+            });
         });
     }
 
@@ -379,18 +374,17 @@ export default class SockethubClient {
             return;
         }
         const registry = payload as PlatformRegistryPayload;
-        if (registry.contexts?.as && typeof registry.contexts.as === "string") {
-            this.asContextUrl = registry.contexts.as;
-        }
+        const asContextUrl = registry.contexts?.as;
+        const sockethubContextUrl = registry.contexts?.sockethub;
         if (
-            registry.contexts?.sockethub &&
-            typeof registry.contexts.sockethub === "string"
+            typeof asContextUrl !== "string" ||
+            typeof sockethubContextUrl !== "string" ||
+            !Array.isArray(registry.platforms)
         ) {
-            this.sockethubContextUrl = registry.contexts.sockethub;
-        }
-        if (!Array.isArray(registry.platforms)) {
             return;
         }
+        this.asContextUrl = asContextUrl;
+        this.sockethubContextUrl = sockethubContextUrl;
 
         this.platformRegistry.clear();
         for (const platform of registry.platforms) {
@@ -418,7 +412,7 @@ export default class SockethubClient {
             );
         }
         // Emit normalized registry payload so app code receives a stable shape.
-        this.socket._emit("platforms", {
+        this.socket._emit("schemas", {
             version: registry.version,
             contexts: this.getRegisteredBaseContexts(),
             platforms: this.getRegisteredPlatforms(),
@@ -501,7 +495,7 @@ export default class SockethubClient {
                         "activity-object",
                         this.events["activity-object"],
                     );
-                    this.requestPlatformRegistry();
+                    await this.requestSchemaRegistry();
                     this.replay("credentials", this.events.credentials);
                     this.replay("message", this.events.connect);
                     this.replay("message", this.events.join);
@@ -516,7 +510,7 @@ export default class SockethubClient {
         this._socket.on("connect", callHandler("connect"));
         this._socket.on("connect_error", callHandler("connect_error"));
         this._socket.on("disconnect", callHandler("disconnect"));
-        this._socket.on("platforms", (payload: unknown) => {
+        this._socket.on("schemas", (payload: unknown) => {
             this.applyPlatformRegistry(payload);
         });
 

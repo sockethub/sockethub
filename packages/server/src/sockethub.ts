@@ -168,14 +168,14 @@ class Sockethub {
             this.rateLimiter(socket, event[0], next);
         });
 
-        // Send platform registry metadata to clients immediately and on-demand.
-        socket.emit("platforms", platformRegistryPayload);
-        socket.on("platforms", (ack?: (payload: unknown) => void) => {
+        // Send schema metadata to clients immediately and on-demand.
+        socket.emit("schemas", platformRegistryPayload);
+        socket.on("schemas", (ack?: (payload: unknown) => void) => {
             if (typeof ack === "function") {
                 ack(platformRegistryPayload);
                 return;
             }
-            socket.emit("platforms", platformRegistryPayload);
+            socket.emit("schemas", platformRegistryPayload);
         });
 
         socket.on("disconnect", () => {

@@ -9,8 +9,8 @@ automatic reconnection and credential replay.
 
 - `SockethubClient` for connection and message handling
 - `ActivityStreams` helpers and validation utilities
-- `contextFor(platform)` helper for canonical `@context` composition
-- Automatic platform registry sync from server (`platforms` event with base contexts + platforms)
+- `contextFor(platform)` helper driven by server-provided schema metadata
+- Automatic schema registry sync from server (`schemas` event with base contexts + platforms)
 - Auto-replay of credentials and connections on reconnect
 - A browser-ready bundle in `dist/`
 
@@ -70,13 +70,14 @@ const socket = io('http://localhost:10550', { path: '/sockethub' });
 const sc = new SockethubClient(socket);
 
 sc.socket.on('message', (msg) => console.log(msg));
-sc.socket.on('platforms', (registry) => console.log(registry.contexts, registry.platforms));
-
-sc.socket.emit('message', {
-    '@context': sc.contextFor('dummy'),
-    type: 'echo',
-    actor: { id: 'test@dummy', type: 'person' },
-    object: { type: 'message', content: 'hello world' }
+sc.socket.on('schemas', (registry) => {
+    console.log(registry.contexts, registry.platforms);
+    sc.socket.emit('message', {
+        '@context': sc.contextFor('dummy'),
+        type: 'echo',
+        actor: { id: 'test@dummy', type: 'person' },
+        object: { type: 'message', content: 'hello world' }
+    });
 });
 ```
 
@@ -85,8 +86,7 @@ See the [Client Guide](../../docs/client-guide.md) for detailed usage and exampl
 ## API
 
 - **`new SockethubClient(socket)`** - Create client instance
-- **`sc.contextFor(platform)`** - Build canonical `@context` for a platform
-- **`SockethubClient.contextFor(platform)`** - Static helper variant
+- **`sc.contextFor(platform)`** - Build canonical `@context` for a platform from server registry
 - **`sc.getRegisteredPlatforms()`** - Get server-registered platforms/contexts
 - **`sc.getRegisteredBaseContexts()`** - Get server-registered AS2 and Sockethub base context URLs
 - **`sc.getPlatformSchema(platform, schemaType?)`** - Get platform message/credentials schema
