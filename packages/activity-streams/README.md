@@ -20,6 +20,9 @@ This library helps you:
 - **Build Activity Streams** that automatically link to stored objects
 - **Listen for events** when objects are created or deleted
 
+It does not rename legacy aliases like `verb`, `objectType`, `@id`, or `@type`.
+Use canonical fields directly (`type`, `id`, and `@context`).
+
 ## Install
 
 ### Node.js

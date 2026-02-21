@@ -11,6 +11,11 @@ import { IrcToActivityStreams } from "./index.js";
 import { TestData } from "./index.test.data.js";
 const ircdata = readFileSync(__dirname + "/index.test.data.irc.txt", "utf-8");
 const inputs = ircdata.split("\n");
+const IRC_CONTEXTS = [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+];
 
 function matchStream(done) {
     return (stream) => {
@@ -52,7 +57,10 @@ describe("IrcToActivityStreams", () => {
                 "irc/messages",
             );
         }
-        irc2as = new IrcToActivityStreams({ server: "localhost" });
+        irc2as = new IrcToActivityStreams({
+            server: "localhost",
+            contexts: IRC_CONTEXTS,
+        });
         expect(irc2as).toHaveProperty("events");
         expect(typeof irc2as.events.on).toEqual("function");
         irc2as.events.on("unprocessed", (string) => {

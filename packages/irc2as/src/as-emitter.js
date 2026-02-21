@@ -1,18 +1,16 @@
 const EVENT_INCOMING = "incoming";
 const EVENT_ERROR = "error";
-export const DEFAULT_CONTEXTS = [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-];
 
 export class ASEmitter {
-    constructor(events, server, contexts = DEFAULT_CONTEXTS) {
+    constructor(events, server, contexts) {
+        if (!Array.isArray(contexts) || contexts.length === 0) {
+            throw new Error(
+                "ASEmitter requires a non-empty contexts array from the caller",
+            );
+        }
         this.server = server;
         this.events = events;
-        this.contexts = Array.isArray(contexts)
-            ? [...contexts]
-            : DEFAULT_CONTEXTS;
+        this.contexts = [...contexts];
     }
 
     emitEvent(code, asObject) {

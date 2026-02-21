@@ -16,6 +16,16 @@ import {
     SOCKETHUB_BASE_CONTEXT_URL,
 } from "../src/context.ts";
 
+/**
+ * Generates canonical Sockethub AS2 artifacts for publishing:
+ * - platform JSON-LD contexts
+ * - platform message/credentials schemas
+ * - context-to-platform/schema map files
+ *
+ * Platform metadata is loaded dynamically from each platform package's
+ * exported schema object to avoid hardcoding platform-specific definitions here.
+ */
+
 type PlatformSchemaShape = {
     name: string;
     version: string;
@@ -62,6 +72,9 @@ mkdirSync(contextsDir, { recursive: true });
 mkdirSync(schemasDir, { recursive: true });
 mkdirSync(mapsDir, { recursive: true });
 
+/**
+ * Discover all workspace platform packages and read their schema metadata.
+ */
 async function loadPlatformSchemas(): Promise<Array<PlatformSchemaShape>> {
     const platformDirs = readdirSync(packagesRootDir, { withFileTypes: true })
         .filter(
@@ -131,8 +144,10 @@ async function loadPlatformSchemas(): Promise<Array<PlatformSchemaShape>> {
     return loadedSchemas;
 }
 
+// Platform packages provided by workspace modules.
 const platformSchemas = await loadPlatformSchemas();
 
+// System pseudo-platforms used by server internals.
 const systemSchemas: Array<PlatformSchemaShape> = [
     {
         name: ERROR_PLATFORM_ID,
@@ -158,6 +173,7 @@ const allSchemas = [...platformSchemas, ...systemSchemas].sort((a, b) =>
     a.name.localeCompare(b.name),
 );
 
+// Shared base JSON-LD terms for all generated platform contexts.
 const baseContext = {
     "@context": {
         as: "https://www.w3.org/ns/activitystreams#",
@@ -170,6 +186,7 @@ const contextToPlatformId: Record<string, string> = {};
 const contextToSchemaId: Record<string, string> = {};
 const contextToCredentialsSchemaId: Record<string, string> = {};
 
+// Emit per-platform context and schema artifacts, and capture lookup maps.
 for (const platform of allSchemas) {
     const contextDoc = {
         "@context": {
@@ -216,6 +233,7 @@ writeFileSync(
     JSON.stringify(baseContext, null, 2),
 );
 
+// Emit canonical context lookup maps consumed by runtime validators/resolvers.
 const contextMapDoc = {
     schemaVersion: packageJson.version,
     generatedAt: new Date().toISOString(),

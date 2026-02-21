@@ -241,6 +241,8 @@ export default class PlatformInstance {
                 try {
                     // this property should never be exposed externally
                     delete msg.sessionSecret;
+                    // platform is internal routing metadata and not part of the canonical envelope
+                    delete msg.platform;
                 } finally {
                     if (this.contextUrl) {
                         msg["@context"] = buildCanonicalContext(
