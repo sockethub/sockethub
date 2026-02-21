@@ -7,17 +7,6 @@
 const SockethubClient = require("@sockethub/client").default;
 const { io } = require("socket.io-client");
 
-const AS2_CONTEXT = "https://www.w3.org/ns/activitystreams";
-const SOCKETHUB_CONTEXT = "https://sockethub.org/ns/context/v1.jsonld";
-
-function contextFor(platform) {
-    return [
-        AS2_CONTEXT,
-        SOCKETHUB_CONTEXT,
-        `https://sockethub.org/ns/context/platform/${platform}/v1.jsonld`,
-    ];
-}
-
 // Circuit breaker - abort test if Sockethub becomes unavailable
 const MAX_CONSECUTIVE_FAILURES = 10; // Consecutive failures before triggering circuit breaker
 const ALERT_INTERVAL_MS = 5000; // Alert every 5 seconds when circuit breaker is open
@@ -153,7 +142,7 @@ function sendCredentials(context, events, done) {
     // Send credentials message (uses 'credentials' event, not 'message')
     const credentialsMsg = {
         type: "credentials",
-        "@context": contextFor("dummy"),
+        "@context": client.contextFor("dummy"),
         actor: {
             id: actorId,
             type: "person",
@@ -186,7 +175,7 @@ function sendDummyEcho(context, events, done) {
 
     const message = {
         type: "echo",
-        "@context": contextFor("dummy"),
+        "@context": client.contextFor("dummy"),
         actor: {
             id: actorId,
             type: "person",
@@ -224,7 +213,7 @@ function sendXMPPMessage(context, events, done) {
 
     const message = {
         type: "send",
-        "@context": contextFor("xmpp"),
+        "@context": client.contextFor("xmpp"),
         actor: {
             id: actorId,
             type: "person",
@@ -272,7 +261,7 @@ function sendFeedMessage(context, events, done) {
 
     const message = {
         type: "fetch",
-        "@context": contextFor("feeds"),
+        "@context": client.contextFor("feeds"),
         actor: {
             id: actorId,
             type: "person",

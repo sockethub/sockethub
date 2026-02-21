@@ -40,7 +40,7 @@ sc.socket.on('message', (msg) => console.log('Received:', msg));
 // Echo test with dummy platform
 sc.socket.emit('message', {
     type: 'echo',
-    context: 'dummy',
+    '@context': sc.contextFor('dummy'),
     actor: { id: 'test', type: 'person' },
     object: { type: 'note', content: 'Hello!' }
 }, (response) => console.log(response));
@@ -53,7 +53,7 @@ sc.socket.emit('message', {
 ```javascript
 {
   "type": "send",            // Action: send, connect, join, fetch
-  "context": "irc",          // Platform: irc, xmpp, feeds, dummy  
+  "@context": sc.contextFor("irc"),  // Canonical contexts for this platform
   "actor": { "id": "user", "type": "person" },     // Who
   "target": { "id": "#room", "type": "room" },     // Where (optional)
   "object": { "type": "note", "content": "Hi!" }   // What
@@ -69,7 +69,7 @@ properties). If none exists, it expands to `{ id }`.
 ```javascript
 // 1. Send credentials
 sc.socket.emit('credentials', {
-    context: 'irc',
+    '@context': sc.contextFor('irc'),
     actor: { id: 'mynick', type: 'person' },
     object: {
         type: 'credentials',
@@ -82,7 +82,7 @@ sc.socket.emit('credentials', {
 // 2. Connect
 sc.socket.emit('message', {
     type: 'connect',
-    context: 'irc',
+    '@context': sc.contextFor('irc'),
     actor: { id: 'mynick', type: 'person' }
 });
 ```
@@ -94,7 +94,7 @@ sc.socket.emit('message', {
 ```javascript
 sc.socket.emit('message', {
     type: 'echo',
-    context: 'dummy',
+    '@context': sc.contextFor('dummy'),
     actor: { id: 'test', type: 'person' },
     object: { type: 'note', content: 'test' }
 });
@@ -105,7 +105,7 @@ sc.socket.emit('message', {
 ```javascript
 sc.socket.emit('message', {
     type: 'fetch',
-    context: 'feeds',
+    '@context': sc.contextFor('feeds'),
     actor: { id: 'https://example.com/feed.xml', type: 'website' }
 });
 ```
@@ -116,7 +116,7 @@ sc.socket.emit('message', {
 // Join channel
 sc.socket.emit('message', {
     type: 'join',
-    context: 'irc',
+    '@context': sc.contextFor('irc'),
     actor: { id: 'mynick', type: 'person' },
     target: { id: '#channel', type: 'room' }
 });

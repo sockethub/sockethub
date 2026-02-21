@@ -81,6 +81,30 @@ describe("SockethubClient", () => {
         expect(socket.on.calledWithMatch("message")).to.be.true;
     });
 
+    describe("contextFor", () => {
+        it("builds canonical context array from an instance", () => {
+            expect(sc.contextFor("xmpp")).to.eql([
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ]);
+        });
+
+        it("builds canonical context array from the static helper", () => {
+            expect(SockethubClient.contextFor("dummy")).to.eql([
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+            ]);
+        });
+
+        it("throws when platform is missing", () => {
+            expect(() => SockethubClient.contextFor("")).to.throw(
+                "requires a non-empty platform string",
+            );
+        });
+    });
+
     describe("event handling", () => {
         it("activity-object", (done) => {
             socket.emit("activity-object", { foo: "bar" });

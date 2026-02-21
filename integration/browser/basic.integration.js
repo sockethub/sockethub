@@ -93,11 +93,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     const dummyObj = {
                         type: "echo",
                         actor: actor.id,
-                        "@context": [
-                            "https://www.w3.org/ns/activitystreams",
-                            "https://sockethub.org/ns/context/v1.jsonld",
-                            "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
-                        ],
+                        "@context": sc.contextFor("dummy"),
                         object: {
                             type: "message",
                             content: `hello world ${i}`,
@@ -123,11 +119,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 const dummyObj = {
                     type: "fail",
                     actor: actor.id,
-                    "@context": [
-                        "https://www.w3.org/ns/activitystreams",
-                        "https://sockethub.org/ns/context/v1.jsonld",
-                        "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
-                    ],
+                    "@context": sc.contextFor("dummy"),
                     object: { type: "message", content: "failure message" },
                 };
                 const msg = await emitWithAck(sc.socket, "message", dummyObj, {
@@ -150,11 +142,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 const dummyObj = {
                     type: "throw",
                     actor: actor.id,
-                    "@context": [
-                        "https://www.w3.org/ns/activitystreams",
-                        "https://sockethub.org/ns/context/v1.jsonld",
-                        "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
-                    ],
+                    "@context": sc.contextFor("dummy"),
                     object: { type: "message", content: "failure message" },
                 };
                 const msg = await emitWithAck(sc.socket, "message", dummyObj, {
@@ -181,11 +169,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         sc.socket,
                         "message",
                         {
-                            "@context": [
-                                "https://www.w3.org/ns/activitystreams",
-                                "https://sockethub.org/ns/context/v1.jsonld",
-                                "https://sockethub.org/ns/context/platform/feeds/v1.jsonld",
-                            ],
+                            "@context": sc.contextFor("feeds"),
                             type: "fetch",
                             actor: {
                                 type: "feed",
@@ -244,11 +228,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         type: "connect",
                         platform: "xmpp",
                         actor: actorObject,
-                        "@context": [
-                            "https://www.w3.org/ns/activitystreams",
-                            "https://sockethub.org/ns/context/v1.jsonld",
-                            "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
-                        ],
+                        "@context": sc.contextFor("xmpp"),
                     });
                 });
             });
@@ -260,11 +240,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         type: "join",
                         platform: "xmpp",
                         actor: actorObject,
-                        "@context": [
-                            "https://www.w3.org/ns/activitystreams",
-                            "https://sockethub.org/ns/context/v1.jsonld",
-                            "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
-                        ],
+                        "@context": sc.contextFor("xmpp"),
                         target: {
                             id: "test@prosody",
                             type: "room",
@@ -285,11 +261,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         type: "send",
                         platform: "xmpp",
                         actor: actorObject,
-                        "@context": [
-                            "https://www.w3.org/ns/activitystreams",
-                            "https://sockethub.org/ns/context/v1.jsonld",
-                            "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
-                        ],
+                        "@context": sc.contextFor("xmpp"),
                         object: {
                             type: "message",
                             content: "Hello, world!",
@@ -321,11 +293,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                                 id: invalidActorId,
                                 type: "person",
                             },
-                            "@context": [
-                                "https://www.w3.org/ns/activitystreams",
-                                "https://sockethub.org/ns/context/v1.jsonld",
-                                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
-                            ],
+                            "@context": sc.contextFor("xmpp"),
                             type: "credentials",
                             object: {
                                 type: "credentials",
@@ -345,11 +313,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         {
                             type: "connect",
                             actor: invalidActorId,
-                            "@context": [
-                                "https://www.w3.org/ns/activitystreams",
-                                "https://sockethub.org/ns/context/v1.jsonld",
-                                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
-                            ],
+                            "@context": sc.contextFor("xmpp"),
                         },
                         { label: "xmpp invalid connect" },
                     );
@@ -380,11 +344,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                                 id: invalidIrcActorId,
                                 type: "person",
                             },
-                            "@context": [
-                                "https://www.w3.org/ns/activitystreams",
-                                "https://sockethub.org/ns/context/v1.jsonld",
-                                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-                            ],
+                            "@context": sc.contextFor("irc"),
                             type: "credentials",
                             object: {
                                 type: "credentials",
@@ -404,11 +364,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         {
                             type: "connect",
                             actor: invalidIrcActorId,
-                            "@context": [
-                                "https://www.w3.org/ns/activitystreams",
-                                "https://sockethub.org/ns/context/v1.jsonld",
-                                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-                            ],
+                            "@context": sc.contextFor("irc"),
                         },
                         { label: "irc invalid connect" },
                     );
@@ -429,11 +385,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 if (incomingMessages.length === 1) {
                     expect(incomingMessages).to.eql([
                         {
-                            "@context": [
-                                "https://www.w3.org/ns/activitystreams",
-                                "https://sockethub.org/ns/context/v1.jsonld",
-                                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
-                            ],
+                            "@context": sc.contextFor("xmpp"),
                             platform: "xmpp",
                             type: "message",
                             actor: { id: "test@prosody", type: "room" },

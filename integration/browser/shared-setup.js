@@ -143,11 +143,7 @@ export function setXMPPCredentials(
 ) {
     const creds = {
         actor: jid,
-        "@context": [
-            "https://www.w3.org/ns/activitystreams",
-            "https://sockethub.org/ns/context/v1.jsonld",
-            "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
-        ],
+        "@context": sh.contextFor("xmpp"),
         type: "credentials",
         object: {
             type: "credentials",
@@ -179,11 +175,7 @@ export function connectXMPP(sh, jid) {
         {
             type: "connect",
             actor: jid,
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
-            ],
+            "@context": sh.contextFor("xmpp"),
         },
         {
             timeout: config.timeouts.connect,
@@ -205,11 +197,7 @@ export function joinXMPPRoom(sh, jid, room = config.prosody.room) {
         {
             type: "join",
             actor: jid,
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
-            ],
+            "@context": sh.contextFor("xmpp"),
             target: {
                 type: "room",
                 id: room,
@@ -232,11 +220,7 @@ export function sendXMPPMessage(sh, jid, room, content) {
         {
             type: "send",
             actor: jid,
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
-            ],
+            "@context": sh.contextFor("xmpp"),
             object: {
                 type: "message",
                 content,

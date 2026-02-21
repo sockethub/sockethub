@@ -28,6 +28,12 @@ interface CustomEmitter extends EventEmitter {
     id: string;
 }
 
+const AS2_CONTEXT_URL = "https://www.w3.org/ns/activitystreams";
+const SOCKETHUB_CONTEXT_URL = "https://sockethub.org/ns/context/v1.jsonld";
+const SOCKETHUB_PLATFORM_CONTEXT_BASE_URL =
+    "https://sockethub.org/ns/context/platform";
+const SOCKETHUB_PLATFORM_CONTEXT_VERSION = "v1";
+
 /**
  * SockethubClient - Client library for Sockethub protocol gateway
  *
@@ -90,6 +96,13 @@ interface CustomEmitter extends EventEmitter {
  * ```
  */
 export default class SockethubClient {
+    public static readonly AS2_CONTEXT_URL = AS2_CONTEXT_URL;
+    public static readonly SOCKETHUB_CONTEXT_URL = SOCKETHUB_CONTEXT_URL;
+    public static readonly SOCKETHUB_PLATFORM_CONTEXT_BASE_URL =
+        SOCKETHUB_PLATFORM_CONTEXT_BASE_URL;
+    public static readonly SOCKETHUB_PLATFORM_CONTEXT_VERSION =
+        SOCKETHUB_PLATFORM_CONTEXT_VERSION;
+
     /**
      * In-memory storage for client state that should be replayed on reconnection.
      *
@@ -156,6 +169,33 @@ export default class SockethubClient {
      */
     public clearCredentials(): void {
         this.events.credentials.clear();
+    }
+
+    /**
+     * Build canonical Sockethub contexts for a platform.
+     *
+     * This is the preferred way to compose `@context` in outbound messages.
+     */
+    public static contextFor(platform: string): ActivityStream["@context"] {
+        if (typeof platform !== "string" || platform.trim().length === 0) {
+            throw new Error(
+                "SockethubClient.contextFor(platform) requires a non-empty platform string",
+            );
+        }
+
+        const normalizedPlatform = platform.trim();
+        return [
+            SockethubClient.AS2_CONTEXT_URL,
+            SockethubClient.SOCKETHUB_CONTEXT_URL,
+            `${SockethubClient.SOCKETHUB_PLATFORM_CONTEXT_BASE_URL}/${normalizedPlatform}/${SockethubClient.SOCKETHUB_PLATFORM_CONTEXT_VERSION}.jsonld`,
+        ];
+    }
+
+    /**
+     * Instance wrapper for `SockethubClient.contextFor(platform)`.
+     */
+    public contextFor(platform: string): ActivityStream["@context"] {
+        return SockethubClient.contextFor(platform);
     }
 
     private createPublicEmitter(): CustomEmitter {
