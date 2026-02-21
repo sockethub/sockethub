@@ -1,5 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
-import * as sinon from "sinon";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import getInitObject, {
     __clearInit,
     printSettingsInfo,
@@ -58,32 +57,50 @@ describe("Init", () => {
 });
 
 describe("printSettingsInfo", () => {
-    let logSpy: sinon.SinonSpy;
-    let exitStub: sinon.SinonStub;
+    let logs: Array<string>;
+    let exitCalled: boolean;
+    let exitMock: () => never;
+    let logMock: (message?: unknown, ...optionalParams: Array<unknown>) => void;
 
     beforeEach(() => {
-        logSpy = sinon.spy(console, "log");
-        exitStub = sinon.stub(process, "exit");
-    });
-
-    afterEach(() => {
-        sinon.restore();
+        logs = [];
+        exitCalled = false;
+        logMock = (message?: unknown, ...optionalParams: Array<unknown>) => {
+            const parts = [message, ...optionalParams].filter(
+                (part) => typeof part !== "undefined",
+            );
+            logs.push(parts.map((part) => String(part)).join(" "));
+        };
+        exitMock = () => {
+            exitCalled = true;
+            throw new Error("exit called");
+        };
     });
 
     it("displays sockethub version", () => {
         const platforms = new Map();
-        printSettingsInfo("5.0.0-alpha.4", platforms);
+        expect(() =>
+            printSettingsInfo("5.0.0-alpha.4", platforms, {
+                log: logMock,
+                exit: exitMock,
+            }),
+        ).toThrow("exit called");
 
-        // Check for version in output (may have color codes)
-        sinon.assert.calledWithMatch(logSpy, sinon.match(/5\.0\.0-alpha\.4/));
+        expect(logs.join("\n")).toMatch(/5\.0\.0-alpha\.4/);
     });
 
     it("displays executable path", () => {
         const platforms = new Map();
-        printSettingsInfo("5.0.0", platforms);
+        expect(() =>
+            printSettingsInfo("5.0.0", platforms, {
+                log: logMock,
+                exit: exitMock,
+            }),
+        ).toThrow("exit called");
 
-        sinon.assert.calledWithMatch(logSpy, sinon.match(/executable:/));
-        sinon.assert.calledWithMatch(logSpy, sinon.match(/sockethub|init/));
+        const output = logs.join("\n");
+        expect(output).toMatch(/executable:/);
+        expect(output).toMatch(/sockethub|init/);
     });
 
     it("displays platform information with colors", () => {
@@ -115,24 +132,29 @@ describe("printSettingsInfo", () => {
             ],
         ]);
 
-        printSettingsInfo("5.0.0", platforms);
+        expect(() =>
+            printSettingsInfo("5.0.0", platforms, {
+                log: logMock,
+                exit: exitMock,
+            }),
+        ).toThrow("exit called");
 
-        // Verify platform name appears
-        sinon.assert.calledWithMatch(
-            logSpy,
-            sinon.match(/platform-dummy/),
-        );
-        // Verify version appears
-        sinon.assert.calledWithMatch(logSpy, sinon.match(/1\.0\.0/));
-        // Verify path appears
-        sinon.assert.calledWithMatch(logSpy, sinon.match(/path.*dummy/));
+        const output = logs.join("\n");
+        expect(output).toMatch(/platform-dummy/);
+        expect(output).toMatch(/1\.0\.0/);
+        expect(output).toMatch(/path.*dummy/);
     });
 
     it("calls process.exit after printing", () => {
         const platforms = new Map();
-        printSettingsInfo("5.0.0", platforms);
+        expect(() =>
+            printSettingsInfo("5.0.0", platforms, {
+                log: logMock,
+                exit: exitMock,
+            }),
+        ).toThrow("exit called");
 
-        sinon.assert.calledOnce(exitStub);
+        expect(exitCalled).toBeTrue();
     });
 
     it("strips colors in non-TTY environment", () => {
@@ -141,11 +163,13 @@ describe("printSettingsInfo", () => {
         process.env.NO_COLOR = "1";
 
         const platforms = new Map();
-        printSettingsInfo("5.0.0", platforms);
-
-        // Output should not contain ANSI codes
-        const calls = logSpy.getCalls();
-        const output = calls.map((c) => c.args[0]).join("\n");
+        expect(() =>
+            printSettingsInfo("5.0.0", platforms, {
+                log: logMock,
+                exit: exitMock,
+            }),
+        ).toThrow("exit called");
+        const output = logs.join("\n");
         expect(output).not.toMatch(/\x1b\[/); // No ANSI escape codes
 
         process.env.NO_COLOR = oldNoColor;

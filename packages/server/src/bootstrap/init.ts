@@ -36,45 +36,51 @@ function getExecutablePath(): string {
 export function printSettingsInfo(
     version: string,
     platforms: Map<string, PlatformStruct>,
+    options?: {
+        log?: (message?: unknown, ...optionalParams: Array<unknown>) => void;
+        exit?: (code?: number | string | null) => never;
+    },
 ) {
     const execPath = getExecutablePath();
+    const logInfo = options?.log ?? console.log;
+    const exit = options?.exit ?? process.exit;
 
-    console.log(`${chalk.cyan("sockethub")} ${version}`);
-    console.log(`${chalk.cyan("executable:")} ${execPath}`);
+    logInfo(`${chalk.cyan("sockethub")} ${version}`);
+    logInfo(`${chalk.cyan("executable:")} ${execPath}`);
 
     const wsUrl = `ws://${config.get("sockethub:host")}:${config.get("sockethub:port")}${config.get("sockethub:path")}`;
-    console.log(`${chalk.cyan("websocket:")} ${chalk.blue(wsUrl)}`);
+    logInfo(`${chalk.cyan("websocket:")} ${chalk.blue(wsUrl)}`);
 
     const examplesUrl = `http://${config.get("public:host")}:${config.get(
         "public:port",
     )}${config.get("public:path")}`;
-    console.log(
+    logInfo(
         `${chalk.cyan("examples:")} ${config.get("examples") ? chalk.blue(examplesUrl) : "disabled"}`,
     );
 
-    console.log(
+    logInfo(
         `${chalk.cyan("redis URL:")} ${chalk.blue(config.get("redis:url"))}`,
     );
 
-    console.log(
+    logInfo(
         `${chalk.cyan("platforms:")} ${Array.from(platforms.keys()).join(", ")}`,
     );
 
     if (platforms.size > 0) {
         for (const platform of platforms.values()) {
-            console.log();
-            console.log(chalk.green(`- ${platform.moduleName}`));
-            console.log(` ${chalk.dim("version:")} ${platform.version}`);
-            console.log(
+            logInfo("");
+            logInfo(chalk.green(`- ${platform.moduleName}`));
+            logInfo(` ${chalk.dim("version:")} ${platform.version}`);
+            logInfo(
                 ` ${chalk.dim("AS types:")} ${platform.types.map((t) => chalk.yellow(t)).join(", ")}`,
             );
             if (platform.modulePath) {
-                console.log(` ${chalk.dim("path:")} ${platform.modulePath}`);
+                logInfo(` ${chalk.dim("path:")} ${platform.modulePath}`);
             }
         }
     }
-    console.log();
-    process.exit();
+    logInfo("");
+    exit();
 }
 
 let initCalled = false;
