@@ -176,6 +176,15 @@ describe("Logger Package", () => {
             const log2 = createLogger("test:2");
             expect(log2.transports.length).toBe(2);
         });
+
+        it("does not throw when logging circular metadata", () => {
+            const log = createLogger("test:namespace");
+            const circular: { self?: unknown } = {};
+            circular.self = circular;
+            expect(() =>
+                log.debug("circular metadata test", { circular }),
+            ).not.toThrow();
+        });
     });
 
     describe("logger context", () => {
