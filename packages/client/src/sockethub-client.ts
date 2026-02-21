@@ -334,9 +334,14 @@ export default class SockethubClient {
                         outgoing as ActivityStream,
                     );
                     if (validationError) {
-                        throw new Error(
-                            `SockethubClient validation failed: ${validationError}`,
-                        );
+                        const errorMessage = `SockethubClient validation failed: ${validationError}`;
+                        // Preserve callback-style socket semantics: surface client-side
+                        // validation failures through ack callback when provided.
+                        if (typeof callback === "function") {
+                            callback({ error: errorMessage });
+                            return;
+                        }
+                        throw new Error(errorMessage);
                     }
                 }
             }

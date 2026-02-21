@@ -346,6 +346,52 @@ describe("SockethubClient", () => {
             }).to.throw("actor property not present");
         });
 
+        it("returns validation error via callback when registry is loaded", () => {
+            sc.socket.connected = true;
+            socket.emit("schemas", {
+                contexts: {
+                    as: "https://example.com/as2",
+                    sockethub: "https://example.com/sh",
+                },
+                platforms: [
+                    {
+                        id: "xmpp",
+                        contextUrl:
+                            "https://example.com/context/platform/xmpp/v9.jsonld",
+                        contextVersion: "9",
+                        schemaVersion: "9",
+                        types: ["send"],
+                        schemas: {
+                            messages: {},
+                            credentials: {},
+                        },
+                    },
+                ],
+            });
+
+            const validateStub = sandbox
+                .stub(sc, "validateActivity")
+                .returns("[xmpp] /actor: invalid actor for this activity");
+            const callback = sandbox.spy();
+            socket.emit.resetHistory();
+
+            expect(() => {
+                sc.socket.emit(
+                    "message",
+                    { actor: "bar", type: "send" },
+                    callback,
+                );
+            }).to.not.throw();
+
+            expect(validateStub.calledOnce).to.equal(true);
+            expect(callback.calledOnce).to.equal(true);
+            expect(callback.firstCall.args[0]).to.eql({
+                error:
+                    "SockethubClient validation failed: [xmpp] /actor: invalid actor for this activity",
+            });
+            expect(socket.emit.calledWithMatch("message")).to.equal(false);
+        });
+
         it("message", (done) => {
             sc.socket.connected = true;
             const callback = () => {};
