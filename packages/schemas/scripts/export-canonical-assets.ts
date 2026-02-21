@@ -1,31 +1,51 @@
 import {
     existsSync,
     mkdirSync,
+    readdirSync,
     readFileSync,
     rmSync,
     writeFileSync,
 } from "node:fs";
 import { dirname, resolve } from "node:path";
+import {
+    AS2_BASE_CONTEXT_URL,
+    ERROR_PLATFORM_CONTEXT_URL,
+    ERROR_PLATFORM_ID,
+    INTERNAL_PLATFORM_CONTEXT_URL,
+    INTERNAL_PLATFORM_ID,
+    SOCKETHUB_BASE_CONTEXT_URL,
+} from "../src/context.ts";
 
 type PlatformSchemaShape = {
     name: string;
     version: string;
-    as2: {
-        contextUrl: string;
-        contextVersion: string;
-        schemaVersion: string;
-        messageConstraints?: object;
-    };
+    contextUrl: string;
+    contextVersion: string;
+    schemaVersion: string;
+    messageConstraints?: object;
     credentials?: object;
     messages?: object;
 };
 
-const AS2_BASE_CONTEXT_URL = "https://www.w3.org/ns/activitystreams";
-const SOCKETHUB_BASE_CONTEXT_URL = "https://sockethub.org/ns/context/v1.jsonld";
+type PlatformPackageJson = {
+    name?: string;
+    exports?: {
+        "."?: {
+            bun?: string;
+        };
+    };
+};
+
+type PlatformConstructor = new (
+    session: Record<string, unknown>,
+) => {
+    schema: PlatformSchemaShape;
+};
 
 const outputRoots = [resolve("./dist"), resolve("./src/generated")];
 
 for (const root of outputRoots) {
+    // These directories are fully generated artifacts and are intentionally rebuilt from scratch.
     if (existsSync(root)) {
         rmSync(root, { recursive: true, force: true });
     }
@@ -33,6 +53,7 @@ for (const root of outputRoots) {
 }
 
 const packageJson = JSON.parse(readFileSync(resolve("./package.json"), "utf8"));
+const packagesRootDir = resolve("../../packages");
 
 const contextsDir = resolve("./dist/contexts");
 const schemasDir = resolve("./dist/schemas");
@@ -48,15 +69,101 @@ mkdirSync(srcGeneratedContextsDir, { recursive: true });
 mkdirSync(srcGeneratedSchemasDir, { recursive: true });
 mkdirSync(srcGeneratedMapsDir, { recursive: true });
 
-const platformSchemas: Array<PlatformSchemaShape> = [
-    (await import("../../platform-dummy/src/index.ts")).default.prototype
-        .schema,
-    (await import("../../platform-feeds/src/schema.ts")).default,
-    (await import("../../platform-irc/src/schema.ts")).PlatformIrcSchema,
-    (await import("../../platform-metadata/src/schema.ts"))
-        .PlatformMetadataSchema,
-    (await import("../../platform-xmpp/src/schema.js")).PlatformSchema,
+async function loadPlatformSchemas(): Promise<Array<PlatformSchemaShape>> {
+    const platformDirs = readdirSync(packagesRootDir, { withFileTypes: true })
+        .filter(
+            (entry) =>
+                entry.isDirectory() && entry.name.startsWith("platform-"),
+        )
+        .map((entry) => entry.name)
+        .sort((a, b) => a.localeCompare(b));
+
+    const noop = () => {};
+    const fakeSession = {
+        log: {
+            error: noop,
+            warn: noop,
+            info: noop,
+            debug: noop,
+        },
+        sendToClient: noop,
+        updateActor: async () => {},
+    };
+
+    const loadedSchemas: Array<PlatformSchemaShape> = [];
+
+    for (const platformDir of platformDirs) {
+        const packagePath = resolve(
+            packagesRootDir,
+            platformDir,
+            "package.json",
+        );
+        if (!existsSync(packagePath)) {
+            continue;
+        }
+
+        const pkg = JSON.parse(
+            readFileSync(packagePath, "utf8"),
+        ) as PlatformPackageJson;
+        if (!pkg.name?.startsWith("@sockethub/platform-")) {
+            continue;
+        }
+
+        const bunEntry = pkg.exports?.["."]?.bun;
+        if (typeof bunEntry !== "string") {
+            throw new Error(
+                `missing exports["."].bun entry for package ${pkg.name ?? platformDir}`,
+            );
+        }
+
+        const modulePath = resolve(packagesRootDir, platformDir, bunEntry);
+        const imported = await import(modulePath);
+        if (typeof imported.default !== "function") {
+            throw new Error(
+                `platform package ${pkg.name ?? platformDir} does not export a default class`,
+            );
+        }
+
+        const PlatformClass = imported.default as PlatformConstructor;
+        const platform = new PlatformClass(fakeSession);
+        if (!platform?.schema?.contextUrl) {
+            throw new Error(
+                `platform package ${pkg.name ?? platformDir} does not expose canonical schema context metadata`,
+            );
+        }
+
+        loadedSchemas.push(platform.schema);
+    }
+
+    return loadedSchemas;
+}
+
+const platformSchemas = await loadPlatformSchemas();
+
+const systemSchemas: Array<PlatformSchemaShape> = [
+    {
+        name: ERROR_PLATFORM_ID,
+        version: packageJson.version,
+        contextUrl: ERROR_PLATFORM_CONTEXT_URL,
+        contextVersion: "1",
+        schemaVersion: "1",
+        messages: {},
+        credentials: {},
+    },
+    {
+        name: INTERNAL_PLATFORM_ID,
+        version: packageJson.version,
+        contextUrl: INTERNAL_PLATFORM_CONTEXT_URL,
+        contextVersion: "1",
+        schemaVersion: "1",
+        messages: {},
+        credentials: {},
+    },
 ];
+
+const allSchemas = [...platformSchemas, ...systemSchemas].sort((a, b) =>
+    a.name.localeCompare(b.name),
+);
 
 const baseContext = {
     "@context": {
@@ -70,21 +177,22 @@ const contextToPlatformId: Record<string, string> = {};
 const contextToSchemaId: Record<string, string> = {};
 const contextToCredentialsSchemaId: Record<string, string> = {};
 
-for (const platform of platformSchemas) {
+for (const platform of allSchemas) {
     const contextDoc = {
         "@context": {
             ...baseContext["@context"],
             [`${platform.name}Type`]: `sh:${platform.name}Type`,
         },
     };
-    const contextRelativePath = `platform/${platform.name}/v${platform.as2.contextVersion}.jsonld`;
-    const schemaRelativePath = `platform/${platform.name}/v${platform.as2.schemaVersion}/messages.schema.json`;
-    const credentialsSchemaRelativePath = `platform/${platform.name}/v${platform.as2.schemaVersion}/credentials.schema.json`;
 
-    contextToPlatformId[platform.as2.contextUrl] = platform.name;
-    contextToSchemaId[platform.as2.contextUrl] =
+    const contextRelativePath = `platform/${platform.name}/v${platform.contextVersion}.jsonld`;
+    const schemaRelativePath = `platform/${platform.name}/v${platform.schemaVersion}/messages.schema.json`;
+    const credentialsSchemaRelativePath = `platform/${platform.name}/v${platform.schemaVersion}/credentials.schema.json`;
+
+    contextToPlatformId[platform.contextUrl] = platform.name;
+    contextToSchemaId[platform.contextUrl] =
         `https://sockethub.org/schemas/as2/${schemaRelativePath}`;
-    contextToCredentialsSchemaId[platform.as2.contextUrl] =
+    contextToCredentialsSchemaId[platform.contextUrl] =
         `https://sockethub.org/schemas/as2/${credentialsSchemaRelativePath}`;
 
     const distContextPath = resolve(contextsDir, contextRelativePath);

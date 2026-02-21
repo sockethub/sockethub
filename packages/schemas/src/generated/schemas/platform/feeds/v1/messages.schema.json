@@ -1,9 +1,13 @@
 {
-  "required": ["type"],
+  "required": [
+    "type"
+  ],
   "properties": {
     "type": {
       "type": "string",
-      "enum": ["fetch"]
+      "enum": [
+        "fetch"
+      ]
     },
     "object": {
       "type": "object",

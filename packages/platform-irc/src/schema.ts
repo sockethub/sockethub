@@ -5,11 +5,9 @@ const version = packageJson.version;
 export const PlatformIrcSchema = {
     name: "irc",
     version: version,
-    as2: {
-        contextUrl: "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-        contextVersion: "1",
-        schemaVersion: "1",
-    },
+    contextUrl: "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+    contextVersion: "1",
+    schemaVersion: "1",
     messages: {
         required: ["type"],
         properties: {

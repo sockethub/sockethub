@@ -3,11 +3,9 @@ import packageJSON from "../package.json" with { type: "json" };
 export default {
     name: "feeds",
     version: packageJSON.version,
-    as2: {
-        contextUrl: "https://sockethub.org/ns/context/platform/feeds/v1.jsonld",
-        contextVersion: "1",
-        schemaVersion: "1",
-    },
+    contextUrl: "https://sockethub.org/ns/context/platform/feeds/v1.jsonld",
+    contextVersion: "1",
+    schemaVersion: "1",
     messages: {
         required: ["type"],
         properties: {

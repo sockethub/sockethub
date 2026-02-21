@@ -25,6 +25,10 @@ import type {
     PlatformInterface,
     PlatformSession,
 } from "@sockethub/schemas";
+import {
+    buildCanonicalContext,
+    INTERNAL_PLATFORM_CONTEXT_URL,
+} from "@sockethub/schemas";
 import config from "./config";
 
 // Simple wrapper function to help with testing
@@ -166,11 +170,9 @@ async function startPlatformProcess() {
                 "heartbeat",
                 {
                     type: "heartbeat",
-                    "@context": [
-                        "https://www.w3.org/ns/activitystreams",
-                        "https://sockethub.org/ns/context/v1.jsonld",
-                        "https://sockethub.org/ns/context/platform/sockethub:internal/v1.jsonld",
-                    ],
+                    "@context": buildCanonicalContext(
+                        INTERNAL_PLATFORM_CONTEXT_URL,
+                    ),
                     actor: {
                         id: "sockethub",
                         type: "platform",

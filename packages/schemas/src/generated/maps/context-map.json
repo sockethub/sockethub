@@ -1,25 +1,31 @@
 {
   "schemaVersion": "3.0.0-alpha.11",
-  "generatedAt": "2026-02-20T20:37:40.967Z",
+  "generatedAt": "2026-02-21T02:43:26.629Z",
   "contextToPlatformId": {
     "https://sockethub.org/ns/context/platform/dummy/v1.jsonld": "dummy",
+    "https://sockethub.org/ns/context/platform/error/v1.jsonld": "error",
     "https://sockethub.org/ns/context/platform/feeds/v1.jsonld": "feeds",
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld": "irc",
     "https://sockethub.org/ns/context/platform/metadata/v1.jsonld": "metadata",
+    "https://sockethub.org/ns/context/platform/sockethub:internal/v1.jsonld": "sockethub:internal",
     "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld": "xmpp"
   },
   "contextToSchemaId": {
     "https://sockethub.org/ns/context/platform/dummy/v1.jsonld": "https://sockethub.org/schemas/as2/platform/dummy/v1/messages.schema.json",
+    "https://sockethub.org/ns/context/platform/error/v1.jsonld": "https://sockethub.org/schemas/as2/platform/error/v1/messages.schema.json",
     "https://sockethub.org/ns/context/platform/feeds/v1.jsonld": "https://sockethub.org/schemas/as2/platform/feeds/v1/messages.schema.json",
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld": "https://sockethub.org/schemas/as2/platform/irc/v1/messages.schema.json",
     "https://sockethub.org/ns/context/platform/metadata/v1.jsonld": "https://sockethub.org/schemas/as2/platform/metadata/v1/messages.schema.json",
+    "https://sockethub.org/ns/context/platform/sockethub:internal/v1.jsonld": "https://sockethub.org/schemas/as2/platform/sockethub:internal/v1/messages.schema.json",
     "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld": "https://sockethub.org/schemas/as2/platform/xmpp/v1/messages.schema.json"
   },
   "contextToCredentialsSchemaId": {
     "https://sockethub.org/ns/context/platform/dummy/v1.jsonld": "https://sockethub.org/schemas/as2/platform/dummy/v1/credentials.schema.json",
+    "https://sockethub.org/ns/context/platform/error/v1.jsonld": "https://sockethub.org/schemas/as2/platform/error/v1/credentials.schema.json",
     "https://sockethub.org/ns/context/platform/feeds/v1.jsonld": "https://sockethub.org/schemas/as2/platform/feeds/v1/credentials.schema.json",
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld": "https://sockethub.org/schemas/as2/platform/irc/v1/credentials.schema.json",
     "https://sockethub.org/ns/context/platform/metadata/v1.jsonld": "https://sockethub.org/schemas/as2/platform/metadata/v1/credentials.schema.json",
+    "https://sockethub.org/ns/context/platform/sockethub:internal/v1.jsonld": "https://sockethub.org/schemas/as2/platform/sockethub:internal/v1/credentials.schema.json",
     "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld": "https://sockethub.org/schemas/as2/platform/xmpp/v1/credentials.schema.json"
   },
   "constants": {

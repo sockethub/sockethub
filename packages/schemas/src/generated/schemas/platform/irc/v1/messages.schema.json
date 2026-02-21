@@ -1,5 +1,7 @@
 {
-  "required": ["type"],
+  "required": [
+    "type"
+  ],
   "properties": {
     "type": {
       "enum": [

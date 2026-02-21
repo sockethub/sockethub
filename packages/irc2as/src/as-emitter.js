@@ -1,10 +1,18 @@
 const EVENT_INCOMING = "incoming";
 const EVENT_ERROR = "error";
+export const DEFAULT_CONTEXTS = [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+];
 
 export class ASEmitter {
-    constructor(events, server) {
+    constructor(events, server, contexts = DEFAULT_CONTEXTS) {
         this.server = server;
         this.events = events;
+        this.contexts = Array.isArray(contexts)
+            ? [...contexts]
+            : DEFAULT_CONTEXTS;
     }
 
     emitEvent(code, asObject) {
@@ -16,11 +24,7 @@ export class ASEmitter {
 
     __generalError(nick, content) {
         return {
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-            ],
+            "@context": this.contexts,
             type: "update",
             actor: {
                 type: "person",
@@ -37,11 +41,7 @@ export class ASEmitter {
 
     presence(nick, role, channel) {
         this.emitEvent(EVENT_INCOMING, {
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-            ],
+            "@context": this.contexts,
             type: "update",
             actor: {
                 type: "person",
@@ -62,11 +62,7 @@ export class ASEmitter {
 
     channelError(channel, nick, content) {
         this.emitEvent(EVENT_ERROR, {
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-            ],
+            "@context": this.contexts,
             type: "update",
             actor: {
                 type: "person",
@@ -86,11 +82,7 @@ export class ASEmitter {
 
     notice(nick, content) {
         this.emitEvent(EVENT_INCOMING, {
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-            ],
+            "@context": this.contexts,
             type: "send",
             actor: {
                 type: "service",
@@ -114,11 +106,7 @@ export class ASEmitter {
 
     joinError(nick) {
         this.emitEvent(EVENT_ERROR, {
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-            ],
+            "@context": this.contexts,
             type: "join",
             actor: {
                 id: this.server,
@@ -134,11 +122,7 @@ export class ASEmitter {
 
     topicChange(channel, nick, content) {
         this.emitEvent(EVENT_INCOMING, {
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-            ],
+            "@context": this.contexts,
             type: "update",
             actor: {
                 type: "person",
@@ -159,11 +143,7 @@ export class ASEmitter {
 
     joinRoom(channel, nick) {
         this.emitEvent(EVENT_INCOMING, {
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-            ],
+            "@context": this.contexts,
             type: "join",
             actor: {
                 type: "person",
@@ -180,11 +160,7 @@ export class ASEmitter {
 
     userQuit(nick) {
         this.emitEvent(EVENT_INCOMING, {
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-            ],
+            "@context": this.contexts,
             type: "leave",
             actor: {
                 type: "person",
@@ -204,11 +180,7 @@ export class ASEmitter {
 
     userPart(channel, nick) {
         this.emitEvent(EVENT_INCOMING, {
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-            ],
+            "@context": this.contexts,
             type: "leave",
             actor: {
                 type: "person",
@@ -242,11 +214,7 @@ export class ASEmitter {
             message = content;
         }
         this.emitEvent(EVENT_INCOMING, {
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-            ],
+            "@context": this.contexts,
             type: "send",
             actor: {
                 type: "person",
@@ -267,11 +235,7 @@ export class ASEmitter {
 
     role(type, nick, target, role, channel) {
         this.emitEvent(EVENT_INCOMING, {
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-            ],
+            "@context": this.contexts,
             type: type,
             actor: {
                 type: "person",
@@ -301,11 +265,7 @@ export class ASEmitter {
 
     nickChange(nick, content) {
         this.emitEvent(EVENT_INCOMING, {
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-            ],
+            "@context": this.contexts,
             type: "update",
             actor: {
                 type: "person",

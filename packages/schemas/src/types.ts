@@ -127,12 +127,10 @@ export interface PersistentPlatformConfig extends BasePlatformConfig {
 export interface PlatformSchemaStruct {
     name: string;
     version: string;
-    as2: {
-        contextUrl: string;
-        contextVersion: string;
-        schemaVersion: string;
-        messageConstraints?: object;
-    };
+    contextUrl: string;
+    contextVersion: string;
+    schemaVersion: string;
+    messageConstraints?: object;
     credentials?: object;
     messages?: {
         required?: string[];

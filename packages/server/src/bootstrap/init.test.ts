@@ -115,12 +115,10 @@ describe("printSettingsInfo", () => {
                     types: ["echo", "greet"],
                     config: {},
                     schemas: {
-                        as2: {
-                            contextUrl:
-                                "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
-                            contextVersion: "1",
-                            schemaVersion: "1",
-                        },
+                        contextUrl:
+                            "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+                        contextVersion: "1",
+                        schemaVersion: "1",
                         credentials: {},
                         messages: {},
                     },

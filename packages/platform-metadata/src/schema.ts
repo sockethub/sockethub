@@ -5,12 +5,9 @@ const version = packageJson.version;
 export const PlatformMetadataSchema = {
     name: "metadata",
     version: version,
-    as2: {
-        contextUrl:
-            "https://sockethub.org/ns/context/platform/metadata/v1.jsonld",
-        contextVersion: "1",
-        schemaVersion: "1",
-    },
+    contextUrl: "https://sockethub.org/ns/context/platform/metadata/v1.jsonld",
+    contextVersion: "1",
+    schemaVersion: "1",
     messages: {
         required: ["type"],
         properties: {

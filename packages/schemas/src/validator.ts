@@ -2,9 +2,13 @@ import Ajv, { type Schema } from "ajv";
 import addFormats from "ajv-formats";
 import additionsFormats2019 from "ajv-formats-draft2019";
 import {
+    ERROR_PLATFORM_CONTEXT_URL,
+    ERROR_PLATFORM_ID,
     getCredentialsSchemaIdByContextUrl,
     getPlatformIdByContextUrl,
     getSchemaIdByContextUrl,
+    INTERNAL_PLATFORM_CONTEXT_URL,
+    INTERNAL_PLATFORM_ID,
     registerPlatformContext,
     resolvePlatformContextUrl,
 } from "./context.js";
@@ -25,6 +29,7 @@ type SchemasDict = Record<string, Schema>;
 const schemaURL = "https://sockethub.org/schemas/v0";
 const schemas: SchemasDict = {};
 let validationErrorOptions: ValidationErrorOptions = {};
+let systemContextsRegistered = false;
 
 schemas[`${schemaURL}/activity-stream`] = ActivityStreamSchema;
 schemas[`${schemaURL}/activity-object`] = ActivityObjectSchema;
@@ -32,6 +37,36 @@ schemas[`${schemaURL}/activity-object`] = ActivityObjectSchema;
 for (const uri in schemas) {
     ajv.addSchema(schemas[uri], uri);
 }
+
+function registerSystemContext(platformId: string, contextUrl: string): void {
+    registerPlatformContext(
+        platformId,
+        contextUrl,
+        `${schemaURL}/context/${platformId}/messages`,
+        `${schemaURL}/context/${platformId}/credentials`,
+    );
+
+    const messageSchemaRef = `${schemaURL}/context/${platformId}/messages`;
+    if (!ajv.getSchema(messageSchemaRef)) {
+        ajv.addSchema({}, messageSchemaRef);
+    }
+
+    const credentialsSchemaRef = `${schemaURL}/context/${platformId}/credentials`;
+    if (!ajv.getSchema(credentialsSchemaRef)) {
+        ajv.addSchema({}, credentialsSchemaRef);
+    }
+}
+
+export function registerSystemPlatformContexts(): void {
+    if (systemContextsRegistered) {
+        return;
+    }
+    registerSystemContext(ERROR_PLATFORM_ID, ERROR_PLATFORM_CONTEXT_URL);
+    registerSystemContext(INTERNAL_PLATFORM_ID, INTERNAL_PLATFORM_CONTEXT_URL);
+    systemContextsRegistered = true;
+}
+
+registerSystemPlatformContexts();
 
 function handleValidation(
     schemaRef: string,

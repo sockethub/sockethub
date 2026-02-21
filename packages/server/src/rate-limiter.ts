@@ -1,4 +1,8 @@
 import { createLogger } from "@sockethub/logger";
+import {
+    buildCanonicalContext,
+    ERROR_PLATFORM_CONTEXT_URL,
+} from "@sockethub/schemas";
 import type { Socket } from "socket.io";
 
 const log = createLogger("server:rate-limiter");
@@ -115,11 +119,7 @@ export function createRateLimiter(config: Partial<RateLimitConfig> = {}) {
             );
             socket.emit("error", {
                 type: "Error",
-                "@context": [
-                    "https://www.w3.org/ns/activitystreams",
-                    "https://sockethub.org/ns/context/v1.jsonld",
-                    "https://sockethub.org/ns/context/platform/error/v1.jsonld",
-                ],
+                "@context": buildCanonicalContext(ERROR_PLATFORM_CONTEXT_URL),
                 actor: {
                     type: "Application",
                     name: "sockethub-server",

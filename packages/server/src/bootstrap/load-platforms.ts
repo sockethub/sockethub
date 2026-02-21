@@ -38,12 +38,10 @@ export type PlatformMap = Map<string, PlatformStruct>;
 export type PlatformSchemaRegistry = {
     name: string;
     version: string;
-    as2: {
-        contextUrl: string;
-        contextVersion: string;
-        schemaVersion: string;
-        messageConstraints?: Schema;
-    };
+    contextUrl: string;
+    contextVersion: string;
+    schemaVersion: string;
+    messageConstraints?: Schema;
     credentials?: Schema | boolean;
     messages?: Schema | boolean;
 };
@@ -167,22 +165,20 @@ export default async function loadPlatforms(
             schemas: {
                 name: p.schema.name,
                 version: p.schema.version,
-                as2: {
-                    contextUrl: p.schema.as2.contextUrl,
-                    contextVersion: p.schema.as2.contextVersion,
-                    schemaVersion: p.schema.as2.schemaVersion,
-                    messageConstraints: p.schema.as2.messageConstraints as
-                        | Schema
-                        | undefined,
-                },
+                contextUrl: p.schema.contextUrl,
+                contextVersion: p.schema.contextVersion,
+                schemaVersion: p.schema.schemaVersion,
+                messageConstraints: p.schema.messageConstraints as
+                    | Schema
+                    | undefined,
                 credentials: p.schema.credentials || {},
                 messages: p.schema.messages || {},
             },
             version: p.schema.version,
             types: types,
-            contextUrl: p.schema.as2.contextUrl,
-            contextVersion: p.schema.as2.contextVersion,
-            schemaVersion: p.schema.as2.schemaVersion,
+            contextUrl: p.schema.contextUrl,
+            contextVersion: p.schema.contextVersion,
+            schemaVersion: p.schema.schemaVersion,
         });
         log.info(`loaded platform ${p.schema.name} v${p.schema.version}`);
     }

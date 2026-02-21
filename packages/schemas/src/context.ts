@@ -3,6 +3,12 @@ import type { ActivityStream, JsonLdContext } from "./types.js";
 export const AS2_BASE_CONTEXT_URL = "https://www.w3.org/ns/activitystreams";
 export const SOCKETHUB_BASE_CONTEXT_URL =
     "https://sockethub.org/ns/context/v1.jsonld";
+export const ERROR_PLATFORM_ID = "error";
+export const ERROR_PLATFORM_CONTEXT_URL =
+    "https://sockethub.org/ns/context/platform/error/v1.jsonld";
+export const INTERNAL_PLATFORM_ID = "sockethub:internal";
+export const INTERNAL_PLATFORM_CONTEXT_URL =
+    "https://sockethub.org/ns/context/platform/sockethub:internal/v1.jsonld";
 
 const platformContextToPlatformId = new Map<string, string>();
 const platformContextToSchemaId = new Map<string, string>();

@@ -21,29 +21,32 @@
 export const PlatformSchema = {
     $id: "https://sockethub.org/schemas/v/platform.json",
     type: "object",
-    required: ["name", "version", "messages", "as2"],
+    required: [
+        "name",
+        "version",
+        "messages",
+        "contextUrl",
+        "contextVersion",
+        "schemaVersion",
+    ],
     additionalProperties: false,
     properties: {
-        as2: {
-            title: "as2",
+        contextUrl: {
+            title: "contextUrl",
+            type: "string",
+            format: "uri",
+        },
+        contextVersion: {
+            title: "contextVersion",
+            type: "string",
+        },
+        schemaVersion: {
+            title: "schemaVersion",
+            type: "string",
+        },
+        messageConstraints: {
+            title: "messageConstraints",
             type: "object",
-            required: ["contextUrl", "contextVersion", "schemaVersion"],
-            additionalProperties: false,
-            properties: {
-                contextUrl: {
-                    type: "string",
-                    format: "uri",
-                },
-                contextVersion: {
-                    type: "string",
-                },
-                schemaVersion: {
-                    type: "string",
-                },
-                messageConstraints: {
-                    type: "object",
-                },
-            },
         },
         credentials: {
             title: "credentials",

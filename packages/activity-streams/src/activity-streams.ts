@@ -86,7 +86,6 @@ const baseProps = {
         "xmpp:stanza-id",
     ],
 } as const;
-const rename: Record<string, string> = {};
 const expand = {
     actor: {
         primary: "id",
@@ -116,16 +115,6 @@ let specialObjs: string[] = []; // the objects don't get rejected for bad props
 function matchesCustomProp(type: string, key: string) {
     const props = customProps[type];
     return Array.isArray(props) && props.includes(key);
-}
-
-function renameProp(obj: Record<string, unknown>, key: string) {
-    const renameKey = rename[key];
-    if (!renameKey) {
-        return obj;
-    }
-    obj[renameKey] = obj[key];
-    delete obj[key];
-    return obj;
 }
 
 function validateObject(
@@ -180,12 +169,6 @@ function validateObject(
 
     for (const key of unknownKeys) {
         const ao = incomingObj as ActivityObject;
-        if (rename[key]) {
-            // rename property instead of fail
-            renameProp(ao as Record<string, unknown>, key);
-            continue;
-        }
-
         if (matchesCustomProp(ao.type, key)) {
             // custom property matches, continue
             continue;

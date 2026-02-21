@@ -1,5 +1,5 @@
 import events from "node:events";
-import { ASEmitter } from "./as-emitter.js";
+import { ASEmitter, DEFAULT_CONTEXTS } from "./as-emitter.js";
 
 const EVENT_INCOMING = "incoming";
 // EVENT_ERROR = 'error',
@@ -60,6 +60,9 @@ export class IrcToActivityStreams {
     constructor(cfg) {
         const config = cfg || {};
         this.server = config.server;
+        this.contexts = Array.isArray(config.contexts)
+            ? [...config.contexts]
+            : DEFAULT_CONTEXTS;
         this.events = new events.EventEmitter();
         this.__buffer = {};
         this.__buffer[NAMES] = {};
@@ -111,7 +114,7 @@ export class IrcToActivityStreams {
         msg,
         incoming,
     ) {
-        const ase = new ASEmitter(this.events, this.server);
+        const ase = new ASEmitter(this.events, this.server, this.contexts);
         let nick;
         let type;
         let role;
@@ -173,11 +176,7 @@ export class IrcToActivityStreams {
             case MOTD: // MOTD
                 if (!this.__buffer[MOTD]) {
                     this.__buffer[MOTD] = {
-                        "@context": [
-                            "https://www.w3.org/ns/activitystreams",
-                            "https://sockethub.org/ns/context/v1.jsonld",
-                            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-                        ],
+                        "@context": this.contexts,
                         type: "update",
                         actor: {
                             type: "service",

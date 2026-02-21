@@ -10,7 +10,10 @@ import type {
     Logger,
     PlatformConfig,
 } from "@sockethub/schemas";
-import { buildCanonicalContext } from "@sockethub/schemas";
+import {
+    buildCanonicalContext,
+    INTERNAL_PLATFORM_CONTEXT_URL,
+} from "@sockethub/schemas";
 import type { Socket } from "socket.io";
 import config from "./config.js";
 import { getSocket } from "./listener.js";
@@ -342,9 +345,9 @@ export default class PlatformInstance {
      */
     private async reportError(sessionId: string, errorMessage: string) {
         const errorObject: ActivityStream = {
-            "@context": this.contextUrl
-                ? buildCanonicalContext(this.contextUrl)
-                : [],
+            "@context": buildCanonicalContext(
+                this.contextUrl ?? INTERNAL_PLATFORM_CONTEXT_URL,
+            ),
             type: "error",
             actor: { id: this.actor, type: "unknown" },
             error: errorMessage,

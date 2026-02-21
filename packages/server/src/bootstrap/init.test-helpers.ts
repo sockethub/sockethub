@@ -13,11 +13,9 @@ function getFakePlatform(name: string) {
             return {
                 name: name,
                 version: "0.0.1",
-                as2: {
-                    contextUrl: `https://sockethub.org/ns/context/platform/${name}/v1.jsonld`,
-                    contextVersion: "1",
-                    schemaVersion: "1",
-                },
+                contextUrl: `https://sockethub.org/ns/context/platform/${name}/v1.jsonld`,
+                contextVersion: "1",
+                schemaVersion: "1",
                 credentials: {
                     required: ["object"],
                     properties: {
