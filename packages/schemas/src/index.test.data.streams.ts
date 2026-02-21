@@ -1,4 +1,4 @@
-import { ObjectTypesList } from "./helpers/objects";
+import { ActorTypesList } from "./helpers/objects";
 
 export default [
     [
@@ -200,7 +200,7 @@ export default [
             },
         },
         false,
-        `[dood] /actor: must match exactly one schema in oneOf: ${ObjectTypesList.join(
+        `[dood] /actor: must match exactly one schema in oneOf: ${ActorTypesList.join(
             ", ",
         )}`,
     ],

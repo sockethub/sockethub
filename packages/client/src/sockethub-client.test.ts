@@ -33,7 +33,22 @@ describe("SockethubClient", () => {
         asInstance = new EventEmitter();
         sandbox.spy(asInstance, "on");
         sandbox.spy(asInstance, "emit");
-        asInstance.Stream = sandbox.stub().returnsArg(0);
+        asInstance.Stream = sandbox.stub().callsFake((stream: any) => {
+            if (!stream || typeof stream !== "object") {
+                return stream;
+            }
+            const next = { ...stream };
+            if (typeof next.actor === "string") {
+                next.actor = { id: next.actor };
+            }
+            if (typeof next.target === "string") {
+                next.target = { id: next.target };
+            }
+            if (typeof next.object === "string") {
+                next.object = { content: next.object };
+            }
+            return next;
+        });
         asInstance.Object = {
             create: sandbox.stub(),
         };
@@ -184,7 +199,7 @@ describe("SockethubClient", () => {
             sc.socket.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar", type: "bar" });
+                expect(data).to.be.eql({ actor: { id: "bar" }, type: "bar" });
                 expect(cb).to.be.eql(callback);
                 done();
             });
@@ -195,7 +210,7 @@ describe("SockethubClient", () => {
             sc.socket.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar", type: "join" });
+                expect(data).to.be.eql({ actor: { id: "bar" }, type: "join" });
                 expect(cb).to.be.eql(callback);
                 done();
             });
@@ -206,7 +221,7 @@ describe("SockethubClient", () => {
             sc.socket.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar", type: "leave" });
+                expect(data).to.be.eql({ actor: { id: "bar" }, type: "leave" });
                 expect(cb).to.be.eql(callback);
                 done();
             });
@@ -221,7 +236,10 @@ describe("SockethubClient", () => {
             sc.socket.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar", type: "connect" });
+                expect(data).to.be.eql({
+                    actor: { id: "bar" },
+                    type: "connect",
+                });
                 expect(cb).to.be.eql(callback);
                 done();
             });
@@ -236,7 +254,10 @@ describe("SockethubClient", () => {
             sc.socket.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar", type: "disconnect" });
+                expect(data).to.be.eql({
+                    actor: { id: "bar" },
+                    type: "disconnect",
+                });
                 expect(cb).to.be.eql(callback);
                 done();
             });
@@ -251,7 +272,7 @@ describe("SockethubClient", () => {
             sc.socket.connected = false;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar" });
+                expect(data).to.be.eql({ actor: { id: "bar" } });
                 expect(cb).to.be.eql(callback);
                 done();
             });
@@ -273,7 +294,7 @@ describe("SockethubClient", () => {
             sc.socket.connected = true;
             const callback = () => {};
             socket.once("credentials", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar" });
+                expect(data).to.be.eql({ actor: { id: "bar", type: "person" } });
                 expect(cb).to.be.eql(callback);
                 done();
             });

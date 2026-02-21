@@ -2,12 +2,12 @@ import {
     AS2_BASE_CONTEXT_URL,
     SOCKETHUB_BASE_CONTEXT_URL,
 } from "../context.js";
-import { ObjectTypesList, ObjectTypesSchema } from "../helpers/objects.js";
-import { ActivityObjectSchema } from "./activity-object.js";
-
-const validActorRefs = ActivityObjectSchema.properties.object.oneOf;
-const validTargetRefs = ActivityObjectSchema.properties.object.oneOf;
-// console.log(validActorRefs);
+import {
+    ObjectTypesList,
+    ObjectTypesSchema,
+    validActorRefs,
+    validTargetRefs,
+} from "../helpers/objects.js";
 
 const validObjectRefs = [];
 

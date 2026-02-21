@@ -1,6 +1,6 @@
 import type { ErrorObject } from "ajv";
 import type { ActivityObject, ActivityStream } from "../types.js";
-import { ObjectTypesList } from "./objects.js";
+import { ActorTypesList, ObjectTypesList, TargetTypesList } from "./objects.js";
 
 export interface ValidationErrorOptions {
     excludeTypes?: Array<string>;
@@ -126,9 +126,16 @@ function composeFinalError(
     // try to build a list of valid types
     let msg: string;
     if (error.keyword === "oneOf") {
-        const filteredTypes = filterTypeList(ObjectTypesList, options);
+        const instanceRoot = error.instancePath.split("/")[1];
+        const pathScopedTypes =
+            instanceRoot === "actor"
+                ? ActorTypesList
+                : instanceRoot === "target"
+                  ? TargetTypesList
+                  : ObjectTypesList;
+        const filteredTypes = filterTypeList(pathScopedTypes, options);
         const typesList =
-            filteredTypes.length > 0 ? filteredTypes : ObjectTypesList;
+            filteredTypes.length > 0 ? filteredTypes : pathScopedTypes;
         msg =
             `${error.instancePath}: ${error.message}: ` +
             `${typesList.join(", ")}`;

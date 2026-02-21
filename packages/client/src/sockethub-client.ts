@@ -206,14 +206,35 @@ export default class SockethubClient {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-expect-error
         socket.emit = (event, content, callback): void => {
-            if (event === "credentials") {
-                this.eventCredentials(content);
-            } else if (event === "activity-object") {
-                this.eventActivityObject(content);
-            } else if (event === "message") {
-                this.eventMessage(content);
+            let outgoing = content;
+            if (event === "credentials" || event === "message") {
+                outgoing = this.ActivityStreams.Stream(
+                    content as ActivityStream,
+                );
+                if (
+                    event === "credentials" &&
+                    outgoing &&
+                    typeof outgoing === "object" &&
+                    "actor" in (outgoing as ActivityStream)
+                ) {
+                    const activity = outgoing as ActivityStream;
+                    if (
+                        activity.actor &&
+                        typeof activity.actor === "object" &&
+                        !activity.actor.type
+                    ) {
+                        activity.actor.type = "person";
+                    }
+                }
             }
-            this._socket.emit(event as string, content, callback);
+            if (event === "credentials") {
+                this.eventCredentials(outgoing as ActivityStream);
+            } else if (event === "activity-object") {
+                this.eventActivityObject(outgoing as ActivityObject);
+            } else if (event === "message") {
+                this.eventMessage(outgoing as BaseActivityObject);
+            }
+            this._socket.emit(event as string, outgoing, callback);
         };
         socket.connected = false;
         socket.disconnect = () => {

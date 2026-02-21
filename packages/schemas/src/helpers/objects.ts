@@ -248,6 +248,29 @@ export const ObjectTypesSchema = {
 // Internal AS object types reserved for Sockethub IPC/housekeeping.
 export const InternalObjectTypesList = ["platform", "heartbeat"];
 export const ObjectTypesList = Object.keys(ObjectTypesSchema);
+export const ActorTypesList = [
+    "person",
+    "room",
+    "service",
+    "feed",
+    "website",
+    "platform",
+];
+export const TargetTypesList = [
+    "person",
+    "room",
+    "service",
+    "feed",
+    "website",
+    "platform",
+    "address",
+];
+export const validActorRefs = ActorTypesList.map((type) => ({
+    $ref: `#/definitions/type/${type}`,
+}));
+export const validTargetRefs = TargetTypesList.map((type) => ({
+    $ref: `#/definitions/type/${type}`,
+}));
 
 for (const type of ObjectTypesList) {
     if (type === "credentials") {
