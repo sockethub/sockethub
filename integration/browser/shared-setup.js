@@ -133,14 +133,34 @@ export function emitWithAck(
     });
 }
 
+export function waitForSchemas(sh, timeout = config.timeouts.connect) {
+    return waitFor(
+        () => {
+            try {
+                return (
+                    sh.socket.connected &&
+                    sh.getRegisteredPlatforms().length > 0
+                );
+            } catch {
+                return false;
+            }
+        },
+        timeout,
+        50,
+        () =>
+            `connected=${Boolean(sh?.socket?.connected)} platforms=${sh?.getRegisteredPlatforms?.().length ?? 0}`,
+    );
+}
+
 // Helper function to set XMPP credentials
-export function setXMPPCredentials(
+export async function setXMPPCredentials(
     sh,
     jid,
     resource = config.prosody.resource,
     username = config.prosody.testUser.username,
     password = config.prosody.testUser.password,
 ) {
+    await waitForSchemas(sh);
     const creds = {
         actor: jid,
         "@context": sh.contextFor("xmpp"),
@@ -168,7 +188,8 @@ export function setXMPPCredentials(
 }
 
 // Helper function to connect to XMPP
-export function connectXMPP(sh, jid) {
+export async function connectXMPP(sh, jid) {
+    await waitForSchemas(sh);
     return emitWithAck(
         sh.socket,
         "message",
@@ -190,7 +211,8 @@ export function connectXMPP(sh, jid) {
 }
 
 // Helper function to join XMPP room
-export function joinXMPPRoom(sh, jid, room = config.prosody.room) {
+export async function joinXMPPRoom(sh, jid, room = config.prosody.room) {
+    await waitForSchemas(sh);
     return emitWithAck(
         sh.socket,
         "message",
@@ -213,7 +235,8 @@ export function joinXMPPRoom(sh, jid, room = config.prosody.room) {
 }
 
 // Helper function to send XMPP message
-export function sendXMPPMessage(sh, jid, room, content) {
+export async function sendXMPPMessage(sh, jid, room, content) {
+    await waitForSchemas(sh);
     return emitWithAck(
         sh.socket,
         "message",

@@ -206,6 +206,17 @@ export default class SockethubClient {
     }
 
     /**
+     * Indicates whether server-provided schema/context registry data is loaded.
+     */
+    public isSchemasReady(): boolean {
+        return Boolean(
+            this.asContextUrl &&
+                this.sockethubContextUrl &&
+                this.platformRegistry.size > 0,
+        );
+    }
+
+    /**
      * Return the canonical base contexts learned from the server registry.
      */
     public getRegisteredBaseContexts(): { as: string; sockethub: string } {
@@ -231,6 +242,26 @@ export default class SockethubClient {
         return this.platformRegistry.get(normalizedPlatform)?.schemas?.[
             schemaType
         ];
+    }
+
+    /**
+     * Wait for schema registry data from the server and return the normalized payload.
+     */
+    public async waitForSchemas(
+        timeoutMs = 2000,
+    ): Promise<PlatformRegistryPayload> {
+        if (!this.isSchemasReady()) {
+            await this.requestSchemaRegistry(timeoutMs);
+        }
+        if (!this.isSchemasReady()) {
+            throw new Error(
+                "Schema registry not loaded yet. Wait for the 'schemas' event after connect.",
+            );
+        }
+        return {
+            contexts: this.getRegisteredBaseContexts(),
+            platforms: this.getRegisteredPlatforms(),
+        };
     }
 
     /**

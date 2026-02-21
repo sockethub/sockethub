@@ -22,5 +22,13 @@ export const PlatformMetadataSchema = {
                 ],
             },
         },
+        definitions: {
+            objectTypes: {
+                "feed-parameters-url": {
+                    type: "object",
+                    additionalProperties: true,
+                },
+            },
+        },
     },
 };

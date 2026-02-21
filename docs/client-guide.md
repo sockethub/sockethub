@@ -44,7 +44,8 @@ sc.socket.on('schemas', (registry) => {
 
 ```javascript
 // Echo test with dummy platform (after schemas registry is loaded)
-sc.socket.on('schemas', () => {
+sc.socket.on('schemas', async () => {
+  await sc.waitForSchemas();
   sc.socket.emit('message', {
       type: 'echo',
       '@context': sc.contextFor('dummy'),

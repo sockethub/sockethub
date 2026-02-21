@@ -70,8 +70,9 @@ const socket = io('http://localhost:10550', { path: '/sockethub' });
 const sc = new SockethubClient(socket);
 
 sc.socket.on('message', (msg) => console.log(msg));
-sc.socket.on('schemas', (registry) => {
+sc.socket.on('schemas', async (registry) => {
     console.log(registry.contexts, registry.platforms);
+    await sc.waitForSchemas();
     sc.socket.emit('message', {
         '@context': sc.contextFor('dummy'),
         type: 'echo',
@@ -87,6 +88,8 @@ See the [Client Guide](../../docs/client-guide.md) for detailed usage and exampl
 
 - **`new SockethubClient(socket)`** - Create client instance
 - **`sc.contextFor(platform)`** - Build canonical `@context` for a platform from server registry
+- **`sc.isSchemasReady()`** - Check whether server schema/context registry is loaded
+- **`sc.waitForSchemas(timeoutMs?)`** - Await schema/context readiness before composing messages
 - **`sc.getRegisteredPlatforms()`** - Get server-registered platforms/contexts
 - **`sc.getRegisteredBaseContexts()`** - Get server-registered AS2 and Sockethub base context URLs
 - **`sc.getPlatformSchema(platform, schemaType?)`** - Get platform message/credentials schema

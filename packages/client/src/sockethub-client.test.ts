@@ -98,6 +98,65 @@ describe("SockethubClient", () => {
     });
 
     describe("contextFor", () => {
+        it("tracks schema readiness", () => {
+            expect(sc.isSchemasReady()).to.equal(false);
+            socket.emit("schemas", {
+                contexts: {
+                    as: "https://example.com/as2",
+                    sockethub: "https://example.com/sh",
+                },
+                platforms: [
+                    {
+                        id: "dummy",
+                        contextUrl:
+                            "https://example.com/context/platform/dummy/v1.jsonld",
+                        contextVersion: "1",
+                        schemaVersion: "1",
+                        types: ["echo"],
+                        schemas: {
+                            messages: {},
+                            credentials: {},
+                        },
+                    },
+                ],
+            });
+            expect(sc.isSchemasReady()).to.equal(true);
+        });
+
+        it("waitForSchemas resolves once registry arrives", async () => {
+            socket.io = {};
+            socket.on("schemas", (ack: any) => {
+                if (typeof ack === "function") {
+                    ack({
+                        contexts: {
+                            as: "https://example.com/as2",
+                            sockethub: "https://example.com/sh",
+                        },
+                        platforms: [
+                            {
+                                id: "dummy",
+                                contextUrl:
+                                    "https://example.com/context/platform/dummy/v1.jsonld",
+                                contextVersion: "1",
+                                schemaVersion: "1",
+                                types: ["echo"],
+                                schemas: {
+                                    messages: {},
+                                    credentials: {},
+                                },
+                            },
+                        ],
+                    });
+                }
+            });
+            const registry = await sc.waitForSchemas();
+            expect(registry.contexts).to.eql({
+                as: "https://example.com/as2",
+                sockethub: "https://example.com/sh",
+            });
+            expect(registry.platforms?.[0]?.id).to.equal("dummy");
+        });
+
         it("throws before schema registry is loaded", () => {
             expect(() => sc.contextFor("xmpp")).to.throw(
                 "Schema registry not loaded yet",
