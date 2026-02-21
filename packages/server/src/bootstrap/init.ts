@@ -42,6 +42,8 @@ export function printSettingsInfo(
     },
 ) {
     const execPath = getExecutablePath();
+    // Allow callers (primarily tests) to inject logger/exit shims so this
+    // function can be asserted without printing to stdout or exiting the process.
     const logInfo = options?.log ?? console.log;
     const exit = options?.exit ?? process.exit;
 
