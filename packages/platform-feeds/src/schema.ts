@@ -21,5 +21,17 @@ export default {
                 ],
             },
         },
+        definitions: {
+            objectTypes: {
+                "feed-parameters-date": {
+                    type: "object",
+                    additionalProperties: true,
+                },
+                "feed-parameters-url": {
+                    type: "object",
+                    additionalProperties: true,
+                },
+            },
+        },
     },
 };
