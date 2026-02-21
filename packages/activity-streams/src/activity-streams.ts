@@ -24,6 +24,7 @@ const baseProps = {
         "@context",
         "id",
         "type",
+        "platform",
         "actor",
         "target",
         "object",

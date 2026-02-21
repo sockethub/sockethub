@@ -315,18 +315,15 @@ export default class SockethubClient {
                 outgoing = this.ActivityStreams.Stream(
                     content as ActivityStream,
                 );
-                if (
-                    event === "credentials" &&
-                    outgoing &&
-                    typeof outgoing === "object" &&
-                    "actor" in (outgoing as ActivityStream)
-                ) {
+                if (outgoing && typeof outgoing === "object") {
                     const activity = outgoing as ActivityStream;
                     if (
                         activity.actor &&
                         typeof activity.actor === "object" &&
                         !activity.actor.type
                     ) {
+                        // Normalize the minimal actor object shape produced from string actors
+                        // so schema validation and downstream code can rely on actor.type.
                         activity.actor.type = "person";
                     }
                 }

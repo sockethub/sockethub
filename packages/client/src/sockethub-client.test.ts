@@ -350,7 +350,10 @@ describe("SockethubClient", () => {
             sc.socket.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: { id: "bar" }, type: "bar" });
+                expect(data).to.be.eql({
+                    actor: { id: "bar", type: "person" },
+                    type: "bar",
+                });
                 expect(cb).to.be.eql(callback);
                 done();
             });
@@ -361,7 +364,10 @@ describe("SockethubClient", () => {
             sc.socket.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: { id: "bar" }, type: "join" });
+                expect(data).to.be.eql({
+                    actor: { id: "bar", type: "person" },
+                    type: "join",
+                });
                 expect(cb).to.be.eql(callback);
                 done();
             });
@@ -372,7 +378,10 @@ describe("SockethubClient", () => {
             sc.socket.connected = true;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: { id: "bar" }, type: "leave" });
+                expect(data).to.be.eql({
+                    actor: { id: "bar", type: "person" },
+                    type: "leave",
+                });
                 expect(cb).to.be.eql(callback);
                 done();
             });
@@ -388,7 +397,7 @@ describe("SockethubClient", () => {
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
                 expect(data).to.be.eql({
-                    actor: { id: "bar" },
+                    actor: { id: "bar", type: "person" },
                     type: "connect",
                 });
                 expect(cb).to.be.eql(callback);
@@ -406,7 +415,7 @@ describe("SockethubClient", () => {
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
                 expect(data).to.be.eql({
-                    actor: { id: "bar" },
+                    actor: { id: "bar", type: "person" },
                     type: "disconnect",
                 });
                 expect(cb).to.be.eql(callback);
@@ -423,7 +432,7 @@ describe("SockethubClient", () => {
             sc.socket.connected = false;
             const callback = () => {};
             socket.once("message", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: { id: "bar" } });
+                expect(data).to.be.eql({ actor: { id: "bar", type: "person" } });
                 expect(cb).to.be.eql(callback);
                 done();
             });
