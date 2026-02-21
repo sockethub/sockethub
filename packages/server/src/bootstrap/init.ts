@@ -169,4 +169,10 @@ async function __loadInit(): Promise<IInitObject> {
 export function __clearInit() {
     init = undefined;
     initCalled = false;
+    initWaitCount = 0;
+    resolveQueue.length = 0;
+    if (cancelWait) {
+        clearInterval(cancelWait);
+        cancelWait = undefined;
+    }
 }
