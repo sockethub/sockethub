@@ -176,6 +176,7 @@ describe("PlatformInstance", () => {
             const emittedPayload = socketMock.emit.getCall(0).args[1];
             expect(emittedPayload).toEqual({
                 foo: "this is a message object",
+                platform: "a platform name",
                 "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/a platform name/v1.jsonld"],
             });
         });
@@ -215,6 +216,7 @@ describe("PlatformInstance", () => {
                 expect(pi.broadcastToSharedPeers.callCount).toEqual(1);
                 sandbox.assert.calledWith(pi.sendToClient, "a session id", {
                     foo: "bar",
+                    platform: "a platform name",
                 });
             });
 
@@ -228,6 +230,7 @@ describe("PlatformInstance", () => {
                 sandbox.assert.calledWith(pi.sendToClient, "a session id", {
                     foo: "bar",
                     error: "a bad result message",
+                    platform: "a platform name",
                 });
             });
         });

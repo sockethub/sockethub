@@ -136,6 +136,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 if (msg?.error) {
                     expect(msg.error).to.equal("Error: failure message");
                     dummyObj.error = "Error: failure message";
+                    dummyObj.platform = "dummy";
                     dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
                     expect(msg).to.eql(dummyObj);
                 } else {
@@ -162,6 +163,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 if (msg?.error) {
                     expect(msg.error).to.equal("Error: failure message");
                     dummyObj.error = "Error: failure message";
+                    dummyObj.platform = "dummy";
                     dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
                     expect(msg).to.eql(dummyObj);
                 } else {
@@ -240,6 +242,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     const msg = await connectXMPP(sc, jid);
                     expect(msg).to.eql({
                         type: "connect",
+                        platform: "xmpp",
                         actor: actorObject,
                         "@context": [
                             "https://www.w3.org/ns/activitystreams",
@@ -255,6 +258,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     const msg = await joinXMPPRoom(sc, jid, "test@prosody");
                     expect(msg).to.eql({
                         type: "join",
+                        platform: "xmpp",
                         actor: actorObject,
                         "@context": [
                             "https://www.w3.org/ns/activitystreams",
@@ -279,6 +283,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     );
                     expect(msg).to.eql({
                         type: "send",
+                        platform: "xmpp",
                         actor: actorObject,
                         "@context": [
                             "https://www.w3.org/ns/activitystreams",
@@ -429,6 +434,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                                 "https://sockethub.org/ns/context/v1.jsonld",
                                 "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
                             ],
+                            platform: "xmpp",
                             type: "message",
                             actor: { id: "test@prosody", type: "room" },
                             error: '<error type="cancel"><service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error>',

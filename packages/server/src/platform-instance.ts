@@ -239,10 +239,7 @@ export default class PlatformInstance {
         return this.getSocket(sessionId).then(
             (socket: Socket) => {
                 try {
-                    // this property should never be exposed externally
-                    delete msg.sessionSecret;
-                    // platform is internal routing metadata and not part of the canonical envelope
-                    delete msg.platform;
+                    this.toExternalPayload(msg as ActivityStream);
                 } finally {
                     if (this.contextUrl) {
                         msg["@context"] = buildCanonicalContext(
@@ -280,7 +277,12 @@ export default class PlatformInstance {
     private toExternalPayload(payload: ActivityStream): ActivityStream {
         const external = payload as InternalActivityStream;
         delete external.sessionSecret;
-        delete external.platform;
+        if (
+            typeof external.platform !== "string" ||
+            external.platform.length === 0
+        ) {
+            external.platform = this.name;
+        }
         return payload;
     }
 
