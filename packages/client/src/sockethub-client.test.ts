@@ -88,12 +88,13 @@ describe("SockethubClient", () => {
     });
 
     it("registers a listeners for socket events", () => {
-        expect(socket.on.callCount).to.equal(5);
+        expect(socket.on.callCount).to.equal(6);
         expect(socket.on.calledWithMatch("activity-object")).to.be.true;
         expect(socket.on.calledWithMatch("connect")).to.be.true;
         expect(socket.on.calledWithMatch("connect_error")).to.be.true;
         expect(socket.on.calledWithMatch("disconnect")).to.be.true;
         expect(socket.on.calledWithMatch("message")).to.be.true;
+        expect(socket.on.calledWithMatch("platforms")).to.be.true;
     });
 
     describe("contextFor", () => {
@@ -116,6 +117,62 @@ describe("SockethubClient", () => {
         it("throws when platform is missing", () => {
             expect(() => SockethubClient.contextFor("")).to.throw(
                 "requires a non-empty platform string",
+            );
+        });
+
+        it("uses server-provided contexts and platform context URL", () => {
+            socket.emit("platforms", {
+                contexts: {
+                    as: "https://example.com/as2",
+                    sockethub: "https://example.com/sh",
+                },
+                platforms: [
+                    {
+                        id: "xmpp",
+                        contextUrl:
+                            "https://example.com/context/platform/xmpp/v9.jsonld",
+                        contextVersion: "9",
+                        schemaVersion: "9",
+                        types: ["connect", "send"],
+                        schemas: {
+                            messages: {},
+                            credentials: {},
+                        },
+                    },
+                ],
+            });
+
+            expect(sc.contextFor("xmpp")).to.eql([
+                "https://example.com/as2",
+                "https://example.com/sh",
+                "https://example.com/context/platform/xmpp/v9.jsonld",
+            ]);
+        });
+
+        it("throws for unknown platform when registry is loaded", () => {
+            socket.emit("platforms", {
+                contexts: {
+                    as: "https://example.com/as2",
+                    sockethub: "https://example.com/sh",
+                },
+                platforms: [
+                    {
+                        id: "xmpp",
+                        contextUrl:
+                            "https://example.com/context/platform/xmpp/v9.jsonld",
+                        contextVersion: "9",
+                        schemaVersion: "9",
+                        types: ["connect"],
+                        schemas: {
+                            messages: {},
+                            credentials: {},
+                        },
+                    },
+                ],
+            });
+
+            expect(() => sc.contextFor("irc")).to.throw(
+                "unknown platform 'irc'",
             );
         });
     });
@@ -150,6 +207,7 @@ describe("SockethubClient", () => {
                 expect(sc.socket.connected).to.be.true;
                 expect(sc.socket._emit.callCount).to.equal(1);
                 expect(sc.socket._emit.calledWithMatch("connect"));
+                expect(socket.emit.calledWithMatch("platforms")).to.be.true;
                 done();
             });
             socket.emit("connect");

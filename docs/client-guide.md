@@ -32,6 +32,9 @@ const sc = new SockethubClient(
 
 // Handle messages
 sc.socket.on('message', (msg) => console.log('Received:', msg));
+
+// Server-synced platform registry (id + context URL + schemas)
+sc.socket.on('platforms', (platforms) => console.log('Platforms:', platforms));
 ```
 
 ### First Message

@@ -7,7 +7,11 @@ import type {
     ActivityStream,
     InternalActivityStream,
 } from "@sockethub/schemas";
-import { resolvePlatformId } from "@sockethub/schemas";
+import {
+    AS2_BASE_CONTEXT_URL,
+    resolvePlatformId,
+    SOCKETHUB_BASE_CONTEXT_URL,
+} from "@sockethub/schemas";
 import type { Socket } from "socket.io";
 import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
@@ -55,6 +59,29 @@ class Sockethub {
     status: boolean;
     processManager!: ProcessManager;
     private rateLimiter!: ReturnType<typeof createRateLimiter>;
+
+    private buildPlatformRegistryPayload() {
+        return {
+            version: this.processManager?.version,
+            contexts: {
+                as: AS2_BASE_CONTEXT_URL,
+                sockethub: SOCKETHUB_BASE_CONTEXT_URL,
+            },
+            platforms: Array.from(this.platformRegistry.values()).map(
+                (platform) => ({
+                    id: platform.id,
+                    contextUrl: platform.contextUrl,
+                    contextVersion: platform.contextVersion,
+                    schemaVersion: platform.schemaVersion,
+                    types: platform.types,
+                    schemas: {
+                        credentials: platform.schemas.credentials || {},
+                        messages: platform.schemas.messages || {},
+                    },
+                }),
+            ),
+        };
+    }
 
     constructor() {
         this.status = false;
@@ -119,10 +146,21 @@ class Sockethub {
             );
 
         sessionLog.debug("socket.io connection");
+        const platformRegistryPayload = this.buildPlatformRegistryPayload();
 
         // Rate limiting middleware - runs on every incoming event
         socket.use((event, next) => {
             this.rateLimiter(socket, event[0], next);
+        });
+
+        // Send platform registry metadata to clients immediately and on-demand.
+        socket.emit("platforms", platformRegistryPayload);
+        socket.on("platforms", (ack?: (payload: unknown) => void) => {
+            if (typeof ack === "function") {
+                ack(platformRegistryPayload);
+                return;
+            }
+            socket.emit("platforms", platformRegistryPayload);
         });
 
         socket.on("disconnect", () => {

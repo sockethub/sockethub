@@ -4,6 +4,12 @@ import type {
     ActivityStream,
     BaseActivityObject,
 } from "@sockethub/schemas";
+import {
+    addPlatformContext,
+    addPlatformSchema,
+    validateActivityStream,
+    validateCredentials,
+} from "@sockethub/schemas";
 import EventEmitter from "eventemitter3";
 import type { Socket } from "socket.io-client";
 
@@ -26,6 +32,29 @@ interface CustomEmitter extends EventEmitter {
     disconnect(): void;
     connected: boolean;
     id: string;
+}
+
+interface PlatformRegistrySchemas {
+    credentials?: object;
+    messages?: object;
+}
+
+export interface PlatformRegistryEntry {
+    id: string;
+    contextUrl: string;
+    contextVersion: string;
+    schemaVersion: string;
+    types: Array<string>;
+    schemas: PlatformRegistrySchemas;
+}
+
+interface PlatformRegistryPayload {
+    version?: string;
+    contexts?: {
+        as?: string;
+        sockethub?: string;
+    };
+    platforms?: Array<PlatformRegistryEntry>;
 }
 
 const AS2_CONTEXT_URL = "https://www.w3.org/ns/activitystreams";
@@ -119,6 +148,9 @@ export default class SockethubClient {
     public ActivityStreams!: ASManager;
     public socket!: CustomEmitter;
     public debug = true;
+    private platformRegistry = new Map<string, PlatformRegistryEntry>();
+    private asContextUrl = SockethubClient.AS2_CONTEXT_URL;
+    private sockethubContextUrl = SockethubClient.SOCKETHUB_CONTEXT_URL;
 
     constructor(socket: Socket) {
         if (!socket) {
@@ -172,6 +204,41 @@ export default class SockethubClient {
     }
 
     /**
+     * Return the platform registry discovered from the server.
+     */
+    public getRegisteredPlatforms(): Array<PlatformRegistryEntry> {
+        return Array.from(this.platformRegistry.values()).map((platform) => ({
+            ...platform,
+            types: [...platform.types],
+            schemas: { ...platform.schemas },
+        }));
+    }
+
+    public getPlatformSchema(
+        platform: string,
+        schemaType: "messages" | "credentials" = "messages",
+    ): object | undefined {
+        const normalizedPlatform = platform?.trim();
+        if (!normalizedPlatform) {
+            return undefined;
+        }
+        return this.platformRegistry.get(normalizedPlatform)?.schemas?.[
+            schemaType
+        ];
+    }
+
+    /**
+     * Validate an activity stream against currently registered platform schemas.
+     * Returns an empty string when valid.
+     */
+    public validateActivity(activity: ActivityStream): string {
+        if (activity.type === "credentials") {
+            return validateCredentials(activity);
+        }
+        return validateActivityStream(activity);
+    }
+
+    /**
      * Build canonical Sockethub contexts for a platform.
      *
      * This is the preferred way to compose `@context` in outbound messages.
@@ -195,7 +262,27 @@ export default class SockethubClient {
      * Instance wrapper for `SockethubClient.contextFor(platform)`.
      */
     public contextFor(platform: string): ActivityStream["@context"] {
-        return SockethubClient.contextFor(platform);
+        if (typeof platform !== "string" || platform.trim().length === 0) {
+            throw new Error(
+                "SockethubClient.contextFor(platform) requires a non-empty platform string",
+            );
+        }
+        const normalizedPlatform = platform.trim();
+        if (this.platformRegistry.size > 0) {
+            const entry = this.platformRegistry.get(normalizedPlatform);
+            if (!entry) {
+                const names = Array.from(this.platformRegistry.keys()).sort();
+                throw new Error(
+                    `unknown platform '${normalizedPlatform}'. Registered platforms: ${names.join(", ")}`,
+                );
+            }
+            return [
+                this.asContextUrl,
+                this.sockethubContextUrl,
+                entry.contextUrl,
+            ];
+        }
+        return SockethubClient.contextFor(normalizedPlatform);
     }
 
     private createPublicEmitter(): CustomEmitter {
@@ -226,6 +313,16 @@ export default class SockethubClient {
                         activity.actor.type = "person";
                     }
                 }
+                if (this.platformRegistry.size > 0) {
+                    const validationError = this.validateActivity(
+                        outgoing as ActivityStream,
+                    );
+                    if (validationError) {
+                        throw new Error(
+                            `SockethubClient validation failed: ${validationError}`,
+                        );
+                    }
+                }
             }
             if (event === "credentials") {
                 this.eventCredentials(outgoing as ActivityStream);
@@ -244,6 +341,58 @@ export default class SockethubClient {
             this._socket.connect();
         };
         return socket;
+    }
+
+    private requestPlatformRegistry() {
+        this._socket.emit("platforms", (payload: unknown) => {
+            this.applyPlatformRegistry(payload);
+        });
+    }
+
+    private applyPlatformRegistry(payload: unknown) {
+        if (!payload || typeof payload !== "object") {
+            return;
+        }
+        const registry = payload as PlatformRegistryPayload;
+        if (registry.contexts?.as && typeof registry.contexts.as === "string") {
+            this.asContextUrl = registry.contexts.as;
+        }
+        if (
+            registry.contexts?.sockethub &&
+            typeof registry.contexts.sockethub === "string"
+        ) {
+            this.sockethubContextUrl = registry.contexts.sockethub;
+        }
+        if (!Array.isArray(registry.platforms)) {
+            return;
+        }
+
+        this.platformRegistry.clear();
+        for (const platform of registry.platforms) {
+            if (
+                !platform ||
+                typeof platform !== "object" ||
+                typeof platform.id !== "string" ||
+                typeof platform.contextUrl !== "string"
+            ) {
+                continue;
+            }
+            this.platformRegistry.set(platform.id, {
+                ...platform,
+                types: Array.isArray(platform.types) ? platform.types : [],
+                schemas: platform.schemas || {},
+            });
+            addPlatformContext(platform.id, platform.contextUrl);
+            addPlatformSchema(
+                platform.schemas?.credentials || {},
+                `${platform.id}/credentials`,
+            );
+            addPlatformSchema(
+                platform.schemas?.messages || {},
+                `${platform.id}/messages`,
+            );
+        }
+        this.socket._emit("platforms", this.getRegisteredPlatforms());
     }
 
     private eventActivityObject(content: ActivityObject) {
@@ -322,6 +471,7 @@ export default class SockethubClient {
                         "activity-object",
                         this.events["activity-object"],
                     );
+                    this.requestPlatformRegistry();
                     this.replay("credentials", this.events.credentials);
                     this.replay("message", this.events.connect);
                     this.replay("message", this.events.join);
@@ -336,6 +486,9 @@ export default class SockethubClient {
         this._socket.on("connect", callHandler("connect"));
         this._socket.on("connect_error", callHandler("connect_error"));
         this._socket.on("disconnect", callHandler("disconnect"));
+        this._socket.on("platforms", (payload: unknown) => {
+            this.applyPlatformRegistry(payload);
+        });
 
         // use as middleware to receive incoming Sockethub messages and unpack them
         // using the ActivityStreams library before passing them along to the app.

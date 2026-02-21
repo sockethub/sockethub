@@ -10,6 +10,7 @@ automatic reconnection and credential replay.
 - `SockethubClient` for connection and message handling
 - `ActivityStreams` helpers and validation utilities
 - `contextFor(platform)` helper for canonical `@context` composition
+- Automatic platform registry sync from server (`platforms` event)
 - Auto-replay of credentials and connections on reconnect
 - A browser-ready bundle in `dist/`
 
@@ -69,6 +70,7 @@ const socket = io('http://localhost:10550', { path: '/sockethub' });
 const sc = new SockethubClient(socket);
 
 sc.socket.on('message', (msg) => console.log(msg));
+sc.socket.on('platforms', (platforms) => console.log(platforms));
 
 sc.socket.emit('message', {
     '@context': sc.contextFor('dummy'),
@@ -85,6 +87,9 @@ See the [Client Guide](../../docs/client-guide.md) for detailed usage and exampl
 - **`new SockethubClient(socket)`** - Create client instance
 - **`sc.contextFor(platform)`** - Build canonical `@context` for a platform
 - **`SockethubClient.contextFor(platform)`** - Static helper variant
+- **`sc.getRegisteredPlatforms()`** - Get server-registered platforms/contexts
+- **`sc.getPlatformSchema(platform, schemaType?)`** - Get platform message/credentials schema
+- **`sc.validateActivity(activity)`** - Validate an activity against registered schemas
 - **`sc.socket.emit(event, data)`** - Send messages
 - **`sc.socket.on(event, handler)`** - Listen for messages
 - **`sc.clearCredentials()`** - Clear stored credentials
