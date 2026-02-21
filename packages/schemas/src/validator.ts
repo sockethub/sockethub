@@ -168,7 +168,9 @@ export function validatePlatformSchema(schema: Schema): string {
 
 export function addPlatformSchema(schema: Schema, platform_type: string) {
     const schemaRef = `${schemaURL}/context/${platform_type}`;
-    ajv.addSchema(schema, schemaRef);
+    if (!ajv.getSchema(schemaRef)) {
+        ajv.addSchema(schema, schemaRef);
+    }
     const parts = platform_type.split("/");
     if (parts.length === 2) {
         const [platformId] = parts;

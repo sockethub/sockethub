@@ -274,6 +274,16 @@ export default class PlatformInstance {
         }
     }
 
+    /**
+     * Remove internal-only transport metadata before returning payloads to clients.
+     */
+    private toExternalPayload(payload: ActivityStream): ActivityStream {
+        const external = payload as InternalActivityStream;
+        delete external.sessionSecret;
+        delete external.platform;
+        return payload;
+    }
+
     // handle job results coming in on the queue from platform instances
     private async handleJobResult(
         state: string,
@@ -294,6 +304,8 @@ export default class PlatformInstance {
         if (!payload || typeof payload === "string") {
             payload = job.msg;
         }
+
+        payload = this.toExternalPayload(payload);
 
         // send result to client
         const callback = this.completedJobHandlers.get(job.title);

@@ -9,14 +9,13 @@ const { io } = require("socket.io-client");
 
 const AS2_CONTEXT = "https://www.w3.org/ns/activitystreams";
 const SOCKETHUB_CONTEXT = "https://sockethub.org/ns/context/v1.jsonld";
-const PLATFORM_CONTEXTS = {
-    dummy: "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
-    xmpp: "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
-    feeds: "https://sockethub.org/ns/context/platform/feeds/v1.jsonld",
-};
 
 function contextFor(platform) {
-    return [AS2_CONTEXT, SOCKETHUB_CONTEXT, PLATFORM_CONTEXTS[platform]];
+    return [
+        AS2_CONTEXT,
+        SOCKETHUB_CONTEXT,
+        `https://sockethub.org/ns/context/platform/${platform}/v1.jsonld`,
+    ];
 }
 
 // Circuit breaker - abort test if Sockethub becomes unavailable
@@ -155,7 +154,6 @@ function sendCredentials(context, events, done) {
     const credentialsMsg = {
         type: "credentials",
         "@context": contextFor("dummy"),
-        platform: "dummy",
         actor: {
             id: actorId,
             type: "person",
@@ -189,7 +187,6 @@ function sendDummyEcho(context, events, done) {
     const message = {
         type: "echo",
         "@context": contextFor("dummy"),
-        platform: "dummy",
         actor: {
             id: actorId,
             type: "person",
@@ -228,7 +225,6 @@ function sendXMPPMessage(context, events, done) {
     const message = {
         type: "send",
         "@context": contextFor("xmpp"),
-        platform: "xmpp",
         actor: {
             id: actorId,
             type: "person",
@@ -277,7 +273,6 @@ function sendFeedMessage(context, events, done) {
     const message = {
         type: "fetch",
         "@context": contextFor("feeds"),
-        platform: "feeds",
         actor: {
             id: actorId,
             type: "person",
