@@ -54,6 +54,7 @@ type PlatformConstructor = new (
 
 const outputRoots = [resolve("./dist")];
 
+// Stage 1: clear and recreate generated output roots.
 for (const root of outputRoots) {
     // These directories are fully generated artifacts and are intentionally rebuilt from scratch.
     if (existsSync(root)) {
@@ -147,6 +148,10 @@ async function loadPlatformSchemas(): Promise<Array<PlatformSchemaShape>> {
 // Platform packages provided by workspace modules.
 const platformSchemas = await loadPlatformSchemas();
 
+/**
+ * System pseudo-platform entries used for non-user messages produced by server internals.
+ * These are generated alongside real platforms so resolvers can treat all contexts uniformly.
+ */
 // System pseudo-platforms used by server internals.
 const systemSchemas: Array<PlatformSchemaShape> = [
     {
@@ -186,6 +191,7 @@ const contextToPlatformId: Record<string, string> = {};
 const contextToSchemaId: Record<string, string> = {};
 const contextToCredentialsSchemaId: Record<string, string> = {};
 
+// Stage 2: emit per-platform JSON-LD contexts and message/credentials schemas.
 // Emit per-platform context and schema artifacts, and capture lookup maps.
 for (const platform of allSchemas) {
     const contextDoc = {
@@ -233,6 +239,7 @@ writeFileSync(
     JSON.stringify(baseContext, null, 2),
 );
 
+// Stage 3: emit canonical lookup maps used by runtime resolution.
 // Emit canonical context lookup maps consumed by runtime validators/resolvers.
 const contextMapDoc = {
     schemaVersion: packageJson.version,

@@ -39,6 +39,10 @@ interface PlatformRegistrySchemas {
     messages?: object;
 }
 
+/**
+ * Server-declared platform metadata used by the client for context generation
+ * and runtime validation.
+ */
 export interface PlatformRegistryEntry {
     id: string;
     contextUrl: string;
@@ -324,6 +328,8 @@ export default class SockethubClient {
                     }
                 }
                 if (this.platformRegistry.size > 0) {
+                    // Once registry metadata exists, reject malformed outbound payloads
+                    // before they are emitted over the socket.
                     const validationError = this.validateActivity(
                         outgoing as ActivityStream,
                     );
@@ -353,12 +359,21 @@ export default class SockethubClient {
         return socket;
     }
 
+    /**
+     * Ask server for the latest platform/context registry via ack callback.
+     * This keeps client context composition aligned with server schema state.
+     */
     private requestPlatformRegistry() {
         this._socket.emit("platforms", (payload: unknown) => {
             this.applyPlatformRegistry(payload);
         });
     }
 
+    /**
+     * Apply server-provided registry metadata to local runtime state.
+     * Also registers platform contexts/schemas with @sockethub/schemas validators
+     * so local validation uses the same canonical sources as the server.
+     */
     private applyPlatformRegistry(payload: unknown) {
         if (!payload || typeof payload !== "object") {
             return;
@@ -402,6 +417,7 @@ export default class SockethubClient {
                 `${platform.id}/messages`,
             );
         }
+        // Emit normalized registry payload so app code receives a stable shape.
         this.socket._emit("platforms", {
             version: registry.version,
             contexts: this.getRegisteredBaseContexts(),
