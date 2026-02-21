@@ -48,7 +48,7 @@ export interface PlatformRegistryEntry {
     schemas: PlatformRegistrySchemas;
 }
 
-interface PlatformRegistryPayload {
+export interface PlatformRegistryPayload {
     version?: string;
     contexts?: {
         as?: string;
@@ -212,6 +212,16 @@ export default class SockethubClient {
             types: [...platform.types],
             schemas: { ...platform.schemas },
         }));
+    }
+
+    /**
+     * Return the canonical base contexts learned from the server registry.
+     */
+    public getRegisteredBaseContexts(): { as: string; sockethub: string } {
+        return {
+            as: this.asContextUrl,
+            sockethub: this.sockethubContextUrl,
+        };
     }
 
     public getPlatformSchema(
@@ -392,7 +402,11 @@ export default class SockethubClient {
                 `${platform.id}/messages`,
             );
         }
-        this.socket._emit("platforms", this.getRegisteredPlatforms());
+        this.socket._emit("platforms", {
+            version: registry.version,
+            contexts: this.getRegisteredBaseContexts(),
+            platforms: this.getRegisteredPlatforms(),
+        } satisfies PlatformRegistryPayload);
     }
 
     private eventActivityObject(content: ActivityObject) {

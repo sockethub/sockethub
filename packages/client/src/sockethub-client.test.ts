@@ -233,6 +233,38 @@ describe("SockethubClient", () => {
             socket.emit("connect_error");
         });
 
+        it("platforms", (done) => {
+            sc.socket.on("platforms", (registry: any) => {
+                expect(registry.contexts).to.eql({
+                    as: "https://example.com/as2",
+                    sockethub: "https://example.com/sh",
+                });
+                expect(registry.platforms).to.be.an("array");
+                expect(registry.platforms[0]?.id).to.equal("xmpp");
+                done();
+            });
+            socket.emit("platforms", {
+                contexts: {
+                    as: "https://example.com/as2",
+                    sockethub: "https://example.com/sh",
+                },
+                platforms: [
+                    {
+                        id: "xmpp",
+                        contextUrl:
+                            "https://example.com/context/platform/xmpp/v9.jsonld",
+                        contextVersion: "9",
+                        schemaVersion: "9",
+                        types: ["connect"],
+                        schemas: {
+                            messages: {},
+                            credentials: {},
+                        },
+                    },
+                ],
+            });
+        });
+
         it("message", (done) => {
             sc.socket.on("message", () => {
                 expect(sc.socket._emit.callCount).to.equal(1);
