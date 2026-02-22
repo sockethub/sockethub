@@ -93,4 +93,29 @@ describe("IrcToActivityStreams", () => {
             );
         });
     });
+
+    describe("context injection", () => {
+        it("defaults context to irc and does not emit @context", (done) => {
+            const instance = new IrcToActivityStreams({ server: "localhost" });
+            instance.events.once("incoming", (stream) => {
+                expect(stream.context).toEqual("irc");
+                expect(stream["@context"]).toBeUndefined();
+                done();
+            });
+            instance.input(":nick!user@host JOIN #room");
+        });
+
+        it("uses custom context from config and does not emit @context", (done) => {
+            const instance = new IrcToActivityStreams({
+                server: "localhost",
+                context: "irc-custom",
+            });
+            instance.events.once("incoming", (stream) => {
+                expect(stream.context).toEqual("irc-custom");
+                expect(stream["@context"]).toBeUndefined();
+                done();
+            });
+            instance.input(":nick!user@host JOIN #room");
+        });
+    });
 });
