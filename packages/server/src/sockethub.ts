@@ -82,6 +82,7 @@ class Sockethub {
             platforms: Array.from(this.platformRegistry.values()).map(
                 (platform) => ({
                     id: platform.id,
+                    version: platform.version,
                     contextUrl: platform.contextUrl,
                     contextVersion: platform.contextVersion,
                     schemaVersion: platform.schemaVersion,

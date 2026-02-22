@@ -134,22 +134,7 @@ export function emitWithAck(
 }
 
 export function waitForSchemas(sh, timeout = config.timeouts.connect) {
-    return waitFor(
-        () => {
-            try {
-                return (
-                    sh.socket.connected &&
-                    sh.getRegisteredPlatforms().length > 0
-                );
-            } catch {
-                return false;
-            }
-        },
-        timeout,
-        50,
-        () =>
-            `connected=${Boolean(sh?.socket?.connected)} platforms=${sh?.getRegisteredPlatforms?.().length ?? 0}`,
-    );
+    return sh.ready(timeout);
 }
 
 // Helper function to set XMPP credentials

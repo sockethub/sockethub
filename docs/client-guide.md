@@ -27,33 +27,72 @@ import SockethubClient from '/sockethub-client.js';
 import { io } from '/socket.io.js';
 
 const sc = new SockethubClient(
-    io('http://localhost:10550', { path: '/sockethub' })
+    io('http://localhost:10550', { path: '/sockethub' }),
+    { initTimeoutMs: 5000 },
 );
 
 // Handle messages
 sc.socket.on('message', (msg) => console.log('Received:', msg));
 
-// Server-synced schema registry payload (base contexts + platforms)
-sc.socket.on('schemas', (registry) => {
-  console.log('Base contexts:', registry.contexts);
-  console.log('Platforms:', registry.platforms);
+sc.socket.on('ready', (info) => {
+  console.log(
+    'Sockethub ready:',
+    info.reason,
+    info.sockethubVersion,
+    info.platforms.map((p) => ({
+      id: p.id,
+      version: p.version,
+      contextVersion: p.contextVersion,
+      schemaVersion: p.schemaVersion,
+    })),
+  );
+  // prints:
+  // Sockethub ready: initial-connect 5.0.0-alpha.11 [
+  //   { id: 'dummy', version: '3.0.0-alpha.11', contextVersion: '1', schemaVersion: '1' },
+  //   { id: 'xmpp', version: '5.0.0-alpha.11', contextVersion: '1', schemaVersion: '3' }
+  // ]
 });
+
+sc.socket.on('init_error', (e) => {
+  console.warn('Sockethub init issue:', e.error);
+  // prints:
+  // Sockethub init issue: Initialization timed out after 5000ms waiting for schemas
+});
+
+// SockethubClient also prints internal timeout/recovery warnings:
+// prints:
+// [SockethubClient] Initialization timed out after 5000ms;
+// queued outbound messages: 3. Waiting for schemas event from server.
+// [SockethubClient] Still waiting for schemas; queued outbound messages: 3; oldest queued age: 12.4s.
+// [SockethubClient] Initialization recovered; flushing 3 queued messages after 13.1s delay.
 ```
 
 ### First Message
 
 ```javascript
-// Echo test with dummy platform (after schemas registry is loaded)
-sc.socket.on('schemas', async () => {
-  await sc.waitForSchemas();
-  sc.socket.emit('message', {
-      type: 'echo',
-      '@context': sc.contextFor('dummy'),
-      actor: { id: 'test', type: 'person' },
-      object: { type: 'note', content: 'Hello!' }
-  }, (response) => console.log(response));
+// Optional: explicitly await ready once
+await sc.ready();
+
+sc.socket.emit('message', {
+  type: 'echo',
+  '@context': sc.contextFor('dummy'),
+  actor: { id: 'test', type: 'person' },
+  object: { type: 'note', content: 'Hello!' }
+}, (response) => {
+  if (response?.error) {
+    console.error('Send failed:', response.error);
+    // prints (example):
+    // Send failed: SockethubClient validation failed: ...
+    return;
+  }
+  console.log('Ack:', response?.type, response?.platform);
+  // prints:
+  // Ack: echo dummy
 });
 ```
+
+You can also emit before `ready()` resolves. SockethubClient queues outbound
+events and flushes them once initialization completes.
 
 ## Core Patterns
 
