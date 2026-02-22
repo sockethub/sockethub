@@ -61,6 +61,8 @@ describe("SockethubClient", () => {
         sandbox = sandbox = createSandbox();
         socket = new EventEmitter();
         socket.connected = false;
+        socket.connect = sandbox.stub();
+        socket.disconnect = sandbox.stub();
         socket.__instance = "socketio"; // used to uniquely identify the object we're passing in
         sandbox.spy(socket, "on");
         sandbox.spy(socket, "emit");
@@ -205,6 +207,8 @@ describe("SockethubClient", () => {
         it("emits init_error and timeout warning when schemas never arrive", (done) => {
             const timeoutSocket = new EventEmitter();
             timeoutSocket.connected = false;
+            timeoutSocket.connect = sandbox.stub();
+            timeoutSocket.disconnect = sandbox.stub();
             timeoutSocket.__instance = "socketio";
             sandbox.spy(timeoutSocket, "on");
             sandbox.spy(timeoutSocket, "emit");
@@ -231,6 +235,19 @@ describe("SockethubClient", () => {
             });
 
             timeoutSocket.emit("connect");
+        });
+
+        it("rejects pending ready waiters on disconnect", async () => {
+            const readyPromise = sc.ready(5000);
+            socket.emit("disconnect");
+            try {
+                await readyPromise;
+                throw new Error(
+                    "expected ready() to reject after disconnect",
+                );
+            } catch (err) {
+                expect(String(err)).to.contain("disconnected");
+            }
         });
     });
 

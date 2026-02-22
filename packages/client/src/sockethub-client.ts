@@ -28,6 +28,7 @@ type ReplayEventMap = {
 // @sockethub/schemas uses a module-level AJV instance, so schema keys are process-global.
 // Track which platform schemas were already registered to avoid duplicate addSchema errors.
 const registeredPlatformSchemaKeys = new Set<string>();
+const registeredPlatformSchemaFingerprints = new Map<string, string>();
 
 type InitState = "idle" | "initializing" | "ready" | "init_error" | "closed";
 
@@ -355,6 +356,9 @@ export default class SockethubClient {
     public ready(
         timeoutMs = this.options.initTimeoutMs,
     ): Promise<ClientReadyInfo> {
+        if (this.initState === "closed") {
+            return Promise.reject(new Error("SockethubClient is closed"));
+        }
         if (this.isReady() && this.latestReadyInfo) {
             return Promise.resolve(this.latestReadyInfo);
         }
@@ -452,9 +456,16 @@ export default class SockethubClient {
         };
         socket.connected = false;
         socket.disconnect = () => {
+            this.initState = "closed";
+            this.initCycle = undefined;
+            this.clearInitTimers();
+            this.rejectReadyWaiters(new Error("Sockethub client disconnected"));
             this._socket.disconnect();
         };
         socket.connect = () => {
+            if (this.initState === "closed") {
+                this.initState = "idle";
+            }
             this._socket.connect();
         };
         return socket;
@@ -538,11 +549,23 @@ export default class SockethubClient {
      * rejects duplicate addSchema calls for identical keys.
      */
     private registerPlatformSchema(schema: object, key: string): void {
+        const fingerprint = JSON.stringify(schema || {});
+        const existingFingerprint =
+            registeredPlatformSchemaFingerprints.get(key);
+        if (
+            existingFingerprint !== undefined &&
+            existingFingerprint !== fingerprint
+        ) {
+            throw new Error(
+                `Conflicting schema registration for key '${key}' across clients`,
+            );
+        }
         if (registeredPlatformSchemaKeys.has(key)) {
             return;
         }
         addPlatformSchema(schema, key);
         registeredPlatformSchemaKeys.add(key);
+        registeredPlatformSchemaFingerprints.set(key, fingerprint);
     }
 
     private eventActivityObject(content: ActivityObject) {
@@ -1014,6 +1037,9 @@ export default class SockethubClient {
             this.socket.connected = false;
             if (this.initState !== "closed") {
                 this.initState = "idle";
+                this.rejectReadyWaiters(
+                    new Error("Sockethub client disconnected"),
+                );
             }
             this.clearInitTimers();
             this.socket._emit("disconnect", obj);

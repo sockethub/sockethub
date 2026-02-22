@@ -77,32 +77,28 @@ class Sockethub {
                 sockethub: SOCKETHUB_BASE_CONTEXT_URL,
             },
             platforms: Array.from(this.platformRegistry.values()).map(
-                (platform) => ({
-                    // Derive context/schema metadata with safe defaults until
-                    // platforms provide explicit AS2 metadata in their schema objects.
-                    ...(() => {
-                        const platformMeta = platform as typeof platform & {
-                            contextUrl?: string;
-                            contextVersion?: string;
-                            schemaVersion?: string;
-                        };
-                        const contextUrl =
-                            platformMeta.contextUrl ||
-                            `https://sockethub.org/ns/context/platform/${platform.id}/v1.jsonld`;
-                        return {
-                            contextUrl,
-                            contextVersion: platformMeta.contextVersion || "1",
-                            schemaVersion: platformMeta.schemaVersion || "1",
-                        };
-                    })(),
-                    id: platform.id,
-                    version: platform.version,
-                    types: platform.types,
-                    schemas: {
-                        credentials: platform.schemas.credentials || {},
-                        messages: platform.schemas.messages || {},
-                    },
-                }),
+                (platform) => {
+                    const platformMeta = platform as typeof platform & {
+                        contextUrl?: string;
+                        contextVersion?: string;
+                        schemaVersion?: string;
+                    };
+                    const contextUrl =
+                        platformMeta.contextUrl ||
+                        `https://sockethub.org/ns/context/platform/${platform.id}/v1.jsonld`;
+                    return {
+                        contextUrl,
+                        contextVersion: platformMeta.contextVersion || "1",
+                        schemaVersion: platformMeta.schemaVersion || "1",
+                        id: platform.id,
+                        version: platform.version,
+                        types: platform.types,
+                        schemas: {
+                            credentials: platform.schemas.credentials || {},
+                            messages: platform.schemas.messages || {},
+                        },
+                    };
+                },
             ),
         };
     }
