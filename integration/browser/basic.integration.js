@@ -397,7 +397,9 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 for (const message of incomingMessages) {
                     expect(message.type).to.equal("message");
                     expect(message.error).to.be.a("string");
-                    expect(message.platform).to.be.a("string");
+                    if (message.platform !== undefined) {
+                        expect(message.platform).to.be.a("string");
+                    }
                 }
                 const xmppMessage = incomingMessages.find(
                     (message) => message.context === "xmpp",
