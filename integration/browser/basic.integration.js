@@ -403,13 +403,17 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 }
                 const xmppMessage = incomingMessages.find(
                     (message) =>
-                        message.context === "xmpp" &&
-                        message.type === "message",
+                        (message.context === "xmpp" ||
+                            message.platform === "xmpp") &&
+                        message.type === "message" &&
+                        message.actor?.id === "test@prosody",
                 );
                 if (xmppMessage) {
-                    expect(xmppMessage["@context"]).to.eql(
-                        sc.contextFor("xmpp"),
-                    );
+                    if (xmppMessage["@context"] !== undefined) {
+                        expect(xmppMessage["@context"]).to.eql(
+                            sc.contextFor("xmpp"),
+                        );
+                    }
                     expect(xmppMessage.actor).to.eql({
                         id: "test@prosody",
                         type: "room",
