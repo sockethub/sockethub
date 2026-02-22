@@ -20,6 +20,9 @@ This library helps you:
 - **Build Activity Streams** that automatically link to stored objects
 - **Listen for events** when objects are created or deleted
 
+Legacy alias keys are not rewritten by this package.
+Use canonical keys directly (for example `type` instead of `verb` and `id` instead of `@id`).
+
 ## Install
 
 ### Node.js
