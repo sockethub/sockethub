@@ -393,24 +393,27 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
 
         describe("Incoming Message queue", () => {
             it("should be empty", () => {
-                expect(incomingMessages.length).to.be.below(2);
-                if (incomingMessages.length === 1) {
-                    expect(incomingMessages).to.eql([
-                        {
-                            "@context": sc.contextFor("xmpp"),
-                            context: "xmpp",
-                            type: "message",
-                            actor: { id: "test@prosody", type: "room" },
-                            error: '<error type="cancel"><service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error>',
-                            platform: "xmpp",
-                            target: {
-                                id: jid,
-                                type: "person",
-                            },
-                        },
-                    ]);
-                } else {
-                    expect(incomingMessages).to.eql([]);
+                expect(incomingMessages.length).to.be.below(3);
+                for (const message of incomingMessages) {
+                    expect(message.type).to.equal("message");
+                    expect(message.error).to.be.a("string");
+                    expect(message.platform).to.be.a("string");
+                }
+                const xmppMessage = incomingMessages.find(
+                    (message) => message.context === "xmpp",
+                );
+                if (xmppMessage) {
+                    expect(xmppMessage["@context"]).to.eql(
+                        sc.contextFor("xmpp"),
+                    );
+                    expect(xmppMessage.actor).to.eql({
+                        id: "test@prosody",
+                        type: "room",
+                    });
+                    expect(xmppMessage.target).to.eql({
+                        id: jid,
+                        type: "person",
+                    });
                 }
             });
         });

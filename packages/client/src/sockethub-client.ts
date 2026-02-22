@@ -945,7 +945,7 @@ export default class SockethubClient {
             if (entry.event === "credentials" || entry.event === "message") {
                 // Run canonical expansion/normalization at send time so queued and
                 // immediate sends follow the exact same path.
-                outgoing = this.ActivityStreams.Stream(
+                outgoing = this.streamWithContextPreserved(
                     entry.content as ActivityStream,
                 );
                 if (outgoing && typeof outgoing === "object") {
@@ -1051,8 +1051,37 @@ export default class SockethubClient {
         // use as middleware to receive incoming Sockethub messages and unpack them
         // using the ActivityStreams library before passing them along to the app.
         this._socket.on("message", (obj) => {
-            this.socket._emit("message", this.ActivityStreams.Stream(obj));
+            this.socket._emit(
+                "message",
+                this.streamWithContextPreserved(obj as ActivityStream),
+            );
         });
+    }
+
+    /**
+     * ActivityStreams currently validates against the legacy stream schema shape,
+     * where @context is not part of the allowed envelope. Preserve @context while
+     * still using Stream() for actor/target/object expansion.
+     */
+    private streamWithContextPreserved(input: ActivityStream): ActivityStream {
+        if (!input || typeof input !== "object") {
+            return this.ActivityStreams.Stream(input);
+        }
+        const contextArray = input["@context"];
+        if (!contextArray) {
+            return this.ActivityStreams.Stream(input);
+        }
+        const streamInput = { ...input };
+        delete streamInput["@context"];
+        const expanded = this.ActivityStreams.Stream(streamInput);
+        if (
+            expanded &&
+            typeof expanded === "object" &&
+            !(expanded as ActivityStream)["@context"]
+        ) {
+            (expanded as ActivityStream)["@context"] = contextArray;
+        }
+        return expanded as ActivityStream;
     }
 
     /**
