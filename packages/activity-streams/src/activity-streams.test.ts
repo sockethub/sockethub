@@ -115,24 +115,16 @@ describe("basic tests", () => {
         });
     });
 
-    interface TestActivityStream extends ActivityStream {
-        type: string;
-        verb?: string;
-        context: string;
-        platform?: string;
-    }
-
     describe("stream tests", () => {
-        let stream: TestActivityStream;
+        let stream: ActivityStream;
 
         beforeEach(() => {
             stream = activity.Stream({
-                verb: "lol",
-                platform: "irc",
+                type: "lol",
                 actor: "thingy1",
                 context: "irc",
                 object: {
-                    objectType: "credentials",
+                    type: "credentials",
                     content: "har",
                     secure: true,
                 },
@@ -140,11 +132,9 @@ describe("basic tests", () => {
             }) as ActivityStream;
         });
 
-        test("renames mapped props", () => {
+        test("keeps canonical stream props", () => {
             expect(stream.type).toEqual("lol");
-            expect(stream.verb).toBeUndefined();
             expect(stream.context).toEqual("irc");
-            expect(stream.platform).toBeUndefined();
         });
 
         test("expands existing objects", () => {
@@ -163,13 +153,12 @@ describe("basic tests", () => {
                 content: "har",
                 secure: true,
             });
-            expect(stream.object.objectType).toBeUndefined();
         });
 
         test("respects specialObj properties", () => {
             const stream2 = activity.Stream({
                 type: "lol",
-                platform: "irc",
+                context: "irc",
                 actor: "thingy",
                 object: {
                     type: "dude",
@@ -197,7 +186,7 @@ describe("basic tests", () => {
             expect(() => {
                 activity.Stream({
                     type: "lol",
-                    platform: "irc",
+                    context: "irc",
                     actor: "thingy",
                     object: {
                         type: "hola",
