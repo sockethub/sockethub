@@ -19,8 +19,8 @@ let loggerNamespaceStore = new WeakMap<Logger, string>();
 // Keep log formatting resilient when metadata contains errors, bigints, or cycles.
 function safeStringify(value: unknown): string {
     try {
-        const seen = new WeakSet<object>();
-        return JSON.stringify(value, (_key, innerValue) => {
+        const parents: object[] = [];
+        return JSON.stringify(value, function (_key, innerValue) {
             if (innerValue instanceof Error) {
                 return {
                     name: innerValue.name,
@@ -32,10 +32,19 @@ function safeStringify(value: unknown): string {
                 return innerValue.toString();
             }
             if (typeof innerValue === "object" && innerValue !== null) {
-                if (seen.has(innerValue)) {
+                // Only treat values on the current traversal path as circular.
+                // Shared references in sibling branches should serialize normally.
+                const parent = this as unknown;
+                while (
+                    parents.length > 0 &&
+                    parents[parents.length - 1] !== parent
+                ) {
+                    parents.pop();
+                }
+                if (parents.includes(innerValue)) {
                     return "[Circular]";
                 }
-                seen.add(innerValue);
+                parents.push(innerValue);
             }
             return innerValue;
         });
