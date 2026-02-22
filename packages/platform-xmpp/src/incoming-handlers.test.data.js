@@ -3,7 +3,11 @@ export const stanzas = [
         "presence error 1",
         `<presence type="error" to="hermes@5apps.com/hyperchannel" from="xmpp.5apps.com/#watercooler" xmlns:stream="http://etherx.jabber.org/streams"><error type="cancel"> <remote-server-not-found xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error></presence>`,
         {
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "join",
             actor: { id: "xmpp.5apps.com/#watercooler", type: "room" },
             error: "remote server not found xmpp.5apps.com/#watercooler",
@@ -14,7 +18,11 @@ export const stanzas = [
         "presence error 2",
         `<presence type="error" to="hermes@5apps.com/hyperchannel" from="xmpp.5apps.com/#watercooler" xmlns:stream="http://etherx.jabber.org/streams"><error type="cancel"><not-allowed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/><text xmlns="urn:ietf:params:xml:ns:xmpp-stanzas">Communication with remote domains is not enabled</text></error></presence>`,
         {
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "update",
             actor: { id: "xmpp.5apps.com/#watercooler", type: "room" },
             error:
@@ -28,7 +36,11 @@ export const stanzas = [
         "initial presence",
         `<presence to="foo@bar.org" from="baz@bag.org"></presence>`,
         {
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "update",
             actor: { id: "baz@bag.org", type: "person" },
             target: { id: "foo@bar.org", type: "person" },
@@ -39,7 +51,11 @@ export const stanzas = [
         "presence body",
         `<presence to="foo@bar.org" from="baz@bag.org"><show>online</show> <status>away message!</status></presence>`,
         {
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "update",
             actor: { id: "baz@bag.org", type: "person" },
             target: { id: "foo@bar.org", type: "person" },
@@ -54,7 +70,11 @@ export const stanzas = [
         "presence unavailable",
         `<presence to="foo@bar.org/hyperchannel" from="baz@bag.org/yarg" type="unavailable"><x xmlns="http://jabber.org/protocol/muc#user"><item affiliation="owner" role="none"></item></x></presence>`,
         {
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "update",
             actor: { type: "person", id: "baz@bag.org/yarg" },
             target: { id: "foo@bar.org/hyperchannel", type: "person" },
@@ -65,7 +85,11 @@ export const stanzas = [
         "presence away",
         `<presence to="foo@bar.org/hyperchannel" from="baz@bag.org/yarg" type="available"><show>away</show><x xmlns="http://jabber.org/protocol/muc#user"><item affiliation="owner" role="none"></item></x></presence>`,
         {
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "update",
             actor: { type: "person", id: "baz@bag.org/yarg" },
             target: { id: "foo@bar.org/hyperchannel", type: "person" },
@@ -76,7 +100,11 @@ export const stanzas = [
         "attendance",
         `<iq id="muc_id" type="result" to="ernie@jabber.net/Home" from="PartyChatRoom@jabber.net" xmlns:stream="http://etherx.jabber.org/streams"> <query xmlns="http://jabber.org/protocol/disco#items"> <item jid="PartyChatRoom@jabber.net/ernie" name="ernie"/> <item jid="PartyChatRoom@jabber.net/bert" name="bert"/><item jid="PartyChatRoom@jabber.net/oscar" name="oscar"/> <item jid="PartyChatRoom@jabber.net/big_bird" name="big_bird"/> <item jid="PartyChatRoom@jabber.net/elmo" name="elmo"/></query></iq>`,
         {
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "query",
             actor: { id: "PartyChatRoom@jabber.net", type: "room" },
             target: { id: "ernie@jabber.net/Home", type: "person" },
@@ -94,7 +122,11 @@ export const stanzas = [
        <body>ohai</body>
      </message>`,
         {
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "send",
             actor: { type: "person", id: "radical@example.org/thinkpad" },
             target: { type: "person", id: "user@jabber.org" },
@@ -115,7 +147,11 @@ export const stanzas = [
        <body>ohai</body>
      </message>`,
         {
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "send",
             published: "2021-04-17T18:50:25.000Z",
             actor: { type: "person", id: "radical@example.org/thinkpad" },
@@ -137,7 +173,11 @@ export const stanzas = [
        <body>oh hey</body>
      </message>`,
         {
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "send",
             actor: { type: "person", id: "radical@example.org/thinkpad" },
             target: { type: "person", id: "user@jabber.org" },
@@ -154,7 +194,11 @@ export const stanzas = [
         "group presence",
         `<presence from='room@xmpp.example.org/speedboat'><show>chat</show> <status>brrroom!</status></presence>`,
         {
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "update",
             actor: {
                 id: "room@xmpp.example.org/speedboat",
@@ -171,7 +215,11 @@ export const stanzas = [
        <body>Thrice the brinded cat hath mew'd.</body>
      </message>`,
         {
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "send",
             actor: {
                 type: "person",
@@ -226,7 +274,11 @@ export const stanzas = [
         "JID malformed",
         `<presence from='coven@chat.shakespeare.lit' id='273hs51g' to='hag66@shakespeare.lit/pda' type='error'> <error by='coven@chat.shakespeare.lit' type='modify'> <jid-malformed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/> </error> </presence>`,
         {
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "update",
             actor: { id: "coven@chat.shakespeare.lit", type: "room" },
             error: `<error by="coven@chat.shakespeare.lit" type="modify"> <jid-malformed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/> </error>`,

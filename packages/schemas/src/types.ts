@@ -1,5 +1,5 @@
 export interface ASCollection {
-    context: string;
+    "@context": JsonLdContext;
     id?: string;
     summary: string;
     type: "collection";
@@ -7,10 +7,13 @@ export interface ASCollection {
     items: Array<ActivityStream>;
 }
 
+export type JsonLdContext = Array<string>;
+
 export interface ActivityStream {
+    "@context": JsonLdContext;
     id?: string;
     type: string;
-    context: string;
+    platform?: string;
     actor: ActivityActor;
     object?: ActivityObject;
     target?: ActivityActor;
@@ -72,7 +75,7 @@ export interface PlatformSession {
 }
 
 export interface CredentialsObject {
-    context: string;
+    "@context": JsonLdContext;
     type: "credentials";
     actor: ActivityActor;
     object: {
@@ -124,6 +127,10 @@ export interface PersistentPlatformConfig extends BasePlatformConfig {
 export interface PlatformSchemaStruct {
     name: string;
     version: string;
+    contextUrl: string;
+    contextVersion: string;
+    schemaVersion: string;
+    messageConstraints?: object;
     credentials?: object;
     messages?: {
         required?: string[];

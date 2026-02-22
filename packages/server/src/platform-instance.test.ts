@@ -163,6 +163,8 @@ describe("PlatformInstance", () => {
         });
 
         it("sends messages to client using socket session id", async () => {
+            pi.contextUrl =
+                "https://sockethub.org/ns/context/platform/a platform name/v1.jsonld";
             await pi.sendToClient("my session id", {
                 foo: "this is a message object",
                 sessionSecret: "private data",
@@ -171,9 +173,11 @@ describe("PlatformInstance", () => {
             sandbox.assert.calledOnce(getSocketFake);
             sandbox.assert.calledWith(getSocketFake, "my session id");
             sandbox.assert.calledOnce(socketMock.emit);
-            sandbox.assert.calledWith(socketMock.emit, "message", {
+            const emittedPayload = socketMock.emit.getCall(0).args[1];
+            expect(emittedPayload).toEqual({
                 foo: "this is a message object",
-                context: "a platform name",
+                platform: "a platform name",
+                "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/a platform name/v1.jsonld"],
             });
         });
 
@@ -212,6 +216,7 @@ describe("PlatformInstance", () => {
                 expect(pi.broadcastToSharedPeers.callCount).toEqual(1);
                 sandbox.assert.calledWith(pi.sendToClient, "a session id", {
                     foo: "bar",
+                    platform: "a platform name",
                 });
             });
 
@@ -225,6 +230,7 @@ describe("PlatformInstance", () => {
                 sandbox.assert.calledWith(pi.sendToClient, "a session id", {
                     foo: "bar",
                     error: "a bad result message",
+                    platform: "a platform name",
                 });
             });
         });
@@ -353,7 +359,7 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        context: "xmpp",
+                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"],
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",
@@ -405,7 +411,7 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        context: "xmpp",
+                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"],
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",
@@ -424,7 +430,7 @@ describe("PlatformInstance", () => {
                     sessionId: "session456",
                     msg: {
                         type: "send",
-                        context: "xmpp",
+                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"],
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-2",
@@ -465,7 +471,7 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        context: "xmpp",
+                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"],
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",
@@ -514,7 +520,7 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        context: "xmpp",
+                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"],
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",

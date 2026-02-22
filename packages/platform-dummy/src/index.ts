@@ -29,6 +29,10 @@ export default class Dummy implements PlatformInterface {
         return {
             name: "dummy",
             version: packageJSON.version,
+            contextUrl:
+                "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+            contextVersion: "1",
+            schemaVersion: "1",
             messages: {
                 required: ["type"],
                 properties: {

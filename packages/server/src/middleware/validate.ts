@@ -6,6 +6,7 @@ import { createLogger } from "@sockethub/logger";
 import {
     type ActivityObject,
     type ActivityStream,
+    resolvePlatformId,
     validateActivityObject,
     validateActivityStream,
     validateCredentials,
@@ -60,13 +61,15 @@ export default function validate(
                 );
             }
             const stream = msg as ActivityStream;
-            if (!initObj.platforms.has(stream.context)) {
+            const platformId = resolvePlatformId(stream);
+            if (!platformId || !initObj.platforms.has(platformId)) {
                 return done(
                     new Error(
-                        `platform context ${stream.context} not registered with this Sockethub instance.`,
+                        "platform context URL not registered with this Sockethub instance.",
                     ),
                 );
             }
+            stream.platform = platformId;
             if (type === "credentials") {
                 const err = validateCredentials(stream);
                 if (err) {
@@ -79,18 +82,18 @@ export default function validate(
                 if (err) {
                     done(new Error(err));
                 } else {
-                    const platformMeta = initObj.platforms.get(stream.context);
+                    const platformMeta = initObj.platforms.get(platformId);
                     if (!platformMeta) {
                         return done(
                             new Error(
-                                `platform context ${stream.context} not registered with this Sockethub instance.`,
+                                `platform ${platformId} not registered with this Sockethub instance.`,
                             ),
                         );
                     }
                     if (!platformMeta.types.includes(stream.type)) {
                         return done(
                             new Error(
-                                `platform type ${stream.type} not supported by ${stream.context} ` +
+                                `platform type ${stream.type} not supported by ${platformId} ` +
                                     `platform. (types: ${platformMeta.types.join(
                                         ", ",
                                     )})`,

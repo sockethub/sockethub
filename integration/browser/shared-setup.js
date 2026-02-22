@@ -133,17 +133,22 @@ export function emitWithAck(
     });
 }
 
+export function waitForSchemas(sh, timeout = config.timeouts.connect) {
+    return sh.ready(timeout);
+}
+
 // Helper function to set XMPP credentials
-export function setXMPPCredentials(
+export async function setXMPPCredentials(
     sh,
     jid,
     resource = config.prosody.resource,
     username = config.prosody.testUser.username,
     password = config.prosody.testUser.password,
 ) {
+    await waitForSchemas(sh);
     const creds = {
         actor: jid,
-        context: "xmpp",
+        "@context": sh.contextFor("xmpp"),
         type: "credentials",
         object: {
             type: "credentials",
@@ -168,14 +173,15 @@ export function setXMPPCredentials(
 }
 
 // Helper function to connect to XMPP
-export function connectXMPP(sh, jid) {
+export async function connectXMPP(sh, jid) {
+    await waitForSchemas(sh);
     return emitWithAck(
         sh.socket,
         "message",
         {
             type: "connect",
             actor: jid,
-            context: "xmpp",
+            "@context": sh.contextFor("xmpp"),
         },
         {
             timeout: config.timeouts.connect,
@@ -190,14 +196,15 @@ export function connectXMPP(sh, jid) {
 }
 
 // Helper function to join XMPP room
-export function joinXMPPRoom(sh, jid, room = config.prosody.room) {
+export async function joinXMPPRoom(sh, jid, room = config.prosody.room) {
+    await waitForSchemas(sh);
     return emitWithAck(
         sh.socket,
         "message",
         {
             type: "join",
             actor: jid,
-            context: "xmpp",
+            "@context": sh.contextFor("xmpp"),
             target: {
                 type: "room",
                 id: room,
@@ -213,14 +220,15 @@ export function joinXMPPRoom(sh, jid, room = config.prosody.room) {
 }
 
 // Helper function to send XMPP message
-export function sendXMPPMessage(sh, jid, room, content) {
+export async function sendXMPPMessage(sh, jid, room, content) {
+    await waitForSchemas(sh);
     return emitWithAck(
         sh.socket,
         "message",
         {
             type: "send",
             actor: jid,
-            context: "xmpp",
+            "@context": sh.contextFor("xmpp"),
             object: {
                 type: "message",
                 content,

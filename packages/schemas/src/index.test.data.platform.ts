@@ -1,6 +1,9 @@
 export default {
     name: "fake",
     version: "1.0",
+    contextUrl: "https://sockethub.org/ns/context/platform/fake/v1.jsonld",
+    contextVersion: "1",
+    schemaVersion: "1",
     messages: {
         required: ["type"],
         properties: {

@@ -68,7 +68,11 @@ export class IncomingHandlers {
         );
         if (this.session.actor && this.session.sendToClient) {
             this.session.sendToClient({
-                context: "xmpp",
+                "@context": [
+                    "https://www.w3.org/ns/activitystreams",
+                    "https://sockethub.org/ns/context/v1.jsonld",
+                    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+                ],
                 type: "close",
                 actor: this.session.actor,
                 target: this.session.actor,
@@ -88,7 +92,11 @@ export class IncomingHandlers {
     error(err) {
         try {
             this.session.sendToClient({
-                context: "xmpp",
+                "@context": [
+                    "https://www.w3.org/ns/activitystreams",
+                    "https://sockethub.org/ns/context/v1.jsonld",
+                    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+                ],
                 type: "error",
                 error: err.text || err.toString(),
                 object: {
@@ -103,7 +111,11 @@ export class IncomingHandlers {
 
     presence(stanza) {
         const obj = {
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "update",
             actor: {
                 type: "person",
@@ -135,7 +147,11 @@ export class IncomingHandlers {
             actor.name = name;
         }
         this.session.sendToClient({
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "request-friend",
             actor: actor,
             target: to,
@@ -162,7 +178,11 @@ export class IncomingHandlers {
         const type = stanza.attrs.type === "groupchat" ? "room" : "person";
 
         const activity = {
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: "send",
             actor: {
                 type: "person",
@@ -218,7 +238,11 @@ export class IncomingHandlers {
         }
 
         this.session.sendToClient({
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             type: type,
             actor: {
                 id: stanza.attrs.from,
@@ -245,7 +269,11 @@ export class IncomingHandlers {
             }
 
             this.session.sendToClient({
-                context: "xmpp",
+                "@context": [
+                    "https://www.w3.org/ns/activitystreams",
+                    "https://sockethub.org/ns/context/v1.jsonld",
+                    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+                ],
                 type: "query",
                 actor: {
                     id: stanza.attrs.from,
@@ -298,7 +326,11 @@ export class IncomingHandlers {
                     this.session.log.debug("STANZA ATTRS: ", entries[e].attrs);
                     if (entries[e].attrs.subscription === "both") {
                         this.session.sendToClient({
-                            context: "xmpp",
+                            "@context": [
+                                "https://www.w3.org/ns/activitystreams",
+                                "https://sockethub.org/ns/context/v1.jsonld",
+                                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+                            ],
                             type: "update",
                             actor: {
                                 id: entries[e].attrs.jid,
@@ -317,7 +349,11 @@ export class IncomingHandlers {
                         entries[e].attrs.ask === "subscribe"
                     ) {
                         this.session.sendToClient({
-                            context: "xmpp",
+                            "@context": [
+                                "https://www.w3.org/ns/activitystreams",
+                                "https://sockethub.org/ns/context/v1.jsonld",
+                                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+                            ],
                             type: "update",
                             actor: {
                                 id: entries[e].attrs.jid,

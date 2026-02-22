@@ -25,6 +25,10 @@ import type {
     PlatformInterface,
     PlatformSession,
 } from "@sockethub/schemas";
+import {
+    buildCanonicalContext,
+    INTERNAL_PLATFORM_CONTEXT_URL,
+} from "@sockethub/schemas";
 import config from "./config";
 
 // Simple wrapper function to help with testing
@@ -55,10 +59,7 @@ async function startPlatformProcess() {
     let sentry: { readonly reportError: (err: Error) => void } = {
         reportError: (err: Error) => {
             logger.debug(
-                "Sentry not configured; error not reported to Sentry",
-                {
-                    error: err,
-                },
+                `Sentry not configured; error not reported to Sentry: ${err?.message || String(err)}`,
             );
         },
     };
@@ -166,7 +167,9 @@ async function startPlatformProcess() {
                 "heartbeat",
                 {
                     type: "heartbeat",
-                    context: "sockethub:internal",
+                    "@context": buildCanonicalContext(
+                        INTERNAL_PLATFORM_CONTEXT_URL,
+                    ),
                     actor: {
                         id: "sockethub",
                         type: "platform",

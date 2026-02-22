@@ -5,6 +5,9 @@ const version = packageJson.version;
 export const PlatformMetadataSchema = {
     name: "metadata",
     version: version,
+    contextUrl: "https://sockethub.org/ns/context/platform/metadata/v1.jsonld",
+    contextVersion: "1",
+    schemaVersion: "1",
     messages: {
         required: ["type"],
         properties: {
@@ -17,6 +20,14 @@ export const PlatformMetadataSchema = {
                 oneOf: [
                     { $ref: "#/definitions/objectTypes/feed-parameters-url" },
                 ],
+            },
+        },
+        definitions: {
+            objectTypes: {
+                "feed-parameters-url": {
+                    type: "object",
+                    additionalProperties: true,
+                },
             },
         },
     },

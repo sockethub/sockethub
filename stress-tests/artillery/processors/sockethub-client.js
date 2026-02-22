@@ -78,12 +78,18 @@ function setupClient(context, events, done) {
     context.vars.actorId = `test-${context.vars.$uuid}@dummy`;
     context.vars.errors = [];
     context.vars.connected = false;
+    context.vars.schemasReady = false;
 
     // Track connection
     socket.on("connect", () => {
         events.emit("counter", "sockethub.connected", 1);
         context.vars.connected = true;
         recordSuccess();
+    });
+
+    context.vars.client.socket.on("schemas", () => {
+        events.emit("counter", "sockethub.schemas_ready", 1);
+        context.vars.schemasReady = true;
     });
 
     socket.on("connect_error", (err) => {
@@ -104,18 +110,29 @@ function setupClient(context, events, done) {
         }
     });
 
-    // Wait for connection or timeout
-    setTimeout(() => {
-        if (!context.vars.connected) {
+    // Wait for both socket connection and server schema registry.
+    const startTime = Date.now();
+    const readyTimeoutMs = 2000;
+    const waitForReady = () => {
+        if (context.vars.connected && context.vars.schemasReady) {
+            done();
+            return;
+        }
+        if (Date.now() - startTime >= readyTimeoutMs) {
             recordFailure();
             if (consecutiveConnectionFailures <= 3) {
-                console.error("Connection timeout - socket never connected");
+                console.error(
+                    `Connection/setup timeout - connected=${context.vars.connected} schemasReady=${context.vars.schemasReady}`,
+                );
             }
             events.emit("counter", "sockethub.connect_timeout", 1);
-            context.vars.errors.push("Connection timeout");
+            context.vars.errors.push("Connection or schema registry timeout");
+            done();
+            return;
         }
-        done();
-    }, 2000);
+        setTimeout(waitForReady, 50);
+    };
+    waitForReady();
 }
 
 /**
@@ -131,6 +148,11 @@ function sendCredentials(context, events, done) {
         console.error("Cannot send credentials - not connected");
         return done();
     }
+    if (!context.vars.schemasReady) {
+        events.emit("counter", "sockethub.error.schemas_not_ready", 1);
+        console.error("Cannot send credentials - schemas not loaded");
+        return done();
+    }
 
     // Create actor object using client's ActivityStreams API
     const _actor = client.ActivityStreams.Object.create({
@@ -142,7 +164,7 @@ function sendCredentials(context, events, done) {
     // Send credentials message (uses 'credentials' event, not 'message')
     const credentialsMsg = {
         type: "credentials",
-        context: "dummy",
+        "@context": client.contextFor("dummy"),
         actor: {
             id: actorId,
             type: "person",
@@ -172,10 +194,15 @@ function sendCredentials(context, events, done) {
 function sendDummyEcho(context, events, done) {
     const client = context.vars.client;
     const actorId = context.vars.actorId;
+    if (!context.vars.schemasReady) {
+        events.emit("counter", "sockethub.error.schemas_not_ready", 1);
+        console.error("Cannot send echo - schemas not loaded");
+        return done();
+    }
 
     const message = {
         type: "echo",
-        context: "dummy",
+        "@context": client.contextFor("dummy"),
         actor: {
             id: actorId,
             type: "person",
@@ -210,10 +237,15 @@ function sendDummyEcho(context, events, done) {
 function sendXMPPMessage(context, events, done) {
     const client = context.vars.client;
     const actorId = context.vars.actorId;
+    if (!context.vars.schemasReady) {
+        events.emit("counter", "sockethub.error.schemas_not_ready", 1);
+        console.error("Cannot send XMPP message - schemas not loaded");
+        return done();
+    }
 
     const message = {
         type: "send",
-        context: "xmpp",
+        "@context": client.contextFor("xmpp"),
         actor: {
             id: actorId,
             type: "person",
@@ -252,6 +284,11 @@ function sendXMPPMessage(context, events, done) {
 function sendFeedMessage(context, events, done) {
     const client = context.vars.client;
     const actorId = context.vars.actorId;
+    if (!context.vars.schemasReady) {
+        events.emit("counter", "sockethub.error.schemas_not_ready", 1);
+        console.error("Cannot send feed message - schemas not loaded");
+        return done();
+    }
 
     const feedUrls = [
         "https://example.com/feed1.xml",
@@ -261,7 +298,7 @@ function sendFeedMessage(context, events, done) {
 
     const message = {
         type: "fetch",
-        context: "feeds",
+        "@context": client.contextFor("feeds"),
         actor: {
             id: actorId,
             type: "person",

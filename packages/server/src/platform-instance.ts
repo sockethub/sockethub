@@ -10,6 +10,10 @@ import type {
     Logger,
     PlatformConfig,
 } from "@sockethub/schemas";
+import {
+    buildCanonicalContext,
+    INTERNAL_PLATFORM_CONTEXT_URL,
+} from "@sockethub/schemas";
 import type { Socket } from "socket.io";
 import config from "./config.js";
 import { getSocket } from "./listener.js";
@@ -60,6 +64,7 @@ export default class PlatformInstance {
     readonly global: boolean = false;
     readonly completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
     config: PlatformConfig;
+    contextUrl?: string;
     private initialized = false;
     readonly name: string;
     process: ChildProcess;
@@ -234,10 +239,13 @@ export default class PlatformInstance {
         return this.getSocket(sessionId).then(
             (socket: Socket) => {
                 try {
-                    // this property should never be exposed externally
-                    delete msg.sessionSecret;
+                    this.toExternalPayload(msg as ActivityStream);
                 } finally {
-                    msg.context = this.name;
+                    if (this.contextUrl) {
+                        msg["@context"] = buildCanonicalContext(
+                            this.contextUrl,
+                        );
+                    }
                     if (
                         msg.type === "error" &&
                         typeof msg.actor === "undefined" &&
@@ -263,6 +271,21 @@ export default class PlatformInstance {
         }
     }
 
+    /**
+     * Remove internal-only transport metadata before returning payloads to clients.
+     */
+    private toExternalPayload(payload: ActivityStream): ActivityStream {
+        const external = payload as InternalActivityStream;
+        delete external.sessionSecret;
+        if (
+            typeof external.platform !== "string" ||
+            external.platform.length === 0
+        ) {
+            external.platform = this.name;
+        }
+        return payload;
+    }
+
     // handle job results coming in on the queue from platform instances
     private async handleJobResult(
         state: string,
@@ -283,6 +306,8 @@ export default class PlatformInstance {
         if (!payload || typeof payload === "string") {
             payload = job.msg;
         }
+
+        payload = this.toExternalPayload(payload);
 
         // send result to client
         const callback = this.completedJobHandlers.get(job.title);
@@ -336,7 +361,9 @@ export default class PlatformInstance {
      */
     private async reportError(sessionId: string, errorMessage: string) {
         const errorObject: ActivityStream = {
-            context: this.name,
+            "@context": buildCanonicalContext(
+                this.contextUrl ?? INTERNAL_PLATFORM_CONTEXT_URL,
+            ),
             type: "error",
             actor: { id: this.actor, type: "unknown" },
             error: errorMessage,

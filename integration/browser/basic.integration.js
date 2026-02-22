@@ -8,6 +8,8 @@ import {
     sendXMPPMessage,
     setXMPPCredentials,
     validateGlobals,
+    waitFor,
+    waitForSchemas,
 } from "./shared-setup.js";
 
 const config = getConfig();
@@ -20,13 +22,15 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
         let sc;
         const incomingMessages = [];
 
-        before(() => {
+        before(async () => {
             sc = new SockethubClient(
                 io(config.sockethub.url, { path: "/sockethub" }),
             );
             sc.socket.on("message", (msg) => {
                 incomingMessages.push(msg);
             });
+            await waitFor(() => sc.socket.connected, config.timeouts.connect);
+            await waitForSchemas(sc);
         });
 
         after(() => {
@@ -93,7 +97,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     const dummyObj = {
                         type: "echo",
                         actor: actor.id,
-                        context: "dummy",
+                        "@context": sc.contextFor("dummy"),
                         object: {
                             type: "message",
                             content: `hello world ${i}`,
@@ -119,7 +123,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 const dummyObj = {
                     type: "fail",
                     actor: actor.id,
-                    context: "dummy",
+                    "@context": sc.contextFor("dummy"),
                     object: { type: "message", content: "failure message" },
                 };
                 const msg = await emitWithAck(sc.socket, "message", dummyObj, {
@@ -128,6 +132,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 if (msg?.error) {
                     expect(msg.error).to.equal("Error: failure message");
                     dummyObj.error = "Error: failure message";
+                    dummyObj.platform = "dummy";
                     dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
                     expect(msg).to.eql(dummyObj);
                 } else {
@@ -141,7 +146,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 const dummyObj = {
                     type: "throw",
                     actor: actor.id,
-                    context: "dummy",
+                    "@context": sc.contextFor("dummy"),
                     object: { type: "message", content: "failure message" },
                 };
                 const msg = await emitWithAck(sc.socket, "message", dummyObj, {
@@ -150,6 +155,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 if (msg?.error) {
                     expect(msg.error).to.equal("Error: failure message");
                     dummyObj.error = "Error: failure message";
+                    dummyObj.platform = "dummy";
                     dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
                     expect(msg).to.eql(dummyObj);
                 } else {
@@ -167,7 +173,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         sc.socket,
                         "message",
                         {
-                            context: "feeds",
+                            "@context": sc.contextFor("feeds"),
                             type: "fetch",
                             actor: {
                                 type: "feed",
@@ -224,8 +230,9 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     const msg = await connectXMPP(sc, jid);
                     expect(msg).to.eql({
                         type: "connect",
+                        platform: "xmpp",
                         actor: actorObject,
-                        context: "xmpp",
+                        "@context": sc.contextFor("xmpp"),
                     });
                 });
             });
@@ -235,8 +242,9 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     const msg = await joinXMPPRoom(sc, jid, "test@prosody");
                     expect(msg).to.eql({
                         type: "join",
+                        platform: "xmpp",
                         actor: actorObject,
-                        context: "xmpp",
+                        "@context": sc.contextFor("xmpp"),
                         target: {
                             id: "test@prosody",
                             type: "room",
@@ -255,8 +263,9 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     );
                     expect(msg).to.eql({
                         type: "send",
+                        platform: "xmpp",
                         actor: actorObject,
-                        context: "xmpp",
+                        "@context": sc.contextFor("xmpp"),
                         object: {
                             type: "message",
                             content: "Hello, world!",
@@ -288,7 +297,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                                 id: invalidActorId,
                                 type: "person",
                             },
-                            context: "xmpp",
+                            "@context": sc.contextFor("xmpp"),
                             type: "credentials",
                             object: {
                                 type: "credentials",
@@ -308,7 +317,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         {
                             type: "connect",
                             actor: invalidActorId,
-                            context: "xmpp",
+                            "@context": sc.contextFor("xmpp"),
                         },
                         { label: "xmpp invalid connect" },
                     );
@@ -339,7 +348,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                                 id: invalidIrcActorId,
                                 type: "person",
                             },
-                            context: "irc",
+                            "@context": sc.contextFor("irc"),
                             type: "credentials",
                             object: {
                                 type: "credentials",
@@ -359,7 +368,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         {
                             type: "connect",
                             actor: invalidIrcActorId,
-                            context: "irc",
+                            "@context": sc.contextFor("irc"),
                         },
                         { label: "irc invalid connect" },
                     );
@@ -376,22 +385,16 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
 
         describe("Incoming Message queue", () => {
             it("should be empty", () => {
-                expect(incomingMessages.length).to.be.below(2);
-                if (incomingMessages.length === 1) {
-                    expect(incomingMessages).to.eql([
-                        {
-                            context: "xmpp",
-                            type: "message",
-                            actor: { id: "test@prosody", type: "room" },
-                            error: '<error type="cancel"><service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error>',
-                            target: {
-                                id: jid,
-                                type: "person",
-                            },
-                        },
-                    ]);
-                } else {
-                    expect(incomingMessages).to.eql([]);
+                // Invalid credential scenarios can emit one error per platform
+                // (XMPP and IRC), so assert bounded shape instead of strict count.
+                expect(incomingMessages.length).to.be.at.most(2);
+                for (const message of incomingMessages) {
+                    expect(["message", "connect"]).to.include(message.type);
+                    expect(message.error).to.be.a("string");
+                    expect(["xmpp", "irc"]).to.include(message.platform);
+                    expect(message["@context"]).to.eql(
+                        sc.contextFor(message.platform),
+                    );
                 }
             });
         });

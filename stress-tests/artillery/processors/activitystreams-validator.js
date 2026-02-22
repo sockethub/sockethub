@@ -12,6 +12,18 @@ module.exports = {
     trackLatency,
 };
 
+const AS2_CONTEXT = "https://www.w3.org/ns/activitystreams";
+const SOCKETHUB_CONTEXT = "https://sockethub.org/ns/context/v1.jsonld";
+const PLATFORM_CONTEXTS = {
+    dummy: "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+    xmpp: "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+    feeds: "https://sockethub.org/ns/context/platform/feeds/v1.jsonld",
+};
+
+function contextFor(platform) {
+    return [AS2_CONTEXT, SOCKETHUB_CONTEXT, PLATFORM_CONTEXTS[platform]];
+}
+
 /**
  * Generate Socket.IO connect credentials message
  */
@@ -25,7 +37,8 @@ function generateConnectMessage(context, _events, done) {
 
     context.vars.connectMessage = {
         type: "credentials",
-        context: "dummy",
+        "@context": contextFor("dummy"),
+        platform: "dummy",
         actor: actor,
         object: {
             type: "credentials",
@@ -49,7 +62,8 @@ function generateDummyEchoMessage(context, _events, done) {
 
     context.vars.echoMessage = {
         type: "echo",
-        context: "dummy",
+        "@context": contextFor("dummy"),
+        platform: "dummy",
         actor: actor,
         object: {
             type: "message",
@@ -73,7 +87,8 @@ function generateXMPPMessage(context, _events, done) {
 
     context.vars.xmppMessage = {
         type: "send",
-        context: "xmpp",
+        "@context": contextFor("xmpp"),
+        platform: "xmpp",
         actor: actor,
         target: {
             id: "testroom@conference.localhost",
@@ -107,7 +122,8 @@ function generateFeedMessage(context, _events, done) {
 
     context.vars.feedMessage = {
         type: "fetch",
-        context: "feeds",
+        "@context": contextFor("feeds"),
+        platform: "feeds",
         actor: actor,
         object: {
             type: "feed",
