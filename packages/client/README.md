@@ -9,6 +9,11 @@ automatic reconnection and credential replay.
 
 - `SockethubClient` for connection and message handling
 - `ActivityStreams` helpers and validation utilities
+- `contextFor(platform)` helper driven by server-provided schema metadata
+- Internal initialization and ready-state management (no app-level `schemas` wiring required)
+- `ready()` promise and `ready`/`init_error` observability events
+- Automatic outbound queuing until initialization is complete
+- Automatic schema registry sync from server (`schemas` event remains available for diagnostics)
 - Auto-replay of credentials and connections on reconnect
 - A browser-ready bundle in `dist/`
 
@@ -16,17 +21,17 @@ automatic reconnection and credential replay.
 
 ### Node.js
 
-`$ npm install @sockethub/client`
+`$ npm install @sockethub/client socket.io-client`
 
 ### Bun
 
-`$ bun install @sockethub/client`
+`$ bun add @sockethub/client socket.io-client`
 
 #### CommonJS
 
 ```javascript
 const SockethubClient = require('@sockethub/client');
-const io = require('@socket.io-client');
+const { io } = require('socket.io-client');
 const SOCKETHUB_SERVER = 'http://localhost:10550';
 const sc = new SockethubClient(io(SOCKETHUB_SERVER));
 ```
@@ -35,28 +40,27 @@ const sc = new SockethubClient(io(SOCKETHUB_SERVER));
 
 ```javascript
 import SockethubClient from '@sockethub/client';
-import { io } from '@socket.io-client';
+import { io } from 'socket.io-client';
 const SOCKETHUB_SERVER = 'http://localhost:10550';
 const sc = new SockethubClient(io(SOCKETHUB_SERVER));
 ```
 
 ### Browser
 
-The browser bundle is available in the dist folder:
+For browser usage without bundling, load the files served by Sockethub:
 
 ```
-import '@sockethub/client/dist/sockethub-client.js';
+<script src="http://localhost:10550/socket.io.js"></script>
+<script src="http://localhost:10550/sockethub-client.js"></script>
 ```
 
-You can place it somewhere accessible from the web and include
-it via a `script` tag.
+Once included, `SockethubClient` is available on global scope:
 
+```javascript
+const sc = new SockethubClient(
+    io('http://localhost:10550', { path: '/sockethub' }),
+);
 ```
-<script src="http://example.com/sockethub-client.js" type="module"></script>
-```
-
-Once included in a web-page, the `SockethubClient` base object
-should be on the global scope.
 
 ## Quick Start
 
@@ -65,9 +69,61 @@ import SockethubClient from '@sockethub/client';
 import { io } from 'socket.io-client';
 
 const socket = io('http://localhost:10550', { path: '/sockethub' });
-const sc = new SockethubClient(socket);
+const sc = new SockethubClient(socket, { initTimeoutMs: 5000 });
 
 sc.socket.on('message', (msg) => console.log(msg));
+sc.socket.on('ready', (info) => {
+    console.log(
+        'Sockethub ready:',
+        info.reason,
+        info.sockethubVersion,
+        info.platforms.map((p) => ({
+            id: p.id,
+            version: p.version,
+            contextVersion: p.contextVersion,
+            schemaVersion: p.schemaVersion,
+        })),
+    );
+    // prints:
+    // Sockethub ready: initial-connect 5.0.0-alpha.11 [
+    //   { id: 'dummy', version: '3.0.0-alpha.11', contextVersion: '1', schemaVersion: '1' },
+    //   { id: 'xmpp', version: '5.0.0-alpha.11', contextVersion: '1', schemaVersion: '3' }
+    // ]
+});
+
+sc.socket.on('init_error', (e) => {
+    console.warn('Sockethub init issue:', e.error);
+    // prints:
+    // Sockethub init issue: Initialization timed out after 5000ms waiting for schemas
+});
+
+// SockethubClient also logs its own timeout/recovery warnings while blocked.
+// prints:
+// [SockethubClient] Initialization timed out after 5000ms;
+// queued outbound messages: 3. Waiting for schemas event from server.
+// [SockethubClient] Still waiting for schemas; queued outbound messages: 3; oldest queued age: 12.4s.
+// [SockethubClient] Initialization recovered; flushing 3 queued messages after 13.1s delay.
+
+// If you need contextFor(platform), wait for initialization first.
+await sc.ready();
+// prints: (no output on success; promise resolves once schemas are loaded)
+// You may also emit before ready(); outbound events are queued and flushed automatically.
+sc.socket.emit('message', {
+    '@context': sc.contextFor('dummy'),
+    type: 'echo',
+    actor: { id: 'test@dummy', type: 'person' },
+    object: { type: 'message', content: 'hello world' }
+}, (ack) => {
+    if (ack?.error) {
+        console.error('Send failed:', ack.error);
+        // prints (example):
+        // Send failed: SockethubClient validation failed: ...
+        return;
+    }
+    console.log('Ack:', ack?.type, ack?.platform);
+    // prints:
+    // Ack: echo dummy
+});
 ```
 
 See the [Client Guide](../../docs/client-guide.md) for detailed usage and examples.
@@ -75,7 +131,18 @@ See the [Client Guide](../../docs/client-guide.md) for detailed usage and exampl
 ## API
 
 - **`new SockethubClient(socket)`** - Create client instance
-- **`sc.socket.emit(event, data)`** - Send messages
+- **`new SockethubClient(socket, options?)`** - Create client instance with optional init/queue settings
+- **`sc.ready(timeoutMs?)`** - Wait for initialization to complete
+- **`sc.isReady()`** - Check whether client is initialized
+- **`sc.getInitState()`** - Return `"idle" | "initializing" | "ready" | "init_error" | "closed"`
+- **`sc.contextFor(platform)`** - Build canonical `@context` for a platform from server registry
+- **`sc.isSchemasReady()`** - Alias for `sc.isReady()` (compatibility)
+- **`sc.waitForSchemas(timeoutMs?)`** - Alias for `sc.ready()` (compatibility)
+- **`sc.getRegisteredPlatforms()`** - Get server-registered platforms/contexts
+- **`sc.getRegisteredBaseContexts()`** - Get server-registered AS2 and Sockethub base context URLs
+- **`sc.getPlatformSchema(platform, schemaType?)`** - Get platform message/credentials schema
+- **`sc.validateActivity(activity)`** - Validate an activity against registered schemas
+- **`sc.socket.emit(event, data)`** - Send messages (queued until ready)
 - **`sc.socket.on(event, handler)`** - Listen for messages
 - **`sc.clearCredentials()`** - Clear stored credentials
 - **`sc.ActivityStreams`** - ActivityStreams library

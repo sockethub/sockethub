@@ -26,7 +26,13 @@ import {
 } from "./rate-limiter.js";
 
 const log = createLogger("server:core");
+const AS2_BASE_CONTEXT_URL = "https://www.w3.org/ns/activitystreams";
+const SOCKETHUB_BASE_CONTEXT_URL = "https://sockethub.org/ns/context/v1.jsonld";
 
+/**
+ * Normalize middleware errors into payload-safe error responses.
+ * Removes internal-only properties that must never be sent to clients.
+ */
 function attachError<T extends ActivityStream | ActivityObject>(
     err: unknown,
     msg?: T,
@@ -45,6 +51,10 @@ function attachError<T extends ActivityStream | ActivityObject>(
     return cleaned;
 }
 
+/**
+ * Main Socket.IO entrypoint for Sockethub runtime.
+ * Owns platform registry metadata, per-session middleware wiring, and routing.
+ */
 class Sockethub {
     private readonly parentId: string;
     private readonly parentSecret1: string;
@@ -54,6 +64,44 @@ class Sockethub {
     status: boolean;
     processManager!: ProcessManager;
     private rateLimiter!: ReturnType<typeof createRateLimiter>;
+
+    /**
+     * Build the platform registry payload sent to clients.
+     * This is the canonical source for base contexts + platform context/schema metadata.
+     */
+    private buildPlatformRegistryPayload() {
+        return {
+            version: this.processManager?.version,
+            contexts: {
+                as: AS2_BASE_CONTEXT_URL,
+                sockethub: SOCKETHUB_BASE_CONTEXT_URL,
+            },
+            platforms: Array.from(this.platformRegistry.values()).map(
+                (platform) => {
+                    const platformMeta = platform as typeof platform & {
+                        contextUrl?: string;
+                        contextVersion?: string;
+                        schemaVersion?: string;
+                    };
+                    const contextUrl =
+                        platformMeta.contextUrl ||
+                        `https://sockethub.org/ns/context/platform/${platform.id}/v1.jsonld`;
+                    return {
+                        contextUrl,
+                        contextVersion: platformMeta.contextVersion || "1",
+                        schemaVersion: platformMeta.schemaVersion || "1",
+                        id: platform.id,
+                        version: platform.version,
+                        types: platform.types,
+                        schemas: {
+                            credentials: platform.schemas.credentials || {},
+                            messages: platform.schemas.messages || {},
+                        },
+                    };
+                },
+            ),
+        };
+    }
 
     constructor() {
         this.status = false;
@@ -105,6 +153,9 @@ class Sockethub {
         stopCleanup();
     }
 
+    /**
+     * Configure all socket listeners and middleware for a single client session.
+     */
     private handleIncomingConnection(socket: Socket) {
         // session-specific debug messages
         const sessionLog = createLogger(`server:core:${socket.id}`);
@@ -118,10 +169,21 @@ class Sockethub {
             );
 
         sessionLog.debug("socket.io connection");
+        const platformRegistryPayload = this.buildPlatformRegistryPayload();
 
         // Rate limiting middleware - runs on every incoming event
         socket.use((event, next) => {
             this.rateLimiter(socket, event[0], next);
+        });
+
+        // Send schema metadata to clients immediately and on-demand.
+        socket.emit("schemas", platformRegistryPayload);
+        socket.on("schemas", (ack?: (payload: unknown) => void) => {
+            if (typeof ack === "function") {
+                ack(platformRegistryPayload);
+                return;
+            }
+            socket.emit("schemas", platformRegistryPayload);
         });
 
         socket.on("disconnect", () => {
@@ -214,6 +276,12 @@ class Sockethub {
                         msg: ActivityStream,
                         next: (data?: ActivityStream | Error) => void,
                     ) => {
+                        if (!msg.context) {
+                            msg.error =
+                                "activity stream must contain a context";
+                            next(msg);
+                            return;
+                        }
                         const platformInstance = this.processManager.get(
                             msg.context,
                             msg.actor.id,
