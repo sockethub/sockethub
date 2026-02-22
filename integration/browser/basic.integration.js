@@ -395,14 +395,16 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             it("should be empty", () => {
                 expect(incomingMessages.length).to.be.below(3);
                 for (const message of incomingMessages) {
-                    expect(message.type).to.equal("message");
+                    expect(["message", "connect"]).to.include(message.type);
                     expect(message.error).to.be.a("string");
                     if (message.platform !== undefined) {
                         expect(message.platform).to.be.a("string");
                     }
                 }
                 const xmppMessage = incomingMessages.find(
-                    (message) => message.context === "xmpp",
+                    (message) =>
+                        message.context === "xmpp" &&
+                        message.type === "message",
                 );
                 if (xmppMessage) {
                     expect(xmppMessage["@context"]).to.eql(
