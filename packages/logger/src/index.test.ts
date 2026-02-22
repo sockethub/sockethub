@@ -176,6 +176,54 @@ describe("Logger Package", () => {
             const log2 = createLogger("test:2");
             expect(log2.transports.length).toBe(2);
         });
+
+        it("does not throw when logging circular metadata", () => {
+            const log = createLogger("test:namespace");
+            const circular: { self?: unknown } = {};
+            circular.self = circular;
+            expect(() =>
+                log.debug("circular metadata test", { circular }),
+            ).not.toThrow();
+        });
+
+        it("serializes Error metadata with name/message/stack in log output", () => {
+            const previousNodeEnv = process.env.NODE_ENV;
+            process.env.NODE_ENV = "production";
+
+            try {
+                const log = createLogger("test:namespace");
+                const consoleTransport = log.transports[0] as {
+                    format: {
+                        transform: (
+                            info: Record<string, unknown>,
+                            opts?: unknown,
+                        ) => Record<PropertyKey, unknown>;
+                        options?: unknown;
+                    };
+                };
+
+                const transformed = consoleTransport.format.transform(
+                    {
+                        level: "error",
+                        [Symbol.for("level")]: "error",
+                        message: "error metadata test",
+                        namespace: "test:namespace",
+                        err: new Error("boom"),
+                    },
+                    consoleTransport.format.options,
+                );
+                const output = String(
+                    transformed[Symbol.for("message")] ?? "",
+                ).replace(/\u001b\[[0-9;]*m/g, "");
+
+                expect(output).toContain("error metadata test");
+                expect(output).toContain("\"name\":\"Error\"");
+                expect(output).toContain("\"message\":\"boom\"");
+                expect(output).toContain("\"stack\"");
+            } finally {
+                process.env.NODE_ENV = previousNodeEnv;
+            }
+        });
     });
 
     describe("logger context", () => {
