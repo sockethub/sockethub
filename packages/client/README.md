@@ -21,17 +21,17 @@ automatic reconnection and credential replay.
 
 ### Node.js
 
-`$ npm install @sockethub/client`
+`$ npm install @sockethub/client socket.io-client`
 
 ### Bun
 
-`$ bun install @sockethub/client`
+`$ bun add @sockethub/client socket.io-client`
 
 #### CommonJS
 
 ```javascript
 const SockethubClient = require('@sockethub/client');
-const io = require('@socket.io-client');
+const { io } = require('socket.io-client');
 const SOCKETHUB_SERVER = 'http://localhost:10550';
 const sc = new SockethubClient(io(SOCKETHUB_SERVER));
 ```
@@ -40,28 +40,27 @@ const sc = new SockethubClient(io(SOCKETHUB_SERVER));
 
 ```javascript
 import SockethubClient from '@sockethub/client';
-import { io } from '@socket.io-client';
+import { io } from 'socket.io-client';
 const SOCKETHUB_SERVER = 'http://localhost:10550';
 const sc = new SockethubClient(io(SOCKETHUB_SERVER));
 ```
 
 ### Browser
 
-The browser bundle is available in the dist folder:
+For browser usage without bundling, load the files served by Sockethub:
 
 ```
-import '@sockethub/client/dist/sockethub-client.js';
+<script src="http://localhost:10550/socket.io.js"></script>
+<script src="http://localhost:10550/sockethub-client.js"></script>
 ```
 
-You can place it somewhere accessible from the web and include
-it via a `script` tag.
+Once included, `SockethubClient` is available on global scope:
 
+```javascript
+const sc = new SockethubClient(
+    io('http://localhost:10550', { path: '/sockethub' }),
+);
 ```
-<script src="http://example.com/sockethub-client.js" type="module"></script>
-```
-
-Once included in a web-page, the `SockethubClient` base object
-should be on the global scope.
 
 ## Quick Start
 
@@ -105,10 +104,10 @@ sc.socket.on('init_error', (e) => {
 // [SockethubClient] Still waiting for schemas; queued outbound messages: 3; oldest queued age: 12.4s.
 // [SockethubClient] Initialization recovered; flushing 3 queued messages after 13.1s delay.
 
-// You may emit immediately. SockethubClient queues outbound events until ready.
+// If you need contextFor(platform), wait for initialization first.
 await sc.ready();
 // prints: (no output on success; promise resolves once schemas are loaded)
-// Note: call ready() before using contextFor(platform).
+// You may also emit before ready(); outbound events are queued and flushed automatically.
 sc.socket.emit('message', {
     '@context': sc.contextFor('dummy'),
     type: 'echo',
