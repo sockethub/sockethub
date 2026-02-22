@@ -60,6 +60,10 @@ export class IrcToActivityStreams {
     constructor(cfg) {
         const config = cfg || {};
         this.server = config.server;
+        this.context =
+            typeof config.context === "string" && config.context.length > 0
+                ? config.context
+                : "irc";
         this.events = new events.EventEmitter();
         this.__buffer = {};
         this.__buffer[NAMES] = {};
@@ -111,7 +115,7 @@ export class IrcToActivityStreams {
         msg,
         incoming,
     ) {
-        const ase = new ASEmitter(this.events, this.server);
+        const ase = new ASEmitter(this.events, this.server, this.context);
         let nick;
         let type;
         let role;
@@ -173,7 +177,7 @@ export class IrcToActivityStreams {
             case MOTD: // MOTD
                 if (!this.__buffer[MOTD]) {
                     this.__buffer[MOTD] = {
-                        context: "irc",
+                        context: this.context,
                         type: "update",
                         actor: {
                             type: "service",
@@ -249,7 +253,7 @@ export class IrcToActivityStreams {
             /** */
             case TOPIC_IS: // topic currently set to
                 this.__buffer[TOPIC_IS] = {
-                    context: "irc",
+                    context: this.context,
                     type: "update",
                     actor: undefined,
                     target: {

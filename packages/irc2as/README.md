@@ -12,7 +12,11 @@ of them, and as time goes on hopefully become more compliant (PRs & feedback wel
 
 ```javascript
     var IRC2AS = require('irc2as');
-    var irc2as = new IRC2AS({server: 'irc.freenode.net'});
+    var irc2as = new IRC2AS({
+      server: 'irc.freenode.net',
+      // optional legacy context field value for emitted activities
+      context: 'irc'
+    });
 
     irc2as.events.on('incoming', function (asObject) {
       console.log('activity stream: ', asObject);
