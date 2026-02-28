@@ -120,13 +120,20 @@ export default class SockethubClient {
         this.ActivityStreams.on(
             "activity-object-create",
             (obj: ActivityObject) => {
-                socket.emit("activity-object", obj, (err: never) => {
-                    if (err) {
-                        console.error("failed to create activity-object ", err);
-                    } else {
+                socket.emit(
+                    "activity-object",
+                    obj,
+                    (resp?: { error?: string }) => {
+                        if (resp && typeof resp.error === "string") {
+                            console.error(
+                                "failed to create activity-object ",
+                                resp,
+                            );
+                            return;
+                        }
                         this.eventActivityObject(obj);
-                    }
-                });
+                    },
+                );
             },
         );
 

@@ -105,6 +105,38 @@ describe("SockethubClient", () => {
             }, 0);
         });
 
+        it("activity-object-create treats non-error ack payload as success", (done) => {
+            const obj = { id: "person-1", type: "person", name: "person-1" };
+
+            socket.once("activity-object", (_data: any, cb: any) => {
+                cb({ id: "person-1", type: "person", name: "person-1" });
+            });
+
+            asInstance.emit("activity-object-create", obj);
+
+            setTimeout(() => {
+                expect(sc.events["activity-object"].get("person-1")).to.eql(obj);
+                done();
+            }, 0);
+        });
+
+        it("activity-object-create treats ack payload with error as failure", (done) => {
+            const obj = { id: "person-2", type: "person", name: "person-2" };
+
+            socket.once("activity-object", (_data: any, cb: any) => {
+                cb({ error: "invalid object" });
+            });
+
+            asInstance.emit("activity-object-create", obj);
+
+            setTimeout(() => {
+                expect(sc.events["activity-object"].has("person-2")).to.equal(
+                    false,
+                );
+                done();
+            }, 0);
+        });
+
         it("connect", (done) => {
             expect(sc.socket.connected).to.be.false;
             sc.socket.on("connect", () => {
