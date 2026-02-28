@@ -75,10 +75,58 @@ See the [Client Guide](../../docs/client-guide.md) for detailed usage and exampl
 ## API
 
 - **`new SockethubClient(socket)`** - Create client instance
-- **`sc.socket.emit(event, data)`** - Send messages
+- **`sc.socket.emit(event, data, callback)`** - Send messages and inspect result
 - **`sc.socket.on(event, handler)`** - Listen for messages
 - **`sc.clearCredentials()`** - Clear stored credentials
 - **`sc.ActivityStreams`** - ActivityStreams library
+
+## Result Handling
+
+For client-initiated requests, pass a callback to `emit` and treat an `error`
+field as failure:
+
+```javascript
+sc.socket.emit("message", activity, (result) => {
+    if (result?.error) {
+        console.error("Sockethub request failed:", result.error);
+        return;
+    }
+
+    console.log("Sockethub request succeeded:", result);
+});
+```
+
+Also listen for ongoing platform events:
+
+```javascript
+sc.socket.on("message", (msg) => {
+    console.log("incoming platform event:", msg);
+});
+```
+
+## ActivityStreams Helpers
+
+Define reusable objects via `ActivityStreams.Object.create(...)`, then build
+streams with `ActivityStreams.Stream(...)`:
+
+```javascript
+sc.ActivityStreams.Object.create({
+    id: "mynick",
+    type: "person",
+    name: "My IRC Nick",
+});
+
+const stream = sc.ActivityStreams.Stream({
+    type: "join",
+    context: "irc",
+    actor: "mynick",
+    target: { id: "#sockethub", type: "room" },
+});
+
+sc.socket.emit("message", stream, (result) => {
+    if (result?.error) console.error(result.error);
+});
+```
 
 ## Security & State Management
 
