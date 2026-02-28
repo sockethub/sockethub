@@ -9,8 +9,6 @@ import type { ActivityStream } from "@sockethub/schemas";
 import type { MiddlewareNext } from "../middleware.js";
 import { platformInstances } from "../platform-instance.js";
 
-const log = createLogger("server:middleware:credential-check");
-
 /**
  * Prevents a second socket from attaching to an existing persistent platform
  * instance when credentials are "empty" (e.g., unregistered IRC nick).
@@ -22,6 +20,9 @@ export default function credentialCheck(
     isSessionActive: (sessionId: string) => boolean = () => false,
 ) {
     const normalizedClientIp = normalizeIp(clientIp);
+    const sessionLog = createLogger(
+        `server:middleware:credential-check:${socketId}`,
+    );
 
     return (msg: ActivityStream, next: MiddlewareNext<ActivityStream>) => {
         const existing = platformInstances.get(
@@ -63,12 +64,12 @@ export default function credentialCheck(
 
                 const scope = `${msg.context}:${msg.actor.id}`;
                 if (isExpectedCredentialValidationError(err)) {
-                    log.info(
+                    sessionLog.info(
                         `credential share validation rejected for ${scope} (socketId=${socketId}, validateSessionShare=true)`,
                         err.toString(),
                     );
                 } else {
-                    log.error(
+                    sessionLog.error(
                         `credential lookup failed for ${scope} (socketId=${socketId}, validateSessionShare=true)`,
                         err.toString(),
                     );
