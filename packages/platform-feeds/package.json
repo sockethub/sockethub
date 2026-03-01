@@ -48,7 +48,7 @@
   },
   "dependencies": {
     "html-tags": "^3.3.1",
-    "htmlparser2": "^9.1.0",
+    "htmlparser2": "^10.0.0",
     "podparse": "^1.6.0"
   },
   "devDependencies": {
