@@ -46,11 +46,11 @@
     "doc": "jsdoc2md --no-gfm --heading-depth 1 src/index.js > API.md"
   },
   "dependencies": {
-    "@xmpp/client": "^0.13.6"
+    "@xmpp/client": "^0.14.0"
   },
   "devDependencies": {
     "@sockethub/schemas": "^3.0.0-alpha.11",
-    "@xmpp/xml": "^0.13.2",
+    "@xmpp/xml": "^0.14.0",
     "jsdoc-to-markdown": "^8.0.3",
     "sinon": "^17.0.2"
   },
