@@ -46,6 +46,59 @@ sc.socket.emit('message', {
 }, (response) => console.log(response));
 ```
 
+## Checking Results (Success/Failure)
+
+### 1. Check the emit callback for request outcome
+
+For client-initiated operations, pass a callback to `emit`. Treat any payload
+with `error` as failure.
+
+```javascript
+sc.socket.emit('message', {
+    type: 'send',
+    context: 'irc',
+    actor: { id: 'mynick', type: 'person' },
+    target: { id: '#sockethub', type: 'room' },
+    object: { type: 'note', content: 'Hello channel' }
+}, (result) => {
+    if (result?.error) {
+        console.error('Send failed:', result.error);
+        return;
+    }
+
+    console.log('Send succeeded:', result);
+});
+```
+
+This same pattern applies to `credentials` and `activity-object` events.
+
+### 2. Listen for incoming platform events on `message`
+
+Not all messages are direct responses to your last request. Platforms can also
+push messages/events asynchronously.
+
+```javascript
+sc.socket.on('message', (msg) => {
+    if (msg?.error) {
+        console.warn('Incoming platform error:', msg.error, msg);
+        return;
+    }
+
+    console.log('Incoming platform event:', msg);
+});
+```
+
+### 3. Handle transport-level connection failures
+
+```javascript
+sc.socket.on('connect', () => console.log('Connected'));
+sc.socket.on('disconnect', () => console.log('Disconnected'));
+sc.socket.on('connect_error', (err) => console.error('Socket error:', err));
+```
+
+Use these to represent WebSocket health in your UI, separate from platform job
+success/failure.
+
 ## Core Patterns
 
 ### ActivityStreams Format
@@ -63,6 +116,37 @@ sc.socket.emit('message', {
 If `actor` is provided as a string, Sockethub expands it using any previously
 saved ActivityObject with the same id (including `type` and any other stored
 properties). If none exists, it expands to `{ id }`.
+
+### Setting ActivityObjects and Building ActivityStreams
+
+The client includes `sc.ActivityStreams` helpers. This is the easiest way to
+define reusable actor/target objects and then reference them by id.
+
+```javascript
+// Register an actor object (also emitted to server as `activity-object`)
+sc.ActivityStreams.Object.create({
+    id: 'mynick',
+    type: 'person',
+    name: 'My IRC Nick'
+});
+
+// Build a stream with string refs; they are expanded from stored objects
+const joinStream = sc.ActivityStreams.Stream({
+    type: 'join',
+    context: 'irc',
+    actor: 'mynick',
+    target: { id: '#sockethub', type: 'room' }
+});
+
+sc.socket.emit('message', joinStream, (result) => {
+    if (result?.error) {
+        console.error('Join failed:', result.error);
+    }
+});
+```
+
+You can still send raw ActivityStreams directly with `sc.socket.emit('message',
+...)` if you prefer.
 
 ### Platforms Requiring Credentials
 
