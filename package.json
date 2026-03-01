@@ -31,7 +31,7 @@
   "private": true,
   "resolutions": {
     "node-fetch": "3.3.2",
-    "engine.io": "6.5.4",
+    "engine.io": "6.6.5",
     "socket.io": "4.7.5"
   },
   "scripts": {
