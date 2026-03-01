@@ -12,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Use Bun latest
-        uses: oven-sh/setup-bun@v2.0.1
+        uses: oven-sh/setup-bun@v2.1.2
         with:
           bun-version: latest
       - run: bun install
@@ -35,7 +35,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Use Bun latest
-        uses: oven-sh/setup-bun@v2.0.1
+        uses: oven-sh/setup-bun@v2.1.2
         with:
           bun-version: latest
       - run: bun install
@@ -69,7 +69,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Use Bun latest
-        uses: oven-sh/setup-bun@v2.0.1
+        uses: oven-sh/setup-bun@v2.1.2
         with:
           bun-version: latest
       - run: bun install
