@@ -86,7 +86,12 @@ For client-initiated requests, pass a callback to `emit` and treat an `error`
 field as failure:
 
 ```javascript
-sc.socket.emit("message", activity, (result) => {
+sc.socket.emit("message", {
+    type: "send",
+    context: "dummy",
+    actor: { id: "test", type: "person" },
+    object: { type: "note", content: "Hello!" },
+}, (result) => {
     if (result?.error) {
         console.error("Sockethub request failed:", result.error);
         return;
