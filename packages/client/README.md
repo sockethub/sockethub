@@ -87,7 +87,7 @@ field as failure:
 
 ```javascript
 sc.socket.emit("message", {
-    type: "send",
+    type: "echo",
     context: "dummy",
     actor: { id: "test", type: "person" },
     object: { type: "note", content: "Hello!" },
