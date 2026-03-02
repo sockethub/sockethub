@@ -64,6 +64,32 @@ Default: `localhost`
 Overrides `REDIS_HOST` and `REDIS_PORT`, can specify a full redis connect URL
 (eq. `redis://username:password@host:port`)
 
+#### HTTP Actions
+
+Enable the HTTP streaming endpoint and tune limits:
+
+- SOCKETHUB_HTTP_ACTIONS_ENABLED
+- SOCKETHUB_HTTP_ACTIONS_PATH
+- SOCKETHUB_HTTP_ACTIONS_REQUIRE_REQUEST_ID
+- SOCKETHUB_HTTP_ACTIONS_MAX_MESSAGES_PER_REQUEST
+- SOCKETHUB_HTTP_ACTIONS_MAX_PAYLOAD_BYTES
+- SOCKETHUB_HTTP_ACTIONS_IDEMPOTENCY_TTL_MS
+- SOCKETHUB_HTTP_ACTIONS_REQUEST_TIMEOUT_MS
+- SOCKETHUB_HTTP_ACTIONS_IDLE_TIMEOUT_MS
+
+Request handling stays on Sockethub's existing core path:
+
+- validate message shape
+- store credentials (when applicable)
+- enqueue to Redis
+- process in platform child process
+- stream each result line back to the HTTP client
+
+HTTP actions only change transport and replay behavior. They do not create a
+separate platform routing model.
+
+See [`docs/configuration.md`](../../docs/configuration.md) for details and examples.
+
 #### Sentry Configuration
 
 Sentry error reporting can be configured via environment variable or config file:

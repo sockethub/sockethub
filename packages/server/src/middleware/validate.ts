@@ -12,7 +12,10 @@ import {
 } from "@sockethub/schemas";
 
 import getInitObject, { type IInitObject } from "../bootstrap/init.js";
-import type { MiddlewareChainInterface } from "../middleware.js";
+import type {
+    MiddlewareChainInterface,
+    MiddlewareHandler,
+} from "../middleware.js";
 
 // called when registered with the middleware function, define the type of validation
 // that will be called when the middleware eventually does.
@@ -20,12 +23,12 @@ export default function validate<T extends ActivityObject>(
     type: "activity-object",
     sockethubId: string,
     passedInitObj?: IInitObject,
-): (msg: T, done: MiddlewareChainInterface<T>) => void;
+): MiddlewareHandler<T>;
 export default function validate<T extends ActivityStream>(
     type: "credentials" | "message",
     sockethubId: string,
     passedInitObj?: IInitObject,
-): (msg: T, done: MiddlewareChainInterface<T>) => void;
+): MiddlewareHandler<T>;
 export default function validate(
     type: string,
     sockethubId: string,

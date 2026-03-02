@@ -4,7 +4,12 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { createLogger } from "@sockethub/logger";
 import bodyParser from "body-parser";
-import express, { type Express, type Request, type Response } from "express";
+import express, {
+    type Express,
+    type NextFunction,
+    type Request,
+    type Response,
+} from "express";
 import rateLimit from "express-rate-limit";
 import { Server } from "socket.io";
 import config from "./config.js";
@@ -25,6 +30,7 @@ log.info(`sockethub v${packageJson.version}`);
  *  - Socket.io (bidirectional websocket communication)
  */
 class Listener {
+    app?: Express;
     io: Server;
     http: HTTP.Server;
 
@@ -35,6 +41,7 @@ class Listener {
     start() {
         // initialize express and socket.io objects
         const app = Listener.initExpress();
+        this.app = app;
         this.http = new HTTP.Server(app);
         this.io = new Server(this.http, {
             path: config.get("sockethub:path") as string,
@@ -114,10 +121,23 @@ class Listener {
         app.use(express.static(examplesPath));
 
         const examplesIndex = path.join(examplesPath, "index.html");
-        app.get("*", limiter, (req: Request, res: Response) => {
-            log.debug(`examples request ${req.path}`);
-            res.sendFile(examplesIndex);
-        });
+        const httpActionsPath = config.get("httpActions:path");
+        app.get(
+            "*",
+            limiter,
+            (req: Request, res: Response, next: NextFunction) => {
+                if (
+                    typeof httpActionsPath === "string" &&
+                    (req.path === httpActionsPath ||
+                        req.path.startsWith(`${httpActionsPath}/`))
+                ) {
+                    next();
+                    return;
+                }
+                log.debug(`examples request ${req.path}`);
+                res.sendFile(examplesIndex);
+            },
+        );
 
         log.info(
             `examples served at http://${config.get("sockethub:host")}:${config.get(
@@ -146,8 +166,18 @@ class Listener {
         app.set("view engine", "ejs");
         // use bodyParser
         app.use(bodyParser.urlencoded({ extended: true }));
-        app.use(bodyParser.json());
+        const jsonLimit = config.get("httpActions:maxPayloadBytes") ?? "100kb";
+        // Keep strict=false so primitive JSON values reach route handlers and
+        // can be converted into consistent JSON error responses.
+        app.use(bodyParser.json({ limit: jsonLimit, strict: false }));
         return app;
+    }
+
+    getApp(): Express {
+        if (!this.app) {
+            throw new Error("listener not started");
+        }
+        return this.app;
     }
 }
 
