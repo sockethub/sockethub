@@ -20,6 +20,25 @@ The server implements:
 - **Session Management**: Per-connection credential isolation and state management
 - **Error Reporting**: Optional Sentry integration for production error monitoring and debugging
 
+## Credential Session Sharing
+
+For persistent platforms, Sockethub may attach multiple sockets to one running
+platform instance when they target the same actor.
+
+Session sharing rules:
+
+- Credentials are validated in the data layer during share attempts.
+- Share is allowed only when credentials include a non-empty `password`.
+- Username-only/anonymous credentials are rejected with `username already in use`.
+
+Reconnect exception for anonymous credentials:
+
+- If a prior socket for that actor is stale (already disconnected) and
+  the reconnect IP matches, Sockethub allows reconnect during janitor grace.
+- IP source is configurable with:
+  - `credentialCheck.reconnectIpSource` (`socket` default, or `proxy`)
+  - `credentialCheck.proxyHeader` (`x-forwarded-for` default)
+
 ## Documentation
 
 For complete Sockethub documentation, see the [main repository README](../../README.md)

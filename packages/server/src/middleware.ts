@@ -32,7 +32,7 @@ export class MiddlewareChain<T> {
 
     constructor(name: string) {
         this.name = name;
-        this.logger = createLogger(`middleware:${name}`);
+        this.logger = createLogger(`server:middleware:${name}`);
     }
 
     use(func: MiddlewareErrorHandler<T> | MiddlewareHandler<T>): this {

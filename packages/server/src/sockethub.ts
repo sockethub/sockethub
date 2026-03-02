@@ -14,6 +14,7 @@ import config from "./config";
 import janitor from "./janitor.js";
 import listener from "./listener.js";
 import createActivityObject from "./middleware/create-activity-object.js";
+import credentialCheck from "./middleware/credential-check.js";
 import expandActivityStream from "./middleware/expand-activity-stream.js";
 import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
@@ -43,6 +44,50 @@ function attachError<T extends ActivityStream | ActivityObject>(
         delete cleaned.sessionSecret;
     }
     return cleaned;
+}
+
+function normalizeIp(ip: string | undefined): string {
+    if (!ip) {
+        return "";
+    }
+    const trimmed = ip.split(",")[0].trim();
+    if (trimmed.startsWith("::ffff:")) {
+        return trimmed.slice(7);
+    }
+    return trimmed;
+}
+
+function getProxyHeaderName(): string {
+    return (
+        (
+            config.get("credentialCheck:proxyHeader") as string | undefined
+        )?.toLowerCase() || "x-forwarded-for"
+    );
+}
+
+function getClientIp(socket: Socket): string {
+    const ipSource =
+        config.get("credentialCheck:reconnectIpSource") === "proxy"
+            ? "proxy"
+            : "socket";
+
+    if (ipSource === "proxy") {
+        const proxyHeader = getProxyHeaderName();
+        const headerValue = socket.handshake.headers[proxyHeader];
+        if (typeof headerValue === "string") {
+            const normalized = normalizeIp(headerValue);
+            if (normalized) {
+                return normalized;
+            }
+        } else if (Array.isArray(headerValue) && headerValue.length > 0) {
+            const normalized = normalizeIp(headerValue[0]);
+            if (normalized) {
+                return normalized;
+            }
+        }
+    }
+
+    return normalizeIp(socket.handshake.address);
 }
 
 class Sockethub {
@@ -93,6 +138,13 @@ class Sockethub {
         // Create rate limiter once at server level
         this.rateLimiter = createRateLimiter(config.get("rateLimiter"));
 
+        if (config.get("credentialCheck:reconnectIpSource") === "proxy") {
+            const proxyHeader = getProxyHeaderName();
+            log.warn(
+                `credentialCheck.reconnectIpSource=proxy enabled; only use this behind a trusted reverse proxy that overwrites '${proxyHeader}'`,
+            );
+        }
+
         log.debug("active platforms: ", [...init.platforms.keys()]);
         listener.start(); // start external services
         janitor.start(); // start cleanup cycle
@@ -109,6 +161,7 @@ class Sockethub {
         // session-specific debug messages
         const sessionLog = createLogger(`server:core:${socket.id}`);
         const sessionSecret = crypto.randToken(16);
+        const clientIp = getClientIp(socket);
         const credentialsStore: CredentialsStoreInterface =
             new CredentialsStore(
                 this.parentId,
@@ -201,6 +254,16 @@ class Sockethub {
                     },
                 )
                 .use(
+                    credentialCheck(
+                        credentialsStore,
+                        socket.id,
+                        clientIp,
+                        (sessionId) =>
+                            listener.io?.sockets?.sockets?.has(sessionId) ??
+                            false,
+                    ),
+                )
+                .use(
                     (
                         err: Error,
                         data: InternalActivityStream,
@@ -218,6 +281,7 @@ class Sockethub {
                             msg.context,
                             msg.actor.id,
                             socket.id,
+                            clientIp,
                         );
                         // job validated and queued, stores socket.io callback for when job is completed
                         try {

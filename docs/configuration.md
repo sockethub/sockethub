@@ -44,6 +44,10 @@ Sockethub uses a JSON configuration file:
     "maxRequests": 100,
     "blockDurationMs": 5000
   },
+  "credentialCheck": {
+    "reconnectIpSource": "socket",
+    "proxyHeader": "x-forwarded-for"
+  },
   "redis": {
     "url": "redis://127.0.0.1:6379"
   },
@@ -124,6 +128,44 @@ Protect against event flooding from individual clients:
 
 The rate limiter operates per WebSocket connection and blocks clients that exceed the configured
 thresholds. Blocked clients are automatically unblocked after the `blockDurationMs` expires.
+
+### Credential Sharing and Anonymous Reconnects
+
+For persistent platforms (for example IRC), Sockethub can reuse an already-running
+platform instance for the same `context + actor.id`.
+
+When another socket is already attached to that actor:
+
+- Session-share validation runs in the data layer.
+- Credentials with a non-empty `password` are considered shareable.
+- Credentials without a non-empty `password` are not shareable and return
+  `username already in use`.
+
+This prevents anonymous/username-only accounts from accidentally sharing the
+same platform thread across different users.
+
+Sockethub still allows a narrow reconnect case for anonymous credentials:
+
+- The prior session must be stale (disconnected socket, still waiting for janitor cleanup).
+- The reconnecting client IP must match the stale session IP.
+
+Configure how reconnect IP is read:
+
+```json
+{
+  "credentialCheck": {
+    "reconnectIpSource": "socket",
+    "proxyHeader": "x-forwarded-for"
+  }
+}
+```
+
+- `reconnectIpSource`: `socket` (default) uses `socket.handshake.address`.
+- `reconnectIpSource: "proxy"` uses the header named by `proxyHeader`.
+- `proxyHeader`: defaults to `x-forwarded-for`; only the first IP is used.
+
+Use `proxy` only when Sockethub is behind a trusted reverse proxy that sets and
+sanitizes forwarding headers.
 
 ### Redis Configuration
 
