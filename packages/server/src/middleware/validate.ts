@@ -39,6 +39,15 @@ export default function validate(
         return typeof legacyContext === "string" ? legacyContext : undefined;
     };
 
+    const getContextValues = (stream: ActivityStream): Array<string> => {
+        if (!Array.isArray(stream["@context"])) {
+            return [];
+        }
+        return stream["@context"].filter(
+            (value): value is string => typeof value === "string",
+        );
+    };
+
     const normalizeLegacyContext = (
         stream: ActivityStream,
         initObj: IInitObject,
@@ -93,9 +102,14 @@ export default function validate(
             normalizeLegacyContext(stream, initObj);
             const platformId = resolvePlatformId(stream);
             if (!platformId) {
+                const contextValues = getContextValues(stream);
+                const contextDetails =
+                    contextValues.length > 0
+                        ? ` Unregistered @context values: ${contextValues.join(", ")}`
+                        : " No @context values were provided.";
                 return done(
                     new Error(
-                        "platform context URL not registered with this Sockethub instance.",
+                        `platform context URL not registered with this Sockethub instance.${contextDetails}`,
                     ),
                 );
             }

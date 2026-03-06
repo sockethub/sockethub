@@ -167,7 +167,9 @@ export default [
             secure: false,
             server: "irc.freenode.net",
         },
-        error: "Error: platform context URL not registered with this Sockethub instance.",
+        error:
+            "Error: platform context URL not registered with this Sockethub instance." +
+            " No @context values were provided.",
     },
     {
         name: "new person",
@@ -242,7 +244,9 @@ export default [
                 id: "larg",
             },
         },
-        error: "Error: platform context URL not registered with this Sockethub instance.",
+        error:
+            "Error: platform context URL not registered with this Sockethub instance." +
+            " No @context values were provided.",
     },
     {
         name: "unexpected AS",
@@ -293,7 +297,12 @@ export default [
             ],
             target: { id: "irc://irc.dooder.net/a-room", type: "room" },
         },
-        error: "Error: platform context URL not registered with this Sockethub instance.",
+        error:
+            "Error: platform context URL not registered with this Sockethub instance." +
+            " Unregistered @context values: " +
+            "https://www.w3.org/ns/activitystreams, " +
+            "https://sockethub.org/ns/context/v1.jsonld, " +
+            "https://sockethub.org/ns/context/platform/foobar111/v1.jsonld",
     },
     {
         name: "missing actor property",
