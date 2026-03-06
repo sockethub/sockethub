@@ -43,7 +43,7 @@ export default function validate(
         stream: ActivityStream,
         initObj: IInitObject,
     ) => {
-        if (Array.isArray(stream["@context"])) {
+        if (resolvePlatformId(stream)) {
             return;
         }
         const legacyContext = getLegacyContext(stream);
@@ -51,10 +51,13 @@ export default function validate(
             return;
         }
         const platformMeta = initObj.platforms.get(legacyContext);
-        if (!platformMeta?.contextUrl) {
+        if (!platformMeta) {
             return;
         }
-        stream["@context"] = buildCanonicalContext(platformMeta.contextUrl);
+        const platformContextUrl =
+            platformMeta.contextUrl ||
+            `https://sockethub.org/ns/context/platform/${legacyContext}/v1.jsonld`;
+        stream["@context"] = buildCanonicalContext(platformContextUrl);
         stream.platform = legacyContext;
     };
 
