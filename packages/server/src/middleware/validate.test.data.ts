@@ -6,7 +6,11 @@ export default [
         input: {
             id: "blah",
             type: "send",
-            context: "fakeplatform",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/fakeplatform/v1.jsonld",
+            ],
             actor: {
                 id: "dood@irc.freenode.net",
                 type: "person",
@@ -32,7 +36,11 @@ export default [
         input: {
             id: "blah",
             type: "credentials",
-            context: "fakeplatform",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/fakeplatform/v1.jsonld",
+            ],
             actor: {
                 id: "dood@irc.freenode.net",
                 type: "person",
@@ -52,7 +60,11 @@ export default [
         type: "credentials",
         input: {
             actor: "hyper_rau@localhost",
-            context: "fakeplatform",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/fakeplatform/v1.jsonld",
+            ],
             object: {
                 username: "hyper_rau",
                 password: "123",
@@ -114,7 +126,7 @@ export default [
             secure: false,
             server: "irc.freenode.net",
         },
-        error: "Error: platform context undefined not registered with this Sockethub instance.",
+        error: "Error: platform context URL not registered with this Sockethub instance.",
     },
     {
         name: "new person",
@@ -162,7 +174,11 @@ export default [
             as: {
                 id: "blah",
                 type: "send",
-                context: "hello",
+                "@context": [
+                    "https://www.w3.org/ns/activitystreams",
+                    "https://sockethub.org/ns/context/v1.jsonld",
+                    "https://sockethub.org/ns/context/platform/hello/v1.jsonld",
+                ],
                 actor: {
                     name: "dood",
                 },
@@ -185,7 +201,7 @@ export default [
                 id: "larg",
             },
         },
-        error: "Error: platform context undefined not registered with this Sockethub instance.",
+        error: "Error: platform context URL not registered with this Sockethub instance.",
     },
     {
         name: "unexpected AS",
@@ -194,13 +210,17 @@ export default [
         input: {
             actor: "irc://uuu@localhost",
             type: "join",
-            context: "fakeplatform",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/fakeplatform/v1.jsonld",
+            ],
             target: "irc://irc.dooder.net/a-room",
         },
         // AJV can report different first errors depending on evaluation order.
         error: [
             "Error: [fakeplatform] /actor: must be object",
-            "Error: [fakeplatform] /target: must match exactly one schema in oneOf: credentials, feed, message, me, person, room, service, website, attendance, presence, relationship, topic, address",
+            "Error: [fakeplatform] /target: must match exactly one schema in oneOf: person, room, service, feed, website, address",
         ],
     },
     {
@@ -209,7 +229,11 @@ export default [
         type: "message",
         input: {
             actor: { id: "irc://uuu@localhost", type: "person" },
-            context: "fakeplatform",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/fakeplatform/v1.jsonld",
+            ],
             target: { id: "irc://irc.dooder.net/a-room", type: "room" },
         },
         error: "Error: [fakeplatform] activity stream: must have required property 'type'",
@@ -221,10 +245,14 @@ export default [
         input: {
             actor: { id: "irc://uuu@localhost", type: "person" },
             type: "foo",
-            context: "foobar111",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/foobar111/v1.jsonld",
+            ],
             target: { id: "irc://irc.dooder.net/a-room", type: "room" },
         },
-        error: "Error: platform context foobar111 not registered with this Sockethub instance.",
+        error: "Error: platform context URL not registered with this Sockethub instance.",
     },
     {
         name: "missing actor property",
@@ -232,7 +260,11 @@ export default [
         type: "message",
         input: {
             type: "foo",
-            context: "fakeplatform",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/fakeplatform/v1.jsonld",
+            ],
             target: { id: "irc://irc.dooder.net/a-room", type: "room" },
         },
         error: "Error: [fakeplatform] activity stream: must have required property 'actor'",
@@ -243,7 +275,11 @@ export default [
         type: "message",
         input: {
             type: "echo",
-            context: "fakeplatform",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/fakeplatform/v1.jsonld",
+            ],
             actor: { id: "irc://uuu@localhost", type: "person" },
         },
     },
@@ -253,11 +289,13 @@ export default [
         type: "message",
         input: {
             type: "foorg",
-            context: "fakeplatform",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/fakeplatform/v1.jsonld",
+            ],
             actor: { id: "irc://uuu@localhost", type: "person" },
         },
-        error:
-            "Error: platform type foorg not supported by fakeplatform platform. " +
-            "(types: credentials, echo, fail)",
+        error: "Error: [fakeplatform] /type: must be equal to one of the allowed values",
     },
 ];

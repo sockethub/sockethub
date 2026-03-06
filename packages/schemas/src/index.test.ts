@@ -16,6 +16,22 @@ import {
     validatePlatformSchema,
 } from "./validator";
 
+const permissiveMessageSchema = {
+    required: ["type"],
+    properties: {
+        type: {
+            type: "string",
+        },
+    },
+};
+
+addPlatformSchema(permissiveMessageSchema, "irc/messages");
+addPlatformSchema(permissiveMessageSchema, "dood/messages");
+addPlatformSchema(
+    testPlatformSchemaData.credentials,
+    "test-platform/credentials",
+);
+
 describe("schemas/src/index.ts", () => {
     describe("Platform schema validation", () => {
         it("returns an empty error for a valid schema", () => {
@@ -33,7 +49,6 @@ describe("schemas/src/index.ts", () => {
     describe("Adding a PlatformSchema", () => {
         it("returns the same schema when fetched", () => {
             const platform_type = "test-platform/credentials";
-            addPlatformSchema(testPlatformSchemaData.credentials, platform_type);
             const compiledSchema = getPlatformSchema(platform_type);
             expect(compiledSchema.schema).toEqual(
                 testPlatformSchemaData.credentials,

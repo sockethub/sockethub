@@ -6,12 +6,19 @@ import parse from "@xmpp/xml/lib/parse.js";
 
 import { IncomingHandlers } from "./incoming-handlers.js";
 import { stanzas } from "./incoming-handlers.test.data.js";
+import { PlatformSchema } from "./schema.js";
 
 describe("Incoming handlers", () => {
     describe("XML stanzas result in the expected AS objects", () => {
         let ih, sendToClient;
 
         beforeEach(() => {
+            if (!schemas.getPlatformSchema("xmpp/messages")) {
+                schemas.addPlatformSchema(
+                    PlatformSchema.messages,
+                    "xmpp/messages",
+                );
+            }
             sendToClient = sinon.fake();
             ih = new IncomingHandlers({
                 sendToClient: sendToClient,
