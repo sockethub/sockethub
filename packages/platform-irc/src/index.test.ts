@@ -5,6 +5,7 @@ import {
     type CredentialsObject,
     addPlatformContext,
     addPlatformSchema,
+    buildCanonicalContext,
     getPlatformSchema,
     validateCredentials,
     validatePlatformSchema,
@@ -31,8 +32,12 @@ const targetRoom = {
     name: "#a-room",
 };
 
+const IRC_CONTEXT = buildCanonicalContext(
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+);
+
 const validCredentials = {
-    "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
+    "@context": IRC_CONTEXT,
     type: "credentials",
     actor: actor,
     object: {
@@ -105,7 +110,7 @@ describe("Initialize IRC Platform", () => {
 
         it("invalid credentials type", () => {
             const result = validateCredentials({
-                "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
+                "@context": IRC_CONTEXT,
                 type: "credentials",
                 actor,
                 // @ts-expect-error test invalid params
@@ -125,7 +130,7 @@ describe("Initialize IRC Platform", () => {
             expect(
                 // @ts-expect-error test invalid params
                 validateCredentials({
-                    "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
+                    "@context": IRC_CONTEXT,
                     type: "credentials",
                     actor,
                     object: {
@@ -141,7 +146,7 @@ describe("Initialize IRC Platform", () => {
             expect(
                 // @ts-expect-error test invalid params
                 validateCredentials({
-                    "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
+                    "@context": IRC_CONTEXT,
                     type: "credentials",
                     actor,
                     object: {
@@ -160,7 +165,7 @@ describe("Initialize IRC Platform", () => {
         beforeEach((done) => {
             platform.connect(
                 {
-                    "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
+                    "@context": IRC_CONTEXT,
                     type: "connect",
                     actor: actor,
                 },
@@ -173,7 +178,7 @@ describe("Initialize IRC Platform", () => {
             beforeEach((done) => {
                 platform.join(
                     {
-                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
+                        "@context": IRC_CONTEXT,
                         type: "join",
                         actor: actor,
                         target: targetRoom,
@@ -190,7 +195,7 @@ describe("Initialize IRC Platform", () => {
             it("leave()", (done) => {
                 platform.leave(
                     {
-                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
+                        "@context": IRC_CONTEXT,
                         type: "leave",
                         actor: actor,
                         target: targetRoom,
@@ -203,7 +208,7 @@ describe("Initialize IRC Platform", () => {
             it("send()", (done) => {
                 platform.send(
                     {
-                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
+                        "@context": IRC_CONTEXT,
                         type: "send",
                         actor: actor,
                         object: { content: "har dee dar" },
@@ -217,7 +222,7 @@ describe("Initialize IRC Platform", () => {
             it("update() topic", (done) => {
                 platform.update(
                     {
-                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
+                        "@context": IRC_CONTEXT,
                         type: "update",
                         actor: actor,
                         object: { type: "topic", content: "important details" },
@@ -232,7 +237,7 @@ describe("Initialize IRC Platform", () => {
             it("update() nick change", (done) => {
                 platform.update(
                     {
-                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
+                        "@context": IRC_CONTEXT,
                         type: "update",
                         actor: actor,
                         object: { type: "address" },
@@ -247,7 +252,7 @@ describe("Initialize IRC Platform", () => {
             it("query()", (done) => {
                 platform.query(
                     {
-                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
+                        "@context": IRC_CONTEXT,
                         type: "query",
                         actor: actor,
                         target: targetRoom,
@@ -266,7 +271,7 @@ describe("Initialize IRC Platform", () => {
                     cb();
                 }
                 platform.disconnect({
-                        "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/irc/v1.jsonld"],
+                        "@context": IRC_CONTEXT,
                         type: "disconnect",
                         actor: actor,
                     },

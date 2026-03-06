@@ -169,7 +169,7 @@ export default [
         },
         error:
             "Error: platform context URL not registered with this Sockethub instance." +
-            " No @context values were provided.",
+            " No platform @context values were provided.",
     },
     {
         name: "new person",
@@ -246,7 +246,7 @@ export default [
         },
         error:
             "Error: platform context URL not registered with this Sockethub instance." +
-            " No @context values were provided.",
+            " No platform @context values were provided.",
     },
     {
         name: "unexpected AS",
@@ -299,9 +299,7 @@ export default [
         },
         error:
             "Error: platform context URL not registered with this Sockethub instance." +
-            " Unregistered @context values: " +
-            "https://www.w3.org/ns/activitystreams, " +
-            "https://sockethub.org/ns/context/v1.jsonld, " +
+            " Unregistered platform @context value: " +
             "https://sockethub.org/ns/context/platform/foobar111/v1.jsonld",
     },
     {

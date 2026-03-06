@@ -25,6 +25,7 @@ import type {
     PlatformSchemaStruct,
     PlatformSession,
 } from "@sockethub/schemas";
+import { buildCanonicalContext } from "@sockethub/schemas";
 import htmlTags from "html-tags";
 import getPodcastFromFeed, { type Episode, type Meta } from "podparse";
 
@@ -38,6 +39,7 @@ import {
 } from "./types.js";
 
 const MAX_NOTE_LENGTH = 256;
+const FEEDS_CONTEXT = buildCanonicalContext(PlatformSchema.contextUrl);
 
 const basic = /\s?<!doctype html>|(<html\b[^>]*>|<body\b[^>]*>|<x-[^>]+>)+/i;
 const full = new RegExp(
@@ -175,11 +177,7 @@ export default class Feeds implements PlatformInterface {
             .then((results) => {
                 return done(null, {
                     id: job.id || null,
-                    "@context": [
-                        "https://www.w3.org/ns/activitystreams",
-                        "https://sockethub.org/ns/context/v1.jsonld",
-                        "https://sockethub.org/ns/context/platform/feeds/v1.jsonld",
-                    ],
+                    "@context": FEEDS_CONTEXT,
                     type: "collection",
                     summary:
                         results.length > 0 && results[0]?.actor?.name
@@ -268,11 +266,7 @@ function buildFeedStruct(
     actor: PlatformFeedsActivityActor,
 ): PlatformFeedsActivityStream {
     return {
-        "@context": [
-            "https://www.w3.org/ns/activitystreams",
-            "https://sockethub.org/ns/context/v1.jsonld",
-            "https://sockethub.org/ns/context/platform/feeds/v1.jsonld",
-        ],
+        "@context": FEEDS_CONTEXT,
         actor: actor,
         type: "post",
     };

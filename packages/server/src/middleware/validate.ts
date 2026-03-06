@@ -6,8 +6,10 @@ import { createLogger } from "@sockethub/logger";
 import {
     type ActivityObject,
     type ActivityStream,
+    AS2_BASE_CONTEXT_URL,
     buildCanonicalContext,
     resolvePlatformId,
+    SOCKETHUB_BASE_CONTEXT_URL,
     validateActivityObject,
     validateActivityStream,
     validateCredentials,
@@ -33,6 +35,11 @@ export default function validate(
     sockethubId: string,
     passedInitObj?: IInitObject,
 ) {
+    const baseContextUrls = new Set([
+        AS2_BASE_CONTEXT_URL,
+        SOCKETHUB_BASE_CONTEXT_URL,
+    ]);
+
     const getLegacyContext = (stream: ActivityStream): string | undefined => {
         const legacyContext = (stream as ActivityStream & { context?: unknown })
             .context;
@@ -45,6 +52,14 @@ export default function validate(
         }
         return stream["@context"].filter(
             (value): value is string => typeof value === "string",
+        );
+    };
+
+    const getPlatformContextCandidates = (
+        stream: ActivityStream,
+    ): Array<string> => {
+        return getContextValues(stream).filter(
+            (value) => !baseContextUrls.has(value),
         );
     };
 
@@ -102,11 +117,14 @@ export default function validate(
             normalizeLegacyContext(stream, initObj);
             const platformId = resolvePlatformId(stream);
             if (!platformId) {
-                const contextValues = getContextValues(stream);
+                const platformContextCandidates =
+                    getPlatformContextCandidates(stream);
                 const contextDetails =
-                    contextValues.length > 0
-                        ? ` Unregistered @context values: ${contextValues.join(", ")}`
-                        : " No @context values were provided.";
+                    platformContextCandidates.length === 0
+                        ? " No platform @context values were provided."
+                        : platformContextCandidates.length > 1
+                          ? ` Multiple platform @context values were provided: ${platformContextCandidates.join(", ")}.`
+                          : ` Unregistered platform @context value: ${platformContextCandidates[0]}`;
                 return done(
                     new Error(
                         `platform context URL not registered with this Sockethub instance.${contextDetails}`,
