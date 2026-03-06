@@ -116,6 +116,7 @@ export default function validate(
                 );
             }
             const stream = msg as ActivityStream;
+            // Intentional mutation for backward compatibility with legacy `context`.
             normalizeLegacyContext(stream, initObj);
             const platformId = resolvePlatformId(stream);
             if (!platformId) {
