@@ -70,11 +70,20 @@ function getPartsCount(error: ErrorObject, types: TypeBreakdown): number {
     return parts.length;
 }
 
-function getTypes(msg: ActivityStream): TypeBreakdown {
+function getTypes(msg: ActivityStream | ActivityObject): TypeBreakdown {
+    if (!Array.isArray((msg as ActivityStream)["@context"])) {
+        return {
+            actor: [],
+            target: [],
+            object: getTypeList(msg),
+        };
+    }
+
+    const stream = msg as ActivityStream;
     return {
-        actor: getTypeList(msg.actor),
-        target: getTypeList(msg.target),
-        object: getTypeList(msg["@context"] ? msg.object : msg),
+        actor: getTypeList(stream.actor),
+        target: getTypeList(stream.target),
+        object: stream.object ? getTypeList(stream.object) : [],
     };
 }
 
@@ -86,7 +95,7 @@ function getTypes(msg: ActivityStream): TypeBreakdown {
  * @returns {string}
  */
 export default function getErrorMessage(
-    msg: ActivityStream,
+    msg: ActivityStream | ActivityObject,
     errors: Array<ErrorObject>,
     options?: ValidationErrorOptions,
 ): string {

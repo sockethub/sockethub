@@ -19,6 +19,7 @@ describe("Incoming handlers", () => {
                     "xmpp/messages",
                 );
             }
+            schemas.addPlatformContext("xmpp", PlatformSchema.contextUrl);
             sendToClient = sinon.fake();
             ih = new IncomingHandlers({
                 sendToClient: sendToClient,

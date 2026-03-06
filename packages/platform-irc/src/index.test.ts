@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "bun:test";
 import {
     type ActivityStream,
     type CredentialsObject,
+    addPlatformContext,
     addPlatformSchema,
     getPlatformSchema,
     validateCredentials,
@@ -69,6 +70,7 @@ describe("Initialize IRC Platform", () => {
         if (!getPlatformSchema("irc/credentials")) {
             addPlatformSchema(platform.schema.credentials, `irc/credentials`);
         }
+        addPlatformContext("irc", platform.schema.contextUrl);
     });
 
     it("lists required types enum", () => {

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import { readFileSync } from "fs";
 import {
+    addPlatformContext,
     addPlatformSchema,
     getPlatformSchema,
     validateActivityStream,
@@ -57,6 +58,10 @@ describe("IrcToActivityStreams", () => {
                 "irc/messages",
             );
         }
+        addPlatformContext(
+            "irc",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        );
         irc2as = new IrcToActivityStreams({
             server: "localhost",
             contexts: IRC_CONTEXTS,

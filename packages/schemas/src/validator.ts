@@ -18,7 +18,7 @@ import getErrorMessage, {
 import { ActivityObjectSchema } from "./schemas/activity-object.js";
 import { ActivityStreamSchema } from "./schemas/activity-stream.js";
 import { PlatformSchema } from "./schemas/platform.js";
-import type { ActivityStream } from "./types.js";
+import type { ActivityObject, ActivityStream } from "./types.js";
 
 const ajv = new Ajv({ strictTypes: false, allErrors: true });
 addFormats(ajv as unknown as Parameters<typeof addFormats>[0]);
@@ -70,7 +70,7 @@ registerSystemPlatformContexts();
 
 function handleValidation(
     schemaRef: string,
-    msg: ActivityStream,
+    msg: ActivityStream | ActivityObject,
     isObject = false,
 ): string {
     const validator = ajv.getSchema(schemaRef);
@@ -89,11 +89,16 @@ function handleValidation(
             validator.errors,
             validationErrorOptions,
         );
-        const platformContextUrl = resolvePlatformContextUrl(msg);
-        if (platformContextUrl) {
-            const platformId = getPlatformIdByContextUrl(platformContextUrl);
-            if (platformId) {
-                errorMessage = `[${platformId}] ${errorMessage}`;
+        if (Array.isArray((msg as ActivityStream)["@context"])) {
+            const platformContextUrl = resolvePlatformContextUrl(
+                msg as ActivityStream,
+            );
+            if (platformContextUrl) {
+                const platformId =
+                    getPlatformIdByContextUrl(platformContextUrl);
+                if (platformId) {
+                    errorMessage = `[${platformId}] ${errorMessage}`;
+                }
             }
         }
         return errorMessage;
@@ -107,7 +112,7 @@ export function setValidationErrorOptions(
     validationErrorOptions = { ...validationErrorOptions, ...options };
 }
 
-export function validateActivityObject(msg: ActivityStream): string {
+export function validateActivityObject(msg: ActivityObject): string {
     return handleValidation(`${schemaURL}/activity-object`, msg, true);
 }
 
@@ -170,17 +175,6 @@ export function addPlatformSchema(schema: Schema, platform_type: string) {
     const schemaRef = `${schemaURL}/context/${platform_type}`;
     if (!ajv.getSchema(schemaRef)) {
         ajv.addSchema(schema, schemaRef);
-    }
-    const parts = platform_type.split("/");
-    if (parts.length === 2) {
-        const [platformId] = parts;
-        const platformContextUrl = `https://sockethub.org/ns/context/platform/${platformId}/v1.jsonld`;
-        registerPlatformContext(
-            platformId,
-            platformContextUrl,
-            `${schemaURL}/context/${platformId}/messages`,
-            `${schemaURL}/context/${platformId}/credentials`,
-        );
     }
 }
 

@@ -191,6 +191,10 @@ const contextToPlatformId: Record<string, string> = {};
 const contextToSchemaId: Record<string, string> = {};
 const contextToCredentialsSchemaId: Record<string, string> = {};
 
+function getPlatformPathSegment(platformName: string): string {
+    return encodeURIComponent(platformName);
+}
+
 // Stage 2: emit per-platform JSON-LD contexts and message/credentials schemas.
 // Emit per-platform context and schema artifacts, and capture lookup maps.
 for (const platform of allSchemas) {
@@ -201,9 +205,10 @@ for (const platform of allSchemas) {
         },
     };
 
-    const contextRelativePath = `platform/${platform.name}/v${platform.contextVersion}.jsonld`;
-    const schemaRelativePath = `platform/${platform.name}/v${platform.schemaVersion}/messages.schema.json`;
-    const credentialsSchemaRelativePath = `platform/${platform.name}/v${platform.schemaVersion}/credentials.schema.json`;
+    const platformPath = getPlatformPathSegment(platform.name);
+    const contextRelativePath = `platform/${platformPath}/v${platform.contextVersion}.jsonld`;
+    const schemaRelativePath = `platform/${platformPath}/v${platform.schemaVersion}/messages.schema.json`;
+    const credentialsSchemaRelativePath = `platform/${platformPath}/v${platform.schemaVersion}/credentials.schema.json`;
 
     contextToPlatformId[platform.contextUrl] = platform.name;
     contextToSchemaId[platform.contextUrl] =

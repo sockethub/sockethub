@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 import { type RedisConfig, redisCheck } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import {
+    addPlatformContext,
     addPlatformSchema,
     InternalObjectTypesList,
     setValidationErrorOptions,
@@ -136,6 +137,7 @@ export default async function getInitObject(
 export async function registerPlatforms(initObj: IInitObject): Promise<void> {
     for (const [_platformId, platform] of initObj.platforms) {
         const schemas: PlatformSchemaRegistry = platform.schemas;
+        addPlatformContext(platform.id, schemas.contextUrl);
         if (schemas.credentials !== undefined) {
             addPlatformSchema(
                 schemas.credentials,

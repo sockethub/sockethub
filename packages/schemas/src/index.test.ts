@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { ActivityStream } from "./types";
+import type { ActivityObject, ActivityStream } from "./types";
 
 import testCredentialsData from "./index.test.data.credentials";
 import testActivityObjectsData from "./index.test.data.objects";
@@ -8,6 +8,7 @@ import testActivityStreamsData from "./index.test.data.streams";
 import { ActivityObjectSchema } from "./schemas/activity-object";
 import { ActivityStreamSchema } from "./schemas/activity-stream";
 import {
+    addPlatformContext,
     addPlatformSchema,
     getPlatformSchema,
     validateActivityObject,
@@ -30,6 +31,18 @@ addPlatformSchema(permissiveMessageSchema, "dood/messages");
 addPlatformSchema(
     testPlatformSchemaData.credentials,
     "test-platform/credentials",
+);
+addPlatformContext(
+    "irc",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+);
+addPlatformContext(
+    "dood",
+    "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+);
+addPlatformContext(
+    "test-platform",
+    "https://sockethub.org/ns/context/platform/test-platform/v1.jsonld",
 );
 
 describe("schemas/src/index.ts", () => {
@@ -82,7 +95,7 @@ describe("schemas/src/index.ts", () => {
             ([name, ao, expectedResult, expectedFailureMessage]) => {
                 describe("validateActivityObject " + name, () => {
                     it(`returns expected result`, () => {
-                        const err = validateActivityObject(ao as ActivityStream);
+                        const err = validateActivityObject(ao as ActivityObject);
                         expect(err).toEqual(expectedFailureMessage);
                         expect(!err).toEqual(expectedResult);
                     });
