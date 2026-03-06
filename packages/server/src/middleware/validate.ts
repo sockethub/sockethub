@@ -81,6 +81,8 @@ export default function validate(
         const platformContextUrl =
             platformMeta.contextUrl ||
             `https://sockethub.org/ns/context/platform/${legacyContext}/v1.jsonld`;
+        // Intentionally mutate the incoming stream so legacy `context` payloads
+        // continue through canonical @context/platform validation paths.
         stream["@context"] = buildCanonicalContext(platformContextUrl);
         stream.platform = legacyContext;
     };
