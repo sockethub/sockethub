@@ -224,7 +224,10 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     const msg = await connectXMPP(sc, jid);
                     expect(msg).to.deep.include({
                         type: "connect",
-                        actor: actorObject,
+                        actor: {
+                            id: actorObject.id,
+                            type: actorObject.type,
+                        },
                         context: "xmpp",
                     });
                 });
@@ -235,7 +238,10 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     const msg = await joinXMPPRoom(sc, jid, "test@prosody");
                     expect(msg).to.deep.include({
                         type: "join",
-                        actor: actorObject,
+                        actor: {
+                            id: actorObject.id,
+                            type: actorObject.type,
+                        },
                         context: "xmpp",
                         target: {
                             id: "test@prosody",
@@ -255,7 +261,10 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     );
                     expect(msg).to.deep.include({
                         type: "send",
-                        actor: actorObject,
+                        actor: {
+                            id: actorObject.id,
+                            type: actorObject.type,
+                        },
                         context: "xmpp",
                         object: {
                             type: "message",
