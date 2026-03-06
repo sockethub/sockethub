@@ -30,6 +30,13 @@ export function getConfig() {
 
 const config = getConfig();
 
+function asPersonActor(jid) {
+    return {
+        id: jid,
+        type: "person",
+    };
+}
+
 // Shared setup and validation functions
 export function validateGlobals() {
     describe("Global Library Validation", () => {
@@ -142,7 +149,7 @@ export function setXMPPCredentials(
     password = config.prosody.testUser.password,
 ) {
     const creds = {
-        actor: jid,
+        actor: asPersonActor(jid),
         context: "xmpp",
         type: "credentials",
         object: {
@@ -174,7 +181,7 @@ export function connectXMPP(sh, jid) {
         "message",
         {
             type: "connect",
-            actor: jid,
+            actor: asPersonActor(jid),
             context: "xmpp",
         },
         {
@@ -196,7 +203,7 @@ export function joinXMPPRoom(sh, jid, room = config.prosody.room) {
         "message",
         {
             type: "join",
-            actor: jid,
+            actor: asPersonActor(jid),
             context: "xmpp",
             target: {
                 type: "room",
@@ -219,7 +226,7 @@ export function sendXMPPMessage(sh, jid, room, content) {
         "message",
         {
             type: "send",
-            actor: jid,
+            actor: asPersonActor(jid),
             context: "xmpp",
             object: {
                 type: "message",

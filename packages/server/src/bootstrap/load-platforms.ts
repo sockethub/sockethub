@@ -27,6 +27,9 @@ export type PlatformStruct = {
     config: PlatformConfig;
     schemas: PlatformSchemaRegistry;
     version: string;
+    contextUrl: string;
+    contextVersion: string;
+    schemaVersion: string;
     types: Array<string>;
 };
 
@@ -35,6 +38,9 @@ export type PlatformMap = Map<string, PlatformStruct>;
 export type PlatformSchemaRegistry = {
     name: string;
     version: string;
+    contextUrl: string;
+    contextVersion: string;
+    schemaVersion: string;
     credentials?: Schema | boolean;
     messages?: Schema | boolean;
 };
@@ -158,10 +164,16 @@ export default async function loadPlatforms(
             schemas: {
                 name: p.schema.name,
                 version: p.schema.version,
+                contextUrl: p.schema.contextUrl,
+                contextVersion: p.schema.contextVersion,
+                schemaVersion: p.schema.schemaVersion,
                 credentials: p.schema.credentials || {},
                 messages: p.schema.messages || {},
             },
             version: p.schema.version,
+            contextUrl: p.schema.contextUrl,
+            contextVersion: p.schema.contextVersion,
+            schemaVersion: p.schema.schemaVersion,
             types: types,
         });
         log.info(`loaded platform ${p.schema.name} v${p.schema.version}`);

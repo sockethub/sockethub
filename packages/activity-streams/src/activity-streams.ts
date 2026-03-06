@@ -21,13 +21,13 @@ import EventEmitter from "eventemitter3";
 const ee = new EventEmitter();
 const baseProps = {
     stream: [
+        "@context",
         "id",
         "type",
+        "platform",
         "actor",
         "target",
         "object",
-        "context",
-        "context",
         "published",
         "error",
     ],

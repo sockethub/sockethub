@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import type { ActivityStream } from "@sockethub/schemas";
 import getInitObject from "../bootstrap/init.js";
-import { initMockFakePlatform } from "../bootstrap/init.test.js";
+import { initMockFakePlatform } from "../bootstrap/init.test-helpers.js";
 import validate from "./validate.js";
 import asObjects from "./validate.test.data.js";
 

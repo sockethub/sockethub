@@ -1,12 +1,22 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import { readFileSync } from "fs";
-import { validateActivityStream } from "@sockethub/schemas";
+import {
+    addPlatformContext,
+    addPlatformSchema,
+    getPlatformSchema,
+    validateActivityStream,
+} from "@sockethub/schemas";
 import equal from "fast-deep-equal";
 
 import { IrcToActivityStreams } from "./index.js";
 import { TestData } from "./index.test.data.js";
 const ircdata = readFileSync(__dirname + "/index.test.data.irc.txt", "utf-8");
 const inputs = ircdata.split("\n");
+const IRC_CONTEXTS = [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+];
 
 function matchStream(done) {
     return (stream) => {
@@ -39,7 +49,23 @@ describe("IrcToActivityStreams", () => {
         pongs = 0,
         pings = 0;
     beforeEach(() => {
-        irc2as = new IrcToActivityStreams({ server: "localhost" });
+        if (!getPlatformSchema("irc/messages")) {
+            addPlatformSchema(
+                {
+                    type: "object",
+                    additionalProperties: true,
+                },
+                "irc/messages",
+            );
+        }
+        addPlatformContext(
+            "irc",
+            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+        );
+        irc2as = new IrcToActivityStreams({
+            server: "localhost",
+            contexts: IRC_CONTEXTS,
+        });
         expect(irc2as).toHaveProperty("events");
         expect(typeof irc2as.events.on).toEqual("function");
         irc2as.events.on("unprocessed", (string) => {
@@ -91,31 +117,6 @@ describe("IrcToActivityStreams", () => {
             irc2as.input(
                 ":hitchcock.freenode.net 366 hyper_slvrbckt #kosmos-random :End of /NAMES list.",
             );
-        });
-    });
-
-    describe("context injection", () => {
-        it("defaults context to irc and does not emit @context", (done) => {
-            const instance = new IrcToActivityStreams({ server: "localhost" });
-            instance.events.once("incoming", (stream) => {
-                expect(stream.context).toEqual("irc");
-                expect(stream["@context"]).toBeUndefined();
-                done();
-            });
-            instance.input(":nick!user@host JOIN #room");
-        });
-
-        it("uses custom context from config and does not emit @context", (done) => {
-            const instance = new IrcToActivityStreams({
-                server: "localhost",
-                context: "irc-custom",
-            });
-            instance.events.once("incoming", (stream) => {
-                expect(stream.context).toEqual("irc-custom");
-                expect(stream["@context"]).toBeUndefined();
-                done();
-            });
-            instance.input(":nick!user@host JOIN #room");
         });
     });
 });

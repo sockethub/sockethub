@@ -8,13 +8,21 @@ export default [
             },
         },
         false,
-        "credential activity streams must have a context set",
+        "credential activity streams must have an @context set",
     ],
 
     [
         "credentials with no type",
         {
-            context: "test-platform",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/test-platform/v1.jsonld",
+            ],
+            actor: {
+                id: "test-platform-user",
+                type: "person",
+            },
             object: {
                 type: "credentials",
             },
@@ -26,8 +34,16 @@ export default [
     [
         "credentials with props",
         {
-            context: "test-platform",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/test-platform/v1.jsonld",
+            ],
             type: "credentials",
+            actor: {
+                id: "test-platform-user",
+                type: "person",
+            },
             object: {
                 type: "credentials",
                 user: "foo",
@@ -41,8 +57,16 @@ export default [
     [
         "credentials with props",
         {
-            context: "test-platform",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/test-platform/v1.jsonld",
+            ],
             type: "credentials",
+            actor: {
+                id: "test-platform-user",
+                type: "person",
+            },
             object: {
                 type: "credentials",
                 username: "foo",
@@ -56,8 +80,16 @@ export default [
     [
         "credentials with props",
         {
-            context: "test-platform",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/test-platform/v1.jsonld",
+            ],
             type: "credentials",
+            actor: {
+                id: "test-platform-user",
+                type: "person",
+            },
             object: {
                 type: "credentials",
                 username: "foo",

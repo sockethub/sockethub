@@ -14,8 +14,14 @@ declare module "irc-socket-sasl" {
 }
 
 declare module "@sockethub/irc2as" {
+    interface IrcToActivityStreamsOptions {
+        server: string;
+        contexts?: Array<string>;
+        context?: string;
+    }
+
     export class IrcToActivityStreams {
-        constructor(options: { server: string });
+        constructor(options: IrcToActivityStreamsOptions);
         input(data: unknown): void;
         events: {
             on(event: string, handler: (...args: Array<unknown>) => void): void;
