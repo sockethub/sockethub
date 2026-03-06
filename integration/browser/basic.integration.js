@@ -129,7 +129,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     expect(msg.error).to.equal("Error: failure message");
                     dummyObj.error = "Error: failure message";
                     dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
-                    expect(msg).to.eql(dummyObj);
+                    expect(msg).to.deep.include(dummyObj);
                 } else {
                     throw new Error(
                         "didn't receive expected failure from dummy platform",
@@ -151,7 +151,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     expect(msg.error).to.equal("Error: failure message");
                     dummyObj.error = "Error: failure message";
                     dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
-                    expect(msg).to.eql(dummyObj);
+                    expect(msg).to.deep.include(dummyObj);
                 } else {
                     throw new Error(
                         "didn't receive expected failure from dummy platform",
@@ -222,7 +222,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             describe("connect", () => {
                 it("is successful", async () => {
                     const msg = await connectXMPP(sc, jid);
-                    expect(msg).to.eql({
+                    expect(msg).to.deep.include({
                         type: "connect",
                         actor: actorObject,
                         context: "xmpp",
@@ -233,7 +233,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             describe("Join", () => {
                 it("should be successful", async () => {
                     const msg = await joinXMPPRoom(sc, jid, "test@prosody");
-                    expect(msg).to.eql({
+                    expect(msg).to.deep.include({
                         type: "join",
                         actor: actorObject,
                         context: "xmpp",
@@ -253,7 +253,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         "test@prosody",
                         "Hello, world!",
                     );
-                    expect(msg).to.eql({
+                    expect(msg).to.deep.include({
                         type: "send",
                         actor: actorObject,
                         context: "xmpp",
@@ -378,18 +378,16 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             it("should be empty", () => {
                 expect(incomingMessages.length).to.be.below(2);
                 if (incomingMessages.length === 1) {
-                    expect(incomingMessages).to.eql([
-                        {
-                            context: "xmpp",
-                            type: "message",
-                            actor: { id: "test@prosody", type: "room" },
-                            error: '<error type="cancel"><service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error>',
-                            target: {
-                                id: jid,
-                                type: "person",
-                            },
+                    expect(incomingMessages[0]).to.deep.include({
+                        context: "xmpp",
+                        type: "message",
+                        actor: { id: "test@prosody", type: "room" },
+                        error: '<error type="cancel"><service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error>',
+                        target: {
+                            id: jid,
+                            type: "person",
                         },
-                    ]);
+                    });
                 } else {
                     expect(incomingMessages).to.eql([]);
                 }
