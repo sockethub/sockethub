@@ -6,6 +6,7 @@ import { createLogger } from "@sockethub/logger";
 import {
     type ActivityObject,
     type ActivityStream,
+    buildCanonicalContext,
     resolvePlatformId,
     validateActivityObject,
     validateActivityStream,
@@ -32,6 +33,31 @@ export default function validate(
     sockethubId: string,
     passedInitObj?: IInitObject,
 ) {
+    const getLegacyContext = (stream: ActivityStream): string | undefined => {
+        const legacyContext = (stream as ActivityStream & { context?: unknown })
+            .context;
+        return typeof legacyContext === "string" ? legacyContext : undefined;
+    };
+
+    const normalizeLegacyContext = (
+        stream: ActivityStream,
+        initObj: IInitObject,
+    ) => {
+        if (Array.isArray(stream["@context"])) {
+            return;
+        }
+        const legacyContext = getLegacyContext(stream);
+        if (!legacyContext) {
+            return;
+        }
+        const platformMeta = initObj.platforms.get(legacyContext);
+        if (!platformMeta?.contextUrl) {
+            return;
+        }
+        stream["@context"] = buildCanonicalContext(platformMeta.contextUrl);
+        stream.platform = legacyContext;
+    };
+
     let initObj = passedInitObj;
     if (!passedInitObj) {
         getInitObject().then((init) => {
@@ -61,11 +87,19 @@ export default function validate(
                 );
             }
             const stream = msg as ActivityStream;
+            normalizeLegacyContext(stream, initObj);
             const platformId = resolvePlatformId(stream);
-            if (!platformId || !initObj.platforms.has(platformId)) {
+            if (!platformId) {
                 return done(
                     new Error(
                         "platform context URL not registered with this Sockethub instance.",
+                    ),
+                );
+            }
+            if (!initObj.platforms.has(platformId)) {
+                return done(
+                    new Error(
+                        `platform ${platformId} resolved from @context is not enabled in this Sockethub instance.`,
                     ),
                 );
             }

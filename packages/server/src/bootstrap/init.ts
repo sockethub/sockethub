@@ -21,6 +21,11 @@ export interface IInitObject {
     platforms: PlatformMap;
 }
 
+interface PrintSettingsInfoOptions {
+    log?: (message?: unknown, ...optionalParams: Array<unknown>) => void;
+    exit?: (code?: number) => unknown;
+}
+
 let init: IInitObject;
 
 function getExecutablePath(): string {
@@ -35,45 +40,46 @@ function getExecutablePath(): string {
 export function printSettingsInfo(
     version: string,
     platforms: Map<string, PlatformStruct>,
+    options: PrintSettingsInfoOptions = {},
 ) {
+    const logFn = options.log ?? console.log;
+    const exitFn = options.exit ?? process.exit;
     const execPath = getExecutablePath();
 
-    console.log(`${chalk.cyan("sockethub")} ${version}`);
-    console.log(`${chalk.cyan("executable:")} ${execPath}`);
+    logFn(`${chalk.cyan("sockethub")} ${version}`);
+    logFn(`${chalk.cyan("executable:")} ${execPath}`);
 
     const wsUrl = `ws://${config.get("sockethub:host")}:${config.get("sockethub:port")}${config.get("sockethub:path")}`;
-    console.log(`${chalk.cyan("websocket:")} ${chalk.blue(wsUrl)}`);
+    logFn(`${chalk.cyan("websocket:")} ${chalk.blue(wsUrl)}`);
 
     const examplesUrl = `http://${config.get("public:host")}:${config.get(
         "public:port",
     )}${config.get("public:path")}`;
-    console.log(
+    logFn(
         `${chalk.cyan("examples:")} ${config.get("examples") ? chalk.blue(examplesUrl) : "disabled"}`,
     );
 
-    console.log(
-        `${chalk.cyan("redis URL:")} ${chalk.blue(config.get("redis:url"))}`,
-    );
+    logFn(`${chalk.cyan("redis URL:")} ${chalk.blue(config.get("redis:url"))}`);
 
-    console.log(
+    logFn(
         `${chalk.cyan("platforms:")} ${Array.from(platforms.keys()).join(", ")}`,
     );
 
     if (platforms.size > 0) {
         for (const platform of platforms.values()) {
-            console.log();
-            console.log(chalk.green(`- ${platform.moduleName}`));
-            console.log(` ${chalk.dim("version:")} ${platform.version}`);
-            console.log(
+            logFn();
+            logFn(chalk.green(`- ${platform.moduleName}`));
+            logFn(` ${chalk.dim("version:")} ${platform.version}`);
+            logFn(
                 ` ${chalk.dim("AS types:")} ${platform.types.map((t) => chalk.yellow(t)).join(", ")}`,
             );
             if (platform.modulePath) {
-                console.log(` ${chalk.dim("path:")} ${platform.modulePath}`);
+                logFn(` ${chalk.dim("path:")} ${platform.modulePath}`);
             }
         }
     }
-    console.log();
-    process.exit();
+    logFn();
+    exitFn();
 }
 
 let initCalled = false;
