@@ -30,6 +30,7 @@ import type {
     PlatformSession,
     PlatformUpdateActor,
 } from "@sockethub/schemas";
+import { buildCanonicalContext } from "@sockethub/schemas";
 import IrcSocket, { type IrcSocketInstance } from "irc-socket-sasl";
 
 import { PlatformIrcSchema } from "./schema.js";
@@ -733,7 +734,10 @@ export default class IRC implements PersistentPlatformInterface {
     }
 
     private registerListeners(server: string) {
-        this.irc2as = new IrcToActivityStreams({ server: server });
+        this.irc2as = new IrcToActivityStreams({
+            server: server,
+            contexts: buildCanonicalContext(this.schema.contextUrl),
+        });
         this.client.on("data", (data: unknown) => {
             this.irc2as.input(data);
         });

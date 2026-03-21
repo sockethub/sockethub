@@ -1,11 +1,15 @@
-import { ObjectTypesList } from "./helpers/objects";
+import { ActorTypesList } from "./helpers/objects";
 
 export default [
     [
         "type:send, object:message",
         {
             type: "send",
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             actor: {
                 id: "dood@irc.freenode.net",
                 type: "person",
@@ -29,7 +33,11 @@ export default [
         "type:send, object:message bad published value",
         {
             type: "send",
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             published: "foo",
             actor: {
                 id: "dood@irc.freenode.net",
@@ -54,7 +62,11 @@ export default [
         "type:credentials, object:credentials",
         {
             type: "credentials",
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             actor: {
                 id: "dood@irc.freenode.net",
                 type: "person",
@@ -76,7 +88,11 @@ export default [
     [
         "type:credentials",
         {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "credentials",
             actor: {
                 id: "dood@irc.freenode.net",
@@ -98,7 +114,11 @@ export default [
         {
             id: "blah",
             type: "send",
-            context: "dood",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+            ],
             actor: {
                 id: "dood@irc.freenode.net",
                 type: "person",
@@ -120,7 +140,11 @@ export default [
         "bad iri in object id",
         {
             type: "feed",
-            context: "dood",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+            ],
             actor: {
                 id: "dood@irc.freenode.net",
                 type: "person",
@@ -138,7 +162,11 @@ export default [
         "valid iri in object id",
         {
             type: "feed",
-            context: "dood",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+            ],
             actor: {
                 id: "dood@irc.freenode.net",
                 type: "person",
@@ -156,7 +184,11 @@ export default [
         "wrong actor type",
         {
             type: "send",
-            context: "dood",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+            ],
             actor: {
                 id: "doobar@freenode.net/channel",
                 type: "foo",
@@ -168,7 +200,7 @@ export default [
             },
         },
         false,
-        `[dood] /actor: must match exactly one schema in oneOf: ${ObjectTypesList.join(
+        `[dood] /actor: must match exactly one schema in oneOf: ${ActorTypesList.join(
             ", ",
         )}`,
     ],
@@ -178,7 +210,11 @@ export default [
         {
             id: "blah",
             type: "send",
-            context: "dood",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+            ],
             actor: {
                 type: "person",
                 name: "dood",
@@ -202,7 +238,11 @@ export default [
         {
             id: "blah",
             type: "observe",
-            context: "dood",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+            ],
             actor: {
                 id: "dood",
                 type: "person",
@@ -224,7 +264,11 @@ export default [
         {
             id: "blah",
             type: "observe",
-            context: "dood",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+            ],
             actor: {
                 id: "chatroom@crusty.net",
                 type: "room",
@@ -244,7 +288,11 @@ export default [
         {
             id: "blah",
             type: "observe",
-            context: "dood",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+            ],
             actor: {
                 id: "dood",
                 type: "person",
@@ -267,7 +315,11 @@ export default [
         {
             id: "blah",
             type: "observe",
-            context: "dood",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+            ],
             actor: {
                 id: "dood",
                 type: "person",
@@ -291,7 +343,11 @@ export default [
         {
             id: "blah",
             type: "observe",
-            context: "dood",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+            ],
             actor: {
                 id: "dood",
                 type: "person",
@@ -316,7 +372,11 @@ export default [
         {
             id: "blah",
             type: "observe",
-            context: "dood",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+            ],
             actor: {
                 id: "dood",
                 type: "person",
@@ -339,7 +399,11 @@ export default [
         {
             id: "blah",
             type: "observe",
-            context: "dood",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+            ],
             actor: {
                 id: "dood",
                 type: "person",
@@ -362,7 +426,11 @@ export default [
         {
             id: "blah",
             type: "observe",
-            context: "dood",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+            ],
             actor: {
                 id: "chatroom@crusty.net",
                 type: "room",
@@ -381,7 +449,11 @@ export default [
         {
             id: "blah",
             type: "update",
-            context: "dood",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+            ],
             actor: {
                 id: "foobar@example.com",
                 type: "person",
@@ -402,7 +474,11 @@ export default [
         "change user address incorrectly",
         {
             type: "update",
-            context: "dood",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
+            ],
             actor: {
                 id: "foobar@example.com",
                 type: "person",
@@ -420,7 +496,11 @@ export default [
         "invalid activity stream",
         {
             actor: { id: "irc://uuu@localhost", type: "person" },
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             target: { id: "irc://irc.dooder.net/a-room", type: "room" },
         },
         false,
@@ -430,7 +510,11 @@ export default [
     [
         "invalid room",
         {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "credentials",
             actor: {
                 id: "sh-9K3Vk@irc.freenode.net",
@@ -448,7 +532,11 @@ export default [
     [
         "relationship",
         {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "add",
             actor: { type: "person", id: "alice@localhost", name: "alice" },
             target: { type: "person", id: "Kilroy@localhost", name: "Kilroy" },
@@ -473,7 +561,11 @@ export default [
     [
         "invalid role in relationship",
         {
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
             type: "add",
             actor: { type: "person", id: "alice@localhost", name: "alice" },
             target: { type: "person", id: "Kilroy@localhost", name: "Kilroy" },

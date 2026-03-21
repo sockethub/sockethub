@@ -2,6 +2,12 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import type { ActivityStream } from "@sockethub/schemas";
 import { ASFactory } from "./activity-streams";
 
+const IRC_CONTEXT = [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+];
+
 describe("warn test", () => {
     expect(typeof ASFactory).toEqual("function");
     const activity = ASFactory();
@@ -9,7 +15,7 @@ describe("warn test", () => {
         expect(() => {
             activity.Stream({
                 type: "lol",
-                platform: "irc",
+                "@context": IRC_CONTEXT,
                 actor: "thingy",
                 object: { type: "hola", content: "har", secure: true },
                 target: ["thingy1", "thingy2"],
@@ -28,14 +34,14 @@ describe("no special props", () => {
         expect(
             activity.Stream({
                 type: "send",
-                context: "irc",
+                "@context": IRC_CONTEXT,
                 actor: "thingy",
                 object: { type: "hola", content: "har" },
                 target: ["thingy1", "thingy2"],
             }),
         ).toEqual({
             type: "send",
-            context: "irc",
+            "@context": IRC_CONTEXT,
             actor: { id: "thingy" },
             object: { type: "hola", content: "har" },
             target: ["thingy1", "thingy2"],
@@ -122,7 +128,7 @@ describe("basic tests", () => {
             stream = activity.Stream({
                 type: "lol",
                 actor: "thingy1",
-                context: "irc",
+                "@context": IRC_CONTEXT,
                 object: {
                     type: "credentials",
                     content: "har",
@@ -134,7 +140,7 @@ describe("basic tests", () => {
 
         test("keeps canonical stream props", () => {
             expect(stream.type).toEqual("lol");
-            expect(stream.context).toEqual("irc");
+            expect(stream["@context"]).toEqual(IRC_CONTEXT);
         });
 
         test("expands existing objects", () => {
@@ -158,7 +164,7 @@ describe("basic tests", () => {
         test("respects specialObj properties", () => {
             const stream2 = activity.Stream({
                 type: "lol",
-                context: "irc",
+                "@context": IRC_CONTEXT,
                 actor: "thingy",
                 object: {
                     type: "dude",
@@ -170,7 +176,7 @@ describe("basic tests", () => {
             });
             expect(stream2).toEqual({
                 type: "lol",
-                context: "irc",
+                "@context": IRC_CONTEXT,
                 actor: { id: "thingy" },
                 target: [{ id: "thingy1" }, { id: "thingy2" }],
                 object: {
@@ -186,7 +192,7 @@ describe("basic tests", () => {
             expect(() => {
                 activity.Stream({
                     type: "lol",
-                    context: "irc",
+                    "@context": IRC_CONTEXT,
                     actor: "thingy",
                     object: {
                         type: "hola",
