@@ -22,8 +22,11 @@ export default function expandActivityStream<T extends ActivityStream>(
 ) {
     if (!ensureObject(msg)) {
         done(new Error("message received is not an object."));
-    } else if (typeof msg.context !== "string") {
-        done(new Error("activity stream must contain a context property"));
+    } else if (
+        !Array.isArray(msg["@context"]) ||
+        !msg["@context"].every((entry) => typeof entry === "string")
+    ) {
+        done(new Error("activity stream must contain an @context array."));
     } else if (typeof msg.type !== "string") {
         done(new Error("activity stream must contain a type property."));
     } else {

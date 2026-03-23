@@ -173,7 +173,7 @@ describe("PlatformInstance", () => {
             sandbox.assert.calledOnce(socketMock.emit);
             sandbox.assert.calledWith(socketMock.emit, "message", {
                 foo: "this is a message object",
-                context: "a platform name",
+                platform: "a platform name",
             });
         });
 
@@ -212,6 +212,7 @@ describe("PlatformInstance", () => {
                 expect(pi.broadcastToSharedPeers.callCount).toEqual(1);
                 sandbox.assert.calledWith(pi.sendToClient, "a session id", {
                     foo: "bar",
+                    platform: "a platform name",
                 });
             });
 
@@ -225,6 +226,7 @@ describe("PlatformInstance", () => {
                 sandbox.assert.calledWith(pi.sendToClient, "a session id", {
                     foo: "bar",
                     error: "a bad result message",
+                    platform: "a platform name",
                 });
             });
         });
