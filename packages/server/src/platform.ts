@@ -59,7 +59,12 @@ async function startPlatformProcess() {
     let sentry: { readonly reportError: (err: Error) => void } = {
         reportError: (err: Error) => {
             logger.debug(
-                `Sentry not configured; error not reported to Sentry: ${err?.message || String(err)}`,
+                "Sentry not configured; error not reported to Sentry",
+                {
+                    error: err,
+                    errorMessage: err?.message ?? String(err),
+                    errorStack: err?.stack,
+                },
             );
         },
     };

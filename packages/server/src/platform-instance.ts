@@ -241,11 +241,9 @@ export default class PlatformInstance {
                 try {
                     this.toExternalPayload(msg as ActivityStream);
                 } finally {
-                    if (this.contextUrl) {
-                        msg["@context"] = buildCanonicalContext(
-                            this.contextUrl,
-                        );
-                    }
+                    const contextUrl =
+                        this.contextUrl ?? INTERNAL_PLATFORM_CONTEXT_URL;
+                    msg["@context"] = buildCanonicalContext(contextUrl);
                     if (
                         msg.type === "error" &&
                         typeof msg.actor === "undefined" &&
@@ -275,8 +273,11 @@ export default class PlatformInstance {
      * Remove internal-only transport metadata before returning payloads to clients.
      */
     private toExternalPayload(payload: ActivityStream): ActivityStream {
-        const external = payload as InternalActivityStream;
+        const external = payload as InternalActivityStream & {
+            context?: unknown;
+        };
         delete external.sessionSecret;
+        delete external.context;
         if (
             typeof external.platform !== "string" ||
             external.platform.length === 0

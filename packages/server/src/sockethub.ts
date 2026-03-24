@@ -67,6 +67,7 @@ class Sockethub {
     status: boolean;
     processManager!: ProcessManager;
     private rateLimiter!: ReturnType<typeof createRateLimiter>;
+    private serverVersion?: string;
 
     /**
      * Build the platform registry payload sent to clients.
@@ -74,7 +75,7 @@ class Sockethub {
      */
     private buildPlatformRegistryPayload() {
         return {
-            version: this.processManager?.version,
+            version: this.serverVersion,
             contexts: {
                 as: AS2_BASE_CONTEXT_URL,
                 sockethub: SOCKETHUB_BASE_CONTEXT_URL,
@@ -122,6 +123,7 @@ class Sockethub {
             return;
         }
 
+        this.serverVersion = init.version;
         this.processManager = new ProcessManager(
             this.parentId,
             this.parentSecret1,

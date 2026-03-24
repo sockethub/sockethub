@@ -1,8 +1,9 @@
-const ctx = (platform: string) => [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    `https://sockethub.org/ns/context/platform/${platform}/v1.jsonld`,
-];
+import { buildCanonicalContext } from "@sockethub/schemas";
+
+const ctx = (platform: string) =>
+    buildCanonicalContext(
+        `https://sockethub.org/ns/context/platform/${platform}/v1.jsonld`,
+    );
 
 export default [
     {
