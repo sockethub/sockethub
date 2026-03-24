@@ -173,12 +173,16 @@ class Sockethub {
 
         // Send schema metadata to clients immediately and on-demand.
         socket.emit("schemas", platformRegistryPayload);
-        socket.on("schemas", (ack?: (payload: unknown) => void) => {
-            if (typeof ack === "function") {
+        socket.on("schemas", (...args: unknown[]) => {
+            const ack = args.find(
+                (a): a is (payload: unknown) => void =>
+                    typeof a === "function",
+            );
+            if (ack) {
                 ack(platformRegistryPayload);
-                return;
+            } else {
+                socket.emit("schemas", platformRegistryPayload);
             }
-            socket.emit("schemas", platformRegistryPayload);
         });
 
         socket.on("disconnect", () => {
