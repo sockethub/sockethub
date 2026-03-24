@@ -3,6 +3,14 @@
  * This runs in the Artillery process (client-side), not in Sockethub
  */
 
+function contextFor(platform) {
+    return [
+        "https://www.w3.org/ns/activitystreams",
+        "https://sockethub.org/ns/context/v1.jsonld",
+        `https://sockethub.org/ns/context/platform/${platform}/v1.jsonld`,
+    ];
+}
+
 module.exports = {
     generateConnectMessage,
     generateDummyEchoMessage,
@@ -25,7 +33,7 @@ function generateConnectMessage(context, _events, done) {
 
     context.vars.connectMessage = {
         type: "credentials",
-        context: "dummy",
+        "@context": contextFor("dummy"),
         actor: actor,
         object: {
             type: "credentials",
@@ -49,7 +57,7 @@ function generateDummyEchoMessage(context, _events, done) {
 
     context.vars.echoMessage = {
         type: "echo",
-        context: "dummy",
+        "@context": contextFor("dummy"),
         actor: actor,
         object: {
             type: "message",
@@ -73,7 +81,7 @@ function generateXMPPMessage(context, _events, done) {
 
     context.vars.xmppMessage = {
         type: "send",
-        context: "xmpp",
+        "@context": contextFor("xmpp"),
         actor: actor,
         target: {
             id: "testroom@conference.localhost",
@@ -107,7 +115,7 @@ function generateFeedMessage(context, _events, done) {
 
     context.vars.feedMessage = {
         type: "fetch",
-        context: "feeds",
+        "@context": contextFor("feeds"),
         actor: actor,
         object: {
             type: "feed",
