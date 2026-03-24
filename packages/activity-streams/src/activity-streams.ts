@@ -327,3 +327,52 @@ export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
         ? (globalThis as Record<string, unknown>)
         : {},
 );
+
+/**
+ * Canonical AS2 base vocabulary URL.
+ */
+export const AS2_BASE_CONTEXT_URL = "https://www.w3.org/ns/activitystreams";
+
+/**
+ * Sockethub base vocabulary URL for shared platform terms.
+ */
+export const SOCKETHUB_BASE_CONTEXT_URL =
+    "https://sockethub.org/ns/context/v1.jsonld";
+
+const PLATFORM_CONTEXT_PREFIX =
+    "https://sockethub.org/ns/context/platform/";
+
+/**
+ * Build the canonical Sockethub @context array for a platform name.
+ */
+export function buildCanonicalContext(platform: string): string[] {
+    const platformUrl = platform.startsWith("https://")
+        ? platform
+        : `${PLATFORM_CONTEXT_PREFIX}${platform}/v1.jsonld`;
+    return [AS2_BASE_CONTEXT_URL, SOCKETHUB_BASE_CONTEXT_URL, platformUrl];
+}
+
+/**
+ * Extract the platform ID from a canonical @context array.
+ * Returns undefined if no platform context URL is found.
+ */
+export function platformIdFromContext(
+    context: string[] | unknown,
+): string | undefined {
+    if (!Array.isArray(context)) {
+        return undefined;
+    }
+    for (const entry of context) {
+        if (
+            typeof entry === "string" &&
+            entry.startsWith(PLATFORM_CONTEXT_PREFIX)
+        ) {
+            const rest = entry.slice(PLATFORM_CONTEXT_PREFIX.length);
+            const slashIdx = rest.indexOf("/");
+            if (slashIdx > 0) {
+                return rest.slice(0, slashIdx);
+            }
+        }
+    }
+    return undefined;
+}

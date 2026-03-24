@@ -2,6 +2,10 @@
 // @ts-ignore
 import { displayMessage } from "$components/chat/IncomingMessages.svelte";
 import { addObject } from "$components/logs/Logger.svelte";
+import {
+    buildCanonicalContext,
+    platformIdFromContext,
+} from "@sockethub/activity-streams";
 import SockethubClient from "@sockethub/client";
 import { io } from "socket.io-client";
 import { writable } from "svelte/store";
@@ -36,12 +40,10 @@ type BaseProps = {
 };
 
 export function contextFor(platform: string): string[] {
-    return [
-        "https://www.w3.org/ns/activitystreams",
-        "https://sockethub.org/ns/context/v1.jsonld",
-        `https://sockethub.org/ns/context/platform/${platform}/v1.jsonld`,
-    ];
+    return buildCanonicalContext(platform);
 }
+
+export { platformIdFromContext };
 
 export interface AnyActivityStream {
     id?: string;

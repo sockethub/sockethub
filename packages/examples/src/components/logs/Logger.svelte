@@ -148,7 +148,7 @@ export function addObject(
                                     />
                                 {/if}
                             {/each}
-                        {:else if Object.prototype.hasOwnProperty.call(tuple[1], "context")}
+                        {:else if Object.prototype.hasOwnProperty.call(tuple[1], "@context")}
                             <LogEntry buttonAction={showLog(id)} {id} response={true} entry={tuple[1]} />
                         {:else}
                             <LogEntry buttonAction={showLog(id)} {id} response={false} entry={tuple[0]} />
