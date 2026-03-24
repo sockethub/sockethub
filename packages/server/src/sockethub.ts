@@ -175,8 +175,7 @@ class Sockethub {
         socket.emit("schemas", platformRegistryPayload);
         socket.on("schemas", (...args: unknown[]) => {
             const ack = args.find(
-                (a): a is (payload: unknown) => void =>
-                    typeof a === "function",
+                (a): a is (payload: unknown) => void => typeof a === "function",
             );
             if (ack) {
                 ack(platformRegistryPayload);

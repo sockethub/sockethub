@@ -16,6 +16,10 @@
  */
 
 import type { ActivityObject, ActivityStream } from "@sockethub/schemas";
+// Context URL constants are mirrored from @sockethub/schemas/src/context.ts
+// (the canonical source of truth). They are duplicated here because bun's
+// browser-targeted bundler cannot resolve workspace subpath exports at build
+// time. Keep these in sync with the schemas package.
 import EventEmitter from "eventemitter3";
 
 const ee = new EventEmitter();
@@ -328,14 +332,7 @@ export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
         : {},
 );
 
-/**
- * Canonical AS2 base vocabulary URL.
- */
 export const AS2_BASE_CONTEXT_URL = "https://www.w3.org/ns/activitystreams";
-
-/**
- * Sockethub base vocabulary URL for shared platform terms.
- */
 export const SOCKETHUB_BASE_CONTEXT_URL =
     "https://sockethub.org/ns/context/v1.jsonld";
 
