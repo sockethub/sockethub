@@ -339,8 +339,7 @@ export const AS2_BASE_CONTEXT_URL = "https://www.w3.org/ns/activitystreams";
 export const SOCKETHUB_BASE_CONTEXT_URL =
     "https://sockethub.org/ns/context/v1.jsonld";
 
-const PLATFORM_CONTEXT_PREFIX =
-    "https://sockethub.org/ns/context/platform/";
+const PLATFORM_CONTEXT_PREFIX = "https://sockethub.org/ns/context/platform/";
 
 /**
  * Build the canonical Sockethub @context array for a platform name.
