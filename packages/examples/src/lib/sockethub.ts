@@ -35,9 +35,17 @@ type BaseProps = {
     published?: string;
 };
 
+export function contextFor(platform: string): string[] {
+    return [
+        "https://www.w3.org/ns/activitystreams",
+        "https://sockethub.org/ns/context/v1.jsonld",
+        `https://sockethub.org/ns/context/platform/${platform}/v1.jsonld`,
+    ];
+}
+
 export interface AnyActivityStream {
     id?: string;
-    context: string;
+    "@context": string[];
     type: string;
     totalItems?: number;
     summary?: string;

@@ -9,7 +9,7 @@ import PlatformConnection from "$components/PlatformConnection.svelte";
 import IncomingMessage from "$components/chat/IncomingMessages.svelte";
 import Room from "$components/chat/Room.svelte";
 import SendMessage from "$components/chat/SendMessage.svelte";
-import { send } from "$lib/sockethub";
+import { contextFor, send } from "$lib/sockethub";
 import type { AnyActivityStream } from "$lib/sockethub";
 import type { CredentialName } from "$lib/sockethub";
 import { writable } from "svelte/store";
@@ -52,7 +52,7 @@ function resetState() {
 async function connectXmpp(): Promise<void> {
     connecting = true;
     return await send({
-        context: "xmpp",
+        "@context": contextFor("xmpp"),
         type: "connect",
         actor: actorId,
     } as AnyActivityStream)
