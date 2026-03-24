@@ -12,8 +12,8 @@ asConfig.failOnUnknownObjectProperties = false;
 
 const activity = ASFactory(asConfig);
 
-function ensureObject(msg: unknown) {
-    return !(typeof msg !== "object" || Array.isArray(msg));
+function ensureObject(msg: unknown): msg is Record<string, unknown> {
+    return typeof msg === "object" && msg !== null && !Array.isArray(msg);
 }
 
 export default function expandActivityStream<T extends ActivityStream>(
