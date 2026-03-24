@@ -2,6 +2,7 @@ import { expect } from "@esm-bundle/chai";
 import createTestUtils from "../utils.js";
 import {
     connectXMPP,
+    ctx,
     emitWithAck,
     getConfig,
     joinXMPPRoom,
@@ -93,7 +94,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     const dummyObj = {
                         type: "echo",
                         actor: actor.id,
-                        context: "dummy",
+                        "@context": ctx("dummy"),
                         object: {
                             type: "message",
                             content: `hello world ${i}`,
@@ -119,7 +120,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 const dummyObj = {
                     type: "fail",
                     actor: actor.id,
-                    context: "dummy",
+                    "@context": ctx("dummy"),
                     object: { type: "message", content: "failure message" },
                 };
                 const msg = await emitWithAck(sc.socket, "message", dummyObj, {
@@ -141,7 +142,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 const dummyObj = {
                     type: "throw",
                     actor: actor.id,
-                    context: "dummy",
+                    "@context": ctx("dummy"),
                     object: { type: "message", content: "failure message" },
                 };
                 const msg = await emitWithAck(sc.socket, "message", dummyObj, {
@@ -167,7 +168,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         sc.socket,
                         "message",
                         {
-                            context: "feeds",
+                            "@context": ctx("feeds"),
                             type: "fetch",
                             actor: {
                                 type: "feed",
@@ -228,7 +229,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                             id: actorObject.id,
                             type: actorObject.type,
                         },
-                        context: "xmpp",
+                        platform: "xmpp",
                     });
                 });
             });
@@ -242,7 +243,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                             id: actorObject.id,
                             type: actorObject.type,
                         },
-                        context: "xmpp",
+                        platform: "xmpp",
                         target: {
                             id: "test@prosody",
                             type: "room",
@@ -265,7 +266,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                             id: actorObject.id,
                             type: actorObject.type,
                         },
-                        context: "xmpp",
+                        platform: "xmpp",
                         object: {
                             type: "message",
                             content: "Hello, world!",
@@ -297,7 +298,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                                 id: invalidActorId,
                                 type: "person",
                             },
-                            context: "xmpp",
+                            "@context": ctx("xmpp"),
                             type: "credentials",
                             object: {
                                 type: "credentials",
@@ -317,7 +318,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         {
                             type: "connect",
                             actor: invalidActorId,
-                            context: "xmpp",
+                            "@context": ctx("xmpp"),
                         },
                         { label: "xmpp invalid connect" },
                     );
@@ -348,7 +349,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                                 id: invalidIrcActorId,
                                 type: "person",
                             },
-                            context: "irc",
+                            "@context": ctx("irc"),
                             type: "credentials",
                             object: {
                                 type: "credentials",
@@ -368,7 +369,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         {
                             type: "connect",
                             actor: invalidIrcActorId,
-                            context: "irc",
+                            "@context": ctx("irc"),
                         },
                         { label: "irc invalid connect" },
                     );
@@ -388,7 +389,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 expect(incomingMessages.length).to.be.below(2);
                 if (incomingMessages.length === 1) {
                     expect(incomingMessages[0]).to.deep.include({
-                        context: "xmpp",
+                        platform: "xmpp",
                         type: "message",
                         actor: { id: "test@prosody", type: "room" },
                         error: '<error type="cancel"><service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error>',

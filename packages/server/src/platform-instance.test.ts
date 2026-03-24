@@ -388,7 +388,7 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        context: "xmpp",
+                        platform: "xmpp",
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",
@@ -440,7 +440,7 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        context: "xmpp",
+                        platform: "xmpp",
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",
@@ -459,7 +459,7 @@ describe("PlatformInstance", () => {
                     sessionId: "session456",
                     msg: {
                         type: "send",
-                        context: "xmpp",
+                        platform: "xmpp",
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-2",
@@ -500,7 +500,7 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        context: "xmpp",
+                        platform: "xmpp",
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",
@@ -549,7 +549,7 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        context: "xmpp",
+                        platform: "xmpp",
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",
