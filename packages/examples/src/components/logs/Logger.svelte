@@ -10,7 +10,9 @@ type LogEntries = Record<
     ]
 >;
 const Logs = writable({} as LogEntries);
-const LogMeta = writable({} as Record<string, { timestamp: number; sortKey: number }>);
+const LogMeta = writable(
+    {} as Record<string, { timestamp: number; sortKey: number }>,
+);
 let counter = 0;
 
 type ObjectType = "SEND" | "RESP";

@@ -9,9 +9,21 @@ interface Props {
 let { entry, buttonAction }: Props = $props();
 
 const labelMap: Record<string, { label: string; color: string; bg: string }> = {
-    schemas: { label: "Schemas Received", color: "text-indigo-800", bg: "bg-indigo-100" },
-    ready: { label: "Client Ready", color: "text-emerald-800", bg: "bg-emerald-100" },
-    init_error: { label: "Init Error", color: "text-red-800", bg: "bg-red-100" },
+    schemas: {
+        label: "Schemas Received",
+        color: "text-indigo-800",
+        bg: "bg-indigo-100",
+    },
+    ready: {
+        label: "Client Ready",
+        color: "text-emerald-800",
+        bg: "bg-emerald-100",
+    },
+    init_error: {
+        label: "Init Error",
+        color: "text-red-800",
+        bg: "bg-red-100",
+    },
 };
 
 const meta = $derived(labelMap[entry._logType] ?? labelMap.schemas);
@@ -31,7 +43,8 @@ function summarize(payload: unknown): string {
 
     if (entry._logType === "ready") {
         const reason = typeof p.reason === "string" ? p.reason : "";
-        const version = typeof p.sockethubVersion === "string" ? p.sockethubVersion : "";
+        const version =
+            typeof p.sockethubVersion === "string" ? p.sockethubVersion : "";
         const platforms = Array.isArray(p.platforms) ? p.platforms.length : 0;
         return `${reason} — Sockethub v${version}, ${platforms} platform${platforms !== 1 ? "s" : ""}`;
     }

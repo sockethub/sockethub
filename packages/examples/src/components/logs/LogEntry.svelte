@@ -13,9 +13,12 @@ interface Props {
     timestamp?: number;
 }
 
-let { id, entry, buttonAction, hasSend, hasResponse, timestamp }: Props = $props();
+let { id, entry, buttonAction, hasSend, hasResponse, timestamp }: Props =
+    $props();
 const platform = $derived(platformIdFromContext(entry["@context"]));
-const time = $derived(timestamp ? new Date(timestamp).toLocaleTimeString() : "");
+const time = $derived(
+    timestamp ? new Date(timestamp).toLocaleTimeString() : "",
+);
 
 const statusLabel = $derived(
     hasSend && hasResponse
