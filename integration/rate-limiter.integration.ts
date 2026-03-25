@@ -147,7 +147,7 @@ describe("Rate Limiter Integration Tests", () => {
                         try {
                             expect(errorMsg).toBeDefined();
                             expect(errorMsg.type).toBe("Error");
-                            expect(errorMsg.context).toBe("error");
+                            expect(errorMsg["@context"]).toBeDefined();
                             expect(errorMsg.actor).toBeDefined();
                             expect(errorMsg.actor.type).toBe("Application");
                             expect(errorMsg.actor.name).toBe(
@@ -170,7 +170,11 @@ describe("Rate Limiter Integration Tests", () => {
                     client.emit("message", {
                         type: "echo",
                         actor: "test@dummy",
-                        context: "dummy",
+                        "@context": [
+                            "https://www.w3.org/ns/activitystreams",
+                            "https://sockethub.org/ns/context/v1.jsonld",
+                            "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+                        ],
                         object: {
                             type: "message",
                             content: `test message ${i}`,
@@ -217,7 +221,7 @@ describe("Rate Limiter Integration Tests", () => {
 
                         if (errorCount === 1) {
                             expect(errorMsg.type).toBe("Error");
-                            expect(errorMsg.context).toBe("error");
+                            expect(errorMsg["@context"]).toBeDefined();
 
                             const elapsed = Date.now() - startTime;
                             expect(elapsed).toBeLessThan(2000);
@@ -231,7 +235,11 @@ describe("Rate Limiter Integration Tests", () => {
                     client.emit("message", {
                         type: "echo",
                         actor: { id: "test2@dummy", type: "person" },
-                        context: "dummy",
+                        "@context": [
+                            "https://www.w3.org/ns/activitystreams",
+                            "https://sockethub.org/ns/context/v1.jsonld",
+                            "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+                        ],
                         object: { type: "message", content: `msg ${i}` },
                     });
                 }
@@ -279,7 +287,11 @@ describe("Rate Limiter Integration Tests", () => {
                     client.emit("message", {
                         type: "echo",
                         actor: { id: "test3@dummy", type: "person" },
-                        context: "dummy",
+                        "@context": [
+                            "https://www.w3.org/ns/activitystreams",
+                            "https://sockethub.org/ns/context/v1.jsonld",
+                            "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+                        ],
                         object: { type: "message", content: `msg ${i}` },
                     });
                 }
@@ -290,7 +302,11 @@ describe("Rate Limiter Integration Tests", () => {
                         {
                             type: "echo",
                             actor: { id: "test3@dummy", type: "person" },
-                            context: "dummy",
+                            "@context": [
+                                "https://www.w3.org/ns/activitystreams",
+                                "https://sockethub.org/ns/context/v1.jsonld",
+                                "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+                            ],
                             object: {
                                 type: "message",
                                 content: "unblock test",
@@ -367,7 +383,11 @@ describe("Rate Limiter Integration Tests", () => {
                         client1.emit("message", {
                             type: "echo",
                             actor: { id: "test4@dummy", type: "person" },
-                            context: "dummy",
+                            "@context": [
+                                "https://www.w3.org/ns/activitystreams",
+                                "https://sockethub.org/ns/context/v1.jsonld",
+                                "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+                            ],
                             object: {
                                 type: "message",
                                 content: `client1 msg ${i}`,
@@ -381,7 +401,11 @@ describe("Rate Limiter Integration Tests", () => {
                             {
                                 type: "echo",
                                 actor: { id: "test5@dummy", type: "person" },
-                                context: "dummy",
+                                "@context": [
+                                    "https://www.w3.org/ns/activitystreams",
+                                    "https://sockethub.org/ns/context/v1.jsonld",
+                                    "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+                                ],
                                 object: {
                                     type: "message",
                                     content: "client2 test",

@@ -16,6 +16,11 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./context": {
+      "bun": "./src/context.ts",
+      "import": "./dist/context.js",
+      "default": "./dist/context.js"
+    },
     "./schemas/json/sockethub-config.json": {
       "default": "./src/schemas/json/sockethub-config.json"
     }
@@ -44,7 +49,7 @@
     "@types/bun": "latest"
   },
   "scripts": {
-    "build": "bun ./scripts/export-json-schema.ts && bun ./scripts/export-canonical-assets.ts && bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
+    "build": "bun ./scripts/export-json-schema.ts && bun ./scripts/export-canonical-assets.ts && bun build src/index.ts src/context.ts --outdir dist --target node --format esm --sourcemap=external",
     "clean": "rm -rf dist",
     "clean:deps": "rm -rf node_modules"
   },

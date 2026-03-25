@@ -16,6 +16,11 @@
  */
 
 import type { ActivityObject, ActivityStream } from "@sockethub/schemas";
+import {
+    AS2_BASE_CONTEXT_URL,
+    PLATFORM_CONTEXT_PREFIX,
+    SOCKETHUB_BASE_CONTEXT_URL,
+} from "@sockethub/schemas/context";
 import EventEmitter from "eventemitter3";
 
 const ee = new EventEmitter();
@@ -327,3 +332,44 @@ export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
         ? (globalThis as Record<string, unknown>)
         : {},
 );
+
+export {
+    AS2_BASE_CONTEXT_URL,
+    PLATFORM_CONTEXT_PREFIX,
+    SOCKETHUB_BASE_CONTEXT_URL,
+};
+
+/**
+ * Build the canonical Sockethub @context array for a platform name.
+ */
+export function buildCanonicalContext(platform: string): string[] {
+    const platformUrl = platform.startsWith("https://")
+        ? platform
+        : `${PLATFORM_CONTEXT_PREFIX}${platform}/v1.jsonld`;
+    return [AS2_BASE_CONTEXT_URL, SOCKETHUB_BASE_CONTEXT_URL, platformUrl];
+}
+
+/**
+ * Extract the platform ID from a canonical @context array.
+ * Returns undefined if no platform context URL is found.
+ */
+export function platformIdFromContext(
+    context: string[] | unknown,
+): string | undefined {
+    if (!Array.isArray(context)) {
+        return undefined;
+    }
+    for (const entry of context) {
+        if (
+            typeof entry === "string" &&
+            entry.startsWith(PLATFORM_CONTEXT_PREFIX)
+        ) {
+            const rest = entry.slice(PLATFORM_CONTEXT_PREFIX.length);
+            const slashIdx = rest.indexOf("/");
+            if (slashIdx > 0) {
+                return rest.slice(0, slashIdx);
+            }
+        }
+    }
+    return undefined;
+}

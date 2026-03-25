@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { AnyActivityStream } from "$lib/sockethub";
+import { platformIdFromContext } from "$lib/sockethub";
 import DummyEntry from "./platforms/DummyEntry.svelte";
 import FeedsEntry from "./platforms/FeedsEntry.svelte";
 import GenericEntry from "./platforms/GenericEntry.svelte";
@@ -11,6 +12,7 @@ interface Props {
 }
 
 let { id, entry, buttonAction, response }: Props = $props();
+const platform = $derived(platformIdFromContext(entry["@context"]));
 </script>
 
 <li class="p-4 hover:bg-gray-50 transition-colors">
@@ -28,9 +30,9 @@ let { id, entry, buttonAction, response }: Props = $props();
                     <span class="text-sm font-semibold text-gray-700">
                         {response ? '📥 Response' : '📤 Sent'}
                     </span>
-                    {#if entry.context}
+                    {#if platform}
                         <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                            {entry.context.toUpperCase()}
+                            {platform.toUpperCase()}
                         </span>
                     {/if}
                     {#if entry.type}
@@ -53,9 +55,9 @@ let { id, entry, buttonAction, response }: Props = $props();
             
             <!-- Platform-specific content -->
             <div class="text-sm text-gray-600">
-                {#if entry.context === "dummy"}
+                {#if platform === "dummy"}
                     <DummyEntry {id} {entry} />
-                {:else if entry.context === "feeds"}
+                {:else if platform === "feeds"}
                     <FeedsEntry {id} {entry} />
                 {:else}
                     <GenericEntry {id} {entry} />

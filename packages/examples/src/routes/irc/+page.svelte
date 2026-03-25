@@ -11,7 +11,7 @@ import IncomingMessage from "$components/chat/IncomingMessages.svelte";
 import Room from "$components/chat/Room.svelte";
 import SendMessage from "$components/chat/SendMessage.svelte";
 import type { AnyActivityStream, CredentialName } from "$lib/sockethub";
-import { send } from "$lib/sockethub";
+import { contextFor, send } from "$lib/sockethub";
 import { writable } from "svelte/store";
 
 const actorIdStore = writable(
@@ -68,7 +68,7 @@ async function connectIrc(): Promise<void> {
     connecting = true;
     await send({
         // Platform context - routes to Sockethub's IRC platform
-        context: "irc",
+        "@context": contextFor("irc"),
         // Activity type - "connect" establishes IRC connection
         type: "connect",
         // Actor - the IRC nick/identity making the connection

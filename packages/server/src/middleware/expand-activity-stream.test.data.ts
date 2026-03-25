@@ -1,3 +1,10 @@
+import { buildCanonicalContext } from "@sockethub/schemas";
+
+const ctx = (platform: string) =>
+    buildCanonicalContext(
+        `https://sockethub.org/ns/context/platform/${platform}/v1.jsonld`,
+    );
+
 export default [
     {
         name: "not an object",
@@ -13,7 +20,7 @@ export default [
         input: {
             id: "foo",
             type: "send",
-            context: "dummy",
+            "@context": ctx("dummy"),
             actor: {
                 id: "dood@irc.freenode.net",
                 type: "person",
@@ -37,7 +44,7 @@ export default [
         input: {
             id: "foo",
             type: "credentials",
-            context: "dummy",
+            "@context": ctx("dummy"),
             actor: {
                 id: "dood@irc.freenode.net",
                 type: "person",
@@ -60,7 +67,7 @@ export default [
         type: "credentials",
         input: {
             type: "credentials",
-            context: "irc",
+            "@context": ctx("irc"),
             actor: {
                 id: "sh-9K3Vk@irc.freenode.net",
                 type: "person",
@@ -89,7 +96,7 @@ export default [
         type: "credentials",
         input: {
             actor: "hyper_rau@localhost",
-            context: "xmpp",
+            "@context": ctx("xmpp"),
             object: {
                 username: "hyper_rau",
                 password: "123",
@@ -105,7 +112,7 @@ export default [
         type: "message",
         valid: "true",
         input: {
-            context: "foo",
+            "@context": ctx("foo"),
             type: "bar",
             actor: "foo@bar",
             object: {
@@ -113,7 +120,7 @@ export default [
             },
         },
         output: {
-            context: "foo",
+            "@context": ctx("foo"),
             type: "bar",
             actor: {
                 id: "foo@bar",
@@ -128,7 +135,7 @@ export default [
         type: "message",
         valid: "true",
         input: {
-            context: "foo",
+            "@context": ctx("foo"),
             type: "bar",
             actor: "someone@example.org/resource",
             object: {
@@ -136,7 +143,7 @@ export default [
             },
         },
         output: {
-            context: "foo",
+            "@context": ctx("foo"),
             type: "bar",
             actor: {
                 id: "someone@example.org/resource",
@@ -151,7 +158,7 @@ export default [
         type: "message",
         valid: "true",
         input: {
-            context: "foo",
+            "@context": ctx("foo"),
             type: "bar",
             actor: "xmpp:someone@example.org/resource",
             object: {
@@ -159,7 +166,7 @@ export default [
             },
         },
         output: {
-            context: "foo",
+            "@context": ctx("foo"),
             type: "bar",
             actor: {
                 id: "xmpp:someone@example.org/resource",
@@ -174,13 +181,13 @@ export default [
         type: "message",
         valid: true,
         input: {
-            context: "some context",
+            "@context": ctx("some context"),
             type: "some type",
             actor: "blah",
             object: {},
         },
         output: {
-            context: "some context",
+            "@context": ctx("some context"),
             type: "some type",
             actor: {
                 id: "blah",
@@ -195,13 +202,13 @@ export default [
         valid: true,
         type: "message",
         input: {
-            context: "some context",
+            "@context": ctx("some context"),
             type: "some type",
             actor: "blah2",
             object: {},
         },
         output: {
-            context: "some context",
+            "@context": ctx("some context"),
             type: "some type",
             actor: {
                 id: "blah2",
@@ -229,7 +236,7 @@ export default [
             as: {
                 id: "blah",
                 type: "send",
-                context: "hello",
+                "@context": ctx("hello"),
                 actor: {
                     name: "dood",
                 },
@@ -252,7 +259,7 @@ export default [
                 id: "larg",
             },
         },
-        error: "Error: activity stream must contain a context property",
+        error: "Error: activity stream must contain an @context array.",
     },
     {
         name: "no actor specified",
@@ -260,7 +267,7 @@ export default [
         type: "message",
         input: {
             type: "some type",
-            context: "xmpp",
+            "@context": ctx("xmpp"),
             object: {
                 type: "error",
                 content: "error message",
@@ -275,7 +282,7 @@ export default [
         input: {
             actor: "irc://uuu@localhost",
             type: "join",
-            context: "irc",
+            "@context": ctx("irc"),
             target: "irc://irc.dooder.net/a-room",
         },
         output: {
@@ -283,7 +290,7 @@ export default [
                 id: "irc://uuu@localhost",
             },
             type: "join",
-            context: "irc",
+            "@context": ctx("irc"),
             target: {
                 id: "irc://irc.dooder.net/a-room",
             },
@@ -296,7 +303,7 @@ export default [
         input: {
             actor: "hyper_rau@localhost",
             type: "join",
-            context: "xmpp",
+            "@context": ctx("xmpp"),
             object: {},
             target: "dooder",
         },
@@ -305,7 +312,7 @@ export default [
                 id: "hyper_rau@localhost",
             },
             type: "join",
-            context: "xmpp",
+            "@context": ctx("xmpp"),
             object: {},
             target: {
                 id: "dooder",
@@ -320,7 +327,7 @@ export default [
             actor: "sh-9K3Vk@irc.freenode.net",
             target: "blah3",
             type: "send",
-            context: "irc",
+            "@context": ctx("irc"),
             object: {},
         },
         output: {
@@ -344,7 +351,7 @@ export default [
                 i: ["am", "extras"],
             },
             type: "send",
-            context: "irc",
+            "@context": ctx("irc"),
             object: {},
         },
     },
