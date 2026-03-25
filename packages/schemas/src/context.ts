@@ -12,6 +12,12 @@ export const SOCKETHUB_BASE_CONTEXT_URL =
     "https://sockethub.org/ns/context/v1.jsonld";
 
 /**
+ * URL prefix for per-platform context URLs.
+ */
+export const PLATFORM_CONTEXT_PREFIX =
+    "https://sockethub.org/ns/context/platform/";
+
+/**
  * Built-in pseudo-platform used for server-side error payloads.
  */
 export const ERROR_PLATFORM_ID = "error";

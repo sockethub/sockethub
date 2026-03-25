@@ -5,6 +5,7 @@ import {
     ERROR_PLATFORM_ID,
     INTERNAL_PLATFORM_CONTEXT_URL,
     INTERNAL_PLATFORM_ID,
+    PLATFORM_CONTEXT_PREFIX,
     SOCKETHUB_BASE_CONTEXT_URL,
 } from "./context.js";
 import { InternalObjectTypesList, ObjectTypesList } from "./helpers/objects.js";
@@ -28,6 +29,7 @@ import {
 export {
     AS2_BASE_CONTEXT_URL,
     SOCKETHUB_BASE_CONTEXT_URL,
+    PLATFORM_CONTEXT_PREFIX,
     ERROR_PLATFORM_ID,
     ERROR_PLATFORM_CONTEXT_URL,
     INTERNAL_PLATFORM_ID,
