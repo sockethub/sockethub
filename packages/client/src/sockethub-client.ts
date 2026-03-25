@@ -909,10 +909,7 @@ export default class SockethubClient {
                             activity.platform,
                         );
                     }
-                    if (
-                        entry.event === "credentials" &&
-                        !activity.type
-                    ) {
+                    if (entry.event === "credentials" && !activity.type) {
                         activity.type = "credentials";
                     }
                     if (
