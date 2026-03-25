@@ -21,13 +21,14 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
         let sc;
         const incomingMessages = [];
 
-        before(() => {
+        before(async () => {
             sc = new SockethubClient(
                 io(config.sockethub.url, { path: "/sockethub" }),
             );
             sc.socket.on("message", (msg) => {
                 incomingMessages.push(msg);
             });
+            await sc.ready();
         });
 
         after(() => {

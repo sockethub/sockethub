@@ -238,11 +238,20 @@ export default class SockethubClient {
         this.ActivityStreams.on(
             "activity-object-create",
             (obj: ActivityObject) => {
-                this.socket.emit("activity-object", obj, (err: never) => {
-                    if (err) {
-                        console.error("failed to create activity-object ", err);
-                    }
-                });
+                this.socket.emit(
+                    "activity-object",
+                    obj,
+                    (resp?: { error?: string }) => {
+                        if (resp && typeof resp.error === "string") {
+                            console.error(
+                                "failed to create activity-object ",
+                                resp.error,
+                            );
+                            return;
+                        }
+                        this.eventActivityObject(obj);
+                    },
+                );
             },
         );
 
@@ -509,7 +518,8 @@ export default class SockethubClient {
             );
         }
         const normalizedPayload = this.buildPlatformRegistryPayload();
-        this.registryFingerprint = JSON.stringify(normalizedPayload);
+        this.registryFingerprint =
+            this.computePayloadFingerprint(normalizedPayload);
         // Emit normalized registry payload so app code receives a stable shape.
         this.socket._emit("schemas", normalizedPayload);
         return normalizedPayload;

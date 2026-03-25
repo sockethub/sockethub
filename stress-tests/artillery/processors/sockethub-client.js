@@ -112,18 +112,30 @@ function setupClient(context, events, done) {
         }
     });
 
-    // Wait for connection or timeout
-    setTimeout(() => {
-        if (!context.vars.connected) {
-            recordFailure();
-            if (consecutiveConnectionFailures <= 3) {
-                console.error("Connection timeout - socket never connected");
+    // Wait for client to be ready (schema initialization) or timeout
+    const client = context.vars.client;
+    client
+        .ready(3000)
+        .then(() => {
+            context.vars.schemasReady = true;
+            done();
+        })
+        .catch(() => {
+            if (!context.vars.connected) {
+                recordFailure();
+                if (consecutiveConnectionFailures <= 3) {
+                    console.error(
+                        "Connection timeout - socket never connected",
+                    );
+                }
+                events.emit("counter", "sockethub.connect_timeout", 1);
+                context.vars.errors.push("Connection timeout");
+            } else {
+                events.emit("counter", "sockethub.schemas_timeout", 1);
+                context.vars.errors.push("Schemas timeout");
             }
-            events.emit("counter", "sockethub.connect_timeout", 1);
-            context.vars.errors.push("Connection timeout");
-        }
-        done();
-    }, 2000);
+            done();
+        });
 }
 
 /**
@@ -133,10 +145,12 @@ function sendCredentials(context, events, done) {
     const client = context.vars.client;
     const actorId = context.vars.actorId;
 
-    // Check if connected
-    if (!context.vars.connected) {
+    // Check if connected and ready
+    if (!context.vars.connected || !context.vars.schemasReady) {
         events.emit("counter", "sockethub.error.not_connected", 1);
-        console.error("Cannot send credentials - not connected");
+        console.error(
+            "Cannot send credentials - not connected or schemas not ready",
+        );
         return done();
     }
 
