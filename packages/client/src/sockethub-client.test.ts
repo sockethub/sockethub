@@ -507,7 +507,10 @@ describe("SockethubClient", () => {
             sc.socket.connected = true;
             const callback = () => {};
             socket.once("credentials", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: { id: "bar", type: "person" } });
+                expect(data).to.be.eql({
+                    type: "credentials",
+                    actor: { id: "bar", type: "person" },
+                });
                 expect(cb).to.be.eql(callback);
                 done();
             });

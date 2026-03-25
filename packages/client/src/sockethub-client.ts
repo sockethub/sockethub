@@ -180,7 +180,8 @@ export interface ClientInitError {
  * // Send credentials - these will be replayed on reconnection
  * client.socket.emit('credentials', {
  *   '@context': ctx,
- *   actor: 'user@example.com',
+ *   type: 'credentials',
+ *   actor: { id: 'user@example.com', type: 'person' },
  *   object: { type: 'credentials', username: 'user', password: 'pass' }
  * });
  * ```
@@ -261,6 +262,8 @@ export default class SockethubClient {
 
         if (this._socket.connected) {
             this.socket.connected = true;
+            (this.socket as unknown as { id?: string }).id = this._socket.id;
+            this.socket._emit("connect");
             this.startInitialization("initial-connect", true);
         }
     }
@@ -715,7 +718,7 @@ export default class SockethubClient {
             console.warn(
                 `[SockethubClient] ${timeoutMsg}; queued outbound messages: ${this.outboundQueue.length}. Waiting for schemas event from server.`,
             );
-            this.emitInitError(timeoutMsg, "timeout", true);
+            this.emitInitError(timeoutMsg, "timeout", false);
             this.startWaitingWarnings();
         }, this.options.initTimeoutMs);
 
@@ -725,7 +728,7 @@ export default class SockethubClient {
         } catch (err) {
             this.initState = "init_error";
             const message = err instanceof Error ? err.message : String(err);
-            this.emitInitError(message, "schemas-request", true);
+            this.emitInitError(message, "schemas-request", false);
             this.startWaitingWarnings();
         }
     }
@@ -905,6 +908,12 @@ export default class SockethubClient {
                         activity["@context"] = this.contextFor(
                             activity.platform,
                         );
+                    }
+                    if (
+                        entry.event === "credentials" &&
+                        !activity.type
+                    ) {
+                        activity.type = "credentials";
                     }
                     if (
                         activity.actor &&

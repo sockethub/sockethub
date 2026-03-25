@@ -23,11 +23,12 @@ export function addObject(
     isBatch = false,
 ): AnyActivityStream {
     let index: string;
+    const sortKey = ++counter;
 
     if (obj.id) {
         index = obj.id;
     } else {
-        index = `${++counter}`;
+        index = `${sortKey}`;
     }
 
     obj.id = index;
@@ -39,7 +40,7 @@ export function addObject(
     const now = Date.now();
     LogMeta.update((meta) => {
         if (!meta[index]) {
-            meta[index] = { timestamp: now, sortKey: counter };
+            meta[index] = { timestamp: now, sortKey };
         }
         return meta;
     });
@@ -139,7 +140,11 @@ export { SchemaLogs };
             modalTitle = "ActivityStreams Data Exchange";
             logModalState = true;
             jsonSend = JSON.stringify(logs[indexSend][0], null, 2);
-            jsonResp = JSON.stringify(logs[indexResp][1] || {}, null, 2);
+            const resp = logs[indexResp]?.[1];
+            jsonResp =
+                resp && Object.keys(resp as object).length > 0
+                    ? JSON.stringify(resp, null, 2)
+                    : "";
         };
     }
 

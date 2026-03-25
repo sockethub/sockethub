@@ -192,6 +192,10 @@ function sendCredentials(context, events, done) {
  * Send Dummy echo message with error handling
  */
 function sendDummyEcho(context, events, done) {
+    if (!context.vars.connected || !context.vars.schemasReady) {
+        events.emit("counter", "sockethub.error.not_ready", 1);
+        return done();
+    }
     const client = context.vars.client;
     const actorId = context.vars.actorId;
 
@@ -230,6 +234,10 @@ function sendDummyEcho(context, events, done) {
  * Send XMPP message with error handling
  */
 function sendXMPPMessage(context, events, done) {
+    if (!context.vars.connected || !context.vars.schemasReady) {
+        events.emit("counter", "sockethub.error.not_ready", 1);
+        return done();
+    }
     const client = context.vars.client;
     const actorId = context.vars.actorId;
 
@@ -272,6 +280,10 @@ function sendXMPPMessage(context, events, done) {
  * Send Feed fetch message with error handling
  */
 function sendFeedMessage(context, events, done) {
+    if (!context.vars.connected || !context.vars.schemasReady) {
+        events.emit("counter", "sockethub.error.not_ready", 1);
+        return done();
+    }
     const client = context.vars.client;
     const actorId = context.vars.actorId;
 
