@@ -274,8 +274,7 @@ class Sockethub {
                         msg: ActivityStream,
                         next: (data?: ActivityStream | Error) => void,
                     ) => {
-                        const platformId =
-                            msg.platform || resolvePlatformId(msg);
+                        const platformId = resolvePlatformId(msg);
                         if (!platformId) {
                             msg.error =
                                 "unable to resolve platform from @context";
