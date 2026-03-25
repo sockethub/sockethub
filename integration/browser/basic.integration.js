@@ -390,6 +390,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 // The server may push 0-2 unsolicited messages during the test
                 // (e.g. XMPP service-unavailable errors from room joins or
                 // failed connect attempts with invalid credentials).
+                expect(incomingMessages.length).to.be.at.most(2);
                 for (const msg of incomingMessages) {
                     expect(msg).to.have.property("platform", "xmpp");
                     expect(msg).to.have.property("error").that.is.a("string");
