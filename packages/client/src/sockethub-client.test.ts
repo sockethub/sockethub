@@ -261,6 +261,49 @@ describe("SockethubClient", () => {
             }, 0);
         });
 
+        it("activity-object-create stores object only after successful ACK", (done) => {
+            sc.socket.connected = true;
+            sc._socket.connected = true;
+            socket.emit("schemas", TEST_REGISTRY);
+            // Intercept the emit to capture the ACK callback
+            socket.on("activity-object", (_data: any, ackCb: any) => {
+                // Simulate successful ACK (no error)
+                if (typeof ackCb === "function") {
+                    ackCb();
+                }
+            });
+            asInstance.emit("activity-object-create", {
+                id: "good-obj",
+                foo: "bar",
+            });
+            setTimeout(() => {
+                expect(sc.events["activity-object"].has("good-obj")).to.be.true;
+                done();
+            }, 0);
+        });
+
+        it("activity-object-create does not store object on ACK error", (done) => {
+            sc.socket.connected = true;
+            sc._socket.connected = true;
+            socket.emit("schemas", TEST_REGISTRY);
+            // Intercept the emit to capture the ACK callback
+            socket.on("activity-object", (_data: any, ackCb: any) => {
+                // Simulate error ACK
+                if (typeof ackCb === "function") {
+                    ackCb({ error: "rejected by server" });
+                }
+            });
+            asInstance.emit("activity-object-create", {
+                id: "bad-obj",
+                foo: "bar",
+            });
+            setTimeout(() => {
+                expect(sc.events["activity-object"].has("bad-obj")).to.be
+                    .false;
+                done();
+            }, 0);
+        });
+
         it("connect", (done) => {
             expect(sc.socket.connected).to.be.false;
             socket.io = {};
@@ -494,10 +537,13 @@ describe("SockethubClient", () => {
 
         it("activity-object", (done) => {
             sc.socket.connected = true;
-            const callback = () => {};
+            const callback = sandbox.spy();
             socket.once("activity-object", (data: any, cb: any) => {
                 expect(data).to.be.eql({ actor: "bar" });
-                expect(cb).to.be.eql(callback);
+                // Callback is wrapped to defer persistence until ACK
+                expect(typeof cb).to.equal("function");
+                cb(); // simulate successful ACK
+                expect(callback.calledOnce).to.be.true;
                 done();
             });
             sc.socket.emit("activity-object", { actor: "bar" }, callback);

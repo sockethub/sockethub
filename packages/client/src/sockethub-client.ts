@@ -936,12 +936,33 @@ export default class SockethubClient {
             }
             if (entry.event === "credentials") {
                 this.eventCredentials(outgoing as ActivityStream);
-            } else if (entry.event === "activity-object") {
-                this.eventActivityObject(outgoing as ActivityObject);
             } else if (entry.event === "message") {
                 this.eventMessage(outgoing as BaseActivityObject);
             }
-            this._socket.emit(entry.event, outgoing, entry.callback);
+            if (entry.event === "activity-object") {
+                // Persist only after successful server ACK to avoid replaying
+                // rejected objects on reconnection.
+                const originalCallback = entry.callback;
+                const obj = outgoing as ActivityObject;
+                this._socket.emit(
+                    entry.event,
+                    outgoing,
+                    (resp?: { error?: string }) => {
+                        if (resp && typeof resp.error === "string") {
+                            if (obj.id) {
+                                this.events["activity-object"].delete(obj.id);
+                            }
+                        } else {
+                            this.eventActivityObject(obj);
+                        }
+                        if (typeof originalCallback === "function") {
+                            originalCallback(resp);
+                        }
+                    },
+                );
+            } else {
+                this._socket.emit(entry.event, outgoing, entry.callback);
+            }
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             this.emitClientError(entry.event, entry.callback, message);
