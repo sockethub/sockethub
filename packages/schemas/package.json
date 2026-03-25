@@ -18,8 +18,8 @@
     },
     "./context": {
       "bun": "./src/context.ts",
-      "import": "./src/context.ts",
-      "default": "./src/context.ts"
+      "import": "./dist/context.js",
+      "default": "./dist/context.js"
     },
     "./schemas/json/sockethub-config.json": {
       "default": "./src/schemas/json/sockethub-config.json"
