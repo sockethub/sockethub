@@ -511,14 +511,30 @@ export default class SockethubClient {
                 schemas: platform.schemas || {},
             });
             addPlatformContext(platform.id, platform.contextUrl);
-            addPlatformSchema(
-                platform.schemas?.credentials || {},
-                `${platform.id}/credentials`,
-            );
-            addPlatformSchema(
-                platform.schemas?.messages || {},
-                `${platform.id}/messages`,
-            );
+            try {
+                const credSchema = platform.schemas?.credentials;
+                if (
+                    credSchema &&
+                    typeof credSchema === "object" &&
+                    !Array.isArray(credSchema)
+                ) {
+                    addPlatformSchema(credSchema, `${platform.id}/credentials`);
+                }
+                const msgSchema = platform.schemas?.messages;
+                if (
+                    msgSchema &&
+                    typeof msgSchema === "object" &&
+                    !Array.isArray(msgSchema)
+                ) {
+                    addPlatformSchema(msgSchema, `${platform.id}/messages`);
+                }
+            } catch (err) {
+                const message =
+                    err instanceof Error ? err.message : String(err);
+                console.warn(
+                    `[SockethubClient] Failed to register schemas for platform ${platform.id}: ${message}`,
+                );
+            }
         }
         const normalizedPayload = this.buildPlatformRegistryPayload();
         this.registryFingerprint =

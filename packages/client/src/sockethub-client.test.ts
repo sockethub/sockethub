@@ -187,6 +187,53 @@ describe("SockethubClient", () => {
     });
 
     describe("initialization API", () => {
+        it("ready() resolves with ClientReadyInfo after server emits schemas", async () => {
+            socket.io = {};
+            socket.connected = true;
+            sc.socket.connected = true;
+            socket.on("schemas", (ack: any) => {
+                if (typeof ack === "function") {
+                    ack(TEST_REGISTRY);
+                }
+            });
+            const info = await sc.ready(2000);
+            expect(info.state).to.equal("ready");
+            expect(info.reason).to.be.a("string");
+            expect(info.sockethubVersion).to.equal("5.0.0-alpha.11");
+            expect(info.platforms).to.be.an("array").with.length.greaterThan(0);
+            expect(info.contexts.as).to.equal("https://example.com/as2");
+        });
+
+        it("ready() resolves immediately when already ready", async () => {
+            socket.emit("schemas", TEST_REGISTRY);
+            const info = await sc.ready();
+            expect(info.state).to.equal("ready");
+        });
+
+        it("ready() rejects on timeout when schemas never arrive", async () => {
+            const timeoutSocket = new EventEmitter();
+            timeoutSocket.connected = true;
+            timeoutSocket.__instance = "socketio";
+            timeoutSocket.io = {};
+            sandbox.spy(timeoutSocket, "on");
+            sandbox.spy(timeoutSocket, "emit");
+
+            class TimeoutClient extends SockethubClient {
+                initActivityStreams() {
+                    this.ActivityStreams = asInstance as ASManager;
+                }
+            }
+            const client = new TimeoutClient(timeoutSocket);
+            client.socket.connected = true;
+            try {
+                await client.ready(50);
+                expect.fail("should have rejected");
+            } catch (err: any) {
+                expect(err.message).to.contain("timed out");
+            }
+            timeoutSocket.emit("disconnect");
+        });
+
         it("emits ready payload including sockethub and platform versions", (done) => {
             sc.socket.on("ready", (info: any) => {
                 expect(info.state).to.equal("ready");

@@ -120,19 +120,20 @@ function setupClient(context, events, done) {
             context.vars.schemasReady = true;
             done();
         })
-        .catch(() => {
+        .catch((err) => {
+            const reason = err?.message || String(err);
             if (!context.vars.connected) {
                 recordFailure();
                 if (consecutiveConnectionFailures <= 3) {
                     console.error(
-                        "Connection timeout - socket never connected",
+                        `Connection timeout - socket never connected: ${reason}`,
                     );
                 }
                 events.emit("counter", "sockethub.connect_timeout", 1);
-                context.vars.errors.push("Connection timeout");
+                context.vars.errors.push(`Connection timeout: ${reason}`);
             } else {
                 events.emit("counter", "sockethub.schemas_timeout", 1);
-                context.vars.errors.push("Schemas timeout");
+                context.vars.errors.push(`Schemas timeout: ${reason}`);
             }
             done();
         });
