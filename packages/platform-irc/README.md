@@ -23,7 +23,11 @@ messages.
 ```json
 {
   "@type": "send",
-  "context": "irc",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
   "actor": {
     "@id": "mynick@irc.libera.chat"
   },
@@ -42,7 +46,11 @@ messages.
 ```json
 {
   "@type": "join",
-  "context": "irc",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
   "actor": {
     "@id": "mynick@irc.libera.chat"
   },
@@ -57,7 +65,11 @@ messages.
 ```json
 {
   "@type": "send",
-  "context": "irc",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
   "actor": {
     "@id": "mynick@irc.libera.chat"
   },

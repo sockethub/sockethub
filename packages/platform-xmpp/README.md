@@ -25,7 +25,11 @@ updates through ActivityStreams messages.
 ```json
 {
   "@type": "send",
-  "context": "xmpp",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
   "actor": {
     "@id": "user@example.org"
   },
@@ -44,7 +48,11 @@ updates through ActivityStreams messages.
 ```json
 {
   "@type": "join",
-  "context": "xmpp",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
   "actor": {
     "@id": "user@example.org"
   },
@@ -59,7 +67,11 @@ updates through ActivityStreams messages.
 ```json
 {
   "@type": "request-friend",
-  "context": "xmpp",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
   "actor": {
     "@id": "user@example.org"
   },

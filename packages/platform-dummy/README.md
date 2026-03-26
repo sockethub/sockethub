@@ -22,7 +22,11 @@ platform communication without requiring external service connections.
 ```json
 {
   "@type": "echo",
-  "context": "dummy",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/dummy/v1.jsonld"
+  ],
   "actor": {
     "@id": "test-user"
   },
@@ -37,7 +41,11 @@ platform communication without requiring external service connections.
 ```json
 {
   "@type": "echo",
-  "context": "dummy",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/dummy/v1.jsonld"
+  ],
   "actor": {
     "@id": "test-user"
   },

@@ -22,7 +22,11 @@ to clients through the Sockethub service.
 ```json
 {
   "@type": "fetch",
-  "context": "metadata",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/metadata/v1.jsonld"
+  ],
   "actor": {
     "@id": "https://example.com/page-to-analyze"
   }
@@ -36,7 +40,11 @@ The platform returns an ActivityStream object with extracted metadata:
 ```json
 {
   "@type": "fetch",
-  "context": "metadata",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/metadata/v1.jsonld"
+  ],
   "actor": {
     "@id": "https://example.com/page-to-analyze",
     "name": "Example Site"

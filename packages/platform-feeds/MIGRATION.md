@@ -7,7 +7,7 @@
 ```javascript
 // Response was an array
 [
-  { context: "feeds", type: "post", actor: {...}, object: {...} },
+  { "@context": ["https://www.w3.org/ns/activitystreams", "..."], type: "post", actor: {...}, object: {...} },
   // ... more items
 ]
 ```
@@ -17,12 +17,12 @@
 ```javascript
 // Response is now a Collection object
 {
-  context: "feeds",
+  "@context": ["https://www.w3.org/ns/activitystreams", "..."],
   type: "collection", 
   summary: "Feed Name",
   totalItems: 20,
   items: [
-    { context: "feeds", type: "post", actor: {...}, object: {...} },
+    { "@context": ["https://www.w3.org/ns/activitystreams", "..."], type: "post", actor: {...}, object: {...} },
     // ... more items
   ]
 }

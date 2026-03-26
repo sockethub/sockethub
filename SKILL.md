@@ -46,14 +46,17 @@ import SockethubClient from '@sockethub/client';
 import { io } from 'socket.io-client';
 
 const socket = io('http://localhost:10550', { path: '/sockethub' });
-const sc = new SockethubClient(socket);
+const sc = new SockethubClient(socket, { initTimeoutMs: 5000 });
 
 // Listen for messages
 sc.socket.on('message', (msg) => console.log(msg));
 
+// Wait for schema registry before using contextFor()
+await sc.ready();
+
 // Send ActivityStreams message
 sc.socket.emit('message', {
-  context: 'irc',
+  '@context': sc.contextFor('irc'),
   type: 'send',
   actor: 'myuser@irc.libera.chat',
   target: { id: '#channel@irc.libera.chat', type: 'room' },
@@ -68,7 +71,7 @@ sc.socket.emit('message', {
 ```javascript
 // Set credentials
 sc.socket.emit('credentials', {
-  context: 'irc',
+  '@context': sc.contextFor('irc'),
   type: 'credentials',
   actor: { id: 'mynick@irc.libera.chat' },
   object: {
@@ -82,14 +85,14 @@ sc.socket.emit('credentials', {
 
 // Connect
 sc.socket.emit('message', {
-  context: 'irc',
+  '@context': sc.contextFor('irc'),
   type: 'connect',
   actor: 'mynick@irc.libera.chat'
 });
 
 // Join channel
 sc.socket.emit('message', {
-  context: 'irc',
+  '@context': sc.contextFor('irc'),
   type: 'join',
   actor: 'mynick@irc.libera.chat',
   target: { id: '#sockethub@irc.libera.chat', type: 'room' }
@@ -101,7 +104,7 @@ sc.socket.emit('message', {
 ```javascript
 // Set XMPP credentials
 sc.socket.emit('credentials', {
-  context: 'xmpp',
+  '@context': sc.contextFor('xmpp'),
   type: 'credentials',
   actor: { id: 'user@jabber.org' },
   object: {
@@ -114,13 +117,13 @@ sc.socket.emit('credentials', {
 
 // Connect and send
 sc.socket.emit('message', {
-  context: 'xmpp',
+  '@context': sc.contextFor('xmpp'),
   type: 'connect',
   actor: 'user@jabber.org'
 });
 
 sc.socket.emit('message', {
-  context: 'xmpp',
+  '@context': sc.contextFor('xmpp'),
   type: 'send',
   actor: 'user@jabber.org',
   target: { id: 'friend@jabber.org', type: 'person' },
@@ -132,14 +135,14 @@ sc.socket.emit('message', {
 
 ```javascript
 sc.socket.emit('message', {
-  context: 'feeds',
+  '@context': sc.contextFor('feeds'),
   type: 'fetch',
   actor: { id: 'https://example.com/feed.rss' }
 });
 
 // Response is a Collection of Create activities with feed entries
 sc.socket.on('message', (msg) => {
-  if (msg.context === 'feeds') {
+  if (msg['@context']) {
     msg.object.items.forEach(entry => {
       console.log(entry.object.title, entry.object.url);
     });
@@ -182,7 +185,11 @@ All messages follow ActivityStreams 2.0 structure:
 
 ```javascript
 {
-  context: 'irc' | 'xmpp' | 'feeds', // Platform identifier
+  "@context": [                        // Platform context array
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/{platform}/v1.jsonld"
+  ],
   type: 'send' | 'join' | 'connect', // Action type
   actor: { id: 'user@server', type: 'person' }, // Who is acting
   target: { id: 'room@server', type: 'room' }, // Target of action
@@ -201,20 +208,24 @@ properties). If none exists, it expands to `{ id }`.
 ```javascript
 import SockethubClient from '@sockethub/client';
 
-const sc = new SockethubClient(socket);
+const sc = new SockethubClient(socket, { initTimeoutMs: 5000 });
 
 // Properties
 sc.socket           // Underlying Socket.IO instance
 sc.ActivityStreams  // ActivityStreams helper library
 
 // Methods
-sc.clearCredentials()  // Remove stored credentials
+await sc.ready()            // Wait for schema registry initialization
+sc.contextFor('irc')        // Build canonical @context array for a platform
+sc.isReady()                // Check whether client is initialized
+sc.getInitState()           // Return init state string
+sc.clearCredentials()       // Remove stored credentials
 
 // Events
 sc.socket.on('message', handler)      // Incoming messages
-sc.socket.on('completed', handler)    // Job completion
-sc.socket.on('failed', handler)       // Job failure
-sc.socket.emit('message', activity)   // Send message
+sc.socket.on('ready', handler)        // Initialization complete
+sc.socket.on('init_error', handler)   // Initialization issue
+sc.socket.emit('message', activity)   // Send message (queued until ready)
 sc.socket.emit('credentials', creds)  // Set credentials
 ```
 

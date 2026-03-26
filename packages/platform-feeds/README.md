@@ -19,7 +19,11 @@ web applications to consume feed content.
 ```json
 {
   "@type": "fetch",
-  "context": "feeds",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/feeds/v1.jsonld"
+  ],
   "actor": {
     "@id": "https://example.com/feed.xml"
   }
@@ -33,7 +37,11 @@ Returns an ActivityStreams Collection with feed entries:
 ```json
 {
   "@type": "Collection",
-  "context": "feeds",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/feeds/v1.jsonld"
+  ],
   "totalItems": 10,
   "items": [
     {

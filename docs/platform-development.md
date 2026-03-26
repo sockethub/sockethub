@@ -8,7 +8,7 @@ A platform is a Node.js package that acts as a bridge between Sockethub and exte
 When a web application sends an ActivityStreams message to Sockethub, the platform translates it
 into the specific protocol's format and handles the communication.
 
-For example: A web app sends `{ type: "send", context: "irc", object: { content: "hello" } }`
+For example: A web app sends `{ type: "send", "@context": [...], object: { content: "hello" } }`
 → the IRC platform converts this to an IRC `PRIVMSG #channel :hello` command and sends it to
 the IRC server.
 
@@ -267,7 +267,6 @@ export default class ChatBot implements PersistentPlatformInterface {
         this.client.on('message', (msg) => {
             this.sendToClient({
                 type: 'send',
-                context: 'chatbot',
                 actor: { id: msg.from, type: 'person' },
                 object: { type: 'note', content: msg.text }
             });

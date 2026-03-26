@@ -89,7 +89,11 @@ Valid AS object for setting XMPP credentials:
 ```js
 {
   type: 'credentials',
-  context: 'xmpp',
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
   actor: {
     id: 'testuser@jabber.net',
     type: 'person',
@@ -131,7 +135,11 @@ Connect to the XMPP server.
 **Example**  
 ```js
 {
-  context: 'xmpp',
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
   type: 'connect',
   actor: {
     id: 'slvrbckt@jabber.net/Home',
@@ -166,7 +174,11 @@ Join a room, optionally defining a display name for that room.
 **Example**  
 ```js
 {
-  context: 'xmpp',
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
   type: 'join',
   actor: {
     type: 'person',
@@ -204,7 +216,11 @@ Leave a room
 **Example**  
 ```js
 {
-  context: 'xmpp',
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
   type: 'leave',
   actor: {
     type: 'person',
@@ -242,7 +258,11 @@ Send a message to a room or private conversation.
 **Example**  
 ```js
 {
-  context: 'xmpp',
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
   type: 'send',
   actor: {
     id: 'slvrbckt@jabber.net/Home',
@@ -262,7 +282,11 @@ Send a message to a room or private conversation.
 }
 
 {
-  context: 'xmpp',
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
   type: 'send',
   actor: {
     id: 'slvrbckt@jabber.net/Home',
@@ -306,7 +330,11 @@ Valid presence values are "away", "chat", "dnd", "xa", "offline", "online".
 **Example**  
 ```js
 {
-  context: 'xmpp',
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
   type: 'update',
   actor: {
     id: 'user@host.org/Home'
@@ -343,7 +371,11 @@ Send friend request
 **Example**  
 ```js
 {
-  context: 'xmpp',
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
   type: 'request-friend',
   actor: {
     id: 'user@host.org/Home'
@@ -378,7 +410,11 @@ Send a remove friend request
 **Example**  
 ```js
 {
-  context: 'xmpp',
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
   type: 'remove-friend',
   actor: {
     id: 'user@host.org/Home'
@@ -413,7 +449,11 @@ Confirm a friend request
 **Example**  
 ```js
 {
-  context: 'xmpp',
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
   type: 'make-friend',
   actor: {
     id: 'user@host.org/Home'
@@ -448,7 +488,11 @@ Indicate an intent to query something (i.e. get a list of users in a room).
 **Example**  
 ```js
 {
-   context: 'xmpp',
+   "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
    type: 'query',
    actor: {
      id: 'slvrbckt@jabber.net/Home',
@@ -465,7 +509,11 @@ Indicate an intent to query something (i.e. get a list of users in a room).
 
  // The above object might return:
  {
-   context: 'xmpp',
+   "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
    type: 'query',
    actor: {
      id: 'PartyChatRoom@muc.jabber.net',
@@ -511,7 +559,11 @@ Disconnect XMPP client
 **Example**  
 ```js
 {
-   context: 'xmpp',
+   "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
    type: 'disconnect',
    actor: {
      id: 'slvrbckt@jabber.net/Home',

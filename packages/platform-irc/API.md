@@ -72,7 +72,11 @@ Valid AS object for setting IRC credentials:
 ```js
 {
    type: 'credentials',
-   context: 'irc',
+   "@context": [
+     "https://www.w3.org/ns/activitystreams",
+     "https://sockethub.org/ns/context/v1.jsonld",
+     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+   ],
    actor: {
      id: 'testuser@irc.host.net',
      type: 'person',
@@ -144,7 +148,11 @@ Join a room or private conversation.
 **Example**  
 ```js
 {
-  context: 'irc',
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
   type: 'join',
   actor: {
     id: 'slvrbckt@irc.freenode.net',
@@ -186,7 +194,11 @@ Leave a room or private conversation.
 **Example**  
 ```js
 {
-  context: 'irc',
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
   type: 'leave',
   actor: {
     id: 'slvrbckt@irc.freenode.net',
@@ -228,7 +240,11 @@ Send a message to a room or private conversation.
 **Example**  
 ```js
 {
-   context: 'irc',
+   "@context": [
+     "https://www.w3.org/ns/activitystreams",
+     "https://sockethub.org/ns/context/v1.jsonld",
+     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+   ],
    type: 'send',
    actor: {
      id: 'slvrbckt@irc.freenode.net',
@@ -279,7 +295,11 @@ Indicate a change (i.e. room topic update, or nickname change).
 change topic
 
 {
-  context: 'irc',
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
   type: 'update',
   actor: {
     id: 'slvrbckt@irc.freenode.net',
@@ -302,7 +322,11 @@ change topic
 ```js
 change nickname
  {
-   context: 'irc'
+   "@context": [
+     "https://www.w3.org/ns/activitystreams",
+     "https://sockethub.org/ns/context/v1.jsonld",
+     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+   ],
    type: 'update',
    actor: {
      id: 'slvrbckt@irc.freenode.net',
@@ -346,7 +370,11 @@ Indicate an intent to query something (e.g. get a list of users in a room).
 **Example**  
 ```js
 {
-   context: 'irc',
+   "@context": [
+     "https://www.w3.org/ns/activitystreams",
+     "https://sockethub.org/ns/context/v1.jsonld",
+     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+   ],
    type: 'query',
    actor: {
      id: 'slvrbckt@irc.freenode.net',
@@ -367,7 +395,11 @@ Indicate an intent to query something (e.g. get a list of users in a room).
 
  // The above object might return:
  {
-   context: 'irc',
+   "@context": [
+     "https://www.w3.org/ns/activitystreams",
+     "https://sockethub.org/ns/context/v1.jsonld",
+     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+   ],
    type: 'query',
    actor: {
      id: 'irc.freenode.net/a-room',
@@ -411,7 +443,11 @@ Disconnect IRC client
 **Example**  
 ```js
 {
-   context: 'irc',
+   "@context": [
+     "https://www.w3.org/ns/activitystreams",
+     "https://sockethub.org/ns/context/v1.jsonld",
+     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+   ],
    type: 'disconnect',
    actor: {
      id: 'slvrbckt@irc.freenode.net',

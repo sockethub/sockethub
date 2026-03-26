@@ -47,44 +47,45 @@ Create a simple HTML file:
 <head>
     <title>My Sockethub App</title>
     <script src="http://localhost:10550/socket.io.js"></script>
-    <script src="http://localhost:10550/sockethub-client.js" type="module"></script>
+    <script src="http://localhost:10550/sockethub-client.js"></script>
 </head>
 <body>
     <h1>My Sockethub App</h1>
     <button onclick="testEcho()">Test Echo</button>
     <div id="output"></div>
 
-    <script type="module">
-        import SockethubClient from '/sockethub-client.js';
-        import { io } from '/socket.io.js';
-        
-        // Connect to Sockethub
+    <script>
+        // Connect to Sockethub (SockethubClient and io are globals from script tags)
         const sc = new SockethubClient(
             io('http://localhost:10550', {
                 path: '/sockethub'
-            })
+            }),
+            { initTimeoutMs: 5000 }
         );
-        
+
         // Listen for responses
         sc.socket.on('message', function(msg) {
-            document.getElementById('output').innerHTML = 
+            document.getElementById('output').innerHTML =
                 '<p>Response: ' + JSON.stringify(msg, null, 2) + '</p>';
         });
-        
+
         // Test function
-        window.testEcho = function() {
+        window.testEcho = async function() {
+            // Wait for schema registry
+            await sc.ready();
+
             // Connect and send echo message
             sc.socket.emit('message', {
                 type: 'connect',
-                context: 'dummy',
+                '@context': sc.contextFor('dummy'),
                 actor: { id: 'test-user', type: 'person' }
             }, (response) => {
                 console.log('Connect response:', response);
-                
+
                 // Send echo message after connection
                 sc.socket.emit('message', {
                     type: 'echo',
-                    context: 'dummy',
+                    '@context': sc.contextFor('dummy'),
                     actor: { id: 'test-user', type: 'person' },
                     object: { type: 'note', content: 'Hello Sockethub!' }
                 });
@@ -104,7 +105,11 @@ All communication uses ActivityStreams 2.0 format:
 ```javascript
 {
   "type": "send",            // The action to perform
-  "context": "xmpp",         // Which platform to use
+  "@context": [              // Which platform to use
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
   "actor": {                 // Who is performing the action
     "id": "user@example.com",
     "type": "person"
@@ -123,7 +128,7 @@ All communication uses ActivityStreams 2.0 format:
 ### Core Concepts
 
 - **Platforms**: Protocol modules (dummy, feeds, irc, xmpp, metadata)
-- **Context**: Which platform to use for a message
+- **@context**: Canonical context array that selects which platform to use
 - **Actor**: The user performing the action  
 - **Verbs**: Actions like connect, send, join, fetch
 

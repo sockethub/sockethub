@@ -120,7 +120,11 @@ Redis and BullMQ provide reliable, encrypted communication between server and pl
 // 1. Client sends ActivityStreams
 {
   "type": "send",
-  "context": "irc", 
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
   "actor": { "id": "mynick", "type": "person" },
   "target": { "id": "#javascript", "type": "room" },
   "object": { "type": "note", "content": "Hello!" }
@@ -200,7 +204,7 @@ IRC: ":alice!user@host PRIVMSG #room :hello world"
   ↓
 ActivityStreams: {
   "type": "send",
-  "context": "irc",
+  "@context": ["...activitystreams", "...sockethub", "...platform/irc/..."],
   "actor": { "id": "alice", "type": "person" },
   "target": { "id": "#room", "type": "room" },
   "object": { "type": "note", "content": "hello world" }
@@ -212,7 +216,7 @@ ActivityStreams: {
 ```
 ActivityStreams: {
   "type": "join",
-  "context": "irc",
+  "@context": ["...activitystreams", "...sockethub", "...platform/irc/..."],
   "actor": { "id": "mynick", "type": "person" },
   "target": { "id": "#room", "type": "room" }
 }
@@ -226,9 +230,14 @@ Web applications send the same ActivityStreams format regardless of target proto
 
 ```javascript
 // Same message format works for IRC, XMPP, or any messaging platform
+// Only the @context array changes to select the platform
 {
   "type": "send",
-  "context": "irc",  // or "xmpp" 
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
   "actor": { "id": "user", "type": "person" },
   "target": { "id": "#room", "type": "room" },
   "object": { "type": "note", "content": "Hello!" }
