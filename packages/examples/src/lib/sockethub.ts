@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { displayMessage } from "$components/chat/IncomingMessages.svelte";
-import { addObject } from "$components/logs/Logger.svelte";
+import { addObject, addSchemaEvent } from "$components/logs/Logger.svelte";
 import {
     buildCanonicalContext,
     platformIdFromContext,
@@ -147,6 +147,18 @@ function sockethubConnect(config: typeof defaultConfig = defaultConfig) {
     sc.socket.on("error", stateChange("error"));
     sc.socket.on("disconnect", stateChange("disconnect"));
     sc.socket.on("message", handleIncomingMessage);
+    sc.socket.on("schemas", (payload: unknown) => {
+        console.log("schemas received:", payload);
+        addSchemaEvent("schemas", payload);
+    });
+    sc.socket.on("ready", (info: unknown) => {
+        console.log("client ready:", info);
+        addSchemaEvent("ready", info);
+    });
+    sc.socket.on("init_error", (err: unknown) => {
+        console.error("client init error:", err);
+        addSchemaEvent("init_error", err);
+    });
 }
 
 if (typeof globalThis === "object" && "window" in globalThis) {

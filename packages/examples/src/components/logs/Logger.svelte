@@ -10,6 +10,9 @@ type LogEntries = Record<
     ]
 >;
 const Logs = writable({} as LogEntries);
+const LogMeta = writable(
+    {} as Record<string, { timestamp: number; sortKey: number }>,
+);
 let counter = 0;
 
 type ObjectType = "SEND" | "RESP";
@@ -20,11 +23,12 @@ export function addObject(
     isBatch = false,
 ): AnyActivityStream {
     let index: string;
+    const sortKey = ++counter;
 
     if (obj.id) {
         index = obj.id;
     } else {
-        index = `${++counter}`;
+        index = `${sortKey}`;
     }
 
     obj.id = index;
@@ -32,6 +36,14 @@ export function addObject(
     if (isBatch) {
         index = `${index}-${++counter}`;
     }
+
+    const now = Date.now();
+    LogMeta.update((meta) => {
+        if (!meta[index]) {
+            meta[index] = { timestamp: now, sortKey };
+        }
+        return meta;
+    });
 
     Logs.update((currentLogs: LogEntries) => {
         if (!currentLogs[index]) {
@@ -48,20 +60,72 @@ export function addObject(
     });
     return obj;
 }
+
+export type SchemaLogType = "schemas" | "ready" | "init_error";
+
+export interface SchemaLogEntry {
+    _logType: SchemaLogType;
+    _logId: string;
+    _sortKey: number;
+    _timestamp: number;
+    payload: unknown;
+}
+
+const SchemaLogs = writable([] as SchemaLogEntry[]);
+
+export function addSchemaEvent(type: SchemaLogType, payload: unknown) {
+    const entry: SchemaLogEntry = {
+        _logType: type,
+        _logId: `${type}-${++counter}`,
+        _sortKey: counter,
+        _timestamp: Date.now(),
+        payload,
+    };
+    SchemaLogs.update((logs) => [entry, ...logs]);
+}
+
+export { SchemaLogs };
 </script>
 
 <script lang="ts">
     import LogEntry from "./LogEntry.svelte";
+    import SchemaLogEntryComponent from "./SchemaLogEntry.svelte";
     import Highlight from "svelte-highlight";
     import json from "svelte-highlight/languages/json";
 
+    type UnifiedEntry =
+        | { kind: "activity"; id: string; sortKey: number; timestamp: number; tuple: [AnyActivityStream | Record<string, never>, AnyActivityStream | Record<string, never>] }
+        | { kind: "schema"; sortKey: number; entry: SchemaLogEntry };
+
     let logs: LogEntries = $state();
+    let meta: Record<string, { timestamp: number; sortKey: number }> = $state({});
+    let schemaLogs: SchemaLogEntry[] = $state([]);
     let logModalState = $state(false);
     let jsonSend = $state("");
     let jsonResp = $state("");
+    let modalTitle = $state("ActivityStreams Data Exchange");
 
     Logs.subscribe((data: LogEntries) => {
         logs = data;
+    });
+    LogMeta.subscribe((data: Record<string, { timestamp: number; sortKey: number }>) => {
+        meta = data;
+    });
+    SchemaLogs.subscribe((data: SchemaLogEntry[]) => {
+        schemaLogs = data;
+    });
+
+    const unified: UnifiedEntry[] = $derived.by(() => {
+        const items: UnifiedEntry[] = [];
+        for (const [id, tuple] of Object.entries(logs ?? {})) {
+            const m = meta[id];
+            items.push({ kind: "activity", id, sortKey: m?.sortKey ?? 0, tuple, timestamp: m?.timestamp ?? 0 });
+        }
+        for (const entry of schemaLogs) {
+            items.push({ kind: "schema", sortKey: entry._sortKey, entry });
+        }
+        items.sort((a, b) => b.sortKey - a.sortKey);
+        return items;
     });
 
     function showLog(uid: string) {
@@ -73,9 +137,23 @@ export function addObject(
             }
             console.log(`indexSend:${indexSend} indexResp:${indexResp}`);
             console.log("logs: ", logs);
+            modalTitle = "ActivityStreams Data Exchange";
             logModalState = true;
             jsonSend = JSON.stringify(logs[indexSend][0], null, 2);
-            jsonResp = JSON.stringify(logs[indexResp][1] || {}, null, 2);
+            const resp = logs[indexResp]?.[1];
+            jsonResp =
+                resp && Object.keys(resp as object).length > 0
+                    ? JSON.stringify(resp, null, 2)
+                    : "";
+        };
+    }
+
+    function showSchemaLog(entry: SchemaLogEntry) {
+        return () => {
+            modalTitle = `Schema Event: ${entry._logType}`;
+            logModalState = true;
+            jsonSend = JSON.stringify(entry.payload, null, 2);
+            jsonResp = "";
         };
     }
 </script>
@@ -94,11 +172,15 @@ export function addObject(
         <div class="flex items-center space-x-4 text-xs">
             <div class="flex items-center space-x-1">
                 <div class="w-3 h-3 bg-orange-400 rounded-full"></div>
-                <span class="text-gray-600">Outgoing</span>
+                <span class="text-gray-600">Pending</span>
             </div>
             <div class="flex items-center space-x-1">
                 <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span class="text-gray-600">Response</span>
+                <span class="text-gray-600">Complete</span>
+            </div>
+            <div class="flex items-center space-x-1">
+                <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                <span class="text-gray-600">Schema</span>
             </div>
         </div>
     </div>
@@ -112,7 +194,7 @@ export function addObject(
         </div>
         
         <div id="messages" class="max-h-96 overflow-y-auto">
-            {#if Object.keys(logs).length === 0}
+            {#if unified.length === 0}
                 <div class="p-8 text-center text-gray-500">
                     <div class="text-4xl mb-2">📭</div>
                     <p class="font-medium">No activity yet</p>
@@ -120,38 +202,33 @@ export function addObject(
                 </div>
             {:else}
                 <ul class="divide-y divide-gray-100">
-                    {#each Object.entries(logs).sort((a, b) => {
-                        let i = a[0],
-                            j;
-                        let k = b[0],
-                            l;
-                        if (a[0].includes("-")) {
-                            [i, j] = a[0].split("-");
-                        }
-                        if (b[0].includes("-")) {
-                            [k, l] = b[0].split("-");
-                        }
-                        if (j && l) {
-                            return parseInt(j) >= parseInt(l) ? -1 : 1;
-                        } else {
-                            return parseInt(i) >= parseInt(k) ? -1 : 1;
-                        }
-                    }) as [id, tuple]}
-                        {#if Array.isArray(tuple[tuple.length - 1])}
-                            {#each Object.entries(tuple[tuple.length - 1]) as [s, r]}
+                    {#each unified as item (item.kind === "schema" ? item.entry._logId : item.id)}
+                        {#if item.kind === "schema"}
+                            <SchemaLogEntryComponent entry={item.entry} buttonAction={showSchemaLog(item.entry)} />
+                        {:else if Array.isArray(item.tuple[item.tuple.length - 1])}
+                            {#each Object.entries(item.tuple[item.tuple.length - 1]) as [s, r]}
                                 {#if r}
                                     <LogEntry
-                                        buttonAction={showLog(`${id}-${s}`)}
-                                        response={typeof logs[id][1] !== "undefined"}
-                                        id={`${id}-${s}`}
+                                        buttonAction={showLog(`${item.id}-${s}`)}
+                                        hasSend={Object.prototype.hasOwnProperty.call(item.tuple[0], "@context")}
+                                        hasResponse={typeof logs[item.id][1] !== "undefined"}
+                                        id={`${item.id}-${s}`}
                                         entry={r}
+                                        timestamp={item.timestamp}
                                     />
                                 {/if}
                             {/each}
-                        {:else if Object.prototype.hasOwnProperty.call(tuple[1], "@context")}
-                            <LogEntry buttonAction={showLog(id)} {id} response={true} entry={tuple[1]} />
                         {:else}
-                            <LogEntry buttonAction={showLog(id)} {id} response={false} entry={tuple[0]} />
+                            {@const hasSend = Object.prototype.hasOwnProperty.call(item.tuple[0], "@context")}
+                            {@const hasResponse = Object.prototype.hasOwnProperty.call(item.tuple[1], "@context")}
+                            <LogEntry
+                                buttonAction={showLog(item.id)}
+                                id={item.id}
+                                {hasSend}
+                                {hasResponse}
+                                entry={hasResponse ? item.tuple[1] : item.tuple[0]}
+                                timestamp={item.timestamp}
+                            />
                         {/if}
                     {/each}
                 </ul>
@@ -171,7 +248,7 @@ export function addObject(
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-bold text-gray-900 flex items-center">
                     <span class="mr-2">🔍</span>
-                    ActivityStreams Data Exchange
+                    {modalTitle}
                 </h3>
                 <button
                     onclick={() => (logModalState = false)}
@@ -191,14 +268,15 @@ export function addObject(
         <div class="flex-1 overflow-auto p-6 space-y-6">
             <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4">
                 <h4 class="font-semibold text-blue-900 mb-3 flex items-center">
-                    <span class="mr-2">📤</span>
-                    Sent to Sockethub
+                    <span class="mr-2">{jsonResp ? '📤' : '📋'}</span>
+                    {jsonResp ? 'Sent to Sockethub' : 'Event Payload'}
                 </h4>
                 <div class="bg-white rounded border border-blue-200 overflow-hidden">
                     <Highlight language={json} code={jsonSend} />
                 </div>
             </div>
-            
+
+            {#if jsonResp}
             <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
                 <h4 class="font-semibold text-green-900 mb-3 flex items-center">
                     <span class="mr-2">📥</span>
@@ -208,6 +286,7 @@ export function addObject(
                     <Highlight language={json} code={jsonResp} />
                 </div>
             </div>
+            {/if}
         </div>
         
         <!-- Modal Footer -->

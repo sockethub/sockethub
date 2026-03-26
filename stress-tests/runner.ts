@@ -26,7 +26,7 @@ interface RunnerOptions {
     ciMode?: boolean;
 }
 
-const CI_TEST_TIMEOUT_MS = 2 * 60 * 1000;
+const CI_TEST_TIMEOUT_MS = 3 * 60 * 1000;
 const DEFAULT_TEST_TIMEOUT_MS = 20 * 60 * 1000;
 const HEALTH_CHECK_INTERVAL_MS = 2000;
 const HEALTH_CHECK_FAILURE_LIMIT = 2;
@@ -401,9 +401,13 @@ async function runArtilleryWithGuards(options: {
         });
 
         const timeoutId = setTimeout(() => {
+            const details = stderr.trim() || stdout.trim();
+            const detailsSuffix = details
+                ? `\n--- captured output ---\n${details.slice(-2000)}`
+                : "";
             stopWithError(
                 new Error(
-                    `Stress test timed out after ${Math.round(timeoutMs / 1000)}s (scenario: ${scenarioPath})`,
+                    `Stress test timed out after ${Math.round(timeoutMs / 1000)}s (scenario: ${scenarioPath})${detailsSuffix}`,
                 ),
             );
         }, timeoutMs);

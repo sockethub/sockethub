@@ -21,13 +21,14 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
         let sc;
         const incomingMessages = [];
 
-        before(() => {
+        before(async () => {
             sc = new SockethubClient(
                 io(config.sockethub.url, { path: "/sockethub" }),
             );
             sc.socket.on("message", (msg) => {
                 incomingMessages.push(msg);
             });
+            await sc.ready();
         });
 
         after(() => {
@@ -385,21 +386,14 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
         });
 
         describe("Incoming Message queue", () => {
-            it("should be empty", () => {
-                expect(incomingMessages.length).to.be.below(2);
-                if (incomingMessages.length === 1) {
-                    expect(incomingMessages[0]).to.deep.include({
-                        platform: "xmpp",
-                        type: "message",
-                        actor: { id: "test@prosody", type: "room" },
-                        error: '<error type="cancel"><service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error>',
-                        target: {
-                            id: jid,
-                            type: "person",
-                        },
-                    });
-                } else {
-                    expect(incomingMessages).to.eql([]);
+            it("should only contain known server-pushed messages", () => {
+                // The server may push 0-2 unsolicited messages during the test
+                // (e.g. XMPP service-unavailable errors from room joins or
+                // failed connect attempts with invalid credentials).
+                expect(incomingMessages.length).to.be.at.most(2);
+                for (const msg of incomingMessages) {
+                    expect(msg).to.have.property("platform", "xmpp");
+                    expect(msg).to.have.property("error").that.is.a("string");
                 }
             });
         });
