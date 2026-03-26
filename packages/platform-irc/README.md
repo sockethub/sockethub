@@ -8,7 +8,7 @@ This platform provides IRC client functionality, allowing web applications to co
 IRC servers, join channels, send messages, and handle IRC events through ActivityStreams
 messages.
 
-## Implemented Verbs (`@type`)
+## Implemented Verbs (`type`)
 
 * **send** - Send messages to channels or users
 * **join** - Join IRC channels
@@ -22,20 +22,20 @@ messages.
 
 ```json
 {
-  "@type": "send",
+  "type": "send",
   "@context": [
     "https://www.w3.org/ns/activitystreams",
     "https://sockethub.org/ns/context/v1.jsonld",
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
   ],
   "actor": {
-    "@id": "mynick@irc.libera.chat"
+    "id": "mynick@irc.libera.chat"
   },
   "target": {
-    "@id": "#general@irc.libera.chat"
+    "id": "#general@irc.libera.chat"
   },
   "object": {
-    "@type": "Note",
+    "type": "Note",
     "content": "Hello IRC channel!"
   }
 }
@@ -45,17 +45,17 @@ messages.
 
 ```json
 {
-  "@type": "join",
+  "type": "join",
   "@context": [
     "https://www.w3.org/ns/activitystreams",
     "https://sockethub.org/ns/context/v1.jsonld",
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
   ],
   "actor": {
-    "@id": "mynick@irc.libera.chat"
+    "id": "mynick@irc.libera.chat"
   },
   "target": {
-    "@id": "#general@irc.libera.chat"
+    "id": "#general@irc.libera.chat"
   }
 }
 ```
@@ -64,20 +64,20 @@ messages.
 
 ```json
 {
-  "@type": "send",
+  "type": "send",
   "@context": [
     "https://www.w3.org/ns/activitystreams",
     "https://sockethub.org/ns/context/v1.jsonld",
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
   ],
   "actor": {
-    "@id": "mynick@irc.libera.chat"
+    "id": "mynick@irc.libera.chat"
   },
   "target": {
-    "@id": "friend@irc.libera.chat"
+    "id": "friend@irc.libera.chat"
   },
   "object": {
-    "@type": "Note",
+    "type": "Note",
     "content": "Hello friend!"
   }
 }

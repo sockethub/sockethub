@@ -266,6 +266,7 @@ export default class ChatBot implements PersistentPlatformInterface {
         this.client = new ChatService(credentials.object.token);
         this.client.on('message', (msg) => {
             this.sendToClient({
+                '@context': job['@context'],
                 type: 'send',
                 actor: { id: msg.from, type: 'person' },
                 object: { type: 'note', content: msg.text }

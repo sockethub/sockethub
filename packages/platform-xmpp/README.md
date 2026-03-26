@@ -8,7 +8,7 @@ This platform provides XMPP client functionality, allowing web applications to c
 XMPP servers, send messages, manage contacts, join chat rooms, and handle presence
 updates through ActivityStreams messages.
 
-## Implemented Verbs (`@type`)
+## Implemented Verbs (`type`)
 
 * **send** - Send messages to contacts or chat rooms
 * **join** - Join XMPP chat rooms (MUCs)
@@ -24,20 +24,20 @@ updates through ActivityStreams messages.
 
 ```json
 {
-  "@type": "send",
+  "type": "send",
   "@context": [
     "https://www.w3.org/ns/activitystreams",
     "https://sockethub.org/ns/context/v1.jsonld",
     "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
   ],
   "actor": {
-    "@id": "user@example.org"
+    "id": "user@example.org"
   },
   "target": {
-    "@id": "friend@jabber.net"
+    "id": "friend@jabber.net"
   },
   "object": {
-    "@type": "Note",
+    "type": "Note",
     "content": "Hello from Sockethub!"
   }
 }
@@ -47,17 +47,17 @@ updates through ActivityStreams messages.
 
 ```json
 {
-  "@type": "join",
+  "type": "join",
   "@context": [
     "https://www.w3.org/ns/activitystreams",
     "https://sockethub.org/ns/context/v1.jsonld",
     "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
   ],
   "actor": {
-    "@id": "user@example.org"
+    "id": "user@example.org"
   },
   "target": {
-    "@id": "room@conference.example.org"
+    "id": "room@conference.example.org"
   }
 }
 ```
@@ -66,17 +66,17 @@ updates through ActivityStreams messages.
 
 ```json
 {
-  "@type": "request-friend",
+  "type": "request-friend",
   "@context": [
     "https://www.w3.org/ns/activitystreams",
     "https://sockethub.org/ns/context/v1.jsonld",
     "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
   ],
   "actor": {
-    "@id": "user@example.org"
+    "id": "user@example.org"
   },
   "target": {
-    "@id": "friend@jabber.net"
+    "id": "friend@jabber.net"
   }
 }
 ```

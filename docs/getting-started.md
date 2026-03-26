@@ -65,8 +65,8 @@ Create a simple HTML file:
 
         // Listen for responses
         sc.socket.on('message', function(msg) {
-            document.getElementById('output').innerHTML =
-                '<p>Response: ' + JSON.stringify(msg, null, 2) + '</p>';
+            document.getElementById('output').textContent =
+                'Response: ' + JSON.stringify(msg, null, 2);
         });
 
         // Test function

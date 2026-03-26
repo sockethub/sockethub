@@ -204,7 +204,7 @@ IRC: ":alice!user@host PRIVMSG #room :hello world"
   ↓
 ActivityStreams: {
   "type": "send",
-  "@context": ["...activitystreams", "...sockethub", "...platform/irc/..."],
+  "@context": ["...as2", "...sockethub", "...irc"],
   "actor": { "id": "alice", "type": "person" },
   "target": { "id": "#room", "type": "room" },
   "object": { "type": "note", "content": "hello world" }
@@ -216,7 +216,7 @@ ActivityStreams: {
 ```
 ActivityStreams: {
   "type": "join",
-  "@context": ["...activitystreams", "...sockethub", "...platform/irc/..."],
+  "@context": ["...as2", "...sockethub", "...irc"],
   "actor": { "id": "mynick", "type": "person" },
   "target": { "id": "#room", "type": "room" }
 }

@@ -142,7 +142,7 @@ sc.socket.emit('message', {
 
 // Response is a Collection of Create activities with feed entries
 sc.socket.on('message', (msg) => {
-  if (msg['@context']) {
+  if (msg.object && Array.isArray(msg.object.items)) {
     msg.object.items.forEach(entry => {
       console.log(entry.object.title, entry.object.url);
     });
@@ -211,7 +211,7 @@ import SockethubClient from '@sockethub/client';
 const sc = new SockethubClient(socket, { initTimeoutMs: 5000 });
 
 // Properties
-sc.socket           // Underlying Socket.IO instance
+sc.socket           // Public event emitter wrapping the Socket.IO client
 sc.ActivityStreams  // ActivityStreams helper library
 
 // Methods

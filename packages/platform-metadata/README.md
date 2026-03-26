@@ -8,7 +8,7 @@ This platform fetches and extracts metadata from web pages, including Open Graph
 site information, images, and other structured metadata. It uses the `open-graph-scraper`
 library to analyze web pages and return structured data in ActivityStreams format.
 
-## Implemented Verbs (`@type`)
+## Implemented Verbs (`type`)
 
 * **fetch** - Extract metadata from a web page URL
 
@@ -21,14 +21,14 @@ to clients through the Sockethub service.
 
 ```json
 {
-  "@type": "fetch",
+  "type": "fetch",
   "@context": [
     "https://www.w3.org/ns/activitystreams",
     "https://sockethub.org/ns/context/v1.jsonld",
     "https://sockethub.org/ns/context/platform/metadata/v1.jsonld"
   ],
   "actor": {
-    "@id": "https://example.com/page-to-analyze"
+    "id": "https://example.com/page-to-analyze"
   }
 }
 ```
@@ -39,14 +39,14 @@ The platform returns an ActivityStream object with extracted metadata:
 
 ```json
 {
-  "@type": "fetch",
+  "type": "fetch",
   "@context": [
     "https://www.w3.org/ns/activitystreams",
     "https://sockethub.org/ns/context/v1.jsonld",
     "https://sockethub.org/ns/context/platform/metadata/v1.jsonld"
   ],
   "actor": {
-    "@id": "https://example.com/page-to-analyze",
+    "id": "https://example.com/page-to-analyze",
     "name": "Example Site"
   },
   "object": {
