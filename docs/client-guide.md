@@ -15,16 +15,29 @@ The client library is automatically served by the Sockethub server:
 
 ```html
 <script src="http://localhost:10550/socket.io.js"></script>
-<script src="http://localhost:10550/sockethub-client.js" type="module"></script>
+<script src="http://localhost:10550/sockethub-client.js"></script>
 ```
+
+These scripts set `io` and `SockethubClient` as globals.
 
 **From npm**: `npm install @sockethub/client socket.io-client`
 
 ### Basic Setup
 
+**Browser** (using globals from script tags):
+
 ```javascript
-import SockethubClient from '/sockethub-client.js';
-import { io } from '/socket.io.js';
+const sc = new SockethubClient(
+    io('http://localhost:10550', { path: '/sockethub' }),
+    { initTimeoutMs: 5000 },
+);
+```
+
+**Node.js / bundler** (using ESM imports):
+
+```javascript
+import SockethubClient from '@sockethub/client';
+import { io } from 'socket.io-client';
 
 const sc = new SockethubClient(
     io('http://localhost:10550', { path: '/sockethub' }),
@@ -64,8 +77,10 @@ sc.socket.emit('message', {
 });
 ```
 
-You can also emit before `ready()` resolves. SockethubClient queues outbound
-events and flushes them once initialization completes.
+**Important:** `contextFor()` requires the schema registry, so it can only be
+called after `ready()` resolves. If you need to emit before `ready()`, provide
+the `@context` array directly instead of using `contextFor()`. SockethubClient
+queues outbound events and flushes them once initialization completes.
 
 ## Checking Results (Success/Failure)
 

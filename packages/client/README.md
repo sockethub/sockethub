@@ -19,11 +19,11 @@ automatic reconnection and credential replay.
 
 ### Node.js
 
-`$ npm install @sockethub/client`
+`$ npm install @sockethub/client socket.io-client`
 
 ### Bun
 
-`$ bun install @sockethub/client`
+`$ bun install @sockethub/client socket.io-client`
 
 #### CommonJS
 
