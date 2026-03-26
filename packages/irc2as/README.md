@@ -14,8 +14,11 @@ of them, and as time goes on hopefully become more compliant (PRs & feedback wel
     var IRC2AS = require('irc2as');
     var irc2as = new IRC2AS({
       server: 'irc.freenode.net',
-      // optional legacy context field value for emitted activities
-      context: 'irc'
+      contexts: [
+        'https://www.w3.org/ns/activitystreams',
+        'https://sockethub.org/ns/context/v1.jsonld',
+        'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+      ]
     });
 
     irc2as.events.on('incoming', function (asObject) {

@@ -9,6 +9,9 @@ automatic reconnection and credential replay.
 
 - `SockethubClient` for connection and message handling
 - `ActivityStreams` helpers and validation utilities
+- `contextFor(platform)` builds canonical `@context` arrays from server metadata
+- `ready()` promise and `ready`/`init_error` observability events
+- Automatic outbound queueing until initialization is complete
 - Auto-replay of credentials and connections on reconnect
 - A browser-ready bundle in `dist/`
 
@@ -65,17 +68,47 @@ import SockethubClient from '@sockethub/client';
 import { io } from 'socket.io-client';
 
 const socket = io('http://localhost:10550', { path: '/sockethub' });
-const sc = new SockethubClient(socket);
+const sc = new SockethubClient(socket, { initTimeoutMs: 5000 });
 
 sc.socket.on('message', (msg) => console.log(msg));
+sc.socket.on('ready', (info) => {
+    console.log('Sockethub ready:', info.reason, info.sockethubVersion,
+        info.platforms.map((p) => ({ id: p.id, version: p.version })));
+});
+sc.socket.on('init_error', (e) => {
+    console.warn('Sockethub init issue:', e.error);
+});
+
+// Wait for schema registry, then send a message
+await sc.ready();
+sc.socket.emit('message', {
+    '@context': sc.contextFor('dummy'),
+    type: 'echo',
+    actor: { id: 'test@dummy', type: 'person' },
+    object: { type: 'message', content: 'hello world' }
+}, (ack) => {
+    if (ack?.error) {
+        console.error('Send failed:', ack.error);
+        return;
+    }
+    console.log('Ack:', ack);
+});
 ```
 
 See the [Client Guide](../../docs/client-guide.md) for detailed usage and examples.
 
 ## API
 
-- **`new SockethubClient(socket)`** - Create client instance
-- **`sc.socket.emit(event, data, callback)`** - Send messages and inspect result
+- **`new SockethubClient(socket, options?)`** - Create client instance with optional init/queue settings
+- **`sc.ready(timeoutMs?)`** - Wait for initialization to complete
+- **`sc.isReady()`** - Check whether client is initialized
+- **`sc.getInitState()`** - Return `"idle" | "initializing" | "ready" | "init_error" | "closed"`
+- **`sc.contextFor(platform)`** - Build canonical `@context` for a platform from server registry
+- **`sc.getRegisteredPlatforms()`** - Get server-registered platforms/contexts
+- **`sc.getRegisteredBaseContexts()`** - Get AS2 and Sockethub base context URLs
+- **`sc.getPlatformSchema(platform, schemaType?)`** - Get platform JSON schema
+- **`sc.validateActivity(activity)`** - Validate against registered schemas
+- **`sc.socket.emit(event, data, callback)`** - Send messages (queued until ready)
 - **`sc.socket.on(event, handler)`** - Listen for messages
 - **`sc.clearCredentials()`** - Clear stored credentials
 - **`sc.ActivityStreams`** - ActivityStreams library
@@ -88,7 +121,7 @@ field as failure:
 ```javascript
 sc.socket.emit("message", {
     type: "echo",
-    context: "dummy",
+    "@context": sc.contextFor("dummy"),
     actor: { id: "test", type: "person" },
     object: { type: "note", content: "Hello!" },
 }, (result) => {
@@ -123,7 +156,7 @@ sc.ActivityStreams.Object.create({
 
 const stream = sc.ActivityStreams.Stream({
     type: "join",
-    context: "irc",
+    "@context": sc.contextFor("irc"),
     actor: "mynick",
     target: { id: "#sockethub", type: "room" },
 });

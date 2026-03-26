@@ -27,24 +27,45 @@ import SockethubClient from '/sockethub-client.js';
 import { io } from '/socket.io.js';
 
 const sc = new SockethubClient(
-    io('http://localhost:10550', { path: '/sockethub' })
+    io('http://localhost:10550', { path: '/sockethub' }),
+    { initTimeoutMs: 5000 },
 );
 
 // Handle messages
 sc.socket.on('message', (msg) => console.log('Received:', msg));
+
+sc.socket.on('ready', (info) => {
+  console.log('Sockethub ready:', info.reason, info.sockethubVersion,
+    info.platforms.map((p) => ({ id: p.id, version: p.version })));
+});
+
+sc.socket.on('init_error', (e) => {
+  console.warn('Sockethub init issue:', e.error);
+});
 ```
 
 ### First Message
 
 ```javascript
-// Echo test with dummy platform
+// Wait for schema registry before using contextFor()
+await sc.ready();
+
 sc.socket.emit('message', {
-    type: 'echo',
-    context: 'dummy',
-    actor: { id: 'test', type: 'person' },
-    object: { type: 'note', content: 'Hello!' }
-}, (response) => console.log(response));
+  type: 'echo',
+  '@context': sc.contextFor('dummy'),
+  actor: { id: 'test', type: 'person' },
+  object: { type: 'note', content: 'Hello!' }
+}, (response) => {
+  if (response?.error) {
+    console.error('Send failed:', response.error);
+    return;
+  }
+  console.log('Ack:', response);
+});
 ```
+
+You can also emit before `ready()` resolves. SockethubClient queues outbound
+events and flushes them once initialization completes.
 
 ## Checking Results (Success/Failure)
 
@@ -56,7 +77,7 @@ with `error` as failure.
 ```javascript
 sc.socket.emit('message', {
     type: 'send',
-    context: 'irc',
+    '@context': sc.contextFor('irc'),
     actor: { id: 'mynick', type: 'person' },
     target: { id: '#sockethub', type: 'room' },
     object: { type: 'note', content: 'Hello channel' }
@@ -106,7 +127,7 @@ success/failure.
 ```javascript
 {
   "type": "send",            // Action: send, connect, join, fetch
-  "context": "irc",          // Platform: irc, xmpp, feeds, dummy  
+  "@context": sc.contextFor("irc"),  // Canonical contexts for this platform
   "actor": { "id": "user", "type": "person" },     // Who
   "target": { "id": "#room", "type": "room" },     // Where (optional)
   "object": { "type": "note", "content": "Hi!" }   // What
@@ -133,7 +154,7 @@ sc.ActivityStreams.Object.create({
 // Build a stream with string refs; they are expanded from stored objects
 const joinStream = sc.ActivityStreams.Stream({
     type: 'join',
-    context: 'irc',
+    '@context': sc.contextFor('irc'),
     actor: 'mynick',
     target: { id: '#sockethub', type: 'room' }
 });
@@ -153,7 +174,8 @@ You can still send raw ActivityStreams directly with `sc.socket.emit('message',
 ```javascript
 // 1. Send credentials
 sc.socket.emit('credentials', {
-    context: 'irc',
+    '@context': sc.contextFor('irc'),
+    type: 'credentials',
     actor: { id: 'mynick', type: 'person' },
     object: {
         type: 'credentials',
@@ -166,7 +188,7 @@ sc.socket.emit('credentials', {
 // 2. Connect
 sc.socket.emit('message', {
     type: 'connect',
-    context: 'irc',
+    '@context': sc.contextFor('irc'),
     actor: { id: 'mynick', type: 'person' }
 });
 ```
@@ -178,7 +200,7 @@ sc.socket.emit('message', {
 ```javascript
 sc.socket.emit('message', {
     type: 'echo',
-    context: 'dummy',
+    '@context': sc.contextFor('dummy'),
     actor: { id: 'test', type: 'person' },
     object: { type: 'note', content: 'test' }
 });
@@ -189,7 +211,7 @@ sc.socket.emit('message', {
 ```javascript
 sc.socket.emit('message', {
     type: 'fetch',
-    context: 'feeds',
+    '@context': sc.contextFor('feeds'),
     actor: { id: 'https://example.com/feed.xml', type: 'website' }
 });
 ```
@@ -200,7 +222,7 @@ sc.socket.emit('message', {
 // Join channel
 sc.socket.emit('message', {
     type: 'join',
-    context: 'irc',
+    '@context': sc.contextFor('irc'),
     actor: { id: 'mynick', type: 'person' },
     target: { id: '#channel', type: 'room' }
 });
@@ -208,6 +230,9 @@ sc.socket.emit('message', {
 
 ## Client Features
 
+- **Schema-driven init**: `ready()` resolves when the server's schema registry is loaded
+- **Context composition**: `contextFor(platform)` builds canonical `@context` arrays
+- **Outbound queueing**: Messages sent before `ready()` are queued and flushed automatically
 - **Auto-replay**: Credentials and connections restored on reconnect
 - **ActivityStreams**: Built-in validation and utilities via `sc.ActivityStreams`
 - **Connection state**: Check `sc.socket.connected` for status
