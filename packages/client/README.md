@@ -29,7 +29,7 @@ automatic reconnection and credential replay.
 
 ```javascript
 const SockethubClient = require('@sockethub/client');
-const io = require('@socket.io-client');
+const io = require('socket.io-client');
 const SOCKETHUB_SERVER = 'http://localhost:10550';
 const sc = new SockethubClient(io(SOCKETHUB_SERVER));
 ```
@@ -38,25 +38,23 @@ const sc = new SockethubClient(io(SOCKETHUB_SERVER));
 
 ```javascript
 import SockethubClient from '@sockethub/client';
-import { io } from '@socket.io-client';
+import { io } from 'socket.io-client';
 const SOCKETHUB_SERVER = 'http://localhost:10550';
 const sc = new SockethubClient(io(SOCKETHUB_SERVER));
 ```
 
 ### Browser
 
-The browser bundle is available in the dist folder:
+The browser bundle is available in the dist folder. Place it somewhere
+accessible from the web, along with `socket.io-client`, and include
+both via script tags:
 
-```
-import '@sockethub/client/dist/sockethub-client.js';
+```html
+<script src="/socket.io.js"></script>
+<script src="/sockethub-client.js"></script>
 ```
 
-You can place it somewhere accessible from the web and include
-it via a `script` tag.
-
-```
-<script src="http://example.com/sockethub-client.js" type="module"></script>
-```
+These scripts set `io` and `SockethubClient` as globals.
 
 Once included in a web-page, the `SockethubClient` base object
 should be on the global scope.
