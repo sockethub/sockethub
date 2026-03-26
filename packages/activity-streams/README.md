@@ -20,9 +20,6 @@ This library helps you:
 - **Build Activity Streams** that automatically link to stored objects
 - **Listen for events** when objects are created or deleted
 
-It does not rename legacy aliases like `verb`, `objectType`, `@id`, or `@type`.
-Use canonical fields directly (`type`, `id`, and `@context`).
-
 ## Install
 
 ### Node.js
@@ -92,31 +89,6 @@ const activity = ActivityStreams.Stream({
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
   ],
   actor: "user@example.com",  // automatically expands to full object
-  object: { type: "message", content: "Hello!" }
-});
-```
-
-### With Sockethub Client
-
-If you're using the Sockethub client, this library is already bundled and available:
-
-```javascript
-import SockethubClient from '@sockethub/client';
-
-const socket = io('http://localhost:10550');
-const sockethubClient = new SockethubClient(socket);
-
-// Access ActivityStreams through the client
-const user = sockethubClient.ActivityStreams.Object.create({
-  id: "user@example.com", 
-  type: "person",
-  name: "John Doe"
-});
-
-const activity = sockethubClient.ActivityStreams.Stream({
-  type: "send",
-  "@context": sockethubClient.contextFor("irc"),
-  actor: "user@example.com",
   object: { type: "message", content: "Hello!" }
 });
 ```
