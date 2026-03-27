@@ -7,6 +7,14 @@
 const SockethubClient = require("@sockethub/client").default;
 const { io } = require("socket.io-client");
 
+function contextFor(platform) {
+    return [
+        "https://www.w3.org/ns/activitystreams",
+        "https://sockethub.org/ns/context/v1.jsonld",
+        `https://sockethub.org/ns/context/platform/${platform}/v1.jsonld`,
+    ];
+}
+
 // Circuit breaker - abort test if Sockethub becomes unavailable
 const MAX_CONSECUTIVE_FAILURES = 10; // Consecutive failures before triggering circuit breaker
 const ALERT_INTERVAL_MS = 5000; // Alert every 5 seconds when circuit breaker is open
@@ -104,18 +112,31 @@ function setupClient(context, events, done) {
         }
     });
 
-    // Wait for connection or timeout
-    setTimeout(() => {
-        if (!context.vars.connected) {
-            recordFailure();
-            if (consecutiveConnectionFailures <= 3) {
-                console.error("Connection timeout - socket never connected");
+    // Wait for client to be ready (schema initialization) or timeout
+    const client = context.vars.client;
+    client
+        .ready(3000)
+        .then(() => {
+            context.vars.schemasReady = true;
+            done();
+        })
+        .catch((err) => {
+            const reason = err?.message || String(err);
+            if (!context.vars.connected) {
+                recordFailure();
+                if (consecutiveConnectionFailures <= 3) {
+                    console.error(
+                        `Connection timeout - socket never connected: ${reason}`,
+                    );
+                }
+                events.emit("counter", "sockethub.connect_timeout", 1);
+                context.vars.errors.push(`Connection timeout: ${reason}`);
+            } else {
+                events.emit("counter", "sockethub.schemas_timeout", 1);
+                context.vars.errors.push(`Schemas timeout: ${reason}`);
             }
-            events.emit("counter", "sockethub.connect_timeout", 1);
-            context.vars.errors.push("Connection timeout");
-        }
-        done();
-    }, 2000);
+            done();
+        });
 }
 
 /**
@@ -125,10 +146,12 @@ function sendCredentials(context, events, done) {
     const client = context.vars.client;
     const actorId = context.vars.actorId;
 
-    // Check if connected
-    if (!context.vars.connected) {
+    // Check if connected and ready
+    if (!context.vars.connected || !context.vars.schemasReady) {
         events.emit("counter", "sockethub.error.not_connected", 1);
-        console.error("Cannot send credentials - not connected");
+        console.error(
+            "Cannot send credentials - not connected or schemas not ready",
+        );
         return done();
     }
 
@@ -142,7 +165,7 @@ function sendCredentials(context, events, done) {
     // Send credentials message (uses 'credentials' event, not 'message')
     const credentialsMsg = {
         type: "credentials",
-        context: "dummy",
+        "@context": contextFor("dummy"),
         actor: {
             id: actorId,
             type: "person",
@@ -170,12 +193,16 @@ function sendCredentials(context, events, done) {
  * Send Dummy echo message with error handling
  */
 function sendDummyEcho(context, events, done) {
+    if (!context.vars.connected || !context.vars.schemasReady) {
+        events.emit("counter", "sockethub.error.not_ready", 1);
+        return done();
+    }
     const client = context.vars.client;
     const actorId = context.vars.actorId;
 
     const message = {
         type: "echo",
-        context: "dummy",
+        "@context": contextFor("dummy"),
         actor: {
             id: actorId,
             type: "person",
@@ -208,12 +235,16 @@ function sendDummyEcho(context, events, done) {
  * Send XMPP message with error handling
  */
 function sendXMPPMessage(context, events, done) {
+    if (!context.vars.connected || !context.vars.schemasReady) {
+        events.emit("counter", "sockethub.error.not_ready", 1);
+        return done();
+    }
     const client = context.vars.client;
     const actorId = context.vars.actorId;
 
     const message = {
         type: "send",
-        context: "xmpp",
+        "@context": contextFor("xmpp"),
         actor: {
             id: actorId,
             type: "person",
@@ -250,6 +281,10 @@ function sendXMPPMessage(context, events, done) {
  * Send Feed fetch message with error handling
  */
 function sendFeedMessage(context, events, done) {
+    if (!context.vars.connected || !context.vars.schemasReady) {
+        events.emit("counter", "sockethub.error.not_ready", 1);
+        return done();
+    }
     const client = context.vars.client;
     const actorId = context.vars.actorId;
 
@@ -261,7 +296,7 @@ function sendFeedMessage(context, events, done) {
 
     const message = {
         type: "fetch",
-        context: "feeds",
+        "@context": contextFor("feeds"),
         actor: {
             id: actorId,
             type: "person",

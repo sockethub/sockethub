@@ -11,8 +11,15 @@ of them, and as time goes on hopefully become more compliant (PRs & feedback wel
 ## Usage
 
 ```javascript
-    var IRC2AS = require('irc2as');
-    var irc2as = new IRC2AS({server: 'irc.freenode.net'});
+    import { IrcToActivityStreams } from '@sockethub/irc2as';
+    const irc2as = new IrcToActivityStreams({
+      server: 'irc.freenode.net',
+      contexts: [
+        'https://www.w3.org/ns/activitystreams',
+        'https://sockethub.org/ns/context/v1.jsonld',
+        'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+      ]
+    });
 
     irc2as.events.on('incoming', function (asObject) {
       console.log('activity stream: ', asObject);

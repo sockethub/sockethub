@@ -2,6 +2,10 @@ import { crypto } from "@sockethub/crypto";
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import { CredentialsStore } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
+import {
+    AS2_BASE_CONTEXT_URL,
+    SOCKETHUB_BASE_CONTEXT_URL,
+} from "@sockethub/schemas";
 import type { Socket } from "socket.io";
 import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
@@ -28,6 +32,35 @@ class Sockethub {
     status: boolean;
     processManager!: ProcessManager;
     private rateLimiter!: ReturnType<typeof createRateLimiter>;
+    private serverVersion?: string;
+
+    /**
+     * Build the platform registry payload sent to clients.
+     * This is the canonical source for base contexts + platform context/schema metadata.
+     */
+    private buildPlatformRegistryPayload() {
+        return {
+            version: this.serverVersion,
+            contexts: {
+                as: AS2_BASE_CONTEXT_URL,
+                sockethub: SOCKETHUB_BASE_CONTEXT_URL,
+            },
+            platforms: Array.from(this.platformRegistry.values()).map(
+                (platform) => ({
+                    id: platform.id,
+                    version: platform.version,
+                    contextUrl: platform.contextUrl,
+                    contextVersion: platform.contextVersion,
+                    schemaVersion: platform.schemaVersion,
+                    types: platform.types,
+                    schemas: {
+                        credentials: platform.schemas.credentials || {},
+                        messages: platform.schemas.messages || {},
+                    },
+                }),
+            ),
+        };
+    }
 
     constructor() {
         this.status = false;
@@ -55,6 +88,7 @@ class Sockethub {
             return;
         }
 
+        this.serverVersion = init.version;
         this.processManager = new ProcessManager(
             this.parentId,
             this.parentSecret1,
@@ -84,6 +118,9 @@ class Sockethub {
         stopCleanup();
     }
 
+    /**
+     * Configure all socket listeners and middleware for a single client session.
+     */
     private handleIncomingConnection(socket: Socket) {
         // session-specific debug messages
         const sessionLog = createLogger(`server:core:${socket.id}`);
@@ -97,10 +134,24 @@ class Sockethub {
             );
 
         sessionLog.debug("socket.io connection");
+        const platformRegistryPayload = this.buildPlatformRegistryPayload();
 
         // Rate limiting middleware - runs on every incoming event
         socket.use((event, next) => {
             this.rateLimiter(socket, event[0], next);
+        });
+
+        // Send schema metadata to clients immediately and on-demand.
+        socket.emit("schemas", platformRegistryPayload);
+        socket.on("schemas", (...args: unknown[]) => {
+            const ack = args.find(
+                (a): a is (payload: unknown) => void => typeof a === "function",
+            );
+            if (ack) {
+                ack(platformRegistryPayload);
+            } else {
+                socket.emit("schemas", platformRegistryPayload);
+            }
         });
 
         socket.on("disconnect", () => {
@@ -122,7 +173,6 @@ class Sockethub {
         // when new activity objects are created on the client side, an event is
         // fired, and we receive a copy on the server side.
         socket.on("activity-object", handlers.activityObject);
-
         socket.on("message", handlers.message);
     }
 }

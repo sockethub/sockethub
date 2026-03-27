@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { AnyActivityStream } from "$lib/sockethub";
+import { platformIdFromContext } from "$lib/sockethub";
 import DummyEntry from "./platforms/DummyEntry.svelte";
 import FeedsEntry from "./platforms/FeedsEntry.svelte";
 import GenericEntry from "./platforms/GenericEntry.svelte";
@@ -7,30 +8,52 @@ interface Props {
     id: string;
     entry: AnyActivityStream;
     buttonAction: () => void;
-    response: boolean;
+    hasSend: boolean;
+    hasResponse: boolean;
+    timestamp?: number;
 }
 
-let { id, entry, buttonAction, response }: Props = $props();
+let { id, entry, buttonAction, hasSend, hasResponse, timestamp }: Props =
+    $props();
+const platform = $derived(platformIdFromContext(entry["@context"]));
+const time = $derived(
+    timestamp ? new Date(timestamp).toLocaleTimeString() : "",
+);
+
+const statusLabel = $derived(
+    hasSend && hasResponse
+        ? "Sent \u2192 Response OK"
+        : hasSend
+          ? "Sent \u2192 Awaiting response"
+          : "",
+);
+const statusDot = $derived(
+    hasSend && hasResponse
+        ? "bg-green-500"
+        : hasSend
+          ? "bg-orange-400"
+          : "bg-green-500",
+);
 </script>
 
 <li class="p-4 hover:bg-gray-50 transition-colors">
     <div class="flex items-start space-x-3">
         <!-- Status Indicator -->
         <div class="flex flex-col items-center space-y-1 mt-1">
-            <div class="w-3 h-3 {response ? 'bg-green-500' : 'bg-orange-400'} rounded-full"></div>
-            <div class="text-xs text-gray-400 font-mono">#{id}</div>
+            <div class="w-3 h-3 {statusDot} rounded-full"></div>
+            <div class="text-xs text-gray-400 font-mono">{time || `#${id}`}</div>
         </div>
-        
+
         <!-- Content -->
         <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center space-x-2">
                     <span class="text-sm font-semibold text-gray-700">
-                        {response ? '📥 Response' : '📤 Sent'}
+                        {statusLabel}
                     </span>
-                    {#if entry.context}
+                    {#if platform}
                         <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                            {entry.context.toUpperCase()}
+                            {platform.toUpperCase()}
                         </span>
                     {/if}
                     {#if entry.type}
@@ -53,9 +76,9 @@ let { id, entry, buttonAction, response }: Props = $props();
             
             <!-- Platform-specific content -->
             <div class="text-sm text-gray-600">
-                {#if entry.context === "dummy"}
+                {#if platform === "dummy"}
                     <DummyEntry {id} {entry} />
-                {:else if entry.context === "feeds"}
+                {:else if platform === "feeds"}
                     <FeedsEntry {id} {entry} />
                 {:else}
                     <GenericEntry {id} {entry} />

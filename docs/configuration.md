@@ -235,12 +235,10 @@ curl -N \
 JSON
 ```
 
-Example response (streamed NDJSON):
+Example response (streamed NDJSON, actual payloads depend on the platform):
 
 ```json
-{"context":"xmpp","type":"connect","actor":{"type":"person","id":"me"},"id":"1"}
-{"context":"xmpp","type":"join","actor":{"type":"person","id":"me"},"target":{"type":"Room","id":"room@example.com"},"id":"2"}
-{"context":"xmpp","type":"send","actor":{"type":"person","id":"me"},"object":{"type":"Note","content":"hello"},"id":"3"}
+{"type":"error","context":"error","actor":{"type":"Application","name":"sockethub-server"},"error":"invalid credentials","requestId":"12345"}
 ```
 
 Replay results after an interrupted request:

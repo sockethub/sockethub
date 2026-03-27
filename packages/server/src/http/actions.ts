@@ -9,7 +9,7 @@ import type { RedisConfig } from "@sockethub/data-layer";
 import {
     CredentialsStore,
     type CredentialsStoreInterface,
-    createCredentialsRedisConnection,
+    createIdempotencyRedisConnection,
 } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import type {
@@ -39,6 +39,8 @@ const DEFAULT_HTTP_ACTIONS_PATH = "/sockethub-http";
 // Redis keys are per request id. Keep list + status separate for replay + progress checks.
 const IDEMPOTENCY_PREFIX = "sockethub:http-actions";
 const IDEMPOTENCY_BATCH_SIZE = 100;
+const MAX_REQUEST_ID_LENGTH = 128;
+const REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]+$/;
 
 interface HttpActionsOptions {
     processManager: ProcessManager;
@@ -69,6 +71,11 @@ type PayloadEnvelope = {
     messages?: Array<unknown>;
 };
 
+type RequestIdResolution = {
+    error?: string;
+    requestId?: string;
+};
+
 function isObject(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null;
 }
@@ -80,8 +87,8 @@ function classifyPayload(payload: unknown): PayloadKind {
     if (!isObject(payload)) {
         return "unknown";
     }
-    // ActivityStream has context/type/actor. Credentials is a special case of ActivityStream.
-    if ("context" in payload && "type" in payload && "actor" in payload) {
+    // ActivityStream messages may identify their platform via context, @context, or platform.
+    if ("type" in payload && "actor" in payload) {
         const typeValue = String(payload.type);
         if (typeValue === "credentials") {
             return "credentials";
@@ -114,42 +121,67 @@ function buildServerError(message: string, requestId?: string) {
     return payload;
 }
 
+function normalizeRequestId(value: unknown): RequestIdResolution {
+    if (typeof value !== "string") {
+        return {};
+    }
+
+    const requestId = value.trim();
+    if (!requestId) {
+        return {};
+    }
+    if (requestId.length > MAX_REQUEST_ID_LENGTH) {
+        return {
+            error: `requestId must be at most ${MAX_REQUEST_ID_LENGTH} characters`,
+        };
+    }
+    if (!REQUEST_ID_PATTERN.test(requestId)) {
+        return {
+            error: "requestId contains invalid characters",
+        };
+    }
+    return { requestId };
+}
+
 /**
  * Pull request id from headers or JSON body.
  */
-function resolveRequestId(req: Request, body: unknown) {
-    const headerId =
+function resolveRequestId(req: Request, body: unknown): RequestIdResolution {
+    const headerId = normalizeRequestId(
         req.header(REQUEST_ID_HEADER) ??
-        req.header(SOCKETHUB_REQUEST_ID_HEADER);
-    if (headerId) {
+            req.header(SOCKETHUB_REQUEST_ID_HEADER),
+    );
+    if (headerId.requestId || headerId.error) {
         return headerId;
     }
     if (isObject(body) && "requestId" in body) {
-        const value = body.requestId;
-        if (typeof value === "string" && value.trim().length > 0) {
-            return value;
+        const bodyRequestId = normalizeRequestId(body.requestId);
+        if (bodyRequestId.requestId || bodyRequestId.error) {
+            return bodyRequestId;
         }
     }
-    return undefined;
+    return {};
 }
 
 /**
  * Pull request id from GET path/query first, then headers/body.
  */
-function resolveRequestIdFromRequest(req: Request) {
+function resolveRequestIdFromRequest(req: Request): RequestIdResolution {
     // GET endpoints may supply request id via path or query.
-    const paramId =
+    const paramId = normalizeRequestId(
         typeof req.params?.requestId === "string"
             ? req.params.requestId
-            : undefined;
-    if (paramId) {
+            : undefined,
+    );
+    if (paramId.requestId || paramId.error) {
         return paramId;
     }
-    const queryId =
+    const queryId = normalizeRequestId(
         typeof req.query?.requestId === "string"
             ? req.query.requestId
-            : undefined;
-    if (queryId) {
+            : undefined,
+    );
+    if (queryId.requestId || queryId.error) {
         return queryId;
     }
     return resolveRequestId(req, req.body);
@@ -193,13 +225,14 @@ function resolveConfigNumber(
 }
 
 function getIdempotencyRedisConnection() {
-    // Share a Redis connection to avoid per-request churn.
+    // Keep HTTP idempotency on its own shared connection so credentials stores
+    // retain their per-store connection naming and lifecycle.
     const redisConfig = config.get("redis") as RedisConfig;
     const connectionConfig: RedisConfig = {
         ...redisConfig,
         connectionName: "sockethub:http-actions:idempotency",
     };
-    return createCredentialsRedisConnection(connectionConfig);
+    return createIdempotencyRedisConnection(connectionConfig);
 }
 
 function buildIdempotencyKeys(requestId: string) {
@@ -316,7 +349,11 @@ export function registerHttpActionsRoutes(
 
     const handleGet = async (req: Request, res: Response) => {
         // Allow retrying/late fetching of results by request id.
-        const requestId = resolveRequestIdFromRequest(req);
+        const { requestId, error } = resolveRequestIdFromRequest(req);
+        if (error) {
+            res.status(400).json({ error });
+            return;
+        }
         if (!requestId) {
             res.status(400).json({
                 error: "requestId is required",
@@ -388,7 +425,14 @@ export function registerHttpActionsRoutes(
                 return;
             }
 
-            const incomingRequestId = resolveRequestId(req, req.body);
+            const { requestId: incomingRequestId, error: requestIdError } =
+                resolveRequestId(req, req.body);
+            if (requestIdError) {
+                res.status(400).json({
+                    error: requestIdError,
+                });
+                return;
+            }
             if (!incomingRequestId && requireRequestId) {
                 res.status(400).json({
                     error: "requestId is required",
@@ -506,7 +550,7 @@ export function registerHttpActionsRoutes(
             res.flushHeaders?.();
 
             let pending = payloads.length;
-            let closed = false;
+            let responseClosed = false;
             let requestTimeoutId: ReturnType<typeof setTimeout> | undefined;
             let idleTimeoutId: ReturnType<typeof setTimeout> | undefined;
             let completionStarted = false;
@@ -565,10 +609,10 @@ export function registerHttpActionsRoutes(
             };
 
             const closeResponse = () => {
-                if (closed) {
+                if (responseClosed) {
                     return;
                 }
-                closed = true;
+                responseClosed = true;
                 if (!res.writableEnded) {
                     res.end();
                 }
@@ -576,7 +620,7 @@ export function registerHttpActionsRoutes(
 
             // Timeout helpers keep request/idle timers consistent across the stream.
             const writeErrorLine = (message: string) => {
-                if (closed) {
+                if (responseClosed) {
                     return;
                 }
                 res.write(
@@ -592,10 +636,11 @@ export function registerHttpActionsRoutes(
                     return;
                 }
                 requestTimeoutId = setTimeout(() => {
-                    if (!closed) {
-                        writeErrorLine("request timeout");
-                        completeRequest();
+                    if (completionStarted) {
+                        return;
                     }
+                    writeErrorLine("request timeout");
+                    completeRequest();
                 }, requestTimeoutMs);
             };
 
@@ -607,10 +652,11 @@ export function registerHttpActionsRoutes(
                     return;
                 }
                 idleTimeoutId = setTimeout(() => {
-                    if (!closed) {
-                        writeErrorLine("request idle timeout");
-                        completeRequest();
+                    if (completionStarted) {
+                        return;
                     }
+                    writeErrorLine("request idle timeout");
+                    completeRequest();
                 }, idleTimeoutMs);
             };
 
@@ -652,7 +698,7 @@ export function registerHttpActionsRoutes(
                         });
                 }
 
-                if (!closed) {
+                if (!responseClosed) {
                     res.write(`${serialized}\n`);
                 }
                 pending -= 1;
@@ -667,7 +713,7 @@ export function registerHttpActionsRoutes(
             scheduleIdleTimeout();
 
             req.on("close", () => {
-                if (!closed) {
+                if (!responseClosed) {
                     log.debug(`http actions request closed early ${requestId}`);
                 }
                 // If the client disconnected but idempotency is enabled, keep processing

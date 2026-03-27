@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import sinon from "sinon";
+import { buildCanonicalContext } from "@sockethub/schemas";
 
 import XMPP from "./index.js";
+import { PlatformSchema } from "./schema.js";
 
 const actor = {
     type: "person",
@@ -35,9 +37,11 @@ const target = {
     },
 };
 
+const XMPP_CONTEXT = buildCanonicalContext(PlatformSchema.contextUrl);
+
 const job = {
     connect: {
-        context: "xmpp",
+        "@context": XMPP_CONTEXT,
         type: "connect",
         actor: {
             id: "slvrbckt@jabber.net/Home",

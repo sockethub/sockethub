@@ -10,6 +10,7 @@ import type {
     ActivityStream,
     InternalActivityStream,
 } from "@sockethub/schemas";
+import { resolvePlatformId } from "@sockethub/schemas";
 import createActivityObject from "./middleware/create-activity-object.js";
 import expandActivityStream from "./middleware/expand-activity-stream.js";
 import storeCredentials from "./middleware/store-credentials.js";
@@ -144,8 +145,18 @@ export function createMessageHandlers(
                 next: (data?: ActivityStream | Error) => void,
             ) => {
                 // Queue the job; the callback will be invoked when the job completes.
+                const platformId = resolvePlatformId(msg);
+                if (!platformId) {
+                    next(
+                        attachError(
+                            "unable to resolve platform from @context",
+                            msg,
+                        ),
+                    );
+                    return;
+                }
                 const platformInstance = processManager.get(
-                    msg.context,
+                    platformId,
                     msg.actor.id,
                     platformSessionId,
                 );
@@ -163,14 +174,10 @@ export function createMessageHandlers(
                             next,
                         );
                     } else {
-                        msg.error = "failed to add job to queue";
-                        next(msg);
+                        next(attachError("failed to add job to queue", msg));
                     }
                 } catch (err) {
-                    const errorMessage =
-                        err instanceof Error ? err.message : String(err);
-                    msg.error = errorMessage || "platform unavailable";
-                    next(msg);
+                    next(attachError(err, msg));
                 }
             },
         )

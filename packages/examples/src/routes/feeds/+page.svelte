@@ -3,7 +3,7 @@ import ActivityActor from "$components/ActivityActor.svelte";
 import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
-import { send } from "$lib/sockethub";
+import { contextFor, send } from "$lib/sockethub";
 import { writable } from "svelte/store";
 
 const sockethubState = writable({
@@ -27,7 +27,7 @@ const actor = $derived({
 function getASObj(type: string) {
     return {
         // Platform context - routes to Sockethub's feeds platform
-        context: "feeds",
+        "@context": contextFor("feeds"),
         // Activity type - "fetch" tells the platform to download and parse the feed
         type: type,
         // Actor - the feed URL to fetch (represented as a "website" actor)

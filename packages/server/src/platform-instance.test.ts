@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as sinon from "sinon";
+import {
+    buildCanonicalContext,
+    INTERNAL_PLATFORM_CONTEXT_URL,
+} from "@sockethub/schemas";
 import { __dirname } from "./util.js";
 const FORK_PATH = __dirname + "/platform.js";
 
@@ -173,8 +177,37 @@ describe("PlatformInstance", () => {
             sandbox.assert.calledOnce(socketMock.emit);
             sandbox.assert.calledWith(socketMock.emit, "message", {
                 foo: "this is a message object",
-                context: "a platform name",
+                platform: "a platform name",
+                "@context": buildCanonicalContext(
+                    INTERNAL_PLATFORM_CONTEXT_URL,
+                ),
             });
+        });
+
+        it("injects platform-specific @context when contextUrl is set", async () => {
+            const testContextUrl =
+                "https://sockethub.org/ns/context/platform/dummy/v1.jsonld";
+            pi.contextUrl = testContextUrl;
+            await pi.sendToClient("my session id", {
+                type: "echo",
+                actor: { id: "test@dummy", type: "person" },
+            });
+            sandbox.assert.calledOnce(socketMock.emit);
+            const emittedMsg = socketMock.emit.firstCall.args[1];
+            expect(emittedMsg["@context"]).toEqual(
+                buildCanonicalContext(testContextUrl),
+            );
+        });
+
+        it("strips legacy context field from outbound payloads", async () => {
+            await pi.sendToClient("my session id", {
+                type: "echo",
+                context: "dummy",
+                actor: { id: "test@dummy", type: "person" },
+            });
+            const emittedMsg = socketMock.emit.firstCall.args[1];
+            expect(emittedMsg.context).toBeUndefined();
+            expect(emittedMsg["@context"]).toBeDefined();
         });
 
         it("broadcasts to peers", async () => {
@@ -212,6 +245,7 @@ describe("PlatformInstance", () => {
                 expect(pi.broadcastToSharedPeers.callCount).toEqual(1);
                 sandbox.assert.calledWith(pi.sendToClient, "a session id", {
                     foo: "bar",
+                    platform: "a platform name",
                 });
             });
 
@@ -225,6 +259,7 @@ describe("PlatformInstance", () => {
                 sandbox.assert.calledWith(pi.sendToClient, "a session id", {
                     foo: "bar",
                     error: "a bad result message",
+                    platform: "a platform name",
                 });
             });
         });
@@ -353,7 +388,7 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        context: "xmpp",
+                        platform: "xmpp",
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",
@@ -405,7 +440,7 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        context: "xmpp",
+                        platform: "xmpp",
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",
@@ -424,7 +459,7 @@ describe("PlatformInstance", () => {
                     sessionId: "session456",
                     msg: {
                         type: "send",
-                        context: "xmpp",
+                        platform: "xmpp",
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-2",
@@ -465,7 +500,7 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        context: "xmpp",
+                        platform: "xmpp",
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",
@@ -514,7 +549,7 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        context: "xmpp",
+                        platform: "xmpp",
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",

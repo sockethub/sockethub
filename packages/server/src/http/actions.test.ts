@@ -4,6 +4,10 @@
 import { describe, expect, test } from "bun:test";
 
 import { registerHttpActionsRoutes } from "./actions.js";
+import {
+    hasHttpSessions,
+    unregisterHttpSession,
+} from "./session-registry.js";
 
 class FakeRedis {
     store = new Map<string, string>();
@@ -147,9 +151,11 @@ function createReqRes({
 function buildHandlers({
     configOverrides = {},
     fakeRedis,
+    createMessageHandlersOverride,
 }: {
     configOverrides?: ConfigOverrides;
     fakeRedis: FakeRedis;
+    createMessageHandlersOverride?: (...args: Array<any>) => any;
 }) {
     const handlers: Record<string, any> = {};
     const app: any = {
@@ -177,11 +183,14 @@ function buildHandlers({
                 return DEFAULT_CONFIG[key];
             },
             createHttpRateLimiter: () => (_req, _res, next) => next(),
-            createMessageHandlers: () => ({
-                credentials: (_payload, cb) => cb({ ok: true, id: "c1" }),
-                message: (_payload, cb) => cb({ ok: true, id: "m1" }),
-                activityObject: (_payload, cb) => cb({ ok: true, id: "a1" }),
-            }),
+            createMessageHandlers:
+                createMessageHandlersOverride ??
+                (() => ({
+                    credentials: (_payload, cb) => cb({ ok: true, id: "c1" }),
+                    message: (_payload, cb) => cb({ ok: true, id: "m1" }),
+                    activityObject: (_payload, cb) =>
+                        cb({ ok: true, id: "a1" }),
+                })),
             createCredentialsStore: () => ({
                 save: async () => 1,
                 get: async () => undefined,
@@ -194,6 +203,29 @@ function buildHandlers({
 }
 
 describe("http actions", () => {
+    test("accepts canonical @context messages", async () => {
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({ fakeRedis });
+
+        const { req, res, writes } = createReqRes({
+            body: {
+                "@context": [
+                    "https://www.w3.org/ns/activitystreams",
+                    "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+                ],
+                type: "echo",
+                actor: { id: "me" },
+                object: { type: "Note", content: "hello" },
+            },
+            headers: { "x-request-id": "ctx-123" },
+        });
+
+        await handlers["/sockethub-http"](req, res);
+
+        expect(res.statusCode).toBe(200);
+        expect(writes.length).toBe(1);
+    });
+
     test("streams results and caches for idempotent replay", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
@@ -316,6 +348,23 @@ describe("http actions", () => {
         expect(res.jsonBody.error).toBe("requestId is required");
     });
 
+    test("rejects invalid requestId values", async () => {
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({ fakeRedis });
+
+        const { req, res } = createReqRes({
+            body: payloads,
+            headers: { "x-request-id": "bad value with spaces" },
+        });
+
+        await handlers["/sockethub-http"](req, res);
+
+        expect(res.statusCode).toBe(400);
+        expect(res.jsonBody.error).toBe(
+            "requestId contains invalid characters",
+        );
+    });
+
     test("allows requests without requestId when requireRequestId is false", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({
@@ -372,5 +421,49 @@ describe("http actions", () => {
 
         expect(getReqRes.res.statusCode).toBe(404);
         expect(getReqRes.res.jsonBody.error).toBe("request not found");
+    });
+
+    test("cleans up tracked platform sessions after an idempotent client disconnect times out", async () => {
+        const platformId = "platform-http-cleanup";
+        while (hasHttpSessions(platformId)) {
+            unregisterHttpSession(platformId);
+        }
+
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({
+            fakeRedis,
+            configOverrides: {
+                "httpActions:requestTimeoutMs": 20,
+                "httpActions:idleTimeoutMs": 10,
+            },
+            createMessageHandlersOverride: ({ onPlatformInstance }: any) => ({
+                credentials: (_payload: unknown, cb: (data: unknown) => void) =>
+                    cb({ ok: true, id: "c1" }),
+                activityObject: (
+                    _payload: unknown,
+                    cb: (data: unknown) => void,
+                ) => cb({ ok: true, id: "a1" }),
+                message: (_payload: unknown, _cb: (data: unknown) => void) => {
+                    onPlatformInstance?.({
+                        id: platformId,
+                        config: { persist: true },
+                    });
+                },
+            }),
+        });
+
+        const { req, res } = createReqRes({
+            body: [singlePayload],
+            headers: { "x-request-id": "timeout-123" },
+        });
+
+        await handlers["/sockethub-http"](req, res);
+        expect(hasHttpSessions(platformId)).toBeTrue();
+
+        req.triggerClose();
+        await new Promise((resolve) => setTimeout(resolve, 40));
+
+        expect(hasHttpSessions(platformId)).toBeFalse();
+        expect(res.ended).toBeTrue();
     });
 });
