@@ -8,7 +8,7 @@ This platform fetches RSS and Atom feeds from URLs and converts feed entries int
 ActivityStreams objects. It handles various feed formats and provides structured data for
 web applications to consume feed content.
 
-## Implemented Verbs (`@type`)
+## Implemented Verbs (`type`)
 
 * **fetch** - Retrieve and parse an RSS or Atom feed
 
@@ -18,10 +18,15 @@ web applications to consume feed content.
 
 ```json
 {
-  "@type": "fetch",
-  "context": "feeds",
+  "type": "fetch",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/feeds/v1.jsonld"
+  ],
   "actor": {
-    "@id": "https://example.com/feed.xml"
+    "id": "https://example.com/feed.xml",
+    "type": "feed"
   }
 }
 ```
@@ -32,19 +37,31 @@ Returns an ActivityStreams Collection with feed entries:
 
 ```json
 {
-  "@type": "Collection",
-  "context": "feeds",
+  "type": "collection",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/feeds/v1.jsonld"
+  ],
+  "summary": "Example Blog",
   "totalItems": 10,
   "items": [
     {
-      "@type": "Create",
+      "type": "post",
+      "@context": [
+        "https://www.w3.org/ns/activitystreams",
+        "https://sockethub.org/ns/context/v1.jsonld",
+        "https://sockethub.org/ns/context/platform/feeds/v1.jsonld"
+      ],
       "actor": {
-        "@id": "https://example.com/feed.xml",
+        "id": "https://example.com/feed.xml",
+        "type": "feed",
         "name": "Example Blog"
       },
       "object": {
-        "@type": "Article",
-        "name": "Blog Post Title",
+        "id": "https://example.com/post/1",
+        "type": "article",
+        "title": "Blog Post Title",
         "content": "Post content...",
         "url": "https://example.com/post/1",
         "published": "2023-01-01T12:00:00Z"
