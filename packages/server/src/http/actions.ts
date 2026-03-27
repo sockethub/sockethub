@@ -457,9 +457,9 @@ export function registerHttpActionsRoutes(
                         await idempotencyRedis.set(
                             idempotencyKeys.statusKey,
                             "in-progress",
-                            "NX",
                             "PX",
                             idempotencyTtlMs,
+                            "NX",
                         ),
                     );
                     if (!claimed) {
@@ -480,9 +480,9 @@ export function registerHttpActionsRoutes(
                                 await idempotencyRedis.set(
                                     idempotencyKeys.statusKey,
                                     "in-progress",
-                                    "NX",
                                     "PX",
                                     idempotencyTtlMs,
+                                    "NX",
                                 ),
                             );
                         }

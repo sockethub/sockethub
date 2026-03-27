@@ -154,6 +154,10 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             // Clear message log
             messageLog.length = 0;
 
+            await ensureSocketsConnected(records);
+            // Allow reconnect and room-presence updates to settle before sending
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+
             // Send message from client 1
             await sendXMPPMessage(
                 sendingClientRecord.sockethubClient,
@@ -169,13 +173,14 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                     messageLog.filter(
                         (log) =>
                             log.message?.object?.content === testMessage &&
-                            log.message?.type === "send",
+                            log.message?.type === "send" &&
+                            log.clientId !== sendingClientRecord.jid,
                     ).length >=
                     CLIENT_COUNT - 1,
                 config.timeouts.multiClientMessage,
                 50,
                 () =>
-                    `Received ${messageLog.filter((log) => log.message?.object?.content === testMessage).length}/${CLIENT_COUNT - 1} messages`,
+                    `Received ${messageLog.filter((log) => log.message?.object?.content === testMessage && log.message?.type === "send" && log.clientId !== sendingClientRecord.jid).length}/${CLIENT_COUNT - 1} recipient messages`,
             );
 
             // Verify message was received by other clients
