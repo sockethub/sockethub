@@ -59,16 +59,16 @@ let credentials = $derived({
 async function connectIrc(): Promise<void> {
     connecting = true;
     try {
-      await send({
-          // Platform context - routes to Sockethub's IRC platform
-          "@context": contextFor("irc"),
-          // Activity type - "connect" establishes IRC connection
-          type: "connect",
-          // Actor - the IRC nick/identity making the connection
-          actor: $actorIdStore,
-          // Note: credentials (server, port, etc.) are sent separately via the Credentials component
-      } as AnyActivityStream);
-      $sockethubState.connected = true;
+        await send({
+            // Platform context - routes to Sockethub's IRC platform
+            "@context": contextFor("irc"),
+            // Activity type - "connect" establishes IRC connection
+            type: "connect",
+            // Actor - the IRC nick/identity making the connection
+            actor: $actorIdStore,
+            // Note: credentials (server, port, etc.) are sent separately via the Credentials component
+        } as AnyActivityStream);
+        $sockethubState.connected = true;
     } catch (err) {
         console.error(err);
         // Keep actor/credentials state so the user can immediately retry connect.

@@ -44,12 +44,12 @@ let credentials = $derived({
 async function connectXmpp(): Promise<void> {
     connecting = true;
     try {
-      await send({
-          "@context": contextFor("xmpp"),
-          type: "connect",
-          actor: actorId,
-      } as AnyActivityStream)
-      $sockethubState.connected = true;
+        await send({
+            "@context": contextFor("xmpp"),
+            type: "connect",
+            actor: actorId,
+        } as AnyActivityStream);
+        $sockethubState.connected = true;
     } catch (err) {
         console.error(err);
         // Keep actor/credentials state so the user can immediately retry connect.
