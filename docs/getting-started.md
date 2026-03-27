@@ -74,24 +74,15 @@ Create a simple HTML file:
             // Wait for schema registry
             await sc.ready();
 
-            // Connect and send echo message
+            // Send echo message
             sc.socket.emit('message', {
-                type: 'connect',
+                type: 'echo',
                 '@context': sc.contextFor('dummy'),
-                actor: { id: 'test-user', type: 'person' }
-            }, (response) => {
-                console.log('Connect response:', response);
-
-                // Send echo message after connection
-                sc.socket.emit('message', {
-                    type: 'echo',
-                    '@context': sc.contextFor('dummy'),
-                    actor: { id: 'test-user', type: 'person' },
-                    object: { type: 'message', content: 'Hello Sockethub!' }
-                }, (echoResponse) => {
-                    document.getElementById('output').textContent =
-                        'Echo: ' + JSON.stringify(echoResponse, null, 2);
-                });
+                actor: { id: 'test-user', type: 'person' },
+                object: { type: 'message', content: 'Hello Sockethub!' }
+            }, (echoResponse) => {
+                document.getElementById('output').textContent =
+                    'Echo: ' + JSON.stringify(echoResponse, null, 2);
             });
         }
     </script>

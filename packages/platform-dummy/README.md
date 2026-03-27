@@ -28,9 +28,11 @@ platform communication without requiring external service connections.
     "https://sockethub.org/ns/context/platform/dummy/v1.jsonld"
   ],
   "actor": {
-    "id": "test-user"
+    "id": "test-user",
+    "type": "person"
   },
   "object": {
+    "type": "message",
     "content": "Hello World"
   }
 }
@@ -47,9 +49,15 @@ platform communication without requiring external service connections.
     "https://sockethub.org/ns/context/platform/dummy/v1.jsonld"
   ],
   "actor": {
-    "id": "test-user"
+    "id": "dummy",
+    "type": "platform"
+  },
+  "target": {
+    "id": "test-user",
+    "type": "person"
   },
   "object": {
+    "type": "message",
     "content": "Hello World"
   }
 }

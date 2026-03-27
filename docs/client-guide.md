@@ -187,6 +187,8 @@ You can still send raw ActivityStreams directly with `sc.socket.emit('message',
 ### Platforms Requiring Credentials
 
 ```javascript
+await sc.ready();
+
 // 1. Send credentials
 sc.socket.emit('credentials', {
     '@context': sc.contextFor('irc'),
@@ -227,7 +229,7 @@ sc.socket.emit('message', {
 sc.socket.emit('message', {
     type: 'fetch',
     '@context': sc.contextFor('feeds'),
-    actor: { id: 'https://example.com/feed.xml', type: 'website' }
+    actor: { id: 'https://example.com/feed.xml', type: 'feed' }
 });
 ```
 
