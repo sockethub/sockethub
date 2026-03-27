@@ -25,17 +25,6 @@ automatic reconnection and credential replay.
 
 `$ bun install @sockethub/client socket.io-client`
 
-#### CommonJS
-
-```javascript
-const SockethubClient = require('@sockethub/client').default;
-const { io } = require('socket.io-client');
-const SOCKETHUB_SERVER = 'http://localhost:10550';
-const sc = new SockethubClient(io(SOCKETHUB_SERVER));
-```
-
-#### ESM
-
 ```javascript
 import SockethubClient from '@sockethub/client';
 import { io } from 'socket.io-client';
@@ -121,7 +110,7 @@ sc.socket.emit("message", {
     type: "echo",
     "@context": sc.contextFor("dummy"),
     actor: { id: "test", type: "person" },
-    object: { type: "note", content: "Hello!" },
+    object: { type: "message", content: "Hello!" },
 }, (result) => {
     if (result?.error) {
         console.error("Sockethub request failed:", result.error);

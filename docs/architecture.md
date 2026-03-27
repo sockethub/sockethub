@@ -127,7 +127,7 @@ Redis and BullMQ provide reliable, encrypted communication between server and pl
   ],
   "actor": { "id": "mynick", "type": "person" },
   "target": { "id": "#javascript", "type": "room" },
-  "object": { "type": "note", "content": "Hello!" }
+  "object": { "type": "message", "content": "Hello!" }
 }
 
 // 2. Server queues encrypted job for IRC platform
@@ -207,7 +207,7 @@ ActivityStreams: {
   "@context": ["...as2", "...sockethub", "...irc"],
   "actor": { "id": "alice", "type": "person" },
   "target": { "id": "#room", "type": "room" },
-  "object": { "type": "note", "content": "hello world" }
+  "object": { "type": "message", "content": "hello world" }
 }
 ```
 
@@ -240,7 +240,7 @@ Web applications send the same ActivityStreams format regardless of target proto
   ],
   "actor": { "id": "user", "type": "person" },
   "target": { "id": "#room", "type": "room" },
-  "object": { "type": "note", "content": "Hello!" }
+  "object": { "type": "message", "content": "Hello!" }
 }
 ```
 

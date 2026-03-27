@@ -58,9 +58,9 @@ await sc.ready();
 sc.socket.emit('message', {
   '@context': sc.contextFor('irc'),
   type: 'send',
-  actor: 'myuser@irc.libera.chat',
+  actor: { id: 'myuser@irc.libera.chat', type: 'person' },
   target: { id: '#channel@irc.libera.chat', type: 'room' },
-  object: { type: 'Note', content: 'Hello!' }
+  object: { type: 'message', content: 'Hello!' }
 });
 ```
 
@@ -73,7 +73,7 @@ sc.socket.emit('message', {
 sc.socket.emit('credentials', {
   '@context': sc.contextFor('irc'),
   type: 'credentials',
-  actor: { id: 'mynick@irc.libera.chat' },
+  actor: { id: 'mynick@irc.libera.chat', type: 'person' },
   object: {
     type: 'credentials',
     nick: 'mynick',
@@ -87,14 +87,14 @@ sc.socket.emit('credentials', {
 sc.socket.emit('message', {
   '@context': sc.contextFor('irc'),
   type: 'connect',
-  actor: 'mynick@irc.libera.chat'
+  actor: { id: 'mynick@irc.libera.chat', type: 'person' }
 });
 
 // Join channel
 sc.socket.emit('message', {
   '@context': sc.contextFor('irc'),
   type: 'join',
-  actor: 'mynick@irc.libera.chat',
+  actor: { id: 'mynick@irc.libera.chat', type: 'person' },
   target: { id: '#sockethub@irc.libera.chat', type: 'room' }
 });
 ```
@@ -106,7 +106,7 @@ sc.socket.emit('message', {
 sc.socket.emit('credentials', {
   '@context': sc.contextFor('xmpp'),
   type: 'credentials',
-  actor: { id: 'user@jabber.org' },
+  actor: { id: 'user@jabber.org', type: 'person' },
   object: {
     type: 'credentials',
     userAddress: 'user@jabber.org',
@@ -119,15 +119,15 @@ sc.socket.emit('credentials', {
 sc.socket.emit('message', {
   '@context': sc.contextFor('xmpp'),
   type: 'connect',
-  actor: 'user@jabber.org'
+  actor: { id: 'user@jabber.org', type: 'person' }
 });
 
 sc.socket.emit('message', {
   '@context': sc.contextFor('xmpp'),
   type: 'send',
-  actor: 'user@jabber.org',
+  actor: { id: 'user@jabber.org', type: 'person' },
   target: { id: 'friend@jabber.org', type: 'person' },
-  object: { type: 'Note', content: 'Hello from Sockethub!' }
+  object: { type: 'message', content: 'Hello from Sockethub!' }
 });
 ```
 
@@ -138,12 +138,10 @@ sc.socket.emit('message', {
   '@context': sc.contextFor('feeds'),
   type: 'fetch',
   actor: { id: 'https://example.com/feed.rss', type: 'feed' }
-});
-
-// Response is a Collection of Create activities with feed entries
-sc.socket.on('message', (msg) => {
-  if (msg.object && Array.isArray(msg.object.items)) {
-    msg.object.items.forEach(entry => {
+}, (response) => {
+  // Response is an ASCollection with feed entries
+  if (response.items) {
+    response.items.forEach(entry => {
       console.log(entry.object.title, entry.object.url);
     });
   }
@@ -193,7 +191,7 @@ All messages follow ActivityStreams 2.0 structure:
   type: 'send' | 'join' | 'connect', // Action type
   actor: { id: 'user@server', type: 'person' }, // Who is acting
   target: { id: 'room@server', type: 'room' }, // Target of action
-  object: { type: 'Note', content: '...' } // Payload
+  object: { type: 'message', content: '...' } // Payload
 }
 ```
 

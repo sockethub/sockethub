@@ -67,7 +67,7 @@ sc.socket.emit('message', {
   type: 'echo',
   '@context': sc.contextFor('dummy'),
   actor: { id: 'test', type: 'person' },
-  object: { type: 'note', content: 'Hello!' }
+  object: { type: 'message', content: 'Hello!' }
 }, (response) => {
   if (response?.error) {
     console.error('Send failed:', response.error);
@@ -95,7 +95,7 @@ sc.socket.emit('message', {
     '@context': sc.contextFor('irc'),
     actor: { id: 'mynick', type: 'person' },
     target: { id: '#sockethub', type: 'room' },
-    object: { type: 'note', content: 'Hello channel' }
+    object: { type: 'message', content: 'Hello channel' }
 }, (result) => {
     if (result?.error) {
         console.error('Send failed:', result.error);
@@ -145,7 +145,7 @@ success/failure.
   "@context": sc.contextFor("irc"),  // Canonical contexts for this platform
   "actor": { "id": "user", "type": "person" },     // Who
   "target": { "id": "#room", "type": "room" },     // Where (optional)
-  "object": { "type": "note", "content": "Hi!" }   // What
+  "object": { "type": "message", "content": "Hi!" }   // What
 }
 ```
 
@@ -217,7 +217,7 @@ sc.socket.emit('message', {
     type: 'echo',
     '@context': sc.contextFor('dummy'),
     actor: { id: 'test', type: 'person' },
-    object: { type: 'note', content: 'test' }
+    object: { type: 'message', content: 'test' }
 });
 ```
 

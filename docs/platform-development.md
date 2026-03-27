@@ -269,7 +269,7 @@ export default class ChatBot implements PersistentPlatformInterface {
                 '@context': job['@context'],
                 type: 'send',
                 actor: { id: msg.from, type: 'person' },
-                object: { type: 'note', content: msg.text }
+                object: { type: 'message', content: msg.text }
             });
         });
         this.initialized = true;

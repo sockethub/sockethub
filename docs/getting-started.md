@@ -87,7 +87,7 @@ Create a simple HTML file:
                     type: 'echo',
                     '@context': sc.contextFor('dummy'),
                     actor: { id: 'test-user', type: 'person' },
-                    object: { type: 'note', content: 'Hello Sockethub!' }
+                    object: { type: 'message', content: 'Hello Sockethub!' }
                 }, (echoResponse) => {
                     document.getElementById('output').textContent =
                         'Echo: ' + JSON.stringify(echoResponse, null, 2);
@@ -122,7 +122,7 @@ All communication uses ActivityStreams 2.0 format:
     "type": "person"
   },
   "object": {                // What to send
-    "type": "note",
+    "type": "message",
     "content": "Hello!"
   }
 }
