@@ -88,6 +88,9 @@ Create a simple HTML file:
                     '@context': sc.contextFor('dummy'),
                     actor: { id: 'test-user', type: 'person' },
                     object: { type: 'note', content: 'Hello Sockethub!' }
+                }, (echoResponse) => {
+                    document.getElementById('output').textContent =
+                        'Echo: ' + JSON.stringify(echoResponse, null, 2);
                 });
             });
         }

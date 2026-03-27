@@ -28,8 +28,8 @@ automatic reconnection and credential replay.
 #### CommonJS
 
 ```javascript
-const SockethubClient = require('@sockethub/client');
-const io = require('socket.io-client');
+const SockethubClient = require('@sockethub/client').default;
+const { io } = require('socket.io-client');
 const SOCKETHUB_SERVER = 'http://localhost:10550';
 const sc = new SockethubClient(io(SOCKETHUB_SERVER));
 ```

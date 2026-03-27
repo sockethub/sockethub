@@ -36,22 +36,23 @@ Returns an ActivityStreams Collection with feed entries:
 
 ```json
 {
-  "type": "Collection",
+  "type": "collection",
   "@context": [
     "https://www.w3.org/ns/activitystreams",
     "https://sockethub.org/ns/context/v1.jsonld",
     "https://sockethub.org/ns/context/platform/feeds/v1.jsonld"
   ],
+  "summary": "Example Blog",
   "totalItems": 10,
   "items": [
     {
-      "type": "Create",
+      "type": "post",
       "actor": {
         "id": "https://example.com/feed.xml",
         "name": "Example Blog"
       },
       "object": {
-        "type": "Article",
+        "type": "article",
         "name": "Blog Post Title",
         "content": "Post content...",
         "url": "https://example.com/post/1",

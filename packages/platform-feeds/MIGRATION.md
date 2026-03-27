@@ -5,7 +5,7 @@
 ### Before (Array)
 
 ```javascript
-// Response was an array
+// Response was an array (@context omitted for brevity)
 [
   { type: "post", actor: {...}, object: {...} },
   // ... more items
@@ -15,7 +15,7 @@
 ### After (Collection)
 
 ```javascript
-// Response is now a Collection object
+// Response is now a Collection object (@context omitted for brevity)
 {
   type: "collection",
   summary: "Feed Name",
