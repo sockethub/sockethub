@@ -238,7 +238,16 @@ JSON
 Example response (streamed NDJSON, actual payloads depend on the platform):
 
 ```json
-{"type":"error","context":"error","actor":{"type":"Application","name":"sockethub-server"},"error":"invalid credentials","requestId":"12345"}
+{
+  "type": "error",
+  "context": "error",
+  "actor": {
+    "type": "Application",
+    "name": "sockethub-server"
+  },
+  "error": "invalid credentials",
+  "requestId": "12345"
+}
 ```
 
 Replay results after an interrupted request:
