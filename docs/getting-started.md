@@ -72,7 +72,13 @@ Create a simple HTML file:
         // Test function
         window.testEcho = async function() {
             // Wait for schema registry
-            await sc.ready();
+            try {
+                await sc.ready();
+            } catch (err) {
+                document.getElementById('output').textContent =
+                    'Initialization failed: ' + String(err);
+                return;
+            }
 
             // Send echo message
             sc.socket.emit('message', {

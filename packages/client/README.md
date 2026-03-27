@@ -34,9 +34,13 @@ const sc = new SockethubClient(io(SOCKETHUB_SERVER));
 
 ### Browser
 
-The browser bundle is available in the dist folder. Place it somewhere
-accessible from the web, along with `socket.io-client`, and include
-both via script tags:
+Two browser builds are published in `dist/`:
+
+- `dist/sockethub-client.browser.js` is the IIFE/global build for plain `<script>` tags
+- `dist/sockethub-client.js` is the ESM build for `<script type="module">`
+
+If you are serving assets from a Sockethub server, use the pre-copied global build
+at `/sockethub-client.js` along with `/socket.io.js`:
 
 ```html
 <script src="/socket.io.js"></script>
@@ -45,8 +49,17 @@ both via script tags:
 
 These scripts set `io` and `SockethubClient` as globals.
 
-Once included in a web-page, the `SockethubClient` base object
-should be on the global scope.
+If you are hosting the package files yourself and want ESM instead, serve
+`dist/sockethub-client.js` and import it from a module script:
+
+```html
+<script type="module">
+import SockethubClient from '/dist/sockethub-client.js';
+import { io } from '/socket.io.esm.min.js';
+
+const sc = new SockethubClient(io('http://localhost:10550'));
+</script>
+```
 
 ## Quick Start
 
@@ -67,19 +80,23 @@ sc.socket.on('init_error', (e) => {
 });
 
 // Wait for schema registry, then send a message
-await sc.ready();
-sc.socket.emit('message', {
-    '@context': sc.contextFor('dummy'),
-    type: 'echo',
-    actor: { id: 'test@dummy', type: 'person' },
-    object: { type: 'message', content: 'hello world' }
-}, (ack) => {
-    if (ack?.error) {
-        console.error('Send failed:', ack.error);
-        return;
-    }
-    console.log('Ack:', ack);
-});
+try {
+    await sc.ready();
+    sc.socket.emit('message', {
+        '@context': sc.contextFor('dummy'),
+        type: 'echo',
+        actor: { id: 'test@dummy', type: 'person' },
+        object: { type: 'message', content: 'hello world' }
+    }, (ack) => {
+        if (ack?.error) {
+            console.error('Send failed:', ack.error);
+            return;
+        }
+        console.log('Ack:', ack);
+    });
+} catch (err) {
+    console.error('Sockethub failed to initialize:', err);
+}
 ```
 
 See the [Client Guide](../../docs/client-guide.md) for detailed usage and examples.

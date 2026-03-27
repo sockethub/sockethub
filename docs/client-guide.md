@@ -61,7 +61,12 @@ sc.socket.on('init_error', (e) => {
 
 ```javascript
 // Wait for schema registry before using contextFor()
-await sc.ready();
+try {
+  await sc.ready();
+} catch (err) {
+  console.error('Sockethub failed to initialize:', err);
+  return;
+}
 
 sc.socket.emit('message', {
   type: 'echo',
