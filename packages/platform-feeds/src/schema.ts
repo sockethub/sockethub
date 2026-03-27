@@ -3,6 +3,9 @@ import packageJSON from "../package.json" with { type: "json" };
 export default {
     name: "feeds",
     version: packageJSON.version,
+    contextUrl: "https://sockethub.org/ns/context/platform/feeds/v1.jsonld",
+    contextVersion: "1",
+    schemaVersion: "1",
     messages: {
         required: ["type"],
         properties: {
@@ -16,6 +19,18 @@ export default {
                     { $ref: "#/definitions/objectTypes/feed-parameters-date" },
                     { $ref: "#/definitions/objectTypes/feed-parameters-url" },
                 ],
+            },
+        },
+        definitions: {
+            objectTypes: {
+                "feed-parameters-date": {
+                    type: "object",
+                    additionalProperties: true,
+                },
+                "feed-parameters-url": {
+                    type: "object",
+                    additionalProperties: true,
+                },
             },
         },
     },

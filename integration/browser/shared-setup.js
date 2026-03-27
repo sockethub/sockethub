@@ -1,5 +1,11 @@
 import { expect } from "@esm-bundle/chai";
 
+export const ctx = (platform) => [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    `https://sockethub.org/ns/context/platform/${platform}/v1.jsonld`,
+];
+
 // sockethub-client.js and socket.io.js are loaded via <script> tags
 // in the test runner HTML (injected from the running Sockethub server)
 
@@ -29,6 +35,13 @@ export function getConfig() {
 }
 
 const config = getConfig();
+
+function asPersonActor(jid) {
+    return {
+        id: jid,
+        type: "person",
+    };
+}
 
 // Shared setup and validation functions
 export function validateGlobals() {
@@ -142,8 +155,8 @@ export function setXMPPCredentials(
     password = config.prosody.testUser.password,
 ) {
     const creds = {
-        actor: jid,
-        context: "xmpp",
+        actor: asPersonActor(jid),
+        "@context": ctx("xmpp"),
         type: "credentials",
         object: {
             type: "credentials",
@@ -174,8 +187,8 @@ export function connectXMPP(sh, jid) {
         "message",
         {
             type: "connect",
-            actor: jid,
-            context: "xmpp",
+            actor: asPersonActor(jid),
+            "@context": ctx("xmpp"),
         },
         {
             timeout: config.timeouts.connect,
@@ -196,8 +209,8 @@ export function joinXMPPRoom(sh, jid, room = config.prosody.room) {
         "message",
         {
             type: "join",
-            actor: jid,
-            context: "xmpp",
+            actor: asPersonActor(jid),
+            "@context": ctx("xmpp"),
             target: {
                 type: "room",
                 id: room,
@@ -219,8 +232,8 @@ export function sendXMPPMessage(sh, jid, room, content) {
         "message",
         {
             type: "send",
-            actor: jid,
-            context: "xmpp",
+            actor: asPersonActor(jid),
+            "@context": ctx("xmpp"),
             object: {
                 type: "message",
                 content,

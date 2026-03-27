@@ -42,6 +42,7 @@ class ProcessManager {
             pi = this.ensureProcess(platform);
         }
         pi.config = platformDetails.config;
+        pi.contextUrl = platformDetails.contextUrl;
         return pi;
     }
 

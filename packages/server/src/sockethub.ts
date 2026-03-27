@@ -7,6 +7,11 @@ import type {
     ActivityStream,
     InternalActivityStream,
 } from "@sockethub/schemas";
+import {
+    AS2_BASE_CONTEXT_URL,
+    resolvePlatformId,
+    SOCKETHUB_BASE_CONTEXT_URL,
+} from "@sockethub/schemas";
 import type { Socket } from "socket.io";
 import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
@@ -28,6 +33,10 @@ import {
 
 const log = createLogger("server:core");
 
+/**
+ * Normalize middleware errors into payload-safe error responses.
+ * Removes internal-only properties that must never be sent to clients.
+ */
 function attachError<T extends ActivityStream | ActivityObject>(
     err: unknown,
     msg?: T,
@@ -90,6 +99,10 @@ function getClientIp(socket: Socket): string {
     return normalizeIp(socket.handshake.address);
 }
 
+/**
+ * Main Socket.IO entrypoint for Sockethub runtime.
+ * Owns platform registry metadata, per-session middleware wiring, and routing.
+ */
 class Sockethub {
     private readonly parentId: string;
     private readonly parentSecret1: string;
@@ -99,6 +112,35 @@ class Sockethub {
     status: boolean;
     processManager!: ProcessManager;
     private rateLimiter!: ReturnType<typeof createRateLimiter>;
+    private serverVersion?: string;
+
+    /**
+     * Build the platform registry payload sent to clients.
+     * This is the canonical source for base contexts + platform context/schema metadata.
+     */
+    private buildPlatformRegistryPayload() {
+        return {
+            version: this.serverVersion,
+            contexts: {
+                as: AS2_BASE_CONTEXT_URL,
+                sockethub: SOCKETHUB_BASE_CONTEXT_URL,
+            },
+            platforms: Array.from(this.platformRegistry.values()).map(
+                (platform) => ({
+                    id: platform.id,
+                    version: platform.version,
+                    contextUrl: platform.contextUrl,
+                    contextVersion: platform.contextVersion,
+                    schemaVersion: platform.schemaVersion,
+                    types: platform.types,
+                    schemas: {
+                        credentials: platform.schemas.credentials || {},
+                        messages: platform.schemas.messages || {},
+                    },
+                }),
+            ),
+        };
+    }
 
     constructor() {
         this.status = false;
@@ -126,6 +168,7 @@ class Sockethub {
             return;
         }
 
+        this.serverVersion = init.version;
         this.processManager = new ProcessManager(
             this.parentId,
             this.parentSecret1,
@@ -157,6 +200,9 @@ class Sockethub {
         stopCleanup();
     }
 
+    /**
+     * Configure all socket listeners and middleware for a single client session.
+     */
     private handleIncomingConnection(socket: Socket) {
         // session-specific debug messages
         const sessionLog = createLogger(`server:core:${socket.id}`);
@@ -171,10 +217,24 @@ class Sockethub {
             );
 
         sessionLog.debug("socket.io connection");
+        const platformRegistryPayload = this.buildPlatformRegistryPayload();
 
         // Rate limiting middleware - runs on every incoming event
         socket.use((event, next) => {
             this.rateLimiter(socket, event[0], next);
+        });
+
+        // Send schema metadata to clients immediately and on-demand.
+        socket.emit("schemas", platformRegistryPayload);
+        socket.on("schemas", (...args: unknown[]) => {
+            const ack = args.find(
+                (a): a is (payload: unknown) => void => typeof a === "function",
+            );
+            if (ack) {
+                ack(platformRegistryPayload);
+            } else {
+                socket.emit("schemas", platformRegistryPayload);
+            }
         });
 
         socket.on("disconnect", () => {
@@ -277,8 +337,15 @@ class Sockethub {
                         msg: ActivityStream,
                         next: (data?: ActivityStream | Error) => void,
                     ) => {
+                        const platformId = resolvePlatformId(msg);
+                        if (!platformId) {
+                            msg.error =
+                                "unable to resolve platform from @context";
+                            next(msg);
+                            return;
+                        }
                         const platformInstance = this.processManager.get(
-                            msg.context,
+                            platformId,
                             msg.actor.id,
                             socket.id,
                             clientIp,

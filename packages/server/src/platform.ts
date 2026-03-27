@@ -25,6 +25,10 @@ import type {
     PlatformInterface,
     PlatformSession,
 } from "@sockethub/schemas";
+import {
+    buildCanonicalContext,
+    INTERNAL_PLATFORM_CONTEXT_URL,
+} from "@sockethub/schemas";
 import config from "./config";
 
 // Simple wrapper function to help with testing
@@ -58,6 +62,8 @@ async function startPlatformProcess() {
                 "Sentry not configured; error not reported to Sentry",
                 {
                     error: err,
+                    errorMessage: err?.message ?? String(err),
+                    errorStack: err?.stack,
                 },
             );
         },
@@ -166,7 +172,9 @@ async function startPlatformProcess() {
                 "heartbeat",
                 {
                     type: "heartbeat",
-                    context: "sockethub:internal",
+                    "@context": buildCanonicalContext(
+                        INTERNAL_PLATFORM_CONTEXT_URL,
+                    ),
                     actor: {
                         id: "sockethub",
                         type: "platform",

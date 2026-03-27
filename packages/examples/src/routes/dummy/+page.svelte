@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { AnyActivityStream } from "$lib/sockethub";
-import { send } from "$lib/sockethub";
+import { contextFor, send } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
 import { writable } from "svelte/store";
 import ActivityActor from "../../components/ActivityActor.svelte";
@@ -26,7 +26,7 @@ let content = $state("");
 function getASObj(type: string): AnyActivityStream {
     return {
         // Platform context - tells Sockethub which platform to route this to
-        context: "dummy",
+        "@context": contextFor("dummy"),
         // Activity type - what action to perform (echo, fail, throw, greet)
         type: type,
         // Actor - who is performing the action

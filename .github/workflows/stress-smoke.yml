@@ -6,6 +6,7 @@ jobs:
 
   smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}

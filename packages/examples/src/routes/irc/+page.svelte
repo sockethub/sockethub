@@ -11,7 +11,7 @@ import IncomingMessage from "$components/chat/IncomingMessages.svelte";
 import Room from "$components/chat/Room.svelte";
 import SendMessage from "$components/chat/SendMessage.svelte";
 import type { AnyActivityStream, CredentialName } from "$lib/sockethub";
-import { send } from "$lib/sockethub";
+import { contextFor, send } from "$lib/sockethub";
 import { writable } from "svelte/store";
 
 const actorIdStore = writable(
@@ -59,16 +59,16 @@ let credentials = $derived({
 async function connectIrc(): Promise<void> {
     connecting = true;
     try {
-        await send({
-            // Platform context - routes to Sockethub's IRC platform
-            context: "irc",
-            // Activity type - "connect" establishes IRC connection
-            type: "connect",
-            // Actor - the IRC nick/identity making the connection
-            actor: $actorIdStore,
-            // Note: credentials (server, port, etc.) are sent separately via the Credentials component
-        } as AnyActivityStream);
-        $sockethubState.connected = true;
+      await send({
+          // Platform context - routes to Sockethub's IRC platform
+          "@context": contextFor("irc"),
+          // Activity type - "connect" establishes IRC connection
+          type: "connect",
+          // Actor - the IRC nick/identity making the connection
+          actor: $actorIdStore,
+          // Note: credentials (server, port, etc.) are sent separately via the Credentials component
+      } as AnyActivityStream);
+      $sockethubState.connected = true;
     } catch (err) {
         console.error(err);
         // Keep actor/credentials state so the user can immediately retry connect.

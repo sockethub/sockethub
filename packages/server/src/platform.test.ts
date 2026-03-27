@@ -42,7 +42,11 @@ describe("platform.ts credential handling", () => {
 
         validCredentials = {
             type: "credentials",
-            context: "xmpp",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
             actor: {
                 id: "testuser@localhost",
                 type: "person",
@@ -75,7 +79,12 @@ describe("platform.ts credential handling", () => {
             title: "xmpp-job-1",
             msg: {
                 type: "connect",
-                context: "xmpp",
+                "@context": [
+                    "https://www.w3.org/ns/activitystreams",
+                    "https://sockethub.org/ns/context/v1.jsonld",
+                    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+                ],
+                platform: "xmpp",
                 actor: { id: "testuser@localhost", type: "person" },
                 sessionSecret: "secret123",
             },

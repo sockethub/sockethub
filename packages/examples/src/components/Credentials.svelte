@@ -1,6 +1,6 @@
 <script lang="ts">
 import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
-import { sc } from "$lib/sockethub";
+import { contextFor, sc } from "$lib/sockethub";
 import type { ActorData } from "$lib/sockethub";
 import type { CredentialsObjectData, SockethubResponse } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
@@ -16,7 +16,7 @@ let { credentials, actor, sockethubState, context }: Props = $props();
 
 function sendCredentials(data: string) {
     const creds = {
-        context: context,
+        "@context": contextFor(context),
         type: "credentials",
         actor: actor.id,
         object: JSON.parse(data),

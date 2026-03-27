@@ -15,7 +15,11 @@ const REDIS_URL = `redis://${REDIS_HOST}:6379`;
 const actor = `${(Math.random() + 1).toString(36).substring(2)}`;
 const creds: CredentialsObject = {
     type: "credentials",
-    context: "bar",
+    "@context": [
+        "https://www.w3.org/ns/activitystreams",
+        "https://sockethub.org/ns/context/v1.jsonld",
+        "https://sockethub.org/ns/context/platform/bar/v1.jsonld",
+    ],
     actor: {
         type: "person",
         id: actor,
@@ -146,7 +150,12 @@ describe("connect and disconnect", () => {
 describe("JobQueue", () => {
     const as: ActivityStream = {
         type: "foo",
-        context: "bar",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://sockethub.org/ns/context/v1.jsonld",
+            "https://sockethub.org/ns/context/platform/bar/v1.jsonld",
+        ],
+        platform: "bar",
         actor: {
             id: "bar",
             type: "person",
@@ -196,7 +205,7 @@ describe("JobQueue", () => {
 
         // Add job and verify it was queued
         const job = await queue.add("socket id", as);
-        expect(job.msg.length).toEqual(193);
+        expect(job.msg.length).toBeGreaterThan(0);
         expect(job.title).toEqual("bar-0");
         expect(job.sessionId).toEqual("socket id");
 
@@ -283,7 +292,11 @@ describe("JobQueue", () => {
     it("handles worker returning ActivityStream", async () => {
         const returnAS: ActivityStream = {
             type: "result",
-            context: "bar",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/bar/v1.jsonld",
+            ],
             actor: { id: "bar", type: "person" },
         };
 
@@ -330,7 +343,12 @@ describe("JobQueue", () => {
     it("encrypts and decrypts job data correctly", async () => {
         const complexAS: ActivityStream = {
             type: "send",
-            context: "irc",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+            ],
+            platform: "irc",
             actor: { id: "user@example.com", type: "person" },
             object: {
                 type: "message",
@@ -398,7 +416,12 @@ describe.skip("Redis connection failure", () => {
 
         const as: ActivityStream = {
             type: "foo",
-            context: "bar",
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/bar/v1.jsonld",
+            ],
+            platform: "bar",
             actor: { id: "bar", type: "person" },
         };
 

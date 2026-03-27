@@ -124,14 +124,14 @@ describe("platform-feeds", () => {
             expect(err).toBeNull();
             
             // Validate required ASCollection properties
-            expect(results).toHaveProperty("context");
+            expect(results).toHaveProperty("@context");
             expect(results).toHaveProperty("type", "collection");
             expect(results).toHaveProperty("summary");
             expect(results).toHaveProperty("totalItems");
             expect(results).toHaveProperty("items");
             
             // Validate types
-            expect(typeof results.context).toBe("string");
+            expect(Array.isArray(results["@context"])).toBe(true);
             expect(typeof results.summary).toBe("string");
             expect(typeof results.totalItems).toBe("number");
             expect(Array.isArray(results.items)).toBe(true);

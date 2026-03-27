@@ -9,7 +9,7 @@ import PlatformConnection from "$components/PlatformConnection.svelte";
 import IncomingMessage from "$components/chat/IncomingMessages.svelte";
 import Room from "$components/chat/Room.svelte";
 import SendMessage from "$components/chat/SendMessage.svelte";
-import { send } from "$lib/sockethub";
+import { contextFor, send } from "$lib/sockethub";
 import type { AnyActivityStream } from "$lib/sockethub";
 import type { CredentialName } from "$lib/sockethub";
 import { writable } from "svelte/store";
@@ -44,12 +44,12 @@ let credentials = $derived({
 async function connectXmpp(): Promise<void> {
     connecting = true;
     try {
-        await send({
-            context: "xmpp",
-            type: "connect",
-            actor: actorId,
-        } as AnyActivityStream);
-        $sockethubState.connected = true;
+      await send({
+          "@context": contextFor("xmpp"),
+          type: "connect",
+          actor: actorId,
+      } as AnyActivityStream)
+      $sockethubState.connected = true;
     } catch (err) {
         console.error(err);
         // Keep actor/credentials state so the user can immediately retry connect.
