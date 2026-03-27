@@ -16,11 +16,14 @@ class FakeRedis {
     async set(
         key: string,
         value: string,
-        mode?: string,
-        _ttlMode?: string,
-        _ttl?: number,
+        arg1?: string | number,
+        arg2?: string | number,
+        arg3?: string | number,
     ) {
-        if (mode === "NX" && this.store.has(key)) {
+        const args = [arg1, arg2, arg3];
+        const nx = args.includes("NX");
+
+        if (nx && this.store.has(key)) {
             return null;
         }
         this.store.set(key, value);

@@ -235,6 +235,42 @@ function getIdempotencyRedisConnection() {
     return createIdempotencyRedisConnection(connectionConfig);
 }
 
+async function waitForRedisReady(
+    redis: ReturnType<typeof getIdempotencyRedisConnection>,
+) {
+    const candidate = redis as {
+        status?: string;
+        connect?: () => Promise<unknown>;
+        once?: (event: string, listener: (err?: unknown) => void) => void;
+        off?: (event: string, listener: (err?: unknown) => void) => void;
+    };
+
+    // Test fakes may not expose connection lifecycle APIs.
+    if (typeof candidate.status !== "string") {
+        return;
+    }
+    if (candidate.status === "ready") {
+        return;
+    }
+    if (candidate.status === "wait" && typeof candidate.connect === "function") {
+        await candidate.connect();
+        return;
+    }
+
+    await new Promise<void>((resolve, reject) => {
+        const onReady = () => {
+            candidate.off?.("error", onError);
+            resolve();
+        };
+        const onError = (err?: unknown) => {
+            candidate.off?.("ready", onReady);
+            reject(err ?? new Error("redis connection failed"));
+        };
+        candidate.once?.("ready", onReady);
+        candidate.once?.("error", onError);
+    });
+}
+
 function buildIdempotencyKeys(requestId: string) {
     // Status tracks in-progress/complete; list stores NDJSON lines in order of completion.
     return {
@@ -365,6 +401,7 @@ export function registerHttpActionsRoutes(
         const idempotencyKeys = buildIdempotencyKeys(requestId);
 
         try {
+            await waitForRedisReady(idempotencyRedis);
             const status = await idempotencyRedis.get(
                 idempotencyKeys.statusKey,
             );
@@ -452,6 +489,7 @@ export function registerHttpActionsRoutes(
 
             if (useIdempotency && idempotencyRedis && idempotencyKeys) {
                 try {
+                    await waitForRedisReady(idempotencyRedis);
                     // Claim the request id. If already complete, replay cached results.
                     let claimed = Boolean(
                         await idempotencyRedis.set(
