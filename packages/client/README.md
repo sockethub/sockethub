@@ -9,6 +9,9 @@ automatic reconnection and credential replay.
 
 - `SockethubClient` for connection and message handling
 - `ActivityStreams` helpers and validation utilities
+- `contextFor(platform)` builds canonical `@context` arrays from server metadata
+- `ready()` promise and `ready`/`init_error` observability events
+- Automatic outbound queueing until initialization is complete
 - Auto-replay of credentials and connections on reconnect
 - A browser-ready bundle in `dist/`
 
@@ -16,47 +19,47 @@ automatic reconnection and credential replay.
 
 ### Node.js
 
-`$ npm install @sockethub/client`
+`$ npm install @sockethub/client socket.io-client`
 
 ### Bun
 
-`$ bun install @sockethub/client`
-
-#### CommonJS
-
-```javascript
-const SockethubClient = require('@sockethub/client');
-const io = require('@socket.io-client');
-const SOCKETHUB_SERVER = 'http://localhost:10550';
-const sc = new SockethubClient(io(SOCKETHUB_SERVER));
-```
-
-#### ESM
+`$ bun install @sockethub/client socket.io-client`
 
 ```javascript
 import SockethubClient from '@sockethub/client';
-import { io } from '@socket.io-client';
+import { io } from 'socket.io-client';
 const SOCKETHUB_SERVER = 'http://localhost:10550';
 const sc = new SockethubClient(io(SOCKETHUB_SERVER));
 ```
 
 ### Browser
 
-The browser bundle is available in the dist folder:
+Two browser builds are published in `dist/`:
 
-```
-import '@sockethub/client/dist/sockethub-client.js';
+- `dist/sockethub-client.browser.js` is the IIFE/global build for plain `<script>` tags
+- `dist/sockethub-client.js` is the ESM build for `<script type="module">`
+
+If you are serving assets from a Sockethub server, use the pre-copied global build
+at `/sockethub-client.js` along with `/socket.io.js`:
+
+```html
+<script src="/socket.io.js"></script>
+<script src="/sockethub-client.js"></script>
 ```
 
-You can place it somewhere accessible from the web and include
-it via a `script` tag.
+These scripts set `io` and `SockethubClient` as globals.
 
-```
-<script src="http://example.com/sockethub-client.js" type="module"></script>
-```
+If you are hosting the package files yourself and want ESM instead, serve
+`dist/sockethub-client.js` and import it from a module script:
 
-Once included in a web-page, the `SockethubClient` base object
-should be on the global scope.
+```html
+<script type="module">
+import SockethubClient from '/dist/sockethub-client.js';
+import { io } from '/socket.io.esm.min.js';
+
+const sc = new SockethubClient(io('http://localhost:10550', { path: '/sockethub' }));
+</script>
+```
 
 ## Quick Start
 
@@ -65,17 +68,51 @@ import SockethubClient from '@sockethub/client';
 import { io } from 'socket.io-client';
 
 const socket = io('http://localhost:10550', { path: '/sockethub' });
-const sc = new SockethubClient(socket);
+const sc = new SockethubClient(socket, { initTimeoutMs: 5000 });
 
 sc.socket.on('message', (msg) => console.log(msg));
+sc.socket.on('ready', (info) => {
+    console.log('Sockethub ready:', info.reason, info.sockethubVersion,
+        info.platforms.map((p) => ({ id: p.id, version: p.version })));
+});
+sc.socket.on('init_error', (e) => {
+    console.warn('Sockethub init issue:', e.error);
+});
+
+// Wait for schema registry, then send a message
+try {
+    await sc.ready();
+    sc.socket.emit('message', {
+        '@context': sc.contextFor('dummy'),
+        type: 'echo',
+        actor: { id: 'test@dummy', type: 'person' },
+        object: { type: 'message', content: 'hello world' }
+    }, (ack) => {
+        if (ack?.error) {
+            console.error('Send failed:', ack.error);
+            return;
+        }
+        console.log('Ack:', ack);
+    });
+} catch (err) {
+    console.error('Sockethub failed to initialize:', err);
+}
 ```
 
 See the [Client Guide](../../docs/client-guide.md) for detailed usage and examples.
 
 ## API
 
-- **`new SockethubClient(socket)`** - Create client instance
-- **`sc.socket.emit(event, data, callback)`** - Send messages and inspect result
+- **`new SockethubClient(socket, options?)`** - Create client instance with optional init/queue settings
+- **`sc.ready(timeoutMs?)`** - Wait for initialization to complete
+- **`sc.isReady()`** - Check whether client is initialized
+- **`sc.getInitState()`** - Return `"idle" | "initializing" | "ready" | "init_error" | "closed"`
+- **`sc.contextFor(platform)`** - Build canonical `@context` for a platform from server registry
+- **`sc.getRegisteredPlatforms()`** - Get server-registered platforms/contexts
+- **`sc.getRegisteredBaseContexts()`** - Get AS2 and Sockethub base context URLs
+- **`sc.getPlatformSchema(platform, schemaType?)`** - Get platform JSON schema
+- **`sc.validateActivity(activity)`** - Validate against registered schemas
+- **`sc.socket.emit(event, data, callback)`** - Send messages (queued until ready)
 - **`sc.socket.on(event, handler)`** - Listen for messages
 - **`sc.clearCredentials()`** - Clear stored credentials
 - **`sc.ActivityStreams`** - ActivityStreams library
@@ -88,9 +125,9 @@ field as failure:
 ```javascript
 sc.socket.emit("message", {
     type: "echo",
-    context: "dummy",
+    "@context": sc.contextFor("dummy"),
     actor: { id: "test", type: "person" },
-    object: { type: "note", content: "Hello!" },
+    object: { type: "message", content: "Hello!" },
 }, (result) => {
     if (result?.error) {
         console.error("Sockethub request failed:", result.error);
@@ -123,7 +160,7 @@ sc.ActivityStreams.Object.create({
 
 const stream = sc.ActivityStreams.Stream({
     type: "join",
-    context: "irc",
+    "@context": sc.contextFor("irc"),
     actor: "mynick",
     target: { id: "#sockethub", type: "room" },
 });

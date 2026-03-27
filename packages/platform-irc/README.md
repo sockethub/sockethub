@@ -8,7 +8,7 @@ This platform provides IRC client functionality, allowing web applications to co
 IRC servers, join channels, send messages, and handle IRC events through ActivityStreams
 messages.
 
-## Implemented Verbs (`@type`)
+## Implemented Verbs (`type`)
 
 * **send** - Send messages to channels or users
 * **join** - Join IRC channels
@@ -22,16 +22,22 @@ messages.
 
 ```json
 {
-  "@type": "send",
-  "context": "irc",
+  "type": "send",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
   "actor": {
-    "@id": "mynick@irc.libera.chat"
+    "id": "mynick@irc.libera.chat",
+    "type": "person"
   },
   "target": {
-    "@id": "#general@irc.libera.chat"
+    "id": "#general@irc.libera.chat",
+    "type": "room"
   },
   "object": {
-    "@type": "Note",
+    "type": "message",
     "content": "Hello IRC channel!"
   }
 }
@@ -41,13 +47,19 @@ messages.
 
 ```json
 {
-  "@type": "join",
-  "context": "irc",
+  "type": "join",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
   "actor": {
-    "@id": "mynick@irc.libera.chat"
+    "id": "mynick@irc.libera.chat",
+    "type": "person"
   },
   "target": {
-    "@id": "#general@irc.libera.chat"
+    "id": "#general@irc.libera.chat",
+    "type": "room"
   }
 }
 ```
@@ -56,16 +68,22 @@ messages.
 
 ```json
 {
-  "@type": "send",
-  "context": "irc",
+  "type": "send",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
   "actor": {
-    "@id": "mynick@irc.libera.chat"
+    "id": "mynick@irc.libera.chat",
+    "type": "person"
   },
   "target": {
-    "@id": "friend@irc.libera.chat"
+    "id": "friend@irc.libera.chat",
+    "type": "person"
   },
   "object": {
-    "@type": "Note",
+    "type": "message",
     "content": "Hello friend!"
   }
 }
