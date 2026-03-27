@@ -137,7 +137,7 @@ sc.socket.emit('message', {
 sc.socket.emit('message', {
   '@context': sc.contextFor('feeds'),
   type: 'fetch',
-  actor: { id: 'https://example.com/feed.rss' }
+  actor: { id: 'https://example.com/feed.rss', type: 'feed' }
 });
 
 // Response is a Collection of Create activities with feed entries

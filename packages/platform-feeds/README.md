@@ -25,7 +25,8 @@ web applications to consume feed content.
     "https://sockethub.org/ns/context/platform/feeds/v1.jsonld"
   ],
   "actor": {
-    "id": "https://example.com/feed.xml"
+    "id": "https://example.com/feed.xml",
+    "type": "feed"
   }
 }
 ```
@@ -49,11 +50,13 @@ Returns an ActivityStreams Collection with feed entries:
       "type": "post",
       "actor": {
         "id": "https://example.com/feed.xml",
+        "type": "feed",
         "name": "Example Blog"
       },
       "object": {
+        "id": "https://example.com/post/1",
         "type": "article",
-        "name": "Blog Post Title",
+        "title": "Blog Post Title",
         "content": "Post content...",
         "url": "https://example.com/post/1",
         "published": "2023-01-01T12:00:00Z"

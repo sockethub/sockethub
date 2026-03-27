@@ -28,7 +28,8 @@ to clients through the Sockethub service.
     "https://sockethub.org/ns/context/platform/metadata/v1.jsonld"
   ],
   "actor": {
-    "id": "https://example.com/page-to-analyze"
+    "id": "https://example.com/page-to-analyze",
+    "type": "website"
   }
 }
 ```
@@ -47,6 +48,7 @@ The platform returns an ActivityStream object with extracted metadata:
   ],
   "actor": {
     "id": "https://example.com/page-to-analyze",
+    "type": "website",
     "name": "Example Site"
   },
   "object": {

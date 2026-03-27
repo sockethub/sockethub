@@ -31,13 +31,15 @@ updates through ActivityStreams messages.
     "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
   ],
   "actor": {
-    "id": "user@example.org"
+    "id": "user@example.org",
+    "type": "person"
   },
   "target": {
-    "id": "friend@jabber.net"
+    "id": "friend@jabber.net",
+    "type": "person"
   },
   "object": {
-    "type": "Note",
+    "type": "message",
     "content": "Hello from Sockethub!"
   }
 }
@@ -54,10 +56,12 @@ updates through ActivityStreams messages.
     "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
   ],
   "actor": {
-    "id": "user@example.org"
+    "id": "user@example.org",
+    "type": "person"
   },
   "target": {
-    "id": "room@conference.example.org"
+    "id": "room@conference.example.org",
+    "type": "room"
   }
 }
 ```
@@ -73,10 +77,12 @@ updates through ActivityStreams messages.
     "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
   ],
   "actor": {
-    "id": "user@example.org"
+    "id": "user@example.org",
+    "type": "person"
   },
   "target": {
-    "id": "friend@jabber.net"
+    "id": "friend@jabber.net",
+    "type": "person"
   }
 }
 ```

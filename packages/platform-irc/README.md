@@ -29,13 +29,15 @@ messages.
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
   ],
   "actor": {
-    "id": "mynick@irc.libera.chat"
+    "id": "mynick@irc.libera.chat",
+    "type": "person"
   },
   "target": {
-    "id": "#general@irc.libera.chat"
+    "id": "#general@irc.libera.chat",
+    "type": "room"
   },
   "object": {
-    "type": "Note",
+    "type": "message",
     "content": "Hello IRC channel!"
   }
 }
@@ -52,10 +54,12 @@ messages.
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
   ],
   "actor": {
-    "id": "mynick@irc.libera.chat"
+    "id": "mynick@irc.libera.chat",
+    "type": "person"
   },
   "target": {
-    "id": "#general@irc.libera.chat"
+    "id": "#general@irc.libera.chat",
+    "type": "room"
   }
 }
 ```
@@ -71,13 +75,15 @@ messages.
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
   ],
   "actor": {
-    "id": "mynick@irc.libera.chat"
+    "id": "mynick@irc.libera.chat",
+    "type": "person"
   },
   "target": {
-    "id": "friend@irc.libera.chat"
+    "id": "friend@irc.libera.chat",
+    "type": "person"
   },
   "object": {
-    "type": "Note",
+    "type": "message",
     "content": "Hello friend!"
   }
 }
