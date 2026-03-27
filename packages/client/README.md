@@ -57,7 +57,7 @@ If you are hosting the package files yourself and want ESM instead, serve
 import SockethubClient from '/dist/sockethub-client.js';
 import { io } from '/socket.io.esm.min.js';
 
-const sc = new SockethubClient(io('http://localhost:10550'));
+const sc = new SockethubClient(io('http://localhost:10550', { path: '/sockethub' }));
 </script>
 ```
 
