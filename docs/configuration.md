@@ -235,19 +235,15 @@ curl -N \
 JSON
 ```
 
-Example response (streamed NDJSON, actual payloads depend on the platform):
+Response format: NDJSON (newline-delimited JSON). The endpoint streams one
+complete JSON object per line. If you send an array of actions, you receive one
+line per action result.
 
-```json
-{
-  "type": "error",
-  "context": "error",
-  "actor": {
-    "type": "Application",
-    "name": "sockethub-server"
-  },
-  "error": "invalid credentials",
-  "requestId": "12345"
-}
+Example streamed response:
+
+```ndjson
+{"type":"echo","context":"dummy","object":{"type":"message","content":"ok"}}
+{"type":"error","context":"error","error":"invalid credentials"}
 ```
 
 Replay results after an interrupted request:

@@ -252,7 +252,10 @@ async function waitForRedisReady(
     if (candidate.status === "ready") {
         return;
     }
-    if (candidate.status === "wait" && typeof candidate.connect === "function") {
+    if (
+        candidate.status === "wait" &&
+        typeof candidate.connect === "function"
+    ) {
         await candidate.connect();
         return;
     }
