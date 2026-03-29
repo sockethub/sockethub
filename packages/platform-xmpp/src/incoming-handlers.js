@@ -274,19 +274,26 @@ export class IncomingHandlers {
             query &&
             query.attrs.xmlns === "http://jabber.org/protocol/disco#info"
         ) {
-            // Extract identity information
+            // Extract identity information (XEP-0030 §4.1: category and type are required, name is optional)
             const identity = query.getChild("identity");
             const identityObj = identity
                 ? {
                       category: identity.attrs.category,
                       type: identity.attrs.type,
-                      name: identity.attrs.name,
+                      ...(identity.attrs.name && {
+                          name: identity.attrs.name,
+                      }),
                   }
-                : null;
+                : undefined;
 
             // Extract features
             const features = query.getChildren("feature");
             const featureList = features.map((feature) => feature.attrs.var);
+
+            const object = { type: "room-info", features: featureList };
+            if (identityObj) {
+                object.identity = identityObj;
+            }
 
             this.session.sendToClient({
                 "@context": XMPP_CONTEXT,
@@ -300,11 +307,7 @@ export class IncomingHandlers {
                     id: stanza.attrs.to,
                     type: "person",
                 },
-                object: {
-                    type: "room-info",
-                    features: featureList,
-                    identity: identityObj,
-                },
+                object,
             });
         }
     }

@@ -182,6 +182,8 @@ export const ObjectTypesSchema = {
             },
             identity: {
                 type: "object",
+                required: ["category", "type"],
+                additionalProperties: false,
                 properties: {
                     category: {
                         type: "string",

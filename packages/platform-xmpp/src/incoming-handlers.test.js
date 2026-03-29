@@ -40,6 +40,52 @@ describe("Incoming handlers", () => {
         });
     });
 
+    describe("Room info edge cases", () => {
+        let ih, sendToClient;
+
+        beforeEach(() => {
+            if (!schemas.getPlatformSchema("xmpp/messages")) {
+                schemas.addPlatformSchema(
+                    PlatformSchema.messages,
+                    "xmpp/messages",
+                );
+            }
+            schemas.addPlatformContext("xmpp", PlatformSchema.contextUrl);
+            sendToClient = sinon.fake();
+            ih = new IncomingHandlers({
+                sendToClient: sendToClient,
+                log: { debug: sinon.fake() },
+            });
+        });
+
+        it("ignores IQ result with non-room_info ID prefix", () => {
+            const stanza = parse(
+                `<iq from='room@conference.example.org' to='user@example.org' type='result' id='muc_id'>
+                  <query xmlns='http://jabber.org/protocol/disco#info'>
+                    <identity category='conference' type='text' name='Test'/>
+                    <feature var='http://jabber.org/protocol/muc'/>
+                  </query>
+                </iq>`,
+            );
+            ih.stanza(stanza);
+            const call = sendToClient.getCall(0);
+            // Should be handled as room attendance, not room-info
+            expect(call.args[0].type).not.toEqual("room-info");
+        });
+
+        it("ignores disco#info response with wrong xmlns", () => {
+            const stanza = parse(
+                `<iq from='room@conference.example.org' to='user@example.org' type='result' id='room_info_999'>
+                  <query xmlns='http://jabber.org/protocol/disco#items'>
+                    <item jid='room@conference.example.org/nick'/>
+                  </query>
+                </iq>`,
+            );
+            ih.stanza(stanza);
+            sinon.assert.notCalled(sendToClient);
+        });
+    });
+
     describe("Error handling edge cases", () => {
         it("close() should handle undefined session gracefully", () => {
             const ih = new IncomingHandlers();

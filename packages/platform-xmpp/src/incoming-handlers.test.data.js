@@ -350,4 +350,66 @@ export const stanzas = [
             },
         },
     ],
+    [
+        "room info response without identity",
+        `<iq from='anonymous@conference.jabber.org' to='jimmy@kosmos.org/pidgin' type='result' id='room_info_789'>
+          <query xmlns='http://jabber.org/protocol/disco#info'>
+            <feature var='http://jabber.org/protocol/muc'/>
+          </query>
+        </iq>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "room-info",
+            actor: {
+                id: "anonymous@conference.jabber.org",
+                type: "room",
+                name: "anonymous@conference.jabber.org",
+            },
+            target: {
+                id: "jimmy@kosmos.org/pidgin",
+                type: "person",
+            },
+            object: {
+                type: "room-info",
+                features: ["http://jabber.org/protocol/muc"],
+            },
+        },
+    ],
+    [
+        "room info response with empty features",
+        `<iq from='empty@conference.jabber.org' to='jimmy@kosmos.org/pidgin' type='result' id='room_info_000'>
+          <query xmlns='http://jabber.org/protocol/disco#info'>
+            <identity category='conference' type='text'/>
+          </query>
+        </iq>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "room-info",
+            actor: {
+                id: "empty@conference.jabber.org",
+                type: "room",
+                name: "empty@conference.jabber.org",
+            },
+            target: {
+                id: "jimmy@kosmos.org/pidgin",
+                type: "person",
+            },
+            object: {
+                type: "room-info",
+                features: [],
+                identity: {
+                    category: "conference",
+                    type: "text",
+                },
+            },
+        },
+    ],
 ];

@@ -799,7 +799,8 @@ export default class XMPP {
                     }),
                 ),
             )
-            .then(done);
+            .then(done)
+            .catch(done);
     }
 
     /**
