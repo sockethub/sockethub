@@ -83,33 +83,12 @@ const user = ActivityStreams.Object.create({
 // Create an activity that references it
 const activity = ActivityStreams.Stream({
   type: "send",
-  context: "irc",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
   actor: "user@example.com",  // automatically expands to full object
-  object: { type: "message", content: "Hello!" }
-});
-```
-
-### With Sockethub Client
-
-If you're using the Sockethub client, this library is already bundled and available:
-
-```javascript
-import SockethubClient from '@sockethub/client';
-
-const socket = io('http://localhost:10550');
-const sockethubClient = new SockethubClient(socket);
-
-// Access ActivityStreams through the client
-const user = sockethubClient.ActivityStreams.Object.create({
-  id: "user@example.com", 
-  type: "person",
-  name: "John Doe"
-});
-
-const activity = sockethubClient.ActivityStreams.Stream({
-  type: "send",
-  context: "irc",
-  actor: "user@example.com",
   object: { type: "message", content: "Hello!" }
 });
 ```

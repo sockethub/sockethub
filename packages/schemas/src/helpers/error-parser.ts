@@ -1,6 +1,6 @@
 import type { ErrorObject } from "ajv";
 import type { ActivityObject, ActivityStream } from "../types.js";
-import { ObjectTypesList } from "./objects.js";
+import { ActorTypesList, ObjectTypesList, TargetTypesList } from "./objects.js";
 
 export interface ValidationErrorOptions {
     excludeTypes?: Array<string>;
@@ -70,11 +70,20 @@ function getPartsCount(error: ErrorObject, types: TypeBreakdown): number {
     return parts.length;
 }
 
-function getTypes(msg: ActivityStream): TypeBreakdown {
+function getTypes(msg: ActivityStream | ActivityObject): TypeBreakdown {
+    if (!Array.isArray((msg as ActivityStream)["@context"])) {
+        return {
+            actor: [],
+            target: [],
+            object: getTypeList(msg),
+        };
+    }
+
+    const stream = msg as ActivityStream;
     return {
-        actor: getTypeList(msg.actor),
-        target: getTypeList(msg.target),
-        object: getTypeList(msg.context ? msg.object : msg),
+        actor: getTypeList(stream.actor),
+        target: getTypeList(stream.target),
+        object: stream.object ? getTypeList(stream.object) : [],
     };
 }
 
@@ -86,7 +95,7 @@ function getTypes(msg: ActivityStream): TypeBreakdown {
  * @returns {string}
  */
 export default function getErrorMessage(
-    msg: ActivityStream,
+    msg: ActivityStream | ActivityObject,
     errors: Array<ErrorObject>,
     options?: ValidationErrorOptions,
 ): string {
@@ -126,9 +135,16 @@ function composeFinalError(
     // try to build a list of valid types
     let msg: string;
     if (error.keyword === "oneOf") {
-        const filteredTypes = filterTypeList(ObjectTypesList, options);
+        const instanceRoot = error.instancePath.split("/")[1];
+        const pathScopedTypes =
+            instanceRoot === "actor"
+                ? ActorTypesList
+                : instanceRoot === "target"
+                  ? TargetTypesList
+                  : ObjectTypesList;
+        const filteredTypes = filterTypeList(pathScopedTypes, options);
         const typesList =
-            filteredTypes.length > 0 ? filteredTypes : ObjectTypesList;
+            filteredTypes.length > 0 ? filteredTypes : pathScopedTypes;
         msg =
             `${error.instancePath}: ${error.message}: ` +
             `${typesList.join(", ")}`;

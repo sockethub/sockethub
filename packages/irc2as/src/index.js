@@ -60,6 +60,12 @@ export class IrcToActivityStreams {
     constructor(cfg) {
         const config = cfg || {};
         this.server = config.server;
+        if (!Array.isArray(config.contexts) || config.contexts.length === 0) {
+            throw new Error(
+                "IrcToActivityStreams requires a non-empty contexts array",
+            );
+        }
+        this.contexts = [...config.contexts];
         this.events = new events.EventEmitter();
         this.__buffer = {};
         this.__buffer[NAMES] = {};
@@ -111,7 +117,7 @@ export class IrcToActivityStreams {
         msg,
         incoming,
     ) {
-        const ase = new ASEmitter(this.events, this.server);
+        const ase = new ASEmitter(this.events, this.server, this.contexts);
         let nick;
         let type;
         let role;
@@ -173,7 +179,7 @@ export class IrcToActivityStreams {
             case MOTD: // MOTD
                 if (!this.__buffer[MOTD]) {
                     this.__buffer[MOTD] = {
-                        context: "irc",
+                        "@context": this.contexts,
                         type: "update",
                         actor: {
                             type: "service",
@@ -249,7 +255,7 @@ export class IrcToActivityStreams {
             /** */
             case TOPIC_IS: // topic currently set to
                 this.__buffer[TOPIC_IS] = {
-                    context: "irc",
+                    "@context": this.contexts,
                     type: "update",
                     actor: undefined,
                     target: {

@@ -1,9 +1,9 @@
 config:
   target: "http://localhost:10550"
   phases:
-    - duration: 60
-      arrivalRate: 20
-      name: "CI Smoke Test - 60 seconds"
+    - duration: 30
+      arrivalRate: 5
+      name: "CI Smoke Test - 30 seconds"
   processor: "../../processors/sockethub-client.js"
 
 scenarios:

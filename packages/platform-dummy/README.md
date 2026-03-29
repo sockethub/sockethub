@@ -8,7 +8,7 @@ This platform provides basic testing functionality for Sockethub development. It
 simple verbs that can be used to test ActivityStreams message flow, error handling, and
 platform communication without requiring external service connections.
 
-## Implemented Verbs (`@type`)
+## Implemented Verbs (`type`)
 
 * **echo** - Returns the received message unchanged
 * **fail** - Intentionally fails with an error message
@@ -21,12 +21,18 @@ platform communication without requiring external service connections.
 
 ```json
 {
-  "@type": "echo",
-  "context": "dummy",
+  "type": "echo",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/dummy/v1.jsonld"
+  ],
   "actor": {
-    "@id": "test-user"
+    "id": "test-user",
+    "type": "person"
   },
   "object": {
+    "type": "message",
     "content": "Hello World"
   }
 }
@@ -36,12 +42,22 @@ platform communication without requiring external service connections.
 
 ```json
 {
-  "@type": "echo",
-  "context": "dummy",
+  "type": "echo",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/dummy/v1.jsonld"
+  ],
   "actor": {
-    "@id": "test-user"
+    "id": "dummy",
+    "type": "platform"
+  },
+  "target": {
+    "id": "test-user",
+    "type": "person"
   },
   "object": {
+    "type": "message",
     "content": "Hello World"
   }
 }

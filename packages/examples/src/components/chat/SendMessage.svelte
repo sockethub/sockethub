@@ -2,7 +2,7 @@
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
 import SockethubButton from "$components/SockethubButton.svelte";
-import { send } from "$lib/sockethub";
+import { contextFor, send } from "$lib/sockethub";
 import type { ActorData } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
 
@@ -27,7 +27,7 @@ async function sendMessage() {
 
     try {
         await send({
-            context: context,
+            "@context": contextFor(context),
             type: "send",
             actor: actor.id,
             object: {

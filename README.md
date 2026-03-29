@@ -23,26 +23,26 @@ Sockethub handles connections, credentials, and protocol translation.
 
 Sockethub uses ActivityStreams JSON for all platforms. Your app sends the same
 shape for IRC, XMPP, feeds, and more, and receives the same shape back. Only
-`context` changes.
+the `@context` changes.
 
 ### Side-by-side Examples
 
 <picture>
   <source
     media="(prefers-color-scheme: dark)"
-    srcset="https://sockethub.org/res/img/activitystreams-send-receive.dark.svg"
+    srcset="docs/img/activitystreams-send-receive.dark.svg"
   />
   <source
     media="(prefers-color-scheme: light)"
-    srcset="https://sockethub.org/res/img/activitystreams-send-receive.svg"
+    srcset="docs/img/activitystreams-send-receive.svg"
   />
   <img
     alt="ActivityStreams send/receive examples"
-    src="https://sockethub.org/res/img/activitystreams-send-receive.svg"
+    src="docs/img/activitystreams-send-receive.svg"
   />
 </picture>
 
-The `context` selects a platform; the rest stays consistent.
+The `@context` selects a platform; the rest stays consistent.
 
 ## About
 

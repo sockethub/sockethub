@@ -3,7 +3,7 @@ import ActivityActor from "$components/ActivityActor.svelte";
 import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
-import { send } from "$lib/sockethub";
+import { contextFor, send } from "$lib/sockethub";
 import { writable } from "svelte/store";
 
 const sockethubState = writable({
@@ -18,7 +18,7 @@ let actor = $derived({
 function getASObj(type: string) {
     return {
         // Platform context - routes to Sockethub's metadata platform
-        context: "metadata",
+        "@context": contextFor("metadata"),
         // Activity type - "fetch" tells the platform to extract metadata
         type: type,
         // Actor - the website URL to analyze (represented as a "website" actor)

@@ -16,6 +16,43 @@ let hasLoggedInit = false;
 let loggerContext = "";
 let loggerNamespaceStore = new WeakMap<Logger, string>();
 
+// Keep log formatting resilient when metadata contains errors, bigints, or cycles.
+function safeStringify(value: unknown): string {
+    try {
+        const parents: object[] = [];
+        return JSON.stringify(value, function (_key, innerValue) {
+            if (innerValue instanceof Error) {
+                return {
+                    name: innerValue.name,
+                    message: innerValue.message,
+                    stack: innerValue.stack,
+                };
+            }
+            if (typeof innerValue === "bigint") {
+                return innerValue.toString();
+            }
+            if (typeof innerValue === "object" && innerValue !== null) {
+                // Only treat values on the current traversal path as circular.
+                // Shared references in sibling branches should serialize normally.
+                const parent = this as unknown;
+                while (
+                    parents.length > 0 &&
+                    parents[parents.length - 1] !== parent
+                ) {
+                    parents.pop();
+                }
+                if (parents.includes(innerValue)) {
+                    return "[Circular]";
+                }
+                parents.push(innerValue);
+            }
+            return innerValue;
+        });
+    } catch {
+        return '"[Unserializable]"';
+    }
+}
+
 /**
  * Initialize the logger system with global configuration.
  *
@@ -174,7 +211,7 @@ export function createLogger(
                       const ns = namespace ? `${namespace} ` : "";
                       const metaStr =
                           Object.keys(meta).length > 0
-                              ? ` ${JSON.stringify(meta)}`
+                              ? ` ${safeStringify(meta)}`
                               : "";
                       return `${level}: ${ns}${message}${metaStr}`;
                   },
@@ -188,7 +225,7 @@ export function createLogger(
                       const ns = namespace ? `${namespace} ` : "";
                       const metaStr =
                           Object.keys(meta).length > 0
-                              ? ` ${JSON.stringify(meta)}`
+                              ? ` ${safeStringify(meta)}`
                               : "";
                       return `${timestamp} ${level}: ${ns}${message}${metaStr}`;
                   },

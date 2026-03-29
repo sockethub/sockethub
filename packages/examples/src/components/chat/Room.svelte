@@ -2,7 +2,7 @@
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
 import SockethubButton from "$components/SockethubButton.svelte";
-import { send } from "$lib/sockethub";
+import { contextFor, send } from "$lib/sockethub";
 import type { ActorData } from "$lib/sockethub";
 import type { AnyActivityStream } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
@@ -22,7 +22,7 @@ async function joinRoom(): Promise<void> {
     joining = true;
     return await send({
         // Platform context - routes to the appropriate chat platform (irc, xmpp)
-        context: context,
+        "@context": contextFor(context),
         // Activity type - "join" means join a chat room/channel
         type: "join",
         // Actor - who is joining (the connected user)

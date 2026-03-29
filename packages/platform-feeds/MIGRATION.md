@@ -5,9 +5,9 @@
 ### Before (Array)
 
 ```javascript
-// Response was an array
+// Response was an array (@context omitted for brevity)
 [
-  { context: "feeds", type: "post", actor: {...}, object: {...} },
+  { type: "post", actor: {...}, object: {...} },
   // ... more items
 ]
 ```
@@ -15,14 +15,13 @@
 ### After (Collection)
 
 ```javascript
-// Response is now a Collection object
+// Response is now a Collection object (@context omitted for brevity)
 {
-  context: "feeds",
-  type: "collection", 
+  type: "collection",
   summary: "Feed Name",
   totalItems: 20,
   items: [
-    { context: "feeds", type: "post", actor: {...}, object: {...} },
+    { type: "post", actor: {...}, object: {...} },
     // ... more items
   ]
 }

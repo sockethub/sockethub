@@ -1,5 +1,6 @@
 <script module lang="ts">
 import type { AnyActivityStream } from "$lib/sockethub";
+import { platformIdFromContext } from "$lib/sockethub";
 import { get, writable } from "svelte/store";
 
 const messages = writable([] as [string, string | undefined][]);
@@ -27,7 +28,7 @@ const recentMessages = new Map<string, number>();
 export function displayMessage(m: AnyActivityStream, isResponse = false) {
     console.log("displayMessage called:", {
         type: m.type,
-        context: m.context,
+        platform: platformIdFromContext(m["@context"]),
         isResponse,
         actor: m.actor,
         content: m.object?.content,
@@ -67,7 +68,7 @@ export function displayMessage(m: AnyActivityStream, isResponse = false) {
             actorName,
             content,
             isResponse,
-            context: m.context,
+            platform: platformIdFromContext(m["@context"]),
         });
     }
 }
