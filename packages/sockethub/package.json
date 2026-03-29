@@ -1,7 +1,7 @@
 {
   "name": "sockethub",
   "description": "A polyglot messaging service",
-  "version": "5.0.0-alpha.11",
+  "version": "5.0.0-alpha.12",
   "private": false,
   "author": "Nick Jennings <nick@silverbucket.net>",
   "license": "LGPL-3.0+",
@@ -37,11 +37,11 @@
   },
   "homepage": "https://sockethub.org",
   "dependencies": {
-    "@sockethub/platform-dummy": "^3.0.0-alpha.11",
-    "@sockethub/platform-feeds": "^4.0.0-alpha.11",
-    "@sockethub/platform-irc": "^4.0.0-alpha.11",
-    "@sockethub/platform-xmpp": "^5.0.0-alpha.11",
-    "@sockethub/server": "^5.0.0-alpha.11"
+    "@sockethub/platform-dummy": "^3.0.0-alpha.12",
+    "@sockethub/platform-feeds": "^4.0.0-alpha.12",
+    "@sockethub/platform-irc": "^4.0.0-alpha.12",
+    "@sockethub/platform-xmpp": "^5.0.0-alpha.12",
+    "@sockethub/server": "^5.0.0-alpha.12"
   },
   "scripts": {
     "build": "bun build.js",
@@ -52,5 +52,5 @@
     "start:verbose": "bun run ./bin/sockethub",
     "start:quiet": "bun run ./bin/sockethub"
   },
-  "gitHead": "f7fb4fa2599da1def438c710ce81a41b6cfee8a7"
+  "gitHead": "cc495a5fcf7ce19a8f328a34bbc8cd1439bb67ce"
 }
