@@ -180,19 +180,22 @@ export const ObjectTypesSchema = {
                     type: "string",
                 },
             },
-            identity: {
-                type: "object",
-                required: ["category", "type"],
-                additionalProperties: false,
-                properties: {
-                    category: {
-                        type: "string",
-                    },
-                    type: {
-                        type: "string",
-                    },
-                    name: {
-                        type: "string",
+            identities: {
+                type: "array",
+                items: {
+                    type: "object",
+                    required: ["category", "type"],
+                    additionalProperties: false,
+                    properties: {
+                        category: {
+                            type: "string",
+                        },
+                        type: {
+                            type: "string",
+                        },
+                        name: {
+                            type: "string",
+                        },
                     },
                 },
             },

@@ -58,6 +58,20 @@ describe("Incoming handlers", () => {
             });
         });
 
+        it("handles IQ error response for room-info query", () => {
+            const stanza = parse(
+                `<iq from='noroom@conference.example.org' to='user@example.org' type='error' id='room_info_err1'>
+                  <error type='cancel'><item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>
+                </iq>`,
+            );
+            ih.stanza(stanza);
+            sinon.assert.calledOnce(sendToClient);
+            const arg = sendToClient.getCall(0).args[0];
+            expect(arg.type).toEqual("room-info");
+            expect(arg.error).toBeDefined();
+            expect(arg.actor.id).toEqual("noroom@conference.example.org");
+        });
+
         it("ignores IQ result with non-room_info ID prefix", () => {
             const stanza = parse(
                 `<iq from='room@conference.example.org' to='user@example.org' type='result' id='muc_id'>

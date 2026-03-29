@@ -342,11 +342,13 @@ export const stanzas = [
                     "muc_passwordprotected",
                     "muc_persistent",
                 ],
-                identity: {
-                    category: "conference",
-                    type: "text",
-                    name: "Kosmos Development Room",
-                },
+                identities: [
+                    {
+                        category: "conference",
+                        type: "text",
+                        name: "Kosmos Development Room",
+                    },
+                ],
             },
         },
     ],
@@ -405,10 +407,55 @@ export const stanzas = [
             object: {
                 type: "room-info",
                 features: [],
-                identity: {
-                    category: "conference",
-                    type: "text",
-                },
+                identities: [
+                    {
+                        category: "conference",
+                        type: "text",
+                    },
+                ],
+            },
+        },
+    ],
+    [
+        "room info response with multiple identities",
+        `<iq from='multilang@conference.jabber.org' to='jimmy@kosmos.org/pidgin' type='result' id='room_info_multi'>
+          <query xmlns='http://jabber.org/protocol/disco#info'>
+            <identity category='conference' type='text' name='Dev Room'/>
+            <identity category='conference' type='text' name='Entwicklerraum'/>
+            <feature var='http://jabber.org/protocol/muc'/>
+          </query>
+        </iq>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "room-info",
+            actor: {
+                id: "multilang@conference.jabber.org",
+                type: "room",
+                name: "Dev Room",
+            },
+            target: {
+                id: "jimmy@kosmos.org/pidgin",
+                type: "person",
+            },
+            object: {
+                type: "room-info",
+                features: ["http://jabber.org/protocol/muc"],
+                identities: [
+                    {
+                        category: "conference",
+                        type: "text",
+                        name: "Dev Room",
+                    },
+                    {
+                        category: "conference",
+                        type: "text",
+                        name: "Entwicklerraum",
+                    },
+                ],
             },
         },
     ],

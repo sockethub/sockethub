@@ -734,13 +734,17 @@ export default class XMPP {
     /**
      * Query room information using service discovery (disco#info).
      *
+     * Sends the IQ query and calls done() once the query is dispatched.
+     * The room info response arrives asynchronously as a separate 'room-info'
+     * event delivered via sendToClient.
+     *
      * @param {object} job activity streams object
-     * @param {object} done callback when job is done
+     * @param {object} done callback when query is sent (not when response arrives)
      *
      * @example
      *
+     * // Request:
      * {
-     *   context: 'xmpp',
      *   type: 'room-info',
      *   actor: {
      *     id: 'jimmy@kosmos.org/pidgin',
@@ -752,9 +756,8 @@ export default class XMPP {
      *   }
      * }
      *
-     * // Response:
+     * // Async response (delivered via sendToClient):
      * {
-     *   context: 'xmpp',
      *   type: 'room-info',
      *   actor: {
      *     id: 'kosmos@kosmos.chat',
@@ -768,11 +771,11 @@ export default class XMPP {
      *   object: {
      *     type: 'room-info',
      *     features: ['http://jabber.org/protocol/muc', 'muc_passwordprotected'],
-     *     identity: {
+     *     identities: [{
      *       category: 'conference',
      *       type: 'text',
      *       name: 'Room Display Name'
-     *     }
+     *     }]
      *   }
      * }
      */
