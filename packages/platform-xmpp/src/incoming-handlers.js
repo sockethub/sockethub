@@ -338,10 +338,7 @@ export class IncomingHandlers {
     stanza(stanza) {
         // console.log("incoming stanza ", stanza);
         if (stanza.attrs.type === "error") {
-            if (
-                stanza.is("iq") &&
-                stanza.attrs.id?.startsWith("room_info_")
-            ) {
+            if (stanza.is("iq") && stanza.attrs.id?.startsWith("room_info_")) {
                 return this.notifyRoomInfoError(stanza);
             }
             this.notifyError(stanza);
