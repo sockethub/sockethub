@@ -289,7 +289,7 @@ export class IncomingHandlers {
             const featureList = features.map((feature) => feature.attrs.var);
 
             this.session.sendToClient({
-                context: "xmpp",
+                "@context": XMPP_CONTEXT,
                 type: "room-info",
                 actor: {
                     id: stanza.attrs.from,
