@@ -56,9 +56,34 @@ export async function resetSharedCredentialsRedisConnection(): Promise<void> {
 export interface CredentialsStoreInterface {
     get(
         actor: string,
-        credentialsHash: string | undefined,
+        credentialsHash?: string,
+        options?: CredentialsValidationOptions,
     ): Promise<CredentialsObject | undefined>;
     save(actor: string, creds: CredentialsObject): Promise<number>;
+}
+
+export interface CredentialsValidationOptions {
+    /**
+     * Enables stricter checks used only when trying to attach a second socket
+     * session to an already-running actor-scoped platform instance.
+     */
+    validateSessionShare?: boolean;
+}
+
+export class CredentialsMismatchError extends Error {
+    constructor(message: string) {
+        super(message);
+        // Keep the legacy "Error: ..." string shape in existing callers/tests.
+        this.name = "Error";
+    }
+}
+
+export class CredentialsNotShareableError extends Error {
+    constructor(message: string) {
+        super(message);
+        // Keep the legacy "Error: ..." string shape in existing callers/tests.
+        this.name = "Error";
+    }
 }
 
 export async function verifySecureStore(config: RedisConfig): Promise<void> {
@@ -159,7 +184,8 @@ export class CredentialsStore implements CredentialsStoreInterface {
      */
     async get(
         actor: string,
-        credentialsHash: string | undefined,
+        credentialsHash?: string,
+        options: CredentialsValidationOptions = {},
     ): Promise<CredentialsObject> {
         this.log.debug(`get credentials for ${actor}`);
         if (!this.store.isConnected) {
@@ -169,10 +195,38 @@ export class CredentialsStore implements CredentialsStoreInterface {
         if (!credentials) {
             throw new Error(`credentials not found for ${actor}`);
         }
+        if (
+            !credentials.object ||
+            typeof credentials.object !== "object" ||
+            Array.isArray(credentials.object) ||
+            Object.keys(credentials.object).length === 0
+        ) {
+            throw new CredentialsMismatchError(
+                `invalid credentials for ${actor}`,
+            );
+        }
 
         if (credentialsHash) {
+            // If a hash is provided, credentials must match exactly. This blocks
+            // "same actor, different credentials" reuse attempts.
             if (credentialsHash !== this.objectHash(credentials.object)) {
-                throw new Error(`invalid credentials for ${actor}`);
+                throw new CredentialsMismatchError(
+                    `invalid credentials for ${actor}`,
+                );
+            }
+        }
+
+        if (options.validateSessionShare) {
+            const password = credentials.object.password;
+            const hasPassword =
+                typeof password === "string" && password.length > 0;
+
+            // Anonymous credentials are valid for a single session but must not
+            // be used to attach additional sessions to the same actor instance.
+            if (!hasPassword) {
+                throw new CredentialsNotShareableError(
+                    "username already in use",
+                );
             }
         }
         return credentials;
