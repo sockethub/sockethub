@@ -27,6 +27,25 @@ services:
         entrypoint: [ "/bin/bash", "/etc/prosody/start.sh" ]
         networks:
             - sockethub-net
+    ergo:
+        image: ghcr.io/ergochat/ergo:stable
+        ports:
+            - "6667:6667"
+        volumes:
+            - ./integration/ergo:/ircd-config:ro
+        entrypoint: [ "/bin/sh", "/ircd-config/bootstrap.sh" ]
+        networks:
+            - sockethub-net
+        depends_on:
+            - mock-oauth
+    mock-oauth:
+        image: node:22-alpine
+        working_dir: /app
+        volumes:
+            - ./integration/mock-oauth:/app:ro
+        command: [ "node", "server.js" ]
+        networks:
+            - sockethub-net
 
 networks:
     sockethub-net:

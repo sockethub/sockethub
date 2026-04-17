@@ -251,3 +251,167 @@ export function sendXMPPMessage(sh, jid, room, content) {
         return msg;
     });
 }
+
+// --- IRC helpers ---
+//
+// platform-irc has a few non-obvious constraints these helpers encode:
+//
+// 1. The credentials schema uses `additionalProperties: false`, so the object
+//    must contain only fields the schema knows.
+// 2. The platform defaults `secure` to `true`, which switches the transport
+//    to TLS on port 6697. The Ergo test container listens plaintext on 6667,
+//    so we always pass `secure: false`.
+// 3. `actor.name` is used as a PING token inside the platform's job queue —
+//    callers must pass an IRC-valid nick (no spaces, etc).
+
+export function setIRCCredentials(
+    sh,
+    actorId,
+    nick = config.irc.testUser.nick,
+    {
+        password = config.irc.testUser.password,
+        token,
+        saslMechanism,
+        sasl = password !== undefined || token !== undefined,
+        port = Number(config.irc.port),
+        secure = false,
+        server = config.irc.host,
+    } = {},
+) {
+    const credentialsObject = {
+        type: "credentials",
+        nick,
+        server,
+        port,
+        secure,
+        sasl,
+    };
+    if (token !== undefined) {
+        credentialsObject.token = token;
+    } else if (password !== undefined) {
+        credentialsObject.password = password;
+    }
+    if (saslMechanism !== undefined) {
+        credentialsObject.saslMechanism = saslMechanism;
+    }
+    const creds = {
+        actor: { id: actorId, type: "person", name: nick },
+        "@context": ctx("irc"),
+        type: "credentials",
+        object: credentialsObject,
+    };
+    console.log("sending IRC credentials: ", creds);
+    return emitWithAck(sh.socket, "credentials", creds, {
+        label: "irc credentials",
+    }).then((response) => {
+        if (response?.error) {
+            throw new Error(
+                `IRC credentials failed for ${actorId}: ${response.error}`,
+            );
+        }
+    });
+}
+
+export function connectIRC(sh, actorId, nick) {
+    return emitWithAck(
+        sh.socket,
+        "message",
+        {
+            type: "connect",
+            actor: { id: actorId, type: "person", name: nick },
+            "@context": ctx("irc"),
+        },
+        {
+            timeout: config.timeouts.connect,
+            label: "irc connect",
+        },
+    ).then((msg) => {
+        if (msg?.error) {
+            throw new Error(`IRC connect failed for ${actorId}: ${msg.error}`);
+        }
+        return msg;
+    });
+}
+
+export function joinIRCChannel(
+    sh,
+    actorId,
+    nick,
+    channel = config.irc.channel,
+) {
+    return emitWithAck(
+        sh.socket,
+        "message",
+        {
+            type: "join",
+            actor: { id: actorId, type: "person", name: nick },
+            "@context": ctx("irc"),
+            target: {
+                type: "room",
+                id: channel,
+                name: channel,
+            },
+        },
+        { label: "irc join" },
+    ).then((msg) => {
+        if (msg?.error) {
+            throw new Error(`IRC join failed for ${actorId}: ${msg.error}`);
+        }
+        return msg;
+    });
+}
+
+export function sendIRCMessage(sh, actorId, nick, channel, content) {
+    return emitWithAck(
+        sh.socket,
+        "message",
+        {
+            type: "send",
+            actor: { id: actorId, type: "person", name: nick },
+            "@context": ctx("irc"),
+            object: {
+                type: "message",
+                content,
+            },
+            target: {
+                type: "room",
+                id: channel,
+                name: channel,
+            },
+        },
+        { label: "irc send" },
+    ).then((msg) => {
+        if (msg?.error) {
+            throw new Error(`IRC send failed for ${actorId}: ${msg.error}`);
+        }
+        return msg;
+    });
+}
+
+export function partIRCChannel(
+    sh,
+    actorId,
+    nick,
+    channel = config.irc.channel,
+) {
+    return emitWithAck(
+        sh.socket,
+        "message",
+        {
+            type: "leave",
+            actor: { id: actorId, type: "person", name: nick },
+            "@context": ctx("irc"),
+            target: {
+                type: "room",
+                id: channel,
+                name: channel,
+            },
+        },
+        { label: "irc leave" },
+    ).then((msg) => {
+        if (msg?.error) {
+            throw new Error(`IRC leave failed for ${actorId}: ${msg.error}`);
+        }
+        return msg;
+    });
+}

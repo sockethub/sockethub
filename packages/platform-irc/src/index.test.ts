@@ -159,6 +159,76 @@ describe("Initialize IRC Platform", () => {
                 "[irc] /object: must NOT have additional properties: host",
             );
         });
+
+        it("valid credentials with OAUTHBEARER token", () => {
+            expect(
+                validateCredentials({
+                    "@context": IRC_CONTEXT,
+                    type: "credentials",
+                    actor,
+                    object: {
+                        type: "credentials",
+                        nick: "testingham",
+                        server: "irc.example.com",
+                        saslMechanism: "OAUTHBEARER",
+                        token: "oauth-access-token",
+                    },
+                }),
+            ).toEqual("");
+        });
+
+        it("valid credentials with PLAIN mechanism", () => {
+            expect(
+                validateCredentials({
+                    "@context": IRC_CONTEXT,
+                    type: "credentials",
+                    actor,
+                    object: {
+                        type: "credentials",
+                        nick: "testingham",
+                        server: "irc.example.com",
+                        saslMechanism: "PLAIN",
+                        password: "secret",
+                    },
+                }),
+            ).toEqual("");
+        });
+
+        it("rejects unknown saslMechanism", () => {
+            expect(
+                validateCredentials({
+                    "@context": IRC_CONTEXT,
+                    type: "credentials",
+                    actor,
+                    object: {
+                        type: "credentials",
+                        nick: "testingham",
+                        server: "irc.example.com",
+                        // @ts-expect-error test invalid params
+                        saslMechanism: "SCRAM-SHA-256",
+                    },
+                }),
+            ).toEqual(
+                "[irc] /object/saslMechanism: must be equal to one of the allowed values",
+            );
+        });
+
+        it("rejects both password and token set", () => {
+            expect(
+                validateCredentials({
+                    "@context": IRC_CONTEXT,
+                    type: "credentials",
+                    actor,
+                    object: {
+                        type: "credentials",
+                        nick: "testingham",
+                        server: "irc.example.com",
+                        password: "secret",
+                        token: "oauth-access-token",
+                    },
+                }),
+            ).toEqual("[irc] /object: must NOT be valid");
+        });
     });
 
     describe("platform type methods", () => {
