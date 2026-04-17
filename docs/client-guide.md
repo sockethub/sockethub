@@ -215,6 +215,27 @@ sc.socket.emit('message', {
 });
 ```
 
+The XMPP platform accepts either a password or a pre-issued auth token. Supply
+exactly one — the token is sent via SASL PLAIN and is compatible with
+ejabberd's `mod_auth_token`, Prosody's `mod_tokenauth`, and similar modules.
+See [packages/platform-xmpp/README.md](../packages/platform-xmpp/README.md#authentication)
+for the full credential reference.
+
+```javascript
+// XMPP with a token instead of a password
+sc.socket.emit('credentials', {
+    '@context': sc.contextFor('xmpp'),
+    type: 'credentials',
+    actor: { id: 'user@jabber.net', type: 'person' },
+    object: {
+        type: 'credentials',
+        userAddress: 'user@jabber.net',
+        token: 'ejabberd-issued-auth-token',
+        resource: 'phone'
+    }
+});
+```
+
 ### Anonymous IRC Username Collisions
 
 If two sockets use the same IRC actor (same `context` + `actor.id`) without a

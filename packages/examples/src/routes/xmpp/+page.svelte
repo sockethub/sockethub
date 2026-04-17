@@ -16,6 +16,9 @@ import { writable } from "svelte/store";
 
 const actorIdStore = writable("user@jabber.org");
 let connecting = $state(false);
+let authMode = $state<"password" | "token">("password");
+let passwordValue = $state("123456");
+let tokenValue = $state("ejabberd-issued-auth-token");
 
 let actorId = $derived(`${$actorIdStore}/SockethubExample`);
 
@@ -37,8 +40,10 @@ let actor = $derived({
 let credentials = $derived({
     type: "credentials" as CredentialName,
     userAddress: $actorIdStore,
-    password: "123456",
     resource: "SockethubExample",
+    ...(authMode === "token"
+        ? { token: tokenValue }
+        : { password: passwordValue }),
 });
 
 async function connectXmpp(): Promise<void> {
@@ -72,7 +77,7 @@ async function connectXmpp(): Promise<void> {
         </p>
         <div class="text-indigo-700 text-sm space-y-1">
             <div><strong>1. 🎭 Set Actor:</strong> Your XMPP address (e.g., user@jabber.org)</div>
-            <div><strong>2. 🔐 Set Credentials:</strong> Your XMPP login and password</div>
+            <div><strong>2. 🔐 Set Credentials:</strong> Your XMPP login with a password <em>or</em> auth token</div>
             <div><strong>3. 🔌 Connect:</strong> Establish connection to XMPP server</div>
             <div><strong>4. 🏠 Join Room:</strong> Enter a multi-user chat room</div>
             <div><strong>5. 💬 Send Messages:</strong> Chat with other users in real-time</div>
@@ -93,9 +98,63 @@ async function connectXmpp(): Promise<void> {
         <!-- Step 2: Credentials -->
         <div class="bg-white border border-gray-200 rounded-lg p-4">
             <h4 class="font-semibold text-gray-800 mb-3">Step 2: Set Your Credentials</h4>
+            <div class="mb-3">
+                <span class="text-sm text-gray-700 font-medium mr-3">Authentication method:</span>
+                <label class="inline-flex items-center mr-4 text-sm text-gray-700">
+                    <input
+                        type="radio"
+                        name="xmpp-auth-mode"
+                        value="password"
+                        bind:group={authMode}
+                        disabled={$sockethubState.credentialsSet}
+                        class="mr-2"
+                    />
+                    Password
+                </label>
+                <label class="inline-flex items-center text-sm text-gray-700">
+                    <input
+                        type="radio"
+                        name="xmpp-auth-mode"
+                        value="token"
+                        bind:group={authMode}
+                        disabled={$sockethubState.credentialsSet}
+                        class="mr-2"
+                    />
+                    Token
+                </label>
+            </div>
+            {#if authMode === "token"}
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="xmpp-token-input">
+                    Auth token
+                </label>
+                <input
+                    id="xmpp-token-input"
+                    type="text"
+                    bind:value={tokenValue}
+                    disabled={$sockethubState.credentialsSet}
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono mb-3"
+                    placeholder="ejabberd-issued-auth-token"
+                />
+                <p class="text-gray-600 text-xs mb-3">
+                    💡 Tokens are sent via SASL PLAIN in the password slot. Supported by ejabberd
+                    (<code>mod_auth_token</code>), Prosody (<code>mod_tokenauth</code>), and similar modules.
+                </p>
+            {:else}
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="xmpp-password-input">
+                    Password
+                </label>
+                <input
+                    id="xmpp-password-input"
+                    type="password"
+                    bind:value={passwordValue}
+                    disabled={$sockethubState.credentialsSet}
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm mb-3"
+                    placeholder="your XMPP account password"
+                />
+            {/if}
             <Credentials context="xmpp" {credentials} {actor} {sockethubState} />
             <p class="text-gray-600 text-sm mt-2">
-                🔐 Use your actual XMPP account credentials to connect
+                🔐 Exactly one of <code>password</code> or <code>token</code> must be provided.
             </p>
         </div>
 
