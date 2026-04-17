@@ -97,9 +97,13 @@ Authenticated connections use SASL. Two mechanisms are supported:
   `password` is set, and is supported by most IRC networks (Libera.Chat,
   OFTC, etc.).
 * **`OAUTHBEARER`** — sends an OAuth 2.0 access token instead of a password
-  ([RFC 7628](https://datatracker.ietf.org/doc/html/rfc7628)). Supported by
-  networks such as SourceHut's `chat.sr.ht`. How to obtain the token is
-  provider-specific and outside the scope of this module.
+  ([RFC 7628](https://datatracker.ietf.org/doc/html/rfc7628)). Adoption on
+  public IRC networks is still limited; the main deployment is SourceHut's
+  `chat.sr.ht` (via the [soju](https://soju.im/) bouncer). Major networks
+  such as Libera.Chat, OFTC, and Hackint do not currently advertise
+  OAUTHBEARER. See emersion's [IRC × OAuth 2.0](https://emersion.fr/blog/2022/irc-and-oauth2/)
+  writeup for background. How to obtain the token is provider-specific and
+  outside the scope of this module.
 
 `password` and `token` are mutually exclusive. `saslMechanism` is inferred
 from whichever is present, or may be set explicitly.
