@@ -65,7 +65,7 @@ It will also check if the incoming AS object uses a type which exists in the
 * **NOTE**: For more information on using the credentials object from a client,
 see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
 
-Valid AS object for setting IRC credentials:
+Valid AS object for setting IRC credentials using SASL PLAIN (password):
 
 **Kind**: global variable  
 **Example**  
@@ -94,6 +94,38 @@ Valid AS object for setting IRC credentials:
    }
  }
 ```
+
+Valid AS object for setting IRC credentials using SASL OAUTHBEARER
+(OAuth 2.0 access token):
+
+**Example**  
+```js
+{
+   type: 'credentials',
+   "@context": [
+     "https://www.w3.org/ns/activitystreams",
+     "https://sockethub.org/ns/context/v1.jsonld",
+     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+   ],
+   actor: {
+     id: 'testuser@chat.sr.ht',
+     type: 'person',
+     name: 'Mr. Test User'
+   },
+   object: {
+     type: 'credentials',
+     server: 'chat.sr.ht',
+     nick: 'testuser',
+     token: 'oauth-access-token',
+     saslMechanism: 'OAUTHBEARER',
+     port: 6697,
+     secure: true
+   }
+ }
+```
+
+`password` and `token` are mutually exclusive. `saslMechanism` defaults to
+`PLAIN` when `password` is set and `OAUTHBEARER` when `token` is set.
 <a name="connect"></a>
 
 # connect(job, credentials, done)

@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@sockethub/irc2as": "^4.0.0-alpha.12",
-    "irc-socket-sasl": "^4.0.0"
+    "irc-socket-sasl": "^4.1.0"
   },
   "devDependencies": {
     "@sockethub/schemas": "^3.0.0-alpha.12",

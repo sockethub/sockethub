@@ -89,6 +89,72 @@ messages.
 }
 ```
 
+## Authentication
+
+Authenticated connections use SASL. Two mechanisms are supported:
+
+* **`PLAIN`** — sends a username and password. This is the default when
+  `password` is set, and is supported by most IRC networks (Libera.Chat,
+  OFTC, etc.).
+* **`OAUTHBEARER`** — sends an OAuth 2.0 access token instead of a password
+  ([RFC 7628](https://datatracker.ietf.org/doc/html/rfc7628)). Supported by
+  networks such as SourceHut's `chat.sr.ht`. How to obtain the token is
+  provider-specific and outside the scope of this module.
+
+`password` and `token` are mutually exclusive. `saslMechanism` is inferred
+from whichever is present, or may be set explicitly.
+
+### Credentials with password (SASL PLAIN)
+
+```json
+{
+  "type": "credentials",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
+  "actor": {
+    "id": "mynick@irc.libera.chat",
+    "type": "person"
+  },
+  "object": {
+    "type": "credentials",
+    "nick": "mynick",
+    "server": "irc.libera.chat",
+    "password": "secret",
+    "port": 6697,
+    "secure": true
+  }
+}
+```
+
+### Credentials with OAuth token (SASL OAUTHBEARER)
+
+```json
+{
+  "type": "credentials",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
+  "actor": {
+    "id": "mynick@chat.sr.ht",
+    "type": "person"
+  },
+  "object": {
+    "type": "credentials",
+    "nick": "mynick",
+    "server": "chat.sr.ht",
+    "token": "oauth-access-token",
+    "saslMechanism": "OAUTHBEARER",
+    "port": 6697,
+    "secure": true
+  }
+}
+```
+
 ## Features
 
 * **Channel communication**: Join and participate in IRC channels

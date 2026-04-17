@@ -38,6 +38,7 @@ export const PlatformIrcSchema = {
                 type: "object",
                 required: ["type", "nick", "server"],
                 additionalProperties: false,
+                not: { required: ["password", "token"] },
                 properties: {
                     type: {
                         type: "string",
@@ -51,6 +52,9 @@ export const PlatformIrcSchema = {
                     password: {
                         type: "string",
                     },
+                    token: {
+                        type: "string",
+                    },
                     server: {
                         type: "string",
                     },
@@ -62,6 +66,10 @@ export const PlatformIrcSchema = {
                     },
                     sasl: {
                         type: "boolean",
+                    },
+                    saslMechanism: {
+                        type: "string",
+                        enum: ["PLAIN", "OAUTHBEARER"],
                     },
                 },
             },
