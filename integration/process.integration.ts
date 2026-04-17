@@ -11,6 +11,7 @@ interface TestConfig {
     sockethubProcess?: ChildProcess;
     client?: Socket;
     platformChildPid?: number;
+    ircChildPid?: number;
     dummyChildPid?: number;
     dummyChildStartSeconds?: number;
     sockethubLogs: string[];
@@ -457,6 +458,47 @@ describe("Parent Process Sudden Termination", () => {
         }
     });
 
+    itWithLogs("should verify IRC server is reachable", async () => {
+        try {
+            const ircCheck = spawn(
+                "nc",
+                ["-z", "-v", config.irc.host, config.irc.port],
+                {
+                    stdio: ["ignore", "pipe", "pipe"],
+                },
+            );
+            const checkResult = await new Promise<boolean>((resolve) => {
+                let success = false;
+                ircCheck.stderr.on("data", (data) => {
+                    if (testConfig.isVerbose) {
+                        console.log("IRC data event ", data);
+                    }
+                    if (data.toString().includes("succeeded")) {
+                        success = true;
+                    }
+                });
+                ircCheck.on("close", () => resolve(success));
+                setTimeout(() => resolve(false), config.timeouts.message);
+            });
+
+            if (!checkResult) {
+                console.log(
+                    `IRC server (Ergo) is not reachable at ${config.irc.host}:${config.irc.port}`,
+                );
+                console.log("Make sure to run: bun run docker:start:irc");
+                throw new Error("IRC server not available - aborting test");
+            }
+            if (testConfig.isVerbose) {
+                console.log("IRC server verified as reachable");
+            }
+        } catch (_e) {
+            console.log(
+                "Could not verify IRC connectivity (nc command failed)",
+            );
+            throw new Error("IRC server not reachable - aborting test");
+        }
+    });
+
     itWithLogs("should connect to Sockethub", async () => {
         testConfig.client = io(config.sockethub.url, {
             path: "/sockethub",
@@ -653,6 +695,123 @@ describe("Parent Process Sudden Termination", () => {
             expect(isRunning).toBe(true);
         },
     );
+
+    itWithLogs(
+        "should send IRC credentials and establish connection",
+        async () => {
+            if (!testConfig.client) {
+                throw new Error(
+                    "No client connection - run previous test first",
+                );
+            }
+            const nick = `${config.irc.testUser.nick}Process`;
+            const actorId = `${nick}@${config.irc.host}`;
+            const credentialsMessage = {
+                type: "credentials",
+                "@context": ctx("irc"),
+                actor: { id: actorId, type: "person", name: nick },
+                object: {
+                    type: "credentials",
+                    nick,
+                    server: config.irc.host,
+                    port: Number(config.irc.port),
+                    secure: false,
+                    sasl: false,
+                },
+            };
+
+            markLogPoint("Sending IRC credentials");
+
+            await new Promise<void>((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error("IRC credentials timeout"));
+                }, config.timeouts.process);
+
+                console.log("→ Sending IRC credentials message to sockethub");
+                testConfig.client.emit(
+                    "credentials",
+                    credentialsMessage,
+                    (response) => {
+                        clearTimeout(timeout);
+                        if (testConfig.isVerbose) {
+                            console.log(
+                                "IRC credentials response:",
+                                JSON.stringify(response, null, 2),
+                            );
+                        }
+                        resolve();
+                    },
+                );
+            });
+
+            const connectMessage = {
+                type: "connect",
+                "@context": ctx("irc"),
+                actor: { id: actorId, type: "person", name: nick },
+            };
+
+            markLogPoint("Sending IRC connect message");
+
+            await new Promise<void>((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error("IRC connect timeout"));
+                }, config.timeouts.connect);
+
+                console.log("→ Sending IRC connect message to sockethub");
+                testConfig.client.emit(
+                    "message",
+                    connectMessage,
+                    (response) => {
+                        clearTimeout(timeout);
+                        if (testConfig.isVerbose) {
+                            console.log(
+                                "IRC connect response:",
+                                JSON.stringify(response, null, 2),
+                            );
+                        }
+                        if (response.error) {
+                            console.log(
+                                "IRC connection failed:",
+                                response.error,
+                            );
+                            showRecentLogs("IRC Connection", 20);
+                            reject(new Error(response.error));
+                        } else {
+                            console.log("✓ IRC connection established");
+                            resolve();
+                        }
+                    },
+                );
+            });
+        },
+    );
+
+    itWithLogs("should find IRC platform child processes", async () => {
+        if (!testConfig.sockethubProcess) {
+            throw new Error("No Sockethub process - run previous tests first");
+        }
+        const childPids = await waitForPlatformChildProcesses(
+            { platformName: "irc" },
+            config.timeouts.process,
+        );
+
+        if (testConfig.isVerbose) {
+            console.log(
+                `Found ${childPids.length} IRC child processes:`,
+                childPids,
+            );
+        }
+
+        if (childPids.length === 0) {
+            console.log("❌ No IRC platform child processes found");
+            showRecentLogs("IRC Child Process Detection", 20);
+        } else {
+            console.log(`✓ Found ${childPids.length} IRC platform process(es)`);
+        }
+
+        expect(childPids.length).toBeGreaterThan(0);
+        testConfig.ircChildPid = childPids[0];
+    });
 
     describe("Dummy platform crash detection", () => {
         const runWithLogs = async <T>(
