@@ -27,6 +27,15 @@ services:
         entrypoint: [ "/bin/bash", "/etc/prosody/start.sh" ]
         networks:
             - sockethub-net
+    ergo:
+        image: ghcr.io/ergochat/ergo:stable
+        ports:
+            - "6667:6667"
+        volumes:
+            - ./integration/ergo:/ircd-config:ro
+        entrypoint: [ "/bin/sh", "/ircd-config/bootstrap.sh" ]
+        networks:
+            - sockethub-net
 
 networks:
     sockethub-net:

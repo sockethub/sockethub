@@ -16,7 +16,10 @@ export function getPlatformId(
     actor?: string,
     _crypto = crypto,
 ): string {
-    return actor ? _crypto.hash(platform + actor) : _crypto.hash(platform);
+    if (actor) {
+        return _crypto.hash(platform + actor);
+    }
+    return _crypto.hash(platform);
 }
 
 export class Crypto {
