@@ -45,9 +45,13 @@ if [ "$NEEDS_SEED" = "1" ]; then
 
     # NS REGISTER uses the current nick as account name; with no email
     # argument and enabled-callbacks=[none], ergo auto-verifies the account.
+    # Stderr is printed so failures are visible in `docker logs ergo`.
+    echo "[bootstrap] seeding account $SEED_NICK" >&2
     printf 'NICK %s\r\nUSER %s 0 * :%s\r\nCAP END\r\nNS REGISTER %s\r\nQUIT\r\n' \
         "$SEED_NICK" "$SEED_NICK" "$SEED_NICK" "$SEED_PASS" \
-        | nc -w 2 127.0.0.1 6667 >/dev/null 2>&1 || true
+        | nc -w 5 127.0.0.1 6667 \
+        | sed 's/^/[bootstrap nc] /' >&2 || true
+    echo "[bootstrap] seeding complete" >&2
 fi
 
 wait "$ERGO_PID"

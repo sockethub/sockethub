@@ -144,6 +144,10 @@ jobs:
         if: always()
         run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
 
+      - name: Ergo Logs - IRC Basic
+        if: always()
+        run: docker logs --since "${{ env.START_TIME }}" sockethub-ergo-1
+
       - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
 
       - name: Multiclient IRC Integration Tests
@@ -152,6 +156,10 @@ jobs:
       - name: Sockethub Logs - IRC Multiclient
         if: always()
         run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
+
+      - name: Ergo Logs - IRC Multiclient
+        if: always()
+        run: docker logs --since "${{ env.START_TIME }}" sockethub-ergo-1
 
       - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
 
@@ -162,6 +170,10 @@ jobs:
         if: always()
         run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
 
+      - name: Ergo Logs - IRC Reconnection
+        if: always()
+        run: docker logs --since "${{ env.START_TIME }}" sockethub-ergo-1
+
       - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
 
       - name: Nick Clash IRC Integration Tests
@@ -170,3 +182,7 @@ jobs:
       - name: Sockethub Logs - IRC Nick Clash
         if: always()
         run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
+
+      - name: Ergo Logs - IRC Nick Clash
+        if: always()
+        run: docker logs --since "${{ env.START_TIME }}" sockethub-ergo-1

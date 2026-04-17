@@ -19,7 +19,12 @@ describe(`Sockethub IRC Basic Integration Tests at ${config.sockethub.url}`, () 
         let sc;
         const incomingMessages = [];
 
-        const nick = `${config.irc.testUser.nick}Basic`;
+        // SASL tests must use the actually-registered account. Ergo's
+        // bootstrap only seeds `jimmy`; SASL PLAIN for any other nick would
+        // fail at the server, but `irc-socket-sasl` turns that failure into
+        // a silent hang (it doesn't parse ERR_SASLFAIL / numeric 904), so
+        // the test would time out without a useful error.
+        const nick = config.irc.testUser.nick;
         const actorId = utils.createIrcActorId(nick);
         const actorObject = utils.createIrcActorObject(nick);
 

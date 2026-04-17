@@ -60,6 +60,12 @@ oper-classes:
 
 opers: {}
 
+logging:
+    -
+        method: stderr
+        level: debug
+        type: "* userinput useroutput"
+
 limits:
     nicklen: 32
     identlen: 20
