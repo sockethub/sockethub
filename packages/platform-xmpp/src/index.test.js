@@ -21,6 +21,16 @@ const credentials = {
     },
 };
 
+const tokenCredentials = {
+    actor: actor,
+    object: {
+        type: "credentials",
+        userAddress: "testingham@jabber.net",
+        token: "ejabberd-issued-auth-token",
+        resource: "home",
+    },
+};
+
 const target = {
     mrfoobar: {
         type: "person",
@@ -211,6 +221,20 @@ describe("XMPP", () => {
                 expect(xp.__client.start).toBeDefined();
                 expect(xp.__client.send).toBeDefined();
                 expect(xp.__client.send.callCount).toEqual(0);
+                sinon.assert.calledOnce(clientObjectFake.start);
+                sinon.assert.notCalled(xp.sendToClient);
+                done();
+            });
+        });
+    });
+
+    describe("Token-based initialization", () => {
+        it("passes the token in the password slot to the xmpp client", (done) => {
+            xp.connect(job.connect, tokenCredentials, () => {
+                sinon.assert.calledOnce(clientFake);
+                expect(clientFake.getCall(0).args[0].password).toEqual(
+                    "ejabberd-issued-auth-token",
+                );
                 sinon.assert.calledOnce(clientObjectFake.start);
                 sinon.assert.notCalled(xp.sendToClient);
                 done();
