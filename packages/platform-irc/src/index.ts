@@ -64,7 +64,9 @@ interface IrcSocketOptions {
     realname: string;
     port: number;
     debug: typeof console.log;
+    saslMechanism?: "PLAIN" | "OAUTHBEARER";
     saslPassword?: string;
+    saslUsername?: string;
     capabilities?: IrcSocketOptionsCapabilities;
     connectOptions?: IrcSocketOptionsConnect;
 }
@@ -121,7 +123,7 @@ export default class IRC implements PersistentPlatformInterface {
      * * **NOTE**: For more information on using the credentials object from a client,
      * see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
      *
-     * Valid AS object for setting IRC credentials:
+     * Valid AS object for setting IRC credentials using SASL PLAIN (password):
      * @example
      *
      *  {
@@ -143,6 +145,32 @@ export default class IRC implements PersistentPlatformInterface {
      *      sasl: true
      *    }
      *  }
+     *
+     * Valid AS object for setting IRC credentials using SASL OAUTHBEARER
+     * (OAuth 2.0 access token):
+     * @example
+     *
+     *  {
+     *    type: 'credentials',
+     *    context: 'irc',
+     *    actor: {
+     *      id: 'testuser@chat.sr.ht',
+     *      type: 'person',
+     *      name: 'Mr. Test User'
+     *    },
+     *    object: {
+     *      type: 'credentials',
+     *      server: 'chat.sr.ht',
+     *      nick: 'testuser',
+     *      token: 'oauth-access-token',
+     *      saslMechanism: 'OAUTHBEARER',
+     *      port: 6697,
+     *      secure: true
+     *    }
+     *  }
+     *
+     * `password` and `token` are mutually exclusive. `saslMechanism` defaults
+     * to `PLAIN` when `password` is set and `OAUTHBEARER` when `token` is set.
      */
     get schema(): PlatformSchemaStruct {
         return PlatformIrcSchema;
@@ -636,10 +664,15 @@ export default class IRC implements PersistentPlatformInterface {
             typeof credentials.object.secure === "boolean"
                 ? credentials.object.secure
                 : true;
+        const sasl_secret =
+            credentials.object.token || credentials.object.password;
+        const sasl_mechanism: "PLAIN" | "OAUTHBEARER" =
+            credentials.object.saslMechanism ||
+            (credentials.object.token ? "OAUTHBEARER" : "PLAIN");
         const is_sasl =
             typeof credentials.object.sasl === "boolean"
                 ? credentials.object.sasl
-                : !!credentials.object.password;
+                : !!sasl_secret;
 
         const module_options: IrcSocketOptions = {
             username: credentials.object.username || credentials.object.nick,
@@ -659,14 +692,15 @@ export default class IRC implements PersistentPlatformInterface {
             module_options.connectOptions = { rejectUnauthorized: false };
         }
         if (is_sasl) {
-            module_options.saslPassword = credentials.object.password;
+            module_options.saslMechanism = sasl_mechanism;
+            module_options.saslPassword = sasl_secret;
             module_options.capabilities = { requires: ["sasl"] };
         }
 
         this.log.debug(
             `attempting to connect to ${module_options.server}:${module_options.port} transport: ${
                 is_secure ? "secure" : "clear"
-            } sasl: ${is_sasl}`,
+            } sasl: ${is_sasl}${is_sasl ? ` (${sasl_mechanism})` : ""}`,
         );
 
         const client = new IrcSocket(module_options, is_secure ? tls : net);

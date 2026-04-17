@@ -42,6 +42,8 @@ const config = {
         testUser: {
             nick: "jimmy",
             password: "passw0rd",
+            // Must match integration/mock-oauth/server.js TEST_TOKEN.
+            oauthToken: "integration-test-token",
         },
         channel: "#sockethub-test",
     },

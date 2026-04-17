@@ -12,12 +12,8 @@ import {
 const config = getConfig();
 const utils = createTestUtils(config);
 
-// SASL is intentionally not exercised here. `irc-socket-sasl` does not
-// handle server-prefixed `AUTHENTICATE +` responses (Ergo sends
-// `:ergo.test AUTHENTICATE +`), so the client never sends its base64
-// PLAIN payload and the handshake stalls until the Sockethub connect
-// timeout fires. The non-SASL path is the realistic default for public
-// IRC networks and exercises the full connect → join → send flow.
+// This file covers the non-authenticated (no SASL) path. SASL PLAIN and
+// OAUTHBEARER are exercised end-to-end in irc-sasl-auth.integration.js.
 
 describe(`Sockethub IRC Basic Integration Tests at ${config.sockethub.url}`, () => {
     validateGlobals();
