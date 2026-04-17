@@ -179,7 +179,7 @@
       "version": "4.0.0-alpha.12",
       "dependencies": {
         "@sockethub/irc2as": "^4.0.0-alpha.12",
-        "irc-socket-sasl": "^4.1.0",
+        "irc-socket-sasl": "^4.1.1",
       },
       "devDependencies": {
         "@sockethub/schemas": "^3.0.0-alpha.12",
@@ -2268,7 +2268,7 @@
 
     "ipaddr.js": ["ipaddr.js@1.9.1", "", {}, "sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g=="],
 
-    "irc-socket-sasl": ["irc-socket-sasl@4.1.0", "", { "dependencies": { "r-result": "^1.5.1" } }, "sha512-FSvALpQ3m7fd2J4y59uFUNFmio8MSWd9msSpogl2kJPVqdGeblzamlH+YyFz+fG6KxGvW2GyzVTKZsHyRORF9g=="],
+    "irc-socket-sasl": ["irc-socket-sasl@4.1.1", "", { "dependencies": { "r-result": "^1.5.1" } }, "sha512-uqCSRFu61VUfRAhYit6tOgX7Ln2FEJqiGQLYhB0HMEWnWQ5fMcWAFhefggu7Q+PjdLlP5dOPOiw6Z50J5tE0Ew=="],
 
     "is-alphabetical": ["is-alphabetical@2.0.1", "", {}, "sha512-FWyyY60MeTNyeSRpkM2Iry0G9hpr7/9kD40mD/cGQEuilcZYS4okz8SN2Q6rLCJ8gbCt6fN+rC+6tMGS99LaxQ=="],
 

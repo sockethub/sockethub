@@ -34,6 +34,12 @@ accounts:
         enabled: true
         allowed-by-default: true
         always-on: disabled
+    oauth2:
+        enabled: true
+        autocreate: true
+        auth-script: false
+        introspection-url: "http://mock-oauth:8080/introspect"
+        introspection-timeout: 5s
 
 channels:
     registration:

@@ -46,7 +46,7 @@
     "docker:start:irc": "docker compose up ergo -d",
     "docker:start:redis": "docker compose up redis -d",
     "docker:start:deps": "docker compose up redis prosody ergo -d",
-    "docker:clean:all": "bun run docker:stop && docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1 sockethub-ergo-1; docker rmi sockethub_sockethub",
+    "docker:clean:all": "bun run docker:stop && docker rm sockethub-sockethub-1 sockethub-redis-1 sockethub-prosody-1 sockethub-ergo-1 sockethub-mock-oauth-1; docker rmi sockethub_sockethub",
     "docker:clean:sockethub": "bun run docker:stop && docker rm sockethub-sockethub-1; docker rmi sockethub-sockethub",
     "docker:logs:sockethub": "docker logs sockethub-sockethub-1",
     "docker:stop": "docker compose down",

@@ -270,7 +270,9 @@ export function setIRCCredentials(
     nick = config.irc.testUser.nick,
     {
         password = config.irc.testUser.password,
-        sasl = password !== undefined,
+        token,
+        saslMechanism,
+        sasl = password !== undefined || token !== undefined,
         port = Number(config.irc.port),
         secure = false,
         server = config.irc.host,
@@ -284,8 +286,13 @@ export function setIRCCredentials(
         secure,
         sasl,
     };
-    if (password !== undefined) {
+    if (token !== undefined) {
+        credentialsObject.token = token;
+    } else if (password !== undefined) {
         credentialsObject.password = password;
+    }
+    if (saslMechanism !== undefined) {
+        credentialsObject.saslMechanism = saslMechanism;
     }
     const creds = {
         actor: { id: actorId, type: "person", name: nick },
