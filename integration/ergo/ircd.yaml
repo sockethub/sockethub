@@ -1,0 +1,73 @@
+network:
+    name: SockethubTest
+
+server:
+    name: ergo.test
+    listeners:
+        ":6667":
+    max-sendq: 128k
+    connection-limits:
+        enabled: false
+    connection-throttling:
+        enabled: false
+    ip-cloaking:
+        enabled: false
+    casemapping: ascii
+
+accounts:
+    authentication-enabled: true
+    registration:
+        enabled: true
+        enabled-callbacks:
+            - none
+        allow-before-connect: true
+        verify-timeout: 1h
+    login:
+        throttling:
+            enabled: false
+    require-sasl:
+        enabled: false
+    nick-reservation:
+        enabled: true
+        method: strict
+    multiclient:
+        enabled: true
+        allowed-by-default: true
+        always-on: disabled
+
+channels:
+    registration:
+        enabled: false
+    default-modes: +nt
+    operator-only-creation: false
+
+datastore:
+    path: /ircd/ircd.db
+    autoupgrade: true
+
+history:
+    enabled: false
+
+roleplay:
+    enabled: false
+
+oper-classes:
+    "server-admin":
+        title: Server Admin
+        capabilities:
+            - "rehash"
+            - "info"
+
+opers: {}
+
+limits:
+    nicklen: 32
+    identlen: 20
+    channellen: 64
+    awaylen: 390
+    kicklen: 390
+    topiclen: 390
+    monitor-entries: 100
+    whowas-entries: 100
+    chan-list-modes: 60
+    registration-messages: 1024

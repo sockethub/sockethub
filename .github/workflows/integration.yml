@@ -43,6 +43,7 @@ jobs:
 
       - run: bun run docker:start:redis
       - run: bun run docker:start:xmpp
+      - run: bun run docker:start:irc
       - run: sleep 5
 
       - name: Verify Redis is listening
@@ -50,6 +51,9 @@ jobs:
 
       - name: Verify XMPP is listening
         run: nc -zv localhost 5222
+
+      - name: Verify IRC is listening
+        run: nc -zv localhost 6667
 
       - name: Verifying Child Process Termination
         run: VERBOSE=true bun run integration:process
@@ -89,6 +93,9 @@ jobs:
       - name: Verify XMPP is listening
         run: nc -zv localhost 5222
 
+      - name: Verify IRC is listening
+        run: nc -zv localhost 6667
+
       - name: Verify Sockethub serves client files
         run: |
           curl -f http://localhost:10550/socket.io.js > /dev/null
@@ -125,5 +132,41 @@ jobs:
         run: XMPP_HOST=prosody bun run integration:browser:resourceclash
 
       - name: Sockethub Logs - Resource Clash
+        if: always()
+        run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
+
+      - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+
+      - name: Basic IRC Integration Tests
+        run: IRC_HOST=ergo bun run integration:browser:irc-basic
+
+      - name: Sockethub Logs - IRC Basic
+        if: always()
+        run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
+
+      - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+
+      - name: Multiclient IRC Integration Tests
+        run: IRC_HOST=ergo bun run integration:browser:irc-multiclient
+
+      - name: Sockethub Logs - IRC Multiclient
+        if: always()
+        run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
+
+      - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+
+      - name: Reconnection IRC Integration Tests
+        run: IRC_HOST=ergo bun run integration:browser:irc-reconnection
+
+      - name: Sockethub Logs - IRC Reconnection
+        if: always()
+        run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
+
+      - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+
+      - name: Nick Clash IRC Integration Tests
+        run: IRC_HOST=ergo bun run integration:browser:irc-nickclash
+
+      - name: Sockethub Logs - IRC Nick Clash
         if: always()
         run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
