@@ -39,7 +39,7 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/activity-streams",
   "scripts": {
-    "build": "bun run clean && bun run build:js && bun run build:minify",
+    "build": "bun run build:js && bun run build:minify",
     "build:js": "bun build ./src/activity-streams.ts --target=browser --sourcemap=inline --format=esm --outdir=dist/",
     "build:minify": "bun build ./src/activity-streams.ts --target=browser --sourcemap=inline --format=esm --outfile=dist/activity-streams.min.js --minify",
     "clean": "rm -rf dist",
