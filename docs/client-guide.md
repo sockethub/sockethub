@@ -204,9 +204,10 @@ sc.socket.emit('credentials', {
         nick: 'mynick',
         server: 'irc.libera.chat',
         secure: true
-        // password: 'secret'           // SASL PLAIN (traditional password)
-        // token: 'oauth-access-token', // SASL OAUTHBEARER — mutually exclusive with password
-        // saslMechanism: 'OAUTHBEARER' // optional; inferred from token/password
+        // password: 'secret'              // SASL PLAIN (traditional password)
+        // token: 'my-access-token',      // SASL PLAIN with token (e.g. Libera PAT)
+        // token: 'oauth-access-token',   // or for OAUTHBEARER (requires saslMechanism below)
+        // saslMechanism: 'OAUTHBEARER'   // required for OAuth 2.0 bearer tokens (RFC 7628)
     }
 });
 
