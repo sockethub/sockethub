@@ -118,10 +118,12 @@ Valid AS object for setting XMPP credentials:
   }
 }
 
-Alternatively, a `token` may be supplied in place of `password`. The token
-is sent via SASL PLAIN in the password slot; servers such as ejabberd
-(`mod_auth_token`) and Prosody (`mod_tokenauth`) accept this for
-token-based authentication. Exactly one of `password` or `token` must be
+Alternatively, a `token` may be supplied in place of `password`. Sockethub
+copies the token into the SASL PLAIN password slot, which only works for
+deployments that explicitly accept a bearer-style token there. Dedicated
+token SASL mechanisms such as ejabberd `X-OAUTH2`, Prosody
+`OAUTHBEARER`, Prosody community `X-TOKEN`, and SASL2 FAST are not
+implemented by this client. Exactly one of `password` or `token` must be
 provided.
 ```
 **Example**  
@@ -136,7 +138,7 @@ provided.
   object: {
     type: 'credentials',
     userAddress: 'testuser@jabber.net',
-    token: 'ejabberd-issued-auth-token',
+    token: 'pre-issued-auth-token',
     resource: 'phone'
   }
 }

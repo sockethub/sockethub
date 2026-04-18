@@ -28,7 +28,8 @@ platform instance when they target the same actor.
 Session sharing rules:
 
 - Credentials are validated in the data layer during share attempts.
-- Share is allowed only when credentials include a non-empty `password`.
+- Share is allowed only when credentials include a non-empty secret such as
+  `password` or `token`.
 - Username-only/anonymous credentials are rejected with `username already in use`.
 
 Reconnect exception for anonymous credentials:

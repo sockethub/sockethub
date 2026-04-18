@@ -18,7 +18,7 @@ const actorIdStore = writable("user@jabber.org");
 let connecting = $state(false);
 let authMode = $state<"password" | "token">("password");
 let passwordValue = $state("123456");
-let tokenValue = $state("ejabberd-issued-auth-token");
+let tokenValue = $state("pre-issued-auth-token");
 
 let actorId = $derived(`${$actorIdStore}/SockethubExample`);
 
@@ -133,11 +133,11 @@ async function connectXmpp(): Promise<void> {
                     bind:value={tokenValue}
                     disabled={$sockethubState.credentialsSet}
                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono mb-3"
-                    placeholder="ejabberd-issued-auth-token"
+                    placeholder="pre-issued-auth-token"
                 />
                 <p class="text-gray-600 text-xs mb-3">
-                    💡 Tokens are sent via SASL PLAIN in the password slot. Supported by ejabberd
-                    (<code>mod_auth_token</code>), Prosody (<code>mod_tokenauth</code>), and similar modules.
+                    💡 This client sends the token through the SASL PLAIN password slot. Use it
+                    only with deployments that explicitly accept bearer-style tokens in that slot.
                 </p>
             {:else}
                 <label class="block text-sm font-medium text-gray-700 mb-1" for="xmpp-password-input">

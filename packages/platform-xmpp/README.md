@@ -37,7 +37,7 @@ validation.
 | `userAddress` | string | yes | Bare JID, e.g. `user@jabber.net`. |
 | `resource` | string | yes | XMPP resource identifier (e.g. `"phone"`). |
 | `password` | string | one of password/token | SASL password. |
-| `token` | string | one of password/token | Auth token sent in the SASL PLAIN slot. |
+| `token` | string | one of password/token | Token copied into the SASL PLAIN password slot. |
 | `server` | string | no | Overrides the hostname from `userAddress`. |
 | `port` | number | no | Overrides the default port. |
 
@@ -67,14 +67,9 @@ available SASL mechanism (typically SCRAM-SHA-1, falling back to PLAIN).
 ### Token authentication
 
 Supply a pre-issued authentication token in place of the password. Sockethub
-places the token in the SASL PLAIN password slot, so this mode works with any
-XMPP server whose token module accepts a token where a password would normally
-go. Examples include:
-
-* **ejabberd** — `mod_auth_token` (tokens issued via `ejabberdctl
-  oauth_issue_token` or the admin API).
-* **Prosody** — `mod_tokenauth` (and compatible community modules).
-* Any custom deployment that treats the SASL PLAIN password as a bearer token.
+places the token in the SASL PLAIN password slot. This is a narrow
+compatibility mode for deployments that explicitly accept a bearer-style token
+where a password would normally go.
 
 ```json
 {
@@ -88,17 +83,19 @@ go. Examples include:
   "object": {
     "type": "credentials",
     "userAddress": "user@jabber.net",
-    "token": "ejabberd-issued-auth-token",
+    "token": "pre-issued-auth-token",
     "resource": "phone"
   }
 }
 ```
 
-**Compatibility note**: because the token travels in the SASL PLAIN slot, the
-server must advertise the PLAIN mechanism for the session. Token-auth modules
-typically do this automatically. If a server advertises only SCRAM-SHA-1, the
-token cannot survive SCRAM's HMAC exchange and authentication will fail — this
-is a limitation of the "token-in-password-slot" approach, not of Sockethub.
+**Compatibility note**: this does not implement dedicated token SASL
+mechanisms such as ejabberd `X-OAUTH2`, Prosody `OAUTHBEARER`, Prosody
+community `X-TOKEN`, or SASL2 FAST token flows. The bundled `@xmpp/client`
+version only implements `SCRAM-SHA-1`, `PLAIN`, and `ANONYMOUS`, and prefers
+`SCRAM-SHA-1` when both SCRAM and PLAIN are offered. In practice, token auth
+through Sockethub only works when the server both advertises `PLAIN` and is
+configured to treat the PLAIN password value as the token.
 
 A failed token authentication (expired, revoked, or unrecognised token)
 surfaces the same `SASLError: not-authorized` as a bad password, and is

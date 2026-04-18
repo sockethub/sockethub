@@ -19,19 +19,29 @@ let {
     submitData,
 }: Props = $props();
 
-let password = $state("unset");
+const secretFieldOrder = ["password", "token"] as const;
+type SecretField = (typeof secretFieldOrder)[number];
 
-if (obj.password) {
-    password = obj.password;
-    obj.password = undefined;
+let secretField = $state<SecretField | null>(null);
+let secretValue = $state("");
+
+for (const field of secretFieldOrder) {
+    const candidate = obj[field];
+    if (typeof candidate === "string" && candidate.length > 0) {
+        secretField = field;
+        secretValue = candidate;
+        obj[field] = undefined;
+        break;
+    }
 }
+
+const secretLabel = $derived(secretField === "token" ? "Token" : "Password");
 
 const objString = $derived(JSON.stringify(obj, null, 3));
 
 async function handleSubmit(): Promise<void> {
-    console.log("PASSWORD: ", password);
-    if (password !== "unset") {
-        obj.password = password;
+    if (secretField) {
+        obj[secretField] = secretValue;
     }
 
     submitData(JSON.stringify(obj));
@@ -42,10 +52,10 @@ async function handleSubmit(): Promise<void> {
     <label for="json-object-{title}" class="form-label inline-block text-gray-900 font-bold mb-2">{title}</label>
     <TextBox title={title} data={objString}></TextBox>
 </div>
-{#if password !== "unset"}
+{#if secretField}
     <div class="w-full p-2">
-        <label for="server" class="inline-block text-gray-900 font-bold w-32">Password</label>
-        <input id="server" bind:value={password} type="password" class="border-4" />
+        <label for="server" class="inline-block text-gray-900 font-bold w-32">{secretLabel}</label>
+        <input id="server" bind:value={secretValue} type="password" class="border-4" />
     </div>
 {/if}
 <div class="w-full text-right">
