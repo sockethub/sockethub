@@ -244,12 +244,14 @@ export class CredentialsStore implements CredentialsStoreInterface {
 
         if (options.validateSessionShare) {
             const password = credentials.object.password;
+            const token = credentials.object.token;
             const hasPassword =
                 typeof password === "string" && password.length > 0;
+            const hasToken = typeof token === "string" && token.length > 0;
 
-            // Anonymous credentials are valid for a single session but must not
-            // be used to attach additional sessions to the same actor instance.
-            if (!hasPassword) {
+            // Credentials must include a non-empty secret before an additional
+            // session can attach to the same persistent actor instance.
+            if (!hasPassword && !hasToken) {
                 throw new CredentialsNotShareableError(
                     "username already in use",
                 );

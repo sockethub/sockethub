@@ -20,39 +20,6 @@ describe("Utils", () => {
                 resource: "Home",
             });
         });
-        it("uses token in the password slot when token is provided", () => {
-            expect(
-                utils.buildXmppCredentials({
-                    object: {
-                        userAddress: "barney@dinosaur.com.au",
-                        token: "t0k3n",
-                        resource: "Home",
-                    },
-                }),
-            ).toEqual({
-                password: "t0k3n",
-                service: "dinosaur.com.au",
-                username: "barney",
-                resource: "Home",
-            });
-        });
-        it("prefers token over password when both are present", () => {
-            expect(
-                utils.buildXmppCredentials({
-                    object: {
-                        userAddress: "barney@dinosaur.com.au",
-                        token: "t0k3n",
-                        password: "bar",
-                        resource: "Home",
-                    },
-                }),
-            ).toEqual({
-                password: "t0k3n",
-                service: "dinosaur.com.au",
-                username: "barney",
-                resource: "Home",
-            });
-        });
     });
     it("allows overriding server value", () => {
         expect(
