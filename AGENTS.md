@@ -127,7 +127,7 @@ using ActivityStreams as the uniform message format.
 - **Linting**: Biome handles formatting and style. Don't comment on style.
 - **Testing**: Test files named `*.test.ts`. Use `describe` and `test` (not `it`).
   Mock external dependencies. Test error paths, not just happy paths.
-- **Error Handling**: Always call `done(err)` on failure. Never silently swallow errors.
+- **Error Handling**: Always propagate errors to the caller. Never silently swallow errors.
   Log errors with context (session ID, platform, action).
 
 ## Platform Development
