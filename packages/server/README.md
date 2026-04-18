@@ -28,10 +28,9 @@ platform instance when they target the same actor.
 Session sharing rules:
 
 - Credentials are validated in the data layer during share attempts.
-- Share is allowed only when credentials include a non-empty secret such as
-  `password` or `token`.
-  XMPP now uses `password` only; `token` here refers to other platform
-  credential shapes such as IRC OAuth-style secrets.
+- Share is allowed only when credentials include a non-empty `password` or
+  `token` field (e.g. IRC OAuth). Credential objects with neither are treated
+  as anonymous and cannot be shared across connections.
 - Username-only/anonymous credentials are rejected with `username already in use`.
 
 Reconnect exception for anonymous credentials:
