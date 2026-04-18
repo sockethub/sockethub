@@ -129,7 +129,7 @@ async function connectXmpp(): Promise<void> {
                 </label>
                 <input
                     id="xmpp-token-input"
-                    type="text"
+                    type="password"
                     bind:value={tokenValue}
                     disabled={$sockethubState.credentialsSet}
                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono mb-3"

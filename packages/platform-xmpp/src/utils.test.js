@@ -36,7 +36,10 @@ describe("Utils", () => {
                 resource: "Home",
             });
         });
-        it("prefers token over password when both are present", () => {
+        // Schema validation rejects dual-secret credentials before runtime,
+        // but the helper still behaves deterministically if malformed input
+        // slips through a lower-level unit test.
+        it("defensively prefers token over password when handed invalid dual-secret input", () => {
             expect(
                 utils.buildXmppCredentials({
                     object: {
