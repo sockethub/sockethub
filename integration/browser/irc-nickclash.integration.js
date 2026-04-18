@@ -63,19 +63,13 @@ describe(`IRC Nick Clash Integration Tests at ${config.sockethub.url}`, () => {
         });
 
         it("second connection with the same nick surfaces a serviceError", async () => {
-            await setIRCCredentials(firstClient, firstActorId, nick, {
-                password: undefined,
-                sasl: false,
-            });
+            await setIRCCredentials(firstClient, firstActorId, nick);
             firstClient.ActivityStreams.Object.create(
                 utils.createIrcActorObject(nick),
             );
             await connectIRC(firstClient, firstActorId, nick);
 
-            await setIRCCredentials(secondClient, secondActorId, nick, {
-                password: undefined,
-                sasl: false,
-            });
+            await setIRCCredentials(secondClient, secondActorId, nick);
             secondClient.ActivityStreams.Object.create({
                 id: secondActorId,
                 type: "person",
@@ -133,14 +127,8 @@ describe(`IRC Nick Clash Integration Tests at ${config.sockethub.url}`, () => {
             // should wait on the first via the `clientConnecting` lock and
             // then reuse the shared client.
             await Promise.all([
-                setIRCCredentials(clientA, actorId, nick, {
-                    password: undefined,
-                    sasl: false,
-                }),
-                setIRCCredentials(clientB, actorId, nick, {
-                    password: undefined,
-                    sasl: false,
-                }),
+                setIRCCredentials(clientA, actorId, nick),
+                setIRCCredentials(clientB, actorId, nick),
             ]);
             const actorObject = utils.createIrcActorObject(nick);
             clientA.ActivityStreams.Object.create(actorObject);

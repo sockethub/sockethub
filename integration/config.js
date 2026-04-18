@@ -38,7 +38,7 @@ const config = {
     // Ergo IRC server configuration
     irc: {
         host: IRC_HOST,
-        port: "6667",
+        port: 6667,
         testUser: {
             nick: "jimmy",
             password: "passw0rd",

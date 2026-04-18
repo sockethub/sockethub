@@ -76,7 +76,6 @@ describe(`IRC Multi-Client Integration Tests at ${config.sockethub.url}`, () => 
                     clientRecord.sockethubClient,
                     clientRecord.actorId,
                     clientRecord.nick,
-                    { password: undefined, sasl: false },
                 ),
             );
 

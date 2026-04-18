@@ -57,10 +57,7 @@ describe("IRC Client Reconnection Tests", () => {
 
             try {
                 initialClient = connectSockethubClient();
-                await setIRCCredentials(initialClient, actorId, nick, {
-                    password: undefined,
-                    sasl: false,
-                });
+                await setIRCCredentials(initialClient, actorId, nick);
                 initialClient.ActivityStreams.Object.create(
                     utils.createIrcActorObject(nick),
                 );
@@ -98,10 +95,7 @@ describe("IRC Client Reconnection Tests", () => {
                     config.timeouts.connect,
                 );
 
-                await setIRCCredentials(reconnectedClient, actorId, nick, {
-                    password: undefined,
-                    sasl: false,
-                });
+                await setIRCCredentials(reconnectedClient, actorId, nick);
                 reconnectedClient.ActivityStreams.Object.create(
                     utils.createIrcActorObject(nick),
                 );
@@ -155,10 +149,7 @@ describe("IRC Client Reconnection Tests", () => {
 
             try {
                 initialClient = connectSockethubClient();
-                await setIRCCredentials(initialClient, actorId, nick, {
-                    password: undefined,
-                    sasl: false,
-                });
+                await setIRCCredentials(initialClient, actorId, nick);
                 initialClient.ActivityStreams.Object.create(
                     utils.createIrcActorObject(nick),
                 );
@@ -226,10 +217,6 @@ describe("IRC Client Reconnection Tests", () => {
                     validCredClient,
                     freshActorId,
                     freshNick,
-                    {
-                        password: undefined,
-                        sasl: false,
-                    },
                 );
                 validCredClient.ActivityStreams.Object.create(
                     utils.createIrcActorObject(freshNick),
