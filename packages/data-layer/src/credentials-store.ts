@@ -12,6 +12,22 @@ import { buildCredentialsStoreId } from "./queue-id.js";
 import type { RedisConfig } from "./types.js";
 
 let sharedCredentialsRedisConnection: Redis | null = null;
+let sharedIdempotencyRedisConnection: Redis | null = null;
+
+function buildSharedRedisConnection(config: RedisConfig): Redis {
+    return new IORedis(config.url, {
+        connectionName: config.connectionName,
+        enableOfflineQueue: false,
+        maxRetriesPerRequest: config.maxRetriesPerRequest ?? null,
+        connectTimeout: config.connectTimeout ?? 10000,
+        disconnectTimeout: config.disconnectTimeout ?? 5000,
+        lazyConnect: false,
+        retryStrategy: (times: number) => {
+            if (times > 3) return null;
+            return Math.min(2 ** (times - 1) * 200, 2000);
+        },
+    });
+}
 
 /**
  * Creates or returns a shared Redis connection for CredentialsStore instances.
@@ -23,20 +39,19 @@ let sharedCredentialsRedisConnection: Redis | null = null;
  */
 export function createCredentialsRedisConnection(config: RedisConfig): Redis {
     if (!sharedCredentialsRedisConnection) {
-        sharedCredentialsRedisConnection = new IORedis(config.url, {
-            connectionName: config.connectionName,
-            enableOfflineQueue: false,
-            maxRetriesPerRequest: config.maxRetriesPerRequest ?? null,
-            connectTimeout: config.connectTimeout ?? 10000,
-            disconnectTimeout: config.disconnectTimeout ?? 5000,
-            lazyConnect: false,
-            retryStrategy: (times: number) => {
-                if (times > 3) return null;
-                return Math.min(2 ** (times - 1) * 200, 2000);
-            },
-        });
+        sharedCredentialsRedisConnection = buildSharedRedisConnection(config);
     }
     return sharedCredentialsRedisConnection;
+}
+
+/**
+ * Creates or returns a dedicated shared Redis connection for HTTP idempotency.
+ */
+export function createIdempotencyRedisConnection(config: RedisConfig): Redis {
+    if (!sharedIdempotencyRedisConnection) {
+        sharedIdempotencyRedisConnection = buildSharedRedisConnection(config);
+    }
+    return sharedIdempotencyRedisConnection;
 }
 
 /**
@@ -50,6 +65,17 @@ export async function resetSharedCredentialsRedisConnection(): Promise<void> {
             // Ignore disconnect errors during cleanup
         }
         sharedCredentialsRedisConnection = null;
+    }
+}
+
+export async function resetSharedIdempotencyRedisConnection(): Promise<void> {
+    if (sharedIdempotencyRedisConnection) {
+        try {
+            sharedIdempotencyRedisConnection.disconnect(false);
+        } catch (_err) {
+            // Ignore disconnect errors during cleanup
+        }
+        sharedIdempotencyRedisConnection = null;
     }
 }
 

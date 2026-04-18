@@ -6,7 +6,10 @@ import {
     CredentialsStore,
     type CredentialsStoreInterface,
     type CredentialsValidationOptions,
+    createCredentialsRedisConnection,
+    createIdempotencyRedisConnection,
     resetSharedCredentialsRedisConnection,
+    resetSharedIdempotencyRedisConnection,
     verifySecureStore,
 } from "./credentials-store.js";
 import {
@@ -28,15 +31,18 @@ async function redisCheck(config: RedisConfig): Promise<void> {
 }
 
 export {
-    redisCheck,
-    JobQueue,
-    JobWorker,
-    CredentialsStore,
     CredentialsMismatchError,
     CredentialsNotShareableError,
-    getRedisConnectionCount,
-    resetSharedRedisConnection,
-    resetSharedCredentialsRedisConnection,
-    type CredentialsValidationOptions,
+    CredentialsStore,
     type CredentialsStoreInterface,
+    type CredentialsValidationOptions,
+    createCredentialsRedisConnection,
+    createIdempotencyRedisConnection,
+    getRedisConnectionCount,
+    JobQueue,
+    JobWorker,
+    redisCheck,
+    resetSharedCredentialsRedisConnection,
+    resetSharedIdempotencyRedisConnection,
+    resetSharedRedisConnection,
 };
