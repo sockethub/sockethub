@@ -66,7 +66,6 @@ interface IrcSocketOptions {
     debug: typeof console.log;
     saslMechanism?: "PLAIN" | "OAUTHBEARER";
     saslPassword?: string;
-    saslUsername?: string;
     capabilities?: IrcSocketOptionsCapabilities;
     connectOptions?: IrcSocketOptionsConnect;
 }
@@ -146,6 +145,28 @@ export default class IRC implements PersistentPlatformInterface {
      *    }
      *  }
      *
+     * Valid AS object for setting IRC credentials using a personal access
+     * token via SASL PLAIN (e.g. Libera.Chat NickServ tokens):
+     * @example
+     *
+     *  {
+     *    type: 'credentials',
+     *    context: 'irc',
+     *    actor: {
+     *      id: 'testuser@irc.libera.chat',
+     *      type: 'person',
+     *      name: 'Mr. Test User'
+     *    },
+     *    object: {
+     *      type: 'credentials',
+     *      server: 'irc.libera.chat',
+     *      nick: 'testuser',
+     *      token: 'my-personal-access-token',
+     *      port: 6697,
+     *      secure: true
+     *    }
+     *  }
+     *
      * Valid AS object for setting IRC credentials using SASL OAUTHBEARER
      * (OAuth 2.0 access token):
      * @example
@@ -169,8 +190,9 @@ export default class IRC implements PersistentPlatformInterface {
      *    }
      *  }
      *
-     * `password` and `token` are mutually exclusive. `saslMechanism` defaults
-     * to `PLAIN` when `password` is set and `OAUTHBEARER` when `token` is set.
+     * `password` and `token` are mutually exclusive. Both default to SASL
+     * PLAIN; set `saslMechanism: 'OAUTHBEARER'` explicitly for OAuth 2.0
+     * bearer tokens (RFC 7628).
      */
     get schema(): PlatformSchemaStruct {
         return PlatformIrcSchema;
@@ -667,8 +689,7 @@ export default class IRC implements PersistentPlatformInterface {
         const sasl_secret =
             credentials.object.token || credentials.object.password;
         const sasl_mechanism: "PLAIN" | "OAUTHBEARER" =
-            credentials.object.saslMechanism ||
-            (credentials.object.token ? "OAUTHBEARER" : "PLAIN");
+            credentials.object.saslMechanism || "PLAIN";
         const is_sasl =
             typeof credentials.object.sasl === "boolean"
                 ? credentials.object.sasl

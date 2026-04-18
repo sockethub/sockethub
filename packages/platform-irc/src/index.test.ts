@@ -177,7 +177,7 @@ describe("Initialize IRC Platform", () => {
             ).toEqual("");
         });
 
-        it("valid credentials with PLAIN mechanism", () => {
+        it("valid credentials with PLAIN mechanism and password", () => {
             expect(
                 validateCredentials({
                     "@context": IRC_CONTEXT,
@@ -189,6 +189,39 @@ describe("Initialize IRC Platform", () => {
                         server: "irc.example.com",
                         saslMechanism: "PLAIN",
                         password: "secret",
+                    },
+                }),
+            ).toEqual("");
+        });
+
+        it("valid credentials with token only (PLAIN, e.g. Libera PAT)", () => {
+            expect(
+                validateCredentials({
+                    "@context": IRC_CONTEXT,
+                    type: "credentials",
+                    actor,
+                    object: {
+                        type: "credentials",
+                        nick: "testingham",
+                        server: "irc.libera.chat",
+                        token: "my-personal-access-token",
+                    },
+                }),
+            ).toEqual("");
+        });
+
+        it("valid credentials with token and explicit PLAIN mechanism", () => {
+            expect(
+                validateCredentials({
+                    "@context": IRC_CONTEXT,
+                    type: "credentials",
+                    actor,
+                    object: {
+                        type: "credentials",
+                        nick: "testingham",
+                        server: "irc.libera.chat",
+                        saslMechanism: "PLAIN",
+                        token: "my-personal-access-token",
                     },
                 }),
             ).toEqual("");
@@ -208,8 +241,8 @@ describe("Initialize IRC Platform", () => {
                         saslMechanism: "SCRAM-SHA-256",
                     },
                 }),
-            ).toEqual(
-                "[irc] /object/saslMechanism: must be equal to one of the allowed values",
+            ).toContain(
+                "/object/saslMechanism: must be equal to one of the allowed values",
             );
         });
 
@@ -227,7 +260,89 @@ describe("Initialize IRC Platform", () => {
                         token: "oauth-access-token",
                     },
                 }),
-            ).toEqual("[irc] /object: must NOT be valid");
+            ).toContain("/object: must NOT be valid");
+        });
+
+        it("rejects OAUTHBEARER with password instead of token", () => {
+            const result = validateCredentials({
+                "@context": IRC_CONTEXT,
+                type: "credentials",
+                actor,
+                object: {
+                    type: "credentials",
+                    nick: "testingham",
+                    server: "irc.example.com",
+                    saslMechanism: "OAUTHBEARER",
+                    password: "secret",
+                },
+            });
+            expect(result).not.toEqual("");
+        });
+
+        it("rejects OAUTHBEARER without any credential", () => {
+            const result = validateCredentials({
+                "@context": IRC_CONTEXT,
+                type: "credentials",
+                actor,
+                object: {
+                    type: "credentials",
+                    nick: "testingham",
+                    server: "irc.example.com",
+                    // @ts-expect-error test incomplete credentials
+                    saslMechanism: "OAUTHBEARER",
+                },
+            });
+            expect(result).not.toEqual("");
+        });
+
+        it("rejects PLAIN without any credential", () => {
+            const result = validateCredentials({
+                "@context": IRC_CONTEXT,
+                type: "credentials",
+                actor,
+                object: {
+                    type: "credentials",
+                    nick: "testingham",
+                    server: "irc.example.com",
+                    // @ts-expect-error test incomplete credentials
+                    saslMechanism: "PLAIN",
+                },
+            });
+            expect(result).not.toEqual("");
+        });
+
+        it("rejects empty token", () => {
+            expect(
+                validateCredentials({
+                    "@context": IRC_CONTEXT,
+                    type: "credentials",
+                    actor,
+                    object: {
+                        type: "credentials",
+                        nick: "testingham",
+                        server: "irc.example.com",
+                        // @ts-expect-error test empty string
+                        token: "",
+                    },
+                }),
+            ).toContain("must NOT have fewer than 1 characters");
+        });
+
+        it("rejects empty password", () => {
+            expect(
+                validateCredentials({
+                    "@context": IRC_CONTEXT,
+                    type: "credentials",
+                    actor,
+                    object: {
+                        type: "credentials",
+                        nick: "testingham",
+                        server: "irc.example.com",
+                        // @ts-expect-error test empty string
+                        password: "",
+                    },
+                }),
+            ).toContain("must NOT have fewer than 1 characters");
         });
     });
 

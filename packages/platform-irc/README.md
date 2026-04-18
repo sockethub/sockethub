@@ -93,11 +93,14 @@ messages.
 
 Authenticated connections use SASL. Two mechanisms are supported:
 
-* **`PLAIN`** — sends a username and password. This is the default when
-  `password` is set, and is supported by most IRC networks (Libera.Chat,
-  OFTC, etc.).
+* **`PLAIN`** — sends a username and secret via SASL PLAIN. This is the
+  default mechanism, and is supported by most IRC networks (Libera.Chat,
+  OFTC, etc.). Both `password` and `token` use PLAIN by default. Use
+  `token` for personal access tokens (e.g. Libera.Chat NickServ tokens)
+  to avoid storing primary account passwords.
 * **`OAUTHBEARER`** — sends an OAuth 2.0 access token instead of a password
-  ([RFC 7628](https://datatracker.ietf.org/doc/html/rfc7628)). Adoption on
+  ([RFC 7628](https://datatracker.ietf.org/doc/html/rfc7628)). Requires
+  `saslMechanism: "OAUTHBEARER"` to be set explicitly. Adoption on
   public IRC networks is still limited; the main deployment is SourceHut's
   `chat.sr.ht` (via the [soju](https://soju.im/) bouncer). Major networks
   such as Libera.Chat, OFTC, and Hackint do not currently advertise
@@ -105,8 +108,8 @@ Authenticated connections use SASL. Two mechanisms are supported:
   writeup for background. How to obtain the token is provider-specific and
   outside the scope of this module.
 
-`password` and `token` are mutually exclusive. `saslMechanism` is inferred
-from whichever is present, or may be set explicitly.
+`password` and `token` are mutually exclusive. Both default to SASL PLAIN;
+set `saslMechanism: "OAUTHBEARER"` explicitly for OAuth 2.0 bearer tokens.
 
 ### Credentials with password (SASL PLAIN)
 
@@ -127,6 +130,35 @@ from whichever is present, or may be set explicitly.
     "nick": "mynick",
     "server": "irc.libera.chat",
     "password": "secret",
+    "port": 6697,
+    "secure": true
+  }
+}
+```
+
+### Credentials with personal access token (SASL PLAIN)
+
+Networks like Libera.Chat accept NickServ personal access tokens via
+SASL PLAIN. Use the `token` field instead of `password` to make the
+distinction clear:
+
+```json
+{
+  "type": "credentials",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
+  "actor": {
+    "id": "mynick@irc.libera.chat",
+    "type": "person"
+  },
+  "object": {
+    "type": "credentials",
+    "nick": "mynick",
+    "server": "irc.libera.chat",
+    "token": "my-personal-access-token",
     "port": 6697,
     "secure": true
   }
