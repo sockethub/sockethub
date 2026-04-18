@@ -1,5 +1,8 @@
 # Sockethub Code Review Instructions
 
+Read and follow all project conventions in [AGENTS.md](../AGENTS.md).
+The sections below are additional Copilot-specific code review guidance.
+
 ## Review Philosophy
 
 **ONLY comment when you have HIGH CONFIDENCE (>80%) that an issue exists.**
