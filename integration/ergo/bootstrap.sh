@@ -47,11 +47,15 @@ if [ "$NEEDS_SEED" = "1" ]; then
     # argument and enabled-callbacks=[none], ergo auto-verifies the account.
     # Stderr is printed so failures are visible in `docker logs ergo`.
     echo "[bootstrap] seeding account $SEED_NICK" >&2
-    printf 'NICK %s\r\nUSER %s 0 * :%s\r\nCAP END\r\nNS REGISTER %s\r\nQUIT\r\n' \
+    SEED_OUTPUT=$(printf 'NICK %s\r\nUSER %s 0 * :%s\r\nCAP END\r\nNS REGISTER %s\r\nQUIT\r\n' \
         "$SEED_NICK" "$SEED_NICK" "$SEED_NICK" "$SEED_PASS" \
-        | nc -w 5 127.0.0.1 6667 \
-        | sed 's/^/[bootstrap nc] /' >&2 || true
-    echo "[bootstrap] seeding complete" >&2
+        | nc -w 5 127.0.0.1 6667 2>&1) || true
+    echo "$SEED_OUTPUT" | sed 's/^/[bootstrap nc] /' >&2
+    if echo "$SEED_OUTPUT" | grep -qi "successfully registered"; then
+        echo "[bootstrap] seeding complete" >&2
+    else
+        echo "[bootstrap] WARNING: did not see 'successfully registered' in NickServ output" >&2
+    fi
 fi
 
 wait "$ERGO_PID"

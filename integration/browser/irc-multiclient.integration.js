@@ -67,16 +67,15 @@ describe(`IRC Multi-Client Integration Tests at ${config.sockethub.url}`, () => 
 
     describe("Concurrent Client Connections", () => {
         it("all clients can set credentials simultaneously", async () => {
-            // Each unique nick gets a unique password-less SASL-free
-            // credentials object so they don't collide on server-side
-            // account state. The shared-account SASL test is covered in
-            // irc-basic — here we want CLIENT_COUNT independent identities.
+            // Each unique nick gets a unique password-less credentials
+            // object so they don't collide on server-side account state.
+            // SASL PLAIN and OAUTHBEARER are covered in irc-sasl-auth —
+            // here we want CLIENT_COUNT independent identities.
             const credentialPromises = records.map((clientRecord) =>
                 setIRCCredentials(
                     clientRecord.sockethubClient,
                     clientRecord.actorId,
                     clientRecord.nick,
-                    { password: undefined, sasl: false },
                 ),
             );
 

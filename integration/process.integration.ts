@@ -11,7 +11,6 @@ interface TestConfig {
     sockethubProcess?: ChildProcess;
     client?: Socket;
     platformChildPid?: number;
-    ircChildPid?: number;
     dummyChildPid?: number;
     dummyChildStartSeconds?: number;
     sockethubLogs: string[];
@@ -714,7 +713,7 @@ describe("Parent Process Sudden Termination", () => {
                     type: "credentials",
                     nick,
                     server: config.irc.host,
-                    port: Number(config.irc.port),
+                    port: config.irc.port,
                     secure: false,
                     sasl: false,
                 },
@@ -810,7 +809,6 @@ describe("Parent Process Sudden Termination", () => {
         }
 
         expect(childPids.length).toBeGreaterThan(0);
-        testConfig.ircChildPid = childPids[0];
     });
 
     describe("Dummy platform crash detection", () => {

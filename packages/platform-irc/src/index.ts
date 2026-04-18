@@ -688,6 +688,11 @@ export default class IRC implements PersistentPlatformInterface {
                 : true;
         const sasl_secret =
             credentials.object.token || credentials.object.password;
+        // saslMechanism must be set explicitly when using token. The schema
+        // enforces this via allOf/anyOf constraints (PLAIN requires
+        // password or token, OAUTHBEARER requires token). The runtime
+        // fallback only applies to the password-only path where
+        // saslMechanism was omitted.
         const sasl_mechanism: "PLAIN" | "OAUTHBEARER" =
             credentials.object.saslMechanism || "PLAIN";
         const is_sasl =

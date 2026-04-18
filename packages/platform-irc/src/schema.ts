@@ -38,6 +38,7 @@ export const PlatformIrcSchema = {
                 type: "object",
                 required: ["type", "nick", "server"],
                 additionalProperties: false,
+                // password and token are mutually exclusive
                 not: { required: ["password", "token"] },
                 // When saslMechanism is set, the matching secret must be
                 // present: PLAIN requires password or token, OAUTHBEARER
