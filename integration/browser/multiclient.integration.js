@@ -35,6 +35,54 @@ async function ensureSocketsConnected(records) {
     );
 }
 
+async function waitForStableRoomDelivery(records, messageLog) {
+    const sender = records[records.length - 1];
+    const maxAttempts = 3;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const syncMessage = `Room sync ${attempt} at ${Date.now()}`;
+        messageLog.length = 0;
+
+        await sendXMPPMessage(
+            sender.sockethubClient,
+            sender.jid,
+            config.prosody.room,
+            syncMessage,
+        );
+
+        try {
+            await waitFor(
+                () =>
+                    messageLog.filter(
+                        (log) =>
+                            log.message?.object?.content === syncMessage &&
+                            log.message?.type === "send" &&
+                            log.clientId !== sender.jid,
+                    ).length >=
+                    CLIENT_COUNT - 1,
+                Math.min(config.timeouts.multiClientMessage, 4000),
+                50,
+                () => {
+                    const received = messageLog.filter(
+                        (log) =>
+                            log.message?.object?.content === syncMessage &&
+                            log.message?.type === "send" &&
+                            log.clientId !== sender.jid,
+                    ).length;
+                    return `sync attempt ${attempt}: ${received}/${CLIENT_COUNT - 1}`;
+                },
+            );
+            messageLog.length = 0;
+            return;
+        } catch (error) {
+            if (attempt === maxAttempts) {
+                throw error;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+        }
+    }
+}
+
 describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () => {
     validateGlobals();
 
@@ -140,9 +188,9 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             // Verify all clients joined successfully
             expect(results).to.have.length(CLIENT_COUNT);
 
-            // Wait for XMPP presence to propagate after all joins
-            // This ensures all clients know about each other before message tests
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            // Joining a MUC is only half the story; CI is still flaky if the
+            // first test message races ahead of room presence propagation.
+            await waitForStableRoomDelivery(records, messageLog);
         });
     });
 
