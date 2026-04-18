@@ -24,17 +24,7 @@ describe("PlatformSchema.credentials", () => {
         expect(validate(withObject({ password: "hunter2" }))).toBe(true);
     });
 
-    it("accepts token-only credentials", () => {
-        expect(validate(withObject({ token: "t0k3n" }))).toBe(true);
-    });
-
-    it("rejects credentials with both password and token", () => {
-        expect(
-            validate(withObject({ password: "hunter2", token: "t0k3n" })),
-        ).toBe(false);
-    });
-
-    it("rejects credentials with neither password nor token", () => {
+    it("rejects credentials without a password", () => {
         expect(validate(base)).toBe(false);
     });
 });

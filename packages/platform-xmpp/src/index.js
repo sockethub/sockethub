@@ -179,30 +179,11 @@ export default class XMPP {
      *   }
      * }
      *
-     * Alternatively, a `token` may be supplied in place of `password`. Sockethub
-     * copies the token into the SASL PLAIN password slot, which only works for
-     * deployments that explicitly accept a bearer-style token there. Dedicated
-     * token SASL mechanisms such as ejabberd `X-OAUTH2`, Prosody
-     * `OAUTHBEARER`, Prosody community `X-TOKEN`, and SASL2 FAST are not
-     * implemented by this client. Exactly one of `password` or `token` must be
-     * provided.
-     *
-     * @example
-     *
-     * {
-     *   type: 'credentials',
-     *   context: 'xmpp',
-     *   actor: {
-     *     id: 'testuser@jabber.net',
-     *     type: 'person'
-     *   },
-     *   object: {
-     *     type: 'credentials',
-     *     userAddress: 'testuser@jabber.net',
-     *     token: 'pre-issued-auth-token',
-     *     resource: 'phone'
-     *   }
-     * }
+     * Deployments that accept a bearer-style token in the SASL PLAIN password
+     * slot should still pass that token string as `password`. Dedicated token
+     * SASL mechanisms such as ejabberd `X-OAUTH2`, Prosody `OAUTHBEARER`,
+     * Prosody community `X-TOKEN`, and SASL2 FAST are not implemented by this
+     * client.
      **/
     get schema() {
         return PlatformSchema;
