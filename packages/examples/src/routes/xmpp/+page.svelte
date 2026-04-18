@@ -20,7 +20,7 @@ let passwordValue = $state("123456");
 
 let actorId = $derived(`${$actorIdStore}/SockethubExample`);
 
-const room = "kosmos-random@kosmos.chat";
+let room = $state("kosmos-random@kosmos.chat");
 
 const sockethubState = writable({
     actorSet: false,
@@ -131,7 +131,7 @@ async function connectXmpp(): Promise<void> {
             <div class="bg-white border border-gray-200 rounded-lg p-4">
                 <h4 class="font-semibold text-gray-800 mb-3">Step 4 & 5: Join Room and Chat</h4>
                 <div class="space-y-4">
-                    <Room {actor} {sockethubState} {room} context="xmpp" />
+                    <Room {actor} {sockethubState} bind:room context="xmpp" />
                     <IncomingMessage />
                     <SendMessage context="xmpp" {actor} {sockethubState} {room} />
                 </div>
