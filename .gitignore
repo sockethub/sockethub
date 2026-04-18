@@ -8,7 +8,6 @@ node_modules
 .DS_Store
 sockethub.config.json
 .claude/
-CLAUDE.md
 packages/sockethub/sockethub.config.json.sentry
 test-install/
 test-results/
