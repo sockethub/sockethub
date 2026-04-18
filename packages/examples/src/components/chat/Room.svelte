@@ -17,6 +17,14 @@ interface Props {
 let { room = $bindable(), actor, context, sockethubState }: Props = $props();
 
 let joining = $state(false);
+let lastJoinedRoom = $state("");
+
+// Reset joined state when room changes so the user can join the new room
+$effect(() => {
+    if (room !== lastJoinedRoom) {
+        $sockethubState.joined = false;
+    }
+});
 
 async function joinRoom(): Promise<void> {
     joining = true;
@@ -39,7 +47,7 @@ async function joinRoom(): Promise<void> {
             joining = false;
         })
         .then(() => {
-            // $actor.roomId = room;
+            lastJoinedRoom = room;
             $sockethubState.joined = true;
             joining = false;
         });
