@@ -11,8 +11,10 @@ export interface PlatformIrcCredentialsObject extends CredentialsObject {
         server: string;
         username?: string;
         password?: string;
+        token?: string;
         port?: number;
         secure?: boolean;
         sasl?: boolean;
+        saslMechanism?: "PLAIN" | "OAUTHBEARER";
     };
 }

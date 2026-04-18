@@ -77,6 +77,7 @@ export class Janitor {
           in platform instance ${platformInstance.id}`,
         );
         platformInstance.sessions.delete(sessionId);
+        platformInstance.sessionIps.delete(sessionId);
         this.removeSessionCallbacks(platformInstance, sessionId);
     }
 

@@ -1,8 +1,11 @@
 import { createLogger } from "@sockethub/logger";
 
 import {
+    CredentialsMismatchError,
+    CredentialsNotShareableError,
     CredentialsStore,
     type CredentialsStoreInterface,
+    type CredentialsValidationOptions,
     createCredentialsRedisConnection,
     createIdempotencyRedisConnection,
     resetSharedCredentialsRedisConnection,
@@ -28,8 +31,11 @@ async function redisCheck(config: RedisConfig): Promise<void> {
 }
 
 export {
+    CredentialsMismatchError,
+    CredentialsNotShareableError,
     CredentialsStore,
     type CredentialsStoreInterface,
+    type CredentialsValidationOptions,
     createCredentialsRedisConnection,
     createIdempotencyRedisConnection,
     getRedisConnectionCount,

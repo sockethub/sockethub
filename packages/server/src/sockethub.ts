@@ -23,6 +23,54 @@ import {
 
 const log = createLogger("server:core");
 
+function normalizeIp(ip: string | undefined): string {
+    if (!ip) {
+        return "";
+    }
+    const trimmed = ip.split(",")[0].trim();
+    if (trimmed.startsWith("::ffff:")) {
+        return trimmed.slice(7);
+    }
+    return trimmed;
+}
+
+function getProxyHeaderName(): string {
+    return (
+        (
+            config.get("credentialCheck:proxyHeader") as string | undefined
+        )?.toLowerCase() || "x-forwarded-for"
+    );
+}
+
+function getClientIp(socket: Socket): string {
+    const ipSource =
+        config.get("credentialCheck:reconnectIpSource") === "proxy"
+            ? "proxy"
+            : "socket";
+
+    if (ipSource === "proxy") {
+        const proxyHeader = getProxyHeaderName();
+        const headerValue = socket.handshake.headers[proxyHeader];
+        if (typeof headerValue === "string") {
+            const normalized = normalizeIp(headerValue);
+            if (normalized) {
+                return normalized;
+            }
+        } else if (Array.isArray(headerValue) && headerValue.length > 0) {
+            const normalized = normalizeIp(headerValue[0]);
+            if (normalized) {
+                return normalized;
+            }
+        }
+    }
+
+    return normalizeIp(socket.handshake.address);
+}
+
+/**
+ * Main Socket.IO entrypoint for Sockethub runtime.
+ * Owns platform registry metadata, per-session middleware wiring, and routing.
+ */
 class Sockethub {
     private readonly parentId: string;
     private readonly parentSecret1: string;
@@ -101,6 +149,13 @@ class Sockethub {
         // Create rate limiter once at server level
         this.rateLimiter = createRateLimiter(config.get("rateLimiter"));
 
+        if (config.get("credentialCheck:reconnectIpSource") === "proxy") {
+            const proxyHeader = getProxyHeaderName();
+            log.warn(
+                `credentialCheck.reconnectIpSource=proxy enabled; only use this behind a trusted reverse proxy that overwrites '${proxyHeader}'`,
+            );
+        }
+
         log.debug("active platforms: ", [...init.platforms.keys()]);
         listener.start(); // start external services
         registerHttpActionsRoutes(listener.getApp(), {
@@ -125,6 +180,7 @@ class Sockethub {
         // session-specific debug messages
         const sessionLog = createLogger(`server:core:${socket.id}`);
         const sessionSecret = crypto.randToken(16);
+        const clientIp = getClientIp(socket);
         const credentialsStore: CredentialsStoreInterface =
             new CredentialsStore(
                 this.parentId,
@@ -164,6 +220,9 @@ class Sockethub {
             sessionId: socket.id,
             sessionSecret,
             credentialsStore,
+            clientIp,
+            isSessionActive: (sessionId) =>
+                listener.io?.sockets?.sockets?.has(sessionId) ?? false,
             // Keep session registration behavior inside ProcessManager.get().
             platformSessionId: socket.id,
         });

@@ -36,7 +36,7 @@ export const PlatformSchema = {
             },
             object: {
                 type: "object",
-                required: ["type", "userAddress", "password", "resource"],
+                required: ["type", "userAddress", "resource"],
                 additionalProperties: false,
                 properties: {
                     type: {
@@ -46,6 +46,9 @@ export const PlatformSchema = {
                         type: "string",
                     },
                     password: {
+                        type: "string",
+                    },
+                    token: {
                         type: "string",
                     },
                     server: {
@@ -58,6 +61,7 @@ export const PlatformSchema = {
                         type: "string",
                     },
                 },
+                oneOf: [{ required: ["password"] }, { required: ["token"] }],
             },
         },
     },

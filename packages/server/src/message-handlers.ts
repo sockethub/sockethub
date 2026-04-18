@@ -12,6 +12,7 @@ import type {
 } from "@sockethub/schemas";
 import { resolvePlatformId } from "@sockethub/schemas";
 import createActivityObject from "./middleware/create-activity-object.js";
+import credentialCheck from "./middleware/credential-check.js";
 import expandActivityStream from "./middleware/expand-activity-stream.js";
 import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
@@ -35,6 +36,8 @@ export interface MessageHandlersOptions {
     sessionId: string;
     sessionSecret: string;
     credentialsStore: CredentialsStoreInterface;
+    clientIp?: string;
+    isSessionActive?: (sessionId: string) => boolean;
     // Socket path uses this to preserve existing ProcessManager session behavior.
     platformSessionId?: string;
     onPlatformInstance?: (platformInstance: PlatformInstance) => void;
@@ -66,6 +69,8 @@ export function createMessageHandlers(
         sessionId,
         sessionSecret,
         credentialsStore,
+        clientIp,
+        isSessionActive,
         platformSessionId,
         onPlatformInstance,
     } = options;
@@ -131,6 +136,14 @@ export function createMessageHandlers(
             },
         )
         .use(
+            credentialCheck(
+                credentialsStore,
+                sessionId,
+                clientIp ?? "",
+                isSessionActive,
+            ),
+        )
+        .use(
             (
                 err: Error,
                 data: InternalActivityStream,
@@ -159,6 +172,7 @@ export function createMessageHandlers(
                     platformId,
                     msg.actor.id,
                     platformSessionId,
+                    clientIp,
                 );
                 if (onPlatformInstance) {
                     onPlatformInstance(platformInstance);

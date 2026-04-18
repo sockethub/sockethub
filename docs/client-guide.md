@@ -204,6 +204,10 @@ sc.socket.emit('credentials', {
         nick: 'mynick',
         server: 'irc.libera.chat',
         secure: true
+        // password: 'secret'              // SASL PLAIN (traditional password)
+        // token: 'my-access-token',      // SASL PLAIN with token (e.g. Libera PAT)
+        // token: 'oauth-access-token',   // or for OAUTHBEARER (requires saslMechanism below)
+        // saslMechanism: 'OAUTHBEARER'   // required for OAuth 2.0 bearer tokens (RFC 7628)
     }
 });
 
@@ -214,6 +218,50 @@ sc.socket.emit('message', {
     actor: { id: 'mynick', type: 'person' }
 });
 ```
+
+The XMPP platform accepts either a password or a pre-issued auth token. Supply
+exactly one — the token is sent via SASL PLAIN and is compatible with
+ejabberd's `mod_auth_token`, Prosody's `mod_tokenauth`, and similar modules.
+See [packages/platform-xmpp/README.md](../packages/platform-xmpp/README.md#authentication)
+for the full credential reference.
+
+```javascript
+// XMPP with a token instead of a password
+sc.socket.emit('credentials', {
+    '@context': sc.contextFor('xmpp'),
+    type: 'credentials',
+    actor: { id: 'user@jabber.net', type: 'person' },
+    object: {
+        type: 'credentials',
+        userAddress: 'user@jabber.net',
+        token: 'ejabberd-issued-auth-token',
+        resource: 'phone'
+    }
+});
+```
+
+### Anonymous IRC Username Collisions
+
+If two sockets use the same IRC actor (same `context` + `actor.id`) without a
+password, Sockethub does not allow them to share one running IRC session.
+
+The rejected request returns an ActivityStream response with an `error`:
+
+```json
+{
+  "context": "irc",
+  "type": "connect",
+  "actor": { "id": "mynick", "type": "person" },
+  "id": "1",
+  "error": "username already in use"
+}
+```
+
+Client apps should treat any callback payload containing `error` as a failed
+action and reset UI state accordingly (for example, re-enable a connect button).
+
+Small exception: after a browser refresh, a reconnect from the same client IP
+may still be allowed while the old stale socket is waiting for janitor cleanup.
 
 ## Platform Examples
 
