@@ -15,6 +15,11 @@ object.</p>
 <code>types</code> portion of the schema object (should be an array of type names).</p>
 <p><strong>NOTE</strong>: For more information on using the credentials object from a client,
 see <a href="https://github.com/sockethub/sockethub/wiki/Sockethub-Client">Sockethub Client</a></p>
+<p>Deployments that accept a bearer-style token in the SASL PLAIN password
+slot should still pass that token string as <code>password</code>. Dedicated token
+SASL mechanisms such as ejabberd <code>X-OAUTH2</code>, Prosody <code>OAUTHBEARER</code>,
+Prosody community <code>X-TOKEN</code>, and SASL2 FAST are not implemented by this
+client.</p>
 <p>Valid AS object for setting XMPP credentials:</p>
 </dd>
 </dl>
@@ -97,6 +102,12 @@ It will also check if the incoming AS object uses a type which exists in the
 **NOTE**: For more information on using the credentials object from a client,
 see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
 
+Deployments that accept a bearer-style token in the SASL PLAIN password
+slot should still pass that token string as `password`. Dedicated token
+SASL mechanisms such as ejabberd `X-OAUTH2`, Prosody `OAUTHBEARER`,
+Prosody community `X-TOKEN`, and SASL2 FAST are not implemented by this
+client.
+
 Valid AS object for setting XMPP credentials:
 
 **Kind**: global variable  
@@ -114,29 +125,6 @@ Valid AS object for setting XMPP credentials:
     type: 'credentials',
     userAddress: 'testuser@jabber.net',
     password: 'asdasdasdasd',
-    resource: 'phone'
-  }
-}
-
-Alternatively, a `token` may be supplied in place of `password`. The token
-is sent via SASL PLAIN in the password slot; servers such as ejabberd
-(`mod_auth_token`) and Prosody (`mod_tokenauth`) accept this for
-token-based authentication. Exactly one of `password` or `token` must be
-provided.
-```
-**Example**  
-```js
-{
-  type: 'credentials',
-  context: 'xmpp',
-  actor: {
-    id: 'testuser@jabber.net',
-    type: 'person'
-  },
-  object: {
-    type: 'credentials',
-    userAddress: 'testuser@jabber.net',
-    token: 'ejabberd-issued-auth-token',
     resource: 'phone'
   }
 }

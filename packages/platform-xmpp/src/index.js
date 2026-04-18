@@ -159,6 +159,12 @@ export default class XMPP {
      * **NOTE**: For more information on using the credentials object from a client,
      * see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
      *
+     * Deployments that accept a bearer-style token in the SASL PLAIN password
+     * slot should still pass that token string as `password`. Dedicated token
+     * SASL mechanisms such as ejabberd `X-OAUTH2`, Prosody `OAUTHBEARER`,
+     * Prosody community `X-TOKEN`, and SASL2 FAST are not implemented by this
+     * client.
+     *
      * Valid AS object for setting XMPP credentials:
      *
      * @example
@@ -175,29 +181,6 @@ export default class XMPP {
      *     type: 'credentials',
      *     userAddress: 'testuser@jabber.net',
      *     password: 'asdasdasdasd',
-     *     resource: 'phone'
-     *   }
-     * }
-     *
-     * Alternatively, a `token` may be supplied in place of `password`. The token
-     * is sent via SASL PLAIN in the password slot; servers such as ejabberd
-     * (`mod_auth_token`) and Prosody (`mod_tokenauth`) accept this for
-     * token-based authentication. Exactly one of `password` or `token` must be
-     * provided.
-     *
-     * @example
-     *
-     * {
-     *   type: 'credentials',
-     *   context: 'xmpp',
-     *   actor: {
-     *     id: 'testuser@jabber.net',
-     *     type: 'person'
-     *   },
-     *   object: {
-     *     type: 'credentials',
-     *     userAddress: 'testuser@jabber.net',
-     *     token: 'ejabberd-issued-auth-token',
      *     resource: 'phone'
      *   }
      * }

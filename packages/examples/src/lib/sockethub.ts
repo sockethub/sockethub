@@ -83,9 +83,7 @@ type XmppCredentialsBase = {
     userAddress: string;
 };
 
-export type XmppCredentials =
-    | (XmppCredentialsBase & { password: string; token?: never })
-    | (XmppCredentialsBase & { token: string; password?: never });
+export type XmppCredentials = XmppCredentialsBase & { password: string };
 
 export type CredentialData = {
     isSet: boolean;

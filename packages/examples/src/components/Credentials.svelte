@@ -21,7 +21,6 @@ function sendCredentials(data: string) {
         actor: actor.id,
         object: JSON.parse(data),
     };
-    console.log("sending credentials: ", creds);
     sc.socket.emit("credentials", creds, (resp: SockethubResponse) => {
         if (resp?.error) {
             throw new Error(resp.error);

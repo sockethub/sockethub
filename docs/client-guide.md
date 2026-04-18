@@ -219,14 +219,15 @@ sc.socket.emit('message', {
 });
 ```
 
-The XMPP platform accepts either a password or a pre-issued auth token. Supply
-exactly one — the token is sent via SASL PLAIN and is compatible with
-ejabberd's `mod_auth_token`, Prosody's `mod_tokenauth`, and similar modules.
+The XMPP platform accepts a single `password` field. If your deployment expects
+a pre-issued auth token in the SASL PLAIN password slot, pass that token
+string as `password`. This is only compatible with deployments that explicitly
+accept bearer-style tokens there.
 See [packages/platform-xmpp/README.md](../packages/platform-xmpp/README.md#authentication)
 for the full credential reference.
 
 ```javascript
-// XMPP with a token instead of a password
+// XMPP using a bearer-style token string in the password slot
 sc.socket.emit('credentials', {
     '@context': sc.contextFor('xmpp'),
     type: 'credentials',
@@ -234,7 +235,7 @@ sc.socket.emit('credentials', {
     object: {
         type: 'credentials',
         userAddress: 'user@jabber.net',
-        token: 'ejabberd-issued-auth-token',
+        password: 'pre-issued-auth-token',
         resource: 'phone'
     }
 });

@@ -8,7 +8,7 @@ export const utils = {
                   ? server
                   : undefined,
             username: username,
-            password: credentials.object.token || credentials.object.password,
+            password: credentials.object.password,
         };
         if (credentials.object.port) {
             xmpp_creds.service = `${xmpp_creds.service}:${credentials.object.port}`;

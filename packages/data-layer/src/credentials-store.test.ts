@@ -172,23 +172,20 @@ describe("CredentialsStore", () => {
             });
         });
 
-        it("rejects anonymous credentials for session-share validation", async () => {
+        it("allows token credentials for session-share validation", async () => {
             MockStoreGet.returns({
                 object: { type: "credentials", token: "a credential" },
             });
-            try {
-                await credentialsStore.get("an actor", undefined, {
-                    validateSessionShare: true,
-                });
-                expect(false).toEqual(true);
-            } catch (err) {
-                expect(err.toString()).toEqual("Error: username already in use");
-                expect(err).toBeInstanceOf(CredentialsNotShareableError);
-            }
+            const res = await credentialsStore.get("an actor", undefined, {
+                validateSessionShare: true,
+            });
             sinon.assert.calledOnce(MockStoreGet);
             sinon.assert.calledWith(MockStoreGet, "an actor");
             sinon.assert.notCalled(MockObjectHash);
             sinon.assert.notCalled(MockStoreSave);
+            expect(res).toEqual({
+                object: { type: "credentials", token: "a credential" },
+            });
         });
 
         it("allows password credentials for session-share validation", async () => {
@@ -205,6 +202,25 @@ describe("CredentialsStore", () => {
             expect(res).toEqual({
                 object: { type: "credentials", password: "a credential" },
             });
+        });
+
+        it("rejects credentials without password or token for session-share validation", async () => {
+            MockStoreGet.returns({
+                object: { type: "credentials" },
+            });
+            try {
+                await credentialsStore.get("an actor", undefined, {
+                    validateSessionShare: true,
+                });
+                expect(false).toEqual(true);
+            } catch (err) {
+                expect(err.toString()).toEqual("Error: username already in use");
+                expect(err).toBeInstanceOf(CredentialsNotShareableError);
+            }
+            sinon.assert.calledOnce(MockStoreGet);
+            sinon.assert.calledWith(MockStoreGet, "an actor");
+            sinon.assert.notCalled(MockObjectHash);
+            sinon.assert.notCalled(MockStoreSave);
         });
 
         it("rejects array credentials objects", async () => {
