@@ -16,9 +16,7 @@ import { writable } from "svelte/store";
 
 const actorIdStore = writable("user@jabber.org");
 let connecting = $state(false);
-let authMode = $state<"password" | "token">("password");
 let passwordValue = $state("123456");
-let tokenValue = $state("pre-issued-auth-token");
 
 let actorId = $derived(`${$actorIdStore}/SockethubExample`);
 
@@ -41,7 +39,7 @@ let credentials = $derived({
     type: "credentials" as CredentialName,
     userAddress: $actorIdStore,
     resource: "SockethubExample",
-    password: authMode === "token" ? tokenValue : passwordValue,
+    password: passwordValue,
 });
 
 async function connectXmpp(): Promise<void> {
@@ -96,65 +94,25 @@ async function connectXmpp(): Promise<void> {
         <!-- Step 2: Credentials -->
         <div class="bg-white border border-gray-200 rounded-lg p-4">
             <h4 class="font-semibold text-gray-800 mb-3">Step 2: Set Your Credentials</h4>
-            <div class="mb-3">
-                <span class="text-sm text-gray-700 font-medium mr-3">Authentication method:</span>
-                <label class="inline-flex items-center mr-4 text-sm text-gray-700">
-                    <input
-                        type="radio"
-                        name="xmpp-auth-mode"
-                        value="password"
-                        bind:group={authMode}
-                        disabled={$sockethubState.credentialsSet}
-                        class="mr-2"
-                    />
-                    Password
-                </label>
-                <label class="inline-flex items-center text-sm text-gray-700">
-                    <input
-                        type="radio"
-                        name="xmpp-auth-mode"
-                        value="token"
-                        bind:group={authMode}
-                        disabled={$sockethubState.credentialsSet}
-                        class="mr-2"
-                    />
-                    Token
-                </label>
-            </div>
-            {#if authMode === "token"}
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="xmpp-token-input">
-                    Auth token
-                </label>
-                <input
-                    id="xmpp-token-input"
-                    type="password"
-                    bind:value={tokenValue}
-                    disabled={$sockethubState.credentialsSet}
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono mb-3"
-                    placeholder="pre-issued-auth-token"
-                />
-                <p class="text-gray-600 text-xs mb-3">
-                    💡 This example labels the secret as a token, but it still submits it as
-                    <code>password</code>. Use it only with deployments that explicitly accept
-                    bearer-style tokens in the SASL PLAIN password slot.
-                </p>
-            {:else}
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="xmpp-password-input">
-                    Password
-                </label>
-                <input
-                    id="xmpp-password-input"
-                    type="password"
-                    bind:value={passwordValue}
-                    disabled={$sockethubState.credentialsSet}
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm mb-3"
-                    placeholder="your XMPP account password"
-                />
-            {/if}
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="xmpp-password-input">
+                Password
+            </label>
+            <input
+                id="xmpp-password-input"
+                type="password"
+                bind:value={passwordValue}
+                disabled={$sockethubState.credentialsSet}
+                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm mb-3"
+                placeholder="your XMPP password or compatible bearer token"
+            />
+            <p class="text-gray-600 text-xs mb-3">
+                💡 If your deployment accepts a bearer-style token in the SASL PLAIN password
+                slot, enter that token here. Sockethub's XMPP platform still submits it as
+                <code>password</code>.
+            </p>
             <Credentials context="xmpp" {credentials} {actor} {sockethubState} />
             <p class="text-gray-600 text-sm mt-2">
-                🔐 Sockethub's XMPP platform accepts a single <code>password</code> field. This
-                example can label that secret as either a password or a token.
+                🔐 Sockethub's XMPP platform accepts a single <code>password</code> field.
             </p>
         </div>
 

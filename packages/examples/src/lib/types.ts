@@ -2,7 +2,6 @@ import type { Writable } from "svelte/store";
 
 export type TextAreaObject = {
     password?: string;
-    token?: string;
     id?: string;
     type?: string;
     name?: string;

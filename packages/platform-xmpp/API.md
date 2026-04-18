@@ -15,6 +15,11 @@ object.</p>
 <code>types</code> portion of the schema object (should be an array of type names).</p>
 <p><strong>NOTE</strong>: For more information on using the credentials object from a client,
 see <a href="https://github.com/sockethub/sockethub/wiki/Sockethub-Client">Sockethub Client</a></p>
+<p>Deployments that accept a bearer-style token in the SASL PLAIN password
+slot should still pass that token string as <code>password</code>. Dedicated token
+SASL mechanisms such as ejabberd <code>X-OAUTH2</code>, Prosody <code>OAUTHBEARER</code>,
+Prosody community <code>X-TOKEN</code>, and SASL2 FAST are not implemented by this
+client.</p>
 <p>Valid AS object for setting XMPP credentials:</p>
 </dd>
 </dl>
@@ -97,6 +102,12 @@ It will also check if the incoming AS object uses a type which exists in the
 **NOTE**: For more information on using the credentials object from a client,
 see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
 
+Deployments that accept a bearer-style token in the SASL PLAIN password
+slot should still pass that token string as `password`. Dedicated token
+SASL mechanisms such as ejabberd `X-OAUTH2`, Prosody `OAUTHBEARER`,
+Prosody community `X-TOKEN`, and SASL2 FAST are not implemented by this
+client.
+
 Valid AS object for setting XMPP credentials:
 
 **Kind**: global variable  
@@ -117,12 +128,6 @@ Valid AS object for setting XMPP credentials:
     resource: 'phone'
   }
 }
-
-Deployments that accept a bearer-style token in the SASL PLAIN password
-slot should still pass that token string as `password`. Dedicated token
-SASL mechanisms such as ejabberd `X-OAUTH2`, Prosody `OAUTHBEARER`,
-Prosody community `X-TOKEN`, and SASL2 FAST are not implemented by this
-client.
 ```
 <a name="__markDisconnected"></a>
 

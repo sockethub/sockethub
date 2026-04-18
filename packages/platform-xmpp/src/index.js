@@ -159,6 +159,12 @@ export default class XMPP {
      * **NOTE**: For more information on using the credentials object from a client,
      * see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
      *
+     * Deployments that accept a bearer-style token in the SASL PLAIN password
+     * slot should still pass that token string as `password`. Dedicated token
+     * SASL mechanisms such as ejabberd `X-OAUTH2`, Prosody `OAUTHBEARER`,
+     * Prosody community `X-TOKEN`, and SASL2 FAST are not implemented by this
+     * client.
+     *
      * Valid AS object for setting XMPP credentials:
      *
      * @example
@@ -178,12 +184,6 @@ export default class XMPP {
      *     resource: 'phone'
      *   }
      * }
-     *
-     * Deployments that accept a bearer-style token in the SASL PLAIN password
-     * slot should still pass that token string as `password`. Dedicated token
-     * SASL mechanisms such as ejabberd `X-OAUTH2`, Prosody `OAUTHBEARER`,
-     * Prosody community `X-TOKEN`, and SASL2 FAST are not implemented by this
-     * client.
      **/
     get schema() {
         return PlatformSchema;
