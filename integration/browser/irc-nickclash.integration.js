@@ -63,19 +63,13 @@ describe(`IRC Nick Clash Integration Tests at ${config.sockethub.url}`, () => {
         });
 
         it("second connection with the same nick surfaces a serviceError", async () => {
-            await setIRCCredentials(firstClient, firstActorId, nick, {
-                password: undefined,
-                sasl: false,
-            });
+            await setIRCCredentials(firstClient, firstActorId, nick);
             firstClient.ActivityStreams.Object.create(
                 utils.createIrcActorObject(nick),
             );
             await connectIRC(firstClient, firstActorId, nick);
 
-            await setIRCCredentials(secondClient, secondActorId, nick, {
-                password: undefined,
-                sasl: false,
-            });
+            await setIRCCredentials(secondClient, secondActorId, nick);
             secondClient.ActivityStreams.Object.create({
                 id: secondActorId,
                 type: "person",
@@ -127,20 +121,14 @@ describe(`IRC Nick Clash Integration Tests at ${config.sockethub.url}`, () => {
             }
         });
 
-        it("two concurrent connects sharing an actor ID both resolve", async () => {
+        it("two concurrent connects sharing an actor ID both succeed via shared client", async () => {
             // Same credentials object on both sockets → same credentialsHash
             // → same platform child process. The second getClient call
             // should wait on the first via the `clientConnecting` lock and
             // then reuse the shared client.
             await Promise.all([
-                setIRCCredentials(clientA, actorId, nick, {
-                    password: undefined,
-                    sasl: false,
-                }),
-                setIRCCredentials(clientB, actorId, nick, {
-                    password: undefined,
-                    sasl: false,
-                }),
+                setIRCCredentials(clientA, actorId, nick),
+                setIRCCredentials(clientB, actorId, nick),
             ]);
             const actorObject = utils.createIrcActorObject(nick);
             clientA.ActivityStreams.Object.create(actorObject);
@@ -152,16 +140,15 @@ describe(`IRC Nick Clash Integration Tests at ${config.sockethub.url}`, () => {
             ]);
 
             const fulfilled = results.filter((r) => r.status === "fulfilled");
-            // At minimum the first caller must succeed. The second should
-            // also succeed (platform sharing); if it fails, it must do so
-            // with a clean error rather than hanging.
-            expect(fulfilled.length).to.be.at.least(1);
-            for (const r of results) {
-                if (r.status === "rejected") {
-                    expect(r.reason.message).to.match(
-                        /irc|connect|client|nick/i,
-                    );
-                }
+            // Both callers should succeed: the `clientConnecting` lock
+            // serialises the two getClient calls so the second reuses the
+            // connection established by the first.
+            expect(fulfilled.length).to.equal(2);
+            for (const r of fulfilled) {
+                expect(r.value).to.deep.include({
+                    type: "connect",
+                    platform: "irc",
+                });
             }
         });
     });

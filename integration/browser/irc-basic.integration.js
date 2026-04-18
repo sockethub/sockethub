@@ -44,10 +44,7 @@ describe(`Sockethub IRC Basic Integration Tests at ${config.sockethub.url}`, () 
 
         describe("Credentials", () => {
             it("fires an empty callback", async () => {
-                await setIRCCredentials(sc, actorId, nick, {
-                    password: undefined,
-                    sasl: false,
-                });
+                await setIRCCredentials(sc, actorId, nick);
             });
         });
 

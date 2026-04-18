@@ -269,11 +269,11 @@ export function setIRCCredentials(
     actorId,
     nick = config.irc.testUser.nick,
     {
-        password = config.irc.testUser.password,
+        password,
         token,
         saslMechanism,
         sasl = password !== undefined || token !== undefined,
-        port = Number(config.irc.port),
+        port = config.irc.port,
         secure = false,
         server = config.irc.host,
     } = {},
@@ -300,7 +300,6 @@ export function setIRCCredentials(
         type: "credentials",
         object: credentialsObject,
     };
-    console.log("sending IRC credentials: ", creds);
     return emitWithAck(sh.socket, "credentials", creds, {
         label: "irc credentials",
     }).then((response) => {

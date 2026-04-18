@@ -150,7 +150,7 @@ describe(`Sockethub IRC SASL auth at ${config.sockethub.url}`, () => {
                         type: "credentials",
                         nick,
                         server: config.irc.host,
-                        port: Number(config.irc.port),
+                        port: config.irc.port,
                         secure: false,
                         ...object,
                     },
