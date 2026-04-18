@@ -20,7 +20,7 @@ const actorIdStore = writable(
 
 let server = $state("chat.freenode.net");
 let port = $state(6697);
-let room = "#sh-random";
+let room = $state("#sh-random");
 let connecting = $state(false);
 
 const sockethubState = writable({
@@ -151,7 +151,7 @@ async function connectIrc(): Promise<void> {
                     Join Channel and Chat
                 </h4>
                 <div class="space-y-6">
-                    <Room {actor} {sockethubState} {room} context="irc" />
+                    <Room {actor} {sockethubState} bind:room context="irc" />
                     <IncomingMessage />
                     <SendMessage context="irc" {actor} {sockethubState} {room} />
                 </div>
