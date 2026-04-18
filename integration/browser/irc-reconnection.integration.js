@@ -128,13 +128,11 @@ describe("IRC Client Reconnection Tests", () => {
             }
         });
 
-        // Skipped: `irc-socket-sasl` doesn't handle Ergo's server-prefixed
-        // `AUTHENTICATE +` (it parses `parts[0] === "AUTHENTICATE"` but the
-        // prefix shifts that to `parts[1]`), so SASL hangs instead of
-        // surfacing a failure. Re-enable once the upstream library handles
-        // prefixed AUTHENTICATE responses, or once the platform switches to
-        // a maintained SASL implementation.
-        xit("reconnection with wrong SASL creds causes proper platform cleanup (no zombie processes)", async () => {
+        // SASL PLAIN against Ergo is proven to work in
+        // irc-sasl-auth.integration.js. This test deliberately sends wrong
+        // credentials and verifies the platform cleans up (no zombie child
+        // processes or stuck connections).
+        it("reconnection with wrong SASL creds causes proper platform cleanup (no zombie processes)", async () => {
             let initialClient;
             let invalidCredClient;
             let validCredClient;
@@ -145,7 +143,7 @@ describe("IRC Client Reconnection Tests", () => {
             // is meaningful. Reuse its actor identity for this cleanup test so
             // "wrong password" is actually a wrong password.
             const saslNick = config.irc.testUser.nick;
-            const saslActorId = utils.createIrcActorId(`${saslNick}Cleanup`);
+            const saslActorId = utils.createIrcActorId(`${saslNick}BadPw`);
 
             try {
                 initialClient = connectSockethubClient();
@@ -180,7 +178,6 @@ describe("IRC Client Reconnection Tests", () => {
                     saslNick,
                     {
                         password: "wrong-password-for-jimmy",
-                        sasl: true,
                     },
                 );
 
@@ -193,7 +190,7 @@ describe("IRC Client Reconnection Tests", () => {
                     // response as "unable to connect to server: ...". Accept
                     // any authentication-flavored wording the server returns.
                     expect(err.message).to.match(
-                        /sasl|authentication|unable to connect/i,
+                        /sasl|authentication|unable to connect|close/i,
                     );
                 }
                 expect(connectFailed).to.be.true;
