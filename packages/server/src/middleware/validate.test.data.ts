@@ -332,8 +332,12 @@ export default [
         },
     },
     {
-        name: "legacy context overrides unregistered @context",
-        valid: true,
+        // String `context` is only promoted to @context when @context is
+        // missing. If @context is present but unregistered, validation fails
+        // with the standard "not registered" error — legacy context no longer
+        // shadows an explicit @context.
+        name: "legacy context does not override unregistered @context",
+        valid: false,
         type: "message",
         input: {
             type: "echo",
@@ -345,17 +349,10 @@ export default [
             ],
             actor: { id: "irc://uuu@localhost", type: "person" },
         },
-        output: {
-            type: "echo",
-            context: "fakeplatform",
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/fakeplatform/v1.jsonld",
-            ],
-            platform: "fakeplatform",
-            actor: { id: "irc://uuu@localhost", type: "person" },
-        },
+        error:
+            "Error: platform context URL not registered with this Sockethub instance." +
+            " Unregistered platform @context value: " +
+            "https://sockethub.org/ns/context/platform/unknown/v1.jsonld",
     },
     {
         name: "message with wrong type",

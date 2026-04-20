@@ -40,51 +40,16 @@ export default function validate(
         SOCKETHUB_BASE_CONTEXT_URL,
     ]);
 
-    const getLegacyContext = (stream: ActivityStream): string | undefined => {
-        const legacyContext = (stream as ActivityStream & { context?: unknown })
-            .context;
-        return typeof legacyContext === "string" ? legacyContext : undefined;
-    };
-
-    const getContextValues = (stream: ActivityStream): Array<string> => {
+    const getPlatformContextCandidates = (
+        stream: ActivityStream,
+    ): Array<string> => {
         if (!Array.isArray(stream["@context"])) {
             return [];
         }
         return stream["@context"].filter(
-            (value): value is string => typeof value === "string",
+            (value): value is string =>
+                typeof value === "string" && !baseContextUrls.has(value),
         );
-    };
-
-    const getPlatformContextCandidates = (
-        stream: ActivityStream,
-    ): Array<string> => {
-        return getContextValues(stream).filter(
-            (value) => !baseContextUrls.has(value),
-        );
-    };
-
-    const normalizeLegacyContext = (
-        stream: ActivityStream,
-        initObj: IInitObject,
-    ) => {
-        if (resolvePlatformId(stream)) {
-            return;
-        }
-        const legacyContext = getLegacyContext(stream);
-        if (!legacyContext) {
-            return;
-        }
-        const platformMeta = initObj.platforms.get(legacyContext);
-        if (!platformMeta) {
-            return;
-        }
-        const platformContextUrl =
-            platformMeta.contextUrl ||
-            `https://sockethub.org/ns/context/platform/${legacyContext}/v1.jsonld`;
-        // Intentionally mutate the incoming stream so legacy `context` payloads
-        // continue through canonical @context/platform validation paths.
-        stream["@context"] = buildCanonicalContext(platformContextUrl);
-        stream.platform = legacyContext;
     };
 
     let initObj = passedInitObj;
@@ -118,8 +83,25 @@ export default function validate(
                 );
             }
             const stream = msg as ActivityStream;
-            // Intentional mutation for backward compatibility with legacy `context`.
-            normalizeLegacyContext(stream, initObj);
+            // A string `context` is a platform-name alias for @context.
+            // Only promote it when @context is missing so an unregistered
+            // legacy name falls through to the standard "not registered"
+            // error below rather than shadowing a real @context.
+            if (!Array.isArray(stream["@context"])) {
+                const legacy = (
+                    stream as ActivityStream & { context?: unknown }
+                ).context;
+                if (typeof legacy === "string" && legacy.trim().length > 0) {
+                    const platformName = legacy.trim();
+                    const platformMeta = initObj.platforms.get(platformName);
+                    if (platformMeta) {
+                        stream["@context"] = buildCanonicalContext(
+                            platformMeta.contextUrl,
+                        );
+                        stream.platform = platformName;
+                    }
+                }
+            }
             const platformId = resolvePlatformId(stream);
             if (!platformId) {
                 const platformContextCandidates =

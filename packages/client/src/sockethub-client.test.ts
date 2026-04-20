@@ -610,6 +610,40 @@ describe("SockethubClient", () => {
             sc.socket.emit("credentials", { actor: "bar" }, callback);
         });
 
+        it("promotes string context to canonical @context via contextFor", (done) => {
+            sc.socket.connected = true;
+            socket.once("message", (data: any) => {
+                expect(data["@context"]).to.eql([
+                    "https://example.com/as2",
+                    "https://example.com/sh",
+                    "https://example.com/context/platform/xmpp/v9.jsonld",
+                ]);
+                expect(data.platform).to.equal("xmpp");
+                done();
+            });
+            sc.socket.emit("message", {
+                actor: "bar",
+                type: "send",
+                context: "xmpp",
+            });
+        });
+
+        it("rejects string context for unknown platform via contextFor error", () => {
+            sc.socket.connected = true;
+            const callback = sandbox.spy();
+            socket.emit.resetHistory();
+            sc.socket.emit(
+                "message",
+                { actor: "bar", type: "send", context: "irc" },
+                callback,
+            );
+            expect(callback.calledOnce).to.equal(true);
+            expect(callback.firstCall.args[0]?.error).to.contain(
+                "unknown platform 'irc'",
+            );
+            expect(socket.emit.calledWithMatch("message")).to.equal(false);
+        });
+
         it("queues outbound messages before ready and flushes after schemas", (done) => {
             const preReadySocket = new EventEmitter();
             preReadySocket.connected = false;
