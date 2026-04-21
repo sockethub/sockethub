@@ -4,6 +4,7 @@
 
 // If sockethub is inside a docker image, the hosts might have unique names
 const XMPP_HOST = process.env.XMPP_HOST || "localhost";
+const IRC_HOST = process.env.IRC_HOST || "localhost";
 const SOCKETHUB_HOST = process.env.SOCKETHUB_HOST || "localhost";
 const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 
@@ -32,6 +33,19 @@ const config = {
             password: "passw0rd",
         },
         room: "testroom@conference.prosody",
+    },
+
+    // Ergo IRC server configuration
+    irc: {
+        host: IRC_HOST,
+        port: 6667,
+        testUser: {
+            nick: "jimmy",
+            password: "passw0rd",
+            // Must match integration/mock-oauth/server.js TEST_TOKEN.
+            oauthToken: "integration-test-token",
+        },
+        channel: "#sockethub-test",
     },
 
     timeouts: {

@@ -71,6 +71,7 @@ export default class PlatformInstance {
     readonly log: Logger;
     readonly parentId: string;
     readonly sessions: Set<string> = new Set();
+    readonly sessionIps: Map<string, string> = new Map();
     readonly sessionCallbacks: Record<
         "close" | "message",
         Map<string, (...args: Array<unknown>) => void | Promise<void>>
@@ -128,7 +129,9 @@ export default class PlatformInstance {
         this.process = fork(
             join(__dirname, "platform.js"),
             [parentId, name, id],
-            { env: env },
+            {
+                env: env,
+            },
         );
     }
 
@@ -216,7 +219,10 @@ export default class PlatformInstance {
      * Register listener to be called when the process emits a message.
      * @param sessionId ID of socket connection that will receive messages from platform emits
      */
-    public registerSession(sessionId: string) {
+    public registerSession(sessionId: string, clientIp?: string) {
+        if (clientIp) {
+            this.sessionIps.set(sessionId, clientIp);
+        }
         if (!this.sessions.has(sessionId)) {
             this.sessions.add(sessionId);
             for (const type of Object.keys(this.sessionCallbacks) as Array<
@@ -238,22 +244,16 @@ export default class PlatformInstance {
     public async sendToClient(sessionId: string, msg: InternalActivityStream) {
         return this.getSocket(sessionId).then(
             (socket: Socket) => {
-                try {
-                    this.toExternalPayload(msg as ActivityStream);
-                } finally {
-                    const contextUrl =
-                        this.contextUrl ?? INTERNAL_PLATFORM_CONTEXT_URL;
-                    msg["@context"] = buildCanonicalContext(contextUrl);
-                    if (
-                        msg.type === "error" &&
-                        typeof msg.actor === "undefined" &&
-                        this.actor
-                    ) {
-                        // ensure an actor is present if not otherwise defined
-                        msg.actor = { id: this.actor, type: "unknown" };
-                    }
-                    socket.emit("message", msg as ActivityStream);
+                this.toExternalPayload(msg);
+                if (
+                    msg.type === "error" &&
+                    typeof msg.actor === "undefined" &&
+                    this.actor
+                ) {
+                    // ensure an actor is present if not otherwise defined
+                    msg.actor = { id: this.actor, type: "unknown" };
                 }
+                socket.emit("message", msg as ActivityStream);
             },
             (err) => this.log.error(`sendToClient ${String(err)}`),
         );
@@ -270,7 +270,13 @@ export default class PlatformInstance {
     }
 
     /**
-     * Remove internal-only transport metadata before returning payloads to clients.
+     * Strip internal-only transport metadata and stamp the canonical `@context`
+     * before returning payloads to clients. Platforms may emit payloads without
+     * a `@context`; the instance always knows which platform it represents.
+     *
+     * Any legacy `context` field is removed so outbound payloads carry only
+     * `@context` as the routing signal, regardless of what an internal platform
+     * emits.
      */
     private toExternalPayload(payload: ActivityStream): ActivityStream {
         const external = payload as InternalActivityStream & {
@@ -278,12 +284,8 @@ export default class PlatformInstance {
         };
         delete external.sessionSecret;
         delete external.context;
-        if (
-            typeof external.platform !== "string" ||
-            external.platform.length === 0
-        ) {
-            external.platform = this.name;
-        }
+        const contextUrl = this.contextUrl ?? INTERNAL_PLATFORM_CONTEXT_URL;
+        payload["@context"] = buildCanonicalContext(contextUrl);
         return payload;
     }
 

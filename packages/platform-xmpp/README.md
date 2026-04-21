@@ -10,80 +10,120 @@ updates through ActivityStreams messages.
 
 ## Implemented Verbs (`type`)
 
+* **connect** - Establish a connection to the XMPP server
+* **disconnect** - Close the XMPP connection
+* **join** - Join an XMPP chat room (MUC)
+* **leave** - Leave an XMPP chat room
 * **send** - Send messages to contacts or chat rooms
-* **join** - Join XMPP chat rooms (MUCs)
-* **observe** - Subscribe to presence updates
-* **request-friend** - Send contact/buddy requests
-* **remove-friend** - Remove contacts from roster
-* **make-friend** - Accept contact requests
-* **room-info** - Query room info
 * **update** - Update presence status and information
+* **observe** - Subscribe to presence updates
+* **request-friend** - Send a contact/buddy request
+* **remove-friend** - Remove a contact from the roster
+* **make-friend** - Accept a contact request
+* **query** - Query room attendance and other server data
+
+## Authentication
+
+Credentials are sent to Sockethub via a `credentials` message before the
+`connect` verb. The XMPP platform accepts a single `password` field.
+
+### Credentials object
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `type` | string | yes | Must be `"credentials"`. |
+| `userAddress` | string | yes | Bare JID, e.g. `user@jabber.net`. |
+| `resource` | string | yes | XMPP resource identifier (e.g. `"phone"`). |
+| `password` | string | yes | SASL password. Use this field for PLAIN-slot tokens too. |
+| `server` | string | no | Overrides the hostname from `userAddress`. |
+| `port` | number | no | Overrides the default port. |
+
+### Password authentication
+
+Use a standard XMPP account password. The server negotiates the strongest
+available SASL mechanism (typically SCRAM-SHA-1, falling back to PLAIN).
+The examples below assume you already have an initialized Sockethub client
+instance named `sc`.
+
+```javascript
+{
+  type: "credentials",
+  "@context": sc.contextFor("xmpp"),
+  actor: { id: "user@jabber.net", type: "person" },
+  object: {
+    type: "credentials",
+    userAddress: "user@jabber.net",
+    password: "s3cret",
+    resource: "phone"
+  }
+}
+```
+
+If your deployment expects a bearer-style token in the SASL PLAIN password
+slot, pass that token string as `password`. This is only a narrow
+compatibility mode. Dedicated token SASL mechanisms such as ejabberd
+`X-OAUTH2`, Prosody `OAUTHBEARER`, Prosody community `X-TOKEN`, and SASL2 FAST
+are not implemented by the bundled `@xmpp/client`, which only supports
+`SCRAM-SHA-1`, `PLAIN`, and `ANONYMOUS` and prefers `SCRAM-SHA-1` when both
+SCRAM and PLAIN are offered.
+
+A failed authentication with either a traditional password or a token string
+surfaces the same `SASLError: not-authorized` and is treated as a
+non-recoverable connection error.
 
 ## Usage
 
 ### Send Message Example
 
-```json
+```javascript
 {
-  "type": "send",
-  "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
-  ],
-  "actor": {
-    "id": "user@example.org",
-    "type": "person"
+  type: "send",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "user@example.org",
+    type: "person"
   },
-  "target": {
-    "id": "friend@jabber.net",
-    "type": "person"
+  target: {
+    id: "friend@jabber.net",
+    type: "person"
   },
-  "object": {
-    "type": "message",
-    "content": "Hello from Sockethub!"
+  object: {
+    type: "message",
+    content: "Hello from Sockethub!"
   }
 }
 ```
 
 ### Join Chat Room Example
 
-```json
+```javascript
 {
-  "type": "join",
-  "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
-  ],
-  "actor": {
-    "id": "user@example.org",
-    "type": "person"
+  type: "join",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "user@example.org",
+    type: "person"
   },
-  "target": {
-    "id": "room@conference.example.org",
-    "type": "room"
+  target: {
+    id: "room@conference.example.org",
+    type: "room"
   }
 }
 ```
 
 ### Request Friend Example
 
-```json
+```javascript
 {
-  "type": "request-friend",
-  "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
-  ],
-  "actor": {
-    "id": "user@example.org",
-    "type": "person"
+  type: "request-friend",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "user@example.org",
+    type: "person"
   },
-  "target": {
-    "id": "friend@jabber.net",
-    "type": "person"
+  target: {
+    id: "friend@jabber.net",
+    type: "person"
   }
 }
 ```
