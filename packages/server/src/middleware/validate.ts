@@ -7,7 +7,6 @@ import {
     type ActivityObject,
     type ActivityStream,
     AS2_BASE_CONTEXT_URL,
-    buildCanonicalContext,
     resolvePlatformId,
     SOCKETHUB_BASE_CONTEXT_URL,
     validateActivityObject,
@@ -83,25 +82,6 @@ export default function validate(
                 );
             }
             const stream = msg as ActivityStream;
-            // A string `context` is a platform-name alias for @context.
-            // Only promote it when @context is missing so an unregistered
-            // legacy name falls through to the standard "not registered"
-            // error below rather than shadowing a real @context.
-            if (!Array.isArray(stream["@context"])) {
-                const legacy = (
-                    stream as ActivityStream & { context?: unknown }
-                ).context;
-                if (typeof legacy === "string" && legacy.trim().length > 0) {
-                    const platformName = legacy.trim();
-                    const platformMeta = initObj.platforms.get(platformName);
-                    if (platformMeta) {
-                        stream["@context"] = buildCanonicalContext(
-                            platformMeta.contextUrl,
-                        );
-                        stream.platform = platformName;
-                    }
-                }
-            }
             const platformId = resolvePlatformId(stream);
             if (!platformId) {
                 const platformContextCandidates =
@@ -125,7 +105,6 @@ export default function validate(
                     ),
                 );
             }
-            stream.platform = platformId;
             if (type === "credentials") {
                 const err = validateCredentials(stream);
                 if (err) {

@@ -55,47 +55,6 @@ export default [
         output: "same",
     },
     {
-        name: "legacy context credentials",
-        valid: true,
-        type: "credentials",
-        input: {
-            id: "legacy-creds",
-            type: "credentials",
-            context: "fakeplatform",
-            actor: {
-                id: "dood@irc.freenode.net",
-                type: "person",
-                name: "dood",
-            },
-            object: {
-                type: "credentials",
-                user: "foo",
-                pass: "bar",
-            },
-        },
-        output: {
-            id: "legacy-creds",
-            type: "credentials",
-            context: "fakeplatform",
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/fakeplatform/v1.jsonld",
-            ],
-            platform: "fakeplatform",
-            actor: {
-                id: "dood@irc.freenode.net",
-                type: "person",
-                name: "dood",
-            },
-            object: {
-                type: "credentials",
-                user: "foo",
-                pass: "bar",
-            },
-        },
-    },
-    {
         name: "no type specified",
         valid: false,
         type: "credentials",
@@ -330,29 +289,6 @@ export default [
             ],
             actor: { id: "irc://uuu@localhost", type: "person" },
         },
-    },
-    {
-        // String `context` is only promoted to @context when @context is
-        // missing. If @context is present but unregistered, validation fails
-        // with the standard "not registered" error — legacy context no longer
-        // shadows an explicit @context.
-        name: "legacy context does not override unregistered @context",
-        valid: false,
-        type: "message",
-        input: {
-            type: "echo",
-            context: "fakeplatform",
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/unknown/v1.jsonld",
-            ],
-            actor: { id: "irc://uuu@localhost", type: "person" },
-        },
-        error:
-            "Error: platform context URL not registered with this Sockethub instance." +
-            " Unregistered platform @context value: " +
-            "https://sockethub.org/ns/context/platform/unknown/v1.jsonld",
     },
     {
         name: "message with wrong type",

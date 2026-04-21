@@ -122,13 +122,21 @@ export default class Feeds implements PlatformInterface {
      *  // Example of the resulting JSON AS Object:
      *
      *   {
-     *     context: 'feeds',
+     *     '@context': [
+     *       'https://www.w3.org/ns/activitystreams',
+     *       'https://sockethub.org/ns/context/v1.jsonld',
+     *       'https://sockethub.org/ns/context/platform/feeds/v1.jsonld'
+     *     ],
      *     type: 'collection',
      *     summary: 'Best Feed Inc.'
      *     totalItems: 10,
      *     items: [
      *       {
-     *         context: 'feeds',
+     *         '@context': [
+     *           'https://www.w3.org/ns/activitystreams',
+     *           'https://sockethub.org/ns/context/v1.jsonld',
+     *           'https://sockethub.org/ns/context/platform/feeds/v1.jsonld'
+     *         ],
      *         type: 'post',
      *         actor: {
      *           type: 'feed',

@@ -916,25 +916,6 @@ export default class SockethubClient {
                 );
                 if (outgoing && typeof outgoing === "object") {
                     const activity = outgoing as ActivityStream;
-                    if (!activity["@context"]) {
-                        // A string `context` is just a platform-name alias for
-                        // @context — resolve it the same way as `platform`.
-                        const legacy = activity as ActivityStream & {
-                            context?: unknown;
-                        };
-                        const platformName =
-                            (typeof legacy.platform === "string" &&
-                                legacy.platform.trim()) ||
-                            (typeof legacy.context === "string" &&
-                                legacy.context.trim());
-                        if (platformName) {
-                            activity.platform = platformName;
-                            // contextFor() throws for unknown platforms; the
-                            // outer try/catch turns that into a client error.
-                            activity["@context"] =
-                                this.contextFor(platformName);
-                        }
-                    }
                     if (entry.event === "credentials" && !activity.type) {
                         activity.type = "credentials";
                     }

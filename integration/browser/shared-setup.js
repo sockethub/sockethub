@@ -1,10 +1,35 @@
 import { expect } from "@esm-bundle/chai";
 
+const PLATFORM_CONTEXT_PREFIX = "https://sockethub.org/ns/context/platform/";
+
 export const ctx = (platform) => [
     "https://www.w3.org/ns/activitystreams",
     "https://sockethub.org/ns/context/v1.jsonld",
-    `https://sockethub.org/ns/context/platform/${platform}/v1.jsonld`,
+    `${PLATFORM_CONTEXT_PREFIX}${platform}/v1.jsonld`,
 ];
+
+/**
+ * Extract the platform id from a canonical Sockethub @context array.
+ * Returns undefined when no platform entry is present.
+ */
+export function platformIdFromContext(context) {
+    if (!Array.isArray(context)) {
+        return undefined;
+    }
+    for (const entry of context) {
+        if (
+            typeof entry === "string" &&
+            entry.startsWith(PLATFORM_CONTEXT_PREFIX)
+        ) {
+            const rest = entry.slice(PLATFORM_CONTEXT_PREFIX.length);
+            const slashIdx = rest.indexOf("/");
+            if (slashIdx > 0) {
+                return rest.slice(0, slashIdx);
+            }
+        }
+    }
+    return undefined;
+}
 
 // sockethub-client.js and socket.io.js are loaded via <script> tags
 // in the test runner HTML (injected from the running Sockethub server)

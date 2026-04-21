@@ -5,7 +5,7 @@ import {
     type CredentialsStoreInterface,
 } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
-import type { ActivityStream } from "@sockethub/schemas";
+import { type ActivityStream, resolvePlatformId } from "@sockethub/schemas";
 import type { MiddlewareNext } from "../middleware.js";
 import { platformInstances } from "../platform-instance.js";
 
@@ -25,8 +25,12 @@ export default function credentialCheck(
     );
 
     return (msg: ActivityStream, next: MiddlewareNext<ActivityStream>) => {
+        // `@context` is canonical by the time validate middleware has run.
+        // Fall back to an empty string so the lookup deterministically misses
+        // rather than blowing up on unresolved platform IDs.
+        const platformId = resolvePlatformId(msg) ?? "";
         const existing = platformInstances.get(
-            getPlatformId(msg.context, msg.actor.id),
+            getPlatformId(platformId, msg.actor.id),
         );
         const hasOtherSession =
             !!existing &&
@@ -62,7 +66,7 @@ export default function credentialCheck(
                     return;
                 }
 
-                const scope = `${msg.context}:${msg.actor.id}`;
+                const scope = `${platformId}:${msg.actor.id}`;
                 if (isExpectedCredentialValidationError(err)) {
                     sessionLog.info(
                         `credential share validation rejected for ${scope} (socketId=${socketId}, validateSessionShare=true)`,

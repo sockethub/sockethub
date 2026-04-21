@@ -126,8 +126,12 @@ export default class IRC implements PersistentPlatformInterface {
      * @example
      *
      *  {
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
      *    type: 'credentials',
-     *    context: 'irc',
      *    actor: {
      *      id: 'testuser@irc.host.net',
      *      type: 'person',
@@ -150,8 +154,12 @@ export default class IRC implements PersistentPlatformInterface {
      * @example
      *
      *  {
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
      *    type: 'credentials',
-     *    context: 'irc',
      *    actor: {
      *      id: 'testuser@irc.libera.chat',
      *      type: 'person',
@@ -172,8 +180,12 @@ export default class IRC implements PersistentPlatformInterface {
      * @example
      *
      *  {
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
      *    type: 'credentials',
-     *    context: 'irc',
      *    actor: {
      *      id: 'testuser@chat.sr.ht',
      *      type: 'person',
@@ -239,7 +251,11 @@ export default class IRC implements PersistentPlatformInterface {
      * @example
      *
      * {
-     *   context: 'irc',
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *   ],
      *   type: 'join',
      *   actor: {
      *     id: 'slvrbckt@irc.freenode.net',
@@ -286,7 +302,11 @@ export default class IRC implements PersistentPlatformInterface {
      *
      * @example
      * {
-     *   context: 'irc',
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *   ],
      *   type: 'leave',
      *   actor: {
      *     id: 'slvrbckt@irc.freenode.net',
@@ -326,7 +346,11 @@ export default class IRC implements PersistentPlatformInterface {
      * @example
      *
      *  {
-     *    context: 'irc',
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
      *    type: 'send',
      *    actor: {
      *      id: 'slvrbckt@irc.freenode.net',
@@ -417,7 +441,11 @@ export default class IRC implements PersistentPlatformInterface {
      * @example change topic
      *
      * {
-     *   context: 'irc',
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *   ],
      *   type: 'update',
      *   actor: {
      *     id: 'slvrbckt@irc.freenode.net',
@@ -438,7 +466,11 @@ export default class IRC implements PersistentPlatformInterface {
      *
      * @example change nickname
      *  {
-     *    context: 'irc'
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
      *    type: 'update',
      *    actor: {
      *      id: 'slvrbckt@irc.freenode.net',
@@ -506,7 +538,11 @@ export default class IRC implements PersistentPlatformInterface {
      * @example
      *
      *  {
-     *    context: 'irc',
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
      *    type: 'query',
      *    actor: {
      *      id: 'slvrbckt@irc.freenode.net',
@@ -527,7 +563,11 @@ export default class IRC implements PersistentPlatformInterface {
      *
      *  // The above object might return:
      *  {
-     *    context: 'irc',
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
      *    type: 'query',
      *    actor: {
      *      id: 'irc.freenode.net/a-room',
@@ -575,7 +615,11 @@ export default class IRC implements PersistentPlatformInterface {
      * @example
      *
      * {
-     *    context: 'irc',
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
      *    type: 'disconnect',
      *    actor: {
      *      id: 'slvrbckt@irc.freenode.net',

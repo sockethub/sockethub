@@ -3,6 +3,7 @@ import createTestUtils from "../utils.js";
 import {
     connectIRC,
     getConfig,
+    platformIdFromContext,
     setIRCCredentials,
     validateGlobals,
 } from "./shared-setup.js";
@@ -145,10 +146,10 @@ describe(`IRC Nick Clash Integration Tests at ${config.sockethub.url}`, () => {
             // connection established by the first.
             expect(fulfilled.length).to.equal(2);
             for (const r of fulfilled) {
-                expect(r.value).to.deep.include({
-                    type: "connect",
-                    platform: "irc",
-                });
+                expect(r.value.type).to.equal("connect");
+                expect(platformIdFromContext(r.value["@context"])).to.equal(
+                    "irc",
+                );
             }
         });
     });

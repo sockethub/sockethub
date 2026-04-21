@@ -13,7 +13,6 @@ export interface ActivityStream {
     "@context": JsonLdContext;
     id?: string;
     type: string;
-    platform?: string;
     actor: ActivityActor;
     object?: ActivityObject;
     target?: ActivityActor;
