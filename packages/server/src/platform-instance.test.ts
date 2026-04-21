@@ -198,6 +198,17 @@ describe("PlatformInstance", () => {
             );
         });
 
+        it("strips legacy context field from outbound payloads", async () => {
+            await pi.sendToClient("my session id", {
+                type: "echo",
+                context: "dummy",
+                actor: { id: "test@dummy", type: "person" },
+            });
+            const emittedMsg = socketMock.emit.firstCall.args[1];
+            expect(emittedMsg.context).toBeUndefined();
+            expect(emittedMsg["@context"]).toBeDefined();
+        });
+
         it("broadcasts to peers", async () => {
             pi.sessions.add("other peer");
             pi.sessions.add("another peer");

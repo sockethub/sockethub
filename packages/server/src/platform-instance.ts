@@ -273,9 +273,17 @@ export default class PlatformInstance {
      * Strip internal-only transport metadata and stamp the canonical `@context`
      * before returning payloads to clients. Platforms may emit payloads without
      * a `@context`; the instance always knows which platform it represents.
+     *
+     * Any legacy `context` field is removed so outbound payloads carry only
+     * `@context` as the routing signal, regardless of what an internal platform
+     * emits.
      */
     private toExternalPayload(payload: ActivityStream): ActivityStream {
-        delete (payload as InternalActivityStream).sessionSecret;
+        const external = payload as InternalActivityStream & {
+            context?: unknown;
+        };
+        delete external.sessionSecret;
+        delete external.context;
         const contextUrl = this.contextUrl ?? INTERNAL_PLATFORM_CONTEXT_URL;
         payload["@context"] = buildCanonicalContext(contextUrl);
         return payload;
