@@ -93,5 +93,8 @@ namespaces
 createLogger
 timestamps
 systemd
+queueing
+pre-copied
+globals
  - ./README.md
 v1.2

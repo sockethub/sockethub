@@ -268,6 +268,66 @@ export class IncomingHandlers {
         }
     }
 
+    notifyRoomInfo(stanza) {
+        const query = stanza.getChild("query");
+        if (
+            query &&
+            query.attrs.xmlns === "http://jabber.org/protocol/disco#info"
+        ) {
+            // Extract identities (XEP-0030 §4.2: entities may have multiple identities)
+            const identities = query.getChildren("identity").map((el) => ({
+                category: el.attrs.category,
+                type: el.attrs.type,
+                ...(el.attrs.name && { name: el.attrs.name }),
+            }));
+
+            // Extract features
+            const features = query.getChildren("feature");
+            const featureList = features.map((feature) => feature.attrs.var);
+
+            // Use first identity name as actor display name, fall back to JID
+            const displayName = identities[0]?.name || stanza.attrs.from;
+
+            const object = { type: "room-info", features: featureList };
+            if (identities.length > 0) {
+                object.identities = identities;
+            }
+
+            this.session.sendToClient({
+                "@context": XMPP_CONTEXT,
+                type: "room-info",
+                actor: {
+                    id: stanza.attrs.from,
+                    type: "room",
+                    name: displayName,
+                },
+                target: {
+                    id: stanza.attrs.to,
+                    type: "person",
+                },
+                object,
+            });
+        }
+    }
+
+    notifyRoomInfoError(stanza) {
+        const error = stanza.getChild("error");
+        const message = error ? error.toString() : stanza.toString();
+        this.session.sendToClient({
+            "@context": XMPP_CONTEXT,
+            type: "room-info",
+            actor: {
+                id: stanza.attrs.from,
+                type: "room",
+            },
+            target: {
+                id: stanza.attrs.to,
+                type: "person",
+            },
+            error: message,
+        });
+    }
+
     online() {
         this.session.log.debug("online");
     }
@@ -278,6 +338,9 @@ export class IncomingHandlers {
     stanza(stanza) {
         // console.log("incoming stanza ", stanza);
         if (stanza.attrs.type === "error") {
+            if (stanza.is("iq") && stanza.attrs.id?.startsWith("room_info_")) {
+                return this.notifyRoomInfoError(stanza);
+            }
             this.notifyError(stanza);
         } else if (stanza.is("message")) {
             this.notifyChatMessage(stanza);
@@ -290,6 +353,15 @@ export class IncomingHandlers {
             ) {
                 this.session.log.debug("got room attendance list");
                 return this.notifyRoomAttendance(stanza);
+            }
+
+            // Handle room info disco#info responses
+            if (
+                stanza.attrs.type === "result" &&
+                stanza.attrs.id?.startsWith("room_info_")
+            ) {
+                this.session.log.debug("got room info response");
+                return this.notifyRoomInfo(stanza);
             }
 
             // todo: clean up this area, unsure of what these are

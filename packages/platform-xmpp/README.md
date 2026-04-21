@@ -16,6 +16,7 @@ updates through ActivityStreams messages.
 * **leave** - Leave an XMPP chat room
 * **send** - Send messages to contacts or chat rooms
 * **update** - Update presence status and information
+* **observe** - Subscribe to presence updates
 * **request-friend** - Send a contact/buddy request
 * **remove-friend** - Remove a contact from the roster
 * **make-friend** - Accept a contact request

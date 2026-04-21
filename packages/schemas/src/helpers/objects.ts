@@ -167,6 +167,41 @@ export const ObjectTypesSchema = {
         },
     },
 
+    "room-info": {
+        required: ["type"],
+        additionalProperties: false,
+        properties: {
+            type: {
+                enum: ["room-info"],
+            },
+            features: {
+                type: "array",
+                items: {
+                    type: "string",
+                },
+            },
+            identities: {
+                type: "array",
+                items: {
+                    type: "object",
+                    required: ["category", "type"],
+                    additionalProperties: false,
+                    properties: {
+                        category: {
+                            type: "string",
+                        },
+                        type: {
+                            type: "string",
+                        },
+                        name: {
+                            type: "string",
+                        },
+                    },
+                },
+            },
+        },
+    },
+
     presence: {
         required: ["type"],
         additionalProperties: false,
