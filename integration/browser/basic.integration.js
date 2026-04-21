@@ -6,6 +6,7 @@ import {
     emitWithAck,
     getConfig,
     joinXMPPRoom,
+    platformIdFromContext,
     sendXMPPMessage,
     setXMPPCredentials,
     validateGlobals,
@@ -230,8 +231,10 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                             id: actorObject.id,
                             type: actorObject.type,
                         },
-                        platform: "xmpp",
                     });
+                    expect(platformIdFromContext(msg["@context"])).to.equal(
+                        "xmpp",
+                    );
                 });
             });
 
@@ -244,12 +247,14 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                             id: actorObject.id,
                             type: actorObject.type,
                         },
-                        platform: "xmpp",
                         target: {
                             id: "test@prosody",
                             type: "room",
                         },
                     });
+                    expect(platformIdFromContext(msg["@context"])).to.equal(
+                        "xmpp",
+                    );
                 });
             });
 
@@ -267,7 +272,6 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                             id: actorObject.id,
                             type: actorObject.type,
                         },
-                        platform: "xmpp",
                         object: {
                             type: "message",
                             content: "Hello, world!",
@@ -277,6 +281,9 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                             type: "room",
                         },
                     });
+                    expect(platformIdFromContext(msg["@context"])).to.equal(
+                        "xmpp",
+                    );
                 });
             });
         });
@@ -392,7 +399,9 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 // failed connect attempts with invalid credentials).
                 expect(incomingMessages.length).to.be.at.most(2);
                 for (const msg of incomingMessages) {
-                    expect(msg).to.have.property("platform", "xmpp");
+                    expect(platformIdFromContext(msg["@context"])).to.equal(
+                        "xmpp",
+                    );
                     expect(msg).to.have.property("error").that.is.a("string");
                 }
             });

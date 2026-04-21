@@ -177,7 +177,6 @@ describe("PlatformInstance", () => {
             sandbox.assert.calledOnce(socketMock.emit);
             sandbox.assert.calledWith(socketMock.emit, "message", {
                 foo: "this is a message object",
-                platform: "a platform name",
                 "@context": buildCanonicalContext(
                     INTERNAL_PLATFORM_CONTEXT_URL,
                 ),
@@ -245,7 +244,9 @@ describe("PlatformInstance", () => {
                 expect(pi.broadcastToSharedPeers.callCount).toEqual(1);
                 sandbox.assert.calledWith(pi.sendToClient, "a session id", {
                     foo: "bar",
-                    platform: "a platform name",
+                    "@context": buildCanonicalContext(
+                        INTERNAL_PLATFORM_CONTEXT_URL,
+                    ),
                 });
             });
 
@@ -259,7 +260,9 @@ describe("PlatformInstance", () => {
                 sandbox.assert.calledWith(pi.sendToClient, "a session id", {
                     foo: "bar",
                     error: "a bad result message",
-                    platform: "a platform name",
+                    "@context": buildCanonicalContext(
+                        INTERNAL_PLATFORM_CONTEXT_URL,
+                    ),
                 });
             });
         });
@@ -388,7 +391,6 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        platform: "xmpp",
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",
@@ -440,7 +442,6 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        platform: "xmpp",
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",
@@ -459,7 +460,6 @@ describe("PlatformInstance", () => {
                     sessionId: "session456",
                     msg: {
                         type: "send",
-                        platform: "xmpp",
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-2",
@@ -500,7 +500,6 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        platform: "xmpp",
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",
@@ -549,7 +548,6 @@ describe("PlatformInstance", () => {
                     sessionId: "session123",
                     msg: {
                         type: "connect",
-                        platform: "xmpp",
                         actor: { id: "testuser@localhost", type: "person" },
                     },
                     title: "xmpp-1",

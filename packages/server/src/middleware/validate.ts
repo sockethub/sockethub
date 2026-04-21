@@ -7,7 +7,6 @@ import {
     type ActivityObject,
     type ActivityStream,
     AS2_BASE_CONTEXT_URL,
-    buildCanonicalContext,
     resolvePlatformId,
     SOCKETHUB_BASE_CONTEXT_URL,
     validateActivityObject,
@@ -40,51 +39,16 @@ export default function validate(
         SOCKETHUB_BASE_CONTEXT_URL,
     ]);
 
-    const getLegacyContext = (stream: ActivityStream): string | undefined => {
-        const legacyContext = (stream as ActivityStream & { context?: unknown })
-            .context;
-        return typeof legacyContext === "string" ? legacyContext : undefined;
-    };
-
-    const getContextValues = (stream: ActivityStream): Array<string> => {
+    const getPlatformContextCandidates = (
+        stream: ActivityStream,
+    ): Array<string> => {
         if (!Array.isArray(stream["@context"])) {
             return [];
         }
         return stream["@context"].filter(
-            (value): value is string => typeof value === "string",
+            (value): value is string =>
+                typeof value === "string" && !baseContextUrls.has(value),
         );
-    };
-
-    const getPlatformContextCandidates = (
-        stream: ActivityStream,
-    ): Array<string> => {
-        return getContextValues(stream).filter(
-            (value) => !baseContextUrls.has(value),
-        );
-    };
-
-    const normalizeLegacyContext = (
-        stream: ActivityStream,
-        initObj: IInitObject,
-    ) => {
-        if (resolvePlatformId(stream)) {
-            return;
-        }
-        const legacyContext = getLegacyContext(stream);
-        if (!legacyContext) {
-            return;
-        }
-        const platformMeta = initObj.platforms.get(legacyContext);
-        if (!platformMeta) {
-            return;
-        }
-        const platformContextUrl =
-            platformMeta.contextUrl ||
-            `https://sockethub.org/ns/context/platform/${legacyContext}/v1.jsonld`;
-        // Intentionally mutate the incoming stream so legacy `context` payloads
-        // continue through canonical @context/platform validation paths.
-        stream["@context"] = buildCanonicalContext(platformContextUrl);
-        stream.platform = legacyContext;
     };
 
     let initObj = passedInitObj;
@@ -118,8 +82,6 @@ export default function validate(
                 );
             }
             const stream = msg as ActivityStream;
-            // Intentional mutation for backward compatibility with legacy `context`.
-            normalizeLegacyContext(stream, initObj);
             const platformId = resolvePlatformId(stream);
             if (!platformId) {
                 const platformContextCandidates =
@@ -143,7 +105,6 @@ export default function validate(
                     ),
                 );
             }
-            stream.platform = platformId;
             if (type === "credentials") {
                 const err = validateCredentials(stream);
                 if (err) {

@@ -3,6 +3,7 @@ import createTestUtils from "../utils.js";
 import {
     connectIRC,
     getConfig,
+    platformIdFromContext,
     setIRCCredentials,
     validateGlobals,
 } from "./shared-setup.js";
@@ -100,8 +101,15 @@ describe(`IRC Nick Clash Integration Tests at ${config.sockethub.url}`, () => {
     describe("Same actor ID, concurrent connects", () => {
         let clientA;
         let clientB;
-        const nick = `${config.irc.testUser.nick}Shared`;
+        // Use the registered NickServ account (only `jimmy` is seeded by
+        // ergo/bootstrap.sh). Session-sharing is a credentialed operation:
+        // credential-check rejects passwordless attempts to attach a second
+        // socket to an existing persistent platform instance
+        // (CredentialsNotShareableError), so exercising the `clientConnecting`
+        // lock requires shareable credentials.
+        const nick = config.irc.testUser.nick;
         const actorId = utils.createIrcActorId(nick);
+        const password = config.irc.testUser.password;
 
         before(() => {
             clientA = new SockethubClient(
@@ -127,8 +135,8 @@ describe(`IRC Nick Clash Integration Tests at ${config.sockethub.url}`, () => {
             // should wait on the first via the `clientConnecting` lock and
             // then reuse the shared client.
             await Promise.all([
-                setIRCCredentials(clientA, actorId, nick),
-                setIRCCredentials(clientB, actorId, nick),
+                setIRCCredentials(clientA, actorId, nick, { password }),
+                setIRCCredentials(clientB, actorId, nick, { password }),
             ]);
             const actorObject = utils.createIrcActorObject(nick);
             clientA.ActivityStreams.Object.create(actorObject);
@@ -145,10 +153,10 @@ describe(`IRC Nick Clash Integration Tests at ${config.sockethub.url}`, () => {
             // connection established by the first.
             expect(fulfilled.length).to.equal(2);
             for (const r of fulfilled) {
-                expect(r.value).to.deep.include({
-                    type: "connect",
-                    platform: "irc",
-                });
+                expect(r.value.type).to.equal("connect");
+                expect(platformIdFromContext(r.value["@context"])).to.equal(
+                    "irc",
+                );
             }
         });
     });

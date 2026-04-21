@@ -244,22 +244,16 @@ export default class PlatformInstance {
     public async sendToClient(sessionId: string, msg: InternalActivityStream) {
         return this.getSocket(sessionId).then(
             (socket: Socket) => {
-                try {
-                    this.toExternalPayload(msg as ActivityStream);
-                } finally {
-                    const contextUrl =
-                        this.contextUrl ?? INTERNAL_PLATFORM_CONTEXT_URL;
-                    msg["@context"] = buildCanonicalContext(contextUrl);
-                    if (
-                        msg.type === "error" &&
-                        typeof msg.actor === "undefined" &&
-                        this.actor
-                    ) {
-                        // ensure an actor is present if not otherwise defined
-                        msg.actor = { id: this.actor, type: "unknown" };
-                    }
-                    socket.emit("message", msg as ActivityStream);
+                this.toExternalPayload(msg);
+                if (
+                    msg.type === "error" &&
+                    typeof msg.actor === "undefined" &&
+                    this.actor
+                ) {
+                    // ensure an actor is present if not otherwise defined
+                    msg.actor = { id: this.actor, type: "unknown" };
                 }
+                socket.emit("message", msg as ActivityStream);
             },
             (err) => this.log.error(`sendToClient ${String(err)}`),
         );
@@ -276,7 +270,13 @@ export default class PlatformInstance {
     }
 
     /**
-     * Remove internal-only transport metadata before returning payloads to clients.
+     * Strip internal-only transport metadata and stamp the canonical `@context`
+     * before returning payloads to clients. Platforms may emit payloads without
+     * a `@context`; the instance always knows which platform it represents.
+     *
+     * Any legacy `context` field is removed so outbound payloads carry only
+     * `@context` as the routing signal, regardless of what an internal platform
+     * emits.
      */
     private toExternalPayload(payload: ActivityStream): ActivityStream {
         const external = payload as InternalActivityStream & {
@@ -284,12 +284,8 @@ export default class PlatformInstance {
         };
         delete external.sessionSecret;
         delete external.context;
-        if (
-            typeof external.platform !== "string" ||
-            external.platform.length === 0
-        ) {
-            external.platform = this.name;
-        }
+        const contextUrl = this.contextUrl ?? INTERNAL_PLATFORM_CONTEXT_URL;
+        payload["@context"] = buildCanonicalContext(contextUrl);
         return payload;
     }
 

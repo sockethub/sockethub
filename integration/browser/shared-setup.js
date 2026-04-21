@@ -1,10 +1,12 @@
 import { expect } from "@esm-bundle/chai";
+import {
+    buildCanonicalContext,
+    platformIdFromContext,
+} from "@sockethub/activity-streams";
 
-export const ctx = (platform) => [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    `https://sockethub.org/ns/context/platform/${platform}/v1.jsonld`,
-];
+export const ctx = (platform) => buildCanonicalContext(platform);
+
+export { platformIdFromContext };
 
 // sockethub-client.js and socket.io.js are loaded via <script> tags
 // in the test runner HTML (injected from the running Sockethub server)

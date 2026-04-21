@@ -196,12 +196,8 @@ export function addPlatformContext(
 
 export function resolvePlatformId(msg: ActivityStream): string | null {
     const platformContextUrl = resolvePlatformContextUrl(msg);
-    if (platformContextUrl) {
-        const id = getPlatformIdByContextUrl(platformContextUrl);
-        if (id) return id;
+    if (!platformContextUrl) {
+        return null;
     }
-    if (typeof msg.platform === "string" && msg.platform) {
-        return msg.platform;
-    }
-    return null;
+    return getPlatformIdByContextUrl(platformContextUrl) ?? null;
 }

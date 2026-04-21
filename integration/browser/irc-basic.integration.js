@@ -4,6 +4,7 @@ import {
     connectIRC,
     getConfig,
     joinIRCChannel,
+    platformIdFromContext,
     sendIRCMessage,
     setIRCCredentials,
     validateGlobals,
@@ -60,10 +61,8 @@ describe(`Sockethub IRC Basic Integration Tests at ${config.sockethub.url}`, () 
         describe("connect", () => {
             it("is successful", async () => {
                 const msg = await connectIRC(sc, actorId, nick);
-                expect(msg).to.deep.include({
-                    type: "connect",
-                    platform: "irc",
-                });
+                expect(msg.type).to.equal("connect");
+                expect(platformIdFromContext(msg["@context"])).to.equal("irc");
                 expect(msg.actor).to.deep.include({
                     id: actorObject.id,
                     type: actorObject.type,
@@ -79,10 +78,8 @@ describe(`Sockethub IRC Basic Integration Tests at ${config.sockethub.url}`, () 
                     nick,
                     config.irc.channel,
                 );
-                expect(msg).to.deep.include({
-                    type: "join",
-                    platform: "irc",
-                });
+                expect(msg.type).to.equal("join");
+                expect(platformIdFromContext(msg["@context"])).to.equal("irc");
                 expect(msg.target).to.deep.include({
                     id: config.irc.channel,
                     type: "room",
@@ -100,10 +97,8 @@ describe(`Sockethub IRC Basic Integration Tests at ${config.sockethub.url}`, () 
                     config.irc.channel,
                     content,
                 );
-                expect(msg).to.deep.include({
-                    type: "send",
-                    platform: "irc",
-                });
+                expect(msg.type).to.equal("send");
+                expect(platformIdFromContext(msg["@context"])).to.equal("irc");
                 expect(msg.object).to.deep.include({
                     type: "message",
                     content,
@@ -124,7 +119,7 @@ describe(`Sockethub IRC Basic Integration Tests at ${config.sockethub.url}`, () 
                 const echoes = incomingMessages.filter(
                     (m) =>
                         m.type === "send" &&
-                        m.platform === "irc" &&
+                        platformIdFromContext(m["@context"]) === "irc" &&
                         m.actor?.id === actorObject.id,
                 );
                 expect(echoes).to.have.length(0);

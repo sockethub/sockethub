@@ -1,17 +1,26 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import {
     CredentialsNotShareableError,
     type CredentialsStoreInterface,
     type CredentialsValidationOptions,
 } from "@sockethub/data-layer";
-import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
+import {
+    type ActivityStream,
+    addPlatformContext,
+    buildCanonicalContext,
+    type CredentialsObject,
+    resolvePlatformId,
+} from "@sockethub/schemas";
 
 import { getPlatformId } from "@sockethub/crypto";
 import { platformInstances } from "../platform-instance.js";
 import credentialCheck from "./credential-check.js";
 
+const IRC_CONTEXT_URL =
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld";
+
 const baseMessage: ActivityStream = {
-    context: "irc",
+    "@context": buildCanonicalContext(IRC_CONTEXT_URL),
     type: "connect",
     actor: { id: "nick@irc.example.com", type: "person" },
 };
@@ -20,7 +29,7 @@ function makeCredentials(
     object: CredentialsObject["object"],
 ): CredentialsObject {
     return {
-        context: "irc",
+        "@context": buildCanonicalContext(IRC_CONTEXT_URL),
         type: "credentials",
         actor: baseMessage.actor,
         object,
@@ -31,6 +40,15 @@ describe("Middleware: credentialCheck", () => {
     const socketId = "socket-1";
     const clientIp = "203.0.113.10";
     let store: CredentialsStoreInterface;
+    let platformKey: string;
+
+    beforeAll(() => {
+        addPlatformContext("irc", IRC_CONTEXT_URL);
+        platformKey = getPlatformId(
+            resolvePlatformId(baseMessage) ?? "",
+            baseMessage.actor.id,
+        );
+    });
 
     beforeEach(() => {
         platformInstances.clear();
@@ -67,9 +85,8 @@ describe("Middleware: credentialCheck", () => {
             expect(options).toEqual({ validateSessionShare: true });
             return makeCredentials({ type: "credentials", password: "abc123" });
         };
-        const key = getPlatformId(baseMessage.context, baseMessage.actor.id);
         platformInstances.set(
-            key,
+            platformKey,
             {
                 sessions: new Set(["socket-2"]),
                 sessionIps: new Map([["socket-2", clientIp]]),
@@ -86,9 +103,8 @@ describe("Middleware: credentialCheck", () => {
     test("allows when only this session is attached", async () => {
         store.get = async () =>
             makeCredentials({ type: "credentials", password: "abc123" });
-        const key = getPlatformId(baseMessage.context, baseMessage.actor.id);
         platformInstances.set(
-            key,
+            platformKey,
             {
                 sessions: new Set([socketId]),
                 sessionIps: new Map([[socketId, clientIp]]),
@@ -105,9 +121,8 @@ describe("Middleware: credentialCheck", () => {
     test("allows anonymous reconnect when prior session is stale and IP matches", async () => {
         store.get = async () =>
             Promise.reject(new CredentialsNotShareableError("username already in use"));
-        const key = getPlatformId(baseMessage.context, baseMessage.actor.id);
         platformInstances.set(
-            key,
+            platformKey,
             {
                 sessions: new Set(["socket-2"]),
                 sessionIps: new Map([["socket-2", clientIp]]),
@@ -129,9 +144,8 @@ describe("Middleware: credentialCheck", () => {
     test("blocks anonymous reconnect when prior session IP differs", async () => {
         store.get = async () =>
             Promise.reject(new CredentialsNotShareableError("username already in use"));
-        const key = getPlatformId(baseMessage.context, baseMessage.actor.id);
         platformInstances.set(
-            key,
+            platformKey,
             {
                 sessions: new Set(["socket-2"]),
                 sessionIps: new Map([["socket-2", "198.51.100.7"]]),
@@ -154,9 +168,8 @@ describe("Middleware: credentialCheck", () => {
     test("blocks anonymous reconnect when prior session is still active", async () => {
         store.get = async () =>
             Promise.reject(new CredentialsNotShareableError("username already in use"));
-        const key = getPlatformId(baseMessage.context, baseMessage.actor.id);
         platformInstances.set(
-            key,
+            platformKey,
             {
                 sessions: new Set(["socket-2"]),
                 sessionIps: new Map([["socket-2", clientIp]]),

@@ -7,10 +7,20 @@ import {
     JobWorker,
     redisCheck,
 } from "@sockethub/data-layer";
-import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
+import {
+    type ActivityStream,
+    addPlatformContext,
+    type CredentialsObject,
+} from "@sockethub/schemas";
 
 const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 const REDIS_URL = `redis://${REDIS_HOST}:6379`;
+
+const BAR_PLATFORM_CONTEXT_URL =
+    "https://sockethub.org/ns/context/platform/bar/v1.jsonld";
+// Register "bar" so resolvePlatformId() can map the @context entry back to the
+// platform id used in job titles.
+addPlatformContext("bar", BAR_PLATFORM_CONTEXT_URL);
 
 const actor = `${(Math.random() + 1).toString(36).substring(2)}`;
 const creds: CredentialsObject = {
@@ -18,7 +28,7 @@ const creds: CredentialsObject = {
     "@context": [
         "https://www.w3.org/ns/activitystreams",
         "https://sockethub.org/ns/context/v1.jsonld",
-        "https://sockethub.org/ns/context/platform/bar/v1.jsonld",
+        BAR_PLATFORM_CONTEXT_URL,
     ],
     actor: {
         type: "person",
@@ -153,9 +163,8 @@ describe("JobQueue", () => {
         "@context": [
             "https://www.w3.org/ns/activitystreams",
             "https://sockethub.org/ns/context/v1.jsonld",
-            "https://sockethub.org/ns/context/platform/bar/v1.jsonld",
+            BAR_PLATFORM_CONTEXT_URL,
         ],
-        platform: "bar",
         actor: {
             id: "bar",
             type: "person",
@@ -348,7 +357,6 @@ describe("JobQueue", () => {
                 "https://sockethub.org/ns/context/v1.jsonld",
                 "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
             ],
-            platform: "irc",
             actor: { id: "user@example.com", type: "person" },
             object: {
                 type: "message",
@@ -419,9 +427,8 @@ describe.skip("Redis connection failure", () => {
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/bar/v1.jsonld",
+                BAR_PLATFORM_CONTEXT_URL,
             ],
-            platform: "bar",
             actor: { id: "bar", type: "person" },
         };
 
