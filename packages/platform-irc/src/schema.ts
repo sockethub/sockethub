@@ -38,6 +38,47 @@ export const PlatformIrcSchema = {
                 type: "object",
                 required: ["type", "nick", "server"],
                 additionalProperties: false,
+                // password and token are mutually exclusive
+                not: { required: ["password", "token"] },
+                // When saslMechanism is set, the matching secret must be
+                // present: PLAIN requires password or token, OAUTHBEARER
+                // requires token. Bare saslMechanism without a secret is
+                // rejected. Expressed as allOf with negated implications
+                // to avoid if/then (which trips the biome noThenProperty
+                // rule).
+                allOf: [
+                    {
+                        // PLAIN → password or token required
+                        anyOf: [
+                            {
+                                not: {
+                                    properties: {
+                                        saslMechanism: { const: "PLAIN" },
+                                    },
+                                    required: ["saslMechanism"],
+                                },
+                            },
+                            { required: ["password"] },
+                            { required: ["token"] },
+                        ],
+                    },
+                    {
+                        // OAUTHBEARER → token required
+                        anyOf: [
+                            {
+                                not: {
+                                    properties: {
+                                        saslMechanism: {
+                                            const: "OAUTHBEARER",
+                                        },
+                                    },
+                                    required: ["saslMechanism"],
+                                },
+                            },
+                            { required: ["token"] },
+                        ],
+                    },
+                ],
                 properties: {
                     type: {
                         type: "string",
@@ -50,6 +91,11 @@ export const PlatformIrcSchema = {
                     },
                     password: {
                         type: "string",
+                        minLength: 1,
+                    },
+                    token: {
+                        type: "string",
+                        minLength: 1,
                     },
                     server: {
                         type: "string",
@@ -62,6 +108,10 @@ export const PlatformIrcSchema = {
                     },
                     sasl: {
                         type: "boolean",
+                    },
+                    saslMechanism: {
+                        type: "string",
+                        enum: ["PLAIN", "OAUTHBEARER"],
                     },
                 },
             },

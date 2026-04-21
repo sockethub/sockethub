@@ -77,12 +77,13 @@ export type IrcCredentials = {
     password?: string;
 };
 
-export type XmppCredentials = {
+type XmppCredentialsBase = {
     type: "credentials";
     resource: string;
     userAddress: string;
-    password: string;
 };
+
+export type XmppCredentials = XmppCredentialsBase & { password: string };
 
 export type CredentialData = {
     isSet: boolean;

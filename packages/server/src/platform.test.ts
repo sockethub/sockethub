@@ -84,7 +84,6 @@ describe("platform.ts credential handling", () => {
                     "https://sockethub.org/ns/context/v1.jsonld",
                     "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
                 ],
-                platform: "xmpp",
                 actor: { id: "testuser@localhost", type: "person" },
                 sessionSecret: "secret123",
             },

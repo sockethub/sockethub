@@ -159,13 +159,23 @@ export default class XMPP {
      * **NOTE**: For more information on using the credentials object from a client,
      * see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
      *
+     * Deployments that accept a bearer-style token in the SASL PLAIN password
+     * slot should still pass that token string as `password`. Dedicated token
+     * SASL mechanisms such as ejabberd `X-OAUTH2`, Prosody `OAUTHBEARER`,
+     * Prosody community `X-TOKEN`, and SASL2 FAST are not implemented by this
+     * client.
+     *
      * Valid AS object for setting XMPP credentials:
      *
      * @example
      *
      * {
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+     *   ],
      *   type: 'credentials',
-     *   context: 'xmpp',
      *   actor: {
      *     id: 'testuser@jabber.net',
      *     type: 'person',
@@ -204,7 +214,11 @@ export default class XMPP {
      * @example
      *
      * {
-     *   context: 'xmpp',
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+     *   ],
      *   type: 'connect',
      *   actor: {
      *     id: 'slvrbckt@jabber.net/Home',
@@ -295,8 +309,9 @@ export default class XMPP {
 
             const errorType = this.__classifyError(err);
 
+            // `@context` is stamped by PlatformInstance.sendToClient before the
+            // payload leaves the platform process; platforms don't set it here.
             const as = {
-                context: "xmpp",
                 type: "connect",
                 actor: { id: job.actor.id },
             };
@@ -371,7 +386,11 @@ export default class XMPP {
      * @example
      *
      * {
-     *   context: 'xmpp',
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+     *   ],
      *   type: 'join',
      *   actor: {
      *     type: 'person',
@@ -414,7 +433,11 @@ export default class XMPP {
      * @example
      *
      * {
-     *   context: 'xmpp',
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+     *   ],
      *   type: 'leave',
      *   actor: {
      *     type: 'person',
@@ -458,7 +481,11 @@ export default class XMPP {
      * @example
      *
      * {
-     *   context: 'xmpp',
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+     *   ],
      *   type: 'send',
      *   actor: {
      *     id: 'slvrbckt@jabber.net/Home',
@@ -478,7 +505,11 @@ export default class XMPP {
      * }
      *
      * {
-     *   context: 'xmpp',
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+     *   ],
      *   type: 'send',
      *   actor: {
      *     id: 'slvrbckt@jabber.net/Home',
@@ -529,7 +560,11 @@ export default class XMPP {
      * @example
      *
      * {
-     *   context: 'xmpp',
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+     *   ],
      *   type: 'update',
      *   actor: {
      *     id: 'user@host.org/Home'
@@ -575,7 +610,11 @@ export default class XMPP {
      * @example
      *
      * {
-     *   context: 'xmpp',
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+     *   ],
      *   type: 'request-friend',
      *   actor: {
      *     id: 'user@host.org/Home'
@@ -607,7 +646,11 @@ export default class XMPP {
      * @example
      *
      * {
-     *   context: 'xmpp',
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+     *   ],
      *   type: 'remove-friend',
      *   actor: {
      *     id: 'user@host.org/Home'
@@ -639,7 +682,11 @@ export default class XMPP {
      * @example
      *
      * {
-     *   context: 'xmpp',
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+     *   ],
      *   type: 'make-friend',
      *   actor: {
      *     id: 'user@host.org/Home'
@@ -670,7 +717,11 @@ export default class XMPP {
      * @example
      *
      *  {
-     *    context: 'xmpp',
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+     *    ],
      *    type: 'query',
      *    actor: {
      *      id: 'slvrbckt@jabber.net/Home',
@@ -687,7 +738,11 @@ export default class XMPP {
      *
      *  // The above object might return:
      *  {
-     *    context: 'xmpp',
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+     *    ],
      *    type: 'query',
      *    actor: {
      *      id: 'PartyChatRoom@muc.jabber.net',
@@ -739,7 +794,11 @@ export default class XMPP {
      * @example
      *
      * {
-     *    context: 'xmpp',
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+     *    ],
      *    type: 'disconnect',
      *    actor: {
      *      id: 'slvrbckt@jabber.net/Home',

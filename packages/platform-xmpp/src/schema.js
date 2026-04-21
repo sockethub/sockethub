@@ -36,7 +36,7 @@ export const PlatformSchema = {
             },
             object: {
                 type: "object",
-                required: ["type", "userAddress", "password", "resource"],
+                required: ["type", "userAddress", "resource", "password"],
                 additionalProperties: false,
                 properties: {
                     type: {

@@ -16,10 +16,11 @@ import { writable } from "svelte/store";
 
 const actorIdStore = writable("user@jabber.org");
 let connecting = $state(false);
+let passwordValue = $state("123456");
 
 let actorId = $derived(`${$actorIdStore}/SockethubExample`);
 
-const room = "kosmos-random@kosmos.chat";
+let room = $state("kosmos-random@kosmos.chat");
 
 const sockethubState = writable({
     actorSet: false,
@@ -37,37 +38,27 @@ let actor = $derived({
 let credentials = $derived({
     type: "credentials" as CredentialName,
     userAddress: $actorIdStore,
-    password: "123456",
     resource: "SockethubExample",
+    password: passwordValue,
 });
-
-function resetState() {
-    $sockethubState.actorSet = false;
-    $sockethubState.credentialsSet = false;
-    $sockethubState.connected = false;
-    $sockethubState.joined = false;
-    connecting = false;
-}
 
 async function connectXmpp(): Promise<void> {
     connecting = true;
-    return await send({
-        "@context": contextFor("xmpp"),
-        type: "connect",
-        actor: actorId,
-    } as AnyActivityStream)
-        .then(
-            () => {
-                $sockethubState.connected = true;
-            },
-            (err) => {
-                console.error(err);
-                resetState();
-            },
-        )
-        .catch(() => {
-            resetState();
-        });
+    try {
+        await send({
+            "@context": contextFor("xmpp"),
+            type: "connect",
+            actor: actorId,
+        } as AnyActivityStream);
+        $sockethubState.connected = true;
+    } catch (err) {
+        console.error(err);
+        // Keep actor/credentials state so the user can immediately retry connect.
+        $sockethubState.connected = false;
+        $sockethubState.joined = false;
+    } finally {
+        connecting = false;
+    }
 }
 </script>
 
@@ -82,7 +73,7 @@ async function connectXmpp(): Promise<void> {
         </p>
         <div class="text-indigo-700 text-sm space-y-1">
             <div><strong>1. 🎭 Set Actor:</strong> Your XMPP address (e.g., user@jabber.org)</div>
-            <div><strong>2. 🔐 Set Credentials:</strong> Your XMPP login and password</div>
+            <div><strong>2. 🔐 Set Credentials:</strong> Your XMPP login secret, sent through the password field</div>
             <div><strong>3. 🔌 Connect:</strong> Establish connection to XMPP server</div>
             <div><strong>4. 🏠 Join Room:</strong> Enter a multi-user chat room</div>
             <div><strong>5. 💬 Send Messages:</strong> Chat with other users in real-time</div>
@@ -103,9 +94,25 @@ async function connectXmpp(): Promise<void> {
         <!-- Step 2: Credentials -->
         <div class="bg-white border border-gray-200 rounded-lg p-4">
             <h4 class="font-semibold text-gray-800 mb-3">Step 2: Set Your Credentials</h4>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="xmpp-password-input">
+                Password
+            </label>
+            <input
+                id="xmpp-password-input"
+                type="password"
+                bind:value={passwordValue}
+                disabled={$sockethubState.credentialsSet}
+                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm mb-3"
+                placeholder="your XMPP password or compatible bearer token"
+            />
+            <p class="text-gray-600 text-xs mb-3">
+                💡 If your deployment accepts a bearer-style token in the SASL PLAIN password
+                slot, enter that token here. Sockethub's XMPP platform still submits it as
+                <code>password</code>.
+            </p>
             <Credentials context="xmpp" {credentials} {actor} {sockethubState} />
             <p class="text-gray-600 text-sm mt-2">
-                🔐 Use your actual XMPP account credentials to connect
+                🔐 Sockethub's XMPP platform accepts a single <code>password</code> field.
             </p>
         </div>
 
@@ -124,7 +131,7 @@ async function connectXmpp(): Promise<void> {
             <div class="bg-white border border-gray-200 rounded-lg p-4">
                 <h4 class="font-semibold text-gray-800 mb-3">Step 4 & 5: Join Room and Chat</h4>
                 <div class="space-y-4">
-                    <Room {actor} {sockethubState} {room} context="xmpp" />
+                    <Room {actor} {sockethubState} bind:room context="xmpp" />
                     <IncomingMessage />
                     <SendMessage context="xmpp" {actor} {sockethubState} {room} />
                 </div>

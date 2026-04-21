@@ -15,6 +15,11 @@ object.</p>
 <code>types</code> portion of the schema object (should be an array of type names).</p>
 <p><strong>NOTE</strong>: For more information on using the credentials object from a client,
 see <a href="https://github.com/sockethub/sockethub/wiki/Sockethub-Client">Sockethub Client</a></p>
+<p>Deployments that accept a bearer-style token in the SASL PLAIN password
+slot should still pass that token string as <code>password</code>. Dedicated token
+SASL mechanisms such as ejabberd <code>X-OAUTH2</code>, Prosody <code>OAUTHBEARER</code>,
+Prosody community <code>X-TOKEN</code>, and SASL2 FAST are not implemented by this
+client.</p>
 <p>Valid AS object for setting XMPP credentials:</p>
 </dd>
 </dl>
@@ -22,6 +27,21 @@ see <a href="https://github.com/sockethub/sockethub/wiki/Sockethub-Client">Socke
 # Functions
 
 <dl>
+<dt><a href="#__markDisconnected">__markDisconnected(stopReconnection)</a></dt>
+<dd><p>Mark the platform as disconnected and uninitialized</p>
+</dd>
+<dt><a href="#__classifyError">__classifyError(err)</a> ⇒ <code>string</code></dt>
+<dd><p>Classify error to determine if reconnection should be attempted</p>
+</dd>
+<dt><a href="#__isClientConnected">__isClientConnected()</a> ⇒ <code>boolean</code></dt>
+<dd><p>Check if the XMPP client is properly connected and can send messages</p>
+</dd>
+<dt><a href="#isInitialized">isInitialized()</a> ⇒ <code>boolean</code></dt>
+<dd><p>Returns whether the platform is ready to handle jobs.
+For XMPP, this means we have successfully connected to the server.
+During temporary network interruptions with automatic reconnection,
+remains true to allow queued jobs to retry rather than fail.</p>
+</dd>
 <dt><a href="#connect">connect(job, credentials, done)</a></dt>
 <dd><p>Connect to the XMPP server.</p>
 </dd>
@@ -82,18 +102,24 @@ It will also check if the incoming AS object uses a type which exists in the
 **NOTE**: For more information on using the credentials object from a client,
 see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
 
+Deployments that accept a bearer-style token in the SASL PLAIN password
+slot should still pass that token string as `password`. Dedicated token
+SASL mechanisms such as ejabberd `X-OAUTH2`, Prosody `OAUTHBEARER`,
+Prosody community `X-TOKEN`, and SASL2 FAST are not implemented by this
+client.
+
 Valid AS object for setting XMPP credentials:
 
 **Kind**: global variable  
 **Example**  
 ```js
 {
-  type: 'credentials',
-  "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  '@context': [
+    'https://www.w3.org/ns/activitystreams',
+    'https://sockethub.org/ns/context/v1.jsonld',
+    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
   ],
+  type: 'credentials',
   actor: {
     id: 'testuser@jabber.net',
     type: 'person',
@@ -107,6 +133,62 @@ Valid AS object for setting XMPP credentials:
   }
 }
 ```
+<a name="__markDisconnected"></a>
+
+# \_\_markDisconnected(stopReconnection)
+Mark the platform as disconnected and uninitialized
+
+**Kind**: global function  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Default</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>stopReconnection</td><td><code>boolean</code></td><td><code>false</code></td><td><p>If true, stop automatic reconnection</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="__classifyError"></a>
+
+# \_\_classifyError(err) ⇒ <code>string</code>
+Classify error to determine if reconnection should be attempted
+
+**Kind**: global function  
+**Returns**: <code>string</code> - 'RECOVERABLE' or 'NON_RECOVERABLE'  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>err</td><td><code>Error</code></td><td><p>The error from XMPP client</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="__isClientConnected"></a>
+
+# \_\_isClientConnected() ⇒ <code>boolean</code>
+Check if the XMPP client is properly connected and can send messages
+
+**Kind**: global function  
+**Returns**: <code>boolean</code> - true if client is connected and operational  
+<a name="isInitialized"></a>
+
+# isInitialized() ⇒ <code>boolean</code>
+Returns whether the platform is ready to handle jobs.
+For XMPP, this means we have successfully connected to the server.
+During temporary network interruptions with automatic reconnection,
+remains true to allow queued jobs to retry rather than fail.
+
+**Kind**: global function  
+**Returns**: <code>boolean</code> - true if ready to handle jobs  
 <a name="connect"></a>
 
 # connect(job, credentials, done)
@@ -135,10 +217,10 @@ Connect to the XMPP server.
 **Example**  
 ```js
 {
-  "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  '@context': [
+    'https://www.w3.org/ns/activitystreams',
+    'https://sockethub.org/ns/context/v1.jsonld',
+    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
   ],
   type: 'connect',
   actor: {
@@ -174,10 +256,10 @@ Join a room, optionally defining a display name for that room.
 **Example**  
 ```js
 {
-  "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  '@context': [
+    'https://www.w3.org/ns/activitystreams',
+    'https://sockethub.org/ns/context/v1.jsonld',
+    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
   ],
   type: 'join',
   actor: {
@@ -216,10 +298,10 @@ Leave a room
 **Example**  
 ```js
 {
-  "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  '@context': [
+    'https://www.w3.org/ns/activitystreams',
+    'https://sockethub.org/ns/context/v1.jsonld',
+    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
   ],
   type: 'leave',
   actor: {
@@ -258,10 +340,10 @@ Send a message to a room or private conversation.
 **Example**  
 ```js
 {
-  "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  '@context': [
+    'https://www.w3.org/ns/activitystreams',
+    'https://sockethub.org/ns/context/v1.jsonld',
+    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
   ],
   type: 'send',
   actor: {
@@ -282,10 +364,10 @@ Send a message to a room or private conversation.
 }
 
 {
-  "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  '@context': [
+    'https://www.w3.org/ns/activitystreams',
+    'https://sockethub.org/ns/context/v1.jsonld',
+    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
   ],
   type: 'send',
   actor: {
@@ -330,10 +412,10 @@ Valid presence values are "away", "chat", "dnd", "xa", "offline", "online".
 **Example**  
 ```js
 {
-  "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  '@context': [
+    'https://www.w3.org/ns/activitystreams',
+    'https://sockethub.org/ns/context/v1.jsonld',
+    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
   ],
   type: 'update',
   actor: {
@@ -371,10 +453,10 @@ Send friend request
 **Example**  
 ```js
 {
-  "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  '@context': [
+    'https://www.w3.org/ns/activitystreams',
+    'https://sockethub.org/ns/context/v1.jsonld',
+    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
   ],
   type: 'request-friend',
   actor: {
@@ -410,10 +492,10 @@ Send a remove friend request
 **Example**  
 ```js
 {
-  "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  '@context': [
+    'https://www.w3.org/ns/activitystreams',
+    'https://sockethub.org/ns/context/v1.jsonld',
+    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
   ],
   type: 'remove-friend',
   actor: {
@@ -449,10 +531,10 @@ Confirm a friend request
 **Example**  
 ```js
 {
-  "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  '@context': [
+    'https://www.w3.org/ns/activitystreams',
+    'https://sockethub.org/ns/context/v1.jsonld',
+    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
   ],
   type: 'make-friend',
   actor: {
@@ -488,11 +570,11 @@ Indicate an intent to query something (i.e. get a list of users in a room).
 **Example**  
 ```js
 {
-   "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
-  ],
+   '@context': [
+     'https://www.w3.org/ns/activitystreams',
+     'https://sockethub.org/ns/context/v1.jsonld',
+     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+   ],
    type: 'query',
    actor: {
      id: 'slvrbckt@jabber.net/Home',
@@ -509,11 +591,11 @@ Indicate an intent to query something (i.e. get a list of users in a room).
 
  // The above object might return:
  {
-   "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
-  ],
+   '@context': [
+     'https://www.w3.org/ns/activitystreams',
+     'https://sockethub.org/ns/context/v1.jsonld',
+     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+   ],
    type: 'query',
    actor: {
      id: 'PartyChatRoom@muc.jabber.net',
@@ -559,11 +641,11 @@ Disconnect XMPP client
 **Example**  
 ```js
 {
-   "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
-  ],
+   '@context': [
+     'https://www.w3.org/ns/activitystreams',
+     'https://sockethub.org/ns/context/v1.jsonld',
+     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
+   ],
    type: 'disconnect',
    actor: {
      id: 'slvrbckt@jabber.net/Home',

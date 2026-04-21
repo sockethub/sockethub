@@ -64,6 +64,7 @@ interface IrcSocketOptions {
     realname: string;
     port: number;
     debug: typeof console.log;
+    saslMechanism?: "PLAIN" | "OAUTHBEARER";
     saslPassword?: string;
     capabilities?: IrcSocketOptionsCapabilities;
     connectOptions?: IrcSocketOptionsConnect;
@@ -121,12 +122,16 @@ export default class IRC implements PersistentPlatformInterface {
      * * **NOTE**: For more information on using the credentials object from a client,
      * see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
      *
-     * Valid AS object for setting IRC credentials:
+     * Valid AS object for setting IRC credentials using SASL PLAIN (password):
      * @example
      *
      *  {
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
      *    type: 'credentials',
-     *    context: 'irc',
      *    actor: {
      *      id: 'testuser@irc.host.net',
      *      type: 'person',
@@ -143,6 +148,63 @@ export default class IRC implements PersistentPlatformInterface {
      *      sasl: true
      *    }
      *  }
+     *
+     * Valid AS object for setting IRC credentials using a personal access
+     * token via SASL PLAIN (e.g. Libera.Chat NickServ tokens):
+     * @example
+     *
+     *  {
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
+     *    type: 'credentials',
+     *    actor: {
+     *      id: 'testuser@irc.libera.chat',
+     *      type: 'person',
+     *      name: 'Mr. Test User'
+     *    },
+     *    object: {
+     *      type: 'credentials',
+     *      server: 'irc.libera.chat',
+     *      nick: 'testuser',
+     *      token: 'my-personal-access-token',
+     *      port: 6697,
+     *      secure: true
+     *    }
+     *  }
+     *
+     * Valid AS object for setting IRC credentials using SASL OAUTHBEARER
+     * (OAuth 2.0 access token):
+     * @example
+     *
+     *  {
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
+     *    type: 'credentials',
+     *    actor: {
+     *      id: 'testuser@chat.sr.ht',
+     *      type: 'person',
+     *      name: 'Mr. Test User'
+     *    },
+     *    object: {
+     *      type: 'credentials',
+     *      server: 'chat.sr.ht',
+     *      nick: 'testuser',
+     *      token: 'oauth-access-token',
+     *      saslMechanism: 'OAUTHBEARER',
+     *      port: 6697,
+     *      secure: true
+     *    }
+     *  }
+     *
+     * `password` and `token` are mutually exclusive. Both default to SASL
+     * PLAIN; set `saslMechanism: 'OAUTHBEARER'` explicitly for OAuth 2.0
+     * bearer tokens (RFC 7628).
      */
     get schema(): PlatformSchemaStruct {
         return PlatformIrcSchema;
@@ -189,7 +251,11 @@ export default class IRC implements PersistentPlatformInterface {
      * @example
      *
      * {
-     *   context: 'irc',
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *   ],
      *   type: 'join',
      *   actor: {
      *     id: 'slvrbckt@irc.freenode.net',
@@ -236,7 +302,11 @@ export default class IRC implements PersistentPlatformInterface {
      *
      * @example
      * {
-     *   context: 'irc',
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *   ],
      *   type: 'leave',
      *   actor: {
      *     id: 'slvrbckt@irc.freenode.net',
@@ -276,7 +346,11 @@ export default class IRC implements PersistentPlatformInterface {
      * @example
      *
      *  {
-     *    context: 'irc',
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
      *    type: 'send',
      *    actor: {
      *      id: 'slvrbckt@irc.freenode.net',
@@ -367,7 +441,11 @@ export default class IRC implements PersistentPlatformInterface {
      * @example change topic
      *
      * {
-     *   context: 'irc',
+     *   '@context': [
+     *     'https://www.w3.org/ns/activitystreams',
+     *     'https://sockethub.org/ns/context/v1.jsonld',
+     *     'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *   ],
      *   type: 'update',
      *   actor: {
      *     id: 'slvrbckt@irc.freenode.net',
@@ -388,7 +466,11 @@ export default class IRC implements PersistentPlatformInterface {
      *
      * @example change nickname
      *  {
-     *    context: 'irc'
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
      *    type: 'update',
      *    actor: {
      *      id: 'slvrbckt@irc.freenode.net',
@@ -456,7 +538,11 @@ export default class IRC implements PersistentPlatformInterface {
      * @example
      *
      *  {
-     *    context: 'irc',
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
      *    type: 'query',
      *    actor: {
      *      id: 'slvrbckt@irc.freenode.net',
@@ -477,7 +563,11 @@ export default class IRC implements PersistentPlatformInterface {
      *
      *  // The above object might return:
      *  {
-     *    context: 'irc',
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
      *    type: 'query',
      *    actor: {
      *      id: 'irc.freenode.net/a-room',
@@ -525,7 +615,11 @@ export default class IRC implements PersistentPlatformInterface {
      * @example
      *
      * {
-     *    context: 'irc',
+     *    '@context': [
+     *      'https://www.w3.org/ns/activitystreams',
+     *      'https://sockethub.org/ns/context/v1.jsonld',
+     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
+     *    ],
      *    type: 'disconnect',
      *    actor: {
      *      id: 'slvrbckt@irc.freenode.net',
@@ -636,10 +730,19 @@ export default class IRC implements PersistentPlatformInterface {
             typeof credentials.object.secure === "boolean"
                 ? credentials.object.secure
                 : true;
+        const sasl_secret =
+            credentials.object.token || credentials.object.password;
+        // saslMechanism must be set explicitly when using token. The schema
+        // enforces this via allOf/anyOf constraints (PLAIN requires
+        // password or token, OAUTHBEARER requires token). The runtime
+        // fallback only applies to the password-only path where
+        // saslMechanism was omitted.
+        const sasl_mechanism: "PLAIN" | "OAUTHBEARER" =
+            credentials.object.saslMechanism || "PLAIN";
         const is_sasl =
             typeof credentials.object.sasl === "boolean"
                 ? credentials.object.sasl
-                : !!credentials.object.password;
+                : !!sasl_secret;
 
         const module_options: IrcSocketOptions = {
             username: credentials.object.username || credentials.object.nick,
@@ -659,14 +762,15 @@ export default class IRC implements PersistentPlatformInterface {
             module_options.connectOptions = { rejectUnauthorized: false };
         }
         if (is_sasl) {
-            module_options.saslPassword = credentials.object.password;
+            module_options.saslMechanism = sasl_mechanism;
+            module_options.saslPassword = sasl_secret;
             module_options.capabilities = { requires: ["sasl"] };
         }
 
         this.log.debug(
             `attempting to connect to ${module_options.server}:${module_options.port} transport: ${
                 is_secure ? "secure" : "clear"
-            } sasl: ${is_sasl}`,
+            } sasl: ${is_sasl}${is_sasl ? ` (${sasl_mechanism})` : ""}`,
         );
 
         const client = new IrcSocket(module_options, is_secure ? tls : net);

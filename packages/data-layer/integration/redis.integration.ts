@@ -7,10 +7,20 @@ import {
     JobWorker,
     redisCheck,
 } from "@sockethub/data-layer";
-import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
+import {
+    type ActivityStream,
+    addPlatformContext,
+    type CredentialsObject,
+} from "@sockethub/schemas";
 
 const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 const REDIS_URL = `redis://${REDIS_HOST}:6379`;
+
+const BAR_PLATFORM_CONTEXT_URL =
+    "https://sockethub.org/ns/context/platform/bar/v1.jsonld";
+// Register "bar" so resolvePlatformId() can map the @context entry back to the
+// platform id used in job titles.
+addPlatformContext("bar", BAR_PLATFORM_CONTEXT_URL);
 
 const actor = `${(Math.random() + 1).toString(36).substring(2)}`;
 const creds: CredentialsObject = {
@@ -18,7 +28,7 @@ const creds: CredentialsObject = {
     "@context": [
         "https://www.w3.org/ns/activitystreams",
         "https://sockethub.org/ns/context/v1.jsonld",
-        "https://sockethub.org/ns/context/platform/bar/v1.jsonld",
+        BAR_PLATFORM_CONTEXT_URL,
     ],
     actor: {
         type: "person",
@@ -26,9 +36,10 @@ const creds: CredentialsObject = {
     },
     object: {
         type: "credentials",
+        password: "secret",
     },
 };
-const credsHash = "e591ec978a505aee278f372354c229d165d2c096";
+const credsHash = "267a747d006c9a2c2e94b2f7d646400ba16e5709";
 const testSecret = "aB3#xK9mP2qR7wZ4cT8nY6vH1jL5fD0s";
 
 describe("CredentialsStore", () => {
@@ -57,12 +68,38 @@ describe("CredentialsStore", () => {
     it("handles credential updates", async () => {
         await store.save(actor, creds);
 
-        const updatedCreds = { ...creds, object: { type: "updated" } };
+        const updatedCreds = {
+            ...creds,
+            object: { type: "updated", password: "updated-secret" },
+        };
         await store.save(actor, updatedCreds);
 
         const newHash = crypto.objectHash(updatedCreds.object);
         const retrieved = await store.get(actor, newHash);
         expect(retrieved).toEqual(updatedCreds);
+    });
+
+    it("allows hash matching when password is missing without share validation", async () => {
+        const noPasswordCreds: CredentialsObject = {
+            ...creds,
+            object: { type: "credentials" },
+        };
+        await store.save(actor, noPasswordCreds);
+
+        const hash = crypto.objectHash(noPasswordCreds.object);
+        await expect(store.get(actor, hash)).resolves.toEqual(noPasswordCreds);
+    });
+
+    it("rejects anonymous credentials when share validation is requested", async () => {
+        const noPasswordCreds: CredentialsObject = {
+            ...creds,
+            object: { type: "credentials" },
+        };
+        await store.save(actor, noPasswordCreds);
+
+        await expect(
+            store.get(actor, undefined, { validateSessionShare: true }),
+        ).rejects.toThrow("username already in use");
     });
 
     it("isolates credentials by session", async () => {
@@ -126,9 +163,8 @@ describe("JobQueue", () => {
         "@context": [
             "https://www.w3.org/ns/activitystreams",
             "https://sockethub.org/ns/context/v1.jsonld",
-            "https://sockethub.org/ns/context/platform/bar/v1.jsonld",
+            BAR_PLATFORM_CONTEXT_URL,
         ],
-        platform: "bar",
         actor: {
             id: "bar",
             type: "person",
@@ -321,7 +357,6 @@ describe("JobQueue", () => {
                 "https://sockethub.org/ns/context/v1.jsonld",
                 "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
             ],
-            platform: "irc",
             actor: { id: "user@example.com", type: "person" },
             object: {
                 type: "message",
@@ -392,9 +427,8 @@ describe.skip("Redis connection failure", () => {
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/bar/v1.jsonld",
+                BAR_PLATFORM_CONTEXT_URL,
             ],
-            platform: "bar",
             actor: { id: "bar", type: "person" },
         };
 

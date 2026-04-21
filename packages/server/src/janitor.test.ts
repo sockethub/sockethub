@@ -22,6 +22,10 @@ function getPlatformInstanceFake() {
             removeListener: sinon.stub(),
         },
         sessions: new Set(["session foo", "session bar"]),
+        sessionIps: new Map([
+            ["session foo", "127.0.0.1"],
+            ["session bar", "127.0.0.1"],
+        ]),
         sessionCallbacks: {
             close: (() =>
                 new Map([

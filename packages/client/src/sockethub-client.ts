@@ -916,15 +916,6 @@ export default class SockethubClient {
                 );
                 if (outgoing && typeof outgoing === "object") {
                     const activity = outgoing as ActivityStream;
-                    if (
-                        !activity["@context"] &&
-                        typeof activity.platform === "string" &&
-                        activity.platform.trim().length > 0
-                    ) {
-                        activity["@context"] = this.contextFor(
-                            activity.platform,
-                        );
-                    }
                     if (entry.event === "credentials" && !activity.type) {
                         activity.type = "credentials";
                     }
