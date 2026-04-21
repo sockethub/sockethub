@@ -192,7 +192,7 @@ export const stanzas = [
     ],
     [
         "group presence",
-        `<presence from='room@xmpp.example.org/speedboat'><show>chat</show> <status>brrroom!</status></presence>`,
+        `<presence from='speedboat@conference.xmpp.example.org/user123'><show>chat</show> <status>brrroom!</status></presence>`,
         {
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
@@ -201,9 +201,9 @@ export const stanzas = [
             ],
             type: "update",
             actor: {
-                id: "room@xmpp.example.org/speedboat",
-                type: "person",
-                name: "speedboat",
+                id: "speedboat@conference.xmpp.example.org/user123",
+                type: "room",
+                name: "user123",
             },
             object: { type: "presence", content: "brrroom!", presence: "chat" },
         },
