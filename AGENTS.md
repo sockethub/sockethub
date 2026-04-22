@@ -98,9 +98,9 @@ packages/
 
 ## Things NOT to Edit
 
-- Generated reference docs such as `packages/*/API.md` or `packages/*/docs/*`.
+- Generated reference docs. These are not committed to the repository.
   Edit the source JSDoc in `src/index.ts` or `src/index.js` instead, then run
-  the package's `doc` script.
+  the package's `doc` script locally when you need to inspect the generated output.
 
 ## Architecture
 

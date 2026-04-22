@@ -1,3 +1,4 @@
 **/node_modules/*
 **/API.md
+packages/platform-irc/docs/**
 CLAUDE.md

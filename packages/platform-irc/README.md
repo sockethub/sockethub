@@ -320,4 +320,5 @@ distinction clear:
 
 ## API
 
-Detailed API documentation can be found in the [generated docs](./docs/README.md).
+API reference docs are generated from the source JSDoc and are not committed to this repository.
+Run `bun run doc` in this package to generate them locally.

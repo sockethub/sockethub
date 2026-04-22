@@ -250,4 +250,5 @@ non-recoverable connection error.
 
 ## API
 
-Detailed API documentation can be found [here](API.md)
+API reference docs are generated from the source JSDoc and are not committed to this repository.
+Run `bun run doc` in this package to generate them locally.
