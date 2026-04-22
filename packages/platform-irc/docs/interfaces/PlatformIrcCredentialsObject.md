@@ -1,6 +1,6 @@
 # Interface: PlatformIrcCredentialsObject
 
-Defined in: [types.ts:3](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/types.ts#L3)
+Defined in: [types.ts:3](https://github.com/sockethub/sockethub/blob/fe9eb6244faf8131d630082d4435fb1fcac8f4fa/packages/platform-irc/src/types.ts#L3)
 
 ## Extends
 
@@ -12,9 +12,9 @@ Defined in: [types.ts:3](https://github.com/sockethub/sockethub/blob/5859b33363e
 
 > **@context**: `string`[]
 
-Defined in: [types.ts:4](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/types.ts#L4)
+Defined in: [types.ts:4](https://github.com/sockethub/sockethub/blob/fe9eb6244faf8131d630082d4435fb1fcac8f4fa/packages/platform-irc/src/types.ts#L4)
 
-#### Properties @context Overrides
+#### Overrides
 
 `CredentialsObject.@context`
 
@@ -24,9 +24,9 @@ Defined in: [types.ts:4](https://github.com/sockethub/sockethub/blob/5859b33363e
 
 > **actor**: `ActivityActor`
 
-Defined in: [types.ts:6](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/types.ts#L6)
+Defined in: [types.ts:6](https://github.com/sockethub/sockethub/blob/fe9eb6244faf8131d630082d4435fb1fcac8f4fa/packages/platform-irc/src/types.ts#L6)
 
-#### Properties actor Overrides
+#### Overrides
 
 `CredentialsObject.actor`
 
@@ -36,7 +36,7 @@ Defined in: [types.ts:6](https://github.com/sockethub/sockethub/blob/5859b33363e
 
 > **object**: `object`
 
-Defined in: [types.ts:8](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/types.ts#L8)
+Defined in: [types.ts:8](https://github.com/sockethub/sockethub/blob/fe9eb6244faf8131d630082d4435fb1fcac8f4fa/packages/platform-irc/src/types.ts#L8)
 
 #### nick
 
@@ -70,7 +70,7 @@ Defined in: [types.ts:8](https://github.com/sockethub/sockethub/blob/5859b33363e
 
 > `optional` **token**: `string`
 
-#### Properties object type
+#### type
 
 > **type**: `"credentials"`
 
@@ -78,7 +78,7 @@ Defined in: [types.ts:8](https://github.com/sockethub/sockethub/blob/5859b33363e
 
 > `optional` **username**: `string`
 
-#### Properties object Overrides
+#### Overrides
 
 `CredentialsObject.object`
 
@@ -88,20 +88,20 @@ Defined in: [types.ts:8](https://github.com/sockethub/sockethub/blob/5859b33363e
 
 > `optional` **target**: `ActivityActor`
 
-Defined in: [types.ts:7](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/types.ts#L7)
+Defined in: [types.ts:7](https://github.com/sockethub/sockethub/blob/fe9eb6244faf8131d630082d4435fb1fcac8f4fa/packages/platform-irc/src/types.ts#L7)
 
-#### Properties target? Overrides
+#### Overrides
 
 `CredentialsObject.target`
 
 ***
 
-### Properties type
+### type
 
 > **type**: `"credentials"`
 
-Defined in: [types.ts:5](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/types.ts#L5)
+Defined in: [types.ts:5](https://github.com/sockethub/sockethub/blob/fe9eb6244faf8131d630082d4435fb1fcac8f4fa/packages/platform-irc/src/types.ts#L5)
 
-#### Properties type Overrides
+#### Overrides
 
 `CredentialsObject.type`
