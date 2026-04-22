@@ -320,4 +320,4 @@ distinction clear:
 
 ## API
 
-Detailed API documentation can be found [here](API.md)
+Detailed API documentation can be found in the [generated docs](./docs/README.md).
