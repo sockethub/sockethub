@@ -98,8 +98,9 @@ packages/
 
 ## Things NOT to Edit
 
-- `packages/*/API.md` - Auto-generated from JSDoc. Edit the JSDoc in `src/index.ts` instead,
-  then run the package's `doc` script.
+- Generated reference docs such as `packages/*/API.md` or `packages/*/docs/*`.
+  Edit the source JSDoc in `src/index.ts` or `src/index.js` instead, then run
+  the package's `doc` script.
 
 ## Architecture
 
