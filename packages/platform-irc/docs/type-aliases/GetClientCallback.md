@@ -2,14 +2,14 @@
 
 > **GetClientCallback** = (`err`, `client?`) => `void`
 
-Defined in: [index.ts:39](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L39)
+Defined in: [index.ts:42](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/index.ts#L42)
 
 ## Parameters
 
 | Parameter | Type |
 | ------ | ------ |
 | `err` | `string` \| `null` |
-| `client?` | `IrcSocketInstance` |
+| `client?` | [`IrcSocketInstance`](../interfaces/IrcSocketInstance.md) |
 
 ## Returns
 

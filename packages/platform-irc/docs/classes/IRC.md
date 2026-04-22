@@ -1,16 +1,8 @@
 # Class: IRC
 
-Defined in: [index.ts:82](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L82)
+Defined in: [index.ts:79](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/index.ts#L79)
 
-IRC
-
-## Description
-
-Handles all actions related to communication via. the IRC protocol.
-
-## Param
-
-a unique config object for this instance
+Handles all actions related to communication via the IRC protocol.
 
 ## Implements
 
@@ -22,15 +14,15 @@ a unique config object for this instance
 
 > **new IRC**(`session`): `IRC`
 
-Defined in: [index.ts:101](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L101)
+Defined in: [index.ts:98](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/index.ts#L98)
 
-#### Constructor Parameters
+#### Constructors Constructor Parameters
 
 | Parameter | Type |
 | ------ | ------ |
 | `session` | `PlatformSession` |
 
-#### Constructor Returns
+#### Constructors Constructor Returns
 
 `IRC`
 
@@ -40,9 +32,9 @@ Defined in: [index.ts:101](https://github.com/sockethub/sockethub/blob/8982792db
 
 > **config**: `PersistentPlatformConfig`
 
-Defined in: [index.ts:85](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L85)
+Defined in: [index.ts:82](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/index.ts#L82)
 
-#### config Implementation of
+#### Properties config Implementation of
 
 `PersistentPlatformInterface.config`
 
@@ -52,7 +44,7 @@ Defined in: [index.ts:85](https://github.com/sockethub/sockethub/blob/8982792db0
 
 > **credentialsHash**: `string`
 
-Defined in: [index.ts:84](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L84)
+Defined in: [index.ts:81](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/index.ts#L81)
 
 Hash of the credentials object this platform instance is bound to.
 Used to validate that incoming requests match the actor this instance serves.
@@ -60,7 +52,7 @@ Prevents credential mismatches and ensures single-actor per instance.
 
 May be undefined before credentials are established. Callers should handle both cases.
 
-#### credentialsHash Implementation of
+#### Properties credentialsHash Implementation of
 
 `PersistentPlatformInterface.credentialsHash`
 
@@ -68,15 +60,11 @@ May be undefined before credentials are established. Callers should handle both 
 
 ### schema
 
-#### schema Get Signature
+#### Accessors schema Get Signature
 
 > **get** **schema**(): `PlatformSchemaStruct`
 
-Defined in: [index.ts:118](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L118)
-
-Property: schema
-
-##### schema Get Signature Description
+Defined in: [index.ts:112](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/index.ts#L112)
 
 JSON schema defining the types this platform accepts.
 
@@ -85,11 +73,11 @@ PLAIN; set `saslMechanism: 'OAUTHBEARER'` explicitly for OAuth 2.0
 bearer tokens (RFC 7628). See the package README for canonical
 credentials payload examples.
 
-##### schema Get Signature Returns
+##### Accessors schema Accessors schema Get Signature Returns
 
 `PlatformSchemaStruct`
 
-#### schema Implementation of
+#### Accessors schema Implementation of
 
 `PersistentPlatformInterface.schema`
 
@@ -99,19 +87,19 @@ credentials payload examples.
 
 > **cleanup**(`done`): `void`
 
-Defined in: [index.ts:355](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L355)
+Defined in: [index.ts:349](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/index.ts#L349)
 
-#### cleanup() Parameters
+#### Methods cleanup() Parameters
 
 | Parameter | Type |
 | ------ | ------ |
 | `done` | `PlatformCallback` |
 
-#### cleanup() Returns
+#### Methods cleanup() Returns
 
 `void`
 
-#### cleanup() Implementation of
+#### Methods cleanup() Implementation of
 
 `PersistentPlatformInterface.cleanup`
 
@@ -121,25 +109,25 @@ Defined in: [index.ts:355](https://github.com/sockethub/sockethub/blob/8982792db
 
 > **connect**(`job`, `credentials`, `done`): `void`
 
-Defined in: [index.ts:139](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L139)
+Defined in: [index.ts:133](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/index.ts#L133)
 
 Function: connect
 
 Connect to an IRC server.
 
-#### connect() Parameters
+#### Methods connect() Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
 | `job` | `ActivityStream` | activity streams object |
-| `credentials` | `PlatformIrcCredentialsObject` | credentials object |
+| `credentials` | [`PlatformIrcCredentialsObject`](../interfaces/PlatformIrcCredentialsObject.md) | credentials object |
 | `done` | `PlatformCallback` | callback when job is done |
 
-#### connect() Returns
+#### Methods connect() Returns
 
 `void`
 
-#### connect() Implementation of
+#### Methods connect() Implementation of
 
 `PersistentPlatformInterface.connect`
 
@@ -149,18 +137,18 @@ Connect to an IRC server.
 
 > **disconnect**(`job`, `done`): `void`
 
-Defined in: [index.ts:350](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L350)
+Defined in: [index.ts:344](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/index.ts#L344)
 
 Disconnect IRC client
 
-#### disconnect() Parameters
+#### Methods disconnect() Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
 | `job` | `ActivityStream` | activity streams object |
 | `done` | `PlatformCallback` |  |
 
-#### disconnect() Returns
+#### Methods disconnect() Returns
 
 `void`
 
@@ -170,16 +158,16 @@ Disconnect IRC client
 
 > **isInitialized**(): `boolean`
 
-Defined in: [index.ts:126](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L126)
+Defined in: [index.ts:120](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/index.ts#L120)
 
 Returns whether the platform is ready to handle jobs.
 For IRC, this means we have successfully connected to the server.
 
-#### isInitialized() Returns
+#### Methods isInitialized() Returns
 
 `boolean`
 
-#### isInitialized() Implementation of
+#### Methods isInitialized() Implementation of
 
 `PersistentPlatformInterface.isInitialized`
 
@@ -189,20 +177,20 @@ For IRC, this means we have successfully connected to the server.
 
 > **join**(`job`, `done`): `void`
 
-Defined in: [index.ts:160](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L160)
+Defined in: [index.ts:154](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/index.ts#L154)
 
 Function: join
 
 Join a room or private conversation.
 
-#### join() Parameters
+#### Methods join() Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
 | `job` | `ActivityStream` | activity streams object |
 | `done` | `PlatformCallback` | callback when job is done |
 
-#### join() Returns
+#### Methods join() Returns
 
 `void`
 
@@ -212,20 +200,20 @@ Join a room or private conversation.
 
 > **leave**(`job`, `done`): `void`
 
-Defined in: [index.ts:189](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L189)
+Defined in: [index.ts:183](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/index.ts#L183)
 
 Function leave
 
 Leave a room or private conversation.
 
-#### leave() Parameters
+#### Methods leave() Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
 | `job` | `ActivityStream` | activity streams object |
 | `done` | `PlatformCallback` | callback when job is done |
 
-#### leave() Returns
+#### Methods leave() Returns
 
 `void`
 
@@ -235,20 +223,20 @@ Leave a room or private conversation.
 
 > **query**(`job`, `done`): `void`
 
-Defined in: [index.ts:326](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L326)
+Defined in: [index.ts:320](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/index.ts#L320)
 
 Function: query
 
 Indicate an intent to query something (e.g. get a list of users in a room).
 
-#### query() Parameters
+#### Methods query() Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
 | `job` | `ActivityStream` | activity streams object |
 | `done` | `PlatformCallback` | callback when job is done |
 
-#### query() Returns
+#### Methods query() Returns
 
 `void`
 
@@ -258,20 +246,20 @@ Indicate an intent to query something (e.g. get a list of users in a room).
 
 > **send**(`job`, `done`): `void`
 
-Defined in: [index.ts:210](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L210)
+Defined in: [index.ts:204](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/index.ts#L204)
 
 Function: send
 
 Send a message to a room or private conversation.
 
-#### send() Parameters
+#### Methods send() Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
 | `job` | `ActivityStream` | activity streams object |
 | `done` | `PlatformCallback` | callback when job is done |
 
-#### send() Returns
+#### Methods send() Returns
 
 `void`
 
@@ -281,20 +269,20 @@ Send a message to a room or private conversation.
 
 > **update**(`job`, `credentials`, `done`): `void`
 
-Defined in: [index.ts:278](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L278)
+Defined in: [index.ts:272](https://github.com/sockethub/sockethub/blob/5859b33363ef280eb3802f335260098baea5cc19/packages/platform-irc/src/index.ts#L272)
 
 Function: update
 
 Indicate a change (i.e. room topic update, or nickname change).
 
-#### update() Parameters
+#### Methods update() Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
 | `job` | `ActivityStream` | activity streams object |
-| `credentials` | `PlatformIrcCredentialsObject` | credentials to verify this user is the right one |
+| `credentials` | [`PlatformIrcCredentialsObject`](../interfaces/PlatformIrcCredentialsObject.md) | credentials to verify this user is the right one |
 | `done` | `PlatformCallback` | callback when job is done |
 
-#### update() Returns
+#### Methods update() Returns
 
 `void`

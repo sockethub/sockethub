@@ -4,6 +4,11 @@
 
 - [IRC](classes/IRC.md)
 
+## Interfaces
+
+- [IrcSocketInstance](interfaces/IrcSocketInstance.md)
+- [PlatformIrcCredentialsObject](interfaces/PlatformIrcCredentialsObject.md)
+
 ## Type Aliases
 
 - [GetClientCallback](type-aliases/GetClientCallback.md)

@@ -43,8 +43,20 @@ function walkMarkdownFiles(dir) {
 
 function rewriteHeadings(content) {
     const lines = content.split("\n");
+    const headingCounts = new Map();
     const headings = [];
     let inFence = false;
+
+    for (const line of lines) {
+        const match = /^(#{1,6}) (.+)$/.exec(line);
+
+        if (!match) {
+            continue;
+        }
+
+        const heading = match[2].trim();
+        headingCounts.set(heading, (headingCounts.get(heading) ?? 0) + 1);
+    }
 
     return lines
         .map((line) => {
@@ -70,9 +82,13 @@ function rewriteHeadings(content) {
 
             let heading = rawHeading.trim();
 
-            if (level >= 4 && GENERIC_HEADINGS.has(heading)) {
+            if (
+                level >= 3 &&
+                (GENERIC_HEADINGS.has(heading) ||
+                    (headingCounts.get(heading) ?? 0) > 1)
+            ) {
                 const contextParts = headings
-                    .slice(3, level)
+                    .slice(2, level)
                     .filter(Boolean)
                     .map((value) => String(value).replace(/[*_`]/g, "").trim())
                     .reduce((parts, value) => {

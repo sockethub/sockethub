@@ -36,6 +36,9 @@ import IrcSocket, { type IrcSocketInstance } from "irc-socket-sasl";
 import { PlatformIrcSchema } from "./schema.js";
 import type { PlatformIrcCredentialsObject } from "./types.js";
 
+export type { IrcSocketInstance } from "irc-socket-sasl";
+export type { PlatformIrcCredentialsObject } from "./types.js";
+
 export type GetClientCallback = (
     err: string | null,
     client?: IrcSocketInstance,
@@ -71,13 +74,7 @@ interface IrcSocketOptions {
 }
 
 /**
- * @class IRC
- * @constructor
- *
- * @description
- * Handles all actions related to communication via. the IRC protocol.
- *
- * @param {object} cfg a unique config object for this instance
+ * Handles all actions related to communication via the IRC protocol.
  */
 export class IRC implements PersistentPlatformInterface {
     private readonly log: Logger;
@@ -105,9 +102,6 @@ export class IRC implements PersistentPlatformInterface {
     }
 
     /**
-     * Property: schema
-     *
-     * @description
      * JSON schema defining the types this platform accepts.
      *
      * `password` and `token` are mutually exclusive. Both default to SASL
