@@ -1,6 +1,6 @@
-# Class: default
+# Class: IRC
 
-Defined in: [index.ts:82](https://github.com/sockethub/sockethub/blob/b8e3084f355a7f9e9d669d3b85a784d8483099d2/packages/platform-irc/src/index.ts#L82)
+Defined in: [index.ts:82](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L82)
 
 IRC
 
@@ -20,9 +20,9 @@ a unique config object for this instance
 
 ### Constructor
 
-> **new default**(`session`): `IRC`
+> **new IRC**(`session`): `IRC`
 
-Defined in: [index.ts:101](https://github.com/sockethub/sockethub/blob/b8e3084f355a7f9e9d669d3b85a784d8483099d2/packages/platform-irc/src/index.ts#L101)
+Defined in: [index.ts:101](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L101)
 
 #### Constructor Parameters
 
@@ -40,7 +40,7 @@ Defined in: [index.ts:101](https://github.com/sockethub/sockethub/blob/b8e3084f3
 
 > **config**: `PersistentPlatformConfig`
 
-Defined in: [index.ts:85](https://github.com/sockethub/sockethub/blob/b8e3084f355a7f9e9d669d3b85a784d8483099d2/packages/platform-irc/src/index.ts#L85)
+Defined in: [index.ts:85](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L85)
 
 #### config Implementation of
 
@@ -52,7 +52,7 @@ Defined in: [index.ts:85](https://github.com/sockethub/sockethub/blob/b8e3084f35
 
 > **credentialsHash**: `string`
 
-Defined in: [index.ts:84](https://github.com/sockethub/sockethub/blob/b8e3084f355a7f9e9d669d3b85a784d8483099d2/packages/platform-irc/src/index.ts#L84)
+Defined in: [index.ts:84](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L84)
 
 Hash of the credentials object this platform instance is bound to.
 Used to validate that incoming requests match the actor this instance serves.
@@ -72,7 +72,7 @@ May be undefined before credentials are established. Callers should handle both 
 
 > **get** **schema**(): `PlatformSchemaStruct`
 
-Defined in: [index.ts:118](https://github.com/sockethub/sockethub/blob/b8e3084f355a7f9e9d669d3b85a784d8483099d2/packages/platform-irc/src/index.ts#L118)
+Defined in: [index.ts:118](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L118)
 
 Property: schema
 
@@ -99,7 +99,7 @@ credentials payload examples.
 
 > **cleanup**(`done`): `void`
 
-Defined in: [index.ts:355](https://github.com/sockethub/sockethub/blob/b8e3084f355a7f9e9d669d3b85a784d8483099d2/packages/platform-irc/src/index.ts#L355)
+Defined in: [index.ts:355](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L355)
 
 #### cleanup() Parameters
 
@@ -121,7 +121,7 @@ Defined in: [index.ts:355](https://github.com/sockethub/sockethub/blob/b8e3084f3
 
 > **connect**(`job`, `credentials`, `done`): `void`
 
-Defined in: [index.ts:139](https://github.com/sockethub/sockethub/blob/b8e3084f355a7f9e9d669d3b85a784d8483099d2/packages/platform-irc/src/index.ts#L139)
+Defined in: [index.ts:139](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L139)
 
 Function: connect
 
@@ -149,7 +149,7 @@ Connect to an IRC server.
 
 > **disconnect**(`job`, `done`): `void`
 
-Defined in: [index.ts:350](https://github.com/sockethub/sockethub/blob/b8e3084f355a7f9e9d669d3b85a784d8483099d2/packages/platform-irc/src/index.ts#L350)
+Defined in: [index.ts:350](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L350)
 
 Disconnect IRC client
 
@@ -170,7 +170,7 @@ Disconnect IRC client
 
 > **isInitialized**(): `boolean`
 
-Defined in: [index.ts:126](https://github.com/sockethub/sockethub/blob/b8e3084f355a7f9e9d669d3b85a784d8483099d2/packages/platform-irc/src/index.ts#L126)
+Defined in: [index.ts:126](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L126)
 
 Returns whether the platform is ready to handle jobs.
 For IRC, this means we have successfully connected to the server.
@@ -189,7 +189,7 @@ For IRC, this means we have successfully connected to the server.
 
 > **join**(`job`, `done`): `void`
 
-Defined in: [index.ts:160](https://github.com/sockethub/sockethub/blob/b8e3084f355a7f9e9d669d3b85a784d8483099d2/packages/platform-irc/src/index.ts#L160)
+Defined in: [index.ts:160](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L160)
 
 Function: join
 
@@ -212,7 +212,7 @@ Join a room or private conversation.
 
 > **leave**(`job`, `done`): `void`
 
-Defined in: [index.ts:189](https://github.com/sockethub/sockethub/blob/b8e3084f355a7f9e9d669d3b85a784d8483099d2/packages/platform-irc/src/index.ts#L189)
+Defined in: [index.ts:189](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L189)
 
 Function leave
 
@@ -235,7 +235,7 @@ Leave a room or private conversation.
 
 > **query**(`job`, `done`): `void`
 
-Defined in: [index.ts:326](https://github.com/sockethub/sockethub/blob/b8e3084f355a7f9e9d669d3b85a784d8483099d2/packages/platform-irc/src/index.ts#L326)
+Defined in: [index.ts:326](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L326)
 
 Function: query
 
@@ -258,7 +258,7 @@ Indicate an intent to query something (e.g. get a list of users in a room).
 
 > **send**(`job`, `done`): `void`
 
-Defined in: [index.ts:210](https://github.com/sockethub/sockethub/blob/b8e3084f355a7f9e9d669d3b85a784d8483099d2/packages/platform-irc/src/index.ts#L210)
+Defined in: [index.ts:210](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L210)
 
 Function: send
 
@@ -281,7 +281,7 @@ Send a message to a room or private conversation.
 
 > **update**(`job`, `credentials`, `done`): `void`
 
-Defined in: [index.ts:278](https://github.com/sockethub/sockethub/blob/b8e3084f355a7f9e9d669d3b85a784d8483099d2/packages/platform-irc/src/index.ts#L278)
+Defined in: [index.ts:278](https://github.com/sockethub/sockethub/blob/8982792db045697f6a91986ce4f647fd19ce99e2/packages/platform-irc/src/index.ts#L278)
 
 Function: update
 

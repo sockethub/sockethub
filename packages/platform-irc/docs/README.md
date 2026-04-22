@@ -2,8 +2,14 @@
 
 ## Classes
 
-- [default](classes/default.md)
+- [IRC](classes/IRC.md)
 
 ## Type Aliases
 
 - [GetClientCallback](type-aliases/GetClientCallback.md)
+
+## References
+
+### default
+
+Renames and re-exports [IRC](classes/IRC.md)

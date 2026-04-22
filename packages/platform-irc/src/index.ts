@@ -79,9 +79,9 @@ interface IrcSocketOptions {
  *
  * @param {object} cfg a unique config object for this instance
  */
-export default class IRC implements PersistentPlatformInterface {
+export class IRC implements PersistentPlatformInterface {
     private readonly log: Logger;
-    credentialsHash: string;
+    public credentialsHash: string | undefined;
     config: PersistentPlatformConfig = {
         persist: true,
         requireCredentials: ["connect", "update"],
@@ -605,3 +605,5 @@ export default class IRC implements PersistentPlatformInterface {
         });
     }
 }
+
+export default IRC;
