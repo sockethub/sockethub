@@ -103,81 +103,8 @@ export default class Feeds implements PlatformInterface {
      *
      * @param job - Activity streams object containing job data with actor.id as feed URL
      * @param done - Callback function that receives (error, ASCollection)
-     *
-     * @example
-     * Request:
-     *  {
-     *    "@context": ["https://www.w3.org/ns/activitystreams", "https://sockethub.org/ns/context/v1.jsonld", "https://sockethub.org/ns/context/platform/feeds/v1.jsonld"],
-     *    type: "fetch",
-     *    actor: {
-     *      id: 'http://blog.example.com/rss',
-     *      type: "feed"
-     *    }
-     *  }
-     *
-     *
-     *  // Without any parameters specified, the platform will return most
-     *  // recent 10 articles fetched from the feed.
-     *
-     *  // Example of the resulting JSON AS Object:
-     *
-     *   {
-     *     '@context': [
-     *       'https://www.w3.org/ns/activitystreams',
-     *       'https://sockethub.org/ns/context/v1.jsonld',
-     *       'https://sockethub.org/ns/context/platform/feeds/v1.jsonld'
-     *     ],
-     *     type: 'collection',
-     *     summary: 'Best Feed Inc.'
-     *     totalItems: 10,
-     *     items: [
-     *       {
-     *         '@context': [
-     *           'https://www.w3.org/ns/activitystreams',
-     *           'https://sockethub.org/ns/context/v1.jsonld',
-     *           'https://sockethub.org/ns/context/platform/feeds/v1.jsonld'
-     *         ],
-     *         type: 'post',
-     *         actor: {
-     *           type: 'feed',
-     *           name: 'Best Feed Inc.',
-     *           id: 'http://blog.example.com/rss',
-     *           description: 'Where the best feed comes to be the best',
-     *           image: {
-     *             width: '144',
-     *             height: '144',
-     *             url: 'http://blog.example.com/images/bestfeed.jpg',
-     *           }
-     *           favicon: 'http://blog.example.com/favicon.ico',
-     *           link: 'http://blog.example.com',
-     *           categories: ['best', 'feed', 'aminals'],
-     *           language: 'en',
-     *           author: 'John Doe'
-     *         },
-     *         object: {
-     *           id: "http://blog.example.com/articles/about-stuff"
-     *           type: 'article',
-     *           title: 'About stuff...',
-     *           url: "http://blog.example.com/articles/about-stuff"
-     *           date: "2013-05-28T12:00:00.000Z",
-     *           datenum: 1369742400000,
-     *           brief: "Brief synopsis of stuff...",
-     *           content: "Once upon a time...",
-     *           contentType: "text",
-     *           media: [
-     *             {
-     *               length: '13908973',
-     *               type: 'audio/mpeg',
-     *               url: 'http://blog.example.com/media/thing.mpg'
-     *             }
-     *           ]
-     *           tags: ['foo', 'bar']
-     *         }
-     *       },
-     *       ...
-     *     ]
-     *   }
-     *
+     * See the package README for canonical request and response payload
+     * examples.
      */
     fetch(job: ActivityStream, done: PlatformCallback) {
         // ready to execute job
