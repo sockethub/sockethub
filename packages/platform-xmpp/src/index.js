@@ -141,53 +141,12 @@ export default class XMPP {
      * @description
      * JSON schema defining the types this platform accepts.
      *
-     * Actual handling of incoming 'set' commands are handled by dispatcher,
-     * but the dispatcher uses this defined schema to validate credentials
-     * received, so that when a @context type is called, it can fetch the
-     * credentials (`session.getConfig()`), knowing they will have already been
-     * validated against this schema.
-     *
-     *
-     * In the below example, Sockethub will validate the incoming credentials object
-     * against whatever is defined in the `credentials` portion of the schema
-     * object.
-     *
-     *
-     * It will also check if the incoming AS object uses a type which exists in the
-     * `types` portion of the schema object (should be an array of type names).
-     *
-     * **NOTE**: For more information on using the credentials object from a client,
-     * see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
-     *
      * Deployments that accept a bearer-style token in the SASL PLAIN password
      * slot should still pass that token string as `password`. Dedicated token
      * SASL mechanisms such as ejabberd `X-OAUTH2`, Prosody `OAUTHBEARER`,
      * Prosody community `X-TOKEN`, and SASL2 FAST are not implemented by this
-     * client.
-     *
-     * Valid AS object for setting XMPP credentials:
-     *
-     * @example
-     *
-     * {
-     *   '@context': [
-     *     'https://www.w3.org/ns/activitystreams',
-     *     'https://sockethub.org/ns/context/v1.jsonld',
-     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-     *   ],
-     *   type: 'credentials',
-     *   actor: {
-     *     id: 'testuser@jabber.net',
-     *     type: 'person',
-     *     name: 'Mr. Test User'
-     *   },
-     *   object: {
-     *     type: 'credentials',
-     *     userAddress: 'testuser@jabber.net',
-     *     password: 'asdasdasdasd',
-     *     resource: 'phone'
-     *   }
-     * }
+     * client. See the package README for canonical credentials and usage
+     * payload examples.
      **/
     get schema() {
         return PlatformSchema;
@@ -210,23 +169,6 @@ export default class XMPP {
      * @param {object} job activity streams object
      * @param {object} credentials credentials object
      * @param {object} done callback when job is done
-     *
-     * @example
-     *
-     * {
-     *   '@context': [
-     *     'https://www.w3.org/ns/activitystreams',
-     *     'https://sockethub.org/ns/context/v1.jsonld',
-     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-     *   ],
-     *   type: 'connect',
-     *   actor: {
-     *     id: 'slvrbckt@jabber.net/Home',
-     *     type: 'person',
-     *     name: 'Nick Jennings',
-     *     userName: 'slvrbckt'
-     *   }
-     * }
      */
     connect(job, credentials, done) {
         if (this.__isClientConnected()) {
@@ -382,26 +324,6 @@ export default class XMPP {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     *
-     * {
-     *   '@context': [
-     *     'https://www.w3.org/ns/activitystreams',
-     *     'https://sockethub.org/ns/context/v1.jsonld',
-     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-     *   ],
-     *   type: 'join',
-     *   actor: {
-     *     type: 'person',
-     *     id: 'slvrbckt@jabber.net/Home',
-     *     name: 'Mr. Pimp'
-     *   },
-     *   target: {
-     *     type: 'room',
-     *     id: 'PartyChatRoom@muc.jabber.net'
-     *   }
-     * }
      */
     async join(job, done) {
         this.log.debug(
@@ -429,26 +351,6 @@ export default class XMPP {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     *
-     * {
-     *   '@context': [
-     *     'https://www.w3.org/ns/activitystreams',
-     *     'https://sockethub.org/ns/context/v1.jsonld',
-     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-     *   ],
-     *   type: 'leave',
-     *   actor: {
-     *     type: 'person',
-     *     id: 'slvrbckt@jabber.net/Home',
-     *     name: 'slvrbckt'
-     *   },
-     *   target: {
-     *     type: 'room'
-     *     id: 'PartyChatRoom@muc.jabber.net',
-     *   }
-     * }
      */
     leave(job, done) {
         this.log.debug(
@@ -477,56 +379,6 @@ export default class XMPP {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     *
-     * {
-     *   '@context': [
-     *     'https://www.w3.org/ns/activitystreams',
-     *     'https://sockethub.org/ns/context/v1.jsonld',
-     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-     *   ],
-     *   type: 'send',
-     *   actor: {
-     *     id: 'slvrbckt@jabber.net/Home',
-     *     type: 'person',
-     *     name: 'Nick Jennings',
-     *     userName: 'slvrbckt'
-     *   },
-     *   target: {
-     *     id: 'homer@jabber.net/Home',
-     *     type: 'user',
-     *     name: 'Homer'
-     *   },
-     *   object: {
-     *     type: 'message',
-     *     content: 'Hello from Sockethub!'
-     *   }
-     * }
-     *
-     * {
-     *   '@context': [
-     *     'https://www.w3.org/ns/activitystreams',
-     *     'https://sockethub.org/ns/context/v1.jsonld',
-     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-     *   ],
-     *   type: 'send',
-     *   actor: {
-     *     id: 'slvrbckt@jabber.net/Home',
-     *     type: 'person',
-     *     name: 'Nick Jennings',
-     *     userName: 'slvrbckt'
-     *   },
-     *   target: {
-     *     id: 'party-room@jabber.net',
-     *     type: 'room'
-     *   },
-     *   object: {
-     *     type: 'message',
-     *     content: 'Hello from Sockethub!'
-     *   }
-     * }
-     *
      */
     send(job, done) {
         this.log.debug(`send() called for ${job.actor.id}`);
@@ -556,25 +408,6 @@ export default class XMPP {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     *
-     * {
-     *   '@context': [
-     *     'https://www.w3.org/ns/activitystreams',
-     *     'https://sockethub.org/ns/context/v1.jsonld',
-     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-     *   ],
-     *   type: 'update',
-     *   actor: {
-     *     id: 'user@host.org/Home'
-     *   },
-     *   object: {
-     *     type: 'presence'
-     *     presence: 'away',
-     *     content: '...clever saying goes here...'
-     *   }
-     * }
      */
     update(job, done) {
         this.log.debug(`update() called for ${job.actor.id}`);
@@ -606,23 +439,6 @@ export default class XMPP {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     *
-     * {
-     *   '@context': [
-     *     'https://www.w3.org/ns/activitystreams',
-     *     'https://sockethub.org/ns/context/v1.jsonld',
-     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-     *   ],
-     *   type: 'request-friend',
-     *   actor: {
-     *     id: 'user@host.org/Home'
-     *   },
-     *   target: {
-     *     id: 'homer@jabber.net/Home',
-     *   }
-     * }
      */
     "request-friend"(job, done) {
         this.log.debug(`request-friend() called for ${job.actor.id}`);
@@ -642,23 +458,6 @@ export default class XMPP {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     *
-     * {
-     *   '@context': [
-     *     'https://www.w3.org/ns/activitystreams',
-     *     'https://sockethub.org/ns/context/v1.jsonld',
-     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-     *   ],
-     *   type: 'remove-friend',
-     *   actor: {
-     *     id: 'user@host.org/Home'
-     *   },
-     *   target: {
-     *     id: 'homer@jabber.net/Home',
-     *   }
-     * }
      */
     "remove-friend"(job, done) {
         this.log.debug(`remove-friend() called for ${job.actor.id}`);
@@ -678,23 +477,6 @@ export default class XMPP {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     *
-     * {
-     *   '@context': [
-     *     'https://www.w3.org/ns/activitystreams',
-     *     'https://sockethub.org/ns/context/v1.jsonld',
-     *     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-     *   ],
-     *   type: 'make-friend',
-     *   actor: {
-     *     id: 'user@host.org/Home'
-     *   },
-     *   target: {
-     *     id: 'homer@jabber.net/Home',
-     *   }
-     * }
      */
     "make-friend"(job, done) {
         this.log.debug(`make-friend() called for ${job.actor.id}`);
@@ -713,56 +495,6 @@ export default class XMPP {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     *
-     *  {
-     *    '@context': [
-     *      'https://www.w3.org/ns/activitystreams',
-     *      'https://sockethub.org/ns/context/v1.jsonld',
-     *      'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-     *    ],
-     *    type: 'query',
-     *    actor: {
-     *      id: 'slvrbckt@jabber.net/Home',
-     *      type: 'person'
-     *    },
-     *    target: {
-     *      id: 'PartyChatRoom@muc.jabber.net',
-     *      type: 'room'
-     *    },
-     *    object: {
-     *      type: 'attendance'
-     *    }
-     *  }
-     *
-     *  // The above object might return:
-     *  {
-     *    '@context': [
-     *      'https://www.w3.org/ns/activitystreams',
-     *      'https://sockethub.org/ns/context/v1.jsonld',
-     *      'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-     *    ],
-     *    type: 'query',
-     *    actor: {
-     *      id: 'PartyChatRoom@muc.jabber.net',
-     *      type: 'room'
-     *    },
-     *    target: {
-     *      id: 'slvrbckt@jabber.net/Home',
-     *      type: 'person'
-     *    },
-     *    object: {
-     *      type: 'attendance'
-     *      members: [
-     *        'RyanGosling',
-     *        'PeeWeeHerman',
-     *        'Commando',
-     *        'Smoochie',
-     *        'neo'
-     *      ]
-     *    }
-     *  }
      */
     query(job, done) {
         this.log.debug(
@@ -790,21 +522,6 @@ export default class XMPP {
      * Disconnect XMPP client
      * @param {object} job activity streams object
      * @param done
-     *
-     * @example
-     *
-     * {
-     *    '@context': [
-     *      'https://www.w3.org/ns/activitystreams',
-     *      'https://sockethub.org/ns/context/v1.jsonld',
-     *      'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-     *    ],
-     *    type: 'disconnect',
-     *    actor: {
-     *      id: 'slvrbckt@jabber.net/Home',
-     *      type: 'person'
-     *    }
-     *  }
      */
     disconnect(_job, done) {
         this.log.debug("disconnecting");

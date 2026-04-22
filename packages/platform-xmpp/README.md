@@ -72,6 +72,19 @@ non-recoverable connection error.
 
 ## Usage
 
+### Connect Example
+
+```javascript
+{
+  type: "connect",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "user@example.org/web",
+    type: "person"
+  }
+}
+```
+
 ### Send Message Example
 
 ```javascript
@@ -89,6 +102,57 @@ non-recoverable connection error.
   object: {
     type: "message",
     content: "Hello from Sockethub!"
+  }
+}
+```
+
+### Update Presence Example
+
+```javascript
+{
+  type: "update",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "user@example.org/web",
+    type: "person"
+  },
+  object: {
+    type: "presence",
+    presence: "away",
+    content: "Out for lunch"
+  }
+}
+```
+
+### Query Room Attendance Example
+
+```javascript
+{
+  type: "query",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "user@example.org/web",
+    type: "person"
+  },
+  target: {
+    id: "room@conference.example.org",
+    type: "room"
+  },
+  object: {
+    type: "attendance"
+  }
+}
+```
+
+### Disconnect Example
+
+```javascript
+{
+  type: "disconnect",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "user@example.org/web",
+    type: "person"
   }
 }
 ```

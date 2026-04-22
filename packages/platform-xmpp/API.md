@@ -3,24 +3,12 @@
 <dl>
 <dt><a href="#schema">schema</a></dt>
 <dd><p>JSON schema defining the types this platform accepts.</p>
-<p>Actual handling of incoming &#39;set&#39; commands are handled by dispatcher,
-but the dispatcher uses this defined schema to validate credentials
-received, so that when a @context type is called, it can fetch the
-credentials (<code>session.getConfig()</code>), knowing they will have already been
-validated against this schema.</p>
-<p>In the below example, Sockethub will validate the incoming credentials object
-against whatever is defined in the <code>credentials</code> portion of the schema
-object.</p>
-<p>It will also check if the incoming AS object uses a type which exists in the
-<code>types</code> portion of the schema object (should be an array of type names).</p>
-<p><strong>NOTE</strong>: For more information on using the credentials object from a client,
-see <a href="https://github.com/sockethub/sockethub/wiki/Sockethub-Client">Sockethub Client</a></p>
 <p>Deployments that accept a bearer-style token in the SASL PLAIN password
 slot should still pass that token string as <code>password</code>. Dedicated token
 SASL mechanisms such as ejabberd <code>X-OAUTH2</code>, Prosody <code>OAUTHBEARER</code>,
 Prosody community <code>X-TOKEN</code>, and SASL2 FAST are not implemented by this
-client.</p>
-<p>Valid AS object for setting XMPP credentials:</p>
+client. See the package README for canonical credentials and usage
+payload examples.</p>
 </dd>
 </dl>
 
@@ -84,55 +72,14 @@ forcefully.</p>
 # schema
 JSON schema defining the types this platform accepts.
 
-Actual handling of incoming 'set' commands are handled by dispatcher,
-but the dispatcher uses this defined schema to validate credentials
-received, so that when a @context type is called, it can fetch the
-credentials (`session.getConfig()`), knowing they will have already been
-validated against this schema.
-
-
-In the below example, Sockethub will validate the incoming credentials object
-against whatever is defined in the `credentials` portion of the schema
-object.
-
-
-It will also check if the incoming AS object uses a type which exists in the
-`types` portion of the schema object (should be an array of type names).
-
-**NOTE**: For more information on using the credentials object from a client,
-see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
-
 Deployments that accept a bearer-style token in the SASL PLAIN password
 slot should still pass that token string as `password`. Dedicated token
 SASL mechanisms such as ejabberd `X-OAUTH2`, Prosody `OAUTHBEARER`,
 Prosody community `X-TOKEN`, and SASL2 FAST are not implemented by this
-client.
-
-Valid AS object for setting XMPP credentials:
+client. See the package README for canonical credentials and usage
+payload examples.
 
 **Kind**: global variable  
-**Example**  
-```js
-{
-  '@context': [
-    'https://www.w3.org/ns/activitystreams',
-    'https://sockethub.org/ns/context/v1.jsonld',
-    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-  ],
-  type: 'credentials',
-  actor: {
-    id: 'testuser@jabber.net',
-    type: 'person',
-    name: 'Mr. Test User'
-  },
-  object: {
-    type: 'credentials',
-    userAddress: 'testuser@jabber.net',
-    password: 'asdasdasdasd',
-    resource: 'phone'
-  }
-}
-```
 <a name="__markDisconnected"></a>
 
 # \_\_markDisconnected(stopReconnection)
@@ -214,23 +161,6 @@ Connect to the XMPP server.
     </tr>  </tbody>
 </table>
 
-**Example**  
-```js
-{
-  '@context': [
-    'https://www.w3.org/ns/activitystreams',
-    'https://sockethub.org/ns/context/v1.jsonld',
-    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-  ],
-  type: 'connect',
-  actor: {
-    id: 'slvrbckt@jabber.net/Home',
-    type: 'person',
-    name: 'Nick Jennings',
-    userName: 'slvrbckt'
-  }
-}
-```
 <a name="join"></a>
 
 # join(job, done)
@@ -253,26 +183,6 @@ Join a room, optionally defining a display name for that room.
     </tr>  </tbody>
 </table>
 
-**Example**  
-```js
-{
-  '@context': [
-    'https://www.w3.org/ns/activitystreams',
-    'https://sockethub.org/ns/context/v1.jsonld',
-    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-  ],
-  type: 'join',
-  actor: {
-    type: 'person',
-    id: 'slvrbckt@jabber.net/Home',
-    name: 'Mr. Pimp'
-  },
-  target: {
-    type: 'room',
-    id: 'PartyChatRoom@muc.jabber.net'
-  }
-}
-```
 <a name="leave"></a>
 
 # leave(job, done)
@@ -295,26 +205,6 @@ Leave a room
     </tr>  </tbody>
 </table>
 
-**Example**  
-```js
-{
-  '@context': [
-    'https://www.w3.org/ns/activitystreams',
-    'https://sockethub.org/ns/context/v1.jsonld',
-    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-  ],
-  type: 'leave',
-  actor: {
-    type: 'person',
-    id: 'slvrbckt@jabber.net/Home',
-    name: 'slvrbckt'
-  },
-  target: {
-    type: 'room'
-    id: 'PartyChatRoom@muc.jabber.net',
-  }
-}
-```
 <a name="send"></a>
 
 # send(job, done)
@@ -337,55 +227,6 @@ Send a message to a room or private conversation.
     </tr>  </tbody>
 </table>
 
-**Example**  
-```js
-{
-  '@context': [
-    'https://www.w3.org/ns/activitystreams',
-    'https://sockethub.org/ns/context/v1.jsonld',
-    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-  ],
-  type: 'send',
-  actor: {
-    id: 'slvrbckt@jabber.net/Home',
-    type: 'person',
-    name: 'Nick Jennings',
-    userName: 'slvrbckt'
-  },
-  target: {
-    id: 'homer@jabber.net/Home',
-    type: 'user',
-    name: 'Homer'
-  },
-  object: {
-    type: 'message',
-    content: 'Hello from Sockethub!'
-  }
-}
-
-{
-  '@context': [
-    'https://www.w3.org/ns/activitystreams',
-    'https://sockethub.org/ns/context/v1.jsonld',
-    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-  ],
-  type: 'send',
-  actor: {
-    id: 'slvrbckt@jabber.net/Home',
-    type: 'person',
-    name: 'Nick Jennings',
-    userName: 'slvrbckt'
-  },
-  target: {
-    id: 'party-room@jabber.net',
-    type: 'room'
-  },
-  object: {
-    type: 'message',
-    content: 'Hello from Sockethub!'
-  }
-}
-```
 <a name="update"></a>
 
 # update(job, done)
@@ -409,25 +250,6 @@ Valid presence values are "away", "chat", "dnd", "xa", "offline", "online".
     </tr>  </tbody>
 </table>
 
-**Example**  
-```js
-{
-  '@context': [
-    'https://www.w3.org/ns/activitystreams',
-    'https://sockethub.org/ns/context/v1.jsonld',
-    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-  ],
-  type: 'update',
-  actor: {
-    id: 'user@host.org/Home'
-  },
-  object: {
-    type: 'presence'
-    presence: 'away',
-    content: '...clever saying goes here...'
-  }
-}
-```
 <a name="request-friend"></a>
 
 # request-friend(job, done)
@@ -450,23 +272,6 @@ Send friend request
     </tr>  </tbody>
 </table>
 
-**Example**  
-```js
-{
-  '@context': [
-    'https://www.w3.org/ns/activitystreams',
-    'https://sockethub.org/ns/context/v1.jsonld',
-    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-  ],
-  type: 'request-friend',
-  actor: {
-    id: 'user@host.org/Home'
-  },
-  target: {
-    id: 'homer@jabber.net/Home',
-  }
-}
-```
 <a name="remove-friend"></a>
 
 # remove-friend(job, done)
@@ -489,23 +294,6 @@ Send a remove friend request
     </tr>  </tbody>
 </table>
 
-**Example**  
-```js
-{
-  '@context': [
-    'https://www.w3.org/ns/activitystreams',
-    'https://sockethub.org/ns/context/v1.jsonld',
-    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-  ],
-  type: 'remove-friend',
-  actor: {
-    id: 'user@host.org/Home'
-  },
-  target: {
-    id: 'homer@jabber.net/Home',
-  }
-}
-```
 <a name="make-friend"></a>
 
 # make-friend(job, done)
@@ -528,23 +316,6 @@ Confirm a friend request
     </tr>  </tbody>
 </table>
 
-**Example**  
-```js
-{
-  '@context': [
-    'https://www.w3.org/ns/activitystreams',
-    'https://sockethub.org/ns/context/v1.jsonld',
-    'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-  ],
-  type: 'make-friend',
-  actor: {
-    id: 'user@host.org/Home'
-  },
-  target: {
-    id: 'homer@jabber.net/Home',
-  }
-}
-```
 <a name="query"></a>
 
 # query(job, done)
@@ -567,56 +338,6 @@ Indicate an intent to query something (i.e. get a list of users in a room).
     </tr>  </tbody>
 </table>
 
-**Example**  
-```js
-{
-   '@context': [
-     'https://www.w3.org/ns/activitystreams',
-     'https://sockethub.org/ns/context/v1.jsonld',
-     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-   ],
-   type: 'query',
-   actor: {
-     id: 'slvrbckt@jabber.net/Home',
-     type: 'person'
-   },
-   target: {
-     id: 'PartyChatRoom@muc.jabber.net',
-     type: 'room'
-   },
-   object: {
-     type: 'attendance'
-   }
- }
-
- // The above object might return:
- {
-   '@context': [
-     'https://www.w3.org/ns/activitystreams',
-     'https://sockethub.org/ns/context/v1.jsonld',
-     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-   ],
-   type: 'query',
-   actor: {
-     id: 'PartyChatRoom@muc.jabber.net',
-     type: 'room'
-   },
-   target: {
-     id: 'slvrbckt@jabber.net/Home',
-     type: 'person'
-   },
-   object: {
-     type: 'attendance'
-     members: [
-       'RyanGosling',
-       'PeeWeeHerman',
-       'Commando',
-       'Smoochie',
-       'neo'
-     ]
-   }
- }
-```
 <a name="disconnect"></a>
 
 # disconnect(job, done)
@@ -638,21 +359,6 @@ Disconnect XMPP client
     </tr>  </tbody>
 </table>
 
-**Example**  
-```js
-{
-   '@context': [
-     'https://www.w3.org/ns/activitystreams',
-     'https://sockethub.org/ns/context/v1.jsonld',
-     'https://sockethub.org/ns/context/platform/xmpp/v1.jsonld'
-   ],
-   type: 'disconnect',
-   actor: {
-     id: 'slvrbckt@jabber.net/Home',
-     type: 'person'
-   }
- }
-```
 <a name="cleanup"></a>
 
 # cleanup(done)

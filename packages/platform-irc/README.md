@@ -89,6 +89,72 @@ messages.
 }
 ```
 
+### Update Topic Example
+
+```json
+{
+  "type": "update",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
+  "actor": {
+    "id": "mynick@irc.libera.chat",
+    "type": "person"
+  },
+  "target": {
+    "id": "#general@irc.libera.chat",
+    "type": "room"
+  },
+  "object": {
+    "type": "topic",
+    "content": "New channel topic"
+  }
+}
+```
+
+### Query Attendance Example
+
+```json
+{
+  "type": "query",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
+  "actor": {
+    "id": "mynick@irc.libera.chat",
+    "type": "person"
+  },
+  "target": {
+    "id": "#general@irc.libera.chat",
+    "type": "room"
+  },
+  "object": {
+    "type": "attendance"
+  }
+}
+```
+
+### Disconnect Example
+
+```json
+{
+  "type": "disconnect",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
+  "actor": {
+    "id": "mynick@irc.libera.chat",
+    "type": "person"
+  }
+}
+```
+
 ## Authentication
 
 Authenticated connections use SASL. Two mechanisms are supported:
