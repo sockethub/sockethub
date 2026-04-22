@@ -106,6 +106,27 @@ non-recoverable connection error.
 }
 ```
 
+### Send Room Message Example
+
+```javascript
+{
+  type: "send",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "user@example.org/web",
+    type: "person"
+  },
+  target: {
+    id: "room@conference.example.org",
+    type: "room"
+  },
+  object: {
+    type: "message",
+    content: "Hello room"
+  }
+}
+```
+
 ### Update Presence Example
 
 ```javascript
@@ -120,6 +141,27 @@ non-recoverable connection error.
     type: "presence",
     presence: "away",
     content: "Out for lunch"
+  }
+}
+```
+
+### Query Room Attendance Response Example
+
+```javascript
+{
+  type: "query",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "room@conference.example.org",
+    type: "room"
+  },
+  target: {
+    id: "user@example.org/web",
+    type: "person"
+  },
+  object: {
+    type: "attendance",
+    members: ["alice", "bob", "carol"]
   }
 }
 ```

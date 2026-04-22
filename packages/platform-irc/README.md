@@ -114,6 +114,30 @@ messages.
 }
 ```
 
+### Update Nickname Example
+
+```json
+{
+  "type": "update",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
+  "actor": {
+    "id": "mynick@irc.libera.chat",
+    "type": "person"
+  },
+  "target": {
+    "id": "newnick@irc.libera.chat",
+    "type": "person"
+  },
+  "object": {
+    "type": "address"
+  }
+}
+```
+
 ### Query Attendance Example
 
 ```json
@@ -134,6 +158,28 @@ messages.
   },
   "object": {
     "type": "attendance"
+  }
+}
+```
+
+### Query Attendance Response Example
+
+```json
+{
+  "type": "query",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
+  ],
+  "actor": {
+    "id": "#general@irc.libera.chat",
+    "type": "room"
+  },
+  "target": {},
+  "object": {
+    "type": "attendance",
+    "members": ["alice", "bob", "carol"]
   }
 }
 ```
