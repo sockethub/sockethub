@@ -1,24 +1,15 @@
-[**@sockethub/platform-irc v4.0.0-alpha.12**](../README.md)
-
-***
-
-[@sockethub/platform-irc](../README.md) / GetClientCallback
-
 # Type Alias: GetClientCallback()
 
 > **GetClientCallback** = (`err`, `client?`) => `void`
 
-Defined in: [index.ts:39](https://github.com/sockethub/sockethub/blob/9f04cf0c5f34a9dd8be42d63fdf43e796c554c6c/packages/platform-irc/src/index.ts#L39)
+Defined in: [index.ts:39](https://github.com/sockethub/sockethub/blob/b8e3084f355a7f9e9d669d3b85a784d8483099d2/packages/platform-irc/src/index.ts#L39)
 
 ## Parameters
 
-### err
-
-`string` | `null`
-
-### client?
-
-`IrcSocketInstance`
+| Parameter | Type |
+| ------ | ------ |
+| `err` | `string` \| `null` |
+| `client?` | `IrcSocketInstance` |
 
 ## Returns
 
