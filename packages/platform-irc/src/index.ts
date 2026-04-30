@@ -36,6 +36,9 @@ import IrcSocket, { type IrcSocketInstance } from "irc-socket-sasl";
 import { PlatformIrcSchema } from "./schema.js";
 import type { PlatformIrcCredentialsObject } from "./types.js";
 
+export type { IrcSocketInstance } from "irc-socket-sasl";
+export type { PlatformIrcCredentialsObject } from "./types.js";
+
 export type GetClientCallback = (
     err: string | null,
     client?: IrcSocketInstance,
@@ -71,17 +74,11 @@ interface IrcSocketOptions {
 }
 
 /**
- * @class IRC
- * @constructor
- *
- * @description
- * Handles all actions related to communication via. the IRC protocol.
- *
- * @param {object} cfg a unique config object for this instance
+ * Handles all actions related to communication via the IRC protocol.
  */
-export default class IRC implements PersistentPlatformInterface {
+export class IRC implements PersistentPlatformInterface {
     private readonly log: Logger;
-    credentialsHash: string;
+    public credentialsHash: string | undefined;
     config: PersistentPlatformConfig = {
         persist: true,
         requireCredentials: ["connect", "update"],
@@ -105,106 +102,12 @@ export default class IRC implements PersistentPlatformInterface {
     }
 
     /**
-     * Property: schema
-     *
-     * @description
      * JSON schema defining the types this platform accepts.
-     *
-     *
-     * In the below example, Sockethub will validate the incoming credentials object
-     * against whatever is defined in the `credentials` portion of the schema
-     * object.
-     *
-     *
-     * It will also check if the incoming AS object uses a type which exists in the
-     * `types` portion of the schema object (should be an array of type names).
-     *
-     * * **NOTE**: For more information on using the credentials object from a client,
-     * see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
-     *
-     * Valid AS object for setting IRC credentials using SASL PLAIN (password):
-     * @example
-     *
-     *  {
-     *    '@context': [
-     *      'https://www.w3.org/ns/activitystreams',
-     *      'https://sockethub.org/ns/context/v1.jsonld',
-     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
-     *    ],
-     *    type: 'credentials',
-     *    actor: {
-     *      id: 'testuser@irc.host.net',
-     *      type: 'person',
-     *      name: 'Mr. Test User',
-     *      userName: 'testuser'
-     *    },
-     *    object: {
-     *      type: 'credentials',
-     *      server: 'irc.host.net',
-     *      nick: 'testuser',
-     *      password: 'secret',
-     *      port: 6697,
-     *      secure: true,
-     *      sasl: true
-     *    }
-     *  }
-     *
-     * Valid AS object for setting IRC credentials using a personal access
-     * token via SASL PLAIN (e.g. Libera.Chat NickServ tokens):
-     * @example
-     *
-     *  {
-     *    '@context': [
-     *      'https://www.w3.org/ns/activitystreams',
-     *      'https://sockethub.org/ns/context/v1.jsonld',
-     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
-     *    ],
-     *    type: 'credentials',
-     *    actor: {
-     *      id: 'testuser@irc.libera.chat',
-     *      type: 'person',
-     *      name: 'Mr. Test User'
-     *    },
-     *    object: {
-     *      type: 'credentials',
-     *      server: 'irc.libera.chat',
-     *      nick: 'testuser',
-     *      token: 'my-personal-access-token',
-     *      port: 6697,
-     *      secure: true
-     *    }
-     *  }
-     *
-     * Valid AS object for setting IRC credentials using SASL OAUTHBEARER
-     * (OAuth 2.0 access token):
-     * @example
-     *
-     *  {
-     *    '@context': [
-     *      'https://www.w3.org/ns/activitystreams',
-     *      'https://sockethub.org/ns/context/v1.jsonld',
-     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
-     *    ],
-     *    type: 'credentials',
-     *    actor: {
-     *      id: 'testuser@chat.sr.ht',
-     *      type: 'person',
-     *      name: 'Mr. Test User'
-     *    },
-     *    object: {
-     *      type: 'credentials',
-     *      server: 'chat.sr.ht',
-     *      nick: 'testuser',
-     *      token: 'oauth-access-token',
-     *      saslMechanism: 'OAUTHBEARER',
-     *      port: 6697,
-     *      secure: true
-     *    }
-     *  }
      *
      * `password` and `token` are mutually exclusive. Both default to SASL
      * PLAIN; set `saslMechanism: 'OAUTHBEARER'` explicitly for OAuth 2.0
-     * bearer tokens (RFC 7628).
+     * bearer tokens (RFC 7628). See the package README for canonical
+     * credentials payload examples.
      */
     get schema(): PlatformSchemaStruct {
         return PlatformIrcSchema;
@@ -247,29 +150,6 @@ export default class IRC implements PersistentPlatformInterface {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     *
-     * {
-     *   '@context': [
-     *     'https://www.w3.org/ns/activitystreams',
-     *     'https://sockethub.org/ns/context/v1.jsonld',
-     *     'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
-     *   ],
-     *   type: 'join',
-     *   actor: {
-     *     id: 'slvrbckt@irc.freenode.net',
-     *     type: 'person',
-     *     name: 'slvrbckt'
-     *   },
-     *   target: {
-     *     id: 'irc.freenode.net/a-room',
-     *     type: 'room',
-     *     name: '#a-room'
-     *   },
-     *   object: {}
-     * }
-     *
      */
     join(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(`join() called for ${job.actor.id}`);
@@ -299,28 +179,6 @@ export default class IRC implements PersistentPlatformInterface {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     * {
-     *   '@context': [
-     *     'https://www.w3.org/ns/activitystreams',
-     *     'https://sockethub.org/ns/context/v1.jsonld',
-     *     'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
-     *   ],
-     *   type: 'leave',
-     *   actor: {
-     *     id: 'slvrbckt@irc.freenode.net',
-     *     type: 'person',
-     *     name: 'slvrbckt'
-     *   },
-     *   target: {
-     *     id: 'irc.freenode.net/remotestorage',
-     *     type: 'room',
-     *     name: '#remotestorage'
-     *   },
-     *   object: {}
-     * }
-     *
      */
     leave(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(`leave() called for ${job.actor.name}`);
@@ -342,33 +200,6 @@ export default class IRC implements PersistentPlatformInterface {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     *
-     *  {
-     *    '@context': [
-     *      'https://www.w3.org/ns/activitystreams',
-     *      'https://sockethub.org/ns/context/v1.jsonld',
-     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
-     *    ],
-     *    type: 'send',
-     *    actor: {
-     *      id: 'slvrbckt@irc.freenode.net',
-     *      type: 'person',
-     *      name: 'Nick Jennings',
-     *      userName: 'slvrbckt'
-     *    },
-     *    target: {
-     *      id: 'irc.freenode.net/remotestorage',
-     *      type: 'room',
-     *      name: '#remotestorage'
-     *    },
-     *    object: {
-     *      type: 'message',
-     *      content: 'Hello from Sockethub!'
-     *    }
-     *  }
-     *
      */
     send(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(
@@ -437,55 +268,6 @@ export default class IRC implements PersistentPlatformInterface {
      * @param {object} job activity streams object
      * @param {object} credentials credentials to verify this user is the right one
      * @param {object} done callback when job is done
-     *
-     * @example change topic
-     *
-     * {
-     *   '@context': [
-     *     'https://www.w3.org/ns/activitystreams',
-     *     'https://sockethub.org/ns/context/v1.jsonld',
-     *     'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
-     *   ],
-     *   type: 'update',
-     *   actor: {
-     *     id: 'slvrbckt@irc.freenode.net',
-     *     type: 'person',
-     *     name: 'Nick Jennings',
-     *     userName: 'slvrbckt'
-     *   },
-     *   target: {
-     *     id: 'irc.freenode.net/a-room',
-     *     type: 'room',
-     *     name: '#a-room'
-     *   },
-     *   object: {
-     *     type: 'topic',
-     *     content: 'New version of Sockethub released!'
-     *   }
-     * }
-     *
-     * @example change nickname
-     *  {
-     *    '@context': [
-     *      'https://www.w3.org/ns/activitystreams',
-     *      'https://sockethub.org/ns/context/v1.jsonld',
-     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
-     *    ],
-     *    type: 'update',
-     *    actor: {
-     *      id: 'slvrbckt@irc.freenode.net',
-     *      type: 'person',
-     *      name: 'slvrbckt'
-     *    },
-     *    object: {
-     *      type: "address",
-     *    },
-     *    target: {
-     *      id: 'cooldude@irc.freenode.net',
-     *      type: 'person',
-     *      name: 'cooldude'
-     *    }
-     *  }
      */
     update(
         job: ActivityStream,
@@ -534,59 +316,6 @@ export default class IRC implements PersistentPlatformInterface {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     *
-     *  {
-     *    '@context': [
-     *      'https://www.w3.org/ns/activitystreams',
-     *      'https://sockethub.org/ns/context/v1.jsonld',
-     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
-     *    ],
-     *    type: 'query',
-     *    actor: {
-     *      id: 'slvrbckt@irc.freenode.net',
-     *      type: 'person',
-     *      name: 'Nick Jennings',
-     *      userName: 'slvrbckt'
-     *    },
-     *    target: {
-     *      id: 'irc.freenode.net/a-room',
-     *      type: 'room',
-     *      name: '#a-room'
-     *    },
-     *    object: {
-     *      type: 'attendance'
-     *    }
-     *  }
-     *
-     *
-     *  // The above object might return:
-     *  {
-     *    '@context': [
-     *      'https://www.w3.org/ns/activitystreams',
-     *      'https://sockethub.org/ns/context/v1.jsonld',
-     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
-     *    ],
-     *    type: 'query',
-     *    actor: {
-     *      id: 'irc.freenode.net/a-room',
-     *      type: 'room',
-     *      name: '#a-room'
-     *    },
-     *    target: {},
-     *    object: {
-     *      type: 'attendance'
-     *      members: [
-     *        'RyanGosling',
-     *        'PeeWeeHerman',
-     *        'Commando',
-     *        'Smoochie',
-     *        'neo'
-     *      ]
-     *    }
-     *  }
-     *
      */
     query(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(`query() called for ${job.actor.id}`);
@@ -611,21 +340,6 @@ export default class IRC implements PersistentPlatformInterface {
      * Disconnect IRC client
      * @param {object} job activity streams object
      * @param done
-     *
-     * @example
-     *
-     * {
-     *    '@context': [
-     *      'https://www.w3.org/ns/activitystreams',
-     *      'https://sockethub.org/ns/context/v1.jsonld',
-     *      'https://sockethub.org/ns/context/platform/irc/v1.jsonld'
-     *    ],
-     *    type: 'disconnect',
-     *    actor: {
-     *      id: 'slvrbckt@irc.freenode.net',
-     *      type: 'person'
-     *    }
-     *  }
      */
     disconnect(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(`disconnect called for ${job.actor.id}`);
@@ -885,3 +599,5 @@ export default class IRC implements PersistentPlatformInterface {
         });
     }
 }
+
+export default IRC;

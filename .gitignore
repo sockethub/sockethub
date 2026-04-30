@@ -13,3 +13,5 @@ test-install/
 test-results/
 .local-tarballs/
 **sockethub.log
+packages/*/API.md
+packages/platform-irc/docs/
