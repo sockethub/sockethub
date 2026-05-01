@@ -52,7 +52,7 @@
     "@sockethub/schemas": "^3.0.0-alpha.12",
     "@xmpp/xml": "^0.13.2",
     "ajv": "^8.17.1",
-    "jsdoc-to-markdown": "^8.0.3",
+    "jsdoc-to-markdown": "^9.0.0",
     "sinon": "^17.0.2"
   },
   "peerDependencies": {
