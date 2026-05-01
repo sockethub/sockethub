@@ -32,7 +32,7 @@
   "resolutions": {
     "node-fetch": "3.3.2",
     "engine.io": "6.5.4",
-    "socket.io": "4.7.5"
+    "socket.io": "4.8.3"
   },
   "scripts": {
     "build": "bun run --filter='*' build && bun run build:server:post",
