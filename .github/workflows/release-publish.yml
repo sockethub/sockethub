@@ -42,7 +42,7 @@ jobs:
       # SETUP PHASE
       # ============================================================
       - name: Checkout master
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: master
           fetch-depth: 0
