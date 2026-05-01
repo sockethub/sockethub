@@ -34,7 +34,7 @@
       "name": "@sockethub/activity-streams",
       "version": "4.4.0-alpha.12",
       "dependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.11",
+        "@sockethub/schemas": "^3.0.0-alpha.12",
         "eventemitter3": "^5.0.4",
       },
       "devDependencies": {
@@ -47,8 +47,8 @@
       "name": "@sockethub/client",
       "version": "5.0.0-alpha.12",
       "dependencies": {
-        "@sockethub/activity-streams": "^4.4.0-alpha.11",
-        "@sockethub/schemas": "^3.0.0-alpha.11",
+        "@sockethub/activity-streams": "^4.4.0-alpha.12",
+        "@sockethub/schemas": "^3.0.0-alpha.12",
         "eventemitter3": "^5.0.4",
       },
       "devDependencies": {
@@ -64,7 +64,7 @@
       "name": "@sockethub/crypto",
       "version": "1.0.0-alpha.12",
       "dependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.11",
+        "@sockethub/schemas": "^3.0.0-alpha.12",
         "object-hash": "^3.0.0",
         "secure-store-redis": "^4.1.0",
       },
@@ -79,9 +79,9 @@
       "name": "@sockethub/data-layer",
       "version": "1.0.0-alpha.12",
       "dependencies": {
-        "@sockethub/crypto": "^1.0.0-alpha.11",
-        "@sockethub/logger": "^1.0.0-alpha.11",
-        "@sockethub/schemas": "^3.0.0-alpha.11",
+        "@sockethub/crypto": "^1.0.0-alpha.12",
+        "@sockethub/logger": "^1.0.0-alpha.12",
+        "@sockethub/schemas": "^3.0.0-alpha.12",
         "bullmq": "^5.66.5",
         "ioredis": "^5.9.2",
         "secure-store-redis": "^4.1.0",
@@ -101,7 +101,7 @@
       "version": "1.0.0-alpha.12",
       "devDependencies": {
         "@playwright/test": "^1.57.0",
-        "@sockethub/client": "^5.0.0-alpha.11",
+        "@sockethub/client": "^5.0.0-alpha.12",
         "@sveltejs/adapter-static": "^3.0.10",
         "@sveltejs/kit": "^2.50.0",
         "@sveltejs/vite-plugin-svelte": "^5.1.1",
@@ -145,11 +145,11 @@
       "name": "@sockethub/platform-dummy",
       "version": "3.0.0-alpha.12",
       "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.11",
+        "@sockethub/schemas": "^3.0.0-alpha.12",
         "@types/bun": "latest",
       },
       "peerDependencies": {
-        "@sockethub/server": "^5.0.0-alpha.11",
+        "@sockethub/server": "^5.0.0-alpha.12",
       },
       "optionalPeers": [
         "@sockethub/server",
@@ -164,11 +164,11 @@
         "podparse": "^1.6.0",
       },
       "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.11",
+        "@sockethub/schemas": "^3.0.0-alpha.12",
         "@types/bun": "latest",
       },
       "peerDependencies": {
-        "@sockethub/server": "5.0.0-alpha.11",
+        "@sockethub/server": "5.0.0-alpha.12",
       },
       "optionalPeers": [
         "@sockethub/server",
@@ -200,10 +200,10 @@
         "open-graph-scraper": "^6.11.0",
       },
       "devDependencies": {
-        "@sockethub/schemas": "^3.0.0-alpha.11",
+        "@sockethub/schemas": "^3.0.0-alpha.12",
       },
       "peerDependencies": {
-        "@sockethub/server": "^5.0.0-alpha.11",
+        "@sockethub/server": "^5.0.0-alpha.12",
       },
     },
     "packages/platform-xmpp": {
@@ -244,12 +244,12 @@
       "bin": "bin/sockethub",
       "dependencies": {
         "@sentry/bun": "^10.36.0",
-        "@sockethub/activity-streams": "^4.4.0-alpha.11",
-        "@sockethub/client": "^5.0.0-alpha.11",
-        "@sockethub/crypto": "^1.0.0-alpha.11",
-        "@sockethub/data-layer": "^1.0.0-alpha.11",
-        "@sockethub/logger": "^1.0.0-alpha.11",
-        "@sockethub/schemas": "^3.0.0-alpha.11",
+        "@sockethub/activity-streams": "^4.4.0-alpha.12",
+        "@sockethub/client": "^5.0.0-alpha.12",
+        "@sockethub/crypto": "^1.0.0-alpha.12",
+        "@sockethub/data-layer": "^1.0.0-alpha.12",
+        "@sockethub/logger": "^1.0.0-alpha.12",
+        "@sockethub/schemas": "^3.0.0-alpha.12",
         "body-parser": "^1.20.4",
         "chalk": "^5.6.2",
         "ejs": "^3.1.10",
@@ -272,12 +272,12 @@
         "web-streams-polyfill": "^3.3.3",
       },
       "optionalDependencies": {
-        "@sockethub/examples": "^1.0.0-alpha.11",
-        "@sockethub/platform-dummy": "^3.0.0-alpha.11",
-        "@sockethub/platform-feeds": "^4.0.0-alpha.11",
-        "@sockethub/platform-irc": "^4.0.0-alpha.11",
-        "@sockethub/platform-metadata": "^1.0.1-alpha.6",
-        "@sockethub/platform-xmpp": "^5.0.0-alpha.11",
+        "@sockethub/examples": "^1.0.0-alpha.12",
+        "@sockethub/platform-dummy": "^3.0.0-alpha.12",
+        "@sockethub/platform-feeds": "^4.0.0-alpha.12",
+        "@sockethub/platform-irc": "^4.0.0-alpha.12",
+        "@sockethub/platform-metadata": "^1.0.1-alpha.7",
+        "@sockethub/platform-xmpp": "^5.0.0-alpha.12",
       },
     },
     "packages/sockethub": {
@@ -285,16 +285,16 @@
       "version": "5.0.0-alpha.12",
       "bin": "bin/sockethub",
       "dependencies": {
-        "@sockethub/platform-dummy": "^3.0.0-alpha.11",
-        "@sockethub/platform-feeds": "^4.0.0-alpha.11",
-        "@sockethub/platform-irc": "^4.0.0-alpha.11",
-        "@sockethub/platform-xmpp": "^5.0.0-alpha.11",
-        "@sockethub/server": "^5.0.0-alpha.11",
+        "@sockethub/platform-dummy": "^3.0.0-alpha.12",
+        "@sockethub/platform-feeds": "^4.0.0-alpha.12",
+        "@sockethub/platform-irc": "^4.0.0-alpha.12",
+        "@sockethub/platform-xmpp": "^5.0.0-alpha.12",
+        "@sockethub/server": "^5.0.0-alpha.12",
       },
     },
   },
   "overrides": {
-    "engine.io": "6.5.4",
+    "engine.io": "6.6.6",
     "node-fetch": "3.3.2",
     "socket.io": "4.7.5",
   },
@@ -1289,7 +1289,7 @@
 
     "@types/winston": ["@types/winston@2.4.4", "", { "dependencies": { "winston": "*" } }, "sha512-BVGCztsypW8EYwJ+Hq+QNYiT/MUyCif0ouBH+flrY66O5W+KIXAMML6E/0fJpm7VjIzgangahl5S03bJJQGrZw=="],
 
-    "@types/ws": ["@types/ws@7.4.7", "", { "dependencies": { "@types/node": "*" } }, "sha512-JQbbmxZTZehdc2iszGKs5oC3NFnjeay7mtAWrdt7qNtAVK0g19muApzAy4bm9byz79xa2ZnO/BOBC2R8RC5Lww=="],
+    "@types/ws": ["@types/ws@8.18.1", "", { "dependencies": { "@types/node": "*" } }, "sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg=="],
 
     "@types/yauzl": ["@types/yauzl@2.10.3", "", { "dependencies": { "@types/node": "*" } }, "sha512-oJoftv0LSuaDZE3Le4DbKX+KS9G36NzOeSap90UIK0yMA/NhKJhqlSGtNDORNRaIbQfzjXDrQa0ytJ6mNRGz/Q=="],
 
@@ -1921,7 +1921,7 @@
 
     "end-of-stream": ["end-of-stream@1.4.4", "", { "dependencies": { "once": "^1.4.0" } }, "sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q=="],
 
-    "engine.io": ["engine.io@6.5.4", "", { "dependencies": { "@types/cookie": "^0.4.1", "@types/cors": "^2.8.12", "@types/node": ">=10.0.0", "accepts": "~1.3.4", "base64id": "2.0.0", "cookie": "~0.4.1", "cors": "~2.8.5", "debug": "~4.3.1", "engine.io-parser": "~5.2.1", "ws": "~8.11.0" } }, "sha512-KdVSDKhVKyOi+r5uEabrDLZw2qXStVvCsEB/LN3mw4WFi6Gx50jTyuxYVCwAAC0U46FdnzP/ScKRBTXb/NiEOg=="],
+    "engine.io": ["engine.io@6.6.6", "", { "dependencies": { "@types/cors": "^2.8.12", "@types/node": ">=10.0.0", "@types/ws": "^8.5.12", "accepts": "~1.3.4", "base64id": "2.0.0", "cookie": "~0.7.2", "cors": "~2.8.5", "debug": "~4.4.1", "engine.io-parser": "~5.2.1", "ws": "~8.18.3" } }, "sha512-U2SN0w3OpjFRVlrc17E6TMDmH58Xl9rai1MblNjAdwWp07Kk+llmzX0hjDpQdrDGzwmvOtgM5yI+meYX6iZ2xA=="],
 
     "engine.io-client": ["engine.io-client@6.6.3", "", { "dependencies": { "@socket.io/component-emitter": "~3.1.0", "debug": "~4.3.1", "engine.io-parser": "~5.2.1", "ws": "~8.17.1", "xmlhttprequest-ssl": "~2.1.1" } }, "sha512-T0iLjnyNWahNyv/lcjS2y4oE358tVS/SYQNxYXGAJ9/GLgH4VCvOQ/mhTjqU88mLZCQgiG8RIegFHYCdVC+j5w=="],
 
@@ -3815,15 +3815,19 @@
 
     "@sinonjs/samsam/type-detect": ["type-detect@4.1.0", "", {}, "sha512-Acylog8/luQ8L7il+geoSxhEkazvkslg7PSNKOX59mbB9cOveP5aq9h74Y7YU8yDpJwetzQQrfIwtf4Wp4LKcw=="],
 
-    "@sockethub/activity-streams/@types/bun": ["@types/bun@1.3.11", "", { "dependencies": { "bun-types": "1.3.11" } }, "sha512-5vPne5QvtpjGpsGYXiFyycfpDF2ECyPcTSsFBMa0fraoxiQyMJ3SmuQIGhzPg2WJuWxVBoxWJ2kClYTcw/4fAg=="],
+    "@sockethub/activity-streams/@types/bun": ["@types/bun@1.3.13", "", { "dependencies": { "bun-types": "1.3.13" } }, "sha512-9fqXWk5YIHGGnUau9TEi+qdlTYDAnOj+xLCmSTwXfAIqXr2x4tytJb43E9uCvt09zJURKXwAtkoH4nLQfzeTXw=="],
 
     "@sockethub/activity-streams/@web/test-runner": ["@web/test-runner@0.19.0", "", { "dependencies": { "@web/browser-logs": "^0.4.0", "@web/config-loader": "^0.3.0", "@web/dev-server": "^0.4.0", "@web/test-runner-chrome": "^0.17.0", "@web/test-runner-commands": "^0.9.0", "@web/test-runner-core": "^0.13.0", "@web/test-runner-mocha": "^0.9.0", "camelcase": "^6.2.0", "command-line-args": "^5.1.1", "command-line-usage": "^7.0.1", "convert-source-map": "^2.0.0", "diff": "^5.0.0", "globby": "^11.0.1", "nanocolors": "^0.2.1", "portfinder": "^1.0.32", "source-map": "^0.7.3" }, "bin": { "wtr": "dist/bin.js", "web-test-runner": "dist/bin.js" } }, "sha512-qLUupi88OK1Kl52cWPD/2JewUCRUxYsZ1V1DyLd05P7u09zCdrUYrtkB/cViWyxlBe/TOvqkSNpcTv6zLJ9GoA=="],
 
-    "@sockethub/client/@types/bun": ["@types/bun@1.3.11", "", { "dependencies": { "bun-types": "1.3.11" } }, "sha512-5vPne5QvtpjGpsGYXiFyycfpDF2ECyPcTSsFBMa0fraoxiQyMJ3SmuQIGhzPg2WJuWxVBoxWJ2kClYTcw/4fAg=="],
+    "@sockethub/client/@types/bun": ["@types/bun@1.3.13", "", { "dependencies": { "bun-types": "1.3.13" } }, "sha512-9fqXWk5YIHGGnUau9TEi+qdlTYDAnOj+xLCmSTwXfAIqXr2x4tytJb43E9uCvt09zJURKXwAtkoH4nLQfzeTXw=="],
 
     "@sockethub/client/@web/test-runner": ["@web/test-runner@0.19.0", "", { "dependencies": { "@web/browser-logs": "^0.4.0", "@web/config-loader": "^0.3.0", "@web/dev-server": "^0.4.0", "@web/test-runner-chrome": "^0.17.0", "@web/test-runner-commands": "^0.9.0", "@web/test-runner-core": "^0.13.0", "@web/test-runner-mocha": "^0.9.0", "camelcase": "^6.2.0", "command-line-args": "^5.1.1", "command-line-usage": "^7.0.1", "convert-source-map": "^2.0.0", "diff": "^5.0.0", "globby": "^11.0.1", "nanocolors": "^0.2.1", "portfinder": "^1.0.32", "source-map": "^0.7.3" }, "bin": { "wtr": "dist/bin.js", "web-test-runner": "dist/bin.js" } }, "sha512-qLUupi88OK1Kl52cWPD/2JewUCRUxYsZ1V1DyLd05P7u09zCdrUYrtkB/cViWyxlBe/TOvqkSNpcTv6zLJ9GoA=="],
 
     "@sockethub/client/socket.io-client": ["socket.io-client@4.8.3", "", { "dependencies": { "@socket.io/component-emitter": "~3.1.0", "debug": "~4.4.1", "engine.io-client": "~6.6.1", "socket.io-parser": "~4.2.4" } }, "sha512-uP0bpjWrjQmUt5DTHq9RuoCBdFJF10cdX9X+a368j/Ft0wmaVgxlrjvK3kjvgCODOMMOz9lcaRzxmso0bTWZ/g=="],
+
+    "@sockethub/crypto/@types/bun": ["@types/bun@1.3.13", "", { "dependencies": { "bun-types": "1.3.13" } }, "sha512-9fqXWk5YIHGGnUau9TEi+qdlTYDAnOj+xLCmSTwXfAIqXr2x4tytJb43E9uCvt09zJURKXwAtkoH4nLQfzeTXw=="],
+
+    "@sockethub/data-layer/@types/bun": ["@types/bun@1.3.13", "", { "dependencies": { "bun-types": "1.3.13" } }, "sha512-9fqXWk5YIHGGnUau9TEi+qdlTYDAnOj+xLCmSTwXfAIqXr2x4tytJb43E9uCvt09zJURKXwAtkoH4nLQfzeTXw=="],
 
     "@sockethub/examples/globals": ["globals@15.15.0", "", {}, "sha512-7ACyT3wmyp3I61S4fG682L0VA2RGD9otkqGJIwNUMF1SWUombIIk+af1unuDYgMm082aHYwD+mzJvv9Iu8dsgg=="],
 
@@ -3831,9 +3835,17 @@
 
     "@sockethub/examples/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
-    "@sockethub/platform-irc/@types/bun": ["@types/bun@1.3.12", "", { "dependencies": { "bun-types": "1.3.12" } }, "sha512-DBv81elK+/VSwXHDlnH3Qduw+KxkTIWi7TXkAeh24zpi5l0B2kUg9Ga3tb4nJaPcOFswflgi/yAvMVBPrxMB+A=="],
+    "@sockethub/logger/@types/bun": ["@types/bun@1.3.13", "", { "dependencies": { "bun-types": "1.3.13" } }, "sha512-9fqXWk5YIHGGnUau9TEi+qdlTYDAnOj+xLCmSTwXfAIqXr2x4tytJb43E9uCvt09zJURKXwAtkoH4nLQfzeTXw=="],
 
-    "@sockethub/schemas/@types/bun": ["@types/bun@1.3.12", "", { "dependencies": { "bun-types": "1.3.12" } }, "sha512-DBv81elK+/VSwXHDlnH3Qduw+KxkTIWi7TXkAeh24zpi5l0B2kUg9Ga3tb4nJaPcOFswflgi/yAvMVBPrxMB+A=="],
+    "@sockethub/platform-dummy/@types/bun": ["@types/bun@1.3.13", "", { "dependencies": { "bun-types": "1.3.13" } }, "sha512-9fqXWk5YIHGGnUau9TEi+qdlTYDAnOj+xLCmSTwXfAIqXr2x4tytJb43E9uCvt09zJURKXwAtkoH4nLQfzeTXw=="],
+
+    "@sockethub/platform-feeds/@types/bun": ["@types/bun@1.3.13", "", { "dependencies": { "bun-types": "1.3.13" } }, "sha512-9fqXWk5YIHGGnUau9TEi+qdlTYDAnOj+xLCmSTwXfAIqXr2x4tytJb43E9uCvt09zJURKXwAtkoH4nLQfzeTXw=="],
+
+    "@sockethub/platform-irc/@types/bun": ["@types/bun@1.3.13", "", { "dependencies": { "bun-types": "1.3.13" } }, "sha512-9fqXWk5YIHGGnUau9TEi+qdlTYDAnOj+xLCmSTwXfAIqXr2x4tytJb43E9uCvt09zJURKXwAtkoH4nLQfzeTXw=="],
+
+    "@sockethub/schemas/@types/bun": ["@types/bun@1.3.13", "", { "dependencies": { "bun-types": "1.3.13" } }, "sha512-9fqXWk5YIHGGnUau9TEi+qdlTYDAnOj+xLCmSTwXfAIqXr2x4tytJb43E9uCvt09zJURKXwAtkoH4nLQfzeTXw=="],
+
+    "@sockethub/server/@types/bun": ["@types/bun@1.3.13", "", { "dependencies": { "bun-types": "1.3.13" } }, "sha512-9fqXWk5YIHGGnUau9TEi+qdlTYDAnOj+xLCmSTwXfAIqXr2x4tytJb43E9uCvt09zJURKXwAtkoH4nLQfzeTXw=="],
 
     "@sveltejs/vite-plugin-svelte-inspector/debug": ["debug@4.4.0", "", { "dependencies": { "ms": "^2.1.3" } }, "sha512-6WTZ/IxCY/T6BALoZHaE4ctp9xm+Z5kY/pzYaCHRFeyVhojxlrm+46y68HA6hr0TcwEssoxNiDEUJQjfPZ/RYA=="],
 
@@ -3882,6 +3894,8 @@
     "@vue/compiler-sfc/estree-walker": ["estree-walker@2.0.2", "", {}, "sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w=="],
 
     "@vue/compiler-sfc/magic-string": ["magic-string@0.30.21", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.5" } }, "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ=="],
+
+    "@web/dev-server-core/@types/ws": ["@types/ws@7.4.7", "", { "dependencies": { "@types/node": "*" } }, "sha512-JQbbmxZTZehdc2iszGKs5oC3NFnjeay7mtAWrdt7qNtAVK0g19muApzAy4bm9byz79xa2ZnO/BOBC2R8RC5Lww=="],
 
     "@web/dev-server-core/chokidar": ["chokidar@4.0.3", "", { "dependencies": { "readdirp": "^4.0.1" } }, "sha512-Qgzu8kfBvo+cA4962jnP1KkS6Dop5NS6g7R5LFYJr4b8Ub94PPQXUksCw9PvXoeXPRRddRNC5C1JQUR2SMGtnA=="],
 
@@ -4013,13 +4027,9 @@
 
     "encoding-sniffer/iconv-lite": ["iconv-lite@0.6.3", "", { "dependencies": { "safer-buffer": ">= 2.1.2 < 3.0.0" } }, "sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw=="],
 
-    "engine.io/@types/cookie": ["@types/cookie@0.4.1", "", {}, "sha512-XW/Aa8APYr6jSVVA1y/DEIZX0/GMKLEVekNG727R8cs56ahETkRAy/3DR7+fJyh7oUgGwNQaRfXCun0+KbWY7Q=="],
+    "engine.io/cookie": ["cookie@0.7.2", "", {}, "sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w=="],
 
-    "engine.io/cookie": ["cookie@0.4.2", "", {}, "sha512-aSWTXFzaKWkvHO1Ny/s+ePFpvKsPnjc551iI41v3ny/ow6tBG5Vd+FuqGNhh1LxOmVzOlGUriIlOaokOvhaStA=="],
-
-    "engine.io/debug": ["debug@4.3.4", "", { "dependencies": { "ms": "2.1.2" } }, "sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ=="],
-
-    "engine.io/ws": ["ws@8.11.0", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": "^5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-HPG3wQd9sNQoT9xHyNCXoDUa+Xw/VevmY9FoHyQ+g+rrMn4j6FB4np7Z0OhdTgjx6MgQLK7jwSy1YecU1+4Asg=="],
+    "engine.io/ws": ["ws@8.18.3", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg=="],
 
     "engine.io-client/debug": ["debug@4.3.4", "", { "dependencies": { "ms": "2.1.2" } }, "sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ=="],
 
@@ -4633,17 +4643,29 @@
 
     "@puppeteer/browsers/yargs/string-width": ["string-width@4.2.3", "", { "dependencies": { "emoji-regex": "^8.0.0", "is-fullwidth-code-point": "^3.0.0", "strip-ansi": "^6.0.1" } }, "sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g=="],
 
-    "@sockethub/activity-streams/@types/bun/bun-types": ["bun-types@1.3.11", "", { "dependencies": { "@types/node": "*" } }, "sha512-1KGPpoxQWl9f6wcZh57LvrPIInQMn2TQ7jsgxqpRzg+l0QPOFvJVH7HmvHo/AiPgwXy+/Thf6Ov3EdVn1vOabg=="],
+    "@sockethub/activity-streams/@types/bun/bun-types": ["bun-types@1.3.13", "", { "dependencies": { "@types/node": "*" } }, "sha512-QXKeHLlOLqQX9LgYaHJfzdBaV21T63HhFJnvuRCcjZiaUDpbs5ED1MgxbMra71CsryN/1dAoXuJJJwIv/2drVA=="],
 
     "@sockethub/activity-streams/@web/test-runner/@web/test-runner-chrome": ["@web/test-runner-chrome@0.17.0", "", { "dependencies": { "@web/test-runner-core": "^0.13.0", "@web/test-runner-coverage-v8": "^0.8.0", "async-mutex": "0.4.0", "chrome-launcher": "^0.15.0", "puppeteer-core": "^23.2.0" } }, "sha512-Il5N9z41NKWCrQM1TVgRaDWWYoJtG5Ha4fG+cN1MWL2OlzBS4WoOb4lFV3EylZ7+W3twZOFr1zy2Rx61yDYd/A=="],
 
-    "@sockethub/client/@types/bun/bun-types": ["bun-types@1.3.11", "", { "dependencies": { "@types/node": "*" } }, "sha512-1KGPpoxQWl9f6wcZh57LvrPIInQMn2TQ7jsgxqpRzg+l0QPOFvJVH7HmvHo/AiPgwXy+/Thf6Ov3EdVn1vOabg=="],
+    "@sockethub/client/@types/bun/bun-types": ["bun-types@1.3.13", "", { "dependencies": { "@types/node": "*" } }, "sha512-QXKeHLlOLqQX9LgYaHJfzdBaV21T63HhFJnvuRCcjZiaUDpbs5ED1MgxbMra71CsryN/1dAoXuJJJwIv/2drVA=="],
 
     "@sockethub/client/@web/test-runner/@web/test-runner-chrome": ["@web/test-runner-chrome@0.17.0", "", { "dependencies": { "@web/test-runner-core": "^0.13.0", "@web/test-runner-coverage-v8": "^0.8.0", "async-mutex": "0.4.0", "chrome-launcher": "^0.15.0", "puppeteer-core": "^23.2.0" } }, "sha512-Il5N9z41NKWCrQM1TVgRaDWWYoJtG5Ha4fG+cN1MWL2OlzBS4WoOb4lFV3EylZ7+W3twZOFr1zy2Rx61yDYd/A=="],
 
-    "@sockethub/platform-irc/@types/bun/bun-types": ["bun-types@1.3.12", "", { "dependencies": { "@types/node": "*" } }, "sha512-HqOLj5PoFajAQciOMRiIZGNoKxDJSr6qigAttOX40vJuSp6DN/CxWp9s3C1Xwm4oH7ybueITwiaOcWXoYVoRkA=="],
+    "@sockethub/crypto/@types/bun/bun-types": ["bun-types@1.3.13", "", { "dependencies": { "@types/node": "*" } }, "sha512-QXKeHLlOLqQX9LgYaHJfzdBaV21T63HhFJnvuRCcjZiaUDpbs5ED1MgxbMra71CsryN/1dAoXuJJJwIv/2drVA=="],
 
-    "@sockethub/schemas/@types/bun/bun-types": ["bun-types@1.3.12", "", { "dependencies": { "@types/node": "*" } }, "sha512-HqOLj5PoFajAQciOMRiIZGNoKxDJSr6qigAttOX40vJuSp6DN/CxWp9s3C1Xwm4oH7ybueITwiaOcWXoYVoRkA=="],
+    "@sockethub/data-layer/@types/bun/bun-types": ["bun-types@1.3.13", "", { "dependencies": { "@types/node": "*" } }, "sha512-QXKeHLlOLqQX9LgYaHJfzdBaV21T63HhFJnvuRCcjZiaUDpbs5ED1MgxbMra71CsryN/1dAoXuJJJwIv/2drVA=="],
+
+    "@sockethub/logger/@types/bun/bun-types": ["bun-types@1.3.13", "", { "dependencies": { "@types/node": "*" } }, "sha512-QXKeHLlOLqQX9LgYaHJfzdBaV21T63HhFJnvuRCcjZiaUDpbs5ED1MgxbMra71CsryN/1dAoXuJJJwIv/2drVA=="],
+
+    "@sockethub/platform-dummy/@types/bun/bun-types": ["bun-types@1.3.13", "", { "dependencies": { "@types/node": "*" } }, "sha512-QXKeHLlOLqQX9LgYaHJfzdBaV21T63HhFJnvuRCcjZiaUDpbs5ED1MgxbMra71CsryN/1dAoXuJJJwIv/2drVA=="],
+
+    "@sockethub/platform-feeds/@types/bun/bun-types": ["bun-types@1.3.13", "", { "dependencies": { "@types/node": "*" } }, "sha512-QXKeHLlOLqQX9LgYaHJfzdBaV21T63HhFJnvuRCcjZiaUDpbs5ED1MgxbMra71CsryN/1dAoXuJJJwIv/2drVA=="],
+
+    "@sockethub/platform-irc/@types/bun/bun-types": ["bun-types@1.3.13", "", { "dependencies": { "@types/node": "*" } }, "sha512-QXKeHLlOLqQX9LgYaHJfzdBaV21T63HhFJnvuRCcjZiaUDpbs5ED1MgxbMra71CsryN/1dAoXuJJJwIv/2drVA=="],
+
+    "@sockethub/schemas/@types/bun/bun-types": ["bun-types@1.3.13", "", { "dependencies": { "@types/node": "*" } }, "sha512-QXKeHLlOLqQX9LgYaHJfzdBaV21T63HhFJnvuRCcjZiaUDpbs5ED1MgxbMra71CsryN/1dAoXuJJJwIv/2drVA=="],
+
+    "@sockethub/server/@types/bun/bun-types": ["bun-types@1.3.13", "", { "dependencies": { "@types/node": "*" } }, "sha512-QXKeHLlOLqQX9LgYaHJfzdBaV21T63HhFJnvuRCcjZiaUDpbs5ED1MgxbMra71CsryN/1dAoXuJJJwIv/2drVA=="],
 
     "@tailwindcss/node/magic-string/@jridgewell/sourcemap-codec": ["@jridgewell/sourcemap-codec@1.5.5", "", {}, "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="],
 
@@ -4718,8 +4740,6 @@
     "default-gateway/execa/strip-final-newline": ["strip-final-newline@2.0.0", "", {}, "sha512-BrpvfNAE3dcvq7ll3xVumzjKjZQ5tI1sEUIKr3Uoks0XUl45St3FlatVqef9prk4jRDzhW6WZg+3bk93y6pLjA=="],
 
     "engine.io-client/debug/ms": ["ms@2.1.2", "", {}, "sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w=="],
-
-    "engine.io/debug/ms": ["ms@2.1.2", "", {}, "sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w=="],
 
     "execa/figures/is-unicode-supported": ["is-unicode-supported@2.1.0", "", {}, "sha512-mE00Gnza5EEB3Ds0HfMyllZzbBrmLOX3vfWoj9A9PEnTfratQ/BcaJOuMhnkhjXvb2+FkY3VuHqtAGpTPmglFQ=="],
 
