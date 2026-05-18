@@ -243,7 +243,7 @@ export class IRC implements PersistentPlatformInterface {
                 const message = buildCommand(job.object.content);
                 // biome-ignore lint/style/useTemplate: IRC raw command formatting
                 client.raw("PRIVMSG " + job.target.name + " :" + message);
-                return done("IRC commands temporarily disabled");
+                return done();
             }
             if (job.object.type === "notice") {
                 // attempt to send as raw command
@@ -595,7 +595,7 @@ export class IRC implements PersistentPlatformInterface {
 
         this.irc2as.events.on("ping", (timestamp: string) => {
             this.log.debug(`received PING at ${timestamp}`);
-            this.client.raw("PONG");
+            this.client?.raw("PONG");
         });
     }
 }
