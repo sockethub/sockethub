@@ -1,8 +1,12 @@
 {
   "entryPoints": ["./src/index.ts"],
+  "plugin": ["typedoc-plugin-markdown"],
   "out": "./docs",
   "readme": "none",
   "includeVersion": true,
+  "hidePageHeader": true,
+  "hideBreadcrumbs": true,
+  "parametersFormat": "table",
   "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/node_modules/**"],
   "skipErrorChecking": true,
   "compilerOptions": {

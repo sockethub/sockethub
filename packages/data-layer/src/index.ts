@@ -20,9 +20,25 @@ export * from "./types.js";
 
 import type { RedisConfig } from "./types.js";
 
+function sanitizeRedisUrl(url: string): string {
+    try {
+        const parsed = new URL(url);
+        if (parsed.username) {
+            parsed.username = "***";
+        }
+        if (parsed.password) {
+            parsed.password = "***";
+        }
+        return parsed.toString();
+    } catch {
+        // Parse failure: do not leak the original URL, which may contain credentials.
+        return "<redis-url:unparseable>";
+    }
+}
+
 async function redisCheck(config: RedisConfig): Promise<void> {
     const log = createLogger("data-layer:redis-check");
-    log.debug(`checking redis connection ${config.url}`);
+    log.debug(`checking redis connection ${sanitizeRedisUrl(config.url)}`);
     await verifySecureStore(config);
     await verifyJobQueue(config);
 }

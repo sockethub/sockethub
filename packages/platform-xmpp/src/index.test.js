@@ -545,12 +545,12 @@ describe("XMPP", () => {
 
         describe("#make-friend", () => {
             it("calls xmpp.js correctly", (done) => {
-                xp["remove-friend"](job["remove-friend"], () => {
+                xp["make-friend"](job["make-friend"], () => {
                     sinon.assert.calledOnce(xp.__client.send);
                     expect(xmlFake.getCall(0).args).toEqual([
                         "presence",
                         {
-                            type: "unsubscribe",
+                            type: "subscribe",
                             to: job["make-friend"].target["id"],
                         },
                     ]);

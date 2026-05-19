@@ -1,8 +1,19 @@
-import { describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 
 import { Config } from "./config.js";
 
 describe("config", () => {
+    let originalEnv: NodeJS.ProcessEnv;
+
+    beforeEach(() => {
+        originalEnv = process.env;
+        process.env = { ...originalEnv };
+    });
+
+    afterEach(() => {
+        process.env = originalEnv;
+    });
+
     it("loads default values", () => {
         const config = new Config();
         expect(config).toHaveProperty("get");
@@ -11,14 +22,14 @@ describe("config", () => {
 
     it("host overrides from env", () => {
         const hostname = "a host string";
-        process.env = { HOST: hostname };
+        process.env.HOST = hostname;
         const config = new Config();
         expect(config).toHaveProperty("get");
         expect(config.get("sockethub:host")).toEqual(hostname);
     });
 
     it("defaults to redis config", () => {
-        process.env = { REDIS_URL: "" };
+        process.env.REDIS_URL = "";
         const config = new Config();
         expect(config).toHaveProperty("get");
         expect(config.get("redis")).toEqual({
@@ -30,7 +41,7 @@ describe("config", () => {
     });
 
     // it("redis url overridden by env var", () => {
-    //     process.env = { REDIS_URL: "foobar83" };
+    //     process.env.REDIS_URL = "foobar83";
     //     const config = new Config();
     //     expect(config).toHaveProperty("get");
     //     expect(config.get("redis")).toEqual({ url: "foobar83" });

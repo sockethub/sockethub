@@ -15,7 +15,7 @@ export class ASEmitter {
 
     emitEvent(code, asObject) {
         if (typeof asObject === "object" && !asObject.published) {
-            asObject.published = `${Date.now()}`;
+            asObject.published = new Date().toISOString();
         }
         this.events.emit(code, asObject);
     }

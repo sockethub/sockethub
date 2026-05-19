@@ -404,6 +404,72 @@ describe("Initialize IRC Platform", () => {
                 platform.completeJob();
             });
 
+            // Regression coverage for the /me handling: /me must report
+            // synchronous success without enqueueing a jobQueue handler.
+            // See the long comment in src/index.ts for the protocol-level
+            // reasoning (no echo-message capability => no incoming event
+            // for the sender's PRIVMSG/CTCP ACTION).
+            it("send() /me completes synchronously without queueing", async () => {
+                expect(platform.jobQueue.length).toEqual(0);
+                const meErr = await new Promise((resolve) => {
+                    platform.send(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "send",
+                            actor: actor,
+                            object: { content: "/me waves" },
+                            target: targetRoom,
+                        } as ActivityStream,
+                        (err: unknown) => resolve(err),
+                    );
+                });
+                expect(meErr).toBeUndefined();
+                expect(platform.jobQueue.length).toEqual(0);
+            });
+
+            it("send() /me does not consume an in-flight job's handler", async () => {
+                // Queue a normal send first; do NOT complete it.
+                let normalDoneCalls = 0;
+                platform.send(
+                    {
+                        "@context": IRC_CONTEXT,
+                        type: "send",
+                        actor: actor,
+                        object: { content: "first message" },
+                        target: targetRoom,
+                    } as ActivityStream,
+                    () => {
+                        normalDoneCalls++;
+                    },
+                );
+                // Wait a tick for the async send path to push onto jobQueue.
+                await new Promise((r) => setImmediate(r));
+                expect(platform.jobQueue.length).toEqual(1);
+
+                // Now issue a /me. Its done callback should fire without
+                // touching the queued handler of the prior send.
+                const meErr = await new Promise((resolve) => {
+                    platform.send(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "send",
+                            actor: actor,
+                            object: { content: "/me sneaks in" },
+                            target: targetRoom,
+                        } as ActivityStream,
+                        (err: unknown) => resolve(err),
+                    );
+                });
+                expect(meErr).toBeUndefined();
+                expect(normalDoneCalls).toEqual(0);
+                expect(platform.jobQueue.length).toEqual(1);
+
+                // Drain the normal send's handler explicitly.
+                platform.completeJob();
+                expect(normalDoneCalls).toEqual(1);
+                expect(platform.jobQueue.length).toEqual(0);
+            });
+
             it("update() topic", (done) => {
                 platform.update(
                     {
