@@ -191,7 +191,7 @@ export function datesEqual(a: unknown, b: unknown): boolean {
     return at === bt;
 }
 
-function buildFeedItem(item: FeedItem): PlatformFeedsActivityObject {
+export function buildFeedItem(item: FeedItem): PlatformFeedsActivityObject {
     const dateNum = Date.parse(item.pubDate.toString()) || 0;
     return {
         type:
