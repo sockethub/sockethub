@@ -86,7 +86,10 @@ export function printSettingsInfo(
 let initCalled = false;
 let initWaitCount = 0;
 let cancelWait: NodeJS.Timeout | undefined;
-const resolveQueue: Array<(init: IInitObject) => void> = [];
+const resolveQueue: Array<{
+    resolve: (init: IInitObject) => void;
+    reject: (reason?: unknown) => void;
+}> = [];
 
 export default async function getInitObject(
     initFunc: () => Promise<IInitObject> = __loadInit,
@@ -99,19 +102,29 @@ export default async function getInitObject(
                 cancelWait = setInterval(() => {
                     if (!init) {
                         if (initWaitCount > 10) {
-                            reject("failed to initialize");
+                            clearInterval(cancelWait);
+                            cancelWait = undefined;
+                            const err = new Error("failed to initialize");
+                            reject(err);
+                            for (const queued of resolveQueue) {
+                                queued.reject(err);
+                            }
+                            resolveQueue.length = 0;
+                            return;
                         }
                         initWaitCount++;
                     } else {
                         clearInterval(cancelWait);
+                        cancelWait = undefined;
                         resolve(init);
-                        for (const resolve of resolveQueue) {
-                            resolve(init);
+                        for (const queued of resolveQueue) {
+                            queued.resolve(init);
                         }
+                        resolveQueue.length = 0;
                     }
                 }, 1000);
             } else {
-                resolveQueue.push(resolve);
+                resolveQueue.push({ resolve, reject });
             }
         } else {
             initCalled = true;

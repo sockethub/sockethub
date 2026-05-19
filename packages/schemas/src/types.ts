@@ -190,9 +190,3 @@ export interface PersistentPlatformInterface extends PlatformInterface {
         done: PlatformCallback,
     ): void;
 }
-
-export interface PlatformSession {
-    log: Logger;
-    sendToClient: PlatformSendToClient;
-    updateActor: PlatformUpdateActor;
-}

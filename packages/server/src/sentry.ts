@@ -10,8 +10,8 @@ const logger = createLogger("sentry");
 if (!config.get("sentry:dsn")) {
     throw new Error("Sentry attempted initialization with no DSN provided");
 }
-logger.info("initialized sentry");
 Sentry.init(config.get("sentry"));
+logger.info("initialized sentry");
 
 export function reportError(err: Error): void {
     logger.warn("reporting error");

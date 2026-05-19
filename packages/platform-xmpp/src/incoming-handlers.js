@@ -169,7 +169,7 @@ export class IncomingHandlers {
                 target: this.session.actor,
             });
             this.session.log.debug(
-                `**** xmpp this.session.for ${this.session.actor.id} closed`,
+                `**** xmpp session for ${this.session.actor.id} closed`,
             );
         }
         if (
@@ -397,7 +397,7 @@ export class IncomingHandlers {
             if (query) {
                 const entries = query.getChildren("item");
                 for (const e in entries) {
-                    if (!entries.hasOwn(e)) {
+                    if (!Object.hasOwn(entries, e)) {
                         continue;
                     }
                     this.session.log.debug("STANZA ATTRS: ", entries[e].attrs);

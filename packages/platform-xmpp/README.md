@@ -72,6 +72,19 @@ non-recoverable connection error.
 
 ## Usage
 
+### Connect Example
+
+```javascript
+{
+  type: "connect",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "user@example.org/web",
+    type: "person"
+  }
+}
+```
+
 ### Send Message Example
 
 ```javascript
@@ -89,6 +102,99 @@ non-recoverable connection error.
   object: {
     type: "message",
     content: "Hello from Sockethub!"
+  }
+}
+```
+
+### Send Room Message Example
+
+```javascript
+{
+  type: "send",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "user@example.org/web",
+    type: "person"
+  },
+  target: {
+    id: "room@conference.example.org",
+    type: "room"
+  },
+  object: {
+    type: "message",
+    content: "Hello room"
+  }
+}
+```
+
+### Update Presence Example
+
+```javascript
+{
+  type: "update",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "user@example.org/web",
+    type: "person"
+  },
+  object: {
+    type: "presence",
+    presence: "away",
+    content: "Out for lunch"
+  }
+}
+```
+
+### Query Room Attendance Response Example
+
+```javascript
+{
+  type: "query",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "room@conference.example.org",
+    type: "room"
+  },
+  target: {
+    id: "user@example.org/web",
+    type: "person"
+  },
+  object: {
+    type: "attendance",
+    members: ["alice", "bob", "carol"]
+  }
+}
+```
+
+### Query Room Attendance Example
+
+```javascript
+{
+  type: "query",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "user@example.org/web",
+    type: "person"
+  },
+  target: {
+    id: "room@conference.example.org",
+    type: "room"
+  },
+  object: {
+    type: "attendance"
+  }
+}
+```
+
+### Disconnect Example
+
+```javascript
+{
+  type: "disconnect",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "user@example.org/web",
+    type: "person"
   }
 }
 ```
@@ -144,4 +250,5 @@ non-recoverable connection error.
 
 ## API
 
-Detailed API documentation can be found [here](API.md)
+API reference docs are generated from the source JSDoc and are not committed to this repository.
+Run `bun run doc` in this package to generate them locally.
