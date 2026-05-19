@@ -99,11 +99,15 @@ export default async function getInitObject(
                 cancelWait = setInterval(() => {
                     if (!init) {
                         if (initWaitCount > 10) {
-                            reject("failed to initialize");
+                            clearInterval(cancelWait);
+                            cancelWait = undefined;
+                            reject(new Error("failed to initialize"));
+                            return;
                         }
                         initWaitCount++;
                     } else {
                         clearInterval(cancelWait);
+                        cancelWait = undefined;
                         resolve(init);
                         for (const resolve of resolveQueue) {
                             resolve(init);

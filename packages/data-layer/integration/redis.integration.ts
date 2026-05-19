@@ -51,10 +51,9 @@ describe("CredentialsStore", () => {
     });
 
     it("get non-existent value", async () => {
-        expect(async () => {
-            await store.get(actor, credsHash);
-            expect(false).toEqual(true);
-        }).toThrow(`credentials not found for ${actor}`);
+        await expect(store.get(actor, credsHash)).rejects.toThrow(
+            `credentials not found for ${actor}`,
+        );
     });
 
     it("save", async () => {
