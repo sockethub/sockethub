@@ -154,7 +154,7 @@ export default [
         },
     },
     {
-        name: "expand unknown actor 2",
+        name: "expand unknown actor 3",
         type: "message",
         valid: "true",
         input: {
@@ -297,7 +297,7 @@ export default [
         },
     },
     {
-        name: "expand actor and target of unknowns",
+        name: "expand actor and target of unknowns with user@host",
         valid: true,
         type: "message",
         input: {
