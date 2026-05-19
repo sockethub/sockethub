@@ -27,17 +27,16 @@
   "keywords": [
     "sockethub",
     "messaging",
-    "redis",
-    "data lyer",
-    "rpc",
-    "data store"
+    "crypto",
+    "encryption",
+    "cryptography"
   ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sockethub/sockethub.git",
-    "directory": "packages/data-layer"
+    "directory": "packages/crypto"
   },
-  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/data-layer",
+  "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/crypto",
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
     "clean": "rm -rf dist",
