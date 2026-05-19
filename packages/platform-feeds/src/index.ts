@@ -175,7 +175,23 @@ interface FeedItem extends Episode {
     source: string;
 }
 
-function buildFeedItem(item: FeedItem): PlatformFeedsActivityObject {
+export function datesEqual(a: unknown, b: unknown): boolean {
+    if (a == null && b == null) {
+        return true;
+    }
+    if (a == null || b == null) {
+        return false;
+    }
+    // Prefer Date.getTime() for Date instances; String(date)+Date.parse loses ms.
+    const at = a instanceof Date ? a.getTime() : Date.parse(String(a));
+    const bt = b instanceof Date ? b.getTime() : Date.parse(String(b));
+    if (Number.isNaN(at) || Number.isNaN(bt)) {
+        return String(a) === String(b);
+    }
+    return at === bt;
+}
+
+export function buildFeedItem(item: FeedItem): PlatformFeedsActivityObject {
     const dateNum = Date.parse(item.pubDate.toString()) || 0;
     return {
         type:
@@ -189,7 +205,7 @@ function buildFeedItem(item: FeedItem): PlatformFeedsActivityObject {
         contentType: isHtml(item.description || "") ? "html" : "text",
         url: item.link || item.meta.link,
         published: item.pubDate,
-        updated: item.pubDate === item.date ? undefined : item.date,
+        updated: datesEqual(item.pubDate, item.date) ? undefined : item.date,
         datenum: dateNum,
         tags: item.categories,
         media: item.media,
