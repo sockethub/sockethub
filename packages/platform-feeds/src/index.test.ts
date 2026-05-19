@@ -1,7 +1,37 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import { RSSFeed} from "./index.test.data";
-import Feeds from "./index";
+import Feeds, { datesEqual } from "./index";
 import { ASCollection, PlatformSession } from "@sockethub/schemas";
+
+describe("datesEqual", () => {
+    it("treats two null/undefined as equal", () => {
+        expect(datesEqual(null, undefined)).toBe(true);
+        expect(datesEqual(undefined, null)).toBe(true);
+    });
+
+    it("treats one nullish and one defined as unequal", () => {
+        expect(datesEqual(null, new Date())).toBe(false);
+        expect(datesEqual("2024-01-01T00:00:00Z", undefined)).toBe(false);
+    });
+
+    it("compares Date instances by getTime (preserves ms)", () => {
+        const a = new Date("2024-01-01T00:00:00.123Z");
+        const b = new Date("2024-01-01T00:00:00.123Z");
+        const c = new Date("2024-01-01T00:00:00.456Z");
+        expect(datesEqual(a, b)).toBe(true);
+        expect(datesEqual(a, c)).toBe(false);
+    });
+
+    it("compares string and Date pointing to same instant as equal", () => {
+        const iso = "2024-01-01T00:00:00.000Z";
+        expect(datesEqual(iso, new Date(iso))).toBe(true);
+    });
+
+    it("falls back to string equality when both are unparseable", () => {
+        expect(datesEqual("not-a-date", "not-a-date")).toBe(true);
+        expect(datesEqual("not-a-date", "other-junk")).toBe(false);
+    });
+});
 
 describe("platform-feeds", () => {
     let platform;

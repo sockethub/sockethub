@@ -175,15 +175,16 @@ interface FeedItem extends Episode {
     source: string;
 }
 
-function datesEqual(a: unknown, b: unknown): boolean {
+export function datesEqual(a: unknown, b: unknown): boolean {
     if (a == null && b == null) {
         return true;
     }
     if (a == null || b == null) {
         return false;
     }
-    const at = Date.parse(String(a));
-    const bt = Date.parse(String(b));
+    // Prefer Date.getTime() for Date instances; String(date)+Date.parse loses ms.
+    const at = a instanceof Date ? a.getTime() : Date.parse(String(a));
+    const bt = b instanceof Date ? b.getTime() : Date.parse(String(b));
     if (Number.isNaN(at) || Number.isNaN(bt)) {
         return String(a) === String(b);
     }
