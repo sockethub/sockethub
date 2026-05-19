@@ -23,7 +23,7 @@ function matchStream(done) {
         expect(typeof stream.published).toEqual("string");
         delete stream.published;
         let matched = false;
-        for (let i = 0; i <= TestData.length; i++) {
+        for (let i = 0; i < TestData.length; i++) {
             matched = equal(stream, TestData[i]);
             if (matched) {
                 // when matched, remove output entry from list

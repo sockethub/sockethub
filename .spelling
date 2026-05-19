@@ -93,5 +93,15 @@ namespaces
 createLogger
 timestamps
 systemd
+pre-copied
+globals
+libera.chat
+nickserv
+oauth
+SourceHut's
+soju
+hackint
+hostname
+ejabberd
  - ./README.md
 v1.2
