@@ -243,6 +243,21 @@ export class IRC implements PersistentPlatformInterface {
                 const message = buildCommand(job.object.content);
                 // biome-ignore lint/style/useTemplate: IRC raw command formatting
                 client.raw("PRIVMSG " + job.target.name + " :" + message);
+                // /me intentionally reports synchronous success rather than
+                // going through the jobQueue + PING/PONG round-trip used by
+                // normal sends. This is safe because:
+                //   1. IRC servers do not echo PRIVMSG/CTCP ACTION back to
+                //      the sender unless the IRCv3 `echo-message` capability
+                //      is negotiated via CAP REQ.
+                //   2. This platform only requests `sasl` (see ircConnect:
+                //      `capabilities = { requires: ["sasl"] }`), so
+                //      `echo-message` is never enabled.
+                //   3. Therefore the outgoing PRIVMSG never re-enters
+                //      irc2as.input() via the `data` event, no `incoming`
+                //      event fires for the sender's actor, and completeJob
+                //      is not triggered as a side effect.
+                // If `echo-message` is ever enabled, the regular send path
+                // would also need refactoring to dedupe echoed PRIVMSGs.
                 return done();
             }
             if (job.object.type === "notice") {
