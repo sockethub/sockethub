@@ -11,7 +11,7 @@ automatic reconnection and credential replay.
 - `ActivityStreams` helpers and validation utilities
 - `contextFor(platform)` builds canonical `@context` arrays from server metadata
 - `ready()` promise and `ready`/`init_error` observability events
-- Automatic outbound queueing until initialization is complete
+- Automatic outbound queuing until initialization is complete
 - Auto-replay of credentials and connections on reconnect
 - A browser-ready bundle in `dist/`
 

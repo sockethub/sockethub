@@ -269,7 +269,8 @@ export class IrcToActivityStreams {
                     },
                 };
                 break;
-            case TOPIC_SET_BY: // current topic set by
+            case TOPIC_SET_BY: {
+                // current topic set by
                 if (!this.__buffer[TOPIC_IS]) {
                     break;
                 }
@@ -289,6 +290,7 @@ export class IrcToActivityStreams {
                 ase.emitEvent(EVENT_INCOMING, this.__buffer[TOPIC_IS]);
                 delete this.__buffer[TOPIC_IS];
                 break;
+            }
 
             /** */
             case WHO:
