@@ -279,10 +279,13 @@ export class IrcToActivityStreams {
                     id: `${nick}@${this.server}`,
                     name: nick,
                 };
-                // IRC RPL_TOPICWHOTIME (333) timestamp is Unix epoch seconds; normalize to ISO 8601
-                this.__buffer[TOPIC_IS].published = new Date(
-                    Number.parseInt(msg[0], 10) * 1000,
-                ).toISOString();
+                // IRC RPL_TOPICWHOTIME (333) timestamp is Unix epoch seconds; normalize when valid
+                const topicSetEpochSeconds = Number.parseInt(msg[0], 10);
+                if (Number.isFinite(topicSetEpochSeconds)) {
+                    this.__buffer[TOPIC_IS].published = new Date(
+                        topicSetEpochSeconds * 1000,
+                    ).toISOString();
+                }
                 ase.emitEvent(EVENT_INCOMING, this.__buffer[TOPIC_IS]);
                 delete this.__buffer[TOPIC_IS];
                 break;
