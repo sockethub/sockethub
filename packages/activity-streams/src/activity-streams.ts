@@ -183,7 +183,6 @@ function validateObject(
         if (!specialObjs.includes(ao.type)) {
             // not defined as a special prop
             // don't know what to do with it, so throw error
-            console.log(ao);
             const receivedValue =
                 typeof ao[key] === "string" ? `"${ao[key]}"` : String(ao[key]);
             const err = `ActivityStreams validation failed: property "${key}" with value ${receivedValue} is not allowed on the "${type}" object of type "${ao.type}".`;
@@ -326,7 +325,7 @@ export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
 }
 
 ((global: Record<string, unknown>) => {
-    global.ASFactor = ASFactory;
+    global.ASFactory = ASFactory;
 })(
     typeof globalThis === "object"
         ? (globalThis as Record<string, unknown>)
