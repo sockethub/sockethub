@@ -536,7 +536,9 @@ export default class XMPP {
     cleanup(done) {
         this.log.debug("cleanup");
         this.__initialized = false;
-        this.__client.stop();
+        if (this.__client && typeof this.__client.stop === "function") {
+            this.__client.stop();
+        }
         done();
     }
 
