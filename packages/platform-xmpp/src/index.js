@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { randomUUID } from "node:crypto";
 import { client, xml } from "@xmpp/client";
 
 import { IncomingHandlers } from "./incoming-handlers.js";
@@ -572,7 +573,7 @@ export default class XMPP {
         );
 
         // Generate unique ID for this disco#info query
-        const queryId = `room_info_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+        const queryId = `room_info_${randomUUID()}`;
 
         this.__client
             .send(
