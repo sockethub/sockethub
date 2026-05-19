@@ -1,12 +1,21 @@
 export const utils = {
     buildXmppCredentials: (credentials) => {
-        const [username, server] = credentials.object.userAddress.split("@");
+        const userAddress = credentials.object.userAddress;
+        if (typeof userAddress !== "string" || !userAddress.includes("@")) {
+            throw new Error(
+                "xmpp credentials.object.userAddress must be a JID in the form 'user@server'",
+            );
+        }
+        const [username, server] = userAddress.split("@");
+        if (!username || !server) {
+            throw new Error(
+                "xmpp credentials.object.userAddress is missing the username or server portion",
+            );
+        }
         const xmpp_creds = {
             service: credentials.object.server
                 ? credentials.object.server
-                : server
-                  ? server
-                  : undefined,
+                : server,
             username: username,
             password: credentials.object.password,
         };
