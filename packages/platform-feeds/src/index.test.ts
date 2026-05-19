@@ -1,7 +1,90 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import { RSSFeed} from "./index.test.data";
-import Feeds from "./index";
+import Feeds, { buildFeedItem, datesEqual } from "./index";
 import { ASCollection, PlatformSession } from "@sockethub/schemas";
+
+describe("datesEqual", () => {
+    it("treats two null/undefined as equal", () => {
+        expect(datesEqual(null, undefined)).toBe(true);
+        expect(datesEqual(undefined, null)).toBe(true);
+    });
+
+    it("treats one nullish and one defined as unequal", () => {
+        expect(datesEqual(null, new Date())).toBe(false);
+        expect(datesEqual("2024-01-01T00:00:00Z", undefined)).toBe(false);
+    });
+
+    it("compares Date instances by getTime (preserves ms)", () => {
+        const a = new Date("2024-01-01T00:00:00.123Z");
+        const b = new Date("2024-01-01T00:00:00.123Z");
+        const c = new Date("2024-01-01T00:00:00.456Z");
+        expect(datesEqual(a, b)).toBe(true);
+        expect(datesEqual(a, c)).toBe(false);
+    });
+
+    it("compares string and Date pointing to same instant as equal", () => {
+        const iso = "2024-01-01T00:00:00.000Z";
+        expect(datesEqual(iso, new Date(iso))).toBe(true);
+    });
+
+    it("falls back to string equality when both are unparseable", () => {
+        expect(datesEqual("not-a-date", "not-a-date")).toBe(true);
+        expect(datesEqual("not-a-date", "other-junk")).toBe(false);
+    });
+});
+
+describe("buildFeedItem", () => {
+    const baseItem: Parameters<typeof buildFeedItem>[0] = {
+        title: "Item",
+        description: "Body",
+        summary: "Body",
+        meta: {
+            title: "Feed",
+            description: "",
+            language: "en",
+            author: { name: "Author" },
+            summary: "",
+            type: "rss",
+            owner: { name: "Owner", email: "owner@example.com" },
+            image: { url: "", link: "", title: "" },
+            explicit: false,
+            lastBuildDate: "2024-01-01T00:00:00.000Z",
+            pubDate: "2024-01-01T00:00:00.000Z",
+            link: "http://example.com/feed",
+            links: [],
+        },
+        pubDate: "2024-01-01T00:00:00.000Z",
+        date: "2024-01-01T00:00:00.000Z",
+        categories: [],
+        media: [],
+        source: "feed-source",
+        author: "Author",
+        episodeType: undefined,
+        guid: "guid-1",
+        duration: 0,
+        enclosure: undefined,
+        link: "http://example.com/item",
+    } as Parameters<typeof buildFeedItem>[0];
+
+    it("omits updated when pubDate and date represent the same instant", () => {
+        const result = buildFeedItem({
+            ...baseItem,
+            date: new Date("2024-01-01T00:00:00.000Z") as unknown as string,
+        });
+
+        expect(result.published).toEqual("2024-01-01T00:00:00.000Z");
+        expect(result.updated).toBeUndefined();
+    });
+
+    it("preserves updated when pubDate and date differ", () => {
+        const result = buildFeedItem({
+            ...baseItem,
+            date: "2024-01-01T00:00:01.000Z",
+        });
+
+        expect(result.updated).toEqual("2024-01-01T00:00:01.000Z");
+    });
+});
 
 describe("platform-feeds", () => {
     let platform;

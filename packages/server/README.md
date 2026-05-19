@@ -83,7 +83,7 @@ Default: `localhost`
 - REDIS_URL
 
 Overrides `REDIS_HOST` and `REDIS_PORT`, can specify a full redis connect URL
-(eq. `redis://username:password@host:port`)
+(e.g. `redis://username:password@host:port`)
 
 #### Sentry Configuration
 
