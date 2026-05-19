@@ -23,13 +23,16 @@ import type { RedisConfig } from "./types.js";
 function sanitizeRedisUrl(url: string): string {
     try {
         const parsed = new URL(url);
-        if (parsed.username || parsed.password) {
-            parsed.username = parsed.username ? "***" : parsed.username;
-            parsed.password = parsed.password ? "***" : parsed.password;
+        if (parsed.username) {
+            parsed.username = "***";
+        }
+        if (parsed.password) {
+            parsed.password = "***";
         }
         return parsed.toString();
     } catch {
-        return url;
+        // Parse failure: do not leak the original URL, which may contain credentials.
+        return "<redis-url:unparseable>";
     }
 }
 
