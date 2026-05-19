@@ -275,15 +275,20 @@ export class IncomingHandlers {
             query.attrs.xmlns === "http://jabber.org/protocol/disco#info"
         ) {
             // Extract identities (XEP-0030 §4.2: entities may have multiple identities)
-            const identities = query.getChildren("identity").map((el) => ({
-                category: el.attrs.category,
-                type: el.attrs.type,
-                ...(el.attrs.name && { name: el.attrs.name }),
-            }));
+            const identities = query
+                .getChildren("identity")
+                .filter((el) => el.attrs.category && el.attrs.type)
+                .map((el) => ({
+                    category: el.attrs.category,
+                    type: el.attrs.type,
+                    ...(el.attrs.name && { name: el.attrs.name }),
+                }));
 
             // Extract features
-            const features = query.getChildren("feature");
-            const featureList = features.map((feature) => feature.attrs.var);
+            const featureList = query
+                .getChildren("feature")
+                .filter((el) => el.attrs.var)
+                .map((el) => el.attrs.var);
 
             // Use first identity name as actor display name, fall back to JID
             const displayName = identities[0]?.name || stanza.attrs.from;

@@ -72,7 +72,7 @@ describe("Incoming handlers", () => {
             expect(arg.actor.id).toEqual("noroom@conference.example.org");
         });
 
-        it("ignores IQ result with non-room_info ID prefix", () => {
+        it("routes IQ result with non-room_info ID prefix to attendance", () => {
             const stanza = parse(
                 `<iq from='room@conference.example.org' to='user@example.org' type='result' id='muc_id'>
                   <query xmlns='http://jabber.org/protocol/disco#info'>
@@ -82,9 +82,10 @@ describe("Incoming handlers", () => {
                 </iq>`,
             );
             ih.stanza(stanza);
-            const call = sendToClient.getCall(0);
-            // Should be handled as room attendance, not room-info
-            expect(call.args[0].type).not.toEqual("room-info");
+            sinon.assert.calledOnce(sendToClient);
+            const arg = sendToClient.getCall(0).args[0];
+            expect(arg.type).toEqual("query");
+            expect(arg.object.type).toEqual("attendance");
         });
 
         it("ignores disco#info response with wrong xmlns", () => {
