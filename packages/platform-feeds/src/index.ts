@@ -175,6 +175,21 @@ interface FeedItem extends Episode {
     source: string;
 }
 
+function datesEqual(a: unknown, b: unknown): boolean {
+    if (a == null && b == null) {
+        return true;
+    }
+    if (a == null || b == null) {
+        return false;
+    }
+    const at = Date.parse(String(a));
+    const bt = Date.parse(String(b));
+    if (Number.isNaN(at) || Number.isNaN(bt)) {
+        return String(a) === String(b);
+    }
+    return at === bt;
+}
+
 function buildFeedItem(item: FeedItem): PlatformFeedsActivityObject {
     const dateNum = Date.parse(item.pubDate.toString()) || 0;
     return {
@@ -189,7 +204,7 @@ function buildFeedItem(item: FeedItem): PlatformFeedsActivityObject {
         contentType: isHtml(item.description || "") ? "html" : "text",
         url: item.link || item.meta.link,
         published: item.pubDate,
-        updated: item.pubDate === item.date ? undefined : item.date,
+        updated: datesEqual(item.pubDate, item.date) ? undefined : item.date,
         datenum: dateNum,
         tags: item.categories,
         media: item.media,
