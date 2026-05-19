@@ -129,7 +129,7 @@ class Listener {
     private startHttp() {
         this.http.listen(
             config.get("sockethub:port"),
-            config.get("sockethub:host") as number,
+            config.get("sockethub:host") as string,
             () => {
                 log.info(
                     `sockethub listening on ws://${config.get("sockethub:host")}:${config.get(

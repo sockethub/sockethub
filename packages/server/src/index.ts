@@ -58,20 +58,25 @@ export async function server() {
         process.exit(1);
     });
 
+    const gracefulShutdown = async (signal: string) => {
+        console.log(`Received ${signal} signal. Shutting down sockethub...`);
+        try {
+            await sockethub.shutdown();
+            process.exit(0);
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err));
+            sentry.reportError(error);
+            console.error(error);
+            process.exit(1);
+        }
+    };
+
     process.once("SIGTERM", () => {
-        console.log("Received TERM signal. Exiting.");
-        process.exit(0);
+        gracefulShutdown("TERM");
     });
 
     process.once("SIGINT", () => {
-        console.log("Received INT signal. Exiting.");
-        process.exit(0);
-    });
-
-    process.once("exit", async () => {
-        console.log("sockethub shutdown...");
-        await sockethub.shutdown();
-        process.exit(0);
+        gracefulShutdown("INT");
     });
 
     try {
