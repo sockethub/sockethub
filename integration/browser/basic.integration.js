@@ -345,7 +345,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             });
 
             describe("IRC with invalid credentials", () => {
-                const invalidIrcActorId = "baduser@irc.libera.chat";
+                const invalidIrcActorId = `baduser@${config.irc.host}`;
 
                 it("should handle IPC channel closure gracefully with IRC wrong credentials", async () => {
                     // Set invalid IRC credentials
@@ -363,8 +363,9 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                                 type: "credentials",
                                 nick: "baduser",
                                 password: "wrong_password_456",
-                                server: "irc.libera.chat",
-                                port: 6667,
+                                server: config.irc.host,
+                                port: config.irc.port,
+                                secure: false,
                             },
                         },
                         { label: "irc invalid credentials" },
