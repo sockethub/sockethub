@@ -10,6 +10,7 @@ import {
     sendXMPPMessage,
     setXMPPCredentials,
     validateGlobals,
+    waitFor,
 } from "./shared-setup.js";
 
 const config = getConfig();
@@ -284,6 +285,44 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     expect(platformIdFromContext(msg["@context"])).to.equal(
                         "xmpp",
                     );
+                });
+            });
+
+            describe("Room presence actor type (issue #679)", () => {
+                // When the platform joins a room, it registers the room JID in
+                // __knownRooms. Presence updates from that JID should be typed
+                // as "room", not "person".
+                it("presence from a joined room JID has actor.type 'room'", async () => {
+                    const roomPresences = [];
+                    const listener = (msg) => {
+                        if (
+                            msg.type === "update" &&
+                            msg.object?.type === "presence" &&
+                            msg.actor?.id?.startsWith("test@prosody")
+                        ) {
+                            roomPresences.push(msg);
+                        }
+                    };
+                    sc.socket.on("message", listener);
+                    try {
+                        // Re-join to trigger a fresh presence update from the room.
+                        await joinXMPPRoom(sc, jid, "test@prosody");
+                        await waitFor(
+                            () => roomPresences.length > 0,
+                            config.timeouts.message,
+                            50,
+                            () =>
+                                `waiting for room presence — received so far: ${JSON.stringify(roomPresences)}`,
+                        );
+                        expect(roomPresences[0].actor.type).to.equal("room");
+                        expect(
+                            platformIdFromContext(
+                                roomPresences[0]["@context"],
+                            ),
+                        ).to.equal("xmpp");
+                    } finally {
+                        sc.socket.off("message", listener);
+                    }
                 });
             });
         });

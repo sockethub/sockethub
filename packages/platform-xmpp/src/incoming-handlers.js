@@ -1,7 +1,6 @@
 import { buildCanonicalContext } from "@sockethub/schemas";
 import { PlatformSchema } from "./schema.js";
 
-const DISCOVERY_TIMEOUT = 5000;
 const XMPP_CONTEXT = buildCanonicalContext(PlatformSchema.contextUrl);
 
 function getMessageBody(stanza) {
@@ -61,95 +60,6 @@ function getPresence(stanza) {
 export class IncomingHandlers {
     constructor(session) {
         this.session = session;
-        // Cache for JID type discoveries to avoid repeated queries
-        this.jidTypeCache = new Map();
-    }
-
-    /**
-     * Determines the actor type (person or room) for a JID using service discovery.
-     * Falls back to heuristic if service discovery fails.
-     * @param {string} jid - The JID to check
-     * @returns {Promise<string>} - 'person' or 'room'
-     */
-    async determineActorType(jid) {
-        // Remove resource part for bare JID
-        const bareJid = jid.split("/")[0];
-
-        // Check cache first
-        if (this.jidTypeCache.has(bareJid)) {
-            return this.jidTypeCache.get(bareJid);
-        }
-
-        try {
-            // Perform service discovery
-            const discoId = `disco_${Date.now()}_${Math.random().toString(36).substring(2)}`;
-            const discoIq = this.session.__xml(
-                "iq",
-                {
-                    type: "get",
-                    to: bareJid,
-                    id: discoId,
-                },
-                this.session.__xml("query", {
-                    xmlns: "http://jabber.org/protocol/disco#info",
-                }),
-            );
-
-            // Send disco query and wait for response
-            const response = await this.session.__client.sendReceive(
-                discoIq,
-                DISCOVERY_TIMEOUT,
-            ); // 5 second timeout
-
-            // Look for MUC feature or room identity
-            const query = response.getChild("query");
-            if (query) {
-                // Check for MUC feature
-                const features = query.getChildren("feature");
-                for (const feature of features) {
-                    if (
-                        feature.attrs.var === "http://jabber.org/protocol/muc"
-                    ) {
-                        this.jidTypeCache.set(bareJid, "room");
-                        return "room";
-                    }
-                }
-
-                // Check for conference identity
-                const identities = query.getChildren("identity");
-                for (const identity of identities) {
-                    if (identity.attrs.category === "conference") {
-                        this.jidTypeCache.set(bareJid, "room");
-                        return "room";
-                    }
-                }
-            }
-
-            // Default to person if no room indicators found
-            this.jidTypeCache.set(bareJid, "person");
-            return "person";
-        } catch (error) {
-            // Provide more specific error messages for debugging
-            const errorType =
-                error.name === "TimeoutError" ||
-                error.message.includes("timeout")
-                    ? "timeout"
-                    : "error";
-            this.session.debug(
-                `Service discovery ${errorType} for ${bareJid}, falling back to heuristic: ${error.message}`,
-            );
-
-            // Fallback: Use heuristic - if JID looks like a conference server, assume room
-            // This is a simple heuristic based on common patterns
-            const type =
-                bareJid.includes("conference.") ||
-                bareJid.includes("muc.") ||
-                bareJid.includes("chat.")
-                    ? "room"
-                    : "person";
-            this.jidTypeCache.set(bareJid, type);
-            return type;
-        }
     }
 
     close() {
@@ -196,9 +106,11 @@ export class IncomingHandlers {
         }
     }
 
-    async presence(stanza) {
-        // Determine the actor type using service discovery
-        const actorType = await this.determineActorType(stanza.attrs.from);
+    presence(stanza) {
+        const bareJid = stanza.attrs.from.split("/")[0];
+        const actorType = this.session.__knownRooms.has(bareJid)
+            ? "room"
+            : "person";
 
         const obj = {
             "@context": XMPP_CONTEXT,
@@ -368,21 +280,14 @@ export class IncomingHandlers {
     /**
      * Handles all unknown conditions that we don't have an explicit handler for
      **/
-    async stanza(stanza) {
+    stanza(stanza) {
         // console.log("incoming stanza ", stanza);
         if (stanza.attrs.type === "error") {
             this.notifyError(stanza);
         } else if (stanza.is("message")) {
             this.notifyChatMessage(stanza);
         } else if (stanza.is("presence")) {
-            // Handle async presence method
-            try {
-                await this.presence(stanza);
-            } catch (error) {
-                this.session.debug(
-                    `Error handling presence stanza: ${error.message}`,
-                );
-            }
+            this.presence(stanza);
         } else if (stanza.is("iq")) {
             if (
                 stanza.attrs.id === "muc_id" &&

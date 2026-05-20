@@ -373,6 +373,26 @@ describe("XMPP", () => {
                     done();
                 });
             });
+
+            it("registers room bare JID in __knownRooms", (done) => {
+                expect(xp.__knownRooms.has("partyroom@jabber.net")).toBeFalse();
+                xp.join(job.join, () => {
+                    expect(xp.__knownRooms.has("partyroom@jabber.net")).toBeTrue();
+                    done();
+                });
+            });
+
+            it("strips resource from target JID before registering", (done) => {
+                const jobWithResource = {
+                    ...job.join,
+                    target: { type: "room", id: "partyroom@jabber.net/someroom" },
+                };
+                xp.join(jobWithResource, () => {
+                    expect(xp.__knownRooms.has("partyroom@jabber.net")).toBeTrue();
+                    expect(xp.__knownRooms.has("partyroom@jabber.net/someroom")).toBeFalse();
+                    done();
+                });
+            });
         });
 
         describe("#leave", () => {
@@ -386,6 +406,14 @@ describe("XMPP", () => {
                         to: "partyroom@jabber.net/testing ham",
                         type: "unavailable",
                     });
+                    done();
+                });
+            });
+
+            it("removes room bare JID from __knownRooms", (done) => {
+                xp.__knownRooms.add("partyroom@jabber.net");
+                xp.leave(job.leave, () => {
+                    expect(xp.__knownRooms.has("partyroom@jabber.net")).toBeFalse();
                     done();
                 });
             });

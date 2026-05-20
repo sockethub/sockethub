@@ -8,6 +8,17 @@ import { IncomingHandlers } from "./incoming-handlers.js";
 import { stanzas } from "./incoming-handlers.test.data.js";
 import { PlatformSchema } from "./schema.js";
 
+function makeSession(overrides = {}) {
+    return {
+        sendToClient: sinon.fake(),
+        log: { debug: sinon.fake() },
+        __knownRooms: new Set(),
+        actor: undefined,
+        connection: undefined,
+        ...overrides,
+    };
+}
+
 describe("Incoming handlers", () => {
     describe("XML stanzas result in the expected AS objects", () => {
         let ih, sendToClient;
@@ -21,28 +32,13 @@ describe("Incoming handlers", () => {
             }
             schemas.addPlatformContext("xmpp", PlatformSchema.contextUrl);
             sendToClient = sinon.fake();
-            ih = new IncomingHandlers({
-                sendToClient: sendToClient,
-                log: { debug: sinon.fake() },
-                __xml: () => ({}),
-                __client: {
-                    sendReceive: sinon.fake.rejects(new Error('Service discovery not available in tests'))
-                }
-            });
-            
-            // Mock determineActorType for testing - matches production heuristic
-            ih.determineActorType = sinon.fake(async (jid) => {
-                // Use same heuristic as production fallback
-                const bareJid = jid.split('/')[0];
-                return bareJid.includes('conference.') || bareJid.includes('muc.') || bareJid.includes('chat.') ? 'room' : 'person';
-            });
+            ih = new IncomingHandlers(makeSession({ sendToClient }));
         });
 
         stanzas.forEach(([name, stanza, asobject]) => {
-            it(name, async () => {
+            it(name, () => {
                 const xmlObj = parse(stanza);
-                await ih.stanza(xmlObj);
-                
+                ih.stanza(xmlObj);
                 sinon.assert.calledWith(sendToClient, asobject);
             });
 
@@ -52,165 +48,154 @@ describe("Incoming handlers", () => {
         });
     });
 
-    describe("Actor type determination", () => {
-        let ih, mockSession;
+    describe("Room presence actor type via __knownRooms", () => {
+        let ih, session;
+        const ROOM_JID = "test@conference.example.org";
+        const PERSON_JID = "user@example.org";
 
         beforeEach(() => {
-            mockSession = {
-                debug: sinon.fake(),
-                __xml: sinon.fake(),
-                __client: {
-                    sendReceive: sinon.stub()
-                }
-            };
-            ih = new IncomingHandlers(mockSession);
+            session = makeSession();
+            ih = new IncomingHandlers(session);
         });
 
-        it("should identify room via MUC feature in service discovery", async () => {
-            const mockResponse = {
-                getChild: sinon.fake.returns({
-                    getChildren: sinon.fake((type) => {
-                        if (type === 'feature') {
-                            return [{ attrs: { var: 'http://jabber.org/protocol/muc' } }];
-                        }
-                        return [];
-                    })
-                })
-            };
-            mockSession.__client.sendReceive.resolves(mockResponse);
-
-            const result = await ih.determineActorType('room@conference.example.org/user');
-            expect(result).toBe('room');
+        it("presence from an unknown JID is typed as person", () => {
+            const stanza = parse(
+                `<presence from="${PERSON_JID}" to="me@example.org"/>`,
+            );
+            ih.stanza(stanza);
+            sinon.assert.calledOnce(session.sendToClient);
+            expect(session.sendToClient.getCall(0).args[0].actor.type).toEqual(
+                "person",
+            );
         });
 
-        it("should identify room via conference identity in service discovery", async () => {
-            const mockResponse = {
-                getChild: sinon.fake.returns({
-                    getChildren: sinon.fake((type) => {
-                        if (type === 'feature') {
-                            return [];
-                        } else if (type === 'identity') {
-                            return [{ attrs: { category: 'conference' } }];
-                        }
-                        return [];
-                    })
-                })
-            };
-            mockSession.__client.sendReceive.resolves(mockResponse);
-
-            const result = await ih.determineActorType('chatroom@muc.example.org');
-            expect(result).toBe('room');
+        it("presence from a registered room JID is typed as room", () => {
+            session.__knownRooms.add(ROOM_JID);
+            const stanza = parse(
+                `<presence from="${ROOM_JID}/Nick" to="me@example.org"/>`,
+            );
+            ih.stanza(stanza);
+            sinon.assert.calledOnce(session.sendToClient);
+            expect(session.sendToClient.getCall(0).args[0].actor.type).toEqual(
+                "room",
+            );
         });
 
-        it("should default to person when service discovery finds no room indicators", async () => {
-            const mockResponse = {
-                getChild: sinon.fake.returns({
-                    getChildren: sinon.fake(() => [])
-                })
-            };
-            mockSession.__client.sendReceive.resolves(mockResponse);
-
-            const result = await ih.determineActorType('user@example.org');
-            expect(result).toBe('person');
+        it("strips resource from JID before looking up in __knownRooms", () => {
+            session.__knownRooms.add(ROOM_JID);
+            // from includes a /resource portion
+            const stanza = parse(
+                `<presence from="${ROOM_JID}/SomeMember" to="me@example.org"/>`,
+            );
+            ih.stanza(stanza);
+            expect(session.sendToClient.getCall(0).args[0].actor.type).toEqual(
+                "room",
+            );
         });
 
-        it("should fall back to heuristic when service discovery fails", async () => {
-            mockSession.__client.sendReceive.rejects(new Error('Service discovery timeout'));
-
-            const roomResult = await ih.determineActorType('test@conference.example.org');
-            expect(roomResult).toBe('room');
-
-            const personResult = await ih.determineActorType('user@example.org');
-            expect(personResult).toBe('person');
+        it("presence from a JID removed from __knownRooms reverts to person", () => {
+            session.__knownRooms.add(ROOM_JID);
+            session.__knownRooms.delete(ROOM_JID);
+            const stanza = parse(
+                `<presence from="${ROOM_JID}" to="me@example.org"/>`,
+            );
+            ih.stanza(stanza);
+            expect(session.sendToClient.getCall(0).args[0].actor.type).toEqual(
+                "person",
+            );
         });
 
-        it("should cache results to avoid repeated queries", async () => {
-            const mockResponse = {
-                getChild: sinon.fake.returns({
-                    getChildren: sinon.fake(() => [{ attrs: { var: 'http://jabber.org/protocol/muc' } }])
-                })
-            };
-            mockSession.__client.sendReceive.resolves(mockResponse);
+        it("multiple rooms in __knownRooms are each typed correctly", () => {
+            const ROOM_A = "room-a@conference.example.org";
+            const ROOM_B = "room-b@conference.example.org";
+            session.__knownRooms.add(ROOM_A);
+            session.__knownRooms.add(ROOM_B);
 
-            // First call
-            await ih.determineActorType('room@conference.example.org/user1');
-            // Second call with different resource should use cache
-            await ih.determineActorType('room@conference.example.org/user2');
+            const stanzaA = parse(
+                `<presence from="${ROOM_A}/Nick" to="me@example.org"/>`,
+            );
+            const stanzaB = parse(
+                `<presence from="${ROOM_B}/Nick" to="me@example.org"/>`,
+            );
+            const stanzaP = parse(
+                `<presence from="${PERSON_JID}" to="me@example.org"/>`,
+            );
 
-            // Service discovery should only be called once due to caching
-            sinon.assert.calledOnce(mockSession.__client.sendReceive);
+            ih.stanza(stanzaA);
+            ih.stanza(stanzaB);
+            ih.stanza(stanzaP);
+
+            const calls = session.sendToClient.getCalls();
+            expect(calls[0].args[0].actor.type).toEqual("room");
+            expect(calls[1].args[0].actor.type).toEqual("room");
+            expect(calls[2].args[0].actor.type).toEqual("person");
+        });
+
+        it("group presence from a joined room (no 'to' attr) sets actor.name from resource", () => {
+            session.__knownRooms.add("speedboat@conference.xmpp.example.org");
+            const stanza = parse(
+                `<presence from='speedboat@conference.xmpp.example.org/user123'><show>chat</show> <status>brrroom!</status></presence>`,
+            );
+            ih.stanza(stanza);
+            const msg = session.sendToClient.getCall(0).args[0];
+            expect(msg.actor.type).toEqual("room");
+            expect(msg.actor.name).toEqual("user123");
+            expect(msg.object.presence).toEqual("chat");
+            expect(msg.object.content).toEqual("brrroom!");
+            expect(msg.target).toBeUndefined();
+        });
+
+        it("presence object has the correct structure", () => {
+            session.__knownRooms.add(ROOM_JID);
+            const stanza = parse(
+                `<presence from="${ROOM_JID}/Nick" to="me@example.org"><show>away</show><status>Be right back</status></presence>`,
+            );
+            ih.stanza(stanza);
+            const msg = session.sendToClient.getCall(0).args[0];
+            expect(msg.type).toEqual("update");
+            expect(msg.actor.type).toEqual("room");
+            expect(msg.actor.id).toEqual(`${ROOM_JID}/Nick`);
+            expect(msg.object.type).toEqual("presence");
+            expect(msg.object.presence).toEqual("away");
+            expect(msg.object.content).toEqual("Be right back");
+            expect(msg.target.id).toEqual("me@example.org");
+            expect(msg.target.type).toEqual("person");
         });
     });
-  
+
     describe("Error handling edge cases", () => {
         it("close() should handle undefined session gracefully", () => {
             const ih = new IncomingHandlers();
             ih.session = undefined;
-            
-            // This should not throw an error
             expect(() => ih.close()).not.toThrow();
         });
 
         it("close() should handle session without actor gracefully", () => {
-            const sendToClient = sinon.fake();
-            const log = {
-                error: sinon.fake(),
-                warn: sinon.fake(),
-                info: sinon.fake(),
-                debug: sinon.fake(),
-            };
-            
-            const ih = new IncomingHandlers({
-                sendToClient: sendToClient,
-                log: log,
-                actor: undefined,
-                connection: undefined
-            });
-            
-            // This should not throw an error
+            const log = { debug: sinon.fake() };
+            const ih = new IncomingHandlers(
+                makeSession({ log, actor: undefined }),
+            );
             expect(() => ih.close()).not.toThrow();
-            
-            // Should still call log.debug
-            sinon.assert.calledWith(log.debug, "received close event with no handler specified");
+            sinon.assert.calledWith(
+                log.debug,
+                "received close event with no handler specified",
+            );
         });
 
         it("close() should handle session without connection gracefully", () => {
-            const sendToClient = sinon.fake();
-            const log = {
-                error: sinon.fake(),
-                warn: sinon.fake(),
-                info: sinon.fake(),
-                debug: sinon.fake(),
-            };
-            
-            const ih = new IncomingHandlers({
-                sendToClient: sendToClient,
-                log: log,
-                actor: { id: "test@example.com" },
-                connection: undefined
-            });
-            
-            // This should not throw an error
+            const ih = new IncomingHandlers(
+                makeSession({ actor: { id: "test@example.com" } }),
+            );
             expect(() => ih.close()).not.toThrow();
         });
 
         it("close() should handle session with invalid connection gracefully", () => {
-            const sendToClient = sinon.fake();
-            const log = {
-                error: sinon.fake(),
-                warn: sinon.fake(),
-                info: sinon.fake(),
-                debug: sinon.fake(),
-            };
-            
-            const ih = new IncomingHandlers({
-                sendToClient: sendToClient,
-                log: log,
-                actor: { id: "test@example.com" },
-                connection: { disconnect: null } // invalid disconnect method
-            });
-            
-            // This should not throw an error
+            const ih = new IncomingHandlers(
+                makeSession({
+                    actor: { id: "test@example.com" },
+                    connection: { disconnect: null },
+                }),
+            );
             expect(() => ih.close()).not.toThrow();
         });
     });

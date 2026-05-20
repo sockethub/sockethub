@@ -191,24 +191,6 @@ export const stanzas = [
         },
     ],
     [
-        "group presence",
-        `<presence from='speedboat@conference.xmpp.example.org/user123'><show>chat</show> <status>brrroom!</status></presence>`,
-        {
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
-            ],
-            type: "update",
-            actor: {
-                id: "speedboat@conference.xmpp.example.org/user123",
-                type: "room",
-                name: "user123",
-            },
-            object: { type: "presence", content: "brrroom!", presence: "chat" },
-        },
-    ],
-    [
         "group message",
         `<message from='coven@chat.shakespeare.lit/thirdwitch' id='hysf1v37' to='crone1@shakespeare.lit/desktop' type='groupchat'>
        <stanza-id id="123456789" />

@@ -43,6 +43,7 @@ export default class XMPP {
             requireCredentials: ["connect"],
         };
         this.__initialized = false; // Private state for initialization tracking
+        this.__knownRooms = new Set();
         this.log = session.log;
         this.sendToClient = session.sendToClient;
         this.createClient();
@@ -326,13 +327,15 @@ export default class XMPP {
      * @param {object} done callback when job is done
      */
     async join(job, done) {
+        const roomJid = job.target.id.split("/")[0];
+        this.__knownRooms.add(roomJid);
         this.log.debug(
             `sending join from ${job.actor.id} to ` +
                 `${job.target.id}/${job.actor.name}`,
         );
         // TODO optional passwords not handled for now
         // TODO investigate implementation reserved nickname discovery
-        const id = job.target.id.split("/")[0];
+        const id = roomJid;
 
         const presence = this.__xml(
             "presence",
@@ -353,12 +356,14 @@ export default class XMPP {
      * @param {object} done callback when job is done
      */
     leave(job, done) {
+        const roomJid = job.target.id.split("/")[0];
+        this.__knownRooms.delete(roomJid);
         this.log.debug(
             `sending leave from ${job.actor.id} to ` +
                 `${job.target.id}/${job.actor.name}`,
         );
 
-        const id = job.target.id.split("/")[0];
+        const id = roomJid;
 
         this.__client
             .send(
