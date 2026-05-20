@@ -316,7 +316,9 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                                 `waiting for room presence — received so far: ${JSON.stringify(roomPresences)}`,
                         );
                         expect(roomPresences[0].actor.type).to.equal("room");
-                        expect(platformIdFromContext(roomPresences[0]["@context"])).to.equal("xmpp");
+                        expect(
+                            platformIdFromContext(roomPresences[0]["@context"]),
+                        ).to.equal("xmpp");
                     } finally {
                         sc.socket.off("message", listener);
                     }
