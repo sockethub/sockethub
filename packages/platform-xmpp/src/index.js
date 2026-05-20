@@ -341,7 +341,7 @@ export default class XMPP {
             "presence",
             {
                 from: job.actor.id,
-                to: `${job.target.id}/${job.actor.name || id}`,
+                to: `${roomJid}/${job.actor.name || id}`,
             },
             this.__xml("x", { xmlns: "http://jabber.org/protocol/muc" }),
         );
