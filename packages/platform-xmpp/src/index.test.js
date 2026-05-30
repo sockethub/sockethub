@@ -417,6 +417,22 @@ describe("XMPP", () => {
                     done();
                 });
             });
+
+            it("strips resource from target JID before sending unavailable presence", (done) => {
+                const jobWithResource = {
+                    ...job.leave,
+                    target: { type: "room", id: "partyroom@jabber.net/someroom" },
+                };
+
+                xp.leave(jobWithResource, () => {
+                    sinon.assert.calledWith(xmlFake, "presence", {
+                        from: "testingham@jabber.net",
+                        to: "partyroom@jabber.net/testing ham",
+                        type: "unavailable",
+                    });
+                    done();
+                });
+            });
         });
 
         describe("#send", () => {
@@ -623,8 +639,10 @@ describe("XMPP", () => {
         describe("#cleanup", () => {
             it("calls client.stop", (done) => {
                 expect(xp.isInitialized()).toEqual(true);
+                xp.__knownRooms.add("partyroom@jabber.net");
                 xp.cleanup(() => {
                     expect(xp.isInitialized()).toEqual(false);
+                    expect(xp.__knownRooms.has("partyroom@jabber.net")).toBeFalse();
                     sinon.assert.calledOnce(xp.__client.stop);
                     done()
                 });
