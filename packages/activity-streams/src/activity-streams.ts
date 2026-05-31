@@ -89,7 +89,6 @@ const baseProps = {
         "titleMap",
         "updated",
         "url",
-        "xmpp:stanza-id",
     ],
 } as const;
 const expand = {
@@ -121,6 +120,33 @@ let specialObjs: string[] = []; // the objects don't get rejected for bad props
 function matchesCustomProp(type: string, key: string) {
     const props = customProps[type];
     return Array.isArray(props) && props.includes(key);
+}
+
+function registerObjectProps(type: string, props: string[]) {
+    if (typeof type !== "string" || !Array.isArray(props)) {
+        return;
+    }
+    const current = new Set(customProps[type] || []);
+    for (const prop of props) {
+        if (typeof prop === "string" && prop.length > 0) {
+            current.add(prop);
+        }
+    }
+    customProps[type] = [...current];
+}
+
+function formatUnknownPropertyValue(value: unknown): string {
+    if (typeof value === "string") {
+        return `"${value}"`;
+    }
+    if (value && typeof value === "object") {
+        try {
+            return JSON.stringify(value);
+        } catch (_err) {
+            return String(value);
+        }
+    }
+    return String(value);
 }
 
 function validateObject(
@@ -183,8 +209,7 @@ function validateObject(
         if (!specialObjs.includes(ao.type)) {
             // not defined as a special prop
             // don't know what to do with it, so throw error
-            const receivedValue =
-                typeof ao[key] === "string" ? `"${ao[key]}"` : String(ao[key]);
+            const receivedValue = formatUnknownPropertyValue(ao[key]);
             const err = `ActivityStreams validation failed: property "${key}" with value ${receivedValue} is not allowed on the "${type}" object of type "${ao.type}".`;
             if (failOnUnknownObjectProperties) {
                 throw new Error(err);
@@ -295,6 +320,7 @@ type EventCallback = (...args: unknown[]) => void;
 export interface ASManager {
     Stream(meta: ActivityStream | unknown): ActivityStream | ActivityObject;
     Object: ActivityObjectManager;
+    registerObjectProps(type: string, props: string[]): void;
     on(event: string, func: EventCallback): void;
     once(event: string, func: EventCallback): void;
     off(event: string, func: EventCallback): void;
@@ -318,6 +344,7 @@ export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
     return {
         Stream: Stream,
         Object: _Object,
+        registerObjectProps,
         on: (event, func) => ee.on(event, func),
         once: (event, func) => ee.once(event, func),
         off: (event, funcName) => ee.off(event, funcName),

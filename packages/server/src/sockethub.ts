@@ -133,6 +133,7 @@ class Sockethub {
                     contextVersion: platform.contextVersion,
                     schemaVersion: platform.schemaVersion,
                     types: platform.types,
+                    extensions: platform.extensions || {},
                     schemas: {
                         credentials: platform.schemas.credentials || {},
                         messages: platform.schemas.messages || {},

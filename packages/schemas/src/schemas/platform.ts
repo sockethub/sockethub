@@ -58,6 +58,23 @@ export const PlatformSchema = {
             type: "object",
         },
 
+        extensions: {
+            title: "extensions",
+            type: "object",
+            additionalProperties: false,
+            properties: {
+                object: {
+                    type: "object",
+                    additionalProperties: {
+                        type: "array",
+                        items: {
+                            type: "string",
+                        },
+                    },
+                },
+            },
+        },
+
         name: {
             title: "name",
             type: "string",

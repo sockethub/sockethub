@@ -19,6 +19,11 @@ const TEST_REGISTRY = {
             contextVersion: "9",
             schemaVersion: "9",
             types: ["connect", "send", "join", "leave", "disconnect"],
+            extensions: {
+                object: {
+                    message: ["xmpp:replace", "xmpp:stanza-id"],
+                },
+            },
             schemas: {
                 messages: {},
                 credentials: {},
@@ -86,6 +91,7 @@ describe("SockethubClient", () => {
         asInstance.Object = {
             create: sandbox.stub(),
         };
+        asInstance.registerObjectProps = sandbox.stub();
         class TestSockethubClient extends SockethubClient {
             initActivityStreams() {
                 this.ActivityStreams = asInstance as ASManager;
@@ -175,6 +181,17 @@ describe("SockethubClient", () => {
                 "https://example.com/sh",
                 "https://example.com/context/platform/xmpp/v9.jsonld",
             ]);
+        });
+
+        it("registers platform ActivityStreams extension props", () => {
+            socket.emit("schemas", TEST_REGISTRY);
+
+            expect(
+                asInstance.registerObjectProps.calledWith("message", [
+                    "xmpp:replace",
+                    "xmpp:stanza-id",
+                ]),
+            ).to.equal(true);
         });
 
         it("throws for unknown platform when registry is loaded", () => {

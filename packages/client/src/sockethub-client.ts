@@ -73,6 +73,10 @@ interface PlatformRegistrySchemas {
     messages?: object;
 }
 
+interface ActivityStreamsExtensions {
+    object?: Record<string, string[]>;
+}
+
 /**
  * Server-declared platform metadata used by the client for context generation
  * and runtime validation.
@@ -85,6 +89,7 @@ export interface PlatformRegistryEntry {
     schemaVersion: string;
     types: Array<string>;
     schemas: PlatformRegistrySchemas;
+    extensions?: ActivityStreamsExtensions;
 }
 
 export interface PlatformRegistryPayload {
@@ -299,6 +304,9 @@ export default class SockethubClient {
             ...platform,
             types: [...platform.types],
             schemas: { ...platform.schemas },
+            extensions: platform.extensions
+                ? { object: { ...platform.extensions.object } }
+                : undefined,
         }));
     }
 
@@ -509,7 +517,11 @@ export default class SockethubClient {
                 version: platform.version,
                 types: Array.isArray(platform.types) ? platform.types : [],
                 schemas: platform.schemas || {},
+                extensions: this.normalizeActivityStreamsExtensions(
+                    platform.extensions,
+                ),
             });
+            this.registerActivityStreamsExtensions(platform.extensions);
             addPlatformContext(platform.id, platform.contextUrl);
             try {
                 const credSchema = platform.schemas?.credentials;
@@ -542,6 +554,43 @@ export default class SockethubClient {
         // Emit normalized registry payload so app code receives a stable shape.
         this.socket._emit("schemas", normalizedPayload);
         return normalizedPayload;
+    }
+
+    private normalizeActivityStreamsExtensions(
+        extensions: unknown,
+    ): ActivityStreamsExtensions | undefined {
+        if (!extensions || typeof extensions !== "object") {
+            return undefined;
+        }
+        const objectExtensions = (extensions as ActivityStreamsExtensions)
+            .object;
+        if (!objectExtensions || typeof objectExtensions !== "object") {
+            return undefined;
+        }
+        const object: Record<string, string[]> = {};
+        for (const [type, props] of Object.entries(objectExtensions)) {
+            if (!Array.isArray(props)) {
+                continue;
+            }
+            const validProps = props.filter(
+                (prop): prop is string =>
+                    typeof prop === "string" && prop.length > 0,
+            );
+            if (validProps.length > 0) {
+                object[type] = validProps;
+            }
+        }
+        return Object.keys(object).length > 0 ? { object } : undefined;
+    }
+
+    private registerActivityStreamsExtensions(extensions: unknown) {
+        const normalized = this.normalizeActivityStreamsExtensions(extensions);
+        if (!normalized?.object) {
+            return;
+        }
+        for (const [type, props] of Object.entries(normalized.object)) {
+            this.ActivityStreams.registerObjectProps(type, props);
+        }
     }
 
     private eventActivityObject(content: ActivityObject) {
