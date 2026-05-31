@@ -10,6 +10,7 @@ import {
     sendXMPPMessage,
     setXMPPCredentials,
     validateGlobals,
+    waitFor,
 } from "./shared-setup.js";
 
 const config = getConfig();
@@ -286,6 +287,43 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     );
                 });
             });
+
+            describe("Room presence actor type (issue #679)", () => {
+                // When the platform joins a room, it registers the room JID in
+                // __knownRooms. Presence updates from that JID should be typed
+                // as "room", not "person".
+                it("presence from a joined room JID has actor.type 'room'", async () => {
+                    const roomId = config.prosody.room;
+                    const roomPresences = [];
+                    const listener = (msg) => {
+                        if (
+                            msg.type === "update" &&
+                            msg.object?.type === "presence" &&
+                            msg.actor?.id?.startsWith(roomId)
+                        ) {
+                            roomPresences.push(msg);
+                        }
+                    };
+                    sc.socket.on("message", listener);
+                    try {
+                        // Re-join to trigger a fresh presence update from the room.
+                        await joinXMPPRoom(sc, jid, roomId);
+                        await waitFor(
+                            () => roomPresences.length > 0,
+                            config.timeouts.message,
+                            50,
+                            () =>
+                                `waiting for room presence — received so far: ${JSON.stringify(roomPresences)}`,
+                        );
+                        expect(roomPresences[0].actor.type).to.equal("room");
+                        expect(
+                            platformIdFromContext(roomPresences[0]["@context"]),
+                        ).to.equal("xmpp");
+                    } finally {
+                        sc.socket.off("message", listener);
+                    }
+                });
+            });
         });
 
         describe("IPC Channel Closed Error Reproduction", () => {
@@ -395,15 +433,22 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
 
         describe("Incoming Message queue", () => {
             it("should only contain known server-pushed messages", () => {
-                // The server may push 0-2 unsolicited messages during the test
-                // (e.g. XMPP service-unavailable errors from room joins or
-                // failed connect attempts with invalid credentials).
-                expect(incomingMessages.length).to.be.at.most(2);
+                // The server may push unsolicited messages during the test:
+                // - XMPP service-unavailable errors from non-MUC joins or failed connects
+                // - Presence updates from MUC room joins (actor-type test)
+                expect(incomingMessages.length).to.be.at.most(4);
                 for (const msg of incomingMessages) {
                     expect(platformIdFromContext(msg["@context"])).to.equal(
                         "xmpp",
                     );
-                    expect(msg).to.have.property("error").that.is.a("string");
+                    const hasError = typeof msg.error === "string";
+                    const isPresenceUpdate =
+                        msg.type === "update" &&
+                        msg.object?.type === "presence";
+                    expect(
+                        hasError || isPresenceUpdate,
+                        `unexpected message: ${JSON.stringify(msg)}`,
+                    ).to.be.true;
                 }
             });
         });
