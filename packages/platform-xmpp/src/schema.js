@@ -25,6 +25,11 @@ export const PlatformSchema = {
             },
         },
     },
+    extensions: {
+        object: {
+            message: ["xmpp:replace", "xmpp:stanza-id"],
+        },
+    },
     credentials: {
         required: ["object"],
         properties: {

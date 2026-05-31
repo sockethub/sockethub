@@ -204,6 +204,45 @@ describe("basic tests", () => {
                 });
             }).toThrow('ActivityStreams validation failed: property "foo" with value "bar" is not allowed on the "object" object of type "hola".');
         });
+
+        test("formats unknown object property values as JSON", () => {
+            expect(() => {
+                activity.Stream({
+                    type: "send",
+                    "@context": IRC_CONTEXT,
+                    actor: "thingy",
+                    object: {
+                        type: "message",
+                        content: "corrected message",
+                        "xmpp:replace": { id: "old-message-id" },
+                    },
+                    target: "thingy2",
+                });
+            }).toThrow('ActivityStreams validation failed: property "xmpp:replace" with value {"id":"old-message-id"} is not allowed on the "object" object of type "message".');
+        });
+
+        test("allows dynamically registered object properties", () => {
+            activity.registerObjectProps("message", [
+                "xmpp:replace",
+                "xmpp:stanza-id",
+            ]);
+
+            expect(() => {
+                activity.Stream({
+                    type: "send",
+                    "@context": IRC_CONTEXT,
+                    actor: "thingy",
+                    object: {
+                        type: "message",
+                        id: "new-message-id",
+                        content: "corrected message",
+                        "xmpp:replace": { id: "old-message-id" },
+                        "xmpp:stanza-id": "stanza-id",
+                    },
+                    target: "thingy2",
+                });
+            }).not.toThrow();
+        });
     });
 
     describe("emitters", () => {
