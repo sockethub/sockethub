@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { randomUUID } from "node:crypto";
 import { client, xml } from "@xmpp/client";
 
 import { IncomingHandlers } from "./incoming-handlers.js";
@@ -522,6 +523,81 @@ export default class XMPP {
                 ),
             )
             .then(done);
+    }
+
+    /**
+     * Query room information using service discovery (disco#info).
+     *
+     * Sends the IQ query and calls done() once the query is dispatched.
+     * The room info response arrives asynchronously as a separate 'room-info'
+     * event delivered via sendToClient.
+     *
+     * @param {object} job activity streams object
+     * @param {object} done callback when query is sent (not when response arrives)
+     *
+     * @example
+     *
+     * // Request:
+     * {
+     *   type: 'room-info',
+     *   actor: {
+     *     id: 'jimmy@kosmos.org/pidgin',
+     *     type: 'person'
+     *   },
+     *   target: {
+     *     id: 'kosmos@kosmos.chat',
+     *     type: 'room'
+     *   }
+     * }
+     *
+     * // Async response (delivered via sendToClient):
+     * {
+     *   type: 'room-info',
+     *   actor: {
+     *     id: 'kosmos@kosmos.chat',
+     *     type: 'room',
+     *     name: 'Room Display Name'
+     *   },
+     *   target: {
+     *     id: 'jimmy@kosmos.org/pidgin',
+     *     type: 'person'
+     *   },
+     *   object: {
+     *     type: 'room-info',
+     *     features: ['http://jabber.org/protocol/muc', 'muc_passwordprotected'],
+     *     identities: [{
+     *       category: 'conference',
+     *       type: 'text',
+     *       name: 'Room Display Name'
+     *     }]
+     *   }
+     * }
+     */
+    roomInfo(job, done) {
+        this.log.debug(
+            `sending room-info query from ${job.actor.id} for ${job.target.id}`,
+        );
+
+        // Generate unique ID for this disco#info query
+        const queryId = `room_info_${randomUUID()}`;
+
+        this.__client
+            .send(
+                this.__xml(
+                    "iq",
+                    {
+                        id: queryId,
+                        type: "get",
+                        from: job.actor.id,
+                        to: job.target.id,
+                    },
+                    this.__xml("query", {
+                        xmlns: "http://jabber.org/protocol/disco#info",
+                    }),
+                ),
+            )
+            .then(done)
+            .catch(done);
     }
 
     /**
