@@ -204,6 +204,23 @@ describe("basic tests", () => {
                 });
             }).toThrow('ActivityStreams validation failed: property "foo" with value "bar" is not allowed on the "object" object of type "hola".');
         });
+
+        test("allows XMPP message correction metadata", () => {
+            expect(() => {
+                activity.Stream({
+                    type: "send",
+                    "@context": IRC_CONTEXT,
+                    actor: "thingy",
+                    object: {
+                        type: "message",
+                        id: "new-message-id",
+                        content: "corrected message",
+                        "xmpp:replace": { id: "old-message-id" },
+                    },
+                    target: "thingy2",
+                });
+            }).not.toThrow();
+        });
     });
 
     describe("emitters", () => {
