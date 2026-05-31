@@ -107,11 +107,16 @@ export class IncomingHandlers {
     }
 
     presence(stanza) {
+        const bareJid = stanza.attrs.from.split("/")[0];
+        const actorType = this.session.__knownRooms.has(bareJid)
+            ? "room"
+            : "person";
+
         const obj = {
             "@context": XMPP_CONTEXT,
             type: "update",
             actor: {
-                type: "person",
+                type: actorType,
                 id: stanza.attrs.from,
             },
             object: {
@@ -128,7 +133,7 @@ export class IncomingHandlers {
             obj.actor.name = stanza.attrs.from.split("/")[1];
         }
         this.session.log.debug(
-            `received contact presence update from ${stanza.attrs.from}`,
+            `received ${actorType} contact presence update from ${stanza.attrs.from}`,
         );
         this.session.sendToClient(obj);
     }

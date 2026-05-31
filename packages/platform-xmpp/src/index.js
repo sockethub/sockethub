@@ -43,6 +43,7 @@ export default class XMPP {
             requireCredentials: ["connect"],
         };
         this.__initialized = false; // Private state for initialization tracking
+        this.__knownRooms = new Set();
         this.log = session.log;
         this.sendToClient = session.sendToClient;
         this.createClient();
@@ -326,24 +327,29 @@ export default class XMPP {
      * @param {object} done callback when job is done
      */
     async join(job, done) {
+        const roomJid = job.target.id.split("/")[0];
         this.log.debug(
             `sending join from ${job.actor.id} to ` +
-                `${job.target.id}/${job.actor.name}`,
+                `${roomJid}/${job.actor.name}`,
         );
         // TODO optional passwords not handled for now
         // TODO investigate implementation reserved nickname discovery
-        const id = job.target.id.split("/")[0];
-
         const presence = this.__xml(
             "presence",
             {
                 from: job.actor.id,
-                to: `${job.target.id}/${job.actor.name || id}`,
+                to: `${roomJid}/${job.actor.name || roomJid}`,
             },
             this.__xml("x", { xmlns: "http://jabber.org/protocol/muc" }),
         );
 
-        return this.__client.send(presence).then(done).catch(done);
+        return this.__client
+            .send(presence)
+            .then(() => {
+                this.__knownRooms.add(roomJid);
+                done();
+            })
+            .catch((err) => done(err));
     }
 
     /**
@@ -353,25 +359,25 @@ export default class XMPP {
      * @param {object} done callback when job is done
      */
     leave(job, done) {
+        const roomJid = job.target.id.split("/")[0];
         this.log.debug(
             `sending leave from ${job.actor.id} to ` +
-                `${job.target.id}/${job.actor.name}`,
+                `${roomJid}/${job.actor.name}`,
         );
-
-        const id = job.target.id.split("/")[0];
 
         this.__client
             .send(
                 this.__xml("presence", {
                     from: job.actor.id,
-                    to:
-                        job.target?.id && job.actor?.name
-                            ? `${job.target.id}/${job.actor.name}`
-                            : id,
+                    to: `${roomJid}/${job.actor.name || roomJid}`,
                     type: "unavailable",
                 }),
             )
-            .then(done);
+            .then(() => {
+                this.__knownRooms.delete(roomJid);
+                done();
+            })
+            .catch((err) => done(err));
     }
 
     /**
@@ -536,6 +542,7 @@ export default class XMPP {
     cleanup(done) {
         this.log.debug("cleanup");
         this.__initialized = false;
+        this.__knownRooms.clear();
         if (this.__client && typeof this.__client.stop === "function") {
             this.__client.stop();
         }
