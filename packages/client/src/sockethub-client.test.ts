@@ -13,9 +13,10 @@ const TEST_REGISTRY = {
     },
     platforms: [
         {
-            id: "xmpp",
+            id: "test-xmpp",
             version: "1.0.0",
-            contextUrl: "https://example.com/context/platform/xmpp/v9.jsonld",
+            contextUrl:
+                "https://example.com/context/platform/test-xmpp/v9.jsonld",
             contextVersion: "9",
             schemaVersion: "9",
             types: ["connect", "send", "join", "leave", "disconnect"],
@@ -163,11 +164,11 @@ describe("SockethubClient", () => {
                 as: "https://example.com/as2",
                 sockethub: "https://example.com/sh",
             });
-            expect(registry.platforms?.[0]?.id).to.equal("xmpp");
+            expect(registry.platforms?.[0]?.id).to.equal("test-xmpp");
         });
 
         it("throws before schema registry is loaded", () => {
-            expect(() => sc.contextFor("xmpp")).to.throw(
+            expect(() => sc.contextFor("test-xmpp")).to.throw(
                 "Schema registry not loaded yet",
             );
         });
@@ -181,10 +182,10 @@ describe("SockethubClient", () => {
         it("uses server-provided contexts and platform context URL", () => {
             socket.emit("schemas", TEST_REGISTRY);
 
-            expect(sc.contextFor("xmpp")).to.eql([
+            expect(sc.contextFor("test-xmpp")).to.eql([
                 "https://example.com/as2",
                 "https://example.com/sh",
-                "https://example.com/context/platform/xmpp/v9.jsonld",
+                "https://example.com/context/platform/test-xmpp/v9.jsonld",
             ]);
         });
 
@@ -426,7 +427,7 @@ describe("SockethubClient", () => {
                     sockethub: "https://example.com/sh",
                 });
                 expect(registry.platforms).to.be.an("array");
-                expect(registry.platforms[0]?.id).to.equal("xmpp");
+                expect(registry.platforms[0]?.id).to.equal("test-xmpp");
                 done();
             });
             socket.emit("schemas", {
@@ -437,10 +438,10 @@ describe("SockethubClient", () => {
                 },
                 platforms: [
                     {
-                        id: "xmpp",
+                        id: "test-xmpp",
                         version: "1.0.0",
                         contextUrl:
-                            "https://example.com/context/platform/xmpp/v9.jsonld",
+                            "https://example.com/context/platform/test-xmpp/v9.jsonld",
                         contextVersion: "9",
                         schemaVersion: "9",
                         types: ["connect"],
