@@ -1,5 +1,6 @@
 import { buildCanonicalContext } from "@sockethub/schemas";
 import { PlatformSchema } from "./schema.js";
+import { utils } from "./utils.js";
 
 const XMPP_CONTEXT = buildCanonicalContext(PlatformSchema.contextUrl);
 
@@ -301,6 +302,39 @@ export class IncomingHandlers {
             const object = { type: "room-info", features: featureList };
             if (identities.length > 0) {
                 object.identities = identities;
+            }
+
+            // Extract extended room info data form (XEP-0128/XEP-0004)
+            const x = query
+                .getChildren("x")
+                .find((el) => el.attrs.xmlns === "jabber:x:data");
+
+            if (x) {
+                const fields = x.getChildren("field");
+                for (const field of fields) {
+                    const parsed = utils.parseXDataField(field);
+                    if (!parsed) {
+                        continue;
+                    }
+
+                    // Split the key
+                    let section = "custom";
+                    let key = parsed.var;
+
+                    if (parsed.var.startsWith("muc#")) {
+                        const remainder = parsed.var.slice(4); // remove "muc#"
+                        const underscoreIdx = remainder.indexOf("_");
+                        if (underscoreIdx !== -1) {
+                            section = remainder.slice(0, underscoreIdx);
+                            key = remainder.slice(underscoreIdx + 1);
+                        }
+                    }
+
+                    if (!object[section]) {
+                        object[section] = {};
+                    }
+                    object[section][key] = parsed.field;
+                }
             }
 
             this.session.sendToClient({

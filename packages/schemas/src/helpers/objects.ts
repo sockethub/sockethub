@@ -1,6 +1,29 @@
 export const validObjectRefs: Array<{ $ref: string }> = [];
 export const validObjectDefs: Record<string, unknown> = {};
 
+const roomInfoFieldSchema = {
+    type: "object",
+    properties: {
+        type: { type: "string" },
+        label: { type: "string" },
+        value: {
+            type: ["string", "number", "boolean", "array", "null"],
+        },
+        options: {
+            type: "array",
+            items: {
+                type: "object",
+                required: ["label", "value"],
+                additionalProperties: false,
+                properties: {
+                    label: { type: "string" },
+                    value: { type: "string" },
+                },
+            },
+        },
+    },
+};
+
 export const ObjectTypesSchema = {
     credentials: {
         required: ["type"],
@@ -198,6 +221,18 @@ export const ObjectTypesSchema = {
                         },
                     },
                 },
+            },
+            roominfo: {
+                type: "object",
+                additionalProperties: roomInfoFieldSchema,
+            },
+            roomconfig: {
+                type: "object",
+                additionalProperties: roomInfoFieldSchema,
+            },
+            custom: {
+                type: "object",
+                additionalProperties: roomInfoFieldSchema,
             },
         },
     },

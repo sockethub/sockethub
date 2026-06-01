@@ -107,6 +107,38 @@ describe("Incoming handlers", () => {
             ih.stanza(stanza);
             sinon.assert.notCalled(sendToClient);
         });
+
+        it("groups fields without 'muc#' prefix or underscore into 'custom'", () => {
+            const stanza = parse(
+                `<iq from='room@conference.example.org' to='user@example.org' type='result' id='room_info_custom'>
+                  <query xmlns='http://jabber.org/protocol/disco#info'>
+                    <x type='result' xmlns='jabber:x:data'>
+                      <field var='some_custom_key' type='text-single' label='Custom Key'>
+                        <value>custom_val</value>
+                      </field>
+                      <field var='flatkey' type='text-single' label='Flat Key'>
+                        <value>flat_val</value>
+                      </field>
+                    </x>
+                  </query>
+                </iq>`,
+            );
+            ih.stanza(stanza);
+            sinon.assert.calledOnce(sendToClient);
+            const arg = sendToClient.getCall(0).args[0];
+            expect(arg.type).toEqual("room-info");
+            expect(arg.object.custom).toBeDefined();
+            expect(arg.object.custom.some_custom_key).toEqual({
+                type: "text-single",
+                label: "Custom Key",
+                value: "custom_val",
+            });
+            expect(arg.object.custom.flatkey).toEqual({
+                type: "text-single",
+                label: "Flat Key",
+                value: "flat_val",
+            });
+        });
     });
   
     describe("Room presence actor type via __knownRooms", () => {
