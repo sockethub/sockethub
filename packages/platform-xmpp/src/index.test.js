@@ -628,7 +628,7 @@ describe("XMPP", () => {
 
         describe("#room-info", () => {
             it("calls xmpp.js correctly", (done) => {
-                xp.roomInfo(job["room-info"], () => {
+                xp["room-info"](job["room-info"], () => {
                     sinon.assert.calledOnce(xp.__client.send);
                     expect(xmlFake.getCall(0).args).toEqual([
                         "query",
