@@ -31,7 +31,6 @@ export type PlatformStruct = {
     contextVersion: string;
     schemaVersion: string;
     types: Array<string>;
-    extensions?: PlatformExtensions;
 };
 
 export type PlatformMap = Map<string, PlatformStruct>;
@@ -44,10 +43,6 @@ export type PlatformSchemaRegistry = {
     schemaVersion: string;
     credentials?: Schema | boolean;
     messages?: Schema | boolean;
-};
-
-export type PlatformExtensions = {
-    object?: Record<string, string[]>;
 };
 
 const dummySession: PlatformSession = {
@@ -180,7 +175,6 @@ export default async function loadPlatforms(
             contextVersion: p.schema.contextVersion,
             schemaVersion: p.schema.schemaVersion,
             types: types,
-            extensions: p.schema.extensions,
         });
         log.info(`loaded platform ${p.schema.name} v${p.schema.version}`);
     }

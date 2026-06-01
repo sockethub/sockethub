@@ -21,94 +21,50 @@ import {
     PLATFORM_CONTEXT_PREFIX,
     SOCKETHUB_BASE_CONTEXT_URL,
 } from "@sockethub/schemas/context";
+import {
+    ActivityStreamSchema,
+    ObjectTypesSchema,
+} from "@sockethub/schemas/object-types";
 import EventEmitter from "eventemitter3";
 
 const ee = new EventEmitter();
-const baseProps = {
-    stream: [
-        "@context",
-        "id",
-        "type",
-        "platform",
-        "actor",
-        "target",
-        "object",
-        "published",
-        "error",
-    ],
-    object: [
-        "id",
-        "type",
-        "context",
-        "alias",
-        "attachedTo",
-        "attachment",
-        "attributedTo",
-        "attributedWith",
-        "condition",
-        "content",
-        "contentMap",
-        "context",
-        "contextOf",
-        "name",
-        "endTime",
-        "generator",
-        "generatorOf",
-        "group",
-        "icon",
-        "image",
-        "inReplyTo",
-        "members",
-        "memberOf",
-        "message",
-        "location",
-        "locationOf",
-        "objectOf",
-        "originOf",
-        "presence",
-        "preview",
-        "previewOf",
-        "provider",
-        "providerOf",
-        "published",
-        "rating",
-        "relationship",
-        "resultOf",
-        "replies",
-        "role",
-        "scope",
-        "scopeOf",
-        "startTime",
-        "status",
-        "summary",
-        "topic",
-        "tag",
-        "tagOf",
-        "targetOf",
-        "title",
-        "titleMap",
-        "updated",
-        "url",
-    ],
-} as const;
+const streamProps = Object.keys(ActivityStreamSchema.properties).concat(
+    "platform",
+);
+const genericObjectProps = new Set<string>();
+const objectPropsByType = new Map<string, Set<string>>();
+const permissiveObjectTypes = new Set<string>();
+
+for (const [type, schema] of Object.entries(ObjectTypesSchema)) {
+    const objectSchema = schema as {
+        additionalProperties?: boolean;
+        properties?: Record<string, unknown>;
+    };
+    const objectProps = Object.keys(objectSchema.properties || {});
+    for (const prop of objectProps) {
+        genericObjectProps.add(prop);
+    }
+    objectPropsByType.set(type, new Set(objectProps));
+    if (objectSchema.additionalProperties === true) {
+        permissiveObjectTypes.add(type);
+    }
+}
+
 const expand = {
     actor: {
         primary: "id",
-        props: baseProps,
     },
     target: {
         primary: "id",
-        props: baseProps,
     },
     object: {
         primary: "content",
-        props: baseProps,
     },
 } as const;
 
 type CustomProps = Record<string, string[]>;
 
-type BasePropKey = keyof typeof baseProps;
+type BasePropKey = "stream" | "object";
 
 const objs = new Map<string, ActivityObject>();
 const customProps: CustomProps = {};
@@ -133,6 +89,14 @@ function registerObjectProps(type: string, props: string[]) {
         }
     }
     customProps[type] = [...current];
+}
+
+function getAllowedObjectProps(type: string): Set<string> {
+    const props = new Set(objectPropsByType.get(type) || genericObjectProps);
+    for (const prop of customProps[type] || []) {
+        props.add(prop);
+    }
+    return props;
 }
 
 function formatUnknownPropertyValue(value: unknown): string {
@@ -192,10 +156,13 @@ function validateObject(
     }
 
     const incomingRecord = incomingObj as Record<string, unknown>;
-    const allowedProps = baseProps[type] as readonly string[];
+    const allowedProps =
+        type === "stream"
+            ? new Set(streamProps)
+            : getAllowedObjectProps(String(incomingRecord.type));
     const unknownKeys = Object.keys(incomingRecord).filter(
         (key: string): boolean => {
-            return !allowedProps.includes(key);
+            return !allowedProps.has(key);
         },
     );
 
@@ -206,7 +173,10 @@ function validateObject(
             continue;
         }
 
-        if (!specialObjs.includes(ao.type)) {
+        if (
+            !specialObjs.includes(ao.type) &&
+            !(type === "object" && permissiveObjectTypes.has(ao.type))
+        ) {
             // not defined as a special prop
             // don't know what to do with it, so throw error
             const receivedValue = formatUnknownPropertyValue(ao[key]);

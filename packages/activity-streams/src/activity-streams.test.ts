@@ -212,21 +212,34 @@ describe("basic tests", () => {
                     "@context": IRC_CONTEXT,
                     actor: "thingy",
                     object: {
-                        type: "message",
-                        content: "corrected message",
-                        "xmpp:replace": { id: "old-message-id" },
+                        type: "presence",
+                        presence: "online",
+                        extra: { id: "unknown-property" },
                     },
                     target: "thingy2",
                 });
-            }).toThrow('ActivityStreams validation failed: property "xmpp:replace" with value {"id":"old-message-id"} is not allowed on the "object" object of type "message".');
+            }).toThrow('ActivityStreams validation failed: property "extra" with value {"id":"unknown-property"} is not allowed on the "object" object of type "presence".');
         });
 
         test("allows dynamically registered object properties", () => {
-            activity.registerObjectProps("message", [
-                "xmpp:replace",
-                "xmpp:stanza-id",
-            ]);
+            activity.registerObjectProps("presence", ["extra"]);
 
+            expect(() => {
+                activity.Stream({
+                    type: "send",
+                    "@context": IRC_CONTEXT,
+                    actor: "thingy",
+                    object: {
+                        type: "presence",
+                        presence: "online",
+                        extra: { id: "registered-property" },
+                    },
+                    target: "thingy2",
+                });
+            }).not.toThrow();
+        });
+
+        test("allows additional properties for permissive schema object types", () => {
             expect(() => {
                 activity.Stream({
                     type: "send",
@@ -237,7 +250,6 @@ describe("basic tests", () => {
                         id: "new-message-id",
                         content: "corrected message",
                         "xmpp:replace": { id: "old-message-id" },
-                        "xmpp:stanza-id": "stanza-id",
                     },
                     target: "thingy2",
                 });

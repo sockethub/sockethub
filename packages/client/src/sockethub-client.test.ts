@@ -19,13 +19,18 @@ const TEST_REGISTRY = {
             contextVersion: "9",
             schemaVersion: "9",
             types: ["connect", "send", "join", "leave", "disconnect"],
-            extensions: {
-                object: {
-                    message: ["xmpp:replace", "xmpp:stanza-id"],
-                },
-            },
             schemas: {
-                messages: {},
+                messages: {
+                    properties: {
+                        object: {
+                            properties: {
+                                type: { enum: ["message"] },
+                                "xmpp:replace": { type: "object" },
+                                "xmpp:stanza-id": { type: "string" },
+                            },
+                        },
+                    },
+                },
                 credentials: {},
             },
         },
@@ -183,15 +188,13 @@ describe("SockethubClient", () => {
             ]);
         });
 
-        it("registers platform ActivityStreams extension props", () => {
+        it("registers platform ActivityStreams props from schemas", () => {
             socket.emit("schemas", TEST_REGISTRY);
 
-            expect(
-                asInstance.registerObjectProps.calledWith("message", [
-                    "xmpp:replace",
-                    "xmpp:stanza-id",
-                ]),
-            ).to.equal(true);
+            const [type, props] = asInstance.registerObjectProps.firstCall.args;
+            expect(type).to.equal("message");
+            expect(props).to.include("xmpp:replace");
+            expect(props).to.include("xmpp:stanza-id");
         });
 
         it("throws for unknown platform when registry is loaded", () => {

@@ -36,6 +36,9 @@
       "@sockethub/platform-irc": ["./packages/platform-irc/index.js"],
       "@sockethub/platform-xmpp": ["./packages/platform-xmpp/src/index.js"],
       "@sockethub/schemas": ["./packages/schemas/src/index.ts"],
+      "@sockethub/schemas/object-types": [
+        "./packages/schemas/src/object-types.ts"
+      ],
       "@sockethub/server": ["./packages/server/src/index.ts"],
       "sockethub": ["./packages/sockethub/bin/sockethub"],
       "$components": ["./packages/examples/src/components"],

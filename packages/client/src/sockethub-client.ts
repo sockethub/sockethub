@@ -73,8 +73,12 @@ interface PlatformRegistrySchemas {
     messages?: object;
 }
 
-interface ActivityStreamsExtensions {
-    object?: Record<string, string[]>;
+interface JsonSchemaLike {
+    oneOf?: JsonSchemaLike[];
+    anyOf?: JsonSchemaLike[];
+    allOf?: JsonSchemaLike[];
+    properties?: Record<string, JsonSchemaLike>;
+    enum?: unknown[];
 }
 
 /**
@@ -89,7 +93,6 @@ export interface PlatformRegistryEntry {
     schemaVersion: string;
     types: Array<string>;
     schemas: PlatformRegistrySchemas;
-    extensions?: ActivityStreamsExtensions;
 }
 
 export interface PlatformRegistryPayload {
@@ -304,9 +307,6 @@ export default class SockethubClient {
             ...platform,
             types: [...platform.types],
             schemas: { ...platform.schemas },
-            extensions: platform.extensions
-                ? { object: { ...platform.extensions.object } }
-                : undefined,
         }));
     }
 
@@ -517,11 +517,8 @@ export default class SockethubClient {
                 version: platform.version,
                 types: Array.isArray(platform.types) ? platform.types : [],
                 schemas: platform.schemas || {},
-                extensions: this.normalizeActivityStreamsExtensions(
-                    platform.extensions,
-                ),
             });
-            this.registerActivityStreamsExtensions(platform.extensions);
+            this.registerActivityStreamsSchemaProps(platform.schemas?.messages);
             addPlatformContext(platform.id, platform.contextUrl);
             try {
                 const credSchema = platform.schemas?.credentials;
@@ -556,41 +553,45 @@ export default class SockethubClient {
         return normalizedPayload;
     }
 
-    private normalizeActivityStreamsExtensions(
-        extensions: unknown,
-    ): ActivityStreamsExtensions | undefined {
-        if (!extensions || typeof extensions !== "object") {
-            return undefined;
-        }
-        const objectExtensions = (extensions as ActivityStreamsExtensions)
-            .object;
-        if (!objectExtensions || typeof objectExtensions !== "object") {
-            return undefined;
-        }
-        const object: Record<string, string[]> = {};
-        for (const [type, props] of Object.entries(objectExtensions)) {
-            if (!Array.isArray(props)) {
-                continue;
-            }
-            const validProps = props.filter(
-                (prop): prop is string =>
-                    typeof prop === "string" && prop.length > 0,
-            );
-            if (validProps.length > 0) {
-                object[type] = validProps;
-            }
-        }
-        return Object.keys(object).length > 0 ? { object } : undefined;
-    }
-
-    private registerActivityStreamsExtensions(extensions: unknown) {
-        const normalized = this.normalizeActivityStreamsExtensions(extensions);
-        if (!normalized?.object) {
+    private registerActivityStreamsSchemaProps(schema: unknown) {
+        if (!schema || typeof schema !== "object") {
             return;
         }
-        for (const [type, props] of Object.entries(normalized.object)) {
-            this.ActivityStreams.registerObjectProps(type, props);
+        for (const objectSchema of this.findObjectSchemas(
+            schema as JsonSchemaLike,
+        )) {
+            const objectType = this.getSchemaObjectType(objectSchema);
+            if (!objectType || !objectSchema.properties) {
+                continue;
+            }
+            this.ActivityStreams.registerObjectProps(
+                objectType,
+                Object.keys(objectSchema.properties),
+            );
         }
+    }
+
+    private findObjectSchemas(schema: JsonSchemaLike): JsonSchemaLike[] {
+        const schemas: JsonSchemaLike[] = [];
+        const nested = [schema.oneOf, schema.anyOf, schema.allOf]
+            .filter(Array.isArray)
+            .flat() as JsonSchemaLike[];
+        for (const entry of nested) {
+            schemas.push(...this.findObjectSchemas(entry));
+        }
+        const objectSchema = schema.properties?.object;
+        if (objectSchema) {
+            schemas.push(objectSchema);
+            schemas.push(...this.findObjectSchemas(objectSchema));
+        }
+        return schemas;
+    }
+
+    private getSchemaObjectType(schema: JsonSchemaLike): string | undefined {
+        const typeEnum = schema.properties?.type?.enum;
+        return typeEnum?.find(
+            (entry): entry is string => typeof entry === "string",
+        );
     }
 
     private eventActivityObject(content: ActivityObject) {

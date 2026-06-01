@@ -12,11 +12,6 @@ export default {
             },
         },
     },
-    extensions: {
-        object: {
-            message: ["fake:message-id"],
-        },
-    },
     credentials: {
         required: ["object"],
         properties: {

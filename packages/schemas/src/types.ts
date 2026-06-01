@@ -139,9 +139,6 @@ export interface PlatformSchemaStruct {
             };
         };
     };
-    extensions?: {
-        object?: Record<string, string[]>;
-    };
 }
 
 export interface PlatformConstructor {
