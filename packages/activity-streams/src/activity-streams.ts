@@ -35,6 +35,8 @@ const genericObjectProps = new Set<string>();
 const objectPropsByType = new Map<string, Set<string>>();
 const permissiveObjectTypes = new Set<string>();
 
+// Keep ActivityStreams object property checks aligned with @sockethub/schemas.
+// Platforms can still add runtime properties through registerObjectProps().
 for (const [type, schema] of Object.entries(ObjectTypesSchema)) {
     const objectSchema = schema as {
         additionalProperties?: boolean;
@@ -82,6 +84,8 @@ function registerObjectProps(type: string, props: string[]) {
     if (typeof type !== "string" || !Array.isArray(props)) {
         return;
     }
+    // Merge, rather than replace, so schema updates from multiple platforms do
+    // not drop base object properties or earlier registrations for the type.
     const current = new Set(customProps[type] || []);
     for (const prop of props) {
         if (typeof prop === "string" && prop.length > 0) {
@@ -177,8 +181,9 @@ function validateObject(
             !specialObjs.includes(ao.type) &&
             !(type === "object" && permissiveObjectTypes.has(ao.type))
         ) {
-            // not defined as a special prop
-            // don't know what to do with it, so throw error
+            // Closed object schemas warn or fail on unknown properties.
+            // Permissive schema types, such as message, intentionally allow
+            // protocol metadata like xmpp:replace without per-property lists.
             const receivedValue = formatUnknownPropertyValue(ao[key]);
             const err = `ActivityStreams validation failed: property "${key}" with value ${receivedValue} is not allowed on the "${type}" object of type "${ao.type}".`;
             if (failOnUnknownObjectProperties) {

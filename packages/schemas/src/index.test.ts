@@ -57,6 +57,15 @@ describe("schemas/src/index.ts", () => {
                 "platform schema failed to validate:  must have required property 'name'",
             );
         });
+        it("includes the unexpected property for additionalProperties errors", () => {
+            const err = validatePlatformSchema({
+                ...testPlatformSchemaData,
+                unexpected: true,
+            });
+            expect(err).toEqual(
+                "platform schema failed to validate:  must NOT have additional properties: unexpected",
+            );
+        });
     });
 
     describe("Adding a PlatformSchema", () => {

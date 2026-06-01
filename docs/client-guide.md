@@ -189,6 +189,31 @@ sc.socket.emit('message', joinStream, (result) => {
 You can still send raw ActivityStreams directly with `sc.socket.emit('message',
 ...)` if you prefer.
 
+### Platform-Specific Object Properties
+
+After `ready()` resolves, SockethubClient has applied the server schema registry
+to local validation. The bundled ActivityStreams helper accepts object properties
+declared by platform message schemas, and object types with permissive schemas
+can carry protocol-specific metadata without a static client allowlist.
+
+For example, XMPP message corrections use `xmpp:replace` on a `message` object:
+
+```javascript
+await sc.ready();
+
+const correction = sc.ActivityStreams.Stream({
+    type: 'send',
+    '@context': sc.contextFor('xmpp'),
+    actor: { id: 'me@example.com', type: 'person' },
+    target: { id: 'you@example.com', type: 'person' },
+    object: {
+        type: 'message',
+        content: 'Corrected text',
+        'xmpp:replace': { id: 'old-message-id' }
+    }
+});
+```
+
 ### Platforms Requiring Credentials
 
 ```javascript

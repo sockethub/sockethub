@@ -166,7 +166,12 @@ export function validatePlatformSchema(schema: Schema): string {
     // validate schema property
     const err = validate(schema);
     if (!err) {
-        return `platform schema failed to validate: ${validate.errors[0].instancePath} ${validate.errors[0].message}`;
+        const validationError = validate.errors[0];
+        let message = `${validationError.instancePath} ${validationError.message}`;
+        if (validationError.keyword === "additionalProperties") {
+            message += `: ${validationError.params.additionalProperty}`;
+        }
+        return `platform schema failed to validate: ${message}`;
     }
     return "";
 }

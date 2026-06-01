@@ -187,3 +187,31 @@ ActivityStreams.Object.create("just-a-string");
 // This will throw: "ActivityStreams validation failed: property 'foo' with value 'bar' is not allowed..."
 ActivityStreams.Object.create({ id: "test", foo: "bar" });
 ```
+
+## Object Property Validation
+
+ActivityStreams derives known stream and object properties from
+`@sockethub/schemas`. Object types whose schemas allow additional properties,
+such as `message`, accept protocol-specific metadata without a static allowlist:
+
+```javascript
+ActivityStreams.Stream({
+  type: "send",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+  ],
+  actor: { id: "me@example.com", type: "person" },
+  target: { id: "you@example.com", type: "person" },
+  object: {
+    type: "message",
+    content: "Corrected text",
+    "xmpp:replace": { id: "old-message-id" }
+  }
+});
+```
+
+Clients can also register object properties discovered from platform schemas at
+runtime with `ActivityStreams.registerObjectProps(type, props)`. The Sockethub
+client does this automatically after it receives the server schema registry.

@@ -557,6 +557,9 @@ export default class SockethubClient {
         if (!schema || typeof schema !== "object") {
             return;
         }
+        // Platform message schemas can narrow the shape of activity.object for
+        // protocol-specific fields. Register those declared fields with AS.js so
+        // local helper validation follows the server-provided schema registry.
         for (const objectSchema of this.findObjectSchemas(
             schema as JsonSchemaLike,
         )) {
@@ -573,6 +576,8 @@ export default class SockethubClient {
 
     private findObjectSchemas(schema: JsonSchemaLike): JsonSchemaLike[] {
         const schemas: JsonSchemaLike[] = [];
+        // Platform schemas use composition heavily; walk through composed
+        // schemas and nested object definitions to find concrete object types.
         const nested = [schema.oneOf, schema.anyOf, schema.allOf]
             .filter(Array.isArray)
             .flat() as JsonSchemaLike[];

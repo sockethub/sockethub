@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import Ajv from "ajv";
+import { validatePlatformSchema } from "@sockethub/schemas";
 
 import { PlatformSchema } from "./schema.js";
 
@@ -20,6 +21,10 @@ function withObject(extra) {
 }
 
 describe("PlatformSchema.credentials", () => {
+    it("is a valid Sockethub platform schema", () => {
+        expect(validatePlatformSchema(PlatformSchema)).toBe("");
+    });
+
     it("accepts password-only credentials", () => {
         expect(validate(withObject({ password: "hunter2" }))).toBe(true);
     });
