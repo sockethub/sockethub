@@ -3,11 +3,21 @@ export const validObjectDefs: Record<string, unknown> = {};
 
 const roomInfoFieldSchema = {
     type: "object",
+    additionalProperties: false,
     properties: {
         type: { type: "string" },
         label: { type: "string" },
         value: {
-            type: ["string", "number", "boolean", "array", "null"],
+            oneOf: [
+                { type: "string" },
+                { type: "number" },
+                { type: "boolean" },
+                { type: "null" },
+                {
+                    type: "array",
+                    items: { type: "string" },
+                },
+            ],
         },
         options: {
             type: "array",

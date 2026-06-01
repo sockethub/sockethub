@@ -325,8 +325,17 @@ export class IncomingHandlers {
                         const remainder = parsed.var.slice(4); // remove "muc#"
                         const underscoreIdx = remainder.indexOf("_");
                         if (underscoreIdx !== -1) {
-                            section = remainder.slice(0, underscoreIdx);
-                            key = remainder.slice(underscoreIdx + 1);
+                            const parsedSection = remainder.slice(
+                                0,
+                                underscoreIdx,
+                            );
+                            if (
+                                parsedSection === "roominfo" ||
+                                parsedSection === "roomconfig"
+                            ) {
+                                section = parsedSection;
+                                key = remainder.slice(underscoreIdx + 1);
+                            }
                         }
                     }
 
