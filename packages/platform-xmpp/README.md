@@ -16,11 +16,10 @@ updates through ActivityStreams messages.
 * **leave** - Leave an XMPP chat room
 * **send** - Send messages to contacts or chat rooms
 * **update** - Update presence status and information
-* **room-info** - Query room information via service discovery
 * **request-friend** - Send a contact/buddy request
 * **remove-friend** - Remove a contact from the roster
 * **make-friend** - Accept a contact request
-* **query** - Query room attendance and other server data
+* **query** - Query room attendance and room information via service discovery
 
 ## Authentication
 
@@ -183,6 +182,53 @@ non-recoverable connection error.
   },
   object: {
     type: "attendance"
+  }
+}
+```
+
+### Query Room Information Example
+
+```javascript
+{
+  type: "query",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "user@example.org/web",
+    type: "person"
+  },
+  target: {
+    id: "room@conference.example.org",
+    type: "room"
+  },
+  object: {
+    type: "room-info"
+  }
+}
+```
+
+### Query Room Information Response Example
+
+```javascript
+{
+  type: "query",
+  "@context": sc.contextFor("xmpp"),
+  actor: {
+    id: "room@conference.example.org",
+    type: "room",
+    name: "Room Display Name"
+  },
+  target: {
+    id: "user@example.org/web",
+    type: "person"
+  },
+  object: {
+    type: "room-info",
+    features: ["http://jabber.org/protocol/muc", "muc_passwordprotected"],
+    identities: [{
+      category: "conference",
+      type: "text",
+      name: "Room Display Name"
+    }]
   }
 }
 ```

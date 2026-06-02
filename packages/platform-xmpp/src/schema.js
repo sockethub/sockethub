@@ -20,7 +20,6 @@ export const PlatformSchema = {
                     "remove-friend",
                     "make-friend",
                     "query",
-                    "room-info",
                     "disconnect",
                 ],
             },

@@ -75,7 +75,8 @@ describe("Incoming handlers", () => {
             ih.stanza(stanza);
             sinon.assert.calledOnce(sendToClient);
             const arg = sendToClient.getCall(0).args[0];
-            expect(arg.type).toEqual("room-info");
+            expect(arg.type).toEqual("query");
+            expect(arg.object.type).toEqual("room-info");
             expect(arg.error).toBeDefined();
             expect(arg.actor.id).toEqual("noroom@conference.example.org");
         });
@@ -126,7 +127,7 @@ describe("Incoming handlers", () => {
             ih.stanza(stanza);
             sinon.assert.calledOnce(sendToClient);
             const arg = sendToClient.getCall(0).args[0];
-            expect(arg.type).toEqual("room-info");
+            expect(arg.type).toEqual("query");
             expect(arg.object.custom).toBeDefined();
             expect(arg.object.custom.some_custom_key).toEqual({
                 type: "text-single",

@@ -137,9 +137,12 @@ const job = {
             type: "attendance",
         },
     },
-    "room-info": {
+    queryRoomInfo: {
         actor: actor,
         target: target.partyroom,
+        object: {
+            type: "room-info",
+        },
     },
 };
 
@@ -604,7 +607,7 @@ describe("XMPP", () => {
         });
 
         describe("#query", () => {
-            it("calls xmpp.js correctly", (done) => {
+            it("calls xmpp.js correctly for attendance query", (done) => {
                 xp.query(job.query, () => {
                     sinon.assert.calledOnce(xp.__client.send);
                     expect(xmlFake.getCall(0).args).toEqual([
@@ -624,11 +627,9 @@ describe("XMPP", () => {
                     done();
                 });
             });
-        });
 
-        describe("#room-info", () => {
-            it("calls xmpp.js correctly", (done) => {
-                xp["room-info"](job["room-info"], () => {
+            it("calls xmpp.js correctly for room-info query", (done) => {
+                xp.query(job.queryRoomInfo, () => {
                     sinon.assert.calledOnce(xp.__client.send);
                     expect(xmlFake.getCall(0).args).toEqual([
                         "query",

@@ -307,7 +307,7 @@ export const stanzas = [
                 "https://sockethub.org/ns/context/v1.jsonld",
                 "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
             ],
-            type: "room-info",
+            type: "query",
             actor: {
                 id: "kosmos@kosmos.chat",
                 type: "room",
@@ -347,7 +347,7 @@ export const stanzas = [
                 "https://sockethub.org/ns/context/v1.jsonld",
                 "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
             ],
-            type: "room-info",
+            type: "query",
             actor: {
                 id: "anonymous@conference.jabber.org",
                 type: "room",
@@ -376,7 +376,7 @@ export const stanzas = [
                 "https://sockethub.org/ns/context/v1.jsonld",
                 "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
             ],
-            type: "room-info",
+            type: "query",
             actor: {
                 id: "empty@conference.jabber.org",
                 type: "room",
@@ -413,7 +413,7 @@ export const stanzas = [
                 "https://sockethub.org/ns/context/v1.jsonld",
                 "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
             ],
-            type: "room-info",
+            type: "query",
             actor: {
                 id: "multilang@conference.jabber.org",
                 type: "room",
@@ -517,7 +517,7 @@ export const stanzas = [
                 "https://sockethub.org/ns/context/v1.jsonld",
                 "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
             ],
-            type: "room-info",
+            type: "query",
             actor: {
                 id: "kosmos@kosmos.chat",
                 type: "room",

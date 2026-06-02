@@ -348,7 +348,7 @@ export class IncomingHandlers {
 
             this.session.sendToClient({
                 "@context": XMPP_CONTEXT,
-                type: "room-info",
+                type: "query",
                 actor: {
                     id: stanza.attrs.from,
                     type: "room",
@@ -368,7 +368,7 @@ export class IncomingHandlers {
         const message = error ? error.toString() : stanza.toString();
         this.session.sendToClient({
             "@context": XMPP_CONTEXT,
-            type: "room-info",
+            type: "query",
             actor: {
                 id: stanza.attrs.from,
                 type: "room",
@@ -376,6 +376,9 @@ export class IncomingHandlers {
             target: {
                 id: stanza.attrs.to,
                 type: "person",
+            },
+            object: {
+                type: "room-info",
             },
             error: message,
         });
