@@ -1,5 +1,21 @@
+import type { XmppElement } from "@xmpp/client";
+
+import type { XmppBuiltCredentials, XmppCredentialsObject } from "./types.js";
+
+interface XDataFieldResult {
+    var: string;
+    field: {
+        type: string;
+        label?: string;
+        value: string | number | boolean | string[] | null;
+        options?: Array<{ label: string; value: string }>;
+    };
+}
+
 export const utils = {
-    buildXmppCredentials: (credentials) => {
+    buildXmppCredentials: (
+        credentials: XmppCredentialsObject,
+    ): XmppBuiltCredentials => {
         const userAddress = credentials.object.userAddress;
         if (typeof userAddress !== "string" || !userAddress.includes("@")) {
             throw new Error(
@@ -12,7 +28,7 @@ export const utils = {
                 "xmpp credentials.object.userAddress is missing the username or server portion",
             );
         }
-        const xmpp_creds = {
+        const xmpp_creds: XmppBuiltCredentials = {
             service: credentials.object.server
                 ? credentials.object.server
                 : server,
@@ -28,7 +44,7 @@ export const utils = {
         return xmpp_creds;
     },
 
-    parseXDataField: (field) => {
+    parseXDataField: (field: XmppElement): XDataFieldResult | null => {
         const varAttr = field.attrs.var;
         if (!varAttr || varAttr === "FORM_TYPE") {
             return null;
@@ -37,14 +53,12 @@ export const utils = {
         const type = field.attrs.type || "text-single";
         const label = field.attrs.label;
 
-        // Extract values
         const values = field
             .getChildren("value")
             .map((v) => v.getText())
             .filter((t) => t !== undefined && t !== null);
 
-        // Coerce value based on type and count
-        let value = null;
+        let value: string | number | boolean | string[] | null = null;
         if (type === "boolean") {
             if (values.length > 0) {
                 const valStr = values[0].toLowerCase();
@@ -55,11 +69,10 @@ export const utils = {
         } else if (type === "text-multi" || type === "list-multi") {
             value = values;
         } else {
-            // text-single, list-single, etc.
             if (values.length > 0) {
                 const firstVal = values[0];
                 if (type !== "list-single" && /^\d+$/.test(firstVal)) {
-                    value = parseInt(firstVal, 10);
+                    value = Number.parseInt(firstVal, 10);
                 } else {
                     value = firstVal;
                 }
@@ -68,7 +81,6 @@ export const utils = {
             }
         }
 
-        // Extract options
         const options = field.getChildren("option").map((opt) => {
             const optValEl = opt.getChild("value");
             const optVal = optValEl ? optValEl.getText() : "";
@@ -78,7 +90,7 @@ export const utils = {
             };
         });
 
-        const fieldObj = {
+        const fieldObj: XDataFieldResult["field"] = {
             type,
             ...(label && { label }),
             value,

@@ -17,11 +17,30 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { client, xml } from "@xmpp/client";
+import type {
+    ActivityStream,
+    Logger,
+    PersistentPlatformConfig,
+    PersistentPlatformInterface,
+    PlatformCallback,
+    PlatformSchemaStruct,
+    PlatformSendToClient,
+} from "@sockethub/schemas";
+import { buildCanonicalContext } from "@sockethub/schemas";
+import {
+    client,
+    type XmppClientInstance,
+    type XmppClientOptions,
+    type XmppElement,
+    xml,
+} from "@xmpp/client";
 
 import { IncomingHandlers } from "./incoming-handlers.js";
 import { PlatformSchema } from "./schema.js";
+import type { XmppCredentialsObject, XmppPlatformSession } from "./types.js";
 import { utils } from "./utils.js";
+
+export type { XmppCredentialsObject, XmppPlatformSession } from "./types.js";
 
 /**
  * Handles all actions related to communication via. the XMPP protocol.
@@ -30,39 +49,59 @@ import { utils } from "./utils.js";
  *
  * {@link https://github.com/xmppjs/xmpp.js}
  */
-export default class XMPP {
+export default class XMPP implements PersistentPlatformInterface {
+    public credentialsHash: string | undefined;
+    readonly config: PersistentPlatformConfig = {
+        connectTimeoutMs: 10000,
+        persist: true,
+        requireCredentials: ["connect"],
+    };
+    readonly log: Logger;
+    readonly sendToClient: PlatformSendToClient;
+    /** @internal Set of bare JIDs for rooms this client has joined. */
+    public __knownRooms: Set<string>;
+    protected __clientConstructor: (
+        options: XmppClientOptions,
+    ) => XmppClientInstance;
+    protected __xml: (
+        name: string,
+        attrs?: Record<string, string | undefined>,
+        ...children: (XmppElement | undefined)[]
+    ) => XmppElement;
+    private readonly id: string;
+    private __initialized: boolean;
+    /** @internal Exposed for test access and IncomingHandlers. */
+    public __client: XmppClientInstance | undefined;
+
     /**
      * Constructor called from the Sockethub `Platform` instance, passing in a
      * session object.
-     * @param {object} session - {@link Sockethub.Platform.PlatformSession#object}
+     * @param session - {@link XmppPlatformSession}
      */
-    constructor(session) {
-        this.id = session.id; // actor
-        this.config = {
-            connectTimeoutMs: 10000,
-            persist: true,
-            requireCredentials: ["connect"],
-        };
-        this.__initialized = false; // Private state for initialization tracking
-        this.__knownRooms = new Set();
+    constructor(session: XmppPlatformSession) {
+        this.id = session.id;
         this.log = session.log;
         this.sendToClient = session.sendToClient;
+        this.credentialsHash = undefined;
+        this.__initialized = false;
+        this.__knownRooms = new Set();
         this.createClient();
         this.createXml();
     }
 
-    createClient() {
+    protected createClient(): void {
         this.__clientConstructor = client;
     }
-    createXml() {
+
+    protected createXml(): void {
         this.__xml = xml;
     }
 
     /**
      * Mark the platform as disconnected and uninitialized
-     * @param {boolean} stopReconnection - If true, stop automatic reconnection
+     * @param stopReconnection - If true, stop automatic reconnection
      */
-    __markDisconnected(stopReconnection = false) {
+    private __markDisconnected(stopReconnection = false): void {
         this.log.debug(`marking client as disconnected for ${this.id}`);
 
         if (stopReconnection && this.__client) {
@@ -76,65 +115,55 @@ export default class XMPP {
 
     /**
      * Classify error to determine if reconnection should be attempted
-     * @param {Error} err - The error from XMPP client
-     * @returns {string} 'RECOVERABLE' or 'NON_RECOVERABLE'
+     * @param err - The error from XMPP client
+     * @returns 'RECOVERABLE' or 'NON_RECOVERABLE'
      */
-    __classifyError(err) {
+    private __classifyError(
+        err: Error & { condition?: string; code?: string },
+    ): "RECOVERABLE" | "NON_RECOVERABLE" {
         const errorString = err.toString();
-        const _condition = err.condition;
 
-        // ONLY these errors are safe to reconnect on
         const recoverableErrors = [
-            "ECONNRESET", // Network connection reset
-            "ECONNREFUSED", // Connection refused (server down)
-            "ETIMEDOUT", // Network timeout
-            "ENOTFOUND", // DNS resolution failed
-            "EHOSTUNREACH", // Host unreachable
-            "ENETUNREACH", // Network unreachable
+            "ECONNRESET",
+            "ECONNREFUSED",
+            "ETIMEDOUT",
+            "ENOTFOUND",
+            "EHOSTUNREACH",
+            "ENETUNREACH",
         ];
 
-        // Check if this is explicitly a recoverable network error
         if (
             recoverableErrors.some((pattern) => errorString.includes(pattern))
         ) {
             return "RECOVERABLE";
         }
 
-        // Also check for specific network-level error codes
         if (err.code && recoverableErrors.includes(err.code)) {
             return "RECOVERABLE";
         }
 
-        // DEFAULT: Everything else is non-recoverable
-        // This includes:
-        // - StreamError: conflict
-        // - SASLError: not-authorized
-        // - StreamError: policy-violation
-        // - Any unknown XMPP protocol errors
-        // - Any authentication failures
-        // - Any server policy violations
-        // - Any new error types we haven't seen before
         return "NON_RECOVERABLE";
     }
 
     /**
      * Check if the XMPP client is properly connected and can send messages
-     * @returns {boolean} true if client is connected and operational
+     * @returns true if client is connected and operational
      */
-    __isClientConnected() {
+    private __isClientConnected(): boolean {
         if (!this.__client) {
             return false;
         }
 
-        // Check if the client has a socket and it's writable
         try {
             return (
-                this.__client.socket &&
+                this.__client.socket !== undefined &&
                 this.__client.socket.writable !== false &&
                 this.__client.status === "online"
             );
         } catch (err) {
-            this.log.debug("Error checking client connection status:", err);
+            this.log.debug("Error checking client connection status:", {
+                err,
+            });
             return false;
         }
     }
@@ -150,7 +179,7 @@ export default class XMPP {
      * client. See the package README for canonical credentials and usage
      * payload examples.
      **/
-    get schema() {
+    get schema(): PlatformSchemaStruct {
         return PlatformSchema;
     }
 
@@ -159,30 +188,34 @@ export default class XMPP {
      * For XMPP, this means we have successfully connected to the server.
      * During temporary network interruptions with automatic reconnection,
      * remains true to allow queued jobs to retry rather than fail.
-     * @returns {boolean} true if ready to handle jobs
+     * @returns true if ready to handle jobs
      */
-    isInitialized() {
+    isInitialized(): boolean {
         return this.__initialized;
     }
 
     /**
      * Connect to the XMPP server.
      *
-     * @param {object} job activity streams object
-     * @param {object} credentials credentials object
-     * @param {object} done callback when job is done
+     * @param job - activity streams object
+     * @param credentials - credentials object
+     * @param done - callback when job is done
      */
-    connect(job, credentials, done) {
+    connect(
+        job: ActivityStream,
+        credentials: XmppCredentialsObject,
+        done: PlatformCallback,
+    ): void {
         if (this.__isClientConnected()) {
             this.log.debug(
                 `client connection already exists for ${job.actor.id}`,
             );
             this.__initialized = true;
-            return done();
+            done();
+            return;
         }
         this.log.debug(`connect() called for ${job.actor.id}`);
 
-        // Log credential processing
         const xmppCreds = utils.buildXmppCredentials(credentials);
         this.log.debug(
             `building XMPP credentials for ${job.actor.id}:`,
@@ -194,31 +227,28 @@ export default class XMPP {
             }),
         );
 
-        // Log before client creation
         this.log.debug(`creating XMPP client for ${job.actor.id}`);
 
         try {
             this.__client = this.__clientConstructor({
                 ...xmppCreds,
-                ...{ timeout: this.config.connectTimeoutMs, tls: false },
+                timeout: this.config.connectTimeoutMs,
+                tls: false,
             });
             this.log.debug(
                 `XMPP client created successfully for ${job.actor.id}`,
             );
         } catch (err) {
-            this.log.debug(
-                `XMPP client creation failed for ${job.actor.id}:`,
+            const e = err as Error;
+            this.log.debug(`XMPP client creation failed for ${job.actor.id}:`, {
                 err,
-            );
-            return done(`client creation failed: ${err.message}`);
+            });
+            done(`client creation failed: ${e.message}`);
+            return;
         }
 
         this.__client.on("offline", () => {
             this.log.debug(`offline event received for ${job.actor.id}`);
-            // If we were never initialized, mark as disconnected (connection failed)
-            // If we were previously initialized, keep state (will auto-reconnect)
-            // This preserves initialized state during brief network interruptions
-            // while properly handling initial connection failures
             if (!this.__initialized) {
                 this.log.debug(
                     `offline during initial connection for ${job.actor.id}`,
@@ -231,57 +261,51 @@ export default class XMPP {
             }
         });
 
-        this.__client.on("error", (err) => {
-            // Internal code errors (TypeError, ReferenceError, etc.) indicate bugs
-            // in our code. These should crash the platform process immediately
-            // as we can't trust the state after such errors.
+        this.__client.on("error", (err: unknown) => {
+            const e = err as Error & { condition?: string; code?: string };
+
             if (
-                err instanceof TypeError ||
-                err instanceof ReferenceError ||
-                err instanceof SyntaxError
+                e instanceof TypeError ||
+                e instanceof ReferenceError ||
+                e instanceof SyntaxError
             ) {
                 this.log.error(
-                    `FATAL: Internal code error in XMPP platform: ${err.toString()}`,
+                    `FATAL: Internal code error in XMPP platform: ${e.toString()}`,
                 );
-                this.log.error(err.stack);
-                process.exit(1);
+                this.log.error(e.stack ?? "");
+                this.cleanup(() => process.exit(1));
+                return;
             }
 
             this.log.debug(
-                `network error event for ${job.actor.id}:${err.toString()}`,
+                `network error event for ${job.actor.id}:${e.toString()}`,
             );
 
-            const errorType = this.__classifyError(err);
+            const errorType = this.__classifyError(e);
 
-            // `@context` is stamped by PlatformInstance.sendToClient before the
-            // payload leaves the platform process; platforms don't set it here.
-            const as = {
-                type: "connect",
-                actor: { id: job.actor.id },
-            };
-
-            if (errorType === "RECOVERABLE") {
-                // For recoverable errors, keep initialized=true and let the client
-                // auto-reconnect. Don't call stop() or clear the client reference.
-                // This allows queued jobs to wait for reconnection instead of failing.
-                as.error = `Connection lost: ${err.toString()}. Attempting automatic reconnection...`;
-                as.object = {
-                    type: "connect",
-                    status: "reconnecting",
-                    condition: err.condition || "network",
-                };
-            } else {
-                // On unrecoverable errors, mark as uninitialized and stop reconnection
+            if (errorType !== "RECOVERABLE") {
                 this.__markDisconnected(true);
-
-                as.error = `Connection failed: ${err.toString()}. Manual reconnection required.`;
-                as.object = {
-                    type: "connect",
-                    status: "failed",
-                    condition: err.condition || "protocol",
-                };
             }
-            this.sendToClient(as);
+
+            this.sendToClient({
+                "@context": this.schema.contextUrl
+                    ? buildCanonicalContext(this.schema.contextUrl)
+                    : [],
+                type: "connect",
+                actor: { id: job.actor.id, type: "person" },
+                error:
+                    errorType === "RECOVERABLE"
+                        ? `Connection lost: ${e.toString()}. Attempting automatic reconnection...`
+                        : `Connection failed: ${e.toString()}. Manual reconnection required.`,
+                object: {
+                    type: "connect",
+                    status:
+                        errorType === "RECOVERABLE" ? "reconnecting" : "failed",
+                    condition:
+                        e.condition ||
+                        (errorType === "RECOVERABLE" ? "network" : "protocol"),
+                },
+            });
         });
 
         this.__client.on("online", () => {
@@ -294,7 +318,6 @@ export default class XMPP {
         this.__client
             .start()
             .then(() => {
-                // connected
                 const duration = Date.now() - startTime;
                 this.log.debug(
                     `connection successful for ${job.actor.id} after ${duration}ms`,
@@ -303,20 +326,21 @@ export default class XMPP {
                 this.__registerHandlers();
                 return done();
             })
-            .catch((err) => {
+            .catch((err: unknown) => {
+                const e = err as Error & { code?: string };
                 const duration = Date.now() - startTime;
                 this.log.debug(
                     `connection failed for ${job.actor.id} after ${duration}ms:`,
                     {
-                        error: err,
-                        message: err?.message,
-                        code: err?.code,
-                        stack: err?.stack,
+                        error: e,
+                        message: e?.message,
+                        code: e?.code,
+                        stack: e?.stack,
                     },
                 );
                 this.__client = undefined;
                 return done(
-                    `connection failed: ${err?.message || err}. (service: ${xmppCreds.service})`,
+                    `connection failed: ${e?.message || e}. (service: ${xmppCreds.service})`,
                 );
             });
     }
@@ -324,17 +348,19 @@ export default class XMPP {
     /**
      * Join a room, optionally defining a display name for that room.
      *
-     * @param {object} job activity streams object
-     * @param {object} done callback when job is done
+     * @param job - activity streams object
+     * @param done - callback when job is done
      */
-    async join(job, done) {
-        const roomJid = job.target.id.split("/")[0];
+    async join(job: ActivityStream, done: PlatformCallback): Promise<void> {
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
+        const roomJid = (job.target?.id ?? "").split("/")[0];
         this.log.debug(
             `sending join from ${job.actor.id} to ` +
                 `${roomJid}/${job.actor.name}`,
         );
-        // TODO optional passwords not handled for now
-        // TODO investigate implementation reserved nickname discovery
         const presence = this.__xml(
             "presence",
             {
@@ -350,17 +376,21 @@ export default class XMPP {
                 this.__knownRooms.add(roomJid);
                 done();
             })
-            .catch((err) => done(err));
+            .catch((err: unknown) => done(err as Error));
     }
 
     /**
      * Leave a room
      *
-     * @param {object} job activity streams object
-     * @param {object} done callback when job is done
+     * @param job - activity streams object
+     * @param done - callback when job is done
      */
-    leave(job, done) {
-        const roomJid = job.target.id.split("/")[0];
+    leave(job: ActivityStream, done: PlatformCallback): void {
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
+        const roomJid = (job.target?.id ?? "").split("/")[0];
         this.log.debug(
             `sending leave from ${job.actor.id} to ` +
                 `${roomJid}/${job.actor.name}`,
@@ -378,34 +408,40 @@ export default class XMPP {
                 this.__knownRooms.delete(roomJid);
                 done();
             })
-            .catch((err) => done(err));
+            .catch((err: unknown) => done(err as Error));
     }
 
     /**
      * Send a message to a room or private conversation.
      *
-     * @param {object} job activity streams object
-     * @param {object} done callback when job is done
+     * @param job - activity streams object
+     * @param done - callback when job is done
      */
-    send(job, done) {
+    send(job: ActivityStream, done: PlatformCallback): void {
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
         this.log.debug(`send() called for ${job.actor.id}`);
-        // send message
         const message = this.__xml(
             "message",
             {
-                type: job.target.type === "room" ? "groupchat" : "chat",
-                to: job.target.id,
-                id: job.object.id,
+                type: job.target?.type === "room" ? "groupchat" : "chat",
+                to: job.target?.id,
+                id: job.object?.id as string | undefined,
             },
-            this.__xml("body", {}, job.object.content),
-            job.object["xmpp:replace"]
+            this.__xml("body", {}, job.object?.content as string | undefined),
+            (job.object?.["xmpp:replace"] as { id: string } | undefined)
                 ? this.__xml("replace", {
-                      id: job.object["xmpp:replace"].id,
+                      id: (job.object?.["xmpp:replace"] as { id: string }).id,
                       xmlns: "urn:xmpp:message-correct:0",
                   })
                 : undefined,
         );
-        this.__client.send(message).then(done);
+        this.__client
+            .send(message)
+            .then(() => done())
+            .catch(done);
     }
 
     /**
@@ -413,30 +449,41 @@ export default class XMPP {
      * Indicate presence and status message.
      * Valid presence values are "away", "chat", "dnd", "xa", "offline", "online".
      *
-     * @param {object} job activity streams object
-     * @param {object} done callback when job is done
+     * @param job - activity streams object
+     * @param done - callback when job is done
      */
-    update(job, done) {
+    update(job: ActivityStream, done: PlatformCallback): void {
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
         this.log.debug(`update() called for ${job.actor.id}`);
-        const props = {};
-        const show = {};
-        const status = {};
-        if (job.object.type === "presence") {
+        const props: Record<string, string | undefined> = {};
+        const show: Record<string, string | undefined> = {};
+        const status: Record<string, string | undefined> = {};
+        if (job.object?.type === "presence") {
             if (job.object.presence === "offline") {
                 props.type = "unavailable";
             } else if (job.object.presence !== "online") {
-                show.show = job.object.presence;
+                show.show = job.object.presence as string;
             }
             if (job.object.content) {
-                status.status = job.object.content;
+                status.status = job.object.content as string;
             }
-            // setting presence
             this.log.debug(`setting presence: ${job.object.presence}`);
             this.__client
-                .send(this.__xml("presence", props, show, status))
-                .then(done);
+                .send(
+                    this.__xml(
+                        "presence",
+                        props,
+                        show as XmppElement,
+                        status as XmppElement,
+                    ),
+                )
+                .then(() => done())
+                .catch(done);
         } else {
-            done(`unknown update object type: ${job.object.type}`);
+            done(`unknown update object type: ${job.object?.type}`);
         }
     }
 
@@ -444,73 +491,91 @@ export default class XMPP {
      * @description
      * Send friend request
      *
-     * @param {object} job activity streams object
-     * @param {object} done callback when job is done
+     * @param job - activity streams object
+     * @param done - callback when job is done
      */
-    "request-friend"(job, done) {
+    "request-friend"(job: ActivityStream, done: PlatformCallback): void {
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
         this.log.debug(`request-friend() called for ${job.actor.id}`);
         this.__client
             .send(
                 this.__xml("presence", {
                     type: "subscribe",
-                    to: job.target.id,
+                    to: job.target?.id,
                 }),
             )
-            .then(done);
+            .then(() => done())
+            .catch(done);
     }
 
     /**
      * @description
      * Send a remove friend request
      *
-     * @param {object} job activity streams object
-     * @param {object} done callback when job is done
+     * @param job - activity streams object
+     * @param done - callback when job is done
      */
-    "remove-friend"(job, done) {
+    "remove-friend"(job: ActivityStream, done: PlatformCallback): void {
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
         this.log.debug(`remove-friend() called for ${job.actor.id}`);
         this.__client
             .send(
                 this.__xml("presence", {
                     type: "unsubscribe",
-                    to: job.target.id,
+                    to: job.target?.id,
                 }),
             )
-            .then(done);
+            .then(() => done())
+            .catch(done);
     }
 
     /**
      * @description
      * Confirm a friend request
      *
-     * @param {object} job activity streams object
-     * @param {object} done callback when job is done
+     * @param job - activity streams object
+     * @param done - callback when job is done
      */
-    "make-friend"(job, done) {
+    "make-friend"(job: ActivityStream, done: PlatformCallback): void {
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
         this.log.debug(`make-friend() called for ${job.actor.id}`);
         this.__client
             .send(
                 this.__xml("presence", {
                     type: "subscribe",
-                    to: job.target.id,
+                    to: job.target?.id,
                 }),
             )
-            .then(done);
+            .then(() => done())
+            .catch(done);
     }
 
     /**
      * Indicate an intent to query something (e.g. get room attendance or room information).
      *
-     * @param {object} job activity streams object
-     * @param {object} done callback when job is done
+     * @param job - activity streams object
+     * @param done - callback when job is done
      */
-    query(job, done) {
-        const queryType = job.object?.type || "attendance";
+    query(job: ActivityStream, done: PlatformCallback): void {
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
+        const queryType = (job.object?.type as string) || "attendance";
         this.log.debug(
-            `sending ${queryType} query from ${job.actor.id} for ${job.target.id}`,
+            `sending ${queryType} query from ${job.actor.id} for ${job.target?.id}`,
         );
 
         if (queryType === "room-info") {
-            // Generate unique ID for this disco#info query
             const queryId = `room_info_${randomUUID()}`;
 
             this.__client
@@ -521,14 +586,14 @@ export default class XMPP {
                             id: queryId,
                             type: "get",
                             from: job.actor.id,
-                            to: job.target.id,
+                            to: job.target?.id,
                         },
                         this.__xml("query", {
                             xmlns: "http://jabber.org/protocol/disco#info",
                         }),
                     ),
                 )
-                .then(done)
+                .then(() => done())
                 .catch(done);
         } else {
             this.__client
@@ -539,24 +604,24 @@ export default class XMPP {
                             id: "muc_id",
                             type: "get",
                             from: job.actor.id,
-                            to: job.target.id,
+                            to: job.target?.id,
                         },
                         this.__xml("query", {
                             xmlns: "http://jabber.org/protocol/disco#items",
                         }),
                     ),
                 )
-                .then(done)
+                .then(() => done())
                 .catch(done);
         }
     }
 
     /**
      * Disconnect XMPP client
-     * @param {object} job activity streams object
-     * @param done
+     * @param _job - activity streams object
+     * @param done - callback when done
      */
-    disconnect(_job, done) {
+    disconnect(_job: ActivityStream, done: PlatformCallback): void {
         this.log.debug("disconnecting");
         this.cleanup(done);
     }
@@ -564,23 +629,27 @@ export default class XMPP {
     /**
      * Called when it's time to close any connections or clean data before being wiped
      * forcefully.
-     * @param {function} done - callback when complete
+     * @param done - callback when complete
      */
-    cleanup(done) {
+    cleanup(done: PlatformCallback): void {
         this.log.debug("cleanup");
         this.__initialized = false;
         this.__knownRooms.clear();
-        if (this.__client && typeof this.__client.stop === "function") {
-            this.__client.stop();
+        if (this.__client) {
+            if (typeof this.__client.stop === "function") {
+                this.__client.stop();
+            }
+            this.__client.removeAllListeners();
         }
+        this.__client = undefined;
         done();
     }
 
-    __registerHandlers() {
+    private __registerHandlers(): void {
         const ih = new IncomingHandlers(this);
-        this.__client.on("close", ih.close.bind(ih));
-        this.__client.on("error", ih.error.bind(ih));
-        this.__client.on("online", ih.online.bind(ih));
-        this.__client.on("stanza", ih.stanza.bind(ih));
+        this.__client?.on("close", ih.close.bind(ih));
+        this.__client?.on("error", ih.error.bind(ih));
+        this.__client?.on("online", ih.online.bind(ih));
+        this.__client?.on("stanza", ih.stanza.bind(ih));
     }
 }

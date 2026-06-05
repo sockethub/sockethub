@@ -1,9 +1,9 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import Ajv from "ajv";
 
 import { PlatformSchema } from "./schema.js";
 
-const ajv = new Ajv({ strictTypes: false, allErrors: true });
+const ajv = new Ajv({ strictTypes: false });
 const validate = ajv.compile(PlatformSchema.credentials);
 
 const base = {
@@ -15,16 +15,16 @@ const base = {
     },
 };
 
-function withObject(extra) {
+function withObject(extra: Record<string, unknown>) {
     return { ...base, object: { ...base.object, ...extra } };
 }
 
 describe("PlatformSchema.credentials", () => {
-    it("accepts password-only credentials", () => {
+    test("accepts password-only credentials", () => {
         expect(validate(withObject({ password: "hunter2" }))).toBe(true);
     });
 
-    it("rejects credentials without a password", () => {
+    test("rejects credentials without a password", () => {
         expect(validate(base)).toBe(false);
     });
 });
