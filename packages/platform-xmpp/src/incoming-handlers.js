@@ -360,6 +360,8 @@ export class IncomingHandlers {
                 },
                 object,
             });
+        } else {
+            this.notifyRoomInfoError(stanza);
         }
     }
 

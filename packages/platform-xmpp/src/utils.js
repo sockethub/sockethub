@@ -58,8 +58,7 @@ export const utils = {
             // text-single, list-single, etc.
             if (values.length > 0) {
                 const firstVal = values[0];
-                // Check if it's an integer
-                if (/^\d+$/.test(firstVal)) {
+                if (type !== "list-single" && /^\d+$/.test(firstVal)) {
                     value = parseInt(firstVal, 10);
                 } else {
                     value = firstVal;

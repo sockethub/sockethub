@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "bun:test";
+import { beforeEach, describe, expect, it, test } from "bun:test";
 import sinon from "sinon";
 
 import * as schemas from "@sockethub/schemas";
@@ -66,7 +66,7 @@ describe("Incoming handlers", () => {
             });
         });
 
-        it("handles IQ error response for room-info query", () => {
+        test("handles IQ error response for room-info query", () => {
             const stanza = parse(
                 `<iq from='noroom@conference.example.org' to='user@example.org' type='error' id='room_info_err1'>
                   <error type='cancel'><item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>
@@ -81,7 +81,7 @@ describe("Incoming handlers", () => {
             expect(arg.actor.id).toEqual("noroom@conference.example.org");
         });
 
-        it("routes IQ result with non-room_info ID prefix to attendance", () => {
+        test("routes IQ result with non-room_info ID prefix to attendance", () => {
             const stanza = parse(
                 `<iq from='room@conference.example.org' to='user@example.org' type='result' id='muc_id'>
                   <query xmlns='http://jabber.org/protocol/disco#info'>
@@ -97,7 +97,7 @@ describe("Incoming handlers", () => {
             expect(arg.object.type).toEqual("attendance");
         });
 
-        it("ignores disco#info response with wrong xmlns", () => {
+        test("sends error response for disco#info result with wrong xmlns", () => {
             const stanza = parse(
                 `<iq from='room@conference.example.org' to='user@example.org' type='result' id='room_info_999'>
                   <query xmlns='http://jabber.org/protocol/disco#items'>
@@ -106,10 +106,14 @@ describe("Incoming handlers", () => {
                 </iq>`,
             );
             ih.stanza(stanza);
-            sinon.assert.notCalled(sendToClient);
+            sinon.assert.calledOnce(sendToClient);
+            const arg = sendToClient.getCall(0).args[0];
+            expect(arg.type).toEqual("query");
+            expect(arg.object.type).toEqual("room-info");
+            expect(arg.error).toBeDefined();
         });
 
-        it("groups fields without 'muc#' prefix or underscore into 'custom'", () => {
+        test("groups fields without 'muc#' prefix or underscore into 'custom'", () => {
             const stanza = parse(
                 `<iq from='room@conference.example.org' to='user@example.org' type='result' id='room_info_custom'>
                   <query xmlns='http://jabber.org/protocol/disco#info'>

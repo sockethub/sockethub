@@ -3,6 +3,7 @@ export const validObjectDefs: Record<string, unknown> = {};
 
 const roomInfoFieldSchema = {
     type: "object",
+    required: ["type", "value"],
     additionalProperties: false,
     properties: {
         type: { type: "string" },
