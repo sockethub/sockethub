@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, test } from "bun:test";
 
 import normalizeActivityStreamMiddleware from "./normalize-activity-stream.js";
 
@@ -8,7 +8,7 @@ import type { ActivityStream } from "@sockethub/schemas";
 describe("Middleware: Normalize Activity Stream", () => {
     describe("AS object normalization", () => {
         asObjects.forEach((obj) => {
-            it(`${obj.type}: ${obj.name}, should ${
+            test(`${obj.type}: ${obj.name}, should ${
                 obj.valid ? "pass" : "fail"
             }`, (done) => {
                 normalizeActivityStreamMiddleware(

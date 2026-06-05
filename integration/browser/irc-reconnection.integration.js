@@ -58,6 +58,7 @@ describe("IRC Client Reconnection Tests", () => {
             try {
                 initialClient = connectSockethubClient();
                 await setIRCCredentials(initialClient, actorId, nick);
+                await connectIRC(initialClient, actorId, nick);
                 await joinIRCChannel(
                     initialClient,
                     actorId,
@@ -92,6 +93,7 @@ describe("IRC Client Reconnection Tests", () => {
                 );
 
                 await setIRCCredentials(reconnectedClient, actorId, nick);
+                await connectIRC(reconnectedClient, actorId, nick);
                 await joinIRCChannel(
                     reconnectedClient,
                     actorId,
@@ -140,6 +142,7 @@ describe("IRC Client Reconnection Tests", () => {
             try {
                 initialClient = connectSockethubClient();
                 await setIRCCredentials(initialClient, actorId, nick);
+                await connectIRC(initialClient, actorId, nick);
                 await joinIRCChannel(
                     initialClient,
                     actorId,
@@ -203,6 +206,7 @@ describe("IRC Client Reconnection Tests", () => {
                     freshActorId,
                     freshNick,
                 );
+                await connectIRC(validCredClient, freshActorId, freshNick);
             } finally {
                 if (invalidCredClient?.socket?.connected) {
                     invalidCredClient.socket.disconnect();
