@@ -15,10 +15,9 @@ let actor = $derived({
     type: "website",
 });
 
-function getASObj(type: string) {
+async function getASObj(type: string) {
     return {
-        // Platform context - routes to Sockethub's metadata platform
-        "@context": contextFor("metadata"),
+        "@context": await contextFor("metadata"),
         // Activity type - "fetch" tells the platform to extract metadata
         type: type,
         // Actor - the website URL to analyze (represented as a "website" actor)
@@ -27,7 +26,7 @@ function getASObj(type: string) {
 }
 
 async function sendFetch(): Promise<void> {
-    send(getASObj("fetch"));
+    await send(await getASObj("fetch"));
 }
 </script>
 

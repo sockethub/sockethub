@@ -23,10 +23,9 @@ let content = $state("");
  * @param type - The activity type (echo, fail, throw, greet)
  * @returns ActivityStreams object ready to send to Sockethub's dummy platform
  */
-function getASObj(type: string): AnyActivityStream {
+async function getASObj(type: string): Promise<AnyActivityStream> {
     return {
-        // Platform context - tells Sockethub which platform to route this to
-        "@context": contextFor("dummy"),
+        "@context": await contextFor("dummy"),
         // Activity type - what action to perform (echo, fail, throw, greet)
         type: type,
         // Actor - who is performing the action
@@ -42,8 +41,8 @@ function getASObj(type: string): AnyActivityStream {
     };
 }
 
-function sendType(type: string): void {
-    send(getASObj(type));
+async function sendType(type: string): Promise<void> {
+    await send(await getASObj(type));
 }
 
 /**
@@ -51,31 +50,19 @@ function sendType(type: string): void {
  * Sockethub will respond with the same message content.
  */
 async function sendEcho(): Promise<void> {
-    send(getASObj("echo"));
+    await send(await getASObj("echo"));
 }
 
-/**
- * Sends a fail request to Sockethub's dummy platform.
- * Sockethub will respond with an error message for testing error handling.
- */
 async function sendFail(): Promise<void> {
-    send(getASObj("fail"));
+    await send(await getASObj("fail"));
 }
 
-/**
- * Sends a throw request to Sockethub's dummy platform.
- * Sockethub will throw an exception for testing exception handling.
- */
 async function sendThrow(): Promise<void> {
-    send(getASObj("throw"));
+    await send(await getASObj("throw"));
 }
 
-/**
- * Sends a greet request to Sockethub's dummy platform.
- * Sockethub will respond with a greeting message.
- */
 async function sendGreet(): Promise<void> {
-    send(getASObj("greet"));
+    await send(await getASObj("greet"));
 }
 </script>
 

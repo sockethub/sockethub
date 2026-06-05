@@ -1,6 +1,5 @@
 <script lang="ts">
 import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
-import { sc } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
 import type { ActivityActor } from "@sockethub/schemas";
 
@@ -12,8 +11,6 @@ interface Props {
 let { actor, sockethubState }: Props = $props();
 let lastSubmittedActorId = $state<string | undefined>(undefined);
 
-// If the actor ID changes after submission, clear dependent state so the user
-// can set credentials again for the new identity.
 $effect(() => {
     if (
         $sockethubState.actorSet &&
@@ -33,9 +30,9 @@ $effect(() => {
     }
 });
 
-function sendActorDefinition(data: string) {
+function confirmActor(data: string) {
     const actorObj = JSON.parse(data);
-    console.log("actor definition saved locally: ", actorObj);
+    console.log("actor confirmed for this app session:", actorObj);
     sockethubState.set({
         actorSet: true,
         credentialsSet: false,
@@ -47,10 +44,16 @@ function sendActorDefinition(data: string) {
 }
 </script>
 
+<p class="text-sm text-gray-600 mb-2">
+    Define the <code>actor</code> object used on credentials and message events. This is stored
+    only in the example app (not registered on the server). Include <code>id</code>,
+    <code>type</code>, and <code>name</code> on every outbound message.
+</p>
+
 <TextAreaSubmit
-    title="Activity Stream Actor"
+    title="Actor (local)"
     obj={actor}
-    buttonText="Save Actor"
-    submitData={sendActorDefinition}
+    buttonText="Confirm actor"
+    submitData={confirmActor}
     disabled={$sockethubState.actorSet}
 />

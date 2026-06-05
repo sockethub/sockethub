@@ -1,6 +1,11 @@
 <script lang="ts">
 import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
-import { contextFor, sc } from "$lib/sockethub";
+import {
+    actorAsObject,
+    contextFor,
+    ensureClientReady,
+    sc,
+} from "$lib/sockethub";
 import type { ActorData } from "$lib/sockethub";
 import type { CredentialsObjectData, SockethubResponse } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
@@ -14,11 +19,12 @@ interface Props {
 
 let { credentials, actor, sockethubState, context }: Props = $props();
 
-function sendCredentials(data: string) {
+async function sendCredentials(data: string) {
+    await ensureClientReady();
     const creds = {
-        "@context": contextFor(context),
+        "@context": await contextFor(context),
         type: "credentials",
-        actor: actor.id,
+        actor: actorAsObject(actor),
         object: JSON.parse(data),
     };
     sc.socket.emit("credentials", creds, (resp: SockethubResponse) => {

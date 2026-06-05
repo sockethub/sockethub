@@ -24,10 +24,9 @@ const actor = $derived({
  * @param type - The activity type (typically "fetch" for feeds)
  * @returns ActivityStreams object that tells Sockethub which feed to process
  */
-function getASObj(type: string) {
+async function getASObj(type: string) {
     return {
-        // Platform context - routes to Sockethub's feeds platform
-        "@context": contextFor("feeds"),
+        "@context": await contextFor("feeds"),
         // Activity type - "fetch" tells the platform to download and parse the feed
         type: type,
         // Actor - the feed URL to fetch (represented as a "website" actor)
@@ -45,7 +44,7 @@ function getASObj(type: string) {
  * 4. Send the results back to this client for display
  */
 async function sendFetch(): Promise<void> {
-    send(getASObj("fetch"));
+    await send(await getASObj("fetch"));
 }
 </script>
 

@@ -2,13 +2,13 @@
 
 The Sockethub client is a small JavaScript SDK for app developers to connect to a
 Sockethub server via Socket.IO and send/receive ActivityStreams messages. It works
-in both Node.js and browsers, and provides helpers for ActivityStreams along with
-automatic reconnection and credential replay.
+in both Node.js and browsers, with schema-driven validation, automatic
+reconnection, and credential replay.
 
 ## What's Included
 
 - `SockethubClient` for connection and message handling
-- `ActivityStreams` helpers and validation utilities
+- Schema-driven ActivityStreams validation and property linting (via `@sockethub/schemas`)
 - `contextFor(platform)` builds canonical `@context` arrays from server metadata
 - `ready()` promise and `ready`/`init_error` observability events
 - Automatic outbound queuing until initialization is complete
@@ -115,7 +115,9 @@ See the [Client Guide](../../docs/client-guide.md) for detailed usage and exampl
 - **`sc.socket.emit(event, data, callback)`** - Send messages (queued until ready)
 - **`sc.socket.on(event, handler)`** - Listen for messages
 - **`sc.clearCredentials()`** - Clear stored credentials
-- **`sc.ActivityStreams`** - ActivityStreams library
+
+There is no `activity-object` event or `Object.create()` actor registry. Send
+full actor objects on each `credentials` and `message` event.
 
 ## Result Handling
 
