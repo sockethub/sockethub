@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { randomUUID } from "node:crypto";
 import { client, xml } from "@xmpp/client";
 
 import { IncomingHandlers } from "./incoming-handlers.js";
@@ -497,31 +498,57 @@ export default class XMPP {
     }
 
     /**
-     * Indicate an intent to query something (i.e. get a list of users in a room).
+     * Indicate an intent to query something (e.g. get room attendance or room information).
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
      */
     query(job, done) {
+        const queryType = job.object?.type || "attendance";
         this.log.debug(
-            `sending query from ${job.actor.id} for ${job.target.id}`,
+            `sending ${queryType} query from ${job.actor.id} for ${job.target.id}`,
         );
-        this.__client
-            .send(
-                this.__xml(
-                    "iq",
-                    {
-                        id: "muc_id",
-                        type: "get",
-                        from: job.actor.id,
-                        to: job.target.id,
-                    },
-                    this.__xml("query", {
-                        xmlns: "http://jabber.org/protocol/disco#items",
-                    }),
-                ),
-            )
-            .then(done);
+
+        if (queryType === "room-info") {
+            // Generate unique ID for this disco#info query
+            const queryId = `room_info_${randomUUID()}`;
+
+            this.__client
+                .send(
+                    this.__xml(
+                        "iq",
+                        {
+                            id: queryId,
+                            type: "get",
+                            from: job.actor.id,
+                            to: job.target.id,
+                        },
+                        this.__xml("query", {
+                            xmlns: "http://jabber.org/protocol/disco#info",
+                        }),
+                    ),
+                )
+                .then(done)
+                .catch(done);
+        } else {
+            this.__client
+                .send(
+                    this.__xml(
+                        "iq",
+                        {
+                            id: "muc_id",
+                            type: "get",
+                            from: job.actor.id,
+                            to: job.target.id,
+                        },
+                        this.__xml("query", {
+                            xmlns: "http://jabber.org/protocol/disco#items",
+                        }),
+                    ),
+                )
+                .then(done)
+                .catch(done);
+        }
     }
 
     /**

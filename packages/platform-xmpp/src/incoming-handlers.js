@@ -1,5 +1,6 @@
 import { buildCanonicalContext } from "@sockethub/schemas";
 import { PlatformSchema } from "./schema.js";
+import { utils } from "./utils.js";
 
 const XMPP_CONTEXT = buildCanonicalContext(PlatformSchema.contextUrl);
 
@@ -273,6 +274,118 @@ export class IncomingHandlers {
         }
     }
 
+    notifyRoomInfo(stanza) {
+        const query = stanza.getChild("query");
+        if (
+            query &&
+            query.attrs.xmlns === "http://jabber.org/protocol/disco#info"
+        ) {
+            // Extract identities (XEP-0030 §4.2: entities may have multiple identities)
+            const identities = query
+                .getChildren("identity")
+                .filter((el) => el.attrs.category && el.attrs.type)
+                .map((el) => ({
+                    category: el.attrs.category,
+                    type: el.attrs.type,
+                    ...(el.attrs.name && { name: el.attrs.name }),
+                }));
+
+            // Extract features
+            const featureList = query
+                .getChildren("feature")
+                .filter((el) => el.attrs.var)
+                .map((el) => el.attrs.var);
+
+            // Use first identity name as actor display name, fall back to JID
+            const displayName = identities[0]?.name || stanza.attrs.from;
+
+            const object = { type: "room-info", features: featureList };
+            if (identities.length > 0) {
+                object.identities = identities;
+            }
+
+            // Extract extended room info data form (XEP-0128/XEP-0004)
+            const x = query
+                .getChildren("x")
+                .find((el) => el.attrs.xmlns === "jabber:x:data");
+
+            if (x) {
+                const fields = x.getChildren("field");
+                for (const field of fields) {
+                    const parsed = utils.parseXDataField(field);
+                    if (!parsed) {
+                        continue;
+                    }
+
+                    // Split the key
+                    let section = "custom";
+                    let key = parsed.var;
+
+                    if (parsed.var.startsWith("muc#")) {
+                        const remainder = parsed.var.slice(4); // remove "muc#"
+                        const underscoreIdx = remainder.indexOf("_");
+                        if (underscoreIdx !== -1) {
+                            const parsedSection = remainder.slice(
+                                0,
+                                underscoreIdx,
+                            );
+                            if (
+                                parsedSection === "roominfo" ||
+                                parsedSection === "roomconfig"
+                            ) {
+                                section = parsedSection;
+                                key = remainder.slice(underscoreIdx + 1);
+                            }
+                        }
+                    }
+
+                    if (!object[section]) {
+                        object[section] = {};
+                    }
+                    object[section][key] = parsed.field;
+                }
+            }
+
+            this.session.sendToClient({
+                "@context": XMPP_CONTEXT,
+                type: "query",
+                actor: {
+                    id: stanza.attrs.from,
+                    type: "room",
+                    name: displayName,
+                },
+                target: {
+                    id: stanza.attrs.to,
+                    type: "person",
+                },
+                object,
+            });
+        } else {
+            this.notifyRoomInfoError(stanza);
+        }
+    }
+
+    notifyRoomInfoError(stanza) {
+        const error = stanza.getChild("error");
+        const message = error ? error.toString() : stanza.toString();
+        this.session.sendToClient({
+            "@context": XMPP_CONTEXT,
+            type: "query",
+            actor: {
+                id: stanza.attrs.from,
+                type: "room",
+            },
+            target: {
+                id: stanza.attrs.to,
+                type: "person",
+            },
+            object: {
+                type: "room-info",
+            },
+            error: message,
+        });
+    }
+
     online() {
         this.session.log.debug("online");
     }
@@ -283,6 +396,9 @@ export class IncomingHandlers {
     stanza(stanza) {
         // console.log("incoming stanza ", stanza);
         if (stanza.attrs.type === "error") {
+            if (stanza.is("iq") && stanza.attrs.id?.startsWith("room_info_")) {
+                return this.notifyRoomInfoError(stanza);
+            }
             this.notifyError(stanza);
         } else if (stanza.is("message")) {
             this.notifyChatMessage(stanza);
@@ -295,6 +411,15 @@ export class IncomingHandlers {
             ) {
                 this.session.log.debug("got room attendance list");
                 return this.notifyRoomAttendance(stanza);
+            }
+
+            // Handle room info disco#info responses
+            if (
+                stanza.attrs.type === "result" &&
+                stanza.attrs.id?.startsWith("room_info_")
+            ) {
+                this.session.log.debug("got room info response");
+                return this.notifyRoomInfo(stanza);
             }
 
             // todo: clean up this area, unsure of what these are

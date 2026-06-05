@@ -1,6 +1,40 @@
 export const validObjectRefs: Array<{ $ref: string }> = [];
 export const validObjectDefs: Record<string, unknown> = {};
 
+const roomInfoFieldSchema = {
+    type: "object",
+    required: ["type", "value"],
+    additionalProperties: false,
+    properties: {
+        type: { type: "string" },
+        label: { type: "string" },
+        value: {
+            oneOf: [
+                { type: "string" },
+                { type: "number" },
+                { type: "boolean" },
+                { type: "null" },
+                {
+                    type: "array",
+                    items: { type: "string" },
+                },
+            ],
+        },
+        options: {
+            type: "array",
+            items: {
+                type: "object",
+                required: ["label", "value"],
+                additionalProperties: false,
+                properties: {
+                    label: { type: "string" },
+                    value: { type: "string" },
+                },
+            },
+        },
+    },
+};
+
 export const ObjectTypesSchema = {
     credentials: {
         required: ["type"],
@@ -163,6 +197,53 @@ export const ObjectTypesSchema = {
                 items: {
                     type: "string",
                 },
+            },
+        },
+    },
+
+    "room-info": {
+        required: ["type"],
+        additionalProperties: false,
+        properties: {
+            type: {
+                enum: ["room-info"],
+            },
+            features: {
+                type: "array",
+                items: {
+                    type: "string",
+                },
+            },
+            identities: {
+                type: "array",
+                items: {
+                    type: "object",
+                    required: ["category", "type"],
+                    additionalProperties: false,
+                    properties: {
+                        category: {
+                            type: "string",
+                        },
+                        type: {
+                            type: "string",
+                        },
+                        name: {
+                            type: "string",
+                        },
+                    },
+                },
+            },
+            roominfo: {
+                type: "object",
+                additionalProperties: roomInfoFieldSchema,
+            },
+            roomconfig: {
+                type: "object",
+                additionalProperties: roomInfoFieldSchema,
+            },
+            custom: {
+                type: "object",
+                additionalProperties: roomInfoFieldSchema,
             },
         },
     },

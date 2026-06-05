@@ -137,6 +137,13 @@ const job = {
             type: "attendance",
         },
     },
+    queryRoomInfo: {
+        actor: actor,
+        target: target.partyroom,
+        object: {
+            type: "room-info",
+        },
+    },
 };
 
 describe("XMPP", () => {
@@ -600,7 +607,7 @@ describe("XMPP", () => {
         });
 
         describe("#query", () => {
-            it("calls xmpp.js correctly", (done) => {
+            it("calls xmpp.js correctly for attendance query", (done) => {
                 xp.query(job.query, () => {
                     sinon.assert.calledOnce(xp.__client.send);
                     expect(xmlFake.getCall(0).args).toEqual([
@@ -617,6 +624,22 @@ describe("XMPP", () => {
                         },
                         undefined,
                     ]);
+                    done();
+                });
+            });
+
+            it("calls xmpp.js correctly for room-info query", (done) => {
+                xp.query(job.queryRoomInfo, () => {
+                    sinon.assert.calledOnce(xp.__client.send);
+                    expect(xmlFake.getCall(0).args).toEqual([
+                        "query",
+                        { xmlns: "http://jabber.org/protocol/disco#info" },
+                    ]);
+                    expect(xmlFake.getCall(1).args[0]).toEqual("iq");
+                    expect(xmlFake.getCall(1).args[1].type).toEqual("get");
+                    expect(xmlFake.getCall(1).args[1].from).toEqual("testingham@jabber.net");
+                    expect(xmlFake.getCall(1).args[1].to).toEqual("partyroom@jabber.net");
+                    expect(xmlFake.getCall(1).args[1].id).toMatch(/^room_info_/);
                     done();
                 });
             });

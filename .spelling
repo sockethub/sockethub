@@ -93,6 +93,7 @@ namespaces
 createLogger
 timestamps
 systemd
+queueing
 pre-copied
 globals
 libera.chat
