@@ -26,6 +26,7 @@ import type {
     PlatformSchemaStruct,
     PlatformSendToClient,
 } from "@sockethub/schemas";
+import { buildCanonicalContext } from "@sockethub/schemas";
 import {
     client,
     type XmppClientInstance,
@@ -282,30 +283,29 @@ export default class XMPP implements PersistentPlatformInterface {
 
             const errorType = this.__classifyError(e);
 
-            const as: Record<string, unknown> = {
-                type: "connect",
-                actor: { id: job.actor.id },
-            };
-
-            if (errorType === "RECOVERABLE") {
-                as.error = `Connection lost: ${e.toString()}. Attempting automatic reconnection...`;
-                as.object = {
-                    type: "connect",
-                    status: "reconnecting",
-                    condition: e.condition || "network",
-                };
-            } else {
+            if (errorType !== "RECOVERABLE") {
                 this.__markDisconnected(true);
-
-                as.error = `Connection failed: ${e.toString()}. Manual reconnection required.`;
-                as.object = {
-                    type: "connect",
-                    status: "failed",
-                    condition: e.condition || "protocol",
-                };
             }
-            // biome-ignore lint/suspicious/noExplicitAny: ActivityStream type doesn't cover all dynamic XMPP error fields
-            this.sendToClient(as as any);
+
+            this.sendToClient({
+                "@context": this.schema.contextUrl
+                    ? buildCanonicalContext(this.schema.contextUrl)
+                    : [],
+                type: "connect",
+                actor: { id: job.actor.id, type: "person" },
+                error:
+                    errorType === "RECOVERABLE"
+                        ? `Connection lost: ${e.toString()}. Attempting automatic reconnection...`
+                        : `Connection failed: ${e.toString()}. Manual reconnection required.`,
+                object: {
+                    type: "connect",
+                    status:
+                        errorType === "RECOVERABLE" ? "reconnecting" : "failed",
+                    condition:
+                        e.condition ||
+                        (errorType === "RECOVERABLE" ? "network" : "protocol"),
+                },
+            });
         });
 
         this.__client.on("online", () => {
