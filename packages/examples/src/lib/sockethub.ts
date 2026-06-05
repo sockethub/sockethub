@@ -5,7 +5,7 @@ import { addObject, addSchemaEvent } from "$components/logs/Logger.svelte";
 import {
     buildCanonicalContext,
     platformIdFromContext,
-} from "@sockethub/schemas";
+} from "@sockethub/schemas/context";
 import SockethubClient from "@sockethub/client";
 import { io } from "socket.io-client";
 import { writable } from "svelte/store";

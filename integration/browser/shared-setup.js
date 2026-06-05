@@ -2,7 +2,7 @@ import { expect } from "@esm-bundle/chai";
 import {
     buildCanonicalContext,
     platformIdFromContext,
-} from "@sockethub/schemas";
+} from "@sockethub/schemas/context";
 
 export const ctx = (platform) => buildCanonicalContext(platform);
 
