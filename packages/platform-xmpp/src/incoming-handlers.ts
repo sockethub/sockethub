@@ -61,7 +61,7 @@ function getMessageReplaceId(stanza: XmppElement): string | null {
 
 function getPresence(stanza: XmppElement): string {
     if (stanza.getChild("show")) {
-        return stanza.getChild("show")!.getText();
+        return stanza.getChild("show")?.getText();
     }
     return stanza.attrs.type === "unavailable" ? "offline" : "online";
 }
@@ -80,25 +80,25 @@ export class IncomingHandlers {
             return;
         }
 
-        this.session!.log.debug(
+        this.session?.log.debug(
             "received close event with no handler specified",
         );
-        if (this.session!.actor && this.session!.sendToClient) {
-            this.session!.sendToClient({
+        if (this.session?.actor && this.session?.sendToClient) {
+            this.session?.sendToClient({
                 "@context": XMPP_CONTEXT,
                 type: "close",
-                actor: this.session!.actor,
-                target: this.session!.actor,
+                actor: this.session?.actor,
+                target: this.session?.actor,
             });
-            this.session!.log.debug(
-                `**** xmpp session for ${this.session!.actor.id} closed`,
+            this.session?.log.debug(
+                `**** xmpp session for ${this.session?.actor.id} closed`,
             );
         }
         if (
-            this.session!.connection &&
-            typeof this.session!.connection.disconnect === "function"
+            this.session?.connection &&
+            typeof this.session?.connection.disconnect === "function"
         ) {
-            this.session!.connection.disconnect();
+            this.session?.connection.disconnect();
         }
     }
 
@@ -108,7 +108,7 @@ export class IncomingHandlers {
         toString(): string;
     }): void {
         try {
-            this.session!.sendToClient({
+            this.session?.sendToClient({
                 "@context": XMPP_CONTEXT,
                 type: "error",
                 actor: { id: "unknown", type: "person" },
@@ -119,13 +119,13 @@ export class IncomingHandlers {
                 },
             });
         } catch (e) {
-            this.session!.log.debug("*** XMPP ERROR (rl catch): ", { e });
+            this.session?.log.debug("*** XMPP ERROR (rl catch): ", { e });
         }
     }
 
     presence(stanza: XmppElement): void {
         const bareJid = (stanza.attrs.from ?? "").split("/")[0];
-        const actorType = this.session!.__knownRooms.has(bareJid)
+        const actorType = this.session?.__knownRooms.has(bareJid)
             ? "room"
             : "person";
 
@@ -151,11 +151,11 @@ export class IncomingHandlers {
             (obj.actor as Record<string, unknown>).name =
                 stanza.attrs.from?.split("/")[1];
         }
-        this.session!.log.debug(
+        this.session?.log.debug(
             `received ${actorType} contact presence update from ${stanza.attrs.from}`,
         );
         // biome-ignore lint/suspicious/noExplicitAny: ActivityStream type doesn't cover all dynamic XMPP fields
-        this.session!.sendToClient(obj as any);
+        this.session?.sendToClient(obj as any);
     }
 
     subscribe(
@@ -163,7 +163,7 @@ export class IncomingHandlers {
         from: string,
         name?: string,
     ): void {
-        this.session!.log.debug(`received subscribe request from ${from}`);
+        this.session?.log.debug(`received subscribe request from ${from}`);
         const actor: { id: string; type: string; name?: string } = {
             id: from,
             type: "person",
@@ -171,7 +171,7 @@ export class IncomingHandlers {
         if (name) {
             actor.name = name;
         }
-        this.session!.sendToClient({
+        this.session?.sendToClient({
             "@context": XMPP_CONTEXT,
             type: "request-friend",
             actor: actor,
@@ -231,7 +231,7 @@ export class IncomingHandlers {
         }
 
         // biome-ignore lint/suspicious/noExplicitAny: ActivityStream type doesn't cover all dynamic XMPP fields
-        this.session!.sendToClient(activity as any);
+        this.session?.sendToClient(activity as any);
     }
 
     notifyError(stanza: XmppElement): void {
@@ -250,7 +250,7 @@ export class IncomingHandlers {
             }
         }
 
-        this.session!.sendToClient({
+        this.session?.sendToClient({
             "@context": XMPP_CONTEXT,
             type: type,
             actor: {
@@ -277,7 +277,7 @@ export class IncomingHandlers {
                 members.push(entries[e].attrs.name ?? "");
             }
 
-            this.session!.sendToClient({
+            this.session?.sendToClient({
                 "@context": XMPP_CONTEXT,
                 type: "query",
                 actor: {
@@ -367,7 +367,7 @@ export class IncomingHandlers {
                 }
             }
 
-            this.session!.sendToClient({
+            this.session?.sendToClient({
                 "@context": XMPP_CONTEXT,
                 type: "query",
                 actor: {
@@ -389,7 +389,7 @@ export class IncomingHandlers {
     notifyRoomInfoError(stanza: XmppElement): void {
         const error = stanza.getChild("error");
         const message = error ? error.toString() : stanza.toString();
-        this.session!.sendToClient({
+        this.session?.sendToClient({
             "@context": XMPP_CONTEXT,
             type: "query",
             actor: {
@@ -408,13 +408,14 @@ export class IncomingHandlers {
     }
 
     online(): void {
-        this.session!.log.debug("online");
+        this.session?.log.debug("online");
     }
 
     stanza(stanza: XmppElement): void {
         if (stanza.attrs.type === "error") {
             if (stanza.is("iq") && stanza.attrs.id?.startsWith("room_info_")) {
-                return this.notifyRoomInfoError(stanza);
+                this.notifyRoomInfoError(stanza);
+                return;
             }
             this.notifyError(stanza);
         } else if (stanza.is("message")) {
@@ -426,16 +427,18 @@ export class IncomingHandlers {
                 stanza.attrs.id === "muc_id" &&
                 stanza.attrs.type === "result"
             ) {
-                this.session!.log.debug("got room attendance list");
-                return this.notifyRoomAttendance(stanza);
+                this.session?.log.debug("got room attendance list");
+                this.notifyRoomAttendance(stanza);
+                return;
             }
 
             if (
                 stanza.attrs.type === "result" &&
                 stanza.attrs.id?.startsWith("room_info_")
             ) {
-                this.session!.log.debug("got room info response");
-                return this.notifyRoomInfo(stanza);
+                this.session?.log.debug("got room info response");
+                this.notifyRoomInfo(stanza);
+                return;
             }
 
             const query = stanza.getChild("query");
@@ -445,9 +448,9 @@ export class IncomingHandlers {
                     if (!Object.hasOwn(entries, e)) {
                         continue;
                     }
-                    this.session!.log.debug("STANZA ATTRS: ", entries[e].attrs);
+                    this.session?.log.debug("STANZA ATTRS: ", entries[e].attrs);
                     if (entries[e].attrs.subscription === "both") {
-                        this.session!.sendToClient({
+                        this.session?.sendToClient({
                             "@context": XMPP_CONTEXT,
                             type: "update",
                             actor: {
@@ -455,7 +458,7 @@ export class IncomingHandlers {
                                 name: entries[e].attrs.name,
                                 type: "person",
                             },
-                            target: this.session!.actor ?? {
+                            target: this.session?.actor ?? {
                                 id: "",
                                 type: "person",
                             },
@@ -470,7 +473,7 @@ export class IncomingHandlers {
                         entries[e].attrs.ask &&
                         entries[e].attrs.ask === "subscribe"
                     ) {
-                        this.session!.sendToClient({
+                        this.session?.sendToClient({
                             "@context": XMPP_CONTEXT,
                             type: "update",
                             actor: {
@@ -478,7 +481,7 @@ export class IncomingHandlers {
                                 name: entries[e].attrs.name,
                                 type: "person",
                             },
-                            target: this.session!.actor ?? {
+                            target: this.session?.actor ?? {
                                 id: "",
                                 type: "person",
                             },
@@ -490,7 +493,7 @@ export class IncomingHandlers {
                         });
                     } else {
                         this.subscribe(
-                            this.session!.actor ?? { id: "", type: "person" },
+                            this.session?.actor ?? { id: "", type: "person" },
                             entries[e].attrs.jid ?? "",
                             entries[e].attrs.name,
                         );
@@ -498,7 +501,7 @@ export class IncomingHandlers {
                 }
             }
         } else {
-            this.session!.log.debug(`got XMPP unknown stanza... ${stanza}`);
+            this.session?.log.debug(`got XMPP unknown stanza... ${stanza}`);
         }
     }
 }

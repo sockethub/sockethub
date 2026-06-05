@@ -351,7 +351,7 @@ export default class XMPP implements PersistentPlatformInterface {
      * @param done - callback when job is done
      */
     async join(job: ActivityStream, done: PlatformCallback): Promise<void> {
-        const roomJid = job.target!.id.split("/")[0];
+        const roomJid = job.target?.id.split("/")[0];
         this.log.debug(
             `sending join from ${job.actor.id} to ` +
                 `${roomJid}/${job.actor.name}`,
@@ -365,7 +365,8 @@ export default class XMPP implements PersistentPlatformInterface {
             this.__xml("x", { xmlns: "http://jabber.org/protocol/muc" }),
         );
 
-        return this.__client!.send(presence)
+        return this.__client
+            ?.send(presence)
             .then(() => {
                 this.__knownRooms.add(roomJid);
                 done();
@@ -380,19 +381,20 @@ export default class XMPP implements PersistentPlatformInterface {
      * @param done - callback when job is done
      */
     leave(job: ActivityStream, done: PlatformCallback): void {
-        const roomJid = job.target!.id.split("/")[0];
+        const roomJid = job.target?.id.split("/")[0];
         this.log.debug(
             `sending leave from ${job.actor.id} to ` +
                 `${roomJid}/${job.actor.name}`,
         );
 
-        this.__client!.send(
-            this.__xml("presence", {
-                from: job.actor.id,
-                to: `${roomJid}/${job.actor.name || roomJid}`,
-                type: "unavailable",
-            }),
-        )
+        this.__client
+            ?.send(
+                this.__xml("presence", {
+                    from: job.actor.id,
+                    to: `${roomJid}/${job.actor.name || roomJid}`,
+                    type: "unavailable",
+                }),
+            )
             .then(() => {
                 this.__knownRooms.delete(roomJid);
                 done();
@@ -411,19 +413,19 @@ export default class XMPP implements PersistentPlatformInterface {
         const message = this.__xml(
             "message",
             {
-                type: job.target!.type === "room" ? "groupchat" : "chat",
-                to: job.target!.id,
+                type: job.target?.type === "room" ? "groupchat" : "chat",
+                to: job.target?.id,
                 id: job.object?.id as string | undefined,
             },
             this.__xml("body", {}, job.object?.content as string | undefined),
             (job.object?.["xmpp:replace"] as { id: string } | undefined)
                 ? this.__xml("replace", {
-                      id: (job.object!["xmpp:replace"] as { id: string }).id,
+                      id: (job.object?.["xmpp:replace"] as { id: string }).id,
                       xmlns: "urn:xmpp:message-correct:0",
                   })
                 : undefined,
         );
-        this.__client!.send(message).then(done);
+        this.__client?.send(message).then(done);
     }
 
     /**
@@ -449,14 +451,16 @@ export default class XMPP implements PersistentPlatformInterface {
                 status.status = job.object.content as string;
             }
             this.log.debug(`setting presence: ${job.object.presence}`);
-            this.__client!.send(
-                this.__xml(
-                    "presence",
-                    props,
-                    show as XmppElement,
-                    status as XmppElement,
-                ),
-            ).then(done);
+            this.__client
+                ?.send(
+                    this.__xml(
+                        "presence",
+                        props,
+                        show as XmppElement,
+                        status as XmppElement,
+                    ),
+                )
+                .then(done);
         } else {
             done(`unknown update object type: ${job.object?.type}`);
         }
@@ -471,12 +475,14 @@ export default class XMPP implements PersistentPlatformInterface {
      */
     "request-friend"(job: ActivityStream, done: PlatformCallback): void {
         this.log.debug(`request-friend() called for ${job.actor.id}`);
-        this.__client!.send(
-            this.__xml("presence", {
-                type: "subscribe",
-                to: job.target!.id,
-            }),
-        ).then(done);
+        this.__client
+            ?.send(
+                this.__xml("presence", {
+                    type: "subscribe",
+                    to: job.target?.id,
+                }),
+            )
+            .then(done);
     }
 
     /**
@@ -488,12 +494,14 @@ export default class XMPP implements PersistentPlatformInterface {
      */
     "remove-friend"(job: ActivityStream, done: PlatformCallback): void {
         this.log.debug(`remove-friend() called for ${job.actor.id}`);
-        this.__client!.send(
-            this.__xml("presence", {
-                type: "unsubscribe",
-                to: job.target!.id,
-            }),
-        ).then(done);
+        this.__client
+            ?.send(
+                this.__xml("presence", {
+                    type: "unsubscribe",
+                    to: job.target?.id,
+                }),
+            )
+            .then(done);
     }
 
     /**
@@ -505,12 +513,14 @@ export default class XMPP implements PersistentPlatformInterface {
      */
     "make-friend"(job: ActivityStream, done: PlatformCallback): void {
         this.log.debug(`make-friend() called for ${job.actor.id}`);
-        this.__client!.send(
-            this.__xml("presence", {
-                type: "subscribe",
-                to: job.target!.id,
-            }),
-        ).then(done);
+        this.__client
+            ?.send(
+                this.__xml("presence", {
+                    type: "subscribe",
+                    to: job.target?.id,
+                }),
+            )
+            .then(done);
     }
 
     /**
@@ -522,43 +532,45 @@ export default class XMPP implements PersistentPlatformInterface {
     query(job: ActivityStream, done: PlatformCallback): void {
         const queryType = (job.object?.type as string) || "attendance";
         this.log.debug(
-            `sending ${queryType} query from ${job.actor.id} for ${job.target!.id}`,
+            `sending ${queryType} query from ${job.actor.id} for ${job.target?.id}`,
         );
 
         if (queryType === "room-info") {
             const queryId = `room_info_${randomUUID()}`;
 
-            this.__client!.send(
-                this.__xml(
-                    "iq",
-                    {
-                        id: queryId,
-                        type: "get",
-                        from: job.actor.id,
-                        to: job.target!.id,
-                    },
-                    this.__xml("query", {
-                        xmlns: "http://jabber.org/protocol/disco#info",
-                    }),
-                ),
-            )
+            this.__client
+                ?.send(
+                    this.__xml(
+                        "iq",
+                        {
+                            id: queryId,
+                            type: "get",
+                            from: job.actor.id,
+                            to: job.target?.id,
+                        },
+                        this.__xml("query", {
+                            xmlns: "http://jabber.org/protocol/disco#info",
+                        }),
+                    ),
+                )
                 .then(done)
                 .catch(done);
         } else {
-            this.__client!.send(
-                this.__xml(
-                    "iq",
-                    {
-                        id: "muc_id",
-                        type: "get",
-                        from: job.actor.id,
-                        to: job.target!.id,
-                    },
-                    this.__xml("query", {
-                        xmlns: "http://jabber.org/protocol/disco#items",
-                    }),
-                ),
-            )
+            this.__client
+                ?.send(
+                    this.__xml(
+                        "iq",
+                        {
+                            id: "muc_id",
+                            type: "get",
+                            from: job.actor.id,
+                            to: job.target?.id,
+                        },
+                        this.__xml("query", {
+                            xmlns: "http://jabber.org/protocol/disco#items",
+                        }),
+                    ),
+                )
                 .then(done)
                 .catch(done);
         }
@@ -591,9 +603,9 @@ export default class XMPP implements PersistentPlatformInterface {
 
     private __registerHandlers(): void {
         const ih = new IncomingHandlers(this);
-        this.__client!.on("close", ih.close.bind(ih));
-        this.__client!.on("error", ih.error.bind(ih));
-        this.__client!.on("online", ih.online.bind(ih));
-        this.__client!.on("stanza", ih.stanza.bind(ih));
+        this.__client?.on("close", ih.close.bind(ih));
+        this.__client?.on("error", ih.error.bind(ih));
+        this.__client?.on("online", ih.online.bind(ih));
+        this.__client?.on("stanza", ih.stanza.bind(ih));
     }
 }
