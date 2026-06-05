@@ -31,6 +31,7 @@ declare module "@xmpp/client" {
         socket?: XmppSocket;
         status: string;
         on(event: string, handler: (...args: unknown[]) => void): void;
+        removeAllListeners(): void;
         start(): Promise<void>;
         stop(): Promise<void>;
         send(element: XmppElement): Promise<void>;

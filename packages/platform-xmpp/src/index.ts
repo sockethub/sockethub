@@ -635,8 +635,11 @@ export default class XMPP implements PersistentPlatformInterface {
         this.log.debug("cleanup");
         this.__initialized = false;
         this.__knownRooms.clear();
-        if (this.__client && typeof this.__client.stop === "function") {
-            this.__client.stop();
+        if (this.__client) {
+            if (typeof this.__client.stop === "function") {
+                this.__client.stop();
+            }
+            this.__client.removeAllListeners();
         }
         this.__client = undefined;
         done();

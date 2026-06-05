@@ -150,7 +150,7 @@ const job = {
 describe("XMPP", () => {
     let clientFake: ReturnType<typeof sinon.fake>;
     let xmlFake: ReturnType<typeof sinon.fake>;
-    let clientObjectFake: Partial<XmppClientInstance> & { on: ReturnType<typeof sinon.fake>; start: ReturnType<typeof sinon.fake>; send: ReturnType<typeof sinon.fake>; stop: ReturnType<typeof sinon.fake>; join: ReturnType<typeof sinon.fake> };
+    let clientObjectFake: Partial<XmppClientInstance> & { on: ReturnType<typeof sinon.fake>; start: ReturnType<typeof sinon.fake>; send: ReturnType<typeof sinon.fake>; stop: ReturnType<typeof sinon.fake>; join: ReturnType<typeof sinon.fake>; removeAllListeners: ReturnType<typeof sinon.fake> };
     let xp: XMPP;
 
     beforeEach(() => {
@@ -160,6 +160,7 @@ describe("XMPP", () => {
             send: sinon.fake.resolves(),
             join: sinon.fake.resolves(),
             stop: sinon.fake.resolves(),
+            removeAllListeners: sinon.fake(),
         };
         clientFake = sinon.fake.returns(clientObjectFake);
 
@@ -653,6 +654,7 @@ describe("XMPP", () => {
                     expect(xp.__knownRooms.has("partyroom@jabber.net")).toBeFalse();
                     expect(xp.__client).toBeUndefined();
                     sinon.assert.calledOnce(clientBeforeCleanup!.stop as ReturnType<typeof sinon.fake>);
+                    sinon.assert.calledOnce(clientBeforeCleanup!.removeAllListeners as ReturnType<typeof sinon.fake>);
                     done();
                 });
             });

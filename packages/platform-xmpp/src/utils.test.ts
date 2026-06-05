@@ -75,6 +75,30 @@ describe("Utils", () => {
             ).toThrow("JID");
         });
 
+        test("throws when userAddress has no username before @", () => {
+            expect(() =>
+                utils.buildXmppCredentials({
+                    object: { type: "credentials", userAddress: "@dinosaur.com.au", password: "bar", resource: "Home" },
+                } as XmppCredentialsObject),
+            ).toThrow("missing the username or server portion");
+        });
+
+        test("throws when userAddress has no server after @", () => {
+            expect(() =>
+                utils.buildXmppCredentials({
+                    object: { type: "credentials", userAddress: "barney@", password: "bar", resource: "Home" },
+                } as XmppCredentialsObject),
+            ).toThrow("missing the username or server portion");
+        });
+
+        test("throws when userAddress is only @", () => {
+            expect(() =>
+                utils.buildXmppCredentials({
+                    object: { type: "credentials", userAddress: "@", password: "bar", resource: "Home" },
+                } as XmppCredentialsObject),
+            ).toThrow("missing the username or server portion");
+        });
+
         test("allows a custom port", () => {
             expect(
                 utils.buildXmppCredentials({
