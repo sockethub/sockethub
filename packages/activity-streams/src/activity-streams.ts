@@ -67,6 +67,11 @@ type CustomProps = Record<string, string[]>;
 
 type BasePropKey = "stream" | "object";
 
+// Shared object store: acts as a global address book so objects registered by
+// one ASFactory instance (e.g. in tests or bootstrap) are visible to Stream()
+// on any other instance in the same process.
+const objs = new Map<string, ActivityObject>();
+
 function formatUnknownPropertyValue(value: unknown): string {
     if (typeof value === "string") {
         return `"${value}"`;
@@ -87,10 +92,7 @@ function ensureProps(obj: ActivityObject): ActivityObject {
     return obj;
 }
 
-function expandStream(
-    meta: ActivityStream,
-    objs: Map<string, ActivityObject>,
-): ActivityStream {
+function expandStream(meta: ActivityStream): ActivityStream {
     const stream: Record<string, unknown> = {};
     const metaRecord = meta as unknown as Record<string, unknown>;
     for (const key of Object.keys(metaRecord)) {
@@ -148,7 +150,10 @@ export interface ASManager {
 
 export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
     const ee = new EventEmitter();
-    const objs = new Map<string, ActivityObject>();
+
+    // Per-instance validation state: custom props and flags are scoped to each
+    // ASFactory call so that registerObjectProps() on one manager cannot widen
+    // validation for unrelated managers in the same process.
     const customProps: CustomProps = {};
     const instanceSpecialObjs: string[] = opts.specialObjs || [];
     const failOnUnknownObjectProperties =
@@ -200,7 +205,6 @@ export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
         incomingObj: unknown,
         requireId = false,
     ) {
-        // Input validation with clear error messages
         if (incomingObj === null) {
             throw new Error(
                 `ActivityStreams validation failed: the "${type}" property is null. Example: { id: "user@example.com", type: "person" }`,
@@ -251,7 +255,6 @@ export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
         for (const key of unknownKeys) {
             const ao = incomingObj as ActivityObject;
             if (matchesCustomProp(ao.type, key)) {
-                // custom property matches, continue
                 continue;
             }
 
@@ -281,7 +284,7 @@ export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
         if (typeof (meta as ActivityStream).object === "object") {
             validateObject("object", (meta as ActivityStream).object);
         }
-        const stream = expandStream(meta as ActivityStream, objs);
+        const stream = expandStream(meta as ActivityStream);
         ee.emit("activity-stream", stream);
         return stream;
     }
