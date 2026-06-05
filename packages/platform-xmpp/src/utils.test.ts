@@ -43,6 +43,22 @@ describe("Utils", () => {
             });
         });
 
+        test("throws when userAddress has no @ sign", () => {
+            expect(() =>
+                utils.buildXmppCredentials({
+                    object: { type: "credentials", userAddress: "barney", password: "bar", resource: "Home" },
+                } as XmppCredentialsObject),
+            ).toThrow("JID");
+        });
+
+        test("throws when userAddress is an empty string", () => {
+            expect(() =>
+                utils.buildXmppCredentials({
+                    object: { type: "credentials", userAddress: "", password: "bar", resource: "Home" },
+                } as XmppCredentialsObject),
+            ).toThrow();
+        });
+
         test("allows a custom port", () => {
             expect(
                 utils.buildXmppCredentials({

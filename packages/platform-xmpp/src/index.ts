@@ -272,7 +272,8 @@ export default class XMPP implements PersistentPlatformInterface {
                     `FATAL: Internal code error in XMPP platform: ${e.toString()}`,
                 );
                 this.log.error(e.stack ?? "");
-                process.exit(1);
+                this.cleanup(() => process.exit(1));
+                return;
             }
 
             this.log.debug(
@@ -351,7 +352,11 @@ export default class XMPP implements PersistentPlatformInterface {
      * @param done - callback when job is done
      */
     async join(job: ActivityStream, done: PlatformCallback): Promise<void> {
-        const roomJid = job.target?.id.split("/")[0];
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
+        const roomJid = (job.target?.id ?? "").split("/")[0];
         this.log.debug(
             `sending join from ${job.actor.id} to ` +
                 `${roomJid}/${job.actor.name}`,
@@ -366,7 +371,7 @@ export default class XMPP implements PersistentPlatformInterface {
         );
 
         return this.__client
-            ?.send(presence)
+            .send(presence)
             .then(() => {
                 this.__knownRooms.add(roomJid);
                 done();
@@ -381,14 +386,18 @@ export default class XMPP implements PersistentPlatformInterface {
      * @param done - callback when job is done
      */
     leave(job: ActivityStream, done: PlatformCallback): void {
-        const roomJid = job.target?.id.split("/")[0];
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
+        const roomJid = (job.target?.id ?? "").split("/")[0];
         this.log.debug(
             `sending leave from ${job.actor.id} to ` +
                 `${roomJid}/${job.actor.name}`,
         );
 
         this.__client
-            ?.send(
+            .send(
                 this.__xml("presence", {
                     from: job.actor.id,
                     to: `${roomJid}/${job.actor.name || roomJid}`,
@@ -409,6 +418,10 @@ export default class XMPP implements PersistentPlatformInterface {
      * @param done - callback when job is done
      */
     send(job: ActivityStream, done: PlatformCallback): void {
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
         this.log.debug(`send() called for ${job.actor.id}`);
         const message = this.__xml(
             "message",
@@ -425,7 +438,10 @@ export default class XMPP implements PersistentPlatformInterface {
                   })
                 : undefined,
         );
-        this.__client?.send(message).then(done);
+        this.__client
+            .send(message)
+            .then(() => done())
+            .catch(done);
     }
 
     /**
@@ -437,6 +453,10 @@ export default class XMPP implements PersistentPlatformInterface {
      * @param done - callback when job is done
      */
     update(job: ActivityStream, done: PlatformCallback): void {
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
         this.log.debug(`update() called for ${job.actor.id}`);
         const props: Record<string, string | undefined> = {};
         const show: Record<string, string | undefined> = {};
@@ -452,7 +472,7 @@ export default class XMPP implements PersistentPlatformInterface {
             }
             this.log.debug(`setting presence: ${job.object.presence}`);
             this.__client
-                ?.send(
+                .send(
                     this.__xml(
                         "presence",
                         props,
@@ -460,7 +480,8 @@ export default class XMPP implements PersistentPlatformInterface {
                         status as XmppElement,
                     ),
                 )
-                .then(done);
+                .then(() => done())
+                .catch(done);
         } else {
             done(`unknown update object type: ${job.object?.type}`);
         }
@@ -474,15 +495,20 @@ export default class XMPP implements PersistentPlatformInterface {
      * @param done - callback when job is done
      */
     "request-friend"(job: ActivityStream, done: PlatformCallback): void {
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
         this.log.debug(`request-friend() called for ${job.actor.id}`);
         this.__client
-            ?.send(
+            .send(
                 this.__xml("presence", {
                     type: "subscribe",
                     to: job.target?.id,
                 }),
             )
-            .then(done);
+            .then(() => done())
+            .catch(done);
     }
 
     /**
@@ -493,15 +519,20 @@ export default class XMPP implements PersistentPlatformInterface {
      * @param done - callback when job is done
      */
     "remove-friend"(job: ActivityStream, done: PlatformCallback): void {
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
         this.log.debug(`remove-friend() called for ${job.actor.id}`);
         this.__client
-            ?.send(
+            .send(
                 this.__xml("presence", {
                     type: "unsubscribe",
                     to: job.target?.id,
                 }),
             )
-            .then(done);
+            .then(() => done())
+            .catch(done);
     }
 
     /**
@@ -512,15 +543,20 @@ export default class XMPP implements PersistentPlatformInterface {
      * @param done - callback when job is done
      */
     "make-friend"(job: ActivityStream, done: PlatformCallback): void {
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
         this.log.debug(`make-friend() called for ${job.actor.id}`);
         this.__client
-            ?.send(
+            .send(
                 this.__xml("presence", {
                     type: "subscribe",
                     to: job.target?.id,
                 }),
             )
-            .then(done);
+            .then(() => done())
+            .catch(done);
     }
 
     /**
@@ -530,6 +566,10 @@ export default class XMPP implements PersistentPlatformInterface {
      * @param done - callback when job is done
      */
     query(job: ActivityStream, done: PlatformCallback): void {
+        if (!this.__client) {
+            done("not connected");
+            return;
+        }
         const queryType = (job.object?.type as string) || "attendance";
         this.log.debug(
             `sending ${queryType} query from ${job.actor.id} for ${job.target?.id}`,
@@ -539,7 +579,7 @@ export default class XMPP implements PersistentPlatformInterface {
             const queryId = `room_info_${randomUUID()}`;
 
             this.__client
-                ?.send(
+                .send(
                     this.__xml(
                         "iq",
                         {
@@ -553,11 +593,11 @@ export default class XMPP implements PersistentPlatformInterface {
                         }),
                     ),
                 )
-                .then(done)
+                .then(() => done())
                 .catch(done);
         } else {
             this.__client
-                ?.send(
+                .send(
                     this.__xml(
                         "iq",
                         {
@@ -571,7 +611,7 @@ export default class XMPP implements PersistentPlatformInterface {
                         }),
                     ),
                 )
-                .then(done)
+                .then(() => done())
                 .catch(done);
         }
     }
@@ -598,6 +638,7 @@ export default class XMPP implements PersistentPlatformInterface {
         if (this.__client && typeof this.__client.stop === "function") {
             this.__client.stop();
         }
+        this.__client = undefined;
         done();
     }
 

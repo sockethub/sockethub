@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, test } from "bun:test";
+import { beforeEach, describe, expect, test } from "bun:test";
 import sinon from "sinon";
 
 import * as schemas from "@sockethub/schemas";
@@ -38,13 +38,13 @@ describe("Incoming handlers", () => {
         });
 
         stanzas.forEach(([name, stanza, asobject]) => {
-            it(name, () => {
+            test(name, () => {
                 const xmlObj = parse(stanza);
                 ih.stanza(xmlObj);
                 sinon.assert.calledWith(sendToClient, asobject);
             });
 
-            it(`${name} - passes @sockethub/schemas validator`, () => {
+            test(`${name} - passes @sockethub/schemas validator`, () => {
                 expect(schemas.validateActivityStream(asobject as Parameters<typeof schemas.validateActivityStream>[0])).toEqual("");
             });
         });
@@ -161,7 +161,7 @@ describe("Incoming handlers", () => {
             ih = new IncomingHandlers(session);
         });
 
-        it("presence from an unknown JID is typed as person", () => {
+        test("presence from an unknown JID is typed as person", () => {
             const stanza = parse(
                 `<presence from="${PERSON_JID}" to="me@example.org"/>`,
             );
@@ -172,7 +172,7 @@ describe("Incoming handlers", () => {
             );
         });
 
-        it("presence from a registered room JID is typed as room", () => {
+        test("presence from a registered room JID is typed as room", () => {
             session.__knownRooms.add(ROOM_JID);
             const stanza = parse(
                 `<presence from="${ROOM_JID}/Nick" to="me@example.org"/>`,
@@ -184,7 +184,7 @@ describe("Incoming handlers", () => {
             );
         });
 
-        it("strips resource from JID before looking up in __knownRooms", () => {
+        test("strips resource from JID before looking up in __knownRooms", () => {
             session.__knownRooms.add(ROOM_JID);
             const stanza = parse(
                 `<presence from="${ROOM_JID}/SomeMember" to="me@example.org"/>`,
@@ -195,7 +195,7 @@ describe("Incoming handlers", () => {
             );
         });
 
-        it("presence from a JID removed from __knownRooms reverts to person", () => {
+        test("presence from a JID removed from __knownRooms reverts to person", () => {
             session.__knownRooms.add(ROOM_JID);
             session.__knownRooms.delete(ROOM_JID);
             const stanza = parse(
@@ -207,7 +207,7 @@ describe("Incoming handlers", () => {
             );
         });
 
-        it("multiple rooms in __knownRooms are each typed correctly", () => {
+        test("multiple rooms in __knownRooms are each typed correctly", () => {
             const ROOM_A = "room-a@conference.example.org";
             const ROOM_B = "room-b@conference.example.org";
             session.__knownRooms.add(ROOM_A);
@@ -233,7 +233,7 @@ describe("Incoming handlers", () => {
             expect(calls[2].args[0].actor.type).toEqual("person");
         });
 
-        it("group presence from a joined room (no 'to' attr) sets actor.name from resource", () => {
+        test("group presence from a joined room (no 'to' attr) sets actor.name from resource", () => {
             session.__knownRooms.add("speedboat@conference.xmpp.example.org");
             const stanza = parse(
                 `<presence from='speedboat@conference.xmpp.example.org/user123'><show>chat</show> <status>brrroom!</status></presence>`,
@@ -247,7 +247,7 @@ describe("Incoming handlers", () => {
             expect(msg.target).toBeUndefined();
         });
 
-        it("presence object has the correct structure", () => {
+        test("presence object has the correct structure", () => {
             session.__knownRooms.add(ROOM_JID);
             const stanza = parse(
                 `<presence from="${ROOM_JID}/Nick" to="me@example.org"><show>away</show><status>Be right back</status></presence>`,
@@ -266,13 +266,13 @@ describe("Incoming handlers", () => {
     });
 
     describe("Error handling edge cases", () => {
-        it("close() should handle undefined session gracefully", () => {
+        test("close() should handle undefined session gracefully", () => {
             const ih = new IncomingHandlers();
             ih.session = undefined;
             expect(() => ih.close()).not.toThrow();
         });
 
-        it("close() should handle session without actor gracefully", () => {
+        test("close() should handle session without actor gracefully", () => {
             const log = { debug: sinon.fake(), error: sinon.fake(), warn: sinon.fake(), info: sinon.fake() };
             const ih = new IncomingHandlers(
                 makeSession({ log, actor: undefined }),
@@ -284,14 +284,14 @@ describe("Incoming handlers", () => {
             );
         });
 
-        it("close() should handle session without connection gracefully", () => {
+        test("close() should handle session without connection gracefully", () => {
             const ih = new IncomingHandlers(
                 makeSession({ actor: { id: "test@example.com", type: "person" } }),
             );
             expect(() => ih.close()).not.toThrow();
         });
 
-        it("close() should handle session with invalid connection gracefully", () => {
+        test("close() should handle session with invalid connection gracefully", () => {
             const ih = new IncomingHandlers(
                 makeSession({
                     actor: { id: "test@example.com", type: "person" },

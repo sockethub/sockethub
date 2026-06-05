@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import sinon from "sinon";
 import { buildCanonicalContext } from "@sockethub/schemas";
 
@@ -214,7 +214,7 @@ describe("XMPP", () => {
     });
 
     describe("Successful initialization", () => {
-        it("works as intended", (done) => {
+        test("works as intended", (done) => {
             xp.connect(job.connect, credentials as never, () => {
                 sinon.assert.calledOnce(clientFake);
                 expect(xp.__client!.on).toBeDefined();
@@ -229,7 +229,7 @@ describe("XMPP", () => {
     });
 
     describe("Bad initialization", () => {
-        it("returns the existing __client object", (done) => {
+        test("returns the existing __client object", (done) => {
             const dummyClient = {
                 foo: "bar",
                 socket: {
@@ -247,7 +247,7 @@ describe("XMPP", () => {
             });
         });
 
-        it("deletes the __client property on failed connect", (done) => {
+        test("deletes the __client property on failed connect", (done) => {
             clientObjectFake.start = sinon.fake.rejects("foo");
             xp.connect(job.connect, credentials as never, () => {
                 expect(xp.__client).toBeUndefined();
@@ -268,7 +268,7 @@ describe("XMPP", () => {
             processExitStub.restore();
         });
 
-        it("terminates process on TypeError (internal code error)", (done) => {
+        test("terminates process on TypeError (internal code error)", (done) => {
             xp.connect(job.connect, credentials as never, () => {
                 const errorHandler = clientObjectFake.on.getCalls().find(
                     (call: sinon.SinonSpyCall) => call.args[0] === "error",
@@ -293,7 +293,7 @@ describe("XMPP", () => {
             });
         });
 
-        it("terminates process on ReferenceError (internal code error)", (done) => {
+        test("terminates process on ReferenceError (internal code error)", (done) => {
             xp.connect(job.connect, credentials as never, () => {
                 const errorHandler = clientObjectFake.on.getCalls().find(
                     (call: sinon.SinonSpyCall) => call.args[0] === "error",
@@ -310,7 +310,7 @@ describe("XMPP", () => {
             });
         });
 
-        it("does NOT terminate process on network errors (recoverable)", (done) => {
+        test("does NOT terminate process on network errors (recoverable)", (done) => {
             xp.connect(job.connect, credentials as never, () => {
                 const errorHandler = clientObjectFake.on.getCalls().find(
                     (call: sinon.SinonSpyCall) => call.args[0] === "error",
@@ -326,7 +326,7 @@ describe("XMPP", () => {
             });
         });
 
-        it("does NOT terminate process on XMPP protocol errors (non-recoverable)", (done) => {
+        test("does NOT terminate process on XMPP protocol errors (non-recoverable)", (done) => {
             xp.connect(job.connect, credentials as never, () => {
                 const errorHandler = clientObjectFake.on.getCalls().find(
                     (call: sinon.SinonSpyCall) => call.args[0] === "error",
@@ -349,7 +349,7 @@ describe("XMPP", () => {
         });
 
         describe("#join", () => {
-            it("calls xmpp.js correctly", (done) => {
+            test("calls xmpp.js correctly", (done) => {
                 expect(xp.__client!.send).toBeInstanceOf(Function);
                 xp.join(job.join as never, () => {
                     sinon.assert.calledOnce(xp.__client!.send as ReturnType<typeof sinon.fake>);
@@ -365,7 +365,7 @@ describe("XMPP", () => {
                 });
             });
 
-            it("registers room bare JID in __knownRooms", (done) => {
+            test("registers room bare JID in __knownRooms", (done) => {
                 expect(xp.__knownRooms.has("partyroom@jabber.net")).toBeFalse();
                 xp.join(job.join as never, () => {
                     expect(xp.__knownRooms.has("partyroom@jabber.net")).toBeTrue();
@@ -373,7 +373,7 @@ describe("XMPP", () => {
                 });
             });
 
-            it("strips resource from target JID before registering", (done) => {
+            test("strips resource from target JID before registering", (done) => {
                 const jobWithResource = {
                     ...job.join,
                     target: { type: "room", id: "partyroom@jabber.net/someroom" },
@@ -387,7 +387,7 @@ describe("XMPP", () => {
         });
 
         describe("#leave", () => {
-            it("calls xmpp.js correctly", (done) => {
+            test("calls xmpp.js correctly", (done) => {
                 expect(xp.__client).toBeDefined();
                 expect(xp.__client!.send).toBeInstanceOf(Function);
                 xp.leave(job.leave as never, () => {
@@ -401,7 +401,7 @@ describe("XMPP", () => {
                 });
             });
 
-            it("removes room bare JID from __knownRooms", (done) => {
+            test("removes room bare JID from __knownRooms", (done) => {
                 xp.__knownRooms.add("partyroom@jabber.net");
                 xp.leave(job.leave as never, () => {
                     expect(xp.__knownRooms.has("partyroom@jabber.net")).toBeFalse();
@@ -409,7 +409,7 @@ describe("XMPP", () => {
                 });
             });
 
-            it("strips resource from target JID before sending unavailable presence", (done) => {
+            test("strips resource from target JID before sending unavailable presence", (done) => {
                 const jobWithResource = {
                     ...job.leave,
                     target: { type: "room", id: "partyroom@jabber.net/someroom" },
@@ -427,7 +427,7 @@ describe("XMPP", () => {
         });
 
         describe("#send", () => {
-            it("calls xmpp.js correctly", (done) => {
+            test("calls xmpp.js correctly", (done) => {
                 expect(xp.__client).toBeDefined();
                 expect(xp.__client!.send).toBeInstanceOf(Function);
                 xp.send(job.send.chat as never, () => {
@@ -451,7 +451,7 @@ describe("XMPP", () => {
                 });
             });
 
-            it("calls xmpp.js correctly for a groupchat", (done) => {
+            test("calls xmpp.js correctly for a groupchat", (done) => {
                 xp.send(job.send.groupchat as never, () => {
                     sinon.assert.calledOnce(xp.__client!.send as ReturnType<typeof sinon.fake>);
                     expect(xmlFake.getCall(0).args).toEqual([
@@ -473,7 +473,7 @@ describe("XMPP", () => {
                 });
             });
 
-            it("calls xmpp.js correctly for a message correction", (done) => {
+            test("calls xmpp.js correctly for a message correction", (done) => {
                 xp.send(job.send.correction as never, () => {
                     sinon.assert.calledOnce(xp.__client!.send as ReturnType<typeof sinon.fake>);
                     expect(xmlFake.getCall(0).args).toEqual([
@@ -504,7 +504,7 @@ describe("XMPP", () => {
         });
 
         describe("#update", () => {
-            it("calls xml() correctly for available", (done) => {
+            test("calls xml() correctly for available", (done) => {
                 xp.update(job.update.presenceOnline as never, () => {
                     sinon.assert.calledOnce(xp.__client!.send as ReturnType<typeof sinon.fake>);
                     expect(xmlFake.getCall(0).args).toEqual([
@@ -516,7 +516,7 @@ describe("XMPP", () => {
                     done();
                 });
             });
-            it("calls xml() correctly for unavailable", (done) => {
+            test("calls xml() correctly for unavailable", (done) => {
                 xp.update(job.update.presenceUnavailable as never, () => {
                     sinon.assert.calledOnce(xp.__client!.send as ReturnType<typeof sinon.fake>);
                     expect(xmlFake.getCall(0).args).toEqual([
@@ -528,7 +528,7 @@ describe("XMPP", () => {
                     done();
                 });
             });
-            it("calls xml() correctly for offline", (done) => {
+            test("calls xml() correctly for offline", (done) => {
                 xp.update(job.update.presenceOffline as never, () => {
                     sinon.assert.calledOnce(xp.__client!.send as ReturnType<typeof sinon.fake>);
                     expect(xmlFake.getCall(0).args).toEqual([
@@ -543,7 +543,7 @@ describe("XMPP", () => {
         });
 
         describe("#request-friend", () => {
-            it("calls xmpp.js correctly", (done) => {
+            test("calls xmpp.js correctly", (done) => {
                 xp["request-friend"](job["request-friend"] as never, () => {
                     sinon.assert.calledOnce(xp.__client!.send as ReturnType<typeof sinon.fake>);
                     expect(xmlFake.getCall(0).args).toEqual([
@@ -559,7 +559,7 @@ describe("XMPP", () => {
         });
 
         describe("#remove-friend", () => {
-            it("calls xmpp.js correctly", (done) => {
+            test("calls xmpp.js correctly", (done) => {
                 xp["remove-friend"](job["remove-friend"] as never, () => {
                     sinon.assert.calledOnce(xp.__client!.send as ReturnType<typeof sinon.fake>);
                     expect(xmlFake.getCall(0).args).toEqual([
@@ -575,7 +575,7 @@ describe("XMPP", () => {
         });
 
         describe("#make-friend", () => {
-            it("calls xmpp.js correctly", (done) => {
+            test("calls xmpp.js correctly", (done) => {
                 xp["make-friend"](job["make-friend"] as never, () => {
                     sinon.assert.calledOnce(xp.__client!.send as ReturnType<typeof sinon.fake>);
                     expect(xmlFake.getCall(0).args).toEqual([
@@ -591,7 +591,7 @@ describe("XMPP", () => {
         });
 
         describe("#query", () => {
-            it("calls xmpp.js correctly for attendance query", (done) => {
+            test("calls xmpp.js correctly for attendance query", (done) => {
                 xp.query(job.query as never, () => {
                     sinon.assert.calledOnce(xp.__client!.send as ReturnType<typeof sinon.fake>);
                     expect(xmlFake.getCall(0).args).toEqual([
@@ -612,7 +612,7 @@ describe("XMPP", () => {
                 });
             });
 
-            it("calls xmpp.js correctly for room-info query", (done) => {
+            test("calls xmpp.js correctly for room-info query", (done) => {
                 xp.query(job.queryRoomInfo as never, () => {
                     sinon.assert.calledOnce(xp.__client!.send as ReturnType<typeof sinon.fake>);
                     expect(xmlFake.getCall(0).args).toEqual([
@@ -630,7 +630,7 @@ describe("XMPP", () => {
         });
 
         describe("#disconnect", () => {
-            it("calls cleanup", (done) => {
+            test("calls cleanup", (done) => {
                 let cleanupCalled = false;
                 xp.cleanup = (done) => {
                     cleanupCalled = true;
@@ -644,20 +644,22 @@ describe("XMPP", () => {
         });
 
         describe("#cleanup", () => {
-            it("calls client.stop", (done) => {
+            test("calls client.stop", (done) => {
                 expect(xp.isInitialized()).toEqual(true);
                 xp.__knownRooms.add("partyroom@jabber.net");
+                const clientBeforeCleanup = xp.__client;
                 xp.cleanup(() => {
                     expect(xp.isInitialized()).toEqual(false);
                     expect(xp.__knownRooms.has("partyroom@jabber.net")).toBeFalse();
-                    sinon.assert.calledOnce(xp.__client!.stop as ReturnType<typeof sinon.fake>);
+                    expect(xp.__client).toBeUndefined();
+                    sinon.assert.calledOnce(clientBeforeCleanup!.stop as ReturnType<typeof sinon.fake>);
                     done();
                 });
             });
         });
 
         describe("#join (MUC stanza)", () => {
-            it("creates correct MUC presence stanza with namespace", (done) => {
+            test("creates correct MUC presence stanza with namespace", (done) => {
                 const joinJob = {
                     actor: {
                         id: "testingham@jabber.net",

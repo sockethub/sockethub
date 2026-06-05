@@ -227,7 +227,10 @@ export class IncomingHandlers {
         }
 
         if (timestamp) {
-            activity.published = new Date(timestamp).toISOString();
+            const parsedTimestamp = new Date(timestamp);
+            if (!Number.isNaN(parsedTimestamp.getTime())) {
+                activity.published = parsedTimestamp.toISOString();
+            }
         }
 
         // biome-ignore lint/suspicious/noExplicitAny: ActivityStream type doesn't cover all dynamic XMPP fields
