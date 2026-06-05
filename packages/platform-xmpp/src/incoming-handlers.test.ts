@@ -7,11 +7,12 @@ import parse from "@xmpp/xml/lib/parse.js";
 import { IncomingHandlers } from "./incoming-handlers.js";
 import { stanzas } from "./incoming-handlers.test.data.js";
 import { PlatformSchema } from "./schema.js";
+import type { XmppHandlerSession } from "./types.js";
 
-function makeSession(overrides = {}) {
+function makeSession(overrides: Partial<XmppHandlerSession> = {}): XmppHandlerSession {
     return {
         sendToClient: sinon.fake(),
-        log: { debug: sinon.fake() },
+        log: { debug: sinon.fake(), error: sinon.fake(), warn: sinon.fake(), info: sinon.fake() },
         __knownRooms: new Set(),
         actor: undefined,
         connection: undefined,
@@ -21,7 +22,8 @@ function makeSession(overrides = {}) {
 
 describe("Incoming handlers", () => {
     describe("XML stanzas result in the expected AS objects", () => {
-        let ih, sendToClient;
+        let ih: IncomingHandlers;
+        let sendToClient: ReturnType<typeof sinon.fake>;
 
         beforeEach(() => {
             if (!schemas.getPlatformSchema("xmpp/messages")) {
@@ -43,13 +45,14 @@ describe("Incoming handlers", () => {
             });
 
             it(`${name} - passes @sockethub/schemas validator`, () => {
-                expect(schemas.validateActivityStream(asobject)).toEqual("");
+                expect(schemas.validateActivityStream(asobject as Parameters<typeof schemas.validateActivityStream>[0])).toEqual("");
             });
         });
     });
 
     describe("Room info edge cases", () => {
-        let ih, sendToClient;
+        let ih: IncomingHandlers;
+        let sendToClient: ReturnType<typeof sinon.fake>;
 
         beforeEach(() => {
             if (!schemas.getPlatformSchema("xmpp/messages")) {
@@ -62,7 +65,8 @@ describe("Incoming handlers", () => {
             sendToClient = sinon.fake();
             ih = new IncomingHandlers({
                 sendToClient: sendToClient,
-                log: { debug: sinon.fake() },
+                log: { debug: sinon.fake(), error: sinon.fake(), warn: sinon.fake(), info: sinon.fake() },
+                __knownRooms: new Set(),
             });
         });
 
@@ -145,9 +149,10 @@ describe("Incoming handlers", () => {
             });
         });
     });
-  
+
     describe("Room presence actor type via __knownRooms", () => {
-        let ih, session;
+        let ih: IncomingHandlers;
+        let session: XmppHandlerSession;
         const ROOM_JID = "test@conference.example.org";
         const PERSON_JID = "user@example.org";
 
@@ -161,8 +166,8 @@ describe("Incoming handlers", () => {
                 `<presence from="${PERSON_JID}" to="me@example.org"/>`,
             );
             ih.stanza(stanza);
-            sinon.assert.calledOnce(session.sendToClient);
-            expect(session.sendToClient.getCall(0).args[0].actor.type).toEqual(
+            sinon.assert.calledOnce(session.sendToClient as ReturnType<typeof sinon.fake>);
+            expect((session.sendToClient as ReturnType<typeof sinon.fake>).getCall(0).args[0].actor.type).toEqual(
                 "person",
             );
         });
@@ -173,20 +178,19 @@ describe("Incoming handlers", () => {
                 `<presence from="${ROOM_JID}/Nick" to="me@example.org"/>`,
             );
             ih.stanza(stanza);
-            sinon.assert.calledOnce(session.sendToClient);
-            expect(session.sendToClient.getCall(0).args[0].actor.type).toEqual(
+            sinon.assert.calledOnce(session.sendToClient as ReturnType<typeof sinon.fake>);
+            expect((session.sendToClient as ReturnType<typeof sinon.fake>).getCall(0).args[0].actor.type).toEqual(
                 "room",
             );
         });
 
         it("strips resource from JID before looking up in __knownRooms", () => {
             session.__knownRooms.add(ROOM_JID);
-            // from includes a /resource portion
             const stanza = parse(
                 `<presence from="${ROOM_JID}/SomeMember" to="me@example.org"/>`,
             );
             ih.stanza(stanza);
-            expect(session.sendToClient.getCall(0).args[0].actor.type).toEqual(
+            expect((session.sendToClient as ReturnType<typeof sinon.fake>).getCall(0).args[0].actor.type).toEqual(
                 "room",
             );
         });
@@ -198,7 +202,7 @@ describe("Incoming handlers", () => {
                 `<presence from="${ROOM_JID}" to="me@example.org"/>`,
             );
             ih.stanza(stanza);
-            expect(session.sendToClient.getCall(0).args[0].actor.type).toEqual(
+            expect((session.sendToClient as ReturnType<typeof sinon.fake>).getCall(0).args[0].actor.type).toEqual(
                 "person",
             );
         });
@@ -223,7 +227,7 @@ describe("Incoming handlers", () => {
             ih.stanza(stanzaB);
             ih.stanza(stanzaP);
 
-            const calls = session.sendToClient.getCalls();
+            const calls = (session.sendToClient as ReturnType<typeof sinon.fake>).getCalls();
             expect(calls[0].args[0].actor.type).toEqual("room");
             expect(calls[1].args[0].actor.type).toEqual("room");
             expect(calls[2].args[0].actor.type).toEqual("person");
@@ -235,7 +239,7 @@ describe("Incoming handlers", () => {
                 `<presence from='speedboat@conference.xmpp.example.org/user123'><show>chat</show> <status>brrroom!</status></presence>`,
             );
             ih.stanza(stanza);
-            const msg = session.sendToClient.getCall(0).args[0];
+            const msg = (session.sendToClient as ReturnType<typeof sinon.fake>).getCall(0).args[0];
             expect(msg.actor.type).toEqual("room");
             expect(msg.actor.name).toEqual("user123");
             expect(msg.object.presence).toEqual("chat");
@@ -249,7 +253,7 @@ describe("Incoming handlers", () => {
                 `<presence from="${ROOM_JID}/Nick" to="me@example.org"><show>away</show><status>Be right back</status></presence>`,
             );
             ih.stanza(stanza);
-            const msg = session.sendToClient.getCall(0).args[0];
+            const msg = (session.sendToClient as ReturnType<typeof sinon.fake>).getCall(0).args[0];
             expect(msg.type).toEqual("update");
             expect(msg.actor.type).toEqual("room");
             expect(msg.actor.id).toEqual(`${ROOM_JID}/Nick`);
@@ -269,7 +273,7 @@ describe("Incoming handlers", () => {
         });
 
         it("close() should handle session without actor gracefully", () => {
-            const log = { debug: sinon.fake() };
+            const log = { debug: sinon.fake(), error: sinon.fake(), warn: sinon.fake(), info: sinon.fake() };
             const ih = new IncomingHandlers(
                 makeSession({ log, actor: undefined }),
             );
@@ -282,7 +286,7 @@ describe("Incoming handlers", () => {
 
         it("close() should handle session without connection gracefully", () => {
             const ih = new IncomingHandlers(
-                makeSession({ actor: { id: "test@example.com" } }),
+                makeSession({ actor: { id: "test@example.com", type: "person" } }),
             );
             expect(() => ih.close()).not.toThrow();
         });
@@ -290,8 +294,8 @@ describe("Incoming handlers", () => {
         it("close() should handle session with invalid connection gracefully", () => {
             const ih = new IncomingHandlers(
                 makeSession({
-                    actor: { id: "test@example.com" },
-                    connection: { disconnect: null },
+                    actor: { id: "test@example.com", type: "person" },
+                    connection: { disconnect: undefined },
                 }),
             );
             expect(() => ih.close()).not.toThrow();

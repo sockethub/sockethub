@@ -3,7 +3,7 @@ import Ajv from "ajv";
 
 import { PlatformSchema } from "./schema.js";
 
-const ajv = new Ajv({ strictTypes: false, allErrors: true });
+const ajv = new Ajv({ strictTypes: false });
 const validate = ajv.compile(PlatformSchema.credentials);
 
 const base = {
@@ -15,7 +15,7 @@ const base = {
     },
 };
 
-function withObject(extra) {
+function withObject(extra: Record<string, unknown>) {
     return { ...base, object: { ...base.object, ...extra } };
 }
 

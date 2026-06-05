@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import parse from "@xmpp/xml/lib/parse.js";
 
+import type { XmppCredentialsObject } from "./types.js";
 import { utils } from "./utils.js";
 
 describe("Utils", () => {
@@ -9,11 +10,12 @@ describe("Utils", () => {
             expect(
                 utils.buildXmppCredentials({
                     object: {
+                        type: "credentials",
                         userAddress: "barney@dinosaur.com.au",
                         password: "bar",
                         resource: "Home",
                     },
-                }),
+                } as XmppCredentialsObject),
             ).toEqual({
                 password: "bar",
                 service: "dinosaur.com.au",
@@ -26,12 +28,13 @@ describe("Utils", () => {
             expect(
                 utils.buildXmppCredentials({
                     object: {
+                        type: "credentials",
                         userAddress: "barney@dinosaur.com.au",
                         server: "foo",
                         password: "bar",
                         resource: "Home",
                     },
-                }),
+                } as XmppCredentialsObject),
             ).toEqual({
                 password: "bar",
                 service: "foo",
@@ -44,12 +47,13 @@ describe("Utils", () => {
             expect(
                 utils.buildXmppCredentials({
                     object: {
+                        type: "credentials",
                         userAddress: "barney@dinosaur.com.au",
                         port: 123,
                         password: "bar",
                         resource: "Home",
                     },
-                }),
+                } as XmppCredentialsObject),
             ).toEqual({
                 password: "bar",
                 service: "dinosaur.com.au:123",
@@ -93,27 +97,27 @@ describe("Utils", () => {
         test("coerces boolean true values", () => {
             const field1 = parse("<field var='muc#roominfo_membersonly' type='boolean'><value>true</value></field>");
             const field2 = parse("<field var='muc#roominfo_membersonly' type='boolean'><value>1</value></field>");
-            expect(utils.parseXDataField(field1).field.value).toBe(true);
-            expect(utils.parseXDataField(field2).field.value).toBe(true);
+            expect(utils.parseXDataField(field1)!.field.value).toBe(true);
+            expect(utils.parseXDataField(field2)!.field.value).toBe(true);
         });
 
         test("coerces boolean false values", () => {
             const field1 = parse("<field var='muc#roominfo_membersonly' type='boolean'><value>false</value></field>");
             const field2 = parse("<field var='muc#roominfo_membersonly' type='boolean'><value>0</value></field>");
             const field3 = parse("<field var='muc#roominfo_membersonly' type='boolean'></field>");
-            expect(utils.parseXDataField(field1).field.value).toBe(false);
-            expect(utils.parseXDataField(field2).field.value).toBe(false);
-            expect(utils.parseXDataField(field3).field.value).toBe(false);
+            expect(utils.parseXDataField(field1)!.field.value).toBe(false);
+            expect(utils.parseXDataField(field2)!.field.value).toBe(false);
+            expect(utils.parseXDataField(field3)!.field.value).toBe(false);
         });
 
         test("coerces numeric digit strings to JS numbers", () => {
             const field = parse("<field var='muc#roominfo_occupants' type='text-single'><value>15</value></field>");
-            expect(utils.parseXDataField(field).field.value).toBe(15);
+            expect(utils.parseXDataField(field)!.field.value).toBe(15);
         });
 
         test("does not coerce alphanumeric values to numbers", () => {
             const field = parse("<field var='muc#roominfo_occupants' type='text-single'><value>15a</value></field>");
-            expect(utils.parseXDataField(field).field.value).toBe("15a");
+            expect(utils.parseXDataField(field)!.field.value).toBe("15a");
         });
 
         test("parses multi-value fields into array of strings", () => {
@@ -123,7 +127,7 @@ describe("Utils", () => {
                     <value>Fixed bug Y</value>
                 </field>`,
             );
-            expect(utils.parseXDataField(field).field.value).toEqual([
+            expect(utils.parseXDataField(field)!.field.value).toEqual([
                 "Added feature X",
                 "Fixed bug Y",
             ]);

@@ -1,6 +1,7 @@
+import type { PlatformSchemaStruct } from "@sockethub/schemas";
 import PackageJSON from "../package.json" with { type: "json" };
 
-export const PlatformSchema = {
+export const PlatformSchema: PlatformSchemaStruct = {
     name: "xmpp",
     version: PackageJSON.version,
     contextUrl: "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
