@@ -190,28 +190,26 @@ ActivityStreams.Object.create({ id: "test", foo: "bar" });
 
 ## Object Property Validation
 
-ActivityStreams derives known stream and object properties from
-`@sockethub/schemas`. Object types whose schemas allow additional properties,
-such as `message`, accept protocol-specific metadata without a static allowlist:
+Standard ActivityStreams only defines a handful of common fields. Real protocols
+often need to carry additional data — threading, delivery options, read state —
+and stripping that out before building a stream defeats the purpose. Some object
+types, like `message`, are intentionally open to extra fields for exactly this
+reason. The set of recognized fields comes from `@sockethub/schemas`:
 
 ```javascript
 ActivityStreams.Stream({
   type: "send",
-  "@context": [
-    "https://www.w3.org/ns/activitystreams",
-    "https://sockethub.org/ns/context/v1.jsonld",
-    "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
-  ],
+  "@context": [/* ... */],
   actor: { id: "me@example.com", type: "person" },
   target: { id: "you@example.com", type: "person" },
   object: {
     type: "message",
-    content: "Corrected text",
-    "xmpp:replace": { id: "old-message-id" }
+    content: "Hello!",
+    replyTo: "msg-42"   // platform-specific field
   }
 });
 ```
 
-Clients can also register object properties discovered from platform schemas at
-runtime with `ActivityStreams.registerObjectProps(type, props)`. The Sockethub
-client does this automatically after it receives the server schema registry.
+You can also register additional fields for any object type with
+`ActivityStreams.registerObjectProps(type, props)`. When using the Sockethub
+client, this is handled automatically from the platform's schema definition.

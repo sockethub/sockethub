@@ -191,25 +191,26 @@ You can still send raw ActivityStreams directly with `sc.socket.emit('message',
 
 ### Platform-Specific Object Properties
 
-After `ready()` resolves, SockethubClient has applied the server schema registry
-to local validation. The bundled ActivityStreams helper accepts object properties
-declared by platform message schemas, and object types with permissive schemas
-can carry protocol-specific metadata without a static client allowlist.
+The standard ActivityStreams fields cover common concepts like content and type,
+but real protocols have richer ideas — threading, read receipts, delivery
+options, and more. You can put those extra fields directly into the `object`
+you're sending, and Sockethub passes them through to the platform without
+rejecting them.
 
-For example, XMPP message corrections use `xmpp:replace` on a `message` object:
+Once `ready()` resolves, the client knows what each platform accepts:
 
 ```javascript
 await sc.ready();
 
-const correction = sc.ActivityStreams.Stream({
+sc.socket.emit('message', {
     type: 'send',
-    '@context': sc.contextFor('xmpp'),
+    '@context': sc.contextFor('irc'),
     actor: { id: 'me@example.com', type: 'person' },
-    target: { id: 'you@example.com', type: 'person' },
+    target: { id: '#general', type: 'room' },
     object: {
         type: 'message',
-        content: 'Corrected text',
-        'xmpp:replace': { id: 'old-message-id' }
+        content: 'Hello!',
+        replyTo: 'msg-42'   // platform-specific field
     }
 });
 ```
