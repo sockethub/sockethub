@@ -1,3 +1,8 @@
+import type {
+    ActivityActor,
+    ActivityObject,
+    ActivityStream,
+} from "@sockethub/schemas";
 import { buildCanonicalContext } from "@sockethub/schemas";
 import type { XmppElement } from "@xmpp/client";
 
@@ -128,34 +133,32 @@ export class IncomingHandlers {
         const actorType = this.session?.__knownRooms.has(bareJid)
             ? "room"
             : "person";
+        const fromJid = stanza.attrs.from ?? "";
+        const statusText = stanza.getChildText("status");
 
-        const obj: Record<string, unknown> = {
+        const actor: ActivityActor = { type: actorType, id: fromJid };
+        if (!stanza.attrs.to) {
+            actor.name = fromJid.split("/")[1];
+        }
+
+        const obj: ActivityStream = {
             "@context": XMPP_CONTEXT,
             type: "update",
-            actor: {
-                type: actorType,
-                id: stanza.attrs.from,
-            },
+            actor,
             object: {
                 type: "presence",
+                presence: getPresence(stanza),
+                ...(statusText && { content: statusText }),
             },
+            ...(stanza.attrs.to && {
+                target: { id: stanza.attrs.to, type: "person" },
+            }),
         };
-        if (stanza.getChildText("status")) {
-            (obj.object as Record<string, unknown>).content =
-                stanza.getChildText("status");
-        }
-        (obj.object as Record<string, unknown>).presence = getPresence(stanza);
-        if (stanza.attrs.to) {
-            obj.target = { id: stanza.attrs.to, type: "person" };
-        } else {
-            (obj.actor as Record<string, unknown>).name =
-                stanza.attrs.from?.split("/")[1];
-        }
+
         this.session?.log.debug(
             `received ${actorType} contact presence update from ${stanza.attrs.from}`,
         );
-        // biome-ignore lint/suspicious/noExplicitAny: ActivityStream type doesn't cover all dynamic XMPP fields
-        this.session?.sendToClient(obj as any);
+        this.session?.sendToClient(obj);
     }
 
     subscribe(
@@ -189,42 +192,37 @@ export class IncomingHandlers {
         const messageId = getMessageId(stanza);
         const type = stanza.attrs.type === "groupchat" ? "room" : "person";
 
-        const activity: Record<string, unknown> = {
-            "@context": XMPP_CONTEXT,
-            type: "send",
-            actor: {
-                type: "person",
-                id: from,
-            },
-            target: {
-                type: type,
-                id: stanza.attrs.to,
-            },
-            object: {
-                type: "message",
-                id: messageId,
-                content: message,
-            },
+        let targetId = stanza.attrs.to ?? "";
+        const actor: ActivityActor = { type: "person", id: from };
+        if (type === "room") {
+            const [roomId, memberName] = from.split("/");
+            targetId = roomId;
+            actor.name = memberName;
+        }
+
+        const object: ActivityObject = {
+            type: "message",
+            ...(messageId !== null && { id: messageId }),
+            content: message,
         };
 
         const messageStanzaId = getMessageStanzaId(stanza);
         if (messageStanzaId) {
-            (activity.object as Record<string, unknown>)["xmpp:stanza-id"] =
-                messageStanzaId;
+            object["xmpp:stanza-id"] = messageStanzaId;
         }
 
         const messageReplaceId = getMessageReplaceId(stanza);
         if (messageReplaceId) {
-            (activity.object as Record<string, unknown>)["xmpp:replace"] = {
-                id: messageReplaceId,
-            };
+            object["xmpp:replace"] = { id: messageReplaceId };
         }
 
-        if (type === "room") {
-            const [targetId, actorName] = from.split("/");
-            (activity.target as Record<string, unknown>).id = targetId;
-            (activity.actor as Record<string, unknown>).name = actorName;
-        }
+        const activity: ActivityStream & { published?: string } = {
+            "@context": XMPP_CONTEXT,
+            type: "send",
+            actor,
+            target: { type, id: targetId },
+            object,
+        };
 
         if (timestamp) {
             const parsedTimestamp = new Date(timestamp);
@@ -233,8 +231,7 @@ export class IncomingHandlers {
             }
         }
 
-        // biome-ignore lint/suspicious/noExplicitAny: ActivityStream type doesn't cover all dynamic XMPP fields
-        this.session?.sendToClient(activity as any);
+        this.session?.sendToClient(activity);
     }
 
     notifyError(stanza: XmppElement): void {
