@@ -122,7 +122,7 @@ describe("Initialize IRC Platform", () => {
             expect([
                 "[irc] /object: must have required property 'type'",
                 "[irc] /object/port: must be number",
-                "[irc] /object: must match exactly one schema in oneOf: credentials, feed, message, me, person, room, service, platform, website, attendance, presence, relationship, topic, address, heartbeat",
+                "[irc] /object: must match exactly one schema in oneOf: credentials, feed, message, me, person, room, service, platform, website, attendance, room-info, presence, relationship, topic, address, heartbeat",
             ]).toContain(result);
         });
 

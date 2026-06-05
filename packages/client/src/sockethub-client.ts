@@ -518,9 +518,11 @@ export default class SockethubClient {
                 types: Array.isArray(platform.types) ? platform.types : [],
                 schemas: platform.schemas || {},
             });
-            this.registerActivityStreamsSchemaProps(platform.schemas?.messages);
             addPlatformContext(platform.id, platform.contextUrl);
             try {
+                this.registerActivityStreamsSchemaProps(
+                    platform.schemas?.messages,
+                );
                 const credSchema = platform.schemas?.credentials;
                 if (
                     credSchema &&

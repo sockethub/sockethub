@@ -189,7 +189,7 @@ describe("SockethubClient", () => {
             ]);
         });
 
-        it("registers platform ActivityStreams props from schemas", () => {
+        test("registers platform ActivityStreams props from schemas", () => {
             socket.emit("schemas", TEST_REGISTRY);
 
             const [type, props] = asInstance.registerObjectProps.firstCall.args;

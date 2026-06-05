@@ -12,7 +12,7 @@
   "main": "dist/index.js",
   "exports": {
     ".": {
-      "bun": "./src/index.js",
+      "bun": "./src/index.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     }
@@ -40,20 +40,21 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/platform-xmpp",
   "scripts": {
-    "build": "bun build src/index.js --outdir dist --target node --format esm --sourcemap=external",
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external",
     "clean": "rm -rf dist",
     "clean:deps": "rm -rf node_modules",
-    "doc": "jsdoc2md --no-gfm --heading-depth 1 src/index.js > API.md"
+    "doc": "typedoc --options typedoc.json"
   },
   "dependencies": {
     "@xmpp/client": "^0.13.6"
   },
   "devDependencies": {
     "@sockethub/schemas": "^3.0.0-alpha.12",
+    "@types/bun": "latest",
     "@xmpp/xml": "^0.13.2",
     "ajv": "^8.17.1",
-    "jsdoc-to-markdown": "^8.0.3",
-    "sinon": "^17.0.2"
+    "sinon": "^17.0.2",
+    "typedoc": "^0.28.14"
   },
   "peerDependencies": {
     "@sockethub/server": "^5.0.0-alpha.12"

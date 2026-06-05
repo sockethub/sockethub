@@ -10,7 +10,7 @@ const IRC_CONTEXT = [
 
 describe("warn test", () => {
     expect(typeof ASFactory).toEqual("function");
-    const activity = ASFactory();
+    const activity = ASFactory({ failOnUnknownObjectProperties: true });
     test("rejects nondefined special types", () => {
         expect(() => {
             activity.Stream({

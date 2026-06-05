@@ -27,7 +27,6 @@ import {
 } from "@sockethub/schemas/object-types";
 import EventEmitter from "eventemitter3";
 
-const ee = new EventEmitter();
 const streamProps = Object.keys(ActivityStreamSchema.properties).concat(
     "platform",
 );
@@ -68,41 +67,6 @@ type CustomProps = Record<string, string[]>;
 
 type BasePropKey = "stream" | "object";
 
-const objs = new Map<string, ActivityObject>();
-const customProps: CustomProps = {};
-
-let failOnUnknownObjectProperties = false;
-let warnOnUnknownObjectProperties = true;
-let specialObjs: string[] = []; // the objects don't get rejected for bad props
-
-function matchesCustomProp(type: string, key: string) {
-    const props = customProps[type];
-    return Array.isArray(props) && props.includes(key);
-}
-
-function registerObjectProps(type: string, props: string[]) {
-    if (typeof type !== "string" || !Array.isArray(props)) {
-        return;
-    }
-    // Merge, rather than replace, so schema updates from multiple platforms do
-    // not drop base object properties or earlier registrations for the type.
-    const current = new Set(customProps[type] || []);
-    for (const prop of props) {
-        if (typeof prop === "string" && prop.length > 0) {
-            current.add(prop);
-        }
-    }
-    customProps[type] = [...current];
-}
-
-function getAllowedObjectProps(type: string): Set<string> {
-    const props = new Set(objectPropsByType.get(type) || genericObjectProps);
-    for (const prop of customProps[type] || []) {
-        props.add(prop);
-    }
-    return props;
-}
-
 function formatUnknownPropertyValue(value: unknown): string {
     if (typeof value === "string") {
         return `"${value}"`;
@@ -117,92 +81,16 @@ function formatUnknownPropertyValue(value: unknown): string {
     return String(value);
 }
 
-function validateObject(
-    type: BasePropKey,
-    incomingObj: unknown,
-    requireId = false,
-) {
-    // Input validation with clear error messages
-    if (incomingObj === null) {
-        throw new Error(
-            `ActivityStreams validation failed: the "${type}" property is null. Example: { id: "user@example.com", type: "person" }`,
-        );
-    }
-
-    if (incomingObj === undefined) {
-        throw new Error(
-            `ActivityStreams validation failed: the "${type}" property is undefined. Example: { id: "user@example.com", type: "person" }`,
-        );
-    }
-
-    if (typeof incomingObj === "string") {
-        throw new Error(
-            `ActivityStreams validation failed: the "${type}" property received string "${incomingObj}" but expected an object. Use: { id: "${incomingObj}", type: "person" }`,
-        );
-    }
-
-    if (typeof incomingObj !== "object" || Array.isArray(incomingObj)) {
-        const receivedType = Array.isArray(incomingObj)
-            ? "array"
-            : typeof incomingObj;
-        const receivedValue = String(incomingObj);
-        throw new Error(
-            `ActivityStreams validation failed: the "${type}" property must be an object, received ${receivedType} (${receivedValue}). Example: { id: "user@example.com", type: "person" }`,
-        );
-    }
-
-    // Require 'id' property when explicitly requested (e.g., Object.create())
-    const obj = incomingObj as ActivityObject;
-    if (requireId && !obj.id) {
-        throw new Error(
-            `ActivityStreams validation failed: the "${type}" property requires an 'id' property. Example: { id: "user@example.com", type: "person" }`,
-        );
-    }
-
-    const incomingRecord = incomingObj as Record<string, unknown>;
-    const allowedProps =
-        type === "stream"
-            ? new Set(streamProps)
-            : getAllowedObjectProps(String(incomingRecord.type));
-    const unknownKeys = Object.keys(incomingRecord).filter(
-        (key: string): boolean => {
-            return !allowedProps.has(key);
-        },
-    );
-
-    for (const key of unknownKeys) {
-        const ao = incomingObj as ActivityObject;
-        if (matchesCustomProp(ao.type, key)) {
-            // custom property matches, continue
-            continue;
-        }
-
-        if (
-            !specialObjs.includes(ao.type) &&
-            !(type === "object" && permissiveObjectTypes.has(ao.type))
-        ) {
-            // Closed object schemas warn or fail on unknown properties.
-            // Permissive schema types, such as message, intentionally allow
-            // protocol metadata like xmpp:replace without per-property lists.
-            const receivedValue = formatUnknownPropertyValue(ao[key]);
-            const err = `ActivityStreams validation failed: property "${key}" with value ${receivedValue} is not allowed on the "${type}" object of type "${ao.type}".`;
-            if (failOnUnknownObjectProperties) {
-                throw new Error(err);
-            }
-            if (warnOnUnknownObjectProperties) {
-                console.warn(err);
-            }
-        }
-    }
-}
-
 function ensureProps(obj: ActivityObject): ActivityObject {
     // ensure the name property, which can generally be inferred from the id
     // name = obj.match(/(?(?\w+):\/\/)(?:.+@)?(.+?)(?:\/|$)/)[1]
     return obj;
 }
 
-function expandStream(meta: ActivityStream) {
+function expandStream(
+    meta: ActivityStream,
+    objs: Map<string, ActivityObject>,
+): ActivityStream {
     const stream: Record<string, unknown> = {};
     const metaRecord = meta as unknown as Record<string, unknown>;
     for (const key of Object.keys(metaRecord)) {
@@ -233,55 +121,12 @@ function expandStream(meta: ActivityStream) {
     return stream as unknown as ActivityStream;
 }
 
-function Stream(
-    meta: unknown,
-): ActivityStream | ActivityObject | Record<string, never> {
-    validateObject("stream", meta);
-    if (typeof (meta as ActivityStream).object === "object") {
-        validateObject("object", (meta as ActivityStream).object);
-    }
-    const stream = expandStream(meta as ActivityStream);
-    ee.emit("activity-stream", stream);
-    return stream;
-}
-
 export interface ActivityObjectManager {
     create(obj: ActivityObject): ActivityObject;
     delete(id: string): boolean;
     list(): IterableIterator<string>;
     get(id: string, expand?: boolean): ActivityObject | string;
 }
-
-const _Object: ActivityObjectManager = {
-    create: (obj: ActivityObject) => {
-        validateObject("object", obj, true); // require ID for Object.create()
-        const ao = ensureProps(obj);
-        objs.set(ao.id, ao);
-        ee.emit("activity-object-create", ao);
-        return ao;
-    },
-
-    delete: (id) => {
-        const result = objs.delete(id);
-        if (result) {
-            ee.emit("activity-object-delete", id);
-        }
-        return result;
-    },
-
-    get: (id, expand) => {
-        let obj = objs.get(id);
-        if (!obj) {
-            if (!expand) {
-                return id;
-            }
-            obj = { id: id } as ActivityObject;
-        }
-        return ensureProps(obj);
-    },
-
-    list: (): IterableIterator<string> => objs.keys(),
-};
 
 export interface ASFactoryOptions {
     specialObjs?: Array<string>;
@@ -302,23 +147,179 @@ export interface ASManager {
 }
 
 export function ASFactory(opts: ASFactoryOptions = {}): ASManager {
-    specialObjs = opts?.specialObjs || [];
-    failOnUnknownObjectProperties =
+    const ee = new EventEmitter();
+    const objs = new Map<string, ActivityObject>();
+    const customProps: CustomProps = {};
+    const instanceSpecialObjs: string[] = opts.specialObjs || [];
+    const failOnUnknownObjectProperties =
         typeof opts.failOnUnknownObjectProperties === "boolean"
             ? opts.failOnUnknownObjectProperties
-            : failOnUnknownObjectProperties;
-    warnOnUnknownObjectProperties =
+            : false;
+    const warnOnUnknownObjectProperties =
         typeof opts.warnOnUnknownObjectProperties === "boolean"
             ? opts.warnOnUnknownObjectProperties
-            : warnOnUnknownObjectProperties;
+            : true;
+
     const customPropsConfig = opts.customProps || {};
     for (const propName of Object.keys(customPropsConfig)) {
         customProps[propName] = customPropsConfig[propName];
     }
 
+    function matchesCustomProp(type: string, key: string): boolean {
+        const props = customProps[type];
+        return Array.isArray(props) && props.includes(key);
+    }
+
+    function registerObjectProps(type: string, props: string[]): void {
+        if (typeof type !== "string" || !Array.isArray(props)) {
+            return;
+        }
+        // Merge, rather than replace, so schema updates from multiple platforms do
+        // not drop base object properties or earlier registrations for the type.
+        const current = new Set(customProps[type] || []);
+        for (const prop of props) {
+            if (typeof prop === "string" && prop.length > 0) {
+                current.add(prop);
+            }
+        }
+        customProps[type] = [...current];
+    }
+
+    function getAllowedObjectProps(type: string): Set<string> {
+        const props = new Set(
+            objectPropsByType.get(type) || genericObjectProps,
+        );
+        for (const prop of customProps[type] || []) {
+            props.add(prop);
+        }
+        return props;
+    }
+
+    function validateObject(
+        type: BasePropKey,
+        incomingObj: unknown,
+        requireId = false,
+    ) {
+        // Input validation with clear error messages
+        if (incomingObj === null) {
+            throw new Error(
+                `ActivityStreams validation failed: the "${type}" property is null. Example: { id: "user@example.com", type: "person" }`,
+            );
+        }
+
+        if (incomingObj === undefined) {
+            throw new Error(
+                `ActivityStreams validation failed: the "${type}" property is undefined. Example: { id: "user@example.com", type: "person" }`,
+            );
+        }
+
+        if (typeof incomingObj === "string") {
+            throw new Error(
+                `ActivityStreams validation failed: the "${type}" property received string "${incomingObj}" but expected an object. Use: { id: "${incomingObj}", type: "person" }`,
+            );
+        }
+
+        if (typeof incomingObj !== "object" || Array.isArray(incomingObj)) {
+            const receivedType = Array.isArray(incomingObj)
+                ? "array"
+                : typeof incomingObj;
+            const receivedValue = String(incomingObj);
+            throw new Error(
+                `ActivityStreams validation failed: the "${type}" property must be an object, received ${receivedType} (${receivedValue}). Example: { id: "user@example.com", type: "person" }`,
+            );
+        }
+
+        // Require 'id' property when explicitly requested (e.g., Object.create())
+        const obj = incomingObj as ActivityObject;
+        if (requireId && !obj.id) {
+            throw new Error(
+                `ActivityStreams validation failed: the "${type}" property requires an 'id' property. Example: { id: "user@example.com", type: "person" }`,
+            );
+        }
+
+        const incomingRecord = incomingObj as Record<string, unknown>;
+        const allowedProps =
+            type === "stream"
+                ? new Set(streamProps)
+                : getAllowedObjectProps(String(incomingRecord.type));
+        const unknownKeys = Object.keys(incomingRecord).filter(
+            (key: string): boolean => {
+                return !allowedProps.has(key);
+            },
+        );
+
+        for (const key of unknownKeys) {
+            const ao = incomingObj as ActivityObject;
+            if (matchesCustomProp(ao.type, key)) {
+                // custom property matches, continue
+                continue;
+            }
+
+            if (
+                !instanceSpecialObjs.includes(ao.type) &&
+                !(type === "object" && permissiveObjectTypes.has(ao.type))
+            ) {
+                // Closed object schemas warn or fail on unknown properties.
+                // Permissive schema types, such as message, intentionally allow
+                // protocol metadata like xmpp:replace without per-property lists.
+                const receivedValue = formatUnknownPropertyValue(ao[key]);
+                const err = `ActivityStreams validation failed: property "${key}" with value ${receivedValue} is not allowed on the "${type}" object of type "${ao.type}".`;
+                if (failOnUnknownObjectProperties) {
+                    throw new Error(err);
+                }
+                if (warnOnUnknownObjectProperties) {
+                    console.warn(err);
+                }
+            }
+        }
+    }
+
+    function Stream(
+        meta: unknown,
+    ): ActivityStream | ActivityObject | Record<string, never> {
+        validateObject("stream", meta);
+        if (typeof (meta as ActivityStream).object === "object") {
+            validateObject("object", (meta as ActivityStream).object);
+        }
+        const stream = expandStream(meta as ActivityStream, objs);
+        ee.emit("activity-stream", stream);
+        return stream;
+    }
+
+    const instanceObject: ActivityObjectManager = {
+        create: (obj: ActivityObject) => {
+            validateObject("object", obj, true); // require ID for Object.create()
+            const ao = ensureProps(obj);
+            objs.set(ao.id, ao);
+            ee.emit("activity-object-create", ao);
+            return ao;
+        },
+
+        delete: (id) => {
+            const result = objs.delete(id);
+            if (result) {
+                ee.emit("activity-object-delete", id);
+            }
+            return result;
+        },
+
+        get: (id, expand) => {
+            let obj = objs.get(id);
+            if (!obj) {
+                if (!expand) {
+                    return id;
+                }
+                obj = { id: id } as ActivityObject;
+            }
+            return ensureProps(obj);
+        },
+
+        list: (): IterableIterator<string> => objs.keys(),
+    };
+
     return {
         Stream: Stream,
-        Object: _Object,
+        Object: instanceObject,
         registerObjectProps,
         on: (event, func) => ee.on(event, func),
         once: (event, func) => ee.once(event, func),

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, test } from "bun:test";
 import type { ActivityObject, ActivityStream } from "./types";
 
 import testCredentialsData from "./index.test.data.credentials";
@@ -57,7 +57,7 @@ describe("schemas/src/index.ts", () => {
                 "platform schema failed to validate:  must have required property 'name'",
             );
         });
-        it("includes the unexpected property for additionalProperties errors", () => {
+        test("includes the unexpected property for additionalProperties errors", () => {
             const err = validatePlatformSchema({
                 ...testPlatformSchemaData,
                 unexpected: true,
