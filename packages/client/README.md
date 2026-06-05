@@ -146,26 +146,19 @@ sc.socket.on("message", (msg) => {
 });
 ```
 
-## ActivityStreams Helpers
+## Sending messages
 
-Define reusable objects via `ActivityStreams.Object.create(...)`, then build
-streams with `ActivityStreams.Stream(...)`:
+Always include a full `actor` object on `credentials` and `message` events.
+The client normalizes string `actor`/`target` refs to `{ id }` and lints unknown
+properties using schemas from the server registry.
 
 ```javascript
-sc.ActivityStreams.Object.create({
-    id: "mynick",
-    type: "person",
-    name: "My IRC Nick",
-});
-
-const stream = sc.ActivityStreams.Stream({
+sc.socket.emit("message", {
     type: "join",
     "@context": sc.contextFor("irc"),
-    actor: "mynick",
+    actor: { id: "mynick", type: "person", name: "My IRC Nick" },
     target: { id: "#sockethub", type: "room" },
-});
-
-sc.socket.emit("message", stream, (result) => {
+}, (result) => {
     if (result?.error) console.error(result.error);
 });
 ```
@@ -180,7 +173,6 @@ memory and replaying it when the connection is re-established.
 #### What Gets Stored
 
 - Credentials (passwords, tokens, API keys)
-- Actor definitions
 - Platform connections
 - Channel/room joins
 

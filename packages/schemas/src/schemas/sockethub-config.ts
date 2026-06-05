@@ -41,23 +41,6 @@ export const SockethubConfigSchema = {
         packageConfig: {
             type: "object",
             properties: {
-                "@sockethub/activity-streams": {
-                    type: "object",
-                    additionalProperties: false,
-                    properties: {
-                        specialObjs: {
-                            type: "array",
-                            items: {
-                                type: "string",
-                            },
-                            default: ["credentials"],
-                        },
-                        failOnUnknownObjectProperties: {
-                            type: "boolean",
-                            default: true,
-                        },
-                    },
-                },
                 "@sockethub/platform-dummy": {
                     type: "object",
                     additionalProperties: false,

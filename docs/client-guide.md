@@ -111,7 +111,7 @@ sc.socket.emit('message', {
 });
 ```
 
-This same pattern applies to `credentials` and `activity-object` events.
+This same pattern applies to `credentials` events.
 
 ### 2. Listen for incoming platform events on `message`
 
@@ -154,40 +154,9 @@ success/failure.
 }
 ```
 
-If `actor` is provided as a string, Sockethub expands it using any previously
-saved ActivityObject with the same id (including `type` and any other stored
-properties). If none exists, it expands to `{ id }`.
-
-### Setting ActivityObjects and Building ActivityStreams
-
-The client includes `sc.ActivityStreams` helpers. This is the easiest way to
-define reusable actor/target objects and then reference them by id.
-
-```javascript
-// Register an actor object (also emitted to server as `activity-object`)
-sc.ActivityStreams.Object.create({
-    id: 'mynick',
-    type: 'person',
-    name: 'My IRC Nick'
-});
-
-// Build a stream with string refs; they are expanded from stored objects
-const joinStream = sc.ActivityStreams.Stream({
-    type: 'join',
-    '@context': sc.contextFor('irc'),
-    actor: 'mynick',
-    target: { id: '#sockethub', type: 'room' }
-});
-
-sc.socket.emit('message', joinStream, (result) => {
-    if (result?.error) {
-        console.error('Join failed:', result.error);
-    }
-});
-```
-
-You can still send raw ActivityStreams directly with `sc.socket.emit('message',
-...)` if you prefer.
+If `actor` is provided as a string, the client normalizes it to `{ id: "…" }`
+before send. Prefer inline actor objects when you need `type`, `name`, or other
+fields on the wire.
 
 ### Platform-Specific Object Properties
 
@@ -331,11 +300,12 @@ sc.socket.emit('message', {
 - **Context composition**: `contextFor(platform)` builds canonical `@context` arrays
 - **Outbound queueing**: Messages sent before `ready()` are queued and flushed automatically
 - **Auto-replay**: Credentials and connections restored on reconnect
-- **ActivityStreams**: Built-in validation and utilities via `sc.ActivityStreams`
+- **Activity stream helpers**: Normalization and property linting via `@sockethub/schemas`
+  (used internally by the client on send/receive)
 - **Connection state**: Check `sc.socket.connected` for status
 
 ## Reference
 
 - **[Client Package](../packages/client/)** - Full API documentation
-- **[ActivityStreams Package](../packages/activity-streams/)** - ActivityStreams utilities and validation
+- **[Schemas Package](../packages/schemas/)** - Activity stream validation, normalization, and JSON schemas
 - **[ActivityStreams Spec](https://www.w3.org/TR/activitystreams-core/)** - Message format specification

@@ -172,13 +172,6 @@ function sendCredentials(context, events, done) {
         return done();
     }
 
-    // Create actor object using client's ActivityStreams API
-    const _actor = client.ActivityStreams.Object.create({
-        id: actorId,
-        type: "person",
-        name: `Test User ${context.vars.$uuid}`,
-    });
-
     // Send credentials message (uses 'credentials' event, not 'message')
     const credentialsMsg = {
         type: "credentials",

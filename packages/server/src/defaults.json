@@ -6,12 +6,7 @@
     "fileLevel": "debug",
     "file": "sockethub.log"
   },
-  "packageConfig": {
-    "@sockethub/activity-streams": {
-      "specialObjs": ["credentials"],
-      "failOnUnknownObjectProperties": true
-    }
-  },
+  "packageConfig": {},
   "platforms": [
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",

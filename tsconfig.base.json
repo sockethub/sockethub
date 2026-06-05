@@ -25,9 +25,6 @@
     "resolveJsonModule": true,
     "downlevelIteration": true,
     "paths": {
-      "@sockethub/activity-streams": [
-        "./packages/activity-streams/src/activity-streams.ts"
-      ],
       "@sockethub/crypto": ["./packages/crypto/src/index.ts"],
       "@sockethub/data-layer": ["./packages/data-layer/src/index.ts"],
       "@sockethub/irc2as": ["./packages/irc2as/src/index.js"],
@@ -52,9 +49,6 @@
   "references": [
     {
       "path": "packages/sockethub"
-    },
-    {
-      "path": "packages/activity-streams"
     },
     {
       "path": "packages/crypto"

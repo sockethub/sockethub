@@ -13,7 +13,7 @@ let { actor, sockethubState }: Props = $props();
 let lastSubmittedActorId = $state<string | undefined>(undefined);
 
 // If the actor ID changes after submission, clear dependent state so the user
-// can create the actor and credentials again for the new identity.
+// can set credentials again for the new identity.
 $effect(() => {
     if (
         $sockethubState.actorSet &&
@@ -33,10 +33,9 @@ $effect(() => {
     }
 });
 
-function sendActivityObjectCreate(data: string) {
+function sendActorDefinition(data: string) {
     const actorObj = JSON.parse(data);
-    console.log("creating activity object:  ", actorObj);
-    sc.ActivityStreams.Object.create(actorObj);
+    console.log("actor definition saved locally: ", actorObj);
     sockethubState.set({
         actorSet: true,
         credentialsSet: false,
@@ -45,17 +44,13 @@ function sendActivityObjectCreate(data: string) {
     });
     lastSubmittedActorId =
         typeof actorObj.id === "string" ? actorObj.id : undefined;
-    // actor.set({
-    //   object: actorObj,
-    //   roomId: "",
-    // });
 }
 </script>
 
 <TextAreaSubmit
     title="Activity Stream Actor"
     obj={actor}
-    buttonText="Activity Object Create"
-    submitData={sendActivityObjectCreate}
+    buttonText="Save Actor"
+    submitData={sendActorDefinition}
     disabled={$sockethubState.actorSet}
 />

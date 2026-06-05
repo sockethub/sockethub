@@ -85,7 +85,6 @@ packages/
   client/           - JavaScript client library for browsers/apps
   data-layer/       - Redis, BullMQ job queues, credential storage
   schemas/          - TypeScript types and AJV validators
-  activity-streams/ - ActivityStreams factory and utilities
   crypto/           - Cryptographic utilities for credential encryption
   irc2as/           - IRC to ActivityStreams conversion library
   platform-irc/     - IRC protocol platform

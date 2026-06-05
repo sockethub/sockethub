@@ -49,15 +49,6 @@ describe(`Sockethub IRC Basic Integration Tests at ${config.sockethub.url}`, () 
             });
         });
 
-        describe("ActivityStreams.create", () => {
-            it("successfully creates and stores an activity-object", () => {
-                const obj = sc.ActivityStreams.Object.create(actorObject);
-                const getObj = sc.ActivityStreams.Object.get(actorObject.id);
-                expect(obj).to.eql(actorObject);
-                expect(getObj).to.eql(actorObject);
-            });
-        });
-
         describe("connect", () => {
             it("is successful", async () => {
                 const msg = await connectIRC(sc, actorId, nick);

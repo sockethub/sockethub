@@ -20,12 +20,7 @@ Sockethub uses a JSON configuration file:
     "fileLevel": "debug",
     "file": "sockethub.log"
   },
-  "packageConfig": {
-    "@sockethub/activity-streams": {
-      "specialObjs": ["credentials"],
-      "failOnUnknownObjectProperties": true
-    }
-  },
+  "packageConfig": {},
   "platforms": [
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
@@ -283,21 +278,6 @@ LOG_LEVEL=debug LOG_FILE_LEVEL=debug sockethub
     "dsn": "https://your-dsn@sentry.io/project-id",
     "environment": "production",
     "traceSampleRate": 1.0
-  }
-}
-```
-
-### Package Configuration
-
-Configure ActivityStreams behavior:
-
-```json
-{
-  "packageConfig": {
-    "@sockethub/activity-streams": {
-      "specialObjs": ["credentials"],
-      "failOnUnknownObjectProperties": true
-    }
   }
 }
 ```

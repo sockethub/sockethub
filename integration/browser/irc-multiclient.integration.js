@@ -86,10 +86,6 @@ describe(`IRC Multi-Client Integration Tests at ${config.sockethub.url}`, () => 
             const results = [];
 
             for (const clientRecord of records) {
-                clientRecord.sockethubClient.ActivityStreams.Object.create(
-                    utils.createIrcActorObject(clientRecord.nick),
-                );
-
                 const result = await connectIRC(
                     clientRecord.sockethubClient,
                     clientRecord.actorId,

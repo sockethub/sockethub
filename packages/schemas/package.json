@@ -54,7 +54,7 @@
     "@types/bun": "latest"
   },
   "scripts": {
-    "build": "bun ./scripts/export-json-schema.ts && bun ./scripts/export-canonical-assets.ts && bun build src/index.ts src/context.ts src/object-types.ts --outdir dist --target node --format esm --sourcemap=external",
+    "build": "bun ./scripts/export-json-schema.ts && bun ./scripts/export-canonical-assets.ts && bun build src/index.ts src/context.ts src/object-types.ts src/activity-stream-helper.ts --outdir dist --target node --format esm --sourcemap=external",
     "clean": "rm -rf dist",
     "clean:deps": "rm -rf node_modules"
   },

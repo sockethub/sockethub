@@ -191,14 +191,12 @@ export default [
             type: "some type",
             actor: {
                 id: "blah",
-                type: "person",
-                name: "dood",
             },
             object: {},
         },
     },
     {
-        name: "person with extras",
+        name: "person string ref normalizes to id object",
         valid: true,
         type: "message",
         input: {
@@ -212,10 +210,6 @@ export default [
             type: "some type",
             actor: {
                 id: "blah2",
-                type: "person",
-                name: "bob",
-                hello: "there",
-                i: ["am", "extras"],
             },
             object: {},
         },
@@ -333,22 +327,9 @@ export default [
         output: {
             actor: {
                 id: "sh-9K3Vk@irc.freenode.net",
-                type: "person",
-                name: "sh-9K3Vk",
-                image: {
-                    height: 250,
-                    mediaType: "image/jpeg",
-                    url: "https://example.org/image.jpg",
-                    width: 250,
-                },
-                url: "https://sockethub.org",
             },
             target: {
                 id: "blah3",
-                type: "person",
-                name: "bob",
-                hello: "there",
-                i: ["am", "extras"],
             },
             type: "send",
             "@context": ctx("irc"),

@@ -39,46 +39,6 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             }
         });
 
-        describe("ActivityStreams", () => {
-            it("handles empty objects", () => {
-                expect(() => {
-                    sc.ActivityStreams.Object.create(undefined);
-                }).to.throw(
-                    'ActivityStreams validation failed: the "object" property is undefined. Example: { id: "user@example.com", type: "person" }',
-                );
-                expect(() => {
-                    sc.ActivityStreams.Object.create(null);
-                }).to.throw(
-                    'ActivityStreams validation failed: the "object" property is null. Example: { id: "user@example.com", type: "person" }',
-                );
-                expect(() => {
-                    sc.ActivityStreams.Object.create("");
-                }).to.throw(
-                    'ActivityStreams validation failed: the "object" property received string "" but expected an object. Use: { id: "", type: "person" }',
-                );
-                expect(() => {
-                    sc.ActivityStreams.Object.create("foo");
-                }).to.throw(
-                    'ActivityStreams validation failed: the "object" property received string "foo" but expected an object. Use: { id: "foo", type: "person" }',
-                );
-                expect(() => {
-                    sc.ActivityStreams.Object.create(123);
-                }).to.throw(
-                    'ActivityStreams validation failed: the "object" property must be an object, received number (123). Example: { id: "user@example.com", type: "person" }',
-                );
-                expect(() => {
-                    sc.ActivityStreams.Object.create([]);
-                }).to.throw(
-                    'ActivityStreams validation failed: the "object" property must be an object, received array (). Example: { id: "user@example.com", type: "person" }',
-                );
-                expect(() => {
-                    sc.ActivityStreams.Object.create({});
-                }).to.throw(
-                    'ActivityStreams validation failed: the "object" property requires an \'id\' property. Example: { id: "user@example.com", type: "person" }',
-                );
-            });
-        });
-
         describe("Dummy", () => {
             const actor = {
                 id: "jimmy@dummy",
@@ -86,17 +46,12 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 name: "Jimmy",
             };
 
-            it("creates activity-object", () => {
-                sc.ActivityStreams.Object.create(actor);
-                expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
-            });
-
             const dummyMessageCount = 5;
             for (let i = 0; i < dummyMessageCount; i++) {
                 it(`sends echo ${i} and gets response`, async () => {
                     const dummyObj = {
                         type: "echo",
-                        actor: actor.id,
+                        actor,
                         "@context": ctx("dummy"),
                         object: {
                             type: "message",
@@ -112,9 +67,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     if (msg?.error) {
                         throw new Error(msg.error);
                     }
-                    expect(msg.target).to.eql(
-                        sc.ActivityStreams.Object.get(actor.id),
-                    );
+                    expect(msg.target).to.eql(actor);
                     expect(msg.actor.type).to.equal("platform");
                 });
             }
@@ -122,7 +75,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             it("sends fail and returns error", async () => {
                 const dummyObj = {
                     type: "fail",
-                    actor: actor.id,
+                    actor,
                     "@context": ctx("dummy"),
                     object: { type: "message", content: "failure message" },
                 };
@@ -132,7 +85,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 if (msg?.error) {
                     expect(msg.error).to.equal("Error: failure message");
                     dummyObj.error = "Error: failure message";
-                    dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
+                    dummyObj.actor = actor;
                     expect(msg).to.deep.include(dummyObj);
                 } else {
                     throw new Error(
@@ -144,7 +97,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             it("sends a throw and returns error", async () => {
                 const dummyObj = {
                     type: "throw",
-                    actor: actor.id,
+                    actor,
                     "@context": ctx("dummy"),
                     object: { type: "message", content: "failure message" },
                 };
@@ -154,7 +107,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 if (msg?.error) {
                     expect(msg.error).to.equal("Error: failure message");
                     dummyObj.error = "Error: failure message";
-                    dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
+                    dummyObj.actor = actor;
                     expect(msg).to.deep.include(dummyObj);
                 } else {
                     throw new Error(
@@ -209,17 +162,6 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             describe("Credentials", () => {
                 it("fires an empty callback", async () => {
                     await setXMPPCredentials(sc, jid);
-                });
-            });
-
-            describe("ActivityStreams.create", () => {
-                it("successfully creates and stores an activity-object", () => {
-                    const obj = sc.ActivityStreams.Object.create(actorObject);
-                    const getObj = sc.ActivityStreams.Object.get(
-                        actorObject.id,
-                    );
-                    expect(obj).to.eql(actorObject);
-                    expect(getObj).to.eql(actorObject);
                 });
             });
 
