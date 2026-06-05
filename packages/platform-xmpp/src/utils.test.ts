@@ -56,7 +56,23 @@ describe("Utils", () => {
                 utils.buildXmppCredentials({
                     object: { type: "credentials", userAddress: "", password: "bar", resource: "Home" },
                 } as XmppCredentialsObject),
-            ).toThrow();
+            ).toThrow("JID");
+        });
+
+        test("throws when userAddress is null", () => {
+            expect(() =>
+                utils.buildXmppCredentials({
+                    object: { type: "credentials", userAddress: null, password: "bar", resource: "Home" },
+                } as unknown as XmppCredentialsObject),
+            ).toThrow("JID");
+        });
+
+        test("throws when userAddress is undefined", () => {
+            expect(() =>
+                utils.buildXmppCredentials({
+                    object: { type: "credentials", password: "bar", resource: "Home" },
+                } as unknown as XmppCredentialsObject),
+            ).toThrow("JID");
         });
 
         test("allows a custom port", () => {
