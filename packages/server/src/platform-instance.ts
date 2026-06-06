@@ -103,6 +103,9 @@ export default class PlatformInstance {
         if (process.env.LOG_LEVEL) {
             env.LOG_LEVEL = process.env.LOG_LEVEL;
         }
+        if (process.env.NODE_EXTRA_CA_CERTS) {
+            env.NODE_EXTRA_CA_CERTS = process.env.NODE_EXTRA_CA_CERTS;
+        }
         const heartbeatInterval = config.get("platformHeartbeat:intervalMs");
         if (typeof heartbeatInterval !== "undefined") {
             env.SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS =
@@ -125,13 +128,17 @@ export default class PlatformInstance {
     }
 
     initProcess(parentId: string, name: string, id: string, env: EnvFormat) {
+        const forkOptions: Parameters<typeof fork>[2] = { env };
+        if (process.env.SOCKETHUB_PLATFORM_NODE) {
+            forkOptions.execPath = process.env.SOCKETHUB_PLATFORM_NODE;
+            // Bun passes --hot to child processes; Node does not understand it.
+            forkOptions.execArgv = [];
+        }
         // spin off a process
         this.process = fork(
             join(__dirname, "platform.js"),
             [parentId, name, id],
-            {
-                env: env,
-            },
+            forkOptions,
         );
     }
 

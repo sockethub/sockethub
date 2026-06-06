@@ -19,18 +19,20 @@ let secretInputId = $derived(
     `secret-input-${title.toLowerCase().replace(/\s+/g, "-")}`,
 );
 
+let editedJson = $state("");
+
 $effect(() => {
     password = typeof obj.password === "string" ? obj.password : "";
 });
 
-const objString = $derived.by(() => {
+$effect(() => {
     const redacted = { ...obj };
     delete redacted.password;
-    return JSON.stringify(redacted, null, 3);
+    editedJson = JSON.stringify(redacted, null, 3);
 });
 
 async function handleSubmit(): Promise<void> {
-    const payload = { ...obj };
+    const payload = JSON.parse(editedJson) as TextAreaObject;
     if (password.length > 0) {
         payload.password = password;
     }
@@ -40,7 +42,7 @@ async function handleSubmit(): Promise<void> {
 
 <div class="w-full">
     <label for="json-object-{title}" class="form-label inline-block text-gray-900 font-bold mb-2">{title}</label>
-    <TextBox title={title} data={objString}></TextBox>
+    <TextBox title={title} bind:data={editedJson}></TextBox>
 </div>
 {#if typeof obj.password === "string"}
     <div class="w-full p-2">
