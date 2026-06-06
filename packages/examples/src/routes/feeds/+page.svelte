@@ -1,11 +1,18 @@
 <script lang="ts">
+import ActivityActor from "$components/ActivityActor.svelte";
 import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
 import { actorAsObject, contextFor, send } from "$lib/sockethub";
 import type { AnyActivityStream } from "$lib/sockethub";
+import { writable } from "svelte/store";
+
+const sockethubState = writable({
+    actorSet: false,
+});
 
 let url = $state("https://sockethub.org/feed.xml");
+let fetchError = $state<string | null>(null);
 
 const actor = $derived({
     id: url,
@@ -14,11 +21,16 @@ const actor = $derived({
 });
 
 async function sendFetch(): Promise<void> {
-    await send({
-        "@context": await contextFor("feeds"),
-        type: "fetch",
-        actor: actorAsObject(actor),
-    } as AnyActivityStream);
+    fetchError = null;
+    try {
+        await send({
+            "@context": await contextFor("feeds"),
+            type: "fetch",
+            actor: actorAsObject(actor),
+        } as AnyActivityStream);
+    } catch (err) {
+        fetchError = err instanceof Error ? err.message : String(err);
+    }
 }
 </script>
 
@@ -44,6 +56,8 @@ async function sendFetch(): Promise<void> {
             The feed URL is the actor <code>id</code> with <code>type: "feed"</code>.
         </p>
 
+        <ActivityActor {actor} {sockethubState} />
+
         <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg">
             <p class="text-blue-700 text-sm">
                 <strong>💡 What happens when you click Fetch:</strong><br>
@@ -51,8 +65,20 @@ async function sendFetch(): Promise<void> {
             </p>
         </div>
 
+        {#if fetchError}
+            <div class="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 text-sm" role="alert">
+                <p class="font-semibold mb-1">Fetch failed</p>
+                <p class="font-mono text-xs whitespace-pre-wrap break-words">{fetchError}</p>
+            </div>
+        {/if}
+
         <div class="w-full text-right">
-            <SockethubButton buttonAction={sendFetch}>Fetch Feed</SockethubButton>
+            <SockethubButton
+                buttonAction={sendFetch}
+                disabled={!$sockethubState.actorSet}
+            >
+                Fetch Feed
+            </SockethubButton>
         </div>
     </div>
 </BaseExample>

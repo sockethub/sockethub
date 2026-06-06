@@ -1,9 +1,15 @@
 <script lang="ts">
+import ActivityActor from "$components/ActivityActor.svelte";
 import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
 import { actorAsObject, contextFor, send } from "$lib/sockethub";
 import type { AnyActivityStream } from "$lib/sockethub";
+import { writable } from "svelte/store";
+
+const sockethubState = writable({
+    actorSet: false,
+});
 
 let url = $state("https://sockethub.org");
 
@@ -44,6 +50,8 @@ async function sendFetch(): Promise<void> {
             The page URL is the actor <code>id</code> with <code>type: "website"</code>.
         </p>
 
+        <ActivityActor {actor} {sockethubState} />
+
         <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg">
             <p class="text-blue-700 text-sm">
                 <strong>💡 What happens when you click Fetch:</strong><br>
@@ -52,7 +60,12 @@ async function sendFetch(): Promise<void> {
         </div>
 
         <div class="w-full text-right">
-            <SockethubButton buttonAction={sendFetch}>Extract Metadata</SockethubButton>
+            <SockethubButton
+                buttonAction={sendFetch}
+                disabled={!$sockethubState.actorSet}
+            >
+                Extract Metadata
+            </SockethubButton>
         </div>
     </div>
 </BaseExample>

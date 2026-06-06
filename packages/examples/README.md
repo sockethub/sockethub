@@ -11,8 +11,9 @@ Interactive web examples showing how client applications talk to Sockethub using
 4. Send **credentials**, **connect**, **join**, **send**, or **fetch** with the actor on each event.
 5. Inspect request/response JSON in the ActivityStreams logger.
 
-Fetch-only examples (feeds, metadata) build the actor from the URL field. Chat
-examples (IRC, XMPP) walk through credentials, connect, join, and send.
+Fetch examples (feeds, metadata) derive the actor from the URL field, then you
+confirm the actor JSON before fetch. Chat examples (IRC, XMPP) walk through
+credentials, connect, join, and send.
 
 ## Platform examples
 
