@@ -1,32 +1,24 @@
 <script lang="ts">
-import ActivityActor from "$components/ActivityActor.svelte";
 import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
-import { contextFor, send } from "$lib/sockethub";
-import { writable } from "svelte/store";
+import { actorAsObject, contextFor, send } from "$lib/sockethub";
+import type { AnyActivityStream } from "$lib/sockethub";
 
-const sockethubState = writable({
-    actorSet: false,
-});
 let url = $state("https://sockethub.org");
-let actor = $derived({
+
+const actor = $derived({
     id: url,
     type: "website",
+    name: url,
 });
 
-async function getASObj(type: string) {
-    return {
-        "@context": await contextFor("metadata"),
-        // Activity type - "fetch" tells the platform to extract metadata
-        type: type,
-        // Actor - the website URL to analyze (represented as a "website" actor)
-        actor: actor,
-    };
-}
-
 async function sendFetch(): Promise<void> {
-    await send(await getASObj("fetch"));
+    await send({
+        "@context": await contextFor("metadata"),
+        type: "fetch",
+        actor: actorAsObject(actor),
+    } as AnyActivityStream);
 }
 </script>
 
@@ -49,15 +41,13 @@ async function sendFetch(): Promise<void> {
     <div class="space-y-4">
         <FormField label="Website URL" id="URL" bind:value={url} placeholder="https://example.com" />
         <p class="text-gray-600 text-sm">
-            ⬆️ Try different websites: news articles, social media posts, product pages, etc.
+            The page URL is the actor <code>id</code> with <code>type: "website"</code>.
         </p>
 
-        <ActivityActor {actor} {sockethubState} />
-        
         <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg">
             <p class="text-blue-700 text-sm">
                 <strong>💡 What happens when you click Fetch:</strong><br>
-                The website URL becomes the "actor", and Sockethub sends a "fetch" activity to download the page and extract all available metadata like page titles, descriptions, and social media preview data.
+                Sockethub sends a <code>fetch</code> activity with the page URL as the actor and returns extracted metadata.
             </p>
         </div>
 

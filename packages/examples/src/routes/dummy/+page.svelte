@@ -32,6 +32,7 @@ async function getASObj(type: string): Promise<AnyActivityStream> {
         actor: {
             type: "person",
             id: actorId,
+            name: actorId,
         },
         // Object - what the action is performed on
         object: {

@@ -45,13 +45,12 @@ function confirmActor(data: string) {
 </script>
 
 <p class="text-sm text-gray-600 mb-2">
-    Define the <code>actor</code> object used on credentials and message events. This is stored
-    only in the example app (not registered on the server). Include <code>id</code>,
-    <code>type</code>, and <code>name</code> on every outbound message.
+    Define the <code>actor</code> object for credentials and message events. Include
+    <code>id</code>, <code>type</code>, and <code>name</code> on every outbound message.
 </p>
 
 <TextAreaSubmit
-    title="Actor (local)"
+    title="Actor"
     obj={actor}
     buttonText="Confirm actor"
     submitData={confirmActor}

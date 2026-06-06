@@ -116,8 +116,7 @@ See the [Client Guide](../../docs/client-guide.md) for detailed usage and exampl
 - **`sc.socket.on(event, handler)`** - Listen for messages
 - **`sc.clearCredentials()`** - Clear stored credentials
 
-There is no `activity-object` event or `Object.create()` actor registry. Send
-full actor objects on each `credentials` and `message` event.
+Send a full `actor` object on each `credentials` and `message` event.
 
 ## Result Handling
 
@@ -150,9 +149,9 @@ sc.socket.on("message", (msg) => {
 
 ## Sending messages
 
-Always include a full `actor` object on `credentials` and `message` events.
-The client normalizes string `actor`/`target` refs to `{ id }` and lints unknown
-properties using schemas from the server registry.
+Include `id`, `type`, and usually `name` on the `actor` for `credentials` and
+`message` events. The client lints unknown object properties using schemas from
+the server registry.
 
 ```javascript
 sc.socket.emit("message", {

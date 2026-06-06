@@ -154,18 +154,11 @@ success/failure.
 }
 ```
 
-Always send a full `actor` object (`id`, `type`, and usually `name`) on
-`credentials` and `message` events. The client may still normalize a bare string
-to `{ id: "…" }` before send, but that form cannot carry `type` or `name` and
-is only useful for quick tests.
-
-### No server-side actor registry
-
-Older Sockethub apps sometimes called `activity-object` or
-`ActivityStreams.Object.create()` to register actors by string id before
-`connect` or `join`. That registry is removed. Define actor objects in your app
-and include them on each message; the server only normalizes string refs to
-`{ id }` when needed for routing.
+Send a full `actor` object (`id`, `type`, and usually `name`) on every
+`credentials` and `message` event. Define actors in your application and include
+them on each outbound message. The client normalizes a bare string `actor` to
+`{ id: "…" }` before send when needed; prefer an object so `type` and `name`
+travel with the message.
 
 ### Platform-Specific Object Properties
 

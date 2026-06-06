@@ -1,50 +1,24 @@
 <script lang="ts">
-import ActivityActor from "$components/ActivityActor.svelte";
 import BaseExample from "$components/BaseExample.svelte";
 import FormField from "$components/FormField.svelte";
 import SockethubButton from "$components/SockethubButton.svelte";
-import { contextFor, send } from "$lib/sockethub";
-import { writable } from "svelte/store";
-
-const sockethubState = writable({
-    actorSet: false,
-});
+import { actorAsObject, contextFor, send } from "$lib/sockethub";
+import type { AnyActivityStream } from "$lib/sockethub";
 
 let url = $state("https://sockethub.org/feed.xml");
 
 const actor = $derived({
-    type: "website",
     id: url,
+    type: "feed",
+    name: url,
 });
 
-/**
- * Creates an ActivityStreams object for the feeds platform.
- * This is sent to Sockethub, which handles the actual RSS/ATOM feed processing.
- *
- * @param type - The activity type (typically "fetch" for feeds)
- * @returns ActivityStreams object that tells Sockethub which feed to process
- */
-async function getASObj(type: string) {
-    return {
-        "@context": await contextFor("feeds"),
-        // Activity type - "fetch" tells the platform to download and parse the feed
-        type: type,
-        // Actor - the feed URL to fetch (represented as a "website" actor)
-        actor: actor,
-    };
-}
-
-/**
- * Sends a fetch request to Sockethub's feeds platform.
- *
- * This example app sends the request, then Sockethub will:
- * 1. Download the feed content from the URL
- * 2. Parse the RSS/ATOM format
- * 3. Convert entries to ActivityStreams objects
- * 4. Send the results back to this client for display
- */
 async function sendFetch(): Promise<void> {
-    await send(await getASObj("fetch"));
+    await send({
+        "@context": await contextFor("feeds"),
+        type: "fetch",
+        actor: actorAsObject(actor),
+    } as AnyActivityStream);
 }
 </script>
 
@@ -67,15 +41,13 @@ async function sendFetch(): Promise<void> {
     <div class="space-y-4">
         <FormField label="Feed URL" id="URL" bind:value={url} placeholder="https://example.com/feed.xml" />
         <p class="text-gray-600 text-sm">
-            ⬆️ Try different RSS/ATOM feeds: news sites, blogs, podcasts, etc.
+            The feed URL is the actor <code>id</code> with <code>type: "feed"</code>.
         </p>
 
-        <ActivityActor {actor} {sockethubState} />
-        
         <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg">
             <p class="text-blue-700 text-sm">
                 <strong>💡 What happens when you click Fetch:</strong><br>
-                The feed URL becomes the "actor" (like a website identity), and Sockethub sends a "fetch" activity to download and parse the feed content.
+                Sockethub sends a <code>fetch</code> activity with the feed URL as the actor and returns a collection of entries.
             </p>
         </div>
 

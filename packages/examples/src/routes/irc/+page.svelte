@@ -90,7 +90,7 @@ async function connectIrc(): Promise<void> {
             IRC (Internet Relay Chat) requires several steps to get connected and chatting.
         </p>
         <div class="text-orange-700 text-sm space-y-1">
-            <div><strong>1. 🎭 Confirm actor:</strong> JSON actor with <code>id</code>, <code>type</code>, <code>name</code> (app-local, not registered on the server)</div>
+            <div><strong>1. 🎭 Actor:</strong> JSON object with <code>id</code>, <code>type</code>, and <code>name</code></div>
             <div><strong>2. 🔐 Set Credentials:</strong> Provide server connection details</div>
             <div><strong>3. 🔌 Connect:</strong> Establish connection to IRC server</div>
             <div><strong>4. 🏠 Join Room:</strong> Enter a channel to start chatting</div>

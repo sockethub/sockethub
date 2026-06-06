@@ -76,7 +76,7 @@ async function connectXmpp(): Promise<void> {
             XMPP (Extensible Messaging and Presence Protocol) is a real-time communication protocol used by services like Jabber.
         </p>
         <div class="text-indigo-700 text-sm space-y-1">
-            <div><strong>1. 🎭 Confirm actor:</strong> Full actor object for your XMPP identity (app-local)</div>
+            <div><strong>1. 🎭 Actor:</strong> JSON object with <code>id</code>, <code>type</code>, and <code>name</code></div>
             <div><strong>2. 🔐 Set Credentials:</strong> Your XMPP login secret, sent through the password field</div>
             <div><strong>3. 🔌 Connect:</strong> Establish connection to XMPP server</div>
             <div><strong>4. 🏠 Join Room:</strong> Enter a multi-user chat room</div>

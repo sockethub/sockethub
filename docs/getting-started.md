@@ -129,11 +129,8 @@ All communication uses ActivityStreams 2.0 format:
 
 - **Platforms**: Protocol modules (dummy, feeds, irc, xmpp, metadata)
 - **@context**: Canonical context array from `sc.contextFor('platform')` after `ready()`
-- **Actor**: Object on each message (`id`, `type`, `name`) — not a server-side registry
+- **Actor**: Object on each message (`id`, `type`, `name`)
 - **Verbs**: Actions like connect, send, join, fetch
-
-Sockethub no longer supports registering actors via `activity-object` or
-`Object.create()`. Include the actor object on every `credentials` and `message` event.
 
 ## Production Usage
 
