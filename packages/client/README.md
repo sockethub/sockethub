@@ -2,13 +2,13 @@
 
 The Sockethub client is a small JavaScript SDK for app developers to connect to a
 Sockethub server via Socket.IO and send/receive ActivityStreams messages. It works
-in both Node.js and browsers, and provides helpers for ActivityStreams along with
-automatic reconnection and credential replay.
+in both Node.js and browsers, with schema-driven validation, automatic
+reconnection, and credential replay.
 
 ## What's Included
 
 - `SockethubClient` for connection and message handling
-- `ActivityStreams` helpers and validation utilities
+- Schema-driven ActivityStreams validation and property linting (via `@sockethub/schemas`)
 - `contextFor(platform)` builds canonical `@context` arrays from server metadata
 - `ready()` promise and `ready`/`init_error` observability events
 - Automatic outbound queuing until initialization is complete
@@ -115,7 +115,8 @@ See the [Client Guide](../../docs/client-guide.md) for detailed usage and exampl
 - **`sc.socket.emit(event, data, callback)`** - Send messages (queued until ready)
 - **`sc.socket.on(event, handler)`** - Listen for messages
 - **`sc.clearCredentials()`** - Clear stored credentials
-- **`sc.ActivityStreams`** - ActivityStreams library
+
+Send a full `actor` object on each `credentials` and `message` event.
 
 ## Result Handling
 
@@ -146,26 +147,19 @@ sc.socket.on("message", (msg) => {
 });
 ```
 
-## ActivityStreams Helpers
+## Sending messages
 
-Define reusable objects via `ActivityStreams.Object.create(...)`, then build
-streams with `ActivityStreams.Stream(...)`:
+Include `id`, `type`, and usually `name` on the `actor` for `credentials` and
+`message` events. The client lints unknown object properties using schemas from
+the server registry.
 
 ```javascript
-sc.ActivityStreams.Object.create({
-    id: "mynick",
-    type: "person",
-    name: "My IRC Nick",
-});
-
-const stream = sc.ActivityStreams.Stream({
+sc.socket.emit("message", {
     type: "join",
     "@context": sc.contextFor("irc"),
-    actor: "mynick",
+    actor: { id: "mynick", type: "person", name: "My IRC Nick" },
     target: { id: "#sockethub", type: "room" },
-});
-
-sc.socket.emit("message", stream, (result) => {
+}, (result) => {
     if (result?.error) console.error(result.error);
 });
 ```
@@ -180,7 +174,6 @@ memory and replaying it when the connection is re-established.
 #### What Gets Stored
 
 - Credentials (passwords, tokens, API keys)
-- Actor definitions
 - Platform connections
 - Channel/room joins
 

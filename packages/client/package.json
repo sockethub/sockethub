@@ -47,7 +47,6 @@
     "test:browser": "wtr dist/**/*.test.js --node-resolve --puppeteer"
   },
   "dependencies": {
-    "@sockethub/activity-streams": "^4.4.0-alpha.12",
     "@sockethub/schemas": "^3.0.0-alpha.12",
     "eventemitter3": "^5.0.4"
   },

@@ -58,9 +58,6 @@ describe("IRC Client Reconnection Tests", () => {
             try {
                 initialClient = connectSockethubClient();
                 await setIRCCredentials(initialClient, actorId, nick);
-                initialClient.ActivityStreams.Object.create(
-                    utils.createIrcActorObject(nick),
-                );
                 await connectIRC(initialClient, actorId, nick);
                 await joinIRCChannel(
                     initialClient,
@@ -96,9 +93,6 @@ describe("IRC Client Reconnection Tests", () => {
                 );
 
                 await setIRCCredentials(reconnectedClient, actorId, nick);
-                reconnectedClient.ActivityStreams.Object.create(
-                    utils.createIrcActorObject(nick),
-                );
                 await connectIRC(reconnectedClient, actorId, nick);
                 await joinIRCChannel(
                     reconnectedClient,
@@ -148,9 +142,6 @@ describe("IRC Client Reconnection Tests", () => {
             try {
                 initialClient = connectSockethubClient();
                 await setIRCCredentials(initialClient, actorId, nick);
-                initialClient.ActivityStreams.Object.create(
-                    utils.createIrcActorObject(nick),
-                );
                 await connectIRC(initialClient, actorId, nick);
                 await joinIRCChannel(
                     initialClient,
@@ -214,9 +205,6 @@ describe("IRC Client Reconnection Tests", () => {
                     validCredClient,
                     freshActorId,
                     freshNick,
-                );
-                validCredClient.ActivityStreams.Object.create(
-                    utils.createIrcActorObject(freshNick),
                 );
                 await connectIRC(validCredClient, freshActorId, freshNick);
             } finally {

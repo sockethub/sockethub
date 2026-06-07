@@ -60,13 +60,13 @@ async function connectIrc(): Promise<void> {
     connecting = true;
     try {
         await send({
-            // Platform context - routes to Sockethub's IRC platform
-            "@context": contextFor("irc"),
-            // Activity type - "connect" establishes IRC connection
+            "@context": await contextFor("irc"),
             type: "connect",
-            // Actor - the IRC nick/identity making the connection
-            actor: $actorIdStore,
-            // Note: credentials (server, port, etc.) are sent separately via the Credentials component
+            actor: {
+                id: actor.id,
+                type: actor.type,
+                name: actor.name,
+            },
         } as AnyActivityStream);
         $sockethubState.connected = true;
     } catch (err) {
@@ -90,7 +90,7 @@ async function connectIrc(): Promise<void> {
             IRC (Internet Relay Chat) requires several steps to get connected and chatting.
         </p>
         <div class="text-orange-700 text-sm space-y-1">
-            <div><strong>1. 🎭 Set Actor:</strong> Choose your IRC nickname</div>
+            <div><strong>1. 🎭 Actor:</strong> JSON object with <code>id</code>, <code>type</code>, and <code>name</code></div>
             <div><strong>2. 🔐 Set Credentials:</strong> Provide server connection details</div>
             <div><strong>3. 🔌 Connect:</strong> Establish connection to IRC server</div>
             <div><strong>4. 🏠 Join Room:</strong> Enter a channel to start chatting</div>
@@ -102,7 +102,7 @@ async function connectIrc(): Promise<void> {
         <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 shadow-sm">
             <h4 class="text-lg font-bold text-green-900 mb-4 flex items-center">
                 <span class="mr-3 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</span>
-                Choose Your IRC Nickname
+                Confirm your actor
             </h4>
             <div class="space-y-4">
                 <ActorIdField bind:value={$actorIdStore} />

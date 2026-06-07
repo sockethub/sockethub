@@ -2,10 +2,7 @@
 // @ts-ignore
 import { displayMessage } from "$components/chat/IncomingMessages.svelte";
 import { addObject, addSchemaEvent } from "$components/logs/Logger.svelte";
-import {
-    buildCanonicalContext,
-    platformIdFromContext,
-} from "@sockethub/activity-streams";
+import { platformIdFromContext } from "@sockethub/schemas/context";
 import SockethubClient from "@sockethub/client";
 import { io } from "socket.io-client";
 import { writable } from "svelte/store";
@@ -39,8 +36,18 @@ type BaseProps = {
     published?: string;
 };
 
-export function contextFor(platform: string): string[] {
-    return buildCanonicalContext(platform);
+/** Wait until the server schema registry is loaded (required for contextFor). */
+export async function ensureClientReady(): Promise<void> {
+    if (!sc) {
+        throw new Error("Sockethub client is not initialized yet");
+    }
+    await sc.ready();
+}
+
+/** Build canonical @context from the server registry (not hardcoded URLs). */
+export async function contextFor(platform: string): Promise<string[]> {
+    await ensureClientReady();
+    return sc.contextFor(platform) as string[];
 }
 
 export { platformIdFromContext };
@@ -63,6 +70,15 @@ export type ActorData = {
     name: string;
     type: string;
 };
+
+/** ActivityStreams actor object for credentials and message events. */
+export function actorAsObject(actor: ActorData): ActorData {
+    return {
+        id: actor.id,
+        type: actor.type,
+        name: actor.name ?? actor.id,
+    };
+}
 
 export type CredentialsObjectData = IrcCredentials | XmppCredentials;
 
@@ -95,6 +111,7 @@ export type SockethubResponse = {
 };
 
 export async function send(obj: AnyActivityStream) {
+    await ensureClientReady();
     console.log("sending ->", obj);
 
     return new Promise<AnyActivityStream>((resolve, reject) => {
@@ -143,6 +160,7 @@ function sockethubConnect(config: typeof defaultConfig = defaultConfig) {
                 path: config.sockethub.path,
             },
         ),
+        { initTimeoutMs: 10000 },
     );
     sc.socket.on("connect", stateChange("connect"));
     sc.socket.on("error", stateChange("error"));

@@ -1,9 +1,3 @@
-const connectConfigPlatforms = {
-    connectTimeoutMs: {
-        type: "number",
-    },
-};
-
 export const SockethubConfigSchema = {
     $id: "https://sockethub.org/schemas/v/sockethub-config.json",
     description: "Sockethub Config Schema",
@@ -35,59 +29,6 @@ export const SockethubConfigSchema = {
                 file: {
                     type: "string",
                     default: "sockethub.log",
-                },
-            },
-        },
-        packageConfig: {
-            type: "object",
-            properties: {
-                "@sockethub/activity-streams": {
-                    type: "object",
-                    additionalProperties: false,
-                    properties: {
-                        specialObjs: {
-                            type: "array",
-                            items: {
-                                type: "string",
-                            },
-                            default: ["credentials"],
-                        },
-                        failOnUnknownObjectProperties: {
-                            type: "boolean",
-                            default: true,
-                        },
-                    },
-                },
-                "@sockethub/platform-dummy": {
-                    type: "object",
-                    additionalProperties: false,
-                    properties: {
-                        greeting: {
-                            type: "string",
-                            default: "Hello",
-                        },
-                    },
-                },
-                "@sockethub/platform-feeds": {
-                    type: "object",
-                    additionalProperties: false,
-                    properties: {
-                        ...connectConfigPlatforms,
-                    },
-                },
-                "@sockethub/platform-irc": {
-                    type: "object",
-                    additionalProperties: false,
-                    properties: {
-                        ...connectConfigPlatforms,
-                    },
-                },
-                "@sockethub/platform-xmpp": {
-                    type: "object",
-                    additionalProperties: false,
-                    properties: {
-                        ...connectConfigPlatforms,
-                    },
                 },
             },
         },

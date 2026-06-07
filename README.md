@@ -169,7 +169,6 @@ DEBUG=sockethub* bun run dev
 
 ### Libraries
 
-* **[@sockethub/activity-streams](packages/activity-streams)** - ActivityStreams object utilities
 * **[@sockethub/crypto](packages/crypto)** - Cryptographic utilities for secure storage
 * **[@sockethub/irc2as](packages/irc2as)** - IRC to ActivityStreams translation
 * **[@sockethub/logger](packages/logger)** - Winston-based logger with global configuration

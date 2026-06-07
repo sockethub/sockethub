@@ -25,9 +25,6 @@
     "resolveJsonModule": true,
     "downlevelIteration": true,
     "paths": {
-      "@sockethub/activity-streams": [
-        "./packages/activity-streams/src/activity-streams.ts"
-      ],
       "@sockethub/crypto": ["./packages/crypto/src/index.ts"],
       "@sockethub/data-layer": ["./packages/data-layer/src/index.ts"],
       "@sockethub/irc2as": ["./packages/irc2as/src/index.js"],
@@ -36,6 +33,9 @@
       "@sockethub/platform-irc": ["./packages/platform-irc/index.js"],
       "@sockethub/platform-xmpp": ["./packages/platform-xmpp/src/index.js"],
       "@sockethub/schemas": ["./packages/schemas/src/index.ts"],
+      "@sockethub/schemas/object-types": [
+        "./packages/schemas/src/object-types.ts"
+      ],
       "@sockethub/server": ["./packages/server/src/index.ts"],
       "sockethub": ["./packages/sockethub/bin/sockethub"],
       "$components": ["./packages/examples/src/components"],
@@ -49,9 +49,6 @@
   "references": [
     {
       "path": "packages/sockethub"
-    },
-    {
-      "path": "packages/activity-streams"
     },
     {
       "path": "packages/crypto"

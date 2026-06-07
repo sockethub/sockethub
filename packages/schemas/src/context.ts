@@ -36,16 +36,37 @@ const platformContextToSchemaId = new Map<string, string>();
 const platformContextToCredentialsSchemaId = new Map<string, string>();
 
 /**
- * Build the canonical Sockethub @context array for a platform context URL.
+ * Build the canonical Sockethub @context array from a platform id or full context URL.
  */
-export function buildCanonicalContext(
-    platformContextUrl: string,
-): JsonLdContext {
-    return [
-        AS2_BASE_CONTEXT_URL,
-        SOCKETHUB_BASE_CONTEXT_URL,
-        platformContextUrl,
-    ];
+export function buildCanonicalContext(platform: string): JsonLdContext {
+    const platformUrl = platform.startsWith("https://")
+        ? platform
+        : `${PLATFORM_CONTEXT_PREFIX}${platform}/v1.jsonld`;
+    return [AS2_BASE_CONTEXT_URL, SOCKETHUB_BASE_CONTEXT_URL, platformUrl];
+}
+
+/**
+ * Extract the platform ID from a canonical @context array.
+ */
+export function platformIdFromContext(
+    context: string[] | unknown,
+): string | undefined {
+    if (!Array.isArray(context)) {
+        return undefined;
+    }
+    for (const entry of context) {
+        if (
+            typeof entry === "string" &&
+            entry.startsWith(PLATFORM_CONTEXT_PREFIX)
+        ) {
+            const rest = entry.slice(PLATFORM_CONTEXT_PREFIX.length);
+            const slashIdx = rest.indexOf("/");
+            if (slashIdx > 0) {
+                return rest.slice(0, slashIdx);
+            }
+        }
+    }
+    return undefined;
 }
 
 /**

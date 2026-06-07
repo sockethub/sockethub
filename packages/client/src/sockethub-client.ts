@@ -1,12 +1,10 @@
-import { ASFactory, type ASManager } from "@sockethub/activity-streams";
-import type {
-    ActivityObject,
-    ActivityStream,
-    BaseActivityObject,
-} from "@sockethub/schemas";
+import type { ActivityStream } from "@sockethub/schemas";
 import {
+    type ActivityStreamProcessor,
     addPlatformContext,
     addPlatformSchema,
+    createActivityStreamProcessor,
+    extractObjectPropertyExtensionsFromMessageSchema,
     validateActivityStream,
     validateCredentials,
 } from "@sockethub/schemas";
@@ -15,13 +13,11 @@ import type { Socket } from "socket.io-client";
 
 export interface EventMapping {
     credentials: Map<string, ActivityStream>;
-    "activity-object": Map<string, BaseActivityObject>;
     connect: Map<string, ActivityStream>;
     join: Map<string, ActivityStream>;
 }
 
 type ReplayEventMap = {
-    "activity-object": BaseActivityObject;
     credentials: ActivityStream;
     message: ActivityStream;
 };
@@ -195,12 +191,11 @@ export default class SockethubClient {
      */
     private events: EventMapping = {
         credentials: new Map(),
-        "activity-object": new Map(),
         connect: new Map(),
         join: new Map(),
     };
     private _socket: Socket;
-    public ActivityStreams!: ASManager;
+    private readonly streamProcessor: ActivityStreamProcessor;
     public socket!: CustomEmitter;
     public debug = true;
     private readonly options: Required<SockethubClientOptions>;
@@ -232,33 +227,11 @@ export default class SockethubClient {
             maxQueuedAgeMs: options.maxQueuedAgeMs ?? 30000,
         };
 
+        this.streamProcessor = createActivityStreamProcessor({
+            looseObjectTypes: ["credentials"],
+        });
         this.socket = this.createPublicEmitter();
         this.registerSocketIOHandlers();
-        this.initActivityStreams();
-
-        this.ActivityStreams.on(
-            "activity-object-create",
-            (obj: ActivityObject) => {
-                this.socket.emit(
-                    "activity-object",
-                    obj,
-                    (resp?: { error?: string }) => {
-                        if (resp && typeof resp.error === "string") {
-                            console.error(
-                                "failed to create activity-object ",
-                                resp.error,
-                            );
-                            return;
-                        }
-                        this.eventActivityObject(obj);
-                    },
-                );
-            },
-        );
-
-        socket.on("activity-object", (obj) => {
-            this.ActivityStreams.Object.create(obj);
-        });
 
         if (this._socket.connected) {
             this.socket.connected = true;
@@ -266,10 +239,6 @@ export default class SockethubClient {
             this.socket._emit("connect");
             this.startInitialization("initial-connect", true);
         }
-    }
-
-    initActivityStreams() {
-        this.ActivityStreams = ASFactory({ specialObjs: ["credentials"] });
     }
 
     /**
@@ -512,6 +481,9 @@ export default class SockethubClient {
             });
             addPlatformContext(platform.id, platform.contextUrl);
             try {
+                this.registerActivityStreamsSchemaProps(
+                    platform.schemas?.messages,
+                );
                 const credSchema = platform.schemas?.credentials;
                 if (
                     credSchema &&
@@ -544,9 +516,12 @@ export default class SockethubClient {
         return normalizedPayload;
     }
 
-    private eventActivityObject(content: ActivityObject) {
-        if (content.id) {
-            this.events["activity-object"].set(content.id, content);
+    private registerActivityStreamsSchemaProps(schema: unknown) {
+        for (const {
+            type,
+            props,
+        } of extractObjectPropertyExtensionsFromMessageSchema(schema)) {
+            this.streamProcessor.registerObjectTypeExtensions(type, props);
         }
     }
 
@@ -558,7 +533,7 @@ export default class SockethubClient {
         }
     }
 
-    private eventMessage(content: BaseActivityObject) {
+    private eventMessage(content: ActivityStream) {
         if (!this._socket.connected) {
             return;
         }
@@ -771,7 +746,6 @@ export default class SockethubClient {
 
         if (replayOnReady) {
             // Replay previously sent state before flushing newly queued outbound events.
-            this.replay("activity-object", this.events["activity-object"]);
             this.replay("credentials", this.events.credentials);
             this.replay("message", this.events.connect);
             this.replay("message", this.events.join);
@@ -911,7 +885,7 @@ export default class SockethubClient {
             if (entry.event === "credentials" || entry.event === "message") {
                 // Run canonical expansion/normalization at send time so queued and
                 // immediate sends follow the exact same path.
-                outgoing = this.ActivityStreams.Stream(
+                outgoing = this.streamProcessor.process(
                     entry.content as ActivityStream,
                 );
                 if (outgoing && typeof outgoing === "object") {
@@ -944,32 +918,9 @@ export default class SockethubClient {
             if (entry.event === "credentials") {
                 this.eventCredentials(outgoing as ActivityStream);
             } else if (entry.event === "message") {
-                this.eventMessage(outgoing as BaseActivityObject);
+                this.eventMessage(outgoing as ActivityStream);
             }
-            if (entry.event === "activity-object") {
-                // Persist only after successful server ACK to avoid replaying
-                // rejected objects on reconnection.
-                const originalCallback = entry.callback;
-                const obj = outgoing as ActivityObject;
-                this._socket.emit(
-                    entry.event,
-                    outgoing,
-                    (resp?: { error?: string }) => {
-                        if (resp && typeof resp.error === "string") {
-                            if (obj.id) {
-                                this.events["activity-object"].delete(obj.id);
-                            }
-                        } else {
-                            this.eventActivityObject(obj);
-                        }
-                        if (typeof originalCallback === "function") {
-                            originalCallback(resp);
-                        }
-                    },
-                );
-            } else {
-                this._socket.emit(entry.event, outgoing, entry.callback);
-            }
+            this._socket.emit(entry.event, outgoing, entry.callback);
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             this.emitClientError(entry.event, entry.callback, message);
@@ -1009,18 +960,16 @@ export default class SockethubClient {
         });
 
         // use as middleware to receive incoming Sockethub messages and unpack them
-        // using the ActivityStreams library before passing them along to the app.
+        // Normalize and lint before passing them along to the app.
         this._socket.on("message", (obj) => {
-            this.socket._emit("message", this.ActivityStreams.Stream(obj));
+            this.socket._emit("message", this.streamProcessor.process(obj));
         });
     }
 
     /**
      * Type guard to check if an object is an ActivityStream with a valid actor.id.
      */
-    private hasActorId(
-        obj: ActivityStream | ActivityObject,
-    ): obj is ActivityStream {
+    private hasActorId(obj: ActivityStream): obj is ActivityStream {
         return (
             "actor" in obj &&
             obj.actor !== null &&
@@ -1043,7 +992,7 @@ export default class SockethubClient {
      * - Does not replay after page refresh (memory cleared)
      * - Server should validate replayed credentials (may be stale/revoked)
      *
-     * @param name - Event name to emit ("credentials", "activity-object", "message")
+     * @param name - Event name to emit ("credentials", "message")
      * @param asMap - Map of events to replay
      */
     private replay<K extends keyof ReplayEventMap>(
@@ -1051,18 +1000,7 @@ export default class SockethubClient {
         asMap: Map<string, ReplayEventMap[K]>,
     ): void {
         for (const obj of asMap.values()) {
-            // activity-objects are raw objects, don't pass through Stream()
-            // which is designed for activity streams with actor/object structure
-            const isActivityObject = name === "activity-object";
-            if (isActivityObject) {
-                const expandedObj = obj as BaseActivityObject;
-                const id = expandedObj?.id;
-                this.log(`replaying ${name} for ${id}`);
-                this._socket.emit(name, expandedObj);
-                continue;
-            }
-
-            const expandedObj = this.ActivityStreams.Stream(
+            const expandedObj = this.streamProcessor.process(
                 obj as ActivityStream,
             );
             let id = expandedObj?.id;

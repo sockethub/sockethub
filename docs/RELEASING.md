@@ -229,7 +229,7 @@ Individual commit messages within the PR can be informal and don't need to follo
 
 - `platform-irc`, `platform-xmpp`, `platform-feeds`, `platform-metadata`, `platform-dummy` -
   Platform packages
-- `server`, `data-layer`, `client`, `schemas`, `logger`, `activity-streams`, `crypto`,
+- `server`, `data-layer`, `client`, `schemas`, `logger`, `crypto`,
   `irc2as`, `examples`, `sockethub` - Core packages
 
 **Special markers**:

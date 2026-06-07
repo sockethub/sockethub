@@ -3,7 +3,6 @@ import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import { CredentialsStore } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import type {
-    ActivityObject,
     ActivityStream,
     InternalActivityStream,
 } from "@sockethub/schemas";
@@ -18,9 +17,8 @@ import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import config from "./config";
 import janitor from "./janitor.js";
 import listener from "./listener.js";
-import createActivityObject from "./middleware/create-activity-object.js";
 import credentialCheck from "./middleware/credential-check.js";
-import expandActivityStream from "./middleware/expand-activity-stream.js";
+import normalizeActivityStreamMiddleware from "./middleware/normalize-activity-stream.js";
 import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
 import middleware from "./middleware.js";
@@ -245,7 +243,7 @@ class Sockethub {
         socket.on(
             "credentials",
             middleware<ActivityStream>("credentials")
-                .use(expandActivityStream)
+                .use(normalizeActivityStreamMiddleware)
                 .use(validate("credentials", socket.id))
                 .use(storeCredentials(credentialsStore))
                 .use(
@@ -269,37 +267,10 @@ class Sockethub {
                 .done(),
         );
 
-        // when new activity objects are created on the client side, an event is
-        // fired, and we receive a copy on the server side.
-        socket.on(
-            "activity-object",
-            middleware<ActivityObject>("activity-object")
-                .use(validate("activity-object", socket.id))
-                .use(createActivityObject)
-                .use(
-                    (
-                        err: Error,
-                        data: ActivityObject,
-                        next: (data?: ActivityObject | Error) => void,
-                    ) => {
-                        next(attachError(err, data));
-                    },
-                )
-                .use(
-                    (
-                        data: ActivityObject,
-                        next: (data?: ActivityObject | Error) => void,
-                    ) => {
-                        next(data);
-                    },
-                )
-                .done(),
-        );
-
         socket.on(
             "message",
             middleware<InternalActivityStream>("message")
-                .use(expandActivityStream)
+                .use(normalizeActivityStreamMiddleware)
                 .use(validate("message", socket.id))
                 .use(
                     (

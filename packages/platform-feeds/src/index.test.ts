@@ -67,22 +67,39 @@ describe("buildFeedItem", () => {
     } as Parameters<typeof buildFeedItem>[0];
 
     it("omits updated when pubDate and date represent the same instant", () => {
-        const result = buildFeedItem({
-            ...baseItem,
-            date: new Date("2024-01-01T00:00:00.000Z") as unknown as string,
-        });
+        const result = buildFeedItem(
+            {
+                ...baseItem,
+                date: new Date("2024-01-01T00:00:00.000Z") as unknown as string,
+            },
+            "http://example.com/feed",
+        );
 
         expect(result.published).toEqual("2024-01-01T00:00:00.000Z");
         expect(result.updated).toBeUndefined();
     });
 
     it("preserves updated when pubDate and date differ", () => {
-        const result = buildFeedItem({
-            ...baseItem,
-            date: "2024-01-01T00:00:01.000Z",
-        });
+        const result = buildFeedItem(
+            {
+                ...baseItem,
+                date: "2024-01-01T00:00:01.000Z",
+            },
+            "http://example.com/feed",
+        );
 
         expect(result.updated).toEqual("2024-01-01T00:00:01.000Z");
+    });
+
+    it("falls back to channel URL when item has no link or meta", () => {
+        const { meta: _meta, link: _link, ...withoutLink } = baseItem;
+        const result = buildFeedItem(
+            withoutLink as Parameters<typeof buildFeedItem>[0],
+            "http://example.com/feed.xml",
+        );
+
+        expect(result.url).toEqual("http://example.com/feed.xml");
+        expect(result.id).toEqual("guid-1");
     });
 });
 
@@ -150,6 +167,41 @@ describe("platform-feeds", () => {
             expect(results.summary).toEqual("Unknown Feed");
         })
     })
+
+    it("handles feed items without per-entry link", () => {
+        platform.makeRequest = (): Promise<string> => {
+            return Promise.resolve(`
+                <rss>
+                    <channel>
+                        <title>Test Feed</title>
+                        <link>http://example.com/feed.xml</link>
+                        <item>
+                            <title>Entry without link</title>
+                            <description>Body text</description>
+                            <guid>entry-without-link</guid>
+                            <pubDate>Thu, 01 Jan 2024 00:00:00 GMT</pubDate>
+                        </item>
+                    </channel>
+                </rss>
+            `);
+        };
+
+        platform.fetch(
+            {
+                id: "no-link-item-id",
+                actor: {
+                    id: "http://example.com/feed.xml",
+                },
+            },
+            (err, results: ASCollection) => {
+                expect(err).toBeNull();
+                expect(results.totalItems).toEqual(1);
+                expect(results.items[0].object?.url).toEqual(
+                    "http://example.com/feed.xml",
+                );
+            },
+        );
+    });
 
     it("handles feed with no actor name", () => {
         // Mock feed with no title/name but proper structure

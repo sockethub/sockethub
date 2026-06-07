@@ -106,10 +106,6 @@ describe(`XMPP Resource Clash Integration Tests at ${config.sockethub.url}`, () 
         it("all clients can connect sequentially", async () => {
             for (const clientRecord of records) {
                 // Create activity object first
-                clientRecord.sockethubClient.ActivityStreams.Object.create(
-                    utils.createActorObject(clientRecord.jid),
-                );
-
                 await connectXMPP(
                     clientRecord.sockethubClient,
                     clientRecord.jid,

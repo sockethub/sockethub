@@ -65,17 +65,9 @@ describe(`IRC Nick Clash Integration Tests at ${config.sockethub.url}`, () => {
 
         it("second connection with the same nick surfaces a serviceError", async () => {
             await setIRCCredentials(firstClient, firstActorId, nick);
-            firstClient.ActivityStreams.Object.create(
-                utils.createIrcActorObject(nick),
-            );
             await connectIRC(firstClient, firstActorId, nick);
 
             await setIRCCredentials(secondClient, secondActorId, nick);
-            secondClient.ActivityStreams.Object.create({
-                id: secondActorId,
-                type: "person",
-                name: nick,
-            });
 
             let secondConnectError;
             try {
@@ -138,10 +130,6 @@ describe(`IRC Nick Clash Integration Tests at ${config.sockethub.url}`, () => {
                 setIRCCredentials(clientA, actorId, nick, { password }),
                 setIRCCredentials(clientB, actorId, nick, { password }),
             ]);
-            const actorObject = utils.createIrcActorObject(nick);
-            clientA.ActivityStreams.Object.create(actorObject);
-            clientB.ActivityStreams.Object.create(actorObject);
-
             const results = await Promise.allSettled([
                 connectIRC(clientA, actorId, nick),
                 connectIRC(clientB, actorId, nick),
