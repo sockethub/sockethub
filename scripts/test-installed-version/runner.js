@@ -2,6 +2,8 @@
  * Test runner for test-installed-version script
  */
 
+import { CONFIG } from "./config.js";
+
 export class TestRunner {
     constructor(logger, runtime, version) {
         this.logger = logger;
@@ -62,6 +64,10 @@ export class TestRunner {
                 file: "./integration/browser/basic.integration.js",
             },
             {
+                name: "browser-contract",
+                file: "./integration/contract/platform-responses.integration.js",
+            },
+            {
                 name: "browser-multiclient",
                 file: "./integration/browser/multiclient.integration.js",
             },
@@ -73,10 +79,30 @@ export class TestRunner {
                 name: "browser-resourceclash",
                 file: "./integration/browser/resourceclash.integration.js",
             },
+            {
+                name: "browser-irc-basic",
+                file: "./integration/browser/irc-basic.integration.js",
+                env: { IRC_HOST: CONFIG.SERVICES.IRC.host },
+            },
+            {
+                name: "browser-irc-multiclient",
+                file: "./integration/browser/irc-multiclient.integration.js",
+                env: { IRC_HOST: CONFIG.SERVICES.IRC.host },
+            },
+            {
+                name: "browser-irc-reconnection",
+                file: "./integration/browser/irc-reconnection.integration.js",
+                env: { IRC_HOST: CONFIG.SERVICES.IRC.host },
+            },
+            {
+                name: "browser-irc-nickclash",
+                file: "./integration/browser/irc-nickclash.integration.js",
+                env: { IRC_HOST: CONFIG.SERVICES.IRC.host },
+            },
         ];
 
         for (const test of browserTests) {
-            await this.runBrowserTest(test.name, test.file);
+            await this.runBrowserTest(test.name, test.file, test.env);
         }
     }
 
@@ -84,8 +110,9 @@ export class TestRunner {
      * Run a single browser integration test
      * @param {string} name - Test name
      * @param {string} file - Test file path
+     * @param {Record<string, string>} [extraEnv] - Additional environment variables
      */
-    async runBrowserTest(name, file) {
+    async runBrowserTest(name, file, extraEnv = {}) {
         await this.logger.info(`Running ${name} tests...`);
 
         const startTime = Date.now();
@@ -95,7 +122,8 @@ export class TestRunner {
             {
                 env: {
                     ...process.env,
-                    XMPP_HOST: "localhost",
+                    XMPP_HOST: CONFIG.SERVICES.PROSODY.host,
+                    ...extraEnv,
                 },
             },
             `integration-${name}.log`,

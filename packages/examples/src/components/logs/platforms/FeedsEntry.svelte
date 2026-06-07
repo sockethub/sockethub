@@ -23,17 +23,13 @@ interface Props {
 
 let { id, entry }: Props = $props();
 
-// Check if this is a collection/feed response (has totalItems) or individual item
-const isCollection = entry.totalItems !== undefined;
-
-// For feed collections, the URL is in the summary field
-// For individual items, the URL is in object.url (link to the article)
-const feedUrl = isCollection ? entry.summary : entry.object?.url;
-
-const actorName =
+const isCollection = $derived(entry.totalItems !== undefined);
+const feedUrl = $derived(isCollection ? entry.summary : entry.object?.url);
+const actorName = $derived(
     typeof entry.actor === "string"
         ? entry.actor
-        : entry.actor?.name || entry.actor?.id;
+        : entry.actor?.name || entry.actor?.id,
+);
 </script>
 
 <Context {entry} />

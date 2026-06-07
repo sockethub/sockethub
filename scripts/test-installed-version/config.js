@@ -17,6 +17,7 @@ export const CONFIG = {
     SERVICES: {
         REDIS: { host: "localhost", port: 6379 },
         PROSODY: { host: "localhost", port: 5222 },
+        IRC: { host: "localhost", port: 6667 },
         SOCKETHUB: { host: "localhost", port: 10550 },
     },
 
