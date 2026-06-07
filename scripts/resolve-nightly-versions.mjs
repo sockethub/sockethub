@@ -3,7 +3,7 @@
  * Resolve npm/git versions for nightly package verification.
  *
  * Outputs a JSON array with:
- * - alpha (npm dist-tag for the current pre-release line)
+ * - latest (npm dist-tag)
  * - latest stable git tag (semver without prerelease)
  * - latest tagged git release (most recent v* tag)
  */
@@ -32,9 +32,7 @@ function latestTaggedRelease() {
     return tag ? tag.replace(/^v/, "") : null;
 }
 
-// Use the npm alpha dist-tag while master tracks v5 pre-releases. The npm
-// `latest` tag still points at v4 and is covered by the stable git tag slot.
-const versions = ["alpha"];
+const versions = ["latest"];
 const stable = latestStableTag();
 const tagged = latestTaggedRelease();
 
@@ -47,7 +45,7 @@ if (tagged && !versions.includes(tagged)) {
 
 if (versions.length === 1) {
     console.error(
-        "Warning: no git release tags found; nightly matrix will only test npm alpha",
+        "Warning: no git release tags found; nightly matrix will only test npm latest",
     );
 }
 
