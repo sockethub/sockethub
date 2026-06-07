@@ -61,3 +61,26 @@ jobs:
             - run: bun install --frozen-lockfile
             - run: bun run build
             - run: bun test
+
+    examples:
+        runs-on: ubuntu-latest
+        needs: [build]
+
+        steps:
+            - run: sudo chown -R $USER:$USER ${{ github.workspace }}
+            - name: Checkout repository
+              uses: actions/checkout@v4
+            - name: Use Bun latest
+              uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+            - run: bun install --frozen-lockfile
+            - run: bun run build
+            - run: bun run docker:start:redis
+            - run: sleep 5
+            - name: Verify Redis is listening
+              run: nc -zv localhost 6379
+            - name: Examples svelte-check
+              run: cd packages/examples && bun run check
+            - name: Examples smoke tests (sockethub --examples)
+              run: cd packages/examples && bun run test:smoke
