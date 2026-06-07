@@ -140,5 +140,6 @@ export async function buildAndPackLocally(logger) {
     return {
         version,
         tarballPath: sockethubTarballPath,
+        packages: Object.fromEntries(tarballs),
     };
 }
