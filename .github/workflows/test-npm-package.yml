@@ -92,15 +92,25 @@ jobs:
           INPUT_SUITE: ${{ inputs.suite || github.event.inputs.suite || 'all' }}
           INPUT_REF: ${{ inputs.ref || github.event.inputs.ref || '' }}
         run: |
+          if [[ ! "$INPUT_SOURCE" =~ ^(npm|local)$ ]]; then
+            echo "Error: Invalid source value" >&2
+            exit 1
+          fi
+
+          SUITE="$INPUT_SUITE"
+          if [[ ! "$SUITE" =~ ^(all|redis|process|browser)$ ]]; then
+            echo "Error: Invalid suite value" >&2
+            exit 1
+          fi
+
           echo "source=${INPUT_SOURCE}" >> $GITHUB_OUTPUT
           echo "ref=${INPUT_REF}" >> $GITHUB_OUTPUT
+          echo "suite=${SUITE}" >> $GITHUB_OUTPUT
 
           if [ "${INPUT_SOURCE}" = "local" ]; then
             echo 'versions=["local"]' >> $GITHUB_OUTPUT
-            echo "suite=${INPUT_SUITE}" >> $GITHUB_OUTPUT
           elif [ "${{ github.event_name }}" = "schedule" ]; then
             echo "versions=$(bun run scripts/resolve-nightly-versions.mjs)" >> $GITHUB_OUTPUT
-            echo "suite=all" >> $GITHUB_OUTPUT
           else
             VERSION="$INPUT_VERSION"
             if [[ ! "$VERSION" =~ ^[a-zA-Z0-9.\-]+$ ]]; then
@@ -108,13 +118,6 @@ jobs:
               exit 1
             fi
             echo "versions=[\"${VERSION}\"]" >> $GITHUB_OUTPUT
-
-            SUITE="$INPUT_SUITE"
-            if [[ ! "$SUITE" =~ ^(all|redis|process|browser)$ ]]; then
-              echo "Error: Invalid suite value" >&2
-              exit 1
-            fi
-            echo "suite=${SUITE}" >> $GITHUB_OUTPUT
           fi
 
   test-npm-version:
@@ -154,12 +157,13 @@ jobs:
         id: runtime
         env:
           INPUT_RUNTIME: ${{ inputs.runtime || github.event.inputs.runtime || 'both' }}
+          MATRIX_RUNTIME: ${{ matrix.runtime }}
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
             echo "run_test=true" >> $GITHUB_OUTPUT
           elif [ "$INPUT_RUNTIME" = "both" ]; then
             echo "run_test=true" >> $GITHUB_OUTPUT
-          elif [ "$INPUT_RUNTIME" = "${{ matrix.runtime }}" ]; then
+          elif [ "$INPUT_RUNTIME" = "$MATRIX_RUNTIME" ]; then
             echo "run_test=true" >> $GITHUB_OUTPUT
           else
             echo "run_test=false" >> $GITHUB_OUTPUT
@@ -167,17 +171,22 @@ jobs:
 
       - name: Run tests against installed version
         if: steps.runtime.outputs.run_test == 'true'
+        env:
+          MATRIX_VERSION: ${{ matrix.version }}
+          MATRIX_RUNTIME: ${{ matrix.runtime }}
+          SETUP_SOURCE: ${{ needs.setup.outputs.source }}
+          SETUP_SUITE: ${{ needs.setup.outputs.suite }}
         run: |
-          if [ "${{ matrix.version }}" = "master" ] || [ "${{ needs.setup.outputs.source }}" = "local" ]; then
+          if [ "$MATRIX_VERSION" = "master" ] || [ "$SETUP_SOURCE" = "local" ]; then
             bun run scripts/test-installed-version.js \
               --local \
-              --runtime ${{ matrix.runtime }} \
-              --suite ${{ needs.setup.outputs.suite }}
+              --runtime "$MATRIX_RUNTIME" \
+              --suite "$SETUP_SUITE"
           else
             bun run scripts/test-installed-version.js \
-              ${{ matrix.version }} \
-              --runtime ${{ matrix.runtime }} \
-              --suite ${{ needs.setup.outputs.suite }}
+              "$MATRIX_VERSION" \
+              --runtime "$MATRIX_RUNTIME" \
+              --suite "$SETUP_SUITE"
           fi
 
       - name: Upload test results

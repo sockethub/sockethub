@@ -82,8 +82,14 @@ export async function buildAndPackLocally(logger) {
             tarballs.set(pkgJson.name, join(tarballsDir, tarballName));
 
             await logger.info(`  ✓ ${pkgJson.name}`);
-        } catch (_) {
-            // Skip if package.json doesn't exist
+        } catch (error) {
+            if (error?.code === "ENOENT") {
+                await logger.info(`Skipping ${dir}: missing package.json`);
+                continue;
+            }
+
+            await logger.error(`Failed packing ${dir}`, error);
+            throw error;
         }
     }
 
