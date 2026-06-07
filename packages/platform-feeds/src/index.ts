@@ -156,11 +156,19 @@ export default class Feeds implements PlatformInterface {
         const actor = buildFeedChannel(url, feed.meta);
         const articles = [];
 
-        for (const item of feed.episodes) {
-            const article = buildFeedStruct(actor);
-            article.id = id;
-            article.object = buildFeedItem(item as FeedItem);
-            articles.push(article);
+        for (const [index, item] of feed.episodes.entries()) {
+            try {
+                const article = buildFeedStruct(actor);
+                article.id = id;
+                article.object = buildFeedItem(item as FeedItem, url);
+                articles.push(article);
+            } catch (err) {
+                const detail = err instanceof Error ? err.message : String(err);
+                throw new Error(
+                    `Failed to parse feed entry ${index + 1} from ${url}: ${detail}`,
+                    { cause: err },
+                );
+            }
         }
         this.log.debug(`fetched ${articles.length} articles`);
         return articles;
@@ -168,11 +176,11 @@ export default class Feeds implements PlatformInterface {
 }
 
 interface FeedItem extends Episode {
-    meta: Meta;
-    date: string;
-    categories: Array<string>;
-    media: Array<unknown>;
-    source: string;
+    meta?: Meta;
+    date?: string;
+    categories?: Array<string>;
+    media?: Array<unknown>;
+    source?: string;
 }
 
 export function datesEqual(a: unknown, b: unknown): boolean {
@@ -191,19 +199,29 @@ export function datesEqual(a: unknown, b: unknown): boolean {
     return at === bt;
 }
 
-export function buildFeedItem(item: FeedItem): PlatformFeedsActivityObject {
-    const dateNum = Date.parse(item.pubDate.toString()) || 0;
+export function buildFeedItem(
+    item: FeedItem,
+    channelUrl: string,
+): PlatformFeedsActivityObject {
+    const dateNum = item.pubDate ? Date.parse(item.pubDate.toString()) || 0 : 0;
+    const itemUrl = item.link || item.meta?.link;
+    const idBase = itemUrl || channelUrl;
+    const stableId =
+        itemUrl ||
+        (item.guid
+            ? String(item.guid)
+            : `${idBase}#${dateNum || indexFallback(item)}`);
     return {
         type:
-            item.description.length > MAX_NOTE_LENGTH
+            (item.description || "").length > MAX_NOTE_LENGTH
                 ? ASObjectType.ARTICLE
                 : ASObjectType.NOTE,
         title: item.title,
-        id: item.link || `${item.meta.link}#${dateNum}`,
+        id: stableId,
         brief: item.description === item.summary ? undefined : item.summary,
         content: item.description,
         contentType: isHtml(item.description || "") ? "html" : "text",
-        url: item.link || item.meta.link,
+        url: itemUrl || channelUrl,
         published: item.pubDate,
         updated: datesEqual(item.pubDate, item.date) ? undefined : item.date,
         datenum: dateNum,
@@ -211,6 +229,10 @@ export function buildFeedItem(item: FeedItem): PlatformFeedsActivityObject {
         media: item.media,
         source: item.source,
     };
+}
+
+function indexFallback(item: FeedItem): string {
+    return `${item.title || "item"}-${item.pubDate || "unknown"}`;
 }
 
 function buildFeedStruct(

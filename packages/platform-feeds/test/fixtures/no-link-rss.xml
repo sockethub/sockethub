@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>No Link Feed</title>
+    <link>https://example.com/feed.xml</link>
+    <item>
+      <title>Entry without link</title>
+      <description>Body text</description>
+      <guid>entry-without-link</guid>
+      <pubDate>Thu, 01 Jan 2024 00:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>
