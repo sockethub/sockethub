@@ -16,8 +16,9 @@ export class InstallManager {
      * @param {string} source - Version to install (e.g., "5.0.0-alpha.6", "latest") or path to local tarball
      * @param {string} runtime - Runtime to use for installation ("bun" or "node")
      * @param {boolean} isLocal - Whether this is a local tarball installation
+     * @param {Record<string, string>} [localPackages] - Map of package name to local tarball path
      */
-    async install(source, runtime, isLocal = false) {
+    async install(source, runtime, isLocal = false, localPackages = null) {
         const description = isLocal
             ? `local tarball (${source})`
             : `npm (sockethub@${source})`;
@@ -30,13 +31,33 @@ export class InstallManager {
         await mkdir(this.installDir, { recursive: true });
 
         if (isLocal) {
-            // Create package.json that references local tarball
+            /** @type {Record<string, string>} */
+            const dependencies = {
+                sockethub: `file:${source}`,
+            };
+            /** @type {Record<string, string>} */
+            const overrides = {};
+
+            if (localPackages) {
+                for (const [name, tarballPath] of Object.entries(
+                    localPackages,
+                )) {
+                    const fileRef = `file:${tarballPath}`;
+                    if (name === "sockethub") {
+                        dependencies.sockethub = fileRef;
+                        continue;
+                    }
+                    if (name.startsWith("@sockethub/")) {
+                        overrides[name] = fileRef;
+                    }
+                }
+            }
+
             const packageJson = {
                 name: "sockethub-test-install",
                 private: true,
-                dependencies: {
-                    sockethub: `file:${source}`,
-                },
+                dependencies,
+                ...(Object.keys(overrides).length > 0 && { overrides }),
             };
 
             const pkgPath = join(this.installDir, "package.json");
