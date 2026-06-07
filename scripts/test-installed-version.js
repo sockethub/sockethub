@@ -101,6 +101,7 @@ async function runTestsForRuntime(
     isFirstRun,
     actualVersion,
     installSource,
+    localPackages = null,
 ) {
     console.log(`\n${"=".repeat(60)}`);
     console.log(`Testing with runtime: ${runtime.toUpperCase()}`);
@@ -120,7 +121,12 @@ async function runTestsForRuntime(
 
             if (values.local) {
                 // Install from local tarballs directory
-                await installer.install(installSource, runtime, true);
+                await installer.install(
+                    installSource,
+                    runtime,
+                    true,
+                    localPackages,
+                );
                 const installedVersion =
                     await installer.verifyVersion(actualVersion);
                 logger.version = installedVersion;
@@ -199,17 +205,23 @@ async function main() {
     // Build and pack locally if --local flag is set
     let installSource;
     let actualVersion = version;
+    /** @type {Record<string, string> | null} */
+    let localPackages = null;
 
     if (values.local) {
         console.log("Mode: Local (build and pack from source)");
         const tempLogger = new Logger(values["output-dir"], "local", "build");
         await tempLogger.init();
 
-        const { version: builtVersion, tarballPath } =
-            await buildAndPackLocally(tempLogger);
+        const {
+            version: builtVersion,
+            tarballPath,
+            packages,
+        } = await buildAndPackLocally(tempLogger);
 
         actualVersion = builtVersion;
         installSource = tarballPath;
+        localPackages = packages;
 
         console.log(`Built version: ${actualVersion}`);
         console.log(`Install from: ${tarballPath}`);
@@ -239,6 +251,7 @@ async function main() {
             isFirstRun,
             actualVersion,
             installSource,
+            localPackages,
         );
         allResults.push(result);
     }
