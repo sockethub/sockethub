@@ -154,11 +154,8 @@ success/failure.
 }
 ```
 
-Send a full `actor` object (`id`, `type`, and usually `name`) on every
-`credentials` and `message` event. Define actors in your application and include
-them on each outbound message. The client normalizes a bare string `actor` to
-`{ id: "…" }` before send when needed; prefer an object so `type` and `name`
-travel with the message.
+The `actor` object must have an `id` and `type` field, and if `name` does not exist,
+the `id` will be used for display purposes.
 
 ### Platform-Specific Object Properties
 
@@ -302,8 +299,8 @@ sc.socket.emit('message', {
 - **Context composition**: `contextFor(platform)` builds canonical `@context` arrays
 - **Outbound queueing**: Messages sent before `ready()` are queued and flushed automatically
 - **Auto-replay**: Credentials and connections restored on reconnect
-- **Activity stream helpers**: Normalization and property linting via `@sockethub/schemas`
-  (used internally by the client on send/receive)
+- **ActivityStream helpers**: Normalization and property linting via `@sockethub/schemas`
+  (can be called explicitly, but also automatically by the client on send/receive)
 - **Connection state**: Check `sc.socket.connected` for status
 
 ## Reference

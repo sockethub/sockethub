@@ -129,7 +129,7 @@ All communication uses ActivityStreams 2.0 format:
 
 - **Platforms**: Protocol modules (dummy, feeds, irc, xmpp, metadata)
 - **@context**: Canonical context array from `sc.contextFor('platform')` after `ready()`
-- **Actor**: Object on each message (`id`, `type`, `name`)
+- **Actor**: Object on each message (`id`, `type`, optional `name`)
 - **Verbs**: Actions like connect, send, join, fetch
 
 ## Production Usage
