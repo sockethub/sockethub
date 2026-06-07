@@ -57,7 +57,9 @@ let buttonText = $derived(
 <div class="w-full flex justify-end">
     <SockethubButton
         disabled={isDisabled}
-        buttonAction={onConnect}
+        buttonAction={async () => {
+            await onConnect();
+        }}
     >
         {#if connecting}
             <div class="flex items-center space-x-2">
