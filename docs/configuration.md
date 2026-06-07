@@ -20,7 +20,6 @@ Sockethub uses a JSON configuration file:
     "fileLevel": "debug",
     "file": "sockethub.log"
   },
-  "packageConfig": {},
   "platforms": [
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
