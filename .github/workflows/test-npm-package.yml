@@ -14,7 +14,7 @@ on:
           - local
         default: npm
       version:
-        description: npm version or dist-tag (e.g. latest, 5.0.0-alpha.12). Ignored when source=local.
+        description: npm version or dist-tag (e.g. latest, alpha, 5.0.0-alpha.12). Ignored when source=local.
         required: false
         default: latest
       ref:
@@ -37,7 +37,7 @@ on:
         type: string
         default: npm
       version:
-        description: npm version or dist-tag. Ignored when source=local.
+        description: npm version or dist-tag (e.g. latest, alpha, 5.0.0-alpha.12). Ignored when source=local.
         required: false
         type: string
         default: latest
