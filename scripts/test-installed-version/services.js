@@ -118,8 +118,8 @@ export class ServiceManager {
         this.startedServices.push("ergo");
 
         await this.waitForService(
-            CONFIG.SERVICES.IRC?.host || "localhost",
-            CONFIG.SERVICES.IRC?.port || 6667,
+            CONFIG.SERVICES.IRC.host,
+            CONFIG.SERVICES.IRC.port,
             "Ergo IRC",
         );
 

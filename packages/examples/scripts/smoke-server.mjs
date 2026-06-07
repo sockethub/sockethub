@@ -109,5 +109,11 @@ sockethub.on("exit", (code, sig) => {
     process.exit(code ?? 1);
 });
 
-await waitForHttp(healthUrl);
-console.log(`Sockethub examples smoke server ready on ${healthUrl}`);
+try {
+    await waitForHttp(healthUrl);
+    console.log(`Sockethub examples smoke server ready on ${healthUrl}`);
+} catch (error) {
+    console.error(error.message);
+    shutdownAll(sockethub, feedFixture);
+    process.exit(1);
+}

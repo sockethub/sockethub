@@ -2,6 +2,8 @@
  * Test runner for test-installed-version script
  */
 
+import { CONFIG } from "./config.js";
+
 export class TestRunner {
     constructor(logger, runtime, version) {
         this.logger = logger;
@@ -80,22 +82,22 @@ export class TestRunner {
             {
                 name: "browser-irc-basic",
                 file: "./integration/browser/irc-basic.integration.js",
-                env: { IRC_HOST: "localhost" },
+                env: { IRC_HOST: CONFIG.SERVICES.IRC.host },
             },
             {
                 name: "browser-irc-multiclient",
                 file: "./integration/browser/irc-multiclient.integration.js",
-                env: { IRC_HOST: "localhost" },
+                env: { IRC_HOST: CONFIG.SERVICES.IRC.host },
             },
             {
                 name: "browser-irc-reconnection",
                 file: "./integration/browser/irc-reconnection.integration.js",
-                env: { IRC_HOST: "localhost" },
+                env: { IRC_HOST: CONFIG.SERVICES.IRC.host },
             },
             {
                 name: "browser-irc-nickclash",
                 file: "./integration/browser/irc-nickclash.integration.js",
-                env: { IRC_HOST: "localhost" },
+                env: { IRC_HOST: CONFIG.SERVICES.IRC.host },
             },
         ];
 
@@ -120,7 +122,7 @@ export class TestRunner {
             {
                 env: {
                     ...process.env,
-                    XMPP_HOST: "localhost",
+                    XMPP_HOST: CONFIG.SERVICES.PROSODY.host,
                     ...extraEnv,
                 },
             },

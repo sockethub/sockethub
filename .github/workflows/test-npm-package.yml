@@ -45,6 +45,10 @@ on:
   schedule:
     - cron: '0 2 * * *'  # Nightly at 2am UTC
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -64,19 +68,22 @@ jobs:
 
       - name: Resolve test matrix
         id: versions
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version || 'latest' }}
+          INPUT_SUITE: ${{ github.event.inputs.suite || 'all' }}
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
             echo "versions=$(bun run scripts/resolve-nightly-versions.mjs)" >> $GITHUB_OUTPUT
             echo "suite=all" >> $GITHUB_OUTPUT
           else
-            VERSION="${{ github.event.inputs.version || 'latest' }}"
+            VERSION="$INPUT_VERSION"
             if [[ ! "$VERSION" =~ ^[a-zA-Z0-9.\-]+$ ]]; then
               echo "Error: Invalid version format" >&2
               exit 1
             fi
             echo "versions=[\"${VERSION}\"]" >> $GITHUB_OUTPUT
 
-            SUITE="${{ github.event.inputs.suite || 'all' }}"
+            SUITE="$INPUT_SUITE"
             if [[ ! "$SUITE" =~ ^(all|redis|process|browser)$ ]]; then
               echo "Error: Invalid suite value" >&2
               exit 1
@@ -119,12 +126,14 @@ jobs:
 
       - name: Determine runtime
         id: runtime
+        env:
+          INPUT_RUNTIME: ${{ github.event.inputs.runtime || 'both' }}
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
             echo "run_test=true" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event.inputs.runtime }}" = "both" ]; then
+          elif [ "$INPUT_RUNTIME" = "both" ]; then
             echo "run_test=true" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event.inputs.runtime }}" = "${{ matrix.runtime }}" ]; then
+          elif [ "$INPUT_RUNTIME" = "${{ matrix.runtime }}" ]; then
             echo "run_test=true" >> $GITHUB_OUTPUT
           else
             echo "run_test=false" >> $GITHUB_OUTPUT
