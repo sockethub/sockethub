@@ -98,10 +98,6 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
             name: "Contract Tester",
         };
 
-        before(() => {
-            sc.ActivityStreams.Object.create(actor);
-        });
-
         it("returns an echo response the client stores on the actor", async () => {
             const msg = await emitWithAck(
                 sc.socket,
@@ -121,7 +117,7 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
             assertNoError(msg, "dummy echo");
             expect(msg.type).to.equal("echo");
             expect(msg.actor).to.have.property("type", "platform");
-            expect(msg.target).to.eql(sc.ActivityStreams.Object.get(actor.id));
+            expect(msg.target).to.eql(actor);
             expect(msg.object).to.deep.include({
                 type: "message",
                 content: "contract echo",

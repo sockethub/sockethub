@@ -1,2 +1,3 @@
 [test]
 coverageThreshold = { functions = 0.85, lines = 0.85 }
+pathIgnorePatterns = ["packages/examples/tests/**"]
