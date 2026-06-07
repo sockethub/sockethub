@@ -82,5 +82,7 @@ jobs:
               run: nc -zv localhost 6379
             - name: Examples svelte-check
               run: cd packages/examples && bun run check
+            - name: Install Playwright browsers
+              run: cd packages/examples && bunx playwright install --with-deps chromium
             - name: Examples smoke tests (sockethub --examples)
               run: cd packages/examples && bun run test:smoke
