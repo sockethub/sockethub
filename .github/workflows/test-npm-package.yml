@@ -3,45 +3,61 @@ name: Test NPM Package
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Sockethub version to test (e.g., 5.0.0-alpha.6, latest)'
+      source:
+        description: |
+          npm — install sockethub@version from the registry (published releases).
+          local — build and pack from the checked-out ref (unreleased master/branch code).
         required: true
-        default: 'latest'
+        type: choice
+        options:
+          - npm
+          - local
+        default: npm
+      version:
+        description: |
+          npm dist-tag or version (latest, alpha, 5.0.0-alpha.12), or master
+          (build and pack from the master branch). Ignored when source=local.
+        required: false
+        default: latest
+      ref:
+        description: Git ref to checkout (branch, tag, or SHA). Empty = the branch you run this workflow from.
+        required: false
+        default: ''
       runtime:
-        description: 'Runtime to test (bun, node, both)'
+        description: Runtime to test (bun, node, both)
         required: false
-        default: 'both'
+        default: both
       suite:
-        description: 'Test suite to run (all, redis, process, browser)'
+        description: Test suite to run (all, redis, process, browser)
         required: false
-        default: 'all'
-      local:
-        description: 'Build and pack from source instead of installing from npm'
-        required: false
-        type: boolean
-        default: false
+        default: all
   workflow_call:
     inputs:
+      source:
+        description: npm (registry install) or local (build and pack checked-out source)
+        required: false
+        type: string
+        default: npm
       version:
-        description: 'Sockethub version to test (e.g., 5.0.0-alpha.6, latest)'
+        description: npm dist-tag/version (latest, alpha, 5.0.0-alpha.12) or master. Ignored when source=local.
         required: false
         type: string
-        default: 'latest'
+        default: latest
+      ref:
+        description: Git ref to checkout. Empty = caller ref.
+        required: false
+        type: string
+        default: ''
       runtime:
-        description: 'Runtime to test (bun, node, both)'
+        description: Runtime to test (bun, node, both)
         required: false
         type: string
-        default: 'both'
+        default: both
       suite:
-        description: 'Test suite to run (all, redis, process, browser)'
+        description: Test suite to run (all, redis, process, browser)
         required: false
         type: string
-        default: 'all'
-      local:
-        description: 'Build and pack from source instead of installing from npm'
-        required: false
-        type: boolean
-        default: false
+        default: all
   schedule:
     - cron: '0 2 * * *'  # Nightly at 2am UTC
 
@@ -55,6 +71,8 @@ jobs:
     outputs:
       versions: ${{ steps.versions.outputs.versions }}
       suite: ${{ steps.versions.outputs.suite }}
+      source: ${{ steps.versions.outputs.source }}
+      ref: ${{ steps.versions.outputs.ref }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -69,12 +87,30 @@ jobs:
       - name: Resolve test matrix
         id: versions
         env:
-          INPUT_VERSION: ${{ github.event.inputs.version || 'latest' }}
-          INPUT_SUITE: ${{ github.event.inputs.suite || 'all' }}
+          INPUT_SOURCE: ${{ inputs.source || github.event.inputs.source || 'npm' }}
+          INPUT_VERSION: ${{ inputs.version || github.event.inputs.version || 'latest' }}
+          INPUT_SUITE: ${{ inputs.suite || github.event.inputs.suite || 'all' }}
+          INPUT_REF: ${{ inputs.ref || github.event.inputs.ref || '' }}
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ]; then
+          if [[ ! "$INPUT_SOURCE" =~ ^(npm|local)$ ]]; then
+            echo "Error: Invalid source value" >&2
+            exit 1
+          fi
+
+          SUITE="$INPUT_SUITE"
+          if [[ ! "$SUITE" =~ ^(all|redis|process|browser)$ ]]; then
+            echo "Error: Invalid suite value" >&2
+            exit 1
+          fi
+
+          echo "source=${INPUT_SOURCE}" >> $GITHUB_OUTPUT
+          echo "ref=${INPUT_REF}" >> $GITHUB_OUTPUT
+          echo "suite=${SUITE}" >> $GITHUB_OUTPUT
+
+          if [ "${INPUT_SOURCE}" = "local" ]; then
+            echo 'versions=["local"]' >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
             echo "versions=$(bun run scripts/resolve-nightly-versions.mjs)" >> $GITHUB_OUTPUT
-            echo "suite=all" >> $GITHUB_OUTPUT
           else
             VERSION="$INPUT_VERSION"
             if [[ ! "$VERSION" =~ ^[a-zA-Z0-9.\-]+$ ]]; then
@@ -82,13 +118,6 @@ jobs:
               exit 1
             fi
             echo "versions=[\"${VERSION}\"]" >> $GITHUB_OUTPUT
-
-            SUITE="$INPUT_SUITE"
-            if [[ ! "$SUITE" =~ ^(all|redis|process|browser)$ ]]; then
-              echo "Error: Invalid suite value" >&2
-              exit 1
-            fi
-            echo "suite=${SUITE}" >> $GITHUB_OUTPUT
           fi
 
   test-npm-version:
@@ -105,6 +134,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
+          ref: ${{ matrix.version == 'master' && 'master' || (needs.setup.outputs.ref || github.ref) }}
           fetch-depth: 0
 
       - name: Setup Bun
@@ -120,20 +150,20 @@ jobs:
       - name: Install dependencies (for test runner)
         run: bun install
 
-      - name: Build packages (if local mode)
-        if: github.event.inputs.local == 'true'
+      - name: Build packages (integration test dependencies)
         run: bun run build
 
       - name: Determine runtime
         id: runtime
         env:
-          INPUT_RUNTIME: ${{ github.event.inputs.runtime || 'both' }}
+          INPUT_RUNTIME: ${{ inputs.runtime || github.event.inputs.runtime || 'both' }}
+          MATRIX_RUNTIME: ${{ matrix.runtime }}
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
             echo "run_test=true" >> $GITHUB_OUTPUT
           elif [ "$INPUT_RUNTIME" = "both" ]; then
             echo "run_test=true" >> $GITHUB_OUTPUT
-          elif [ "$INPUT_RUNTIME" = "${{ matrix.runtime }}" ]; then
+          elif [ "$INPUT_RUNTIME" = "$MATRIX_RUNTIME" ]; then
             echo "run_test=true" >> $GITHUB_OUTPUT
           else
             echo "run_test=false" >> $GITHUB_OUTPUT
@@ -141,17 +171,22 @@ jobs:
 
       - name: Run tests against installed version
         if: steps.runtime.outputs.run_test == 'true'
+        env:
+          MATRIX_VERSION: ${{ matrix.version }}
+          MATRIX_RUNTIME: ${{ matrix.runtime }}
+          SETUP_SOURCE: ${{ needs.setup.outputs.source }}
+          SETUP_SUITE: ${{ needs.setup.outputs.suite }}
         run: |
-          if [ "${{ github.event.inputs.local }}" = "true" ]; then
+          if [ "$MATRIX_VERSION" = "master" ] || [ "$SETUP_SOURCE" = "local" ]; then
             bun run scripts/test-installed-version.js \
               --local \
-              --runtime ${{ matrix.runtime }} \
-              --suite ${{ needs.setup.outputs.suite }}
+              --runtime "$MATRIX_RUNTIME" \
+              --suite "$SETUP_SUITE"
           else
             bun run scripts/test-installed-version.js \
-              ${{ matrix.version }} \
-              --runtime ${{ matrix.runtime }} \
-              --suite ${{ needs.setup.outputs.suite }}
+              "$MATRIX_VERSION" \
+              --runtime "$MATRIX_RUNTIME" \
+              --suite "$SETUP_SUITE"
           fi
 
       - name: Upload test results

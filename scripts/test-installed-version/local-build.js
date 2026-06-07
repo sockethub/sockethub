@@ -7,6 +7,23 @@ import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 /**
+ * Extract tarball filename from `bun pm pack` / `npm pack` stdout.
+ * Bun prints metadata lines after the filename (e.g. "Packed size: ...").
+ * @param {string} output
+ * @returns {string}
+ */
+export function tarballNameFromPackOutput(output) {
+    const match = output.match(/(\S+\.tgz)/);
+    if (!match) {
+        throw new Error(
+            `Could not find tarball filename in pack output:\n${output}`,
+        );
+    }
+
+    return match[1];
+}
+
+/**
  * Build and pack packages locally for testing
  * @param {Logger} logger - Logger instance
  * @returns {Promise<{version: string, tarballsDir: string}>} Version and directory containing tarballs
@@ -55,7 +72,7 @@ export async function buildAndPackLocally(logger) {
                 encoding: "utf-8",
             });
 
-            const tarballName = output.trim().split("\n").pop();
+            const tarballName = tarballNameFromPackOutput(output);
             const tarballPath = join(pkgDir, tarballName);
 
             // Move to tarballs directory
@@ -65,8 +82,14 @@ export async function buildAndPackLocally(logger) {
             tarballs.set(pkgJson.name, join(tarballsDir, tarballName));
 
             await logger.info(`  ✓ ${pkgJson.name}`);
-        } catch (_) {
-            // Skip if package.json doesn't exist
+        } catch (error) {
+            if (error?.code === "ENOENT") {
+                await logger.info(`Skipping ${dir}: missing package.json`);
+                continue;
+            }
+
+            await logger.error(`Failed packing ${dir}`, error);
+            throw error;
         }
     }
 
@@ -109,7 +132,7 @@ export async function buildAndPackLocally(logger) {
         encoding: "utf-8",
     });
 
-    const sockethubTarball = packOutput.trim().split("\n").pop();
+    const sockethubTarball = tarballNameFromPackOutput(packOutput);
     const sockethubTarballPath = join(tarballsDir, sockethubTarball);
 
     await logger.success(`Created sockethub tarball: ${sockethubTarball}`);

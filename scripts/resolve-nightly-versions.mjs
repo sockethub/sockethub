@@ -4,6 +4,8 @@
  *
  * Outputs a JSON array with:
  * - latest (npm dist-tag)
+ * - alpha (npm dist-tag for the current pre-release line)
+ * - master (local build and pack from the master branch)
  * - latest stable git tag (semver without prerelease)
  * - latest tagged git release (most recent v* tag)
  */
@@ -32,7 +34,7 @@ function latestTaggedRelease() {
     return tag ? tag.replace(/^v/, "") : null;
 }
 
-const versions = ["latest"];
+const versions = ["latest", "alpha", "master"];
 const stable = latestStableTag();
 const tagged = latestTaggedRelease();
 
@@ -43,9 +45,9 @@ if (tagged && !versions.includes(tagged)) {
     versions.push(tagged);
 }
 
-if (versions.length === 1) {
+if (!stable && !tagged) {
     console.error(
-        "Warning: no git release tags found; nightly matrix will only test npm latest",
+        "Warning: no git release tags found; nightly matrix will only test latest, alpha, and master",
     );
 }
 
