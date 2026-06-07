@@ -3,6 +3,7 @@ import {
     ctx,
     emitWithAck,
     getConfig,
+    platformIdFromContext,
     validateGlobals,
 } from "../browser/shared-setup.js";
 
@@ -34,6 +35,11 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
         if (msg?.error) {
             throw new Error(`${label}: ${msg.error}`);
         }
+    }
+
+    function assertPlatformContext(msg, platform) {
+        expect(msg).to.have.property("@context").that.is.an("array");
+        expect(platformIdFromContext(msg["@context"])).to.equal(platform);
     }
 
     function assertCollectionContract(msg) {
@@ -83,6 +89,7 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
             );
 
             assertNoError(msg, "feeds fetch");
+            assertPlatformContext(msg, "feeds");
             assertCollectionContract(msg);
 
             for (const item of msg.items) {
@@ -116,6 +123,7 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
 
             assertNoError(msg, "dummy echo");
             expect(msg.type).to.equal("echo");
+            assertPlatformContext(msg, "dummy");
             expect(msg.actor).to.have.property("type", "platform");
             expect(msg.target).to.eql(actor);
             expect(msg.object).to.deep.include({
@@ -143,6 +151,7 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
 
             assertNoError(msg, "metadata fetch");
             expect(msg.type).to.equal("fetch");
+            assertPlatformContext(msg, "metadata");
             expect(msg.actor).to.have.property("id").that.is.a("string");
             expect(msg.object).to.be.an("object");
             expect(msg.object).to.have.property("type", "page");

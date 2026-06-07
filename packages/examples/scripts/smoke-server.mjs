@@ -17,6 +17,7 @@ const healthUrl = "http://localhost:10550/";
 const feedFixtureUrl = "http://localhost:10551/feed.xml";
 const feedFixturePath = path.join(root, "packages/examples/static/feed.xml");
 
+/** Poll an HTTP URL until it returns a successful response. */
 async function waitForHttp(url, maxAttempts = 90) {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
@@ -38,12 +39,14 @@ async function waitForHttp(url, maxAttempts = 90) {
     }
 }
 
+/** Send SIGTERM to a child process when still running. */
 function shutdown(child) {
     if (child && !child.killed) {
         child.kill("SIGTERM");
     }
 }
 
+/** Stop the feed fixture server and Sockethub child process. */
 function shutdownAll(sockethub, feedFixture) {
     feedFixture.close();
     shutdown(sockethub);
@@ -99,7 +102,7 @@ for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
 }
 
 sockethub.on("exit", (code, sig) => {
-    shutdownAll(sockethub, feedFixture);
+    feedFixture.close();
     if (sig) {
         process.exit(0);
     }

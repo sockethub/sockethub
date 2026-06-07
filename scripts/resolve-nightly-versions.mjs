@@ -9,6 +9,7 @@
  */
 import { execSync } from "node:child_process";
 
+/** @returns {string | null} Latest stable semver tag without prerelease suffix. */
 function latestStableTag() {
     const tags = execSync("git tag -l 'v*'", { encoding: "utf8" })
         .trim()
@@ -21,6 +22,7 @@ function latestStableTag() {
     return latest ? latest.replace(/^v/, "") : null;
 }
 
+/** @returns {string | null} Most recent git tag matching `v*`. */
 function latestTaggedRelease() {
     const tag = execSync("git tag -l 'v*' --sort=-v:refname", {
         encoding: "utf8",

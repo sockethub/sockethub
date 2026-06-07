@@ -33,16 +33,3 @@ declare module "@sockethub/client" {
         contextFor(platform: string): string[];
     }
 }
-
-declare module "@sockethub/schemas" {
-    export interface ActivityActor {
-        id: string;
-        type: string;
-        name?: string;
-        [key: string]: unknown;
-    }
-}
-
-declare module "@sockethub/schemas/context" {
-    export function platformIdFromContext(context: string[]): string;
-}

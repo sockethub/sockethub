@@ -1,7 +1,7 @@
 <script lang="ts">
 import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
 import type { SockethubStateStore } from "$lib/types";
-import type { ActivityActor } from "@sockethub/schemas";
+import type { ActivityActor } from "$lib/types/schemas";
 
 interface Props {
     actor: ActivityActor;

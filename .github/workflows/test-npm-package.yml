@@ -53,12 +53,12 @@ jobs:
       suite: ${{ steps.versions.outputs.suite }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2.0.1
+        uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2.0.1
         with:
           bun-version: latest
 
@@ -70,8 +70,18 @@ jobs:
             echo "suite=all" >> $GITHUB_OUTPUT
           else
             VERSION="${{ github.event.inputs.version || 'latest' }}"
+            if [[ ! "$VERSION" =~ ^[a-zA-Z0-9.\-]+$ ]]; then
+              echo "Error: Invalid version format" >&2
+              exit 1
+            fi
             echo "versions=[\"${VERSION}\"]" >> $GITHUB_OUTPUT
-            echo "suite=${{ github.event.inputs.suite || 'all' }}" >> $GITHUB_OUTPUT
+
+            SUITE="${{ github.event.inputs.suite || 'all' }}"
+            if [[ ! "$SUITE" =~ ^(all|redis|process|browser)$ ]]; then
+              echo "Error: Invalid suite value" >&2
+              exit 1
+            fi
+            echo "suite=${SUITE}" >> $GITHUB_OUTPUT
           fi
 
   test-npm-version:
@@ -86,17 +96,17 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2.0.1
+        uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2.0.1
         with:
           bun-version: latest
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
@@ -137,7 +147,7 @@ jobs:
 
       - name: Upload test results
         if: always() && steps.runtime.outputs.run_test == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: test-results-${{ matrix.version }}-${{ matrix.runtime }}
           path: test-results/
