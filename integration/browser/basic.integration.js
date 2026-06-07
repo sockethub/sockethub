@@ -133,6 +133,11 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         },
                         { label: "feeds fetch" },
                     );
+                    if (msg?.error) {
+                        throw new Error(
+                            `Failed to fetch ${msg.items?.[0]?.actor?.id || "feed"}: ${msg.error}`,
+                        );
+                    }
                     expect(msg.type).to.eql("collection");
                     expect(msg.items.length).to.eql(20);
                     expect(msg.totalItems).to.eql(20);
@@ -141,11 +146,6 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         expect(m.object.contentType).to.equal("html");
                         expect(m.actor.type).to.equal("feed");
                         expect(m.type).to.equal("post");
-                    }
-                    if (msg?.error) {
-                        throw new Error(
-                            `Failed to fetch ${msg.items?.[0]?.actor?.id || "feed"}: ${msg.error}`,
-                        );
                     }
                 });
             });

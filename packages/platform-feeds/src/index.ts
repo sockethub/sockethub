@@ -176,11 +176,11 @@ export default class Feeds implements PlatformInterface {
 }
 
 interface FeedItem extends Episode {
-    meta: Meta;
-    date: string;
-    categories: Array<string>;
-    media: Array<unknown>;
-    source: string;
+    meta?: Meta;
+    date?: string;
+    categories?: Array<string>;
+    media?: Array<unknown>;
+    source?: string;
 }
 
 export function datesEqual(a: unknown, b: unknown): boolean {
@@ -203,14 +203,14 @@ export function buildFeedItem(
     item: FeedItem,
     channelUrl: string,
 ): PlatformFeedsActivityObject {
-    const dateNum = Date.parse(item.pubDate.toString()) || 0;
+    const dateNum = item.pubDate ? Date.parse(item.pubDate.toString()) : NaN;
     const itemUrl = item.link || item.meta?.link;
     const idBase = itemUrl || channelUrl;
     const stableId =
         itemUrl ||
         (item.guid
             ? String(item.guid)
-            : `${idBase}#${dateNum || indexFallback(item)}`);
+            : `${idBase}#${Number.isFinite(dateNum) ? dateNum : indexFallback(item)}`);
     return {
         type:
             (item.description || "").length > MAX_NOTE_LENGTH
@@ -224,7 +224,7 @@ export function buildFeedItem(
         url: itemUrl || channelUrl,
         published: item.pubDate,
         updated: datesEqual(item.pubDate, item.date) ? undefined : item.date,
-        datenum: dateNum,
+        datenum: Number.isFinite(dateNum) ? dateNum : 0,
         tags: item.categories,
         media: item.media,
         source: item.source,
