@@ -176,11 +176,11 @@ export default class Feeds implements PlatformInterface {
 }
 
 interface FeedItem extends Episode {
-    meta: Meta;
-    date: string;
-    categories: Array<string>;
-    media: Array<unknown>;
-    source: string;
+    meta?: Meta;
+    date?: string;
+    categories?: Array<string>;
+    media?: Array<unknown>;
+    source?: string;
 }
 
 export function datesEqual(a: unknown, b: unknown): boolean {
@@ -203,7 +203,7 @@ export function buildFeedItem(
     item: FeedItem,
     channelUrl: string,
 ): PlatformFeedsActivityObject {
-    const dateNum = Date.parse(item.pubDate.toString()) || 0;
+    const dateNum = item.pubDate ? Date.parse(item.pubDate.toString()) || 0 : 0;
     const itemUrl = item.link || item.meta?.link;
     const idBase = itemUrl || channelUrl;
     const stableId =

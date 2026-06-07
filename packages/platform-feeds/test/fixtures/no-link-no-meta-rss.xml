@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Podcast Without Entry Links</title>
+    <link>https://example.com/podcast</link>
+    <description>Regression fixture: podparse episodes without per-entry link or meta</description>
+    <item>
+      <title>Episode 1</title>
+      <description>First episode description</description>
+      <guid isPermaLink="false">episode-1-guid</guid>
+      <pubDate>Thu, 01 Jan 2024 00:00:00 GMT</pubDate>
+      <enclosure url="https://example.com/ep1.mp3" type="audio/mpeg" length="12345"/>
+    </item>
+    <item>
+      <title>Episode 2</title>
+      <description>Second episode description</description>
+      <guid isPermaLink="false">episode-2-guid</guid>
+      <pubDate>Fri, 02 Jan 2024 00:00:00 GMT</pubDate>
+      <enclosure url="https://example.com/ep2.mp3" type="audio/mpeg" length="23456"/>
+    </item>
+  </channel>
+</rss>
