@@ -33,6 +33,7 @@
     "build": "bunx --bun vite build",
     "test": "bun run test:unit",
     "test:integration": "sh -c 'if [ -z \"$RUN_PLAYWRIGHT\" ]; then echo \"Skipping Playwright integration tests (set RUN_PLAYWRIGHT=1 to run).\"; else bunx --bun playwright test; fi'",
+    "test:smoke": "bunx playwright test --config playwright.smoke.config.ts",
     "test:unit": "bunx --bun vitest run",
     "preview": "bunx --bun vite preview",
     "clean": "rm -rf build",
@@ -42,6 +43,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
+    "@sockethub/activity-streams": "workspace:4.4.0-alpha.12",
     "@sockethub/client": "^5.0.0-alpha.12",
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.50.0",

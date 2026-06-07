@@ -104,6 +104,9 @@ jobs:
       - name: Basic Browser Integration Tests
         run: XMPP_HOST=prosody bun run integration:browser:basic
 
+      - name: Platform Response Contract Tests
+        run: XMPP_HOST=prosody bun run integration:browser:contract
+
       - name: Sockethub Logs - Basic
         if: always()
         run: docker logs sockethub-sockethub-1

@@ -20,6 +20,7 @@ export class ServiceManager {
 
         const needsRedis = ["all", "browser"].includes(suite);
         const needsXmpp = ["all", "browser"].includes(suite);
+        const needsIrc = suite === "all";
 
         if (needsRedis) {
             await this.startRedis();
@@ -27,6 +28,10 @@ export class ServiceManager {
 
         if (needsXmpp) {
             await this.startXmpp();
+        }
+
+        if (needsIrc) {
+            await this.startIrc();
         }
     }
 
@@ -91,6 +96,34 @@ export class ServiceManager {
         await new Promise((resolve) => setTimeout(resolve, 5000));
 
         await this.logger.success("Prosody is ready");
+    }
+
+    /**
+     * Start Ergo IRC Docker container
+     */
+    async startIrc() {
+        await this.logger.info("Starting Ergo IRC container...");
+
+        const result = await this.logger.exec(
+            "docker",
+            ["compose", "up", "ergo", "-d"],
+            {},
+            "ergo.log",
+        );
+
+        if (result.exitCode !== 0) {
+            throw new Error(`Failed to start Ergo: ${result.stderr}`);
+        }
+
+        this.startedServices.push("ergo");
+
+        await this.waitForService(
+            CONFIG.SERVICES.IRC?.host || "localhost",
+            CONFIG.SERVICES.IRC?.port || 6667,
+            "Ergo IRC",
+        );
+
+        await this.logger.success("Ergo IRC is ready");
     }
 
     /**

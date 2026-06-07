@@ -63,6 +63,7 @@
     "integration:browser:irc-reconnection": "bun integration/browser/test-runner.js ./integration/browser/irc-reconnection.integration.js",
     "integration:browser:irc-nickclash": "bun integration/browser/test-runner.js ./integration/browser/irc-nickclash.integration.js",
     "integration:browser:irc-sasl-auth": "bun integration/browser/test-runner.js ./integration/browser/irc-sasl-auth.integration.js",
+    "integration:browser:contract": "bun integration/browser/test-runner.js ./integration/contract/platform-responses.integration.js",
     "integration:packages": "bun --workspaces --if-present run test:integration",
     "integration:process": "bun test ./integration/process.integration.ts",
     "integration:rate-limiter": "bun test ./integration/rate-limiter.integration.ts",
