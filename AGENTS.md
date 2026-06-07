@@ -18,6 +18,10 @@ Valid prefixes: `feat/`, `fix/`, `docs/`, `style/`, `refactor/`, `perf/`, `test/
 
 Examples: `feat/add-matrix-platform`, `fix/irc-reconnection-loop`, `docs/update-api-guide`
 
+**Never use `cursor/` branch names.** Cloud-agent or IDE tooling may suggest that prefix;
+CI rejects it. Always use one of the valid prefixes above (e.g. `fix/my-change`, not
+`cursor/my-change-26b0`).
+
 ### Commit Messages
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
