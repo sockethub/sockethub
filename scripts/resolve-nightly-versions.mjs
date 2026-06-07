@@ -5,6 +5,7 @@
  * Outputs a JSON array with:
  * - latest (npm dist-tag)
  * - alpha (npm dist-tag for the current pre-release line)
+ * - master (local build and pack from the master branch)
  * - latest stable git tag (semver without prerelease)
  * - latest tagged git release (most recent v* tag)
  */
@@ -33,7 +34,7 @@ function latestTaggedRelease() {
     return tag ? tag.replace(/^v/, "") : null;
 }
 
-const versions = ["latest", "alpha"];
+const versions = ["latest", "alpha", "master"];
 const stable = latestStableTag();
 const tagged = latestTaggedRelease();
 
