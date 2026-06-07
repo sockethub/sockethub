@@ -28,12 +28,10 @@ test.describe("examples smoke against sockethub --examples", () => {
             .getByLabel("Feed URL")
             .fill("http://localhost:10551/feed.xml");
 
+        await page.getByRole("button", { name: "Confirm actor" }).click();
+
         const fetchButton = page.getByRole("button", { name: "Fetch Feed" });
         await expect(fetchButton).toBeEnabled({ timeout: 30_000 });
-
-        await page
-            .getByRole("button", { name: "Activity Object Create" })
-            .click();
         await fetchButton.click();
 
         // The examples logger renders individual feed items (not the collection

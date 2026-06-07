@@ -13,6 +13,8 @@ const config: PlaywrightTestConfig = {
     testDir: "tests",
     testMatch: /smoke\.spec\.ts/,
     timeout: 60_000,
+    retries: process.env.CI ? 1 : 0,
+    workers: 1,
 };
 
 export default config;

@@ -41,4 +41,10 @@ if (tagged && !versions.includes(tagged)) {
     versions.push(tagged);
 }
 
+if (versions.length === 1) {
+    console.error(
+        "Warning: no git release tags found; nightly matrix will only test npm latest",
+    );
+}
+
 console.log(JSON.stringify(versions));

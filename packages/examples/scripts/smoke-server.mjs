@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
-import { execSync, spawn } from "node:child_process";
 /**
  * Starts Redis and Sockethub with --examples for Playwright smoke tests.
  * Assumes the monorepo has already been built.
  */
+import { execSync, spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import path from "node:path";
@@ -42,6 +42,11 @@ function shutdown(child) {
     if (child && !child.killed) {
         child.kill("SIGTERM");
     }
+}
+
+function shutdownAll(sockethub, feedFixture) {
+    feedFixture.close();
+    shutdown(sockethub);
 }
 
 try {
@@ -88,13 +93,13 @@ const sockethub = spawn(
 
 for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
     process.on(signal, () => {
-        feedFixture.close();
-        shutdown(sockethub);
+        shutdownAll(sockethub, feedFixture);
         process.exit(0);
     });
 }
 
 sockethub.on("exit", (code, sig) => {
+    shutdownAll(sockethub, feedFixture);
     if (sig) {
         process.exit(0);
     }

@@ -253,6 +253,8 @@ export { SchemaLogs };
                     {modalTitle}
                 </h3>
                 <button
+                    type="button"
+                    aria-label="Close activity log details"
                     onclick={() => (logModalState = false)}
                     class="text-gray-400 hover:text-gray-600 transition-colors"
                 >

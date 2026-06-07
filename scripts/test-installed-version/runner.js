@@ -108,6 +108,7 @@ export class TestRunner {
      * Run a single browser integration test
      * @param {string} name - Test name
      * @param {string} file - Test file path
+     * @param {Record<string, string>} [extraEnv] - Additional environment variables
      */
     async runBrowserTest(name, file, extraEnv = {}) {
         await this.logger.info(`Running ${name} tests...`);
