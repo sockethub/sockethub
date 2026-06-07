@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { beforeEach, describe, expect, it } from "bun:test";
+import { beforeEach, describe, expect, test } from "bun:test";
 import type { ASCollection, PlatformSession } from "@sockethub/schemas";
 import getPodcastFromFeed from "podparse";
 import { RSSFeed } from "./index.test.data";
@@ -13,17 +13,17 @@ function loadFixture(name: string): string {
 }
 
 describe("datesEqual", () => {
-    it("treats two null/undefined as equal", () => {
+    test("treats two null/undefined as equal", () => {
         expect(datesEqual(null, undefined)).toBe(true);
         expect(datesEqual(undefined, null)).toBe(true);
     });
 
-    it("treats one nullish and one defined as unequal", () => {
+    test("treats one nullish and one defined as unequal", () => {
         expect(datesEqual(null, new Date())).toBe(false);
         expect(datesEqual("2024-01-01T00:00:00Z", undefined)).toBe(false);
     });
 
-    it("compares Date instances by getTime (preserves ms)", () => {
+    test("compares Date instances by getTime (preserves ms)", () => {
         const a = new Date("2024-01-01T00:00:00.123Z");
         const b = new Date("2024-01-01T00:00:00.123Z");
         const c = new Date("2024-01-01T00:00:00.456Z");
@@ -31,12 +31,12 @@ describe("datesEqual", () => {
         expect(datesEqual(a, c)).toBe(false);
     });
 
-    it("compares string and Date pointing to same instant as equal", () => {
+    test("compares string and Date pointing to same instant as equal", () => {
         const iso = "2024-01-01T00:00:00.000Z";
         expect(datesEqual(iso, new Date(iso))).toBe(true);
     });
 
-    it("falls back to string equality when both are unparseable", () => {
+    test("falls back to string equality when both are unparseable", () => {
         expect(datesEqual("not-a-date", "not-a-date")).toBe(true);
         expect(datesEqual("not-a-date", "other-junk")).toBe(false);
     });
@@ -76,7 +76,7 @@ describe("buildFeedItem", () => {
         link: "http://example.com/item",
     } as Parameters<typeof buildFeedItem>[0];
 
-    it("omits updated when pubDate and date represent the same instant", () => {
+    test("omits updated when pubDate and date represent the same instant", () => {
         const result = buildFeedItem(
             {
                 ...baseItem,
@@ -89,7 +89,7 @@ describe("buildFeedItem", () => {
         expect(result.updated).toBeUndefined();
     });
 
-    it("preserves updated when pubDate and date differ", () => {
+    test("preserves updated when pubDate and date differ", () => {
         const result = buildFeedItem(
             {
                 ...baseItem,
@@ -101,7 +101,7 @@ describe("buildFeedItem", () => {
         expect(result.updated).toEqual("2024-01-01T00:00:01.000Z");
     });
 
-    it("falls back to channel URL when item has no link or meta", () => {
+    test("falls back to channel URL when item has no link or meta", () => {
         const { meta: _meta, link: _link, ...withoutLink } = baseItem;
         const result = buildFeedItem(
             withoutLink as Parameters<typeof buildFeedItem>[0],
@@ -110,6 +110,22 @@ describe("buildFeedItem", () => {
 
         expect(result.url).toEqual(channelUrl);
         expect(result.id).toEqual("guid-1");
+    });
+
+    test("uses epoch timestamp in stable id when pubDate is Unix epoch", () => {
+        const epoch = "1970-01-01T00:00:00.000Z";
+        const { meta: _meta, link: _link, guid: _guid, ...withoutLinkOrGuid } =
+            baseItem;
+        const result = buildFeedItem(
+            {
+                ...withoutLinkOrGuid,
+                pubDate: epoch,
+            } as Parameters<typeof buildFeedItem>[0],
+            channelUrl,
+        );
+
+        expect(result.datenum).toEqual(0);
+        expect(result.id).toEqual(`${channelUrl}#0`);
     });
 });
 
@@ -153,7 +169,7 @@ describe("feed fixture matrix", () => {
     ] as const;
 
     for (const fixture of fixtures) {
-        it(`parses ${fixture.file} through podparse and buildFeedItem`, () => {
+        test(`parses ${fixture.file} through podparse and buildFeedItem`, () => {
             const feed = getPodcastFromFeed(loadFixture(fixture.file));
             expect(feed.episodes).toHaveLength(fixture.expectedCount);
 
@@ -178,7 +194,7 @@ describe("feed fixture matrix", () => {
         });
     }
 
-    it("builds atom-like entries without per-entry link via buildFeedItem", () => {
+    test("builds atom-like entries without per-entry link via buildFeedItem", () => {
         const result = buildFeedItem(
             {
                 title: "Atom entry without link",
@@ -202,7 +218,7 @@ describe("buildFeedItem fuzz", () => {
         return values[Math.floor(Math.random() * values.length)];
     }
 
-    it("does not throw on random partial episode shapes", () => {
+    test("does not throw on random partial episode shapes", () => {
         for (let i = 0; i < 200; i++) {
             const partial = {
                 title: randomPick([undefined, "", "Title", "Episode"]),
@@ -260,7 +276,7 @@ describe("platform-feeds", () => {
         };
     });
 
-    it("fetches expected feed", () => {
+    test("fetches expected feed", () => {
         platform.fetch(
             {
                 id: "an id",
@@ -290,7 +306,7 @@ describe("platform-feeds", () => {
         );
     });
 
-    it("handles empty feed gracefully", () => {
+    test("handles empty feed gracefully", () => {
         platform.makeRequest = (): Promise<string> => {
             return Promise.resolve(
                 '<rss><channel><title>Empty Feed</title></channel></rss>',
@@ -314,7 +330,7 @@ describe("platform-feeds", () => {
         );
     });
 
-    it("handles feed items without per-entry link", () => {
+    test("handles feed items without per-entry link", () => {
         platform.makeRequest = (): Promise<string> => {
             return Promise.resolve(loadFixture("no-link-rss.xml"));
         };
@@ -336,7 +352,7 @@ describe("platform-feeds", () => {
         );
     });
 
-    it("handles regression podcast feed without per-entry link or meta", () => {
+    test("handles regression podcast feed without per-entry link or meta", () => {
         platform.makeRequest = (): Promise<string> => {
             return Promise.resolve(loadFixture("no-link-no-meta-rss.xml"));
         };
@@ -361,7 +377,7 @@ describe("platform-feeds", () => {
         );
     });
 
-    it("handles feed with no actor name", () => {
+    test("handles feed with no actor name", () => {
         platform.makeRequest = (): Promise<string> => {
             return Promise.resolve(`
                 <rss>
@@ -391,7 +407,7 @@ describe("platform-feeds", () => {
         );
     });
 
-    it("handles network errors properly", () => {
+    test("handles network errors properly", () => {
         platform.makeRequest = (): Promise<string> => {
             return Promise.reject(new Error("Network timeout"));
         };
@@ -411,7 +427,7 @@ describe("platform-feeds", () => {
         );
     });
 
-    it("validates collection structure matches ASCollection interface", () => {
+    test("validates collection structure matches ASCollection interface", () => {
         platform.fetch(
             {
                 id: "validation-test-id",
