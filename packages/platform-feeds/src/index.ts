@@ -216,10 +216,10 @@ export function buildFeedItem(
             (item.description || "").length > MAX_NOTE_LENGTH
                 ? ASObjectType.ARTICLE
                 : ASObjectType.NOTE,
-        title: item.title,
+        title: item.title || "",
         id: stableId,
         brief: item.description === item.summary ? undefined : item.summary,
-        content: item.description,
+        content: item.description || "",
         contentType: isHtml(item.description || "") ? "html" : "text",
         url: itemUrl || channelUrl,
         published: item.pubDate,

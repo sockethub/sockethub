@@ -32,7 +32,13 @@ $effect(() => {
 });
 
 async function handleSubmit(): Promise<void> {
-    const payload = JSON.parse(editedJson) as TextAreaObject;
+    let payload: TextAreaObject;
+    try {
+        payload = JSON.parse(editedJson) as TextAreaObject;
+    } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error(`Invalid JSON: ${message}`);
+    }
     if (password.length > 0) {
         payload.password = password;
     }

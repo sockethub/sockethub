@@ -19,7 +19,7 @@ interface Props {
 
 let { credentials, actor, sockethubState, context }: Props = $props();
 
-async function sendCredentials(data: string) {
+async function sendCredentials(data: string): Promise<void> {
     await ensureClientReady();
     const creds = {
         "@context": await contextFor(context),
@@ -27,11 +27,15 @@ async function sendCredentials(data: string) {
         actor: actorAsObject(actor),
         object: JSON.parse(data),
     };
-    sc.socket.emit("credentials", creds, (resp: SockethubResponse) => {
-        if (resp?.error) {
-            throw new Error(resp.error);
-        }
-        $sockethubState.credentialsSet = true;
+    return new Promise<void>((resolve, reject) => {
+        sc.socket.emit("credentials", creds, (resp: SockethubResponse) => {
+            if (resp?.error) {
+                reject(new Error(resp.error));
+                return;
+            }
+            $sockethubState.credentialsSet = true;
+            resolve();
+        });
     });
 }
 </script>
