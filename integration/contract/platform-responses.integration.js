@@ -105,7 +105,7 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
                 {
                     "@context": ctx("dummy"),
                     type: "echo",
-                    actor: actor.id,
+                    actor,
                     object: {
                         type: "message",
                         content: "contract echo",
