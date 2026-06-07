@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Sockethub version to test (e.g., 5.0.0-alpha.6, latest)'
+        description: 'Sockethub version to test (e.g., 5.0.0-alpha.12, alpha, latest)'
         required: true
-        default: 'latest'
+        default: 'alpha'
       runtime:
         description: 'Runtime to test (bun, node, both)'
         required: false
@@ -23,10 +23,10 @@ on:
   workflow_call:
     inputs:
       version:
-        description: 'Sockethub version to test (e.g., 5.0.0-alpha.6, latest)'
+        description: 'Sockethub version to test (e.g., 5.0.0-alpha.12, alpha, latest)'
         required: false
         type: string
-        default: 'latest'
+        default: 'alpha'
       runtime:
         description: 'Runtime to test (bun, node, both)'
         required: false
@@ -120,8 +120,7 @@ jobs:
       - name: Install dependencies (for test runner)
         run: bun install
 
-      - name: Build packages (if local mode)
-        if: github.event.inputs.local == 'true'
+      - name: Build packages (integration test dependencies)
         run: bun run build
 
       - name: Determine runtime
