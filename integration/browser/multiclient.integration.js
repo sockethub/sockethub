@@ -4,6 +4,7 @@ import {
     connectXMPP,
     getConfig,
     joinXMPPRoom,
+    queryRoomAttendance,
     sendXMPPMessage,
     setXMPPCredentials,
     validateGlobals,
@@ -81,6 +82,31 @@ async function waitForStableRoomDelivery(records, messageLog) {
             await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
         }
     }
+}
+
+// Poll the room's attendance list until the server reports every client as an
+// occupant. This is the precondition for MUC fan-out: a message is only routed
+// to clients already present when it is broadcast (the room does not replay it
+// to late joiners). Asserting membership before sending closes the join race at
+// its source instead of inferring it by bouncing messages.
+async function waitForRoomOccupancy(sender, expectedCount, timeout) {
+    const startTime = Date.now();
+    let members = [];
+    while (Date.now() - startTime < timeout) {
+        members = await queryRoomAttendance(
+            sender.sockethubClient,
+            sender.jid,
+            config.prosody.room,
+        );
+        if (members.length >= expectedCount) {
+            return members;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+    throw new Error(
+        `Room never reached ${expectedCount} occupants within ${timeout}ms; ` +
+            `last saw ${members.length}: [${members.join(", ")}]`,
+    );
 }
 
 describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () => {
@@ -195,7 +221,16 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             const testMessage = `Test message from client 1 at ${Date.now()}`;
             const sendingClientRecord = records[0];
 
-            // Clear message log
+            // Confirm every client is registered as a room occupant before
+            // broadcasting, so the message cannot be lost to a client whose MUC
+            // join has not fully propagated yet.
+            await waitForRoomOccupancy(
+                sendingClientRecord,
+                CLIENT_COUNT,
+                config.timeouts.multiClientMessage,
+            );
+
+            // Clear message log (drops the attendance query responses above)
             messageLog.length = 0;
 
             // Send message from client 1
