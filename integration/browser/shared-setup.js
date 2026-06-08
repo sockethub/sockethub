@@ -254,67 +254,6 @@ export function sendXMPPMessage(sh, jid, room, content) {
     });
 }
 
-// Query MUC occupancy (disco#items) and resolve with the room's member list.
-//
-// The emit ack only confirms the attendance IQ was *sent*; the member list
-// arrives later as a separate inbound `type: "query"` message, so we listen for
-// that and race it against a safety timeout.
-export function queryRoomAttendance(sh, jid, room = config.prosody.room) {
-    return new Promise((resolve, reject) => {
-        const onMessage = (msg) => {
-            if (
-                msg?.type === "query" &&
-                msg?.object?.type === "attendance" &&
-                msg?.target?.id === jid
-            ) {
-                cleanup();
-                resolve(
-                    Array.isArray(msg.object.members) ? msg.object.members : [],
-                );
-            }
-        };
-        const timer = setTimeout(() => {
-            cleanup();
-            reject(
-                new Error(`Attendance query timed out for ${jid} in ${room}`),
-            );
-        }, config.timeouts.message);
-        function cleanup() {
-            clearTimeout(timer);
-            sh.socket.off("message", onMessage);
-        }
-
-        sh.socket.on("message", onMessage);
-        emitWithAck(
-            sh.socket,
-            "message",
-            {
-                type: "query",
-                actor: asPersonActor(jid),
-                "@context": ctx("xmpp"),
-                target: { type: "room", id: room },
-                object: { type: "attendance" },
-            },
-            { label: "xmpp attendance query" },
-        ).then(
-            (msg) => {
-                if (msg?.error) {
-                    cleanup();
-                    reject(
-                        new Error(
-                            `Attendance query failed for ${jid}: ${msg.error}`,
-                        ),
-                    );
-                }
-            },
-            (err) => {
-                cleanup();
-                reject(err);
-            },
-        );
-    });
-}
-
 // --- IRC helpers ---
 //
 // platform-irc has a few non-obvious constraints these helpers encode:

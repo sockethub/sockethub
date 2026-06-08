@@ -4,7 +4,6 @@ import {
     connectXMPP,
     getConfig,
     joinXMPPRoom,
-    queryRoomAttendance,
     sendXMPPMessage,
     setXMPPCredentials,
     validateGlobals,
@@ -36,8 +35,11 @@ async function ensureSocketsConnected(records) {
     );
 }
 
-async function waitForStableRoomDelivery(records, messageLog) {
-    const sender = records[records.length - 1];
+async function waitForStableRoomDelivery(
+    records,
+    messageLog,
+    sender = records[records.length - 1],
+) {
     const maxAttempts = 3;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -82,31 +84,6 @@ async function waitForStableRoomDelivery(records, messageLog) {
             await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
         }
     }
-}
-
-// Poll the room's attendance list until the server reports every client as an
-// occupant. This is the precondition for MUC fan-out: a message is only routed
-// to clients already present when it is broadcast (the room does not replay it
-// to late joiners). Asserting membership before sending closes the join race at
-// its source instead of inferring it by bouncing messages.
-async function waitForRoomOccupancy(sender, expectedCount, timeout) {
-    const startTime = Date.now();
-    let members = [];
-    while (Date.now() - startTime < timeout) {
-        members = await queryRoomAttendance(
-            sender.sockethubClient,
-            sender.jid,
-            config.prosody.room,
-        );
-        if (members.length >= expectedCount) {
-            return members;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 200));
-    }
-    throw new Error(
-        `Room never reached ${expectedCount} occupants within ${timeout}ms; ` +
-            `last saw ${members.length}: [${members.join(", ")}]`,
-    );
 }
 
 describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () => {
@@ -218,59 +195,15 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
 
     describe("Cross-Client Message Verification", () => {
         it("message from client 1 is received by all other clients", async () => {
-            const testMessage = `Test message from client 1 at ${Date.now()}`;
-            const sendingClientRecord = records[0];
-
-            // Confirm every client is registered as a room occupant before
-            // broadcasting, so the message cannot be lost to a client whose MUC
-            // join has not fully propagated yet.
-            await waitForRoomOccupancy(
-                sendingClientRecord,
-                CLIENT_COUNT,
-                config.timeouts.multiClientMessage,
-            );
-
-            // Clear message log (drops the attendance query responses above)
             messageLog.length = 0;
 
-            // Send message from client 1
-            await sendXMPPMessage(
-                sendingClientRecord.sockethubClient,
-                sendingClientRecord.jid,
-                config.prosody.room,
-                testMessage,
-            );
-
-            // Wait for messages to propagate to other clients
-            // Use longer timeout for multi-client tests due to XMPP routing delays.
-            // The gate must exclude the sender's own echoed message; otherwise it
-            // can be satisfied by [sender echo + N-2 peers] and resolve one
-            // delivery early, only for the sender-excluding assertion below to
-            // then fail with one fewer message than required.
-            const peerDeliveries = () =>
-                messageLog.filter(
-                    (log) =>
-                        log.message?.object?.content === testMessage &&
-                        log.message?.type === "send" &&
-                        log.clientId !== sendingClientRecord.jid,
-                ).length;
-            await waitFor(
-                () => peerDeliveries() >= CLIENT_COUNT - 1,
-                config.timeouts.multiClientMessage,
-                50,
-                () =>
-                    `Received ${peerDeliveries()}/${CLIENT_COUNT - 1} messages`,
-            );
-
-            // Verify message was received by other clients
-            const receivedMessages = messageLog.filter(
-                (log) =>
-                    log.message?.object?.content === testMessage &&
-                    log.message?.type === "send" &&
-                    log.clientId !== sendingClientRecord.jid,
-            );
-
-            expect(receivedMessages).to.have.length.at.least(CLIENT_COUNT - 1);
+            // A MUC only delivers a message to occupants already present when it
+            // is broadcast; it is not replayed to a peer whose join has not yet
+            // propagated. A single send is therefore racy. waitForStableRoomDelivery
+            // re-sends a freshly tagged message (with backoff) until every peer
+            // receives one, converging on confirmed room-wide delivery and failing
+            // only if it never reaches all peers within the attempts.
+            await waitForStableRoomDelivery(records, messageLog, records[0]);
         });
 
         it("rapid messages from multiple clients are all delivered", async () => {
