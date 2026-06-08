@@ -33,6 +33,26 @@ export default class Metadata implements PlatformInterface {
         this.log.debug(`fetching ${job.actor.id}`);
         ogs({
             url: job.actor.id,
+            // open-graph-scraper *replaces* (does not merge) the default URL
+            // validator settings, so we restate the defaults and only relax
+            // require_tld. This lets the scraper accept TLD-less hosts such as
+            // `localhost` and intranet names. Note: the default validator already
+            // accepts bare IPs, so this does not introduce a new SSRF class on its
+            // own — see the SSRF hardening tracked separately.
+            urlValidatorSettings: {
+                allow_fragments: true,
+                allow_protocol_relative_urls: false,
+                allow_query_components: true,
+                allow_trailing_dot: false,
+                allow_underscores: false,
+                protocols: ["http", "https"],
+                require_host: true,
+                require_port: false,
+                require_protocol: false,
+                require_tld: false,
+                require_valid_protocol: true,
+                validate_length: true,
+            },
         })
             .then((data) => {
                 const { result } = data;

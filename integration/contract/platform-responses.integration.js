@@ -135,10 +135,12 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
 
     describe("metadata platform", () => {
         it("returns page object fields the examples metadata view expects", async () => {
-            const fixtureUrl = `${config.sockethub.url.replace(
-                "://localhost:",
-                "://127.0.0.1:",
-            )}/metadata-test.html`;
+            // Fetch the fixture via the same base URL the rest of the suite uses.
+            // An earlier revision rewrote localhost -> 127.0.0.1 to satisfy the
+            // scraper's URL validator, but that broke when Sockethub binds only to
+            // IPv6 localhost (::1) — the IPv4 fetch was refused. The metadata
+            // platform now accepts TLD-less hosts, so localhost works everywhere.
+            const fixtureUrl = `${config.sockethub.url}/metadata-test.html`;
             const msg = await emitWithAck(
                 sc.socket,
                 "message",
