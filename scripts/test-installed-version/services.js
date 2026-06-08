@@ -175,7 +175,7 @@ export class ServiceManager {
                     ...process.env,
                     REDIS_URL: "redis://127.0.0.1:6379",
                     PORT: "10550",
-                    DEBUG: "sockethub*",
+                    LOG_LEVEL: "debug",
                 },
             },
             "sockethub.log",

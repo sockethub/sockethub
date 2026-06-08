@@ -154,7 +154,7 @@ For debugging and configuration options, see the [Server package documentation](
 **Debug logging:**
 
 ```bash
-DEBUG=sockethub* bun run dev
+LOG_LEVEL=debug bun run dev
 ```
 
 ## Packages

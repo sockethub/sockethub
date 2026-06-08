@@ -52,7 +52,7 @@ and [Sockethub wiki](https://github.com/sockethub/sockethub/wiki).
 
 ## Running
 
-`$ DEBUG=sockethub* bunx @sockethub/server`
+`$ LOG_LEVEL=debug bunx @sockethub/server`
 
 ### Environment Variables
 
@@ -64,11 +64,11 @@ Default: `10550`
 
 Default: `localhost`
 
-- DEBUG
+- LOG_LEVEL
 
-Specify the namespace to console log, e.g. `sockethub*` will print all sockethub
-related debug statements, whereas `*` will also print any other modules debug
-statements that use the `debug` module.
+Console log level: `error`, `warn`, `info` (default), or `debug`. Set to
+`debug` to print all Sockethub debug statements. See also `LOG_FILE_LEVEL` and
+`LOG_FILE`.
 
 - REDIS_PORT
 
@@ -126,14 +126,14 @@ debugging in production environments.
 
 Run with debug output and examples enabled:
 
-`$ DEBUG=sockethub* bin/sockethub --examples`
+`$ LOG_LEVEL=debug bin/sockethub --examples`
 
 You should then be able to browse to `http://localhost:10550/examples` and try
 out the examples.
 
 For production, with examples disabled.
 
-`$ DEBUG=sockethub* bin/sockethub`
+`$ LOG_LEVEL=debug bin/sockethub`
 
 ## License
 
