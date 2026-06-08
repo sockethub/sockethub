@@ -596,12 +596,14 @@ export default class XMPP implements PersistentPlatformInterface {
                 .then(() => done())
                 .catch(done);
         } else {
+            const queryId = `attendance_${randomUUID()}`;
+
             this.__client
                 .send(
                     this.__xml(
                         "iq",
                         {
-                            id: "muc_id",
+                            id: queryId,
                             type: "get",
                             from: job.actor.id,
                             to: job.target?.id,
