@@ -93,7 +93,7 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
     const messageLog = [];
     const connectionLog = [];
 
-    before(() => {
+    before(async () => {
         for (let i = 1; i <= CLIENT_COUNT; i++) {
             const socket = io(config.sockethub.url, { path: "/sockethub" });
             const sockethubClient = new SockethubClient(socket);
@@ -115,6 +115,15 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
 
             records.push(clientRecord);
         }
+
+        // Wait for every client to connect and finish initialization (schema
+        // registry loaded) before any test sends credentials. Otherwise the
+        // first test emits credentials while the clients are still connecting;
+        // SockethubClient queues them and the per-emit ack must then also cover
+        // connect + ready + flush, which races the credential ACK timeout.
+        await Promise.all(
+            records.map((clientRecord) => clientRecord.sockethubClient.ready()),
+        );
     });
 
     after(() => {
