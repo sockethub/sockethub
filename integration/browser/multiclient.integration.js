@@ -207,19 +207,24 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
             );
 
             // Wait for messages to propagate to other clients
-            // Use longer timeout for multi-client tests due to XMPP routing delays
+            // Use longer timeout for multi-client tests due to XMPP routing delays.
+            // The gate must exclude the sender's own echoed message; otherwise it
+            // can be satisfied by [sender echo + N-2 peers] and resolve one
+            // delivery early, only for the sender-excluding assertion below to
+            // then fail with one fewer message than required.
+            const peerDeliveries = () =>
+                messageLog.filter(
+                    (log) =>
+                        log.message?.object?.content === testMessage &&
+                        log.message?.type === "send" &&
+                        log.clientId !== sendingClientRecord.jid,
+                ).length;
             await waitFor(
-                () =>
-                    messageLog.filter(
-                        (log) =>
-                            log.message?.object?.content === testMessage &&
-                            log.message?.type === "send",
-                    ).length >=
-                    CLIENT_COUNT - 1,
+                () => peerDeliveries() >= CLIENT_COUNT - 1,
                 config.timeouts.multiClientMessage,
                 50,
                 () =>
-                    `Received ${messageLog.filter((log) => log.message?.object?.content === testMessage).length}/${CLIENT_COUNT - 1} messages`,
+                    `Received ${peerDeliveries()}/${CLIENT_COUNT - 1} messages`,
             );
 
             // Verify message was received by other clients
