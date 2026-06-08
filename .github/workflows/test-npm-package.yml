@@ -3,22 +3,6 @@ name: Test NPM Package
 on:
   workflow_dispatch:
     inputs:
-      source:
-        description: |
-          npm — install sockethub@version from the registry (published releases).
-          local — build and pack from the checked-out ref (unreleased master/branch code).
-        required: true
-        type: choice
-        options:
-          - npm
-          - local
-        default: npm
-      version:
-        description: |
-          npm dist-tag or version (latest, alpha, 5.0.0-alpha.12), or master
-          (build and pack from the master branch). Ignored when source=local.
-        required: false
-        default: latest
       ref:
         description: Git ref to checkout (branch, tag, or SHA). Empty = the branch you run this workflow from.
         required: false
@@ -28,21 +12,11 @@ on:
         required: false
         default: both
       suite:
-        description: Test suite to run (all, redis, process, browser)
+        description: Test suite to run (all, browser)
         required: false
         default: all
   workflow_call:
     inputs:
-      source:
-        description: npm (registry install) or local (build and pack checked-out source)
-        required: false
-        type: string
-        default: npm
-      version:
-        description: npm dist-tag/version (latest, alpha, 5.0.0-alpha.12) or master. Ignored when source=local.
-        required: false
-        type: string
-        default: latest
       ref:
         description: Git ref to checkout. Empty = caller ref.
         required: false
@@ -54,79 +28,24 @@ on:
         type: string
         default: both
       suite:
-        description: Test suite to run (all, redis, process, browser)
+        description: Test suite to run (all, browser)
         required: false
         type: string
         default: all
-  schedule:
-    - cron: '0 2 * * *'  # Nightly at 2am UTC
 
 permissions:
   contents: read
   actions: read
 
+env:
+  LOCAL_REGISTRY_URL: http://127.0.0.1:4873
+
 jobs:
-  setup:
+  test-packaged-current:
     runs-on: ubuntu-latest
-    outputs:
-      versions: ${{ steps.versions.outputs.versions }}
-      suite: ${{ steps.versions.outputs.suite }}
-      source: ${{ steps.versions.outputs.source }}
-      ref: ${{ steps.versions.outputs.ref }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2.0.1
-        with:
-          bun-version: latest
-
-      - name: Resolve test matrix
-        id: versions
-        env:
-          INPUT_SOURCE: ${{ inputs.source || github.event.inputs.source || 'npm' }}
-          INPUT_VERSION: ${{ inputs.version || github.event.inputs.version || 'latest' }}
-          INPUT_SUITE: ${{ inputs.suite || github.event.inputs.suite || 'all' }}
-          INPUT_REF: ${{ inputs.ref || github.event.inputs.ref || '' }}
-        run: |
-          if [[ ! "$INPUT_SOURCE" =~ ^(npm|local)$ ]]; then
-            echo "Error: Invalid source value" >&2
-            exit 1
-          fi
-
-          SUITE="$INPUT_SUITE"
-          if [[ ! "$SUITE" =~ ^(all|redis|process|browser)$ ]]; then
-            echo "Error: Invalid suite value" >&2
-            exit 1
-          fi
-
-          echo "source=${INPUT_SOURCE}" >> $GITHUB_OUTPUT
-          echo "ref=${INPUT_REF}" >> $GITHUB_OUTPUT
-          echo "suite=${SUITE}" >> $GITHUB_OUTPUT
-
-          if [ "${INPUT_SOURCE}" = "local" ]; then
-            echo 'versions=["local"]' >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "versions=$(bun run scripts/resolve-nightly-versions.mjs)" >> $GITHUB_OUTPUT
-          else
-            VERSION="$INPUT_VERSION"
-            if [[ ! "$VERSION" =~ ^[a-zA-Z0-9.\-]+$ ]]; then
-              echo "Error: Invalid version format" >&2
-              exit 1
-            fi
-            echo "versions=[\"${VERSION}\"]" >> $GITHUB_OUTPUT
-          fi
-
-  test-npm-version:
-    runs-on: ubuntu-latest
-    needs: [setup]
 
     strategy:
       matrix:
-        version: ${{ fromJson(needs.setup.outputs.versions) }}
         runtime: [bun, node]
       fail-fast: false
 
@@ -134,7 +53,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          ref: ${{ matrix.version == 'master' && 'master' || (needs.setup.outputs.ref || github.ref) }}
+          ref: ${{ inputs.ref || github.event.inputs.ref || github.ref }}
           fetch-depth: 0
 
       - name: Setup Bun
@@ -147,53 +66,101 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies (for test runner)
-        run: bun install
-
-      - name: Build packages (integration test dependencies)
-        run: bun run build
-
       - name: Determine runtime
         id: runtime
         env:
           INPUT_RUNTIME: ${{ inputs.runtime || github.event.inputs.runtime || 'both' }}
           MATRIX_RUNTIME: ${{ matrix.runtime }}
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "run_test=true" >> $GITHUB_OUTPUT
-          elif [ "$INPUT_RUNTIME" = "both" ]; then
-            echo "run_test=true" >> $GITHUB_OUTPUT
+          if [ "$INPUT_RUNTIME" = "both" ]; then
+            echo "run_test=true" >> "$GITHUB_OUTPUT"
           elif [ "$INPUT_RUNTIME" = "$MATRIX_RUNTIME" ]; then
-            echo "run_test=true" >> $GITHUB_OUTPUT
+            echo "run_test=true" >> "$GITHUB_OUTPUT"
           else
-            echo "run_test=false" >> $GITHUB_OUTPUT
+            echo "run_test=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Run tests against installed version
+      - name: Validate suite
         if: steps.runtime.outputs.run_test == 'true'
         env:
-          MATRIX_VERSION: ${{ matrix.version }}
-          MATRIX_RUNTIME: ${{ matrix.runtime }}
-          SETUP_SOURCE: ${{ needs.setup.outputs.source }}
-          SETUP_SUITE: ${{ needs.setup.outputs.suite }}
+          INPUT_SUITE: ${{ inputs.suite || github.event.inputs.suite || 'all' }}
         run: |
-          if [ "$MATRIX_VERSION" = "master" ] || [ "$SETUP_SOURCE" = "local" ]; then
-            bun run scripts/test-installed-version.js \
-              --local \
-              --runtime "$MATRIX_RUNTIME" \
-              --suite "$SETUP_SUITE"
-          else
-            bun run scripts/test-installed-version.js \
-              "$MATRIX_VERSION" \
-              --runtime "$MATRIX_RUNTIME" \
-              --suite "$SETUP_SUITE"
+          if [[ ! "$INPUT_SUITE" =~ ^(all|browser)$ ]]; then
+            echo "Error: Invalid suite value" >&2
+            exit 1
           fi
+
+      - name: Install dependencies
+        if: steps.runtime.outputs.run_test == 'true'
+        run: bun install
+
+      - name: Build packages
+        if: steps.runtime.outputs.run_test == 'true'
+        run: bun run build
+
+      - name: Start local npm registry
+        if: steps.runtime.outputs.run_test == 'true'
+        run: |
+          REGISTRY_DIR="$RUNNER_TEMP/verdaccio"
+          mkdir -p "$REGISTRY_DIR"
+          cp scripts/test-installed-version/verdaccio.yaml "$REGISTRY_DIR/config.yaml"
+
+          bunx verdaccio \
+            --config "$REGISTRY_DIR/config.yaml" \
+            --listen 127.0.0.1:4873 \
+            > "$REGISTRY_DIR/verdaccio.log" 2>&1 &
+          echo "$!" > "$REGISTRY_DIR/pid"
+
+          for attempt in {1..30}; do
+            if curl -fsS "$LOCAL_REGISTRY_URL/-/ping" >/dev/null; then
+              echo "Local registry is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "Local registry failed to start" >&2
+          cat "$REGISTRY_DIR/verdaccio.log" >&2
+          exit 1
+
+      - name: Publish packages to local registry
+        if: steps.runtime.outputs.run_test == 'true'
+        env:
+          NPM_CONFIG_REGISTRY: ${{ env.LOCAL_REGISTRY_URL }}
+        run: |
+          bunx lerna publish from-package \
+            --registry "$LOCAL_REGISTRY_URL" \
+            --dist-tag local \
+            --yes \
+            --no-git-tag-version \
+            --no-push \
+            --ignore-scripts
+
+      - name: Resolve package version
+        if: steps.runtime.outputs.run_test == 'true'
+        id: package
+        run: |
+          VERSION=$(node -p "require('./packages/sockethub/package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Testing packaged sockethub@$VERSION"
+
+      - name: Run tests against locally published package
+        if: steps.runtime.outputs.run_test == 'true'
+        env:
+          MATRIX_RUNTIME: ${{ matrix.runtime }}
+          SETUP_SUITE: ${{ inputs.suite || github.event.inputs.suite || 'all' }}
+        run: |
+          bun run scripts/test-installed-version.js \
+            "${{ steps.package.outputs.version }}" \
+            --registry "$LOCAL_REGISTRY_URL" \
+            --runtime "$MATRIX_RUNTIME" \
+            --suite "$SETUP_SUITE"
 
       - name: Upload test results
         if: always() && steps.runtime.outputs.run_test == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: test-results-${{ matrix.version }}-${{ matrix.runtime }}
+          name: test-results-local-${{ matrix.runtime }}
           path: test-results/
           retention-days: 30
 
@@ -203,4 +170,12 @@ jobs:
           if [ -f test-results/*/summary.json ]; then
             echo "Test Results Summary:"
             cat test-results/*/summary.json
+          fi
+
+      - name: Stop local npm registry
+        if: always() && steps.runtime.outputs.run_test == 'true'
+        run: |
+          PID_FILE="$RUNNER_TEMP/verdaccio/pid"
+          if [ -f "$PID_FILE" ]; then
+            kill "$(cat "$PID_FILE")" 2>/dev/null || true
           fi
