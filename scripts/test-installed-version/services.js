@@ -20,7 +20,10 @@ export class ServiceManager {
 
         const needsRedis = ["all", "browser"].includes(suite);
         const needsXmpp = ["all", "browser"].includes(suite);
-        const needsIrc = suite === "all";
+        // The "browser" suite includes the IRC browser tests (see runner.js),
+        // so it needs the Ergo IRC server too. Without this, `suite=browser`
+        // runs the IRC tests with no server and they fail to connect.
+        const needsIrc = ["all", "browser"].includes(suite);
 
         if (needsRedis) {
             await this.startRedis();
