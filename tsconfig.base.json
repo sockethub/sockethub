@@ -30,8 +30,8 @@
       "@sockethub/irc2as": ["./packages/irc2as/src/index.js"],
       "@sockethub/logger": ["./packages/logger/src/index.ts"],
       "@sockethub/platform-feeds": ["./packages/platform-feeds/src/index.ts"],
-      "@sockethub/platform-irc": ["./packages/platform-irc/index.js"],
-      "@sockethub/platform-xmpp": ["./packages/platform-xmpp/src/index.js"],
+      "@sockethub/platform-irc": ["./packages/platform-irc/src/index.ts"],
+      "@sockethub/platform-xmpp": ["./packages/platform-xmpp/src/index.ts"],
       "@sockethub/schemas": ["./packages/schemas/src/index.ts"],
       "@sockethub/schemas/object-types": [
         "./packages/schemas/src/object-types.ts"

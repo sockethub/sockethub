@@ -12,13 +12,12 @@
   "main": "dist/index.js",
   "exports": {
     ".": {
-      "bun": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     }
   },
   "files": [
-    "src/",
     "dist/"
   ],
   "engines": {
@@ -64,5 +63,6 @@
       "optional": true
     }
   },
-  "gitHead": "cc495a5fcf7ce19a8f328a34bbc8cd1439bb67ce"
+  "gitHead": "cc495a5fcf7ce19a8f328a34bbc8cd1439bb67ce",
+  "types": "./dist/index.d.ts"
 }

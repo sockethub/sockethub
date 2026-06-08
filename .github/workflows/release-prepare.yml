@@ -25,7 +25,6 @@ jobs:
   test-local-packages:
     uses: ./.github/workflows/test-npm-package.yml
     with:
-      source: local
       runtime: both
       suite: all
 

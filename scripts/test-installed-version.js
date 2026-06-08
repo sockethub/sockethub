@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 /**
- * Stand-alone test runner for npm-published Sockethub versions
+ * Stand-alone test runner for packaged Sockethub versions
  *
- * This script installs a specified version of Sockethub from npm and runs
- * integration tests against it using either Bun or Node.js runtime.
+ * This script installs a specified version of Sockethub from an npm registry
+ * and runs integration tests against it using either Bun or Node.js runtime.
  *
  * Usage:
  *   bun run scripts/test-installed-version.js <version> [options]
@@ -14,7 +14,7 @@
  * Options:
  *   --runtime <bun|node|both>  Runtime to test (default: "both")
  *   --suite <browser|all>  Test suite (default: "all")
- *   --local                Build and pack from source instead of installing from npm
+ *   --registry <url>       Registry to install from (default: package manager default)
  *   --skip-install         Skip npm install
  *   --skip-cleanup         Don't remove resources after test
  *   --install-dir <path>   Installation directory (default: "./test-install")
@@ -25,7 +25,6 @@ import { parseArgs } from "node:util";
 import { cleanup } from "./test-installed-version/cleanup.js";
 import { CONFIG } from "./test-installed-version/config.js";
 import { InstallManager } from "./test-installed-version/install.js";
-import { buildAndPackLocally } from "./test-installed-version/local-build.js";
 import { Logger } from "./test-installed-version/logger.js";
 import { TestRunner } from "./test-installed-version/runner.js";
 import { ServiceManager } from "./test-installed-version/services.js";
@@ -36,7 +35,7 @@ const { values, positionals } = parseArgs({
     options: {
         runtime: { type: "string", default: CONFIG.DEFAULT_RUNTIME },
         suite: { type: "string", default: CONFIG.DEFAULT_SUITE },
-        local: { type: "boolean", default: false },
+        registry: { type: "string" },
         "skip-install": { type: "boolean", default: false },
         "skip-cleanup": { type: "boolean", default: false },
         "install-dir": { type: "string", default: CONFIG.DEFAULT_INSTALL_DIR },
@@ -45,10 +44,10 @@ const { values, positionals } = parseArgs({
     allowPositionals: true,
 });
 
-// Validate version argument (not required for --local)
+// Validate version argument
 const version = positionals[0];
-if (!version && !values.local) {
-    console.error("Error: Version argument is required (unless using --local)");
+if (!version) {
+    console.error("Error: Version argument is required");
     console.error("");
     console.error(
         "Usage: bun run scripts/test-installed-version.js <version> [options]",
@@ -63,7 +62,7 @@ if (!version && !values.local) {
         "  bun run scripts/test-installed-version.js latest --suite browser",
     );
     console.error(
-        "  bun run scripts/test-installed-version.js --local --runtime bun",
+        "  bun run scripts/test-installed-version.js 5.0.0-alpha.12 --registry http://127.0.0.1:4873",
     );
     process.exit(1);
 }
@@ -101,7 +100,7 @@ async function runTestsForRuntime(
     isFirstRun,
     actualVersion,
     installSource,
-    localPackages = null,
+    registry = null,
 ) {
     console.log(`\n${"=".repeat(60)}`);
     console.log(`Testing with runtime: ${runtime.toUpperCase()}`);
@@ -119,27 +118,13 @@ async function runTestsForRuntime(
         if (!values["skip-install"] || isFirstRun) {
             installer = new InstallManager(values["install-dir"], logger);
 
-            if (values.local) {
-                // Install from local tarballs directory
-                await installer.install(
-                    installSource,
-                    runtime,
-                    true,
-                    localPackages,
-                );
-                const installedVersion =
-                    await installer.verifyVersion(actualVersion);
-                logger.version = installedVersion;
-            } else {
-                // Install from npm
-                await installer.install(installSource, runtime, false);
-                const installedVersion =
-                    await installer.verifyVersion(installSource);
+            await installer.install(installSource, runtime, registry);
+            const installedVersion =
+                await installer.verifyVersion(actualVersion);
 
-                // Update version in results if "latest" was used
-                if (installSource === "latest") {
-                    logger.version = installedVersion;
-                }
+            // Update version in results if a dist-tag was used.
+            if (installSource === "latest") {
+                logger.version = installedVersion;
             }
         } else {
             await logger.info("Skipping installation (--skip-install)");
@@ -202,32 +187,12 @@ async function main() {
     console.log("Sockethub NPM Version Test Runner");
     console.log("=".repeat(60));
 
-    // Build and pack locally if --local flag is set
-    let installSource;
-    let actualVersion = version;
-    /** @type {Record<string, string> | null} */
-    let localPackages = null;
+    const installSource = version;
+    const actualVersion = version;
 
-    if (values.local) {
-        console.log("Mode: Local (build and pack from source)");
-        const tempLogger = new Logger(values["output-dir"], "local", "build");
-        await tempLogger.init();
-
-        const {
-            version: builtVersion,
-            tarballPath,
-            packages,
-        } = await buildAndPackLocally(tempLogger);
-
-        actualVersion = builtVersion;
-        installSource = tarballPath;
-        localPackages = packages;
-
-        console.log(`Built version: ${actualVersion}`);
-        console.log(`Install from: ${tarballPath}`);
-    } else {
-        console.log(`Version: ${version}`);
-        installSource = version;
+    console.log(`Version: ${version}`);
+    if (values.registry) {
+        console.log(`Registry: ${values.registry}`);
     }
 
     console.log(`Runtime(s): ${values.runtime}`);
@@ -251,7 +216,7 @@ async function main() {
             isFirstRun,
             actualVersion,
             installSource,
-            localPackages,
+            values.registry,
         );
         allResults.push(result);
     }

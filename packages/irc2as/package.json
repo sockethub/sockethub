@@ -6,13 +6,12 @@
   "main": "dist/index.js",
   "exports": {
     ".": {
-      "bun": "./src/index.js",
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     }
   },
   "files": [
-    "src/",
     "dist/"
   ],
   "engines": {
@@ -48,5 +47,6 @@
   "devDependencies": {
     "@sockethub/schemas": "^3.0.0-alpha.12"
   },
-  "gitHead": "cc495a5fcf7ce19a8f328a34bbc8cd1439bb67ce"
+  "gitHead": "cc495a5fcf7ce19a8f328a34bbc8cd1439bb67ce",
+  "types": "./dist/index.d.ts"
 }
