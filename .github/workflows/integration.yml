@@ -11,6 +11,8 @@ jobs:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false
       - name: Use Bun latest
         uses: oven-sh/setup-bun@v2.0.1
         with:
@@ -34,6 +36,8 @@ jobs:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false
       - name: Use Bun latest
         uses: oven-sh/setup-bun@v2.0.1
         with:
@@ -72,6 +76,8 @@ jobs:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false
       - name: Use Bun latest
         uses: oven-sh/setup-bun@v2.0.1
         with:
@@ -209,6 +215,8 @@ jobs:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false
       - name: Use Bun latest
         uses: oven-sh/setup-bun@v2.0.1
         with:
