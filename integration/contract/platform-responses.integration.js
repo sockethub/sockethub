@@ -135,6 +135,7 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
 
     describe("metadata platform", () => {
         it("returns page object fields the examples metadata view expects", async () => {
+            const fixtureUrl = `${config.sockethub.url}/metadata-test.html`;
             const msg = await emitWithAck(
                 sc.socket,
                 "message",
@@ -143,7 +144,7 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
                     type: "fetch",
                     actor: {
                         type: "website",
-                        id: "https://sockethub.org",
+                        id: fixtureUrl,
                     },
                 },
                 { label: "metadata contract" },
@@ -155,9 +156,15 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
             expect(msg.actor).to.have.property("id").that.is.a("string");
             expect(msg.object).to.be.an("object");
             expect(msg.object).to.have.property("type", "page");
-            expect(msg.object).to.have.property("title");
-            expect(msg.object).to.have.property("url");
-            expect(msg.object).to.have.property("description");
+            expect(msg.object).to.have.property(
+                "title",
+                "Sockethub Metadata Test",
+            );
+            expect(msg.object).to.have.property("url", fixtureUrl);
+            expect(msg.object).to.have.property(
+                "description",
+                "Local metadata fixture for integration tests",
+            );
         });
     });
 });

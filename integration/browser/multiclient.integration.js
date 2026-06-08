@@ -430,6 +430,7 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                 () => newSockethubClient.socket.connected,
                 config.timeouts.connect,
             );
+            await newSockethubClient.ready();
 
             // Set WRONG credentials (same actor JID, different resource)
             await setXMPPCredentials(
