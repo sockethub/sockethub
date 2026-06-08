@@ -11,6 +11,8 @@ jobs:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false
       - name: Use Bun latest
         uses: oven-sh/setup-bun@v2.0.1
         with:
@@ -34,6 +36,8 @@ jobs:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false
       - name: Use Bun latest
         uses: oven-sh/setup-bun@v2.0.1
         with:
@@ -72,6 +76,8 @@ jobs:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false
       - name: Use Bun latest
         uses: oven-sh/setup-bun@v2.0.1
         with:
@@ -106,9 +112,6 @@ jobs:
 
       - name: Basic Browser Integration Tests
         run: XMPP_HOST=prosody bun run integration:browser:basic
-
-      - name: Platform Response Contract Tests
-        run: XMPP_HOST=prosody bun run integration:browser:contract
 
       - name: Sockethub Logs - Basic
         if: always()
@@ -204,3 +207,47 @@ jobs:
         if: always()
         continue-on-error: true
         run: docker logs --since "${{ env.START_TIME }}" sockethub-ergo-1
+
+  contract:
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: sudo chown -R $USER:$USER ${{ github.workspace }}
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+      - name: Use Bun latest
+        uses: oven-sh/setup-bun@v2.0.1
+        with:
+          bun-version: latest
+      - run: bun install
+      - run: bun run build
+
+      - run: docker compose build --build-arg bun_version=latest --build-arg LOG_LEVEL=debug
+
+      # Contract tests only exercise the feeds, dummy, and metadata platforms,
+      # which need Sockethub + Redis (sockethub depends_on redis) — no XMPP/IRC.
+      # Running in a dedicated job keeps a flaky XMPP/IRC delivery race in the
+      # browser job from blocking unrelated contract changes, and vice versa.
+      - run: docker compose up sockethub -d
+      - run: sleep 5
+
+      - name: Verify Sockethub is listening externally
+        run: nc -zv localhost 10550
+
+      - name: Verify Redis is listening
+        run: nc -zv localhost 6379
+
+      - name: Verify Sockethub serves client files
+        run: |
+          curl -f http://localhost:10550/socket.io.js > /dev/null
+          curl -f http://localhost:10550/sockethub-client.js > /dev/null
+
+      - name: Platform Response Contract Tests
+        run: bun run integration:browser:contract
+
+      - name: Sockethub Logs - Contract
+        if: always()
+        continue-on-error: true
+        run: docker logs sockethub-sockethub-1
