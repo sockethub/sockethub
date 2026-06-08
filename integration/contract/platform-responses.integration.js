@@ -135,7 +135,10 @@ describe(`Platform response contracts at ${config.sockethub.url}`, () => {
 
     describe("metadata platform", () => {
         it("returns page object fields the examples metadata view expects", async () => {
-            const fixtureUrl = `${config.sockethub.url}/metadata-test.html`;
+            const fixtureUrl = `${config.sockethub.url.replace(
+                "://localhost:",
+                "://127.0.0.1:",
+            )}/metadata-test.html`;
             const msg = await emitWithAck(
                 sc.socket,
                 "message",
