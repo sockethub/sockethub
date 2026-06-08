@@ -599,16 +599,12 @@ describe("XMPP", () => {
                         "query",
                         { xmlns: "http://jabber.org/protocol/disco#items" },
                     ]);
-                    expect(xmlFake.getCall(1).args).toEqual([
-                        "iq",
-                        {
-                            id: "muc_id",
-                            type: "get",
-                            from: "testingham@jabber.net",
-                            to: "partyroom@jabber.net",
-                        },
-                        undefined,
-                    ]);
+                    expect(xmlFake.getCall(1).args[0]).toEqual("iq");
+                    expect(xmlFake.getCall(1).args[1].type).toEqual("get");
+                    expect(xmlFake.getCall(1).args[1].from).toEqual("testingham@jabber.net");
+                    expect(xmlFake.getCall(1).args[1].to).toEqual("partyroom@jabber.net");
+                    expect(xmlFake.getCall(1).args[1].id).toMatch(/^attendance_/);
+                    expect(xmlFake.getCall(1).args[2]).toBeUndefined();
                     done();
                 });
             });

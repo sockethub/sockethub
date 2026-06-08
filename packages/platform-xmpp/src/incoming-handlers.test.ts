@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import sinon from "sinon";
 
 import * as schemas from "@sockethub/schemas";
+import type { XmppClientInstance, XmppElement } from "@xmpp/client";
 import parse from "@xmpp/xml/lib/parse.js";
 
 import { IncomingHandlers } from "./incoming-handlers.js";
 import { stanzas } from "./incoming-handlers.test.data.js";
+import XMPP from "./index.js";
 import { PlatformSchema } from "./schema.js";
 import type { XmppHandlerSession } from "./types.js";
 
@@ -39,7 +41,14 @@ describe("Incoming handlers", () => {
 
         stanzas.forEach(([name, stanza, asobject]) => {
             test(name, () => {
-                const xmlObj = parse(stanza);
+                const xmlObj = parse(
+                    name === "attendance"
+                        ? stanza.replace(
+                            'id="muc_id"',
+                            'id="attendance_00000000-0000-4000-8000-000000000000"',
+                        )
+                        : stanza,
+                );
                 ih.stanza(xmlObj);
                 sinon.assert.calledWith(sendToClient, asobject);
             });
@@ -85,9 +94,9 @@ describe("Incoming handlers", () => {
             expect(arg.actor.id).toEqual("noroom@conference.example.org");
         });
 
-        test("routes IQ result with non-room_info ID prefix to attendance", () => {
+        test("routes IQ result with attendance ID prefix to attendance", () => {
             const stanza = parse(
-                `<iq from='room@conference.example.org' to='user@example.org' type='result' id='muc_id'>
+                `<iq from='room@conference.example.org' to='user@example.org' type='result' id='attendance_999'>
                   <query xmlns='http://jabber.org/protocol/disco#info'>
                     <identity category='conference' type='text' name='Test'/>
                     <feature var='http://jabber.org/protocol/muc'/>
@@ -99,6 +108,31 @@ describe("Incoming handlers", () => {
             const arg = sendToClient.getCall(0).args[0];
             expect(arg.type).toEqual("query");
             expect(arg.object.type).toEqual("attendance");
+        });
+
+        test("does not route old or unrelated IQ IDs to attendance", () => {
+            const oldIdStanza = parse(
+                `<iq from='room@conference.example.org' to='user@example.org' type='result' id='muc_id'>
+                  <query xmlns='http://jabber.org/protocol/disco#items'>
+                    <item jid='room@conference.example.org/nick' name='nick'/>
+                  </query>
+                </iq>`,
+            );
+            const unrelatedIdStanza = parse(
+                `<iq from='room@conference.example.org' to='user@example.org' type='result' id='room_members_1'>
+                  <query xmlns='http://jabber.org/protocol/disco#items'>
+                    <item jid='room@conference.example.org/nick' name='nick'/>
+                  </query>
+                </iq>`,
+            );
+
+            ih.stanza(oldIdStanza);
+            ih.stanza(unrelatedIdStanza);
+
+            sinon.assert.calledTwice(sendToClient);
+            for (const call of sendToClient.getCalls()) {
+                expect(call.args[0].object?.type).not.toEqual("attendance");
+            }
         });
 
         test("sends error response for disco#info result with wrong xmlns", () => {
@@ -147,6 +181,100 @@ describe("Incoming handlers", () => {
                 label: "Flat Key",
                 value: "flat_val",
             });
+        });
+    });
+
+    describe("Attendance query IDs", () => {
+        test("uses distinct attendance IDs and routes matching responses", async () => {
+            const send = sinon.fake.resolves();
+            const xmlFake = sinon.fake(
+                (
+                    name: string,
+                    attrs?: Record<string, string | undefined>,
+                    ...children: XmppElement[]
+                ) => ({ name, attrs, children }) as unknown as XmppElement,
+            );
+
+            class TestXMPP extends XMPP {
+                protected createXml(): void {
+                    this.__xml = xmlFake as unknown as typeof this.__xml;
+                }
+            }
+
+            const xp = new TestXMPP({
+                id: "user@example.org",
+                log: { debug: sinon.fake(), error: sinon.fake(), warn: sinon.fake(), info: sinon.fake() },
+                sendToClient: sinon.fake(),
+                updateActor: sinon.fake.resolves(),
+            });
+            xp.__client = {
+                send,
+            } as unknown as XmppClientInstance;
+
+            const job = {
+                actor: {
+                    id: "user@example.org",
+                    type: "person",
+                },
+                target: {
+                    id: "room@conference.example.org",
+                    type: "room",
+                },
+                object: {
+                    type: "attendance",
+                },
+            };
+
+            await new Promise<void>((resolve, reject) => {
+                xp.query(job as never, (err) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    resolve();
+                });
+            });
+            await new Promise<void>((resolve, reject) => {
+                xp.query(job as never, (err) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    resolve();
+                });
+            });
+
+            const firstId = send.getCall(0).args[0].attrs.id;
+            const secondId = send.getCall(1).args[0].attrs.id;
+
+            expect(firstId).toMatch(/^attendance_/);
+            expect(secondId).toMatch(/^attendance_/);
+            expect(firstId).not.toEqual(secondId);
+
+            const sendToClient = sinon.fake();
+            const ih = new IncomingHandlers(makeSession({ sendToClient }));
+            ih.stanza(
+                parse(
+                    `<iq from='room@conference.example.org' to='user@example.org' type='result' id='${firstId}'>
+                      <query xmlns='http://jabber.org/protocol/disco#items'>
+                        <item jid='room@conference.example.org/one' name='one'/>
+                      </query>
+                    </iq>`,
+                ),
+            );
+            ih.stanza(
+                parse(
+                    `<iq from='room@conference.example.org' to='user@example.org' type='result' id='${secondId}'>
+                      <query xmlns='http://jabber.org/protocol/disco#items'>
+                        <item jid='room@conference.example.org/two' name='two'/>
+                      </query>
+                    </iq>`,
+                ),
+            );
+
+            sinon.assert.calledTwice(sendToClient);
+            expect(sendToClient.getCall(0).args[0].object.members).toEqual(["one"]);
+            expect(sendToClient.getCall(1).args[0].object.members).toEqual(["two"]);
         });
     });
 
