@@ -6,7 +6,7 @@ import { createLogger } from "@sockethub/logger";
 import bodyParser from "body-parser";
 import express, { type Express, type Request, type Response } from "express";
 import rateLimit from "express-rate-limit";
-import { Server } from "socket.io";
+import { Server, type Socket } from "socket.io";
 import config from "./config.js";
 import routes from "./routes.js";
 
@@ -153,23 +153,21 @@ class Listener {
 
 const listener = new Listener();
 
-type EmitFunction = (type: string, data: unknown) => void;
-
-export interface SocketInstance {
-    id: string;
-    emit: EmitFunction;
-}
-
-export async function getSocket(sessionId: string): Promise<SocketInstance> {
-    const sockets: Array<SocketInstance> = await listener.io.fetchSockets();
-    return new Promise((resolve, reject) => {
-        for (const socket of sockets) {
-            if (sessionId === socket.id) {
-                return resolve(socket);
-            }
-        }
-        return reject(`unable to find socket for sessionId ${sessionId}`);
-    });
+/**
+ * Look up a currently-connected socket by its session id (== socket.id).
+ *
+ * Returns `undefined` when no socket with that id is connected — e.g. the
+ * client has disconnected and its session is in the janitor grace window
+ * awaiting a possible reconnect. Callers treat that as "nothing to deliver to
+ * right now", not an error.
+ *
+ * This is an O(1) lookup against socket.io's local namespace map. Sockethub
+ * runs a single socket.io server (no redis adapter), and a platform instance
+ * only ever delivers to sockets connected to its own server, so the local map
+ * is the authoritative source.
+ */
+export function getSocket(sessionId: string): Socket | undefined {
+    return listener.io.sockets.sockets.get(sessionId);
 }
 
 export default listener;

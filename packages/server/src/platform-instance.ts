@@ -14,7 +14,6 @@ import {
     buildCanonicalContext,
     INTERNAL_PLATFORM_CONTEXT_URL,
 } from "@sockethub/schemas";
-import type { Socket } from "socket.io";
 import config from "./config.js";
 import { getSocket } from "./listener.js";
 import { __dirname } from "./util.js";
@@ -241,22 +240,30 @@ export default class PlatformInstance {
      * @param sessionId ID of the socket connection to send the message to
      * @param msg ActivityStream object to send to client
      */
-    public async sendToClient(sessionId: string, msg: InternalActivityStream) {
-        return this.getSocket(sessionId).then(
-            (socket: Socket) => {
-                this.toExternalPayload(msg);
-                if (
-                    msg.type === "error" &&
-                    typeof msg.actor === "undefined" &&
-                    this.actor
-                ) {
-                    // ensure an actor is present if not otherwise defined
-                    msg.actor = { id: this.actor, type: "unknown" };
-                }
-                socket.emit("message", msg as ActivityStream);
-            },
-            (err) => this.log.error(`sendToClient ${String(err)}`),
-        );
+    public sendToClient(sessionId: string, msg: InternalActivityStream) {
+        const socket = this.getSocket(sessionId);
+        if (!socket) {
+            // No socket is currently connected for this session — e.g. the
+            // client is mid page-refresh and its session is in the janitor
+            // grace window awaiting reconnect. There is simply nothing to
+            // deliver to right now, so skip quietly. The session reference is
+            // retained for reconnect (the janitor owns its lifecycle); on
+            // reconnect the client re-registers and delivery resumes.
+            this.log.debug(
+                `skipping delivery to ${sessionId}: socket not connected`,
+            );
+            return;
+        }
+        this.toExternalPayload(msg);
+        if (
+            msg.type === "error" &&
+            typeof msg.actor === "undefined" &&
+            this.actor
+        ) {
+            // ensure an actor is present if not otherwise defined
+            msg.actor = { id: this.actor, type: "unknown" };
+        }
+        socket.emit("message", msg as ActivityStream);
     }
 
     // send message to every connected socket associated with this platform instance.
@@ -318,7 +325,7 @@ export default class PlatformInstance {
             callback(payload);
             this.completedJobHandlers.delete(job.title);
         } else {
-            await this.sendToClient(job.sessionId, payload);
+            this.sendToClient(job.sessionId, payload);
         }
 
         if (payload) {
@@ -375,7 +382,7 @@ export default class PlatformInstance {
         // Only attempt to send to client if we have a valid session
         try {
             if (sessionId && this.sessions.has(sessionId)) {
-                await this.sendToClient(sessionId, errorObject);
+                this.sendToClient(sessionId, errorObject);
             }
         } catch (err) {
             this.log.error(
@@ -456,7 +463,7 @@ export default class PlatformInstance {
                     return;
                 } else {
                     // treat like a message to clients
-                    await this.sendToClient(sessionId, second);
+                    this.sendToClient(sessionId, second);
                 }
             },
         };

@@ -17,7 +17,9 @@ describe("PlatformInstance", () => {
         socketMock = {
             emit: sandbox.spy(),
         };
-        getSocketFake = sinon.fake.resolves(socketMock);
+        // getSocket is a synchronous lookup that returns the socket or
+        // undefined when no socket is connected for the session.
+        getSocketFake = sinon.fake.returns(socketMock);
         forkFake = sandbox.fake();
     });
 
@@ -215,6 +217,38 @@ describe("PlatformInstance", () => {
             await pi.broadcastToSharedPeers("myself", { foo: "bar" });
             expect(getSocketFake.callCount).toEqual(2);
             sandbox.assert.calledWith(getSocketFake, "other peer");
+        });
+
+        it("skips delivery (no emit, no error) when the socket is not connected", () => {
+            // Simulate a disconnected session in the janitor grace window.
+            getSocketFake = sinon.fake.returns(undefined);
+            pi.getSocket = getSocketFake;
+            const errorSpy = sandbox.spy(pi.log, "error");
+
+            pi.sendToClient("disconnected session", {
+                foo: "this should not be delivered",
+            });
+
+            sandbox.assert.calledOnce(getSocketFake);
+            sandbox.assert.notCalled(socketMock.emit);
+            sandbox.assert.notCalled(errorSpy);
+        });
+
+        it("broadcastToSharedPeers delivers only to connected peers", async () => {
+            // "live peer" is connected; "stale peer" is not (returns undefined).
+            const liveSocket = { emit: sandbox.spy() };
+            getSocketFake = sinon.fake((id) =>
+                id === "live peer" ? liveSocket : undefined,
+            );
+            pi.getSocket = getSocketFake;
+            const errorSpy = sandbox.spy(pi.log, "error");
+
+            pi.sessions.add("live peer");
+            pi.sessions.add("stale peer");
+            await pi.broadcastToSharedPeers("myself", { foo: "bar" });
+
+            sandbox.assert.calledOnce(liveSocket.emit);
+            sandbox.assert.notCalled(errorSpy);
         });
 
         describe("handleJobResult", () => {

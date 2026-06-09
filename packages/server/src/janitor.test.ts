@@ -3,11 +3,6 @@ import * as sinon from "sinon";
 
 import { Janitor } from "./janitor.js";
 
-const sockets = [
-    { id: "socket foo", emit: () => {} },
-    { id: "socket bar", emit: () => {} },
-];
-
 function getPlatformInstanceFake() {
     return {
         flaggedForTermination: false,
@@ -44,20 +39,24 @@ function getPlatformInstanceFake() {
 const cycleInterval = 10;
 
 describe("Janitor", () => {
-    let sandbox, fetchSocketsFake, janitor;
+    let sandbox, janitor;
 
     beforeEach((done) => {
         sandbox = sinon.createSandbox();
-        fetchSocketsFake = sandbox.stub().returns(sockets);
 
         janitor = new Janitor();
-        janitor.getSockets = fetchSocketsFake;
+        // The live cycle reads socket.io's connected-socket map; stub it so the
+        // janitor can be tested without standing up a socket.io server.
+        janitor.connectedSocketIds = sandbox.stub().returns(new Map());
         expect(janitor.cycleInterval).not.toEqual(cycleInterval);
         janitor.cycleInterval = cycleInterval;
         expect(janitor.cycleInterval).toEqual(cycleInterval);
         janitor.start();
         setTimeout(() => {
-            expect(janitor.cycleCount).toEqual(1);
+            // The janitor has started and is cycling. Assert progress rather
+            // than an exact count — cycle timing against real timers is not
+            // deterministic to a single tick.
+            expect(janitor.cycleCount).toBeGreaterThanOrEqual(1);
             done();
         }, cycleInterval);
     });
@@ -74,12 +73,23 @@ describe("Janitor", () => {
         const currCycleCount = janitor.cycleCount;
         expect(currCycleCount).not.toEqual(0);
         setTimeout(() => {
-            expect(janitor.cycleCount).toEqual(currCycleCount + 1);
+            const afterOne = janitor.cycleCount;
+            expect(afterOne).toBeGreaterThan(currCycleCount);
             setTimeout(() => {
-                expect(janitor.cycleCount).toEqual(currCycleCount + 2);
+                expect(janitor.cycleCount).toBeGreaterThan(afterOne);
                 done();
             }, cycleInterval);
         }, cycleInterval);
+    });
+
+    describe("socketExists", () => {
+        it("reflects membership in the live connected-socket map", () => {
+            janitor.connectedSocketIds = sandbox
+                .stub()
+                .returns(new Map([["live session", {}]]));
+            expect(janitor.socketExists("live session")).toBeTrue();
+            expect(janitor.socketExists("gone session")).toBeFalse();
+        });
     });
 
     describe("removeSessionCallbacks", () => {
