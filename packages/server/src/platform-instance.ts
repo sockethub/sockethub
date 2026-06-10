@@ -259,12 +259,14 @@ export default class PlatformInstance {
             // (an id-bearing, valid actor).
             msg.actor = { id: this.actor ?? this.name, type: "service" };
         }
-        // Validate outbound protocol responses against the platform's
-        // `responses` schema and drop malformed messages (#1120). `error`
-        // envelopes are a generic cross-cutting shape (not a platform protocol
-        // response) and are exempt; platforms without a `responses` schema are
-        // a no-op (validateActivityStreamResponse returns "").
-        if (msg.type !== "error") {
+        // Validate successful protocol responses against the platform's
+        // `responses` schema and drop malformed messages (#1120). Error and
+        // failure notifications are exempt: a `type: "error"` envelope, or any
+        // message carrying an `error` field (e.g. a failed job echoes the
+        // original request plus `error`), is a generic cross-cutting shape, not
+        // a protocol response. Platforms without a `responses` schema are a
+        // no-op (validateActivityStreamResponse returns "").
+        if (msg.type !== "error" && typeof msg.error === "undefined") {
             const responseError = validateActivityStreamResponse(
                 msg as ActivityStream,
             );

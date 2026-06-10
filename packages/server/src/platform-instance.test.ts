@@ -311,6 +311,33 @@ describe("PlatformInstance", () => {
             });
         });
 
+        test("exempts failure notifications (request echo + error) from validation", () => {
+            pi.contextUrl = RESPONSES_CTX;
+            const errorSpy = sandbox.spy(pi.log, "error");
+            // A failed job echoes the original request (an inbound type, not in
+            // the responses enum) plus an `error` field; it must still deliver.
+            pi.sendToClient("my session id", {
+                type: "fetch", // inbound type, not a respplat response type
+                actor: { id: "a@b", type: "feed" },
+                error: "job failed",
+            });
+            sandbox.assert.notCalled(errorSpy);
+            sandbox.assert.calledOnce(socketMock.emit);
+        });
+
+        test("reportError emits a valid service actor for a global platform", async () => {
+            pi.sessions.add("my session id");
+            await pi.reportError("my session id", "boom");
+            sandbox.assert.calledOnce(socketMock.emit);
+            const emitted = socketMock.emit.firstCall.args[1];
+            expect(emitted.type).toEqual("error");
+            expect(emitted.actor).toEqual({
+                id: "a platform name",
+                type: "service",
+            });
+            expect(emitted.error).toEqual("boom");
+        });
+
         describe("handleJobResult", () => {
             beforeEach(() => {
                 pi.sendToClient = sandbox.fake();
