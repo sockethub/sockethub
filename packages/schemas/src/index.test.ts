@@ -42,15 +42,13 @@ const objectAwareMessageSchema = {
     definitions: { type: ObjectTypesSchema },
 };
 
-addPlatformSchema(objectAwareMessageSchema, "irc/messages");
+// `dood` is a fake test platform (not a real package), used to exercise
+// per-platform object validation without colliding with real platforms'
+// registrations in the shared schema singleton during the combined test run.
 addPlatformSchema(objectAwareMessageSchema, "dood/messages");
 addPlatformSchema(
     testPlatformSchemaData.credentials,
     "test-platform/credentials",
-);
-addPlatformContext(
-    "irc",
-    "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
 );
 addPlatformContext(
     "dood",
