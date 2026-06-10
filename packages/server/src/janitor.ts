@@ -1,6 +1,6 @@
 import { getRedisConnectionCount } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
-import listener, { type SocketInstance } from "./listener.js";
+import listener from "./listener.js";
 import type PlatformInstance from "./platform-instance.js";
 import { platformInstances } from "./platform-instance.js";
 
@@ -12,7 +12,6 @@ export class Janitor {
     cycleCount = 0; // a counter for each cycleInterval
     reportCount = 0; // number of times a report is printed
     protected stopTriggered = false;
-    protected sockets: Array<SocketInstance>;
     private cycleRunning = false;
 
     /**
@@ -94,21 +93,17 @@ export class Janitor {
         }
     }
 
-    private socketExists(sessionId: string) {
-        for (const socket of this.sockets) {
-            if (socket.id === sessionId) {
-                return true;
-            }
-        }
-        return false;
+    private socketExists(sessionId: string): boolean {
+        return this.connectedSocketIds().has(sessionId);
     }
 
     private async delay(ms: number): Promise<void> {
         return await new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    private async getSockets(): Promise<Array<SocketInstance>> {
-        return listener.io.fetchSockets();
+    /** Live, O(1) map of connected socket ids (socket.io's namespace map). */
+    private connectedSocketIds(): ReadonlyMap<string, unknown> {
+        return listener.io.sockets.sockets;
     }
 
     private async performStaleCheck(platformInstance: PlatformInstance) {
@@ -139,13 +134,12 @@ export class Janitor {
         }
         this.cycleRunning = true;
         this.cycleCount++;
-        this.sockets = await this.getSockets();
 
         if (!(this.cycleCount % REPORT_CYCLE_MOD)) {
             this.reportCount++;
             const redisConnections = await getRedisConnectionCount();
             rmLog.info(
-                `socket sessions: ${this.sockets.length} platform instances: ${platformInstances.size} redis connections: ${redisConnections}`,
+                `socket sessions: ${this.connectedSocketIds().size} platform instances: ${platformInstances.size} redis connections: ${redisConnections}`,
             );
         }
 
