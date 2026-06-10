@@ -13,6 +13,7 @@ import {
     getPlatformSchema,
     validateActivityObject,
     validateActivityStream,
+    validateActivityStreamResponse,
     validateCredentials,
     validatePlatformSchema,
 } from "./validator";
@@ -44,6 +45,17 @@ addPlatformContext(
     "test-platform",
     "https://sockethub.org/ns/context/platform/test-platform/v1.jsonld",
 );
+// A platform with an outbound `responses` schema (only allows type "collection").
+addPlatformSchema(
+    { required: ["type"], properties: { type: { enum: ["collection"] } } },
+    "respplat/responses",
+);
+addPlatformContext(
+    "respplat",
+    "https://sockethub.org/ns/context/platform/respplat/v1.jsonld",
+);
+const RESP_CTX = "https://sockethub.org/ns/context/platform/respplat/v1.jsonld";
+const NO_RESP_CTX = "https://sockethub.org/ns/context/platform/dood/v1.jsonld";
 
 describe("schemas/src/index.ts", () => {
     describe("Platform schema validation", () => {
@@ -132,5 +144,43 @@ describe("schemas/src/index.ts", () => {
                 });
             },
         );
+    });
+
+    describe("validateActivityStreamResponse", () => {
+        test("is a no-op (passes) when the platform has no responses schema", () => {
+            const msg = {
+                "@context": [NO_RESP_CTX],
+                type: "anything",
+                actor: { id: "a@b", type: "person" },
+            } as unknown as ActivityStream;
+            expect(validateActivityStreamResponse(msg)).toEqual("");
+        });
+
+        test("is a no-op when no registered platform context is present", () => {
+            const msg = {
+                "@context": ["https://example.com/unregistered"],
+                type: "collection",
+                actor: { id: "a@b", type: "person" },
+            } as unknown as ActivityStream;
+            expect(validateActivityStreamResponse(msg)).toEqual("");
+        });
+
+        test("passes a response matching the platform's responses schema", () => {
+            const msg = {
+                "@context": [RESP_CTX],
+                type: "collection",
+                actor: { id: "a@b", type: "feed" },
+            } as unknown as ActivityStream;
+            expect(validateActivityStreamResponse(msg)).toEqual("");
+        });
+
+        test("fails a response that violates the platform's responses schema", () => {
+            const msg = {
+                "@context": [RESP_CTX],
+                type: "page",
+                actor: { id: "a@b", type: "feed" },
+            } as unknown as ActivityStream;
+            expect(validateActivityStreamResponse(msg)).not.toEqual("");
+        });
     });
 });

@@ -139,6 +139,8 @@ export interface PlatformSchemaStruct {
             };
         };
     };
+    // Outbound (platform → client) response schema. Validated on send.
+    responses?: object;
 }
 
 export interface PlatformConstructor {

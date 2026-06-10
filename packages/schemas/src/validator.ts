@@ -135,6 +135,27 @@ export function validateActivityStream(msg: ActivityStream): string {
     return handleValidation(schemaId, msg);
 }
 
+/**
+ * Validate an outbound platform response against that platform's `responses`
+ * schema. Returns "" when the platform has no responses schema registered (yet),
+ * so outbound validation can be adopted platform-by-platform.
+ */
+export function validateActivityStreamResponse(msg: ActivityStream): string {
+    const platformContextUrl = resolvePlatformContextUrl(msg);
+    if (!platformContextUrl) {
+        return "";
+    }
+    const platformId = getPlatformIdByContextUrl(platformContextUrl);
+    if (!platformId) {
+        return "";
+    }
+    const responsesSchemaId = `${schemaURL}/context/${platformId}/responses`;
+    if (!ajv.getSchema(responsesSchemaId)) {
+        return "";
+    }
+    return handleValidation(responsesSchemaId, msg);
+}
+
 export function validateCredentials(msg: ActivityStream): string {
     if (!Array.isArray(msg["@context"])) {
         return "credential activity streams must have an @context set";

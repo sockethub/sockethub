@@ -27,6 +27,7 @@ import {
     setValidationErrorOptions,
     validateActivityObject,
     validateActivityStream,
+    validateActivityStreamResponse,
     validateCredentials,
     validatePlatformSchema,
 } from "./validator.js";
@@ -58,6 +59,7 @@ export {
     validatePlatformSchema,
     validateCredentials,
     validateActivityStream,
+    validateActivityStreamResponse,
     validateActivityObject,
     setValidationErrorOptions,
     PlatformSchema,

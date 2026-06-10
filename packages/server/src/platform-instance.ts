@@ -13,6 +13,7 @@ import type {
 import {
     buildCanonicalContext,
     INTERNAL_PLATFORM_CONTEXT_URL,
+    validateActivityStreamResponse,
 } from "@sockethub/schemas";
 import config from "./config.js";
 import { getSocket } from "./listener.js";
@@ -259,6 +260,18 @@ export default class PlatformInstance {
         ) {
             // ensure an actor is present if not otherwise defined
             msg.actor = { id: this.actor, type: "unknown" };
+        }
+        // Warn-only outbound validation (see #1120): no-op until a platform
+        // registers a `responses` schema. Once it does, mismatches are logged
+        // (not dropped) so we can converge schemas against real traffic before
+        // enforcing.
+        const responseError = validateActivityStreamResponse(
+            msg as ActivityStream,
+        );
+        if (responseError) {
+            this.log.warn(
+                `outbound message does not match ${this.name} responses schema [${sessionId}]: ${responseError}`,
+            );
         }
         socket.emit("message", msg as ActivityStream);
     }
