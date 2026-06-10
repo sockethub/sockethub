@@ -1,9 +1,21 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as sinon from "sinon";
 import {
+    addPlatformContext,
+    addPlatformSchema,
     buildCanonicalContext,
     INTERNAL_PLATFORM_CONTEXT_URL,
 } from "@sockethub/schemas";
+
+// A platform context with an outbound `responses` schema (only allows
+// type "collection"), used to exercise warn-only outbound validation.
+const RESPONSES_CTX =
+    "https://sockethub.org/ns/context/platform/respplat/v1.jsonld";
+addPlatformSchema(
+    { required: ["type"], properties: { type: { enum: ["collection"] } } },
+    "respplat/responses",
+);
+addPlatformContext("respplat", RESPONSES_CTX);
 import { __dirname } from "./util.js";
 const FORK_PATH = __dirname + "/platform.js";
 
@@ -250,6 +262,28 @@ describe("PlatformInstance", () => {
 
             sandbox.assert.calledOnce(liveSocket.emit);
             sandbox.assert.notCalled(errorSpy);
+        });
+
+        test("warns (but still delivers) when an outbound message violates the responses schema", () => {
+            pi.contextUrl = RESPONSES_CTX;
+            const warnSpy = sandbox.spy(pi.log, "warn");
+            pi.sendToClient("my session id", {
+                type: "page", // not allowed by respplat responses schema
+                actor: { id: "a@b", type: "feed" },
+            });
+            sandbox.assert.calledOnce(warnSpy);
+            sandbox.assert.calledOnce(socketMock.emit); // warn-only: still delivered
+        });
+
+        test("does not warn when an outbound message matches the responses schema", () => {
+            pi.contextUrl = RESPONSES_CTX;
+            const warnSpy = sandbox.spy(pi.log, "warn");
+            pi.sendToClient("my session id", {
+                type: "collection",
+                actor: { id: "a@b", type: "feed" },
+            });
+            sandbox.assert.notCalled(warnSpy);
+            sandbox.assert.calledOnce(socketMock.emit);
         });
 
         describe("handleJobResult", () => {

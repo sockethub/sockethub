@@ -43,6 +43,7 @@ export type PlatformSchemaRegistry = {
     schemaVersion: string;
     credentials?: Schema | boolean;
     messages?: Schema | boolean;
+    responses?: Schema | boolean;
 };
 
 const dummySession: PlatformSession = {
@@ -169,6 +170,8 @@ export default async function loadPlatforms(
                 schemaVersion: p.schema.schemaVersion,
                 credentials: p.schema.credentials || {},
                 messages: p.schema.messages || {},
+                // Server-side only (not sent to clients): outbound validation.
+                responses: p.schema.responses,
             },
             version: p.schema.version,
             contextUrl: p.schema.contextUrl,
