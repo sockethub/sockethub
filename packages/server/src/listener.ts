@@ -154,17 +154,10 @@ class Listener {
 const listener = new Listener();
 
 /**
- * Look up a currently-connected socket by its session id (== socket.id).
- *
- * Returns `undefined` when no socket with that id is connected — e.g. the
- * client has disconnected and its session is in the janitor grace window
- * awaiting a possible reconnect. Callers treat that as "nothing to deliver to
- * right now", not an error.
- *
- * This is an O(1) lookup against socket.io's local namespace map. Sockethub
- * runs a single socket.io server (no redis adapter), and a platform instance
- * only ever delivers to sockets connected to its own server, so the local map
- * is the authoritative source.
+ * O(1) lookup of a connected socket by session id (== socket.id). Returns
+ * `undefined` when no such socket is connected (e.g. disconnected, awaiting
+ * reconnect). Single socket.io server, no adapter, so the local map is
+ * authoritative.
  */
 export function getSocket(sessionId: string): Socket | undefined {
     return listener.io.sockets.sockets.get(sessionId);

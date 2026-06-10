@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as sinon from "sinon";
 
 import { Janitor } from "./janitor.js";
@@ -69,7 +69,7 @@ describe("Janitor", () => {
         }, janitor.cycleInterval * 2);
     });
 
-    it("runs cycle at every cycleInterval", (done) => {
+    test("runs cycle at every cycleInterval", (done) => {
         const currCycleCount = janitor.cycleCount;
         expect(currCycleCount).not.toEqual(0);
         setTimeout(() => {
@@ -83,7 +83,7 @@ describe("Janitor", () => {
     });
 
     describe("socketExists", () => {
-        it("reflects membership in the live connected-socket map", () => {
+        test("reflects membership in the live connected-socket map", () => {
             janitor.connectedSocketIds = sandbox
                 .stub()
                 .returns(new Map([["live session", {}]]));
@@ -93,7 +93,7 @@ describe("Janitor", () => {
     });
 
     describe("removeSessionCallbacks", () => {
-        it("removes session listeners and callbacks for a given platform", () => {
+        test("removes session listeners and callbacks for a given platform", () => {
             const pi = getPlatformInstanceFake();
             const barMessage = pi.sessionCallbacks.message.get("session bar");
             const barClose = pi.sessionCallbacks.close.get("session bar");
@@ -116,7 +116,7 @@ describe("Janitor", () => {
     });
 
     describe("removeStaleSocketSessions", () => {
-        it("doesnt do anything if the socket is active and stop is not flagged", async () => {
+        test("doesnt do anything if the socket is active and stop is not flagged", async () => {
             const pi = getPlatformInstanceFake();
             janitor.removeSessionCallbacks = sinon.stub();
             janitor.socketExists = sinon.stub().returns(true);
@@ -125,7 +125,7 @@ describe("Janitor", () => {
             sinon.assert.notCalled(janitor.removeSessionCallbacks);
         });
 
-        it("removes session if the socket is active and stop is flagged", async () => {
+        test("removes session if the socket is active and stop is flagged", async () => {
             const pi = getPlatformInstanceFake();
             janitor.removeSessionCallbacks = sinon.stub();
             janitor.socketExists = sinon.stub().returns(true);
@@ -145,7 +145,7 @@ describe("Janitor", () => {
             );
         });
 
-        it("removes session if the socket is inactive", async () => {
+        test("removes session if the socket is inactive", async () => {
             const pi = getPlatformInstanceFake();
             janitor.removeSessionCallbacks = sinon.stub();
             janitor.socketExists = sinon
@@ -166,7 +166,7 @@ describe("Janitor", () => {
     });
 
     describe("performStaleCheck", () => {
-        it("removes flagged and uninitialized platform instances", async () => {
+        test("removes flagged and uninitialized platform instances", async () => {
             const pi = getPlatformInstanceFake();
             pi.flaggedForTermination = true;
             pi.isInitialized.returns(false);
@@ -178,7 +178,7 @@ describe("Janitor", () => {
             expect(pi.flaggedForTermination).toBeTrue();
         });
 
-        it("flags for termination when there are not sockets", async () => {
+        test("flags for termination when there are not sockets", async () => {
             const pi = getPlatformInstanceFake();
             pi.sessions = new Set();
             pi.flaggedForTermination = false;
@@ -192,7 +192,7 @@ describe("Janitor", () => {
     });
 
     describe("removeStalePlatformInstance", () => {
-        it("flags stale platform", async () => {
+        test("flags stale platform", async () => {
             const pi = getPlatformInstanceFake();
             expect(pi.flaggedForTermination).toBeFalse();
             await janitor.removeStalePlatformInstance(pi);
@@ -200,7 +200,7 @@ describe("Janitor", () => {
             expect(pi.flaggedForTermination).toBeTrue();
         });
 
-        it("removes flagged stale platform", async () => {
+        test("removes flagged stale platform", async () => {
             const pi = getPlatformInstanceFake();
             pi.flaggedForTermination = true;
             await janitor.removeStalePlatformInstance(pi);
@@ -208,7 +208,7 @@ describe("Janitor", () => {
         });
     });
 
-    it("closes all connections when stop() is called", (done) => {
+    test("closes all connections when stop() is called", (done) => {
         const prevCycle = janitor.cycleCount;
         janitor.stop();
         setTimeout(() => {

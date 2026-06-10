@@ -101,11 +101,7 @@ export class Janitor {
         return await new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    /**
-     * Live map of currently-connected socket ids, owned by socket.io. This is
-     * the authoritative, O(1) source for whether a session still has a socket
-     * (no per-cycle materialization of the full socket list).
-     */
+    /** Live, O(1) map of connected socket ids (socket.io's namespace map). */
     private connectedSocketIds(): ReadonlyMap<string, unknown> {
         return listener.io.sockets.sockets;
     }

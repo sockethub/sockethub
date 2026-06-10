@@ -243,12 +243,9 @@ export default class PlatformInstance {
     public sendToClient(sessionId: string, msg: InternalActivityStream) {
         const socket = this.getSocket(sessionId);
         if (!socket) {
-            // No socket is currently connected for this session — e.g. the
-            // client is mid page-refresh and its session is in the janitor
-            // grace window awaiting reconnect. There is simply nothing to
-            // deliver to right now, so skip quietly. The session reference is
-            // retained for reconnect (the janitor owns its lifecycle); on
-            // reconnect the client re-registers and delivery resumes.
+            // Socket not connected (e.g. mid page-refresh, within the janitor
+            // grace window). Nothing to deliver to right now; skip quietly. The
+            // session/reconnect lifecycle is the janitor's job.
             this.log.debug(
                 `skipping delivery to ${sessionId}: socket not connected`,
             );
