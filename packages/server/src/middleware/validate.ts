@@ -45,27 +45,16 @@ export default function validate(
     };
 
     let initObj = passedInitObj;
-    if (!passedInitObj) {
-        getInitObject().then((init) => {
-            initObj = init;
-        });
-    }
 
     const sessionLog = createLogger(
         `server:middleware:validate:${sockethubId}`,
     );
-    return (
+
+    const runValidation = (
+        ready: IInitObject,
         stream: ActivityStream,
         done: MiddlewareChainInterface<ActivityStream>,
     ) => {
-        sessionLog.debug(`applying schema validation for ${type}`);
-        if (!initObj) {
-            return done(
-                new Error(
-                    "Sockethub platforms not initialized for validation.",
-                ),
-            );
-        }
         const platformId = resolvePlatformId(stream);
         if (!platformId) {
             const platformContextCandidates =
@@ -82,7 +71,7 @@ export default function validate(
                 ),
             );
         }
-        if (!initObj.platforms.has(platformId)) {
+        if (!ready.platforms.has(platformId)) {
             return done(
                 new Error(
                     `platform ${platformId} resolved from @context is not enabled in this Sockethub instance.`,
@@ -101,7 +90,7 @@ export default function validate(
             if (err) {
                 done(new Error(err));
             } else {
-                const platformMeta = initObj.platforms.get(platformId);
+                const platformMeta = ready.platforms.get(platformId);
                 if (!platformMeta) {
                     return done(
                         new Error(
@@ -122,5 +111,32 @@ export default function validate(
                 done(stream);
             }
         }
+    };
+
+    return (
+        stream: ActivityStream,
+        done: MiddlewareChainInterface<ActivityStream>,
+    ) => {
+        sessionLog.debug(`applying schema validation for ${type}`);
+        // Fast path: init already resolved. In production init is awaited before
+        // connections are accepted (sockethub.ts), and it is cached after the
+        // first resolve.
+        if (initObj) {
+            return runValidation(initObj, stream, done);
+        }
+        // Init not yet resolved (e.g. a message arriving during startup): resolve
+        // the memoized init promise rather than rejecting the message.
+        getInitObject().then(
+            (resolved) => {
+                initObj = resolved;
+                runValidation(resolved, stream, done);
+            },
+            () =>
+                done(
+                    new Error(
+                        "Sockethub platforms not initialized for validation.",
+                    ),
+                ),
+        );
     };
 }
