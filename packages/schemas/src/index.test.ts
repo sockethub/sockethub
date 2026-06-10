@@ -4,7 +4,6 @@ import type { ActivityStream } from "./types";
 import testCredentialsData from "./index.test.data.credentials";
 import testPlatformSchemaData from "./index.test.data.platform";
 import testActivityStreamsData from "./index.test.data.streams";
-import { ObjectTypesSchema } from "./helpers/objects";
 import { ActivityStreamSchema } from "./schemas/activity-stream";
 import {
     addPlatformContext,
@@ -19,7 +18,8 @@ import {
 // The base envelope no longer enumerates a global object vocabulary; platforms
 // own inbound object validation via their `messages` schema. This object-aware
 // test schema exercises that mechanism (object `oneOf` referencing object-type
-// definitions) for the data-driven stream fixtures.
+// definitions) for the data-driven stream fixtures, with its object vocabulary
+// declared locally (as a real platform would).
 const objectAwareMessageSchema = {
     required: ["type"],
     properties: {
@@ -39,7 +39,94 @@ const objectAwareMessageSchema = {
             ].map((type) => ({ $ref: `#/definitions/type/${type}` })),
         },
     },
-    definitions: { type: ObjectTypesSchema },
+    definitions: {
+        type: {
+            credentials: {
+                required: ["type"],
+                additionalProperties: true,
+                properties: { type: { enum: ["credentials"] } },
+            },
+            message: {
+                required: ["type", "content"],
+                additionalProperties: true,
+                properties: {
+                    type: { enum: ["message"] },
+                    id: { type: "string" },
+                    name: { type: "string" },
+                    content: { type: "string" },
+                },
+            },
+            feed: {
+                required: ["id", "type"],
+                additionalProperties: true,
+                properties: {
+                    type: { enum: ["feed"] },
+                    id: { type: "string", format: "iri" },
+                    name: { type: "string" },
+                    description: { type: "string" },
+                    author: { type: "string" },
+                    favicon: { type: "string" },
+                },
+            },
+            website: {
+                required: ["id", "type"],
+                additionalProperties: true,
+                properties: {
+                    id: { type: "string", format: "iri" },
+                    type: { enum: ["website"] },
+                    name: { type: "string" },
+                },
+            },
+            attendance: {
+                required: ["type"],
+                additionalProperties: false,
+                properties: {
+                    type: { enum: ["attendance"] },
+                    members: { type: "array", items: { type: "string" } },
+                },
+            },
+            presence: {
+                required: ["type"],
+                additionalProperties: false,
+                properties: {
+                    type: { enum: ["presence"] },
+                    presence: {
+                        enum: ["away", "chat", "dnd", "xa", "offline", "online"],
+                    },
+                    role: {
+                        enum: ["owner", "member", "participant", "admin"],
+                    },
+                    content: { type: "string" },
+                },
+            },
+            topic: {
+                required: ["type"],
+                additionalProperties: false,
+                properties: {
+                    type: { enum: ["topic"] },
+                    content: { type: "string" },
+                },
+            },
+            address: {
+                required: ["type"],
+                additionalProperties: false,
+                properties: { type: { enum: ["address"] } },
+            },
+            relationship: {
+                required: ["type", "relationship"],
+                additionalProperties: false,
+                properties: {
+                    type: { enum: ["relationship"] },
+                    relationship: { enum: ["role"] },
+                    subject: {
+                        type: "object",
+                        oneOf: [{ $ref: "#/definitions/type/presence" }],
+                    },
+                    object: { type: "object" },
+                },
+            },
+        },
+    },
 };
 
 // `dood` is a fake test platform (not a real package), used to exercise

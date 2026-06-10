@@ -30,14 +30,7 @@ import {
     validatePlatformSchema,
 } from "./validator.js";
 
-export {
-    type ActivityStreamProcessor,
-    type ActivityStreamProcessorOptions,
-    createActivityStreamProcessor,
-    extractObjectPropertyExtensionsFromMessageSchema,
-    type JsonSchemaLike,
-    normalizeActivityStream,
-} from "./activity-stream-helper.js";
+export { normalizeActivityStream } from "./activity-stream-helper.js";
 
 export {
     AS2_BASE_CONTEXT_URL,

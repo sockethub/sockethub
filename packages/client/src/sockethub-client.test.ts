@@ -60,10 +60,6 @@ describe("SockethubClient bad initialization", () => {
 });
 
 describe("SockethubClient", () => {
-    let streamProcessor: {
-        process: (stream: unknown) => unknown;
-        registerObjectTypeExtensions: (...args: unknown[]) => void;
-    };
     let socket: any;
     let sc: any;
     let sandbox: any;
@@ -75,28 +71,7 @@ describe("SockethubClient", () => {
         socket.__instance = "socketio"; // used to uniquely identify the object we're passing in
         sandbox.spy(socket, "on");
         sandbox.spy(socket, "emit");
-        streamProcessor = {
-            process: sandbox.stub().callsFake((stream: any) => {
-                if (!stream || typeof stream !== "object") {
-                    return stream;
-                }
-                const next = { ...stream };
-                if (typeof next.actor === "string") {
-                    next.actor = { id: next.actor };
-                }
-                if (typeof next.target === "string") {
-                    next.target = { id: next.target };
-                }
-                if (typeof next.object === "string") {
-                    next.object = { content: next.object };
-                }
-                return next;
-            }),
-            registerObjectTypeExtensions: sandbox.stub(),
-        };
         sc = new SockethubClient(socket);
-        (sc as { streamProcessor: typeof streamProcessor }).streamProcessor =
-            streamProcessor;
         sandbox.spy(sc.socket, "on");
         sandbox.spy(sc.socket, "emit");
         sandbox.spy(sc.socket, "_emit");
@@ -169,16 +144,6 @@ describe("SockethubClient", () => {
             ]);
         });
 
-        test("registers platform ActivityStreams props from schemas", () => {
-            socket.emit("schemas", TEST_REGISTRY);
-
-            const [type, props] =
-                streamProcessor.registerObjectTypeExtensions.firstCall.args;
-            expect(type).to.equal("message");
-            expect(props).to.include("xmpp:replace");
-            expect(props).to.include("xmpp:stanza-id");
-        });
-
         it("throws for unknown platform when registry is loaded", () => {
             socket.emit("schemas", TEST_REGISTRY);
 
@@ -221,8 +186,6 @@ describe("SockethubClient", () => {
             sandbox.spy(timeoutSocket, "emit");
 
             const client = new SockethubClient(timeoutSocket);
-            (client as { streamProcessor: typeof streamProcessor }).streamProcessor =
-                streamProcessor;
             client.socket.connected = true;
             try {
                 await client.ready(50);
@@ -259,9 +222,6 @@ describe("SockethubClient", () => {
             const timeoutClient = new SockethubClient(timeoutSocket, {
                 initTimeoutMs: 10,
             });
-            (
-                timeoutClient as { streamProcessor: typeof streamProcessor }
-            ).streamProcessor = streamProcessor;
             timeoutClient.socket.on("init_error", (err: any) => {
                 expect(err.phase).to.equal("timeout");
                 expect(err.error).to.contain("timed out");
@@ -532,9 +492,6 @@ describe("SockethubClient", () => {
             sandbox.spy(preReadySocket, "emit");
 
             const preReadyClient = new SockethubClient(preReadySocket);
-            (
-                preReadyClient as { streamProcessor: typeof streamProcessor }
-            ).streamProcessor = streamProcessor;
             sandbox.spy(preReadyClient.socket, "_emit");
             sandbox.stub(preReadyClient, "validateActivity").returns("");
 
@@ -575,12 +532,10 @@ describe("SockethubClient", () => {
             sc.events.credentials.set(credentials.actor.id, credentials);
 
             socket.emit.resetHistory();
-            streamProcessor.process.resetHistory();
             socket.emit("connect");
             socket.emit("schemas", TEST_REGISTRY);
 
             setTimeout(() => {
-                expect(streamProcessor.process.called).to.be.true;
                 const replayCalls = socket.emit
                     .getCalls()
                     .filter((call: any) => call.args[0] === "credentials");
