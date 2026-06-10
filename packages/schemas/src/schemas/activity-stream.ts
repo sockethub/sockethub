@@ -38,6 +38,10 @@ export const ActivityStreamSchema = {
 
     type: "object",
     required: ["@context", "type", "actor"],
+    // Reject unknown top-level message properties. Inbound messages carry only
+    // the properties below; `error`/`sessionSecret` are added server-side after
+    // validation, so they never reach this schema.
+    additionalProperties: false,
     properties: {
         "@context": contextSchema,
         id: {

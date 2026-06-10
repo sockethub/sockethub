@@ -1,10 +1,8 @@
 import type { ActivityStream } from "@sockethub/schemas";
 import {
-    type ActivityStreamProcessor,
     addPlatformContext,
     addPlatformSchema,
-    createActivityStreamProcessor,
-    extractObjectPropertyExtensionsFromMessageSchema,
+    normalizeActivityStream,
     validateActivityStream,
     validateCredentials,
 } from "@sockethub/schemas";
@@ -195,7 +193,6 @@ export default class SockethubClient {
         join: new Map(),
     };
     private _socket: Socket;
-    private readonly streamProcessor: ActivityStreamProcessor;
     public socket!: CustomEmitter;
     public debug = true;
     private readonly options: Required<SockethubClientOptions>;
@@ -227,9 +224,6 @@ export default class SockethubClient {
             maxQueuedAgeMs: options.maxQueuedAgeMs ?? 30000,
         };
 
-        this.streamProcessor = createActivityStreamProcessor({
-            looseObjectTypes: ["credentials"],
-        });
         this.socket = this.createPublicEmitter();
         this.registerSocketIOHandlers();
 
@@ -481,9 +475,6 @@ export default class SockethubClient {
             });
             addPlatformContext(platform.id, platform.contextUrl);
             try {
-                this.registerActivityStreamsSchemaProps(
-                    platform.schemas?.messages,
-                );
                 const credSchema = platform.schemas?.credentials;
                 if (
                     credSchema &&
@@ -514,15 +505,6 @@ export default class SockethubClient {
         // Emit normalized registry payload so app code receives a stable shape.
         this.socket._emit("schemas", normalizedPayload);
         return normalizedPayload;
-    }
-
-    private registerActivityStreamsSchemaProps(schema: unknown) {
-        for (const {
-            type,
-            props,
-        } of extractObjectPropertyExtensionsFromMessageSchema(schema)) {
-            this.streamProcessor.registerObjectTypeExtensions(type, props);
-        }
     }
 
     private eventCredentials(content: ActivityStream) {
@@ -885,7 +867,7 @@ export default class SockethubClient {
             if (entry.event === "credentials" || entry.event === "message") {
                 // Run canonical expansion/normalization at send time so queued and
                 // immediate sends follow the exact same path.
-                outgoing = this.streamProcessor.process(
+                outgoing = normalizeActivityStream(
                     entry.content as ActivityStream,
                 );
                 if (outgoing && typeof outgoing === "object") {
@@ -962,7 +944,7 @@ export default class SockethubClient {
         // use as middleware to receive incoming Sockethub messages and unpack them
         // Normalize and lint before passing them along to the app.
         this._socket.on("message", (obj) => {
-            this.socket._emit("message", this.streamProcessor.process(obj));
+            this.socket._emit("message", normalizeActivityStream(obj));
         });
     }
 
@@ -1000,9 +982,7 @@ export default class SockethubClient {
         asMap: Map<string, ReplayEventMap[K]>,
     ): void {
         for (const obj of asMap.values()) {
-            const expandedObj = this.streamProcessor.process(
-                obj as ActivityStream,
-            );
+            const expandedObj = normalizeActivityStream(obj as ActivityStream);
             let id = expandedObj?.id;
             if (this.hasActorId(expandedObj)) {
                 const actor = (expandedObj as ActivityStream).actor;
