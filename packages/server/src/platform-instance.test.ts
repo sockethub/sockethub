@@ -8,7 +8,7 @@ import {
 } from "@sockethub/schemas";
 
 // A platform context with an outbound `responses` schema (only allows
-// type "collection"), used to exercise warn-only outbound validation.
+// type "collection"), used to exercise enforced outbound validation.
 const RESPONSES_CTX =
     "https://sockethub.org/ns/context/platform/respplat/v1.jsonld";
 addPlatformSchema(
@@ -264,26 +264,78 @@ describe("PlatformInstance", () => {
             sandbox.assert.notCalled(errorSpy);
         });
 
-        test("warns (but still delivers) when an outbound message violates the responses schema", () => {
+        test("drops (no emit) an outbound message that violates the responses schema", () => {
             pi.contextUrl = RESPONSES_CTX;
-            const warnSpy = sandbox.spy(pi.log, "warn");
+            const errorSpy = sandbox.spy(pi.log, "error");
             pi.sendToClient("my session id", {
                 type: "page", // not allowed by respplat responses schema
                 actor: { id: "a@b", type: "feed" },
             });
-            sandbox.assert.calledOnce(warnSpy);
-            sandbox.assert.calledOnce(socketMock.emit); // warn-only: still delivered
+            sandbox.assert.calledOnce(errorSpy);
+            sandbox.assert.notCalled(socketMock.emit); // enforced: dropped
         });
 
-        test("does not warn when an outbound message matches the responses schema", () => {
+        test("delivers an outbound message that matches the responses schema", () => {
             pi.contextUrl = RESPONSES_CTX;
-            const warnSpy = sandbox.spy(pi.log, "warn");
+            const errorSpy = sandbox.spy(pi.log, "error");
             pi.sendToClient("my session id", {
                 type: "collection",
                 actor: { id: "a@b", type: "feed" },
             });
-            sandbox.assert.notCalled(warnSpy);
+            sandbox.assert.notCalled(errorSpy);
             sandbox.assert.calledOnce(socketMock.emit);
+        });
+
+        test("exempts error envelopes from responses-schema validation", () => {
+            pi.contextUrl = RESPONSES_CTX;
+            const errorSpy = sandbox.spy(pi.log, "error");
+            // `error` is not in respplat's responses enum, but error envelopes
+            // are exempt and must still be delivered.
+            pi.sendToClient("my session id", {
+                type: "error",
+                actor: { id: "a@b", type: "service" },
+                error: "boom",
+            });
+            sandbox.assert.notCalled(errorSpy);
+            sandbox.assert.calledOnce(socketMock.emit);
+        });
+
+        test("injects a valid actor on actorless errors (global platform)", () => {
+            // pi is constructed without an `actor` (global), so the fallback is
+            // the platform name — never an undefined id.
+            pi.sendToClient("my session id", { type: "error", error: "boom" });
+            sandbox.assert.calledOnce(socketMock.emit);
+            expect(socketMock.emit.firstCall.args[1].actor).toEqual({
+                id: "a platform name",
+                type: "service",
+            });
+        });
+
+        test("exempts failure notifications (request echo + error) from validation", () => {
+            pi.contextUrl = RESPONSES_CTX;
+            const errorSpy = sandbox.spy(pi.log, "error");
+            // A failed job echoes the original request (an inbound type, not in
+            // the responses enum) plus an `error` field; it must still deliver.
+            pi.sendToClient("my session id", {
+                type: "fetch", // inbound type, not a respplat response type
+                actor: { id: "a@b", type: "feed" },
+                error: "job failed",
+            });
+            sandbox.assert.notCalled(errorSpy);
+            sandbox.assert.calledOnce(socketMock.emit);
+        });
+
+        test("reportError emits a valid service actor for a global platform", async () => {
+            pi.sessions.add("my session id");
+            await pi.reportError("my session id", "boom");
+            sandbox.assert.calledOnce(socketMock.emit);
+            const emitted = socketMock.emit.firstCall.args[1];
+            expect(emitted.type).toEqual("error");
+            expect(emitted.actor).toEqual({
+                id: "a platform name",
+                type: "service",
+            });
+            expect(emitted.error).toEqual("boom");
         });
 
         describe("handleJobResult", () => {

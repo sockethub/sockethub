@@ -253,25 +253,29 @@ export default class PlatformInstance {
             return;
         }
         this.toExternalPayload(msg);
-        if (
-            msg.type === "error" &&
-            typeof msg.actor === "undefined" &&
-            this.actor
-        ) {
-            // ensure an actor is present if not otherwise defined
-            msg.actor = { id: this.actor, type: "unknown" };
+        if (msg.type === "error" && typeof msg.actor === "undefined") {
+            // ensure an actor is present if not otherwise defined; global
+            // platforms have no `this.actor`, so fall back to the platform name
+            // (an id-bearing, valid actor).
+            msg.actor = { id: this.actor ?? this.name, type: "service" };
         }
-        // Warn-only outbound validation (see #1120): no-op until a platform
-        // registers a `responses` schema. Once it does, mismatches are logged
-        // (not dropped) so we can converge schemas against real traffic before
-        // enforcing.
-        const responseError = validateActivityStreamResponse(
-            msg as ActivityStream,
-        );
-        if (responseError) {
-            this.log.warn(
-                `outbound message does not match ${this.name} responses schema [${sessionId}]: ${responseError}`,
+        // Validate successful protocol responses against the platform's
+        // `responses` schema and drop malformed messages (#1120). Error and
+        // failure notifications are exempt: a `type: "error"` envelope, or any
+        // message carrying an `error` field (e.g. a failed job echoes the
+        // original request plus `error`), is a generic cross-cutting shape, not
+        // a protocol response. Platforms without a `responses` schema are a
+        // no-op (validateActivityStreamResponse returns "").
+        if (msg.type !== "error" && typeof msg.error === "undefined") {
+            const responseError = validateActivityStreamResponse(
+                msg as ActivityStream,
             );
+            if (responseError) {
+                this.log.error(
+                    `dropping malformed outbound message [${this.name}] to ${sessionId}: ${responseError}`,
+                );
+                return;
+            }
         }
         socket.emit("message", msg as ActivityStream);
     }
@@ -385,7 +389,9 @@ export default class PlatformInstance {
                 this.contextUrl ?? INTERNAL_PLATFORM_CONTEXT_URL,
             ),
             type: "error",
-            actor: { id: this.actor, type: "unknown" },
+            // Global platforms have no `this.actor`; fall back to the platform
+            // name so the error always carries a valid (id-bearing) actor.
+            actor: { id: this.actor ?? this.name, type: "service" },
             error: errorMessage,
         };
 

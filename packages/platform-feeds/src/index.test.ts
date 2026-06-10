@@ -2,9 +2,42 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { beforeEach, describe, expect, test } from "bun:test";
 import type { ASCollection, PlatformSession } from "@sockethub/schemas";
+import {
+    addPlatformContext,
+    addPlatformSchema,
+    validateActivityStreamResponse,
+} from "@sockethub/schemas";
 import getPodcastFromFeed from "podparse";
+import feedsSchema from "./schema";
 import { RSSFeed } from "./index.test.data";
 import Feeds, { buildFeedItem, datesEqual } from "./index";
+
+addPlatformSchema(feedsSchema.responses, "feeds/responses");
+addPlatformContext("feeds", feedsSchema.contextUrl);
+
+// Wrap feed-item objects exactly as the feeds platform emits them: a single
+// `collection` message whose `items` are `post` entries. Used to validate real
+// parsed output against the strict outbound `responses` schema.
+function buildCollection(objects: Array<ReturnType<typeof buildFeedItem>>) {
+    return {
+        "@context": [feedsSchema.contextUrl],
+        type: "collection",
+        summary: "Test Feed",
+        totalItems: objects.length,
+        items: objects.map((object) => ({
+            "@context": [feedsSchema.contextUrl],
+            type: "post",
+            actor: {
+                id: "https://example.com/feed",
+                type: "feed",
+                name: "Example",
+                link: "https://example.com",
+                categories: [],
+            },
+            object,
+        })),
+    };
+}
 
 const FIXTURES_DIR = path.join(import.meta.dirname, "../test/fixtures");
 
@@ -190,9 +223,31 @@ describe("feed fixture matrix", () => {
                     ),
                 );
                 fixture.assertItems(results);
+                // Real parsed output must satisfy the strict outbound schema.
+                expect(
+                    validateActivityStreamResponse(buildCollection(results)),
+                ).toEqual("");
             }
         });
     }
+
+    test("rejects a collection whose item object has an unknown type", () => {
+        const items = [
+            {
+                type: "article",
+                title: "t",
+                id: "id-1",
+                content: "c",
+                contentType: "text",
+                url: "https://example.com/a",
+                datenum: 0,
+                bogusField: "nope", // not in the strict feedItem schema
+            },
+        ] as unknown as Array<ReturnType<typeof buildFeedItem>>;
+        expect(
+            validateActivityStreamResponse(buildCollection(items)),
+        ).not.toEqual("");
+    });
 
     test("builds atom-like entries without per-entry link via buildFeedItem", () => {
         const result = buildFeedItem(
