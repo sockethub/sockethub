@@ -8,7 +8,7 @@ import {
 } from "@sockethub/schemas";
 
 // A platform context with an outbound `responses` schema (only allows
-// type "collection"), used to exercise warn-only outbound validation.
+// type "collection"), used to exercise enforced outbound validation.
 const RESPONSES_CTX =
     "https://sockethub.org/ns/context/platform/respplat/v1.jsonld";
 addPlatformSchema(
@@ -264,25 +264,39 @@ describe("PlatformInstance", () => {
             sandbox.assert.notCalled(errorSpy);
         });
 
-        test("warns (but still delivers) when an outbound message violates the responses schema", () => {
+        test("drops (no emit) an outbound message that violates the responses schema", () => {
             pi.contextUrl = RESPONSES_CTX;
-            const warnSpy = sandbox.spy(pi.log, "warn");
+            const errorSpy = sandbox.spy(pi.log, "error");
             pi.sendToClient("my session id", {
                 type: "page", // not allowed by respplat responses schema
                 actor: { id: "a@b", type: "feed" },
             });
-            sandbox.assert.calledOnce(warnSpy);
-            sandbox.assert.calledOnce(socketMock.emit); // warn-only: still delivered
+            sandbox.assert.calledOnce(errorSpy);
+            sandbox.assert.notCalled(socketMock.emit); // enforced: dropped
         });
 
-        test("does not warn when an outbound message matches the responses schema", () => {
+        test("delivers an outbound message that matches the responses schema", () => {
             pi.contextUrl = RESPONSES_CTX;
-            const warnSpy = sandbox.spy(pi.log, "warn");
+            const errorSpy = sandbox.spy(pi.log, "error");
             pi.sendToClient("my session id", {
                 type: "collection",
                 actor: { id: "a@b", type: "feed" },
             });
-            sandbox.assert.notCalled(warnSpy);
+            sandbox.assert.notCalled(errorSpy);
+            sandbox.assert.calledOnce(socketMock.emit);
+        });
+
+        test("exempts error envelopes from responses-schema validation", () => {
+            pi.contextUrl = RESPONSES_CTX;
+            const errorSpy = sandbox.spy(pi.log, "error");
+            // `error` is not in respplat's responses enum, but error envelopes
+            // are exempt and must still be delivered.
+            pi.sendToClient("my session id", {
+                type: "error",
+                actor: { id: "a@b", type: "service" },
+                error: "boom",
+            });
+            sandbox.assert.notCalled(errorSpy);
             sandbox.assert.calledOnce(socketMock.emit);
         });
 

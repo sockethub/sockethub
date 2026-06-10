@@ -259,19 +259,23 @@ export default class PlatformInstance {
             this.actor
         ) {
             // ensure an actor is present if not otherwise defined
-            msg.actor = { id: this.actor, type: "unknown" };
+            msg.actor = { id: this.actor, type: "service" };
         }
-        // Warn-only outbound validation (see #1120): no-op until a platform
-        // registers a `responses` schema. Once it does, mismatches are logged
-        // (not dropped) so we can converge schemas against real traffic before
-        // enforcing.
-        const responseError = validateActivityStreamResponse(
-            msg as ActivityStream,
-        );
-        if (responseError) {
-            this.log.warn(
-                `outbound message does not match ${this.name} responses schema [${sessionId}]: ${responseError}`,
+        // Validate outbound protocol responses against the platform's
+        // `responses` schema and drop malformed messages (#1120). `error`
+        // envelopes are a generic cross-cutting shape (not a platform protocol
+        // response) and are exempt; platforms without a `responses` schema are
+        // a no-op (validateActivityStreamResponse returns "").
+        if (msg.type !== "error") {
+            const responseError = validateActivityStreamResponse(
+                msg as ActivityStream,
             );
+            if (responseError) {
+                this.log.error(
+                    `dropping malformed outbound message [${this.name}] to ${sessionId}: ${responseError}`,
+                );
+                return;
+            }
         }
         socket.emit("message", msg as ActivityStream);
     }
@@ -385,7 +389,7 @@ export default class PlatformInstance {
                 this.contextUrl ?? INTERNAL_PLATFORM_CONTEXT_URL,
             ),
             type: "error",
-            actor: { id: this.actor, type: "unknown" },
+            actor: { id: this.actor, type: "service" },
             error: errorMessage,
         };
 
