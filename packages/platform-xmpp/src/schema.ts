@@ -24,6 +24,68 @@ export const PlatformSchema: PlatformSchemaStruct = {
                     "disconnect",
                 ],
             },
+            // Inbound object shapes the client may send (when present). Owned by
+            // this platform now that the base envelope no longer enumerates a
+            // global object vocabulary.
+            object: {
+                oneOf: [
+                    { $ref: "#/definitions/objectTypes/message" },
+                    { $ref: "#/definitions/objectTypes/presence" },
+                    { $ref: "#/definitions/objectTypes/attendance" },
+                    { $ref: "#/definitions/objectTypes/room-info" },
+                ],
+            },
+        },
+        definitions: {
+            objectTypes: {
+                message: {
+                    type: "object",
+                    required: ["type", "content"],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["message"] },
+                        id: { type: "string" },
+                        content: { type: "string" },
+                        "xmpp:replace": {
+                            type: "object",
+                            required: ["id"],
+                            additionalProperties: false,
+                            properties: { id: { type: "string" } },
+                        },
+                    },
+                },
+                presence: {
+                    type: "object",
+                    required: ["type"],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["presence"] },
+                        presence: {
+                            enum: [
+                                "away",
+                                "chat",
+                                "dnd",
+                                "xa",
+                                "offline",
+                                "online",
+                            ],
+                        },
+                        content: { type: "string" },
+                    },
+                },
+                attendance: {
+                    type: "object",
+                    required: ["type"],
+                    additionalProperties: false,
+                    properties: { type: { enum: ["attendance"] } },
+                },
+                "room-info": {
+                    type: "object",
+                    required: ["type"],
+                    additionalProperties: false,
+                    properties: { type: { enum: ["room-info"] } },
+                },
+            },
         },
     },
     // Outbound (platform -> client). Strict: every message type, object type,

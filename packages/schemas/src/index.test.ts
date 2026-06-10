@@ -1,41 +1,54 @@
 import { describe, expect, it, test } from "bun:test";
-import type { ActivityObject, ActivityStream } from "./types";
+import type { ActivityStream } from "./types";
 
 import testCredentialsData from "./index.test.data.credentials";
-import testActivityObjectsData from "./index.test.data.objects";
 import testPlatformSchemaData from "./index.test.data.platform";
 import testActivityStreamsData from "./index.test.data.streams";
-import { ActivityObjectSchema } from "./schemas/activity-object";
+import { ObjectTypesSchema } from "./helpers/objects";
 import { ActivityStreamSchema } from "./schemas/activity-stream";
 import {
     addPlatformContext,
     addPlatformSchema,
     getPlatformSchema,
-    validateActivityObject,
     validateActivityStream,
     validateActivityStreamResponse,
     validateCredentials,
     validatePlatformSchema,
 } from "./validator";
 
-const permissiveMessageSchema = {
+// The base envelope no longer enumerates a global object vocabulary; platforms
+// own inbound object validation via their `messages` schema. This object-aware
+// test schema exercises that mechanism (object `oneOf` referencing object-type
+// definitions) for the data-driven stream fixtures.
+const objectAwareMessageSchema = {
     required: ["type"],
     properties: {
-        type: {
-            type: "string",
+        type: { type: "string" },
+        object: {
+            type: "object",
+            oneOf: [
+                "credentials",
+                "message",
+                "feed",
+                "website",
+                "attendance",
+                "presence",
+                "topic",
+                "address",
+                "relationship",
+            ].map((type) => ({ $ref: `#/definitions/type/${type}` })),
         },
     },
+    definitions: { type: ObjectTypesSchema },
 };
 
-addPlatformSchema(permissiveMessageSchema, "irc/messages");
-addPlatformSchema(permissiveMessageSchema, "dood/messages");
+// `dood` is a fake test platform (not a real package), used to exercise
+// per-platform object validation without colliding with real platforms'
+// registrations in the shared schema singleton during the combined test run.
+addPlatformSchema(objectAwareMessageSchema, "dood/messages");
 addPlatformSchema(
     testPlatformSchemaData.credentials,
     "test-platform/credentials",
-);
-addPlatformContext(
-    "irc",
-    "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
 );
 addPlatformContext(
     "dood",
@@ -96,27 +109,6 @@ describe("schemas/src/index.ts", () => {
                 describe("validateCredential " + name, () => {
                     it(`returns expected result`, () => {
                         const err = validateCredentials(creds as ActivityStream);
-                        expect(err).toEqual(expectedFailureMessage);
-                        expect(!err).toEqual(expectedResult);
-                    });
-                });
-            },
-        );
-    });
-
-    describe("ActivityObject", () => {
-        it("has expected properties", () => {
-            expect(typeof ActivityObjectSchema).toEqual("object");
-            expect(ActivityObjectSchema["$id"]).toEqual(
-                "https://sockethub.org/schemas/v/activity-object.json",
-            );
-        });
-
-        testActivityObjectsData.forEach(
-            ([name, ao, expectedResult, expectedFailureMessage]) => {
-                describe("validateActivityObject " + name, () => {
-                    it(`returns expected result`, () => {
-                        const err = validateActivityObject(ao as ActivityObject);
                         expect(err).toEqual(expectedFailureMessage);
                         expect(!err).toEqual(expectedResult);
                     });

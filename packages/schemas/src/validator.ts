@@ -15,10 +15,9 @@ import {
 import getErrorMessage, {
     type ValidationErrorOptions,
 } from "./helpers/error-parser.js";
-import { ActivityObjectSchema } from "./schemas/activity-object.js";
 import { ActivityStreamSchema } from "./schemas/activity-stream.js";
 import { PlatformSchema } from "./schemas/platform.js";
-import type { ActivityObject, ActivityStream } from "./types.js";
+import type { ActivityStream } from "./types.js";
 
 const ajv = new Ajv({ strictTypes: false, allErrors: true });
 addFormats(ajv as unknown as Parameters<typeof addFormats>[0]);
@@ -32,7 +31,6 @@ let validationErrorOptions: ValidationErrorOptions = {};
 let systemContextsRegistered = false;
 
 schemas[`${schemaURL}/activity-stream`] = ActivityStreamSchema;
-schemas[`${schemaURL}/activity-object`] = ActivityObjectSchema;
 
 for (const uri in schemas) {
     ajv.addSchema(schemas[uri], uri);
@@ -68,21 +66,12 @@ export function registerSystemPlatformContexts(): void {
 
 registerSystemPlatformContexts();
 
-function handleValidation(
-    schemaRef: string,
-    msg: ActivityStream | ActivityObject,
-    isObject = false,
-): string {
+function handleValidation(schemaRef: string, msg: ActivityStream): string {
     const validator = ajv.getSchema(schemaRef);
     if (!validator) {
         return `schema ${schemaRef} not found`;
     }
-    let result: boolean | Promise<unknown>;
-    if (isObject) {
-        result = validator({ object: msg });
-    } else {
-        result = validator(msg);
-    }
+    const result = validator(msg);
     if (!result) {
         let errorMessage = getErrorMessage(
             msg,
@@ -110,10 +99,6 @@ export function setValidationErrorOptions(
     options: ValidationErrorOptions,
 ): void {
     validationErrorOptions = { ...validationErrorOptions, ...options };
-}
-
-export function validateActivityObject(msg: ActivityObject): string {
-    return handleValidation(`${schemaURL}/activity-object`, msg, true);
 }
 
 export function validateActivityStream(msg: ActivityStream): string {
