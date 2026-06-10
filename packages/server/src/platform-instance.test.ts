@@ -300,6 +300,17 @@ describe("PlatformInstance", () => {
             sandbox.assert.calledOnce(socketMock.emit);
         });
 
+        test("injects a valid actor on actorless errors (global platform)", () => {
+            // pi is constructed without an `actor` (global), so the fallback is
+            // the platform name — never an undefined id.
+            pi.sendToClient("my session id", { type: "error", error: "boom" });
+            sandbox.assert.calledOnce(socketMock.emit);
+            expect(socketMock.emit.firstCall.args[1].actor).toEqual({
+                id: "a platform name",
+                type: "service",
+            });
+        });
+
         describe("handleJobResult", () => {
             beforeEach(() => {
                 pi.sendToClient = sandbox.fake();

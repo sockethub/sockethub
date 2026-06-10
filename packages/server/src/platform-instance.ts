@@ -253,13 +253,11 @@ export default class PlatformInstance {
             return;
         }
         this.toExternalPayload(msg);
-        if (
-            msg.type === "error" &&
-            typeof msg.actor === "undefined" &&
-            this.actor
-        ) {
-            // ensure an actor is present if not otherwise defined
-            msg.actor = { id: this.actor, type: "service" };
+        if (msg.type === "error" && typeof msg.actor === "undefined") {
+            // ensure an actor is present if not otherwise defined; global
+            // platforms have no `this.actor`, so fall back to the platform name
+            // (an id-bearing, valid actor).
+            msg.actor = { id: this.actor ?? this.name, type: "service" };
         }
         // Validate outbound protocol responses against the platform's
         // `responses` schema and drop malformed messages (#1120). `error`
@@ -389,7 +387,9 @@ export default class PlatformInstance {
                 this.contextUrl ?? INTERNAL_PLATFORM_CONTEXT_URL,
             ),
             type: "error",
-            actor: { id: this.actor, type: "service" },
+            // Global platforms have no `this.actor`; fall back to the platform
+            // name so the error always carries a valid (id-bearing) actor.
+            actor: { id: this.actor ?? this.name, type: "service" },
             error: errorMessage,
         };
 
