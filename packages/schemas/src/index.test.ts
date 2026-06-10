@@ -1,17 +1,14 @@
 import { describe, expect, it, test } from "bun:test";
-import type { ActivityObject, ActivityStream } from "./types";
+import type { ActivityStream } from "./types";
 
 import testCredentialsData from "./index.test.data.credentials";
-import testActivityObjectsData from "./index.test.data.objects";
 import testPlatformSchemaData from "./index.test.data.platform";
 import testActivityStreamsData from "./index.test.data.streams";
-import { ActivityObjectSchema } from "./schemas/activity-object";
 import { ActivityStreamSchema } from "./schemas/activity-stream";
 import {
     addPlatformContext,
     addPlatformSchema,
     getPlatformSchema,
-    validateActivityObject,
     validateActivityStream,
     validateActivityStreamResponse,
     validateCredentials,
@@ -96,27 +93,6 @@ describe("schemas/src/index.ts", () => {
                 describe("validateCredential " + name, () => {
                     it(`returns expected result`, () => {
                         const err = validateCredentials(creds as ActivityStream);
-                        expect(err).toEqual(expectedFailureMessage);
-                        expect(!err).toEqual(expectedResult);
-                    });
-                });
-            },
-        );
-    });
-
-    describe("ActivityObject", () => {
-        it("has expected properties", () => {
-            expect(typeof ActivityObjectSchema).toEqual("object");
-            expect(ActivityObjectSchema["$id"]).toEqual(
-                "https://sockethub.org/schemas/v/activity-object.json",
-            );
-        });
-
-        testActivityObjectsData.forEach(
-            ([name, ao, expectedResult, expectedFailureMessage]) => {
-                describe("validateActivityObject " + name, () => {
-                    it(`returns expected result`, () => {
-                        const err = validateActivityObject(ao as ActivityObject);
                         expect(err).toEqual(expectedFailureMessage);
                         expect(!err).toEqual(expectedResult);
                     });

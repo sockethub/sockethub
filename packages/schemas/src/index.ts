@@ -14,7 +14,6 @@ import {
     ObjectTypesList,
     ObjectTypesSchema,
 } from "./helpers/objects.js";
-import { ActivityObjectSchema } from "./schemas/activity-object.js";
 import { ActivityStreamSchema } from "./schemas/activity-stream.js";
 import { PlatformSchema } from "./schemas/platform.js";
 import { SockethubConfigSchema } from "./schemas/sockethub-config.js";
@@ -25,7 +24,6 @@ import {
     registerSystemPlatformContexts,
     resolvePlatformId,
     setValidationErrorOptions,
-    validateActivityObject,
     validateActivityStream,
     validateActivityStreamResponse,
     validateCredentials,
@@ -60,10 +58,8 @@ export {
     validateCredentials,
     validateActivityStream,
     validateActivityStreamResponse,
-    validateActivityObject,
     setValidationErrorOptions,
     PlatformSchema,
-    ActivityObjectSchema,
     ActivityStreamSchema,
     SockethubConfigSchema,
     ObjectTypesList,
