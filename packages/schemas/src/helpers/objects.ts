@@ -1,6 +1,3 @@
-export const validObjectRefs: Array<{ $ref: string }> = [];
-export const validObjectDefs: Record<string, unknown> = {};
-
 const roomInfoFieldSchema = {
     type: "object",
     required: ["type", "value"],
@@ -284,7 +281,6 @@ export const ObjectTypesSchema = {
             },
             object: {
                 type: "object",
-                oneOf: validObjectRefs,
             },
         },
     },
@@ -352,13 +348,3 @@ export const validActorRefs = ActorTypesList.map((type) => ({
 export const validTargetRefs = TargetTypesList.map((type) => ({
     $ref: `#/definitions/type/${type}`,
 }));
-
-for (const type of ObjectTypesList) {
-    if (type === "credentials") {
-        continue;
-    }
-    validObjectRefs.push({ $ref: `#/definitions/type/${type}` });
-    validObjectDefs[type] = (ObjectTypesSchema as Record<string, unknown>)[
-        type
-    ];
-}

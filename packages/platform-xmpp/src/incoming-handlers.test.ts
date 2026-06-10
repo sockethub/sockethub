@@ -28,10 +28,10 @@ describe("Incoming handlers", () => {
         let sendToClient: ReturnType<typeof sinon.fake>;
 
         beforeEach(() => {
-            if (!schemas.getPlatformSchema("xmpp/messages")) {
+            if (!schemas.getPlatformSchema("xmpp/responses")) {
                 schemas.addPlatformSchema(
-                    PlatformSchema.messages,
-                    "xmpp/messages",
+                    PlatformSchema.responses,
+                    "xmpp/responses",
                 );
             }
             schemas.addPlatformContext("xmpp", PlatformSchema.contextUrl);
@@ -54,7 +54,15 @@ describe("Incoming handlers", () => {
             });
 
             test(`${name} - passes @sockethub/schemas validator`, () => {
-                expect(schemas.validateActivityStream(asobject as Parameters<typeof schemas.validateActivityStream>[0])).toEqual("");
+                // asobjects are outbound (server -> client) messages, validated
+                // against the platform's `responses` schema.
+                expect(
+                    schemas.validateActivityStreamResponse(
+                        asobject as Parameters<
+                            typeof schemas.validateActivityStreamResponse
+                        >[0],
+                    ),
+                ).toEqual("");
             });
         });
     });
@@ -64,10 +72,10 @@ describe("Incoming handlers", () => {
         let sendToClient: ReturnType<typeof sinon.fake>;
 
         beforeEach(() => {
-            if (!schemas.getPlatformSchema("xmpp/messages")) {
+            if (!schemas.getPlatformSchema("xmpp/responses")) {
                 schemas.addPlatformSchema(
-                    PlatformSchema.messages,
-                    "xmpp/messages",
+                    PlatformSchema.responses,
+                    "xmpp/responses",
                 );
             }
             schemas.addPlatformContext("xmpp", PlatformSchema.contextUrl);

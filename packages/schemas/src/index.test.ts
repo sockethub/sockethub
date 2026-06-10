@@ -4,6 +4,7 @@ import type { ActivityStream } from "./types";
 import testCredentialsData from "./index.test.data.credentials";
 import testPlatformSchemaData from "./index.test.data.platform";
 import testActivityStreamsData from "./index.test.data.streams";
+import { ObjectTypesSchema } from "./helpers/objects";
 import { ActivityStreamSchema } from "./schemas/activity-stream";
 import {
     addPlatformContext,
@@ -15,17 +16,34 @@ import {
     validatePlatformSchema,
 } from "./validator";
 
-const permissiveMessageSchema = {
+// The base envelope no longer enumerates a global object vocabulary; platforms
+// own inbound object validation via their `messages` schema. This object-aware
+// test schema exercises that mechanism (object `oneOf` referencing object-type
+// definitions) for the data-driven stream fixtures.
+const objectAwareMessageSchema = {
     required: ["type"],
     properties: {
-        type: {
-            type: "string",
+        type: { type: "string" },
+        object: {
+            type: "object",
+            oneOf: [
+                "credentials",
+                "message",
+                "feed",
+                "website",
+                "attendance",
+                "presence",
+                "topic",
+                "address",
+                "relationship",
+            ].map((type) => ({ $ref: `#/definitions/type/${type}` })),
         },
     },
+    definitions: { type: ObjectTypesSchema },
 };
 
-addPlatformSchema(permissiveMessageSchema, "irc/messages");
-addPlatformSchema(permissiveMessageSchema, "dood/messages");
+addPlatformSchema(objectAwareMessageSchema, "irc/messages");
+addPlatformSchema(objectAwareMessageSchema, "dood/messages");
 addPlatformSchema(
     testPlatformSchemaData.credentials,
     "test-platform/credentials",

@@ -23,6 +23,51 @@ export const PlatformIrcSchema = {
                     "disconnect",
                 ],
             },
+            // Inbound object shapes the client may send (when present). Owned by
+            // this platform now that the base envelope no longer enumerates a
+            // global object vocabulary.
+            object: {
+                oneOf: [
+                    { $ref: "#/definitions/objectTypes/message" },
+                    { $ref: "#/definitions/objectTypes/topic" },
+                    { $ref: "#/definitions/objectTypes/address" },
+                    { $ref: "#/definitions/objectTypes/attendance" },
+                ],
+            },
+        },
+        definitions: {
+            objectTypes: {
+                message: {
+                    type: "object",
+                    required: ["type", "content"],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["message"] },
+                        content: { type: "string" },
+                    },
+                },
+                topic: {
+                    type: "object",
+                    required: ["type", "content"],
+                    additionalProperties: false,
+                    properties: {
+                        type: { enum: ["topic"] },
+                        content: { type: "string" },
+                    },
+                },
+                address: {
+                    type: "object",
+                    required: ["type"],
+                    additionalProperties: false,
+                    properties: { type: { enum: ["address"] } },
+                },
+                attendance: {
+                    type: "object",
+                    required: ["type"],
+                    additionalProperties: false,
+                    properties: { type: { enum: ["attendance"] } },
+                },
+            },
         },
     },
     // Outbound (platform -> client) via the irc2as translator. Strict: every
