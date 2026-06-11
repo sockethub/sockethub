@@ -42,8 +42,9 @@ Sockethub is a protocol gateway that runs as four coordinated components:
 └────────────────┘     └─────────────────────┘    └─────────────────┘
 ```
 
-**Data Flow**: All ActivityStreams messages, credentials, and job data are encrypted before
-storage or transmission. Each phase handles specific responsibilities:
+**Data Flow**: Credentials and job payloads are encrypted at rest in Redis and on the
+server↔platform job queue. The browser↔server hop is plain Socket.IO — run it over HTTPS/WSS
+for transport encryption. Each phase handles specific responsibilities:
 
 - **Web App**: Sends standardized ActivityStreams messages
 - **Sockethub Server**: Validates, encrypts, and routes messages  
@@ -270,7 +271,7 @@ Every client WebSocket connection gets its own completely isolated environment:
 
 - **Unique Session ID**: Generated per connection for complete isolation
 - **Dedicated Encryption**: 32-character secret key per session
-- **Redis Namespace**: `session:{sessionId}:*` prevents cross-session data access
+- **Redis Namespace**: keys scoped per session (parent + session id) prevent cross-session access
 - **Automatic Cleanup**: All session data cleared on disconnect
 
 ### Job Queue Coordination
@@ -332,9 +333,9 @@ Redis and BullMQ provide reliable, encrypted communication between server and pl
 ### Encryption Everywhere
 
 - **Session Keys**: Unique 32-character encryption key per client session
-- **All Data Encrypted**: ActivityStreams messages, credentials, job data - everything encrypted
-- **Job Queue**: All messages encrypted before queuing in Redis
-- **No Plaintext**: Sensitive data never stored or transmitted in plaintext
+- **Encrypted at rest**: credentials and job payloads are encrypted before being stored in Redis
+- **Encrypted on the queue**: job messages are encrypted between the server and platform workers
+- **Transport**: the browser↔server Socket.IO hop is not app-encrypted — serve over HTTPS/WSS
 
 ### Multi-Level Isolation
 
@@ -346,7 +347,7 @@ Redis and BullMQ provide reliable, encrypted communication between server and pl
 ### Validation Pipeline
 
 ```
-ActivityStreams Message → Schema Validation → Platform Verification → Encryption → Queue
+Incoming activity → normalize → schema validation → credential handling → encrypt → enqueue
 ```
 
 ## Platform Types
