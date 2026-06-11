@@ -98,7 +98,7 @@ with `error` as failure.
 sc.socket.emit('message', {
     type: 'send',
     '@context': sc.contextFor('irc'),
-    actor: { id: 'mynick', type: 'person' },
+    actor: { id: 'mynick@irc.libera.chat', type: 'person', name: 'mynick' },
     target: { id: '#sockethub', type: 'room' },
     object: { type: 'message', content: 'Hello channel' }
 }, (result) => {
@@ -148,7 +148,7 @@ success/failure.
 {
   "type": "send",            // Action: send, connect, join, fetch
   "@context": sc.contextFor("irc"),  // Canonical contexts for this platform
-  "actor": { "id": "user", "type": "person" },     // Who
+  "actor": { "id": "user@irc.libera.chat", "type": "person", "name": "user" },  // Who
   "target": { "id": "#room", "type": "room" },     // Where (optional)
   "object": { "type": "message", "content": "Hi!" }   // What
 }
@@ -173,7 +173,7 @@ await sc.ready();
 sc.socket.emit('message', {
     type: 'send',
     '@context': sc.contextFor('irc'),
-    actor: { id: 'me@example.com', type: 'person' },
+    actor: { id: 'me@irc.libera.chat', type: 'person', name: 'me' },
     target: { id: '#general', type: 'room' },
     object: {
         type: 'message',
@@ -192,7 +192,7 @@ await sc.ready();
 sc.socket.emit('credentials', {
     '@context': sc.contextFor('irc'),
     type: 'credentials',
-    actor: { id: 'mynick', type: 'person' },
+    actor: { id: 'mynick@irc.libera.chat', type: 'person', name: 'mynick' },
     object: {
         type: 'credentials',
         nick: 'mynick',
@@ -209,7 +209,7 @@ sc.socket.emit('credentials', {
 sc.socket.emit('message', {
     type: 'connect',
     '@context': sc.contextFor('irc'),
-    actor: { id: 'mynick', type: 'person' }
+    actor: { id: 'mynick@irc.libera.chat', type: 'person', name: 'mynick' }
 });
 ```
 
@@ -246,7 +246,7 @@ The rejected request returns an ActivityStream response with an `error`:
 {
   "context": "irc",
   "type": "connect",
-  "actor": { "id": "mynick", "type": "person" },
+  "actor": { "id": "mynick@irc.libera.chat", "type": "person", "name": "mynick" },
   "id": "1",
   "error": "username already in use"
 }
@@ -290,7 +290,7 @@ sc.socket.emit('message', {
 sc.socket.emit('message', {
     type: 'join',
     '@context': sc.contextFor('irc'),
-    actor: { id: 'mynick', type: 'person' },
+    actor: { id: 'mynick@irc.libera.chat', type: 'person', name: 'mynick' },
     target: { id: '#channel', type: 'room' }
 });
 ```

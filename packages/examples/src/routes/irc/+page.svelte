@@ -18,7 +18,7 @@ const actorIdStore = writable(
     `sh-${(Math.random() + 1).toString(36).substring(7)}`,
 );
 
-let server = $state("chat.freenode.net");
+let server = $state("irc.libera.chat");
 let port = $state(6697);
 let room = $state("#sh-random");
 let connecting = $state(false);
@@ -31,7 +31,7 @@ const sockethubState = writable({
 });
 
 let actor = $derived({
-    id: $actorIdStore,
+    id: `${$actorIdStore}@${server}`,
     type: "person",
     name: $actorIdStore,
 });

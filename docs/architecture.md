@@ -317,7 +317,7 @@ Redis and BullMQ provide reliable, encrypted communication between server and pl
     "https://sockethub.org/ns/context/v1.jsonld",
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
   ],
-  "actor": { "id": "mynick", "type": "person" },
+  "actor": { "id": "mynick@irc.libera.chat", "type": "person", "name": "mynick" },
   "target": { "id": "#javascript", "type": "room" },
   "object": { "type": "message", "content": "Hello!" }
 }
@@ -406,7 +406,7 @@ IRC: ":alice!user@host PRIVMSG #room :hello world"
 ActivityStreams: {
   "type": "send",
   "@context": ["...as2", "...sockethub", "...irc"],
-  "actor": { "id": "alice", "type": "person" },
+  "actor": { "id": "alice@irc.libera.chat", "type": "person", "name": "alice" },
   "target": { "id": "#room", "type": "room" },
   "object": { "type": "message", "content": "hello world" }
 }
@@ -418,7 +418,7 @@ ActivityStreams: {
 ActivityStreams: {
   "type": "join",
   "@context": ["...as2", "...sockethub", "...irc"],
-  "actor": { "id": "mynick", "type": "person" },
+  "actor": { "id": "mynick@irc.libera.chat", "type": "person", "name": "mynick" },
   "target": { "id": "#room", "type": "room" }
 }
   ↓
@@ -439,7 +439,7 @@ Web applications send the same ActivityStreams format regardless of target proto
     "https://sockethub.org/ns/context/v1.jsonld",
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
   ],
-  "actor": { "id": "user", "type": "person" },
+  "actor": { "id": "user@irc.libera.chat", "type": "person", "name": "user" },
   "target": { "id": "#room", "type": "room" },
   "object": { "type": "message", "content": "Hello!" }
 }
