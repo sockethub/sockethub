@@ -83,6 +83,13 @@ export interface PlatformRegistryEntry {
 
 export interface PlatformRegistryPayload {
     version?: string;
+    // Server-computed content fingerprint of the registry. The client echoes
+    // this on re-request so the server can reply "unchanged" instead of
+    // re-sending the full schema set (#1117).
+    fingerprint?: string;
+    // Set by the server when the echoed fingerprint matches: the registry is
+    // identical to what the client already holds, so no platforms are included.
+    unchanged?: boolean;
     contexts?: {
         as?: string;
         sockethub?: string;
@@ -425,9 +432,15 @@ export default class SockethubClient {
         if (!("io" in socketLike)) {
             return;
         }
-        this._socket.emit("schemas", (payload: unknown) => {
-            this.handleSchemasPayload(payload);
-        });
+        // Echo the fingerprint we last applied so the server can short-circuit
+        // with an "unchanged" reply on reconnect/re-request (#1117).
+        this._socket.emit(
+            "schemas",
+            this.registryFingerprint,
+            (payload: unknown) => {
+                this.handleSchemasPayload(payload);
+            },
+        );
     }
 
     /**
@@ -500,8 +513,13 @@ export default class SockethubClient {
             }
         }
         const normalizedPayload = this.buildPlatformRegistryPayload();
+        // Prefer the server-supplied fingerprint (what we echo back for #1117
+        // dedup); fall back to a locally-computed one for payloads that predate
+        // the fingerprint field (e.g. test fixtures).
         this.registryFingerprint =
-            this.computePayloadFingerprint(normalizedPayload);
+            typeof registry.fingerprint === "string"
+                ? registry.fingerprint
+                : this.computePayloadFingerprint(normalizedPayload);
         // Emit normalized registry payload so app code receives a stable shape.
         this.socket._emit("schemas", normalizedPayload);
         return normalizedPayload;
@@ -768,7 +786,25 @@ export default class SockethubClient {
         if (!payload || typeof payload !== "object") {
             return;
         }
-        const incomingFingerprint = this.computePayloadFingerprint(payload);
+        // Server short-circuit: the registry matches the fingerprint we echoed,
+        // so nothing was re-sent (#1117). Our cached registry is still valid —
+        // just complete any pending init cycle.
+        if ((payload as PlatformRegistryPayload).unchanged === true) {
+            if (this.initCycle) {
+                this.markReady(this.initCycle.reason);
+            } else if (this.initState !== "ready") {
+                this.markReady("schemas-update");
+            }
+            return;
+        }
+        // Prefer the server-supplied fingerprint so this dedup check compares
+        // like-for-like with the value stored in applyPlatformRegistry.
+        const serverFingerprint = (payload as PlatformRegistryPayload)
+            .fingerprint;
+        const incomingFingerprint =
+            typeof serverFingerprint === "string"
+                ? serverFingerprint
+                : this.computePayloadFingerprint(payload);
         if (
             this.initState === "ready" &&
             !this.initCycle &&
