@@ -2,7 +2,7 @@
  * This file is only imported if sentry reporting is enabled in the Sockethub config.
  */
 
-import * as Sentry from "@sentry/bun";
+import * as Sentry from "@sentry/node";
 import { createLogger } from "@sockethub/logger";
 import config from "./config";
 

@@ -4,7 +4,7 @@ Get up and running with Sockethub in 5 minutes.
 
 ## Prerequisites
 
-- **Node.js** v20+ — Sockethub runs on Node.js (development from source uses **Bun** v1.2+ as the toolchain)
+- **Node.js** v20+ — Sockethub runs on Node.js (development from source uses **Bun** v1.2.4+ as the toolchain)
 - **Redis** server v6.0+ running locally or remotely
 
 ## Installation

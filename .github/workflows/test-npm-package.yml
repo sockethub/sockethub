@@ -75,9 +75,8 @@ jobs:
           INPUT_RUNTIME: ${{ inputs.runtime || github.event.inputs.runtime || 'node' }}
           MATRIX_RUNTIME: ${{ matrix.runtime }}
         run: |
-          if [ "$INPUT_RUNTIME" = "both" ]; then
-            echo "run_test=true" >> "$GITHUB_OUTPUT"
-          elif [ "$INPUT_RUNTIME" = "$MATRIX_RUNTIME" ]; then
+          # node is the only matrix runtime; run when it matches (default 'node').
+          if [ "$INPUT_RUNTIME" = "$MATRIX_RUNTIME" ]; then
             echo "run_test=true" >> "$GITHUB_OUTPUT"
           else
             echo "run_test=false" >> "$GITHUB_OUTPUT"

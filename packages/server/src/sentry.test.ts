@@ -72,10 +72,13 @@ describe("Sentry Integration Bug - Issue #918", () => {
     });
 
     it("should verify the Sentry version has been upgraded to fix the bug", () => {
-        // This test documents that the problematic version has been fixed
+        // This test documents that the problematic version has been fixed.
+        // The server runs on Node.js and uses @sentry/node (the original #918
+        // Proxy bug was specific to @sentry/bun's Bun-serve instrumentation,
+        // which the Node SDK does not have).
         const packageJson = require("../package.json");
-        const currentVersion = packageJson.dependencies["@sentry/bun"];
-        
+        const currentVersion = packageJson.dependencies["@sentry/node"];
+
         // Should now be version 10.x or higher (which fixes the Proxy bug)
         expect(currentVersion).toMatch(/^(\^?10\.|^10\.|latest)/);
         

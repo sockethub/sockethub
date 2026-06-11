@@ -50,7 +50,7 @@
   },
   "homepage": "https://sockethub.org",
   "dependencies": {
-    "@sentry/bun": "^10.36.0",
+    "@sentry/node": "^10.36.0",
     "@sockethub/client": "^5.0.0-alpha.12",
     "@sockethub/crypto": "^1.0.0-alpha.12",
     "@sockethub/data-layer": "^1.0.0-alpha.12",
