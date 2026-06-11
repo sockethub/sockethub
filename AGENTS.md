@@ -51,8 +51,12 @@ The default branch is `master` (not `main`).
 
 ### Prerequisites
 
-- Bun >= 1.2.4 (runtime and package manager)
-- This is a Bun workspace monorepo managed by Lerna Lite
+- Node.js >= 20 — the **deployment runtime**. Sockethub is built and deployed to
+  run on Node.js; the published bins, Docker image, and CI release validation all
+  use Node.js.
+- Bun >= 1.2.4 — the **development toolchain** (package manager, builder, and unit
+  test runner). This is a Bun workspace monorepo managed by Lerna Lite. Bun is a
+  dev/build tool only; it is not a deployment target.
 
 ### Commands
 

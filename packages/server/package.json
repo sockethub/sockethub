@@ -25,7 +25,7 @@
   "bin": "bin/sockethub",
   "preferGlobal": true,
   "engines": {
-    "bun": ">=1.2.4"
+    "node": ">=20"
   },
   "keywords": [
     "sockethub",
@@ -50,7 +50,7 @@
   },
   "homepage": "https://sockethub.org",
   "dependencies": {
-    "@sentry/bun": "^10.36.0",
+    "@sentry/node": "^10.36.0",
     "@sockethub/client": "^5.0.0-alpha.12",
     "@sockethub/crypto": "^1.0.0-alpha.12",
     "@sockethub/data-layer": "^1.0.0-alpha.12",
@@ -70,7 +70,7 @@
     "clean": "rm -rf dist",
     "clean:deps": "rm -rf node_modules",
     "dev": "bun run --hot ./bin/sockethub --examples",
-    "start": "bun run ./bin/sockethub",
+    "start": "node ./bin/sockethub",
     "test": "bun test src/",
     "test:integration": "bun test ./integration/*.integration.ts"
   },

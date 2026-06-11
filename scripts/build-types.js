@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 /**
  * Emit TypeScript declaration files for published package entrypoints.
  *

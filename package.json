@@ -27,7 +27,7 @@
     "verdaccio": "^6.7.2"
   },
   "engines": {
-    "bun": ">=1.2.4"
+    "node": ">=20"
   },
   "private": true,
   "resolutions": {
@@ -72,8 +72,8 @@
     "lint:doc": "markdownlint '**/*.md'",
     "lint:doc:fix": "markdownlint --fix '**/*.md' && mdspell -n -a --en-us ./README.md ./packages/*/README.md",
     "lint:fix": "biome check --write && bun run lint:doc:fix",
-    "preinstall": "bunx only-allow bun",
-    "start": "bun run packages/sockethub/bin/sockethub-logged",
+    "start": "node packages/sockethub/bin/sockethub",
+    "start:logged": "bun packages/sockethub/bin/sockethub-logged",
     "stress:all": "bun run stress-tests/runner.ts --all",
     "stress:performance": "bun run stress-tests/runner.ts --type=performance",
     "stress:stress": "bun run stress-tests/runner.ts --type=stress",

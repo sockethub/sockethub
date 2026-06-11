@@ -48,11 +48,13 @@ and [Sockethub wiki](https://github.com/sockethub/sockethub/wiki).
 
 ## Install
 
-`$ bun install -g @sockethub/server`
+`$ npm install -g @sockethub/server`
 
 ## Running
 
-`$ LOG_LEVEL=debug bunx @sockethub/server`
+Sockethub runs on Node.js:
+
+`$ LOG_LEVEL=debug npx @sockethub/server`
 
 ### Environment Variables
 

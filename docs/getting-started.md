@@ -4,7 +4,7 @@ Get up and running with Sockethub in 5 minutes.
 
 ## Prerequisites
 
-- **Node.js** v18+ or **Bun** v1.2+ (examples use Bun)
+- **Node.js** v20+ — Sockethub runs on Node.js (development from source uses **Bun** v1.2.4+ as the toolchain)
 - **Redis** server v6.0+ running locally or remotely
 
 ## Installation
@@ -134,13 +134,17 @@ All communication uses ActivityStreams 2.0 format:
 
 ## Production Usage
 
-```bash
-# Build for production
-bun run build
+Deploy on Node.js — install the published package (or use the Docker image,
+which builds and runs the server on Node.js):
 
-# Start production server (examples disabled)
-bun run start
+```bash
+# Install and run on Node.js (examples disabled)
+npm install -g sockethub
+sockethub --host 0.0.0.0
 ```
+
+When developing from source, build with the Bun toolchain (`bun run build`),
+then run the built server on Node.js (`npm start`).
 
 ## Next Steps
 
