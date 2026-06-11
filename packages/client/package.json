@@ -14,7 +14,7 @@
     "dist/"
   ],
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   },
   "repository": {
     "type": "git",
