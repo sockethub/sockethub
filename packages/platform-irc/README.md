@@ -33,7 +33,7 @@ messages.
     "type": "person"
   },
   "target": {
-    "id": "#general@irc.libera.chat",
+    "id": "irc.libera.chat/#general",
     "type": "room"
   },
   "object": {
@@ -58,7 +58,7 @@ messages.
     "type": "person"
   },
   "target": {
-    "id": "#general@irc.libera.chat",
+    "id": "irc.libera.chat/#general",
     "type": "room"
   }
 }
@@ -104,7 +104,7 @@ messages.
     "type": "person"
   },
   "target": {
-    "id": "#general@irc.libera.chat",
+    "id": "irc.libera.chat/#general",
     "type": "room"
   },
   "object": {
@@ -153,7 +153,7 @@ messages.
     "type": "person"
   },
   "target": {
-    "id": "#general@irc.libera.chat",
+    "id": "irc.libera.chat/#general",
     "type": "room"
   },
   "object": {
@@ -173,7 +173,7 @@ messages.
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
   ],
   "actor": {
-    "id": "#general@irc.libera.chat",
+    "id": "irc.libera.chat/#general",
     "type": "room"
   },
   "target": {},

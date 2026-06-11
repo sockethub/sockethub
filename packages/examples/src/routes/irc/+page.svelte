@@ -151,9 +151,9 @@ async function connectIrc(): Promise<void> {
                     Join Channel and Chat
                 </h4>
                 <div class="space-y-6">
-                    <Room {actor} {sockethubState} bind:room context="irc" />
+                    <Room {actor} {sockethubState} bind:room context="irc" {server} />
                     <IncomingMessage />
-                    <SendMessage context="irc" {actor} {sockethubState} {room} />
+                    <SendMessage context="irc" {actor} {sockethubState} {room} {server} />
                 </div>
             </div>
         {:else}

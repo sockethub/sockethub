@@ -11,9 +11,12 @@ interface Props {
     context: string;
     sockethubState: SockethubStateStore;
     room: string;
+    // For IRC, the connection server used to qualify the room id as
+    // `server/#channel` (XMPP rooms are already full JIDs).
+    server?: string;
 }
 
-let { actor, context, sockethubState, room }: Props = $props();
+let { actor, context, sockethubState, room, server }: Props = $props();
 
 let message = $state("");
 let sending = $state(false);
@@ -35,7 +38,7 @@ async function sendMessage() {
                 content: messageToSend,
             },
             target: {
-                id: room,
+                id: context === "irc" && server ? `${server}/${room}` : room,
                 name: room,
                 type: "room",
             },

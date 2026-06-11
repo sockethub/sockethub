@@ -157,17 +157,23 @@ export class IRC implements PersistentPlatformInterface {
             if (err) {
                 return done(err);
             }
-            if (this.channels.has(job.target.name)) {
-                this.log.debug(`channel ${job.target.name} already joined`);
+            const channel = this.resolveIrcTarget(job.target);
+            if (!channel) {
+                return done(
+                    "IRC room targets must be server-qualified as 'server/#channel'",
+                );
+            }
+            if (this.channels.has(channel)) {
+                this.log.debug(`channel ${channel} already joined`);
                 return done();
             }
             // join channel
             this.jobQueue.push(() => {
-                this.hasJoined(job.target.name);
+                this.hasJoined(channel);
                 done();
             });
-            this.log.debug(`sending join ${job.target.name}`);
-            client.raw(["JOIN", job.target.name]);
+            this.log.debug(`sending join ${channel}`);
+            client.raw(["JOIN", channel]);
             client.raw(`PING ${job.actor.name}`);
         });
     }
@@ -186,9 +192,15 @@ export class IRC implements PersistentPlatformInterface {
             if (err) {
                 return done(err);
             }
+            const channel = this.resolveIrcTarget(job.target);
+            if (!channel) {
+                return done(
+                    "IRC room targets must be server-qualified as 'server/#channel'",
+                );
+            }
             // leave channel
-            this.hasLeft(job.target.name);
-            client.raw(["PART", job.target.name]);
+            this.hasLeft(channel);
+            client.raw(["PART", channel]);
             done();
         });
     }
@@ -212,6 +224,13 @@ export class IRC implements PersistentPlatformInterface {
 
             if (typeof job.object.content !== "string") {
                 return done("cannot send message with no object.content");
+            }
+
+            const recipient = this.resolveIrcTarget(job.target);
+            if (!recipient) {
+                return done(
+                    "IRC room targets must be server-qualified as 'server/#channel'",
+                );
             }
 
             const match = /(\/\w+)\s*([\s\S]*)/.exec(job.object.content);
@@ -242,7 +261,7 @@ export class IRC implements PersistentPlatformInterface {
                 );
                 const message = buildCommand(job.object.content);
                 // biome-ignore lint/style/useTemplate: IRC raw command formatting
-                client.raw("PRIVMSG " + job.target.name + " :" + message);
+                client.raw("PRIVMSG " + recipient + " :" + message);
                 // /me intentionally reports synchronous success rather than
                 // going through the jobQueue + PING/PONG round-trip used by
                 // normal sends. This is safe because:
@@ -262,9 +281,9 @@ export class IRC implements PersistentPlatformInterface {
             }
             if (job.object.type === "notice") {
                 // attempt to send as raw command
-                client.raw(`NOTICE ${job.target.name} :${job.object.content}`);
-            } else if (this.isJoined(job.target.name)) {
-                client.raw(`PRIVMSG ${job.target.name} :${job.object.content}`);
+                client.raw(`NOTICE ${recipient} :${job.object.content}`);
+            } else if (this.isJoined(recipient)) {
+                client.raw(`PRIVMSG ${recipient} :${job.object.content}`);
             } else {
                 return done(
                     "cannot send message to a channel of which you've not first joined.",
@@ -314,9 +333,15 @@ export class IRC implements PersistentPlatformInterface {
                 client.raw(["NICK", job.target.name]);
             } else if (job.object.type === "topic") {
                 // update topic
-                this.log.debug(`changing topic in channel ${job.target.name}`);
+                const channel = this.resolveIrcTarget(job.target);
+                if (!channel) {
+                    return done(
+                        "IRC room targets must be server-qualified as 'server/#channel'",
+                    );
+                }
+                this.log.debug(`changing topic in channel ${channel}`);
                 this.jobQueue.push(done);
-                client.raw(["topic", job.target.name, job.object.content]);
+                client.raw(["topic", channel, job.object.content]);
             } else {
                 return done(`unknown update action: ${job.object.type}`);
             }
@@ -340,10 +365,14 @@ export class IRC implements PersistentPlatformInterface {
             }
 
             if (job.object.type === "attendance") {
-                this.log.debug(
-                    `query() - sending NAMES for ${job.target.name}`,
-                );
-                client.raw(["NAMES", job.target.name]);
+                const channel = this.resolveIrcTarget(job.target);
+                if (!channel) {
+                    return done(
+                        "IRC room targets must be server-qualified as 'server/#channel'",
+                    );
+                }
+                this.log.debug(`query() - sending NAMES for ${channel}`);
+                client.raw(["NAMES", channel]);
                 done();
             } else {
                 done(`unknown 'type' '${job.object.type}'`);
@@ -377,6 +406,39 @@ export class IRC implements PersistentPlatformInterface {
     //
     // Private methods
     //
+
+    /**
+     * Resolve an activity target to its IRC recipient (channel or nick).
+     *
+     * Targets are server-qualified for consistency with what the platform emits
+     * (see irc2as): rooms are addressed as `server/#channel` and users (private
+     * messages) as `nick@server`. Returns `null` for a `room` target that isn't
+     * server-qualified (a bare `#channel`), which callers reject — bare channel
+     * names are no longer accepted.
+     *
+     * @param target activity stream target (`job.target`)
+     * @returns the IRC channel (`#channel`) or nick, or `null` for a bare room
+     */
+    private resolveIrcTarget(target?: {
+        id?: string;
+        name?: string;
+        type?: string;
+    }): string | null {
+        const id = target?.id ?? "";
+        const slash = id.indexOf("/");
+        if (slash !== -1) {
+            // server/#channel -> #channel
+            return id.slice(slash + 1);
+        }
+        if (target?.type === "room") {
+            // bare channel (no server) — rejected for consistency with inbound
+            return null;
+        }
+        const at = id.indexOf("@");
+        // nick@server -> nick (private message); otherwise pass through
+        return at !== -1 ? id.slice(0, at) : id;
+    }
+
     private isJoined(channel: string) {
         if (channel.indexOf("#") === 0) {
             // valid channel name

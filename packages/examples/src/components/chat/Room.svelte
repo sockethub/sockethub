@@ -12,9 +12,18 @@ interface Props {
     actor: ActorData;
     context: string;
     sockethubState: SockethubStateStore;
+    // For IRC, the connection server used to qualify the room id as
+    // `server/#channel` (XMPP rooms are already full JIDs).
+    server?: string;
 }
 
-let { room = $bindable(), actor, context, sockethubState }: Props = $props();
+let {
+    room = $bindable(),
+    actor,
+    context,
+    sockethubState,
+    server,
+}: Props = $props();
 
 let joining = $state(false);
 let lastJoinedRoom = $state("");
@@ -33,7 +42,7 @@ async function joinRoom(): Promise<void> {
         type: "join",
         actor: actorAsObject(actor),
         target: {
-            id: room,
+            id: context === "irc" && server ? `${server}/${room}` : room,
             name: room,
             type: "room",
         },

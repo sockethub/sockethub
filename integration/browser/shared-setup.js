@@ -349,7 +349,7 @@ export function joinIRCChannel(
             "@context": ctx("irc"),
             target: {
                 type: "room",
-                id: channel,
+                id: `${config.irc.host}/${channel}`,
                 name: channel,
             },
         },
@@ -376,7 +376,7 @@ export function sendIRCMessage(sh, actorId, nick, channel, content) {
             },
             target: {
                 type: "room",
-                id: channel,
+                id: `${config.irc.host}/${channel}`,
                 name: channel,
             },
         },
@@ -404,7 +404,7 @@ export function partIRCChannel(
             "@context": ctx("irc"),
             target: {
                 type: "room",
-                id: channel,
+                id: `${config.irc.host}/${channel}`,
                 name: channel,
             },
         },

@@ -94,4 +94,29 @@ describe("irc messages (inbound) object validation", () => {
             } as any),
         ).not.toEqual("");
     });
+
+    test("rejects a room target that is not server-qualified", () => {
+        expect(
+            validateActivityStream({
+                "@context": FULL_CTX,
+                type: "join",
+                actor: { id: "u@localhost", type: "person" },
+                target: { id: "#bare", type: "room" },
+                // biome-ignore lint/suspicious/noExplicitAny: test
+            } as any),
+        ).not.toEqual("");
+    });
+
+    test("accepts a person (PM) target without room qualification", () => {
+        expect(
+            validateActivityStream({
+                "@context": FULL_CTX,
+                type: "send",
+                actor: { id: "u@localhost", type: "person" },
+                target: { id: "friend@localhost", type: "person" },
+                object: { type: "message", content: "hi" },
+                // biome-ignore lint/suspicious/noExplicitAny: test
+            } as any),
+        ).toEqual("");
+    });
 });

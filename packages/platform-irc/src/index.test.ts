@@ -28,7 +28,7 @@ const newActor = {
 
 const targetRoom = {
     type: "room",
-    id: "irc.example.com/a-room",
+    id: "irc.example.com/#a-room",
     name: "#a-room",
 };
 
@@ -356,6 +356,25 @@ describe("Initialize IRC Platform", () => {
                 },
                 { object: { server: "a server address" } },
                 done,
+            );
+        });
+
+        it("rejects a join with a bare (unqualified) channel target", (done) => {
+            platform.join(
+                {
+                    "@context": IRC_CONTEXT,
+                    type: "join",
+                    actor: actor,
+                    target: {
+                        type: "room",
+                        id: "#bare-room",
+                        name: "#bare-room",
+                    },
+                },
+                (err) => {
+                    expect(err).toContain("server-qualified");
+                    done();
+                },
             );
         });
 
