@@ -44,6 +44,15 @@ jobs:
   test-packaged-current:
     runs-on: ubuntu-latest
 
+    # node is the gating runtime. The bun leg is non-blocking: it surfaces a
+    # known bun-runtime issue with engine.io HTTP long-polling on a loopback
+    # socket under XMPP-active load (browser-multiclient "Timeout waiting for
+    # ack") that node does not hit and docker masks. It is NOT a Sockethub code
+    # bug and NOT a bun-version regression (reproduces on the last-known-good
+    # bun 1.3.6). Tracked in #1118; keep it visible but non-blocking until the
+    # upstream bun/engine.io behaviour is resolved.
+    continue-on-error: ${{ matrix.runtime == 'bun' }}
+
     strategy:
       matrix:
         runtime: [bun, node]
