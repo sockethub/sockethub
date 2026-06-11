@@ -129,7 +129,7 @@ using ActivityStreams as the uniform message format.
 
 - **TypeScript**: Use proper types from `@sockethub/schemas`. Avoid `any`.
 - **Linting**: Biome handles formatting and style. Don't comment on style.
-- **Testing**: Test files named `*.test.ts`. Use `describe` and `test` (not `it`).
+- **Testing**: Test files named `*.test.ts`. Use `describe` and `it` (not `test`).
   Mock external dependencies. Test error paths, not just happy paths.
 - **Error Handling**: Always propagate errors to the caller. Never silently swallow errors.
   Log errors with context (session ID, platform, action).

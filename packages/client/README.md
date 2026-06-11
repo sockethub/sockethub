@@ -8,12 +8,40 @@ reconnection, and credential replay.
 ## What's Included
 
 - `SockethubClient` for connection and message handling
-- Schema-driven ActivityStreams validation and property linting (via `@sockethub/schemas`)
+- Schema-driven validation of outbound ActivityStreams messages (via `@sockethub/schemas`)
 - `contextFor(platform)` builds canonical `@context` arrays from server metadata
 - `ready()` promise and `ready`/`init_error` observability events
 - Automatic outbound queuing until initialization is complete
 - Auto-replay of credentials and connections on reconnect
 - A browser-ready bundle in `dist/`
+
+## How It Works
+
+`SockethubClient` wraps a [Socket.IO](https://socket.io) connection and manages
+everything between your app and the Sockethub server:
+
+1. **Schema registry handshake.** On connect (and every reconnect) the client
+   requests the server's *platform schema registry* — the contexts, versions,
+   and JSON schemas for each platform the server has loaded. It caches that
+   registry along with a content fingerprint the server provides. On reconnect
+   the client echoes the fingerprint; if nothing has changed the server replies
+   `unchanged` instead of re-sending the full schema set, so the (potentially
+   large) registry crosses the wire only when it actually changes.
+2. **Initialization lifecycle.** `ready()` resolves once the registry is
+   applied; `getInitState()` and the `ready` / `init_error` events expose the
+   same lifecycle. Outbound events emitted before the client is ready are queued
+   in memory and flushed automatically once initialization completes.
+3. **Message handling.** Outgoing `message`/`credentials` events are normalized
+   (string `actor`/`target` references are expanded to objects) and validated
+   against the originating platform's schema before they leave the client;
+   incoming platform events are normalized before being handed to your
+   `message` listener. Validation uses the same schemas the server enforces, so
+   malformed activities are caught locally rather than round-tripping.
+4. **Context composition.** `contextFor(platform)` builds the canonical
+   `@context` array for a platform from the cached registry.
+5. **Reconnect resilience.** Credentials, platform connections, and room joins
+   are kept in memory and replayed when the socket reconnects (see
+   [Security & State Management](#security--state-management)).
 
 ## Install
 
@@ -150,8 +178,9 @@ sc.socket.on("message", (msg) => {
 ## Sending messages
 
 Include `id`, `type`, and usually `name` on the `actor` for `credentials` and
-`message` events. The client lints unknown object properties using schemas from
-the server registry.
+`message` events. Before sending, the client validates each outgoing activity
+against the originating platform's schema from the server registry, surfacing a
+client-side error instead of dispatching a malformed message.
 
 ```javascript
 sc.socket.emit("message", {

@@ -109,8 +109,9 @@ describe("SockethubClient", () => {
             socket.io = {};
             socket.connected = true;
             sc.socket.connected = true;
-            socket.on("schemas", (ack: any) => {
-                if (typeof ack === "function") {
+            socket.on("schemas", (...args: any[]) => {
+                const ack = args.find((a) => typeof a === "function");
+                if (ack) {
                     ack(TEST_REGISTRY);
                 }
             });
@@ -158,8 +159,9 @@ describe("SockethubClient", () => {
             socket.io = {};
             socket.connected = true;
             sc.socket.connected = true;
-            socket.on("schemas", (ack: any) => {
-                if (typeof ack === "function") {
+            socket.on("schemas", (...args: any[]) => {
+                const ack = args.find((a) => typeof a === "function");
+                if (ack) {
                     ack(TEST_REGISTRY);
                 }
             });
@@ -175,6 +177,56 @@ describe("SockethubClient", () => {
             socket.emit("schemas", TEST_REGISTRY);
             const info = await sc.ready();
             expect(info.state).to.equal("ready");
+        });
+
+        it("echoes the fingerprint and reuses the registry on an 'unchanged' reply (#1117)", () => {
+            socket.io = {};
+            socket.connected = true;
+            sc.socket.connected = true;
+            const FP = "deadbeefdeadbeef";
+            const fingerprinted = { ...TEST_REGISTRY, fingerprint: FP };
+            const echoed: unknown[] = [];
+            socket.on("schemas", (...args: any[]) => {
+                const ack = args.find((a) => typeof a === "function");
+                const clientFp = args.find((a) => typeof a === "string");
+                echoed.push(clientFp);
+                if (!ack) {
+                    return;
+                }
+                ack(
+                    clientFp === FP
+                        ? { fingerprint: FP, unchanged: true }
+                        : fingerprinted,
+                );
+            });
+
+            // initial connect: no fingerprint echoed -> full registry sent
+            socket.emit("connect");
+            expect(sc.isSchemasReady()).to.equal(true);
+            expect(echoed[0]).to.equal(undefined);
+            const ctxBefore = sc.contextFor("test-xmpp");
+
+            // reconnect: client echoes the stored fingerprint and the server
+            // replies "unchanged"; the cached registry must survive.
+            socket.emit("disconnect");
+            socket.emit("connect");
+            expect(echoed).to.contain(FP);
+            expect(sc.isSchemasReady()).to.equal(true);
+            expect(sc.contextFor("test-xmpp")).to.eql(ctxBefore);
+        });
+
+        it("ignores an 'unchanged' reply when no registry is cached (#1117)", () => {
+            // A malformed or premature "unchanged" reply must not fast-path the
+            // client to ready with no validators registered.
+            expect(sc.isSchemasReady()).to.equal(false);
+            socket.emit("schemas", {
+                fingerprint: "deadbeefdeadbeef",
+                unchanged: true,
+            });
+            expect(sc.isSchemasReady()).to.equal(false);
+            expect(() => sc.contextFor("test-xmpp")).to.throw(
+                "Schema registry not loaded yet",
+            );
         });
 
         it("ready() rejects on timeout when schemas never arrive", async () => {
@@ -242,8 +294,9 @@ describe("SockethubClient", () => {
         it("connect", (done) => {
             expect(sc.socket.connected).to.be.false;
             socket.io = {};
-            socket.on("schemas", (ack: any) => {
-                if (typeof ack === "function") {
+            socket.on("schemas", (...args: any[]) => {
+                const ack = args.find((a) => typeof a === "function");
+                if (ack) {
                     ack({
                         contexts: {
                             as: "https://example.com/as2",
