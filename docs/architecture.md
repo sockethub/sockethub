@@ -346,9 +346,18 @@ Redis and BullMQ provide reliable, encrypted communication between server and pl
 
 ### Validation Pipeline
 
+The per-session middleware chain runs on each inbound event; the validated job is
+then handed to the job-queue layer, which encrypts the payload as it enqueues:
+
 ```
-Incoming activity → normalize → schema validation → credential handling → encrypt → enqueue
+middleware:  normalize → schema validation → credential handling
+job queue:   queue.add() → encrypt payload → enqueue (Redis/BullMQ)
 ```
+
+Encryption is not a middleware step — it happens inside `@sockethub/data-layer`
+(`JobQueue.createJob` → `encryptActivityStream`) when `platformInstance.queue.add()`
+is called; the worker decrypts via `decryptJobData` before running the platform
+handler.
 
 ## Platform Types
 
