@@ -513,13 +513,14 @@ export default class SockethubClient {
             }
         }
         const normalizedPayload = this.buildPlatformRegistryPayload();
-        // Prefer the server-supplied fingerprint (what we echo back for #1117
-        // dedup); fall back to a locally-computed one for payloads that predate
-        // the fingerprint field (e.g. test fixtures).
+        // Dedup only on the server's fingerprint, which is computed over the
+        // full payload (including schema bodies and types). Without one we leave
+        // the fingerprint unset so handleSchemasPayload never short-circuits and
+        // a schema change can't be silently missed (#1117 review).
         this.registryFingerprint =
             typeof registry.fingerprint === "string"
                 ? registry.fingerprint
-                : this.computePayloadFingerprint(normalizedPayload);
+                : undefined;
         // Emit normalized registry payload so app code receives a stable shape.
         this.socket._emit("schemas", normalizedPayload);
         return normalizedPayload;
@@ -754,57 +755,33 @@ export default class SockethubClient {
         this.flushOutboundQueue();
     }
 
-    private computePayloadFingerprint(payload: unknown): string | undefined {
-        if (!payload || typeof payload !== "object") {
-            return undefined;
-        }
-        const registry = payload as PlatformRegistryPayload;
-        if (
-            typeof registry.contexts?.as !== "string" ||
-            typeof registry.contexts?.sockethub !== "string" ||
-            !Array.isArray(registry.platforms)
-        ) {
-            return undefined;
-        }
-        const normalizedPlatforms = registry.platforms
-            .map((platform) => ({
-                id: platform.id,
-                version: platform.version,
-                contextUrl: platform.contextUrl,
-                contextVersion: platform.contextVersion,
-                schemaVersion: platform.schemaVersion,
-            }))
-            .sort((a, b) => a.id.localeCompare(b.id));
-        return JSON.stringify({
-            version: registry.version,
-            contexts: registry.contexts,
-            platforms: normalizedPlatforms,
-        });
-    }
-
     private handleSchemasPayload(payload: unknown) {
         if (!payload || typeof payload !== "object") {
             return;
         }
         // Server short-circuit: the registry matches the fingerprint we echoed,
-        // so nothing was re-sent (#1117). Our cached registry is still valid —
-        // just complete any pending init cycle.
+        // so nothing was re-sent (#1117). Only honor this when we actually hold
+        // a cached registry to reuse — a malformed or empty "unchanged" reply
+        // must not fast-path init to ready with no validators registered.
         if ((payload as PlatformRegistryPayload).unchanged === true) {
-            if (this.initCycle) {
-                this.markReady(this.initCycle.reason);
-            } else if (this.initState !== "ready") {
-                this.markReady("schemas-update");
+            const haveCachedRegistry =
+                typeof this.registryFingerprint === "string" &&
+                this.platformRegistry.size > 0;
+            if (haveCachedRegistry) {
+                if (this.initCycle) {
+                    this.markReady(this.initCycle.reason);
+                } else if (this.initState !== "ready") {
+                    this.markReady("schemas-update");
+                }
+                return;
             }
-            return;
+            // Nothing cached to reuse: fall through so applyPlatformRegistry
+            // rejects the contentless payload and surfaces an init error.
         }
-        // Prefer the server-supplied fingerprint so this dedup check compares
-        // like-for-like with the value stored in applyPlatformRegistry.
-        const serverFingerprint = (payload as PlatformRegistryPayload)
+        // Dedup only against the server-supplied fingerprint (which is what we
+        // stored in applyPlatformRegistry); absent one, always re-apply.
+        const incomingFingerprint = (payload as PlatformRegistryPayload)
             .fingerprint;
-        const incomingFingerprint =
-            typeof serverFingerprint === "string"
-                ? serverFingerprint
-                : this.computePayloadFingerprint(payload);
         if (
             this.initState === "ready" &&
             !this.initCycle &&

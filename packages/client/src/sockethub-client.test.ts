@@ -215,6 +215,20 @@ describe("SockethubClient", () => {
             expect(sc.contextFor("test-xmpp")).to.eql(ctxBefore);
         });
 
+        it("ignores an 'unchanged' reply when no registry is cached (#1117)", () => {
+            // A malformed or premature "unchanged" reply must not fast-path the
+            // client to ready with no validators registered.
+            expect(sc.isSchemasReady()).to.equal(false);
+            socket.emit("schemas", {
+                fingerprint: "deadbeefdeadbeef",
+                unchanged: true,
+            });
+            expect(sc.isSchemasReady()).to.equal(false);
+            expect(() => sc.contextFor("test-xmpp")).to.throw(
+                "Schema registry not loaded yet",
+            );
+        });
+
         it("ready() rejects on timeout when schemas never arrive", async () => {
             const timeoutSocket = new EventEmitter();
             timeoutSocket.connected = true;
