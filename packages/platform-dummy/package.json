@@ -21,7 +21,7 @@
     "dist/"
   ],
   "engines": {
-    "bun": ">=1.2"
+    "node": ">=22"
   },
   "keywords": [
     "sockethub",

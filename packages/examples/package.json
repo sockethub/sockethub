@@ -6,7 +6,7 @@
     "build"
   ],
   "engines": {
-    "bun": ">=1.2.4"
+    "node": ">=22"
   },
   "keywords": [
     "sockethub",

@@ -8,9 +8,9 @@ on:
         required: false
         default: ''
       runtime:
-        description: Runtime to test (bun, node, both)
+        description: Deployment runtime to test (node)
         required: false
-        default: both
+        default: node
       suite:
         description: Test suite to run (all, browser)
         required: false
@@ -23,10 +23,10 @@ on:
         type: string
         default: ''
       runtime:
-        description: Runtime to test (bun, node, both)
+        description: Deployment runtime to test (node)
         required: false
         type: string
-        default: both
+        default: node
       suite:
         description: Test suite to run (all, browser)
         required: false
@@ -46,7 +46,10 @@ jobs:
 
     strategy:
       matrix:
-        runtime: [bun, node]
+        # node is the only supported deployment runtime; releases are validated
+        # against node. bun remains a dev/build tool (used in the build step
+        # below), not a deployment target.
+        runtime: [node]
       fail-fast: false
 
     steps:
@@ -69,7 +72,7 @@ jobs:
       - name: Determine runtime
         id: runtime
         env:
-          INPUT_RUNTIME: ${{ inputs.runtime || github.event.inputs.runtime || 'both' }}
+          INPUT_RUNTIME: ${{ inputs.runtime || github.event.inputs.runtime || 'node' }}
           MATRIX_RUNTIME: ${{ matrix.runtime }}
         run: |
           if [ "$INPUT_RUNTIME" = "both" ]; then

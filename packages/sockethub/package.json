@@ -9,7 +9,7 @@
   "bin": "bin/sockethub",
   "preferGlobal": true,
   "engines": {
-    "bun": ">=1.2.4"
+    "node": ">=22"
   },
   "keywords": [
     "sockethub",
@@ -47,10 +47,9 @@
     "build": "bun build.js",
     "clean:deps": "rm -rf node_modules",
     "dev": "bun run --hot ./bin/sockethub --examples",
-    "info": "bun run ./bin/sockethub --info",
-    "start": "bun run ./bin/sockethub-logged",
-    "start:verbose": "bun run ./bin/sockethub",
-    "start:quiet": "bun run ./bin/sockethub"
+    "info": "node ./bin/sockethub --info",
+    "start": "node ./bin/sockethub",
+    "start:logged": "bun ./bin/sockethub-logged"
   },
   "gitHead": "cc495a5fcf7ce19a8f328a34bbc8cd1439bb67ce"
 }
