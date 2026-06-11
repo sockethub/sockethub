@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { crypto } from "@sockethub/crypto";
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import { CredentialsStore } from "@sockethub/data-layer";
@@ -111,6 +112,12 @@ class Sockethub {
     processManager!: ProcessManager;
     private rateLimiter!: ReturnType<typeof createRateLimiter>;
     private serverVersion?: string;
+    private platformRegistryPayloadCache?: {
+        payload: ReturnType<Sockethub["buildPlatformRegistryPayload"]> & {
+            fingerprint: string;
+        };
+        fingerprint: string;
+    };
 
     /**
      * Build the platform registry payload sent to clients.
@@ -138,6 +145,28 @@ class Sockethub {
                 }),
             ),
         };
+    }
+
+    /**
+     * Return the platform registry payload plus a content fingerprint, computed
+     * once and cached. The registry is static after platform load, so clients
+     * that already hold a matching fingerprint can be told "unchanged" instead
+     * of being re-sent the full (tens-of-KB) schema set on every reconnect or
+     * re-request (see #1117).
+     */
+    private getPlatformRegistryPayload() {
+        if (!this.platformRegistryPayloadCache) {
+            const base = this.buildPlatformRegistryPayload();
+            const fingerprint = createHash("sha256")
+                .update(JSON.stringify(base))
+                .digest("hex")
+                .slice(0, 16);
+            this.platformRegistryPayloadCache = {
+                payload: { fingerprint, ...base },
+                fingerprint,
+            };
+        }
+        return this.platformRegistryPayloadCache;
     }
 
     constructor() {
@@ -215,23 +244,33 @@ class Sockethub {
             );
 
         sessionLog.debug("socket.io connection");
-        const platformRegistryPayload = this.buildPlatformRegistryPayload();
+        const { payload: platformRegistryPayload, fingerprint } =
+            this.getPlatformRegistryPayload();
 
         // Rate limiting middleware - runs on every incoming event
         socket.use((event, next) => {
             this.rateLimiter(socket, event[0], next);
         });
 
-        // Send schema metadata to clients immediately and on-demand.
-        socket.emit("schemas", platformRegistryPayload);
+        // Serve the platform registry on demand. The client (SockethubClient)
+        // requests it on every connect/reconnect and echoes the fingerprint it
+        // last received; when that matches we reply "unchanged" so a reconnect
+        // or re-request doesn't re-transmit the full schema set (#1117).
         socket.on("schemas", (...args: unknown[]) => {
             const ack = args.find(
                 (a): a is (payload: unknown) => void => typeof a === "function",
             );
+            const clientFingerprint = args.find(
+                (a): a is string => typeof a === "string",
+            );
+            const response =
+                clientFingerprint === fingerprint
+                    ? { fingerprint, unchanged: true }
+                    : platformRegistryPayload;
             if (ack) {
-                ack(platformRegistryPayload);
+                ack(response);
             } else {
-                socket.emit("schemas", platformRegistryPayload);
+                socket.emit("schemas", response);
             }
         });
 
