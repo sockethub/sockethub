@@ -744,4 +744,11 @@ describe("applyFetchFilters", () => {
             4,
         );
     });
+
+    it("excludes undated entries even when since is the epoch", () => {
+        const result = applyFetchFilters(articles, {
+            since: "1970-01-01T00:00:00.000Z",
+        });
+        expect(result.map((a) => a.object?.datenum)).toEqual([300, 200, 100]);
+    });
 });

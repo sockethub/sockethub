@@ -228,7 +228,13 @@ export function applyFetchFilters(
         if (!Number.isNaN(sinceMs)) {
             result = result.filter((article) => {
                 const datenum = article.object?.datenum;
-                return typeof datenum === "number" && datenum >= sinceMs;
+                // `datenum === 0` is the unparseable-date sentinel from
+                // buildFeedItem; exclude it even when `since` is the epoch.
+                return (
+                    typeof datenum === "number" &&
+                    datenum !== 0 &&
+                    datenum >= sinceMs
+                );
             });
         }
     }
