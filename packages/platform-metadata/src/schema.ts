@@ -15,20 +15,11 @@ export const PlatformMetadataSchema = {
                 type: "string",
                 enum: ["fetch"],
             },
-            object: {
-                type: "object",
-                oneOf: [
-                    { $ref: "#/definitions/objectTypes/feed-parameters-url" },
-                ],
-            },
-        },
-        definitions: {
-            objectTypes: {
-                "feed-parameters-url": {
-                    type: "object",
-                    additionalProperties: true,
-                },
-            },
+            // A metadata fetch takes no parameters — the target URL is the
+            // actor id. Strictly reject any inbound `object` rather than leave
+            // a permissive, unenforced placeholder. (The outbound response
+            // carries an `object`/`page`, validated by the `responses` schema.)
+            object: false,
         },
     },
     // Outbound (platform -> client): the metadata platform echoes the `fetch`
