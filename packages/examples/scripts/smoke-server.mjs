@@ -90,6 +90,9 @@ const sockethub = spawn(
             ...process.env,
             REDIS_URL: "redis://127.0.0.1:6379",
             PORT: "10550",
+            // The smoke test serves its feed fixture from loopback, which
+            // the feeds SSRF guard blocks by default. Dev/test only.
+            SOCKETHUB_FEEDS_ALLOW_PRIVATE_ADDRESSES: "true",
         },
     },
 );

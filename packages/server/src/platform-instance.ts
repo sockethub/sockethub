@@ -32,6 +32,7 @@ export interface PlatformInstanceParams {
 type EnvFormat = {
     LOG_LEVEL?: string;
     REDIS_URL: string;
+    SOCKETHUB_FEEDS_ALLOW_PRIVATE_ADDRESSES?: string;
     SOCKETHUB_PLATFORM_CHILD?: string;
     SOCKETHUB_PLATFORM_CONFIG?: string;
     SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS?: string;
@@ -103,6 +104,10 @@ export default class PlatformInstance {
         };
         if (process.env.LOG_LEVEL) {
             env.LOG_LEVEL = process.env.LOG_LEVEL;
+        }
+        if (process.env.SOCKETHUB_FEEDS_ALLOW_PRIVATE_ADDRESSES) {
+            env.SOCKETHUB_FEEDS_ALLOW_PRIVATE_ADDRESSES =
+                process.env.SOCKETHUB_FEEDS_ALLOW_PRIVATE_ADDRESSES;
         }
         const heartbeatInterval = config.get("platformHeartbeat:intervalMs");
         if (typeof heartbeatInterval !== "undefined") {
