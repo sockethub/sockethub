@@ -101,6 +101,11 @@ export default class Feeds implements PlatformInterface {
      * response to the original request with a complete ActivityStreams Collection
      * containing all feed items and metadata.
      *
+     * The request may carry an optional `object` with filtering parameters:
+     * `since` (RFC3339 date-time; only entries published at or after this
+     * instant, undated entries excluded) and `limit` (integer >= 1; cap on
+     * returned entries, applied after `since`, feed order preserved).
+     *
      * @param job - Activity streams object containing job data with actor.id as feed URL
      * @param done - Callback function that receives (error, ASCollection)
      * See the package README for canonical request and response payload

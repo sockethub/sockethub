@@ -31,6 +31,38 @@ web applications to consume feed content.
 }
 ```
 
+#### Optional Fetch Parameters
+
+A fetch request may carry an `object` with filtering parameters. The `object`
+is strictly validated: only the parameters below are accepted, anything else
+is rejected.
+
+```json
+{
+  "type": "fetch",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/feeds/v1.jsonld"
+  ],
+  "actor": {
+    "id": "https://example.com/feed.xml",
+    "type": "feed"
+  },
+  "object": {
+    "since": "2024-01-01T00:00:00.000Z",
+    "limit": 10
+  }
+}
+```
+
+* **since** (RFC3339 `date-time` string) — only return entries published at or
+  after this instant. Entries without a parseable publication date are
+  excluded when `since` is set, since they cannot be confirmed as recent
+  enough.
+* **limit** (integer, minimum `1`) — return at most this many entries. Applied
+  after `since`, preserving feed order.
+
 ### Response Format
 
 Returns an ActivityStreams Collection with feed entries:
@@ -60,7 +92,7 @@ Returns an ActivityStreams Collection with feed entries:
       },
       "object": {
         "id": "https://example.com/post/1",
-        "type": "article",
+        "type": "note",
         "title": "Blog Post Title",
         "content": "Post content...",
         "url": "https://example.com/post/1",
@@ -96,12 +128,7 @@ Returns an ActivityStreams Collection with feed entries:
         "name": "Best Feed Inc.",
         "id": "http://blog.example.com/rss",
         "description": "Where the best feed comes to be the best",
-        "image": {
-          "width": "144",
-          "height": "144",
-          "url": "http://blog.example.com/images/bestfeed.jpg"
-        },
-        "favicon": "http://blog.example.com/favicon.ico",
+        "image": "http://blog.example.com/images/bestfeed.jpg",
         "link": "http://blog.example.com",
         "categories": ["best", "feed", "animals"],
         "language": "en",
@@ -109,22 +136,14 @@ Returns an ActivityStreams Collection with feed entries:
       },
       "object": {
         "id": "http://blog.example.com/articles/about-stuff",
-        "type": "article",
+        "type": "note",
         "title": "About stuff...",
         "url": "http://blog.example.com/articles/about-stuff",
-        "date": "2013-05-28T12:00:00.000Z",
+        "published": "2013-05-28T12:00:00.000Z",
         "datenum": 1369742400000,
         "brief": "Brief synopsis of stuff...",
         "content": "Once upon a time...",
-        "contentType": "text",
-        "media": [
-          {
-            "length": "13908973",
-            "type": "audio/mpeg",
-            "url": "http://blog.example.com/media/thing.mpg"
-          }
-        ],
-        "tags": ["foo", "bar"]
+        "contentType": "text"
       }
     }
   ]
