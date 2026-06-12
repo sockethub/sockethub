@@ -12,7 +12,13 @@ import {
 import getPodcastFromFeed from "podparse";
 import feedsSchema from "./schema";
 import { RSSFeed } from "./index.test.data";
-import Feeds, { buildFeedItem, datesEqual } from "./index";
+import Feeds, {
+    applyFetchFilters,
+    buildFeedItem,
+    datesEqual,
+    extractFetchParams,
+    type FeedFetchParams,
+} from "./index";
 
 addPlatformSchema(feedsSchema.messages, "feeds/messages");
 addPlatformSchema(feedsSchema.responses, "feeds/responses");
@@ -49,8 +55,8 @@ function loadFixture(name: string): string {
 }
 
 describe("inbound messages schema", () => {
-    it("validates a well-formed fetch activity carrying an object payload", () => {
-        const msg = {
+    function fetchMsg(object?: Record<string, unknown>): ActivityStream {
+        return {
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://sockethub.org/ns/context/v1.jsonld",
@@ -61,18 +67,48 @@ describe("inbound messages schema", () => {
                 id: "https://example.com/feed.xml",
                 type: "feed",
             },
-            object: {
-                type: "feed-parameters",
-                url: "https://example.com/feed.xml",
-            },
+            ...(object ? { object } : {}),
         } as unknown as ActivityStream;
-        expect(validateActivityStream(msg)).toEqual("");
+    }
+
+    it("validates a fetch with no object (the common case)", () => {
+        expect(validateActivityStream(fetchMsg())).toEqual("");
     });
 
-    it("has no impossible identical-branch oneOf on object", () => {
+    it("validates a fetch carrying since and limit parameters", () => {
+        expect(
+            validateActivityStream(
+                fetchMsg({ since: "2024-01-01T00:00:00.000Z", limit: 10 }),
+            ),
+        ).toEqual("");
+    });
+
+    it("rejects an unknown parameter on the object", () => {
+        expect(
+            validateActivityStream(fetchMsg({ url: "https://example.com" })),
+        ).not.toEqual("");
+    });
+
+    it("rejects a non-integer or out-of-range limit", () => {
+        expect(validateActivityStream(fetchMsg({ limit: 0 }))).not.toEqual("");
+        expect(validateActivityStream(fetchMsg({ limit: 1.5 }))).not.toEqual(
+            "",
+        );
+    });
+
+    it("rejects a since that is not an RFC3339 date-time", () => {
+        expect(
+            validateActivityStream(fetchMsg({ since: "last tuesday" })),
+        ).not.toEqual("");
+    });
+
+    it("has no permissive additionalProperties hole on object", () => {
         expect(feedsSchema.messages.properties.object).not.toHaveProperty(
             "oneOf",
         );
+        expect(
+            feedsSchema.messages.properties.object.additionalProperties,
+        ).toBe(false);
         expect(feedsSchema.messages).not.toHaveProperty("definitions");
     });
 });
@@ -603,6 +639,109 @@ describe("platform-feeds", () => {
 
                 expect(results.items.length).toEqual(results.totalItems);
             },
+        );
+    });
+
+    it("limit caps the number of returned entries", () => {
+        platform.fetch(
+            { id: "limit-id", actor: { id: "some url" }, object: { limit: 5 } },
+            (err, results: ASCollection) => {
+                expect(err).toBeNull();
+                expect(results.totalItems).toEqual(5);
+                expect(results.items.length).toEqual(5);
+            },
+        );
+    });
+
+    it("since in the future filters out all entries", () => {
+        platform.fetch(
+            {
+                id: "since-future-id",
+                actor: { id: "some url" },
+                object: { since: "2999-01-01T00:00:00.000Z" },
+            },
+            (err, results: ASCollection) => {
+                expect(err).toBeNull();
+                expect(results.totalItems).toEqual(0);
+            },
+        );
+    });
+
+    it("since at the epoch keeps every entry", () => {
+        platform.fetch(
+            {
+                id: "since-epoch-id",
+                actor: { id: "some url" },
+                object: { since: "1970-01-01T00:00:00.000Z" },
+            },
+            (err, results: ASCollection) => {
+                expect(err).toBeNull();
+                expect(results.totalItems).toEqual(20);
+            },
+        );
+    });
+});
+
+describe("extractFetchParams", () => {
+    it("returns empty params for missing or non-object input", () => {
+        expect(extractFetchParams(undefined)).toEqual({});
+        expect(extractFetchParams(null)).toEqual({});
+        expect(extractFetchParams("nope")).toEqual({});
+    });
+
+    it("reads since and a valid integer limit", () => {
+        expect(
+            extractFetchParams({ since: "2024-01-01T00:00:00.000Z", limit: 3 }),
+        ).toEqual({ since: "2024-01-01T00:00:00.000Z", limit: 3 });
+    });
+
+    it("ignores a non-integer or out-of-range limit", () => {
+        expect(extractFetchParams({ limit: 0 })).toEqual({});
+        expect(extractFetchParams({ limit: 2.5 })).toEqual({});
+        expect(extractFetchParams({ limit: "5" })).toEqual({});
+    });
+});
+
+describe("applyFetchFilters", () => {
+    function article(
+        datenum: number,
+    ): Parameters<typeof applyFetchFilters>[0][number] {
+        return {
+            "@context": [feedsSchema.contextUrl],
+            type: "post",
+            actor: { id: "a", type: "feed", name: "n", link: "l" },
+            object: { datenum },
+        } as unknown as Parameters<typeof applyFetchFilters>[0][number];
+    }
+
+    const articles = [article(300), article(200), article(100), article(0)];
+
+    it("returns all entries when no params are given", () => {
+        expect(applyFetchFilters(articles, {}).length).toEqual(4);
+    });
+
+    it("drops entries published before since (undated excluded)", () => {
+        const result = applyFetchFilters(articles, { since: new Date(150).toISOString() });
+        expect(result.map((a) => a.object?.datenum)).toEqual([300, 200]);
+    });
+
+    it("preserves feed order and caps at limit", () => {
+        const result = applyFetchFilters(articles, { limit: 2 });
+        expect(result.map((a) => a.object?.datenum)).toEqual([300, 200]);
+    });
+
+    it("applies since before limit", () => {
+        const params: FeedFetchParams = {
+            since: new Date(50).toISOString(),
+            limit: 2,
+        };
+        const result = applyFetchFilters(articles, params);
+        expect(result.map((a) => a.object?.datenum)).toEqual([300, 200]);
+    });
+
+    it("ignores an unparseable since", () => {
+        expect(applyFetchFilters(articles, { since: "garbage" }).length).toEqual(
+            4,
         );
     });
 });

@@ -108,7 +108,8 @@ export default class Feeds implements PlatformInterface {
      */
     fetch(job: ActivityStream, done: PlatformCallback) {
         // ready to execute job
-        this.fetchFeed(job.actor.id, job.id)
+        const params = extractFetchParams(job.object);
+        this.fetchFeed(job.actor.id, job.id, params)
             .then((results) => {
                 return done(null, {
                     id: job.id || null,
@@ -149,6 +150,7 @@ export default class Feeds implements PlatformInterface {
     private async fetchFeed(
         url: string,
         id: string,
+        params: FeedFetchParams = {},
     ): Promise<Array<PlatformFeedsActivityStream>> {
         this.log.debug(`fetching ${url}`);
         const res = await this.makeRequest(url);
@@ -170,9 +172,70 @@ export default class Feeds implements PlatformInterface {
                 );
             }
         }
-        this.log.debug(`fetched ${articles.length} articles`);
-        return articles;
+        const filtered = applyFetchFilters(articles, params);
+        this.log.debug(
+            `fetched ${articles.length} articles, returning ${filtered.length}`,
+        );
+        return filtered;
     }
+}
+
+/**
+ * Optional parameters a client may attach to a `fetch` request `object`.
+ * Mirrors the strict `messages.object` schema; both must stay in sync.
+ */
+export interface FeedFetchParams {
+    since?: string;
+    limit?: number;
+}
+
+/**
+ * Extract the supported fetch parameters from a request `object`. Inbound
+ * messages are already validated against the strict `messages` schema on the
+ * server, so this only needs to read the recognized fields defensively (the
+ * platform may also be called directly, e.g. in tests).
+ */
+export function extractFetchParams(object: unknown): FeedFetchParams {
+    if (!object || typeof object !== "object") {
+        return {};
+    }
+    const { since, limit } = object as Record<string, unknown>;
+    const params: FeedFetchParams = {};
+    if (typeof since === "string") {
+        params.since = since;
+    }
+    if (typeof limit === "number" && Number.isInteger(limit) && limit >= 1) {
+        params.limit = limit;
+    }
+    return params;
+}
+
+/**
+ * Apply the `since` and `limit` fetch parameters to built feed entries.
+ *
+ * - `since`: drop entries published before the given instant. Entries without a
+ *   parseable date (`datenum === 0`) are excluded when `since` is set, since we
+ *   cannot confirm they are recent enough. An unparseable `since` is ignored.
+ * - `limit`: return at most `limit` entries, preserving feed order.
+ */
+export function applyFetchFilters(
+    articles: Array<PlatformFeedsActivityStream>,
+    params: FeedFetchParams,
+): Array<PlatformFeedsActivityStream> {
+    let result = articles;
+    if (params.since) {
+        const sinceMs = Date.parse(params.since);
+        if (!Number.isNaN(sinceMs)) {
+            result = result.filter((article) => {
+                const datenum = article.object?.datenum;
+                return typeof datenum === "number" && datenum >= sinceMs;
+            });
+        }
+    }
+    if (params.limit !== undefined && result.length > params.limit) {
+        result = result.slice(0, params.limit);
+    }
+    return result;
 }
 
 interface FeedItem extends Episode {
