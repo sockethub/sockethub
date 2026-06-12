@@ -13,23 +13,16 @@ export default {
                 type: "string",
                 enum: ["fetch"],
             },
+            // Optional fetch parameters. When present, strictly validated: only
+            // the parameters the platform actually honors are allowed.
             object: {
                 type: "object",
-                oneOf: [
-                    { $ref: "#/definitions/objectTypes/feed-parameters-date" },
-                    { $ref: "#/definitions/objectTypes/feed-parameters-url" },
-                ],
-            },
-        },
-        definitions: {
-            objectTypes: {
-                "feed-parameters-date": {
-                    type: "object",
-                    additionalProperties: true,
-                },
-                "feed-parameters-url": {
-                    type: "object",
-                    additionalProperties: true,
+                additionalProperties: false,
+                properties: {
+                    // Only return entries published at or after this instant.
+                    since: { type: "string", format: "date-time" },
+                    // Cap the number of returned entries (feed order preserved).
+                    limit: { type: "integer", minimum: 1 },
                 },
             },
         },

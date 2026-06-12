@@ -277,7 +277,9 @@ sc.socket.emit('message', {
 sc.socket.emit('message', {
     type: 'fetch',
     '@context': sc.contextFor('feeds'),
-    actor: { id: 'https://example.com/feed.xml', type: 'feed' }
+    actor: { id: 'https://example.com/feed.xml', type: 'feed' },
+    // optional filters: entries published at/after `since`, at most `limit`
+    object: { since: '2024-01-01T00:00:00.000Z', limit: 10 }
 });
 ```
 

@@ -2,16 +2,25 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { beforeEach, describe, expect, it, test } from "bun:test";
 import type { ASCollection, PlatformSession } from "@sockethub/schemas";
+import type { ActivityStream } from "@sockethub/schemas";
 import {
     addPlatformContext,
     addPlatformSchema,
+    validateActivityStream,
     validateActivityStreamResponse,
 } from "@sockethub/schemas";
 import getPodcastFromFeed from "podparse";
 import feedsSchema from "./schema";
 import { RSSFeed } from "./index.test.data";
-import Feeds, { buildFeedItem, datesEqual } from "./index";
+import Feeds, {
+    applyFetchFilters,
+    buildFeedItem,
+    datesEqual,
+    extractFetchParams,
+    type FeedFetchParams,
+} from "./index";
 
+addPlatformSchema(feedsSchema.messages, "feeds/messages");
 addPlatformSchema(feedsSchema.responses, "feeds/responses");
 addPlatformContext("feeds", feedsSchema.contextUrl);
 
@@ -44,6 +53,65 @@ const FIXTURES_DIR = path.join(import.meta.dirname, "../test/fixtures");
 function loadFixture(name: string): string {
     return readFileSync(path.join(FIXTURES_DIR, name), "utf8");
 }
+
+describe("inbound messages schema", () => {
+    function fetchMsg(object?: Record<string, unknown>): ActivityStream {
+        return {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                feedsSchema.contextUrl,
+            ],
+            type: "fetch",
+            actor: {
+                id: "https://example.com/feed.xml",
+                type: "feed",
+            },
+            ...(object ? { object } : {}),
+        } as unknown as ActivityStream;
+    }
+
+    it("validates a fetch with no object (the common case)", () => {
+        expect(validateActivityStream(fetchMsg())).toEqual("");
+    });
+
+    it("validates a fetch carrying since and limit parameters", () => {
+        expect(
+            validateActivityStream(
+                fetchMsg({ since: "2024-01-01T00:00:00.000Z", limit: 10 }),
+            ),
+        ).toEqual("");
+    });
+
+    it("rejects an unknown parameter on the object", () => {
+        expect(
+            validateActivityStream(fetchMsg({ url: "https://example.com" })),
+        ).not.toEqual("");
+    });
+
+    it("rejects a non-integer or out-of-range limit", () => {
+        expect(validateActivityStream(fetchMsg({ limit: 0 }))).not.toEqual("");
+        expect(validateActivityStream(fetchMsg({ limit: 1.5 }))).not.toEqual(
+            "",
+        );
+    });
+
+    it("rejects a since that is not an RFC3339 date-time", () => {
+        expect(
+            validateActivityStream(fetchMsg({ since: "last tuesday" })),
+        ).not.toEqual("");
+    });
+
+    it("has no permissive additionalProperties hole on object", () => {
+        expect(feedsSchema.messages.properties.object).not.toHaveProperty(
+            "oneOf",
+        );
+        expect(
+            feedsSchema.messages.properties.object.additionalProperties,
+        ).toBe(false);
+        expect(feedsSchema.messages).not.toHaveProperty("definitions");
+    });
+});
 
 describe("datesEqual", () => {
     test("treats two null/undefined as equal", () => {
@@ -331,6 +399,24 @@ describe("platform-feeds", () => {
         };
     });
 
+    // Promisify platform.fetch so tests await its completion. With the bare
+    // callback style the test body returns before the callback fires, and
+    // assertion failures escape as unhandled rejections instead of failing
+    // the test.
+    function fetchCollection(
+        job: Parameters<Feeds["fetch"]>[0],
+    ): Promise<ASCollection> {
+        return new Promise((resolve, reject) => {
+            platform.fetch(job, (err, results: ASCollection) => {
+                if (err) {
+                    reject(err instanceof Error ? err : new Error(String(err)));
+                } else {
+                    resolve(results);
+                }
+            });
+        });
+    }
+
     test("fetches expected feed", () => {
         platform.fetch(
             {
@@ -482,69 +568,55 @@ describe("platform-feeds", () => {
         );
     });
 
-    it("emits a schema-valid collection from a real channel image/author feed", () => {
+    it("emits a schema-valid collection from a real channel image/author feed", async () => {
         platform.makeRequest = (): Promise<string> => {
             return Promise.resolve(loadFixture("channel-image-author-rss.xml"));
         };
 
-        platform.fetch(
-            {
-                id: "image-author-feed-id",
-                actor: {
-                    id: "https://example.com/feed",
-                },
+        const results = await fetchCollection({
+            id: "image-author-feed-id",
+            actor: {
+                id: "https://example.com/feed",
             },
-            (err, results: ASCollection) => {
-                expect(err).toBeNull();
-                expect(results.totalItems).toEqual(1);
+        });
+        expect(results.totalItems).toEqual(1);
 
-                // The real buildFeedChannel output (image + author) and the
-                // per-post `id` must satisfy the strict outbound schema.
-                const actor = results.items[0].actor;
-                expect(typeof actor?.image).toBe("string");
-                expect(actor?.image).toEqual("https://example.com/logo.png");
-                // podparse maps <author> to the raw text, not an object.
-                expect(actor?.author).toEqual(
-                    "editor@example.com (Jane Editor)",
-                );
-                expect(results.items[0].id).toEqual("image-author-feed-id");
+        // The real buildFeedChannel output (image + author) and the
+        // per-post `id` must satisfy the strict outbound schema.
+        const actor = results.items[0].actor;
+        expect(typeof actor?.image).toBe("string");
+        expect(actor?.image).toEqual("https://example.com/logo.png");
+        // podparse maps <author> to the raw text, not an object.
+        expect(actor?.author).toEqual("editor@example.com (Jane Editor)");
+        expect(results.items[0].id).toEqual("image-author-feed-id");
 
-                expect(validateActivityStreamResponse(results)).toEqual("");
-            },
-        );
+        expect(validateActivityStreamResponse(results)).toEqual("");
     });
 
-    it("emits a schema-valid collection from a feed without channel image/author", () => {
+    it("emits a schema-valid collection from a feed without channel image/author", async () => {
         platform.makeRequest = (): Promise<string> => {
             return Promise.resolve(loadFixture("bare-channel-rss.xml"));
         };
 
-        platform.fetch(
-            {
-                id: "bare-feed-id",
-                actor: {
-                    id: "https://example.com/feed",
-                },
+        const results = await fetchCollection({
+            id: "bare-feed-id",
+            actor: {
+                id: "https://example.com/feed",
             },
-            (err, results: ASCollection) => {
-                expect(err).toBeNull();
-                expect(results.totalItems).toEqual(1);
+        });
+        expect(results.totalItems).toEqual(1);
 
-                // Absent channel metadata must not break strict validation:
-                // image/author are undefined and AJV skips undefined-valued
-                // properties (they are also dropped at the JSON/IPC boundary).
-                const actor = results.items[0].actor;
-                expect(actor?.image).toBeUndefined();
-                expect(actor?.author).toBeUndefined();
+        // Absent channel metadata must not break strict validation:
+        // image/author are undefined and AJV skips undefined-valued
+        // properties (they are also dropped at the JSON/IPC boundary).
+        const actor = results.items[0].actor;
+        expect(actor?.image).toBeUndefined();
+        expect(actor?.author).toBeUndefined();
 
-                expect(validateActivityStreamResponse(results)).toEqual("");
-                expect(
-                    validateActivityStreamResponse(
-                        JSON.parse(JSON.stringify(results)),
-                    ),
-                ).toEqual("");
-            },
-        );
+        expect(validateActivityStreamResponse(results)).toEqual("");
+        expect(
+            validateActivityStreamResponse(JSON.parse(JSON.stringify(results))),
+        ).toEqual("");
     });
 
     test("validates collection structure matches ASCollection interface", () => {
@@ -572,5 +644,104 @@ describe("platform-feeds", () => {
                 expect(results.items.length).toEqual(results.totalItems);
             },
         );
+    });
+
+    it("limit caps the number of returned entries", async () => {
+        const results = await fetchCollection({
+            id: "limit-id",
+            actor: { id: "some url" },
+            object: { limit: 5 },
+        });
+        expect(results.totalItems).toEqual(5);
+        expect(results.items.length).toEqual(5);
+    });
+
+    it("since in the future filters out all entries", async () => {
+        const results = await fetchCollection({
+            id: "since-future-id",
+            actor: { id: "some url" },
+            object: { since: "2999-01-01T00:00:00.000Z" },
+        });
+        expect(results.totalItems).toEqual(0);
+    });
+
+    it("since at the epoch keeps every entry", async () => {
+        const results = await fetchCollection({
+            id: "since-epoch-id",
+            actor: { id: "some url" },
+            object: { since: "1970-01-01T00:00:00.000Z" },
+        });
+        expect(results.totalItems).toEqual(20);
+    });
+});
+
+describe("extractFetchParams", () => {
+    it("returns empty params for missing or non-object input", () => {
+        expect(extractFetchParams(undefined)).toEqual({});
+        expect(extractFetchParams(null)).toEqual({});
+        expect(extractFetchParams("nope")).toEqual({});
+    });
+
+    it("reads since and a valid integer limit", () => {
+        expect(
+            extractFetchParams({ since: "2024-01-01T00:00:00.000Z", limit: 3 }),
+        ).toEqual({ since: "2024-01-01T00:00:00.000Z", limit: 3 });
+    });
+
+    it("ignores a non-integer or out-of-range limit", () => {
+        expect(extractFetchParams({ limit: 0 })).toEqual({});
+        expect(extractFetchParams({ limit: 2.5 })).toEqual({});
+        expect(extractFetchParams({ limit: "5" })).toEqual({});
+    });
+});
+
+describe("applyFetchFilters", () => {
+    function article(
+        datenum: number,
+    ): Parameters<typeof applyFetchFilters>[0][number] {
+        return {
+            "@context": [feedsSchema.contextUrl],
+            type: "post",
+            actor: { id: "a", type: "feed", name: "n", link: "l" },
+            object: { datenum },
+        } as unknown as Parameters<typeof applyFetchFilters>[0][number];
+    }
+
+    const articles = [article(300), article(200), article(100), article(0)];
+
+    it("returns all entries when no params are given", () => {
+        expect(applyFetchFilters(articles, {}).length).toEqual(4);
+    });
+
+    it("drops entries published before since (undated excluded)", () => {
+        const result = applyFetchFilters(articles, { since: new Date(150).toISOString() });
+        expect(result.map((a) => a.object?.datenum)).toEqual([300, 200]);
+    });
+
+    it("preserves feed order and caps at limit", () => {
+        const result = applyFetchFilters(articles, { limit: 2 });
+        expect(result.map((a) => a.object?.datenum)).toEqual([300, 200]);
+    });
+
+    it("applies since before limit", () => {
+        const params: FeedFetchParams = {
+            since: new Date(50).toISOString(),
+            limit: 2,
+        };
+        const result = applyFetchFilters(articles, params);
+        expect(result.map((a) => a.object?.datenum)).toEqual([300, 200]);
+    });
+
+    it("ignores an unparseable since", () => {
+        expect(applyFetchFilters(articles, { since: "garbage" }).length).toEqual(
+            4,
+        );
+    });
+
+    it("excludes undated entries even when since is the epoch", () => {
+        const result = applyFetchFilters(articles, {
+            since: "1970-01-01T00:00:00.000Z",
+        });
+        expect(result.map((a) => a.object?.datenum)).toEqual([300, 200, 100]);
     });
 });
