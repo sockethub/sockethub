@@ -14,9 +14,11 @@ import feedsSchema from "./schema";
 import { RSSFeed } from "./index.test.data";
 import Feeds, {
     applyFetchFilters,
+    assertUrlAllowed,
     buildFeedItem,
     extractFetchParams,
     type FeedFetchParams,
+    isBlockedAddress,
 } from "./index";
 
 addPlatformSchema(feedsSchema.messages, "feeds/messages");
@@ -618,5 +620,82 @@ describe("applyFetchFilters", () => {
             since: "1970-01-01T00:00:00.000Z",
         });
         expect(result.map((a) => a.object?.datenum)).toEqual([300, 200, 100]);
+    });
+});
+
+describe("assertUrlAllowed (SSRF guard)", () => {
+    it("rejects ftp: scheme", async () => {
+        await expect(
+            assertUrlAllowed("ftp://example.com/feed"),
+        ).rejects.toThrow(/unsupported scheme/);
+    });
+
+    it("rejects file: scheme", async () => {
+        await expect(
+            assertUrlAllowed("file:///etc/passwd"),
+        ).rejects.toThrow(/unsupported scheme/);
+    });
+
+    it("rejects a malformed URL", async () => {
+        await expect(assertUrlAllowed("not a url")).rejects.toThrow(
+            /invalid URL/,
+        );
+    });
+
+    it("rejects an http URL pointing directly at a loopback IP", async () => {
+        await expect(
+            assertUrlAllowed("http://127.0.0.1/feed"),
+        ).rejects.toThrow(/not a public address/);
+    });
+
+    it("rejects the cloud metadata address", async () => {
+        await expect(
+            assertUrlAllowed("http://169.254.169.254/latest/meta-data/"),
+        ).rejects.toThrow(/not a public address/);
+    });
+});
+
+describe("isBlockedAddress", () => {
+    it("blocks IPv4 loopback (127.0.0.0/8)", () => {
+        expect(isBlockedAddress("127.0.0.1")).toBe(true);
+        expect(isBlockedAddress("127.255.255.254")).toBe(true);
+    });
+
+    it("blocks private IPv4 ranges", () => {
+        expect(isBlockedAddress("10.0.0.1")).toBe(true);
+        expect(isBlockedAddress("172.16.5.4")).toBe(true);
+        expect(isBlockedAddress("172.31.255.255")).toBe(true);
+        expect(isBlockedAddress("192.168.1.1")).toBe(true);
+    });
+
+    it("blocks link-local and metadata addresses", () => {
+        expect(isBlockedAddress("169.254.1.1")).toBe(true);
+        expect(isBlockedAddress("169.254.169.254")).toBe(true);
+    });
+
+    it("blocks 0.0.0.0", () => {
+        expect(isBlockedAddress("0.0.0.0")).toBe(true);
+    });
+
+    it("blocks IPv6 loopback and unique/link-local", () => {
+        expect(isBlockedAddress("::1")).toBe(true);
+        expect(isBlockedAddress("fc00::1")).toBe(true);
+        expect(isBlockedAddress("fd12:3456::1")).toBe(true);
+        expect(isBlockedAddress("fe80::1")).toBe(true);
+    });
+
+    it("blocks IPv4-mapped IPv6 private addresses", () => {
+        expect(isBlockedAddress("::ffff:127.0.0.1")).toBe(true);
+        expect(isBlockedAddress("::ffff:169.254.169.254")).toBe(true);
+    });
+
+    it("does not block representative public addresses", () => {
+        expect(isBlockedAddress("8.8.8.8")).toBe(false);
+        expect(isBlockedAddress("1.1.1.1")).toBe(false);
+        expect(isBlockedAddress("2606:4700:4700::1111")).toBe(false);
+    });
+
+    it("does not block IPv4-mapped public addresses", () => {
+        expect(isBlockedAddress("::ffff:8.8.8.8")).toBe(false);
     });
 });
