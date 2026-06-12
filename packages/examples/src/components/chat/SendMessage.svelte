@@ -23,11 +23,18 @@ let sending = $state(false);
 
 async function sendMessage() {
     if (!message.trim()) return;
+    // IRC room targets must be server-qualified (`server/#channel`); never fall
+    // back to a bare channel, which the platform rejects.
+    if (context === "irc" && !server) {
+        console.error("IRC sends require a server (server/#channel)");
+        return;
+    }
 
     sending = true;
     const messageToSend = message.trim();
     console.log("send message: ", messageToSend);
 
+    const targetId = context === "irc" ? `${server}/${room}` : room;
     try {
         await send({
             "@context": await contextFor(context),
@@ -38,7 +45,7 @@ async function sendMessage() {
                 content: messageToSend,
             },
             target: {
-                id: context === "irc" && server ? `${server}/${room}` : room,
+                id: targetId,
                 name: room,
                 type: "room",
             },

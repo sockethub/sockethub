@@ -36,24 +36,32 @@ $effect(() => {
 });
 
 async function joinRoom(): Promise<void> {
+    // IRC room targets must be server-qualified (`server/#channel`); never fall
+    // back to a bare channel, which the platform rejects.
+    if (context === "irc" && !server) {
+        console.error("IRC room joins require a server (server/#channel)");
+        return;
+    }
     joining = true;
+    const targetId = context === "irc" ? `${server}/${room}` : room;
     return await send({
         "@context": await contextFor(context),
         type: "join",
         actor: actorAsObject(actor),
         target: {
-            id: context === "irc" && server ? `${server}/${room}` : room,
+            id: targetId,
             name: room,
             type: "room",
         },
     } as AnyActivityStream)
-        .catch(() => {
-            $sockethubState.joined = false;
-            joining = false;
-        })
         .then(() => {
             lastJoinedRoom = room;
             $sockethubState.joined = true;
+        })
+        .catch(() => {
+            $sockethubState.joined = false;
+        })
+        .finally(() => {
             joining = false;
         });
 }
