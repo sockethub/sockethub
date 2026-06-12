@@ -399,6 +399,24 @@ describe("platform-feeds", () => {
         };
     });
 
+    // Promisify platform.fetch so tests await its completion. With the bare
+    // callback style the test body returns before the callback fires, and
+    // assertion failures escape as unhandled rejections instead of failing
+    // the test.
+    function fetchCollection(
+        job: Parameters<Feeds["fetch"]>[0],
+    ): Promise<ASCollection> {
+        return new Promise((resolve, reject) => {
+            platform.fetch(job, (err, results: ASCollection) => {
+                if (err) {
+                    reject(err instanceof Error ? err : new Error(String(err)));
+                } else {
+                    resolve(results);
+                }
+            });
+        });
+    }
+
     test("fetches expected feed", () => {
         platform.fetch(
             {
@@ -550,69 +568,55 @@ describe("platform-feeds", () => {
         );
     });
 
-    it("emits a schema-valid collection from a real channel image/author feed", () => {
+    it("emits a schema-valid collection from a real channel image/author feed", async () => {
         platform.makeRequest = (): Promise<string> => {
             return Promise.resolve(loadFixture("channel-image-author-rss.xml"));
         };
 
-        platform.fetch(
-            {
-                id: "image-author-feed-id",
-                actor: {
-                    id: "https://example.com/feed",
-                },
+        const results = await fetchCollection({
+            id: "image-author-feed-id",
+            actor: {
+                id: "https://example.com/feed",
             },
-            (err, results: ASCollection) => {
-                expect(err).toBeNull();
-                expect(results.totalItems).toEqual(1);
+        });
+        expect(results.totalItems).toEqual(1);
 
-                // The real buildFeedChannel output (image + author) and the
-                // per-post `id` must satisfy the strict outbound schema.
-                const actor = results.items[0].actor;
-                expect(typeof actor?.image).toBe("string");
-                expect(actor?.image).toEqual("https://example.com/logo.png");
-                // podparse maps <author> to the raw text, not an object.
-                expect(actor?.author).toEqual(
-                    "editor@example.com (Jane Editor)",
-                );
-                expect(results.items[0].id).toEqual("image-author-feed-id");
+        // The real buildFeedChannel output (image + author) and the
+        // per-post `id` must satisfy the strict outbound schema.
+        const actor = results.items[0].actor;
+        expect(typeof actor?.image).toBe("string");
+        expect(actor?.image).toEqual("https://example.com/logo.png");
+        // podparse maps <author> to the raw text, not an object.
+        expect(actor?.author).toEqual("editor@example.com (Jane Editor)");
+        expect(results.items[0].id).toEqual("image-author-feed-id");
 
-                expect(validateActivityStreamResponse(results)).toEqual("");
-            },
-        );
+        expect(validateActivityStreamResponse(results)).toEqual("");
     });
 
-    it("emits a schema-valid collection from a feed without channel image/author", () => {
+    it("emits a schema-valid collection from a feed without channel image/author", async () => {
         platform.makeRequest = (): Promise<string> => {
             return Promise.resolve(loadFixture("bare-channel-rss.xml"));
         };
 
-        platform.fetch(
-            {
-                id: "bare-feed-id",
-                actor: {
-                    id: "https://example.com/feed",
-                },
+        const results = await fetchCollection({
+            id: "bare-feed-id",
+            actor: {
+                id: "https://example.com/feed",
             },
-            (err, results: ASCollection) => {
-                expect(err).toBeNull();
-                expect(results.totalItems).toEqual(1);
+        });
+        expect(results.totalItems).toEqual(1);
 
-                // Absent channel metadata must not break strict validation:
-                // image/author are undefined and AJV skips undefined-valued
-                // properties (they are also dropped at the JSON/IPC boundary).
-                const actor = results.items[0].actor;
-                expect(actor?.image).toBeUndefined();
-                expect(actor?.author).toBeUndefined();
+        // Absent channel metadata must not break strict validation:
+        // image/author are undefined and AJV skips undefined-valued
+        // properties (they are also dropped at the JSON/IPC boundary).
+        const actor = results.items[0].actor;
+        expect(actor?.image).toBeUndefined();
+        expect(actor?.author).toBeUndefined();
 
-                expect(validateActivityStreamResponse(results)).toEqual("");
-                expect(
-                    validateActivityStreamResponse(
-                        JSON.parse(JSON.stringify(results)),
-                    ),
-                ).toEqual("");
-            },
-        );
+        expect(validateActivityStreamResponse(results)).toEqual("");
+        expect(
+            validateActivityStreamResponse(JSON.parse(JSON.stringify(results))),
+        ).toEqual("");
     });
 
     test("validates collection structure matches ASCollection interface", () => {
@@ -642,43 +646,32 @@ describe("platform-feeds", () => {
         );
     });
 
-    it("limit caps the number of returned entries", () => {
-        platform.fetch(
-            { id: "limit-id", actor: { id: "some url" }, object: { limit: 5 } },
-            (err, results: ASCollection) => {
-                expect(err).toBeNull();
-                expect(results.totalItems).toEqual(5);
-                expect(results.items.length).toEqual(5);
-            },
-        );
+    it("limit caps the number of returned entries", async () => {
+        const results = await fetchCollection({
+            id: "limit-id",
+            actor: { id: "some url" },
+            object: { limit: 5 },
+        });
+        expect(results.totalItems).toEqual(5);
+        expect(results.items.length).toEqual(5);
     });
 
-    it("since in the future filters out all entries", () => {
-        platform.fetch(
-            {
-                id: "since-future-id",
-                actor: { id: "some url" },
-                object: { since: "2999-01-01T00:00:00.000Z" },
-            },
-            (err, results: ASCollection) => {
-                expect(err).toBeNull();
-                expect(results.totalItems).toEqual(0);
-            },
-        );
+    it("since in the future filters out all entries", async () => {
+        const results = await fetchCollection({
+            id: "since-future-id",
+            actor: { id: "some url" },
+            object: { since: "2999-01-01T00:00:00.000Z" },
+        });
+        expect(results.totalItems).toEqual(0);
     });
 
-    it("since at the epoch keeps every entry", () => {
-        platform.fetch(
-            {
-                id: "since-epoch-id",
-                actor: { id: "some url" },
-                object: { since: "1970-01-01T00:00:00.000Z" },
-            },
-            (err, results: ASCollection) => {
-                expect(err).toBeNull();
-                expect(results.totalItems).toEqual(20);
-            },
-        );
+    it("since at the epoch keeps every entry", async () => {
+        const results = await fetchCollection({
+            id: "since-epoch-id",
+            actor: { id: "some url" },
+            object: { since: "1970-01-01T00:00:00.000Z" },
+        });
+        expect(results.totalItems).toEqual(20);
     });
 });
 
