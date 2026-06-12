@@ -1,15 +1,24 @@
-import { describe, expect, mock, test } from "bun:test";
+import { describe, expect, it, mock, test } from "bun:test";
 import {
     addPlatformContext,
     addPlatformSchema,
+    validateActivityStream,
     validateActivityStreamResponse,
 } from "@sockethub/schemas";
 import { PlatformMetadataSchema } from "./schema";
 
 addPlatformSchema(PlatformMetadataSchema.responses, "metadata/responses");
+addPlatformSchema(PlatformMetadataSchema.messages, "metadata/messages");
 addPlatformContext("metadata", PlatformMetadataSchema.contextUrl);
 
 const CTX = [PlatformMetadataSchema.contextUrl];
+// Full envelope context required by the base activity-stream schema (exactly
+// three entries) for inbound message validation.
+const MSG_CTX = [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    PlatformMetadataSchema.contextUrl,
+];
 
 // Mock open-graph-scraper so we exercise the platform's real fetch() output
 // path against the strict responses schema, without network access.
@@ -89,5 +98,37 @@ describe("metadata responses schema", () => {
         };
         // biome-ignore lint/suspicious/noExplicitAny: assertion
         expect(validateActivityStreamResponse(msg as any)).not.toEqual("");
+    });
+});
+
+describe("metadata inbound messages schema", () => {
+    function fetchMsg(object?: Record<string, unknown>) {
+        return {
+            "@context": MSG_CTX,
+            type: "fetch",
+            actor: { id: "https://example.com", type: "website" },
+            ...(object ? { object } : {}),
+        };
+    }
+
+    it("validates a fetch with only an actor (no object)", () => {
+        // biome-ignore lint/suspicious/noExplicitAny: assertion
+        expect(validateActivityStream(fetchMsg() as any)).toEqual("");
+    });
+
+    it("rejects a fetch carrying any inbound object", () => {
+        expect(
+            // biome-ignore lint/suspicious/noExplicitAny: assertion
+            validateActivityStream(fetchMsg({ url: "https://example.com" }) as any),
+        ).not.toEqual("");
+        // biome-ignore lint/suspicious/noExplicitAny: assertion
+        expect(validateActivityStream(fetchMsg({}) as any)).not.toEqual("");
+    });
+
+    it("has no permissive placeholder left on the messages schema", () => {
+        expect(PlatformMetadataSchema.messages.properties.object).toBe(false);
+        expect(PlatformMetadataSchema.messages).not.toHaveProperty(
+            "definitions",
+        );
     });
 });
