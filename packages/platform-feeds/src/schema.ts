@@ -63,6 +63,7 @@ export default {
                             type: "array",
                             items: { type: "string" },
                         },
+                        id: { type: ["string", "null"] },
                         type: { enum: ["post"] },
                         actor: { $ref: "#/definitions/responses/feedChannel" },
                         object: { $ref: "#/definitions/responses/feedItem" },

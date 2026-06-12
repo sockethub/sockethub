@@ -252,9 +252,9 @@ function buildFeedChannel(url: string, meta: Meta): PlatformFeedsActivityActor {
         name: meta.title ? meta.title : meta.link ? meta.link : url,
         link: meta.link || url,
         description: meta.description ? meta.description : undefined,
-        image: meta.image ? meta.image : undefined,
+        image: meta.image?.url || undefined,
         categories: meta.category ? meta.category : [],
         language: meta.language ? meta.language : undefined,
-        author: meta.author ? meta.author : undefined,
+        author: meta.author?.name || undefined,
     };
 }
