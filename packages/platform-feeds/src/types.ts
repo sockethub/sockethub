@@ -38,14 +38,10 @@ export interface PlatformFeedsActivityObject extends ActivityObject {
     type: ASObjectType;
     title: string;
     id: string;
-    brief: string;
+    brief?: string;
     content: string;
     contentType: string;
     url: string;
-    published: string;
-    updated: string;
+    published?: string;
     datenum: number;
-    tags: Array<string>;
-    media: Array<unknown>;
-    source: string;
 }

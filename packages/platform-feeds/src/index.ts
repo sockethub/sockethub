@@ -167,7 +167,7 @@ export default class Feeds implements PlatformInterface {
             try {
                 const article = buildFeedStruct(actor);
                 article.id = id;
-                article.object = buildFeedItem(item as FeedItem, url);
+                article.object = buildFeedItem(item, url);
                 articles.push(article);
             } catch (err) {
                 const detail = err instanceof Error ? err.message : String(err);
@@ -249,36 +249,12 @@ export function applyFetchFilters(
     return result;
 }
 
-interface FeedItem extends Episode {
-    meta?: Meta;
-    date?: string;
-    categories?: Array<string>;
-    media?: Array<unknown>;
-    source?: string;
-}
-
-export function datesEqual(a: unknown, b: unknown): boolean {
-    if (a == null && b == null) {
-        return true;
-    }
-    if (a == null || b == null) {
-        return false;
-    }
-    // Prefer Date.getTime() for Date instances; String(date)+Date.parse loses ms.
-    const at = a instanceof Date ? a.getTime() : Date.parse(String(a));
-    const bt = b instanceof Date ? b.getTime() : Date.parse(String(b));
-    if (Number.isNaN(at) || Number.isNaN(bt)) {
-        return String(a) === String(b);
-    }
-    return at === bt;
-}
-
 export function buildFeedItem(
-    item: FeedItem,
+    item: Episode,
     channelUrl: string,
 ): PlatformFeedsActivityObject {
     const dateNum = item.pubDate ? Date.parse(item.pubDate.toString()) : NaN;
-    const itemUrl = item.link || item.meta?.link;
+    const itemUrl = item.link;
     const idBase = itemUrl || channelUrl;
     const stableId =
         itemUrl ||
@@ -297,11 +273,7 @@ export function buildFeedItem(
         contentType: isHtml(item.description || "") ? "html" : "text",
         url: itemUrl || channelUrl,
         published: item.pubDate,
-        updated: datesEqual(item.pubDate, item.date) ? undefined : item.date,
         datenum: Number.isFinite(dateNum) ? dateNum : 0,
-        tags: item.categories,
-        media: item.media,
-        source: item.source,
     };
 }
 
@@ -315,7 +287,7 @@ function buildFeedStruct(
     };
 }
 
-function indexFallback(item: FeedItem): string {
+function indexFallback(item: Episode): string {
     return `${item.title || "item"}-${item.pubDate || "unknown"}`;
 }
 

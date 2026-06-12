@@ -15,7 +15,6 @@ import { RSSFeed } from "./index.test.data";
 import Feeds, {
     applyFetchFilters,
     buildFeedItem,
-    datesEqual,
     extractFetchParams,
     type FeedFetchParams,
 } from "./index";
@@ -113,62 +112,13 @@ describe("inbound messages schema", () => {
     });
 });
 
-describe("datesEqual", () => {
-    test("treats two null/undefined as equal", () => {
-        expect(datesEqual(null, undefined)).toBe(true);
-        expect(datesEqual(undefined, null)).toBe(true);
-    });
-
-    test("treats one nullish and one defined as unequal", () => {
-        expect(datesEqual(null, new Date())).toBe(false);
-        expect(datesEqual("2024-01-01T00:00:00Z", undefined)).toBe(false);
-    });
-
-    test("compares Date instances by getTime (preserves ms)", () => {
-        const a = new Date("2024-01-01T00:00:00.123Z");
-        const b = new Date("2024-01-01T00:00:00.123Z");
-        const c = new Date("2024-01-01T00:00:00.456Z");
-        expect(datesEqual(a, b)).toBe(true);
-        expect(datesEqual(a, c)).toBe(false);
-    });
-
-    test("compares string and Date pointing to same instant as equal", () => {
-        const iso = "2024-01-01T00:00:00.000Z";
-        expect(datesEqual(iso, new Date(iso))).toBe(true);
-    });
-
-    test("falls back to string equality when both are unparseable", () => {
-        expect(datesEqual("not-a-date", "not-a-date")).toBe(true);
-        expect(datesEqual("not-a-date", "other-junk")).toBe(false);
-    });
-});
-
 describe("buildFeedItem", () => {
     const channelUrl = "http://example.com/feed.xml";
     const baseItem: Parameters<typeof buildFeedItem>[0] = {
         title: "Item",
         description: "Body",
         summary: "Body",
-        meta: {
-            title: "Feed",
-            description: "",
-            language: "en",
-            author: { name: "Author" },
-            summary: "",
-            type: "rss",
-            owner: { name: "Owner", email: "owner@example.com" },
-            image: { url: "", link: "", title: "" },
-            explicit: false,
-            lastBuildDate: "2024-01-01T00:00:00.000Z",
-            pubDate: "2024-01-01T00:00:00.000Z",
-            link: "http://example.com/feed",
-            links: [],
-        },
         pubDate: "2024-01-01T00:00:00.000Z",
-        date: "2024-01-01T00:00:00.000Z",
-        categories: [],
-        media: [],
-        source: "feed-source",
         author: "Author",
         episodeType: undefined,
         guid: "guid-1",
@@ -177,33 +127,14 @@ describe("buildFeedItem", () => {
         link: "http://example.com/item",
     } as Parameters<typeof buildFeedItem>[0];
 
-    test("omits updated when pubDate and date represent the same instant", () => {
-        const result = buildFeedItem(
-            {
-                ...baseItem,
-                date: new Date("2024-01-01T00:00:00.000Z") as unknown as string,
-            },
-            channelUrl,
-        );
+    it("uses item published date", () => {
+        const result = buildFeedItem(baseItem, channelUrl);
 
         expect(result.published).toEqual("2024-01-01T00:00:00.000Z");
-        expect(result.updated).toBeUndefined();
     });
 
-    test("preserves updated when pubDate and date differ", () => {
-        const result = buildFeedItem(
-            {
-                ...baseItem,
-                date: "2024-01-01T00:00:01.000Z",
-            },
-            channelUrl,
-        );
-
-        expect(result.updated).toEqual("2024-01-01T00:00:01.000Z");
-    });
-
-    test("falls back to channel URL when item has no link or meta", () => {
-        const { meta: _meta, link: _link, ...withoutLink } = baseItem;
+    it("falls back to channel URL when item has no link", () => {
+        const { link: _link, ...withoutLink } = baseItem;
         const result = buildFeedItem(
             withoutLink as Parameters<typeof buildFeedItem>[0],
             channelUrl,
@@ -215,8 +146,7 @@ describe("buildFeedItem", () => {
 
     test("uses epoch timestamp in stable id when pubDate is Unix epoch", () => {
         const epoch = "1970-01-01T00:00:00.000Z";
-        const { meta: _meta, link: _link, guid: _guid, ...withoutLinkOrGuid } =
-            baseItem;
+        const { link: _link, guid: _guid, ...withoutLinkOrGuid } = baseItem;
         const result = buildFeedItem(
             {
                 ...withoutLinkOrGuid,
@@ -276,19 +206,13 @@ describe("feed fixture matrix", () => {
 
             for (const episode of feed.episodes) {
                 expect(() =>
-                    buildFeedItem(
-                        episode as Parameters<typeof buildFeedItem>[0],
-                        fixture.channelUrl,
-                    ),
+                    buildFeedItem(episode, fixture.channelUrl),
                 ).not.toThrow();
             }
 
             if (fixture.expectedCount > 0) {
                 const results = feed.episodes.map((episode) =>
-                    buildFeedItem(
-                        episode as Parameters<typeof buildFeedItem>[0],
-                        fixture.channelUrl,
-                    ),
+                    buildFeedItem(episode, fixture.channelUrl),
                 );
                 fixture.assertItems(results);
                 // Real parsed output must satisfy the strict outbound schema.
@@ -359,14 +283,6 @@ describe("buildFeedItem fuzz", () => {
                     "2024-01-01T00:00:00.000Z",
                     new Date("2024-01-01"),
                 ]),
-                date: randomPick([undefined, "2024-01-02T00:00:00.000Z"]),
-                meta: randomPick([
-                    undefined,
-                    { link: "https://example.com/feed" },
-                ]),
-                categories: randomPick([undefined, [], ["news"]]),
-                media: randomPick([undefined, []]),
-                source: randomPick([undefined, "source"]),
             };
 
             expect(() =>
@@ -417,108 +333,83 @@ describe("platform-feeds", () => {
         });
     }
 
-    test("fetches expected feed", () => {
-        platform.fetch(
-            {
-                id: "an id",
-                actor: {
-                    id: "some url",
-                },
+    it("fetches expected feed", async () => {
+        const results = await fetchCollection({
+            id: "an id",
+            actor: {
+                id: "some url",
             },
-            (err, results: ASCollection) => {
-                expect(results.totalItems).toEqual(20);
-                expect(results.items[5].object).toEqual({
-                    type: "article",
-                    title: "Sockethub 3.x",
-                    id: "https://sockethub.org/news/2019-09-26-3x.html",
-                    brief: undefined,
-                    content:
-                        "<p>Sockethub 3.0 has been released and includes a lot of improvements focusing mainly on XMPP and IRC, additionally a ton of internal improvements. Ongoing releases tracked on the <a href=\"https://github.com/sockethub/sockethub/releases\">Github page</a>. </p>",
-                    contentType: "html",
-                    url: "https://sockethub.org/news/2019-09-26-3x.html",
-                    published: "2019-09-26T00:00:00.000Z",
-                    updated: undefined,
-                    datenum: 1569456000000,
-                    tags: undefined,
-                    media: undefined,
-                    source: undefined,
-                });
-            },
-        );
+        });
+        expect(results.totalItems).toEqual(20);
+        expect(results.items[5].object).toEqual({
+            type: "article",
+            title: "Sockethub 3.x",
+            id: "https://sockethub.org/news/2019-09-26-3x.html",
+            brief: undefined,
+            content:
+                "<p>Sockethub 3.0 has been released and includes a lot of improvements focusing mainly on XMPP and IRC, additionally a ton of internal improvements. Ongoing releases tracked on the <a href=\"https://github.com/sockethub/sockethub/releases\">Github page</a>. </p>",
+            contentType: "html",
+            url: "https://sockethub.org/news/2019-09-26-3x.html",
+            published: "2019-09-26T00:00:00.000Z",
+            datenum: 1569456000000,
+        });
     });
 
-    test("handles empty feed gracefully", () => {
+    it("handles empty feed gracefully", async () => {
         platform.makeRequest = (): Promise<string> => {
             return Promise.resolve(
                 '<rss><channel><title>Empty Feed</title></channel></rss>',
             );
         };
 
-        platform.fetch(
-            {
-                id: "empty-feed-id",
-                actor: {
-                    id: "http://example.com/empty.xml",
-                },
+        const results = await fetchCollection({
+            id: "empty-feed-id",
+            actor: {
+                id: "http://example.com/empty.xml",
             },
-            (err, results: ASCollection) => {
-                expect(err).toBeNull();
-                expect(results.type).toEqual("collection");
-                expect(results.totalItems).toEqual(0);
-                expect(results.items).toEqual([]);
-                expect(results.summary).toEqual("Unknown Feed");
-            },
-        );
+        });
+        expect(results.type).toEqual("collection");
+        expect(results.totalItems).toEqual(0);
+        expect(results.items).toEqual([]);
+        expect(results.summary).toEqual("Unknown Feed");
     });
 
-    test("handles feed items without per-entry link", () => {
+    it("handles feed items without per-entry link", async () => {
         platform.makeRequest = (): Promise<string> => {
             return Promise.resolve(loadFixture("no-link-rss.xml"));
         };
 
-        platform.fetch(
-            {
-                id: "no-link-item-id",
-                actor: {
-                    id: "http://example.com/feed.xml",
-                },
+        const results = await fetchCollection({
+            id: "no-link-item-id",
+            actor: {
+                id: "http://example.com/feed.xml",
             },
-            (err, results: ASCollection) => {
-                expect(err).toBeNull();
-                expect(results.totalItems).toEqual(1);
-                expect(results.items[0].object?.url).toEqual(
-                    "http://example.com/feed.xml",
-                );
-            },
+        });
+        expect(results.totalItems).toEqual(1);
+        expect(results.items[0].object?.url).toEqual(
+            "http://example.com/feed.xml",
         );
     });
 
-    test("handles regression podcast feed without per-entry link or meta", () => {
+    it("handles regression podcast feed without per-entry link or meta", async () => {
         platform.makeRequest = (): Promise<string> => {
             return Promise.resolve(loadFixture("no-link-no-meta-rss.xml"));
         };
 
-        platform.fetch(
-            {
-                id: "regression-feed-id",
-                actor: {
-                    id: "https://example.com/podcast",
-                },
+        const results = await fetchCollection({
+            id: "regression-feed-id",
+            actor: {
+                id: "https://example.com/podcast",
             },
-            (err, results: ASCollection) => {
-                expect(err).toBeNull();
-                expect(results.totalItems).toEqual(2);
-                for (const item of results.items) {
-                    expect(item.object?.url).toEqual(
-                        "https://example.com/podcast",
-                    );
-                    expect(typeof item.object?.id).toBe("string");
-                }
-            },
-        );
+        });
+        expect(results.totalItems).toEqual(2);
+        for (const item of results.items) {
+            expect(item.object?.url).toEqual("https://example.com/podcast");
+            expect(typeof item.object?.id).toBe("string");
+        }
     });
 
-    test("handles feed with no actor name", () => {
+    it("handles feed with no actor name", async () => {
         platform.makeRequest = (): Promise<string> => {
             return Promise.resolve(`
                 <rss>
@@ -534,38 +425,28 @@ describe("platform-feeds", () => {
             `);
         };
 
-        platform.fetch(
-            {
-                id: "no-name-feed-id",
-                actor: {
-                    id: "http://example.com/noname.xml",
-                },
+        const results = await fetchCollection({
+            id: "no-name-feed-id",
+            actor: {
+                id: "http://example.com/noname.xml",
             },
-            (err, results: ASCollection) => {
-                expect(err).toBeNull();
-                expect(results.summary).toEqual("http://example.com/noname.xml");
-            },
-        );
+        });
+        expect(results.summary).toEqual("http://example.com/noname.xml");
     });
 
-    test("handles network errors properly", () => {
+    it("handles network errors properly", async () => {
         platform.makeRequest = (): Promise<string> => {
             return Promise.reject(new Error("Network timeout"));
         };
 
-        platform.fetch(
-            {
+        await expect(
+            fetchCollection({
                 id: "error-test-id",
                 actor: {
                     id: "http://example.com/timeout.xml",
                 },
-            },
-            (err, results: ASCollection) => {
-                expect(err).toBeInstanceOf(Error);
-                expect(err?.message).toEqual("Network timeout");
-                expect(results).toBeUndefined();
-            },
-        );
+            }),
+        ).rejects.toThrow("Network timeout");
     });
 
     it("emits a schema-valid collection from a real channel image/author feed", async () => {
@@ -619,31 +500,25 @@ describe("platform-feeds", () => {
         ).toEqual("");
     });
 
-    test("validates collection structure matches ASCollection interface", () => {
-        platform.fetch(
-            {
-                id: "validation-test-id",
-                actor: {
-                    id: "some url",
-                },
+    it("validates collection structure matches ASCollection interface", async () => {
+        const results = await fetchCollection({
+            id: "validation-test-id",
+            actor: {
+                id: "some url",
             },
-            (err, results: ASCollection) => {
-                expect(err).toBeNull();
+        });
+        expect(results).toHaveProperty("@context");
+        expect(results).toHaveProperty("type", "collection");
+        expect(results).toHaveProperty("summary");
+        expect(results).toHaveProperty("totalItems");
+        expect(results).toHaveProperty("items");
 
-                expect(results).toHaveProperty("@context");
-                expect(results).toHaveProperty("type", "collection");
-                expect(results).toHaveProperty("summary");
-                expect(results).toHaveProperty("totalItems");
-                expect(results).toHaveProperty("items");
+        expect(Array.isArray(results["@context"])).toBe(true);
+        expect(typeof results.summary).toBe("string");
+        expect(typeof results.totalItems).toBe("number");
+        expect(Array.isArray(results.items)).toBe(true);
 
-                expect(Array.isArray(results["@context"])).toBe(true);
-                expect(typeof results.summary).toBe("string");
-                expect(typeof results.totalItems).toBe("number");
-                expect(Array.isArray(results.items)).toBe(true);
-
-                expect(results.items.length).toEqual(results.totalItems);
-            },
-        );
+        expect(results.items.length).toEqual(results.totalItems);
     });
 
     it("limit caps the number of returned entries", async () => {
