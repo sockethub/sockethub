@@ -503,9 +503,46 @@ describe("platform-feeds", () => {
                 const actor = results.items[0].actor;
                 expect(typeof actor?.image).toBe("string");
                 expect(actor?.image).toEqual("https://example.com/logo.png");
+                // podparse maps <author> to the raw text, not an object.
+                expect(actor?.author).toEqual(
+                    "editor@example.com (Jane Editor)",
+                );
                 expect(results.items[0].id).toEqual("image-author-feed-id");
 
                 expect(validateActivityStreamResponse(results)).toEqual("");
+            },
+        );
+    });
+
+    it("emits a schema-valid collection from a feed without channel image/author", () => {
+        platform.makeRequest = (): Promise<string> => {
+            return Promise.resolve(loadFixture("bare-channel-rss.xml"));
+        };
+
+        platform.fetch(
+            {
+                id: "bare-feed-id",
+                actor: {
+                    id: "https://example.com/feed",
+                },
+            },
+            (err, results: ASCollection) => {
+                expect(err).toBeNull();
+                expect(results.totalItems).toEqual(1);
+
+                // Absent channel metadata must not break strict validation:
+                // image/author are undefined and AJV skips undefined-valued
+                // properties (they are also dropped at the JSON/IPC boundary).
+                const actor = results.items[0].actor;
+                expect(actor?.image).toBeUndefined();
+                expect(actor?.author).toBeUndefined();
+
+                expect(validateActivityStreamResponse(results)).toEqual("");
+                expect(
+                    validateActivityStreamResponse(
+                        JSON.parse(JSON.stringify(results)),
+                    ),
+                ).toEqual("");
             },
         );
     });
