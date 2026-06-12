@@ -15,7 +15,6 @@ import { RSSFeed } from "./index.test.data";
 import Feeds, {
     applyFetchFilters,
     buildFeedItem,
-    datesEqual,
     extractFetchParams,
     type FeedFetchParams,
 } from "./index";
@@ -113,62 +112,13 @@ describe("inbound messages schema", () => {
     });
 });
 
-describe("datesEqual", () => {
-    test("treats two null/undefined as equal", () => {
-        expect(datesEqual(null, undefined)).toBe(true);
-        expect(datesEqual(undefined, null)).toBe(true);
-    });
-
-    test("treats one nullish and one defined as unequal", () => {
-        expect(datesEqual(null, new Date())).toBe(false);
-        expect(datesEqual("2024-01-01T00:00:00Z", undefined)).toBe(false);
-    });
-
-    test("compares Date instances by getTime (preserves ms)", () => {
-        const a = new Date("2024-01-01T00:00:00.123Z");
-        const b = new Date("2024-01-01T00:00:00.123Z");
-        const c = new Date("2024-01-01T00:00:00.456Z");
-        expect(datesEqual(a, b)).toBe(true);
-        expect(datesEqual(a, c)).toBe(false);
-    });
-
-    test("compares string and Date pointing to same instant as equal", () => {
-        const iso = "2024-01-01T00:00:00.000Z";
-        expect(datesEqual(iso, new Date(iso))).toBe(true);
-    });
-
-    test("falls back to string equality when both are unparseable", () => {
-        expect(datesEqual("not-a-date", "not-a-date")).toBe(true);
-        expect(datesEqual("not-a-date", "other-junk")).toBe(false);
-    });
-});
-
 describe("buildFeedItem", () => {
     const channelUrl = "http://example.com/feed.xml";
     const baseItem: Parameters<typeof buildFeedItem>[0] = {
         title: "Item",
         description: "Body",
         summary: "Body",
-        meta: {
-            title: "Feed",
-            description: "",
-            language: "en",
-            author: { name: "Author" },
-            summary: "",
-            type: "rss",
-            owner: { name: "Owner", email: "owner@example.com" },
-            image: { url: "", link: "", title: "" },
-            explicit: false,
-            lastBuildDate: "2024-01-01T00:00:00.000Z",
-            pubDate: "2024-01-01T00:00:00.000Z",
-            link: "http://example.com/feed",
-            links: [],
-        },
         pubDate: "2024-01-01T00:00:00.000Z",
-        date: "2024-01-01T00:00:00.000Z",
-        categories: [],
-        media: [],
-        source: "feed-source",
         author: "Author",
         episodeType: undefined,
         guid: "guid-1",
@@ -177,33 +127,14 @@ describe("buildFeedItem", () => {
         link: "http://example.com/item",
     } as Parameters<typeof buildFeedItem>[0];
 
-    test("omits updated when pubDate and date represent the same instant", () => {
-        const result = buildFeedItem(
-            {
-                ...baseItem,
-                date: new Date("2024-01-01T00:00:00.000Z") as unknown as string,
-            },
-            channelUrl,
-        );
+    it("uses item published date", () => {
+        const result = buildFeedItem(baseItem, channelUrl);
 
         expect(result.published).toEqual("2024-01-01T00:00:00.000Z");
-        expect(result.updated).toBeUndefined();
     });
 
-    test("preserves updated when pubDate and date differ", () => {
-        const result = buildFeedItem(
-            {
-                ...baseItem,
-                date: "2024-01-01T00:00:01.000Z",
-            },
-            channelUrl,
-        );
-
-        expect(result.updated).toEqual("2024-01-01T00:00:01.000Z");
-    });
-
-    test("falls back to channel URL when item has no link or meta", () => {
-        const { meta: _meta, link: _link, ...withoutLink } = baseItem;
+    it("falls back to channel URL when item has no link", () => {
+        const { link: _link, ...withoutLink } = baseItem;
         const result = buildFeedItem(
             withoutLink as Parameters<typeof buildFeedItem>[0],
             channelUrl,
@@ -215,8 +146,7 @@ describe("buildFeedItem", () => {
 
     test("uses epoch timestamp in stable id when pubDate is Unix epoch", () => {
         const epoch = "1970-01-01T00:00:00.000Z";
-        const { meta: _meta, link: _link, guid: _guid, ...withoutLinkOrGuid } =
-            baseItem;
+        const { link: _link, guid: _guid, ...withoutLinkOrGuid } = baseItem;
         const result = buildFeedItem(
             {
                 ...withoutLinkOrGuid,
@@ -276,19 +206,13 @@ describe("feed fixture matrix", () => {
 
             for (const episode of feed.episodes) {
                 expect(() =>
-                    buildFeedItem(
-                        episode as Parameters<typeof buildFeedItem>[0],
-                        fixture.channelUrl,
-                    ),
+                    buildFeedItem(episode, fixture.channelUrl),
                 ).not.toThrow();
             }
 
             if (fixture.expectedCount > 0) {
                 const results = feed.episodes.map((episode) =>
-                    buildFeedItem(
-                        episode as Parameters<typeof buildFeedItem>[0],
-                        fixture.channelUrl,
-                    ),
+                    buildFeedItem(episode, fixture.channelUrl),
                 );
                 fixture.assertItems(results);
                 // Real parsed output must satisfy the strict outbound schema.
@@ -359,14 +283,6 @@ describe("buildFeedItem fuzz", () => {
                     "2024-01-01T00:00:00.000Z",
                     new Date("2024-01-01"),
                 ]),
-                date: randomPick([undefined, "2024-01-02T00:00:00.000Z"]),
-                meta: randomPick([
-                    undefined,
-                    { link: "https://example.com/feed" },
-                ]),
-                categories: randomPick([undefined, [], ["news"]]),
-                media: randomPick([undefined, []]),
-                source: randomPick([undefined, "source"]),
             };
 
             expect(() =>
@@ -437,11 +353,7 @@ describe("platform-feeds", () => {
                     contentType: "html",
                     url: "https://sockethub.org/news/2019-09-26-3x.html",
                     published: "2019-09-26T00:00:00.000Z",
-                    updated: undefined,
                     datenum: 1569456000000,
-                    tags: undefined,
-                    media: undefined,
-                    source: undefined,
                 });
             },
         );
