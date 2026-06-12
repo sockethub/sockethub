@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Bare Feed</title>
+    <link>https://example.com/feed</link>
+    <description>A feed with no channel-level image or author</description>
+    <item>
+      <title>First Post</title>
+      <description>Short body content</description>
+      <link>https://example.com/posts/1</link>
+      <guid isPermaLink="true">https://example.com/posts/1</guid>
+      <pubDate>Thu, 01 Jan 2024 00:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

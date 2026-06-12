@@ -252,9 +252,14 @@ function buildFeedChannel(url: string, meta: Meta): PlatformFeedsActivityActor {
         name: meta.title ? meta.title : meta.link ? meta.link : url,
         link: meta.link || url,
         description: meta.description ? meta.description : undefined,
-        image: meta.image ? meta.image : undefined,
+        image: meta.image?.url || undefined,
         categories: meta.category ? meta.category : [],
         language: meta.language ? meta.language : undefined,
-        author: meta.author ? meta.author : undefined,
+        // podparse's typings declare `author` as an object, but its RSS
+        // mapping emits the raw <author> text as a string; handle both shapes.
+        author:
+            (typeof meta.author === "string"
+                ? meta.author
+                : meta.author?.name) || undefined,
     };
 }

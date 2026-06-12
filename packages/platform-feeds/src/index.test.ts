@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, it, test } from "bun:test";
 import type { ASCollection, PlatformSession } from "@sockethub/schemas";
 import {
     addPlatformContext,
@@ -478,6 +478,71 @@ describe("platform-feeds", () => {
                 expect(err).toBeInstanceOf(Error);
                 expect(err?.message).toEqual("Network timeout");
                 expect(results).toBeUndefined();
+            },
+        );
+    });
+
+    it("emits a schema-valid collection from a real channel image/author feed", () => {
+        platform.makeRequest = (): Promise<string> => {
+            return Promise.resolve(loadFixture("channel-image-author-rss.xml"));
+        };
+
+        platform.fetch(
+            {
+                id: "image-author-feed-id",
+                actor: {
+                    id: "https://example.com/feed",
+                },
+            },
+            (err, results: ASCollection) => {
+                expect(err).toBeNull();
+                expect(results.totalItems).toEqual(1);
+
+                // The real buildFeedChannel output (image + author) and the
+                // per-post `id` must satisfy the strict outbound schema.
+                const actor = results.items[0].actor;
+                expect(typeof actor?.image).toBe("string");
+                expect(actor?.image).toEqual("https://example.com/logo.png");
+                // podparse maps <author> to the raw text, not an object.
+                expect(actor?.author).toEqual(
+                    "editor@example.com (Jane Editor)",
+                );
+                expect(results.items[0].id).toEqual("image-author-feed-id");
+
+                expect(validateActivityStreamResponse(results)).toEqual("");
+            },
+        );
+    });
+
+    it("emits a schema-valid collection from a feed without channel image/author", () => {
+        platform.makeRequest = (): Promise<string> => {
+            return Promise.resolve(loadFixture("bare-channel-rss.xml"));
+        };
+
+        platform.fetch(
+            {
+                id: "bare-feed-id",
+                actor: {
+                    id: "https://example.com/feed",
+                },
+            },
+            (err, results: ASCollection) => {
+                expect(err).toBeNull();
+                expect(results.totalItems).toEqual(1);
+
+                // Absent channel metadata must not break strict validation:
+                // image/author are undefined and AJV skips undefined-valued
+                // properties (they are also dropped at the JSON/IPC boundary).
+                const actor = results.items[0].actor;
+                expect(actor?.image).toBeUndefined();
+                expect(actor?.author).toBeUndefined();
+
+                expect(validateActivityStreamResponse(results)).toEqual("");
+                expect(
+                    validateActivityStreamResponse(
+                        JSON.parse(JSON.stringify(results)),
+                    ),
+                ).toEqual("");
             },
         );
     });
