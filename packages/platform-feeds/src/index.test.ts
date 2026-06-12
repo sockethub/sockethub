@@ -2,9 +2,11 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { beforeEach, describe, expect, it, test } from "bun:test";
 import type { ASCollection, PlatformSession } from "@sockethub/schemas";
+import type { ActivityStream } from "@sockethub/schemas";
 import {
     addPlatformContext,
     addPlatformSchema,
+    validateActivityStream,
     validateActivityStreamResponse,
 } from "@sockethub/schemas";
 import getPodcastFromFeed from "podparse";
@@ -12,6 +14,7 @@ import feedsSchema from "./schema";
 import { RSSFeed } from "./index.test.data";
 import Feeds, { buildFeedItem, datesEqual } from "./index";
 
+addPlatformSchema(feedsSchema.messages, "feeds/messages");
 addPlatformSchema(feedsSchema.responses, "feeds/responses");
 addPlatformContext("feeds", feedsSchema.contextUrl);
 
@@ -44,6 +47,35 @@ const FIXTURES_DIR = path.join(import.meta.dirname, "../test/fixtures");
 function loadFixture(name: string): string {
     return readFileSync(path.join(FIXTURES_DIR, name), "utf8");
 }
+
+describe("inbound messages schema", () => {
+    it("validates a well-formed fetch activity carrying an object payload", () => {
+        const msg = {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                feedsSchema.contextUrl,
+            ],
+            type: "fetch",
+            actor: {
+                id: "https://example.com/feed.xml",
+                type: "feed",
+            },
+            object: {
+                type: "feed-parameters",
+                url: "https://example.com/feed.xml",
+            },
+        } as unknown as ActivityStream;
+        expect(validateActivityStream(msg)).toEqual("");
+    });
+
+    it("has no impossible identical-branch oneOf on object", () => {
+        expect(feedsSchema.messages.properties.object).not.toHaveProperty(
+            "oneOf",
+        );
+        expect(feedsSchema.messages).not.toHaveProperty("definitions");
+    });
+});
 
 describe("datesEqual", () => {
     test("treats two null/undefined as equal", () => {

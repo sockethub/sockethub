@@ -15,22 +15,7 @@ export default {
             },
             object: {
                 type: "object",
-                oneOf: [
-                    { $ref: "#/definitions/objectTypes/feed-parameters-date" },
-                    { $ref: "#/definitions/objectTypes/feed-parameters-url" },
-                ],
-            },
-        },
-        definitions: {
-            objectTypes: {
-                "feed-parameters-date": {
-                    type: "object",
-                    additionalProperties: true,
-                },
-                "feed-parameters-url": {
-                    type: "object",
-                    additionalProperties: true,
-                },
+                additionalProperties: true,
             },
         },
     },
