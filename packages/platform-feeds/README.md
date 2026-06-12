@@ -150,6 +150,38 @@ Returns an ActivityStreams Collection with feed entries:
 }
 ```
 
+## Request Hardening (SSRF Guard)
+
+Because the server fetches whatever URL a client supplies as `actor.id`, feed
+requests are hardened against server-side request forgery (SSRF) and resource
+exhaustion:
+
+* Only `http:` and `https:` URLs are accepted.
+* The destination hostname is resolved and the request is rejected if any
+  resolved address (or an IP literal in the URL) is loopback, private,
+  link-local, carrier-grade NAT, or otherwise non-public. IPv4-mapped,
+  IPv4-compatible, and NAT64 IPv6 spellings of those ranges are normalized
+  and blocked as well.
+* Redirects are followed manually with a bounded hop count, and every hop is
+  re-validated before being fetched.
+* Response bodies are capped at 5 MiB, enforced while streaming (a missing or
+  lying `Content-Length` does not bypass the cap).
+* Non-2xx responses fail the job with a descriptive error.
+
+### `SOCKETHUB_FEEDS_ALLOW_PRIVATE_ADDRESSES`
+
+Setting the environment variable `SOCKETHUB_FEEDS_ALLOW_PRIVATE_ADDRESSES=true`
+disables **only** the private/loopback destination checks. Scheme validation,
+the redirect limit, and the response size cap always remain in effect.
+
+This is an escape hatch for development and test harnesses that serve feed
+fixtures from `localhost`, or for self-hosted deployments that intentionally
+fetch intranet feeds. **Do not enable it on a server that accepts requests
+from untrusted clients** — it allows any client to make the server issue HTTP
+requests to internal services, including cloud metadata endpoints such as
+`169.254.169.254`. The flag defaults to off; the full guard is active unless
+it is explicitly set to the string `true`.
+
 ## Supported Feed Formats
 
 * **RSS 2.0**: Standard RSS feeds

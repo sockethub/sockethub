@@ -653,6 +653,64 @@ describe("assertUrlAllowed (SSRF guard)", () => {
             assertUrlAllowed("http://169.254.169.254/latest/meta-data/"),
         ).rejects.toThrow(/not a public address/);
     });
+
+    it("rejects a hex-form IPv4-mapped IPv6 loopback literal", async () => {
+        await expect(
+            assertUrlAllowed("http://[::ffff:7f00:1]/feed"),
+        ).rejects.toThrow(/not a public address/);
+    });
+
+    it("routes non-IP hostnames to DNS resolution instead of blocking them as literals", async () => {
+        // A guaranteed-unresolvable name (RFC 2606 .invalid) must fail with
+        // the "could not resolve" error, proving it passed the IP-literal
+        // check rather than being conservatively blocked as a non-IPv4
+        // string ("not a public address").
+        await expect(
+            assertUrlAllowed("http://feeds.sockethub-test.invalid/feed.xml"),
+        ).rejects.toThrow(/could not resolve/);
+    });
+
+    describe("allowPrivateAddresses escape hatch", () => {
+        it("allows a loopback IP literal when enabled", async () => {
+            await expect(
+                assertUrlAllowed("http://127.0.0.1:10550/feed.xml", {
+                    allowPrivateAddresses: true,
+                }),
+            ).resolves.toBeUndefined();
+        });
+
+        it("allows a localhost hostname when enabled", async () => {
+            await expect(
+                assertUrlAllowed("http://localhost:10550/feed.xml", {
+                    allowPrivateAddresses: true,
+                }),
+            ).resolves.toBeUndefined();
+        });
+
+        it("still rejects unsupported schemes when enabled", async () => {
+            await expect(
+                assertUrlAllowed("file:///etc/passwd", {
+                    allowPrivateAddresses: true,
+                }),
+            ).rejects.toThrow(/unsupported scheme/);
+        });
+
+        it("still rejects malformed URLs when enabled", async () => {
+            await expect(
+                assertUrlAllowed("not a url", {
+                    allowPrivateAddresses: true,
+                }),
+            ).rejects.toThrow(/invalid URL/);
+        });
+
+        it("still blocks loopback when explicitly disabled", async () => {
+            await expect(
+                assertUrlAllowed("http://127.0.0.1:10550/feed.xml", {
+                    allowPrivateAddresses: false,
+                }),
+            ).rejects.toThrow(/not a public address/);
+        });
+    });
 });
 
 describe("isBlockedAddress", () => {
@@ -697,5 +755,59 @@ describe("isBlockedAddress", () => {
 
     it("does not block IPv4-mapped public addresses", () => {
         expect(isBlockedAddress("::ffff:8.8.8.8")).toBe(false);
+    });
+
+    it("blocks hex-form IPv4-mapped IPv6 loopback (::ffff:7f00:1)", () => {
+        expect(isBlockedAddress("::ffff:7f00:1")).toBe(true);
+    });
+
+    it("blocks non-compressed IPv4-mapped IPv6 loopback", () => {
+        expect(isBlockedAddress("0:0:0:0:0:ffff:7f00:1")).toBe(true);
+        expect(isBlockedAddress("0:0:0:0:0:ffff:127.0.0.1")).toBe(true);
+    });
+
+    it("blocks uppercase hex-form IPv4-mapped IPv6 loopback", () => {
+        expect(isBlockedAddress("::FFFF:7F00:1")).toBe(true);
+    });
+
+    it("blocks hex-form IPv4-mapped link-local/metadata (::ffff:a9fe:a9fe)", () => {
+        expect(isBlockedAddress("::ffff:a9fe:a9fe")).toBe(true);
+    });
+
+    it("does not block hex-form IPv4-mapped public addresses (::ffff:808:808)", () => {
+        expect(isBlockedAddress("::ffff:808:808")).toBe(false);
+    });
+
+    it("blocks IPv4-compatible IPv6 spellings of blocked ranges", () => {
+        expect(isBlockedAddress("::7f00:1")).toBe(true);
+        expect(isBlockedAddress("::127.0.0.1")).toBe(true);
+    });
+
+    it("blocks NAT64 (64:ff9b::/96) spellings of blocked ranges", () => {
+        expect(isBlockedAddress("64:ff9b::7f00:1")).toBe(true);
+        expect(isBlockedAddress("64:ff9b::127.0.0.1")).toBe(true);
+        expect(isBlockedAddress("64:ff9b::a9fe:a9fe")).toBe(true);
+    });
+
+    it("does not block NAT64 spellings of public addresses", () => {
+        expect(isBlockedAddress("64:ff9b::808:808")).toBe(false);
+    });
+
+    it("blocks carrier-grade NAT (100.64.0.0/10)", () => {
+        expect(isBlockedAddress("100.64.0.1")).toBe(true);
+        expect(isBlockedAddress("100.127.255.254")).toBe(true);
+        expect(isBlockedAddress("100.63.255.254")).toBe(false);
+        expect(isBlockedAddress("100.128.0.1")).toBe(false);
+    });
+
+    it("blocks unparseable address strings conservatively", () => {
+        expect(isBlockedAddress("not-an-ip")).toBe(true);
+        expect(isBlockedAddress(":::1")).toBe(true);
+        expect(isBlockedAddress("1:2:3:4:5:6:7:8:9")).toBe(true);
+        expect(isBlockedAddress("::ffff:999.0.0.1")).toBe(true);
+    });
+
+    it("strips zone indexes before classification", () => {
+        expect(isBlockedAddress("fe80::1%eth0")).toBe(true);
     });
 });
