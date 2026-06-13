@@ -1,4 +1,4 @@
-import { describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { Agent } from "undici";
 
 // Capture the options passed to open-graph-scraper and control its outcome,
@@ -41,6 +41,13 @@ function runFetch(
 }
 
 describe("metadata fetch SSRF hardening", () => {
+    beforeEach(() => {
+        // Reset shared mock state so a stale value from one test cannot make a
+        // later assertion pass without exercising the current path.
+        ogsOptions = undefined;
+        ogsBehavior = () => Promise.resolve({ result: {} });
+    });
+
     it("passes a guarded undici dispatcher to open-graph-scraper", async () => {
         ogsBehavior = () => Promise.resolve({ result: {} });
         await runFetch(makePlatform());

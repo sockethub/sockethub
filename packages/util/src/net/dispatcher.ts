@@ -1,4 +1,5 @@
-import { lookup as dnsLookup } from "node:dns";
+import { lookup as dnsLookup, type LookupAddress } from "node:dns";
+import type { LookupFunction } from "node:net";
 import { Agent } from "undici";
 import { isBlockedAddress } from "./address.js";
 
@@ -15,10 +16,10 @@ export interface GuardedDispatcherOptions {
     maxResponseBytes?: number;
 }
 
-// Node's net `lookup` callback shapes: single-address (all=false) and
-// all-addresses (all=true). undici/net may request either form.
-type LookupAddress = { address: string; family: number };
-type LookupOptions = { all?: boolean } & Record<string, unknown>;
+type LookupOptions = { all?: boolean; family?: number } & Record<
+    string,
+    unknown
+>;
 type LookupCallback = (
     err: NodeJS.ErrnoException | null,
     address?: string | Array<LookupAddress>,
@@ -36,20 +37,31 @@ type LookupCallback = (
  * ignores undici dispatchers, so the lookup decision is verified here rather
  * than through an end-to-end fetch.
  */
-export function createGuardedLookup(allowPrivateAddresses: boolean) {
+export function createGuardedLookup(
+    allowPrivateAddresses: boolean,
+): LookupFunction {
     return (
         hostname: string,
+        // net.connect passes a LookupOptions object; the legacy dns.lookup
+        // signature allows a numeric `family`, which we preserve.
         options: LookupOptions | number,
         callback: LookupCallback,
     ): void => {
         const opts: LookupOptions =
-            typeof options === "object" && options !== null ? options : {};
-        dnsLookup(hostname, { ...opts, all: true }, (err, result) => {
+            typeof options === "number" ? { family: options } : (options ?? {});
+        dnsLookup(hostname, { ...opts, all: true }, (err, addresses) => {
             if (err) {
                 callback(err);
                 return;
             }
-            const addresses = result as unknown as Array<LookupAddress>;
+            if (!addresses || addresses.length === 0) {
+                callback(
+                    Object.assign(new Error(`could not resolve ${hostname}`), {
+                        code: "ENOTFOUND",
+                    }),
+                );
+                return;
+            }
             if (!allowPrivateAddresses) {
                 for (const { address } of addresses) {
                     if (isBlockedAddress(address)) {
@@ -94,8 +106,7 @@ export function createGuardedDispatcher(
     return new Agent({
         maxResponseSize: maxResponseBytes,
         connect: {
-            // biome-ignore lint/suspicious/noExplicitAny: net lookup signature
-            lookup: createGuardedLookup(allowPrivateAddresses) as any,
+            lookup: createGuardedLookup(allowPrivateAddresses),
         },
     });
 }
