@@ -22,6 +22,7 @@ import type {
     CredentialsObject,
     PersistentPlatformInterface,
     PlatformCallback,
+    PlatformConfig,
     PlatformInterface,
     PlatformSession,
 } from "@sockethub/schemas";
@@ -32,6 +33,26 @@ import {
 import config from "./config";
 
 // Simple wrapper function to help with testing
+/**
+ * Merge per-platform config (forwarded from the parent's `packageConfig` as a
+ * JSON string in `SOCKETHUB_PLATFORM_CONFIG`) onto the platform's own config
+ * defaults. Platform defaults win for any key the file does not set. Throws on
+ * malformed JSON so the caller can log it rather than silently using defaults.
+ */
+export function mergePackageConfig(
+    base: PlatformConfig,
+    rawConfig: string | undefined,
+): PlatformConfig {
+    if (!rawConfig) {
+        return base;
+    }
+    const parsed = JSON.parse(rawConfig);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error("SOCKETHUB_PLATFORM_CONFIG must be a JSON object");
+    }
+    return { ...base, ...(parsed as Partial<PlatformConfig>) };
+}
+
 export function derivePlatformCredentialsSecret(
     parentSecret: string,
     sessionSecret: string,
@@ -110,6 +131,20 @@ async function startPlatformProcess() {
         const p = new PlatformModule.default(
             platformSession,
         ) as PlatformInterface;
+        // Apply per-platform config from the parent's `packageConfig` (if any),
+        // forwarded as JSON. On malformed input, log and keep platform defaults.
+        try {
+            p.config = mergePackageConfig(
+                p.config,
+                process.env.SOCKETHUB_PLATFORM_CONFIG,
+            );
+        } catch (err) {
+            logger.warn(
+                `ignoring invalid SOCKETHUB_PLATFORM_CONFIG: ${
+                    err instanceof Error ? err.message : String(err)
+                }`,
+            );
+        }
         logger.info(
             `platform handler loaded for ${platformName} ${identifier}`,
         );

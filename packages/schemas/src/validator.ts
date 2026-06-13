@@ -17,6 +17,7 @@ import getErrorMessage, {
 } from "./helpers/error-parser.js";
 import { ActivityStreamSchema } from "./schemas/activity-stream.js";
 import { PlatformSchema } from "./schemas/platform.js";
+import { SockethubConfigSchema } from "./schemas/sockethub-config.js";
 import type { ActivityStream } from "./types.js";
 
 const ajv = new Ajv({ strictTypes: false, allErrors: true });
@@ -99,6 +100,27 @@ export function setValidationErrorOptions(
     options: ValidationErrorOptions,
 ): void {
     validationErrorOptions = { ...validationErrorOptions, ...options };
+}
+
+let sockethubConfigValidator: ReturnType<typeof ajv.compile> | undefined;
+
+/**
+ * Validate a (fully-materialized) Sockethub server config object against the
+ * canonical config schema. Returns "" when valid, otherwise a human-readable
+ * error string. Used by the server at startup so a mis-typed or unknown config
+ * value — including inside a platform's `packageConfig` entry — fails loudly
+ * rather than reaching a platform wrong-typed.
+ */
+export function validateSockethubConfig(config: unknown): string {
+    if (!sockethubConfigValidator) {
+        sockethubConfigValidator = ajv.compile(SockethubConfigSchema);
+    }
+    if (sockethubConfigValidator(config)) {
+        return "";
+    }
+    return ajv.errorsText(sockethubConfigValidator.errors, {
+        dataVar: "config",
+    });
 }
 
 export function validateActivityStream(msg: ActivityStream): string {
