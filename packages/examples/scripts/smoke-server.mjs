@@ -92,7 +92,7 @@ const sockethub = spawn(
             PORT: "10550",
             // The smoke test serves its feed fixture from loopback, which
             // the feeds SSRF guard blocks by default. Dev/test only.
-            SOCKETHUB_FEEDS_ALLOW_PRIVATE_ADDRESSES: "true",
+            SOCKETHUB_PLATFORM_FEEDS_ALLOW_PRIVATE_ADDRESSES: "true",
         },
     },
 );

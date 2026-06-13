@@ -168,11 +168,12 @@ exhaustion:
   lying `Content-Length` does not bypass the cap).
 * Non-2xx responses fail the job with a descriptive error.
 
-### `SOCKETHUB_FEEDS_ALLOW_PRIVATE_ADDRESSES`
+### `SOCKETHUB_PLATFORM_FEEDS_ALLOW_PRIVATE_ADDRESSES`
 
-Setting the environment variable `SOCKETHUB_FEEDS_ALLOW_PRIVATE_ADDRESSES=true`
-disables **only** the private/loopback destination checks. Scheme validation,
-the redirect limit, and the response size cap always remain in effect.
+Setting the environment variable
+`SOCKETHUB_PLATFORM_FEEDS_ALLOW_PRIVATE_ADDRESSES=true` disables **only** the
+private/loopback destination checks. Scheme validation, the redirect limit, and
+the response size cap always remain in effect.
 
 This is an escape hatch for development and test harnesses that serve feed
 fixtures from `localhost`, or for self-hosted deployments that intentionally

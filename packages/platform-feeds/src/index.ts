@@ -312,6 +312,8 @@ async function readCappedBody(res: Response, url: string): Promise<string> {
     if (contentLength) {
         const declared = Number(contentLength);
         if (Number.isFinite(declared) && declared > MAX_RESPONSE_BYTES) {
+            // Drain the body so the connection can be reused rather than leaked.
+            await res.body?.cancel().catch(() => {});
             throw new Error(
                 `feed request failed: response too large (${declared} bytes) for ${url}`,
             );
@@ -450,7 +452,8 @@ export default class Feeds implements PlatformInterface {
         // Dev/test escape hatch: allow loopback/private feed destinations.
         // Never enable in production; see the package README.
         const allowPrivateAddresses =
-            process.env.SOCKETHUB_FEEDS_ALLOW_PRIVATE_ADDRESSES === "true";
+            process.env.SOCKETHUB_PLATFORM_FEEDS_ALLOW_PRIVATE_ADDRESSES ===
+            "true";
 
         for (let hop = 0; ; hop++) {
             // Validate scheme + resolve DNS and block private destinations

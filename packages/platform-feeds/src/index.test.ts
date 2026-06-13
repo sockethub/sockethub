@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { beforeEach, describe, expect, it, test } from "bun:test";
+import { beforeEach, describe, expect, it, mock, test } from "bun:test";
 import type { ASCollection, PlatformSession } from "@sockethub/schemas";
 import type { ActivityStream } from "@sockethub/schemas";
 import {
@@ -661,13 +661,23 @@ describe("assertUrlAllowed (SSRF guard)", () => {
     });
 
     it("routes non-IP hostnames to DNS resolution instead of blocking them as literals", async () => {
-        // A guaranteed-unresolvable name (RFC 2606 .invalid) must fail with
-        // the "could not resolve" error, proving it passed the IP-literal
-        // check rather than being conservatively blocked as a non-IPv4
-        // string ("not a public address").
-        await expect(
-            assertUrlAllowed("http://feeds.sockethub-test.invalid/feed.xml"),
-        ).rejects.toThrow(/could not resolve/);
+        // Mock node:dns/promises so the test is deterministic and never makes a
+        // real DNS query. A rejected lookup must surface as the "could not
+        // resolve" error, proving the hostname passed the IP-literal check and
+        // reached the DNS path rather than being conservatively blocked as a
+        // non-IPv4 string ("not a public address").
+        const realDns = await import("node:dns/promises");
+        mock.module("node:dns/promises", () => ({
+            ...realDns,
+            lookup: () => Promise.reject(new Error("mocked unresolvable host")),
+        }));
+        try {
+            await expect(
+                assertUrlAllowed("http://feeds.example.test/feed.xml"),
+            ).rejects.toThrow(/could not resolve/);
+        } finally {
+            mock.module("node:dns/promises", () => realDns);
+        }
     });
 
     describe("allowPrivateAddresses escape hatch", () => {
