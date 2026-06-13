@@ -154,18 +154,16 @@ Returns an ActivityStreams Collection with feed entries:
 
 Because the server fetches whatever URL a client supplies as `actor.id`, feed
 requests are hardened against server-side request forgery (SSRF) and resource
-exhaustion:
+exhaustion, using the shared guarded fetch dispatcher from `@sockethub/util`:
 
 * Only `http:` and `https:` URLs are accepted.
-* The destination hostname is resolved and the request is rejected if any
-  resolved address (or an IP literal in the URL) is loopback, private,
-  link-local, carrier-grade NAT, or otherwise non-public. IPv4-mapped,
-  IPv4-compatible, and NAT64 IPv6 spellings of those ranges are normalized
-  and blocked as well.
-* Redirects are followed manually with a bounded hop count, and every hop is
-  re-validated before being fetched.
-* Response bodies are capped at 5 MiB, enforced while streaming (a missing or
-  lying `Content-Length` does not bypass the cap).
+* The connection is refused if the destination resolves to a loopback, private,
+  link-local, carrier-grade NAT, or otherwise non-public address — validated at
+  the connection layer, so it also covers every redirect hop (no
+  check-then-fetch rebinding gap). IPv4-mapped, IPv4-compatible, and NAT64 IPv6
+  spellings of those ranges are normalized and blocked as well.
+* Response bodies are capped (a missing or lying `Content-Length` does not
+  bypass the cap).
 * Non-2xx responses fail the job with a descriptive error.
 
 ### `allowPrivateAddresses`

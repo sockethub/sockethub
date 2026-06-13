@@ -146,6 +146,7 @@
       "name": "@sockethub/platform-feeds",
       "version": "4.0.0-alpha.12",
       "dependencies": {
+        "@sockethub/util": "^1.0.0-alpha.0",
         "html-tags": "^3.3.1",
         "htmlparser2": "^9.1.0",
         "podparse": "^1.6.0",
@@ -184,6 +185,7 @@
       "name": "@sockethub/platform-metadata",
       "version": "1.0.1-alpha.7",
       "dependencies": {
+        "@sockethub/util": "^1.0.0-alpha.0",
         "open-graph-scraper": "^6.11.0",
       },
       "devDependencies": {
