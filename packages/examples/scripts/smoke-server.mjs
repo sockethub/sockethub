@@ -90,9 +90,13 @@ const sockethub = spawn(
             ...process.env,
             REDIS_URL: "redis://127.0.0.1:6379",
             PORT: "10550",
-            // The smoke test serves its feed fixture from loopback, which
-            // the feeds SSRF guard blocks by default. Dev/test only.
-            SOCKETHUB_PLATFORM_FEEDS_ALLOW_PRIVATE_ADDRESSES: "true",
+            // The smoke test serves its feed fixture from loopback, which the
+            // feeds SSRF guard blocks by default. This config enables the
+            // escape hatch via packageConfig. Dev/test only.
+            SOCKETHUB_CONFIG: path.join(
+                root,
+                "integration/sockethub.ci.config.json",
+            ),
         },
     },
 );

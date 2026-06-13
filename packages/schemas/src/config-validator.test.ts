@@ -20,6 +20,32 @@ describe("validateSockethubConfig", () => {
         ).toEqual("");
     });
 
+    it("accepts the feeds allowPrivateAddresses boolean", () => {
+        expect(
+            validateSockethubConfig({
+                ...base,
+                packageConfig: {
+                    "@sockethub/platform-feeds": {
+                        allowPrivateAddresses: true,
+                    },
+                },
+            }),
+        ).toEqual("");
+    });
+
+    it("rejects a non-boolean allowPrivateAddresses", () => {
+        expect(
+            validateSockethubConfig({
+                ...base,
+                packageConfig: {
+                    "@sockethub/platform-feeds": {
+                        allowPrivateAddresses: "true",
+                    },
+                },
+            }),
+        ).not.toEqual("");
+    });
+
     it("rejects an unknown top-level key", () => {
         expect(validateSockethubConfig({ ...base, nope: 1 })).not.toEqual("");
     });

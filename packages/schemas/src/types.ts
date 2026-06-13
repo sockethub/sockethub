@@ -105,6 +105,9 @@ export type PlatformConfig = StatelessPlatformConfig | PersistentPlatformConfig;
 
 interface BasePlatformConfig {
     connectTimeoutMs?: number;
+    // feeds: allow fetching loopback/private destinations (SSRF escape hatch,
+    // dev/test only). Set via packageConfig; see platform-feeds README.
+    allowPrivateAddresses?: boolean;
 }
 
 /** Configuration for stateless platforms that start/stop per-request */

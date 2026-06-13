@@ -450,10 +450,9 @@ export default class Feeds implements PlatformInterface {
             signal = AbortSignal.timeout(this.config.connectTimeoutMs);
         }
         // Dev/test escape hatch: allow loopback/private feed destinations.
-        // Never enable in production; see the package README.
+        // Set via packageConfig (see the package README); never in production.
         const allowPrivateAddresses =
-            process.env.SOCKETHUB_PLATFORM_FEEDS_ALLOW_PRIVATE_ADDRESSES ===
-            "true";
+            this.config.allowPrivateAddresses === true;
 
         for (let hop = 0; ; hop++) {
             // Validate scheme + resolve DNS and block private destinations

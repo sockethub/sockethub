@@ -1,0 +1,8 @@
+{
+  "$schema": "../packages/schemas/src/schemas/json/sockethub-config.json",
+  "packageConfig": {
+    "@sockethub/platform-feeds": {
+      "allowPrivateAddresses": true
+    }
+  }
+}
