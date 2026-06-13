@@ -167,4 +167,26 @@ describe("config", () => {
             "@sockethub/platform-feeds": { connectTimeoutMs: 7000 },
         });
     });
+
+    it("rejects a mis-typed packageConfig value", () => {
+        const file = writeConfig({
+            platforms: ["@sockethub/platform-feeds"],
+            packageConfig: {
+                "@sockethub/platform-feeds": { connectTimeoutMs: "7000" },
+            },
+        });
+        process.argv = ["node", "test", "--config", file];
+        expect(() => new Config()).toThrow(/invalid configuration/);
+    });
+
+    it("rejects an unknown key within a packageConfig entry", () => {
+        const file = writeConfig({
+            platforms: ["@sockethub/platform-feeds"],
+            packageConfig: {
+                "@sockethub/platform-feeds": { bogusKey: true },
+            },
+        });
+        process.argv = ["node", "test", "--config", file];
+        expect(() => new Config()).toThrow(/invalid configuration/);
+    });
 });

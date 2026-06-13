@@ -12,6 +12,10 @@ export const SockethubConfigSchema = {
             type: "boolean",
             default: true,
         },
+        info: {
+            type: "boolean",
+            default: false,
+        },
         logging: {
             type: "object",
             additionalProperties: false,
@@ -44,6 +48,57 @@ export const SockethubConfigSchema = {
                 "@sockethub/platform-metadata",
                 "@sockethub/platform-xmpp",
             ],
+        },
+        // Per-platform config, keyed by package name. Each platform's entry is
+        // validated against its declared keys; entries for platforms without a
+        // declared shape here are passed through unvalidated.
+        packageConfig: {
+            type: "object",
+            properties: {
+                "@sockethub/platform-dummy": {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                        greeting: { type: "string", default: "Hello" },
+                    },
+                },
+                "@sockethub/platform-feeds": {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                        connectTimeoutMs: { type: "number" },
+                    },
+                },
+                "@sockethub/platform-irc": {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                        connectTimeoutMs: { type: "number" },
+                    },
+                },
+                "@sockethub/platform-xmpp": {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                        connectTimeoutMs: { type: "number" },
+                    },
+                },
+            },
+        },
+        credentialCheck: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+                reconnectIpSource: {
+                    type: "string",
+                    enum: ["socket", "proxy"],
+                    default: "socket",
+                },
+                proxyHeader: {
+                    type: "string",
+                    default: "x-forwarded-for",
+                },
+            },
         },
         public: {
             type: "object",

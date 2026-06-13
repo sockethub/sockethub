@@ -28,6 +28,7 @@ import {
     validateActivityStreamResponse,
     validateCredentials,
     validatePlatformSchema,
+    validateSockethubConfig,
 } from "./validator.js";
 
 export { normalizeActivityStream } from "./activity-stream-helper.js";
@@ -51,6 +52,7 @@ export {
     validateCredentials,
     validateActivityStream,
     validateActivityStreamResponse,
+    validateSockethubConfig,
     setValidationErrorOptions,
     PlatformSchema,
     ActivityStreamSchema,

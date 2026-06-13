@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { validateSockethubConfig } from "@sockethub/schemas";
 import convict from "convict";
 
 import { createWinstonLogger, type Logger } from "./logger-core.js";
@@ -214,9 +215,17 @@ export class Config {
             throw new Error(`Config file not found: ${file}`);
         }
 
-        // Coerce + validate. `strict` makes an unknown or mis-typed key in a
-        // config file a hard error rather than a silent no-op.
+        // Coerce + validate top-level keys/types. `strict` makes an unknown or
+        // mis-typed top-level key a hard error rather than a silent no-op.
         this.conf.validate({ allowed: "strict" });
+
+        // Validate the full materialized config against the canonical schema.
+        // This adds depth convict's flat schema lacks — notably the contents of
+        // each platform's `packageConfig` entry (e.g. a string `connectTimeoutMs`).
+        const configError = validateSockethubConfig(this.conf.getProperties());
+        if (configError) {
+            throw new Error(`invalid configuration: ${configError}`);
+        }
 
         const platforms = this.conf.get("platforms");
         if (!Array.isArray(platforms) || platforms.length === 0) {

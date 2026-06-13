@@ -121,11 +121,11 @@ the platform default):
 }
 ```
 
-Each platform documents the keys it accepts in its own README. Unknown
-*top-level* config keys are rejected at startup (see [Validation](#validation)),
-but keys *within* a platform's `packageConfig` entry are passed through to the
-platform as-is and are not currently validated centrally — an unrecognized or
-mis-typed key may be ignored or cause a platform-specific error.
+Each platform documents the keys it accepts in its own README. For platforms
+with a declared config schema, the keys and value types of their `packageConfig`
+entry are validated at startup — an unknown or mis-typed key is rejected (see
+[Validation](#validation)). Entries for platforms without a declared schema are
+passed through to the platform unvalidated.
 
 ### Rate Limiting
 
