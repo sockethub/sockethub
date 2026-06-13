@@ -28,7 +28,8 @@ export default class Metadata implements PlatformInterface {
     private getDispatcher(): ReturnType<typeof createGuardedDispatcher> {
         if (!this.dispatcher) {
             this.dispatcher = createGuardedDispatcher({
-                allowPrivateAddresses: this.config.allowPrivateAddresses === true,
+                allowPrivateAddresses:
+                    this.config.allowPrivateAddresses === true,
             });
         }
         return this.dispatcher;
