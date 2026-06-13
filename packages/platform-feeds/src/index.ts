@@ -16,8 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { lookup } from "node:dns/promises";
-import { isIP } from "node:net";
 import type {
     ActivityStream,
     Logger,
@@ -28,6 +26,7 @@ import type {
     PlatformSession,
 } from "@sockethub/schemas";
 import { buildCanonicalContext } from "@sockethub/schemas";
+import { createGuardedDispatcher } from "@sockethub/util/net";
 import htmlTags from "html-tags";
 import getPodcastFromFeed, { type Episode, type Meta } from "podparse";
 
@@ -43,15 +42,6 @@ import {
 const MAX_NOTE_LENGTH = 256;
 const FEEDS_CONTEXT = buildCanonicalContext(PlatformSchema.contextUrl);
 
-// Cap the amount of data read from a single feed response. AbortSignal.timeout
-// bounds how long a request may take; this bounds how many bytes it may return,
-// guarding against unbounded (or lying-Content-Length) bodies exhausting memory.
-const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
-
-// Bound how many redirects we follow. Each hop is re-validated (scheme + DNS)
-// to prevent redirect-based DNS rebinding past the SSRF guard.
-const MAX_REDIRECTS = 5;
-
 const basic = /\s?<!doctype html>|(<html\b[^>]*>|<body\b[^>]*>|<x-[^>]+>)+/i;
 const full = new RegExp(
     htmlTags.map((tag) => `<${tag}\\b[^>]*>`).join("|"),
@@ -62,297 +52,6 @@ function isHtml(s: string): boolean {
     // limit it to a reasonable length to improve performance.
     const limitedString = s.trim().slice(0, 1000);
     return basic.test(limitedString) || full.test(s);
-}
-
-function isRedirect(status: number): boolean {
-    return (
-        status === 301 ||
-        status === 302 ||
-        status === 303 ||
-        status === 307 ||
-        status === 308
-    );
-}
-
-/**
- * Returns true if `ip` is a loopback, private, link-local, or otherwise
- * non-public address that should not be reachable by a server fetching
- * client-supplied URLs (SSRF defense). Handles IPv4, IPv6, and IPv4-mapped
- * IPv6 addresses.
- */
-export function isBlockedAddress(ip: string): boolean {
-    const addr = ip.trim().toLowerCase();
-
-    if (addr.includes(":")) {
-        return isBlockedIpv6(addr);
-    }
-
-    return isBlockedIpv4(addr);
-}
-
-function isBlockedIpv4(ip: string): boolean {
-    const parts = ip.split(".").map((p) => Number(p));
-    if (
-        parts.length !== 4 ||
-        parts.some((p) => !Number.isInteger(p) || p < 0 || p > 255)
-    ) {
-        // Not a parseable IPv4 literal; block conservatively.
-        return true;
-    }
-    const [a, b] = parts;
-    // 0.0.0.0/8 ("this network", commonly routes to localhost)
-    if (a === 0) return true;
-    // 127.0.0.0/8 loopback
-    if (a === 127) return true;
-    // 10.0.0.0/8 private
-    if (a === 10) return true;
-    // 172.16.0.0/12 private
-    if (a === 172 && b >= 16 && b <= 31) return true;
-    // 192.168.0.0/16 private
-    if (a === 192 && b === 168) return true;
-    // 169.254.0.0/16 link-local (incl. 169.254.169.254 cloud metadata)
-    if (a === 169 && b === 254) return true;
-    // 100.64.0.0/10 carrier-grade NAT shared address space
-    if (a === 100 && b >= 64 && b <= 127) return true;
-    return false;
-}
-
-/**
- * Expand an IPv6 literal (lowercased, zone index already stripped) to its
- * eight 16-bit groups, or null if unparseable. A trailing dotted-quad
- * (e.g. ::ffff:127.0.0.1) is converted to two hex groups first, so every
- * notation of the same address normalizes identically.
- */
-function expandIpv6(address: string): Array<number> | null {
-    let addr = address;
-    const dotted = addr.match(/^(.+:)(\d{1,3}(?:\.\d{1,3}){3})$/);
-    if (dotted) {
-        const octets = dotted[2].split(".").map(Number);
-        if (octets.some((o) => !Number.isInteger(o) || o < 0 || o > 255)) {
-            return null;
-        }
-        const hi = ((octets[0] << 8) | octets[1]).toString(16);
-        const lo = ((octets[2] << 8) | octets[3]).toString(16);
-        addr = `${dotted[1]}${hi}:${lo}`;
-    }
-
-    const halves = addr.split("::");
-    if (halves.length > 2) return null;
-    const head = halves[0] ? halves[0].split(":") : [];
-    const tail = halves.length === 2 && halves[1] ? halves[1].split(":") : [];
-    if (halves.length === 2 ? head.length + tail.length > 8 : head.length !== 8)
-        return null;
-    const groupsStr =
-        halves.length === 2
-            ? [
-                  ...head,
-                  ...new Array(8 - head.length - tail.length).fill("0"),
-                  ...tail,
-              ]
-            : head;
-
-    const groups: Array<number> = [];
-    for (const group of groupsStr) {
-        if (!/^[0-9a-f]{1,4}$/.test(group)) return null;
-        groups.push(Number.parseInt(group, 16));
-    }
-    return groups;
-}
-
-/**
- * If the expanded IPv6 groups embed an IPv4 address — IPv4-mapped
- * (::ffff:0:0/96), deprecated IPv4-compatible (::/96, which also covers
- * `::`/`::1`), or the NAT64 well-known prefix (64:ff9b::/96) — return it in
- * dotted-quad form so IPv4 rules apply; otherwise return null.
- */
-function extractEmbeddedIpv4(groups: Array<number>): string | null {
-    const [a, b, c, d, e, f, g, h] = groups;
-    const zeroPrefix = a === 0 && b === 0 && c === 0 && d === 0 && e === 0;
-    const mapped = zeroPrefix && f === 0xffff;
-    const compat = zeroPrefix && f === 0;
-    const nat64 =
-        a === 0x64 && b === 0xff9b && c === 0 && d === 0 && e === 0 && f === 0;
-    if (!mapped && !compat && !nat64) return null;
-    return `${g >> 8}.${g & 0xff}.${h >> 8}.${h & 0xff}`;
-}
-
-function isBlockedIpv6(ip: string): boolean {
-    // Strip zone index (e.g. fe80::1%eth0).
-    const addr = ip.split("%")[0];
-    // Normalize to 8 groups so hex/dotted/compressed/uppercase spellings of
-    // the same address are classified identically (e.g. ::ffff:7f00:1 and
-    // ::ffff:127.0.0.1 are both IPv4-mapped loopback).
-    const groups = expandIpv6(addr);
-    if (!groups) {
-        // Not a parseable IPv6 literal; block conservatively.
-        return true;
-    }
-    // Embedded IPv4 (mapped/compat/NAT64) -> apply IPv4 rules. This also
-    // covers :: (0.0.0.0) and ::1 (0.0.0.1), both within blocked 0.0.0.0/8.
-    const embedded = extractEmbeddedIpv4(groups);
-    if (embedded) {
-        return isBlockedIpv4(embedded);
-    }
-    // fc00::/7 unique-local.
-    if ((groups[0] & 0xfe00) === 0xfc00) return true;
-    // fe80::/10 link-local.
-    if ((groups[0] & 0xffc0) === 0xfe80) return true;
-    return false;
-}
-
-/**
- * Options for {@link assertUrlAllowed}.
- */
-export interface AssertUrlAllowedOptions {
-    /**
-     * When true, skip the private/loopback destination checks (scheme and URL
-     * validation still apply). Dev/test escape hatch only; see README.
-     */
-    allowPrivateAddresses?: boolean;
-    /** Abort signal bounding the DNS lookup (shared with the fetch budget). */
-    signal?: AbortSignal;
-}
-
-/**
- * Resolve `hostname` to all of its addresses, bounded by `signal` so a slow
- * or unresponsive DNS server cannot stall a job past its abort budget.
- */
-async function lookupAll(
-    hostname: string,
-    signal?: AbortSignal,
-): Promise<Array<{ address: string }>> {
-    const pending = lookup(hostname, { all: true });
-    if (!signal) {
-        return pending;
-    }
-    signal.throwIfAborted();
-    return await new Promise((resolve, reject) => {
-        const onAbort = () => reject(signal.reason);
-        signal.addEventListener("abort", onAbort, { once: true });
-        pending.then(resolve, reject).finally(() => {
-            signal.removeEventListener("abort", onAbort);
-        });
-    });
-}
-
-/**
- * Validates that `url` is an http(s) URL whose hostname resolves only to
- * public addresses. Throws a clear Error otherwise. Used before every fetch
- * (including each redirect hop) to defend against SSRF.
- *
- * Note: this is a check-then-fetch guard. The subsequent fetch performs its
- * own DNS resolution, so a rebinding DNS server could in principle answer the
- * guard with a public address and the fetch with a private one (TOCTOU).
- * Closing that residual gap requires pinning the validated address at
- * connection time (e.g. a custom undici dispatcher with a validating
- * `connect.lookup`); tracked as a follow-up. The platform also runs in an
- * isolated child process, limiting blast radius.
- */
-export async function assertUrlAllowed(
-    url: string,
-    options: AssertUrlAllowedOptions = {},
-): Promise<void> {
-    let parsed: URL;
-    try {
-        parsed = new URL(url);
-    } catch {
-        throw new Error(`feed request blocked: invalid URL ${url}`);
-    }
-
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-        throw new Error(
-            `feed request blocked: unsupported scheme ${parsed.protocol} for ${url}`,
-        );
-    }
-
-    if (options.allowPrivateAddresses) {
-        // Explicitly configured escape hatch (dev/test harnesses): skip only
-        // the private/loopback destination checks below.
-        return;
-    }
-
-    const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
-
-    if (isIP(hostname) !== 0) {
-        // The host is an IP literal; check it directly.
-        if (isBlockedAddress(hostname)) {
-            throw new Error(
-                `feed request blocked: destination ${hostname} is not a public address (${url})`,
-            );
-        }
-        return;
-    }
-
-    // Otherwise resolve all records and reject if ANY is private/loopback.
-    let addresses: Array<{ address: string }>;
-    try {
-        addresses = await lookupAll(hostname, options.signal);
-    } catch (err) {
-        const detail = err instanceof Error ? err.message : String(err);
-        throw new Error(
-            `feed request blocked: could not resolve ${hostname} (${detail})`,
-        );
-    }
-    for (const { address } of addresses) {
-        if (isBlockedAddress(address)) {
-            throw new Error(
-                `feed request blocked: ${hostname} resolves to non-public address ${address} (${url})`,
-            );
-        }
-    }
-}
-
-/**
- * Reads a response body, enforcing MAX_RESPONSE_BYTES. Rejects up front on an
- * oversized Content-Length and defensively while streaming (in case the header
- * is missing or lies). Returns the decoded body as a string.
- */
-async function readCappedBody(res: Response, url: string): Promise<string> {
-    const contentLength = res.headers.get("content-length");
-    if (contentLength) {
-        const declared = Number(contentLength);
-        if (Number.isFinite(declared) && declared > MAX_RESPONSE_BYTES) {
-            // Drain the body so the connection can be reused rather than leaked.
-            await res.body?.cancel().catch(() => {});
-            throw new Error(
-                `feed request failed: response too large (${declared} bytes) for ${url}`,
-            );
-        }
-    }
-
-    if (!res.body) {
-        return await res.text();
-    }
-
-    const reader = res.body.getReader();
-    const chunks: Array<Uint8Array> = [];
-    let total = 0;
-    try {
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            if (value) {
-                total += value.byteLength;
-                if (total > MAX_RESPONSE_BYTES) {
-                    await reader.cancel();
-                    throw new Error(
-                        `feed request failed: response exceeded ${MAX_RESPONSE_BYTES} bytes for ${url}`,
-                    );
-                }
-                chunks.push(value);
-            }
-        }
-    } finally {
-        reader.releaseLock();
-    }
-
-    const combined = new Uint8Array(total);
-    let offset = 0;
-    for (const chunk of chunks) {
-        combined.set(chunk, offset);
-        offset += chunk.byteLength;
-    }
-    return new TextDecoder().decode(combined);
 }
 
 /**
@@ -374,6 +73,7 @@ async function readCappedBody(res: Response, url: string): Promise<string> {
 export default class Feeds implements PlatformInterface {
     id: string;
     private readonly log: Logger;
+    private dispatcher?: ReturnType<typeof createGuardedDispatcher>;
     config: PlatformConfig = {
         persist: false,
         connectTimeoutMs: 5000,
@@ -435,76 +135,65 @@ export default class Feeds implements PlatformInterface {
 
     /**
      * Cleanup method called when platform instance is being shut down.
-     * Currently, no cleanup required for feeds platform.
      *
      * @param done - Callback function to signal completion
      */
     cleanup(done: PlatformCallback) {
+        // Release the guarded dispatcher's pooled connections on shutdown.
+        this.dispatcher?.close().catch(() => {});
         done();
     }
 
-    private async makeRequest(url: string): Promise<string> {
-        let currentUrl = url;
-        let signal: AbortSignal | undefined;
-        if (this.config.connectTimeoutMs) {
-            signal = AbortSignal.timeout(this.config.connectTimeoutMs);
-        }
-        // Dev/test escape hatch: allow loopback/private feed destinations.
-        // Set via packageConfig (see the package README); never in production.
-        const allowPrivateAddresses =
-            this.config.allowPrivateAddresses === true;
-
-        for (let hop = 0; ; hop++) {
-            // Validate scheme + resolve DNS and block private destinations
-            // before every fetch, including each redirect hop.
-            await assertUrlAllowed(currentUrl, {
-                allowPrivateAddresses,
-                signal,
+    /**
+     * The SSRF-guarded undici dispatcher, created once per instance (its
+     * `allowPrivateAddresses` setting comes from packageConfig, fixed before the
+     * first job) and reused so connections/timers are pooled.
+     */
+    private getDispatcher(): ReturnType<typeof createGuardedDispatcher> {
+        if (!this.dispatcher) {
+            this.dispatcher = createGuardedDispatcher({
+                allowPrivateAddresses:
+                    this.config.allowPrivateAddresses === true,
             });
-
-            const opts: RequestInit = { redirect: "manual" };
-            if (signal) {
-                opts.signal = signal;
-            }
-            const res = await fetch(currentUrl, opts);
-
-            if (isRedirect(res.status)) {
-                // Drain the unused body so the keep-alive connection is
-                // returned to the pool instead of leaking until GC.
-                await res.body?.cancel().catch(() => {});
-                if (hop >= MAX_REDIRECTS) {
-                    throw new Error(
-                        `feed request failed: too many redirects for ${url}`,
-                    );
-                }
-                const location = res.headers.get("location");
-                if (!location) {
-                    throw new Error(
-                        `feed request failed: ${res.status} redirect without Location for ${currentUrl}`,
-                    );
-                }
-                // Resolve relative redirects against the current URL.
-                try {
-                    currentUrl = new URL(location, currentUrl).toString();
-                } catch {
-                    throw new Error(
-                        `feed request failed: invalid redirect Location "${location}" for ${currentUrl}`,
-                    );
-                }
-                continue;
-            }
-
-            if (!res.ok) {
-                await res.body?.cancel().catch(() => {});
-                // HTTP/2 has no reason phrases, so statusText may be empty.
-                const statusText = res.statusText ? ` ${res.statusText}` : "";
-                throw new Error(
-                    `feed request failed: ${res.status}${statusText} for ${url}`,
-                );
-            }
-
-            return await readCappedBody(res, currentUrl);
         }
+        return this.dispatcher;
+    }
+
+    private async makeRequest(url: string): Promise<string> {
+        // Reject non-http(s) schemes (and malformed URLs) before fetching; the
+        // guarded dispatcher then blocks private/loopback destinations at the
+        // connection layer (including across redirect hops) and caps the body
+        // size — see @sockethub/util/net.
+        let parsed: URL;
+        try {
+            parsed = new URL(url);
+        } catch {
+            throw new Error(`feed request failed: invalid URL ${url}`);
+        }
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+            throw new Error(
+                `feed request failed: unsupported scheme ${parsed.protocol} for ${url}`,
+            );
+        }
+
+        const opts: RequestInit & { dispatcher?: unknown } = {
+            dispatcher: this.getDispatcher(),
+        };
+        if (this.config.connectTimeoutMs) {
+            opts.signal = AbortSignal.timeout(this.config.connectTimeoutMs);
+        }
+        const res = await fetch(url, opts as RequestInit);
+
+        if (!res.ok) {
+            await res.body?.cancel().catch(() => {});
+            // HTTP/2 has no reason phrases, so statusText may be empty.
+            const statusText = res.statusText ? ` ${res.statusText}` : "";
+            throw new Error(
+                `feed request failed: ${res.status}${statusText} for ${url}`,
+            );
+        }
+
+        return await res.text();
     }
 
     // fetches the articles from a feed, adding them to an array
