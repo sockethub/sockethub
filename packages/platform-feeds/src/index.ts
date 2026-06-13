@@ -27,7 +27,11 @@ import type {
 } from "@sockethub/schemas";
 import { buildCanonicalContext } from "@sockethub/schemas";
 import { errorMessage } from "@sockethub/util/error";
-import { createGuardedDispatcher, safeFetch } from "@sockethub/util/net";
+import {
+    createGuardedDispatcher,
+    redactUrl,
+    safeFetch,
+} from "@sockethub/util/net";
 import htmlTags from "html-tags";
 import getPodcastFromFeed, { type Episode, type Meta } from "podparse";
 
@@ -192,7 +196,7 @@ export default class Feeds implements PlatformInterface {
                 articles.push(article);
             } catch (err) {
                 throw new Error(
-                    `Failed to parse feed entry ${index + 1} from ${url}: ${errorMessage(err)}`,
+                    `Failed to parse feed entry ${index + 1} from ${redactUrl(url)}: ${errorMessage(err)}`,
                     { cause: err },
                 );
             }

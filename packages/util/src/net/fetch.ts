@@ -1,6 +1,6 @@
 import type { Agent } from "undici";
 import { createGuardedDispatcher } from "./dispatcher.js";
-import { assertHttpUrl } from "./url.js";
+import { assertHttpUrl, redactUrl } from "./url.js";
 
 export interface SafeFetchOptions {
     /**
@@ -47,7 +47,7 @@ export async function safeFetch(
         });
 
     const init: RequestInit & { dispatcher?: unknown } = { dispatcher };
-    if (options.timeoutMs) {
+    if (options.timeoutMs !== undefined && options.timeoutMs > 0) {
         init.signal = AbortSignal.timeout(options.timeoutMs);
     }
     if (options.headers) {
@@ -61,7 +61,9 @@ export async function safeFetch(
         await res.body?.cancel().catch(() => {});
         // HTTP/2 has no reason phrases, so statusText may be empty.
         const statusText = res.statusText ? ` ${res.statusText}` : "";
-        throw new Error(`request failed: ${res.status}${statusText} for ${url}`);
+        throw new Error(
+            `request failed: ${res.status}${statusText} for ${redactUrl(url)}`,
+        );
     }
     return res;
 }
