@@ -206,9 +206,9 @@ export class Config {
             throw new Error(`Config file not found: ${file}`);
         }
 
-        // Coerce + validate known keys; warn (don't throw) on unknown keys in a
-        // user config file so existing deployments keep loading.
-        this.conf.validate({ allowed: "warn" });
+        // Coerce + validate. `strict` makes an unknown or mis-typed key in a
+        // config file a hard error rather than a silent no-op.
+        this.conf.validate({ allowed: "strict" });
 
         const platforms = this.conf.get("platforms");
         if (!Array.isArray(platforms) || platforms.length === 0) {

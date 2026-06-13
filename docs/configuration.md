@@ -104,6 +104,26 @@ Platforms are specified as an array of package names:
 
 To disable a platform, remove it from the array.
 
+### Per-Platform Configuration (`packageConfig`)
+
+Individual platforms can be configured under `packageConfig`, keyed by the
+platform's full package name. These values are merged onto the platform's own
+defaults when its child process starts (the file value wins; unset keys keep
+the platform default):
+
+```json
+{
+  "packageConfig": {
+    "@sockethub/platform-feeds": {
+      "connectTimeoutMs": 5000
+    }
+  }
+}
+```
+
+Each platform documents the keys it accepts in its own README. Unknown keys are
+rejected at startup (see [Validation](#validation)).
+
 ### Rate Limiting
 
 Protect against event flooding from individual clients:
@@ -391,6 +411,14 @@ export SENTRY_DSN=https://your-dsn@sentry.io/project-id
 1. Environment variables (`LOG_LEVEL`, `LOG_FILE_LEVEL`) (highest priority)
 2. Configuration file (`logging.level`, `logging.fileLevel`, `logging.file`)
 3. Default values (`info` for console, `debug` for file) (lowest priority)
+
+## Validation
+
+The configuration file is validated against the schema on startup. An unknown
+key, or a value of the wrong type (e.g. a non-integer `port`, or a `logging.level`
+outside `error`/`warn`/`info`/`debug`), is a **hard error** — Sockethub will
+refuse to start rather than silently ignore it. Keep config files in sync with
+the schema (`packages/schemas/src/schemas/json/sockethub-config.json`).
 
 ## Process Management
 

@@ -33,6 +33,7 @@ type EnvFormat = {
     LOG_LEVEL?: string;
     REDIS_URL: string;
     SOCKETHUB_PLATFORM_CHILD?: string;
+    SOCKETHUB_PLATFORM_CONFIG?: string;
     SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS?: string;
     SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS?: string;
 };
@@ -112,6 +113,20 @@ export default class PlatformInstance {
         if (typeof heartbeatTimeout !== "undefined") {
             env.SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS =
                 String(heartbeatTimeout);
+        }
+        // Forward this platform's `packageConfig` entry (keyed by package name)
+        // to the forked child, which merges it onto the platform's defaults.
+        const packageConfig = config.get("packageConfig") as
+            | Record<string, unknown>
+            | undefined;
+        const platformConfig =
+            packageConfig?.[`@sockethub/platform-${this.name}`];
+        if (
+            platformConfig &&
+            typeof platformConfig === "object" &&
+            Object.keys(platformConfig).length > 0
+        ) {
+            env.SOCKETHUB_PLATFORM_CONFIG = JSON.stringify(platformConfig);
         }
 
         this.createQueue();

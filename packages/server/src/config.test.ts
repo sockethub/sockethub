@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 
 import { Config } from "./config.js";
@@ -5,6 +8,17 @@ import { Config } from "./config.js";
 describe("config", () => {
     let originalEnv: NodeJS.ProcessEnv;
     let originalArgv: Array<string>;
+    const tmpFiles: Array<string> = [];
+
+    function writeConfig(contents: unknown): string {
+        const file = path.join(
+            os.tmpdir(),
+            `sh-config-${tmpFiles.length}-test.json`,
+        );
+        fs.writeFileSync(file, JSON.stringify(contents));
+        tmpFiles.push(file);
+        return file;
+    }
 
     beforeEach(() => {
         originalEnv = process.env;
@@ -17,6 +31,9 @@ describe("config", () => {
     afterEach(() => {
         process.env = originalEnv;
         process.argv = originalArgv;
+        for (const file of tmpFiles.splice(0)) {
+            fs.rmSync(file, { force: true });
+        }
     });
 
     it("loads default values", () => {
@@ -112,5 +129,37 @@ describe("config", () => {
         process.env.SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS = "9000";
         const config = new Config();
         expect(config.get("platformHeartbeat:intervalMs")).toBe(9000);
+    });
+
+    it("strictly rejects an unknown key in a config file", () => {
+        const file = writeConfig({
+            platforms: ["@sockethub/platform-feeds"],
+            notARealKey: true,
+        });
+        process.argv = ["node", "test", "--config", file];
+        expect(() => new Config()).toThrow();
+    });
+
+    it("rejects a mis-typed value in a config file", () => {
+        const file = writeConfig({
+            platforms: ["@sockethub/platform-feeds"],
+            logging: { level: "not-a-level" },
+        });
+        process.argv = ["node", "test", "--config", file];
+        expect(() => new Config()).toThrow();
+    });
+
+    it("loads packageConfig from a config file", () => {
+        const file = writeConfig({
+            platforms: ["@sockethub/platform-feeds"],
+            packageConfig: {
+                "@sockethub/platform-feeds": { connectTimeoutMs: 7000 },
+            },
+        });
+        process.argv = ["node", "test", "--config", file];
+        const config = new Config();
+        expect(config.get("packageConfig")).toEqual({
+            "@sockethub/platform-feeds": { connectTimeoutMs: 7000 },
+        });
     });
 });
