@@ -5,6 +5,13 @@ services:
             target: prod
         environment:
             - REDIS_URL=redis://redis:6379
+            # This compose file is the dev/CI harness; its feed fixtures are
+            # served from loopback, which the feeds SSRF guard blocks by
+            # default. The mounted config enables the feeds escape hatch via
+            # packageConfig. Never enable it in production.
+            - SOCKETHUB_CONFIG=/app/sockethub.ci.config.json
+        volumes:
+            - ./integration/sockethub.ci.config.json:/app/sockethub.ci.config.json:ro
         ports:
             - "10550:10550"
         networks:
