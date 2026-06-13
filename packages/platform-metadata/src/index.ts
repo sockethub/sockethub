@@ -6,6 +6,7 @@ import type {
     PlatformInterface,
     PlatformSession,
 } from "@sockethub/schemas";
+import { toError } from "@sockethub/util/error";
 import { createGuardedDispatcher } from "@sockethub/util/net";
 import ogs from "open-graph-scraper";
 import { PlatformMetadataSchema } from "./schema";
@@ -101,10 +102,7 @@ export default class Metadata implements PlatformInterface {
                 // dispatcher/abort failure can reject with a plain Error. Handle
                 // both so the real error is reported rather than throwing a
                 // TypeError on `result.error`.
-                const err =
-                    data?.result?.error ??
-                    (data instanceof Error ? data : new Error(String(data)));
-                cb(err instanceof Error ? err : new Error(String(err)));
+                cb(toError(data?.result?.error ?? data));
             });
     }
 

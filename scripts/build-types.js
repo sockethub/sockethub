@@ -69,7 +69,7 @@ const packages = [
     },
     {
         dir: "packages/util",
-        entries: ["src/index.ts", "src/net/index.ts"],
+        entries: ["src/index.ts", "src/net/index.ts", "src/error/index.ts"],
     },
 ];
 
