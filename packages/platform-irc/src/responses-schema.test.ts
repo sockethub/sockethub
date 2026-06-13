@@ -107,6 +107,18 @@ describe("irc messages (inbound) object validation", () => {
         ).not.toEqual("");
     });
 
+    test("rejects a room target missing the channel sigil after the server", () => {
+        expect(
+            validateActivityStream({
+                "@context": FULL_CTX,
+                type: "join",
+                actor: { id: "u@localhost", type: "person" },
+                target: { id: "localhost/nick", type: "room" },
+                // biome-ignore lint/suspicious/noExplicitAny: test
+            } as any),
+        ).not.toEqual("");
+    });
+
     test("accepts a person (PM) target without room qualification", () => {
         expect(
             validateActivityStream({

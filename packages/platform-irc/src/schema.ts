@@ -48,7 +48,7 @@ export const PlatformIrcSchema = {
                 then: {
                     required: ["id"],
                     properties: {
-                        id: { type: "string", pattern: "^[^/]+/.+$" },
+                        id: { type: "string", pattern: "^[^/]+/#[^\\s]+$" },
                     },
                 },
             },
@@ -155,7 +155,7 @@ export const PlatformIrcSchema = {
                     additionalProperties: false,
                     properties: {
                         // Server-qualified room id: `server/#channel`.
-                        id: { type: "string", pattern: "^[^/]+/.+$" },
+                        id: { type: "string", pattern: "^[^/]+/#[^\\s]+$" },
                         type: { enum: ["room"] },
                         name: { type: "string" },
                     },

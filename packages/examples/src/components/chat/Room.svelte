@@ -58,8 +58,16 @@ async function joinRoom(): Promise<void> {
             lastJoinedRoom = room;
             $sockethubState.joined = true;
         })
-        .catch(() => {
+        .catch((err) => {
             $sockethubState.joined = false;
+            console.error("joinRoom failed", {
+                action: "join",
+                platform: context,
+                room,
+                server,
+                err,
+            });
+            throw err;
         })
         .finally(() => {
             joining = false;
