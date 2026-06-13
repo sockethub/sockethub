@@ -118,6 +118,11 @@ describe("config", () => {
         expect(() => new Config()).toThrow(/Config file not found/);
     });
 
+    it("throws a clear error when --config is given without a path", () => {
+        process.argv = ["node", "test", "--config"];
+        expect(() => new Config()).toThrow(/requires a file path/);
+    });
+
     it("exposes the platforms array", () => {
         const config = new Config();
         const platforms = config.get("platforms") as Array<string>;

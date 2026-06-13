@@ -166,16 +166,24 @@ function resolveConfigFile(): { file?: string; explicit: boolean } {
     for (let i = 0; i < argv.length; i++) {
         const arg = argv[i];
         if (arg === "--config" || arg === "-c") {
-            return { file: argv[i + 1], explicit: true };
+            const value = argv[i + 1];
+            if (!value || value.startsWith("-")) {
+                throw new Error(`${arg} requires a file path`);
+            }
+            return { file: value, explicit: true };
         }
         if (arg.startsWith("--config=")) {
-            return { file: arg.slice("--config=".length), explicit: true };
+            const value = arg.slice("--config=".length);
+            if (!value) {
+                throw new Error("--config requires a file path");
+            }
+            return { file: value, explicit: true };
         }
     }
     if (process.env.SOCKETHUB_CONFIG) {
         return { file: process.env.SOCKETHUB_CONFIG, explicit: true };
     }
-    return { file: `${process.cwd()}/${defaultConfig}`, explicit: false };
+    return { file: path.join(process.cwd(), defaultConfig), explicit: false };
 }
 
 export class Config {

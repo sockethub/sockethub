@@ -124,6 +124,7 @@ export default class PlatformInstance {
         if (
             platformConfig &&
             typeof platformConfig === "object" &&
+            !Array.isArray(platformConfig) &&
             Object.keys(platformConfig).length > 0
         ) {
             env.SOCKETHUB_PLATFORM_CONFIG = JSON.stringify(platformConfig);
