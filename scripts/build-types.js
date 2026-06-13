@@ -67,6 +67,10 @@ const packages = [
         dir: "packages/server",
         entries: ["src/index.ts", "src/platform.ts"],
     },
+    {
+        dir: "packages/util",
+        entries: ["src/index.ts", "src/net/index.ts"],
+    },
 ];
 
 const repoRoot = process.cwd();
