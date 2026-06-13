@@ -84,6 +84,13 @@ export const SockethubConfigSchema = {
                         connectTimeoutMs: { type: "number" },
                     },
                 },
+                "@sockethub/platform-metadata": {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                        allowPrivateAddresses: { type: "boolean" },
+                    },
+                },
             },
         },
         credentialCheck: {

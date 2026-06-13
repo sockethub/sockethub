@@ -3,6 +3,9 @@
   "packageConfig": {
     "@sockethub/platform-feeds": {
       "allowPrivateAddresses": true
+    },
+    "@sockethub/platform-metadata": {
+      "allowPrivateAddresses": true
     }
   }
 }

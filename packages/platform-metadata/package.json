@@ -42,6 +42,7 @@
     "clean:deps": "rm -rf node_modules"
   },
   "dependencies": {
+    "@sockethub/util": "^1.0.0-alpha.0",
     "open-graph-scraper": "^6.11.0"
   },
   "devDependencies": {

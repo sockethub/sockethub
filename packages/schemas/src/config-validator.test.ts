@@ -46,6 +46,30 @@ describe("validateSockethubConfig", () => {
         ).not.toEqual("");
     });
 
+    it("accepts the metadata allowPrivateAddresses boolean", () => {
+        expect(
+            validateSockethubConfig({
+                ...base,
+                packageConfig: {
+                    "@sockethub/platform-metadata": {
+                        allowPrivateAddresses: true,
+                    },
+                },
+            }),
+        ).toEqual("");
+    });
+
+    it("rejects an unknown key in the metadata packageConfig entry", () => {
+        expect(
+            validateSockethubConfig({
+                ...base,
+                packageConfig: {
+                    "@sockethub/platform-metadata": { bogus: true },
+                },
+            }),
+        ).not.toEqual("");
+    });
+
     it("rejects an unknown top-level key", () => {
         expect(validateSockethubConfig({ ...base, nope: 1 })).not.toEqual("");
     });

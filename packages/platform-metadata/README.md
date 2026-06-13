@@ -86,10 +86,42 @@ The platform extracts the following metadata when available:
 * **open-graph-scraper**: Core library for extracting Open Graph and metadata from web
   pages
 
+## Request Hardening (SSRF Guard)
+
+Because the server fetches whatever URL a client supplies as `actor.id`, metadata
+requests are hardened against server-side request forgery (SSRF) and resource
+exhaustion. The fetch runs through a guarded connection layer that:
+
+* refuses to connect to loopback, private, link-local, carrier-grade NAT, or
+  cloud-metadata addresses (e.g. `169.254.169.254`), in every IPv4/IPv6 spelling,
+  validated at connection time so it also covers redirect hops;
+* caps the response body size.
+
+### `allowPrivateAddresses`
+
+Set in the Sockethub config file under this platform's `packageConfig` entry:
+
+```json
+{
+  "packageConfig": {
+    "@sockethub/platform-metadata": {
+      "allowPrivateAddresses": true
+    }
+  }
+}
+```
+
+This disables **only** the private/loopback destination checks. **Do not enable
+it on a server that accepts requests from untrusted clients** — it lets any
+client make the server issue requests to internal services. It defaults to off;
+it is an escape hatch for dev/test harnesses serving fixtures from `localhost`,
+or self-hosted deployments that intentionally fetch intranet pages.
+
 ## Error Handling
 
-If metadata extraction fails (invalid URL, network issues, parsing errors), the platform
-will return an error through the standard Sockethub error handling mechanism.
+If metadata extraction fails (invalid URL, network issues, parsing errors, or a
+blocked destination), the platform returns an error through the standard
+Sockethub error handling mechanism.
 
 ## Use Cases
 
