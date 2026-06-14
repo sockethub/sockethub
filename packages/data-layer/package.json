@@ -46,9 +46,9 @@
     "test:integration": "bun test ./integration/redis.integration.ts"
   },
   "dependencies": {
-    "@sockethub/crypto": "^1.0.0-alpha.12",
     "@sockethub/logger": "^1.0.0-alpha.12",
     "@sockethub/schemas": "^3.0.0-alpha.12",
+    "@sockethub/util": "^1.0.0-alpha.0",
     "bullmq": "^5.66.5",
     "ioredis": "^5.9.2",
     "secure-store-redis": "^4.1.0"

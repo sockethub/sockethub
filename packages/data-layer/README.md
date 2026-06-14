@@ -56,7 +56,7 @@ encryption/decryption and session-based isolation.
 **Dependencies:**
 
 - Redis server (6.0+)
-- `@sockethub/crypto` for encryption
+- `@sockethub/util` (`@sockethub/util/crypto`) for encryption
 - `@sockethub/schemas` for type definitions
 
 ## API Documentation
