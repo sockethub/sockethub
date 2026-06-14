@@ -1,5 +1,6 @@
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
+import { toError } from "@sockethub/util/error";
 
 import type { MiddlewareChainInterface } from "../middleware.js";
 
@@ -13,11 +14,9 @@ export default function storeCredentials(store: CredentialsStoreInterface) {
             store
                 .save(credentials.actor.id, credentials)
                 .then(() => done(creds))
-                .catch((err) =>
-                    done(err instanceof Error ? err : new Error(String(err))),
-                );
+                .catch((err) => done(toError(err)));
         } catch (err) {
-            done(err instanceof Error ? err : new Error(String(err)));
+            done(toError(err));
         }
     };
 }

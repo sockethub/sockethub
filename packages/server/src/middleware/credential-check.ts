@@ -6,6 +6,7 @@ import {
 } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import { type ActivityStream, resolvePlatformId } from "@sockethub/schemas";
+import { toError } from "@sockethub/util/error";
 import type { MiddlewareNext } from "../middleware.js";
 import { platformInstances } from "../platform-instance.js";
 
@@ -78,7 +79,7 @@ export default function credentialCheck(
                         err.toString(),
                     );
                 }
-                next(err instanceof Error ? err : new Error(String(err)));
+                next(toError(err));
             });
     };
 }

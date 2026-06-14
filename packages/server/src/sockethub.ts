@@ -12,6 +12,7 @@ import {
     resolvePlatformId,
     SOCKETHUB_BASE_CONTEXT_URL,
 } from "@sockethub/schemas";
+import { errorMessage } from "@sockethub/util/error";
 import type { Socket } from "socket.io";
 import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
@@ -40,12 +41,12 @@ function attachError<T extends ActivityStream | ActivityObject>(
     err: unknown,
     msg?: T,
 ) {
-    const errorMessage = err instanceof Error ? err.message : String(err);
+    const message = errorMessage(err);
     if (!msg) {
-        return new Error(errorMessage);
+        return new Error(message);
     }
 
-    const cleaned = { ...msg, error: errorMessage } as T & {
+    const cleaned = { ...msg, error: message } as T & {
         sessionSecret?: string;
     };
     if ("sessionSecret" in cleaned) {
@@ -378,11 +379,8 @@ class Sockethub {
                             }
                         } catch (err) {
                             // Queue is closed (platform terminating) - send error to client
-                            const errorMessage =
-                                err instanceof Error
-                                    ? err.message
-                                    : String(err);
-                            msg.error = errorMessage || "platform unavailable";
+                            msg.error =
+                                errorMessage(err) || "platform unavailable";
                             next(msg);
                         }
                     },
