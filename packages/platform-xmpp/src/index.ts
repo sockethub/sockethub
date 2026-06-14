@@ -27,6 +27,7 @@ import type {
     PlatformSendToClient,
 } from "@sockethub/schemas";
 import { buildCanonicalContext } from "@sockethub/schemas";
+import { toError } from "@sockethub/util/error";
 import {
     client,
     type XmppClientInstance,
@@ -376,7 +377,7 @@ export default class XMPP implements PersistentPlatformInterface {
                 this.__knownRooms.add(roomJid);
                 done();
             })
-            .catch((err: unknown) => done(err as Error));
+            .catch((err: unknown) => done(toError(err)));
     }
 
     /**
@@ -408,7 +409,7 @@ export default class XMPP implements PersistentPlatformInterface {
                 this.__knownRooms.delete(roomJid);
                 done();
             })
-            .catch((err: unknown) => done(err as Error));
+            .catch((err: unknown) => done(toError(err)));
     }
 
     /**

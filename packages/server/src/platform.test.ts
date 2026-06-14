@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as sinon from "sinon";
-import { crypto } from "@sockethub/crypto";
+import { crypto } from "@sockethub/util/crypto";
 import type {
     ActivityStream,
     CredentialsObject,

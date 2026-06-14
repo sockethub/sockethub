@@ -18,10 +18,6 @@ const packages = [
         entries: ["src/sockethub-client.ts"],
     },
     {
-        dir: "packages/crypto",
-        entries: ["src/index.ts"],
-    },
-    {
         dir: "packages/data-layer",
         entries: ["src/index.ts"],
     },
@@ -69,7 +65,12 @@ const packages = [
     },
     {
         dir: "packages/util",
-        entries: ["src/index.ts", "src/net/index.ts", "src/error/index.ts"],
+        entries: [
+            "src/index.ts",
+            "src/net/index.ts",
+            "src/error/index.ts",
+            "src/crypto/index.ts",
+        ],
     },
 ];
 

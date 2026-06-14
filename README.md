@@ -165,9 +165,9 @@ For debugging and configuration options, see the [Server package documentation](
 
 ### Libraries
 
-* **[@sockethub/crypto](packages/crypto)** - Cryptographic utilities for secure storage
 * **[@sockethub/irc2as](packages/irc2as)** - IRC to ActivityStreams translation
 * **[@sockethub/logger](packages/logger)** - Winston-based logger with global configuration
+* **[@sockethub/util](packages/util)** - Shared utilities (crypto, networking/SSRF, error helpers)
 
 ### Platform Implementations
 

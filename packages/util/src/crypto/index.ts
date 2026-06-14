@@ -4,7 +4,6 @@ import {
     createHash,
     randomBytes,
 } from "node:crypto";
-import type { ActivityStream } from "@sockethub/schemas";
 import hash from "object-hash";
 import { SecretValidator } from "secure-store-redis";
 
@@ -33,7 +32,7 @@ export class Crypto {
         this.randomBytes = randomBytes;
     }
 
-    encrypt(json: ActivityStream, secret: string): string {
+    encrypt(json: unknown, secret: string): string {
         Crypto.ensureSecret(secret);
         const iv = this.randomBytes(IV_LENGTH);
         const cipher = createCipheriv(ALGORITHM, Buffer.from(secret), iv);
@@ -43,7 +42,7 @@ export class Crypto {
         return `${iv.toString("hex")}:${encrypted.toString("hex")}`;
     }
 
-    decrypt(text: string, secret: string): ActivityStream {
+    decrypt(text: string, secret: string): unknown {
         Crypto.ensureSecret(secret);
         const parts = text.split(":");
         const iv = Buffer.from(parts.shift(), "hex");

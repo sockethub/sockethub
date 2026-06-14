@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { crypto } from "@sockethub/crypto";
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import { CredentialsStore } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
@@ -12,6 +11,7 @@ import {
     resolvePlatformId,
     SOCKETHUB_BASE_CONTEXT_URL,
 } from "@sockethub/schemas";
+import { crypto } from "@sockethub/util/crypto";
 import { errorMessage } from "@sockethub/util/error";
 import type { Socket } from "socket.io";
 import getInitObject from "./bootstrap/init.js";

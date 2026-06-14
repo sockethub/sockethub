@@ -1,4 +1,3 @@
-import { getPlatformId } from "@sockethub/crypto";
 import {
     CredentialsMismatchError,
     CredentialsNotShareableError,
@@ -6,6 +5,7 @@ import {
 } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import { type ActivityStream, resolvePlatformId } from "@sockethub/schemas";
+import { getPlatformId } from "@sockethub/util/crypto";
 import { toError } from "@sockethub/util/error";
 import type { MiddlewareNext } from "../middleware.js";
 import { platformInstances } from "../platform-instance.js";

@@ -1,6 +1,6 @@
 import EventEmitter from "node:events";
-import { type Crypto, crypto } from "@sockethub/crypto";
 import type { ActivityStream } from "@sockethub/schemas";
+import { type Crypto, crypto } from "@sockethub/util/crypto";
 import IORedis, { type Redis } from "ioredis";
 
 import type { JobDataDecrypted, JobEncrypted, RedisConfig } from "./types.js";
@@ -116,7 +116,7 @@ export class JobBase extends EventEmitter {
     }
 
     protected decryptActivityStream(msg: string): ActivityStream {
-        return this.crypto.decrypt(msg, this.secret);
+        return this.crypto.decrypt(msg, this.secret) as ActivityStream;
     }
 
     protected encryptActivityStream(msg: ActivityStream): string {

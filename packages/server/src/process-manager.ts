@@ -1,4 +1,4 @@
-import { getPlatformId } from "@sockethub/crypto";
+import { getPlatformId } from "@sockethub/util/crypto";
 
 import type { IInitObject } from "./bootstrap/init.js";
 import PlatformInstance, {

@@ -9,7 +9,7 @@
  * If an exception is thrown by the platform, this process will die along with
  * it and sockethub will start up another process. This ensures memory safety.
  */
-import { crypto, getPlatformId } from "@sockethub/crypto";
+
 import type { JobHandler } from "@sockethub/data-layer";
 import {
     CredentialsStore,
@@ -30,6 +30,7 @@ import {
     buildCanonicalContext,
     INTERNAL_PLATFORM_CONTEXT_URL,
 } from "@sockethub/schemas";
+import { crypto, getPlatformId } from "@sockethub/util/crypto";
 import { errorMessage, toError } from "@sockethub/util/error";
 import config from "./config";
 
