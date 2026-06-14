@@ -20,6 +20,7 @@ import net from "node:net";
 import tls from "node:tls";
 import { IrcToActivityStreams } from "@sockethub/irc2as";
 import type {
+    ActivityActor,
     ActivityStream,
     Logger,
     PersistentPlatformConfig,
@@ -340,10 +341,18 @@ export class IRC implements PersistentPlatformInterface {
             }
 
             if (job.object.type === "attendance") {
-                this.log.debug(
-                    `query() - sending NAMES for ${job.target.name}`,
-                );
-                client.raw(["NAMES", job.target.name]);
+                const channel = this.resolveChannelName(job.target);
+                if (!channel) {
+                    // Never emit a bare `NAMES` (no channel argument): IRC
+                    // servers answer it with the entire network channel list,
+                    // flooding the client with presence for rooms it never
+                    // joined. See sockethub/sockethub#1085.
+                    return done(
+                        "cannot query attendance without a valid channel name",
+                    );
+                }
+                this.log.debug(`query() - sending NAMES for ${channel}`);
+                client.raw(["NAMES", channel]);
                 done();
             } else {
                 done(`unknown 'type' '${job.object.type}'`);
@@ -377,6 +386,28 @@ export class IRC implements PersistentPlatformInterface {
     //
     // Private methods
     //
+    /**
+     * Resolve an IRC channel name from a job target. Prefers `target.name`,
+     * falling back to the channel segment of `target.id` (`<server>/<channel>`).
+     * Returns undefined when no valid `#channel` can be determined, so callers
+     * never emit a bare `NAMES` command (which floods the client with the
+     * server's entire channel list).
+     */
+    private resolveChannelName(target?: ActivityActor): string | undefined {
+        if (typeof target?.name === "string" && target.name.startsWith("#")) {
+            return target.name;
+        }
+        if (typeof target?.id === "string") {
+            const slash = target.id.indexOf("/");
+            const candidate =
+                slash >= 0 ? target.id.slice(slash + 1) : target.id;
+            if (candidate.startsWith("#")) {
+                return candidate;
+            }
+        }
+        return undefined;
+    }
+
     private isJoined(channel: string) {
         if (channel.indexOf("#") === 0) {
             // valid channel name
