@@ -25,7 +25,6 @@
     "resolveJsonModule": true,
     "downlevelIteration": true,
     "paths": {
-      "@sockethub/crypto": ["./packages/crypto/src/index.ts"],
       "@sockethub/data-layer": ["./packages/data-layer/src/index.ts"],
       "@sockethub/irc2as": ["./packages/irc2as/src/index.js"],
       "@sockethub/logger": ["./packages/logger/src/index.ts"],
@@ -49,9 +48,6 @@
   "references": [
     {
       "path": "packages/sockethub"
-    },
-    {
-      "path": "packages/crypto"
     },
     {
       "path": "packages/data-layer"

@@ -365,6 +365,12 @@ export class IRC implements PersistentPlatformInterface {
             }
 
             if (job.object.type === "attendance") {
+                // `resolveIrcTarget` returns null for a bare (non
+                // server-qualified) room target, so we never emit a bare
+                // `NAMES` (no channel argument): IRC servers answer that with
+                // the entire network channel list, flooding the client with
+                // presence for rooms it never joined. See
+                // sockethub/sockethub#1085.
                 const channel = this.resolveIrcTarget(job.target);
                 if (!channel) {
                     return done(

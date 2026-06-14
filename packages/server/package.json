@@ -52,10 +52,10 @@
   "dependencies": {
     "@sentry/node": "^10.36.0",
     "@sockethub/client": "^5.0.0-alpha.12",
-    "@sockethub/crypto": "^1.0.0-alpha.12",
     "@sockethub/data-layer": "^1.0.0-alpha.12",
     "@sockethub/logger": "^1.0.0-alpha.12",
     "@sockethub/schemas": "^3.0.0-alpha.12",
+    "@sockethub/util": "^1.0.0-alpha.0",
     "body-parser": "^1.20.4",
     "chalk": "^5.6.2",
     "convict": "^6.2.5",

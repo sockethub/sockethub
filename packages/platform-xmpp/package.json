@@ -45,6 +45,7 @@
     "doc": "typedoc --options typedoc.json"
   },
   "dependencies": {
+    "@sockethub/util": "^1.0.0-alpha.0",
     "@xmpp/client": "^0.13.6"
   },
   "devDependencies": {

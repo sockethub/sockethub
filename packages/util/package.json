@@ -20,6 +20,16 @@
       "types": "./dist/net/index.d.ts",
       "import": "./dist/net/index.js",
       "default": "./dist/net/index.js"
+    },
+    "./error": {
+      "types": "./dist/error/index.d.ts",
+      "import": "./dist/error/index.js",
+      "default": "./dist/error/index.js"
+    },
+    "./crypto": {
+      "types": "./dist/crypto/index.d.ts",
+      "import": "./dist/crypto/index.js",
+      "default": "./dist/crypto/index.js"
     }
   },
   "files": [
@@ -32,6 +42,8 @@
     "sockethub",
     "ssrf",
     "networking",
+    "crypto",
+    "encryption",
     "utilities"
   ],
   "repository": {
@@ -41,14 +53,19 @@
   },
   "homepage": "https://github.com/sockethub/sockethub/tree/master/packages/util",
   "scripts": {
-    "build": "bun build src/index.ts src/net/index.ts --outdir dist --target node --format esm --sourcemap=external --external undici",
+    "build": "bun build src/index.ts src/net/index.ts src/error/index.ts src/crypto/index.ts --outdir dist --target node --format esm --sourcemap=external --external undici",
     "clean": "rm -rf dist",
     "clean:deps": "rm -rf node_modules"
   },
   "dependencies": {
+    "object-hash": "^3.0.0",
+    "secure-store-redis": "^4.1.0",
     "undici": "^7.19.0"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/object-hash": "^3.0.6",
+    "@types/sinon": "^17.0.4",
+    "sinon": "^17.0.2"
   }
 }

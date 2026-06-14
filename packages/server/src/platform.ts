@@ -9,7 +9,7 @@
  * If an exception is thrown by the platform, this process will die along with
  * it and sockethub will start up another process. This ensures memory safety.
  */
-import { crypto, getPlatformId } from "@sockethub/crypto";
+
 import type { JobHandler } from "@sockethub/data-layer";
 import {
     CredentialsStore,
@@ -30,6 +30,8 @@ import {
     buildCanonicalContext,
     INTERNAL_PLATFORM_CONTEXT_URL,
 } from "@sockethub/schemas";
+import { crypto, getPlatformId } from "@sockethub/util/crypto";
+import { errorMessage, toError } from "@sockethub/util/error";
 import config from "./config";
 
 // Simple wrapper function to help with testing
@@ -140,9 +142,9 @@ async function startPlatformProcess() {
             );
         } catch (err) {
             logger.warn(
-                `ignoring invalid SOCKETHUB_PLATFORM_CONFIG: ${
-                    err instanceof Error ? err.message : String(err)
-                }`,
+                `ignoring invalid SOCKETHUB_PLATFORM_CONFIG: ${errorMessage(
+                    err,
+                )}`,
             );
         }
         logger.info(
@@ -183,11 +185,7 @@ async function startPlatformProcess() {
                 process.send(message);
             } catch (ipcErr) {
                 console.error(
-                    `Failed to report error via IPC: ${
-                        ipcErr instanceof Error
-                            ? ipcErr.message
-                            : String(ipcErr)
-                    }`,
+                    `Failed to report error via IPC: ${errorMessage(ipcErr)}`,
                 );
             }
         } else {
@@ -326,18 +324,17 @@ async function startPlatformProcess() {
                     jobCallbackCalled = true;
                     if (err) {
                         jobLog.error(`failed ${job.title} ${job.msg.type}`);
-                        let errMsg: string | Error;
+                        let message: string;
                         // some error objects (e.g. TimeoutError) don't interpolate correctly
                         // to being human-readable, so we have to do this little dance
                         try {
-                            errMsg = err.toString();
-                        } catch (err) {
-                            errMsg = err instanceof Error ? err : String(err);
+                            message = err.toString();
+                        } catch {
+                            // toString() failed; fall back to the original error.
+                            message = errorMessage(err);
                         }
-                        const errorMessage =
-                            errMsg instanceof Error ? errMsg.message : errMsg;
-                        sentry.reportError(new Error(errorMessage));
-                        reject(new Error(errorMessage));
+                        sentry.reportError(new Error(message));
+                        reject(new Error(message));
                     } else {
                         jobLog.debug(`completed ${job.title} ${job.msg.type}`);
 
@@ -440,18 +437,10 @@ async function startPlatformProcess() {
                              */
                             if (platform.isInitialized()) {
                                 // Platform already running - reject job only, preserve platform instance
-                                doneCallback(
-                                    err instanceof Error
-                                        ? err
-                                        : new Error(String(err)),
-                                    null,
-                                );
+                                doneCallback(toError(err), null);
                             } else {
                                 // Platform not initialized - terminate platform process
-                                const error =
-                                    err instanceof Error
-                                        ? err
-                                        : new Error(String(err));
+                                const error = toError(err);
                                 sentry.reportError(error);
                                 reject(error);
                             }
@@ -482,8 +471,7 @@ async function startPlatformProcess() {
                             doneCallback,
                         );
                     } catch (err) {
-                        const error =
-                            err instanceof Error ? err : new Error(String(err));
+                        const error = toError(err);
                         jobLog.error(
                             `platform call failed ${error.toString()}`,
                         );

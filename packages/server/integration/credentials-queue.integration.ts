@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { crypto } from "@sockethub/crypto";
 import {
     CredentialsStore,
     type JobDataDecrypted,
@@ -7,6 +6,7 @@ import {
     JobWorker,
 } from "@sockethub/data-layer";
 import type { ActivityStream, CredentialsObject } from "@sockethub/schemas";
+import { crypto } from "@sockethub/util/crypto";
 
 import { derivePlatformCredentialsSecret } from "../src/platform.js";
 

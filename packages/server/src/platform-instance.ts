@@ -15,6 +15,7 @@ import {
     INTERNAL_PLATFORM_CONTEXT_URL,
     validateActivityStreamResponse,
 } from "@sockethub/schemas";
+import { errorMessage } from "@sockethub/util/error";
 import config from "./config.js";
 import { getSocket } from "./listener.js";
 import { __dirname } from "./util.js";
@@ -397,9 +398,9 @@ export default class PlatformInstance {
     /**
      * Sends error message to client and clears all references to this class.
      * @param sessionId
-     * @param errorMessage
+     * @param message
      */
-    private async reportError(sessionId: string, errorMessage: string) {
+    private async reportError(sessionId: string, message: string) {
         const errorObject: ActivityStream = {
             "@context": buildCanonicalContext(
                 this.contextUrl ?? INTERNAL_PLATFORM_CONTEXT_URL,
@@ -408,7 +409,7 @@ export default class PlatformInstance {
             // Global platforms have no `this.actor`; fall back to the platform
             // name so the error always carries a valid (id-bearing) actor.
             actor: { id: this.actor ?? this.name, type: "service" },
-            error: errorMessage,
+            error: message,
         };
 
         // Only attempt to send to client if we have a valid session
@@ -418,9 +419,7 @@ export default class PlatformInstance {
             }
         } catch (err) {
             this.log.error(
-                `Failed to send error to client: ${
-                    err instanceof Error ? err.message : String(err)
-                }`,
+                `Failed to send error to client: ${errorMessage(err)}`,
             );
         }
 

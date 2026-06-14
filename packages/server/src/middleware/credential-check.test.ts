@@ -12,7 +12,7 @@ import {
     resolvePlatformId,
 } from "@sockethub/schemas";
 
-import { getPlatformId } from "@sockethub/crypto";
+import { getPlatformId } from "@sockethub/util/crypto";
 import { platformInstances } from "../platform-instance.js";
 import credentialCheck from "./credential-check.js";
 

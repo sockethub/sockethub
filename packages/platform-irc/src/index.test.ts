@@ -519,18 +519,74 @@ describe("Initialize IRC Platform", () => {
                 platform.completeJob();
             });
 
-            it("query()", (done) => {
-                platform.query(
-                    {
-                        "@context": IRC_CONTEXT,
-                        type: "query",
-                        actor: actor,
-                        target: targetRoom,
-                        object: { type: "attendance" },
-                    },
-                    done,
-                );
-                platform.completeJob();
+            describe("query() attendance", () => {
+                let rawCalls;
+                beforeEach(() => {
+                    rawCalls = [];
+                    platform.client.raw = (...args) => {
+                        rawCalls.push(args);
+                    };
+                });
+
+                it("sends NAMES for the target channel name", (done) => {
+                    platform.query(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "query",
+                            actor: actor,
+                            target: targetRoom,
+                            object: { type: "attendance" },
+                        },
+                        (err) => {
+                            expect(err).toBeUndefined();
+                            expect(rawCalls).toEqual([[["NAMES", "#a-room"]]]);
+                            done();
+                        },
+                    );
+                });
+
+                it("derives the channel from target.id when name is missing", (done) => {
+                    platform.query(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "query",
+                            actor: actor,
+                            target: {
+                                type: "room",
+                                id: "irc.example.com/#a-room",
+                            },
+                            object: { type: "attendance" },
+                        },
+                        (err) => {
+                            expect(err).toBeUndefined();
+                            expect(rawCalls).toEqual([[["NAMES", "#a-room"]]]);
+                            done();
+                        },
+                    );
+                });
+
+                // Regression coverage for sockethub/sockethub#1085: a query
+                // with no resolvable channel must error rather than emit a
+                // bare `NAMES`, which the server answers with the entire
+                // network channel list (presence flood for unjoined rooms).
+                it("rejects without sending a bare NAMES when no channel resolves", (done) => {
+                    platform.query(
+                        {
+                            "@context": IRC_CONTEXT,
+                            type: "query",
+                            actor: actor,
+                            target: { type: "room", id: "irc.example.com/" },
+                            object: { type: "attendance" },
+                        },
+                        (err) => {
+                            expect(err).toEqual(
+                                "IRC room targets must be server-qualified as 'server/#channel'",
+                            );
+                            expect(rawCalls).toEqual([]);
+                            done();
+                        },
+                    );
+                });
             });
 
             it("disconnect()", (done) => {
