@@ -1,5 +1,6 @@
 import path from "node:path";
 import { createLogger, initLogger, setLoggerContext } from "@sockethub/logger";
+import { toError } from "@sockethub/util/error";
 import config from "./config";
 import Sockethub from "./sockethub";
 
@@ -34,7 +35,7 @@ export async function server() {
     try {
         sockethub = new Sockethub();
     } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
+        const error = toError(err);
         sentry.reportError(error);
         console.error(error);
         process.exit(1);
@@ -54,7 +55,7 @@ export async function server() {
             `${(new Date()).toUTCString()} UNHANDLED REJECTION\n`,
             err,
         );
-        sentry.reportError(err instanceof Error ? err : new Error(String(err)));
+        sentry.reportError(toError(err));
         process.exit(1);
     });
 
@@ -64,7 +65,7 @@ export async function server() {
             await sockethub.shutdown();
             process.exit(0);
         } catch (err) {
-            const error = err instanceof Error ? err : new Error(String(err));
+            const error = toError(err);
             sentry.reportError(error);
             console.error(error);
             process.exit(1);
@@ -82,7 +83,7 @@ export async function server() {
     try {
         await sockethub.boot();
     } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
+        const error = toError(err);
         sentry.reportError(error);
         console.error(error);
         process.exit(1);

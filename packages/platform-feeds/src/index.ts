@@ -26,7 +26,12 @@ import type {
     PlatformSession,
 } from "@sockethub/schemas";
 import { buildCanonicalContext } from "@sockethub/schemas";
-import { createGuardedDispatcher } from "@sockethub/util/net";
+import { errorMessage } from "@sockethub/util/error";
+import {
+    createGuardedDispatcher,
+    redactUrl,
+    safeFetch,
+} from "@sockethub/util/net";
 import htmlTags from "html-tags";
 import getPodcastFromFeed, { type Episode, type Meta } from "podparse";
 
@@ -160,39 +165,13 @@ export default class Feeds implements PlatformInterface {
     }
 
     private async makeRequest(url: string): Promise<string> {
-        // Reject non-http(s) schemes (and malformed URLs) before fetching; the
-        // guarded dispatcher then blocks private/loopback destinations at the
-        // connection layer (including across redirect hops) and caps the body
-        // size — see @sockethub/util/net.
-        let parsed: URL;
-        try {
-            parsed = new URL(url);
-        } catch {
-            throw new Error(`feed request failed: invalid URL ${url}`);
-        }
-        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-            throw new Error(
-                `feed request failed: unsupported scheme ${parsed.protocol} for ${url}`,
-            );
-        }
-
-        const opts: RequestInit & { dispatcher?: unknown } = {
+        // safeFetch validates the scheme, routes through the guarded dispatcher
+        // (blocks private/loopback destinations at the connection layer on every
+        // redirect hop, caps the body), and throws on a non-2xx response.
+        const res = await safeFetch(url, {
             dispatcher: this.getDispatcher(),
-        };
-        if (this.config.connectTimeoutMs) {
-            opts.signal = AbortSignal.timeout(this.config.connectTimeoutMs);
-        }
-        const res = await fetch(url, opts as RequestInit);
-
-        if (!res.ok) {
-            await res.body?.cancel().catch(() => {});
-            // HTTP/2 has no reason phrases, so statusText may be empty.
-            const statusText = res.statusText ? ` ${res.statusText}` : "";
-            throw new Error(
-                `feed request failed: ${res.status}${statusText} for ${url}`,
-            );
-        }
-
+            timeoutMs: this.config.connectTimeoutMs,
+        });
         return await res.text();
     }
 
@@ -216,9 +195,8 @@ export default class Feeds implements PlatformInterface {
                 article.object = buildFeedItem(item, url);
                 articles.push(article);
             } catch (err) {
-                const detail = err instanceof Error ? err.message : String(err);
                 throw new Error(
-                    `Failed to parse feed entry ${index + 1} from ${url}: ${detail}`,
+                    `Failed to parse feed entry ${index + 1} from ${redactUrl(url)}: ${errorMessage(err)}`,
                     { cause: err },
                 );
             }
