@@ -328,7 +328,8 @@ async function startPlatformProcess() {
                         // to being human-readable, so we have to do this little dance
                         try {
                             message = err.toString();
-                        } catch (err) {
+                        } catch {
+                            // toString() failed; fall back to the original error.
                             message = errorMessage(err);
                         }
                         sentry.reportError(new Error(message));
