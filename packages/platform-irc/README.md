@@ -222,6 +222,10 @@ Authenticated connections use SASL. Two mechanisms are supported:
 
 `password` and `token` are mutually exclusive. Both default to SASL PLAIN;
 set `saslMechanism: "OAUTHBEARER"` explicitly for OAuth 2.0 bearer tokens.
+Secure connections validate the IRC server's TLS certificate by default. The
+optional `allowInvalidCert` field defaults to `false`; when set to `true`, it
+disables TLS certificate validation for secure connections. Use this
+security-relevant opt-out only for trusted self-signed IRC networks.
 
 ### Credentials with password (SASL PLAIN)
 

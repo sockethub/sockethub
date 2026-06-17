@@ -18,6 +18,7 @@
 
 import net from "node:net";
 import tls from "node:tls";
+
 import { IrcToActivityStreams } from "@sockethub/irc2as";
 import type {
     ActivityActor,
@@ -39,6 +40,32 @@ import type { PlatformIrcCredentialsObject } from "./types.js";
 
 export type { IrcSocketInstance } from "irc-socket-sasl";
 export type { PlatformIrcCredentialsObject } from "./types.js";
+
+// irc-socket-sasl builds the options object it passes to the transport via
+// `Object.create(connectOptions)`, which places our `rejectUnauthorized`
+// setting on the prototype rather than as an own property. Node's
+// `tls.connect` only honors `rejectUnauthorized` as an own property, so we
+// flatten the options (own + inherited) into a plain object before handing
+// them to the real TLS transport. Without this the `allowInvalidCert`
+// opt-out (and, defensively, the secure default) would be silently ignored.
+export function flattenConnectOptions(
+    options: Record<string, unknown>,
+): Record<string, unknown> {
+    const flattened: Record<string, unknown> = {};
+    for (const key in options) {
+        flattened[key] = options[key];
+    }
+    return flattened;
+}
+
+const tlsTransport = {
+    connect(options: Record<string, unknown>, ...rest: Array<unknown>) {
+        return (tls.connect as unknown as (...args: Array<unknown>) => unknown)(
+            flattenConnectOptions(options),
+            ...rest,
+        );
+    },
+};
 
 export type GetClientCallback = (
     err: string | null,
@@ -519,7 +546,12 @@ export class IRC implements PersistentPlatformInterface {
             debug: console.log,
         };
         if (is_secure) {
-            module_options.connectOptions = { rejectUnauthorized: false };
+            // Validate the server's TLS certificate by default. Only disable
+            // validation when the caller explicitly opts in via
+            // `allowInvalidCert` (e.g. for self-signed IRC networks). See #1056.
+            module_options.connectOptions = {
+                rejectUnauthorized: !credentials.object.allowInvalidCert,
+            };
         }
         if (is_sasl) {
             module_options.saslMechanism = sasl_mechanism;
@@ -533,7 +565,10 @@ export class IRC implements PersistentPlatformInterface {
             } sasl: ${is_sasl}${is_sasl ? ` (${sasl_mechanism})` : ""}`,
         );
 
-        const client = new IrcSocket(module_options, is_secure ? tls : net);
+        const client = new IrcSocket(
+            module_options,
+            is_secure ? tlsTransport : net,
+        );
 
         const forceDisconnect = (err: string) => {
             this.forceDisconnect = true;
