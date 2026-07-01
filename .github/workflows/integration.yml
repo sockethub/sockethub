@@ -10,7 +10,7 @@ jobs:
     steps:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Use Bun latest
@@ -35,7 +35,7 @@ jobs:
     steps:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Use Bun latest
@@ -75,7 +75,7 @@ jobs:
     steps:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Use Bun latest
@@ -214,7 +214,7 @@ jobs:
     steps:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Use Bun latest
