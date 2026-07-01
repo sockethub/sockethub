@@ -46,12 +46,12 @@
   },
   "dependencies": {
     "@sockethub/util": "^1.0.0-alpha.0",
-    "@xmpp/client": "^0.13.6"
+    "@xmpp/client": "^0.14.0"
   },
   "devDependencies": {
     "@sockethub/schemas": "^3.0.0-alpha.12",
     "@types/bun": "latest",
-    "@xmpp/xml": "^0.13.2",
+    "@xmpp/xml": "^0.14.0",
     "ajv": "^8.17.1",
     "sinon": "^17.0.2",
     "typedoc": "^0.28.14"
