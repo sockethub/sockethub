@@ -143,3 +143,27 @@ patterns including schema definitions, credential handling, client lifecycle, an
 
 See `docs/CONTRIBUTING.md` for the complete contributor guide including version bump rules,
 release process, and workflow details.
+
+## Cursor Cloud specific instructions
+
+The startup update script already runs `bun install`. Bun is installed under
+`~/.bun/bin` (on `PATH` via `~/.bashrc`); non-login shells may need the full path
+`~/.bun/bin/bun`.
+
+- **Redis is required** for anything touching the data layer (the server itself, and
+  the `process`/`rate-limiter`/`integration` tests). It is NOT auto-started. Start it
+  before running the app or those tests: `redis-server --daemonize yes` (verify with
+  `redis-cli ping` → `PONG`). Plain unit tests (`bun test`) do not need Redis.
+- **Run the app (dev):** `bun run dev` from the repo root. This rebuilds all packages
+  first, then starts the server with hot reload and the examples UI at
+  `http://localhost:10550` (WebSocket path `/sockethub`). A quick smoke test: open
+  `http://localhost:10550/dummy` and use the `echo` action.
+- **Examples must be built before serving.** `bun run dev` builds them for you, but if
+  you run the server bin directly with `--examples` and `packages/examples/build` is
+  missing, the server exits with an error. Run `bun run build` first in that case.
+- **Standard commands** (install/build/test/lint) are documented above under
+  `## Development`; use those rather than ad-hoc variants.
+- **Docker is not installed in the base environment.** The IRC/XMPP integration tests
+  and `docker:*` scripts (which need `docker compose` plus the `ergo`/`prosody` images)
+  will not run without first installing Docker. The `dummy` and `feeds` platforms work
+  end-to-end with only Redis.
