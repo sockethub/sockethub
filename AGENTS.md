@@ -163,7 +163,28 @@ The startup update script already runs `bun install`. Bun is installed under
   missing, the server exits with an error. Run `bun run build` first in that case.
 - **Standard commands** (install/build/test/lint) are documented above under
   `## Development`; use those rather than ad-hoc variants.
-- **Docker is not installed in the base environment.** The IRC/XMPP integration tests
-  and `docker:*` scripts (which need `docker compose` plus the `ergo`/`prosody` images)
-  will not run without first installing Docker. The `dummy` and `feeds` platforms work
-  end-to-end with only Redis.
+- **The `dummy` and `feeds` platforms work end-to-end with only Redis.** Testing the
+  `irc` / `xmpp` platforms additionally needs the `ergo` (IRC, `:6667`) and `prosody`
+  (XMPP, `:5222`) containers.
+
+### Docker / IRC / XMPP integration testing
+
+Docker is available but the daemon is not auto-started. Start it with
+`sudo dockerd > /tmp/dockerd.log 2>&1 &` (the daemon is pre-configured for this VM:
+`fuse-overlayfs` storage driver with the `containerd-snapshotter` feature disabled — required
+for Docker 29 — and `iptables-legacy`; use `sudo` for all `docker` commands).
+
+- **Start the test servers.** Redis already runs natively on `:6379`, so start only the
+  chat servers rather than the full `docker:start:deps` (which would collide on Redis):
+  `sudo docker compose up prosody ergo -d`. This also starts `mock-oauth` (an `ergo`
+  dependency used by the IRC SASL/OAuth tests). Containers seed test account
+  `jimmy` / `passw0rd` on both servers; all integration params live in `integration/config.js`.
+- **Run the platform E2E tests** (need the sockethub server + Redis + prosody + ergo all
+  running): `bun run integration:browser` runs every XMPP and IRC browser suite. These
+  use `@web/test-runner` with headless Chrome (already installed) and are the canonical
+  end-to-end tests for IRC/XMPP.
+- **Gotcha: the examples IRC UI (`/irc`) hardcodes `secure: true`**, which forces TLS on
+  `:6697`; the `ergo` container only publishes plaintext `:6667`, so the browser examples
+  page cannot connect to the local IRC server. Use the `integration:browser:irc-*` tests
+  (which pass `secure: false`) to exercise IRC locally. The `/xmpp` examples page works
+  against local prosody.
