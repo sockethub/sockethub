@@ -25,6 +25,15 @@ import type { JobEncrypted, JobHandler, RedisConfig } from "./types.js";
  * });
  * ```
  */
+export interface JobWorkerOptions {
+    /**
+     * Number of jobs this worker will process in parallel. Defaults to 1
+     * (serial processing). Only safe to raise for stateless platforms whose
+     * job handlers are independent of one another (e.g. feeds, metadata).
+     */
+    concurrency?: number;
+}
+
 export class JobWorker extends JobBase {
     private readonly connectionName: string;
     protected worker: Worker;
@@ -32,6 +41,7 @@ export class JobWorker extends JobBase {
     private readonly log: Logger;
     private readonly redisConfig: RedisConfig;
     protected readonly queueId: string;
+    private readonly concurrency: number;
     private initialized = false;
 
     /**
@@ -47,8 +57,16 @@ export class JobWorker extends JobBase {
         instanceId: string,
         secret: string,
         redisConfig: RedisConfig,
+        options: JobWorkerOptions = {},
     ) {
         super(secret);
+        const concurrency = Math.floor(options.concurrency ?? 1);
+        if (!Number.isFinite(concurrency) || concurrency < 1) {
+            throw new Error(
+                `JobWorker concurrency must be a positive integer, got ${options.concurrency}`,
+            );
+        }
+        this.concurrency = concurrency;
         // Create logger with full namespace (context will be prepended automatically)
         this.log = createLogger(`data-layer:worker:${parentId}:${instanceId}`);
 
@@ -74,6 +92,10 @@ export class JobWorker extends JobBase {
         // Let BullMQ create its own connection (it duplicates them internally anyway)
         this.worker = new Worker(queueName, this.jobHandler.bind(this), {
             connection: this.redisConfig,
+            // Number of jobs processed in parallel; > 1 for stateless platforms
+            // shared by every session (feeds, metadata), so one slow network
+            // fetch doesn't stall the queue for all other clients.
+            concurrency: this.concurrency,
             // Prevent infinite retry loops when platform child process crashes mid-job.
             // If worker disappears (crash/disconnect), job becomes "stalled" and retries
             // up to maxStalledCount times (with default 30s interval) before failing permanently.
