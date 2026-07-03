@@ -39,21 +39,6 @@ export class Janitor {
         }
     }
 
-    private removeSessionCallbacks(
-        platformInstance: PlatformInstance,
-        sessionId: string,
-    ): void {
-        for (const key of Object.keys(
-            platformInstance.sessionCallbacks,
-        ) as Array<"close" | "message">) {
-            platformInstance.process.removeListener(
-                key,
-                platformInstance.sessionCallbacks[key].get(sessionId),
-            );
-            platformInstance.sessionCallbacks[key].delete(sessionId);
-        }
-    }
-
     private removeStaleSocketSessions(
         platformInstance: PlatformInstance,
     ): void {
@@ -76,7 +61,6 @@ export class Janitor {
         );
         platformInstance.sessions.delete(sessionId);
         platformInstance.sessionIps.delete(sessionId);
-        this.removeSessionCallbacks(platformInstance, sessionId);
     }
 
     private async removeStalePlatformInstance(
