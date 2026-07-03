@@ -89,6 +89,15 @@ function buildSchema(): convict.Config<Record<string, unknown>> {
             windowMs: { format: "nat", default: 1000 },
             maxRequests: { format: "nat", default: 100 },
             blockDurationMs: { format: "nat", default: 5000 },
+            maxConnectionsPerIp: {
+                doc:
+                    "Maximum concurrent socket connections per client IP. " +
+                    "The per-event rate limiter is keyed by socket id, so " +
+                    "without a connection cap a client can bypass it by " +
+                    "opening more sockets. 0 disables the cap.",
+                format: "nat",
+                default: 0,
+            },
         },
         credentialCheck: {
             reconnectIpSource: {
@@ -138,6 +147,18 @@ function buildSchema(): convict.Config<Record<string, unknown>> {
                 arg: "host",
             },
             path: { format: String, default: "/sockethub" },
+            cors: {
+                origin: {
+                    doc:
+                        "Allowed CORS origin(s) for socket.io connections. " +
+                        "'*' allows any website to connect visitors' " +
+                        "browsers to this instance; public deployments " +
+                        "should set an explicit origin or comma-separated " +
+                        "list of origins.",
+                    format: String,
+                    default: "*",
+                },
+            },
         },
         platformHeartbeat: {
             intervalMs: {

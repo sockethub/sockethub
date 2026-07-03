@@ -146,6 +146,11 @@ export const SockethubConfigSchema = {
                     type: "number",
                     default: 5000,
                 },
+                maxConnectionsPerIp: {
+                    type: "number",
+                    minimum: 0,
+                    default: 0,
+                },
             },
         },
         redis: {
@@ -203,6 +208,16 @@ export const SockethubConfigSchema = {
                 path: {
                     type: "string",
                     default: "/sockethub",
+                },
+                cors: {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                        origin: {
+                            type: "string",
+                            default: "*",
+                        },
+                    },
                 },
             },
         },
