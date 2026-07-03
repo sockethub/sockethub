@@ -148,6 +148,17 @@ export const SockethubConfigSchema = {
                 },
             },
         },
+        limits: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+                maxPlatformInstances: {
+                    type: "number",
+                    minimum: 0,
+                    default: 0,
+                },
+            },
+        },
         redis: {
             type: "object",
             additionalProperties: false,
