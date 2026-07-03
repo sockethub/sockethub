@@ -237,7 +237,12 @@ export class JobQueue extends JobBase {
 
     private createJob(socketId: string, msg: ActivityStream): JobDataEncrypted {
         const platformId = resolvePlatformId(msg) || "unknown";
-        const title = `${platformId}-${msg.id ? msg.id : this.counter++}`;
+        // The title keys the per-instance completed-job handler registry, so
+        // it must be unique per job. Client-supplied msg.id values are not
+        // guaranteed unique (or honest); two in-flight jobs sharing a title
+        // silently overwrite each other's completion handlers, dropping or
+        // misrouting responses. Always use the internal counter.
+        const title = `${platformId}-${this.counter++}`;
         return {
             title: title,
             sessionId: socketId,
