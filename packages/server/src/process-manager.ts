@@ -1,5 +1,7 @@
 import { getPlatformId } from "@sockethub/util/crypto";
 
+import config from "./config.js";
+
 import type { IInitObject } from "./bootstrap/init.js";
 import PlatformInstance, {
     type MessageFromParent,
@@ -78,10 +80,13 @@ class ProcessManager {
     ): PlatformInstance {
         const identifier = getPlatformId(platform, actor);
         const existing = platformInstances.get(identifier);
-        const platformInstance =
-            existing && this.isProcessAlive(existing)
-                ? existing
-                : this.createPlatformInstance(identifier, platform, actor);
+        const reusable = existing && this.isProcessAlive(existing);
+        if (!reusable) {
+            this.assertInstanceCapacity(platform);
+        }
+        const platformInstance = reusable
+            ? existing
+            : this.createPlatformInstance(identifier, platform, actor);
         if (existing && existing !== platformInstance) {
             void existing.shutdown();
         }
@@ -90,6 +95,24 @@ class ProcessManager {
         }
         platformInstances.set(identifier, platformInstance);
         return platformInstance;
+    }
+
+    /**
+     * Each platform instance forks a full child process; without an upper
+     * bound, a public instance can be driven into resource exhaustion.
+     * Throws when the configured cap (`limits.maxPlatformInstances`, 0 =
+     * disabled) has been reached and a new instance would be created.
+     */
+    private assertInstanceCapacity(platform: string): void {
+        const max = Number(config.get("limits:maxPlatformInstances") ?? 0);
+        if (!Number.isFinite(max) || max <= 0) {
+            return;
+        }
+        if (platformInstances.size >= max) {
+            throw new Error(
+                `platform instance limit reached (${max}); cannot start new ${platform} instance`,
+            );
+        }
     }
 
     private isProcessAlive(platformInstance: PlatformInstance): boolean {

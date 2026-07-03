@@ -355,12 +355,23 @@ class Sockethub {
                             next(msg);
                             return;
                         }
-                        const platformInstance = this.processManager.get(
-                            platformId,
-                            msg.actor.id,
-                            socket.id,
-                            clientIp,
-                        );
+                        let platformInstance: ReturnType<
+                            ProcessManager["get"]
+                        >;
+                        try {
+                            platformInstance = this.processManager.get(
+                                platformId,
+                                msg.actor.id,
+                                socket.id,
+                                clientIp,
+                            );
+                        } catch (err) {
+                            // e.g. limits.maxPlatformInstances reached
+                            msg.error =
+                                errorMessage(err) || "platform unavailable";
+                            next(msg);
+                            return;
+                        }
                         // job validated and queued, stores socket.io callback for when job is completed
                         try {
                             const job = await platformInstance.queue.add(
