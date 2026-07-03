@@ -31,7 +31,9 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`
 
 Scopes (optional): package names (`client`, `server`, `data-layer`, `schemas`, `platform-irc`,
 `platform-xmpp`, `examples`, etc.) or components (`job-queue`, `credentials`, `session`,
-`middleware`, `config`). Omit scope for cross-cutting changes.
+`middleware`, `config`). Omit scope for cross-cutting changes. **PR titles with a scope must
+use a name that has a matching `scope:*` label** — see [`.github/LABELS.md`](.github/LABELS.md).
+Commit messages are not validated the same way; only PR titles trigger auto-label CI.
 
 Breaking changes: add `!` after type/scope (e.g. `feat(client)!: remove deprecated method`).
 
@@ -42,6 +44,13 @@ PR titles follow the same conventional format. The PR title becomes the squash c
 ```
 <type>(<scope>): <description>
 ```
+
+If you include a scope, it **must** match an existing GitHub label `scope:<scope>` or the
+**Auto Label PR** CI check fails (even when lint/build/tests pass). See
+[`.github/LABELS.md`](.github/LABELS.md) for the canonical list. Omit the scope for
+cross-cutting changes (including edits to this file or other repo-wide docs).
+
+Examples: `docs: add Cursor Cloud environment setup notes`, `fix(server): handle reconnect`
 
 ### Default Branch
 
