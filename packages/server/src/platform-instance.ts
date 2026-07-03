@@ -50,6 +50,10 @@ export interface MessageFromParent extends Array<string | unknown> {
     1: unknown;
 }
 
+// Handlers for jobs that never complete are pruned after this long. Matches
+// the queue's removeOnComplete/removeOnFail age (300s) plus slack.
+const JOB_HANDLER_TTL_MS = 6 * 60 * 1000;
+
 const HEARTBEAT_INTERVAL_MS = Number(
     config.get("platformHeartbeat:intervalMs") ?? 5000,
 );
@@ -65,6 +69,8 @@ export default class PlatformInstance {
     getSocket: typeof getSocket;
     readonly global: boolean = false;
     readonly completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
+    private readonly completedJobHandlerTimestamps: Map<string, number> =
+        new Map();
     config: PlatformConfig;
     contextUrl?: string;
     private initialized = false;
@@ -233,6 +239,48 @@ export default class PlatformInstance {
     }
 
     /**
+     * Register a handler to be invoked when the job with the given title
+     * completes or fails. Entries are pruned after JOB_HANDLER_TTL_MS so
+     * jobs that never produce a result (e.g. the platform process dies
+     * mid-job) don't leak handlers for the lifetime of the instance.
+     */
+    public registerCompletedJobHandler(
+        title: string,
+        handler: CompletedJobHandler,
+    ) {
+        this.pruneExpiredJobHandlers();
+        this.completedJobHandlers.set(title, handler);
+        this.completedJobHandlerTimestamps.set(title, Date.now());
+    }
+
+    private takeCompletedJobHandler(
+        title: string,
+    ): CompletedJobHandler | undefined {
+        const handler = this.completedJobHandlers.get(title);
+        if (handler) {
+            this.completedJobHandlers.delete(title);
+            this.completedJobHandlerTimestamps.delete(title);
+        }
+        return handler;
+    }
+
+    private pruneExpiredJobHandlers() {
+        const cutoff = Date.now() - JOB_HANDLER_TTL_MS;
+        for (const [
+            title,
+            registeredAt,
+        ] of this.completedJobHandlerTimestamps) {
+            if (registeredAt < cutoff) {
+                this.log.debug(
+                    `pruning expired completed-job handler ${title}`,
+                );
+                this.completedJobHandlers.delete(title);
+                this.completedJobHandlerTimestamps.delete(title);
+            }
+        }
+    }
+
+    /**
      * Register listener to be called when the process emits a message.
      * @param sessionId ID of socket connection that will receive messages from platform emits
      */
@@ -351,10 +399,9 @@ export default class PlatformInstance {
         payload = this.toExternalPayload(payload);
 
         // send result to client
-        const callback = this.completedJobHandlers.get(job.title);
+        const callback = this.takeCompletedJobHandler(job.title);
         if (callback) {
             callback(payload);
-            this.completedJobHandlers.delete(job.title);
         } else {
             this.sendToClient(job.sessionId, payload);
         }

@@ -123,16 +123,17 @@ describe("JobQueue", () => {
                 id: "an identifier",
             });
             expect(job).to.eql({
-                title: `${TEST_PLATFORM_ID}-an identifier`,
+                title: `${TEST_PLATFORM_ID}-0`,
                 msg: "an encrypted message",
                 sessionId: "a socket id",
             });
         });
 
-        it("uses counter when no id provided", () => {
+        it("uses counter even when an id is provided (ids may repeat)", () => {
             cryptoMocks.encrypt.returns("an encrypted message");
             let job = jobQueue.createJob("a socket id", {
                 "@context": TEST_CONTEXT,
+                id: "a reused identifier",
             });
             expect(job).to.eql({
                 title: `${TEST_PLATFORM_ID}-0`,
@@ -141,6 +142,7 @@ describe("JobQueue", () => {
             });
             job = jobQueue.createJob("a socket id", {
                 "@context": TEST_CONTEXT,
+                id: "a reused identifier",
             });
             expect(job).to.eql({
                 title: `${TEST_PLATFORM_ID}-1`,
@@ -155,7 +157,7 @@ describe("JobQueue", () => {
                 id: "an identifier",
             });
             expect(job).to.eql({
-                title: "unknown-an identifier",
+                title: "unknown-0",
                 msg: "an encrypted message",
                 sessionId: "a socket id",
             });
@@ -218,7 +220,7 @@ describe("JobQueue", () => {
         it("stores encrypted job", async () => {
             cryptoMocks.encrypt.returns("encrypted foo");
             jobQueue.queue.isPaused.returns(false);
-            const title = `${TEST_PLATFORM_ID}-an identifier`;
+            const title = `${TEST_PLATFORM_ID}-0`;
             const resultJob = {
                 title,
                 sessionId: "a socket id",

@@ -368,7 +368,7 @@ class Sockethub {
                                 msg,
                             );
                             if (job) {
-                                platformInstance.completedJobHandlers.set(
+                                platformInstance.registerCompletedJobHandler(
                                     job.title,
                                     next,
                                 );
