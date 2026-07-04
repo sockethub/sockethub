@@ -266,10 +266,8 @@ export default class PlatformInstance {
 
     private pruneExpiredJobHandlers() {
         const cutoff = Date.now() - JOB_HANDLER_TTL_MS;
-        for (const [
-            title,
-            registeredAt,
-        ] of this.completedJobHandlerTimestamps) {
+        for (const [title, registeredAt] of this
+            .completedJobHandlerTimestamps) {
             if (registeredAt < cutoff) {
                 this.log.debug(
                     `pruning expired completed-job handler ${title}`,
