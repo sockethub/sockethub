@@ -68,6 +68,7 @@ export const SockethubConfigSchema = {
                     properties: {
                         connectTimeoutMs: { type: "number" },
                         allowPrivateAddresses: { type: "boolean" },
+                        concurrency: { type: "integer", minimum: 1 },
                     },
                 },
                 "@sockethub/platform-irc": {
@@ -89,6 +90,7 @@ export const SockethubConfigSchema = {
                     additionalProperties: false,
                     properties: {
                         allowPrivateAddresses: { type: "boolean" },
+                        concurrency: { type: "integer", minimum: 1 },
                     },
                 },
             },
@@ -145,6 +147,22 @@ export const SockethubConfigSchema = {
                 blockDurationMs: {
                     type: "number",
                     default: 5000,
+                },
+                maxConnectionsPerIp: {
+                    type: "number",
+                    minimum: 0,
+                    default: 0,
+                },
+            },
+        },
+        limits: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+                maxPlatformInstances: {
+                    type: "number",
+                    minimum: 0,
+                    default: 0,
                 },
             },
         },
@@ -203,6 +221,16 @@ export const SockethubConfigSchema = {
                 path: {
                     type: "string",
                     default: "/sockethub",
+                },
+                cors: {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                        origin: {
+                            type: "string",
+                            default: "*",
+                        },
+                    },
                 },
             },
         },

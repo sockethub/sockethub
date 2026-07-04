@@ -14,7 +14,7 @@ import {
     resetSharedRedisConnection,
 } from "./job-base.js";
 import { JobQueue, verifyJobQueue } from "./job-queue.js";
-import { JobWorker } from "./job-worker.js";
+import { JobWorker, type JobWorkerOptions } from "./job-worker.js";
 
 export * from "./types.js";
 
@@ -47,6 +47,7 @@ export {
     redisCheck,
     JobQueue,
     JobWorker,
+    type JobWorkerOptions,
     CredentialsStore,
     CredentialsMismatchError,
     CredentialsNotShareableError,
