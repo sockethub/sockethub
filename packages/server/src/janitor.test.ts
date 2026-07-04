@@ -13,26 +13,11 @@ function getPlatformInstanceFake() {
         global: false,
         isInitialized: sinon.stub().returns(false),
         shutdown: sinon.stub(),
-        process: {
-            removeListener: sinon.stub(),
-        },
         sessions: new Set(["session foo", "session bar"]),
         sessionIps: new Map([
             ["session foo", "127.0.0.1"],
             ["session bar", "127.0.0.1"],
         ]),
-        sessionCallbacks: {
-            close: (() =>
-                new Map([
-                    ["session foo", function sessionFooClose() {}],
-                    ["session bar", function sessionBarClose() {}],
-                ]))(),
-            message: (() =>
-                new Map([
-                    ["session foo", function sessionFooMessage() {}],
-                    ["session bar", function sessionBarMessage() {}],
-                ]))(),
-        },
     };
 }
 
@@ -92,62 +77,28 @@ describe("Janitor", () => {
         });
     });
 
-    describe("removeSessionCallbacks", () => {
-        test("removes session listeners and callbacks for a given platform", () => {
-            const pi = getPlatformInstanceFake();
-            const barMessage = pi.sessionCallbacks.message.get("session bar");
-            const barClose = pi.sessionCallbacks.close.get("session bar");
-            pi.flaggedForTermination = true;
-            janitor.removeSessionCallbacks(pi, "session foo");
-            sinon.assert.calledTwice(pi.process.removeListener);
-            expect(
-                pi.sessionCallbacks.message.get("session foo"),
-            ).toBeUndefined();
-            expect(pi.sessionCallbacks.message.get("session bar")).toEqual(
-                barMessage,
-            );
-            expect(
-                pi.sessionCallbacks.close.get("session foo"),
-            ).toBeUndefined();
-            expect(pi.sessionCallbacks.close.get("session bar")).toEqual(
-                barClose,
-            );
-        });
-    });
-
     describe("removeStaleSocketSessions", () => {
         test("doesnt do anything if the socket is active and stop is not flagged", async () => {
             const pi = getPlatformInstanceFake();
-            janitor.removeSessionCallbacks = sinon.stub();
             janitor.socketExists = sinon.stub().returns(true);
             expect(janitor.stopTriggered).toBeFalse();
             await janitor.removeStaleSocketSessions(pi);
-            sinon.assert.notCalled(janitor.removeSessionCallbacks);
+            expect(pi.sessions.has("session foo")).toBeTrue();
+            expect(pi.sessions.has("session bar")).toBeTrue();
         });
 
         test("removes session if the socket is active and stop is flagged", async () => {
             const pi = getPlatformInstanceFake();
-            janitor.removeSessionCallbacks = sinon.stub();
             janitor.socketExists = sinon.stub().returns(true);
             janitor.stop();
             expect(janitor.stopTriggered).toBeTrue();
             await janitor.removeStaleSocketSessions(pi);
-            sinon.assert.calledTwice(janitor.removeSessionCallbacks);
-            sinon.assert.calledWith(
-                janitor.removeSessionCallbacks,
-                pi,
-                "session foo",
-            );
-            sinon.assert.calledWith(
-                janitor.removeSessionCallbacks,
-                pi,
-                "session bar",
-            );
+            expect(pi.sessions.size).toEqual(0);
+            expect(pi.sessionIps.size).toEqual(0);
         });
 
         test("removes session if the socket is inactive", async () => {
             const pi = getPlatformInstanceFake();
-            janitor.removeSessionCallbacks = sinon.stub();
             janitor.socketExists = sinon
                 .stub()
                 .onFirstCall()
@@ -156,12 +107,8 @@ describe("Janitor", () => {
                 .returns(true);
             expect(janitor.stopTriggered).toBeFalse();
             await janitor.removeStaleSocketSessions(pi);
-            sinon.assert.calledOnce(janitor.removeSessionCallbacks);
-            sinon.assert.calledWith(
-                janitor.removeSessionCallbacks,
-                pi,
-                "session foo",
-            );
+            expect(pi.sessions.has("session foo")).toBeFalse();
+            expect(pi.sessions.has("session bar")).toBeTrue();
         });
     });
 
