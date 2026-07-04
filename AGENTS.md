@@ -172,9 +172,13 @@ The startup update script already runs `bun install`. Bun is installed under
   missing, the server exits with an error. Run `bun run build` first in that case.
 - **Standard commands** (install/build/test/lint) are documented above under
   `## Development`; use those rather than ad-hoc variants.
-- **The `dummy` and `feeds` platforms work end-to-end with only Redis.** Testing the
-  `irc` / `xmpp` platforms additionally needs the `ergo` (IRC, `:6667`) and `prosody`
-  (XMPP, `:5222`) containers.
+- **The `dummy` platform works end-to-end with only Redis.** The `feeds` platform
+  also needs only Redis for public feed URLs, but fetching loopback or private
+  addresses (as in integration tests and the examples smoke test) requires
+  `SOCKETHUB_CONFIG=integration/sockethub.ci.config.json` to bypass the SSRF
+  guard — the same file `docker-compose.yml` mounts for the CI harness. Testing
+  the `irc` / `xmpp` platforms additionally needs the `ergo` (IRC, `:6667`) and
+  `prosody` (XMPP, `:5222`) containers.
 
 ### Docker / IRC / XMPP integration testing
 
