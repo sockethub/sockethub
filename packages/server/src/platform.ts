@@ -557,15 +557,16 @@ async function startPlatformProcess() {
                 return;
             }
         }
+        const concurrency = getWorkerConcurrency();
         jobWorker = new JobWorker(
             parentId,
             identifier,
             parentSecret1 + parentSecret2,
             { url: redisUrl },
-            { concurrency: getWorkerConcurrency() },
+            { concurrency },
         );
         logger.info(
-            `listening on the queue for incoming jobs (concurrency: ${getWorkerConcurrency()})`,
+            `listening on the queue for incoming jobs (concurrency: ${concurrency})`,
         );
         jobWorker.onJob(getJobHandler());
         jobWorkerStarted = true;
