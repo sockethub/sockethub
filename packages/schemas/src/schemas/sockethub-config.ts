@@ -68,6 +68,7 @@ export const SockethubConfigSchema = {
                     properties: {
                         connectTimeoutMs: { type: "number" },
                         allowPrivateAddresses: { type: "boolean" },
+                        concurrency: { type: "integer", minimum: 1 },
                     },
                 },
                 "@sockethub/platform-irc": {
@@ -89,6 +90,7 @@ export const SockethubConfigSchema = {
                     additionalProperties: false,
                     properties: {
                         allowPrivateAddresses: { type: "boolean" },
+                        concurrency: { type: "integer", minimum: 1 },
                     },
                 },
             },
