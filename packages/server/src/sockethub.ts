@@ -243,9 +243,7 @@ class Sockethub {
         clientIp: string,
         sessionLog: ReturnType<typeof createLogger>,
     ): boolean {
-        const max = Number(
-            config.get("rateLimiter:maxConnectionsPerIp") ?? 0,
-        );
+        const max = Number(config.get("rateLimiter:maxConnectionsPerIp") ?? 0);
         if (!Number.isFinite(max) || max <= 0 || !clientIp) {
             return true;
         }
