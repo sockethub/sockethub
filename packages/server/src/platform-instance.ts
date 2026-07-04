@@ -494,10 +494,14 @@ export default class PlatformInstance {
             return;
         }
         this.processMessageListener = (message: MessageFromPlatform) => {
-            void this.handleProcessMessage(message);
+            this.handleProcessMessage(message).catch((err) => {
+                this.log.error(`message handler failed: ${errorMessage(err)}`);
+            });
         };
         this.processCloseListener = (e: unknown) => {
-            void this.handleProcessClose(e);
+            this.handleProcessClose(e).catch((err) => {
+                this.log.error(`close handler failed: ${errorMessage(err)}`);
+            });
         };
         this.process.on("message", this.processMessageListener);
         this.process.on("close", this.processCloseListener);

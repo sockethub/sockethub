@@ -13,9 +13,6 @@ function getPlatformInstanceFake() {
         global: false,
         isInitialized: sinon.stub().returns(false),
         shutdown: sinon.stub(),
-        process: {
-            removeListener: sinon.stub(),
-        },
         sessions: new Set(["session foo", "session bar"]),
         sessionIps: new Map([
             ["session foo", "127.0.0.1"],
