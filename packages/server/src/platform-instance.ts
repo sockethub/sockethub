@@ -509,17 +509,22 @@ export default class PlatformInstance {
 
     private async handleProcessClose(e: unknown) {
         this.log.error(`close event triggered ${this.id}: ${e}`);
-        // Check if process is still connected before attempting error reporting
-        if (this.process?.connected && !this.flaggedForTermination) {
+        // `close` fires after the child has already exited and its IPC channel
+        // torn down, so `this.process.connected` is always false by this point —
+        // it can't distinguish an unexpected crash from an intentional shutdown.
+        // `flaggedForTermination` is set *before* we tear anything down in every
+        // intentional path (shutdown(), credential-init failure, heartbeat
+        // timeout), so it alone tells us whether this close was expected.
+        if (!this.flaggedForTermination) {
             await this.broadcastFatalError(
                 `Error: session thread closed unexpectedly: ${e}`,
             );
         } else {
             this.log.debug(
-                "Process already disconnected or flagged for termination, skipping error report",
+                "process already flagged for termination, skipping error report",
             );
-            await this.shutdown();
         }
+        await this.shutdown();
     }
 
     private async handleProcessMessage([

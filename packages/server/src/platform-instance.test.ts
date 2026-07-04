@@ -387,35 +387,24 @@ describe("PlatformInstance", () => {
                 pi.updateIdentifier = sandbox.fake();
             });
 
-            test("close events from platform thread are reported", async () => {
-                // Mock process as connected and not flagged for termination
-                pi.process.connected = true;
+            test("unexpected close events are reported, regardless of process.connected", async () => {
+                // `connected` is already false by the time `close` fires in real
+                // usage (see the comment on handleProcessClose); the handler must
+                // rely on flaggedForTermination alone, not on `connected`.
+                pi.process.connected = false;
                 pi.flaggedForTermination = false;
+                pi.shutdown = sandbox.stub();
 
                 await pi.handleProcessClose("error msg");
                 sandbox.assert.calledWith(
                     pi.broadcastFatalError,
                     "Error: session thread closed unexpectedly: error msg",
                 );
-            });
-
-            test("close events skip error reporting when process disconnected", async () => {
-                // Mock process as disconnected
-                pi.process.connected = false;
-                pi.flaggedForTermination = false;
-                pi.shutdown = sandbox.stub();
-
-                await pi.handleProcessClose("error msg");
-
-                // Should NOT attempt to report error
-                sandbox.assert.notCalled(pi.broadcastFatalError);
-                // Should call shutdown
                 sandbox.assert.called(pi.shutdown);
             });
 
             test("close events skip error reporting when flagged for termination", async () => {
-                // Mock process as flagged for termination
-                pi.process.connected = true;
+                pi.process.connected = false;
                 pi.flaggedForTermination = true;
                 pi.shutdown = sandbox.stub();
 
@@ -423,7 +412,7 @@ describe("PlatformInstance", () => {
 
                 // Should NOT attempt to report error
                 sandbox.assert.notCalled(pi.broadcastFatalError);
-                // Should call shutdown
+                // Should still shut down to clean up instance state
                 sandbox.assert.called(pi.shutdown);
             });
 
