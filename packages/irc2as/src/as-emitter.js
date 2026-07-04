@@ -48,7 +48,7 @@ export class ASEmitter {
             },
             target: {
                 type: "room",
-                id: `${this.server}/${channel}`,
+                id: `${channel}@${this.server}`,
                 name: channel,
             },
             object: {
@@ -68,7 +68,7 @@ export class ASEmitter {
             },
             target: {
                 type: "room",
-                id: `${this.server}/${channel}`,
+                id: `${channel}@${this.server}`,
             },
             error: content,
         });
@@ -129,7 +129,7 @@ export class ASEmitter {
             },
             target: {
                 type: "room",
-                id: `${this.server}/${channel}`,
+                id: `${channel}@${this.server}`,
                 name: channel,
             },
             object: {
@@ -150,7 +150,7 @@ export class ASEmitter {
             },
             target: {
                 type: "room",
-                id: `${this.server}/${channel}`,
+                id: `${channel}@${this.server}`,
                 name: channel,
             },
         });
@@ -187,7 +187,7 @@ export class ASEmitter {
             },
             target: {
                 type: "room",
-                id: `${this.server}/${channel}`,
+                id: `${channel}@${this.server}`,
                 name: channel,
             },
             object: {
@@ -221,7 +221,7 @@ export class ASEmitter {
             },
             target: {
                 type: target.startsWith("#") ? "room" : "person",
-                id: `${this.server}/${target}`,
+                id: `${target}@${this.server}`,
                 name: target,
             },
             object: {
@@ -254,7 +254,7 @@ export class ASEmitter {
                 },
                 object: {
                     type: "room",
-                    id: `${this.server}/${channel}`,
+                    id: `${channel}@${this.server}`,
                     name: channel,
                 },
             },

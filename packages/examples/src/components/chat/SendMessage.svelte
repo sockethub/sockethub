@@ -12,7 +12,7 @@ interface Props {
     sockethubState: SockethubStateStore;
     room: string;
     // For IRC, the connection server used to qualify the room id as
-    // `server/#channel` (XMPP rooms are already full JIDs).
+    // `#channel@server` (XMPP rooms are already full JIDs).
     server?: string;
 }
 
@@ -23,10 +23,10 @@ let sending = $state(false);
 
 async function sendMessage() {
     if (!message.trim()) return;
-    // IRC room targets must be server-qualified (`server/#channel`); never fall
+    // IRC room targets must be server-qualified (`#channel@server`); never fall
     // back to a bare channel, which the platform rejects.
     if (context === "irc" && !server) {
-        console.error("IRC sends require a server (server/#channel)");
+        console.error("IRC sends require a server (#channel@server)");
         return;
     }
 
@@ -34,7 +34,7 @@ async function sendMessage() {
     const messageToSend = message.trim();
     console.log("send message: ", messageToSend);
 
-    const targetId = context === "irc" ? `${server}/${room}` : room;
+    const targetId = context === "irc" ? `${room}@${server}` : room;
     try {
         await send({
             "@context": await contextFor(context),

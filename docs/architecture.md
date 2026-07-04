@@ -318,7 +318,7 @@ Redis and BullMQ provide reliable, encrypted communication between server and pl
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
   ],
   "actor": { "id": "mynick@irc.libera.chat", "type": "person", "name": "mynick" },
-  "target": { "id": "irc.libera.chat/#javascript", "type": "room" },
+  "target": { "id": "#javascript@irc.libera.chat", "type": "room" },
   "object": { "type": "message", "content": "Hello!" }
 }
 
@@ -407,7 +407,7 @@ ActivityStreams: {
   "type": "send",
   "@context": ["...as2", "...sockethub", "...irc"],
   "actor": { "id": "alice@irc.libera.chat", "type": "person", "name": "alice" },
-  "target": { "id": "irc.libera.chat/#room", "type": "room" },
+  "target": { "id": "#room@irc.libera.chat", "type": "room" },
   "object": { "type": "message", "content": "hello world" }
 }
 ```
@@ -419,7 +419,7 @@ ActivityStreams: {
   "type": "join",
   "@context": ["...as2", "...sockethub", "...irc"],
   "actor": { "id": "mynick@irc.libera.chat", "type": "person", "name": "mynick" },
-  "target": { "id": "irc.libera.chat/#room", "type": "room" }
+  "target": { "id": "#room@irc.libera.chat", "type": "room" }
 }
   ↓
 IRC: "JOIN #room"
@@ -440,7 +440,7 @@ Web applications send the same ActivityStreams format regardless of target proto
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld"
   ],
   "actor": { "id": "user@irc.libera.chat", "type": "person", "name": "user" },
-  "target": { "id": "irc.libera.chat/#room", "type": "room" },
+  "target": { "id": "#room@irc.libera.chat", "type": "room" },
   "object": { "type": "message", "content": "Hello!" }
 }
 ```

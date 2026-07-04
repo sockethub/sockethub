@@ -28,7 +28,7 @@ const newActor = {
 
 const targetRoom = {
     type: "room",
-    id: "irc.example.com/#a-room",
+    id: "#a-room@irc.example.com",
     name: "#a-room",
 };
 
@@ -553,7 +553,7 @@ describe("Initialize IRC Platform", () => {
                             actor: actor,
                             target: {
                                 type: "room",
-                                id: "irc.example.com/#a-room",
+                                id: "#a-room@irc.example.com",
                             },
                             object: { type: "attendance" },
                         },
@@ -580,7 +580,7 @@ describe("Initialize IRC Platform", () => {
                         },
                         (err) => {
                             expect(err).toEqual(
-                                "IRC room targets must be server-qualified as 'server/#channel'",
+                                "IRC room targets must be server-qualified as '#channel@server'",
                             );
                             expect(rawCalls).toEqual([]);
                             done();

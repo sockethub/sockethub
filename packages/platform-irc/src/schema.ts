@@ -34,9 +34,10 @@ export const PlatformIrcSchema = {
                     { $ref: "#/definitions/objectTypes/attendance" },
                 ],
             },
-            // Room targets must be server-qualified as `server/#channel`,
-            // consistent with what the platform emits inbound (see irc2as).
-            // A bare `#channel` is rejected. Non-room targets (e.g. person
+            // Room targets must be server-qualified as `#channel@server`,
+            // consistent with what the platform emits inbound (see irc2as)
+            // and with how person actors are addressed (`nick@server`). A
+            // bare `#channel` is rejected. Non-room targets (e.g. person
             // PMs / nick-change) are left unconstrained here.
             target: {
                 type: "object",
@@ -48,7 +49,7 @@ export const PlatformIrcSchema = {
                 then: {
                     required: ["id"],
                     properties: {
-                        id: { type: "string", pattern: "^[^/]+/#[^\\s]+$" },
+                        id: { type: "string", pattern: "^#[^\\s@]+@[^\\s]+$" },
                     },
                 },
             },
@@ -154,8 +155,8 @@ export const PlatformIrcSchema = {
                     required: ["id", "type"],
                     additionalProperties: false,
                     properties: {
-                        // Server-qualified room id: `server/#channel`.
-                        id: { type: "string", pattern: "^[^/]+/#[^\\s]+$" },
+                        // Server-qualified room id: `#channel@server`.
+                        id: { type: "string", pattern: "^#[^\\s@]+@[^\\s]+$" },
                         type: { enum: ["room"] },
                         name: { type: "string" },
                     },
