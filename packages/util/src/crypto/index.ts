@@ -16,9 +16,9 @@ export function getPlatformId(
     _crypto = crypto,
 ): string {
     if (actor) {
-        return _crypto.hash(platform + actor);
+        return _crypto.hashFull(platform + actor);
     }
-    return _crypto.hash(platform);
+    return _crypto.hashFull(platform);
 }
 
 export class Crypto {
@@ -57,6 +57,17 @@ export class Crypto {
         const SHASum = createHash("sha1");
         SHASum.update(text);
         return SHASum.digest("hex").substring(0, 7);
+    }
+
+    /**
+     * Full-length SHA-256 hex digest. Used where hash values act as
+     * identity keys (e.g. platform instance IDs): the truncated 28-bit
+     * `hash()` has a ~1% birthday-collision probability by ~2,400 distinct
+     * inputs, and a collision on a platform instance ID silently routes two
+     * different (platform, actor) pairs to the same instance.
+     */
+    hashFull(text: string): string {
+        return createHash("sha256").update(text).digest("hex");
     }
 
     objectHash(object: object): string {
