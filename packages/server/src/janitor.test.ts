@@ -67,6 +67,24 @@ describe("Janitor", () => {
         }, cycleInterval);
     });
 
+    test("survives a clean() failure instead of stopping the cycle", (done) => {
+        let calls = 0;
+        janitor.clean = sandbox.stub().callsFake(async () => {
+            calls++;
+            if (calls === 1) {
+                throw new Error("simulated failure");
+            }
+        });
+        setTimeout(() => {
+            // The loop kept calling clean() past the first, failing call
+            // instead of dying or leaving cycleRunning stuck.
+            expect(calls).toBeGreaterThanOrEqual(2);
+            expect(janitor.cycleRunning).toBeFalse();
+            expect(janitor.stopTriggered).toBeFalse();
+            done();
+        }, cycleInterval * 3);
+    });
+
     describe("socketExists", () => {
         test("reflects membership in the live connected-socket map", () => {
             janitor.connectedSocketIds = sandbox

@@ -113,7 +113,12 @@ export class Janitor {
      */
     private async runCleanCycle(): Promise<void> {
         while (!this.stopTriggered) {
-            await this.clean();
+            try {
+                await this.clean();
+            } catch (err) {
+                this.cycleRunning = false;
+                rmLog.error(`janitor clean cycle failed: ${err}`);
+            }
             await this.delay(this.cycleInterval);
         }
         this.cycleRunning = false;
