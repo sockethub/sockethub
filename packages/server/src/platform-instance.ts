@@ -189,10 +189,7 @@ export default class PlatformInstance {
                 this.processMessageListener = undefined;
             }
             if (this.processCloseListener) {
-                this.process.removeListener(
-                    "close",
-                    this.processCloseListener,
-                );
+                this.process.removeListener("close", this.processCloseListener);
                 this.processCloseListener = undefined;
             }
             this.process.removeAllListeners("close");
