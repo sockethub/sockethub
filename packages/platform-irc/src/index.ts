@@ -41,13 +41,14 @@ import type { PlatformIrcCredentialsObject } from "./types.js";
 export type { IrcSocketInstance } from "irc-socket-sasl";
 export type { PlatformIrcCredentialsObject } from "./types.js";
 
-// irc-socket-sasl builds the options object it passes to the transport via
-// `Object.create(connectOptions)`, which places our `rejectUnauthorized`
-// setting on the prototype rather than as an own property. Node's
-// `tls.connect` only honors `rejectUnauthorized` as an own property, so we
-// flatten the options (own + inherited) into a plain object before handing
-// them to the real TLS transport. Without this the `allowInvalidCert`
-// opt-out (and, defensively, the secure default) would be silently ignored.
+// irc-socket-sasl >=4.1.2 already flattens connectOptions into a plain
+// object before handing them to the transport (silverbucket/irc-socket-sasl#24),
+// so this is now a defensive backstop rather than the primary fix: earlier
+// versions built the options via `Object.create(connectOptions)`, which put
+// our `rejectUnauthorized` setting on the prototype rather than as an own
+// property, and Node's `tls.connect` only honors it as an own property.
+// Keeping this here means we don't depend on the installed dependency
+// version (or a future regression/fork) to get this right.
 export function flattenConnectOptions(
     options: Record<string, unknown>,
 ): Record<string, unknown> {
