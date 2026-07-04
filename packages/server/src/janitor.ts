@@ -24,9 +24,8 @@ export class Janitor {
      */
     start(): void {
         rmLog.debug("initializing");
-        this.clean().then(() => {
-            rmLog.info("cleaning cycle started");
-        });
+        void this.runCleanCycle();
+        rmLog.info("cleaning cycle started");
     }
 
     async stop(): Promise<void> {
@@ -106,6 +105,25 @@ export class Janitor {
         }
     }
 
+    /**
+     * Run clean() every cycleInterval in a plain loop. The previous
+     * implementation recursed (`return this.clean()`) after the delay, so
+     * the promise chain from start() grew by one pending promise per cycle
+     * for the lifetime of the process — a slow, unbounded leak.
+     */
+    private async runCleanCycle(): Promise<void> {
+        while (!this.stopTriggered) {
+            try {
+                await this.clean();
+            } catch (err) {
+                this.cycleRunning = false;
+                rmLog.error(`janitor clean cycle failed: ${err}`);
+            }
+            await this.delay(this.cycleInterval);
+        }
+        this.cycleRunning = false;
+    }
+
     private async clean(): Promise<void> {
         if (this.stopTriggered) {
             this.cycleRunning = false;
@@ -131,8 +149,6 @@ export class Janitor {
             await this.performStaleCheck(platformInstance);
         }
         this.cycleRunning = false;
-        await this.delay(this.cycleInterval);
-        return this.clean();
     }
 }
 
