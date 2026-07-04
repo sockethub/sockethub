@@ -39,7 +39,7 @@ class Listener {
         this.io = new Server(this.http, {
             path: config.get("sockethub:path") as string,
             cors: {
-                origin: "*",
+                origin: Listener.corsOrigin(),
                 methods: ["GET", "POST"],
             },
         });
@@ -124,6 +124,30 @@ class Listener {
                 "sockethub:port",
             )}`,
         );
+    }
+
+    /**
+     * Resolve the socket.io CORS origin from config. Accepts '*' (default,
+     * historical behavior), a single origin, or a comma-separated list.
+     * Public deployments should set an explicit origin: with '*' any
+     * website can connect visitors' browsers to this instance and use it
+     * as a relay.
+     */
+    private static corsOrigin(): string | Array<string> {
+        const configured = (
+            (config.get("sockethub:cors:origin") as string) || "*"
+        ).trim();
+        if (configured === "*" || configured === "") {
+            return "*";
+        }
+        const origins = configured
+            .split(",")
+            .map((origin) => origin.trim())
+            .filter((origin) => origin.length > 0);
+        if (origins.length === 0) {
+            return "*";
+        }
+        return origins.length === 1 ? origins[0] : origins;
     }
 
     private startHttp() {
