@@ -13,7 +13,7 @@ interface Props {
     context: string;
     sockethubState: SockethubStateStore;
     // For IRC, the connection server used to qualify the room id as
-    // `#channel@server` (XMPP rooms are already full JIDs).
+    // `channel@server` (no leading `#`; XMPP rooms are already full JIDs).
     server?: string;
 }
 
@@ -36,14 +36,16 @@ $effect(() => {
 });
 
 async function joinRoom(): Promise<void> {
-    // IRC room targets must be server-qualified (`#channel@server`); never fall
+    // IRC room targets must be server-qualified (`channel@server`); never fall
     // back to a bare channel, which the platform rejects.
     if (context === "irc" && !server) {
-        console.error("IRC room joins require a server (#channel@server)");
+        console.error("IRC room joins require a server (channel@server)");
         return;
     }
     joining = true;
-    const targetId = context === "irc" ? `${room}@${server}` : room;
+    // The platform's id omits the leading `#` (kept only in `name` for display).
+    const targetId =
+        context === "irc" ? `${room.replace(/^#/, "")}@${server}` : room;
     return await send({
         "@context": await contextFor(context),
         type: "join",

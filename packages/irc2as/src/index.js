@@ -1,5 +1,5 @@
 import events from "node:events";
-import { ASEmitter } from "./as-emitter.js";
+import { ASEmitter, stripChannelPrefix } from "./as-emitter.js";
 
 const EVENT_INCOMING = "incoming";
 // EVENT_ERROR = 'error',
@@ -260,7 +260,7 @@ export class IrcToActivityStreams {
                     actor: undefined,
                     target: {
                         type: "room",
-                        id: `${channel}@${this.server}`,
+                        id: `${stripChannelPrefix(channel)}@${this.server}`,
                         name: channel,
                     },
                     object: {

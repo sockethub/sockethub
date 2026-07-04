@@ -99,7 +99,7 @@ sc.socket.emit('message', {
     type: 'send',
     '@context': sc.contextFor('irc'),
     actor: { id: 'mynick@irc.libera.chat', type: 'person', name: 'mynick' },
-    target: { id: '#sockethub@irc.libera.chat', type: 'room' },
+    target: { id: 'sockethub@irc.libera.chat', type: 'room' },
     object: { type: 'message', content: 'Hello channel' }
 }, (result) => {
     if (result?.error) {
@@ -149,7 +149,7 @@ success/failure.
   "type": "send",            // Action: send, connect, join, fetch
   "@context": sc.contextFor("irc"),  // Canonical contexts for this platform
   "actor": { "id": "user@irc.libera.chat", "type": "person", "name": "user" },  // Who
-  "target": { "id": "#room@irc.libera.chat", "type": "room" },  // Where (optional)
+  "target": { "id": "room@irc.libera.chat", "type": "room" },  // Where (optional)
   "object": { "type": "message", "content": "Hi!" }   // What
 }
 ```
@@ -174,7 +174,7 @@ sc.socket.emit('message', {
     type: 'send',
     '@context': sc.contextFor('irc'),
     actor: { id: 'me@irc.libera.chat', type: 'person', name: 'me' },
-    target: { id: '#general@irc.libera.chat', type: 'room' },
+    target: { id: 'general@irc.libera.chat', type: 'room' },
     object: {
         type: 'message',
         content: 'Hello!',
@@ -291,7 +291,7 @@ sc.socket.emit('message', {
     type: 'join',
     '@context': sc.contextFor('irc'),
     actor: { id: 'mynick@irc.libera.chat', type: 'person', name: 'mynick' },
-    target: { id: '#channel@irc.libera.chat', type: 'room' }
+    target: { id: 'channel@irc.libera.chat', type: 'room' }
 });
 ```
 

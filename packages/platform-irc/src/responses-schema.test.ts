@@ -47,7 +47,7 @@ describe("irc responses schema", () => {
                 "@context": CTX,
                 type: "send",
                 actor: { id: "a@b", type: "person" },
-                target: { id: "#x@localhost", type: "room" },
+                target: { id: "x@localhost", type: "room" },
                 object: { type: "message", content: "x", bogus: "y" },
                 // biome-ignore lint/suspicious/noExplicitAny: test
             } as any),
@@ -62,7 +62,7 @@ describe("irc messages (inbound) object validation", () => {
                 "@context": FULL_CTX,
                 type: "send",
                 actor: { id: "u@localhost", type: "person" },
-                target: { id: "#room@localhost", type: "room" },
+                target: { id: "room@localhost", type: "room" },
                 object: { type: "message", content: "har dee dar" },
                 // biome-ignore lint/suspicious/noExplicitAny: test
             } as any),
@@ -75,7 +75,7 @@ describe("irc messages (inbound) object validation", () => {
                 "@context": FULL_CTX,
                 type: "update",
                 actor: { id: "u@localhost", type: "person" },
-                target: { id: "#room@localhost", type: "room" },
+                target: { id: "room@localhost", type: "room" },
                 object: { type: "topic", content: "new topic" },
                 // biome-ignore lint/suspicious/noExplicitAny: test
             } as any),
@@ -88,7 +88,7 @@ describe("irc messages (inbound) object validation", () => {
                 "@context": FULL_CTX,
                 type: "send",
                 actor: { id: "u@localhost", type: "person" },
-                target: { id: "#room@localhost", type: "room" },
+                target: { id: "room@localhost", type: "room" },
                 object: { type: "message", content: "hi", bogus: "x" },
                 // biome-ignore lint/suspicious/noExplicitAny: test
             } as any),
@@ -101,19 +101,19 @@ describe("irc messages (inbound) object validation", () => {
                 "@context": FULL_CTX,
                 type: "join",
                 actor: { id: "u@localhost", type: "person" },
-                target: { id: "#bare", type: "room" },
+                target: { id: "bare", type: "room" },
                 // biome-ignore lint/suspicious/noExplicitAny: test
             } as any),
         ).not.toEqual("");
     });
 
-    test("rejects a room target missing the channel sigil after the server", () => {
+    test("rejects a room target with a redundant leading '#' sigil", () => {
         expect(
             validateActivityStream({
                 "@context": FULL_CTX,
                 type: "join",
                 actor: { id: "u@localhost", type: "person" },
-                target: { id: "localhost/nick", type: "room" },
+                target: { id: "#room@localhost", type: "room" },
                 // biome-ignore lint/suspicious/noExplicitAny: test
             } as any),
         ).not.toEqual("");

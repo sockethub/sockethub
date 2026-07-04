@@ -160,7 +160,7 @@ export class IRC implements PersistentPlatformInterface {
             const channel = this.resolveIrcTarget(job.target);
             if (!channel) {
                 return done(
-                    "IRC room targets must be server-qualified as '#channel@server'",
+                    "IRC room targets must be server-qualified as 'channel@server'",
                 );
             }
             if (this.channels.has(channel)) {
@@ -195,7 +195,7 @@ export class IRC implements PersistentPlatformInterface {
             const channel = this.resolveIrcTarget(job.target);
             if (!channel) {
                 return done(
-                    "IRC room targets must be server-qualified as '#channel@server'",
+                    "IRC room targets must be server-qualified as 'channel@server'",
                 );
             }
             // leave channel
@@ -229,7 +229,7 @@ export class IRC implements PersistentPlatformInterface {
             const recipient = this.resolveIrcTarget(job.target);
             if (!recipient) {
                 return done(
-                    "IRC room targets must be server-qualified as '#channel@server'",
+                    "IRC room targets must be server-qualified as 'channel@server'",
                 );
             }
 
@@ -336,7 +336,7 @@ export class IRC implements PersistentPlatformInterface {
                 const channel = this.resolveIrcTarget(job.target);
                 if (!channel) {
                     return done(
-                        "IRC room targets must be server-qualified as '#channel@server'",
+                        "IRC room targets must be server-qualified as 'channel@server'",
                     );
                 }
                 this.log.debug(`changing topic in channel ${channel}`);
@@ -374,7 +374,7 @@ export class IRC implements PersistentPlatformInterface {
                 const channel = this.resolveIrcTarget(job.target);
                 if (!channel) {
                     return done(
-                        "IRC room targets must be server-qualified as '#channel@server'",
+                        "IRC room targets must be server-qualified as 'channel@server'",
                     );
                 }
                 this.log.debug(`query() - sending NAMES for ${channel}`);
@@ -417,11 +417,11 @@ export class IRC implements PersistentPlatformInterface {
      * Resolve an activity target to its IRC recipient (channel or nick).
      *
      * Targets are server-qualified for consistency with what the platform emits
-     * (see irc2as): rooms are addressed as `#channel@server` and users (private
-     * messages) as `nick@server` — the same `@server` suffix for both. Returns
-     * `null` for a `room` target that isn't server-qualified (a bare
-     * `#channel`), which callers reject — bare channel names are no longer
-     * accepted.
+     * (see irc2as): rooms are addressed as `channel@server` (no leading `#` —
+     * kept only in `name` for display) and users (private messages) as
+     * `nick@server` — the same `@server` suffix for both. Returns `null` for a
+     * `room` target that isn't server-qualified (a bare channel), which callers
+     * reject — bare channel names are no longer accepted.
      *
      * @param target activity stream target (`job.target`)
      * @returns the IRC channel (`#channel`) or nick, or `null` for a bare room
@@ -433,12 +433,17 @@ export class IRC implements PersistentPlatformInterface {
     }): string | null {
         const id = target?.id ?? "";
         const at = id.indexOf("@");
-        if (target?.type === "room" && at === -1) {
-            // bare channel (no server) — rejected for consistency with inbound
-            return null;
+        if (target?.type === "room") {
+            if (at === -1) {
+                // bare channel (no server) — rejected for consistency with inbound
+                return null;
+            }
+            // channel@server -> #channel (the raw IRC protocol requires the
+            // `#` that the wire format omits)
+            const channel = id.slice(0, at);
+            return channel.startsWith("#") ? channel : `#${channel}`;
         }
-        // #channel@server -> #channel; nick@server -> nick (private message);
-        // otherwise pass through
+        // nick@server -> nick (private message); otherwise pass through
         return at !== -1 ? id.slice(0, at) : id;
     }
 

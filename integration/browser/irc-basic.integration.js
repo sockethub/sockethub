@@ -72,7 +72,7 @@ describe(`Sockethub IRC Basic Integration Tests at ${config.sockethub.url}`, () 
                 expect(msg.type).to.equal("join");
                 expect(platformIdFromContext(msg["@context"])).to.equal("irc");
                 expect(msg.target).to.deep.include({
-                    id: `${config.irc.channel}@${config.irc.host}`,
+                    id: `${config.irc.channel.replace(/^#/, "")}@${config.irc.host}`,
                     type: "room",
                 });
             });
@@ -95,7 +95,7 @@ describe(`Sockethub IRC Basic Integration Tests at ${config.sockethub.url}`, () 
                     content,
                 });
                 expect(msg.target).to.deep.include({
-                    id: `${config.irc.channel}@${config.irc.host}`,
+                    id: `${config.irc.channel.replace(/^#/, "")}@${config.irc.host}`,
                     type: "room",
                 });
             });

@@ -1,6 +1,13 @@
 const EVENT_INCOMING = "incoming";
 const EVENT_ERROR = "error";
 
+// Room ids drop the leading `#` (kept in `name` for display); `type: "room"`
+// already disambiguates from a person id (`nick@server`), and the bare form
+// avoids `#` reading as a URI fragment separator when the id is used as one.
+export function stripChannelPrefix(channel) {
+    return channel.startsWith("#") ? channel.slice(1) : channel;
+}
+
 export class ASEmitter {
     constructor(events, server, contexts) {
         if (!Array.isArray(contexts) || contexts.length === 0) {
@@ -48,7 +55,7 @@ export class ASEmitter {
             },
             target: {
                 type: "room",
-                id: `${channel}@${this.server}`,
+                id: `${stripChannelPrefix(channel)}@${this.server}`,
                 name: channel,
             },
             object: {
@@ -68,7 +75,7 @@ export class ASEmitter {
             },
             target: {
                 type: "room",
-                id: `${channel}@${this.server}`,
+                id: `${stripChannelPrefix(channel)}@${this.server}`,
             },
             error: content,
         });
@@ -129,7 +136,7 @@ export class ASEmitter {
             },
             target: {
                 type: "room",
-                id: `${channel}@${this.server}`,
+                id: `${stripChannelPrefix(channel)}@${this.server}`,
                 name: channel,
             },
             object: {
@@ -150,7 +157,7 @@ export class ASEmitter {
             },
             target: {
                 type: "room",
-                id: `${channel}@${this.server}`,
+                id: `${stripChannelPrefix(channel)}@${this.server}`,
                 name: channel,
             },
         });
@@ -187,7 +194,7 @@ export class ASEmitter {
             },
             target: {
                 type: "room",
-                id: `${channel}@${this.server}`,
+                id: `${stripChannelPrefix(channel)}@${this.server}`,
                 name: channel,
             },
             object: {
@@ -221,7 +228,7 @@ export class ASEmitter {
             },
             target: {
                 type: target.startsWith("#") ? "room" : "person",
-                id: `${target}@${this.server}`,
+                id: `${stripChannelPrefix(target)}@${this.server}`,
                 name: target,
             },
             object: {
@@ -254,7 +261,7 @@ export class ASEmitter {
                 },
                 object: {
                     type: "room",
-                    id: `${channel}@${this.server}`,
+                    id: `${stripChannelPrefix(channel)}@${this.server}`,
                     name: channel,
                 },
             },
