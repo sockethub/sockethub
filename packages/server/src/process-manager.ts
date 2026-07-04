@@ -1,8 +1,6 @@
 import { getPlatformId } from "@sockethub/util/crypto";
-
-import config from "./config.js";
-
 import type { IInitObject } from "./bootstrap/init.js";
+import config from "./config.js";
 import PlatformInstance, {
     type MessageFromParent,
     type PlatformInstanceParams,

@@ -355,9 +355,7 @@ class Sockethub {
                             next(msg);
                             return;
                         }
-                        let platformInstance: ReturnType<
-                            ProcessManager["get"]
-                        >;
+                        let platformInstance: ReturnType<ProcessManager["get"]>;
                         try {
                             platformInstance = this.processManager.get(
                                 platformId,
