@@ -90,6 +90,17 @@ function buildSchema(): convict.Config<Record<string, unknown>> {
             maxRequests: { format: "nat", default: 100 },
             blockDurationMs: { format: "nat", default: 5000 },
         },
+        limits: {
+            maxPlatformInstances: {
+                doc:
+                    "Upper bound on concurrently running platform instances " +
+                    "(child processes). Each persistent-platform actor forks " +
+                    "its own process, so an unbounded count is a resource " +
+                    "exhaustion risk on public instances. 0 disables the cap.",
+                format: "nat",
+                default: 0,
+            },
+        },
         credentialCheck: {
             reconnectIpSource: {
                 format: ["socket", "proxy"],
