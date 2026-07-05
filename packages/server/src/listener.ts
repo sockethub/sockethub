@@ -101,12 +101,22 @@ class Listener {
             process.exit(1);
         }
 
+        const httpActionsPath = config.get("httpActions:path");
+        // HTTP actions requests fall through this catch-all to their own route,
+        // which enforces the configured `rateLimiter`. They must not also be
+        // gated by the examples file-access limiter below.
+        const isHttpActionsPath = (reqPath: string) =>
+            typeof httpActionsPath === "string" &&
+            (reqPath === httpActionsPath ||
+                reqPath.startsWith(`${httpActionsPath}/`));
+
         // Set up rate limiter to prevent DoS attacks on file system access
         const limiter = rateLimit({
             windowMs: 1 * 60 * 1000, // 1 minute
             max: 60, // max 60 requests per windowMs
             standardHeaders: true,
             legacyHeaders: false,
+            skip: (req) => isHttpActionsPath(req.path),
         });
 
         // Write runtime config for the examples app
@@ -121,16 +131,11 @@ class Listener {
         app.use(express.static(examplesPath));
 
         const examplesIndex = path.join(examplesPath, "index.html");
-        const httpActionsPath = config.get("httpActions:path");
         app.get(
             "*",
             limiter,
             (req: Request, res: Response, next: NextFunction) => {
-                if (
-                    typeof httpActionsPath === "string" &&
-                    (req.path === httpActionsPath ||
-                        req.path.startsWith(`${httpActionsPath}/`))
-                ) {
+                if (isHttpActionsPath(req.path)) {
                     next();
                     return;
                 }
