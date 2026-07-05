@@ -20,7 +20,7 @@ let passwordValue = $state("123456");
 
 let actorId = $derived(`${$actorIdStore}/SockethubExample`);
 
-const room = "kosmos-random@kosmos.chat";
+let room = $state("kosmos-random@kosmos.chat");
 
 const sockethubState = writable({
     actorSet: false,
@@ -46,9 +46,13 @@ async function connectXmpp(): Promise<void> {
     connecting = true;
     try {
         await send({
-            "@context": contextFor("xmpp"),
+            "@context": await contextFor("xmpp"),
             type: "connect",
-            actor: actorId,
+            actor: {
+                id: actor.id,
+                type: actor.type,
+                name: actor.name,
+            },
         } as AnyActivityStream);
         $sockethubState.connected = true;
     } catch (err) {
@@ -72,7 +76,7 @@ async function connectXmpp(): Promise<void> {
             XMPP (Extensible Messaging and Presence Protocol) is a real-time communication protocol used by services like Jabber.
         </p>
         <div class="text-indigo-700 text-sm space-y-1">
-            <div><strong>1. 🎭 Set Actor:</strong> Your XMPP address (e.g., user@jabber.org)</div>
+            <div><strong>1. 🎭 Actor:</strong> JSON object with <code>id</code>, <code>type</code>, and <code>name</code></div>
             <div><strong>2. 🔐 Set Credentials:</strong> Your XMPP login secret, sent through the password field</div>
             <div><strong>3. 🔌 Connect:</strong> Establish connection to XMPP server</div>
             <div><strong>4. 🏠 Join Room:</strong> Enter a multi-user chat room</div>
@@ -131,7 +135,7 @@ async function connectXmpp(): Promise<void> {
             <div class="bg-white border border-gray-200 rounded-lg p-4">
                 <h4 class="font-semibold text-gray-800 mb-3">Step 4 & 5: Join Room and Chat</h4>
                 <div class="space-y-4">
-                    <Room {actor} {sockethubState} {room} context="xmpp" />
+                    <Room {actor} {sockethubState} bind:room context="xmpp" />
                     <IncomingMessage />
                     <SendMessage context="xmpp" {actor} {sockethubState} {room} />
                 </div>

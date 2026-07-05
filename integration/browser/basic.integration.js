@@ -6,9 +6,11 @@ import {
     emitWithAck,
     getConfig,
     joinXMPPRoom,
+    platformIdFromContext,
     sendXMPPMessage,
     setXMPPCredentials,
     validateGlobals,
+    waitFor,
 } from "./shared-setup.js";
 
 const config = getConfig();
@@ -37,46 +39,6 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             }
         });
 
-        describe("ActivityStreams", () => {
-            it("handles empty objects", () => {
-                expect(() => {
-                    sc.ActivityStreams.Object.create(undefined);
-                }).to.throw(
-                    'ActivityStreams validation failed: the "object" property is undefined. Example: { id: "user@example.com", type: "person" }',
-                );
-                expect(() => {
-                    sc.ActivityStreams.Object.create(null);
-                }).to.throw(
-                    'ActivityStreams validation failed: the "object" property is null. Example: { id: "user@example.com", type: "person" }',
-                );
-                expect(() => {
-                    sc.ActivityStreams.Object.create("");
-                }).to.throw(
-                    'ActivityStreams validation failed: the "object" property received string "" but expected an object. Use: { id: "", type: "person" }',
-                );
-                expect(() => {
-                    sc.ActivityStreams.Object.create("foo");
-                }).to.throw(
-                    'ActivityStreams validation failed: the "object" property received string "foo" but expected an object. Use: { id: "foo", type: "person" }',
-                );
-                expect(() => {
-                    sc.ActivityStreams.Object.create(123);
-                }).to.throw(
-                    'ActivityStreams validation failed: the "object" property must be an object, received number (123). Example: { id: "user@example.com", type: "person" }',
-                );
-                expect(() => {
-                    sc.ActivityStreams.Object.create([]);
-                }).to.throw(
-                    'ActivityStreams validation failed: the "object" property must be an object, received array (). Example: { id: "user@example.com", type: "person" }',
-                );
-                expect(() => {
-                    sc.ActivityStreams.Object.create({});
-                }).to.throw(
-                    'ActivityStreams validation failed: the "object" property requires an \'id\' property. Example: { id: "user@example.com", type: "person" }',
-                );
-            });
-        });
-
         describe("Dummy", () => {
             const actor = {
                 id: "jimmy@dummy",
@@ -84,17 +46,12 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 name: "Jimmy",
             };
 
-            it("creates activity-object", () => {
-                sc.ActivityStreams.Object.create(actor);
-                expect(sc.ActivityStreams.Object.get(actor.id)).to.eql(actor);
-            });
-
             const dummyMessageCount = 5;
             for (let i = 0; i < dummyMessageCount; i++) {
                 it(`sends echo ${i} and gets response`, async () => {
                     const dummyObj = {
                         type: "echo",
-                        actor: actor.id,
+                        actor,
                         "@context": ctx("dummy"),
                         object: {
                             type: "message",
@@ -110,9 +67,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                     if (msg?.error) {
                         throw new Error(msg.error);
                     }
-                    expect(msg.target).to.eql(
-                        sc.ActivityStreams.Object.get(actor.id),
-                    );
+                    expect(msg.target).to.eql(actor);
                     expect(msg.actor.type).to.equal("platform");
                 });
             }
@@ -120,7 +75,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             it("sends fail and returns error", async () => {
                 const dummyObj = {
                     type: "fail",
-                    actor: actor.id,
+                    actor,
                     "@context": ctx("dummy"),
                     object: { type: "message", content: "failure message" },
                 };
@@ -130,7 +85,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 if (msg?.error) {
                     expect(msg.error).to.equal("Error: failure message");
                     dummyObj.error = "Error: failure message";
-                    dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
+                    dummyObj.actor = actor;
                     expect(msg).to.deep.include(dummyObj);
                 } else {
                     throw new Error(
@@ -142,7 +97,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             it("sends a throw and returns error", async () => {
                 const dummyObj = {
                     type: "throw",
-                    actor: actor.id,
+                    actor,
                     "@context": ctx("dummy"),
                     object: { type: "message", content: "failure message" },
                 };
@@ -152,7 +107,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 if (msg?.error) {
                     expect(msg.error).to.equal("Error: failure message");
                     dummyObj.error = "Error: failure message";
-                    dummyObj.actor = sc.ActivityStreams.Object.get(actor.id);
+                    dummyObj.actor = actor;
                     expect(msg).to.deep.include(dummyObj);
                 } else {
                     throw new Error(
@@ -178,6 +133,11 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         },
                         { label: "feeds fetch" },
                     );
+                    if (msg?.error) {
+                        throw new Error(
+                            `Failed to fetch ${msg.items?.[0]?.actor?.id || "feed"}: ${msg.error}`,
+                        );
+                    }
                     expect(msg.type).to.eql("collection");
                     expect(msg.items.length).to.eql(20);
                     expect(msg.totalItems).to.eql(20);
@@ -186,11 +146,6 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                         expect(m.object.contentType).to.equal("html");
                         expect(m.actor.type).to.equal("feed");
                         expect(m.type).to.equal("post");
-                    }
-                    if (msg?.error) {
-                        throw new Error(
-                            `Failed to fetch ${msg.items?.[0]?.actor?.id || "feed"}: ${msg.error}`,
-                        );
                     }
                 });
             });
@@ -210,17 +165,6 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                 });
             });
 
-            describe("ActivityStreams.create", () => {
-                it("successfully creates and stores an activity-object", () => {
-                    const obj = sc.ActivityStreams.Object.create(actorObject);
-                    const getObj = sc.ActivityStreams.Object.get(
-                        actorObject.id,
-                    );
-                    expect(obj).to.eql(actorObject);
-                    expect(getObj).to.eql(actorObject);
-                });
-            });
-
             describe("connect", () => {
                 it("is successful", async () => {
                     const msg = await connectXMPP(sc, jid);
@@ -230,8 +174,10 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                             id: actorObject.id,
                             type: actorObject.type,
                         },
-                        platform: "xmpp",
                     });
+                    expect(platformIdFromContext(msg["@context"])).to.equal(
+                        "xmpp",
+                    );
                 });
             });
 
@@ -244,12 +190,14 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                             id: actorObject.id,
                             type: actorObject.type,
                         },
-                        platform: "xmpp",
                         target: {
                             id: "test@prosody",
                             type: "room",
                         },
                     });
+                    expect(platformIdFromContext(msg["@context"])).to.equal(
+                        "xmpp",
+                    );
                 });
             });
 
@@ -267,7 +215,6 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                             id: actorObject.id,
                             type: actorObject.type,
                         },
-                        platform: "xmpp",
                         object: {
                             type: "message",
                             content: "Hello, world!",
@@ -277,6 +224,46 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                             type: "room",
                         },
                     });
+                    expect(platformIdFromContext(msg["@context"])).to.equal(
+                        "xmpp",
+                    );
+                });
+            });
+
+            describe("Room presence actor type (issue #679)", () => {
+                // When the platform joins a room, it registers the room JID in
+                // __knownRooms. Presence updates from that JID should be typed
+                // as "room", not "person".
+                it("presence from a joined room JID has actor.type 'room'", async () => {
+                    const roomId = config.prosody.room;
+                    const roomPresences = [];
+                    const listener = (msg) => {
+                        if (
+                            msg.type === "update" &&
+                            msg.object?.type === "presence" &&
+                            msg.actor?.id?.startsWith(roomId)
+                        ) {
+                            roomPresences.push(msg);
+                        }
+                    };
+                    sc.socket.on("message", listener);
+                    try {
+                        // Re-join to trigger a fresh presence update from the room.
+                        await joinXMPPRoom(sc, jid, roomId);
+                        await waitFor(
+                            () => roomPresences.length > 0,
+                            config.timeouts.message,
+                            50,
+                            () =>
+                                `waiting for room presence — received so far: ${JSON.stringify(roomPresences)}`,
+                        );
+                        expect(roomPresences[0].actor.type).to.equal("room");
+                        expect(
+                            platformIdFromContext(roomPresences[0]["@context"]),
+                        ).to.equal("xmpp");
+                    } finally {
+                        sc.socket.off("message", listener);
+                    }
                 });
             });
         });
@@ -338,7 +325,7 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
             });
 
             describe("IRC with invalid credentials", () => {
-                const invalidIrcActorId = "baduser@irc.libera.chat";
+                const invalidIrcActorId = `baduser@${config.irc.host}`;
 
                 it("should handle IPC channel closure gracefully with IRC wrong credentials", async () => {
                     // Set invalid IRC credentials
@@ -356,8 +343,9 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
                                 type: "credentials",
                                 nick: "baduser",
                                 password: "wrong_password_456",
-                                server: "irc.libera.chat",
-                                port: 6667,
+                                server: config.irc.host,
+                                port: config.irc.port,
+                                secure: false,
                             },
                         },
                         { label: "irc invalid credentials" },
@@ -387,13 +375,22 @@ describe(`Sockethub Basic Integration Tests at ${config.sockethub.url}`, () => {
 
         describe("Incoming Message queue", () => {
             it("should only contain known server-pushed messages", () => {
-                // The server may push 0-2 unsolicited messages during the test
-                // (e.g. XMPP service-unavailable errors from room joins or
-                // failed connect attempts with invalid credentials).
-                expect(incomingMessages.length).to.be.at.most(2);
+                // The server may push unsolicited messages during the test:
+                // - XMPP service-unavailable errors from non-MUC joins or failed connects
+                // - Presence updates from MUC room joins (actor-type test)
+                expect(incomingMessages.length).to.be.at.most(4);
                 for (const msg of incomingMessages) {
-                    expect(msg).to.have.property("platform", "xmpp");
-                    expect(msg).to.have.property("error").that.is.a("string");
+                    expect(platformIdFromContext(msg["@context"])).to.equal(
+                        "xmpp",
+                    );
+                    const hasError = typeof msg.error === "string";
+                    const isPresenceUpdate =
+                        msg.type === "update" &&
+                        msg.object?.type === "presence";
+                    expect(
+                        hasError || isPresenceUpdate,
+                        `unexpected message: ${JSON.stringify(msg)}`,
+                    ).to.be.true;
                 }
             });
         });

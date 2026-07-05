@@ -6,10 +6,14 @@ import {
     INTERNAL_PLATFORM_CONTEXT_URL,
     INTERNAL_PLATFORM_ID,
     PLATFORM_CONTEXT_PREFIX,
+    platformIdFromContext,
     SOCKETHUB_BASE_CONTEXT_URL,
 } from "./context.js";
-import { InternalObjectTypesList, ObjectTypesList } from "./helpers/objects.js";
-import { ActivityObjectSchema } from "./schemas/activity-object.js";
+import {
+    InternalObjectTypesList,
+    ObjectTypesList,
+    ObjectTypesSchema,
+} from "./helpers/objects.js";
 import { ActivityStreamSchema } from "./schemas/activity-stream.js";
 import { PlatformSchema } from "./schemas/platform.js";
 import { SockethubConfigSchema } from "./schemas/sockethub-config.js";
@@ -20,11 +24,14 @@ import {
     registerSystemPlatformContexts,
     resolvePlatformId,
     setValidationErrorOptions,
-    validateActivityObject,
     validateActivityStream,
+    validateActivityStreamResponse,
     validateCredentials,
     validatePlatformSchema,
+    validateSockethubConfig,
 } from "./validator.js";
+
+export { normalizeActivityStream } from "./activity-stream-helper.js";
 
 export {
     AS2_BASE_CONTEXT_URL,
@@ -35,6 +42,7 @@ export {
     INTERNAL_PLATFORM_ID,
     INTERNAL_PLATFORM_CONTEXT_URL,
     buildCanonicalContext,
+    platformIdFromContext,
     addPlatformContext,
     addPlatformSchema,
     getPlatformSchema,
@@ -43,13 +51,14 @@ export {
     validatePlatformSchema,
     validateCredentials,
     validateActivityStream,
-    validateActivityObject,
+    validateActivityStreamResponse,
+    validateSockethubConfig,
     setValidationErrorOptions,
     PlatformSchema,
-    ActivityObjectSchema,
     ActivityStreamSchema,
     SockethubConfigSchema,
     ObjectTypesList,
+    ObjectTypesSchema,
     InternalObjectTypesList,
 };
 

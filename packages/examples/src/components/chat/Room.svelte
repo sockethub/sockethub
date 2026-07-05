@@ -2,7 +2,7 @@
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
 import SockethubButton from "$components/SockethubButton.svelte";
-import { contextFor, send } from "$lib/sockethub";
+import { actorAsObject, contextFor, send } from "$lib/sockethub";
 import type { ActorData } from "$lib/sockethub";
 import type { AnyActivityStream } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
@@ -17,17 +17,21 @@ interface Props {
 let { room = $bindable(), actor, context, sockethubState }: Props = $props();
 
 let joining = $state(false);
+let lastJoinedRoom = $state("");
+
+// Reset joined state when room changes so the user can join the new room
+$effect(() => {
+    if (room !== lastJoinedRoom) {
+        $sockethubState.joined = false;
+    }
+});
 
 async function joinRoom(): Promise<void> {
     joining = true;
     return await send({
-        // Platform context - routes to the appropriate chat platform (irc, xmpp)
-        "@context": contextFor(context),
-        // Activity type - "join" means join a chat room/channel
+        "@context": await contextFor(context),
         type: "join",
-        // Actor - who is joining (the connected user)
-        actor: actor.id,
-        // Target - what room/channel to join
+        actor: actorAsObject(actor),
         target: {
             id: room,
             name: room,
@@ -39,7 +43,7 @@ async function joinRoom(): Promise<void> {
             joining = false;
         })
         .then(() => {
-            // $actor.roomId = room;
+            lastJoinedRoom = room;
             $sockethubState.joined = true;
             joining = false;
         });
@@ -59,10 +63,10 @@ async function joinRoom(): Promise<void> {
                 id="room" 
                 bind:value={room} 
                 class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 text-gray-900 placeholder-gray-500" 
-                placeholder="#general, kosmos-random@kosmos.chat"
+                placeholder="sockethub@irc.libera.chat, kosmos-random@kosmos.chat"
             />
             <p class="text-gray-500 text-xs">
-                💡 IRC: Use #channel-name | XMPP: Use room@server.com
+                💡 IRC: channel@server (e.g. sockethub@irc.libera.chat); include # in name when sending (e.g. #sockethub) | XMPP: room@server.com
             </p>
         </div>
         

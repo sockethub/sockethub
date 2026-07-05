@@ -4,7 +4,6 @@
  * Accepts ActivityStreams via POST, streams NDJSON results as jobs complete,
  * and optionally caches results in Redis for idempotent replay + GET retrieval.
  */
-import { crypto } from "@sockethub/crypto";
 import type { RedisConfig } from "@sockethub/data-layer";
 import {
     CredentialsStore,
@@ -13,10 +12,14 @@ import {
 } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import type {
-    ActivityObject,
     ActivityStream,
     InternalActivityStream,
 } from "@sockethub/schemas";
+import {
+    buildCanonicalContext,
+    ERROR_PLATFORM_CONTEXT_URL,
+} from "@sockethub/schemas";
+import { crypto } from "@sockethub/util/crypto";
 import type { Express, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import config from "../config.js";
@@ -64,7 +67,7 @@ interface HttpActionsDependencies {
     >;
 }
 
-type PayloadKind = "credentials" | "message" | "activity-object" | "unknown";
+type PayloadKind = "credentials" | "message" | "unknown";
 
 type PayloadEnvelope = {
     requestId?: string;
@@ -95,10 +98,6 @@ function classifyPayload(payload: unknown): PayloadKind {
         }
         return "message";
     }
-    // ActivityObject has only "object" at top-level.
-    if ("object" in payload) {
-        return "activity-object";
-    }
     return "unknown";
 }
 
@@ -108,7 +107,7 @@ function classifyPayload(payload: unknown): PayloadKind {
 function buildServerError(message: string, requestId?: string) {
     const payload: Record<string, unknown> = {
         type: "error",
-        context: "error",
+        "@context": buildCanonicalContext(ERROR_PLATFORM_CONTEXT_URL),
         actor: {
             type: "Application",
             name: "sockethub-server",
@@ -778,12 +777,6 @@ export function registerHttpActionsRoutes(
                     case "message":
                         handlers.message(
                             payload as InternalActivityStream,
-                            writeResult,
-                        );
-                        break;
-                    case "activity-object":
-                        handlers.activityObject(
-                            payload as ActivityObject,
                             writeResult,
                         );
                         break;

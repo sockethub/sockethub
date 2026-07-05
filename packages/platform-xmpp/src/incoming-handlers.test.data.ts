@@ -1,0 +1,623 @@
+export const stanzas: Array<[string, string, Record<string, unknown>]> = [
+    [
+        "presence error 1",
+        `<presence type="error" to="hermes@5apps.com/hyperchannel" from="xmpp.5apps.com/#watercooler" xmlns:stream="http://etherx.jabber.org/streams"><error type="cancel"> <remote-server-not-found xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/></error></presence>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "join",
+            actor: { id: "xmpp.5apps.com/#watercooler", type: "room" },
+            error: "remote server not found xmpp.5apps.com/#watercooler",
+            target: { id: "hermes@5apps.com/hyperchannel", type: "person" },
+        },
+    ],
+    [
+        "presence error 2",
+        `<presence type="error" to="hermes@5apps.com/hyperchannel" from="xmpp.5apps.com/#watercooler" xmlns:stream="http://etherx.jabber.org/streams"><error type="cancel"><not-allowed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/><text xmlns="urn:ietf:params:xml:ns:xmpp-stanzas">Communication with remote domains is not enabled</text></error></presence>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "update",
+            actor: { id: "xmpp.5apps.com/#watercooler", type: "room" },
+            error:
+                '<error type="cancel"><not-allowed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/>' +
+                '<text xmlns="urn:ietf:params:xml:ns:xmpp-stanzas">Communication with remote domains is not enabled</text>' +
+                "</error>",
+            target: { id: "hermes@5apps.com/hyperchannel", type: "person" },
+        },
+    ],
+    [
+        "initial presence",
+        `<presence to="foo@bar.org" from="baz@bag.org"></presence>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "update",
+            actor: { id: "baz@bag.org", type: "person" },
+            target: { id: "foo@bar.org", type: "person" },
+            object: { type: "presence", presence: "online" },
+        },
+    ],
+    [
+        "presence body",
+        `<presence to="foo@bar.org" from="baz@bag.org"><show>online</show> <status>away message!</status></presence>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "update",
+            actor: { id: "baz@bag.org", type: "person" },
+            target: { id: "foo@bar.org", type: "person" },
+            object: {
+                type: "presence",
+                content: "away message!",
+                presence: "online",
+            },
+        },
+    ],
+    [
+        "presence unavailable",
+        `<presence to="foo@bar.org/hyperchannel" from="baz@bag.org/yarg" type="unavailable"><x xmlns="http://jabber.org/protocol/muc#user"><item affiliation="owner" role="none"></item></x></presence>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "update",
+            actor: { type: "person", id: "baz@bag.org/yarg" },
+            target: { id: "foo@bar.org/hyperchannel", type: "person" },
+            object: { type: "presence", presence: "offline" },
+        },
+    ],
+    [
+        "presence away",
+        `<presence to="foo@bar.org/hyperchannel" from="baz@bag.org/yarg" type="available"><show>away</show><x xmlns="http://jabber.org/protocol/muc#user"><item affiliation="owner" role="none"></item></x></presence>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "update",
+            actor: { type: "person", id: "baz@bag.org/yarg" },
+            target: { id: "foo@bar.org/hyperchannel", type: "person" },
+            object: { type: "presence", presence: "away" },
+        },
+    ],
+    [
+        "attendance",
+        `<iq id="muc_id" type="result" to="ernie@jabber.net/Home" from="PartyChatRoom@jabber.net" xmlns:stream="http://etherx.jabber.org/streams"> <query xmlns="http://jabber.org/protocol/disco#items"> <item jid="PartyChatRoom@jabber.net/ernie" name="ernie"/> <item jid="PartyChatRoom@jabber.net/bert" name="bert"/><item jid="PartyChatRoom@jabber.net/oscar" name="oscar"/> <item jid="PartyChatRoom@jabber.net/big_bird" name="big_bird"/> <item jid="PartyChatRoom@jabber.net/elmo" name="elmo"/></query></iq>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "query",
+            actor: { id: "PartyChatRoom@jabber.net", type: "room" },
+            target: { id: "ernie@jabber.net/Home", type: "person" },
+            object: {
+                type: "attendance",
+                members: ["ernie", "bert", "oscar", "big_bird", "elmo"],
+            },
+        },
+    ],
+    [
+        "message",
+        `<message from="radical@example.org/thinkpad" to="user@jabber.org" type="chat" id="purple9840c15f" xmlns:stream="http://etherx.jabber.org/streams">
+       <active xmlns="http://jabber.org/protocol/chatstates" />
+       <stanza-id xmlns="urn:xmpp:sid:0" id="123456789" />
+       <body>ohai</body>
+     </message>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "send",
+            actor: { type: "person", id: "radical@example.org/thinkpad" },
+            target: { type: "person", id: "user@jabber.org" },
+            object: {
+                type: "message",
+                content: "ohai",
+                id: "purple9840c15f",
+                "xmpp:stanza-id": "123456789",
+            },
+        },
+    ],
+    [
+        "message with delay (e.g. offline message)",
+        `<message from="radical@example.org/thinkpad" to="user@jabber.org" type="chat" id="purple9840c15f" xmlns:stream="http://etherx.jabber.org/streams">
+       <active xmlns="http://jabber.org/protocol/chatstates" />
+       <stanza-id xmlns="urn:xmpp:sid:0" id="123456789" />
+       <delay xmlns="urn:xmpp:delay" from="jabber.org" stamp="2021-04-17T18:50:25Z">Offline Storage</delay>
+       <body>ohai</body>
+     </message>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "send",
+            published: "2021-04-17T18:50:25.000Z",
+            actor: { type: "person", id: "radical@example.org/thinkpad" },
+            target: { type: "person", id: "user@jabber.org" },
+            object: {
+                type: "message",
+                content: "ohai",
+                id: "purple9840c15f",
+                "xmpp:stanza-id": "123456789",
+            },
+        },
+    ],
+    [
+        "message correction (XEP-0308)",
+        `<message from="radical@example.org/thinkpad" to="user@jabber.org" type="chat" id="purple9840c15f" xmlns:stream="http://etherx.jabber.org/streams">
+       <active xmlns="http://jabber.org/protocol/chatstates" />
+       <stanza-id xmlns="urn:xmpp:sid:0" id="123456789" />
+       <replace id="purple1234c15f" />
+       <body>oh hey</body>
+     </message>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "send",
+            actor: { type: "person", id: "radical@example.org/thinkpad" },
+            target: { type: "person", id: "user@jabber.org" },
+            object: {
+                type: "message",
+                content: "oh hey",
+                id: "purple9840c15f",
+                "xmpp:stanza-id": "123456789",
+                "xmpp:replace": { id: "purple1234c15f" },
+            },
+        },
+    ],
+    [
+        "group message",
+        `<message from='coven@chat.shakespeare.lit/thirdwitch' id='hysf1v37' to='crone1@shakespeare.lit/desktop' type='groupchat'>
+       <stanza-id id="123456789" />
+       <body>Thrice the brinded cat hath mew'd.</body>
+     </message>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "send",
+            actor: {
+                type: "person",
+                id: "coven@chat.shakespeare.lit/thirdwitch",
+                name: "thirdwitch",
+            },
+            target: { type: "room", id: "coven@chat.shakespeare.lit" },
+            object: {
+                id: "hysf1v37",
+                type: "message",
+                content: "Thrice the brinded cat hath mew'd.",
+                "xmpp:stanza-id": "123456789",
+            },
+        },
+    ],
+    // [
+    //   'subscribe',
+    //   `<presence from=’user1@example.com’ to=’user2@example.com’ type=’subscribe’></presence>`,
+    //   {}
+    // ],
+    // [
+    //   'subscribed',
+    //   `<presence from=’user2@example.com’ to=’user1@example.com’ type=’subscribed’></presence>`,
+    //   {}
+    // ],
+    // [
+    //   'status',
+    //   `<presence><show>away</show><status>feeding the chickens</status></presence>`,
+    //   {}
+    // ],
+    // [
+    //   'request roster',
+    //   `<iq from=’abc@example.com’ type=’get’ id=’xyz123’>
+    //   <query xmlns=’jabber:iq:roster’/> </iq>`,
+    //   {}
+    // ],
+    // [
+    //   'present roster',
+    //   `<iq to=’abc@example.com’ type=’result’ id=’xyz123’> <query xmlns=’jabber:iq:roster’>
+    //    <item jid=’efg@example.com’ name=’EFG’/> <item jid=’hij’@ example.com’ name=’HIJ’/>
+    //    </query> </iq>`,
+    //   {}
+    // ],
+    // [
+    //   'join room',
+    //   `<presence from='hav66@shakespeare.lit/pda' id='n13mt3l'
+    //   to='coven@chat.shakespeare.lit/thirdwitch'>
+    //   <x xmlns='http://jabber.org/protocol/muc'/> </presence>`,
+    //   {}
+    // ],
+    [
+        "JID malformed",
+        `<presence from='coven@chat.shakespeare.lit' id='273hs51g' to='hag66@shakespeare.lit/pda' type='error'> <error by='coven@chat.shakespeare.lit' type='modify'> <jid-malformed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/> </error> </presence>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "update",
+            actor: { id: "coven@chat.shakespeare.lit", type: "room" },
+            error: `<error by="coven@chat.shakespeare.lit" type="modify"> <jid-malformed xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/> </error>`,
+            target: { id: "hag66@shakespeare.lit/pda", type: "person" },
+        },
+    ],
+    // [
+    //   'presence affiliation owner',
+    //   `<presence from='coven@chat.shakespeare.lit/firstwitch'
+    //   id='3DCB0401-D7CF-4E31-BE05-EDF8D057BFBD' to='hag66@shakespeare.lit/pda'>
+    //   <x xmlns='http://jabber.org/protocol/muc#user'> <item affiliation='owner'
+    //   role='moderator'/> </x> </presence>`,
+    //   {}
+    // ],
+    // [
+    //   'presence affiliation member',
+    //   `<presence from='coven@chat.shakespeare.lit/thirdwitch'
+    //   id='27C55F89-1C6A-459A-9EB5-77690145D624' to='crone1@shakespeare.lit/desktop'>
+    //   <x xmlns='http://jabber.org/protocol/muc#user'> <item affiliation='member'
+    //   role='participant'/> </x> </presence>`,
+    //   {}
+    // ],
+    // [
+    //   'presence affiliation none',
+    //   `<presence from='coven@chat.shakespeare.lit/thirdwitch'
+    //   id='17232D15-134F-43C8-9A29-61C20A64B236' to='crone1@shakespeare.lit/desktop'>
+    //   <x xmlns='http://jabber.org/protocol/muc#user'> <item affiliation='none'
+    //   jid='hag66@shakespeare.lit/pda' role='participant'/> </x> </presence>`,
+    //   {}
+    // ]
+    [
+        "room info response",
+        `<iq from='kosmos@kosmos.chat' to='jimmy@kosmos.org/pidgin' type='result' id='room_info_123456'>
+          <query xmlns='http://jabber.org/protocol/disco#info'>
+            <identity category='conference' name='Kosmos Development Room' type='text'/>
+            <feature var='http://jabber.org/protocol/muc'/>
+            <feature var='muc_passwordprotected'/>
+            <feature var='muc_persistent'/>
+          </query>
+        </iq>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "query",
+            actor: {
+                id: "kosmos@kosmos.chat",
+                type: "room",
+                name: "Kosmos Development Room",
+            },
+            target: {
+                id: "jimmy@kosmos.org/pidgin",
+                type: "person",
+            },
+            object: {
+                type: "room-info",
+                features: [
+                    "http://jabber.org/protocol/muc",
+                    "muc_passwordprotected",
+                    "muc_persistent",
+                ],
+                identities: [
+                    {
+                        category: "conference",
+                        type: "text",
+                        name: "Kosmos Development Room",
+                    },
+                ],
+            },
+        },
+    ],
+    [
+        "room info response without identity",
+        `<iq from='anonymous@conference.jabber.org' to='jimmy@kosmos.org/pidgin' type='result' id='room_info_789'>
+          <query xmlns='http://jabber.org/protocol/disco#info'>
+            <feature var='http://jabber.org/protocol/muc'/>
+          </query>
+        </iq>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "query",
+            actor: {
+                id: "anonymous@conference.jabber.org",
+                type: "room",
+                name: "anonymous@conference.jabber.org",
+            },
+            target: {
+                id: "jimmy@kosmos.org/pidgin",
+                type: "person",
+            },
+            object: {
+                type: "room-info",
+                features: ["http://jabber.org/protocol/muc"],
+            },
+        },
+    ],
+    [
+        "room info response with empty features",
+        `<iq from='empty@conference.jabber.org' to='jimmy@kosmos.org/pidgin' type='result' id='room_info_000'>
+          <query xmlns='http://jabber.org/protocol/disco#info'>
+            <identity category='conference' type='text'/>
+          </query>
+        </iq>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "query",
+            actor: {
+                id: "empty@conference.jabber.org",
+                type: "room",
+                name: "empty@conference.jabber.org",
+            },
+            target: {
+                id: "jimmy@kosmos.org/pidgin",
+                type: "person",
+            },
+            object: {
+                type: "room-info",
+                features: [],
+                identities: [
+                    {
+                        category: "conference",
+                        type: "text",
+                    },
+                ],
+            },
+        },
+    ],
+    [
+        "room info response with multiple identities",
+        `<iq from='multilang@conference.jabber.org' to='jimmy@kosmos.org/pidgin' type='result' id='room_info_multi'>
+          <query xmlns='http://jabber.org/protocol/disco#info'>
+            <identity category='conference' type='text' name='Dev Room'/>
+            <identity category='conference' type='text' name='Entwicklerraum'/>
+            <feature var='http://jabber.org/protocol/muc'/>
+          </query>
+        </iq>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "query",
+            actor: {
+                id: "multilang@conference.jabber.org",
+                type: "room",
+                name: "Dev Room",
+            },
+            target: {
+                id: "jimmy@kosmos.org/pidgin",
+                type: "person",
+            },
+            object: {
+                type: "room-info",
+                features: ["http://jabber.org/protocol/muc"],
+                identities: [
+                    {
+                        category: "conference",
+                        type: "text",
+                        name: "Dev Room",
+                    },
+                    {
+                        category: "conference",
+                        type: "text",
+                        name: "Entwicklerraum",
+                    },
+                ],
+            },
+        },
+    ],
+    [
+        "room info response with extended data form",
+        `<iq from='kosmos@kosmos.chat' to='jimmy@kosmos.org/pidgin' type='result' id='room_info_123456'>
+          <query xmlns="http://jabber.org/protocol/disco#info">
+            <identity name="Kosmos" type="text" category="conference" />
+            <feature var="vcard-temp" />
+            <feature var="http://jabber.org/protocol/muc" />
+            <feature var="http://jabber.org/protocol/disco#info" />
+            <feature var="http://jabber.org/protocol/disco#items" />
+            <feature var="http://jabber.org/protocol/commands" />
+            <feature var="urn:xmpp:message-moderate:0" />
+            <feature var="urn:xmpp:message-moderate:1" />
+            <feature var="urn:xmpp:message-retract:1" />
+            <feature var="muc_public" />
+            <feature var="muc_persistent" />
+            <feature var="muc_open" />
+            <feature var="muc_semianonymous" />
+            <feature var="muc_moderated" />
+            <feature var="muc_unsecured" />
+            <feature var="jabber:iq:register" />
+            <feature var="urn:xmpp:occupant-id:0" />
+            <feature var="urn:xmpp:mam:tmp" />
+            <feature var="urn:xmpp:mam:0" />
+            <feature var="urn:xmpp:mam:1" />
+            <feature var="urn:xmpp:mam:2" />
+            <feature var="urn:xmpp:sid:0" />
+            <x type="result" xmlns="jabber:x:data">
+              <field var="FORM_TYPE" type="hidden">
+                <value>http://jabber.org/protocol/muc#roominfo</value>
+              </field>
+              <field var="muc#roominfo_avatarhash" type="text-multi" label="Hash of the vCard-temp avatar of this room">
+                <value>5ceb29f6a9b2c4a4e4bdbe42e4c0e8d9c1da4cf5</value>
+              </field>
+              <field var="muc#roominfo_occupants" type="text-single" label="Number of occupants">
+                <value>13</value>
+              </field>
+              <field var="muc#roomconfig_roomname" type="text-single" label="Natural-Language Room Name">
+                <value>Kosmos</value>
+              </field>
+              <field var="muc#roominfo_description" type="text-single" label="Room description" />
+              <field var="muc#roomconfig_changesubject" type="boolean" label="Occupants May Change the Subject">
+                <value>0</value>
+              </field>
+              <field var="muc#roomconfig_allowinvites" type="boolean" label="Occupants are allowed to invite others">
+                <value>0</value>
+              </field>
+              <field var="muc#roomconfig_allow_query_users" type="boolean" label="Occupants are allowed to query others">
+                <value>1</value>
+              </field>
+              <field var="muc#roomconfig_allowpm" type="list-single" label="Roles that May Send Private Messages">
+                <value>anyone</value>
+                <option label="Anyone">
+                  <value>anyone</value>
+                </option>
+                <option label="Anyone with Voice">
+                  <value>participants</value>
+                </option>
+                <option label="Moderators Only">
+                  <value>moderators</value>
+                </option>
+                <option label="Nobody">
+                  <value>none</value>
+                </option>
+              </field>
+              <field var="muc#roominfo_lang" type="text-single" label="Natural Language for Room Discussions">
+                <value>en</value>
+              </field>
+            </x>
+          </query>
+        </iq>`,
+        {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://sockethub.org/ns/context/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
+            ],
+            type: "query",
+            actor: {
+                id: "kosmos@kosmos.chat",
+                type: "room",
+                name: "Kosmos",
+            },
+            target: {
+                id: "jimmy@kosmos.org/pidgin",
+                type: "person",
+            },
+            object: {
+                type: "room-info",
+                features: [
+                    "vcard-temp",
+                    "http://jabber.org/protocol/muc",
+                    "http://jabber.org/protocol/disco#info",
+                    "http://jabber.org/protocol/disco#items",
+                    "http://jabber.org/protocol/commands",
+                    "urn:xmpp:message-moderate:0",
+                    "urn:xmpp:message-moderate:1",
+                    "urn:xmpp:message-retract:1",
+                    "muc_public",
+                    "muc_persistent",
+                    "muc_open",
+                    "muc_semianonymous",
+                    "muc_moderated",
+                    "muc_unsecured",
+                    "jabber:iq:register",
+                    "urn:xmpp:occupant-id:0",
+                    "urn:xmpp:mam:tmp",
+                    "urn:xmpp:mam:0",
+                    "urn:xmpp:mam:1",
+                    "urn:xmpp:mam:2",
+                    "urn:xmpp:sid:0",
+                ],
+                identities: [
+                    {
+                        category: "conference",
+                        type: "text",
+                        name: "Kosmos",
+                    },
+                ],
+                roominfo: {
+                    avatarhash: {
+                        type: "text-multi",
+                        label: "Hash of the vCard-temp avatar of this room",
+                        value: ["5ceb29f6a9b2c4a4e4bdbe42e4c0e8d9c1da4cf5"],
+                    },
+                    occupants: {
+                        type: "text-single",
+                        label: "Number of occupants",
+                        value: 13,
+                    },
+                    description: {
+                        type: "text-single",
+                        label: "Room description",
+                        value: null,
+                    },
+                    lang: {
+                        type: "text-single",
+                        label: "Natural Language for Room Discussions",
+                        value: "en",
+                    },
+                },
+                roomconfig: {
+                    roomname: {
+                        type: "text-single",
+                        label: "Natural-Language Room Name",
+                        value: "Kosmos",
+                    },
+                    changesubject: {
+                        type: "boolean",
+                        label: "Occupants May Change the Subject",
+                        value: false,
+                    },
+                    allowinvites: {
+                        type: "boolean",
+                        label: "Occupants are allowed to invite others",
+                        value: false,
+                    },
+                    allow_query_users: {
+                        type: "boolean",
+                        label: "Occupants are allowed to query others",
+                        value: true,
+                    },
+                    allowpm: {
+                        type: "list-single",
+                        label: "Roles that May Send Private Messages",
+                        value: "anyone",
+                        options: [
+                            { label: "Anyone", value: "anyone" },
+                            {
+                                label: "Anyone with Voice",
+                                value: "participants",
+                            },
+                            { label: "Moderators Only", value: "moderators" },
+                            { label: "Nobody", value: "none" },
+                        ],
+                    },
+                },
+            },
+        },
+    ],
+];

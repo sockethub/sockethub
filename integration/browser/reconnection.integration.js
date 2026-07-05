@@ -59,9 +59,6 @@ describe("XMPP Client Reconnection Tests", () => {
                 initialClient = connectSockethubClient();
                 const jid = utils.createXmppJid("Reconnect");
                 await setXMPPCredentials(initialClient, jid);
-                initialClient.ActivityStreams.Object.create(
-                    utils.createActorObject(jid),
-                );
                 await connectXMPP(initialClient, jid);
                 await joinXMPPRoom(initialClient, jid, config.prosody.room);
                 expect(connect.get(initialClient.socket.id)).to.be.true;
@@ -100,9 +97,6 @@ describe("XMPP Client Reconnection Tests", () => {
 
                 // Manually set credentials and reconnect (what browser would do)
                 await setXMPPCredentials(reconnectedClient, jid);
-                reconnectedClient.ActivityStreams.Object.create(
-                    utils.createActorObject(jid),
-                );
                 await connectXMPP(reconnectedClient, jid);
                 await joinXMPPRoom(reconnectedClient, jid, config.prosody.room);
 
@@ -150,9 +144,6 @@ describe("XMPP Client Reconnection Tests", () => {
                 });
 
                 await setXMPPCredentials(initialClient, jid);
-                initialClient.ActivityStreams.Object.create(
-                    utils.createActorObject(jid),
-                );
                 await connectXMPP(initialClient, jid);
                 await joinXMPPRoom(initialClient, jid, config.prosody.room);
 
@@ -230,10 +221,6 @@ describe("XMPP Client Reconnection Tests", () => {
 
                 // Use VALID credentials this time
                 await setXMPPCredentials(validCredClient, jid);
-                validCredClient.ActivityStreams.Object.create(
-                    utils.createActorObject(jid),
-                );
-                await connectXMPP(validCredClient, jid);
 
                 console.log(
                     "Step 6: Fresh connection with valid credentials succeeded - cleanup was proper",

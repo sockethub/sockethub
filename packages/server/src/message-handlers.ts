@@ -6,14 +6,13 @@
  */
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import type {
-    ActivityObject,
     ActivityStream,
     InternalActivityStream,
 } from "@sockethub/schemas";
 import { resolvePlatformId } from "@sockethub/schemas";
-import createActivityObject from "./middleware/create-activity-object.js";
+import { errorMessage } from "@sockethub/util/error";
 import credentialCheck from "./middleware/credential-check.js";
-import expandActivityStream from "./middleware/expand-activity-stream.js";
+import normalizeActivityStreamMiddleware from "./middleware/normalize-activity-stream.js";
 import storeCredentials from "./middleware/store-credentials.js";
 import validate from "./middleware/validate.js";
 import middleware from "./middleware.js";
@@ -27,7 +26,6 @@ export type MessageHandler<T> = (
 
 export interface MessageHandlers {
     credentials: MessageHandler<ActivityStream>;
-    activityObject: MessageHandler<ActivityObject>;
     message: MessageHandler<InternalActivityStream>;
 }
 
@@ -43,16 +41,17 @@ export interface MessageHandlersOptions {
     onPlatformInstance?: (platformInstance: PlatformInstance) => void;
 }
 
-export function attachError<T extends ActivityStream | ActivityObject>(
-    err: unknown,
-    msg?: T,
-) {
-    const errorMessage = err instanceof Error ? err.message : String(err);
+/**
+ * Normalize middleware errors into payload-safe error responses.
+ * Removes internal-only properties that must never be sent to clients.
+ */
+export function attachError<T extends ActivityStream>(err: unknown, msg?: T) {
+    const message = errorMessage(err);
     if (!msg) {
-        return new Error(errorMessage);
+        return new Error(message);
     }
 
-    const cleaned = { ...msg, error: errorMessage } as T & {
+    const cleaned = { ...msg, error: message } as T & {
         sessionSecret?: string;
     };
     if ("sessionSecret" in cleaned) {
@@ -77,7 +76,7 @@ export function createMessageHandlers(
 
     // Shared handler chain for credentials across socket + HTTP paths.
     const credentials = middleware<ActivityStream>("credentials")
-        .use(expandActivityStream)
+        .use(normalizeActivityStreamMiddleware)
         .use(validate<ActivityStream>("credentials", sessionId))
         .use(storeCredentials(credentialsStore))
         .use(
@@ -86,6 +85,7 @@ export function createMessageHandlers(
                 data: ActivityStream,
                 next: (data?: ActivityStream | Error) => void,
             ) => {
+                // error handler
                 next(attachError(err, data));
             },
         )
@@ -99,38 +99,18 @@ export function createMessageHandlers(
         )
         .done();
 
-    // Shared handler chain for activity-object across socket + HTTP paths.
-    const activityObject = middleware<ActivityObject>("activity-object")
-        .use(validate<ActivityObject>("activity-object", sessionId))
-        .use(createActivityObject)
-        .use(
-            (
-                err: Error,
-                data: ActivityObject,
-                next: (data?: ActivityObject | Error) => void,
-            ) => {
-                next(attachError(err, data));
-            },
-        )
-        .use(
-            (
-                data: ActivityObject,
-                next: (data?: ActivityObject | Error) => void,
-            ) => {
-                next(data);
-            },
-        )
-        .done();
-
     // Shared handler chain for message processing across socket + HTTP paths.
     const message = middleware<InternalActivityStream>("message")
-        .use(expandActivityStream)
+        .use(normalizeActivityStreamMiddleware)
         .use(validate<InternalActivityStream>("message", sessionId))
         .use(
             (
                 msg: InternalActivityStream,
                 next: (data?: InternalActivityStream | Error) => void,
             ) => {
+                // The platform thread must find the credentials on their own using the given
+                // sessionSecret, which indicates that this specific session (socket
+                // connection) has provided credentials.
                 msg.sessionSecret = sessionSecret;
                 next(msg);
             },
@@ -157,7 +137,6 @@ export function createMessageHandlers(
                 msg: ActivityStream,
                 next: (data?: ActivityStream | Error) => void,
             ) => {
-                // Queue the job; the callback will be invoked when the job completes.
                 const platformId = resolvePlatformId(msg);
                 if (!platformId) {
                     next(
@@ -168,29 +147,39 @@ export function createMessageHandlers(
                     );
                     return;
                 }
-                const platformInstance = processManager.get(
-                    platformId,
-                    msg.actor.id,
-                    platformSessionId,
-                    clientIp,
-                );
+                let platformInstance: ReturnType<ProcessManager["get"]>;
+                try {
+                    platformInstance = processManager.get(
+                        platformId,
+                        msg.actor.id,
+                        platformSessionId,
+                        clientIp,
+                    );
+                } catch (err) {
+                    // e.g. limits.maxPlatformInstances reached
+                    next(attachError(err, msg));
+                    return;
+                }
                 if (onPlatformInstance) {
                     onPlatformInstance(platformInstance);
                 }
+                // job validated and queued, stores the callback for when the job completes
                 try {
                     const job = await platformInstance.queue.add(
                         sessionId,
                         msg,
                     );
                     if (job) {
-                        platformInstance.completedJobHandlers.set(
+                        platformInstance.registerCompletedJobHandler(
                             job.title,
                             next,
                         );
                     } else {
+                        // failed to add job to queue, reject handler immediately
                         next(attachError("failed to add job to queue", msg));
                     }
                 } catch (err) {
+                    // Queue is closed (platform terminating) - send error to client
                     next(attachError(err, msg));
                 }
             },
@@ -199,7 +188,6 @@ export function createMessageHandlers(
 
     return {
         credentials,
-        activityObject,
         message,
     };
 }

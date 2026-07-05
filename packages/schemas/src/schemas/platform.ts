@@ -58,6 +58,11 @@ export const PlatformSchema = {
             type: "object",
         },
 
+        responses: {
+            title: "responses",
+            type: "object",
+        },
+
         name: {
             title: "name",
             type: "string",

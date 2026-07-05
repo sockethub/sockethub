@@ -4,13 +4,10 @@
 
 import { createLogger } from "@sockethub/logger";
 import {
-    type ActivityObject,
     type ActivityStream,
     AS2_BASE_CONTEXT_URL,
-    buildCanonicalContext,
     resolvePlatformId,
     SOCKETHUB_BASE_CONTEXT_URL,
-    validateActivityObject,
     validateActivityStream,
     validateCredentials,
 } from "@sockethub/schemas";
@@ -23,11 +20,6 @@ import type {
 
 // called when registered with the middleware function, define the type of validation
 // that will be called when the middleware eventually does.
-export default function validate<T extends ActivityObject>(
-    type: "activity-object",
-    sockethubId: string,
-    passedInitObj?: IInitObject,
-): MiddlewareHandler<T>;
 export default function validate<T extends ActivityStream>(
     type: "credentials" | "message",
     sockethubId: string,
@@ -43,143 +35,111 @@ export default function validate(
         SOCKETHUB_BASE_CONTEXT_URL,
     ]);
 
-    const getLegacyContext = (stream: ActivityStream): string | undefined => {
-        const legacyContext = (stream as ActivityStream & { context?: unknown })
-            .context;
-        return typeof legacyContext === "string" ? legacyContext : undefined;
-    };
-
-    const getContextValues = (stream: ActivityStream): Array<string> => {
+    const getPlatformContextCandidates = (
+        stream: ActivityStream,
+    ): Array<string> => {
         if (!Array.isArray(stream["@context"])) {
             return [];
         }
         return stream["@context"].filter(
-            (value): value is string => typeof value === "string",
+            (value): value is string =>
+                typeof value === "string" && !baseContextUrls.has(value),
         );
-    };
-
-    const getPlatformContextCandidates = (
-        stream: ActivityStream,
-    ): Array<string> => {
-        return getContextValues(stream).filter(
-            (value) => !baseContextUrls.has(value),
-        );
-    };
-
-    const normalizeLegacyContext = (
-        stream: ActivityStream,
-        initObj: IInitObject,
-    ) => {
-        if (resolvePlatformId(stream)) {
-            return;
-        }
-        const legacyContext = getLegacyContext(stream);
-        if (!legacyContext) {
-            return;
-        }
-        const platformMeta = initObj.platforms.get(legacyContext);
-        if (!platformMeta) {
-            return;
-        }
-        const platformContextUrl =
-            platformMeta.contextUrl ||
-            `https://sockethub.org/ns/context/platform/${legacyContext}/v1.jsonld`;
-        // Intentionally mutate the incoming stream so legacy `context` payloads
-        // continue through canonical @context/platform validation paths.
-        stream["@context"] = buildCanonicalContext(platformContextUrl);
-        stream.platform = legacyContext;
     };
 
     let initObj = passedInitObj;
-    if (!passedInitObj) {
-        getInitObject().then((init) => {
-            initObj = init;
-        });
-    }
 
     const sessionLog = createLogger(
         `server:middleware:validate:${sockethubId}`,
     );
-    return (
-        msg: ActivityStream | ActivityObject,
-        done: MiddlewareChainInterface<ActivityStream | ActivityObject>,
+
+    const runValidation = (
+        ready: IInitObject,
+        stream: ActivityStream,
+        done: MiddlewareChainInterface<ActivityStream>,
     ) => {
-        sessionLog.debug(`applying schema validation for ${type}`);
-        if (type === "activity-object") {
-            const err = validateActivityObject(msg as ActivityObject);
+        const platformId = resolvePlatformId(stream);
+        if (!platformId) {
+            const platformContextCandidates =
+                getPlatformContextCandidates(stream);
+            const contextDetails =
+                platformContextCandidates.length === 0
+                    ? " No platform @context values were provided."
+                    : platformContextCandidates.length > 1
+                      ? ` Multiple platform @context values were provided: ${platformContextCandidates.join(", ")}.`
+                      : ` Unregistered platform @context value: ${platformContextCandidates[0]}`;
+            return done(
+                new Error(
+                    `platform context URL not registered with this Sockethub instance.${contextDetails}`,
+                ),
+            );
+        }
+        if (!ready.platforms.has(platformId)) {
+            return done(
+                new Error(
+                    `platform ${platformId} resolved from @context is not enabled in this Sockethub instance.`,
+                ),
+            );
+        }
+        if (type === "credentials") {
+            const err = validateCredentials(stream);
             if (err) {
                 done(new Error(err));
             } else {
-                done(msg);
+                done(stream);
             }
         } else {
-            if (!initObj) {
-                return done(
+            const err = validateActivityStream(stream);
+            if (err) {
+                done(new Error(err));
+            } else {
+                const platformMeta = ready.platforms.get(platformId);
+                if (!platformMeta) {
+                    return done(
+                        new Error(
+                            `platform ${platformId} not registered with this Sockethub instance.`,
+                        ),
+                    );
+                }
+                if (!platformMeta.types.includes(stream.type)) {
+                    return done(
+                        new Error(
+                            `platform type ${stream.type} not supported by ${platformId} ` +
+                                `platform. (types: ${platformMeta.types.join(
+                                    ", ",
+                                )})`,
+                        ),
+                    );
+                }
+                done(stream);
+            }
+        }
+    };
+
+    return (
+        stream: ActivityStream,
+        done: MiddlewareChainInterface<ActivityStream>,
+    ) => {
+        sessionLog.debug(`applying schema validation for ${type}`);
+        // Fast path: init already resolved. In production init is awaited before
+        // connections are accepted (sockethub.ts), and it is cached after the
+        // first resolve.
+        if (initObj) {
+            return runValidation(initObj, stream, done);
+        }
+        // Init not yet resolved (e.g. a message arriving during startup): resolve
+        // the memoized init promise rather than rejecting the message.
+        getInitObject().then(
+            (resolved) => {
+                initObj = resolved;
+                runValidation(resolved, stream, done);
+            },
+            () =>
+                done(
                     new Error(
                         "Sockethub platforms not initialized for validation.",
                     ),
-                );
-            }
-            const stream = msg as ActivityStream;
-            // Intentional mutation for backward compatibility with legacy `context`.
-            normalizeLegacyContext(stream, initObj);
-            const platformId = resolvePlatformId(stream);
-            if (!platformId) {
-                const platformContextCandidates =
-                    getPlatformContextCandidates(stream);
-                const contextDetails =
-                    platformContextCandidates.length === 0
-                        ? " No platform @context values were provided."
-                        : platformContextCandidates.length > 1
-                          ? ` Multiple platform @context values were provided: ${platformContextCandidates.join(", ")}.`
-                          : ` Unregistered platform @context value: ${platformContextCandidates[0]}`;
-                return done(
-                    new Error(
-                        `platform context URL not registered with this Sockethub instance.${contextDetails}`,
-                    ),
-                );
-            }
-            if (!initObj.platforms.has(platformId)) {
-                return done(
-                    new Error(
-                        `platform ${platformId} resolved from @context is not enabled in this Sockethub instance.`,
-                    ),
-                );
-            }
-            stream.platform = platformId;
-            if (type === "credentials") {
-                const err = validateCredentials(stream);
-                if (err) {
-                    done(new Error(err));
-                } else {
-                    done(stream);
-                }
-            } else {
-                const err = validateActivityStream(stream);
-                if (err) {
-                    done(new Error(err));
-                } else {
-                    const platformMeta = initObj.platforms.get(platformId);
-                    if (!platformMeta) {
-                        return done(
-                            new Error(
-                                `platform ${platformId} not registered with this Sockethub instance.`,
-                            ),
-                        );
-                    }
-                    if (!platformMeta.types.includes(stream.type)) {
-                        return done(
-                            new Error(
-                                `platform type ${stream.type} not supported by ${platformId} ` +
-                                    `platform. (types: ${platformMeta.types.join(
-                                        ", ",
-                                    )})`,
-                            ),
-                        );
-                    }
-                    done(stream);
-                }
-            }
-        }
+                ),
+        );
     };
 }

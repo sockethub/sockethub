@@ -3,7 +3,6 @@ import type {
     ActivityObject,
     ActivityStream,
 } from "@sockethub/schemas";
-import type { Author } from "podparse";
 
 export enum ASFeedType {
     FEED_CHANNEL = "feed",
@@ -21,10 +20,10 @@ export interface PlatformFeedsActivityActor extends ActivityActor {
     id: string;
     link: string;
     description: string;
-    image: unknown;
+    image: string | undefined;
     categories: Array<string>;
     language: string;
-    author: Author;
+    author: string | undefined;
 }
 
 export interface PlatformFeedsActivityStream extends ActivityStream {
@@ -39,14 +38,10 @@ export interface PlatformFeedsActivityObject extends ActivityObject {
     type: ASObjectType;
     title: string;
     id: string;
-    brief: string;
+    brief?: string;
     content: string;
     contentType: string;
     url: string;
-    published: string;
-    updated: string;
+    published?: string;
     datenum: number;
-    tags: Array<string>;
-    media: Array<unknown>;
-    source: string;
 }

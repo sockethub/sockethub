@@ -51,8 +51,10 @@ protocols and services that are impractical to use from in-browser JavaScript.
 It runs server-side, keeps long-lived connections, and exposes everything as
 ActivityStreams JSON.
 
-Built with modern TypeScript and powered by Bun, Sockethub is organized as a
+Built with modern TypeScript and running on Node.js, Sockethub is organized as a
 monorepo with packages for the server, client, schemas, and platforms.
+(Development uses [Bun](https://bun.sh) as the toolchain; see
+[Contributing](docs/CONTRIBUTING.md).)
 
 Originally inspired as a sister project to
 [RemoteStorage](https://remotestorage.io), and assisting in the development of
@@ -116,46 +118,40 @@ Enable or disable platforms in `config.json`.
 
 ### Requirements
 
-* **Bun** v1.2+
+* **Node.js** v20+ (Sockethub runs on Node.js)
 * **Redis** (data layer and job queue)
 
-### CLI Install
+### Install & Run
 
 ```bash
-npm install -g sockethub
-sockethub --help
-```
-
-```bash
-# Install dependencies
-bun install
-
 # Start Redis (required for data layer)
 # - Docker: docker run -d -p 6379:6379 redis:alpine
 # - Homebrew: brew install redis && brew services start redis
 
-# Start dev server with examples
-bun run dev
+# Install and run the server (Node.js)
+npm install -g sockethub
+sockethub --help
+sockethub --host 0.0.0.0
+```
+
+Or run with Docker (`docker compose up sockethub`), which builds and runs the
+server on Node.js.
+
+### Develop from source
+
+Contributors use Bun as the toolchain. See [Contributing](docs/CONTRIBUTING.md)
+for the full workflow.
+
+```bash
+bun install        # install workspace dependencies
+bun run dev        # dev server with examples + hot reload
 ```
 
 Open `http://localhost:10550` for the interactive examples.
 
-### Production
-
-```bash
-bun run build
-bun run start
-```
-
 ### Environment Variables
 
 For debugging and configuration options, see the [Server package documentation](packages/server/README.md#environment-variables).
-
-**Debug logging:**
-
-```bash
-DEBUG=sockethub* bun run dev
-```
 
 ## Packages
 
@@ -169,10 +165,9 @@ DEBUG=sockethub* bun run dev
 
 ### Libraries
 
-* **[@sockethub/activity-streams](packages/activity-streams)** - ActivityStreams object utilities
-* **[@sockethub/crypto](packages/crypto)** - Cryptographic utilities for secure storage
 * **[@sockethub/irc2as](packages/irc2as)** - IRC to ActivityStreams translation
 * **[@sockethub/logger](packages/logger)** - Winston-based logger with global configuration
+* **[@sockethub/util](packages/util)** - Shared utilities (crypto, networking/SSRF, error helpers)
 
 ### Platform Implementations
 

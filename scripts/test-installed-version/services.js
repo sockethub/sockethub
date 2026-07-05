@@ -2,7 +2,15 @@
  * Service management for test-installed-version script
  */
 
+import { fileURLToPath } from "node:url";
+
 import { CONFIG } from "./config.js";
+
+// Same config the docker-compose CI environment mounts: allows the
+// SSRF-guarded feeds/metadata platforms to fetch loopback test fixtures.
+const CI_CONFIG_PATH = fileURLToPath(
+    new URL("../../integration/sockethub.ci.config.json", import.meta.url),
+);
 
 export class ServiceManager {
     constructor(logger) {
@@ -20,6 +28,10 @@ export class ServiceManager {
 
         const needsRedis = ["all", "browser"].includes(suite);
         const needsXmpp = ["all", "browser"].includes(suite);
+        // The "browser" suite includes the IRC browser tests (see runner.js),
+        // so it needs the Ergo IRC server too. Without this, `suite=browser`
+        // runs the IRC tests with no server and they fail to connect.
+        const needsIrc = ["all", "browser"].includes(suite);
 
         if (needsRedis) {
             await this.startRedis();
@@ -27,6 +39,10 @@ export class ServiceManager {
 
         if (needsXmpp) {
             await this.startXmpp();
+        }
+
+        if (needsIrc) {
+            await this.startIrc();
         }
     }
 
@@ -94,6 +110,34 @@ export class ServiceManager {
     }
 
     /**
+     * Start Ergo IRC Docker container
+     */
+    async startIrc() {
+        await this.logger.info("Starting Ergo IRC container...");
+
+        const result = await this.logger.exec(
+            "docker",
+            ["compose", "up", "ergo", "-d"],
+            {},
+            "ergo.log",
+        );
+
+        if (result.exitCode !== 0) {
+            throw new Error(`Failed to start Ergo: ${result.stderr}`);
+        }
+
+        this.startedServices.push("ergo");
+
+        await this.waitForService(
+            CONFIG.SERVICES.IRC.host,
+            CONFIG.SERVICES.IRC.port,
+            "Ergo IRC",
+        );
+
+        await this.logger.success("Ergo IRC is ready");
+    }
+
+    /**
      * Start Sockethub with the npm-installed binary
      * @param {string} binPath - Path to sockethub binary
      * @param {string} runtime - Runtime to use ("bun" or "node")
@@ -139,7 +183,8 @@ export class ServiceManager {
                     ...process.env,
                     REDIS_URL: "redis://127.0.0.1:6379",
                     PORT: "10550",
-                    DEBUG: "sockethub*",
+                    LOG_LEVEL: "debug",
+                    SOCKETHUB_CONFIG: CI_CONFIG_PATH,
                 },
             },
             "sockethub.log",

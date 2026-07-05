@@ -56,7 +56,9 @@ describe("Middleware", () => {
             funcs.unshift(callback);
             for (let i = 1; i < funcs.length; i++) {
                 expect(funcs[i].calledOnce).toBeTrue();
-                expect(funcs[i].calledWith("foobar981", funcs[i - 1]));
+                expect(
+                    funcs[i].calledWith("some data", sinon.match.func),
+                ).toBeTrue();
             }
             done();
         });
@@ -175,7 +177,9 @@ describe("Middleware", () => {
             funcs.unshift(callback);
             for (let i = 1; i < funcs.length; i++) {
                 expect(funcs[i].calledOnce).toBeTrue();
-                expect(funcs[i].calledWith("foo", funcs[i - 1]));
+                expect(
+                    funcs[i].calledWith("some data", sinon.match.func),
+                ).toBeTrue();
             }
             expect(errorHandlerCalled).toBeFalse();
             done();

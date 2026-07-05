@@ -20,12 +20,6 @@ Sockethub uses a JSON configuration file:
     "fileLevel": "debug",
     "file": "sockethub.log"
   },
-  "packageConfig": {
-    "@sockethub/activity-streams": {
-      "specialObjs": ["credentials"],
-      "failOnUnknownObjectProperties": true
-    }
-  },
   "platforms": [
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
@@ -119,6 +113,29 @@ Platforms are specified as an array of package names:
 ```
 
 To disable a platform, remove it from the array.
+
+### Per-Platform Configuration (`packageConfig`)
+
+Individual platforms can be configured under `packageConfig`, keyed by the
+platform's full package name. These values are merged onto the platform's own
+defaults when its child process starts (the file value wins; unset keys keep
+the platform default):
+
+```json
+{
+  "packageConfig": {
+    "@sockethub/platform-feeds": {
+      "connectTimeoutMs": 5000
+    }
+  }
+}
+```
+
+Each platform documents the keys it accepts in its own README. For platforms
+with a declared config schema, the keys and value types of their `packageConfig`
+entry are validated at startup — an unknown or mis-typed key is rejected (see
+[Validation](#validation)). Entries for platforms without a declared schema are
+passed through to the platform unvalidated.
 
 ### Rate Limiting
 
@@ -240,6 +257,9 @@ Conflict behavior:
 
 Example request:
 
+Messages use the same canonical `@context` ActivityStreams format as the
+WebSocket transport:
+
 ```bash
 curl -N \
   -H 'Content-Type: application/json' \
@@ -248,30 +268,48 @@ curl -N \
   http://localhost:10550/sockethub-http <<'JSON'
 [
   {
-    "context": "xmpp",
+    "@context": [
+      "https://www.w3.org/ns/activitystreams",
+      "https://sockethub.org/ns/context/v1.jsonld",
+      "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+    ],
     "type": "credentials",
-    "actor": { "id": "me" },
+    "actor": { "id": "me@jabber.net", "type": "person" },
     "object": {
-      "type": "Credentials",
-      "object": { "username": "me", "password": "secret" }
+      "type": "credentials",
+      "userAddress": "me@jabber.net",
+      "password": "secret"
     }
   },
   {
-    "context": "xmpp",
+    "@context": [
+      "https://www.w3.org/ns/activitystreams",
+      "https://sockethub.org/ns/context/v1.jsonld",
+      "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+    ],
     "type": "connect",
-    "actor": { "id": "me" }
+    "actor": { "id": "me@jabber.net", "type": "person" }
   },
   {
-    "context": "xmpp",
+    "@context": [
+      "https://www.w3.org/ns/activitystreams",
+      "https://sockethub.org/ns/context/v1.jsonld",
+      "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+    ],
     "type": "join",
-    "actor": { "id": "me" },
-    "target": { "type": "Room", "id": "room@example.com" }
+    "actor": { "id": "me@jabber.net", "type": "person" },
+    "target": { "type": "room", "id": "room@muc.example.com" }
   },
   {
-    "context": "xmpp",
+    "@context": [
+      "https://www.w3.org/ns/activitystreams",
+      "https://sockethub.org/ns/context/v1.jsonld",
+      "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld"
+    ],
     "type": "send",
-    "actor": { "id": "me" },
-    "object": { "type": "Note", "content": "hello" }
+    "actor": { "id": "me@jabber.net", "type": "person" },
+    "target": { "type": "room", "id": "room@muc.example.com" },
+    "object": { "type": "message", "content": "hello" }
   }
 ]
 JSON
@@ -281,11 +319,11 @@ Response format: NDJSON (newline-delimited JSON). The endpoint streams one
 complete JSON object per line. If you send an array of actions, you receive one
 line per action result.
 
-Example streamed response:
+Example streamed response (`@context` arrays abbreviated):
 
 ```ndjson
-{"type":"echo","context":"dummy","object":{"type":"message","content":"ok"}}
-{"type":"error","context":"error","error":"invalid credentials"}
+{"type":"echo","@context":["..."],"object":{"type":"message","content":"ok"}}
+{"type":"error","@context":["..."],"error":"invalid credentials"}
 ```
 
 Replay results after an interrupted request:
@@ -420,21 +458,6 @@ LOG_LEVEL=debug LOG_FILE_LEVEL=debug sockethub
 }
 ```
 
-### Package Configuration
-
-Configure ActivityStreams behavior:
-
-```json
-{
-  "packageConfig": {
-    "@sockethub/activity-streams": {
-      "specialObjs": ["credentials"],
-      "failOnUnknownObjectProperties": true
-    }
-  }
-}
-```
-
 ## Environment Variables
 
 Override configuration with environment variables:
@@ -545,6 +568,14 @@ export SENTRY_DSN=https://your-dsn@sentry.io/project-id
 1. Environment variables (`LOG_LEVEL`, `LOG_FILE_LEVEL`) (highest priority)
 2. Configuration file (`logging.level`, `logging.fileLevel`, `logging.file`)
 3. Default values (`info` for console, `debug` for file) (lowest priority)
+
+## Validation
+
+The configuration file is validated against the schema on startup. An unknown
+key, or a value of the wrong type (e.g. a non-integer `port`, or a `logging.level`
+outside `error`/`warn`/`info`/`debug`), is a **hard error** — Sockethub will
+refuse to start rather than silently ignore it. Keep config files in sync with
+the schema (`packages/schemas/src/schemas/json/sockethub-config.json`).
 
 ## Process Management
 

@@ -8,7 +8,7 @@ export default [
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
             ],
             actor: {
                 id: "dood@irc.freenode.net",
@@ -36,7 +36,7 @@ export default [
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
             ],
             published: "foo",
             actor: {
@@ -55,7 +55,7 @@ export default [
             },
         },
         false,
-        '[irc] /published: must match format "date-time"',
+        '[dood] /published: must match format "date-time"',
     ],
 
     [
@@ -65,7 +65,7 @@ export default [
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
             ],
             actor: {
                 id: "dood@irc.freenode.net",
@@ -91,7 +91,7 @@ export default [
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
             ],
             type: "credentials",
             actor: {
@@ -499,12 +499,12 @@ export default [
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
             ],
             target: { id: "irc://irc.dooder.net/a-room", type: "room" },
         },
         false,
-        "[irc] activity stream: must have required property 'type'",
+        "[dood] activity stream: must have required property 'type'",
     ],
 
     [
@@ -513,7 +513,7 @@ export default [
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
             ],
             type: "credentials",
             actor: {
@@ -526,7 +526,7 @@ export default [
             },
         },
         false,
-        "[irc] /target: must have required property 'id'",
+        "[dood] /target: must have required property 'id'",
     ],
 
     [
@@ -535,7 +535,7 @@ export default [
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
             ],
             type: "add",
             actor: { type: "person", id: "alice@localhost", name: "alice" },
@@ -564,7 +564,7 @@ export default [
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
+                "https://sockethub.org/ns/context/platform/dood/v1.jsonld",
             ],
             type: "add",
             actor: { type: "person", id: "alice@localhost", name: "alice" },
@@ -584,7 +584,7 @@ export default [
             },
         },
         false,
-        "[irc] /object/subject/role: must be equal to one of the allowed values: " +
+        "[dood] /object/subject/role: must be equal to one of the allowed values: " +
             "owner, member, participant, admin",
     ],
 ];

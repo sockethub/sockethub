@@ -1,10 +1,10 @@
-import { crypto } from "@sockethub/crypto";
 import {
     createLogger,
     getLoggerNamespace,
     type Logger,
 } from "@sockethub/logger";
 import type { CredentialsObject } from "@sockethub/schemas";
+import { crypto } from "@sockethub/util/crypto";
 import IORedis, { type Redis } from "ioredis";
 import SecureStore from "secure-store-redis";
 

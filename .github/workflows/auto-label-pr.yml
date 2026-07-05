@@ -1,7 +1,11 @@
 name: Auto Label PR
 
 on:
-  pull_request:
+  # pull_request_target (not pull_request) so this gets a write-scoped token
+  # even for PRs from forks. Safe here because the job only reads
+  # `pull_request.title` and calls the labels API — it never checks out or
+  # executes any code from the PR head.
+  pull_request_target:
     types: [opened, reopened, edited, synchronize]
 
 jobs:

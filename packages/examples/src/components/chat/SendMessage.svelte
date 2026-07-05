@@ -2,7 +2,7 @@
      Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
 import SockethubButton from "$components/SockethubButton.svelte";
-import { contextFor, send } from "$lib/sockethub";
+import { actorAsObject, contextFor, send } from "$lib/sockethub";
 import type { ActorData } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
 
@@ -27,9 +27,9 @@ async function sendMessage() {
 
     try {
         await send({
-            "@context": contextFor(context),
+            "@context": await contextFor(context),
             type: "send",
-            actor: actor.id,
+            actor: actorAsObject(actor),
             object: {
                 type: "message",
                 content: messageToSend,
@@ -40,7 +40,6 @@ async function sendMessage() {
                 type: "room",
             },
         });
-        // Clear the message input after successful send
         message = "";
     } catch (error) {
         console.error("Failed to send message:", error);
@@ -65,8 +64,8 @@ async function sendMessage() {
                     bind:value={message} 
                     class="flex-1 px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 text-gray-900 placeholder-gray-500" 
                     placeholder="Type your message here..."
-                    on:keydown={(e) => {
-                        if (e.key === 'Enter' && !sending && $sockethubState.connected) {
+                    onkeydown={(e) => {
+                        if (e.key === "Enter" && !sending && $sockethubState.connected) {
                             sendMessage();
                         }
                     }}

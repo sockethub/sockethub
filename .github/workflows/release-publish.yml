@@ -25,8 +25,7 @@ jobs:
       (github.event_name == 'workflow_dispatch')
     uses: ./.github/workflows/test-npm-package.yml
     with:
-      local: true
-      runtime: both
+      runtime: node
       suite: all
 
   publish:
@@ -36,6 +35,9 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      dist_tag: ${{ steps.dist_tag.outputs.tag }}
 
     steps:
       # ============================================================
@@ -223,31 +225,12 @@ jobs:
         run: |
           echo "✅ All packages already published, skipping npm publish"
 
-      # # ============================================================
-      # # VERIFICATION PHASE
-      # # Always verify regardless of publish step outcome
-      # # ============================================================
-      # - name: Verify all packages on npm
-      #   id: verify
-      #   run: |
-      #     echo "⏳ Waiting 30 seconds for npm registry to propagate..."
-      #     sleep 30
-      #     echo ""
-
-      #     if ./scripts/verify-npm-publish.sh; then
-      #       echo "success=true" >> $GITHUB_OUTPUT
-      #     else
-      #       echo "success=false" >> $GITHUB_OUTPUT
-      #       exit 1
-      #     fi
-
       # ============================================================
       # FINALIZATION PHASE
-      # Only proceed if all packages verified
+      # Runs whenever the npm publish/skip step above didn't fail the job
       # ============================================================
       - name: Create git tag
         id: create_tag
-        if: steps.verify.outputs.success == 'true'
         run: |
           TAG="${{ steps.version.outputs.tag }}"
           SKIP_IF_EXISTS="${{ inputs.skip_tag_if_exists }}"
@@ -276,7 +259,6 @@ jobs:
 
       - name: Publish GitHub Release
         id: publish_release
-        if: steps.verify.outputs.success == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -305,7 +287,6 @@ jobs:
       # SUCCESS SUMMARY
       # ============================================================
       - name: Release summary
-        if: steps.verify.outputs.success == 'true'
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           TAG="${{ steps.version.outputs.tag }}"
@@ -393,6 +374,9 @@ jobs:
           # Check if an issue already exists for this version
           EXISTING=$(gh issue list --search "Release v$VERSION failed in:title" --state open --json number --jq '.[0].number')
 
+          # Ensure the label exists so issue creation doesn't fail if it's missing
+          gh label create "release" --color "0e8a16" --description "Release process issues" 2>/dev/null || true
+
           if [ -n "$EXISTING" ]; then
             echo "📝 Updating existing issue #$EXISTING"
             gh issue comment "$EXISTING" --body "$(cat failure_report.md)"
@@ -403,3 +387,75 @@ jobs:
               --body "$(cat failure_report.md)" \
               --label "release"
           fi
+
+  # ============================================================
+  # DOCKER IMAGE PUBLISH PHASE
+  # Build and push a multi-arch image to ghcr.io once the release
+  # has been published to npm. Image tags mirror the npm dist-tags:
+  #   - ghcr.io/sockethub/sockethub:<version>   (moving, points at latest build)
+  #   - ghcr.io/sockethub/sockethub:<dist-tag>  (alpha|beta|next|latest)
+  #   - ghcr.io/sockethub/sockethub:sha-<short> (immutable, traceable identity)
+  # so :latest only ever points at a stable (non-prerelease) version, while the
+  # sha tag uniquely identifies the exact commit a build came from. To retry a
+  # failed build, re-run this job (tags are overwritten); no new release needed.
+  # ============================================================
+  docker-publish:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: tags
+        env:
+          VERSION: ${{ needs.publish.outputs.version }}
+          DIST_TAG: ${{ needs.publish.outputs.dist_tag }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          # ghcr requires the image path to be lowercase
+          IMAGE="ghcr.io/$(echo "$REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+
+          # $GITHUB_SHA is a built-in env var (no untrusted interpolation needed)
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+
+          # Moving version + dist-tag (alpha|beta|next|latest) matching the npm
+          # publish step, plus an immutable sha tag for traceability/pinning.
+          TAGS="$IMAGE:$VERSION,$IMAGE:$DIST_TAG,$IMAGE:sha-$SHORT_SHA"
+
+          echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
+          echo "🐳 Image tags: $TAGS"
+
+      - name: Build and push image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ needs.publish.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -55,47 +55,6 @@ export default [
         output: "same",
     },
     {
-        name: "legacy context credentials",
-        valid: true,
-        type: "credentials",
-        input: {
-            id: "legacy-creds",
-            type: "credentials",
-            context: "fakeplatform",
-            actor: {
-                id: "dood@irc.freenode.net",
-                type: "person",
-                name: "dood",
-            },
-            object: {
-                type: "credentials",
-                user: "foo",
-                pass: "bar",
-            },
-        },
-        output: {
-            id: "legacy-creds",
-            type: "credentials",
-            context: "fakeplatform",
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/fakeplatform/v1.jsonld",
-            ],
-            platform: "fakeplatform",
-            actor: {
-                id: "dood@irc.freenode.net",
-                type: "person",
-                name: "dood",
-            },
-            object: {
-                type: "credentials",
-                user: "foo",
-                pass: "bar",
-            },
-        },
-    },
-    {
         name: "no type specified",
         valid: false,
         type: "credentials",
@@ -117,46 +76,6 @@ export default [
         error: "Error: credential activity streams must have credentials set as type",
     },
     {
-        name: "basic person",
-        type: "activity-object",
-        valid: true,
-        input: {
-            id: "blah",
-            type: "person",
-            name: "dood",
-        },
-        output: "same",
-    },
-    {
-        name: "person with extras",
-        valid: true,
-        type: "activity-object",
-        input: {
-            id: "blah",
-            type: "person",
-            name: "bob",
-            hello: "there",
-            i: ["am", "extras"],
-        },
-        output: "same",
-    },
-    {
-        name: "alone credentials (as activity-object)",
-        valid: false,
-        type: "activity-object",
-        input: {
-            type: "credentials",
-            nick: "sh-9K3Vk",
-            port: 6667,
-            secure: false,
-            server: "irc.freenode.net",
-        },
-        error:
-            "Error: /object: must match exactly one schema in oneOf: " +
-            "credentials, feed, message, me, person, room, service, website, " +
-            "attendance, presence, relationship, topic, address",
-    },
-    {
         name: "alone credentials (as credentials)",
         valid: false,
         type: "credentials",
@@ -166,83 +85,6 @@ export default [
             port: 6667,
             secure: false,
             server: "irc.freenode.net",
-        },
-        error:
-            "Error: platform context URL not registered with this Sockethub instance." +
-            " No platform @context values were provided.",
-    },
-    {
-        name: "new person",
-        valid: true,
-        type: "activity-object",
-        input: {
-            id: "sh-9K3Vk@irc.freenode.net",
-            type: "person",
-            name: "sh-9K3Vk",
-            image: {
-                height: 250,
-                mediaType: "image/jpeg",
-                url: "https://example.org/image.jpg",
-                width: 250,
-            },
-            url: "https://sockethub.org",
-        },
-        output: "same",
-    },
-    {
-        name: "new person",
-        valid: true,
-        type: "activity-object",
-        input: {
-            id: "irc://sh-9K3Vk@irc.freenode.net",
-            type: "person",
-            name: "sh-9K3Vk",
-            url: "https://sockethub.org",
-        },
-        output: "same",
-    },
-    {
-        name: "bad parent object",
-        valid: false,
-        type: "activity-stream",
-        input: {
-            string: "this is a string",
-            array: [
-                "this",
-                "is",
-                {
-                    an: "array",
-                },
-            ],
-            as: {
-                id: "blah",
-                type: "send",
-                "@context": [
-                    "https://www.w3.org/ns/activitystreams",
-                    "https://sockethub.org/ns/context/v1.jsonld",
-                    "https://sockethub.org/ns/context/platform/hello/v1.jsonld",
-                ],
-                actor: {
-                    name: "dood",
-                },
-                target: {
-                    type: "person",
-                    name: "bob",
-                },
-                object: {
-                    type: "credentials",
-                },
-            },
-            noId: {
-                name: "dood",
-            },
-            noId2: {
-                type: "person",
-                name: "bob",
-            },
-            noDisplayName: {
-                id: "larg",
-            },
         },
         error:
             "Error: platform context URL not registered with this Sockethub instance." +
@@ -328,32 +170,6 @@ export default [
                 "https://sockethub.org/ns/context/v1.jsonld",
                 "https://sockethub.org/ns/context/platform/fakeplatform/v1.jsonld",
             ],
-            actor: { id: "irc://uuu@localhost", type: "person" },
-        },
-    },
-    {
-        name: "legacy context overrides unregistered @context",
-        valid: true,
-        type: "message",
-        input: {
-            type: "echo",
-            context: "fakeplatform",
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/unknown/v1.jsonld",
-            ],
-            actor: { id: "irc://uuu@localhost", type: "person" },
-        },
-        output: {
-            type: "echo",
-            context: "fakeplatform",
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://sockethub.org/ns/context/v1.jsonld",
-                "https://sockethub.org/ns/context/platform/fakeplatform/v1.jsonld",
-            ],
-            platform: "fakeplatform",
             actor: { id: "irc://uuu@localhost", type: "person" },
         },
     },

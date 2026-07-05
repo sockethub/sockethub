@@ -78,10 +78,16 @@ async function waitForHttpActions(timeoutMs: number) {
     return false;
 }
 
+const DUMMY_CONTEXT = [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/dummy/v1.jsonld",
+];
+
 function buildEchoPayload(content: string) {
     return {
         type: "echo",
-        context: "dummy",
+        "@context": DUMMY_CONTEXT,
         actor: { id: "test@dummy", type: "person" },
         object: { type: "message", content },
     };
@@ -207,7 +213,9 @@ describe("HTTP actions integration", () => {
 
         const lines = parseNdjson(await res.text());
         expect(lines.length).toBe(1);
-        expect(lines[0].actor.id).toBe("test@dummy");
+        // The dummy platform echoes back as itself, moving the caller to target.
+        expect(lines[0].actor.id).toBe("dummy");
+        expect(lines[0].target.id).toBe("test@dummy");
         expect(lines[0].type).toBe("echo");
     });
 
@@ -364,7 +372,7 @@ describe("HTTP actions integration", () => {
             },
             body: JSON.stringify({
                 type: "echo",
-                context: "dummy",
+                "@context": DUMMY_CONTEXT,
                 object: { type: "message", content: "missing actor" },
             }),
         });

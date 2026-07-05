@@ -1,8 +1,7 @@
 <script lang="ts">
 import TextAreaSubmit from "$components/TextAreaSubmit.svelte";
-import { sc } from "$lib/sockethub";
 import type { SockethubStateStore } from "$lib/types";
-import type { ActivityActor } from "@sockethub/schemas";
+import type { ActivityActor } from "$lib/types/schemas";
 
 interface Props {
     actor: ActivityActor;
@@ -12,8 +11,6 @@ interface Props {
 let { actor, sockethubState }: Props = $props();
 let lastSubmittedActorId = $state<string | undefined>(undefined);
 
-// If the actor ID changes after submission, clear dependent state so the user
-// can create the actor and credentials again for the new identity.
 $effect(() => {
     if (
         $sockethubState.actorSet &&
@@ -33,10 +30,9 @@ $effect(() => {
     }
 });
 
-function sendActivityObjectCreate(data: string) {
+function confirmActor(data: string) {
     const actorObj = JSON.parse(data);
-    console.log("creating activity object:  ", actorObj);
-    sc.ActivityStreams.Object.create(actorObj);
+    console.log("actor confirmed for this app session:", actorObj);
     sockethubState.set({
         actorSet: true,
         credentialsSet: false,
@@ -45,17 +41,18 @@ function sendActivityObjectCreate(data: string) {
     });
     lastSubmittedActorId =
         typeof actorObj.id === "string" ? actorObj.id : undefined;
-    // actor.set({
-    //   object: actorObj,
-    //   roomId: "",
-    // });
 }
 </script>
 
+<p class="text-sm text-gray-600 mb-2">
+    Define the <code>actor</code> object for credentials and message events. Include
+    <code>id</code>, <code>type</code>, and <code>name</code> on every outbound message.
+</p>
+
 <TextAreaSubmit
-    title="Activity Stream Actor"
+    title="Actor"
     obj={actor}
-    buttonText="Activity Object Create"
-    submitData={sendActivityObjectCreate}
+    buttonText="Confirm actor"
+    submitData={confirmActor}
     disabled={$sockethubState.actorSet}
 />

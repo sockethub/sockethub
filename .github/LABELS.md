@@ -64,7 +64,6 @@ scope → scope:<scope> label (must exist as a label)
 | `scope:client` | Issues related to Sockethub Client package | `#000000` |
 | `scope:schemas` | Schema and validation changes | `#000000` |
 | `scope:logger` | Logger package changes | `#000000` |
-| `scope:activity-streams` | Issues related to ActivityStreams.js | `#000000` |
 | `scope:crypto` | Cryptographic utilities | `#000000` |
 | `scope:irc2as` | Issues related to IRC2AS | `#000000` |
 | `scope:examples` | Example Demo App | `#000000` |
@@ -90,7 +89,7 @@ PRs with these labels are excluded from release notes:
 
 The auto-label workflow validates that scope labels exist. If you use a scope that doesn't have a corresponding `scope:*` label, the workflow will fail with an error message.
 
-**Valid scopes**: `platform-irc`, `platform-xmpp`, `platform-feeds`, `platform-metadata`, `platform-dummy`, `server`, `data-layer`, `client`, `schemas`, `logger`, `activity-streams`, `crypto`, `irc2as`, `examples`, `sockethub`
+**Valid scopes**: `platform-irc`, `platform-xmpp`, `platform-feeds`, `platform-metadata`, `platform-dummy`, `server`, `data-layer`, `client`, `schemas`, `logger`, `crypto`, `irc2as`, `examples`, `sockethub`
 
 **Invalid example**: `feat(ircstypo): ...` → ❌ Fails because `scope:ircstypo` doesn't exist
 

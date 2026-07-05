@@ -2,18 +2,46 @@
 
 The Sockethub client is a small JavaScript SDK for app developers to connect to a
 Sockethub server via Socket.IO and send/receive ActivityStreams messages. It works
-in both Node.js and browsers, and provides helpers for ActivityStreams along with
-automatic reconnection and credential replay.
+in both Node.js and browsers, with schema-driven validation, automatic
+reconnection, and credential replay.
 
 ## What's Included
 
 - `SockethubClient` for connection and message handling
-- `ActivityStreams` helpers and validation utilities
+- Schema-driven validation of outbound ActivityStreams messages (via `@sockethub/schemas`)
 - `contextFor(platform)` builds canonical `@context` arrays from server metadata
 - `ready()` promise and `ready`/`init_error` observability events
-- Automatic outbound queueing until initialization is complete
+- Automatic outbound queuing until initialization is complete
 - Auto-replay of credentials and connections on reconnect
 - A browser-ready bundle in `dist/`
+
+## How It Works
+
+`SockethubClient` wraps a [Socket.IO](https://socket.io) connection and manages
+everything between your app and the Sockethub server:
+
+1. **Schema registry handshake.** On connect (and every reconnect) the client
+   requests the server's *platform schema registry* — the contexts, versions,
+   and JSON schemas for each platform the server has loaded. It caches that
+   registry along with a content fingerprint the server provides. On reconnect
+   the client echoes the fingerprint; if nothing has changed the server replies
+   `unchanged` instead of re-sending the full schema set, so the (potentially
+   large) registry crosses the wire only when it actually changes.
+2. **Initialization lifecycle.** `ready()` resolves once the registry is
+   applied; `getInitState()` and the `ready` / `init_error` events expose the
+   same lifecycle. Outbound events emitted before the client is ready are queued
+   in memory and flushed automatically once initialization completes.
+3. **Message handling.** Outgoing `message`/`credentials` events are normalized
+   (string `actor`/`target` references are expanded to objects) and validated
+   against the originating platform's schema before they leave the client;
+   incoming platform events are normalized before being handed to your
+   `message` listener. Validation uses the same schemas the server enforces, so
+   malformed activities are caught locally rather than round-tripping.
+4. **Context composition.** `contextFor(platform)` builds the canonical
+   `@context` array for a platform from the cached registry.
+5. **Reconnect resilience.** Credentials, platform connections, and room joins
+   are kept in memory and replayed when the socket reconnects (see
+   [Security & State Management](#security--state-management)).
 
 ## Install
 
@@ -115,7 +143,8 @@ See the [Client Guide](../../docs/client-guide.md) for detailed usage and exampl
 - **`sc.socket.emit(event, data, callback)`** - Send messages (queued until ready)
 - **`sc.socket.on(event, handler)`** - Listen for messages
 - **`sc.clearCredentials()`** - Clear stored credentials
-- **`sc.ActivityStreams`** - ActivityStreams library
+
+Send a full `actor` object on each `credentials` and `message` event.
 
 ## Result Handling
 
@@ -146,26 +175,24 @@ sc.socket.on("message", (msg) => {
 });
 ```
 
-## ActivityStreams Helpers
+## Sending messages
 
-Define reusable objects via `ActivityStreams.Object.create(...)`, then build
-streams with `ActivityStreams.Stream(...)`:
+Include `id`, `type`, and usually `name` on the `actor` for `credentials` and
+`message` events. Before sending, the client validates each outgoing activity
+against the originating platform's schema from the server registry, surfacing a
+client-side error instead of dispatching a malformed message.
 
 ```javascript
-sc.ActivityStreams.Object.create({
-    id: "mynick",
-    type: "person",
-    name: "My IRC Nick",
-});
-
-const stream = sc.ActivityStreams.Stream({
+sc.socket.emit("message", {
     type: "join",
     "@context": sc.contextFor("irc"),
-    actor: "mynick",
-    target: { id: "#sockethub", type: "room" },
-});
-
-sc.socket.emit("message", stream, (result) => {
+    actor: { id: "mynick@irc.libera.chat", type: "person", name: "mynick" },
+    target: {
+        id: "sockethub@irc.libera.chat",
+        type: "room",
+        name: "#sockethub",
+    },
+}, (result) => {
     if (result?.error) console.error(result.error);
 });
 ```
@@ -180,7 +207,6 @@ memory and replaying it when the connection is re-established.
 #### What Gets Stored
 
 - Credentials (passwords, tokens, API keys)
-- Actor definitions
 - Platform connections
 - Channel/room joins
 

@@ -18,8 +18,10 @@
 
 import net from "node:net";
 import tls from "node:tls";
+
 import { IrcToActivityStreams } from "@sockethub/irc2as";
 import type {
+    ActivityActor,
     ActivityStream,
     Logger,
     PersistentPlatformConfig,
@@ -35,6 +37,43 @@ import IrcSocket, { type IrcSocketInstance } from "irc-socket-sasl";
 
 import { PlatformIrcSchema } from "./schema.js";
 import type { PlatformIrcCredentialsObject } from "./types.js";
+
+export type { IrcSocketInstance } from "irc-socket-sasl";
+export type { PlatformIrcCredentialsObject } from "./types.js";
+
+// irc-socket-sasl >=4.1.2 already flattens connectOptions into a plain
+// object before handing them to the transport (silverbucket/irc-socket-sasl#24),
+// so this is now a defensive backstop rather than the primary fix: earlier
+// versions built the options via `Object.create(connectOptions)`, which put
+// our `rejectUnauthorized` setting on the prototype rather than as an own
+// property, and Node's `tls.connect` only honors it as an own property.
+// Keeping this here means we don't depend on the installed dependency
+// version (or a future regression/fork) to get this right.
+export function flattenConnectOptions(
+    options: Record<string, unknown>,
+): Record<string, unknown> {
+    const flattened: Record<string, unknown> = Object.create(null);
+    for (const key in options) {
+        if (
+            key === "__proto__" ||
+            key === "constructor" ||
+            key === "prototype"
+        ) {
+            continue;
+        }
+        flattened[key] = options[key];
+    }
+    return flattened;
+}
+
+const tlsTransport = {
+    connect(options: Record<string, unknown>, ...rest: Array<unknown>) {
+        return (tls.connect as unknown as (...args: Array<unknown>) => unknown)(
+            flattenConnectOptions(options),
+            ...rest,
+        );
+    },
+};
 
 export type GetClientCallback = (
     err: string | null,
@@ -71,17 +110,11 @@ interface IrcSocketOptions {
 }
 
 /**
- * @class IRC
- * @constructor
- *
- * @description
- * Handles all actions related to communication via. the IRC protocol.
- *
- * @param {object} cfg a unique config object for this instance
+ * Handles all actions related to communication via the IRC protocol.
  */
-export default class IRC implements PersistentPlatformInterface {
+export class IRC implements PersistentPlatformInterface {
     private readonly log: Logger;
-    credentialsHash: string;
+    public credentialsHash: string | undefined;
     config: PersistentPlatformConfig = {
         persist: true,
         requireCredentials: ["connect", "update"],
@@ -105,94 +138,12 @@ export default class IRC implements PersistentPlatformInterface {
     }
 
     /**
-     * Property: schema
-     *
-     * @description
      * JSON schema defining the types this platform accepts.
-     *
-     *
-     * In the below example, Sockethub will validate the incoming credentials object
-     * against whatever is defined in the `credentials` portion of the schema
-     * object.
-     *
-     *
-     * It will also check if the incoming AS object uses a type which exists in the
-     * `types` portion of the schema object (should be an array of type names).
-     *
-     * * **NOTE**: For more information on using the credentials object from a client,
-     * see [Sockethub Client](https://github.com/sockethub/sockethub/wiki/Sockethub-Client)
-     *
-     * Valid AS object for setting IRC credentials using SASL PLAIN (password):
-     * @example
-     *
-     *  {
-     *    type: 'credentials',
-     *    context: 'irc',
-     *    actor: {
-     *      id: 'testuser@irc.host.net',
-     *      type: 'person',
-     *      name: 'Mr. Test User',
-     *      userName: 'testuser'
-     *    },
-     *    object: {
-     *      type: 'credentials',
-     *      server: 'irc.host.net',
-     *      nick: 'testuser',
-     *      password: 'secret',
-     *      port: 6697,
-     *      secure: true,
-     *      sasl: true
-     *    }
-     *  }
-     *
-     * Valid AS object for setting IRC credentials using a personal access
-     * token via SASL PLAIN (e.g. Libera.Chat NickServ tokens):
-     * @example
-     *
-     *  {
-     *    type: 'credentials',
-     *    context: 'irc',
-     *    actor: {
-     *      id: 'testuser@irc.libera.chat',
-     *      type: 'person',
-     *      name: 'Mr. Test User'
-     *    },
-     *    object: {
-     *      type: 'credentials',
-     *      server: 'irc.libera.chat',
-     *      nick: 'testuser',
-     *      token: 'my-personal-access-token',
-     *      port: 6697,
-     *      secure: true
-     *    }
-     *  }
-     *
-     * Valid AS object for setting IRC credentials using SASL OAUTHBEARER
-     * (OAuth 2.0 access token):
-     * @example
-     *
-     *  {
-     *    type: 'credentials',
-     *    context: 'irc',
-     *    actor: {
-     *      id: 'testuser@chat.sr.ht',
-     *      type: 'person',
-     *      name: 'Mr. Test User'
-     *    },
-     *    object: {
-     *      type: 'credentials',
-     *      server: 'chat.sr.ht',
-     *      nick: 'testuser',
-     *      token: 'oauth-access-token',
-     *      saslMechanism: 'OAUTHBEARER',
-     *      port: 6697,
-     *      secure: true
-     *    }
-     *  }
      *
      * `password` and `token` are mutually exclusive. Both default to SASL
      * PLAIN; set `saslMechanism: 'OAUTHBEARER'` explicitly for OAuth 2.0
-     * bearer tokens (RFC 7628).
+     * bearer tokens (RFC 7628). See the package README for canonical
+     * credentials payload examples.
      */
     get schema(): PlatformSchemaStruct {
         return PlatformIrcSchema;
@@ -235,25 +186,6 @@ export default class IRC implements PersistentPlatformInterface {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     *
-     * {
-     *   context: 'irc',
-     *   type: 'join',
-     *   actor: {
-     *     id: 'slvrbckt@irc.freenode.net',
-     *     type: 'person',
-     *     name: 'slvrbckt'
-     *   },
-     *   target: {
-     *     id: 'irc.freenode.net/a-room',
-     *     type: 'room',
-     *     name: '#a-room'
-     *   },
-     *   object: {}
-     * }
-     *
      */
     join(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(`join() called for ${job.actor.id}`);
@@ -283,24 +215,6 @@ export default class IRC implements PersistentPlatformInterface {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     * {
-     *   context: 'irc',
-     *   type: 'leave',
-     *   actor: {
-     *     id: 'slvrbckt@irc.freenode.net',
-     *     type: 'person',
-     *     name: 'slvrbckt'
-     *   },
-     *   target: {
-     *     id: 'irc.freenode.net/remotestorage',
-     *     type: 'room',
-     *     name: '#remotestorage'
-     *   },
-     *   object: {}
-     * }
-     *
      */
     leave(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(`leave() called for ${job.actor.name}`);
@@ -322,29 +236,6 @@ export default class IRC implements PersistentPlatformInterface {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     *
-     *  {
-     *    context: 'irc',
-     *    type: 'send',
-     *    actor: {
-     *      id: 'slvrbckt@irc.freenode.net',
-     *      type: 'person',
-     *      name: 'Nick Jennings',
-     *      userName: 'slvrbckt'
-     *    },
-     *    target: {
-     *      id: 'irc.freenode.net/remotestorage',
-     *      type: 'room',
-     *      name: '#remotestorage'
-     *    },
-     *    object: {
-     *      type: 'message',
-     *      content: 'Hello from Sockethub!'
-     *    }
-     *  }
-     *
      */
     send(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(
@@ -388,7 +279,22 @@ export default class IRC implements PersistentPlatformInterface {
                 const message = buildCommand(job.object.content);
                 // biome-ignore lint/style/useTemplate: IRC raw command formatting
                 client.raw("PRIVMSG " + job.target.name + " :" + message);
-                return done("IRC commands temporarily disabled");
+                // /me intentionally reports synchronous success rather than
+                // going through the jobQueue + PING/PONG round-trip used by
+                // normal sends. This is safe because:
+                //   1. IRC servers do not echo PRIVMSG/CTCP ACTION back to
+                //      the sender unless the IRCv3 `echo-message` capability
+                //      is negotiated via CAP REQ.
+                //   2. This platform only requests `sasl` (see ircConnect:
+                //      `capabilities = { requires: ["sasl"] }`), so
+                //      `echo-message` is never enabled.
+                //   3. Therefore the outgoing PRIVMSG never re-enters
+                //      irc2as.input() via the `data` event, no `incoming`
+                //      event fires for the sender's actor, and completeJob
+                //      is not triggered as a side effect.
+                // If `echo-message` is ever enabled, the regular send path
+                // would also need refactoring to dedupe echoed PRIVMSGs.
+                return done();
             }
             if (job.object.type === "notice") {
                 // attempt to send as raw command
@@ -413,47 +319,6 @@ export default class IRC implements PersistentPlatformInterface {
      * @param {object} job activity streams object
      * @param {object} credentials credentials to verify this user is the right one
      * @param {object} done callback when job is done
-     *
-     * @example change topic
-     *
-     * {
-     *   context: 'irc',
-     *   type: 'update',
-     *   actor: {
-     *     id: 'slvrbckt@irc.freenode.net',
-     *     type: 'person',
-     *     name: 'Nick Jennings',
-     *     userName: 'slvrbckt'
-     *   },
-     *   target: {
-     *     id: 'irc.freenode.net/a-room',
-     *     type: 'room',
-     *     name: '#a-room'
-     *   },
-     *   object: {
-     *     type: 'topic',
-     *     content: 'New version of Sockethub released!'
-     *   }
-     * }
-     *
-     * @example change nickname
-     *  {
-     *    context: 'irc'
-     *    type: 'update',
-     *    actor: {
-     *      id: 'slvrbckt@irc.freenode.net',
-     *      type: 'person',
-     *      name: 'slvrbckt'
-     *    },
-     *    object: {
-     *      type: "address",
-     *    },
-     *    target: {
-     *      id: 'cooldude@irc.freenode.net',
-     *      type: 'person',
-     *      name: 'cooldude'
-     *    }
-     *  }
      */
     update(
         job: ActivityStream,
@@ -502,51 +367,6 @@ export default class IRC implements PersistentPlatformInterface {
      *
      * @param {object} job activity streams object
      * @param {object} done callback when job is done
-     *
-     * @example
-     *
-     *  {
-     *    context: 'irc',
-     *    type: 'query',
-     *    actor: {
-     *      id: 'slvrbckt@irc.freenode.net',
-     *      type: 'person',
-     *      name: 'Nick Jennings',
-     *      userName: 'slvrbckt'
-     *    },
-     *    target: {
-     *      id: 'irc.freenode.net/a-room',
-     *      type: 'room',
-     *      name: '#a-room'
-     *    },
-     *    object: {
-     *      type: 'attendance'
-     *    }
-     *  }
-     *
-     *
-     *  // The above object might return:
-     *  {
-     *    context: 'irc',
-     *    type: 'query',
-     *    actor: {
-     *      id: 'irc.freenode.net/a-room',
-     *      type: 'room',
-     *      name: '#a-room'
-     *    },
-     *    target: {},
-     *    object: {
-     *      type: 'attendance'
-     *      members: [
-     *        'RyanGosling',
-     *        'PeeWeeHerman',
-     *        'Commando',
-     *        'Smoochie',
-     *        'neo'
-     *      ]
-     *    }
-     *  }
-     *
      */
     query(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(`query() called for ${job.actor.id}`);
@@ -556,10 +376,18 @@ export default class IRC implements PersistentPlatformInterface {
             }
 
             if (job.object.type === "attendance") {
-                this.log.debug(
-                    `query() - sending NAMES for ${job.target.name}`,
-                );
-                client.raw(["NAMES", job.target.name]);
+                const channel = this.resolveChannelName(job.target);
+                if (!channel) {
+                    // Never emit a bare `NAMES` (no channel argument): IRC
+                    // servers answer it with the entire network channel list,
+                    // flooding the client with presence for rooms it never
+                    // joined. See sockethub/sockethub#1085.
+                    return done(
+                        "cannot query attendance without a valid channel name",
+                    );
+                }
+                this.log.debug(`query() - sending NAMES for ${channel}`);
+                client.raw(["NAMES", channel]);
                 done();
             } else {
                 done(`unknown 'type' '${job.object.type}'`);
@@ -571,17 +399,6 @@ export default class IRC implements PersistentPlatformInterface {
      * Disconnect IRC client
      * @param {object} job activity streams object
      * @param done
-     *
-     * @example
-     *
-     * {
-     *    context: 'irc',
-     *    type: 'disconnect',
-     *    actor: {
-     *      id: 'slvrbckt@irc.freenode.net',
-     *      type: 'person'
-     *    }
-     *  }
      */
     disconnect(job: ActivityStream, done: PlatformCallback) {
         this.log.debug(`disconnect called for ${job.actor.id}`);
@@ -604,6 +421,28 @@ export default class IRC implements PersistentPlatformInterface {
     //
     // Private methods
     //
+    /**
+     * Resolve an IRC channel name from a job target. Prefers `target.name`,
+     * falling back to the channel segment of `target.id` (`<server>/<channel>`).
+     * Returns undefined when no valid `#channel` can be determined, so callers
+     * never emit a bare `NAMES` command (which floods the client with the
+     * server's entire channel list).
+     */
+    private resolveChannelName(target?: ActivityActor): string | undefined {
+        if (typeof target?.name === "string" && target.name.startsWith("#")) {
+            return target.name;
+        }
+        if (typeof target?.id === "string") {
+            const slash = target.id.indexOf("/");
+            const candidate =
+                slash >= 0 ? target.id.slice(slash + 1) : target.id;
+            if (candidate.startsWith("#")) {
+                return candidate;
+            }
+        }
+        return undefined;
+    }
+
     private isJoined(channel: string) {
         if (channel.indexOf("#") === 0) {
             // valid channel name
@@ -715,7 +554,12 @@ export default class IRC implements PersistentPlatformInterface {
             debug: console.log,
         };
         if (is_secure) {
-            module_options.connectOptions = { rejectUnauthorized: false };
+            // Validate the server's TLS certificate by default. Only disable
+            // validation when the caller explicitly opts in via
+            // `allowInvalidCert` (e.g. for self-signed IRC networks). See #1056.
+            module_options.connectOptions = {
+                rejectUnauthorized: !credentials.object.allowInvalidCert,
+            };
         }
         if (is_sasl) {
             module_options.saslMechanism = sasl_mechanism;
@@ -729,7 +573,10 @@ export default class IRC implements PersistentPlatformInterface {
             } sasl: ${is_sasl}${is_sasl ? ` (${sasl_mechanism})` : ""}`,
         );
 
-        const client = new IrcSocket(module_options, is_secure ? tls : net);
+        const client = new IrcSocket(
+            module_options,
+            is_secure ? tlsTransport : net,
+        );
 
         const forceDisconnect = (err: string) => {
             this.forceDisconnect = true;
@@ -837,7 +684,9 @@ export default class IRC implements PersistentPlatformInterface {
 
         this.irc2as.events.on("ping", (timestamp: string) => {
             this.log.debug(`received PING at ${timestamp}`);
-            this.client.raw("PONG");
+            this.client?.raw("PONG");
         });
     }
 }
+
+export default IRC;

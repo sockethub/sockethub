@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as sinon from "sinon";
-import { crypto } from "@sockethub/crypto";
+import { crypto } from "@sockethub/util/crypto";
 import type {
     ActivityStream,
     CredentialsObject,
@@ -8,7 +8,10 @@ import type {
     PlatformInterface,
 } from "@sockethub/schemas";
 import type { JobDataDecrypted } from "@sockethub/data-layer";
-import { derivePlatformCredentialsSecret } from "./platform.js";
+import {
+    derivePlatformCredentialsSecret,
+    mergePackageConfig,
+} from "./platform.js";
 
 /**
  * Tests for platform.ts credential handling logic
@@ -84,7 +87,6 @@ describe("platform.ts credential handling", () => {
                     "https://sockethub.org/ns/context/v1.jsonld",
                     "https://sockethub.org/ns/context/platform/xmpp/v1.jsonld",
                 ],
-                platform: "xmpp",
                 actor: { id: "testuser@localhost", type: "person" },
                 sessionSecret: "secret123",
             },
@@ -557,5 +559,39 @@ describe("platform.ts credential handling", () => {
             // Verify final state
             expect(mockPlatform.credentialsHash).toBeDefined();
         });
+    });
+});
+
+describe("mergePackageConfig", () => {
+    const base = { persist: false, connectTimeoutMs: 5000 };
+
+    it("returns the base config unchanged when no override is given", () => {
+        expect(mergePackageConfig(base, undefined)).toEqual(base);
+        expect(mergePackageConfig(base, "")).toEqual(base);
+    });
+
+    it("overlays file values onto the platform defaults", () => {
+        expect(
+            mergePackageConfig(base, JSON.stringify({ connectTimeoutMs: 9000 })),
+        ).toEqual({ persist: false, connectTimeoutMs: 9000 });
+    });
+
+    it("keeps defaults for keys the override does not set", () => {
+        expect(
+            mergePackageConfig(base, JSON.stringify({ connectTimeoutMs: 1 })),
+        ).toMatchObject({ persist: false });
+    });
+
+    it("throws on malformed JSON", () => {
+        expect(() => mergePackageConfig(base, "{not json")).toThrow();
+    });
+
+    it("throws when the override is not a JSON object", () => {
+        expect(() => mergePackageConfig(base, "5")).toThrow(
+            /must be a JSON object/,
+        );
+        expect(() => mergePackageConfig(base, "[1,2]")).toThrow(
+            /must be a JSON object/,
+        );
     });
 });

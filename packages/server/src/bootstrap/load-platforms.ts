@@ -16,6 +16,7 @@ import {
     type PlatformSession,
     validatePlatformSchema,
 } from "@sockethub/schemas";
+import { errorMessage } from "@sockethub/util/error";
 import type { Schema } from "ajv";
 
 const log = createLogger("server:bootstrap:platforms");
@@ -43,6 +44,7 @@ export type PlatformSchemaRegistry = {
     schemaVersion: string;
     credentials?: Schema | boolean;
     messages?: Schema | boolean;
+    responses?: Schema | boolean;
 };
 
 const dummySession: PlatformSession = {
@@ -83,9 +85,9 @@ function resolveModulePath(platformName: string): string | undefined {
         return dirname(filePath);
     } catch (err) {
         log.warn(
-            `failed to resolve module path for ${platformName}: ${
-                err instanceof Error ? err.message : String(err)
-            }`,
+            `failed to resolve module path for ${platformName}: ${errorMessage(
+                err,
+            )}`,
         );
         return undefined;
     }
@@ -169,6 +171,8 @@ export default async function loadPlatforms(
                 schemaVersion: p.schema.schemaVersion,
                 credentials: p.schema.credentials || {},
                 messages: p.schema.messages || {},
+                // Server-side only (not sent to clients): outbound validation.
+                responses: p.schema.responses,
             },
             version: p.schema.version,
             contextUrl: p.schema.contextUrl,

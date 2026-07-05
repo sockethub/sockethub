@@ -3,136 +3,200 @@ name: Test NPM Package
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Sockethub version to test (e.g., 5.0.0-alpha.6, latest)'
-        required: true
-        default: 'latest'
+      ref:
+        description: Git ref to checkout (branch, tag, or SHA). Empty = the branch you run this workflow from.
+        required: false
+        default: ''
       runtime:
-        description: 'Runtime to test (bun, node, both)'
+        description: Deployment runtime to test (node)
         required: false
-        default: 'both'
+        default: node
       suite:
-        description: 'Test suite to run (all, redis, process, browser)'
+        description: Test suite to run (all, browser)
         required: false
-        default: 'all'
-      local:
-        description: 'Build and pack from source instead of installing from npm'
-        required: false
-        type: boolean
-        default: false
+        default: all
   workflow_call:
     inputs:
-      version:
-        description: 'Sockethub version to test (e.g., 5.0.0-alpha.6, latest)'
+      ref:
+        description: Git ref to checkout. Empty = caller ref.
         required: false
         type: string
-        default: 'latest'
+        default: ''
       runtime:
-        description: 'Runtime to test (bun, node, both)'
+        description: Deployment runtime to test (node)
         required: false
         type: string
-        default: 'both'
+        default: node
       suite:
-        description: 'Test suite to run (all, redis, process, browser)'
+        description: Test suite to run (all, browser)
         required: false
         type: string
-        default: 'all'
-      local:
-        description: 'Build and pack from source instead of installing from npm'
-        required: false
-        type: boolean
-        default: false
-  schedule:
-    - cron: '0 2 * * *'  # Nightly at 2am UTC
+        default: all
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  LOCAL_REGISTRY_URL: http://127.0.0.1:4873
 
 jobs:
-  test-npm-version:
+  test-packaged-current:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        runtime: [bun, node]
-      fail-fast: false  # Continue testing other runtimes even if one fails
+        # node is the only supported deployment runtime; releases are validated
+        # against node. bun remains a dev/build tool (used in the build step
+        # below), not a deployment target.
+        runtime: [node]
+      fail-fast: false
 
     steps:
+      # node is the only supported deployment runtime. An unrecognized value
+      # must fail the job immediately, not skip steps: a caller passing a
+      # stale value (e.g. 'both') would otherwise produce a green job that
+      # tested nothing.
+      - name: Validate runtime
+        env:
+          INPUT_RUNTIME: ${{ inputs.runtime || github.event.inputs.runtime || 'node' }}
+        run: |
+          if [ "$INPUT_RUNTIME" != "node" ]; then
+            echo "Error: unsupported runtime '$INPUT_RUNTIME' (supported: node)" >&2
+            exit 1
+          fi
+
+      - name: Normalize ref
+        id: ref
+        env:
+          INPUT_REF: ${{ inputs.ref || github.event.inputs.ref || github.ref }}
+        run: |
+          # Accept a bare version (e.g. 5.0.0-alpha.13) by mapping it to its
+          # release tag (v5.0.0-alpha.13).
+          REF="$INPUT_REF"
+          if [[ "$REF" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            REF="v$REF"
+          fi
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ steps.ref.outputs.ref }}
+          fetch-depth: 0
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2.0.1
+        uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2.0.1
         with:
           bun-version: latest
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
-      - name: Install dependencies (for test runner)
+      - name: Validate suite
+        env:
+          INPUT_SUITE: ${{ inputs.suite || github.event.inputs.suite || 'all' }}
+        run: |
+          if [[ ! "$INPUT_SUITE" =~ ^(all|browser)$ ]]; then
+            echo "Error: Invalid suite value" >&2
+            exit 1
+          fi
+
+      - name: Install dependencies
         run: bun install
 
-      - name: Build packages (if local mode)
-        if: github.event.inputs.local == 'true'
+      - name: Build packages
         run: bun run build
 
-      - name: Determine version
-        id: version
+      - name: Start local npm registry
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "version=latest" >> $GITHUB_OUTPUT
-          else
-            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          REGISTRY_DIR="$RUNNER_TEMP/verdaccio"
+          mkdir -p "$REGISTRY_DIR"
+          cp scripts/test-installed-version/verdaccio.yaml "$REGISTRY_DIR/config.yaml"
+
+          bunx verdaccio \
+            --config "$REGISTRY_DIR/config.yaml" \
+            --listen 127.0.0.1:4873 \
+            > "$REGISTRY_DIR/verdaccio.log" 2>&1 &
+          echo "$!" > "$REGISTRY_DIR/pid"
+
+          for attempt in {1..30}; do
+            if curl -fsS "$LOCAL_REGISTRY_URL/-/ping" >/dev/null; then
+              echo "Local registry is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "Local registry failed to start" >&2
+          cat "$REGISTRY_DIR/verdaccio.log" >&2
+          exit 1
+
+      - name: Publish packages to local registry
+        env:
+          NPM_CONFIG_REGISTRY: ${{ env.LOCAL_REGISTRY_URL }}
+        run: |
+          bunx lerna publish from-package \
+            --registry "$LOCAL_REGISTRY_URL" \
+            --dist-tag local \
+            --yes \
+            --no-git-tag-version \
+            --no-push \
+            --ignore-scripts
+
+      - name: Resolve package version
+        id: package
+        run: |
+          VERSION=$(node -p "require('./packages/sockethub/package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Testing packaged sockethub@$VERSION"
+
+      # The harness spawns sockethub with `...process.env`, so this reaches the
+      # server even when an older checked-out ref's harness predates the
+      # explicit SOCKETHUB_CONFIG override (needed for tags v5.0.0-alpha.13 and
+      # earlier, whose SSRF guard otherwise blocks loopback fixtures). Only set
+      # when the ref ships the config: the server hard-fails on an explicit
+      # SOCKETHUB_CONFIG path that does not exist.
+      - name: Point sockethub at the CI config when the ref ships it
+        run: |
+          CONFIG="$GITHUB_WORKSPACE/integration/sockethub.ci.config.json"
+          if [ -f "$CONFIG" ]; then
+            echo "SOCKETHUB_CONFIG=$CONFIG" >> "$GITHUB_ENV"
           fi
 
-      - name: Determine suite
-        id: suite
+      - name: Run tests against locally published package
+        env:
+          MATRIX_RUNTIME: ${{ matrix.runtime }}
+          SETUP_SUITE: ${{ inputs.suite || github.event.inputs.suite || 'all' }}
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "suite=all" >> $GITHUB_OUTPUT
-          else
-            echo "suite=${{ github.event.inputs.suite || 'all' }}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Determine runtime
-        id: runtime
-        run: |
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "run_test=true" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event.inputs.runtime }}" = "both" ]; then
-            echo "run_test=true" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event.inputs.runtime }}" = "${{ matrix.runtime }}" ]; then
-            echo "run_test=true" >> $GITHUB_OUTPUT
-          else
-            echo "run_test=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run tests against installed version
-        if: steps.runtime.outputs.run_test == 'true'
-        run: |
-          if [ "${{ github.event.inputs.local }}" = "true" ]; then
-            bun run scripts/test-installed-version.js \
-              --local \
-              --runtime ${{ matrix.runtime }} \
-              --suite ${{ steps.suite.outputs.suite }}
-          else
-            bun run scripts/test-installed-version.js \
-              ${{ steps.version.outputs.version }} \
-              --runtime ${{ matrix.runtime }} \
-              --suite ${{ steps.suite.outputs.suite }}
-          fi
+          bun run scripts/test-installed-version.js \
+            "${{ steps.package.outputs.version }}" \
+            --registry "$LOCAL_REGISTRY_URL" \
+            --runtime "$MATRIX_RUNTIME" \
+            --suite "$SETUP_SUITE"
 
       - name: Upload test results
-        if: always() && steps.runtime.outputs.run_test == 'true'
-        uses: actions/upload-artifact@v4
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: test-results-${{ steps.version.outputs.version }}-${{ matrix.runtime }}
+          name: test-results-local-${{ matrix.runtime }}
           path: test-results/
           retention-days: 30
 
       - name: Report status
-        if: always() && steps.runtime.outputs.run_test == 'true'
+        if: always()
         run: |
           if [ -f test-results/*/summary.json ]; then
             echo "Test Results Summary:"
             cat test-results/*/summary.json
+          fi
+
+      - name: Stop local npm registry
+        if: always()
+        run: |
+          PID_FILE="$RUNNER_TEMP/verdaccio/pid"
+          if [ -f "$PID_FILE" ]; then
+            kill "$(cat "$PID_FILE")" 2>/dev/null || true
           fi

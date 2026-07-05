@@ -46,7 +46,7 @@ import Intro from "../components/Intro.svelte";
             <h2 class="text-xl font-semibold text-yellow-800 mb-2">How It Works</h2>
             <ol class="text-yellow-700 space-y-2 text-sm">
                 <li><span class="font-semibold">1.</span> Your web app connects to Sockethub via WebSocket</li>
-                <li><span class="font-semibold">2.</span> You send ActivityStreams messages describing what you want to do</li>
+                <li><span class="font-semibold">2.</span> You define an actor and send ActivityStreams messages (<code>credentials</code>, <code>connect</code>, <code>join</code>, …) with full actor objects</li>
                 <li><span class="font-semibold">3.</span> Sockethub routes messages to the appropriate platform</li>
                 <li><span class="font-semibold">4.</span> Platform handles protocol-specific communication</li>
                 <li><span class="font-semibold">5.</span> Results are sent back to your web app as ActivityStreams</li>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Complete Feed</title>
+    <link>https://example.com/feed</link>
+    <description>A feed with standard linked entries</description>
+    <item>
+      <title>Linked Article</title>
+      <description>Article body with enough content to classify as an article type when length exceeds the note threshold for classification purposes in the feeds platform.</description>
+      <link>https://example.com/articles/linked</link>
+      <guid isPermaLink="true">https://example.com/articles/linked</guid>
+      <pubDate>Thu, 01 Jan 2024 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Short Note</title>
+      <description>Brief note</description>
+      <link>https://example.com/notes/short</link>
+      <pubDate>Fri, 02 Jan 2024 00:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

@@ -1,4 +1,3 @@
-import type { ASManager } from "@sockethub/activity-streams";
 import { expect } from "chai";
 import EventEmitter from "eventemitter3";
 import { createSandbox, restore } from "sinon";
@@ -13,14 +12,25 @@ const TEST_REGISTRY = {
     },
     platforms: [
         {
-            id: "xmpp",
+            id: "test-xmpp",
             version: "1.0.0",
-            contextUrl: "https://example.com/context/platform/xmpp/v9.jsonld",
+            contextUrl:
+                "https://example.com/context/platform/test-xmpp/v9.jsonld",
             contextVersion: "9",
             schemaVersion: "9",
             types: ["connect", "send", "join", "leave", "disconnect"],
             schemas: {
-                messages: {},
+                messages: {
+                    properties: {
+                        object: {
+                            properties: {
+                                type: { enum: ["message"] },
+                                "xmpp:replace": { type: "object" },
+                                "xmpp:stanza-id": { type: "string" },
+                            },
+                        },
+                    },
+                },
                 credentials: {},
             },
         },
@@ -41,57 +51,27 @@ const TEST_REGISTRY = {
 
 describe("SockethubClient bad initialization", () => {
     it("no socket.io instance", () => {
-        class TestSockethubClient extends SockethubClient {
-            initActivityStreams() {
-                this.ActivityStreams = {} as ASManager;
-            }
-        }
         expect(() => {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            new TestSockethubClient();
+            new SockethubClient();
         }).to.throw("SockethubClient requires a socket.io instance");
     });
 });
 
 describe("SockethubClient", () => {
-    let asInstance: any, socket: any, sc: any, sandbox: any;
+    let socket: any;
+    let sc: any;
+    let sandbox: any;
 
     beforeEach(() => {
-        sandbox = sandbox = createSandbox();
+        sandbox = createSandbox();
         socket = new EventEmitter();
         socket.connected = false;
         socket.__instance = "socketio"; // used to uniquely identify the object we're passing in
         sandbox.spy(socket, "on");
         sandbox.spy(socket, "emit");
-        asInstance = new EventEmitter();
-        sandbox.spy(asInstance, "on");
-        sandbox.spy(asInstance, "emit");
-        asInstance.Stream = sandbox.stub().callsFake((stream: any) => {
-            if (!stream || typeof stream !== "object") {
-                return stream;
-            }
-            const next = { ...stream };
-            if (typeof next.actor === "string") {
-                next.actor = { id: next.actor };
-            }
-            if (typeof next.target === "string") {
-                next.target = { id: next.target };
-            }
-            if (typeof next.object === "string") {
-                next.object = { content: next.object };
-            }
-            return next;
-        });
-        asInstance.Object = {
-            create: sandbox.stub(),
-        };
-        class TestSockethubClient extends SockethubClient {
-            initActivityStreams() {
-                this.ActivityStreams = asInstance as ASManager;
-            }
-        }
-        sc = new TestSockethubClient(socket);
+        sc = new SockethubClient(socket);
         sandbox.spy(sc.socket, "on");
         sandbox.spy(sc.socket, "emit");
         sandbox.spy(sc.socket, "_emit");
@@ -99,12 +79,6 @@ describe("SockethubClient", () => {
 
     afterEach(() => {
         restore();
-    });
-
-    it("contains the ActivityStreams property", () => {
-        expect(asInstance).to.be.eql(sc.ActivityStreams);
-        expect(typeof asInstance.Stream).to.equal("function");
-        expect(typeof sc.ActivityStreams.Object.create).to.equal("function");
     });
 
     it("contains the socket property", () => {
@@ -115,15 +89,8 @@ describe("SockethubClient", () => {
         expect(sc.socket.connected).to.be.false;
     });
 
-    it("registers listeners for ActivityStream events", () => {
-        expect(asInstance.on.callCount).to.equal(1);
-        expect(asInstance.on.calledWithMatch("activity-object-create")).to.be
-            .true;
-    });
-
     it("registers a listeners for socket events", () => {
-        expect(socket.on.callCount).to.equal(6);
-        expect(socket.on.calledWithMatch("activity-object")).to.be.true;
+        expect(socket.on.callCount).to.equal(5);
         expect(socket.on.calledWithMatch("connect")).to.be.true;
         expect(socket.on.calledWithMatch("connect_error")).to.be.true;
         expect(socket.on.calledWithMatch("disconnect")).to.be.true;
@@ -142,8 +109,9 @@ describe("SockethubClient", () => {
             socket.io = {};
             socket.connected = true;
             sc.socket.connected = true;
-            socket.on("schemas", (ack: any) => {
-                if (typeof ack === "function") {
+            socket.on("schemas", (...args: any[]) => {
+                const ack = args.find((a) => typeof a === "function");
+                if (ack) {
                     ack(TEST_REGISTRY);
                 }
             });
@@ -152,11 +120,11 @@ describe("SockethubClient", () => {
                 as: "https://example.com/as2",
                 sockethub: "https://example.com/sh",
             });
-            expect(registry.platforms?.[0]?.id).to.equal("xmpp");
+            expect(registry.platforms?.[0]?.id).to.equal("test-xmpp");
         });
 
         it("throws before schema registry is loaded", () => {
-            expect(() => sc.contextFor("xmpp")).to.throw(
+            expect(() => sc.contextFor("test-xmpp")).to.throw(
                 "Schema registry not loaded yet",
             );
         });
@@ -170,10 +138,10 @@ describe("SockethubClient", () => {
         it("uses server-provided contexts and platform context URL", () => {
             socket.emit("schemas", TEST_REGISTRY);
 
-            expect(sc.contextFor("xmpp")).to.eql([
+            expect(sc.contextFor("test-xmpp")).to.eql([
                 "https://example.com/as2",
                 "https://example.com/sh",
-                "https://example.com/context/platform/xmpp/v9.jsonld",
+                "https://example.com/context/platform/test-xmpp/v9.jsonld",
             ]);
         });
 
@@ -191,8 +159,9 @@ describe("SockethubClient", () => {
             socket.io = {};
             socket.connected = true;
             sc.socket.connected = true;
-            socket.on("schemas", (ack: any) => {
-                if (typeof ack === "function") {
+            socket.on("schemas", (...args: any[]) => {
+                const ack = args.find((a) => typeof a === "function");
+                if (ack) {
                     ack(TEST_REGISTRY);
                 }
             });
@@ -210,6 +179,56 @@ describe("SockethubClient", () => {
             expect(info.state).to.equal("ready");
         });
 
+        it("echoes the fingerprint and reuses the registry on an 'unchanged' reply (#1117)", () => {
+            socket.io = {};
+            socket.connected = true;
+            sc.socket.connected = true;
+            const FP = "deadbeefdeadbeef";
+            const fingerprinted = { ...TEST_REGISTRY, fingerprint: FP };
+            const echoed: unknown[] = [];
+            socket.on("schemas", (...args: any[]) => {
+                const ack = args.find((a) => typeof a === "function");
+                const clientFp = args.find((a) => typeof a === "string");
+                echoed.push(clientFp);
+                if (!ack) {
+                    return;
+                }
+                ack(
+                    clientFp === FP
+                        ? { fingerprint: FP, unchanged: true }
+                        : fingerprinted,
+                );
+            });
+
+            // initial connect: no fingerprint echoed -> full registry sent
+            socket.emit("connect");
+            expect(sc.isSchemasReady()).to.equal(true);
+            expect(echoed[0]).to.equal(undefined);
+            const ctxBefore = sc.contextFor("test-xmpp");
+
+            // reconnect: client echoes the stored fingerprint and the server
+            // replies "unchanged"; the cached registry must survive.
+            socket.emit("disconnect");
+            socket.emit("connect");
+            expect(echoed).to.contain(FP);
+            expect(sc.isSchemasReady()).to.equal(true);
+            expect(sc.contextFor("test-xmpp")).to.eql(ctxBefore);
+        });
+
+        it("ignores an 'unchanged' reply when no registry is cached (#1117)", () => {
+            // A malformed or premature "unchanged" reply must not fast-path the
+            // client to ready with no validators registered.
+            expect(sc.isSchemasReady()).to.equal(false);
+            socket.emit("schemas", {
+                fingerprint: "deadbeefdeadbeef",
+                unchanged: true,
+            });
+            expect(sc.isSchemasReady()).to.equal(false);
+            expect(() => sc.contextFor("test-xmpp")).to.throw(
+                "Schema registry not loaded yet",
+            );
+        });
+
         it("ready() rejects on timeout when schemas never arrive", async () => {
             const timeoutSocket = new EventEmitter();
             timeoutSocket.connected = true;
@@ -218,12 +237,7 @@ describe("SockethubClient", () => {
             sandbox.spy(timeoutSocket, "on");
             sandbox.spy(timeoutSocket, "emit");
 
-            class TimeoutClient extends SockethubClient {
-                initActivityStreams() {
-                    this.ActivityStreams = asInstance as ASManager;
-                }
-            }
-            const client = new TimeoutClient(timeoutSocket);
+            const client = new SockethubClient(timeoutSocket);
             client.socket.connected = true;
             try {
                 await client.ready(50);
@@ -257,12 +271,7 @@ describe("SockethubClient", () => {
             sandbox.spy(timeoutSocket, "emit");
             const warnStub = sandbox.stub(console, "warn");
 
-            class TimeoutSockethubClient extends SockethubClient {
-                initActivityStreams() {
-                    this.ActivityStreams = asInstance as ASManager;
-                }
-            }
-            const timeoutClient = new TimeoutSockethubClient(timeoutSocket, {
+            const timeoutClient = new SockethubClient(timeoutSocket, {
                 initTimeoutMs: 10,
             });
             timeoutClient.socket.on("init_error", (err: any) => {
@@ -282,80 +291,12 @@ describe("SockethubClient", () => {
     });
 
     describe("event handling", () => {
-        it("activity-object", (done) => {
-            socket.emit("activity-object", { foo: "bar" });
-            setTimeout(() => {
-                sandbox.assert.calledWith(asInstance.Object.create, {
-                    foo: "bar",
-                });
-                done();
-            }, 0);
-        });
-
-        it("activity-object-create", (done) => {
-            sc.socket.connected = true;
-            sc._socket.connected = true;
-            socket.emit("schemas", TEST_REGISTRY);
-            asInstance.emit("activity-object-create", { foo: "bar" });
-            setTimeout(() => {
-                expect(socket.emit.callCount).to.be.greaterThanOrEqual(2);
-                expect(
-                    socket.emit.calledWithMatch("activity-object", {
-                        foo: "bar",
-                    }),
-                ).to.be.true;
-                done();
-            }, 0);
-        });
-
-        it("activity-object-create stores object only after successful ACK", (done) => {
-            sc.socket.connected = true;
-            sc._socket.connected = true;
-            socket.emit("schemas", TEST_REGISTRY);
-            // Intercept the emit to capture the ACK callback
-            socket.on("activity-object", (_data: any, ackCb: any) => {
-                // Simulate successful ACK (no error)
-                if (typeof ackCb === "function") {
-                    ackCb();
-                }
-            });
-            asInstance.emit("activity-object-create", {
-                id: "good-obj",
-                foo: "bar",
-            });
-            setTimeout(() => {
-                expect(sc.events["activity-object"].has("good-obj")).to.be.true;
-                done();
-            }, 0);
-        });
-
-        it("activity-object-create does not store object on ACK error", (done) => {
-            sc.socket.connected = true;
-            sc._socket.connected = true;
-            socket.emit("schemas", TEST_REGISTRY);
-            // Intercept the emit to capture the ACK callback
-            socket.on("activity-object", (_data: any, ackCb: any) => {
-                // Simulate error ACK
-                if (typeof ackCb === "function") {
-                    ackCb({ error: "rejected by server" });
-                }
-            });
-            asInstance.emit("activity-object-create", {
-                id: "bad-obj",
-                foo: "bar",
-            });
-            setTimeout(() => {
-                expect(sc.events["activity-object"].has("bad-obj")).to.be
-                    .false;
-                done();
-            }, 0);
-        });
-
         it("connect", (done) => {
             expect(sc.socket.connected).to.be.false;
             socket.io = {};
-            socket.on("schemas", (ack: any) => {
-                if (typeof ack === "function") {
+            socket.on("schemas", (...args: any[]) => {
+                const ack = args.find((a) => typeof a === "function");
+                if (ack) {
                     ack({
                         contexts: {
                             as: "https://example.com/as2",
@@ -406,7 +347,7 @@ describe("SockethubClient", () => {
                     sockethub: "https://example.com/sh",
                 });
                 expect(registry.platforms).to.be.an("array");
-                expect(registry.platforms[0]?.id).to.equal("xmpp");
+                expect(registry.platforms[0]?.id).to.equal("test-xmpp");
                 done();
             });
             socket.emit("schemas", {
@@ -417,10 +358,10 @@ describe("SockethubClient", () => {
                 },
                 platforms: [
                     {
-                        id: "xmpp",
+                        id: "test-xmpp",
                         version: "1.0.0",
                         contextUrl:
-                            "https://example.com/context/platform/xmpp/v9.jsonld",
+                            "https://example.com/context/platform/test-xmpp/v9.jsonld",
                         contextVersion: "9",
                         schemaVersion: "9",
                         types: ["connect"],
@@ -582,20 +523,6 @@ describe("SockethubClient", () => {
             }, 0);
         });
 
-        it("activity-object", (done) => {
-            sc.socket.connected = true;
-            const callback = sandbox.spy();
-            socket.once("activity-object", (data: any, cb: any) => {
-                expect(data).to.be.eql({ actor: "bar" });
-                // Callback is wrapped to defer persistence until ACK
-                expect(typeof cb).to.equal("function");
-                cb(); // simulate successful ACK
-                expect(callback.calledOnce).to.be.true;
-                done();
-            });
-            sc.socket.emit("activity-object", { actor: "bar" }, callback);
-        });
-
         it("credentials", (done) => {
             sc.socket.connected = true;
             const callback = () => {};
@@ -617,12 +544,7 @@ describe("SockethubClient", () => {
             sandbox.spy(preReadySocket, "on");
             sandbox.spy(preReadySocket, "emit");
 
-            class TestSockethubClient extends SockethubClient {
-                initActivityStreams() {
-                    this.ActivityStreams = asInstance as ASManager;
-                }
-            }
-            const preReadyClient = new TestSockethubClient(preReadySocket);
+            const preReadyClient = new SockethubClient(preReadySocket);
             sandbox.spy(preReadyClient.socket, "_emit");
             sandbox.stub(preReadyClient, "validateActivity").returns("");
 
@@ -655,89 +577,22 @@ describe("SockethubClient", () => {
     });
 
     describe("replay functionality", () => {
-        it("replays map values, not [key, val] pairs", (done) => {
-            // Directly populate the activity-object map to test replay
-            const testObj = { id: "test1", type: "like", content: "test" };
-            sc.events["activity-object"].set("test1", testObj);
-
-            // Reset socket spy and trigger replay
-            socket.emit.resetHistory();
-            socket.emit("connect");
-            socket.emit("schemas", TEST_REGISTRY);
-
-            setTimeout(() => {
-                const replayCalls = socket.emit.getCalls().filter(call => call.args[0] === "activity-object");
-
-                expect(replayCalls).to.have.length(1);
-                expect(replayCalls[0].args[1]).to.deep.equal(testObj);
-                expect(Array.isArray(replayCalls[0].args[1])).to.be.false;
-
-                done();
-            }, 0);
-        });
-
-        it("does not call ActivityStreams.Stream() on activity-objects", (done) => {
-            // Store an activity-object directly
-            const activityObject = {
-                id: "test-actor@example.com",
-                type: "person",
-                name: "Test Actor",
-            };
-            sc.events["activity-object"].set(activityObject.id, activityObject);
-
-            // Reset spies
-            socket.emit.resetHistory();
-            asInstance.Stream.resetHistory();
-
-            // Trigger reconnect which calls replay
-            socket.emit("connect");
-            socket.emit("schemas", TEST_REGISTRY);
-
-            setTimeout(() => {
-                // Stream() should NOT be called for activity-objects
-                const streamCalls = asInstance.Stream.getCalls();
-                const activityObjectStreamCalls = streamCalls.filter(
-                    (call: any) => call.args[0]?.id === "test-actor@example.com",
-                );
-                expect(activityObjectStreamCalls).to.have.length(0);
-
-                // But the activity-object should still be emitted
-                const replayCalls = socket.emit
-                    .getCalls()
-                    .filter((call: any) => call.args[0] === "activity-object");
-                expect(replayCalls).to.have.length(1);
-                expect(replayCalls[0].args[1]).to.deep.equal(activityObject);
-
-                done();
-            }, 0);
-        });
-
-        it("calls ActivityStreams.Stream() on credentials during replay", (done) => {
-            // Store credentials
+        it("replays credentials through stream processing", (done) => {
             const credentials = {
                 actor: { id: "user@example.com", type: "person" },
                 object: { type: "credentials", password: "secret" },
             };
             sc.events.credentials.set(credentials.actor.id, credentials);
 
-            // Reset spies
             socket.emit.resetHistory();
-            asInstance.Stream.resetHistory();
-
-            // Trigger reconnect
             socket.emit("connect");
             socket.emit("schemas", TEST_REGISTRY);
 
             setTimeout(() => {
-                // Stream() SHOULD be called for credentials
-                expect(asInstance.Stream.called).to.be.true;
-
-                // Credentials should be emitted
                 const replayCalls = socket.emit
                     .getCalls()
                     .filter((call: any) => call.args[0] === "credentials");
                 expect(replayCalls).to.have.length(1);
-
                 done();
             }, 0);
         });

@@ -1,6 +1,14 @@
 name: Integration
 on:
   pull_request:
+  # Nightly run on master catches environment drift (unpinned docker images,
+  # bun latest, runner updates) that no PR trigger would surface.
+  schedule:
+    - cron: '0 3 * * *'  # 3am UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
 
@@ -11,6 +19,8 @@ jobs:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false
       - name: Use Bun latest
         uses: oven-sh/setup-bun@v2.0.1
         with:
@@ -34,6 +44,8 @@ jobs:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false
       - name: Use Bun latest
         uses: oven-sh/setup-bun@v2.0.1
         with:
@@ -75,6 +87,8 @@ jobs:
       - run: sudo chown -R $USER:$USER ${{ github.workspace }}
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false
       - name: Use Bun latest
         uses: oven-sh/setup-bun@v2.0.1
         with:
@@ -83,6 +97,9 @@ jobs:
       - run: bun run build
 
       - run: docker compose build --build-arg bun_version=latest --build-arg LOG_LEVEL=debug
+
+      - name: Pre-pull external images (with retry)
+        run: bash scripts/docker-compose-retry.sh pull prosody ergo mock-oauth redis
 
       - run: bun run docker:start
       - run: sleep 5
@@ -109,6 +126,7 @@ jobs:
 
       - name: Sockethub Logs - Basic
         if: always()
+        continue-on-error: true
         run: docker logs sockethub-sockethub-1
 
       - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
@@ -118,6 +136,7 @@ jobs:
 
       - name: Sockethub Logs - Multiclient
         if: always()
+        continue-on-error: true
         run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
 
       - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
@@ -127,6 +146,7 @@ jobs:
 
       - name: Sockethub Logs - Reconnection
         if: always()
+        continue-on-error: true
         run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
 
       - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
@@ -136,6 +156,7 @@ jobs:
 
       - name: Sockethub Logs - Resource Clash
         if: always()
+        continue-on-error: true
         run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
 
       - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
@@ -145,10 +166,12 @@ jobs:
 
       - name: Sockethub Logs - IRC Basic
         if: always()
+        continue-on-error: true
         run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
 
       - name: Ergo Logs - IRC Basic
         if: always()
+        continue-on-error: true
         run: docker logs --since "${{ env.START_TIME }}" sockethub-ergo-1
 
       - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
@@ -158,10 +181,12 @@ jobs:
 
       - name: Sockethub Logs - IRC Multiclient
         if: always()
+        continue-on-error: true
         run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
 
       - name: Ergo Logs - IRC Multiclient
         if: always()
+        continue-on-error: true
         run: docker logs --since "${{ env.START_TIME }}" sockethub-ergo-1
 
       - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
@@ -171,10 +196,12 @@ jobs:
 
       - name: Sockethub Logs - IRC Reconnection
         if: always()
+        continue-on-error: true
         run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
 
       - name: Ergo Logs - IRC Reconnection
         if: always()
+        continue-on-error: true
         run: docker logs --since "${{ env.START_TIME }}" sockethub-ergo-1
 
       - run: echo "START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
@@ -184,8 +211,54 @@ jobs:
 
       - name: Sockethub Logs - IRC Nick Clash
         if: always()
+        continue-on-error: true
         run: docker logs --since "${{ env.START_TIME }}" sockethub-sockethub-1
 
       - name: Ergo Logs - IRC Nick Clash
         if: always()
+        continue-on-error: true
         run: docker logs --since "${{ env.START_TIME }}" sockethub-ergo-1
+
+  contract:
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: sudo chown -R $USER:$USER ${{ github.workspace }}
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+      - name: Use Bun latest
+        uses: oven-sh/setup-bun@v2.0.1
+        with:
+          bun-version: latest
+      - run: bun install
+      - run: bun run build
+
+      - run: docker compose build --build-arg bun_version=latest --build-arg LOG_LEVEL=debug
+
+      # Contract tests only exercise the feeds, dummy, and metadata platforms,
+      # which need Sockethub + Redis (sockethub depends_on redis) — no XMPP/IRC.
+      # Running in a dedicated job keeps a flaky XMPP/IRC delivery race in the
+      # browser job from blocking unrelated contract changes, and vice versa.
+      - run: docker compose up sockethub -d
+      - run: sleep 5
+
+      - name: Verify Sockethub is listening externally
+        run: nc -zv localhost 10550
+
+      - name: Verify Redis is listening
+        run: nc -zv localhost 6379
+
+      - name: Verify Sockethub serves client files
+        run: |
+          curl -f http://localhost:10550/socket.io.js > /dev/null
+          curl -f http://localhost:10550/sockethub-client.js > /dev/null
+
+      - name: Platform Response Contract Tests
+        run: bun run integration:browser:contract
+
+      - name: Sockethub Logs - Contract
+        if: always()
+        continue-on-error: true
+        run: docker logs sockethub-sockethub-1

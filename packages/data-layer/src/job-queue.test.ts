@@ -1,7 +1,11 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
 
-import type { Logger } from "@sockethub/schemas";
+import {
+    addPlatformContext,
+    buildCanonicalContext,
+    type Logger,
+} from "@sockethub/schemas";
 
 import { JobQueue } from "./index";
 
@@ -11,6 +15,13 @@ const mockLogger: Logger = {
     info: () => {},
     debug: () => {},
 };
+
+const TEST_PLATFORM_ID = "test-platform";
+const TEST_PLATFORM_CONTEXT_URL =
+    "https://sockethub.org/ns/context/platform/test-platform/v1.jsonld";
+const TEST_CONTEXT = buildCanonicalContext(TEST_PLATFORM_CONTEXT_URL);
+
+addPlatformContext(TEST_PLATFORM_ID, TEST_PLATFORM_CONTEXT_URL);
 
 describe("JobQueue", () => {
     let MockBull, jobQueue, cryptoMocks, sandbox;
@@ -108,31 +119,45 @@ describe("JobQueue", () => {
         it("returns expected job format", () => {
             cryptoMocks.encrypt.returns("an encrypted message");
             const job = jobQueue.createJob("a socket id", {
-                platform: "some context",
+                "@context": TEST_CONTEXT,
                 id: "an identifier",
             });
             expect(job).to.eql({
-                title: "some context-an identifier",
+                title: `${TEST_PLATFORM_ID}-0`,
                 msg: "an encrypted message",
                 sessionId: "a socket id",
             });
         });
 
-        it("uses counter when no id provided", () => {
+        it("uses counter even when an id is provided (ids may repeat)", () => {
             cryptoMocks.encrypt.returns("an encrypted message");
             let job = jobQueue.createJob("a socket id", {
-                platform: "some context",
+                "@context": TEST_CONTEXT,
+                id: "a reused identifier",
             });
             expect(job).to.eql({
-                title: "some context-0",
+                title: `${TEST_PLATFORM_ID}-0`,
                 msg: "an encrypted message",
                 sessionId: "a socket id",
             });
             job = jobQueue.createJob("a socket id", {
-                platform: "some context",
+                "@context": TEST_CONTEXT,
+                id: "a reused identifier",
             });
             expect(job).to.eql({
-                title: "some context-1",
+                title: `${TEST_PLATFORM_ID}-1`,
+                msg: "an encrypted message",
+                sessionId: "a socket id",
+            });
+        });
+
+        it("falls back to `unknown` when no platform context is registered", () => {
+            cryptoMocks.encrypt.returns("an encrypted message");
+            const job = jobQueue.createJob("a socket id", {
+                id: "an identifier",
+            });
+            expect(job).to.eql({
+                title: "unknown-0",
                 msg: "an encrypted message",
                 sessionId: "a socket id",
             });
@@ -195,20 +220,21 @@ describe("JobQueue", () => {
         it("stores encrypted job", async () => {
             cryptoMocks.encrypt.returns("encrypted foo");
             jobQueue.queue.isPaused.returns(false);
+            const title = `${TEST_PLATFORM_ID}-0`;
             const resultJob = {
-                title: "a platform-an identifier",
+                title,
                 sessionId: "a socket id",
                 msg: "encrypted foo",
             };
             const res = await jobQueue.add("a socket id", {
-                platform: "a platform",
+                "@context": TEST_CONTEXT,
                 id: "an identifier",
             });
             sinon.assert.calledOnce(jobQueue.queue.isPaused);
             sinon.assert.notCalled(jobQueue.queue.emit);
             sinon.assert.calledOnceWithExactly(
                 jobQueue.queue.add,
-                "a platform-an identifier",
+                title,
                 resultJob,
                 {
                     removeOnComplete: { age: 300 },
@@ -222,7 +248,7 @@ describe("JobQueue", () => {
             jobQueue.queue.isPaused.returns(true);
             try {
                 await jobQueue.add("a socket id", {
-                    platform: "a platform",
+                    "@context": TEST_CONTEXT,
                     id: "an identifier",
                 });
             } catch (err) {
@@ -262,6 +288,28 @@ describe("JobQueue", () => {
             sinon.assert.notCalled(jobQueue.queue.pause);
             sinon.assert.calledOnce(jobQueue.queue.removeAllListeners);
             sinon.assert.calledOnce(jobQueue.queue.obliterate);
+        });
+    });
+
+    describe("disconnect", () => {
+        it("closes connections without pausing or obliterating the queue", async () => {
+            await jobQueue.disconnect();
+            sinon.assert.called(jobQueue.queue.removeAllListeners);
+            sinon.assert.called(jobQueue.queue.close);
+            sinon.assert.called(jobQueue.events.close);
+            sinon.assert.notCalled(jobQueue.queue.pause);
+            sinon.assert.notCalled(jobQueue.queue.obliterate);
+        });
+
+        it("propagates errors from the underlying connection close", async () => {
+            jobQueue.queue.close.rejects(new Error("close failed"));
+            let err: Error | undefined;
+            try {
+                await jobQueue.disconnect();
+            } catch (e) {
+                err = e as Error;
+            }
+            expect(err?.message).to.equal("close failed");
         });
     });
 

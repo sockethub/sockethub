@@ -3,17 +3,10 @@ import {
     SOCKETHUB_BASE_CONTEXT_URL,
 } from "../context.js";
 import {
-    ObjectTypesList,
     ObjectTypesSchema,
     validActorRefs,
     validTargetRefs,
 } from "../helpers/objects.js";
-
-const validObjectRefs = [];
-
-for (const type of ObjectTypesList) {
-    validObjectRefs.push({ $ref: `#/definitions/type/${type}` });
-}
 
 const contextSchema = {
     type: "array",
@@ -45,6 +38,10 @@ export const ActivityStreamSchema = {
 
     type: "object",
     required: ["@context", "type", "actor"],
+    // Reject unknown top-level message properties. Inbound messages carry only
+    // the properties below; `error`/`sessionSecret` are added server-side after
+    // validation, so they never reach this schema.
+    additionalProperties: false,
     properties: {
         "@context": contextSchema,
         id: {
@@ -59,9 +56,11 @@ export const ActivityStreamSchema = {
             type: "object",
             oneOf: validTargetRefs,
         },
+        // Object shape is validated per-platform by each platform's `messages`
+        // (inbound) and `responses` (outbound) schemas, which own their object
+        // vocabulary. The base envelope only requires it to be an object.
         object: {
             type: "object",
-            oneOf: validObjectRefs,
         },
         published: {
             type: "string",

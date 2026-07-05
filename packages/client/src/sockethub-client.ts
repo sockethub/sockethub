@@ -1,12 +1,8 @@
-import { ASFactory, type ASManager } from "@sockethub/activity-streams";
-import type {
-    ActivityObject,
-    ActivityStream,
-    BaseActivityObject,
-} from "@sockethub/schemas";
+import type { ActivityStream } from "@sockethub/schemas";
 import {
     addPlatformContext,
     addPlatformSchema,
+    normalizeActivityStream,
     validateActivityStream,
     validateCredentials,
 } from "@sockethub/schemas";
@@ -15,13 +11,11 @@ import type { Socket } from "socket.io-client";
 
 export interface EventMapping {
     credentials: Map<string, ActivityStream>;
-    "activity-object": Map<string, BaseActivityObject>;
     connect: Map<string, ActivityStream>;
     join: Map<string, ActivityStream>;
 }
 
 type ReplayEventMap = {
-    "activity-object": BaseActivityObject;
     credentials: ActivityStream;
     message: ActivityStream;
 };
@@ -89,6 +83,13 @@ export interface PlatformRegistryEntry {
 
 export interface PlatformRegistryPayload {
     version?: string;
+    // Server-computed content fingerprint of the registry. The client echoes
+    // this on re-request so the server can reply "unchanged" instead of
+    // re-sending the full schema set (#1117).
+    fingerprint?: string;
+    // Set by the server when the echoed fingerprint matches: the registry is
+    // identical to what the client already holds, so no platforms are included.
+    unchanged?: boolean;
     contexts?: {
         as?: string;
         sockethub?: string;
@@ -195,12 +196,10 @@ export default class SockethubClient {
      */
     private events: EventMapping = {
         credentials: new Map(),
-        "activity-object": new Map(),
         connect: new Map(),
         join: new Map(),
     };
     private _socket: Socket;
-    public ActivityStreams!: ASManager;
     public socket!: CustomEmitter;
     public debug = true;
     private readonly options: Required<SockethubClientOptions>;
@@ -234,31 +233,6 @@ export default class SockethubClient {
 
         this.socket = this.createPublicEmitter();
         this.registerSocketIOHandlers();
-        this.initActivityStreams();
-
-        this.ActivityStreams.on(
-            "activity-object-create",
-            (obj: ActivityObject) => {
-                this.socket.emit(
-                    "activity-object",
-                    obj,
-                    (resp?: { error?: string }) => {
-                        if (resp && typeof resp.error === "string") {
-                            console.error(
-                                "failed to create activity-object ",
-                                resp.error,
-                            );
-                            return;
-                        }
-                        this.eventActivityObject(obj);
-                    },
-                );
-            },
-        );
-
-        socket.on("activity-object", (obj) => {
-            this.ActivityStreams.Object.create(obj);
-        });
 
         if (this._socket.connected) {
             this.socket.connected = true;
@@ -266,10 +240,6 @@ export default class SockethubClient {
             this.socket._emit("connect");
             this.startInitialization("initial-connect", true);
         }
-    }
-
-    initActivityStreams() {
-        this.ActivityStreams = ASFactory({ specialObjs: ["credentials"] });
     }
 
     /**
@@ -462,9 +432,15 @@ export default class SockethubClient {
         if (!("io" in socketLike)) {
             return;
         }
-        this._socket.emit("schemas", (payload: unknown) => {
-            this.handleSchemasPayload(payload);
-        });
+        // Echo the fingerprint we last applied so the server can short-circuit
+        // with an "unchanged" reply on reconnect/re-request (#1117).
+        this._socket.emit(
+            "schemas",
+            this.registryFingerprint,
+            (payload: unknown) => {
+                this.handleSchemasPayload(payload);
+            },
+        );
     }
 
     /**
@@ -537,17 +513,17 @@ export default class SockethubClient {
             }
         }
         const normalizedPayload = this.buildPlatformRegistryPayload();
+        // Dedup only on the server's fingerprint, which is computed over the
+        // full payload (including schema bodies and types). Without one we leave
+        // the fingerprint unset so handleSchemasPayload never short-circuits and
+        // a schema change can't be silently missed (#1117 review).
         this.registryFingerprint =
-            this.computePayloadFingerprint(normalizedPayload);
+            typeof registry.fingerprint === "string"
+                ? registry.fingerprint
+                : undefined;
         // Emit normalized registry payload so app code receives a stable shape.
         this.socket._emit("schemas", normalizedPayload);
         return normalizedPayload;
-    }
-
-    private eventActivityObject(content: ActivityObject) {
-        if (content.id) {
-            this.events["activity-object"].set(content.id, content);
-        }
     }
 
     private eventCredentials(content: ActivityStream) {
@@ -558,7 +534,7 @@ export default class SockethubClient {
         }
     }
 
-    private eventMessage(content: BaseActivityObject) {
+    private eventMessage(content: ActivityStream) {
         if (!this._socket.connected) {
             return;
         }
@@ -771,7 +747,6 @@ export default class SockethubClient {
 
         if (replayOnReady) {
             // Replay previously sent state before flushing newly queued outbound events.
-            this.replay("activity-object", this.events["activity-object"]);
             this.replay("credentials", this.events.credentials);
             this.replay("message", this.events.connect);
             this.replay("message", this.events.join);
@@ -780,39 +755,33 @@ export default class SockethubClient {
         this.flushOutboundQueue();
     }
 
-    private computePayloadFingerprint(payload: unknown): string | undefined {
-        if (!payload || typeof payload !== "object") {
-            return undefined;
-        }
-        const registry = payload as PlatformRegistryPayload;
-        if (
-            typeof registry.contexts?.as !== "string" ||
-            typeof registry.contexts?.sockethub !== "string" ||
-            !Array.isArray(registry.platforms)
-        ) {
-            return undefined;
-        }
-        const normalizedPlatforms = registry.platforms
-            .map((platform) => ({
-                id: platform.id,
-                version: platform.version,
-                contextUrl: platform.contextUrl,
-                contextVersion: platform.contextVersion,
-                schemaVersion: platform.schemaVersion,
-            }))
-            .sort((a, b) => a.id.localeCompare(b.id));
-        return JSON.stringify({
-            version: registry.version,
-            contexts: registry.contexts,
-            platforms: normalizedPlatforms,
-        });
-    }
-
     private handleSchemasPayload(payload: unknown) {
         if (!payload || typeof payload !== "object") {
             return;
         }
-        const incomingFingerprint = this.computePayloadFingerprint(payload);
+        // Server short-circuit: the registry matches the fingerprint we echoed,
+        // so nothing was re-sent (#1117). Only honor this when we actually hold
+        // a cached registry to reuse — a malformed or empty "unchanged" reply
+        // must not fast-path init to ready with no validators registered.
+        if ((payload as PlatformRegistryPayload).unchanged === true) {
+            const haveCachedRegistry =
+                typeof this.registryFingerprint === "string" &&
+                this.platformRegistry.size > 0;
+            if (haveCachedRegistry) {
+                if (this.initCycle) {
+                    this.markReady(this.initCycle.reason);
+                } else if (this.initState !== "ready") {
+                    this.markReady("schemas-update");
+                }
+                return;
+            }
+            // Nothing cached to reuse: fall through so applyPlatformRegistry
+            // rejects the contentless payload and surfaces an init error.
+        }
+        // Dedup only against the server-supplied fingerprint (which is what we
+        // stored in applyPlatformRegistry); absent one, always re-apply.
+        const incomingFingerprint = (payload as PlatformRegistryPayload)
+            .fingerprint;
         if (
             this.initState === "ready" &&
             !this.initCycle &&
@@ -911,20 +880,11 @@ export default class SockethubClient {
             if (entry.event === "credentials" || entry.event === "message") {
                 // Run canonical expansion/normalization at send time so queued and
                 // immediate sends follow the exact same path.
-                outgoing = this.ActivityStreams.Stream(
+                outgoing = normalizeActivityStream(
                     entry.content as ActivityStream,
                 );
                 if (outgoing && typeof outgoing === "object") {
                     const activity = outgoing as ActivityStream;
-                    if (
-                        !activity["@context"] &&
-                        typeof activity.platform === "string" &&
-                        activity.platform.trim().length > 0
-                    ) {
-                        activity["@context"] = this.contextFor(
-                            activity.platform,
-                        );
-                    }
                     if (entry.event === "credentials" && !activity.type) {
                         activity.type = "credentials";
                     }
@@ -953,32 +913,9 @@ export default class SockethubClient {
             if (entry.event === "credentials") {
                 this.eventCredentials(outgoing as ActivityStream);
             } else if (entry.event === "message") {
-                this.eventMessage(outgoing as BaseActivityObject);
+                this.eventMessage(outgoing as ActivityStream);
             }
-            if (entry.event === "activity-object") {
-                // Persist only after successful server ACK to avoid replaying
-                // rejected objects on reconnection.
-                const originalCallback = entry.callback;
-                const obj = outgoing as ActivityObject;
-                this._socket.emit(
-                    entry.event,
-                    outgoing,
-                    (resp?: { error?: string }) => {
-                        if (resp && typeof resp.error === "string") {
-                            if (obj.id) {
-                                this.events["activity-object"].delete(obj.id);
-                            }
-                        } else {
-                            this.eventActivityObject(obj);
-                        }
-                        if (typeof originalCallback === "function") {
-                            originalCallback(resp);
-                        }
-                    },
-                );
-            } else {
-                this._socket.emit(entry.event, outgoing, entry.callback);
-            }
+            this._socket.emit(entry.event, outgoing, entry.callback);
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             this.emitClientError(entry.event, entry.callback, message);
@@ -1018,18 +955,16 @@ export default class SockethubClient {
         });
 
         // use as middleware to receive incoming Sockethub messages and unpack them
-        // using the ActivityStreams library before passing them along to the app.
+        // Normalize and lint before passing them along to the app.
         this._socket.on("message", (obj) => {
-            this.socket._emit("message", this.ActivityStreams.Stream(obj));
+            this.socket._emit("message", normalizeActivityStream(obj));
         });
     }
 
     /**
      * Type guard to check if an object is an ActivityStream with a valid actor.id.
      */
-    private hasActorId(
-        obj: ActivityStream | ActivityObject,
-    ): obj is ActivityStream {
+    private hasActorId(obj: ActivityStream): obj is ActivityStream {
         return (
             "actor" in obj &&
             obj.actor !== null &&
@@ -1052,7 +987,7 @@ export default class SockethubClient {
      * - Does not replay after page refresh (memory cleared)
      * - Server should validate replayed credentials (may be stale/revoked)
      *
-     * @param name - Event name to emit ("credentials", "activity-object", "message")
+     * @param name - Event name to emit ("credentials", "message")
      * @param asMap - Map of events to replay
      */
     private replay<K extends keyof ReplayEventMap>(
@@ -1060,20 +995,7 @@ export default class SockethubClient {
         asMap: Map<string, ReplayEventMap[K]>,
     ): void {
         for (const obj of asMap.values()) {
-            // activity-objects are raw objects, don't pass through Stream()
-            // which is designed for activity streams with actor/object structure
-            const isActivityObject = name === "activity-object";
-            if (isActivityObject) {
-                const expandedObj = obj as BaseActivityObject;
-                const id = expandedObj?.id;
-                this.log(`replaying ${name} for ${id}`);
-                this._socket.emit(name, expandedObj);
-                continue;
-            }
-
-            const expandedObj = this.ActivityStreams.Stream(
-                obj as ActivityStream,
-            );
+            const expandedObj = normalizeActivityStream(obj as ActivityStream);
             let id = expandedObj?.id;
             if (this.hasActorId(expandedObj)) {
                 const actor = (expandedObj as ActivityStream).actor;

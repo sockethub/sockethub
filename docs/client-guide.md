@@ -98,8 +98,8 @@ with `error` as failure.
 sc.socket.emit('message', {
     type: 'send',
     '@context': sc.contextFor('irc'),
-    actor: { id: 'mynick', type: 'person' },
-    target: { id: '#sockethub', type: 'room' },
+    actor: { id: 'mynick@irc.libera.chat', type: 'person', name: 'mynick' },
+    target: { id: 'sockethub@irc.libera.chat', type: 'room', name: '#sockethub' },
     object: { type: 'message', content: 'Hello channel' }
 }, (result) => {
     if (result?.error) {
@@ -111,7 +111,7 @@ sc.socket.emit('message', {
 });
 ```
 
-This same pattern applies to `credentials` and `activity-object` events.
+This same pattern applies to `credentials` events.
 
 ### 2. Listen for incoming platform events on `message`
 
@@ -148,46 +148,46 @@ success/failure.
 {
   "type": "send",            // Action: send, connect, join, fetch
   "@context": sc.contextFor("irc"),  // Canonical contexts for this platform
-  "actor": { "id": "user", "type": "person" },     // Who
-  "target": { "id": "#room", "type": "room" },     // Where (optional)
+  "actor": { "id": "user@irc.libera.chat", "type": "person", "name": "user" },  // Who
+  "target": { "id": "room@irc.libera.chat", "type": "room", "name": "#room" },  // Where (optional)
   "object": { "type": "message", "content": "Hi!" }   // What
 }
 ```
 
-If `actor` is provided as a string, Sockethub expands it using any previously
-saved ActivityObject with the same id (including `type` and any other stored
-properties). If none exists, it expands to `{ id }`.
+The `actor` object must have an `id` and `type` field, and if `name` does not exist,
+the `id` will be used for display purposes.
 
-### Setting ActivityObjects and Building ActivityStreams
+For IRC, room targets use `channel@server` in `target.id` (for example
+`sockethub@irc.libera.chat`). Put the channel name as it appears on IRC in
+`target.name` (for example `#sockethub`). The `#` does not belong in
+`target.id`; `type: "room"` disambiguates room ids from person ids
+(`nick@server`).
 
-The client includes `sc.ActivityStreams` helpers. This is the easiest way to
-define reusable actor/target objects and then reference them by id.
+### Platform-Specific Object Properties
+
+The standard ActivityStreams fields cover common concepts like content and type,
+but real protocols have richer ideas — threading, read receipts, delivery
+options, and more. You can put those extra fields directly into the `object`
+you're sending, and Sockethub passes them through to the platform without
+rejecting them.
+
+Once `ready()` resolves, the client knows what each platform accepts:
 
 ```javascript
-// Register an actor object (also emitted to server as `activity-object`)
-sc.ActivityStreams.Object.create({
-    id: 'mynick',
-    type: 'person',
-    name: 'My IRC Nick'
-});
+await sc.ready();
 
-// Build a stream with string refs; they are expanded from stored objects
-const joinStream = sc.ActivityStreams.Stream({
-    type: 'join',
+sc.socket.emit('message', {
+    type: 'send',
     '@context': sc.contextFor('irc'),
-    actor: 'mynick',
-    target: { id: '#sockethub', type: 'room' }
-});
-
-sc.socket.emit('message', joinStream, (result) => {
-    if (result?.error) {
-        console.error('Join failed:', result.error);
+    actor: { id: 'me@irc.libera.chat', type: 'person', name: 'me' },
+    target: { id: 'general@irc.libera.chat', type: 'room', name: '#general' },
+    object: {
+        type: 'message',
+        content: 'Hello!',
+        replyTo: 'msg-42'   // platform-specific field
     }
 });
 ```
-
-You can still send raw ActivityStreams directly with `sc.socket.emit('message',
-...)` if you prefer.
 
 ### Platforms Requiring Credentials
 
@@ -198,7 +198,7 @@ await sc.ready();
 sc.socket.emit('credentials', {
     '@context': sc.contextFor('irc'),
     type: 'credentials',
-    actor: { id: 'mynick', type: 'person' },
+    actor: { id: 'mynick@irc.libera.chat', type: 'person', name: 'mynick' },
     object: {
         type: 'credentials',
         nick: 'mynick',
@@ -215,7 +215,7 @@ sc.socket.emit('credentials', {
 sc.socket.emit('message', {
     type: 'connect',
     '@context': sc.contextFor('irc'),
-    actor: { id: 'mynick', type: 'person' }
+    actor: { id: 'mynick@irc.libera.chat', type: 'person', name: 'mynick' }
 });
 ```
 
@@ -252,7 +252,7 @@ The rejected request returns an ActivityStream response with an `error`:
 {
   "context": "irc",
   "type": "connect",
-  "actor": { "id": "mynick", "type": "person" },
+  "actor": { "id": "mynick@irc.libera.chat", "type": "person", "name": "mynick" },
   "id": "1",
   "error": "username already in use"
 }
@@ -283,7 +283,9 @@ sc.socket.emit('message', {
 sc.socket.emit('message', {
     type: 'fetch',
     '@context': sc.contextFor('feeds'),
-    actor: { id: 'https://example.com/feed.xml', type: 'feed' }
+    actor: { id: 'https://example.com/feed.xml', type: 'feed' },
+    // optional filters: entries published at/after `since`, at most `limit`
+    object: { since: '2024-01-01T00:00:00.000Z', limit: 10 }
 });
 ```
 
@@ -294,22 +296,26 @@ sc.socket.emit('message', {
 sc.socket.emit('message', {
     type: 'join',
     '@context': sc.contextFor('irc'),
-    actor: { id: 'mynick', type: 'person' },
-    target: { id: '#channel', type: 'room' }
+    actor: { id: 'mynick@irc.libera.chat', type: 'person', name: 'mynick' },
+    target: { id: 'channel@irc.libera.chat', type: 'room', name: '#channel' }
 });
 ```
 
 ## Client Features
 
 - **Schema-driven init**: `ready()` resolves when the server's schema registry is loaded
+- **Registry caching**: the registry is fetched once and cached; on reconnect the
+  client echoes a fingerprint so the server skips re-sending an unchanged registry
 - **Context composition**: `contextFor(platform)` builds canonical `@context` arrays
 - **Outbound queueing**: Messages sent before `ready()` are queued and flushed automatically
 - **Auto-replay**: Credentials and connections restored on reconnect
-- **ActivityStreams**: Built-in validation and utilities via `sc.ActivityStreams`
+- **ActivityStream handling**: outbound messages are normalized and validated against
+  the platform's schema (via `@sockethub/schemas`) before sending; incoming messages
+  are normalized before delivery
 - **Connection state**: Check `sc.socket.connected` for status
 
 ## Reference
 
 - **[Client Package](../packages/client/)** - Full API documentation
-- **[ActivityStreams Package](../packages/activity-streams/)** - ActivityStreams utilities and validation
+- **[Schemas Package](../packages/schemas/)** - Activity stream validation, normalization, and JSON schemas
 - **[ActivityStreams Spec](https://www.w3.org/TR/activitystreams-core/)** - Message format specification

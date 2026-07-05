@@ -2,7 +2,7 @@
  * Package installation manager for test-installed-version script
  */
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 export class InstallManager {
@@ -12,47 +12,40 @@ export class InstallManager {
     }
 
     /**
-     * Install sockethub package from npm or local tarball
-     * @param {string} source - Version to install (e.g., "5.0.0-alpha.6", "latest") or path to local tarball
+     * Install sockethub package from an npm registry
+     * @param {string} source - Version to install (e.g., "5.0.0-alpha.6", "latest")
      * @param {string} runtime - Runtime to use for installation ("bun" or "node")
-     * @param {boolean} isLocal - Whether this is a local tarball installation
+     * @param {string | null} [registry] - Optional registry URL
      */
-    async install(source, runtime, isLocal = false) {
-        const description = isLocal
-            ? `local tarball (${source})`
+    async install(source, runtime, registry = null) {
+        const description = registry
+            ? `registry ${registry} (sockethub@${source})`
             : `npm (sockethub@${source})`;
 
         await this.logger.info(
             `Installing from ${description} using ${runtime}...`,
         );
 
-        // Create install directory
+        // Create a clean install directory.
+        await rm(this.installDir, { recursive: true, force: true });
         await mkdir(this.installDir, { recursive: true });
 
-        if (isLocal) {
-            // Create package.json that references local tarball
-            const packageJson = {
-                name: "sockethub-test-install",
-                private: true,
-                dependencies: {
-                    sockethub: `file:${source}`,
-                },
-            };
+        const packageJson = {
+            name: "sockethub-test-install",
+            private: true,
+            dependencies: {
+                sockethub: source,
+            },
+        };
 
-            const pkgPath = join(this.installDir, "package.json");
-            await writeFile(pkgPath, JSON.stringify(packageJson, null, 2));
-        } else {
-            // Create package.json for npm install
-            const packageJson = {
-                name: "sockethub-test-install",
-                private: true,
-                dependencies: {
-                    sockethub: source,
-                },
-            };
+        const pkgPath = join(this.installDir, "package.json");
+        await writeFile(pkgPath, JSON.stringify(packageJson, null, 2));
 
-            const pkgPath = join(this.installDir, "package.json");
-            await writeFile(pkgPath, JSON.stringify(packageJson, null, 2));
+        if (registry) {
+            await writeFile(
+                join(this.installDir, ".npmrc"),
+                `registry=${registry}\n@sockethub:registry=${registry}\n`,
+            );
         }
 
         // Install using appropriate package manager

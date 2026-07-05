@@ -1,40 +1,141 @@
-import { describe, expect, it } from "bun:test";
-import type { ActivityObject, ActivityStream } from "./types";
+import { describe, expect, it, test } from "bun:test";
+import type { ActivityStream } from "./types";
 
 import testCredentialsData from "./index.test.data.credentials";
-import testActivityObjectsData from "./index.test.data.objects";
 import testPlatformSchemaData from "./index.test.data.platform";
 import testActivityStreamsData from "./index.test.data.streams";
-import { ActivityObjectSchema } from "./schemas/activity-object";
 import { ActivityStreamSchema } from "./schemas/activity-stream";
 import {
     addPlatformContext,
     addPlatformSchema,
     getPlatformSchema,
-    validateActivityObject,
     validateActivityStream,
+    validateActivityStreamResponse,
     validateCredentials,
     validatePlatformSchema,
 } from "./validator";
 
-const permissiveMessageSchema = {
+// The base envelope no longer enumerates a global object vocabulary; platforms
+// own inbound object validation via their `messages` schema. This object-aware
+// test schema exercises that mechanism (object `oneOf` referencing object-type
+// definitions) for the data-driven stream fixtures, with its object vocabulary
+// declared locally (as a real platform would).
+const objectAwareMessageSchema = {
     required: ["type"],
     properties: {
+        type: { type: "string" },
+        object: {
+            type: "object",
+            oneOf: [
+                "credentials",
+                "message",
+                "feed",
+                "website",
+                "attendance",
+                "presence",
+                "topic",
+                "address",
+                "relationship",
+            ].map((type) => ({ $ref: `#/definitions/type/${type}` })),
+        },
+    },
+    definitions: {
         type: {
-            type: "string",
+            credentials: {
+                required: ["type"],
+                additionalProperties: true,
+                properties: { type: { enum: ["credentials"] } },
+            },
+            message: {
+                required: ["type", "content"],
+                additionalProperties: true,
+                properties: {
+                    type: { enum: ["message"] },
+                    id: { type: "string" },
+                    name: { type: "string" },
+                    content: { type: "string" },
+                },
+            },
+            feed: {
+                required: ["id", "type"],
+                additionalProperties: true,
+                properties: {
+                    type: { enum: ["feed"] },
+                    id: { type: "string", format: "iri" },
+                    name: { type: "string" },
+                    description: { type: "string" },
+                    author: { type: "string" },
+                    favicon: { type: "string" },
+                },
+            },
+            website: {
+                required: ["id", "type"],
+                additionalProperties: true,
+                properties: {
+                    id: { type: "string", format: "iri" },
+                    type: { enum: ["website"] },
+                    name: { type: "string" },
+                },
+            },
+            attendance: {
+                required: ["type"],
+                additionalProperties: false,
+                properties: {
+                    type: { enum: ["attendance"] },
+                    members: { type: "array", items: { type: "string" } },
+                },
+            },
+            presence: {
+                required: ["type"],
+                additionalProperties: false,
+                properties: {
+                    type: { enum: ["presence"] },
+                    presence: {
+                        enum: ["away", "chat", "dnd", "xa", "offline", "online"],
+                    },
+                    role: {
+                        enum: ["owner", "member", "participant", "admin"],
+                    },
+                    content: { type: "string" },
+                },
+            },
+            topic: {
+                required: ["type"],
+                additionalProperties: false,
+                properties: {
+                    type: { enum: ["topic"] },
+                    content: { type: "string" },
+                },
+            },
+            address: {
+                required: ["type"],
+                additionalProperties: false,
+                properties: { type: { enum: ["address"] } },
+            },
+            relationship: {
+                required: ["type", "relationship"],
+                additionalProperties: false,
+                properties: {
+                    type: { enum: ["relationship"] },
+                    relationship: { enum: ["role"] },
+                    subject: {
+                        type: "object",
+                        oneOf: [{ $ref: "#/definitions/type/presence" }],
+                    },
+                    object: { type: "object" },
+                },
+            },
         },
     },
 };
 
-addPlatformSchema(permissiveMessageSchema, "irc/messages");
-addPlatformSchema(permissiveMessageSchema, "dood/messages");
+// `dood` is a fake test platform (not a real package), used to exercise
+// per-platform object validation without colliding with real platforms'
+// registrations in the shared schema singleton during the combined test run.
+addPlatformSchema(objectAwareMessageSchema, "dood/messages");
 addPlatformSchema(
     testPlatformSchemaData.credentials,
     "test-platform/credentials",
-);
-addPlatformContext(
-    "irc",
-    "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
 );
 addPlatformContext(
     "dood",
@@ -44,6 +145,17 @@ addPlatformContext(
     "test-platform",
     "https://sockethub.org/ns/context/platform/test-platform/v1.jsonld",
 );
+// A platform with an outbound `responses` schema (only allows type "collection").
+addPlatformSchema(
+    { required: ["type"], properties: { type: { enum: ["collection"] } } },
+    "respplat/responses",
+);
+addPlatformContext(
+    "respplat",
+    "https://sockethub.org/ns/context/platform/respplat/v1.jsonld",
+);
+const RESP_CTX = "https://sockethub.org/ns/context/platform/respplat/v1.jsonld";
+const NO_RESP_CTX = "https://sockethub.org/ns/context/platform/dood/v1.jsonld";
 
 describe("schemas/src/index.ts", () => {
     describe("Platform schema validation", () => {
@@ -55,6 +167,15 @@ describe("schemas/src/index.ts", () => {
             const err = validatePlatformSchema({ foo: "bar" });
             expect(err).toEqual(
                 "platform schema failed to validate:  must have required property 'name'",
+            );
+        });
+        test("includes the unexpected property for additionalProperties errors", () => {
+            const err = validatePlatformSchema({
+                ...testPlatformSchemaData,
+                unexpected: true,
+            });
+            expect(err).toEqual(
+                "platform schema failed to validate:  must NOT have additional properties: unexpected",
             );
         });
     });
@@ -83,27 +204,6 @@ describe("schemas/src/index.ts", () => {
         );
     });
 
-    describe("ActivityObject", () => {
-        it("has expected properties", () => {
-            expect(typeof ActivityObjectSchema).toEqual("object");
-            expect(ActivityObjectSchema["$id"]).toEqual(
-                "https://sockethub.org/schemas/v/activity-object.json",
-            );
-        });
-
-        testActivityObjectsData.forEach(
-            ([name, ao, expectedResult, expectedFailureMessage]) => {
-                describe("validateActivityObject " + name, () => {
-                    it(`returns expected result`, () => {
-                        const err = validateActivityObject(ao as ActivityObject);
-                        expect(err).toEqual(expectedFailureMessage);
-                        expect(!err).toEqual(expectedResult);
-                    });
-                });
-            },
-        );
-    });
-
     describe("ActivityStream", () => {
         it("has expected properties", () => {
             expect(typeof ActivityStreamSchema).toEqual("object");
@@ -123,5 +223,43 @@ describe("schemas/src/index.ts", () => {
                 });
             },
         );
+    });
+
+    describe("validateActivityStreamResponse", () => {
+        test("is a no-op (passes) when the platform has no responses schema", () => {
+            const msg = {
+                "@context": [NO_RESP_CTX],
+                type: "anything",
+                actor: { id: "a@b", type: "person" },
+            } as unknown as ActivityStream;
+            expect(validateActivityStreamResponse(msg)).toEqual("");
+        });
+
+        test("is a no-op when no registered platform context is present", () => {
+            const msg = {
+                "@context": ["https://example.com/unregistered"],
+                type: "collection",
+                actor: { id: "a@b", type: "person" },
+            } as unknown as ActivityStream;
+            expect(validateActivityStreamResponse(msg)).toEqual("");
+        });
+
+        test("passes a response matching the platform's responses schema", () => {
+            const msg = {
+                "@context": [RESP_CTX],
+                type: "collection",
+                actor: { id: "a@b", type: "feed" },
+            } as unknown as ActivityStream;
+            expect(validateActivityStreamResponse(msg)).toEqual("");
+        });
+
+        test("fails a response that violates the platform's responses schema", () => {
+            const msg = {
+                "@context": [RESP_CTX],
+                type: "page",
+                actor: { id: "a@b", type: "feed" },
+            } as unknown as ActivityStream;
+            expect(validateActivityStreamResponse(msg)).not.toEqual("");
+        });
     });
 });

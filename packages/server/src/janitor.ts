@@ -1,7 +1,7 @@
 import { getRedisConnectionCount } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import { hasHttpSessions } from "./http/session-registry.js";
-import listener, { type SocketInstance } from "./listener.js";
+import listener from "./listener.js";
 import type PlatformInstance from "./platform-instance.js";
 import { platformInstances } from "./platform-instance.js";
 
@@ -13,7 +13,6 @@ export class Janitor {
     cycleCount = 0; // a counter for each cycleInterval
     reportCount = 0; // number of times a report is printed
     protected stopTriggered = false;
-    protected sockets: Array<SocketInstance>;
     private cycleRunning = false;
 
     /**
@@ -26,9 +25,8 @@ export class Janitor {
      */
     start(): void {
         rmLog.debug("initializing");
-        this.clean().then(() => {
-            rmLog.info("cleaning cycle started");
-        });
+        void this.runCleanCycle();
+        rmLog.info("cleaning cycle started");
     }
 
     async stop(): Promise<void> {
@@ -38,21 +36,6 @@ export class Janitor {
             this.removeStaleSocketSessions(platformInstance);
             await this.removeStalePlatformInstance(platformInstance);
             await platformInstance.shutdown();
-        }
-    }
-
-    private removeSessionCallbacks(
-        platformInstance: PlatformInstance,
-        sessionId: string,
-    ): void {
-        for (const key of Object.keys(
-            platformInstance.sessionCallbacks,
-        ) as Array<"close" | "message">) {
-            platformInstance.process.removeListener(
-                key,
-                platformInstance.sessionCallbacks[key].get(sessionId),
-            );
-            platformInstance.sessionCallbacks[key].delete(sessionId);
         }
     }
 
@@ -78,7 +61,6 @@ export class Janitor {
         );
         platformInstance.sessions.delete(sessionId);
         platformInstance.sessionIps.delete(sessionId);
-        this.removeSessionCallbacks(platformInstance, sessionId);
     }
 
     private async removeStalePlatformInstance(
@@ -95,21 +77,17 @@ export class Janitor {
         }
     }
 
-    private socketExists(sessionId: string) {
-        for (const socket of this.sockets) {
-            if (socket.id === sessionId) {
-                return true;
-            }
-        }
-        return false;
+    private socketExists(sessionId: string): boolean {
+        return this.connectedSocketIds().has(sessionId);
     }
 
     private async delay(ms: number): Promise<void> {
         return await new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    private async getSockets(): Promise<Array<SocketInstance>> {
-        return listener.io.fetchSockets();
+    /** Live, O(1) map of connected socket ids (socket.io's namespace map). */
+    private connectedSocketIds(): ReadonlyMap<string, unknown> {
+        return listener.io.sockets.sockets;
     }
 
     private async performStaleCheck(platformInstance: PlatformInstance) {
@@ -132,6 +110,25 @@ export class Janitor {
         }
     }
 
+    /**
+     * Run clean() every cycleInterval in a plain loop. The previous
+     * implementation recursed (`return this.clean()`) after the delay, so
+     * the promise chain from start() grew by one pending promise per cycle
+     * for the lifetime of the process — a slow, unbounded leak.
+     */
+    private async runCleanCycle(): Promise<void> {
+        while (!this.stopTriggered) {
+            try {
+                await this.clean();
+            } catch (err) {
+                this.cycleRunning = false;
+                rmLog.error(`janitor clean cycle failed: ${err}`);
+            }
+            await this.delay(this.cycleInterval);
+        }
+        this.cycleRunning = false;
+    }
+
     private async clean(): Promise<void> {
         if (this.stopTriggered) {
             this.cycleRunning = false;
@@ -144,13 +141,12 @@ export class Janitor {
         }
         this.cycleRunning = true;
         this.cycleCount++;
-        this.sockets = await this.getSockets();
 
         if (!(this.cycleCount % REPORT_CYCLE_MOD)) {
             this.reportCount++;
             const redisConnections = await getRedisConnectionCount();
             rmLog.info(
-                `socket sessions: ${this.sockets.length} platform instances: ${platformInstances.size} redis connections: ${redisConnections}`,
+                `socket sessions: ${this.connectedSocketIds().size} platform instances: ${platformInstances.size} redis connections: ${redisConnections}`,
             );
         }
 
@@ -158,8 +154,6 @@ export class Janitor {
             await this.performStaleCheck(platformInstance);
         }
         this.cycleRunning = false;
-        await this.delay(this.cycleInterval);
-        return this.clean();
     }
 }
 

@@ -9,7 +9,7 @@
  * If an exception is thrown by the platform, this process will die along with
  * it and sockethub will start up another process. This ensures memory safety.
  */
-import { crypto, getPlatformId } from "@sockethub/crypto";
+
 import type { JobHandler } from "@sockethub/data-layer";
 import {
     CredentialsStore,
@@ -22,6 +22,7 @@ import type {
     CredentialsObject,
     PersistentPlatformInterface,
     PlatformCallback,
+    PlatformConfig,
     PlatformInterface,
     PlatformSession,
 } from "@sockethub/schemas";
@@ -29,9 +30,31 @@ import {
     buildCanonicalContext,
     INTERNAL_PLATFORM_CONTEXT_URL,
 } from "@sockethub/schemas";
+import { crypto, getPlatformId } from "@sockethub/util/crypto";
+import { errorMessage, toError } from "@sockethub/util/error";
 import config from "./config";
 
 // Simple wrapper function to help with testing
+/**
+ * Merge per-platform config (forwarded from the parent's `packageConfig` as a
+ * JSON string in `SOCKETHUB_PLATFORM_CONFIG`) onto the platform's own config
+ * defaults. Platform defaults win for any key the file does not set. Throws on
+ * malformed JSON so the caller can log it rather than silently using defaults.
+ */
+export function mergePackageConfig(
+    base: PlatformConfig,
+    rawConfig: string | undefined,
+): PlatformConfig {
+    if (!rawConfig) {
+        return base;
+    }
+    const parsed = JSON.parse(rawConfig);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error("SOCKETHUB_PLATFORM_CONFIG must be a JSON object");
+    }
+    return { ...base, ...(parsed as Partial<PlatformConfig>) };
+}
+
 export function derivePlatformCredentialsSecret(
     parentSecret: string,
     sessionSecret: string,
@@ -110,6 +133,20 @@ async function startPlatformProcess() {
         const p = new PlatformModule.default(
             platformSession,
         ) as PlatformInterface;
+        // Apply per-platform config from the parent's `packageConfig` (if any),
+        // forwarded as JSON. On malformed input, log and keep platform defaults.
+        try {
+            p.config = mergePackageConfig(
+                p.config,
+                process.env.SOCKETHUB_PLATFORM_CONFIG,
+            );
+        } catch (err) {
+            logger.warn(
+                `ignoring invalid SOCKETHUB_PLATFORM_CONFIG: ${errorMessage(
+                    err,
+                )}`,
+            );
+        }
         logger.info(
             `platform handler loaded for ${platformName} ${identifier}`,
         );
@@ -148,11 +185,7 @@ async function startPlatformProcess() {
                 process.send(message);
             } catch (ipcErr) {
                 console.error(
-                    `Failed to report error via IPC: ${
-                        ipcErr instanceof Error
-                            ? ipcErr.message
-                            : String(ipcErr)
-                    }`,
+                    `Failed to report error via IPC: ${errorMessage(ipcErr)}`,
                 );
             }
         } else {
@@ -186,6 +219,26 @@ async function startPlatformProcess() {
                 } as ActivityStream,
             ]);
         }, heartbeatIntervalMs);
+    }
+
+    /**
+     * Persistent platforms hold per-actor connection state, so their jobs
+     * must be processed serially. Stateless platforms (feeds, metadata) are
+     * shared by every session on the server and their jobs are independent
+     * network fetches, so they process in parallel — otherwise one slow
+     * fetch stalls the queue for all clients. Overridable per-platform via
+     * `packageConfig.concurrency`.
+     */
+    const DEFAULT_STATELESS_CONCURRENCY = 10;
+    function getWorkerConcurrency(): number {
+        if (platform.config.persist) {
+            return 1;
+        }
+        const configured = Number(platform.config.concurrency);
+        if (Number.isFinite(configured) && configured >= 1) {
+            return Math.floor(configured);
+        }
+        return DEFAULT_STATELESS_CONCURRENCY;
     }
 
     /**
@@ -291,18 +344,17 @@ async function startPlatformProcess() {
                     jobCallbackCalled = true;
                     if (err) {
                         jobLog.error(`failed ${job.title} ${job.msg.type}`);
-                        let errMsg: string | Error;
+                        let message: string;
                         // some error objects (e.g. TimeoutError) don't interpolate correctly
                         // to being human-readable, so we have to do this little dance
                         try {
-                            errMsg = err.toString();
-                        } catch (err) {
-                            errMsg = err instanceof Error ? err : String(err);
+                            message = err.toString();
+                        } catch {
+                            // toString() failed; fall back to the original error.
+                            message = errorMessage(err);
                         }
-                        const errorMessage =
-                            errMsg instanceof Error ? errMsg.message : errMsg;
-                        sentry.reportError(new Error(errorMessage));
-                        reject(new Error(errorMessage));
+                        sentry.reportError(new Error(message));
+                        reject(new Error(message));
                     } else {
                         jobLog.debug(`completed ${job.title} ${job.msg.type}`);
 
@@ -405,18 +457,10 @@ async function startPlatformProcess() {
                              */
                             if (platform.isInitialized()) {
                                 // Platform already running - reject job only, preserve platform instance
-                                doneCallback(
-                                    err instanceof Error
-                                        ? err
-                                        : new Error(String(err)),
-                                    null,
-                                );
+                                doneCallback(toError(err), null);
                             } else {
                                 // Platform not initialized - terminate platform process
-                                const error =
-                                    err instanceof Error
-                                        ? err
-                                        : new Error(String(err));
+                                const error = toError(err);
                                 sentry.reportError(error);
                                 reject(error);
                             }
@@ -447,8 +491,7 @@ async function startPlatformProcess() {
                             doneCallback,
                         );
                     } catch (err) {
-                        const error =
-                            err instanceof Error ? err : new Error(String(err));
+                        const error = toError(err);
                         jobLog.error(
                             `platform call failed ${error.toString()}`,
                         );
@@ -514,13 +557,17 @@ async function startPlatformProcess() {
                 return;
             }
         }
+        const concurrency = getWorkerConcurrency();
         jobWorker = new JobWorker(
             parentId,
             identifier,
             parentSecret1 + parentSecret2,
             { url: redisUrl },
+            { concurrency },
         );
-        logger.info("listening on the queue for incoming jobs");
+        logger.info(
+            `listening on the queue for incoming jobs (concurrency: ${concurrency})`,
+        );
         jobWorker.onJob(getJobHandler());
         jobWorkerStarted = true;
     }

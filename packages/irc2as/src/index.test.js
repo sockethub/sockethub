@@ -1,11 +1,5 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import { readFileSync } from "fs";
-import {
-    addPlatformContext,
-    addPlatformSchema,
-    getPlatformSchema,
-    validateActivityStream,
-} from "@sockethub/schemas";
 import equal from "fast-deep-equal";
 
 import { IrcToActivityStreams } from "./index.js";
@@ -18,28 +12,28 @@ const IRC_CONTEXTS = [
     "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
 ];
 
-function matchStream(done) {
+// `remaining` is a per-test copy of the expected outputs; matched entries are
+// removed from it (never from the shared TestData export, which other test
+// files import). Schema validation of irc2as output lives in platform-irc's
+// responses-schema test (the correct outbound validator), not here.
+function matchStream(remaining, done) {
     return (stream) => {
         expect(typeof stream.published).toEqual("string");
         delete stream.published;
         let matched = false;
-        for (let i = 0; i <= TestData.length; i++) {
-            matched = equal(stream, TestData[i]);
+        for (let i = 0; i < remaining.length; i++) {
+            matched = equal(stream, remaining[i]);
             if (matched) {
                 // when matched, remove output entry from list
-                TestData.splice(i, 1);
+                remaining.splice(i, 1);
                 break;
             }
         }
         if (!matched) {
             console.log();
-            console.log("available matches:" + JSON.stringify(TestData));
+            console.log("available matches:" + JSON.stringify(remaining));
             console.log("failed to find match for: " + JSON.stringify(stream));
             return done(new Error("failed matching " + JSON.stringify(stream)));
-        }
-        const err = validateActivityStream(stream);
-        if (err) {
-            return done(new Error(err + " - " + JSON.stringify(stream)));
         }
     };
 }
@@ -49,19 +43,6 @@ describe("IrcToActivityStreams", () => {
         pongs = 0,
         pings = 0;
     beforeEach(() => {
-        if (!getPlatformSchema("irc/messages")) {
-            addPlatformSchema(
-                {
-                    type: "object",
-                    additionalProperties: true,
-                },
-                "irc/messages",
-            );
-        }
-        addPlatformContext(
-            "irc",
-            "https://sockethub.org/ns/context/platform/irc/v1.jsonld",
-        );
         irc2as = new IrcToActivityStreams({
             server: "localhost",
             contexts: IRC_CONTEXTS,
@@ -81,13 +62,14 @@ describe("IrcToActivityStreams", () => {
 
     describe("inputs generate expected outputs", () => {
         it("inputs generate expected outputs", (done) => {
-            irc2as.events.on("incoming", matchStream(done));
-            irc2as.events.on("error", matchStream(done));
+            const remaining = [...TestData];
+            irc2as.events.on("incoming", matchStream(remaining, done));
+            irc2as.events.on("error", matchStream(remaining, done));
             for (let i = 0; inputs.length > i; i++) {
                 irc2as.input(inputs[i]);
             }
             setTimeout(() => {
-                expect(TestData.length).toEqual(0);
+                expect(remaining.length).toEqual(0);
                 done();
             }, 0);
         });

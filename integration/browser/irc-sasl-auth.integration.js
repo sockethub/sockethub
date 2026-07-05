@@ -7,6 +7,7 @@ import {
     getConfig,
     joinIRCChannel,
     partIRCChannel,
+    platformIdFromContext,
     sendIRCMessage,
     setIRCCredentials,
     validateGlobals,
@@ -50,10 +51,8 @@ describe(`Sockethub IRC SASL auth at ${config.sockethub.url}`, () => {
 
             it("connects successfully", async () => {
                 const msg = await connectIRC(sc, actorId, nick);
-                expect(msg).to.deep.include({
-                    type: "connect",
-                    platform: "irc",
-                });
+                expect(msg.type).to.equal("connect");
+                expect(platformIdFromContext(msg["@context"])).to.equal("irc");
                 expect(msg.actor?.id).to.equal(actorId);
             });
 
@@ -64,10 +63,8 @@ describe(`Sockethub IRC SASL auth at ${config.sockethub.url}`, () => {
                     nick,
                     config.irc.channel,
                 );
-                expect(msg).to.deep.include({
-                    type: "join",
-                    platform: "irc",
-                });
+                expect(msg.type).to.equal("join");
+                expect(platformIdFromContext(msg["@context"])).to.equal("irc");
                 expect(msg.target?.id).to.equal(config.irc.channel);
             });
 
@@ -80,10 +77,8 @@ describe(`Sockethub IRC SASL auth at ${config.sockethub.url}`, () => {
                     config.irc.channel,
                     content,
                 );
-                expect(msg).to.deep.include({
-                    type: "send",
-                    platform: "irc",
-                });
+                expect(msg.type).to.equal("send");
+                expect(platformIdFromContext(msg["@context"])).to.equal("irc");
                 expect(msg.object?.content).to.equal(content);
             });
 
@@ -94,10 +89,8 @@ describe(`Sockethub IRC SASL auth at ${config.sockethub.url}`, () => {
                     nick,
                     config.irc.channel,
                 );
-                expect(msg).to.deep.include({
-                    type: "leave",
-                    platform: "irc",
-                });
+                expect(msg.type).to.equal("leave");
+                expect(platformIdFromContext(msg["@context"])).to.equal("irc");
             });
         });
     }

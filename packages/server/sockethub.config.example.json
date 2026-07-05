@@ -1,26 +1,27 @@
 {
   "$schema": "../schemas/src/schemas/json/sockethub-config.json",
-  "activity-streams": {
-    "opts": {
-      "specialObjs": ["credentials"]
-    }
-  },
-  "examples": {
-    "enabled": false,
-    "secret": 1234567890
-  },
+  "examples": true,
   "sockethub": {
     "port": 10550,
     "host": "localhost",
     "path": "/sockethub"
   },
-  "logFile": "",
+  "logging": {
+    "level": "info",
+    "fileLevel": "debug",
+    "file": "sockethub.log"
+  },
   "platforms": [
     "@sockethub/platform-dummy",
     "@sockethub/platform-feeds",
     "@sockethub/platform-irc",
     "@sockethub/platform-xmpp"
   ],
+  "packageConfig": {
+    "@sockethub/platform-feeds": {
+      "connectTimeoutMs": 5000
+    }
+  },
   "public": {
     "protocol": "http",
     "host": "localhost",

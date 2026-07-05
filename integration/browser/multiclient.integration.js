@@ -35,8 +35,11 @@ async function ensureSocketsConnected(records) {
     );
 }
 
-async function waitForStableRoomDelivery(records, messageLog) {
-    const sender = records[records.length - 1];
+async function waitForStableRoomDelivery(
+    records,
+    messageLog,
+    sender = records[records.length - 1],
+) {
     const maxAttempts = 3;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -90,7 +93,7 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
     const messageLog = [];
     const connectionLog = [];
 
-    before(() => {
+    before(async () => {
         for (let i = 1; i <= CLIENT_COUNT; i++) {
             const socket = io(config.sockethub.url, { path: "/sockethub" });
             const sockethubClient = new SockethubClient(socket);
@@ -112,6 +115,15 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
 
             records.push(clientRecord);
         }
+
+        // Wait for every client to connect and finish initialization (schema
+        // registry loaded) before any test sends credentials. Otherwise the
+        // first test emits credentials while the clients are still connecting;
+        // SockethubClient queues them and the per-emit ack must then also cover
+        // connect + ready + flush, which races the credential ACK timeout.
+        await Promise.all(
+            records.map((clientRecord) => clientRecord.sockethubClient.ready()),
+        );
     });
 
     after(() => {
@@ -147,10 +159,6 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
 
             for (const clientRecord of records) {
                 // Create activity object first
-                clientRecord.sockethubClient.ActivityStreams.Object.create(
-                    utils.createActorObject(clientRecord.jid),
-                );
-
                 const result = await connectXMPP(
                     clientRecord.sockethubClient,
                     clientRecord.jid,
@@ -196,50 +204,15 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
 
     describe("Cross-Client Message Verification", () => {
         it("message from client 1 is received by all other clients", async () => {
-            const testMessage = `Test message from client 1 at ${Date.now()}`;
-            const sendingClientRecord = records[0];
-
-            // Clear message log
             messageLog.length = 0;
 
-            await ensureSocketsConnected(records);
-            // Allow reconnect and room-presence updates to settle before sending
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-
-            // Send message from client 1
-            await sendXMPPMessage(
-                sendingClientRecord.sockethubClient,
-                sendingClientRecord.jid,
-                config.prosody.room,
-                testMessage,
-            );
-
-            // Wait for messages to propagate to other clients
-            // Use longer timeout for multi-client tests due to XMPP routing delays
-            await waitFor(
-                () =>
-                    messageLog.filter(
-                        (log) =>
-                            log.message?.object?.content === testMessage &&
-                            log.message?.type === "send" &&
-                            log.clientId !== sendingClientRecord.jid,
-                    ).length >=
-                    CLIENT_COUNT - 1,
-                config.timeouts.multiClientMessage,
-                50,
-                () =>
-                    `Received ${messageLog.filter((log) => log.message?.object?.content === testMessage && log.message?.type === "send" && log.clientId !== sendingClientRecord.jid).length}/${CLIENT_COUNT - 1} recipient messages`,
-            );
-
-            // Verify message was received by other clients
-            const receivedMessages = messageLog.filter(
-                (log) =>
-                    log.message?.object?.content === testMessage &&
-                    log.message?.type === "send" &&
-                    log.clientId !== sendingClientRecord.jid,
-            );
-
-            expect(receivedMessages).to.have.length.at.least(CLIENT_COUNT - 1);
+            // A MUC only delivers a message to occupants already present when it
+            // is broadcast; it is not replayed to a peer whose join has not yet
+            // propagated. A single send is therefore racy. waitForStableRoomDelivery
+            // re-sends a freshly tagged message (with backoff) until every peer
+            // receives one, converging on confirmed room-wide delivery and failing
+            // only if it never reaches all peers within the attempts.
+            await waitForStableRoomDelivery(records, messageLog, records[0]);
         });
 
         it("rapid messages from multiple clients are all delivered", async () => {
@@ -439,6 +412,7 @@ describe(`Multi-Client XMPP Integration Tests at ${config.sockethub.url}`, () =>
                 () => newSockethubClient.socket.connected,
                 config.timeouts.connect,
             );
+            await newSockethubClient.ready();
 
             // Set WRONG credentials (same actor JID, different resource)
             await setXMPPCredentials(

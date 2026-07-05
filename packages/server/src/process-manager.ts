@@ -1,6 +1,6 @@
-import { getPlatformId } from "@sockethub/crypto";
-
+import { getPlatformId } from "@sockethub/util/crypto";
 import type { IInitObject } from "./bootstrap/init.js";
+import config from "./config.js";
 import PlatformInstance, {
     type MessageFromParent,
     type PlatformInstanceParams,
@@ -78,18 +78,53 @@ class ProcessManager {
     ): PlatformInstance {
         const identifier = getPlatformId(platform, actor);
         const existing = platformInstances.get(identifier);
-        const platformInstance =
-            existing && this.isProcessAlive(existing)
-                ? existing
-                : this.createPlatformInstance(identifier, platform, actor);
-        if (existing && existing !== platformInstance) {
+        const reusable = existing && this.isProcessAlive(existing);
+        if (!reusable) {
+            this.assertInstanceCapacity(platform, identifier);
+        }
+        if (existing && !reusable) {
+            // The replacement created below shares `identifier` and the Redis
+            // queue name derived from it. Mark the dead instance as replaced
+            // *before* starting its async teardown so that teardown can't
+            // obliterate the replacement's queue or evict it from
+            // platformInstances (#1166).
+            existing.markReplaced();
             void existing.shutdown();
         }
+        const platformInstance = reusable
+            ? existing
+            : this.createPlatformInstance(identifier, platform, actor);
         if (sessionId) {
             platformInstance.registerSession(sessionId, sessionIp);
         }
         platformInstances.set(identifier, platformInstance);
         return platformInstance;
+    }
+
+    /**
+     * Each platform instance forks a full child process; without an upper
+     * bound, a public instance can be driven into resource exhaustion.
+     * Throws when the configured cap (`limits.maxPlatformInstances`, 0 =
+     * disabled) has been reached and a new instance would be created.
+     *
+     * `identifier`'s existing (dead) slot, if any, is excluded from the
+     * count: replacing a crashed instance for the same actor doesn't
+     * increase the total instance count, so it shouldn't be blocked by
+     * the cap.
+     */
+    private assertInstanceCapacity(platform: string, identifier: string): void {
+        const max = Number(config.get("limits:maxPlatformInstances") ?? 0);
+        if (!Number.isFinite(max) || max <= 0) {
+            return;
+        }
+        const occupied = platformInstances.has(identifier)
+            ? platformInstances.size - 1
+            : platformInstances.size;
+        if (occupied >= max) {
+            throw new Error(
+                `platform instance limit reached (${max}); cannot start new ${platform} instance`,
+            );
+        }
     }
 
     private isProcessAlive(platformInstance: PlatformInstance): boolean {

@@ -191,8 +191,6 @@ function buildHandlers({
                 (() => ({
                     credentials: (_payload, cb) => cb({ ok: true, id: "c1" }),
                     message: (_payload, cb) => cb({ ok: true, id: "m1" }),
-                    activityObject: (_payload, cb) =>
-                        cb({ ok: true, id: "a1" }),
                 })),
             createCredentialsStore: () => ({
                 save: async () => 1,
@@ -442,10 +440,6 @@ describe("http actions", () => {
             createMessageHandlersOverride: ({ onPlatformInstance }: any) => ({
                 credentials: (_payload: unknown, cb: (data: unknown) => void) =>
                     cb({ ok: true, id: "c1" }),
-                activityObject: (
-                    _payload: unknown,
-                    cb: (data: unknown) => void,
-                ) => cb({ ok: true, id: "a1" }),
                 message: (_payload: unknown, _cb: (data: unknown) => void) => {
                     onPlatformInstance?.({
                         id: platformId,

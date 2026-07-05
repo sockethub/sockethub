@@ -97,7 +97,7 @@ export { SchemaLogs };
         | { kind: "activity"; id: string; sortKey: number; timestamp: number; tuple: [AnyActivityStream | Record<string, never>, AnyActivityStream | Record<string, never>] }
         | { kind: "schema"; sortKey: number; entry: SchemaLogEntry };
 
-    let logs: LogEntries = $state();
+    let logs: LogEntries = $state({} as LogEntries);
     let meta: Record<string, { timestamp: number; sortKey: number }> = $state({});
     let schemaLogs: SchemaLogEntry[] = $state([]);
     let logModalState = $state(false);
@@ -226,7 +226,9 @@ export { SchemaLogs };
                                 id={item.id}
                                 {hasSend}
                                 {hasResponse}
-                                entry={hasResponse ? item.tuple[1] : item.tuple[0]}
+                                entry={(hasResponse
+                                    ? item.tuple[1]
+                                    : item.tuple[0]) as AnyActivityStream}
                                 timestamp={item.timestamp}
                             />
                         {/if}
@@ -251,6 +253,8 @@ export { SchemaLogs };
                     {modalTitle}
                 </h3>
                 <button
+                    type="button"
+                    aria-label="Close activity log details"
                     onclick={() => (logModalState = false)}
                     class="text-gray-400 hover:text-gray-600 transition-colors"
                 >

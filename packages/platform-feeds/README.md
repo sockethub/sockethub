@@ -31,6 +31,38 @@ web applications to consume feed content.
 }
 ```
 
+#### Optional Fetch Parameters
+
+A fetch request may carry an `object` with filtering parameters. The `object`
+is strictly validated: only the parameters below are accepted, anything else
+is rejected.
+
+```json
+{
+  "type": "fetch",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/feeds/v1.jsonld"
+  ],
+  "actor": {
+    "id": "https://example.com/feed.xml",
+    "type": "feed"
+  },
+  "object": {
+    "since": "2024-01-01T00:00:00.000Z",
+    "limit": 10
+  }
+}
+```
+
+* **since** (RFC3339 `date-time` string) — only return entries published at or
+  after this instant. Entries without a parseable publication date are
+  excluded when `since` is set, since they cannot be confirmed as recent
+  enough.
+* **limit** (integer, minimum `1`) — return at most this many entries. Applied
+  after `since`, preserving feed order.
+
 ### Response Format
 
 Returns an ActivityStreams Collection with feed entries:
@@ -60,7 +92,7 @@ Returns an ActivityStreams Collection with feed entries:
       },
       "object": {
         "id": "https://example.com/post/1",
-        "type": "article",
+        "type": "note",
         "title": "Blog Post Title",
         "content": "Post content...",
         "url": "https://example.com/post/1",
@@ -70,6 +102,95 @@ Returns an ActivityStreams Collection with feed entries:
   ]
 }
 ```
+
+### Detailed Response Example
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://sockethub.org/ns/context/v1.jsonld",
+    "https://sockethub.org/ns/context/platform/feeds/v1.jsonld"
+  ],
+  "type": "collection",
+  "summary": "Best Feed Inc.",
+  "totalItems": 10,
+  "items": [
+    {
+      "@context": [
+        "https://www.w3.org/ns/activitystreams",
+        "https://sockethub.org/ns/context/v1.jsonld",
+        "https://sockethub.org/ns/context/platform/feeds/v1.jsonld"
+      ],
+      "type": "post",
+      "actor": {
+        "type": "feed",
+        "name": "Best Feed Inc.",
+        "id": "http://blog.example.com/rss",
+        "description": "Where the best feed comes to be the best",
+        "image": "http://blog.example.com/images/bestfeed.jpg",
+        "link": "http://blog.example.com",
+        "categories": ["best", "feed", "animals"],
+        "language": "en",
+        "author": "John Doe"
+      },
+      "object": {
+        "id": "http://blog.example.com/articles/about-stuff",
+        "type": "note",
+        "title": "About stuff...",
+        "url": "http://blog.example.com/articles/about-stuff",
+        "published": "2013-05-28T12:00:00.000Z",
+        "datenum": 1369742400000,
+        "brief": "Brief synopsis of stuff...",
+        "content": "Once upon a time...",
+        "contentType": "text"
+      }
+    }
+  ]
+}
+```
+
+## Request Hardening (SSRF Guard)
+
+Because the server fetches whatever URL a client supplies as `actor.id`, feed
+requests are hardened against server-side request forgery (SSRF) and resource
+exhaustion, using the shared guarded fetch dispatcher from `@sockethub/util`:
+
+* Only `http:` and `https:` URLs are accepted.
+* The connection is refused if the destination resolves to a loopback, private,
+  link-local, carrier-grade NAT, or otherwise non-public address — validated at
+  the connection layer, so it also covers every redirect hop (no
+  check-then-fetch rebinding gap). IPv4-mapped, IPv4-compatible, and NAT64 IPv6
+  spellings of those ranges are normalized and blocked as well.
+* Response bodies are capped (a missing or lying `Content-Length` does not
+  bypass the cap).
+* Non-2xx responses fail the job with a descriptive error.
+
+### `allowPrivateAddresses`
+
+Set in the Sockethub config file under this platform's `packageConfig` entry:
+
+```json
+{
+  "packageConfig": {
+    "@sockethub/platform-feeds": {
+      "allowPrivateAddresses": true
+    }
+  }
+}
+```
+
+This disables **only** the private/loopback destination checks. Scheme
+validation, the redirect limit, and the response size cap always remain in
+effect.
+
+This is an escape hatch for development and test harnesses that serve feed
+fixtures from `localhost`, or for self-hosted deployments that intentionally
+fetch intranet feeds. **Do not enable it on a server that accepts requests
+from untrusted clients** — it allows any client to make the server issue HTTP
+requests to internal services, including cloud metadata endpoints such as
+`169.254.169.254`. It defaults to off; the full guard is active unless
+`allowPrivateAddresses` is explicitly `true`.
 
 ## Supported Feed Formats
 

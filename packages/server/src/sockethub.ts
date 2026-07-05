@@ -1,11 +1,14 @@
-import { crypto } from "@sockethub/crypto";
+import { createHash } from "node:crypto";
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import { CredentialsStore } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import {
     AS2_BASE_CONTEXT_URL,
+    buildCanonicalContext,
+    ERROR_PLATFORM_CONTEXT_URL,
     SOCKETHUB_BASE_CONTEXT_URL,
 } from "@sockethub/schemas";
+import { crypto } from "@sockethub/util/crypto";
 import type { Socket } from "socket.io";
 import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
@@ -80,7 +83,16 @@ class Sockethub {
     status: boolean;
     processManager!: ProcessManager;
     private rateLimiter!: ReturnType<typeof createRateLimiter>;
+    // Concurrent socket connections per client IP; used to enforce
+    // rateLimiter.maxConnectionsPerIp.
+    private readonly socketsPerIp = new Map<string, number>();
     private serverVersion?: string;
+    private platformRegistryPayloadCache?: {
+        payload: ReturnType<Sockethub["buildPlatformRegistryPayload"]> & {
+            fingerprint: string;
+        };
+        fingerprint: string;
+    };
 
     /**
      * Build the platform registry payload sent to clients.
@@ -108,6 +120,28 @@ class Sockethub {
                 }),
             ),
         };
+    }
+
+    /**
+     * Return the platform registry payload plus a content fingerprint, computed
+     * once and cached. The registry is static after platform load, so clients
+     * that already hold a matching fingerprint can be told "unchanged" instead
+     * of being re-sent the full (tens-of-KB) schema set on every reconnect or
+     * re-request (see #1117).
+     */
+    private getPlatformRegistryPayload() {
+        if (!this.platformRegistryPayloadCache) {
+            const base = this.buildPlatformRegistryPayload();
+            const fingerprint = createHash("sha256")
+                .update(JSON.stringify(base))
+                .digest("hex")
+                .slice(0, 16);
+            this.platformRegistryPayloadCache = {
+                payload: { fingerprint, ...base },
+                fingerprint,
+            };
+        }
+        return this.platformRegistryPayloadCache;
     }
 
     constructor() {
@@ -174,6 +208,53 @@ class Sockethub {
     }
 
     /**
+     * Reserve a connection slot for the client IP. Returns false (after
+     * notifying and disconnecting the socket) when the configured
+     * per-IP connection cap has been reached.
+     */
+    private claimIpSlot(
+        socket: Socket,
+        clientIp: string,
+        sessionLog: ReturnType<typeof createLogger>,
+    ): boolean {
+        const max = Number(config.get("rateLimiter:maxConnectionsPerIp") ?? 0);
+        if (!Number.isFinite(max) || max <= 0 || !clientIp) {
+            return true;
+        }
+        const current = this.socketsPerIp.get(clientIp) ?? 0;
+        if (current >= max) {
+            sessionLog.warn(
+                `connection limit reached for ${clientIp} (${current}/${max}), rejecting socket`,
+            );
+            socket.emit("error", {
+                type: "Error",
+                "@context": buildCanonicalContext(ERROR_PLATFORM_CONTEXT_URL),
+                actor: {
+                    type: "Application",
+                    name: "sockethub-server",
+                },
+                summary: "too many concurrent connections from this address",
+            });
+            socket.disconnect(true);
+            return false;
+        }
+        this.socketsPerIp.set(clientIp, current + 1);
+        return true;
+    }
+
+    private releaseIpSlot(clientIp: string): void {
+        if (!clientIp) {
+            return;
+        }
+        const current = this.socketsPerIp.get(clientIp) ?? 0;
+        if (current <= 1) {
+            this.socketsPerIp.delete(clientIp);
+        } else {
+            this.socketsPerIp.set(clientIp, current - 1);
+        }
+    }
+
+    /**
      * Configure all socket listeners and middleware for a single client session.
      */
     private handleIncomingConnection(socket: Socket) {
@@ -181,6 +262,13 @@ class Sockethub {
         const sessionLog = createLogger(`server:core:${socket.id}`);
         const sessionSecret = crypto.randToken(16);
         const clientIp = getClientIp(socket);
+
+        // The per-event rate limiter is keyed by socket id, so a client can
+        // bypass it by opening more sockets; cap concurrent connections per
+        // IP when configured (0 = disabled).
+        if (!this.claimIpSlot(socket, clientIp, sessionLog)) {
+            return;
+        }
         const credentialsStore: CredentialsStoreInterface =
             new CredentialsStore(
                 this.parentId,
@@ -190,29 +278,40 @@ class Sockethub {
             );
 
         sessionLog.debug("socket.io connection");
-        const platformRegistryPayload = this.buildPlatformRegistryPayload();
+        const { payload: platformRegistryPayload, fingerprint } =
+            this.getPlatformRegistryPayload();
 
         // Rate limiting middleware - runs on every incoming event
         socket.use((event, next) => {
             this.rateLimiter(socket, event[0], next);
         });
 
-        // Send schema metadata to clients immediately and on-demand.
-        socket.emit("schemas", platformRegistryPayload);
+        // Serve the platform registry on demand. The client (SockethubClient)
+        // requests it on every connect/reconnect and echoes the fingerprint it
+        // last received; when that matches we reply "unchanged" so a reconnect
+        // or re-request doesn't re-transmit the full schema set (#1117).
         socket.on("schemas", (...args: unknown[]) => {
             const ack = args.find(
                 (a): a is (payload: unknown) => void => typeof a === "function",
             );
+            const clientFingerprint = args.find(
+                (a): a is string => typeof a === "string",
+            );
+            const response =
+                clientFingerprint === fingerprint
+                    ? { fingerprint, unchanged: true }
+                    : platformRegistryPayload;
             if (ack) {
-                ack(platformRegistryPayload);
+                ack(response);
             } else {
-                socket.emit("schemas", platformRegistryPayload);
+                socket.emit("schemas", response);
             }
         });
 
         socket.on("disconnect", () => {
             sessionLog.debug("disconnect received from client");
             cleanupClient(socket.id);
+            this.releaseIpSlot(clientIp);
         });
 
         const handlers = createMessageHandlers({
@@ -228,10 +327,6 @@ class Sockethub {
         });
 
         socket.on("credentials", handlers.credentials);
-
-        // when new activity objects are created on the client side, an event is
-        // fired, and we receive a copy on the server side.
-        socket.on("activity-object", handlers.activityObject);
         socket.on("message", handlers.message);
     }
 }

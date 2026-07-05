@@ -13,7 +13,6 @@ export interface ActivityStream {
     "@context": JsonLdContext;
     id?: string;
     type: string;
-    platform?: string;
     actor: ActivityActor;
     object?: ActivityObject;
     target?: ActivityActor;
@@ -106,12 +105,23 @@ export type PlatformConfig = StatelessPlatformConfig | PersistentPlatformConfig;
 
 interface BasePlatformConfig {
     connectTimeoutMs?: number;
+    // feeds: allow fetching loopback/private destinations (SSRF escape hatch,
+    // dev/test only). Set via packageConfig; see platform-feeds README.
+    allowPrivateAddresses?: boolean;
 }
 
 /** Configuration for stateless platforms that start/stop per-request */
 export interface StatelessPlatformConfig extends BasePlatformConfig {
     persist: false;
     requireCredentials?: string[];
+    /**
+     * Number of jobs the platform's worker processes in parallel. Stateless
+     * platforms are shared by every session on the server, so serial
+     * processing lets one slow job (e.g. a hanging feed fetch) stall all
+     * other clients. Defaults to 10; override per-platform via
+     * `packageConfig`.
+     */
+    concurrency?: number;
 }
 
 /**
@@ -140,6 +150,8 @@ export interface PlatformSchemaStruct {
             };
         };
     };
+    // Outbound (platform → client) response schema. Validated on send.
+    responses?: object;
 }
 
 export interface PlatformConstructor {
@@ -190,10 +202,4 @@ export interface PersistentPlatformInterface extends PlatformInterface {
         credentials: CredentialsObject,
         done: PlatformCallback,
     ): void;
-}
-
-export interface PlatformSession {
-    log: Logger;
-    sendToClient: PlatformSendToClient;
-    updateActor: PlatformUpdateActor;
 }
