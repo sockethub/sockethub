@@ -345,7 +345,11 @@ class Sockethub {
             // The session's credential key is dead weight once the socket
             // closes: a reconnect gets a new socket.id (and the client
             // re-sends credentials), so nothing ever reads it again.
-            void credentialsStore.teardown?.();
+            credentialsStore.teardown?.()?.catch((err: unknown) => {
+                sessionLog.warn(
+                    `credentials store teardown failed on disconnect: ${String(err)}`,
+                );
+            });
             cleanupClient(socket.id);
             this.releaseIpSlot(clientIp);
         });
