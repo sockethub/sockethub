@@ -40,6 +40,7 @@ describe("ProcessManager", () => {
             .callsFake(function (this: PlatformInstance) {
                 this.JobQueue = sandbox.stub().returns({
                     shutdown: sandbox.stub().resolves(),
+                    disconnect: sandbox.stub().resolves(),
                     on: sandbox.stub(),
                 }) as never;
             });
@@ -120,5 +121,39 @@ describe("ProcessManager", () => {
             manager.get("fakeplatform", "actor-a"),
         ).not.toThrow();
         expect(platformInstances.size).toEqual(1);
+    });
+
+    test("marks a dead instance as replaced before shutting it down", () => {
+        const first = manager.get("fakeplatform", "actor-a");
+        setAlive(first, false);
+        const markReplaced = sandbox.spy(first, "markReplaced");
+        const shutdown = sandbox.stub(first, "shutdown").resolves();
+        const second = manager.get("fakeplatform", "actor-a");
+        expect(second).not.toBe(first);
+        sinon.assert.calledOnce(markReplaced);
+        sinon.assert.calledOnce(shutdown);
+        expect(markReplaced.calledBefore(shutdown)).toEqual(true);
+    });
+
+    test("the dead instance's async teardown does not evict the replacement from the map", async () => {
+        const first = manager.get("fakeplatform", "actor-a");
+        setAlive(first, false);
+        const second = manager.get("fakeplatform", "actor-a");
+        expect(second).not.toBe(first);
+        // ensureProcess fires the old instance's shutdown without awaiting
+        // it; let it finish, then verify the replacement still owns the slot
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(platformInstances.get(second.id)).toBe(second);
+    });
+
+    test("does not shut down a live instance when reusing it", () => {
+        const first = manager.get("fakeplatform", "actor-a");
+        setAlive(first, true);
+        const markReplaced = sandbox.spy(first, "markReplaced");
+        const shutdown = sandbox.stub(first, "shutdown").resolves();
+        const second = manager.get("fakeplatform", "actor-a");
+        expect(second).toBe(first);
+        sinon.assert.notCalled(markReplaced);
+        sinon.assert.notCalled(shutdown);
     });
 });
