@@ -73,9 +73,10 @@ function buildSchema(): convict.Config<Record<string, unknown>> {
                 "@sockethub/platform-xmpp",
             ],
         },
-        // Per-platform config keyed by package name. Free-form for now: no
-        // server code consumes it yet (see README/follow-up).
         packageConfig: {
+            doc:
+                "Per-platform config keyed by package name, validated against " +
+                "each platform's config schema and forwarded to its child process",
             format: Object,
             default: {},
         },
