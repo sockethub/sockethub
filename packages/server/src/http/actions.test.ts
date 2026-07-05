@@ -187,6 +187,7 @@ function buildHandlers({
                 }
                 return DEFAULT_CONFIG[key];
             },
+            createRateLimiter: () => (_req, _res, next) => next(),
             createMessageHandlers:
                 createMessageHandlersOverride ??
                 (() => ({
@@ -568,7 +569,7 @@ describe("http actions", () => {
         expect(hasHttpSessions(platformId)).toBeFalse();
     });
 
-    it("returns 500 when request setup throws instead of crashing", async () => {
+    it("propagates an unexpected setup error to Express", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({
             fakeRedis,
@@ -582,13 +583,17 @@ describe("http actions", () => {
             headers: { "x-request-id": "throws-1" },
         });
 
-        await handlers["/sockethub-http"](req, res);
-
-        expect(res.statusCode).toBe(500);
-        expect(res.jsonBody.error).toBe("internal server error");
-        // Idempotency claim must be cleared so the id is not wedged "in-progress".
-        expect(
-            fakeRedis.store.get("sockethub:http-actions:status:throws-1"),
-        ).toBeUndefined();
+        // The handler no longer self-catches: Express 5 forwards a rejected
+        // async route handler to its error middleware (Express 4 would have
+        // crashed the process). Assert the error propagates rather than being
+        // swallowed.
+        let threw = false;
+        try {
+            await handlers["/sockethub-http"](req, res);
+        } catch (err) {
+            threw = true;
+            expect(String(err)).toContain("boom during setup");
+        }
+        expect(threw).toBeTrue();
     });
 });

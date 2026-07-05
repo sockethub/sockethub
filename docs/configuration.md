@@ -243,6 +243,8 @@ Configuration behavior:
 - `requestTimeoutMs`: maximum total request time.
 - `idleTimeoutMs`: maximum time between streamed result lines.
 - HTTP actions reuse the top-level `rateLimiter` settings (keyed by client IP).
+  The limiter is backed by Redis, so a client's request budget is shared across
+  all Sockethub instances behind a load balancer rather than counted per process.
 
 Request id sources, in priority order:
 

@@ -8,8 +8,10 @@ import {
     type CredentialsValidationOptions,
     createCredentialsRedisConnection,
     createIdempotencyRedisConnection,
+    createRateLimitRedisConnection,
     resetSharedCredentialsRedisConnection,
     resetSharedIdempotencyRedisConnection,
+    resetSharedRateLimitRedisConnection,
     verifySecureStore,
 } from "./credentials-store.js";
 import {
@@ -54,6 +56,7 @@ export {
     type CredentialsValidationOptions,
     createCredentialsRedisConnection,
     createIdempotencyRedisConnection,
+    createRateLimitRedisConnection,
     getRedisConnectionCount,
     JobQueue,
     JobWorker,
@@ -61,5 +64,6 @@ export {
     redisCheck,
     resetSharedCredentialsRedisConnection,
     resetSharedIdempotencyRedisConnection,
+    resetSharedRateLimitRedisConnection,
     resetSharedRedisConnection,
 };

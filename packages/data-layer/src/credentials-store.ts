@@ -13,11 +13,18 @@ import type { RedisConfig } from "./types.js";
 
 let sharedCredentialsRedisConnection: Redis | null = null;
 let sharedIdempotencyRedisConnection: Redis | null = null;
+let sharedRateLimitRedisConnection: Redis | null = null;
 
-function buildSharedRedisConnection(config: RedisConfig): Redis {
+function buildSharedRedisConnection(
+    config: RedisConfig,
+    opts: { enableOfflineQueue?: boolean } = {},
+): Redis {
     return new IORedis(config.url, {
         connectionName: config.connectionName,
-        enableOfflineQueue: false,
+        // Credentials/idempotency fail fast when the socket isn't writable; the
+        // rate limiter enables the offline queue so its eager script load queues
+        // until the connection is ready instead of rejecting at construction.
+        enableOfflineQueue: opts.enableOfflineQueue ?? false,
         maxRetriesPerRequest: config.maxRetriesPerRequest ?? null,
         connectTimeout: config.connectTimeout ?? 10000,
         disconnectTimeout: config.disconnectTimeout ?? 5000,
@@ -55,6 +62,21 @@ export function createIdempotencyRedisConnection(config: RedisConfig): Redis {
 }
 
 /**
+ * Creates or returns a dedicated shared Redis connection for rate limiting.
+ * A dedicated connection keeps rate-limit traffic off the credentials and
+ * idempotency connections and lets a Redis-backed limiter share request budgets
+ * across instances.
+ */
+export function createRateLimitRedisConnection(config: RedisConfig): Redis {
+    if (!sharedRateLimitRedisConnection) {
+        sharedRateLimitRedisConnection = buildSharedRedisConnection(config, {
+            enableOfflineQueue: true,
+        });
+    }
+    return sharedRateLimitRedisConnection;
+}
+
+/**
  * Resets the shared credentials Redis connection. Used primarily for testing.
  */
 export async function resetSharedCredentialsRedisConnection(): Promise<void> {
@@ -76,6 +98,17 @@ export async function resetSharedIdempotencyRedisConnection(): Promise<void> {
             // Ignore disconnect errors during cleanup
         }
         sharedIdempotencyRedisConnection = null;
+    }
+}
+
+export async function resetSharedRateLimitRedisConnection(): Promise<void> {
+    if (sharedRateLimitRedisConnection) {
+        try {
+            sharedRateLimitRedisConnection.disconnect(false);
+        } catch (_err) {
+            // Ignore disconnect errors during cleanup
+        }
+        sharedRateLimitRedisConnection = null;
     }
 }
 
