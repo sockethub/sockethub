@@ -222,6 +222,26 @@ async function startPlatformProcess() {
     }
 
     /**
+     * Persistent platforms hold per-actor connection state, so their jobs
+     * must be processed serially. Stateless platforms (feeds, metadata) are
+     * shared by every session on the server and their jobs are independent
+     * network fetches, so they process in parallel — otherwise one slow
+     * fetch stalls the queue for all clients. Overridable per-platform via
+     * `packageConfig.concurrency`.
+     */
+    const DEFAULT_STATELESS_CONCURRENCY = 10;
+    function getWorkerConcurrency(): number {
+        if (platform.config.persist) {
+            return 1;
+        }
+        const configured = Number(platform.config.concurrency);
+        if (Number.isFinite(configured) && configured >= 1) {
+            return Math.floor(configured);
+        }
+        return DEFAULT_STATELESS_CONCURRENCY;
+    }
+
+    /**
      * Type guard to check if a platform is persistent and has credentialsHash.
      */
     function isPersistentPlatform(
@@ -537,13 +557,17 @@ async function startPlatformProcess() {
                 return;
             }
         }
+        const concurrency = getWorkerConcurrency();
         jobWorker = new JobWorker(
             parentId,
             identifier,
             parentSecret1 + parentSecret2,
             { url: redisUrl },
+            { concurrency },
         );
-        logger.info("listening on the queue for incoming jobs");
+        logger.info(
+            `listening on the queue for incoming jobs (concurrency: ${concurrency})`,
+        );
         jobWorker.onJob(getJobHandler());
         jobWorkerStarted = true;
     }

@@ -114,6 +114,14 @@ interface BasePlatformConfig {
 export interface StatelessPlatformConfig extends BasePlatformConfig {
     persist: false;
     requireCredentials?: string[];
+    /**
+     * Number of jobs the platform's worker processes in parallel. Stateless
+     * platforms are shared by every session on the server, so serial
+     * processing lets one slow job (e.g. a hanging feed fetch) stall all
+     * other clients. Defaults to 10; override per-platform via
+     * `packageConfig`.
+     */
+    concurrency?: number;
 }
 
 /**

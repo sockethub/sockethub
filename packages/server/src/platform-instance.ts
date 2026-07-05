@@ -50,6 +50,10 @@ export interface MessageFromParent extends Array<string | unknown> {
     1: unknown;
 }
 
+// Handlers for jobs that never complete are pruned after this long. Matches
+// the queue's removeOnComplete/removeOnFail age (300s) plus slack.
+const JOB_HANDLER_TTL_MS = 6 * 60 * 1000;
+
 const HEARTBEAT_INTERVAL_MS = Number(
     config.get("platformHeartbeat:intervalMs") ?? 5000,
 );
@@ -65,6 +69,8 @@ export default class PlatformInstance {
     getSocket: typeof getSocket;
     readonly global: boolean = false;
     readonly completedJobHandlers: Map<string, CompletedJobHandler> = new Map();
+    private readonly completedJobHandlerTimestamps: Map<string, number> =
+        new Map();
     config: PlatformConfig;
     contextUrl?: string;
     private initialized = false;
@@ -74,13 +80,8 @@ export default class PlatformInstance {
     readonly parentId: string;
     readonly sessions: Set<string> = new Set();
     readonly sessionIps: Map<string, string> = new Map();
-    readonly sessionCallbacks: Record<
-        "close" | "message",
-        Map<string, (...args: Array<unknown>) => void | Promise<void>>
-    > = {
-        close: new Map(),
-        message: new Map(),
-    };
+    private processMessageListener?: (message: MessageFromPlatform) => void;
+    private processCloseListener?: (e: unknown) => void;
     private heartbeatLastSeen = Date.now();
     private heartbeatMonitor?: NodeJS.Timeout;
     private heartbeatListener?: (message: MessageFromPlatform) => void;
@@ -133,6 +134,7 @@ export default class PlatformInstance {
 
         this.createQueue();
         this.initProcess(this.parentId, this.name, this.id, env);
+        this.attachProcessListeners();
         this.startHeartbeatMonitor();
         this.createGetSocket();
     }
@@ -178,6 +180,17 @@ export default class PlatformInstance {
             if (this.heartbeatListener) {
                 this.process.removeListener("message", this.heartbeatListener);
                 this.heartbeatListener = undefined;
+            }
+            if (this.processMessageListener) {
+                this.process.removeListener(
+                    "message",
+                    this.processMessageListener,
+                );
+                this.processMessageListener = undefined;
+            }
+            if (this.processCloseListener) {
+                this.process.removeListener("close", this.processCloseListener);
+                this.processCloseListener = undefined;
             }
             this.process.removeAllListeners("close");
             this.process.unref();
@@ -233,6 +246,46 @@ export default class PlatformInstance {
     }
 
     /**
+     * Register a handler to be invoked when the job with the given title
+     * completes or fails. Entries are pruned after JOB_HANDLER_TTL_MS so
+     * jobs that never produce a result (e.g. the platform process dies
+     * mid-job) don't leak handlers for the lifetime of the instance.
+     */
+    public registerCompletedJobHandler(
+        title: string,
+        handler: CompletedJobHandler,
+    ) {
+        this.pruneExpiredJobHandlers();
+        this.completedJobHandlers.set(title, handler);
+        this.completedJobHandlerTimestamps.set(title, Date.now());
+    }
+
+    private takeCompletedJobHandler(
+        title: string,
+    ): CompletedJobHandler | undefined {
+        const handler = this.completedJobHandlers.get(title);
+        if (handler) {
+            this.completedJobHandlers.delete(title);
+            this.completedJobHandlerTimestamps.delete(title);
+        }
+        return handler;
+    }
+
+    private pruneExpiredJobHandlers() {
+        const cutoff = Date.now() - JOB_HANDLER_TTL_MS;
+        for (const [title, registeredAt] of this
+            .completedJobHandlerTimestamps) {
+            if (registeredAt < cutoff) {
+                this.log.debug(
+                    `pruning expired completed-job handler ${title}`,
+                );
+                this.completedJobHandlers.delete(title);
+                this.completedJobHandlerTimestamps.delete(title);
+            }
+        }
+    }
+
+    /**
      * Register listener to be called when the process emits a message.
      * @param sessionId ID of socket connection that will receive messages from platform emits
      */
@@ -240,16 +293,7 @@ export default class PlatformInstance {
         if (clientIp) {
             this.sessionIps.set(sessionId, clientIp);
         }
-        if (!this.sessions.has(sessionId)) {
-            this.sessions.add(sessionId);
-            for (const type of Object.keys(this.sessionCallbacks) as Array<
-                "close" | "message"
-            >) {
-                const cb = this.callbackFunction(type, sessionId);
-                this.process.on(type, cb);
-                this.sessionCallbacks[type].set(sessionId, cb);
-            }
-        }
+        this.sessions.add(sessionId);
     }
 
     /**
@@ -351,10 +395,9 @@ export default class PlatformInstance {
         payload = this.toExternalPayload(payload);
 
         // send result to client
-        const callback = this.completedJobHandlers.get(job.title);
+        const callback = this.takeCompletedJobHandler(job.title);
         if (callback) {
             callback(payload);
-            this.completedJobHandlers.delete(job.title);
         } else {
             this.sendToClient(job.sessionId, payload);
         }
@@ -396,11 +439,12 @@ export default class PlatformInstance {
     }
 
     /**
-     * Sends error message to client and clears all references to this class.
-     * @param sessionId
-     * @param message
+     * Sends a fatal error message to every connected session, then clears
+     * all references to this class. Previously only the session whose
+     * listener happened to run first received the error; every other
+     * session sharing the instance lost the platform silently.
      */
-    private async reportError(sessionId: string, message: string) {
+    private async broadcastFatalError(message: string) {
         const errorObject: ActivityStream = {
             "@context": buildCanonicalContext(
                 this.contextUrl ?? INTERNAL_PLATFORM_CONTEXT_URL,
@@ -412,15 +456,14 @@ export default class PlatformInstance {
             error: message,
         };
 
-        // Only attempt to send to client if we have a valid session
-        try {
-            if (sessionId && this.sessions.has(sessionId)) {
+        for (const sessionId of this.sessions.values()) {
+            try {
                 this.sendToClient(sessionId, errorObject);
+            } catch (err) {
+                this.log.error(
+                    `Failed to send error to client: ${errorMessage(err)}`,
+                );
             }
-        } catch (err) {
-            this.log.error(
-                `Failed to send error to client: ${errorMessage(err)}`,
-            );
         }
 
         this.sessions.clear();
@@ -438,67 +481,92 @@ export default class PlatformInstance {
     }
 
     /**
-     * Generates a function tied to a given client session (socket connection), the generated
-     * function will be called for each session ID registered, for every platform emit.
-     * @param listener
-     * @param sessionId
+     * Attach one message and one close listener to the child process,
+     * serving every session registered with this instance. Sessions no
+     * longer add their own listener pair, so listener count stays constant
+     * regardless of how many sockets share the instance. Previously each
+     * session registered two listeners: O(sessions) callback invocations
+     * per platform emit, plus MaxListenersExceeded warnings past ten
+     * sessions on shared (e.g. global) platforms.
      */
-    private callbackFunction(listener: "close" | "message", sessionId: string) {
-        const funcs: Record<
-            "close" | "message",
-            (...args: Array<unknown>) => Promise<void>
-        > = {
-            close: async (e: object) => {
-                this.log.error(`close event triggered ${this.id}: ${e}`);
-                // Check if process is still connected before attempting error reporting
-                if (this.process?.connected && !this.flaggedForTermination) {
-                    await this.reportError(
-                        sessionId,
-                        `Error: session thread closed unexpectedly: ${e}`,
-                    );
-                } else {
-                    this.log.debug(
-                        "Process already disconnected or flagged for termination, skipping error report",
-                    );
-                    await this.shutdown();
-                }
-            },
-            message: async ([first, second, third]: MessageFromPlatform) => {
-                if (first === "updateActor") {
-                    // Internal control message: platform process is reporting a new actor id.
-                    // We need to update the key to the store in order to find it in the future.
-                    this.updateIdentifier(third);
-                } else if (first === "error") {
-                    // Error messages travel over IPC as plain objects; normalize to a string.
-                    let normalizedError: string;
-                    if (typeof second === "string") {
-                        normalizedError = second;
-                    } else if (
-                        second &&
-                        typeof second === "object" &&
-                        "message" in (second as Record<string, unknown>)
-                    ) {
-                        normalizedError = String(
-                            (second as Record<string, unknown>).message,
-                        );
-                    } else {
-                        try {
-                            normalizedError = JSON.stringify(second);
-                        } catch {
-                            normalizedError = String(second);
-                        }
-                    }
-                    await this.reportError(sessionId, normalizedError);
-                } else if (first === "heartbeat") {
-                    // Internal heartbeat signals are handled by the monitor listener only.
-                    return;
-                } else {
-                    // treat like a message to clients
-                    this.sendToClient(sessionId, second);
-                }
-            },
+    private attachProcessListeners() {
+        if (!this.process?.on) {
+            return;
+        }
+        this.processMessageListener = (message: MessageFromPlatform) => {
+            this.handleProcessMessage(message).catch((err) => {
+                this.log.error(`message handler failed: ${errorMessage(err)}`);
+            });
         };
-        return funcs[listener];
+        this.processCloseListener = (e: unknown) => {
+            this.handleProcessClose(e).catch((err) => {
+                this.log.error(`close handler failed: ${errorMessage(err)}`);
+            });
+        };
+        this.process.on("message", this.processMessageListener);
+        this.process.on("close", this.processCloseListener);
+    }
+
+    private async handleProcessClose(e: unknown) {
+        this.log.error(`close event triggered ${this.id}: ${e}`);
+        // `close` fires after the child has already exited and its IPC channel
+        // torn down, so `this.process.connected` is always false by this point —
+        // it can't distinguish an unexpected crash from an intentional shutdown.
+        // `flaggedForTermination` is set *before* we tear anything down in every
+        // intentional path (shutdown(), credential-init failure, heartbeat
+        // timeout), so it alone tells us whether this close was expected.
+        if (!this.flaggedForTermination) {
+            await this.broadcastFatalError(
+                `Error: session thread closed unexpectedly: ${e}`,
+            );
+        } else {
+            this.log.debug(
+                "process already flagged for termination, skipping error report",
+            );
+        }
+        await this.shutdown();
+    }
+
+    private async handleProcessMessage([
+        first,
+        second,
+        third,
+    ]: MessageFromPlatform) {
+        if (first === "updateActor") {
+            // Internal control message: platform process is reporting a new actor id.
+            // We need to update the key to the store in order to find it in the future.
+            this.updateIdentifier(third);
+        } else if (first === "error") {
+            // Error messages travel over IPC as plain objects; normalize to a string.
+            let normalizedError: string;
+            if (typeof second === "string") {
+                normalizedError = second;
+            } else if (
+                second &&
+                typeof second === "object" &&
+                "message" in (second as Record<string, unknown>)
+            ) {
+                normalizedError = String(
+                    (second as Record<string, unknown>).message,
+                );
+            } else {
+                try {
+                    normalizedError = JSON.stringify(second);
+                } catch {
+                    normalizedError = String(second);
+                }
+            }
+            await this.broadcastFatalError(normalizedError);
+        } else if (first === "heartbeat") {
+            // Internal heartbeat signals are handled by the monitor listener only.
+            return;
+        } else {
+            // treat like a message to clients: deliver to every session
+            // registered with this platform instance
+            for (const sessionId of this.sessions.values()) {
+                this.sendToClient(sessionId, second as InternalActivityStream);
+            }
+        }
     }
 
     private markHeartbeat() {

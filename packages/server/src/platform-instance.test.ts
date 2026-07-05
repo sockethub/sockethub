@@ -128,24 +128,11 @@ describe("PlatformInstance", () => {
         });
 
         describe("registerSession", () => {
-            beforeEach(() => {
-                pi.callbackFunction = sandbox.fake();
-            });
-
-            test("adds a close and message handler when a session is registered", () => {
+            test("tracks the session without adding process listeners", () => {
                 pi.registerSession("my session id");
-                expect(pi.callbackFunction.callCount).toEqual(2);
-                sandbox.assert.calledWith(
-                    pi.callbackFunction,
-                    "close",
-                    "my session id",
-                );
-                sandbox.assert.calledWith(
-                    pi.callbackFunction,
-                    "message",
-                    "my session id",
-                );
                 expect(pi.sessions.has("my session id")).toEqual(true);
+                // sessions no longer register per-session process listeners
+                sandbox.assert.notCalled(pi.process.on);
             });
 
             test("is able to generate failure reports", async () => {
@@ -153,7 +140,12 @@ describe("PlatformInstance", () => {
                 expect(pi.sessions.has("my session id")).toEqual(true);
                 pi.sendToClient = sandbox.stub();
                 pi.shutdown = sandbox.stub();
-                await pi.reportError("my session id", "an error message");
+                await pi.broadcastFatalError("an error message");
+                sandbox.assert.calledWith(
+                    pi.sendToClient,
+                    "my session id",
+                    sinon.match({ error: "an error message" }),
+                );
                 expect(pi.sessions.size).toEqual(0);
             });
         });
@@ -325,9 +317,9 @@ describe("PlatformInstance", () => {
             sandbox.assert.calledOnce(socketMock.emit);
         });
 
-        test("reportError emits a valid service actor for a global platform", async () => {
+        test("broadcastFatalError emits a valid service actor for a global platform", async () => {
             pi.sessions.add("my session id");
-            await pi.reportError("my session id", "boom");
+            await pi.broadcastFatalError("boom");
             sandbox.assert.calledOnce(socketMock.emit);
             const emitted = socketMock.emit.firstCall.args[1];
             expect(emitted.type).toEqual("error");
@@ -388,77 +380,67 @@ describe("PlatformInstance", () => {
             });
         });
 
-        describe("callbackFunction", () => {
+        describe("process event handlers", () => {
             beforeEach(() => {
-                pi.reportError = sandbox.fake();
+                pi.broadcastFatalError = sandbox.fake();
                 pi.sendToClient = sandbox.fake();
                 pi.updateIdentifier = sandbox.fake();
             });
 
-            test("close events from platform thread are reported", async () => {
-                // Mock process as connected and not flagged for termination
-                pi.process.connected = true;
-                pi.flaggedForTermination = false;
-
-                const close = pi.callbackFunction("close", "my session id");
-                await close("error msg");
-                sandbox.assert.calledWith(
-                    pi.reportError,
-                    "my session id",
-                    "Error: session thread closed unexpectedly: error msg",
-                );
-            });
-
-            test("close events skip error reporting when process disconnected", async () => {
-                // Mock process as disconnected
+            test("unexpected close events are reported, regardless of process.connected", async () => {
+                // `connected` is already false by the time `close` fires in real
+                // usage (see the comment on handleProcessClose); the handler must
+                // rely on flaggedForTermination alone, not on `connected`.
                 pi.process.connected = false;
                 pi.flaggedForTermination = false;
                 pi.shutdown = sandbox.stub();
 
-                const close = pi.callbackFunction("close", "my session id");
-                await close("error msg");
-
-                // Should NOT attempt to report error
-                sandbox.assert.notCalled(pi.reportError);
-                // Should call shutdown
+                await pi.handleProcessClose("error msg");
+                sandbox.assert.calledWith(
+                    pi.broadcastFatalError,
+                    "Error: session thread closed unexpectedly: error msg",
+                );
                 sandbox.assert.called(pi.shutdown);
             });
 
             test("close events skip error reporting when flagged for termination", async () => {
-                // Mock process as flagged for termination
-                pi.process.connected = true;
+                pi.process.connected = false;
                 pi.flaggedForTermination = true;
                 pi.shutdown = sandbox.stub();
 
-                const close = pi.callbackFunction("close", "my session id");
-                await close("error msg");
+                await pi.handleProcessClose("error msg");
 
                 // Should NOT attempt to report error
-                sandbox.assert.notCalled(pi.reportError);
-                // Should call shutdown
+                sandbox.assert.notCalled(pi.broadcastFatalError);
+                // Should still shut down to clean up instance state
                 sandbox.assert.called(pi.shutdown);
             });
 
-            test("message events from platform thread are route based on command: error", () => {
-                const message = pi.callbackFunction("message", "my session id");
-                message(["error", "error message"]);
+            test("message events from platform thread are routed based on command: error", async () => {
+                await pi.handleProcessMessage(["error", "error message"]);
                 sandbox.assert.calledWith(
-                    pi.reportError,
-                    "my session id",
+                    pi.broadcastFatalError,
                     "error message",
                 );
             });
 
-            test("message events from platform thread are route based on command: updateActor", () => {
-                const message = pi.callbackFunction("message", "my session id");
-                message(["updateActor", undefined, { foo: "bar" }]);
+            test("message events from platform thread are routed based on command: updateActor", async () => {
+                await pi.handleProcessMessage([
+                    "updateActor",
+                    undefined,
+                    { foo: "bar" },
+                ]);
                 sandbox.assert.calledWith(pi.updateIdentifier, { foo: "bar" });
             });
 
-            test("message events from platform thread are route based on command: else", () => {
-                const message = pi.callbackFunction("message", "my session id");
-                message(["blah", { foo: "bar" }]);
-                sandbox.assert.calledWith(pi.sendToClient, "my session id", {
+            test("message events from platform thread are delivered to every registered session", async () => {
+                pi.sessions.add("session one");
+                pi.sessions.add("session two");
+                await pi.handleProcessMessage(["blah", { foo: "bar" }]);
+                sandbox.assert.calledWith(pi.sendToClient, "session one", {
+                    foo: "bar",
+                });
+                sandbox.assert.calledWith(pi.sendToClient, "session two", {
                     foo: "bar",
                 });
             });

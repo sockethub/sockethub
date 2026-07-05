@@ -8,6 +8,8 @@ import type {
 } from "@sockethub/schemas";
 import {
     AS2_BASE_CONTEXT_URL,
+    buildCanonicalContext,
+    ERROR_PLATFORM_CONTEXT_URL,
     resolvePlatformId,
     SOCKETHUB_BASE_CONTEXT_URL,
 } from "@sockethub/schemas";
@@ -112,6 +114,9 @@ class Sockethub {
     status: boolean;
     processManager!: ProcessManager;
     private rateLimiter!: ReturnType<typeof createRateLimiter>;
+    // Concurrent socket connections per client IP; used to enforce
+    // rateLimiter.maxConnectionsPerIp.
+    private readonly socketsPerIp = new Map<string, number>();
     private serverVersion?: string;
     private platformRegistryPayloadCache?: {
         payload: ReturnType<Sockethub["buildPlatformRegistryPayload"]> & {
@@ -229,6 +234,53 @@ class Sockethub {
     }
 
     /**
+     * Reserve a connection slot for the client IP. Returns false (after
+     * notifying and disconnecting the socket) when the configured
+     * per-IP connection cap has been reached.
+     */
+    private claimIpSlot(
+        socket: Socket,
+        clientIp: string,
+        sessionLog: ReturnType<typeof createLogger>,
+    ): boolean {
+        const max = Number(config.get("rateLimiter:maxConnectionsPerIp") ?? 0);
+        if (!Number.isFinite(max) || max <= 0 || !clientIp) {
+            return true;
+        }
+        const current = this.socketsPerIp.get(clientIp) ?? 0;
+        if (current >= max) {
+            sessionLog.warn(
+                `connection limit reached for ${clientIp} (${current}/${max}), rejecting socket`,
+            );
+            socket.emit("error", {
+                type: "Error",
+                "@context": buildCanonicalContext(ERROR_PLATFORM_CONTEXT_URL),
+                actor: {
+                    type: "Application",
+                    name: "sockethub-server",
+                },
+                summary: "too many concurrent connections from this address",
+            });
+            socket.disconnect(true);
+            return false;
+        }
+        this.socketsPerIp.set(clientIp, current + 1);
+        return true;
+    }
+
+    private releaseIpSlot(clientIp: string): void {
+        if (!clientIp) {
+            return;
+        }
+        const current = this.socketsPerIp.get(clientIp) ?? 0;
+        if (current <= 1) {
+            this.socketsPerIp.delete(clientIp);
+        } else {
+            this.socketsPerIp.set(clientIp, current - 1);
+        }
+    }
+
+    /**
      * Configure all socket listeners and middleware for a single client session.
      */
     private handleIncomingConnection(socket: Socket) {
@@ -236,6 +288,13 @@ class Sockethub {
         const sessionLog = createLogger(`server:core:${socket.id}`);
         const sessionSecret = crypto.randToken(16);
         const clientIp = getClientIp(socket);
+
+        // The per-event rate limiter is keyed by socket id, so a client can
+        // bypass it by opening more sockets; cap concurrent connections per
+        // IP when configured (0 = disabled).
+        if (!this.claimIpSlot(socket, clientIp, sessionLog)) {
+            return;
+        }
         const credentialsStore: CredentialsStoreInterface =
             new CredentialsStore(
                 this.parentId,
@@ -278,6 +337,7 @@ class Sockethub {
         socket.on("disconnect", () => {
             sessionLog.debug("disconnect received from client");
             cleanupClient(socket.id);
+            this.releaseIpSlot(clientIp);
         });
 
         socket.on(
@@ -355,12 +415,21 @@ class Sockethub {
                             next(msg);
                             return;
                         }
-                        const platformInstance = this.processManager.get(
-                            platformId,
-                            msg.actor.id,
-                            socket.id,
-                            clientIp,
-                        );
+                        let platformInstance: ReturnType<ProcessManager["get"]>;
+                        try {
+                            platformInstance = this.processManager.get(
+                                platformId,
+                                msg.actor.id,
+                                socket.id,
+                                clientIp,
+                            );
+                        } catch (err) {
+                            // e.g. limits.maxPlatformInstances reached
+                            msg.error =
+                                errorMessage(err) || "platform unavailable";
+                            next(msg);
+                            return;
+                        }
                         // job validated and queued, stores socket.io callback for when job is completed
                         try {
                             const job = await platformInstance.queue.add(
@@ -368,7 +437,7 @@ class Sockethub {
                                 msg,
                             );
                             if (job) {
-                                platformInstance.completedJobHandlers.set(
+                                platformInstance.registerCompletedJobHandler(
                                     job.title,
                                     next,
                                 );
