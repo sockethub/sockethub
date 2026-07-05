@@ -304,6 +304,9 @@ export const PlatformIrcSchema = {
                         type: "string",
                         enum: ["PLAIN", "OAUTHBEARER"],
                     },
+                    allowInvalidCert: {
+                        type: "boolean",
+                    },
                 },
             },
         },
