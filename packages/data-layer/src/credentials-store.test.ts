@@ -380,7 +380,7 @@ describe("purgeCredentialsStoreKeys", () => {
     }
 
     it("scans and deletes only this parentId's keys", async () => {
-        const delStub = sinon.stub().resolves(2);
+        const delStub = sinon.stub().resolves(1);
         const client = fakeClient(
             [["0", ["sockethub:pid:data-layer:credentials-store:a", "sockethub:pid:data-layer:credentials-store:b"]]],
             delStub,
@@ -398,9 +398,14 @@ describe("purgeCredentialsStoreKeys", () => {
             "COUNT",
             100,
         ]);
+        // Per-key deletion (multi-key DEL is cluster-unsafe)
+        sinon.assert.calledTwice(delStub);
         sinon.assert.calledWith(
             delStub,
             "sockethub:pid:data-layer:credentials-store:a",
+        );
+        sinon.assert.calledWith(
+            delStub,
             "sockethub:pid:data-layer:credentials-store:b",
         );
     });

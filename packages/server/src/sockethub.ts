@@ -6,6 +6,7 @@ import type {
 import {
     CredentialsStore,
     purgeCredentialsStores,
+    resetSharedCredentialsRedisConnection,
 } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import {
@@ -229,6 +230,11 @@ class Sockethub {
             log.debug(`purged ${removed} credential store keys on shutdown`);
         } catch (err) {
             log.warn(`failed to purge credential store keys: ${err}`);
+        } finally {
+            // The purge reuses the shared credentials client; close it so a
+            // caller that doesn't exit the process (tests, embedders) isn't
+            // left with an open Redis connection.
+            await resetSharedCredentialsRedisConnection();
         }
     }
 

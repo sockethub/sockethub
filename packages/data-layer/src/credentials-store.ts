@@ -383,8 +383,10 @@ export async function purgeCredentialsStoreKeys(
             100,
         );
         cursor = nextCursor;
-        if (keys.length > 0) {
-            removed += await client.del(...keys);
+        // Delete per key: a multi-key DEL would throw CROSSSLOT on a Redis
+        // Cluster, where these keys hash to different slots.
+        for (const key of keys) {
+            removed += await client.del(key);
         }
     } while (cursor !== "0");
     return removed;

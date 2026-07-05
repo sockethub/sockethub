@@ -54,9 +54,14 @@ describe("crypto", () => {
     });
 
     describe("randId", () => {
+        // A real Crypto instance: the zero-byte randomBytes mock above would
+        // make every draw 'A', so it would never exercise rejection sampling
+        // or charset variation.
+        const realCrypto = new Crypto();
+
         it("generates requested lengths", () => {
             for (const len of [1, 8, 16, 32]) {
-                expect(crypto.randId(len).length).toEqual(len);
+                expect(realCrypto.randId(len).length).toEqual(len);
             }
         });
 
@@ -64,13 +69,17 @@ describe("crypto", () => {
             // Identifiers land in Redis key names, logger namespaces, and
             // HTTP headers; glob/shell metacharacters must never appear.
             for (let i = 0; i < 50; i++) {
-                expect(crypto.randId(32)).toMatch(/^[A-Za-z0-9]+$/);
+                expect(realCrypto.randId(32)).toMatch(/^[A-Za-z0-9]+$/);
             }
+        });
+
+        it("produces varied output", () => {
+            expect(realCrypto.randId(32)).not.toEqual(realCrypto.randId(32));
         });
 
         it("33+ will fail", () => {
             expect(() => {
-                crypto.randId(33);
+                realCrypto.randId(33);
             }).toThrow();
         });
     });
