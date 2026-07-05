@@ -344,6 +344,23 @@ A single release might update:
 
 **Prevention**: Set calendar reminder for token renewal (90 days).
 
+### NPM Publish Requires OTP (`EOTP`)
+
+**Error**: `lerna ERR! EOTP You must provide a one-time pass.` — `npm whoami` still succeeds, so the
+token isn't expired; it's just the wrong *type*. A classic **"Publish"** token always requires an
+interactive 2FA one-time-pass, even in CI, so it can never work here. Only these bypass OTP:
+
+- Classic token, type **"Automation"**, or
+- Granular Access Token with **"Bypass two-factor authentication for token-based publishes"**
+  explicitly checked when creating it
+
+**Solution**:
+
+1. Generate a new token at <https://www.npmjs.com/settings/YOUR_USERNAME/tokens> using one of the
+   two types above
+2. Update GitHub secret: Settings → Secrets → `NPM_TOKEN`
+3. Re-run the publish workflow (it's idempotent — already-published packages are skipped)
+
 ### Package Verification Failed
 
 **Error**: `Package not found on npm`
@@ -504,7 +521,9 @@ existing draft release will be automatically deleted and recreated with fresh no
 
 **NPM_TOKEN**:
 
-- Type: "Automation" or "Publish"
+- Type: "Automation" (classic), or a Granular Access Token with "Bypass two-factor
+  authentication for token-based publishes" checked. **Not** classic "Publish" — that type
+  requires an interactive OTP on every publish and will fail in CI with `EOTP`.
 - Permissions: Publish and manage packages
 - Expiration: 90 days (max)
 

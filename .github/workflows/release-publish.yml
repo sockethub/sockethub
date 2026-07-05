@@ -374,6 +374,9 @@ jobs:
           # Check if an issue already exists for this version
           EXISTING=$(gh issue list --search "Release v$VERSION failed in:title" --state open --json number --jq '.[0].number')
 
+          # Ensure the label exists so issue creation doesn't fail if it's missing
+          gh label create "release" --color "0e8a16" --description "Release process issues" 2>/dev/null || true
+
           if [ -n "$EXISTING" ]; then
             echo "📝 Updating existing issue #$EXISTING"
             gh issue comment "$EXISTING" --body "$(cat failure_report.md)"
