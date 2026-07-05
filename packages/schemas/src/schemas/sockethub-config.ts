@@ -252,22 +252,27 @@ export const SockethubConfigSchema = {
                 },
                 maxMessagesPerRequest: {
                     type: "number",
+                    minimum: 1,
                     default: 20,
                 },
                 maxPayloadBytes: {
                     type: "number",
+                    minimum: 1,
                     default: 262144,
                 },
                 idempotencyTtlMs: {
                     type: "number",
+                    minimum: 0,
                     default: 300000,
                 },
                 requestTimeoutMs: {
                     type: "number",
+                    minimum: 0,
                     default: 30000,
                 },
                 idleTimeoutMs: {
                     type: "number",
+                    minimum: 0,
                     default: 15000,
                 },
             },

@@ -1,7 +1,7 @@
 /**
  * Tests for HTTP actions endpoint idempotency and GET replay behavior.
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 
 import { registerHttpActionsRoutes } from "./actions.js";
 import {
@@ -208,7 +208,7 @@ function buildHandlers({
 }
 
 describe("http actions", () => {
-    test("accepts canonical @context messages", async () => {
+    it("accepts canonical @context messages", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -231,7 +231,7 @@ describe("http actions", () => {
         expect(writes.length).toBe(1);
     });
 
-    test("tears down the session credential store after completion", async () => {
+    it("tears down the session credential store after completion", async () => {
         const fakeRedis = new FakeRedis();
         let teardowns = 0;
         const handlers = buildHandlers({
@@ -253,7 +253,7 @@ describe("http actions", () => {
         expect(teardowns).toBe(1);
     });
 
-    test("streams results and caches for idempotent replay", async () => {
+    it("streams results and caches for idempotent replay", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -279,7 +279,7 @@ describe("http actions", () => {
         expect(replay.writes.length).toBe(2);
     });
 
-    test("serves cached results via GET", async () => {
+    it("serves cached results via GET", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -304,7 +304,7 @@ describe("http actions", () => {
         expect(getReqRes.writes.length).toBe(1);
     });
 
-    test("accepts GET requestId via query string", async () => {
+    it("accepts GET requestId via query string", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -326,7 +326,7 @@ describe("http actions", () => {
         expect(getReqRes.writes.length).toBe(1);
     });
 
-    test("rejects requests over maxMessagesPerRequest", async () => {
+    it("rejects requests over maxMessagesPerRequest", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({
             fakeRedis,
@@ -345,7 +345,7 @@ describe("http actions", () => {
         expect(res.jsonBody.error).toContain("payload limit exceeded");
     });
 
-    test("rejects empty payload arrays", async () => {
+    it("rejects empty payload arrays", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -361,7 +361,7 @@ describe("http actions", () => {
         );
     });
 
-    test("requires requestId when configured", async () => {
+    it("requires requestId when configured", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -375,7 +375,7 @@ describe("http actions", () => {
         expect(res.jsonBody.error).toBe("requestId is required");
     });
 
-    test("rejects invalid requestId values", async () => {
+    it("rejects invalid requestId values", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -392,7 +392,7 @@ describe("http actions", () => {
         );
     });
 
-    test("allows requests without requestId when requireRequestId is false", async () => {
+    it("allows requests without requestId when requireRequestId is false", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({
             fakeRedis,
@@ -410,7 +410,7 @@ describe("http actions", () => {
         expect(res.ended).toBeTrue();
     });
 
-    test("returns 202 when request is still in progress", async () => {
+    it("returns 202 when request is still in progress", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -433,7 +433,7 @@ describe("http actions", () => {
         expect(getReqRes.res.jsonBody.status).toBe("in-progress");
     });
 
-    test("returns 404 when request id is unknown", async () => {
+    it("returns 404 when request id is unknown", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({ fakeRedis });
 
@@ -450,7 +450,43 @@ describe("http actions", () => {
         expect(getReqRes.res.jsonBody.error).toBe("request not found");
     });
 
-    test("cleans up tracked platform sessions after an idempotent client disconnect times out", async () => {
+    it("returns 503 when the idempotency store fails on GET", async () => {
+        const fakeRedis = new FakeRedis();
+        fakeRedis.get = async () => {
+            throw new Error("redis down");
+        };
+        const handlers = buildHandlers({ fakeRedis });
+
+        const getReqRes = createReqRes({ params: { requestId: "req-503" } });
+        await handlers["GET:/sockethub-http/:requestId"](
+            getReqRes.req,
+            getReqRes.res,
+        );
+
+        expect(getReqRes.res.statusCode).toBe(503);
+        expect(getReqRes.res.jsonBody.error).toBe(
+            "idempotency store unavailable",
+        );
+    });
+
+    it("returns 503 when the idempotency store fails on POST claim", async () => {
+        const fakeRedis = new FakeRedis();
+        fakeRedis.set = async () => {
+            throw new Error("redis down");
+        };
+        const handlers = buildHandlers({ fakeRedis });
+
+        const { req, res } = createReqRes({
+            body: [singlePayload],
+            headers: { "x-request-id": "req-503-post" },
+        });
+        await handlers["/sockethub-http"](req, res);
+
+        expect(res.statusCode).toBe(503);
+        expect(res.jsonBody.error).toBe("idempotency store unavailable");
+    });
+
+    it("cleans up tracked platform sessions after an idempotent client disconnect times out", async () => {
         const platformId = "platform-http-cleanup";
         while (hasHttpSessions(platformId)) {
             unregisterHttpSession(platformId);
@@ -490,7 +526,7 @@ describe("http actions", () => {
         expect(res.ended).toBeTrue();
     });
 
-    test("best-effort disconnect keeps platform tracking until jobs finish", async () => {
+    it("best-effort disconnect keeps platform tracking until jobs finish", async () => {
         const platformId = "platform-http-besteffort";
         while (hasHttpSessions(platformId)) {
             unregisterHttpSession(platformId);
@@ -532,7 +568,7 @@ describe("http actions", () => {
         expect(hasHttpSessions(platformId)).toBeFalse();
     });
 
-    test("returns 500 when request setup throws instead of crashing", async () => {
+    it("returns 500 when request setup throws instead of crashing", async () => {
         const fakeRedis = new FakeRedis();
         const handlers = buildHandlers({
             fakeRedis,

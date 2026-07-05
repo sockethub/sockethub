@@ -1,7 +1,7 @@
 /**
  * Tests for tracking in-flight HTTP sessions per platform.
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
     hasHttpSessions,
     registerHttpSession,
@@ -15,7 +15,7 @@ function clearPlatform(platformId: string) {
 }
 
 describe("http session registry", () => {
-    test("increments and decrements session counts", () => {
+    it("increments and decrements session counts", () => {
         const platformId = "platform-1";
         clearPlatform(platformId);
 
@@ -32,7 +32,7 @@ describe("http session registry", () => {
         expect(hasHttpSessions(platformId)).toBeFalse();
     });
 
-    test("handles unregister for unknown platforms", () => {
+    it("handles unregister for unknown platforms", () => {
         const platformId = "platform-2";
         clearPlatform(platformId);
 

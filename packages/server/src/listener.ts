@@ -195,10 +195,10 @@ class Listener {
         app.set("view engine", "ejs");
         // use bodyParser
         app.use(bodyParser.urlencoded({ extended: true }));
-        const jsonLimit = config.get("httpActions:maxPayloadBytes") ?? "100kb";
-        // Keep strict=false so primitive JSON values reach route handlers and
-        // can be converted into consistent JSON error responses.
-        app.use(bodyParser.json({ limit: jsonLimit, strict: false }));
+        // JSON parsing is scoped to the HTTP actions POST route (see
+        // registerHttpActionsRoutes) rather than applied globally, so its
+        // lenient `strict: false` and `httpActions:maxPayloadBytes` limit do
+        // not affect other routes. No other route consumes a JSON body.
         return app;
     }
 
