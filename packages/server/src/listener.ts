@@ -3,7 +3,6 @@ import * as HTTP from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { createLogger } from "@sockethub/logger";
-import bodyParser from "body-parser";
 import express, { type Express, type Request, type Response } from "express";
 import rateLimit from "express-rate-limit";
 import { Server, type Socket } from "socket.io";
@@ -114,7 +113,10 @@ class Listener {
         app.use(express.static(examplesPath));
 
         const examplesIndex = path.join(examplesPath, "index.html");
-        app.get("*", limiter, (req: Request, res: Response) => {
+        // SPA fallback: serve index.html for any unmatched GET. Express 5 /
+        // path-to-regexp v8 no longer accept the bare "*" string path, so use a
+        // regex that matches every path instead.
+        app.get(/.*/, limiter, (req: Request, res: Response) => {
             log.debug(`examples request ${req.path}`);
             res.sendFile(examplesIndex);
         });
@@ -168,9 +170,10 @@ class Listener {
         const app = express();
         // templating engines
         app.set("view engine", "ejs");
-        // use bodyParser
-        app.use(bodyParser.urlencoded({ extended: true }));
-        app.use(bodyParser.json());
+        // Express bundles body-parser as express.json()/express.urlencoded(),
+        // so use those directly rather than the standalone dependency.
+        app.use(express.urlencoded({ extended: true }));
+        app.use(express.json());
         return app;
     }
 }
