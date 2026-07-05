@@ -53,6 +53,19 @@ jobs:
       fail-fast: false
 
     steps:
+      # node is the only supported deployment runtime. An unrecognized value
+      # must fail the job immediately, not skip steps: a caller passing a
+      # stale value (e.g. 'both') would otherwise produce a green job that
+      # tested nothing.
+      - name: Validate runtime
+        env:
+          INPUT_RUNTIME: ${{ inputs.runtime || github.event.inputs.runtime || 'node' }}
+        run: |
+          if [ "$INPUT_RUNTIME" != "node" ]; then
+            echo "Error: unsupported runtime '$INPUT_RUNTIME' (supported: node)" >&2
+            exit 1
+          fi
+
       - name: Normalize ref
         id: ref
         env:
@@ -82,28 +95,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Determine runtime
-        id: runtime
-        env:
-          INPUT_RUNTIME: ${{ inputs.runtime || github.event.inputs.runtime || 'node' }}
-          MATRIX_RUNTIME: ${{ matrix.runtime }}
-        run: |
-          # node is the only supported deployment runtime. An unrecognized
-          # value must fail the job, not skip every step: a caller passing a
-          # stale value (e.g. 'both') would otherwise produce a green job that
-          # tested nothing.
-          if [ "$INPUT_RUNTIME" != "node" ]; then
-            echo "Error: unsupported runtime '$INPUT_RUNTIME' (supported: node)" >&2
-            exit 1
-          fi
-          if [ "$INPUT_RUNTIME" = "$MATRIX_RUNTIME" ]; then
-            echo "run_test=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "run_test=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Validate suite
-        if: steps.runtime.outputs.run_test == 'true'
         env:
           INPUT_SUITE: ${{ inputs.suite || github.event.inputs.suite || 'all' }}
         run: |
@@ -113,15 +105,12 @@ jobs:
           fi
 
       - name: Install dependencies
-        if: steps.runtime.outputs.run_test == 'true'
         run: bun install
 
       - name: Build packages
-        if: steps.runtime.outputs.run_test == 'true'
         run: bun run build
 
       - name: Start local npm registry
-        if: steps.runtime.outputs.run_test == 'true'
         run: |
           REGISTRY_DIR="$RUNNER_TEMP/verdaccio"
           mkdir -p "$REGISTRY_DIR"
@@ -146,7 +135,6 @@ jobs:
           exit 1
 
       - name: Publish packages to local registry
-        if: steps.runtime.outputs.run_test == 'true'
         env:
           NPM_CONFIG_REGISTRY: ${{ env.LOCAL_REGISTRY_URL }}
         run: |
@@ -159,7 +147,6 @@ jobs:
             --ignore-scripts
 
       - name: Resolve package version
-        if: steps.runtime.outputs.run_test == 'true'
         id: package
         run: |
           VERSION=$(node -p "require('./packages/sockethub/package.json').version")
@@ -167,7 +154,6 @@ jobs:
           echo "Testing packaged sockethub@$VERSION"
 
       - name: Run tests against locally published package
-        if: steps.runtime.outputs.run_test == 'true'
         env:
           MATRIX_RUNTIME: ${{ matrix.runtime }}
           SETUP_SUITE: ${{ inputs.suite || github.event.inputs.suite || 'all' }}
@@ -179,7 +165,7 @@ jobs:
             --suite "$SETUP_SUITE"
 
       - name: Upload test results
-        if: always() && steps.runtime.outputs.run_test == 'true'
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: test-results-local-${{ matrix.runtime }}
@@ -187,7 +173,7 @@ jobs:
           retention-days: 30
 
       - name: Report status
-        if: always() && steps.runtime.outputs.run_test == 'true'
+        if: always()
         run: |
           if [ -f test-results/*/summary.json ]; then
             echo "Test Results Summary:"
@@ -195,7 +181,7 @@ jobs:
           fi
 
       - name: Stop local npm registry
-        if: always() && steps.runtime.outputs.run_test == 'true'
+        if: always()
         run: |
           PID_FILE="$RUNNER_TEMP/verdaccio/pid"
           if [ -f "$PID_FILE" ]; then
