@@ -186,8 +186,12 @@ client-side error instead of dispatching a malformed message.
 sc.socket.emit("message", {
     type: "join",
     "@context": sc.contextFor("irc"),
-    actor: { id: "mynick", type: "person", name: "My IRC Nick" },
-    target: { id: "#sockethub", type: "room" },
+    actor: { id: "mynick@irc.libera.chat", type: "person", name: "mynick" },
+    target: {
+        id: "sockethub@irc.libera.chat",
+        type: "room",
+        name: "#sockethub",
+    },
 }, (result) => {
     if (result?.error) console.error(result.error);
 });
