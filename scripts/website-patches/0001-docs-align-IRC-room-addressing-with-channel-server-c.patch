@@ -1,0 +1,297 @@
+From c3ef1eafb422ad570dac23391444ecfec790f355 Mon Sep 17 00:00:00 2001
+From: Cursor Agent <cursoragent@cursor.com>
+Date: Sun, 5 Jul 2026 02:01:21 +0000
+Subject: [PATCH 1/2] docs: align IRC room addressing with channel@server
+ convention
+
+Update ActivityStreams examples and diagrams across get-started, platforms,
+how-it-works, and the alpha-12 news post. Sync send/receive SVGs from the
+core repo.
+---
+ build/feed.xml                                      | 4 ++--
+ build/get-started/index.html                        | 2 +-
+ build/how-it-works/index.html                       | 2 +-
+ build/news/alpha-12-canonical-context/index.html    | 2 +-
+ build/platforms/index.html                          | 4 ++--
+ build/res/img/activitystreams-send-receive.dark.svg | 8 ++++----
+ build/res/img/activitystreams-send-receive.svg      | 8 ++++----
+ layouts/get-started.hbs                             | 2 +-
+ layouts/how-it-works.hbs                            | 2 +-
+ layouts/platforms.hbs                               | 4 ++--
+ src/news/2026-03-29-alpha-12-canonical-context.md   | 2 +-
+ src/res/img/activitystreams-send-receive.dark.svg   | 8 ++++----
+ src/res/img/activitystreams-send-receive.svg        | 8 ++++----
+ 13 files changed, 28 insertions(+), 28 deletions(-)
+
+diff --git a/build/feed.xml b/build/feed.xml
+index e924ff0..3b7fc57 100644
+--- a/build/feed.xml
++++ b/build/feed.xml
+@@ -1,4 +1,4 @@
+-<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[Sockethub]]></title><description><![CDATA[Sockethub is a protocol gateway that lets browser apps talk to IRC, XMPP, feeds, and metadata services through one ActivityStreams 2.0 API.]]></description><link>https://sockethub.org</link><generator>metalsmith-feed</generator><lastBuildDate>Sun, 05 Jul 2026 01:53:40 GMT</lastBuildDate><atom:link href="https://sockethub.org/feed.xml" rel="self" type="application/rss+xml"/><author><![CDATA[Nick Jennings]]></author><item><title><![CDATA[Alpha 12 — Canonical AS2.0 contexts]]></title><description><![CDATA[<p>With the 5.0.0-alpha.12 release, Sockethub&#39;s message envelope is a first-class
++<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[Sockethub]]></title><description><![CDATA[Sockethub is a protocol gateway that lets browser apps talk to IRC, XMPP, feeds, and metadata services through one ActivityStreams 2.0 API.]]></description><link>https://sockethub.org</link><generator>metalsmith-feed</generator><lastBuildDate>Sun, 05 Jul 2026 02:00:56 GMT</lastBuildDate><atom:link href="https://sockethub.org/feed.xml" rel="self" type="application/rss+xml"/><author><![CDATA[Nick Jennings]]></author><item><title><![CDATA[Alpha 12 — Canonical AS2.0 contexts]]></title><description><![CDATA[<p>With the 5.0.0-alpha.12 release, Sockethub&#39;s message envelope is a first-class
+ <a href="https://www.w3.org/TR/activitystreams-core/">ActivityStreams 2.0</a> and JSON-LD
+ citizen. Every outgoing and incoming message carries a canonical three-element
+ <code>@context</code> array identifying the AS2 base vocabulary, the Sockethub gateway
+@@ -51,7 +51,7 @@ of hardcoding URLs:</p>
+   &#39;@context&#39;: sc.contextFor(&#39;irc&#39;),
+   type: &#39;send&#39;,
+   actor:  { id: &#39;alice@irc.libera.chat&#39;, type: &#39;person&#39; },
+-  target: { id: &#39;#sockethub@irc.libera.chat&#39;, type: &#39;room&#39; },
++  target: { id: &#39;sockethub@irc.libera.chat&#39;, type: &#39;room&#39; },
+   object: { type: &#39;message&#39;, content: &#39;hello&#39; }
+ });
+ </code></pre>
+diff --git a/build/get-started/index.html b/build/get-started/index.html
+index d80aec4..acee46f 100644
+--- a/build/get-started/index.html
++++ b/build/get-started/index.html
+@@ -266,7 +266,7 @@ bun run dev</code></pre>
+ 
+ <span class="tok-key">const</span> ircContext = sc.contextFor(<span class="tok-str">'irc'</span>);
+ <span class="tok-key">const</span> actor = { id: <span class="tok-str">'alice@irc.libera.chat'</span>, type: <span class="tok-str">'person'</span> };
+-<span class="tok-key">const</span> room  = { id: <span class="tok-str">'#sockethub@irc.libera.chat'</span>, type: <span class="tok-str">'room'</span> };
++<span class="tok-key">const</span> room  = { id: <span class="tok-str">'sockethub@irc.libera.chat'</span>, type: <span class="tok-str">'room'</span> };
+ 
+ <span class="tok-comment">// turn emit+ack into an awaitable step</span>
+ <span class="tok-key">const</span> step = (event, activity) =&gt; <span class="tok-key">new</span> <span class="tok-key">Promise</span>((resolve, reject) =&gt; {
+diff --git a/build/how-it-works/index.html b/build/how-it-works/index.html
+index aac2679..fbd5d5e 100644
+--- a/build/how-it-works/index.html
++++ b/build/how-it-works/index.html
+@@ -223,7 +223,7 @@
+     <span class="tok-key">"type"</span>: <span class="tok-str">"person"</span>
+   },
+   <span class="tok-key">"target"</span>: {
+-    <span class="tok-key">"id"</span>:   <span class="tok-str">"#sockethub@irc.libera.chat"</span>,
++    <span class="tok-key">"id"</span>:   <span class="tok-str">"sockethub@irc.libera.chat"</span>,
+     <span class="tok-key">"type"</span>: <span class="tok-str">"room"</span>
+   },
+   <span class="tok-key">"object"</span>: {
+diff --git a/build/news/alpha-12-canonical-context/index.html b/build/news/alpha-12-canonical-context/index.html
+index 0b55baa..cda683a 100644
+--- a/build/news/alpha-12-canonical-context/index.html
++++ b/build/news/alpha-12-canonical-context/index.html
+@@ -191,7 +191,7 @@ of hardcoding URLs:</p>
+   &#39;@context&#39;: sc.contextFor(&#39;irc&#39;),
+   type: &#39;send&#39;,
+   actor:  { id: &#39;alice@irc.libera.chat&#39;, type: &#39;person&#39; },
+-  target: { id: &#39;#sockethub@irc.libera.chat&#39;, type: &#39;room&#39; },
++  target: { id: &#39;sockethub@irc.libera.chat&#39;, type: &#39;room&#39; },
+   object: { type: &#39;message&#39;, content: &#39;hello&#39; }
+ });
+ </code></pre>
+diff --git a/build/platforms/index.html b/build/platforms/index.html
+index 1604bf9..174a6cd 100644
+--- a/build/platforms/index.html
++++ b/build/platforms/index.html
+@@ -206,7 +206,7 @@
+   <span class="tok-key">"@context"</span>: [ <span class="tok-comment">/* as above */</span> ],
+   <span class="tok-key">"type"</span>:   <span class="tok-str">"join"</span>,
+   <span class="tok-key">"actor"</span>:  { <span class="tok-key">"id"</span>: <span class="tok-str">"alice@irc.libera.chat"</span>,     <span class="tok-key">"type"</span>: <span class="tok-str">"person"</span> },
+-  <span class="tok-key">"target"</span>: { <span class="tok-key">"id"</span>: <span class="tok-str">"#sockethub@irc.libera.chat"</span>, <span class="tok-key">"type"</span>: <span class="tok-str">"room"</span> }
++  <span class="tok-key">"target"</span>: { <span class="tok-key">"id"</span>: <span class="tok-str">"sockethub@irc.libera.chat"</span>, <span class="tok-key">"type"</span>: <span class="tok-str">"room"</span> }
+ }</code></pre>
+ 
+         <h3 class="protocol__section">4. Send a message</h3>
+@@ -214,7 +214,7 @@
+   <span class="tok-key">"@context"</span>: [ <span class="tok-comment">/* as above */</span> ],
+   <span class="tok-key">"type"</span>:   <span class="tok-str">"send"</span>,
+   <span class="tok-key">"actor"</span>:  { <span class="tok-key">"id"</span>: <span class="tok-str">"alice@irc.libera.chat"</span>,     <span class="tok-key">"type"</span>: <span class="tok-str">"person"</span> },
+-  <span class="tok-key">"target"</span>: { <span class="tok-key">"id"</span>: <span class="tok-str">"#sockethub@irc.libera.chat"</span>, <span class="tok-key">"type"</span>: <span class="tok-str">"room"</span> },
++  <span class="tok-key">"target"</span>: { <span class="tok-key">"id"</span>: <span class="tok-str">"sockethub@irc.libera.chat"</span>, <span class="tok-key">"type"</span>: <span class="tok-str">"room"</span> },
+   <span class="tok-key">"object"</span>: { <span class="tok-key">"type"</span>: <span class="tok-str">"message"</span>, <span class="tok-key">"content"</span>: <span class="tok-str">"hey everyone"</span> }
+ }</code></pre>
+       </div>
+diff --git a/build/res/img/activitystreams-send-receive.dark.svg b/build/res/img/activitystreams-send-receive.dark.svg
+index 27be208..45adb68 100644
+--- a/build/res/img/activitystreams-send-receive.dark.svg
++++ b/build/res/img/activitystreams-send-receive.dark.svg
+@@ -25,11 +25,11 @@
+   <text x="72" y="175" class="code"><tspan class="s">"https://sockethub.org/ns/context/platform/irc/v1.jsonld"</tspan></text>
+   <text x="56" y="193" class="code"><tspan class="p">],</tspan></text>
+   <text x="56" y="211" class="code"><tspan class="k">"actor"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="72" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"alice"</tspan><tspan class="p">,</tspan></text>
++  <text x="72" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"alice@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="72" y="247" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"person"</tspan></text>
+   <text x="56" y="265" class="code"><tspan class="p">},</tspan></text>
+   <text x="56" y="283" class="code"><tspan class="k">"target"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="72" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"#sockethub"</tspan><tspan class="p">,</tspan></text>
++  <text x="72" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"sockethub@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="72" y="319" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"room"</tspan></text>
+   <text x="56" y="337" class="code"><tspan class="p">},</tspan></text>
+   <text x="56" y="355" class="code"><tspan class="k">"object"</tspan><tspan class="p">: {</tspan></text>
+@@ -47,11 +47,11 @@
+   <text x="672" y="175" class="code"><tspan class="s">"https://sockethub.org/ns/context/platform/irc/v1.jsonld"</tspan></text>
+   <text x="656" y="193" class="code"><tspan class="p">],</tspan></text>
+   <text x="656" y="211" class="code"><tspan class="k">"actor"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="672" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"bob"</tspan><tspan class="p">,</tspan></text>
++  <text x="672" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"bob@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="672" y="247" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"person"</tspan></text>
+   <text x="656" y="265" class="code"><tspan class="p">},</tspan></text>
+   <text x="656" y="283" class="code"><tspan class="k">"target"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="672" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"#sockethub"</tspan><tspan class="p">,</tspan></text>
++  <text x="672" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"sockethub@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="672" y="319" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"room"</tspan></text>
+   <text x="656" y="337" class="code"><tspan class="p">},</tspan></text>
+   <text x="656" y="355" class="code"><tspan class="k">"object"</tspan><tspan class="p">: {</tspan></text>
+diff --git a/build/res/img/activitystreams-send-receive.svg b/build/res/img/activitystreams-send-receive.svg
+index a9b7e82..585e6b3 100644
+--- a/build/res/img/activitystreams-send-receive.svg
++++ b/build/res/img/activitystreams-send-receive.svg
+@@ -25,11 +25,11 @@
+   <text x="72" y="175" class="code"><tspan class="s">"https://sockethub.org/ns/context/platform/irc/v1.jsonld"</tspan></text>
+   <text x="56" y="193" class="code"><tspan class="p">],</tspan></text>
+   <text x="56" y="211" class="code"><tspan class="k">"actor"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="72" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"alice"</tspan><tspan class="p">,</tspan></text>
++  <text x="72" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"alice@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="72" y="247" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"person"</tspan></text>
+   <text x="56" y="265" class="code"><tspan class="p">},</tspan></text>
+   <text x="56" y="283" class="code"><tspan class="k">"target"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="72" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"#sockethub"</tspan><tspan class="p">,</tspan></text>
++  <text x="72" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"sockethub@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="72" y="319" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"room"</tspan></text>
+   <text x="56" y="337" class="code"><tspan class="p">},</tspan></text>
+   <text x="56" y="355" class="code"><tspan class="k">"object"</tspan><tspan class="p">: {</tspan></text>
+@@ -47,11 +47,11 @@
+   <text x="672" y="175" class="code"><tspan class="s">"https://sockethub.org/ns/context/platform/irc/v1.jsonld"</tspan></text>
+   <text x="656" y="193" class="code"><tspan class="p">],</tspan></text>
+   <text x="656" y="211" class="code"><tspan class="k">"actor"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="672" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"bob"</tspan><tspan class="p">,</tspan></text>
++  <text x="672" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"bob@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="672" y="247" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"person"</tspan></text>
+   <text x="656" y="265" class="code"><tspan class="p">},</tspan></text>
+   <text x="656" y="283" class="code"><tspan class="k">"target"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="672" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"#sockethub"</tspan><tspan class="p">,</tspan></text>
++  <text x="672" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"sockethub@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="672" y="319" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"room"</tspan></text>
+   <text x="656" y="337" class="code"><tspan class="p">},</tspan></text>
+   <text x="656" y="355" class="code"><tspan class="k">"object"</tspan><tspan class="p">: {</tspan></text>
+diff --git a/layouts/get-started.hbs b/layouts/get-started.hbs
+index 16a71a2..a7e357d 100644
+--- a/layouts/get-started.hbs
++++ b/layouts/get-started.hbs
+@@ -146,7 +146,7 @@ bun run dev</code></pre>
+ 
+ <span class="tok-key">const</span> ircContext = sc.contextFor(<span class="tok-str">'irc'</span>);
+ <span class="tok-key">const</span> actor = { id: <span class="tok-str">'alice@irc.libera.chat'</span>, type: <span class="tok-str">'person'</span> };
+-<span class="tok-key">const</span> room  = { id: <span class="tok-str">'#sockethub@irc.libera.chat'</span>, type: <span class="tok-str">'room'</span> };
++<span class="tok-key">const</span> room  = { id: <span class="tok-str">'sockethub@irc.libera.chat'</span>, type: <span class="tok-str">'room'</span> };
+ 
+ <span class="tok-comment">// turn emit+ack into an awaitable step</span>
+ <span class="tok-key">const</span> step = (event, activity) =&gt; <span class="tok-key">new</span> <span class="tok-key">Promise</span>((resolve, reject) =&gt; {
+diff --git a/layouts/how-it-works.hbs b/layouts/how-it-works.hbs
+index f97deba..a0bcdb9 100644
+--- a/layouts/how-it-works.hbs
++++ b/layouts/how-it-works.hbs
+@@ -103,7 +103,7 @@
+     <span class="tok-key">"type"</span>: <span class="tok-str">"person"</span>
+   },
+   <span class="tok-key">"target"</span>: {
+-    <span class="tok-key">"id"</span>:   <span class="tok-str">"#sockethub@irc.libera.chat"</span>,
++    <span class="tok-key">"id"</span>:   <span class="tok-str">"sockethub@irc.libera.chat"</span>,
+     <span class="tok-key">"type"</span>: <span class="tok-str">"room"</span>
+   },
+   <span class="tok-key">"object"</span>: {
+diff --git a/layouts/platforms.hbs b/layouts/platforms.hbs
+index a36f6fb..1f52343 100644
+--- a/layouts/platforms.hbs
++++ b/layouts/platforms.hbs
+@@ -86,7 +86,7 @@
+   <span class="tok-key">"@context"</span>: [ <span class="tok-comment">/* as above */</span> ],
+   <span class="tok-key">"type"</span>:   <span class="tok-str">"join"</span>,
+   <span class="tok-key">"actor"</span>:  { <span class="tok-key">"id"</span>: <span class="tok-str">"alice@irc.libera.chat"</span>,     <span class="tok-key">"type"</span>: <span class="tok-str">"person"</span> },
+-  <span class="tok-key">"target"</span>: { <span class="tok-key">"id"</span>: <span class="tok-str">"#sockethub@irc.libera.chat"</span>, <span class="tok-key">"type"</span>: <span class="tok-str">"room"</span> }
++  <span class="tok-key">"target"</span>: { <span class="tok-key">"id"</span>: <span class="tok-str">"sockethub@irc.libera.chat"</span>, <span class="tok-key">"type"</span>: <span class="tok-str">"room"</span> }
+ }</code></pre>
+ 
+         <h3 class="protocol__section">4. Send a message</h3>
+@@ -94,7 +94,7 @@
+   <span class="tok-key">"@context"</span>: [ <span class="tok-comment">/* as above */</span> ],
+   <span class="tok-key">"type"</span>:   <span class="tok-str">"send"</span>,
+   <span class="tok-key">"actor"</span>:  { <span class="tok-key">"id"</span>: <span class="tok-str">"alice@irc.libera.chat"</span>,     <span class="tok-key">"type"</span>: <span class="tok-str">"person"</span> },
+-  <span class="tok-key">"target"</span>: { <span class="tok-key">"id"</span>: <span class="tok-str">"#sockethub@irc.libera.chat"</span>, <span class="tok-key">"type"</span>: <span class="tok-str">"room"</span> },
++  <span class="tok-key">"target"</span>: { <span class="tok-key">"id"</span>: <span class="tok-str">"sockethub@irc.libera.chat"</span>, <span class="tok-key">"type"</span>: <span class="tok-str">"room"</span> },
+   <span class="tok-key">"object"</span>: { <span class="tok-key">"type"</span>: <span class="tok-str">"message"</span>, <span class="tok-key">"content"</span>: <span class="tok-str">"hey everyone"</span> }
+ }</code></pre>
+       </div>
+diff --git a/src/news/2026-03-29-alpha-12-canonical-context.md b/src/news/2026-03-29-alpha-12-canonical-context.md
+index c14bbdb..743a577 100644
+--- a/src/news/2026-03-29-alpha-12-canonical-context.md
++++ b/src/news/2026-03-29-alpha-12-canonical-context.md
+@@ -75,7 +75,7 @@ sc.socket.emit('message', {
+   '@context': sc.contextFor('irc'),
+   type: 'send',
+   actor:  { id: 'alice@irc.libera.chat', type: 'person' },
+-  target: { id: '#sockethub@irc.libera.chat', type: 'room' },
++  target: { id: 'sockethub@irc.libera.chat', type: 'room' },
+   object: { type: 'message', content: 'hello' }
+ });
+ ```
+diff --git a/src/res/img/activitystreams-send-receive.dark.svg b/src/res/img/activitystreams-send-receive.dark.svg
+index 27be208..45adb68 100644
+--- a/src/res/img/activitystreams-send-receive.dark.svg
++++ b/src/res/img/activitystreams-send-receive.dark.svg
+@@ -25,11 +25,11 @@
+   <text x="72" y="175" class="code"><tspan class="s">"https://sockethub.org/ns/context/platform/irc/v1.jsonld"</tspan></text>
+   <text x="56" y="193" class="code"><tspan class="p">],</tspan></text>
+   <text x="56" y="211" class="code"><tspan class="k">"actor"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="72" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"alice"</tspan><tspan class="p">,</tspan></text>
++  <text x="72" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"alice@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="72" y="247" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"person"</tspan></text>
+   <text x="56" y="265" class="code"><tspan class="p">},</tspan></text>
+   <text x="56" y="283" class="code"><tspan class="k">"target"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="72" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"#sockethub"</tspan><tspan class="p">,</tspan></text>
++  <text x="72" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"sockethub@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="72" y="319" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"room"</tspan></text>
+   <text x="56" y="337" class="code"><tspan class="p">},</tspan></text>
+   <text x="56" y="355" class="code"><tspan class="k">"object"</tspan><tspan class="p">: {</tspan></text>
+@@ -47,11 +47,11 @@
+   <text x="672" y="175" class="code"><tspan class="s">"https://sockethub.org/ns/context/platform/irc/v1.jsonld"</tspan></text>
+   <text x="656" y="193" class="code"><tspan class="p">],</tspan></text>
+   <text x="656" y="211" class="code"><tspan class="k">"actor"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="672" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"bob"</tspan><tspan class="p">,</tspan></text>
++  <text x="672" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"bob@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="672" y="247" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"person"</tspan></text>
+   <text x="656" y="265" class="code"><tspan class="p">},</tspan></text>
+   <text x="656" y="283" class="code"><tspan class="k">"target"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="672" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"#sockethub"</tspan><tspan class="p">,</tspan></text>
++  <text x="672" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"sockethub@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="672" y="319" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"room"</tspan></text>
+   <text x="656" y="337" class="code"><tspan class="p">},</tspan></text>
+   <text x="656" y="355" class="code"><tspan class="k">"object"</tspan><tspan class="p">: {</tspan></text>
+diff --git a/src/res/img/activitystreams-send-receive.svg b/src/res/img/activitystreams-send-receive.svg
+index a9b7e82..585e6b3 100644
+--- a/src/res/img/activitystreams-send-receive.svg
++++ b/src/res/img/activitystreams-send-receive.svg
+@@ -25,11 +25,11 @@
+   <text x="72" y="175" class="code"><tspan class="s">"https://sockethub.org/ns/context/platform/irc/v1.jsonld"</tspan></text>
+   <text x="56" y="193" class="code"><tspan class="p">],</tspan></text>
+   <text x="56" y="211" class="code"><tspan class="k">"actor"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="72" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"alice"</tspan><tspan class="p">,</tspan></text>
++  <text x="72" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"alice@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="72" y="247" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"person"</tspan></text>
+   <text x="56" y="265" class="code"><tspan class="p">},</tspan></text>
+   <text x="56" y="283" class="code"><tspan class="k">"target"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="72" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"#sockethub"</tspan><tspan class="p">,</tspan></text>
++  <text x="72" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"sockethub@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="72" y="319" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"room"</tspan></text>
+   <text x="56" y="337" class="code"><tspan class="p">},</tspan></text>
+   <text x="56" y="355" class="code"><tspan class="k">"object"</tspan><tspan class="p">: {</tspan></text>
+@@ -47,11 +47,11 @@
+   <text x="672" y="175" class="code"><tspan class="s">"https://sockethub.org/ns/context/platform/irc/v1.jsonld"</tspan></text>
+   <text x="656" y="193" class="code"><tspan class="p">],</tspan></text>
+   <text x="656" y="211" class="code"><tspan class="k">"actor"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="672" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"bob"</tspan><tspan class="p">,</tspan></text>
++  <text x="672" y="229" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"bob@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="672" y="247" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"person"</tspan></text>
+   <text x="656" y="265" class="code"><tspan class="p">},</tspan></text>
+   <text x="656" y="283" class="code"><tspan class="k">"target"</tspan><tspan class="p">: {</tspan></text>
+-  <text x="672" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"#sockethub"</tspan><tspan class="p">,</tspan></text>
++  <text x="672" y="301" class="code"><tspan class="k">"id"</tspan><tspan class="p">: </tspan><tspan class="s">"sockethub@irc.libera.chat"</tspan><tspan class="p">,</tspan></text>
+   <text x="672" y="319" class="code"><tspan class="k">"type"</tspan><tspan class="p">: </tspan><tspan class="s">"room"</tspan></text>
+   <text x="656" y="337" class="code"><tspan class="p">},</tspan></text>
+   <text x="656" y="355" class="code"><tspan class="k">"object"</tspan><tspan class="p">: {</tspan></text>
+-- 
+2.43.0
+
