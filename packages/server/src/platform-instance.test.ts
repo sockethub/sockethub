@@ -40,6 +40,7 @@ describe("PlatformInstance", () => {
             createQueue() {
                 this.JobQueue = sandbox.stub().returns({
                     shutdown: sandbox.stub(),
+                    disconnect: sandbox.stub(),
                     on: sandbox.stub(),
                     getJob: sandbox.stub(),
                     initResultEvents: sandbox.stub(),
@@ -163,6 +164,39 @@ describe("PlatformInstance", () => {
             await pi.shutdown();
             expect(pi.queue).toBeUndefined();
             expect(platformInstances.has("platform identifier")).toBeFalse();
+        });
+
+        test("shutdown of a replaced instance disconnects the queue without obliterating it", async () => {
+            pi.initQueue("a secret");
+            const queue = pi.queue;
+            pi.markReplaced();
+            expect(pi.flaggedForTermination).toEqual(true);
+            await pi.shutdown();
+            sandbox.assert.notCalled(queue.shutdown);
+            sandbox.assert.called(queue.disconnect);
+            expect(pi.queue).toBeUndefined();
+        });
+
+        test("shutdown does not evict a replacement instance from the map", async () => {
+            const TestPlatformInstance = getTestPlatformInstanceClass();
+            const replacement = new TestPlatformInstance({
+                identifier: "platform identifier",
+                platform: "a platform name",
+                parentId: "the parentId",
+            });
+            platformInstances.set(replacement.id, replacement);
+            pi.initQueue("a secret");
+            const queue = pi.queue;
+            await pi.shutdown();
+            // the queue name is shared with the replacement, so the stale
+            // instance must not pause/obliterate it
+            sandbox.assert.notCalled(queue.shutdown);
+            sandbox.assert.called(queue.disconnect);
+            expect(platformInstances.get("platform identifier")).toBe(
+                replacement,
+            );
+            platformInstances.set(pi.id, pi); // restore for afterEach shutdown
+            await replacement.shutdown();
         });
 
         test("updates its identifier when changed", () => {
@@ -456,6 +490,7 @@ describe("PlatformInstance", () => {
                 pause: sandbox.stub().resolves(),
                 resume: sandbox.stub().resolves(),
                 shutdown: sandbox.stub().resolves(),
+                disconnect: sandbox.stub().resolves(),
                 on: sandbox.stub(),
                 getJob: sandbox.stub(),
                 initResultEvents: sandbox.stub(),

@@ -86,6 +86,7 @@ export default class PlatformInstance {
     private heartbeatMonitor?: NodeJS.Timeout;
     private heartbeatListener?: (message: MessageFromPlatform) => void;
     private heartbeatFailureHandled = false;
+    private replaced = false;
     private readonly actor?: string;
 
     constructor(params: PlatformInstanceParams) {
@@ -166,6 +167,19 @@ export default class PlatformInstance {
     }
 
     /**
+     * Marks this instance as superseded by a replacement that shares its
+     * identifier — and therefore its Redis queue name and platformInstances
+     * slot. shutdown() on a replaced instance must leave those shared
+     * resources alone: pausing/obliterating the queue would destroy the
+     * replacement's pending jobs, and deleting the map entry would evict
+     * the replacement, causing duplicate child processes (#1166).
+     */
+    public markReplaced() {
+        this.replaced = true;
+        this.flaggedForTermination = true;
+    }
+
+    /**
      * Destroys all references to this platform instance, internal listeners and controlled processes
      */
     public async shutdown() {
@@ -200,14 +214,25 @@ export default class PlatformInstance {
         }
 
         try {
-            await this.queue.shutdown();
+            if (this.replaced || platformInstances.get(this.id) !== this) {
+                // A replacement instance shares this queue's Redis name;
+                // pausing or obliterating it would destroy the replacement's
+                // pending jobs. Close our connections only.
+                await this.queue.disconnect();
+            } else {
+                await this.queue.shutdown();
+            }
             this.queue = undefined;
         } catch (_e) {
             // this needs to happen
         }
 
         try {
-            platformInstances.delete(this.id);
+            // Guard against evicting a replacement instance that has taken
+            // over this identifier since our teardown began.
+            if (platformInstances.get(this.id) === this) {
+                platformInstances.delete(this.id);
+            }
         } catch (_e) {
             // this needs to happen
         }

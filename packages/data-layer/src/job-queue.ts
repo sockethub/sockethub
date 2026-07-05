@@ -222,6 +222,20 @@ export class JobQueue extends JobBase {
         await this.events.close();
     }
 
+    /**
+     * Closes this queue's connections without pausing or obliterating the
+     * underlying Redis queue. The queue name is derived from the platform
+     * instance identifier, so a replacement instance for the same identifier
+     * shares it; use this instead of shutdown() when a replacement exists
+     * and must keep accepting and processing jobs.
+     */
+    async disconnect() {
+        this.removeAllListeners();
+        this.queue.removeAllListeners();
+        await this.queue.close();
+        await this.events.close();
+    }
+
     private async getJob(jobId: string): Promise<JobDecrypted> {
         const job = await this.queue.getJob(jobId);
         if (job) {
