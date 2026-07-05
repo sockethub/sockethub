@@ -2,7 +2,15 @@
  * Service management for test-installed-version script
  */
 
+import { fileURLToPath } from "node:url";
+
 import { CONFIG } from "./config.js";
+
+// Same config the docker-compose CI environment mounts: allows the
+// SSRF-guarded feeds/metadata platforms to fetch loopback test fixtures.
+const CI_CONFIG_PATH = fileURLToPath(
+    new URL("../../integration/sockethub.ci.config.json", import.meta.url),
+);
 
 export class ServiceManager {
     constructor(logger) {
@@ -176,6 +184,7 @@ export class ServiceManager {
                     REDIS_URL: "redis://127.0.0.1:6379",
                     PORT: "10550",
                     LOG_LEVEL: "debug",
+                    SOCKETHUB_CONFIG: CI_CONFIG_PATH,
                 },
             },
             "sockethub.log",
