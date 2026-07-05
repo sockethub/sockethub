@@ -246,6 +246,23 @@ Configuration behavior:
   The limiter is backed by Redis, so a client's request budget is shared across
   all Sockethub instances behind a load balancer rather than counted per process.
 
+### CORS
+
+The HTTP actions endpoint is browser-facing and honors the same
+`sockethub:cors:origin` setting that governs socket.io connections. A browser
+app hosted on a different domain than Sockethub can call the endpoint only if
+its origin is allowed:
+
+- `"*"` (default) — any origin may call the endpoint.
+- A single origin or comma-separated list — only those origins are allowed;
+  the matching origin is echoed in `Access-Control-Allow-Origin` (with
+  `Vary: Origin`), and requests from other origins are blocked by the browser.
+
+Preflight `OPTIONS` requests are answered automatically, and the allowed request
+headers include `Content-Type`, `X-Request-Id`, and `X-Sockethub-Request-Id`.
+For a cross-origin deployment, set `sockethub:cors:origin` to your web app's
+origin so both the socket.io and HTTP actions transports accept it.
+
 Request id sources, in priority order:
 
 1. `X-Request-Id` header

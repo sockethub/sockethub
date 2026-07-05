@@ -425,4 +425,109 @@ describe("HTTP actions integration", () => {
 
         expect(res.status).toBe(413);
     });
+
+    it("streams one result line per message in a batch, in order", async () => {
+        if (!httpActionsAvailable) {
+            return;
+        }
+
+        const requestId = `req-${Date.now()}-batch`;
+        const batch = [
+            buildEchoPayload("one"),
+            buildEchoPayload("two"),
+            buildEchoPayload("three"),
+        ];
+        const res = await fetch(httpUrl, {
+            method: "POST",
+            headers: {
+                "content-type": "application/json",
+                "x-request-id": requestId,
+            },
+            body: JSON.stringify(batch),
+        });
+
+        expect(res.status).toBe(200);
+        const lines = parseNdjson(await res.text());
+        expect(lines.length).toBe(3);
+        expect(lines.map((line) => line.object.content)).toEqual([
+            "one",
+            "two",
+            "three",
+        ]);
+    });
+
+    it("serves cached results via GET query string", async () => {
+        if (!httpActionsAvailable) {
+            return;
+        }
+
+        const requestId = `req-${Date.now()}-query`;
+        const post = await fetch(httpUrl, {
+            method: "POST",
+            headers: {
+                "content-type": "application/json",
+                "x-request-id": requestId,
+            },
+            body: JSON.stringify(buildEchoPayload("query-replay")),
+        });
+        expect(post.status).toBe(200);
+        await post.text();
+
+        const getRes = await fetch(
+            `${httpUrl}?requestId=${encodeURIComponent(requestId)}`,
+            { method: "GET" },
+        );
+        expect(getRes.status).toBe(200);
+        expect(getRes.headers.get("x-idempotent-replay")).toBe("true");
+        const lines = parseNdjson(await getRes.text());
+        expect(lines.length).toBe(1);
+    });
+
+    it("answers CORS preflight with the configured allow headers", async () => {
+        if (!httpActionsAvailable) {
+            return;
+        }
+
+        const res = await fetch(httpUrl, {
+            method: "OPTIONS",
+            headers: {
+                origin: "https://webapp.example",
+                "access-control-request-method": "POST",
+                "access-control-request-headers": "content-type,x-request-id",
+            },
+        });
+
+        expect(res.status).toBe(204);
+        // Default config allows any origin.
+        expect(res.headers.get("access-control-allow-origin")).toBe("*");
+        expect(res.headers.get("access-control-allow-methods")).toContain(
+            "POST",
+        );
+        expect(
+            res.headers.get("access-control-allow-headers")?.toLowerCase(),
+        ).toContain("x-request-id");
+    });
+
+    it("sets CORS headers on a cross-origin POST response", async () => {
+        if (!httpActionsAvailable) {
+            return;
+        }
+
+        const res = await fetch(httpUrl, {
+            method: "POST",
+            headers: {
+                "content-type": "application/json",
+                origin: "https://webapp.example",
+                "x-request-id": `req-${Date.now()}-cors`,
+            },
+            body: JSON.stringify(buildEchoPayload("cors")),
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.headers.get("access-control-allow-origin")).toBe("*");
+        expect(
+            res.headers.get("access-control-expose-headers")?.toLowerCase(),
+        ).toContain("x-request-id");
+        await res.text();
+    });
 });

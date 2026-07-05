@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from "bun:test";
 
-import { registerHttpActionsRoutes } from "./actions.js";
+import { registerHttpActionsRoutes, resolveAllowedOrigin } from "./actions.js";
 import {
     hasHttpSessions,
     unregisterHttpSession,
@@ -169,6 +169,9 @@ function buildHandlers({
         },
         get: (path: string, ...args: Array<any>) => {
             handlers[`GET:${path}`] = args[args.length - 1];
+        },
+        options: (path: string, ...args: Array<any>) => {
+            handlers[`OPTIONS:${path}`] = args[args.length - 1];
         },
     };
 
@@ -595,5 +598,36 @@ describe("http actions", () => {
             expect(String(err)).toContain("boom during setup");
         }
         expect(threw).toBeTrue();
+    });
+});
+
+describe("resolveAllowedOrigin", () => {
+    it("allows any origin when configured as * or unset", () => {
+        expect(resolveAllowedOrigin("*", "https://app.example")).toBe("*");
+        expect(resolveAllowedOrigin(undefined, "https://app.example")).toBe(
+            "*",
+        );
+        expect(resolveAllowedOrigin("", "https://app.example")).toBe("*");
+    });
+
+    it("echoes a request origin that is in the configured allow-list", () => {
+        expect(
+            resolveAllowedOrigin(
+                "https://a.example, https://b.example",
+                "https://b.example",
+            ),
+        ).toBe("https://b.example");
+    });
+
+    it("returns undefined for an origin not in the allow-list", () => {
+        expect(
+            resolveAllowedOrigin("https://a.example", "https://evil.example"),
+        ).toBeUndefined();
+    });
+
+    it("returns undefined for a restricted list when no origin is sent", () => {
+        expect(
+            resolveAllowedOrigin("https://a.example", undefined),
+        ).toBeUndefined();
     });
 });

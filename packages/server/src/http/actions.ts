@@ -50,6 +50,12 @@ const IDEMPOTENCY_PREFIX = "sockethub:http-actions";
 const IDEMPOTENCY_BATCH_SIZE = 100;
 const MAX_REQUEST_ID_LENGTH = 128;
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]+$/;
+// CORS: the endpoint is a browser-facing API, so it honors the same
+// `sockethub:cors:origin` config that governs socket.io.
+const CORS_ALLOWED_METHODS = "GET, POST, OPTIONS";
+const CORS_ALLOWED_HEADERS =
+    "Content-Type, X-Request-Id, X-Sockethub-Request-Id";
+const CORS_EXPOSED_HEADERS = "X-Request-Id, X-Idempotent-Replay";
 
 interface HttpActionsOptions {
     processManager: ProcessManager;
@@ -232,6 +238,67 @@ function resolveConfigNumber(
         }
     }
     return fallback;
+}
+
+/**
+ * Resolve the `Access-Control-Allow-Origin` value for a request, using the same
+ * `sockethub:cors:origin` config that governs socket.io. Returns `"*"` when any
+ * origin is allowed, the request's own origin when it is in a configured
+ * allow-list, or `undefined` when the origin is not allowed (the browser then
+ * blocks the response).
+ */
+export function resolveAllowedOrigin(
+    configuredOrigin: string | undefined,
+    requestOrigin: string | undefined,
+): string | undefined {
+    const configured = (configuredOrigin ?? "*").trim();
+    if (configured === "*" || configured === "") {
+        return "*";
+    }
+    const allowed = configured
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter((origin) => origin.length > 0);
+    if (allowed.length === 0) {
+        return "*";
+    }
+    if (requestOrigin && allowed.includes(requestOrigin)) {
+        return requestOrigin;
+    }
+    return undefined;
+}
+
+/**
+ * CORS middleware for the HTTP actions routes. Emits the allow headers and
+ * answers preflight `OPTIONS` requests so browser clients on a configured
+ * origin can call the endpoint.
+ */
+function createCorsMiddleware(
+    getConfig: (key: string) => unknown,
+): RequestHandler {
+    return (req, res, next) => {
+        const allowOrigin = resolveAllowedOrigin(
+            getConfig("sockethub:cors:origin") as string | undefined,
+            req.headers.origin,
+        );
+        if (allowOrigin) {
+            res.setHeader("Access-Control-Allow-Origin", allowOrigin);
+            if (allowOrigin !== "*") {
+                // Response varies by origin, so it must not be cached and served
+                // to a different origin.
+                res.setHeader("Vary", "Origin");
+            }
+        }
+        res.setHeader("Access-Control-Allow-Methods", CORS_ALLOWED_METHODS);
+        res.setHeader("Access-Control-Allow-Headers", CORS_ALLOWED_HEADERS);
+        res.setHeader("Access-Control-Expose-Headers", CORS_EXPOSED_HEADERS);
+        res.setHeader("Access-Control-Max-Age", "600");
+        if (req.method === "OPTIONS") {
+            res.status(204).end();
+            return;
+        }
+        next();
+    };
 }
 
 function getIdempotencyRedisConnection() {
@@ -483,11 +550,17 @@ export function registerHttpActionsRoutes(
         }
     };
 
-    app.get(routePath, rateLimiter, handleGet);
-    app.get(`${routePath}/:requestId`, rateLimiter, handleGet);
+    const cors = createCorsMiddleware(getConfig);
+    // Preflight requests for both routes.
+    app.options(routePath, cors);
+    app.options(`${routePath}/:requestId`, cors);
+
+    app.get(routePath, cors, rateLimiter, handleGet);
+    app.get(`${routePath}/:requestId`, cors, rateLimiter, handleGet);
 
     app.post(
         routePath,
+        cors,
         rateLimiter,
         parseJson,
         async (req: Request, res: Response) => {
