@@ -16,5 +16,6 @@ export interface PlatformIrcCredentialsObject extends CredentialsObject {
         secure?: boolean;
         sasl?: boolean;
         saslMechanism?: "PLAIN" | "OAUTHBEARER";
+        allowInvalidCert?: boolean;
     };
 }

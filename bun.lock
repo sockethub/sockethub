@@ -152,7 +152,7 @@
       "version": "4.0.0-alpha.12",
       "dependencies": {
         "@sockethub/irc2as": "^4.0.0-alpha.12",
-        "irc-socket-sasl": "^4.1.1",
+        "irc-socket-sasl": "^4.1.2",
       },
       "devDependencies": {
         "@sockethub/schemas": "^3.0.0-alpha.12",
@@ -2333,7 +2333,7 @@
 
     "ipaddr.js": ["ipaddr.js@1.9.1", "", {}, "sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g=="],
 
-    "irc-socket-sasl": ["irc-socket-sasl@4.1.1", "", { "dependencies": { "r-result": "^1.5.1" } }, "sha512-uqCSRFu61VUfRAhYit6tOgX7Ln2FEJqiGQLYhB0HMEWnWQ5fMcWAFhefggu7Q+PjdLlP5dOPOiw6Z50J5tE0Ew=="],
+    "irc-socket-sasl": ["irc-socket-sasl@4.1.2", "", {}, "sha512-ioBVPtvQE3bBNZAqLF8XnWj4/pSEsGvsrq2j8OErDScc3Xvwf/9kmUFLdOrEY7YqugwPmkloVKH7UQngtkUOlQ=="],
 
     "is-alphabetical": ["is-alphabetical@2.0.1", "", {}, "sha512-FWyyY60MeTNyeSRpkM2Iry0G9hpr7/9kD40mD/cGQEuilcZYS4okz8SN2Q6rLCJ8gbCt6fN+rC+6tMGS99LaxQ=="],
 
@@ -3090,8 +3090,6 @@
     "quick-lru": ["quick-lru@5.1.1", "", {}, "sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA=="],
 
     "quote-unquote": ["quote-unquote@1.0.0", "", {}, "sha512-twwRO/ilhlG/FIgYeKGFqyHhoEhqgnKVkcmqMKi2r524gz3ZbDTcyFt38E9xjJI2vT+KbRNHVbnJ/e0I25Azwg=="],
-
-    "r-result": ["r-result@1.5.1", "", {}, "sha512-L5dlAU3rNZCcdEXC1xQzzSGgcTma0x/v4KiihuQ1s0E800pdX5mzLyfRJmSRS61Z4ITan4No/dNsDkxjYJDkPA=="],
 
     "railroad-diagrams": ["railroad-diagrams@1.0.0", "", {}, "sha512-cz93DjNeLY0idrCNOH6PviZGRN9GJhsdm9hpn1YCS879fj4W+x5IFJhhkRZcwVgMmFF7R82UA/7Oh+R8lLZg6A=="],
 

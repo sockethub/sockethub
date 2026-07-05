@@ -187,7 +187,11 @@ sc.socket.emit("message", {
     type: "join",
     "@context": sc.contextFor("irc"),
     actor: { id: "mynick@irc.libera.chat", type: "person", name: "mynick" },
-    target: { id: "sockethub@irc.libera.chat", type: "room" },
+    target: {
+        id: "sockethub@irc.libera.chat",
+        type: "room",
+        name: "#sockethub",
+    },
 }, (result) => {
     if (result?.error) console.error(result.error);
 });

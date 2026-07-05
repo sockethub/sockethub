@@ -1,6 +1,14 @@
 name: Integration
 on:
   pull_request:
+  # Nightly run on master catches environment drift (unpinned docker images,
+  # bun latest, runner updates) that no PR trigger would surface.
+  schedule:
+    - cron: '0 3 * * *'  # 3am UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
 
