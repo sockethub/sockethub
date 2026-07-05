@@ -185,7 +185,6 @@ function buildHandlers({
                 }
                 return DEFAULT_CONFIG[key];
             },
-            createHttpRateLimiter: () => (_req, _res, next) => next(),
             createMessageHandlers:
                 createMessageHandlersOverride ??
                 (() => ({

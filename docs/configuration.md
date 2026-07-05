@@ -250,6 +250,13 @@ Request id sources, in priority order:
 2. `X-Sockethub-Request-Id` header
 3. `requestId` field in JSON body
 
+> **Treat request ids as secrets.** A completed request's results can be
+> replayed by anyone who presents its `requestId` (via `GET` or a repeat
+> `POST`) for up to `idempotencyTtlMs` — there is no per-caller
+> authentication on replay. Use unguessable ids (e.g. UUIDs); never sequential
+> or otherwise predictable values, or one caller could read another's cached
+> results. The `12345` id used in the examples below is illustrative only.
+
 Conflict behavior:
 
 - same `requestId` + request still running: `409`
