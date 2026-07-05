@@ -51,7 +51,7 @@
     "@sockethub/util": "^1.0.0-alpha.1",
     "bullmq": "^5.66.5",
     "ioredis": "^5.9.2",
-    "secure-store-redis": "^4.1.0"
+    "secure-store-redis": "^4.2.0"
   },
   "devDependencies": {
     "@types/bun": "latest",

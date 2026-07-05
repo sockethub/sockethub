@@ -7,6 +7,7 @@ import {
     CredentialsMismatchError,
     CredentialsNotShareableError,
     CredentialsStore,
+    purgeCredentialsStoreKeys,
 } from "./credentials-store";
 
 const mockLogger: Logger = {
@@ -18,43 +19,44 @@ const mockLogger: Logger = {
 
 describe("CredentialsStore", () => {
     let credentialsStore,
+        TestCredentialsStore,
         MockSecureStore,
         MockStoreGet,
         MockStoreSave,
-        MockStoreDel,
+        MockStoreDeleteAll,
         MockObjectHash;
     beforeEach(() => {
         MockStoreGet = sinon.stub().returns({
             object: { password: "credential foo" },
         });
         MockStoreSave = sinon.stub();
-        MockStoreDel = sinon.stub().resolves(1);
+        MockStoreDeleteAll = sinon.stub().resolves(1);
         MockObjectHash = sinon.stub();
         MockSecureStore = sinon.stub().returns({
             get: MockStoreGet,
             save: MockStoreSave,
-            client: { del: MockStoreDel },
+            deleteAll: MockStoreDeleteAll,
             isConnected: true,
             connect: sinon.stub().resolves(),
         });
-        class TestCredentialsStore extends CredentialsStore {
+        TestCredentialsStore = class extends CredentialsStore {
             initCrypto() {
                 this.objectHash = MockObjectHash;
             }
-            initSecureStore(secret, redisConfig) {
+            initSecureStore(secret, redisConfig, ttlMs) {
                 this.store = MockSecureStore({
                     namespace: "foo",
                     secret: secret,
                     redis: redisConfig,
+                    ...(ttlMs ? { ttl: ttlMs } : {}),
                 });
             }
-        }
+        };
         credentialsStore = new TestCredentialsStore(
             "a parent id",
             "a session id",
             "a secret must be 32 chars and th",
             { url: "redis config" },
-            mockLogger,
         );
     });
 
@@ -322,17 +324,114 @@ describe("CredentialsStore", () => {
         });
     });
 
+    describe("ttl", () => {
+        it("passes ttlMs through to the secure store config", () => {
+            MockSecureStore.resetHistory();
+            new TestCredentialsStore(
+                "a parent id",
+                "a session id",
+                "a secret must be 32 chars and th",
+                { url: "redis config" },
+                { ttlMs: 604800000 },
+            );
+            sinon.assert.calledOnce(MockSecureStore);
+            expect(MockSecureStore.firstCall.args[0].ttl).toEqual(604800000);
+        });
+
+        it("omits ttl from the secure store config when not set", () => {
+            expect(
+                "ttl" in MockSecureStore.firstCall.args[0],
+            ).toEqual(false);
+        });
+    });
+
     describe("teardown", () => {
         it("deletes the session's credential namespace", async () => {
             await credentialsStore.teardown();
-            sinon.assert.calledOnce(MockStoreDel);
-            sinon.assert.calledWith(MockStoreDel, credentialsStore.uid);
+            sinon.assert.calledOnce(MockStoreDeleteAll);
+        });
+
+        it("connects first when the store is not connected", async () => {
+            credentialsStore.store.isConnected = false;
+            await credentialsStore.teardown();
+            sinon.assert.calledOnce(credentialsStore.store.connect);
+            sinon.assert.calledOnce(MockStoreDeleteAll);
         });
 
         it("swallows errors so cleanup never throws", async () => {
-            MockStoreDel.rejects(new Error("redis down"));
+            MockStoreDeleteAll.rejects(new Error("redis down"));
             await credentialsStore.teardown();
-            sinon.assert.calledOnce(MockStoreDel);
+            sinon.assert.calledOnce(MockStoreDeleteAll);
         });
+    });
+});
+
+describe("purgeCredentialsStoreKeys", () => {
+    function fakeClient(scanPages, delStub) {
+        let call = 0;
+        return {
+            scan: sinon.stub().callsFake(async () => {
+                const page = scanPages[call];
+                call += 1;
+                return page;
+            }),
+            del: delStub,
+        };
+    }
+
+    it("scans and deletes only this parentId's keys", async () => {
+        const delStub = sinon.stub().resolves(2);
+        const client = fakeClient(
+            [["0", ["sockethub:pid:data-layer:credentials-store:a", "sockethub:pid:data-layer:credentials-store:b"]]],
+            delStub,
+        );
+        const removed = await purgeCredentialsStoreKeys(
+            client as never,
+            "pid",
+        );
+        expect(removed).toEqual(2);
+        sinon.assert.calledOnce(client.scan);
+        expect(client.scan.firstCall.args).toEqual([
+            "0",
+            "MATCH",
+            "sockethub:pid:data-layer:credentials-store:*",
+            "COUNT",
+            100,
+        ]);
+        sinon.assert.calledWith(
+            delStub,
+            "sockethub:pid:data-layer:credentials-store:a",
+            "sockethub:pid:data-layer:credentials-store:b",
+        );
+    });
+
+    it("follows the scan cursor across pages and skips empty pages", async () => {
+        const delStub = sinon.stub().resolves(1);
+        const client = fakeClient(
+            [
+                ["17", []],
+                ["0", ["sockethub:pid:data-layer:credentials-store:a"]],
+            ],
+            delStub,
+        );
+        const removed = await purgeCredentialsStoreKeys(
+            client as never,
+            "pid",
+        );
+        expect(removed).toEqual(1);
+        expect(client.scan.callCount).toEqual(2);
+        sinon.assert.calledOnce(delStub);
+    });
+
+    it("escapes redis glob characters in the parentId", async () => {
+        // randToken's charset includes `*`; unescaped it would make the MATCH
+        // pattern match (and delete) other instances' keys.
+        const delStub = sinon.stub().resolves(0);
+        const client = fakeClient([["0", []]], delStub);
+        await purgeCredentialsStoreKeys(client as never, "a*b?c[d]e\\f");
+        expect(client.scan.firstCall.args[2]).toEqual(
+            "sockethub:a\\*b\\?c\\[d\\]e\\\\f:data-layer:credentials-store:*",
+        );
+        sinon.assert.notCalled(delStub);
     });
 });

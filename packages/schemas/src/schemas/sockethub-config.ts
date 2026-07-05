@@ -95,6 +95,24 @@ export const SockethubConfigSchema = {
                 },
             },
         },
+        credentials: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+                ttlMs: {
+                    type: "number",
+                    minimum: 0,
+                    default: 604800000,
+                    description:
+                        "Sliding TTL in milliseconds for per-session encrypted " +
+                        "credential keys in Redis, refreshed on every save and " +
+                        "read. A backstop against keys orphaned by crashes; " +
+                        "sessions normally delete their key on disconnect. " +
+                        "Size generously — idle sessions do not refresh it. " +
+                        "0 disables expiry.",
+                },
+            },
+        },
         credentialCheck: {
             type: "object",
             additionalProperties: false,

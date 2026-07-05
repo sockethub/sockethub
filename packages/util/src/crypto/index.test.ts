@@ -53,6 +53,28 @@ describe("crypto", () => {
         }).toThrow();
     });
 
+    describe("randId", () => {
+        it("generates requested lengths", () => {
+            for (const len of [1, 8, 16, 32]) {
+                expect(crypto.randId(len).length).toEqual(len);
+            }
+        });
+
+        it("is strictly alphanumeric", () => {
+            // Identifiers land in Redis key names, logger namespaces, and
+            // HTTP headers; glob/shell metacharacters must never appear.
+            for (let i = 0; i < 50; i++) {
+                expect(crypto.randId(32)).toMatch(/^[A-Za-z0-9]+$/);
+            }
+        });
+
+        it("33+ will fail", () => {
+            expect(() => {
+                crypto.randId(33);
+            }).toThrow();
+        });
+    });
+
     describe("deriveSecret", () => {
         it("returns a 32-char string", () => {
             const result = crypto.deriveSecret("secret1", "secret2");

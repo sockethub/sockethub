@@ -1,6 +1,12 @@
 import { createHash } from "node:crypto";
-import type { CredentialsStoreInterface } from "@sockethub/data-layer";
-import { CredentialsStore } from "@sockethub/data-layer";
+import type {
+    CredentialsStoreInterface,
+    RedisConfig,
+} from "@sockethub/data-layer";
+import {
+    CredentialsStore,
+    purgeCredentialsStores,
+} from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
 import {
     AS2_BASE_CONTEXT_URL,
@@ -35,6 +41,11 @@ function normalizeIp(ip: string | undefined): string {
         return trimmed.slice(7);
     }
     return trimmed;
+}
+
+function getCredentialsTtlMs(): number | undefined {
+    const ttlMs = Number(config.get("credentials:ttlMs") ?? 0);
+    return Number.isFinite(ttlMs) && ttlMs > 0 ? ttlMs : undefined;
 }
 
 function getProxyHeaderName(): string {
@@ -146,7 +157,9 @@ class Sockethub {
 
     constructor() {
         this.status = false;
-        this.parentId = crypto.randToken(16);
+        // Identifier, not a secret: ends up in Redis key names and logger
+        // namespaces, so it must stay free of glob/shell metacharacters.
+        this.parentId = crypto.randId(16);
         this.parentSecret1 = crypto.randToken(16);
         this.parentSecret2 = crypto.randToken(16);
         log.debug(`session id: ${this.parentId}`);
@@ -205,6 +218,18 @@ class Sockethub {
     async shutdown() {
         await janitor.stop();
         stopCleanup();
+        // Reclaim this instance's credential keys: parentId is randomized per
+        // boot, so any key left behind would be stranded under a prefix no
+        // future boot references (until its TTL lapses).
+        try {
+            const removed = await purgeCredentialsStores(
+                this.parentId,
+                config.get("redis") as RedisConfig,
+            );
+            log.debug(`purged ${removed} credential store keys on shutdown`);
+        } catch (err) {
+            log.warn(`failed to purge credential store keys: ${err}`);
+        }
     }
 
     /**
@@ -275,6 +300,7 @@ class Sockethub {
                 socket.id,
                 crypto.deriveSecret(this.parentSecret1, sessionSecret),
                 config.get("redis"),
+                { ttlMs: getCredentialsTtlMs() },
             );
 
         sessionLog.debug("socket.io connection");
@@ -310,6 +336,10 @@ class Sockethub {
 
         socket.on("disconnect", () => {
             sessionLog.debug("disconnect received from client");
+            // The session's credential key is dead weight once the socket
+            // closes: a reconnect gets a new socket.id (and the client
+            // re-sends credentials), so nothing ever reads it again.
+            void credentialsStore.teardown?.();
             cleanupClient(socket.id);
             this.releaseIpSlot(clientIp);
         });

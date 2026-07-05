@@ -33,6 +33,7 @@ export interface PlatformInstanceParams {
 type EnvFormat = {
     LOG_LEVEL?: string;
     REDIS_URL: string;
+    SOCKETHUB_CREDENTIALS_TTL_MS?: string;
     SOCKETHUB_PLATFORM_CHILD?: string;
     SOCKETHUB_PLATFORM_CONFIG?: string;
     SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS?: string;
@@ -106,6 +107,12 @@ export default class PlatformInstance {
         };
         if (process.env.LOG_LEVEL) {
             env.LOG_LEVEL = process.env.LOG_LEVEL;
+        }
+        // Forward the credential-key TTL so the child's per-job reads refresh
+        // the sliding expiry the parent set on save.
+        const credentialsTtl = config.get("credentials:ttlMs");
+        if (typeof credentialsTtl !== "undefined") {
+            env.SOCKETHUB_CREDENTIALS_TTL_MS = String(credentialsTtl);
         }
         const heartbeatInterval = config.get("platformHeartbeat:intervalMs");
         if (typeof heartbeatInterval !== "undefined") {

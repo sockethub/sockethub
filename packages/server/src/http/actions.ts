@@ -428,10 +428,16 @@ export function registerHttpActionsRoutes(
 ) {
     const getConfig = deps.getConfig ?? ((key: string) => config.get(key));
     const buildHandlers = deps.createMessageHandlers ?? createMessageHandlers;
+    // The TTL is a crash backstop only: request cleanup explicitly tears the
+    // key down, but a process crash mid-request would otherwise strand it.
+    const credentialsTtlMs =
+        Number(getConfig("credentials:ttlMs")) || undefined;
     const buildCredentialsStore =
         deps.createCredentialsStore ??
         ((parentId, sessionId, secret, redisConfig) =>
-            new CredentialsStore(parentId, sessionId, secret, redisConfig));
+            new CredentialsStore(parentId, sessionId, secret, redisConfig, {
+                ttlMs: credentialsTtlMs,
+            }));
     const getIdempotencyRedis =
         deps.getIdempotencyRedisConnection ?? getIdempotencyRedisConnection;
     const buildRateLimiter = deps.createRateLimiter ?? defaultRateLimiter;
@@ -594,7 +600,10 @@ export function registerHttpActionsRoutes(
             }
 
             // If client provides request id, we enable idempotency. Otherwise, we run best-effort.
-            const requestId = incomingRequestId ?? crypto.randToken(16);
+            // randId, not randToken: a server-minted request id is echoed in
+            // headers/bodies and must satisfy REQUEST_ID_PATTERN, which
+            // randToken's special characters would fail.
+            const requestId = incomingRequestId ?? crypto.randId(16);
             const useIdempotency = Boolean(incomingRequestId);
             const idempotencyKeys = useIdempotency
                 ? buildIdempotencyKeys(requestId)
@@ -665,7 +674,7 @@ export function registerHttpActionsRoutes(
                 }
             }
             // Create a server-side session id for internal routing only.
-            const sessionId = `http:${crypto.randToken(16)}`;
+            const sessionId = `http:${crypto.randId(16)}`;
             const sessionSecret = crypto.randToken(16);
 
             // Track which platform instances were touched so janitor

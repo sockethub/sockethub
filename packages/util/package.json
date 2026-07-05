@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "object-hash": "^3.0.0",
-    "secure-store-redis": "^4.1.0",
+    "secure-store-redis": "^4.2.0",
     "undici": "^7.19.0"
   },
   "devDependencies": {
