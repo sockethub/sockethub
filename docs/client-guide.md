@@ -98,8 +98,8 @@ with `error` as failure.
 sc.socket.emit('message', {
     type: 'send',
     '@context': sc.contextFor('irc'),
-    actor: { id: 'mynick', type: 'person' },
-    target: { id: '#sockethub', type: 'room' },
+    actor: { id: 'mynick@irc.libera.chat', type: 'person', name: 'mynick' },
+    target: { id: 'sockethub@irc.libera.chat', type: 'room' },
     object: { type: 'message', content: 'Hello channel' }
 }, (result) => {
     if (result?.error) {
@@ -148,14 +148,19 @@ success/failure.
 {
   "type": "send",            // Action: send, connect, join, fetch
   "@context": sc.contextFor("irc"),  // Canonical contexts for this platform
-  "actor": { "id": "user", "type": "person" },     // Who
-  "target": { "id": "#room", "type": "room" },     // Where (optional)
+  "actor": { "id": "user@irc.libera.chat", "type": "person", "name": "user" },  // Who
+  "target": { "id": "room@irc.libera.chat", "type": "room" },  // Where (optional)
   "object": { "type": "message", "content": "Hi!" }   // What
 }
 ```
 
 The `actor` object must have an `id` and `type` field, and if `name` does not exist,
 the `id` will be used for display purposes.
+
+For IRC, room targets use `channel@server` in `target.id` (for example
+`sockethub@irc.libera.chat`). The leading `#` belongs in `target.name` when you
+want to preserve the IRC channel sigil for display; `type: "room"` disambiguates
+room ids from person ids (`nick@server`).
 
 ### Platform-Specific Object Properties
 
@@ -173,8 +178,8 @@ await sc.ready();
 sc.socket.emit('message', {
     type: 'send',
     '@context': sc.contextFor('irc'),
-    actor: { id: 'me@example.com', type: 'person' },
-    target: { id: '#general', type: 'room' },
+    actor: { id: 'me@irc.libera.chat', type: 'person', name: 'me' },
+    target: { id: 'general@irc.libera.chat', type: 'room' },
     object: {
         type: 'message',
         content: 'Hello!',
@@ -192,7 +197,7 @@ await sc.ready();
 sc.socket.emit('credentials', {
     '@context': sc.contextFor('irc'),
     type: 'credentials',
-    actor: { id: 'mynick', type: 'person' },
+    actor: { id: 'mynick@irc.libera.chat', type: 'person', name: 'mynick' },
     object: {
         type: 'credentials',
         nick: 'mynick',
@@ -246,7 +251,7 @@ The rejected request returns an ActivityStream response with an `error`:
 {
   "context": "irc",
   "type": "connect",
-  "actor": { "id": "mynick", "type": "person" },
+  "actor": { "id": "mynick@irc.libera.chat", "type": "person", "name": "mynick" },
   "id": "1",
   "error": "username already in use"
 }
@@ -290,8 +295,8 @@ sc.socket.emit('message', {
 sc.socket.emit('message', {
     type: 'join',
     '@context': sc.contextFor('irc'),
-    actor: { id: 'mynick', type: 'person' },
-    target: { id: '#channel', type: 'room' }
+    actor: { id: 'mynick@irc.libera.chat', type: 'person', name: 'mynick' },
+    target: { id: 'channel@irc.libera.chat', type: 'room' }
 });
 ```
 

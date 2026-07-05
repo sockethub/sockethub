@@ -63,10 +63,10 @@ async function joinRoom(): Promise<void> {
                 id="room" 
                 bind:value={room} 
                 class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 text-gray-900 placeholder-gray-500" 
-                placeholder="#general, kosmos-random@kosmos.chat"
+                placeholder="general, kosmos-random@kosmos.chat"
             />
             <p class="text-gray-500 text-xs">
-                💡 IRC: Use #channel-name | XMPP: Use room@server.com
+                💡 IRC: channel@server (e.g. sockethub@irc.libera.chat) | XMPP: room@server.com
             </p>
         </div>
         
