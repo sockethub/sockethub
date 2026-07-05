@@ -153,15 +153,23 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Testing packaged sockethub@$VERSION"
 
+      # The harness spawns sockethub with `...process.env`, so this reaches the
+      # server even when an older checked-out ref's harness predates the
+      # explicit SOCKETHUB_CONFIG override (needed for tags v5.0.0-alpha.13 and
+      # earlier, whose SSRF guard otherwise blocks loopback fixtures). Only set
+      # when the ref ships the config: the server hard-fails on an explicit
+      # SOCKETHUB_CONFIG path that does not exist.
+      - name: Point sockethub at the CI config when the ref ships it
+        run: |
+          CONFIG="$GITHUB_WORKSPACE/integration/sockethub.ci.config.json"
+          if [ -f "$CONFIG" ]; then
+            echo "SOCKETHUB_CONFIG=$CONFIG" >> "$GITHUB_ENV"
+          fi
+
       - name: Run tests against locally published package
         env:
           MATRIX_RUNTIME: ${{ matrix.runtime }}
           SETUP_SUITE: ${{ inputs.suite || github.event.inputs.suite || 'all' }}
-          # The harness spawns sockethub with `...process.env`, so this reaches
-          # the server even when an older checked-out ref's harness predates the
-          # explicit SOCKETHUB_CONFIG override (needed for tags v5.0.0-alpha.13
-          # and earlier, whose SSRF guard otherwise blocks loopback fixtures).
-          SOCKETHUB_CONFIG: ${{ github.workspace }}/integration/sockethub.ci.config.json
         run: |
           bun run scripts/test-installed-version.js \
             "${{ steps.package.outputs.version }}" \
