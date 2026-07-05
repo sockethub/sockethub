@@ -17,7 +17,7 @@ let sharedRateLimitRedisConnection: Redis | null = null;
 
 function buildSharedRedisConnection(
     config: RedisConfig,
-    opts: { enableOfflineQueue?: boolean } = {},
+    opts: { enableOfflineQueue?: boolean; retryForever?: boolean } = {},
 ): Redis {
     return new IORedis(config.url, {
         connectionName: config.connectionName,
@@ -30,6 +30,12 @@ function buildSharedRedisConnection(
         disconnectTimeout: config.disconnectTimeout ?? 5000,
         lazyConnect: false,
         retryStrategy: (times: number) => {
+            // The rate limiter must recover on its own after a Redis restart:
+            // giving up would leave every queued command rejecting until the
+            // process restarts. Keep retrying with a capped backoff instead.
+            if (opts.retryForever) {
+                return Math.min(2 ** Math.min(times - 1, 5) * 200, 5000);
+            }
             if (times > 3) return null;
             return Math.min(2 ** (times - 1) * 200, 2000);
         },
@@ -71,6 +77,7 @@ export function createRateLimitRedisConnection(config: RedisConfig): Redis {
     if (!sharedRateLimitRedisConnection) {
         sharedRateLimitRedisConnection = buildSharedRedisConnection(config, {
             enableOfflineQueue: true,
+            retryForever: true,
         });
     }
     return sharedRateLimitRedisConnection;

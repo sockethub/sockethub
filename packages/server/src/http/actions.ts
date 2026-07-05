@@ -721,7 +721,12 @@ export function registerHttpActionsRoutes(
                 // so it does not linger in Redis (SecureStore writes have no
                 // TTL). Runs after all jobs have completed or the request has
                 // timed out, so queued platform jobs already read the creds.
-                void credentialsStore.teardown?.();
+                // Fire-and-forget, but catch in case an implementation rejects.
+                credentialsStore.teardown?.()?.catch((err: unknown) => {
+                    log.error(
+                        `credentials store teardown failed for ${sessionId}: ${String(err)}`,
+                    );
+                });
                 if (requestTimeoutId) {
                     clearTimeout(requestTimeoutId);
                     requestTimeoutId = undefined;
@@ -779,14 +784,59 @@ export function registerHttpActionsRoutes(
                 }
             };
 
+            // Persist one NDJSON line to the idempotency list so a later GET can
+            // replay the exact stream. Skipped once the request is finalized so a
+            // late callback cannot grow the cached list past the finalized
+            // response. Refreshes the list + status TTLs alongside each append.
+            const persistLine = (serialized: string) => {
+                if (
+                    !useIdempotency ||
+                    !idempotencyRedis ||
+                    !idempotencyKeys ||
+                    completionStarted
+                ) {
+                    return;
+                }
+                redisWriteChain = redisWriteChain
+                    .then(() =>
+                        idempotencyRedis.rpush(
+                            idempotencyKeys.listKey,
+                            serialized,
+                        ),
+                    )
+                    .then(() =>
+                        idempotencyRedis.pexpire(
+                            idempotencyKeys.listKey,
+                            idempotencyTtlMs,
+                        ),
+                    )
+                    .then(() =>
+                        idempotencyRedis.pexpire(
+                            idempotencyKeys.statusKey,
+                            idempotencyTtlMs,
+                        ),
+                    )
+                    .catch((err) => {
+                        log.error(
+                            `failed to persist idempotency result for ${requestId}: ${String(
+                                err,
+                            )}`,
+                        );
+                    });
+            };
+
             // Timeout helpers keep request/idle timers consistent across the stream.
             const writeErrorLine = (message: string) => {
                 if (responseClosed) {
                     return;
                 }
-                res.write(
-                    `${JSON.stringify(buildServerError(message, requestId))}\n`,
+                // Persist the error line too, so a replay matches what the client
+                // streamed (e.g. a trailing "request timeout" line).
+                const serialized = JSON.stringify(
+                    buildServerError(message, requestId),
                 );
+                persistLine(serialized);
+                res.write(`${serialized}\n`);
             };
 
             const scheduleRequestTimeout = () => {
@@ -829,44 +879,7 @@ export function registerHttpActionsRoutes(
                         : result;
                 const serialized = JSON.stringify(output);
 
-                // Once the request is finalized (all lines done, or a timeout
-                // fired and wrote "complete"), a late job callback must not
-                // append more lines — that would grow the cached list past the
-                // finalized response and make replays inconsistent.
-                if (
-                    useIdempotency &&
-                    idempotencyRedis &&
-                    idempotencyKeys &&
-                    !completionStarted
-                ) {
-                    // Persist each line so a later GET can replay the response.
-                    redisWriteChain = redisWriteChain
-                        .then(() =>
-                            idempotencyRedis.rpush(
-                                idempotencyKeys.listKey,
-                                serialized,
-                            ),
-                        )
-                        .then(() =>
-                            idempotencyRedis.pexpire(
-                                idempotencyKeys.listKey,
-                                idempotencyTtlMs,
-                            ),
-                        )
-                        .then(() =>
-                            idempotencyRedis.pexpire(
-                                idempotencyKeys.statusKey,
-                                idempotencyTtlMs,
-                            ),
-                        )
-                        .catch((err) => {
-                            log.error(
-                                `failed to persist idempotency result for ${requestId}: ${String(
-                                    err,
-                                )}`,
-                            );
-                        });
-                }
+                persistLine(serialized);
 
                 if (!responseClosed) {
                     res.write(`${serialized}\n`);

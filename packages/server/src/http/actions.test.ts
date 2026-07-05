@@ -490,6 +490,45 @@ describe("http actions", () => {
         expect(res.jsonBody.error).toBe("idempotency store unavailable");
     });
 
+    it("persists a timeout error line so a GET replay matches the stream", async () => {
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({
+            fakeRedis,
+            configOverrides: {
+                "httpActions:requestTimeoutMs": 15,
+                "httpActions:idleTimeoutMs": 0,
+            },
+            createMessageHandlersOverride: () => ({
+                credentials: (_p: unknown, cb: (d: unknown) => void) =>
+                    cb({ ok: true }),
+                // Never call back: the request times out with the line still open.
+                message: () => {},
+            }),
+        });
+
+        const requestId = "timeout-persist";
+        const { req, res, writes } = createReqRes({
+            body: [singlePayload],
+            headers: { "x-request-id": requestId },
+        });
+        await handlers["/sockethub-http"](req, res);
+        // Let the request timeout fire and the redis write chain settle.
+        await new Promise((resolve) => setTimeout(resolve, 40));
+
+        // The client streamed exactly one line: the timeout error.
+        expect(writes.length).toBe(1);
+        expect(JSON.parse(writes[0]).error).toBe("request timeout");
+
+        // A GET replay must return that same line.
+        const getReqRes = createReqRes({ params: { requestId } });
+        await handlers["GET:/sockethub-http/:requestId"](
+            getReqRes.req,
+            getReqRes.res,
+        );
+        expect(getReqRes.writes.length).toBe(1);
+        expect(JSON.parse(getReqRes.writes[0]).error).toBe("request timeout");
+    });
+
     it("cleans up tracked platform sessions after an idempotent client disconnect times out", async () => {
         const platformId = "platform-http-cleanup";
         while (hasHttpSessions(platformId)) {
