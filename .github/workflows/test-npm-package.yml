@@ -53,10 +53,23 @@ jobs:
       fail-fast: false
 
     steps:
+      - name: Normalize ref
+        id: ref
+        env:
+          INPUT_REF: ${{ inputs.ref || github.event.inputs.ref || github.ref }}
+        run: |
+          # Accept a bare version (e.g. 5.0.0-alpha.13) by mapping it to its
+          # release tag (v5.0.0-alpha.13).
+          REF="$INPUT_REF"
+          if [[ "$REF" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            REF="v$REF"
+          fi
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          ref: ${{ inputs.ref || github.event.inputs.ref || github.ref }}
+          ref: ${{ steps.ref.outputs.ref }}
           fetch-depth: 0
 
       - name: Setup Bun
@@ -75,7 +88,14 @@ jobs:
           INPUT_RUNTIME: ${{ inputs.runtime || github.event.inputs.runtime || 'node' }}
           MATRIX_RUNTIME: ${{ matrix.runtime }}
         run: |
-          # node is the only matrix runtime; run when it matches (default 'node').
+          # node is the only supported deployment runtime. An unrecognized
+          # value must fail the job, not skip every step: a caller passing a
+          # stale value (e.g. 'both') would otherwise produce a green job that
+          # tested nothing.
+          if [ "$INPUT_RUNTIME" != "node" ]; then
+            echo "Error: unsupported runtime '$INPUT_RUNTIME' (supported: node)" >&2
+            exit 1
+          fi
           if [ "$INPUT_RUNTIME" = "$MATRIX_RUNTIME" ]; then
             echo "run_test=true" >> "$GITHUB_OUTPUT"
           else
