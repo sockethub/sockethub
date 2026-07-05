@@ -291,6 +291,16 @@ describe("JobQueue", () => {
         });
     });
 
+    describe("disconnect", () => {
+        it("closes connections without pausing or obliterating the queue", async () => {
+            await jobQueue.disconnect();
+            sinon.assert.called(jobQueue.queue.removeAllListeners);
+            sinon.assert.called(jobQueue.queue.close);
+            sinon.assert.notCalled(jobQueue.queue.pause);
+            sinon.assert.notCalled(jobQueue.queue.obliterate);
+        });
+    });
+
     describe("decryptJobData", () => {
         it("decrypts and returns expected object", () => {
             cryptoMocks.decrypt.returnsArg(0);

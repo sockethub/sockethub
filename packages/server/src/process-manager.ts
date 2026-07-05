@@ -82,12 +82,18 @@ class ProcessManager {
         if (!reusable) {
             this.assertInstanceCapacity(platform, identifier);
         }
+        if (existing && !reusable) {
+            // The replacement created below shares `identifier` and the Redis
+            // queue name derived from it. Mark the dead instance as replaced
+            // *before* starting its async teardown so that teardown can't
+            // obliterate the replacement's queue or evict it from
+            // platformInstances (#1166).
+            existing.markReplaced();
+            void existing.shutdown();
+        }
         const platformInstance = reusable
             ? existing
             : this.createPlatformInstance(identifier, platform, actor);
-        if (existing && existing !== platformInstance) {
-            void existing.shutdown();
-        }
         if (sessionId) {
             platformInstance.registerSession(sessionId, sessionIp);
         }
