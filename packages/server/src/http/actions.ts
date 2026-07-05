@@ -541,239 +541,285 @@ export function registerHttpActionsRoutes(
         const sessionId = `http:${crypto.randToken(16)}`;
         const sessionSecret = crypto.randToken(16);
 
-        const credentialsStore = buildCredentialsStore(
-            options.parentId,
-            sessionId,
-            crypto.deriveSecret(options.parentSecret1, sessionSecret),
-            getConfig("redis") as RedisConfig,
-        );
-
-        // Track which platform instances were touched so janitor doesn't kill them mid-request.
+        // Track which platform instances were touched so janitor doesn't kill
+        // them mid-request. Declared out here so the failure path below can
+        // release them even if setup throws before the stream is wired.
         const platformIds = new Set<string>();
-        const handlers = buildHandlers({
-            processManager: options.processManager,
-            sessionId,
-            sessionSecret,
-            credentialsStore,
-            onPlatformInstance: (platformInstance) => {
-                // Only persistent platforms need lifecycle tracking during
-                // HTTP-only requests.
-                if (!platformInstance.config.persist) {
+
+        // Express 4.x does not catch rejections thrown from async route
+        // handlers, and an unhandled rejection crashes the process (Node >=15),
+        // taking down every other client. Guard the whole request body: on an
+        // unexpected throw, respond (or close), release tracked platforms, and
+        // clear the idempotency claim so it is not stuck "in-progress".
+        try {
+            const credentialsStore = buildCredentialsStore(
+                options.parentId,
+                sessionId,
+                crypto.deriveSecret(options.parentSecret1, sessionSecret),
+                getConfig("redis") as RedisConfig,
+            );
+
+            const handlers = buildHandlers({
+                processManager: options.processManager,
+                sessionId,
+                sessionSecret,
+                credentialsStore,
+                onPlatformInstance: (platformInstance) => {
+                    // Only persistent platforms need lifecycle tracking during
+                    // HTTP-only requests.
+                    if (!platformInstance.config.persist) {
+                        return;
+                    }
+                    if (!platformIds.has(platformInstance.id)) {
+                        platformIds.add(platformInstance.id);
+                        registerHttpSession(platformInstance.id);
+                    }
+                },
+            });
+
+            // Stream NDJSON so callers can process results as they arrive.
+            res.status(200);
+            res.setHeader("Content-Type", "application/x-ndjson");
+            res.setHeader("Cache-Control", "no-store");
+            res.setHeader("X-Request-Id", requestId);
+            res.setHeader("X-Accel-Buffering", "no");
+            res.flushHeaders?.();
+
+            let pending = payloads.length;
+            let responseClosed = false;
+            let requestTimeoutId: ReturnType<typeof setTimeout> | undefined;
+            let idleTimeoutId: ReturnType<typeof setTimeout> | undefined;
+            let completionStarted = false;
+            let redisWriteChain = Promise.resolve();
+
+            const cleanup = () => {
+                for (const platformId of platformIds) {
+                    unregisterHttpSession(platformId);
+                }
+                platformIds.clear();
+                // This session id is single-use; drop its credential namespace
+                // so it does not linger in Redis (SecureStore writes have no
+                // TTL). Runs after all jobs have completed or the request has
+                // timed out, so queued platform jobs already read the creds.
+                void credentialsStore.teardown?.();
+                if (requestTimeoutId) {
+                    clearTimeout(requestTimeoutId);
+                    requestTimeoutId = undefined;
+                }
+                if (idleTimeoutId) {
+                    clearTimeout(idleTimeoutId);
+                    idleTimeoutId = undefined;
+                }
+            };
+
+            const completeRequest = () => {
+                if (completionStarted) {
                     return;
                 }
-                if (!platformIds.has(platformInstance.id)) {
-                    platformIds.add(platformInstance.id);
-                    registerHttpSession(platformInstance.id);
+                completionStarted = true;
+
+                const finish = () => {
+                    cleanup();
+                    closeResponse();
+                };
+
+                if (useIdempotency && idempotencyRedis && idempotencyKeys) {
+                    // Finalize status only after all result lines are persisted
+                    // so immediate retries can replay instead of racing 409.
+                    redisWriteChain = redisWriteChain
+                        .then(() =>
+                            idempotencyRedis.set(
+                                idempotencyKeys.statusKey,
+                                "complete",
+                                "PX",
+                                idempotencyTtlMs,
+                            ),
+                        )
+                        .catch((err) => {
+                            log.error(
+                                `failed to finalize idempotency for ${requestId}: ${String(
+                                    err,
+                                )}`,
+                            );
+                        })
+                        .finally(finish);
+                    return;
                 }
-            },
-        });
 
-        // Stream NDJSON so callers can process results as they arrive.
-        res.status(200);
-        res.setHeader("Content-Type", "application/x-ndjson");
-        res.setHeader("Cache-Control", "no-store");
-        res.setHeader("X-Request-Id", requestId);
-        res.setHeader("X-Accel-Buffering", "no");
-        res.flushHeaders?.();
+                finish();
+            };
 
-        let pending = payloads.length;
-        let responseClosed = false;
-        let requestTimeoutId: ReturnType<typeof setTimeout> | undefined;
-        let idleTimeoutId: ReturnType<typeof setTimeout> | undefined;
-        let completionStarted = false;
-        let redisWriteChain = Promise.resolve();
+            const closeResponse = () => {
+                if (responseClosed) {
+                    return;
+                }
+                responseClosed = true;
+                if (!res.writableEnded) {
+                    res.end();
+                }
+            };
 
-        const cleanup = () => {
+            // Timeout helpers keep request/idle timers consistent across the stream.
+            const writeErrorLine = (message: string) => {
+                if (responseClosed) {
+                    return;
+                }
+                res.write(
+                    `${JSON.stringify(buildServerError(message, requestId))}\n`,
+                );
+            };
+
+            const scheduleRequestTimeout = () => {
+                if (
+                    !Number.isFinite(requestTimeoutMs) ||
+                    requestTimeoutMs <= 0
+                ) {
+                    return;
+                }
+                requestTimeoutId = setTimeout(() => {
+                    if (completionStarted) {
+                        return;
+                    }
+                    writeErrorLine("request timeout");
+                    completeRequest();
+                }, requestTimeoutMs);
+            };
+
+            const scheduleIdleTimeout = () => {
+                if (idleTimeoutId) {
+                    clearTimeout(idleTimeoutId);
+                }
+                if (!Number.isFinite(idleTimeoutMs) || idleTimeoutMs <= 0) {
+                    return;
+                }
+                idleTimeoutId = setTimeout(() => {
+                    if (completionStarted) {
+                        return;
+                    }
+                    writeErrorLine("request idle timeout");
+                    completeRequest();
+                }, idleTimeoutMs);
+            };
+
+            const writeResult = (result: unknown) => {
+                // Normalize errors into ActivityStreams-ish error payloads for consistency.
+                const output =
+                    result instanceof Error
+                        ? buildServerError(result.message, requestId)
+                        : result;
+                const serialized = JSON.stringify(output);
+
+                // Once the request is finalized (all lines done, or a timeout
+                // fired and wrote "complete"), a late job callback must not
+                // append more lines — that would grow the cached list past the
+                // finalized response and make replays inconsistent.
+                if (
+                    useIdempotency &&
+                    idempotencyRedis &&
+                    idempotencyKeys &&
+                    !completionStarted
+                ) {
+                    // Persist each line so a later GET can replay the response.
+                    redisWriteChain = redisWriteChain
+                        .then(() =>
+                            idempotencyRedis.rpush(
+                                idempotencyKeys.listKey,
+                                serialized,
+                            ),
+                        )
+                        .then(() =>
+                            idempotencyRedis.pexpire(
+                                idempotencyKeys.listKey,
+                                idempotencyTtlMs,
+                            ),
+                        )
+                        .then(() =>
+                            idempotencyRedis.pexpire(
+                                idempotencyKeys.statusKey,
+                                idempotencyTtlMs,
+                            ),
+                        )
+                        .catch((err) => {
+                            log.error(
+                                `failed to persist idempotency result for ${requestId}: ${String(
+                                    err,
+                                )}`,
+                            );
+                        });
+                }
+
+                if (!responseClosed) {
+                    res.write(`${serialized}\n`);
+                }
+                pending -= 1;
+                if (pending <= 0) {
+                    completeRequest();
+                    return;
+                }
+                scheduleIdleTimeout();
+            };
+
+            scheduleRequestTimeout();
+            scheduleIdleTimeout();
+
+            req.on("close", () => {
+                if (!responseClosed) {
+                    log.debug(`http actions request closed early ${requestId}`);
+                }
+                // Keep platform-session tracking alive until queued jobs finish,
+                // regardless of idempotency mode; only stop writing to the
+                // response. Completing early here would unregister platforms via
+                // cleanup() and let the janitor reap one mid-job. Timers still
+                // bound how long processing continues after a disconnect.
+                if (pending > 0) {
+                    closeResponse();
+                    return;
+                }
+                completeRequest();
+            });
+
+            payloads.forEach((payload) => {
+                const kind = classifyPayload(payload);
+                switch (kind) {
+                    case "credentials":
+                        handlers.credentials(
+                            payload as ActivityStream,
+                            writeResult,
+                        );
+                        break;
+                    case "message":
+                        handlers.message(
+                            payload as InternalActivityStream,
+                            writeResult,
+                        );
+                        break;
+                    default:
+                        writeResult(new Error("unsupported payload type"));
+                        break;
+                }
+            });
+        } catch (err) {
+            log.error(
+                `unexpected error handling request ${requestId}: ${String(err)}`,
+            );
             for (const platformId of platformIds) {
                 unregisterHttpSession(platformId);
             }
             platformIds.clear();
-            // This session id is single-use; drop its credential namespace so
-            // it does not linger in Redis (SecureStore writes have no TTL).
-            // Runs after all jobs have completed or the request has timed out,
-            // so queued platform jobs have already read the credentials.
-            void credentialsStore.teardown?.();
-            if (requestTimeoutId) {
-                clearTimeout(requestTimeoutId);
-                requestTimeoutId = undefined;
-            }
-            if (idleTimeoutId) {
-                clearTimeout(idleTimeoutId);
-                idleTimeoutId = undefined;
-            }
-        };
-
-        const completeRequest = () => {
-            if (completionStarted) {
-                return;
-            }
-            completionStarted = true;
-
-            const finish = () => {
-                cleanup();
-                closeResponse();
-            };
-
-            if (useIdempotency && idempotencyRedis && idempotencyKeys) {
-                // Finalize status only after all result lines are persisted so
-                // immediate retries can replay instead of racing with 409.
-                redisWriteChain = redisWriteChain
-                    .then(() =>
-                        idempotencyRedis.set(
-                            idempotencyKeys.statusKey,
-                            "complete",
-                            "PX",
-                            idempotencyTtlMs,
-                        ),
-                    )
-                    .catch((err) => {
-                        log.error(
-                            `failed to finalize idempotency for ${requestId}: ${String(
-                                err,
-                            )}`,
-                        );
-                    })
-                    .finally(finish);
-                return;
-            }
-
-            finish();
-        };
-
-        const closeResponse = () => {
-            if (responseClosed) {
-                return;
-            }
-            responseClosed = true;
-            if (!res.writableEnded) {
+            if (!res.headersSent) {
+                res.status(500).json({
+                    error: "internal server error",
+                    requestId,
+                });
+            } else if (!res.writableEnded) {
                 res.end();
             }
-        };
-
-        // Timeout helpers keep request/idle timers consistent across the stream.
-        const writeErrorLine = (message: string) => {
-            if (responseClosed) {
-                return;
-            }
-            res.write(
-                `${JSON.stringify(buildServerError(message, requestId))}\n`,
-            );
-        };
-
-        const scheduleRequestTimeout = () => {
-            if (!Number.isFinite(requestTimeoutMs) || requestTimeoutMs <= 0) {
-                return;
-            }
-            requestTimeoutId = setTimeout(() => {
-                if (completionStarted) {
-                    return;
-                }
-                writeErrorLine("request timeout");
-                completeRequest();
-            }, requestTimeoutMs);
-        };
-
-        const scheduleIdleTimeout = () => {
-            if (idleTimeoutId) {
-                clearTimeout(idleTimeoutId);
-            }
-            if (!Number.isFinite(idleTimeoutMs) || idleTimeoutMs <= 0) {
-                return;
-            }
-            idleTimeoutId = setTimeout(() => {
-                if (completionStarted) {
-                    return;
-                }
-                writeErrorLine("request idle timeout");
-                completeRequest();
-            }, idleTimeoutMs);
-        };
-
-        const writeResult = (result: unknown) => {
-            // Normalize errors into ActivityStreams-ish error payloads for consistency.
-            const output =
-                result instanceof Error
-                    ? buildServerError(result.message, requestId)
-                    : result;
-            const serialized = JSON.stringify(output);
-
             if (useIdempotency && idempotencyRedis && idempotencyKeys) {
-                // Persist each line so a later GET can replay the response.
-                redisWriteChain = redisWriteChain
-                    .then(() =>
-                        idempotencyRedis.rpush(
-                            idempotencyKeys.listKey,
-                            serialized,
-                        ),
-                    )
-                    .then(() =>
-                        idempotencyRedis.pexpire(
-                            idempotencyKeys.listKey,
-                            idempotencyTtlMs,
-                        ),
-                    )
-                    .then(() =>
-                        idempotencyRedis.pexpire(
-                            idempotencyKeys.statusKey,
-                            idempotencyTtlMs,
-                        ),
-                    )
-                    .catch((err) => {
-                        log.error(
-                            `failed to persist idempotency result for ${requestId}: ${String(
-                                err,
-                            )}`,
-                        );
-                    });
+                await idempotencyRedis
+                    .del(idempotencyKeys.statusKey)
+                    .catch(() => {});
             }
-
-            if (!responseClosed) {
-                res.write(`${serialized}\n`);
-            }
-            pending -= 1;
-            if (pending <= 0) {
-                completeRequest();
-                return;
-            }
-            scheduleIdleTimeout();
-        };
-
-        scheduleRequestTimeout();
-        scheduleIdleTimeout();
-
-        req.on("close", () => {
-            if (!responseClosed) {
-                log.debug(`http actions request closed early ${requestId}`);
-            }
-            // If the client disconnected but idempotency is enabled, keep processing
-            // and let the caller fetch results later via GET.
-            if (useIdempotency && pending > 0) {
-                closeResponse();
-                return;
-            }
-            completeRequest();
-        });
-
-        payloads.forEach((payload) => {
-            const kind = classifyPayload(payload);
-            switch (kind) {
-                case "credentials":
-                    handlers.credentials(
-                        payload as ActivityStream,
-                        writeResult,
-                    );
-                    break;
-                case "message":
-                    handlers.message(
-                        payload as InternalActivityStream,
-                        writeResult,
-                    );
-                    break;
-                default:
-                    writeResult(new Error("unsupported payload type"));
-                    break;
-            }
-        });
+        }
     });
 
     log.info(`http actions enabled at ${routePath}`);

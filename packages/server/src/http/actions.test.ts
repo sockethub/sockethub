@@ -489,4 +489,70 @@ describe("http actions", () => {
         expect(hasHttpSessions(platformId)).toBeFalse();
         expect(res.ended).toBeTrue();
     });
+
+    test("best-effort disconnect keeps platform tracking until jobs finish", async () => {
+        const platformId = "platform-http-besteffort";
+        while (hasHttpSessions(platformId)) {
+            unregisterHttpSession(platformId);
+        }
+
+        const fakeRedis = new FakeRedis();
+        // No requestId (best-effort mode); a job stays pending after disconnect.
+        const handlers = buildHandlers({
+            fakeRedis,
+            configOverrides: {
+                "httpActions:requireRequestId": false,
+                "httpActions:requestTimeoutMs": 30,
+                "httpActions:idleTimeoutMs": 20,
+            },
+            createMessageHandlersOverride: ({ onPlatformInstance }: any) => ({
+                credentials: (_payload: unknown, cb: (data: unknown) => void) =>
+                    cb({ ok: true, id: "c1" }),
+                message: (_payload: unknown, _cb: (data: unknown) => void) => {
+                    onPlatformInstance?.({
+                        id: platformId,
+                        config: { persist: true },
+                    });
+                    // never call back -> job stays pending
+                },
+            }),
+        });
+
+        const { req, res } = createReqRes({ body: [singlePayload] });
+        await handlers["/sockethub-http"](req, res);
+        expect(hasHttpSessions(platformId)).toBeTrue();
+
+        // Disconnect while the job is still pending: tracking must survive so
+        // the janitor cannot reap the platform mid-job.
+        req.triggerClose();
+        expect(hasHttpSessions(platformId)).toBeTrue();
+
+        // Only the request timeout finally releases it.
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        expect(hasHttpSessions(platformId)).toBeFalse();
+    });
+
+    test("returns 500 when request setup throws instead of crashing", async () => {
+        const fakeRedis = new FakeRedis();
+        const handlers = buildHandlers({
+            fakeRedis,
+            createMessageHandlersOverride: () => {
+                throw new Error("boom during setup");
+            },
+        });
+
+        const { req, res } = createReqRes({
+            body: [singlePayload],
+            headers: { "x-request-id": "throws-1" },
+        });
+
+        await handlers["/sockethub-http"](req, res);
+
+        expect(res.statusCode).toBe(500);
+        expect(res.jsonBody.error).toBe("internal server error");
+        // Idempotency claim must be cleared so the id is not wedged "in-progress".
+        expect(
+            fakeRedis.store.get("sockethub:http-actions:status:throws-1"),
+        ).toBeUndefined();
+    });
 });
