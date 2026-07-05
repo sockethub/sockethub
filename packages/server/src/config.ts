@@ -20,6 +20,14 @@ const MAPPED_ENV_VARS = [
     "LOG_FILE",
     "SOCKETHUB_PLATFORM_HEARTBEAT_INTERVAL_MS",
     "SOCKETHUB_PLATFORM_HEARTBEAT_TIMEOUT_MS",
+    "SOCKETHUB_HTTP_ACTIONS_ENABLED",
+    "SOCKETHUB_HTTP_ACTIONS_PATH",
+    "SOCKETHUB_HTTP_ACTIONS_REQUIRE_REQUEST_ID",
+    "SOCKETHUB_HTTP_ACTIONS_MAX_MESSAGES_PER_REQUEST",
+    "SOCKETHUB_HTTP_ACTIONS_MAX_PAYLOAD_BYTES",
+    "SOCKETHUB_HTTP_ACTIONS_IDEMPOTENCY_TTL_MS",
+    "SOCKETHUB_HTTP_ACTIONS_REQUEST_TIMEOUT_MS",
+    "SOCKETHUB_HTTP_ACTIONS_IDLE_TIMEOUT_MS",
 ] as const;
 
 const LOG_LEVELS = ["error", "warn", "info", "debug"] as const;
@@ -170,6 +178,49 @@ function buildSchema(): convict.Config<Record<string, unknown>> {
                     format: String,
                     default: "*",
                 },
+            },
+        },
+        httpActions: {
+            enabled: {
+                doc: "Enable the HTTP actions endpoint",
+                format: Boolean,
+                default: false,
+                env: "SOCKETHUB_HTTP_ACTIONS_ENABLED",
+            },
+            path: {
+                format: String,
+                default: "/sockethub-http",
+                env: "SOCKETHUB_HTTP_ACTIONS_PATH",
+            },
+            requireRequestId: {
+                format: Boolean,
+                default: true,
+                env: "SOCKETHUB_HTTP_ACTIONS_REQUIRE_REQUEST_ID",
+            },
+            maxMessagesPerRequest: {
+                format: "nat",
+                default: 20,
+                env: "SOCKETHUB_HTTP_ACTIONS_MAX_MESSAGES_PER_REQUEST",
+            },
+            maxPayloadBytes: {
+                format: "nat",
+                default: 262144,
+                env: "SOCKETHUB_HTTP_ACTIONS_MAX_PAYLOAD_BYTES",
+            },
+            idempotencyTtlMs: {
+                format: "nat",
+                default: 300000,
+                env: "SOCKETHUB_HTTP_ACTIONS_IDEMPOTENCY_TTL_MS",
+            },
+            requestTimeoutMs: {
+                format: "nat",
+                default: 30000,
+                env: "SOCKETHUB_HTTP_ACTIONS_REQUEST_TIMEOUT_MS",
+            },
+            idleTimeoutMs: {
+                format: "nat",
+                default: 15000,
+                env: "SOCKETHUB_HTTP_ACTIONS_IDLE_TIMEOUT_MS",
             },
         },
         platformHeartbeat: {

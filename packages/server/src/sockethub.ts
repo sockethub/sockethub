@@ -2,30 +2,21 @@ import { createHash } from "node:crypto";
 import type { CredentialsStoreInterface } from "@sockethub/data-layer";
 import { CredentialsStore } from "@sockethub/data-layer";
 import { createLogger } from "@sockethub/logger";
-import type {
-    ActivityStream,
-    InternalActivityStream,
-} from "@sockethub/schemas";
 import {
     AS2_BASE_CONTEXT_URL,
     buildCanonicalContext,
     ERROR_PLATFORM_CONTEXT_URL,
-    resolvePlatformId,
     SOCKETHUB_BASE_CONTEXT_URL,
 } from "@sockethub/schemas";
 import { crypto } from "@sockethub/util/crypto";
-import { errorMessage } from "@sockethub/util/error";
 import type { Socket } from "socket.io";
 import getInitObject from "./bootstrap/init.js";
 import type { PlatformMap } from "./bootstrap/load-platforms.js";
 import config from "./config";
+import { registerHttpActionsRoutes } from "./http/actions.js";
 import janitor from "./janitor.js";
 import listener from "./listener.js";
-import credentialCheck from "./middleware/credential-check.js";
-import normalizeActivityStreamMiddleware from "./middleware/normalize-activity-stream.js";
-import storeCredentials from "./middleware/store-credentials.js";
-import validate from "./middleware/validate.js";
-import middleware from "./middleware.js";
+import { createMessageHandlers } from "./message-handlers.js";
 import ProcessManager from "./process-manager.js";
 import {
     cleanupClient,
@@ -34,28 +25,6 @@ import {
 } from "./rate-limiter.js";
 
 const log = createLogger("server:core");
-
-/**
- * Normalize middleware errors into payload-safe error responses.
- * Removes internal-only properties that must never be sent to clients.
- */
-function attachError<T extends ActivityStream | ActivityObject>(
-    err: unknown,
-    msg?: T,
-) {
-    const message = errorMessage(err);
-    if (!msg) {
-        return new Error(message);
-    }
-
-    const cleaned = { ...msg, error: message } as T & {
-        sessionSecret?: string;
-    };
-    if ("sessionSecret" in cleaned) {
-        delete cleaned.sessionSecret;
-    }
-    return cleaned;
-}
 
 function normalizeIp(ip: string | undefined): string {
     if (!ip) {
@@ -223,6 +192,11 @@ class Sockethub {
 
         log.debug("active platforms: ", [...init.platforms.keys()]);
         listener.start(); // start external services
+        registerHttpActionsRoutes(listener.getApp(), {
+            processManager: this.processManager,
+            parentId: this.parentId,
+            parentSecret1: this.parentSecret1,
+        });
         janitor.start(); // start cleanup cycle
         log.debug("registering handlers");
         listener.io.on("connection", this.handleIncomingConnection.bind(this));
@@ -340,122 +314,20 @@ class Sockethub {
             this.releaseIpSlot(clientIp);
         });
 
-        socket.on(
-            "credentials",
-            middleware<ActivityStream>("credentials")
-                .use(normalizeActivityStreamMiddleware)
-                .use(validate("credentials", socket.id))
-                .use(storeCredentials(credentialsStore))
-                .use(
-                    (
-                        err: Error,
-                        data: ActivityStream,
-                        next: (data?: ActivityStream | Error) => void,
-                    ) => {
-                        // error handler
-                        next(attachError(err, data));
-                    },
-                )
-                .use(
-                    (
-                        data: ActivityStream,
-                        next: (data?: ActivityStream | Error) => void,
-                    ) => {
-                        next(data);
-                    },
-                )
-                .done(),
-        );
+        const handlers = createMessageHandlers({
+            processManager: this.processManager,
+            sessionId: socket.id,
+            sessionSecret,
+            credentialsStore,
+            clientIp,
+            isSessionActive: (sessionId) =>
+                listener.io?.sockets?.sockets?.has(sessionId) ?? false,
+            // Keep session registration behavior inside ProcessManager.get().
+            platformSessionId: socket.id,
+        });
 
-        socket.on(
-            "message",
-            middleware<InternalActivityStream>("message")
-                .use(normalizeActivityStreamMiddleware)
-                .use(validate("message", socket.id))
-                .use(
-                    (
-                        msg: InternalActivityStream,
-                        next: (data?: InternalActivityStream | Error) => void,
-                    ) => {
-                        // The platform thread must find the credentials on their own using the given
-                        // sessionSecret, which indicates that this specific session (socket
-                        // connection) has provided credentials.
-                        msg.sessionSecret = sessionSecret;
-                        next(msg);
-                    },
-                )
-                .use(
-                    credentialCheck(
-                        credentialsStore,
-                        socket.id,
-                        clientIp,
-                        (sessionId) =>
-                            listener.io?.sockets?.sockets?.has(sessionId) ??
-                            false,
-                    ),
-                )
-                .use(
-                    (
-                        err: Error,
-                        data: InternalActivityStream,
-                        next: (data?: InternalActivityStream | Error) => void,
-                    ) => {
-                        next(attachError(err, data));
-                    },
-                )
-                .use(
-                    async (
-                        msg: ActivityStream,
-                        next: (data?: ActivityStream | Error) => void,
-                    ) => {
-                        const platformId = resolvePlatformId(msg);
-                        if (!platformId) {
-                            msg.error =
-                                "unable to resolve platform from @context";
-                            next(msg);
-                            return;
-                        }
-                        let platformInstance: ReturnType<ProcessManager["get"]>;
-                        try {
-                            platformInstance = this.processManager.get(
-                                platformId,
-                                msg.actor.id,
-                                socket.id,
-                                clientIp,
-                            );
-                        } catch (err) {
-                            // e.g. limits.maxPlatformInstances reached
-                            msg.error =
-                                errorMessage(err) || "platform unavailable";
-                            next(msg);
-                            return;
-                        }
-                        // job validated and queued, stores socket.io callback for when job is completed
-                        try {
-                            const job = await platformInstance.queue.add(
-                                socket.id,
-                                msg,
-                            );
-                            if (job) {
-                                platformInstance.registerCompletedJobHandler(
-                                    job.title,
-                                    next,
-                                );
-                            } else {
-                                // failed to add job to queue, reject handler immediately
-                                msg.error = "failed to add job to queue";
-                                next(msg);
-                            }
-                        } catch (err) {
-                            // Queue is closed (platform terminating) - send error to client
-                            msg.error =
-                                errorMessage(err) || "platform unavailable";
-                            next(msg);
-                        }
-                    },
-                )
-                .done(),
-        );
+        socket.on("credentials", handlers.credentials);
+        socket.on("message", handlers.message);
     }
 }
 

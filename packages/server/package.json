@@ -62,7 +62,8 @@
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.1",
     "jquery": "^3.7.1",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "rate-limit-redis": "^4.2.0"
   },
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target node --format esm --sourcemap=external && bun build src/platform.ts --outdir dist --target node --format esm --sourcemap=external",

@@ -1,3 +1,9 @@
+/**
+ * Rate limiter for socket events, keyed by socket id.
+ *
+ * HTTP routes use `express-rate-limit` directly (keyed by client IP); see
+ * `http/actions.ts`.
+ */
 import { createLogger } from "@sockethub/logger";
 import {
     buildCanonicalContext,

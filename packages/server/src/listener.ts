@@ -3,7 +3,12 @@ import * as HTTP from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { createLogger } from "@sockethub/logger";
-import express, { type Express, type Request, type Response } from "express";
+import express, {
+    type Express,
+    type NextFunction,
+    type Request,
+    type Response,
+} from "express";
 import rateLimit from "express-rate-limit";
 import { Server, type Socket } from "socket.io";
 import config from "./config.js";
@@ -24,6 +29,7 @@ log.info(`sockethub v${packageJson.version}`);
  *  - Socket.io (bidirectional websocket communication)
  */
 class Listener {
+    app?: Express;
     io: Server;
     http: HTTP.Server;
 
@@ -34,6 +40,7 @@ class Listener {
     start() {
         // initialize express and socket.io objects
         const app = Listener.initExpress();
+        this.app = app;
         this.http = new HTTP.Server(app);
         this.io = new Server(this.http, {
             path: config.get("sockethub:path") as string,
@@ -93,12 +100,22 @@ class Listener {
             process.exit(1);
         }
 
+        const httpActionsPath = config.get("httpActions:path");
+        // HTTP actions requests fall through this catch-all to their own route,
+        // which enforces the configured `rateLimiter`. They must not also be
+        // gated by the examples file-access limiter below.
+        const isHttpActionsPath = (reqPath: string) =>
+            typeof httpActionsPath === "string" &&
+            (reqPath === httpActionsPath ||
+                reqPath.startsWith(`${httpActionsPath}/`));
+
         // Set up rate limiter to prevent DoS attacks on file system access
         const limiter = rateLimit({
             windowMs: 1 * 60 * 1000, // 1 minute
             max: 60, // max 60 requests per windowMs
             standardHeaders: true,
             legacyHeaders: false,
+            skip: (req) => isHttpActionsPath(req.path),
         });
 
         // Write runtime config for the examples app
@@ -115,11 +132,20 @@ class Listener {
         const examplesIndex = path.join(examplesPath, "index.html");
         // SPA fallback: serve index.html for any unmatched GET. Express 5 /
         // path-to-regexp v8 no longer accept the bare "*" string path, so use a
-        // regex that matches every path instead.
-        app.get(/.*/, limiter, (req: Request, res: Response) => {
-            log.debug(`examples request ${req.path}`);
-            res.sendFile(examplesIndex);
-        });
+        // regex that matches every path instead. HTTP actions requests fall
+        // through to their own route rather than the examples index.
+        app.get(
+            /.*/,
+            limiter,
+            (req: Request, res: Response, next: NextFunction) => {
+                if (isHttpActionsPath(req.path)) {
+                    next();
+                    return;
+                }
+                log.debug(`examples request ${req.path}`);
+                res.sendFile(examplesIndex);
+            },
+        );
 
         log.info(
             `examples served at http://${config.get("sockethub:host")}:${config.get(
@@ -170,11 +196,20 @@ class Listener {
         const app = express();
         // templating engines
         app.set("view engine", "ejs");
-        // Express bundles body-parser as express.json()/express.urlencoded(),
-        // so use those directly rather than the standalone dependency.
+        // Express bundles body-parser as express.urlencoded(); use it directly.
         app.use(express.urlencoded({ extended: true }));
-        app.use(express.json());
+        // JSON parsing is scoped to the HTTP actions POST route (see
+        // registerHttpActionsRoutes) rather than applied globally, so its
+        // lenient `strict: false` and `httpActions:maxPayloadBytes` limit do
+        // not affect other routes. No other route consumes a JSON body.
         return app;
+    }
+
+    getApp(): Express {
+        if (!this.app) {
+            throw new Error("listener not started");
+        }
+        return this.app;
     }
 }
 

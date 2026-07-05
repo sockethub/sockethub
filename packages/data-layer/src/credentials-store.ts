@@ -12,6 +12,35 @@ import { buildCredentialsStoreId } from "./queue-id.js";
 import type { RedisConfig } from "./types.js";
 
 let sharedCredentialsRedisConnection: Redis | null = null;
+let sharedIdempotencyRedisConnection: Redis | null = null;
+let sharedRateLimitRedisConnection: Redis | null = null;
+
+function buildSharedRedisConnection(
+    config: RedisConfig,
+    opts: { enableOfflineQueue?: boolean; retryForever?: boolean } = {},
+): Redis {
+    return new IORedis(config.url, {
+        connectionName: config.connectionName,
+        // Credentials/idempotency fail fast when the socket isn't writable; the
+        // rate limiter enables the offline queue so its eager script load queues
+        // until the connection is ready instead of rejecting at construction.
+        enableOfflineQueue: opts.enableOfflineQueue ?? false,
+        maxRetriesPerRequest: config.maxRetriesPerRequest ?? null,
+        connectTimeout: config.connectTimeout ?? 10000,
+        disconnectTimeout: config.disconnectTimeout ?? 5000,
+        lazyConnect: false,
+        retryStrategy: (times: number) => {
+            // The rate limiter must recover on its own after a Redis restart:
+            // giving up would leave every queued command rejecting until the
+            // process restarts. Keep retrying with a capped backoff instead.
+            if (opts.retryForever) {
+                return Math.min(2 ** Math.min(times - 1, 5) * 200, 5000);
+            }
+            if (times > 3) return null;
+            return Math.min(2 ** (times - 1) * 200, 2000);
+        },
+    });
+}
 
 /**
  * Creates or returns a shared Redis connection for CredentialsStore instances.
@@ -23,20 +52,35 @@ let sharedCredentialsRedisConnection: Redis | null = null;
  */
 export function createCredentialsRedisConnection(config: RedisConfig): Redis {
     if (!sharedCredentialsRedisConnection) {
-        sharedCredentialsRedisConnection = new IORedis(config.url, {
-            connectionName: config.connectionName,
-            enableOfflineQueue: false,
-            maxRetriesPerRequest: config.maxRetriesPerRequest ?? null,
-            connectTimeout: config.connectTimeout ?? 10000,
-            disconnectTimeout: config.disconnectTimeout ?? 5000,
-            lazyConnect: false,
-            retryStrategy: (times: number) => {
-                if (times > 3) return null;
-                return Math.min(2 ** (times - 1) * 200, 2000);
-            },
-        });
+        sharedCredentialsRedisConnection = buildSharedRedisConnection(config);
     }
     return sharedCredentialsRedisConnection;
+}
+
+/**
+ * Creates or returns a dedicated shared Redis connection for HTTP idempotency.
+ */
+export function createIdempotencyRedisConnection(config: RedisConfig): Redis {
+    if (!sharedIdempotencyRedisConnection) {
+        sharedIdempotencyRedisConnection = buildSharedRedisConnection(config);
+    }
+    return sharedIdempotencyRedisConnection;
+}
+
+/**
+ * Creates or returns a dedicated shared Redis connection for rate limiting.
+ * A dedicated connection keeps rate-limit traffic off the credentials and
+ * idempotency connections and lets a Redis-backed limiter share request budgets
+ * across instances.
+ */
+export function createRateLimitRedisConnection(config: RedisConfig): Redis {
+    if (!sharedRateLimitRedisConnection) {
+        sharedRateLimitRedisConnection = buildSharedRedisConnection(config, {
+            enableOfflineQueue: true,
+            retryForever: true,
+        });
+    }
+    return sharedRateLimitRedisConnection;
 }
 
 /**
@@ -53,6 +97,28 @@ export async function resetSharedCredentialsRedisConnection(): Promise<void> {
     }
 }
 
+export async function resetSharedIdempotencyRedisConnection(): Promise<void> {
+    if (sharedIdempotencyRedisConnection) {
+        try {
+            sharedIdempotencyRedisConnection.disconnect(false);
+        } catch (_err) {
+            // Ignore disconnect errors during cleanup
+        }
+        sharedIdempotencyRedisConnection = null;
+    }
+}
+
+export async function resetSharedRateLimitRedisConnection(): Promise<void> {
+    if (sharedRateLimitRedisConnection) {
+        try {
+            sharedRateLimitRedisConnection.disconnect(false);
+        } catch (_err) {
+            // Ignore disconnect errors during cleanup
+        }
+        sharedRateLimitRedisConnection = null;
+    }
+}
+
 export interface CredentialsStoreInterface {
     get(
         actor: string,
@@ -60,6 +126,13 @@ export interface CredentialsStoreInterface {
         options?: CredentialsValidationOptions,
     ): Promise<CredentialsObject | undefined>;
     save(actor: string, creds: CredentialsObject): Promise<number>;
+    /**
+     * Delete this session's entire credential namespace from Redis. Used by
+     * single-use sessions (e.g. HTTP actions requests) whose credentials are
+     * never read again once the request completes. Optional: long-lived socket
+     * sessions do not implement it.
+     */
+    teardown?(): Promise<void>;
 }
 
 export interface CredentialsValidationOptions {
@@ -244,5 +317,21 @@ export class CredentialsStore implements CredentialsStoreInterface {
             await this.store.connect();
         }
         return await this.store.save(actor, creds);
+    }
+
+    /**
+     * Delete this session's entire credential hash from Redis.
+     *
+     * `SecureStore` writes have no TTL and nothing else removes them, so a
+     * single-use session (an HTTP actions request mints a unique session id
+     * per request) would otherwise leave a permanent key. Best-effort and safe
+     * to call when nothing was stored — a missing key is a no-op.
+     */
+    async teardown(): Promise<void> {
+        try {
+            await this.store.client?.del(this.uid);
+        } catch (err) {
+            this.log.debug(`credential store teardown failed: ${err}`);
+        }
     }
 }
