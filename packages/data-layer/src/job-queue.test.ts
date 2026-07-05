@@ -296,8 +296,20 @@ describe("JobQueue", () => {
             await jobQueue.disconnect();
             sinon.assert.called(jobQueue.queue.removeAllListeners);
             sinon.assert.called(jobQueue.queue.close);
+            sinon.assert.called(jobQueue.events.close);
             sinon.assert.notCalled(jobQueue.queue.pause);
             sinon.assert.notCalled(jobQueue.queue.obliterate);
+        });
+
+        it("propagates errors from the underlying connection close", async () => {
+            jobQueue.queue.close.rejects(new Error("close failed"));
+            let err: Error | undefined;
+            try {
+                await jobQueue.disconnect();
+            } catch (e) {
+                err = e as Error;
+            }
+            expect(err?.message).to.equal("close failed");
         });
     });
 
