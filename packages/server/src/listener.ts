@@ -3,7 +3,6 @@ import * as HTTP from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { createLogger } from "@sockethub/logger";
-import bodyParser from "body-parser";
 import express, {
     type Express,
     type NextFunction,
@@ -131,8 +130,12 @@ class Listener {
         app.use(express.static(examplesPath));
 
         const examplesIndex = path.join(examplesPath, "index.html");
+        // SPA fallback: serve index.html for any unmatched GET. Express 5 /
+        // path-to-regexp v8 no longer accept the bare "*" string path, so use a
+        // regex that matches every path instead. HTTP actions requests fall
+        // through to their own route rather than the examples index.
         app.get(
-            "*",
+            /.*/,
             limiter,
             (req: Request, res: Response, next: NextFunction) => {
                 if (isHttpActionsPath(req.path)) {
@@ -193,8 +196,8 @@ class Listener {
         const app = express();
         // templating engines
         app.set("view engine", "ejs");
-        // use bodyParser
-        app.use(bodyParser.urlencoded({ extended: true }));
+        // Express bundles body-parser as express.urlencoded(); use it directly.
+        app.use(express.urlencoded({ extended: true }));
         // JSON parsing is scoped to the HTTP actions POST route (see
         // registerHttpActionsRoutes) rather than applied globally, so its
         // lenient `strict: false` and `httpActions:maxPayloadBytes` limit do
