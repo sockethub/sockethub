@@ -52,8 +52,15 @@ export type { PlatformIrcCredentialsObject } from "./types.js";
 export function flattenConnectOptions(
     options: Record<string, unknown>,
 ): Record<string, unknown> {
-    const flattened: Record<string, unknown> = {};
+    const flattened: Record<string, unknown> = Object.create(null);
     for (const key in options) {
+        if (
+            key === "__proto__" ||
+            key === "constructor" ||
+            key === "prototype"
+        ) {
+            continue;
+        }
         flattened[key] = options[key];
     }
     return flattened;
