@@ -18,6 +18,10 @@ messages.
 
 ## Usage
 
+IRC room targets use `channel@server` in `target.id` (for example
+`general@irc.libera.chat`). When you include `target.name`, use the channel
+name as it appears on IRC (for example `#general`).
+
 ### Send Message Example
 
 ```json
@@ -34,7 +38,8 @@ messages.
   },
   "target": {
     "id": "general@irc.libera.chat",
-    "type": "room"
+    "type": "room",
+    "name": "#general"
   },
   "object": {
     "type": "message",
@@ -59,7 +64,8 @@ messages.
   },
   "target": {
     "id": "general@irc.libera.chat",
-    "type": "room"
+    "type": "room",
+    "name": "#general"
   }
 }
 ```
@@ -105,7 +111,8 @@ messages.
   },
   "target": {
     "id": "general@irc.libera.chat",
-    "type": "room"
+    "type": "room",
+    "name": "#general"
   },
   "object": {
     "type": "topic",
@@ -154,7 +161,8 @@ messages.
   },
   "target": {
     "id": "general@irc.libera.chat",
-    "type": "room"
+    "type": "room",
+    "name": "#general"
   },
   "object": {
     "type": "attendance"
@@ -174,7 +182,8 @@ messages.
   ],
   "actor": {
     "id": "general@irc.libera.chat",
-    "type": "room"
+    "type": "room",
+    "name": "#general"
   },
   "target": {},
   "object": {
