@@ -28,6 +28,7 @@ const MAPPED_ENV_VARS = [
     "SOCKETHUB_HTTP_ACTIONS_IDEMPOTENCY_TTL_MS",
     "SOCKETHUB_HTTP_ACTIONS_REQUEST_TIMEOUT_MS",
     "SOCKETHUB_HTTP_ACTIONS_IDLE_TIMEOUT_MS",
+    "SOCKETHUB_CREDENTIALS_TTL_MS",
 ] as const;
 
 const LOG_LEVELS = ["error", "warn", "info", "debug"] as const;
@@ -117,6 +118,20 @@ function buildSchema(): convict.Config<Record<string, unknown>> {
                     "exhaustion risk on public instances. 0 disables the cap.",
                 format: "nat",
                 default: 0,
+            },
+        },
+        credentials: {
+            ttlMs: {
+                doc:
+                    "Sliding TTL in milliseconds for per-session encrypted " +
+                    "credential keys in Redis, refreshed on every save and " +
+                    "read. A backstop against keys orphaned by crashes; " +
+                    "sessions normally delete their key on disconnect. " +
+                    "Size generously — idle sessions do not refresh it. " +
+                    "0 disables expiry.",
+                format: "nat",
+                default: 604800000,
+                env: "SOCKETHUB_CREDENTIALS_TTL_MS",
             },
         },
         credentialCheck: {
